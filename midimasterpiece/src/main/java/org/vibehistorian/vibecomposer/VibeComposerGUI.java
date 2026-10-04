@@ -216,7 +216,7 @@ public class VibeComposerGUI extends JFrame
 		}
 		@Override public GUIConfig getGUIConfig() { return guiConfig; }
 		@Override public MidiGenerator getMelodyGenerator() {
-			return midiEditorSession.getMelodyGenerator();
+			return midiEditorSession.getMidiGenerator();
 		}
 		@Override public void regenerateInPlace() { VibeComposerGUI.this.regenerateInPlace(); }
 		@Override public void playNote(int pitch, int durationMs, int velocity, INST part,

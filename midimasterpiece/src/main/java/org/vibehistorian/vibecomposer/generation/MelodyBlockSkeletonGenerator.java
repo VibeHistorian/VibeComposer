@@ -33,14 +33,17 @@ final class MelodyBlockSkeletonGenerator {
     private final MelodyGenerationState state;
     private final MelodyChordInference inference;
     private final MelodyExpansion expansion;
+    private final MelodyGenerationSettings settings;
 
     MelodyBlockSkeletonGenerator(GUIConfig gc, MidiGenerator mg, MelodyGenerationState state,
-            MelodyChordInference inference, MelodyExpansion expansion) {
+            MelodyChordInference inference, MelodyExpansion expansion,
+			MelodyGenerationSettings settings) {
         this.gc = gc;
         this.mg = mg;
         this.state = state;
         this.inference = inference;
         this.expansion = expansion;
+		this.settings = settings;
     }
     protected Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
                                                                  List<int[]> roots, int measures, int notesSeedOffset, Section sec,
@@ -84,19 +87,17 @@ final class MelodyBlockSkeletonGenerator {
 
         // Chord note choices
         List<Integer> blockChordNoteChoices;
-        if (MelodyGenerator.TARGET_NOTES == null) {
-            MelodyGenerator.TARGET_NOTES = new HashMap<>();
-        }
-        if (MelodyGenerator.RANDOMIZE_TARGET_NOTES) {
+        Map<Integer, List<Integer>> targetNotes = settings.getOrCreateTargetNotes();
+        if (settings.isRandomizeTargetNotes()) {
             if (gc.getActualArrangement().getSections().indexOf(sec) < 1
-                    || MelodyGenerator.TARGET_NOTES.get(mp.getOrderOffset()) == null) {
+                    || targetNotes.get(mp.getOrderOffset()) == null) {
                 int targetNoteSeed = gc.isMelody1ForcePatterns()
                         ? (seed + 1)
                         : (seed + mp.getOrderOffset());
                 blockChordNoteChoices = MidiGeneratorUtils.generateNoteTargetOffsets(roots, targetNoteSeed,
                         gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation(), gc.getNoteTargetDirectionChoice());
             } else {
-                blockChordNoteChoices = MelodyGenerator.TARGET_NOTES.get(mp.getOrderOffset());
+                blockChordNoteChoices = targetNotes.get(mp.getOrderOffset());
             }
         } else {
             blockChordNoteChoices = (mp.getChordNoteChoices() != null)
@@ -107,7 +108,7 @@ final class MelodyBlockSkeletonGenerator {
                 blockChordNoteChoices.addAll(blockChordNoteChoices);
             }
         }
-        MelodyGenerator.TARGET_NOTES.put(mp.getOrderOffset(), blockChordNoteChoices);
+        targetNotes.put(mp.getOrderOffset(), blockChordNoteChoices);
         LG.d("Choices: " + blockChordNoteChoices);
 
         Vector<Note> noteList = new Vector<>();

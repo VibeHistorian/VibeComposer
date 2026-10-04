@@ -45,6 +45,7 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
 import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
+import org.vibehistorian.vibecomposer.generation.MelodyGenerationSettings;
 import org.vibehistorian.vibecomposer.generation.MelodyUtils;
 import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 import org.vibehistorian.vibecomposer.generation.MidiGeneratorUtils;
@@ -66,6 +67,7 @@ import java.util.stream.Collectors;
 public class MelodyGUI extends InstGUI<MelodyPanel> {
 	private Phrase userMelody;
 	private Phrase userMelodyCandidate;
+	private final MelodyGenerationSettings generationSettings = new MelodyGenerationSettings();
 
 	public JCheckBox generateMelodiesOnCompose;
 	public KnobPanel melodyUseOldAlgoChance;
@@ -113,6 +115,10 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		return userMelody;
 	}
 
+	public MelodyGenerationSettings getGenerationSettings() {
+		return generationSettings;
+	}
+
 	private final Context context;
 
 	public MelodyGUI(Context context, InstrumentPanelController panelController) {
@@ -134,8 +140,8 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		modes.forEach(userMelodyScaleModeSelect::addItem);
 	}
 
-	public void applyGeneratedTargetNotes(boolean regenerate,
-			Map<Integer, List<Integer>> targetNotes, GUIConfig config) {
+	public void applyGeneratedTargetNotes(boolean regenerate, GUIConfig config) {
+		Map<Integer, List<Integer>> targetNotes = generationSettings.getTargetNotes();
 		if (regenerate || !melodyTargetNotesRandomizeOnCompose.isSelected() || targetNotes == null) {
 			return;
 		}

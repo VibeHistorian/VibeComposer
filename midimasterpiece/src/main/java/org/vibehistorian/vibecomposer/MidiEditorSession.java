@@ -9,19 +9,19 @@ import java.util.List;
 public final class MidiEditorSession {
 	private final MidiEditPopup.Context context;
 	private MidiEditPopup currentPopup;
-	private MidiGenerator melodyGenerator;
+	private MidiGenerator midiGenerator;
 	private int sectionIndex = -1;
 
 	public MidiEditorSession(MidiEditPopup.Context context) {
 		this.context = context;
 	}
 
-	public void setMelodyGenerator(MidiGenerator melodyGenerator) {
-		this.melodyGenerator = melodyGenerator;
+	public void setMidiGenerator(MidiGenerator midiGenerator) {
+		this.midiGenerator = midiGenerator;
 	}
 
-	public MidiGenerator getMelodyGenerator() {
-		return melodyGenerator;
+	public MidiGenerator getMidiGenerator() {
+		return midiGenerator;
 	}
 
 	public void open(Section section, int instrument, int panelOrder, int sectionIndex) {

@@ -25,8 +25,8 @@ import org.vibehistorian.vibecomposer.Components.ShowPanelBig;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Panels.KnobPanel;
 import org.vibehistorian.vibecomposer.Popups.ShowScorePopup;
+import org.vibehistorian.vibecomposer.ScoreHistory;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,7 +107,7 @@ public class ScoreGUI {
 	}
 
 	public void pianoRoll() {
-		if (MidiGenerator.LAST_SCORES.isEmpty()) {
+		if (ScoreHistory.getScores().isEmpty()) {
 			return;
 		}
 		if (scorePanel == null) {

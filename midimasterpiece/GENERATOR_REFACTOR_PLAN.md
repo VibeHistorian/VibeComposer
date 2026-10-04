@@ -74,6 +74,10 @@ An `ArrangementGenerationPlanner` or `SectionGenerationPlanner` may fit the sect
 
 **Progress 2026-10-03:** transition selection, section key-change policy, and alternate melody-progression eligibility now live in `SectionGenerationPlanner`. The planner receives the existing variation random generator and makes its transition draw at the same point in the section sequence. Key-change selection still delegates to `ChordProgressionGenerator`, while the planner applies custom section key and scale settings and returns the pending values to the coordinator. The section loop still applies chord swaps and sequences N-1 replacement and phrase rendering.
 
+**Progress 2026-10-04:** `generateMasterpiece` now delegates progression prepass and section sequencing to `processArrangementSections`, score-track creation to `createScoreParts`, and section-to-track assembly to `addSectionsToScoreParts`. Score construction and result publication remain named stages. The section sequence and shared-configuration restoration stay in the coordinator, with the original operation order preserved.
+
+**Implemented 2026-10-04:** phase 4's generation setup, per-section processing, score-part assembly, score building, and result publication are now named stages coordinated by `generateMasterpiece`.
+
 ### Phase 5 — Separate score assembly and instrument phrase generation
 
 - Move score and track construction, track assignment, track combination, padding, and score-level post-processing behind a focused score builder or assembler.
@@ -92,6 +96,10 @@ Candidate names include `MidiScoreBuilder`, `MelodyPhraseBuilder`, `BassPhraseGe
 
 **Progress 2026-10-03:** the three instrument renderers now extend `InstPhraseGenerator`, which owns their shared timing shape, base phrase-and-variation result, configuration, and variation callback. Chord and drum results extend the common result with their instrument-specific data. The compile and MIDI fixture regression check pass after this consolidation.
 
+**Progress 2026-10-04:** melody section-phrase rendering now lives in `MelodyPhraseBuilder`, while the arpeggio pattern and note algorithm lives in `ArpPhraseGenerator`. Existing `MidiGenerator` entry points still publish section patterns and apply instrument-specific final processing. The compile and MIDI fixture regression check pass after both extractions.
+
+**Implemented 2026-10-04:** score assembly and melody, bass, chord, arpeggio, and drum phrase generation have focused collaborators. `MidiGenerator` coordinates them and retains the compatibility methods used by current callers.
+
 ### Phase 6 — Migrate mutable state by lifetime
 
 Perform this phase incrementally alongside earlier extractions when a collaborator needs a clearer input. Avoid a single large static-state migration.
@@ -101,6 +109,8 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 - Give application-lifetime values such as score history an application/session owner rather than storing them in an algorithm class.
 - Consolidate duration constants and mutable duration settings only after auditing external callers. Derived timing values should have one clear owner.
 - Migrate callers in groups, including GUI consumers and utility classes that currently read generator statics. Remove compatibility fields only after the final caller has moved.
+
+**Progress 2026-10-04:** score history moved from `MidiGenerator` to the application-level `ScoreHistory` owner, and the score history views now read through it. Target-note choices and the attached user melody now live in `MelodyGUI`-owned `MelodyGenerationSettings`, passed into each compose run; generated melody patterns are instance state on `MidiGenerator`. Shared chord and progression state still has callers to migrate.
 
 **Completion signal:** internal generation collaborators no longer depend on mutable global state for their inputs, and any remaining compatibility surface has known callers and a removal path.
 

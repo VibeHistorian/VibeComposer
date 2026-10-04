@@ -31,10 +31,6 @@ public class MelodyGenerator {
     public List<int[]> melodyBasedRootProgression = new ArrayList<>();
     public String alternateChords = null;
 
-    // shared - freely use anywhere
-    public static Map<Integer, List<Integer>> TARGET_NOTES = null;
-    public static boolean RANDOMIZE_TARGET_NOTES = false;
-    public static Phrase userMelody = null;
     public static double[] MELODY_SKELETON_DURATIONS_SHORT = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
             MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE, MidiGenerator.Durations.DOTTED_EIGHTH_NOTE,
             MidiGenerator.Durations.QUARTER_NOTE, MidiGenerator.Durations.DOTTED_QUARTER_NOTE, MidiGenerator.Durations.HALF_NOTE };
@@ -49,13 +45,21 @@ public class MelodyGenerator {
     private final MelodyBlockSkeletonGenerator blockSkeletonGenerator;
     private final LegacyMelodySkeletonGenerator legacySkeletonGenerator;
     private final MelodyExpansion expansion;
+    private final MelodyGenerationSettings settings;
+
     public MelodyGenerator(GUIConfig gc, MidiGenerator mg) {
+		this(gc, mg, MelodyGenerationSettings.fromConfig(gc));
+	}
+
+	public MelodyGenerator(GUIConfig gc, MidiGenerator mg, MelodyGenerationSettings settings) {
         this.gc = gc;
         this.mg = mg;
+        this.settings = settings;
         this.state = new MelodyGenerationState(chordMelodyMap1, melodyBasedChordProgression, melodyBasedRootProgression);
         this.inference = new MelodyChordInference(gc, mg, state);
         this.expansion = new MelodyExpansion(gc, mg);
-        this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg, state, inference, expansion);
+        this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg, state, inference,
+				 expansion, settings);
         this.legacySkeletonGenerator = new LegacyMelodySkeletonGenerator(gc, mg, state, inference);
     }
 
@@ -66,6 +70,7 @@ public class MelodyGenerator {
         int measures = sec.getMeasures();
 
         Vector<Note> skeletonNotes;
+        Phrase userMelody = settings.getUserMelody();
         if (userMelody != null) {
             skeletonNotes = (Vector<Note>) userMelody.copy().getNoteList();
         } else {
@@ -124,4 +129,12 @@ public class MelodyGenerator {
         melodyBasedChordProgression = state.melodyBasedChordProgression;
         melodyBasedRootProgression = state.melodyBasedRootProgression;
     }
+
+	void setUserMelody(Phrase userMelody) {
+		settings.setUserMelody(userMelody);
+	}
+
+	Phrase getUserMelody() {
+		return settings.getUserMelody();
+	}
 }

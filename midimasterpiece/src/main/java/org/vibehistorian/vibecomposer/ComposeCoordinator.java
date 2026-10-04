@@ -8,7 +8,6 @@ import org.vibehistorian.vibecomposer.controllers.ConsoleOutputController;
 import org.vibehistorian.vibecomposer.controllers.MidiCcController;
 import org.vibehistorian.vibecomposer.controllers.MidiDeviceController;
 import org.vibehistorian.vibecomposer.controllers.SoloMuteController;
-import org.vibehistorian.vibecomposer.generation.MelodyGenerator;
 import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 import org.vibehistorian.vibecomposer.gui.ArpGUI;
 import org.vibehistorian.vibecomposer.gui.ArrangementGUI;
@@ -141,10 +140,11 @@ public final class ComposeCoordinator {
             GUIConfig midiConfig = new GUIConfig();
             context.copyGuiToConfig(midiConfig, true);
 
-            MidiGenerator melodyGenerator = new MidiGenerator(midiConfig, context::assignSequenceTrack,
-                    consoleOutputController, ExtraSettingsGUI.getMidiOutputOptions());
-            midiEditorSession.setMelodyGenerator(melodyGenerator);
-            fillUserParameters(midiConfig, regenerate, manual);
+            MidiGenerator midiGenerator = new MidiGenerator(midiConfig, context::assignSequenceTrack,
+                    consoleOutputController, ExtraSettingsGUI.getMidiOutputOptions(),
+                    melodyGUI.getGenerationSettings());
+            midiEditorSession.setMidiGenerator(midiGenerator);
+            fillUserParameters(midiConfig, midiGenerator, regenerate, manual);
 
             File makeDir = new File(Constants.MIDIS_FOLDER);
             makeDir.mkdir();
@@ -169,7 +169,7 @@ public final class ComposeCoordinator {
             if (logPerformance) {
                 LG.i("After setup: " + (System.currentTimeMillis() - systemTime));
             }
-            melodyGenerator.generateMasterpiece(masterpieceSeed, relPath);
+            midiGenerator.generateMasterpiece(masterpieceSeed, relPath);
 
             context.setGUIConfig(midiConfig);
             soloMuteController.reapplyTracks();
@@ -232,7 +232,8 @@ public final class ComposeCoordinator {
                 + (System.currentTimeMillis() - systemTime) + " ms ==========================");
     }
 
-    private void fillUserParameters(GUIConfig config, boolean regenerate, boolean manual) {
+    private void fillUserParameters(GUIConfig config, MidiGenerator midiGenerator,
+                                    boolean regenerate, boolean manual) {
         try {
             boolean validChordDurations = MidiGenerator.configureFromConfig(config,
                     ExtraSettingsGUI.stretchMidi.getInt(),
@@ -241,18 +242,22 @@ public final class ComposeCoordinator {
             if (!validChordDurations) {
                 new TemporaryInfoPopup("Invalid durations!", 3000);
             }
-            MelodyGenerator.RANDOMIZE_TARGET_NOTES = !regenerate
-                    && melodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected();
-            MelodyGenerator.TARGET_NOTES = (melodyGUI.melody1ForcePatterns.isSelected()
+            melodyGUI.getGenerationSettings().setRandomizeTargetNotes(false);
+            melodyGUI.getGenerationSettings().setTargetNotes(null);
+            midiGenerator.setUserMelody(config.getMelodyNotes() != null
+                    ? config.getMelodyNotes().makePhrase() : null);
+            melodyGUI.getGenerationSettings().setRandomizeTargetNotes(!regenerate
+                    && melodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected());
+            melodyGUI.getGenerationSettings().setTargetNotes((melodyGUI.melody1ForcePatterns.isSelected()
                     && !melodyGUI.getPanels().isEmpty()
                     && !melodyGUI.getPanels().get(0).getNoteTargetsButton().isEnabled())
                     ? melodyGUI.getPanels().stream()
                     .collect(Collectors.toMap(MelodyPanel::getPanelOrder,
                             MelodyPanel::getChordNoteChoices))
-                    : null;
+                    : null);
 
             if (!melodyGUI.useUserMelody.isSelected()) {
-                MelodyGenerator.userMelody = null;
+                midiGenerator.setUserMelody(null);
             }
         } catch (Exception e) {
             LG.i("User screwed up his inputs!");
@@ -343,8 +348,7 @@ public final class ComposeCoordinator {
     private void cleanUpUIAfterCompose(boolean regenerate) {
         chordGUI.applyGeneratedChords(MidiGenerator.chordInts,
                 melodyGUI.getUserMelody() != null, context.getGUIConfig());
-        melodyGUI.applyGeneratedTargetNotes(regenerate, MelodyGenerator.TARGET_NOTES,
-                context.getGUIConfig());
+        melodyGUI.applyGeneratedTargetNotes(regenerate, context.getGUIConfig());
         arpGUI.applyGeneratedPatterns(MidiGenerator.gc.getArpParts());
         arrangementGUI.applyGeneratedArrangement(MidiGenerator.gc.getActualArrangement(),
                 context.getGUIConfig());

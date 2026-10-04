@@ -38,10 +38,10 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.PlaybackState;
+import org.vibehistorian.vibecomposer.ScoreHistory;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -482,16 +482,16 @@ public class ShowPanelBig extends JPanel {
 	}
 
 	public void setScore() {
-		if (MidiGenerator.LAST_SCORES.isEmpty()) {
+		if (ScoreHistory.getScores().isEmpty()) {
 			return;
 		}
 		int selectableScore = OMNI.clamp(scoreBox.getVal(), 0,
-				MidiGenerator.LAST_SCORES.size() - 1);
-		if (scoreBox.getLastVal() < MidiGenerator.LAST_SCORES_LIMIT - 1
-				&& MidiGenerator.LAST_SCORES.size() > scoreBox.getLastVal() + 1) {
+				ScoreHistory.getScores().size() - 1);
+		if (scoreBox.getLastVal() < ScoreHistory.LIMIT - 1
+				&& ScoreHistory.getScores().size() > scoreBox.getLastVal() + 1) {
 			scoreBox.addItem(scoreBox.getLastVal() + 1);
 		}
-		setScore(MidiGenerator.LAST_SCORES.get(selectableScore));
+		setScore(ScoreHistory.getScores().get(selectableScore));
 	}
 
 
