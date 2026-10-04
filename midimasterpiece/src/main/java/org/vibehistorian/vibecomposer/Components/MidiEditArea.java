@@ -2,6 +2,7 @@ package org.vibehistorian.vibecomposer.Components;
 
 import jm.constants.Pitches;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.GeneratedChordState;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNote;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
@@ -14,7 +15,7 @@ import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 import org.vibehistorian.vibecomposer.Popups.TextProcessingPopup;
 import org.vibehistorian.vibecomposer.Section;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MidiTiming;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,8 +42,7 @@ public class MidiEditArea extends JComponent {
 		List<Double> getUserChordDurations();
 	}
 
-	public static final double[] TIME_GRID = new double[] { 0.125, 1 / 6.0, MidiGenerator.Durations.SIXTEENTH_NOTE, 1 / 3.0, MidiGenerator.Durations.EIGHTH_NOTE,
-			2 / 3.0, MidiGenerator.Durations.QUARTER_NOTE, 4 / 3.0, MidiGenerator.Durations.HALF_NOTE, MidiGenerator.Durations.WHOLE_NOTE };
+	private final double[] timeGrid;
 
 	public enum DM {
 		POSITION, DURATION, NOTE_START, VELOCITY, PITCH, PITCH_SHAPE, VELOCITY_SHAPE, MULTIPLE;
@@ -80,11 +80,11 @@ public class MidiEditArea extends JComponent {
 	Integer prevHighlightedDragLocation;
 	Point mousePoint;
 
-	public Double lastUsedDuration = MidiGenerator.Durations.EIGHTH_NOTE;
+	public Double lastUsedDuration;
 
 	public boolean drawNoteStrings = true;
 	public boolean splitNotesByGrid = false;
-	public int timeGridChoice = TIME_GRID.length-1;
+	public int timeGridChoice;
 	public List<Double> chordSpacingDurations;
 	public boolean forceMarginTime = false;
 
@@ -94,12 +94,19 @@ public class MidiEditArea extends JComponent {
 
 	MidiEditPopup pop = null;
 	private final Context context;
+	private final MidiTiming timing;
 	public int notesHistoryIndex = 0;
 	public List<PhraseNotes> notesHistory = new ArrayList<>();
 
 	public MidiEditArea(int minimum, int maximum, PhraseNotes vals, Context context) {
 		super();
 		this.context = context;
+		this.timing = ApplicationSessionState.getActiveMidiTiming();
+		this.timeGrid = new double[] { 0.125, 1 / 6.0, timing.sixteenthNote, 1 / 3.0,
+				timing.eighthNote, 2 / 3.0, timing.quarterNote, 4 / 3.0,
+				timing.halfNote, timing.wholeNote };
+		this.lastUsedDuration = timing.eighthNote;
+		this.timeGridChoice = timeGrid.length - 1;
 		setRange(minimum, maximum);
 		setCurrentMin(minimum);
 		setCurrentMax(maximum);
@@ -424,7 +431,7 @@ public class MidiEditArea extends JComponent {
 	}
 
 	public double getTimeGrid() {
-		return TIME_GRID[pop != null ? MidiEditPopup.snapToTimeGridChoice : timeGridChoice];
+		return timeGrid[pop != null ? MidiEditPopup.snapToTimeGridChoice : timeGridChoice];
 	}
 
 
@@ -568,9 +575,9 @@ public class MidiEditArea extends JComponent {
 					insertedPn = new PhraseNote(pop != null && pop.isSnapPitch()
 							? (MidiUtils.octavePitch(yValue) + closestNormalized)
 							: yValue);
-					insertedPn.setDuration((lastUsedDuration != null && lastUsedDuration + DBL_ERR > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0)
+					insertedPn.setDuration((lastUsedDuration != null && lastUsedDuration + DBL_ERR > timing.sixteenthNote / 2.0)
 							? lastUsedDuration
-							: MidiGenerator.Durations.EIGHTH_NOTE);
+							: timing.eighthNote);
 					insertedPn.setRv(0);
 					insertedPn.setOffset(oldPn.getOffset());
 					insertedPn.setStartTime(oldPn.getStartTime());
@@ -680,7 +687,7 @@ public class MidiEditArea extends JComponent {
 					+ noteDragMarginX;
 
 			if (noteStart <= loc.x && loc.x <= noteEnd) {
-				if (pn.getDuration() > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0) {
+				if (pn.getDuration() > timing.sixteenthNote / 2.0) {
 					if (noteStart + noteDragMarginX * 2 >= loc.x) {
 						return 0;
 					} else if (noteEnd - noteDragMarginX * 2 <= loc.x) {
@@ -705,7 +712,7 @@ public class MidiEditArea extends JComponent {
 			double positionInNote = timeDifference / pn.getDuration();
 
 			if (positionInNote >= 0 && positionInNote <= 1.0) {
-				if (pn.getDuration() > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0) {
+				if (pn.getDuration() > timing.sixteenthNote / 2.0) {
 					if (positionInNote < 0.15) {
 						return 0;
 					} else if (positionInNote > 0.85) {
@@ -835,12 +842,12 @@ public class MidiEditArea extends JComponent {
 					if (lockTimeGrid) {
 						duration = timeGridValue(duration);
 					}
-					duration = Math.max(MidiGenerator.Durations.SIXTEENTH_NOTE / 2, duration);
+					duration = Math.max(timing.sixteenthNote / 2, duration);
 					if (draggingAny(DM.MULTIPLE)) {
 						double durationChange = duration - draggedNoteCopy.getDuration();
 						for (int i = 0; i < selectedNotesCopy.size(); i++) {
 							selectedNotes.get(i).setDuration(Math.max(
-									MidiGenerator.Durations.SIXTEENTH_NOTE / 2,
+								timing.sixteenthNote / 2,
 									selectedNotesCopy.get(i).getDuration() + durationChange));
 						}
 					} else {
@@ -864,14 +871,14 @@ public class MidiEditArea extends JComponent {
 					}
 					double duration = draggedNoteCopy.getDuration() + draggedNoteCopy.getOffset()
 							- offset;
-					if (duration > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.5) {
+					if (duration > timing.sixteenthNote / 2.5) {
 						if (draggingAny(DM.MULTIPLE)) {
 							double offsetChange = offset - draggedNoteCopy.getOffset();
 							double durationChange = duration - draggedNoteCopy.getDuration();
 							for (int i = 0; i < selectedNotesCopy.size(); i++) {
 								double newDuration = selectedNotesCopy.get(i).getDuration()
 										+ durationChange;
-								if (newDuration > MidiGenerator.Durations.SIXTEENTH_NOTE / 2.5) {
+								if (newDuration > timing.sixteenthNote / 2.5) {
 									selectedNotes.get(i).setOffset(
 											selectedNotesCopy.get(i).getOffset() + offsetChange);
 									selectedNotes.get(i).setDuration(newDuration);

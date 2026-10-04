@@ -50,7 +50,7 @@ import org.vibehistorian.vibecomposer.controllers.MidiDeviceController;
 import org.vibehistorian.vibecomposer.controllers.MidiExportController;
 import org.vibehistorian.vibecomposer.controllers.SoloMuteController;
 import org.vibehistorian.vibecomposer.generation.MidiGenerator;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.generation.MidiTiming;
 import org.vibehistorian.vibecomposer.gui.*;
 
 import javax.sound.midi.InvalidMidiDataException;
@@ -657,6 +657,12 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			}
 			@Override public void repaintScore() { scoreGUI.repaintScoreDisplay(); }
 			@Override public List<Section> getArrangementSections() { return getGeneratedArrangementSections(); }
+			@Override public double getGeneratedMeasureLength() {
+				return VibeComposerGUI.this.generatedMeasureLength();
+			}
+			@Override public double getStartTimeDelay() {
+				return VibeComposerGUI.this.activeMidiTiming().startTimeDelay;
+			}
 		});
 	}
 
@@ -1540,7 +1546,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 			double currentChordDuration = (sliderBeatStartTimes.size() > bfsi)
 					? (sliderBeatStartTimes.get(bfsi) - sliderBeatStartTimes.get(bfsi - 1))
 							/ quarterNote
-					: Durations.WHOLE_NOTE;
+					: activeMidiTiming().wholeNote;
 
 			boolean soloCondition = soloMuteController.getGlobalSoloMuter().soloState != State.OFF;
 			INST instrument = INST.fromIndex(part);
@@ -1568,7 +1574,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 
 				double delayedQuarterNotes = quarterNotesInMeasure
-						- MidiGenerator.noteMultiplier * (ip.getOffset() / 1000.0);
+						- activeMidiTiming().noteMultiplier * (ip.getOffset() / 1000.0);
 
 				ip.getComboPanel().notifyPatternHighlight(delayedQuarterNotes,
 						beatChordNumInMeasure, prevChordDurations, turnOff, isIgnoreFill,
@@ -1586,7 +1592,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	public int delayed() {
-		return (int) (MidiGenerator.START_TIME_DELAY * 1000 * 60 / guiConfig.getBpm());
+		return (int) (activeMidiTiming().startTimeDelay * 1000 * 60 / guiConfig.getBpm());
 	}
 
 	public int beatFromBpm(int speedAdjustment) {
@@ -1599,7 +1605,17 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 	}
 
 	public int sliderMeasureWidth() {
-		return (int) (beatFromBpm(0) * MidiGenerator.GENERATED_MEASURE_LENGTH);
+		return (int) (beatFromBpm(0) * generatedMeasureLength());
+	}
+
+	private double generatedMeasureLength() {
+		MidiGenerator generator = midiEditorSession.getMidiGenerator();
+		return generator == null ? 0 : generator.getGeneratedMeasureLength();
+	}
+
+	private MidiTiming activeMidiTiming() {
+		MidiGenerator generator = midiEditorSession.getMidiGenerator();
+		return generator == null ? new MidiTiming(100) : generator.getTiming();
 	}
 
 	public void regenerateInPlace() {

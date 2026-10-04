@@ -137,8 +137,8 @@ final class MelodyBlockSkeletonGenerator {
         Random soloGenerator = new Random(melodyBlockGeneratorSeed + 25);
         //Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
 
-        double[] melodySkeletonDurations = { MidiGenerator.Durations.QUARTER_NOTE, MidiGenerator.Durations.HALF_NOTE,
-                MidiGenerator.Durations.DOTTED_HALF_NOTE, MidiGenerator.Durations.WHOLE_NOTE };
+        double[] melodySkeletonDurations = { mg.getTiming().quarterNote, mg.getTiming().halfNote,
+                mg.getTiming().dottedHalfNote, mg.getTiming().wholeNote };
 
         List<int[]> usedChords = null;
         if (gc.isMelodyBasicChordsOnly()) {
@@ -284,7 +284,8 @@ final class MelodyBlockSkeletonGenerator {
 
                 int originalBlockOffsetIndex = (originalBlockOffset < 0) ? (blockSeedOffsets.indexOf(originalBlockOffset * -1)) : blockSeedOffsets.indexOf(originalBlockOffset);
                 Map<Integer, List<PhraseNote>> customUserDurationsByBlock = expansion.convertCustomUserDurations(mp, melodyBlockGeneratorSeed,
-                        chordIndex, (gc.isMelodyCustomDurationsRandomWeighting() && existingPattern != null) ? originalBlockOffsetIndex : blockOffset);
+                        chordIndex, (gc.isMelodyCustomDurationsRandomWeighting() && existingPattern != null) ? originalBlockOffsetIndex : blockOffset,
+                        mg.currentSection, mg.progressionDurations);
                 int numBlocks = !customUserDurationsByBlock.isEmpty() ? customUserDurationsByBlock.size() : durations.size();
                 if (existingPattern != null
                         && gc.getMelodyPatternEffect() > 0) {
@@ -457,9 +458,9 @@ final class MelodyBlockSkeletonGenerator {
                         }
                         Note n = new Note(pitch, swingDuration);
                         n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
-                                * MidiGenerator.GLOBAL_DURATION_MULTIPLIER);
+                                * mg.getGlobalDurationMultiplier());
                         if (embellish
-                                && (n.getRhythmValue() > MidiGenerator.Durations.DOTTED_EIGHTH_NOTE - DBL_ERR)) {
+                                && (n.getRhythmValue() > mg.getTiming().dottedEighthNote - DBL_ERR)) {
                             List<Note> embNotes = expansion.addEmbellishedNotes(n, embellishmentGenerator);
                             noteList.addAll(embNotes);
                             if (fillChordMelodyMap && o == 0) {
@@ -479,7 +480,7 @@ final class MelodyBlockSkeletonGenerator {
 
         if (fillChordMelodyMap) {
             List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2, mg.progressionDurations, state.chordMelodyMap1,
-                    MidiUtils.baseFreqMap);
+                    MidiUtils.baseFreqMap, mg.getTiming());
             int start = 1;
             int end = state.chordMelodyMap1.size() - 1;
             inference.populateMelodyBasedProgression(chordStrings, start, end);
@@ -528,7 +529,7 @@ final class MelodyBlockSkeletonGenerator {
             speed = OMNI.clamp(speed, -100, 100);
             int addQuick = (speed - 50) * 2;
             int addSlow = addQuick * -1;
-            boolean shortNotes = blockDuration < MidiGenerator.Durations.QUARTER_NOTE - DBL_ERR;
+            boolean shortNotes = blockDuration < mg.getTiming().quarterNote - DBL_ERR;
             int[] melodySkeletonDurationWeights = shortNotes
                     ? MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 100 + addQuick, 300 + addQuick,
                     100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow)
@@ -537,7 +538,8 @@ final class MelodyBlockSkeletonGenerator {
 
             Rhythm blockRhythm = new Rhythm(offsettedMelodyGeneratorSeed + blockIndex,
                     blockDuration,
-                    shortNotes ? MelodyGenerator.MELODY_SKELETON_DURATIONS_SHORT : MelodyGenerator.MELODY_SKELETON_DURATIONS,
+                    shortNotes ? mg.getTiming().getShortMelodySkeletonDurations()
+                            : mg.getTiming().getMelodySkeletonDurations(),
                     melodySkeletonDurationWeights);
             //int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
@@ -607,15 +609,16 @@ final class MelodyBlockSkeletonGenerator {
             List<Integer> blockNotes = Arrays.asList(blockNotesArray);
             List<Double> blockDurations = !customUserDurationsByBlock.isEmpty() && customUserDurationsByBlock.get(blockIndex).size() == blockNotes.size()
                     ? customUserDurationsByBlock.get(blockIndex).stream().filter(e -> e.getDynamic() > 0).map(PhraseNote::getDuration).collect(Collectors.toList())
-                    : blockRhythm.makeDurations(blockNotes.size(), mp.getSpeed() < 20 ? MidiGenerator.Durations.QUARTER_NOTE : MidiGenerator.Durations.SIXTEENTH_NOTE);
+                    : blockRhythm.makeDurations(blockNotes.size(), mp.getSpeed() < 20
+                            ? mg.getTiming().quarterNote : mg.getTiming().sixteenthNote);
 
 
             if (gc.isMelodyArpySurprises() && (blockNotes.size() == 4)
                     && (mp.getSpeed() < 20 || mp.getSpeed() > 80)) {
-                double wrongNoteLow = (mp.getSpeed() < 20) ? MidiGenerator.Durations.SIXTEENTH_NOTE * 0.99
-                        : MidiGenerator.Durations.DOTTED_QUARTER_NOTE * 0.99;
-                double wrongNoteHigh = (mp.getSpeed() < 20) ? MidiGenerator.Durations.SIXTEENTH_NOTE * 1.01
-                        : MidiGenerator.Durations.WHOLE_NOTE * 1.01;
+                double wrongNoteLow = (mp.getSpeed() < 20) ? mg.getTiming().sixteenthNote * 0.99
+                        : mg.getTiming().dottedQuarterNote * 0.99;
+                double wrongNoteHigh = (mp.getSpeed() < 20) ? mg.getTiming().sixteenthNote * 1.01
+                        : mg.getTiming().wholeNote * 1.01;
                 boolean containsWrongNote = blockDurations.stream()
                         .anyMatch(e -> (e > wrongNoteLow && e < wrongNoteHigh));
                 if (containsWrongNote) {

@@ -31,15 +31,6 @@ public class MelodyGenerator {
     public List<int[]> melodyBasedRootProgression = new ArrayList<>();
     public String alternateChords = null;
 
-    public static double[] MELODY_SKELETON_DURATIONS_SHORT = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
-            MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE, MidiGenerator.Durations.DOTTED_EIGHTH_NOTE,
-            MidiGenerator.Durations.QUARTER_NOTE, MidiGenerator.Durations.DOTTED_QUARTER_NOTE, MidiGenerator.Durations.HALF_NOTE };
-
-    public static double[] MELODY_SKELETON_DURATIONS = { MidiGenerator.Durations.SIXTEENTH_NOTE,
-            MidiGenerator.Durations.EIGHTH_NOTE, MidiGenerator.Durations.DOTTED_EIGHTH_NOTE, MidiGenerator.Durations.QUARTER_NOTE,
-            MidiGenerator.Durations.DOTTED_QUARTER_NOTE, MidiGenerator.Durations.HALF_NOTE };
-
-
     private final MelodyGenerationState state;
     private final MelodyChordInference inference;
     private final MelodyBlockSkeletonGenerator blockSkeletonGenerator;
@@ -57,7 +48,7 @@ public class MelodyGenerator {
         this.settings = settings;
         this.state = new MelodyGenerationState(chordMelodyMap1, melodyBasedChordProgression, melodyBasedRootProgression);
         this.inference = new MelodyChordInference(gc, mg, state);
-        this.expansion = new MelodyExpansion(gc, mg);
+        this.expansion = new MelodyExpansion(gc, mg.getTiming(), mg.getGlobalDurationMultiplier());
         this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg, state, inference,
 				 expansion, settings);
         this.legacySkeletonGenerator = new LegacyMelodySkeletonGenerator(gc, mg, state, inference);
@@ -108,6 +99,11 @@ public class MelodyGenerator {
         }
         return fullMelodyMap;
     }
+
+    public MidiTiming getTiming() {
+        return mg.getTiming();
+    }
+
     protected Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
             List<int[]> roots, int measures, int notesSeedOffset, Section sec,
             List<Integer> variations, List<Integer> melodyBlockJumpPreference) {
@@ -121,7 +117,7 @@ public class MelodyGenerator {
             List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
             List<int[]> chords, int measures) {
         return expansion.convertMelodySkeletonToFullMelody(mp, durations, sec, skeleton,
-                notesSeedOffset, chords, measures);
+                notesSeedOffset, chords, measures, mg.modScale);
     }
 
     void processUserMelody(Phrase userMelody) {

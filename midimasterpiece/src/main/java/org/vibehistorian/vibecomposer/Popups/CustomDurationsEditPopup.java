@@ -5,6 +5,7 @@ import org.vibehistorian.vibecomposer.Components.MidiDropPane;
 import org.vibehistorian.vibecomposer.Components.MidiEditArea;
 import org.vibehistorian.vibecomposer.Components.MidiListCellRenderer;
 import org.vibehistorian.vibecomposer.Components.VeloRect;
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.Helpers.FileTransferHandler;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
@@ -14,7 +15,6 @@ import org.vibehistorian.vibecomposer.JMusicUtilsCustom;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Panels.MelodyPanel;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -48,7 +48,7 @@ public class CustomDurationsEditPopup extends CloseablePopup {
         cdMvea = new MidiEditArea(0, maxPitch, values, userChordDurationProvider::get);
         cdMvea.splitNotesByGrid = true;
         cdMvea.drawNoteStrings = false;
-        cdMvea.sectionLength = MidiGenerator.Durations.WHOLE_NOTE;
+        cdMvea.sectionLength = ApplicationSessionState.getActiveMidiTiming().wholeNote;
         cdMvea.timeGridChoice = 0;
         cdMvea.forceMarginTime = true;
         //cdMvea.setPop(null);

@@ -21,7 +21,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
 import org.vibehistorian.vibecomposer.generation.MidiGeneratorUtils;
 
 import java.io.FileOutputStream;
@@ -217,7 +216,7 @@ public class JMusicUtilsCustom implements JMC {
 				double varOffset = offsets.get(i - 1);
 				double varDur = durations.get(i - 1);
 				double dur = n.getDuration();
-				if (!isDrum && dur < Durations.SIXTEENTH_NOTE + DBL_ERR) {
+				if (!isDrum && dur < ApplicationSessionState.getActiveMidiTiming().sixteenthNote + DBL_ERR) {
 					varDur /= 5;
 				}
 

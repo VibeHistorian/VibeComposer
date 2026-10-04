@@ -31,13 +31,17 @@ import static org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 
 final class MelodyExpansion {
     private final GUIConfig gc;
-    private final MidiGenerator mg;
+    private final MidiTiming timing;
+    private final double globalDurationMultiplier;
 
-    MelodyExpansion(GUIConfig gc, MidiGenerator mg) {
+    MelodyExpansion(GUIConfig gc, MidiTiming timing, double globalDurationMultiplier) {
         this.gc = gc;
-        this.mg = mg;
+        this.timing = timing;
+        this.globalDurationMultiplier = globalDurationMultiplier;
     }
-    Map<Integer, List<PhraseNote>> convertCustomUserDurations(MelodyPart mp, int melodyBlockGeneratorSeed, int chordIndex, int blockOffsetChordIndex) {
+    Map<Integer, List<PhraseNote>> convertCustomUserDurations(MelodyPart mp,
+            int melodyBlockGeneratorSeed, int chordIndex, int blockOffsetChordIndex,
+            Section section, List<Double> progressionDurations) {
         Map<Integer, List<PhraseNote>> customUserDurationsByBlock = new LinkedHashMap<>();
         if (gc.isMelodyUseCustomDurations() && mp.getCustomDurationNotes() != null && mp.getCustomDurationNotes().size() > 1) {
             PartPhraseNotes customDurationNotesMap = createCustomDurationNotesMap(mp.getCustomDurationNotes());
@@ -53,13 +57,13 @@ final class MelodyExpansion {
             PhraseNotes userCustomDurations = customDurationNotesMap.get(indexValue);
             int pitchValue = userCustomDurations.get(0).getPitch();
 
-            double mult = MidiGenerator.getBeatDurationMult(gc, mg.currentSection);
+            double mult = MidiGenerator.getBeatDurationMult(gc, section);
             if (!MidiUtils.roughlyEqual(mult, 1.0)) {
                 userCustomDurations.stretch(mult, false);
             }
             userCustomDurations.remakeNoteStartTimes(true);
 
-            double currentChordDur = mg.progressionDurations.get(chordIndex);
+            double currentChordDur = progressionDurations.get(chordIndex);
 
 
             double startTime = userCustomDurations.getIterationOrder().get(0).getStartTime();
@@ -163,7 +167,8 @@ final class MelodyExpansion {
 
     protected Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
                                                                          List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
-                                                                         List<int[]> chords, int measures) {
+                                                                         List<int[]> chords, int measures,
+                                                                         ScaleMode modScale) {
 
         int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
@@ -237,12 +242,12 @@ final class MelodyExpansion {
             durCounter += adjDur;
 
             boolean splitLastNoteInChord = (chordLeadingGenerator.nextInt(100) < mp
-                    .getLeadChordsChance()) && (adjDur > MidiGenerator.Durations.DOTTED_SIXTEENTH_NOTE * 1.1)
+                    .getLeadChordsChance()) && (adjDur > timing.dottedSixteenthNote * 1.1)
                     && (i < skeleton.size() - 1)
                     && ((durCounter + skeleton.get(i + 1).getRhythmValue()) > currentChordDur);
 
 
-            if ((adjDur > MidiGenerator.Durations.EIGHTH_NOTE * 1.4 && splitGenerator.nextInt(100) < splitChance)
+            if ((adjDur > timing.eighthNote * 1.4 && splitGenerator.nextInt(100) < splitChance)
                     || splitLastNoteInChord) {
 
                 int pitch1 = n1.getPitch();
@@ -265,7 +270,7 @@ final class MelodyExpansion {
                             positionInChord, splitNoteGenerator);
                 }
 
-                double multiplier = (MidiGeneratorUtils.isDottedNote(adjDur)
+                double multiplier = (MidiGeneratorUtils.isDottedNote(adjDur, timing)
                         && splitGenerator.nextBoolean()) ? (1.0 / 3.0) : 0.5;
 
                 double swingDuration1 = adjDur * multiplier;
@@ -306,7 +311,8 @@ final class MelodyExpansion {
                 pitches[pitch % 12]++;
             }
         });
-        applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords, sec, mp);
+        applyNoteTargets(fullMelody, fullMelodyMap, pitches, notesSeedOffset, chords, sec, mp,
+                modScale);
 
         if (!ScaleMode.LOCRIAN.equals(gc.getScaleMode())) {
             MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
@@ -314,13 +320,13 @@ final class MelodyExpansion {
 
         if (gc.getMelodyReplaceAvoidNotes() > 0) {
             MidiGeneratorUtils.replaceNearChordNotes(fullMelodyMap, chords,
-                    mp.getPatternSeedWithPartOffset(), gc.getMelodyReplaceAvoidNotes());
+                    mp.getPatternSeedWithPartOffset(), gc.getMelodyReplaceAvoidNotes(), timing);
         }
 
         // pause by %, sort not-paused into pitches
         for (int chordIndex = 0; chordIndex < fullMelodyMap.size(); chordIndex++) {
             List<Note> notes = MelodyUtils
-                    .sortNotesByRhythmicImportance(fullMelodyMap.get(chordIndex));
+                    .sortNotesByRhythmicImportance(fullMelodyMap.get(chordIndex), timing);
             //Collections.sort(notes, Comparator.comparing(e -> e.getRhythmValue()));
             pauseGenerator.setSeed(orderSeed + 5);
             int actualPauseChance = MidiGeneratorUtils.adjustChanceParamForTransition(
@@ -416,7 +422,7 @@ final class MelodyExpansion {
             }
             Note n = e.get(0);
             int pitch = n.getPitch();
-            if (pitch >= 0 && n.getDuration() < MidiGenerator.Durations.QUARTER_NOTE * 1.1
+            if (pitch >= 0 && n.getDuration() < timing.quarterNote * 1.1
                     && e.get(1).getPitch() != pitch && e.get(2).getPitch() != pitch) {
                 n.setDuration(n.getDuration() * (1 + (mp.getAccents() / 200.0)));
             }
@@ -426,9 +432,9 @@ final class MelodyExpansion {
         for (int i = 0; i < firstNotePitches.size(); i++) {
             if (!fullMelodyMap.get(i).isEmpty()) {
                 Note n = fullMelodyMap.get(i).get(0);
-                double preferredDelay = MelodyGenerator.MELODY_SKELETON_DURATIONS[startNoteRand.nextInt(3)];
+                double preferredDelay = timing.getMelodySkeletonDurations()[startNoteRand.nextInt(3)];
                 if (n.getPitch() >= 0 && startNoteRand.nextInt(100) >= mp.getStartNoteChance()) {
-                    int sixteenths = (int) Math.floor(n.getDuration() / MidiGenerator.Durations.SIXTEENTH_NOTE);
+                    int sixteenths = (int) Math.floor(n.getDuration() / timing.sixteenthNote);
                     double usedDelay = -1;
                     switch (sixteenths) {
                         case 0:
@@ -436,14 +442,14 @@ final class MelodyExpansion {
                             n.setPitch(Pitches.REST);
                             break;
                         case 2:
-                            usedDelay = MidiGenerator.Durations.SIXTEENTH_NOTE;
+                            usedDelay = timing.sixteenthNote;
                             break;
                         case 3:
                         case 4:
-                            usedDelay = Math.min(preferredDelay, MidiGenerator.Durations.EIGHTH_NOTE);
+                            usedDelay = Math.min(preferredDelay, timing.eighthNote);
                             break;
                         default:
-                            usedDelay = Math.min(preferredDelay, MidiGenerator.Durations.DOTTED_EIGHTH_NOTE);
+                            usedDelay = Math.min(preferredDelay, timing.dottedEighthNote);
                             break;
                     }
                     if (usedDelay > 0) {
@@ -456,16 +462,16 @@ final class MelodyExpansion {
 
         if (sec.getVariation(0, mp.getAbsoluteOrder(gc.getMelodyParts())).contains(3)) {
             double currRv = 0;
-            for (int chordIndex = 0; chordIndex < fullMelodyMap.keySet().size(); chordIndex++) {
+            for (int chordIndex = 0; chordIndex < fullMelodyMap.size(); chordIndex++) {
                 List<Note> notes = fullMelodyMap.get(chordIndex);
                 for (Note n : notes) {
                     if (n.getPitch() >= 0) {
                         double noteStart = currRv + n.getOffset();
                         double noteEnd = noteStart + n.getDuration();
 
-                        double closestEndOnGrid = Math.floor(noteEnd / MidiGenerator.Durations.EIGHTH_NOTE)
-                                * MidiGenerator.Durations.EIGHTH_NOTE;
-                        if (closestEndOnGrid > (noteStart + MidiGenerator.Durations.SIXTEENTH_NOTE / 2)) {
+                        double closestEndOnGrid = Math.floor(noteEnd / timing.eighthNote)
+                                * timing.eighthNote;
+                        if (closestEndOnGrid > (noteStart + timing.sixteenthNote / 2)) {
                             n.setDuration(closestEndOnGrid - noteStart);
                         }
                     }
@@ -477,7 +483,8 @@ final class MelodyExpansion {
     }
 
     protected void applyNoteTargets(List<Note> fullMelody, Map<Integer, List<Note>> fullMelodyMap,
-                                    int[] pitches, int notesSeedOffset, List<int[]> chords, Section sec, MelodyPart mp) {
+                                    int[] pitches, int notesSeedOffset, List<int[]> chords, Section sec,
+                                    MelodyPart mp, ScaleMode modScale) {
         // --------- NOTE ADJUSTING ---------------
         int[] chordSeparators = new int[fullMelodyMap.size() + 1];
         chordSeparators[0] = 0;
@@ -488,7 +495,7 @@ final class MelodyExpansion {
         int surplusTonics = applyTonicNoteTargets(fullMelody, fullMelodyMap, pitches,
                 notesSeedOffset, chordSeparators);
         List<Note> modeNoteChanges = applyModeNoteTargets(fullMelody, fullMelodyMap, pitches,
-                surplusTonics);
+                surplusTonics, modScale);
         applyChordNoteTargets(fullMelody, fullMelodyMap, chords, modeNoteChanges, sec, mp);
 
     }
@@ -572,9 +579,10 @@ final class MelodyExpansion {
     }
 
     private List<Note> applyModeNoteTargets(List<Note> fullMelody,
-                                            Map<Integer, List<Note>> fullMelodyMap, int[] pitches, int surplusTonics) {
+                                            Map<Integer, List<Note>> fullMelodyMap, int[] pitches,
+                                            int surplusTonics, ScaleMode modScale) {
 
-        ScaleMode scale = (mg.modScale != null) ? mg.modScale : gc.getScaleMode();
+        ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
         List<Note> modeNoteChanges = new ArrayList<>();
         if (gc.getMelodyModeNoteTarget() > 0 && scale.modeTargetNote >= 0) {
             double requiredPercentage = gc.getMelodyModeNoteTarget() / 100.0;
@@ -725,21 +733,22 @@ final class MelodyExpansion {
 
     List<Note> addEmbellishedNotes(Note n, Random embellishmentGenerator) {
         // pick embellishment rhythm - if note RV is multiple of dotted 8th use length 3, otherwise length 4
-        int notesNeeded = MidiUtils.isMultiple(n.getRhythmValue(), MidiGenerator.Durations.DOTTED_EIGHTH_NOTE) ? 3
+        int notesNeeded = MidiUtils.isMultiple(n.getRhythmValue(), timing.dottedEighthNote) ? 3
                 : 4;
         Random localEmbGenerator = new Random(embellishmentGenerator.nextInt());
         if (localEmbGenerator.nextInt(100) >= MelodyGenerator.EMBELLISHMENT_CHANCE) {
             return Collections.singletonList(n);
         }
-        boolean shortNotes = n.getRhythmValue() > MidiGenerator.Durations.QUARTER_NOTE - DBL_ERR;
+        boolean shortNotes = n.getRhythmValue() > timing.quarterNote - DBL_ERR;
         int[] melodySkeletonDurationWeights = shortNotes
                 ? MelodyUtils.normalizedCumulativeWeights(100, 100, 300, 100, 300, 100, 100)
                 : MelodyUtils.normalizedCumulativeWeights(100, 300, 100, 300, 100, 100);
         Rhythm blockRhythm = new Rhythm(localEmbGenerator.nextInt(), n.getRhythmValue(),
-                shortNotes ? MelodyGenerator.MELODY_SKELETON_DURATIONS_SHORT : MelodyGenerator.MELODY_SKELETON_DURATIONS,
+                shortNotes ? timing.getShortMelodySkeletonDurations()
+                        : timing.getMelodySkeletonDurations(),
                 melodySkeletonDurationWeights);
         List<Double> blockDurations = blockRhythm.makeDurations(notesNeeded,
-                MidiGenerator.Durations.SIXTEENTH_NOTE);
+                timing.sixteenthNote);
 
         // split note according to rhythm, apply pitch change to notes
         // pick embellishment pitch pattern according to rhythm length (3 or 4)
@@ -772,7 +781,7 @@ final class MelodyExpansion {
                 newPitch -= 12;
             }
             Note embNote = new Note(newPitch, blockDurations.get(i));
-            embNote.setDuration(blockDurations.get(i) * MidiGenerator.GLOBAL_DURATION_MULTIPLIER);
+            embNote.setDuration(blockDurations.get(i) * globalDurationMultiplier);
 
             // slightly lower volume on following notes
             embNote.setDynamic(n.getDynamic() - (i * 5));

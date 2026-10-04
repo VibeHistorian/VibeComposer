@@ -3,7 +3,6 @@ package org.vibehistorian.vibecomposer;
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -95,7 +94,7 @@ public class Chord {
 		return c2;
 	}
 
-	public void makeAndStoreNotesBackwards(Random gen) {
+	public void makeAndStoreNotesBackwards(Random gen, double globalDurationMultiplier) {
 		List<Note> noteList = new ArrayList<>();
 		for (int i = notes.length - 1; i >= 0; i--) {
 			int pitch;
@@ -114,7 +113,7 @@ public class Chord {
 				LG.d("ERROR - Chord pitch: " + pitch);
 			}
 			Note n = new Note(pitch, rhythm, velocity);
-			n.setDuration(getDuration() * MidiGenerator.GLOBAL_DURATION_MULTIPLIER);
+			n.setDuration(getDuration() * globalDurationMultiplier);
 			//n.setOffset(flam * i);
 			noteList.add(n);
 		}

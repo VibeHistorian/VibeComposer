@@ -11,7 +11,7 @@ import org.vibehistorian.vibecomposer.INST;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -907,13 +907,13 @@ public class VisualPatternPanel extends JPanel {
 			currentPatternTime -= prevChordDurations.get(i);
 		}
 
-		double patternTotalDuration = Durations.WHOLE_NOTE * chordSpan;
+		double patternTotalDuration = ApplicationSessionState.getActiveMidiTiming().wholeNote * chordSpan;
 		double percentage = (currentPatternTime / patternTotalDuration);
 		/*LG.i("Quarter notes: " + currentPatternTime);
 		LG.i("Percentage raw: " + percentage);
 		LG.i("Last chord duration: " + currentChordDuration);*/
 
-		double patternCoverage = currentChordDuration / Durations.WHOLE_NOTE;
+		double patternCoverage = currentChordDuration / ApplicationSessionState.getActiveMidiTiming().wholeNote;
 		/*if (chordSpan > 1 && patternRepeat != 3 && patternCoverage > 1 + MidiGenerator.DBL_ERR) {
 			while (chordSpan % 2 == 0 && patternRepeat % 2 == 0) {
 				chordSpan /= 2;

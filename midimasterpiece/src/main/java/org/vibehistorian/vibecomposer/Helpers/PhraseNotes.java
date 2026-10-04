@@ -3,14 +3,12 @@ package org.vibehistorian.vibecomposer.Helpers;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
 import org.apache.commons.lang3.StringUtils;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,12 +44,6 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 		}
 		pn.addAll(notes.stream().map(PhraseNote::clone).collect(Collectors.toList()));
 		return pn.copy();
-	}
-
-	public static List<Note> blankNoteList() {
-		Note blankNote = new Note(0, 0);
-		blankNote.setDuration(MidiGenerator.Durations.WHOLE_NOTE);
-		return new ArrayList<>(Collections.singletonList(blankNote));
 	}
 
 	public List<Note> makeNotes() {
@@ -146,10 +138,8 @@ public class PhraseNotes extends ArrayList<PhraseNote> implements Cloneable {
 		if (getClass() != obj.getClass())
 			return false;
 		PhraseNotes other = (PhraseNotes) obj;
-		if (partOrder != other.partOrder)
-			return false;
-		return true;
-	}
+        return partOrder == other.partOrder;
+    }
 
 
 	public void stretch(double beatDurationMult, boolean remakeOrder) {

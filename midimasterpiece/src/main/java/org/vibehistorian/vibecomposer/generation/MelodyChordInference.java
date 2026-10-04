@@ -33,7 +33,7 @@ final class MelodyChordInference {
         int chordCounter = 0;
 
         double mult = MidiGenerator.getBeatDurationMult(gc, mg.currentSection);
-        double separatorValue = MidiGenerator.Durations.WHOLE_NOTE * mult;
+        double separatorValue = mg.getTiming().wholeNote * mult;
         double chordSeparator = separatorValue;
         Vector<Note> noteList = userMelody.getNoteList();
         if (!state.chordMelodyMap1.containsKey(0)) {
@@ -70,7 +70,7 @@ final class MelodyChordInference {
         }
         LG.i("Processed melody, chords: " + (chordCounter + 1));
         List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(1, mg.progressionDurations,
-                state.chordMelodyMap1, MidiUtils.freqMap);
+                state.chordMelodyMap1, MidiUtils.freqMap, mg.getTiming());
 		/*List<String> spicyChordStrings = getChordsFromMelodyPitches(1, state.chordMelodyMap1,
 				MidiUtils.freqMap);
 		for (int i = 0; i < spicyChordStrings.size(); i++) {

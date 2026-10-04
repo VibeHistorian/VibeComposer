@@ -31,6 +31,7 @@ package org.vibehistorian.vibecomposer.Components;
 import jm.music.data.Note;
 import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.ApplicationSessionState;
 import org.vibehistorian.vibecomposer.GUIConstants;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
@@ -41,7 +42,6 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.PlaybackState;
 import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,10 +70,17 @@ public class ShowAreaBig extends JComponent {
 	private ShowPanelBig sp;
 	private int thinNote = 2; // thin value
 	public static final int noteOffsetXMargin = 10;
-	private final double[] noteTrimValues = { MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0,
-			MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE };
 	private Point mousePoint = null;
 	private boolean mouseClickConsumed = false;
+
+	private double noteTrimValue(int index) {
+		org.vibehistorian.vibecomposer.generation.MidiTiming timing =
+				ApplicationSessionState.getActiveMidiTiming();
+		if (index == 0) {
+			return timing.sixteenthNote / 2.0;
+		}
+		return index == 1 ? timing.sixteenthNote : timing.eighthNote;
+	}
 
 	public static int getIndexForPartName(String partName) {
 		if (partName == null) {
@@ -181,8 +188,8 @@ public class ShowAreaBig extends JComponent {
 
 								double durationTrimmer = sp.getTrimNoteLengthBox()
 									.getSelectedIndex() > 0
-										? noteTrimValues[sp.getTrimNoteLengthBox()
-												.getSelectedIndex() - 1]
+										? noteTrimValue(sp.getTrimNoteLengthBox()
+								.getSelectedIndex() - 1)
 												: 1000;
 
 
@@ -490,8 +497,8 @@ public class ShowAreaBig extends JComponent {
 
 						double durationTrimmer = sp.getTrimNoteLengthBox()
 								.getSelectedIndex() > 0
-									? noteTrimValues[sp.getTrimNoteLengthBox()
-											.getSelectedIndex() - 1]
+								? noteTrimValue(sp.getTrimNoteLengthBox()
+							.getSelectedIndex() - 1)
 										: 1000;
 
 

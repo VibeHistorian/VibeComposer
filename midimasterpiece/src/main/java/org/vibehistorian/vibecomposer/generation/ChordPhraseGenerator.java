@@ -366,7 +366,7 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
 							cC.getDurationRatio() * (joinApplicable ? durMultiplier : 1.0))));
 					//LG.d("Dur multiplier after: " + cC.getDurationRatio());
 					cC.setFlam(flamming);
-					cC.makeAndStoreNotesBackwards(flamGenerator);
+					cC.makeAndStoreNotesBackwards(flamGenerator, timing.globalDurationMultiplier);
 					chords.add(cC);
 					durationNow += duration;
 					p = (p + 1) % pattern.size();

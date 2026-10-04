@@ -342,18 +342,12 @@ public class MidiGeneratorUtils {
 		return map;
 	}
 
-	public static boolean isDottedNote(double note) {
-		if (MidiUtils.roughlyEqual(MidiGenerator.Durations.DOTTED_QUARTER_NOTE, note))
-			return true;
-		if (MidiUtils.roughlyEqual(MidiGenerator.Durations.DOTTED_WHOLE_NOTE, note))
-			return true;
-		if (MidiUtils.roughlyEqual(MidiGenerator.Durations.DOTTED_HALF_NOTE, note))
-			return true;
-		if (MidiUtils.roughlyEqual(MidiGenerator.Durations.DOTTED_EIGHTH_NOTE, note))
-			return true;
-		if (MidiUtils.roughlyEqual(MidiGenerator.Durations.DOTTED_SIXTEENTH_NOTE, note))
-			return true;
-		return false;
+	static boolean isDottedNote(double note, MidiTiming timing) {
+		return MidiUtils.roughlyEqual(timing.dottedQuarterNote, note)
+				|| MidiUtils.roughlyEqual(timing.dottedWholeNote, note)
+				|| MidiUtils.roughlyEqual(timing.dottedHalfNote, note)
+				|| MidiUtils.roughlyEqual(timing.dottedEighthNote, note)
+				|| MidiUtils.roughlyEqual(timing.dottedSixteenthNote, note);
 	}
 
 	public static int getAllowedPitchFromRange(int min, int max, double posInChord,
@@ -548,7 +542,7 @@ public class MidiGeneratorUtils {
 	}
 
 	static void replaceNearChordNotes(Map<Integer, List<Note>> fullMelodyMap, List<int[]> chords,
-									  int randomSeed, int notesToAvoid) {
+									  int randomSeed, int notesToAvoid, MidiTiming timing) {
 		Random rand = new Random(randomSeed);
 		for (int i = 0; i < fullMelodyMap.keySet().size(); i++) {
 			Set<Integer> avoidNotes = MidiUtils.getNearNotesFromChord(chords.get(i % chords.size()),
@@ -563,7 +557,7 @@ public class MidiGeneratorUtils {
 				}
 				//LG.d("Note: " + n.getPitch() + ", RV: " + n.getRhythmValue());
 				boolean avoidAllLengths = true;
-				if (avoidAllLengths || (n.getRhythmValue() > MidiGenerator.Durations.EIGHTH_NOTE
+				if (avoidAllLengths || (n.getRhythmValue() > timing.eighthNote
 						- Constants.DBL_ERR)) {
 					if (avoidNotes.contains(oldPitch % 12)) {
 						int normalizedPitch = oldPitch % 12;

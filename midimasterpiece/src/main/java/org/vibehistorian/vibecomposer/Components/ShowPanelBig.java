@@ -74,6 +74,8 @@ public class ShowPanelBig extends JPanel {
 		boolean isDrumCustomMapping();
 		void repaintScore();
 		List<Section> getArrangementSections();
+		double getGeneratedMeasureLength();
+		double getStartTimeDelay();
 	}
 
 	private static final long serialVersionUID = 1464206032589622048L;
@@ -303,7 +305,8 @@ public class ShowPanelBig extends JPanel {
 		areaPanel.setVisible(true);
 		pan.add("Center", areaScrollPane);
 		//add a ruler
-		ruler = new ShowRulerBig(this, playbackActions::getArrangementSections);
+		ruler = new ShowRulerBig(this, playbackActions::getArrangementSections,
+				playbackActions::getGeneratedMeasureLength, playbackActions::getStartTimeDelay);
 		ruler.setVisible(true);
 		ruler.addMouseListener(ml);
 		ruler.setAlignmentX(LEFT_ALIGNMENT);

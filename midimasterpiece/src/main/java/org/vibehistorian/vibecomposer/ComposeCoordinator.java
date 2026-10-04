@@ -416,7 +416,7 @@ public final class ComposeCoordinator {
             slider.setTickStart(delayed);
             Dictionary<Integer, JLabel> table = new Hashtable<>();
 
-            double fullMeasureNoteDuration = MidiGenerator.GENERATED_MEASURE_LENGTH;
+            double fullMeasureNoteDuration = midiEditorSession.getMidiGenerator().getGeneratedMeasureLength();
             sliderMeasureStartTimes = new ArrayList<>();
             sliderBeatStartTimes = new ArrayList<>();
 

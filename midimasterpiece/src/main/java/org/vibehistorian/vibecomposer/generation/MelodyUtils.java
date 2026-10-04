@@ -9,7 +9,6 @@ import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator.Durations;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -439,7 +438,7 @@ public class MelodyUtils {
 		return new ArrayList<>(MELODY_PATTERNS.get(rand.nextInt(MELODY_PATTERNS.size())));
 	}
 
-	public static List<Note> sortNotesByRhythmicImportance(List<Note> notes) {
+	public static List<Note> sortNotesByRhythmicImportance(List<Note> notes, MidiTiming timing) {
 		List<Note> sorted = new ArrayList<>();
 		List<Note> main8th = new ArrayList<>();
 		List<Note> main16th = new ArrayList<>();
@@ -447,9 +446,9 @@ public class MelodyUtils {
 
 		double currTime = 0;
 		for (Note n : notes) {
-			if (MidiUtils.isMultiple(currTime + n.getOffset(), Durations.EIGHTH_NOTE)) {
+			if (MidiUtils.isMultiple(currTime + n.getOffset(), timing.eighthNote)) {
 				main8th.add(n);
-			} else if (MidiUtils.isMultiple(currTime + n.getOffset(), Durations.SIXTEENTH_NOTE)) {
+			} else if (MidiUtils.isMultiple(currTime + n.getOffset(), timing.sixteenthNote)) {
 				main16th.add(n);
 			} else {
 				others.add(n);
@@ -468,7 +467,7 @@ public class MelodyUtils {
 	}
 
 	public static List<String> getChordsFromMelodyPitches(int orderOfMatch, List<Double> durations,
-			Map<Integer, List<Note>> melodyMap, Map<String, Set<Integer>> freqMap) {
+			Map<Integer, List<Note>> melodyMap, Map<String, Set<Integer>> freqMap, MidiTiming timing) {
 		List<String> chordStrings = new ArrayList<>();
 		String prevChordString = null;
 
@@ -484,8 +483,8 @@ public class MelodyUtils {
 				}
 				while (durCounter < dur && totalDuration < durations.get(index)) {
 					chordFreqs.add(n.getPitch() % 12);
-					durCounter += Durations.EIGHTH_NOTE;
-					totalDuration += Durations.EIGHTH_NOTE;
+					durCounter += timing.eighthNote;
+					totalDuration += timing.eighthNote;
 				}
 			}
 
@@ -506,20 +505,22 @@ public class MelodyUtils {
 	}
 
 	public static Map<Integer, List<Integer>> patternsFromNotes(Map<Integer, List<Note>> fullMelodyMap,
-			List<Double> progressionDurations, double beatDurationMultiplier, boolean flip) {
+			List<Double> progressionDurations, double beatDurationMultiplier, boolean flip,
+			MidiTiming timing) {
 		Map<Integer, List<Integer>> patterns = new HashMap<>();
 		for (Integer chordKey : fullMelodyMap.keySet()) {
 			patterns.put(chordKey, patternFromNotes(fullMelodyMap.get(chordKey), 1,
-					progressionDurations.get(chordKey % progressionDurations.size()), beatDurationMultiplier, flip));
+					progressionDurations.get(chordKey % progressionDurations.size()), beatDurationMultiplier, flip,
+					timing));
 		}
 		return patterns;
 	}
 
 	private static List<Integer> patternFromNotes(List<Note> notes, int chordsTotal, Double measureTotal,
-			double beatDurationMultiplier, boolean flip) {
+			double beatDurationMultiplier, boolean flip, MidiTiming timing) {
 		int hits = (int) Math.round(
-				chordsTotal * MidiGenerator.MELODY_PATTERN_RESOLUTION * measureTotal / Durations.WHOLE_NOTE);
-		measureTotal = (measureTotal == null) ? (chordsTotal * beatDurationMultiplier * Durations.WHOLE_NOTE)
+				chordsTotal * MidiTiming.MELODY_PATTERN_RESOLUTION * measureTotal / timing.wholeNote);
+		measureTotal = (measureTotal == null) ? (chordsTotal * beatDurationMultiplier * timing.wholeNote)
 				: measureTotal;
 		double timeForHit = measureTotal / hits;
 		List<Integer> pattern = new ArrayList<>();
@@ -569,20 +570,20 @@ public class MelodyUtils {
 		return pattern;
 	}
 
-	public static List<Double> makeSurpriseTrioArpedDurations(List<Double> durations) {
+	public static List<Double> makeSurpriseTrioArpedDurations(List<Double> durations, MidiTiming timing) {
 		List<Double> arpedDurations = new ArrayList<>(durations);
 		for (int trioIndex = 0; trioIndex < arpedDurations.size() - 2; trioIndex++) {
 			double sumThirds = arpedDurations.subList(trioIndex, trioIndex + 3).stream()
 					.mapToDouble(e -> e).sum();
 			boolean valid = false;
-			if (MidiGeneratorUtils.isDottedNote(sumThirds)) {
+			if (MidiGeneratorUtils.isDottedNote(sumThirds, timing)) {
 				sumThirds /= 3.0;
 				for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
 					arpedDurations.set(trio, sumThirds);
 				}
 				valid = true;
-			} else if (MidiUtils.isMultiple(sumThirds, Durations.HALF_NOTE)) {
-				if (sumThirds > Durations.DOTTED_HALF_NOTE) {
+			} else if (MidiUtils.isMultiple(sumThirds, timing.halfNote)) {
+				if (sumThirds > timing.dottedHalfNote) {
 					sumThirds /= 4.0;
 					for (int trio = trioIndex; trio < trioIndex + 3; trio++) {
 						arpedDurations.set(trio, sumThirds);

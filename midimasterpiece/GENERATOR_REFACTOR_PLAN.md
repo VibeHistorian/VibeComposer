@@ -141,6 +141,12 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Progress 2026-10-04:** Phase 7 review confirms that the remaining `MidiGenerator` generation entry points still have active callers, so their delegation methods remain useful. The unresolved shared duration values have about 150 references across generation, editing, score display, and GUI code; ownership migration needs a dedicated pass that preserves the current active-project timing behavior.
 
+**Progress 2026-10-04:** the global duration multiplier, drum-track collapse option, generated measure length, beat lengths, start delay, and generated melody duration choices now belong to each `MidiGenerator` run. `MidiTiming` is immutable; GUI editing views use the active editor's timing snapshot through `ApplicationSessionState`. Phrase generators read run-owned timing and duration settings. `SPLIT_DURATION_MULTIPLIER` is an immutable implementation constant. No callers remain for the removed mutable duration fields or melody-duration arrays. The Phase 7 ownership map is documented in `GENERATOR_REFACTOR_MAP.md`.
+
+**Progress 2026-10-04:** the first compile of this migration exposed local-name shadowing between run timing and instrument phrase timing, plus a static offset helper that still depended on run state. The phrase timing locals are now named explicitly and the offset helper is an instance method. `mvn compile` and `GeneratorRegressionTest` pass; the MIDI fixture remains byte-for-byte unchanged.
+
+**Progress 2026-10-04:** `MelodyExpansion` no longer keeps a back-reference to `MidiGenerator`. It receives timing and duration settings at construction, and section, progression, and scale inputs at the expansion call. `MelodyGenerator` remains the bridge for these values; skeleton generation and chord inference still use run state on `MidiGenerator` and need a separate boundary review. Compilation and `GeneratorRegressionTest` pass after this extraction, with the MIDI fixture unchanged.
+
 
 ---------------------------------------------------------------
 

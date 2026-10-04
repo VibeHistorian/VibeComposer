@@ -313,7 +313,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 					: durationSplit.length); i++) {
 				durations.add(!forceDefault && coversAllCustomChords
 						? ExtraSettingsGUI.stretchMidi.getInt() * Double.parseDouble(durationSplit[i]) / 100.0
-						: MidiGenerator.Durations.WHOLE_NOTE);
+						: ApplicationSessionState.getActiveMidiTiming().wholeNote);
 			}
 		} catch (Exception e) {
 			new TemporaryInfoPopup("Invalid durations!", 3000);
@@ -759,7 +759,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		mg.generatePrettyUserChords(new Random().nextInt(),
 				userChords.chordCount() > 0 ? userChords.chordCount()
 						: config.getFixedDuration(),
-				4 * MidiGenerator.Durations.WHOLE_NOTE);
+				4 * mg.getTiming().wholeNote);
 		userChords.setupChords(GeneratedChordState.getChordNames());
 	}
 

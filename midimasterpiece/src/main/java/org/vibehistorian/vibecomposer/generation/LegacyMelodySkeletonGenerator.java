@@ -78,8 +78,8 @@ final class LegacyMelodySkeletonGenerator {
         //Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
         Random exceptionTypeGenerator = new Random(seed + 20 + notesSeedOffset);
 
-        double[] melodySkeletonDurations = { MidiGenerator.Durations.SIXTEENTH_NOTE, MidiGenerator.Durations.EIGHTH_NOTE,
-                MidiGenerator.Durations.QUARTER_NOTE, MidiGenerator.Durations.DOTTED_QUARTER_NOTE, MidiGenerator.Durations.HALF_NOTE };
+        double[] melodySkeletonDurations = { mg.getTiming().sixteenthNote, mg.getTiming().eighthNote,
+                mg.getTiming().quarterNote, mg.getTiming().dottedQuarterNote, mg.getTiming().halfNote };
 
         int weight3rd = mp.getSpeed() / 3;
         // 0% ->
@@ -184,13 +184,14 @@ final class LegacyMelodySkeletonGenerator {
                         melodySkeletonDurationWeights);
 
                 List<Double> durations = rhythm.regenerateDurations(sameRhythmTwice ? 1 : 2,
-                        MidiGenerator.Durations.SIXTEENTH_NOTE / 2.0);
+                        mg.getTiming().sixteenthNote / 2.0);
                 if (gc.isMelodyArpySurprises()) {
                     if (sameRhythmTwice) {
                         if ((i % 2 == 0) || (durations.size() < 3)) {
                             durations.addAll(durations);
                         } else {
-                            List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations);
+                            List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations,
+                                    mg.getTiming());
                             if (arpedDurations != null) {
                                 LG.d("Double pattern - surprise!");
                                 durations.addAll(arpedDurations);
@@ -200,7 +201,8 @@ final class LegacyMelodySkeletonGenerator {
                         }
                     } else if (i % 2 == 1 && durations.size() >= 4) {
 
-                        List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations);
+                        List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations,
+                                mg.getTiming());
                         if (arpedDurations != null) {
                             LG.d("Single pattern - surprise!");
                             durations = arpedDurations;
@@ -265,7 +267,7 @@ final class LegacyMelodySkeletonGenerator {
                     double swingDuration = durations.get(j);
                     Note n = new Note(pitch, swingDuration, 100);
                     n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
-                            * MidiGenerator.GLOBAL_DURATION_MULTIPLIER);
+                            * mg.getGlobalDurationMultiplier());
 
                     if (hasSingleNoteException && gc.isMelodySingleNoteExceptions()) {
                         if (tempChangedDir) {
@@ -309,7 +311,7 @@ final class LegacyMelodySkeletonGenerator {
 
         if (fillChordMelodyMap) {
             List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2, mg.progressionDurations, state.chordMelodyMap1,
-                    MidiUtils.baseFreqMap);
+                    MidiUtils.baseFreqMap, mg.getTiming());
             inference.populateMelodyBasedProgression(chordStrings, 1, state.chordMelodyMap1.keySet().size() - 1);
 
         }
@@ -326,8 +328,8 @@ final class LegacyMelodySkeletonGenerator {
         int velSpace = mp.getVelocityMax() - velMin;
 
         int direction = (isAscDirection) ? 1 : -1;
-        double dur = pickDurationWeightedRandom(generator, durationLeft, MidiGenerator.MELODY_DUR_ARRAY,
-                MidiGenerator.MELODY_DUR_CHANCE, MidiGenerator.Durations.EIGHTH_NOTE);
+        double dur = pickDurationWeightedRandom(generator, durationLeft, mg.getTiming().getMelodyDurationOptions(),
+                mg.getTiming().getMelodyDurationChances(), mg.getTiming().eighthNote);
         boolean isPause = (generator.nextInt(100) < mp.getPauseChance());
         if (previousNote == null) {
             int[] firstChord = chord;
@@ -393,8 +395,8 @@ final class LegacyMelodySkeletonGenerator {
 
         int exceptionsLeft = mp.getMaxNoteExceptions();
 
-        while (currentDuration <= maxDuration - MidiGenerator.Durations.EIGHTH_NOTE) {
-            double durationLeft = maxDuration - MidiGenerator.Durations.EIGHTH_NOTE - currentDuration;
+        while (currentDuration <= maxDuration - mg.getTiming().eighthNote) {
+            double durationLeft = maxDuration - mg.getTiming().eighthNote - currentDuration;
             boolean exceptionChangeUsed = false;
             // generate note,
             boolean actualDirection = isAscDirection;
@@ -472,7 +474,7 @@ final class LegacyMelodySkeletonGenerator {
         }
         if (chord != null && melodyGenerator != null && gc.isFirstNoteFromChord()) {
             Note n = algoGen1GenerateNote(mp, chord, true, MELODY_SCALE, null, melodyGenerator,
-                    MidiGenerator.Durations.WHOLE_NOTE);
+                    mg.getTiming().wholeNote);
             copied[0] = new Note(n.getPitch(), originals[0].getRhythmValue(),
                     originals[0].getDynamic());
         }

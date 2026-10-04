@@ -18,6 +18,9 @@ public final class MidiEditorSession {
 
 	public void setMidiGenerator(MidiGenerator midiGenerator) {
 		this.midiGenerator = midiGenerator;
+		if (midiGenerator != null) {
+			ApplicationSessionState.setActiveMidiTiming(midiGenerator.getTiming());
+		}
 	}
 
 	public MidiGenerator getMidiGenerator() {

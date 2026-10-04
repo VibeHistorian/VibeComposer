@@ -414,7 +414,7 @@ public class MidiUtils {
 			int normalized = n.getPitch() % 12;
 			pitches.add(normalized);
 			pitchCounts[normalized] += (int) (n.getDuration()
-					/ (MidiGenerator.Durations.SIXTEENTH_NOTE / 4.0));
+					/ (ApplicationSessionState.getActiveMidiTiming().sixteenthNote / 4.0));
 			if (pitchCounts[normalized] > mostFrequents) {
 				mostFrequents = pitchCounts[normalized];
 				mostFrequentPitch = normalized;
@@ -1164,7 +1164,7 @@ public class MidiUtils {
 	public static List<Chord> convertChordStringsToChords(List<String> chordStrings) {
 		List<Chord> chords = new ArrayList<>();
 		for (String s : chordStrings) {
-			Chord c = Chord.EMPTY(MidiGenerator.Durations.WHOLE_NOTE);
+			Chord c = Chord.EMPTY(ApplicationSessionState.getActiveMidiTiming().wholeNote);
 			int[] mapped = mappedChord(s);
 			if (mapped == null)
 				return null;
