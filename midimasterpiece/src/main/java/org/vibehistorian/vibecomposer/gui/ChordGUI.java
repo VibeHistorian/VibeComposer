@@ -26,18 +26,11 @@ import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.Constants;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.Enums.StrumType;
-import org.vibehistorian.vibecomposer.GUIConfig;
-import org.vibehistorian.vibecomposer.GeneratedChordState;
-import org.vibehistorian.vibecomposer.INST;
-import org.vibehistorian.vibecomposer.InstUtils;
-import org.vibehistorian.vibecomposer.LG;
-import org.vibehistorian.vibecomposer.MidiUtils;
-import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.ChordGenSettings;
 import org.vibehistorian.vibecomposer.Panels.ChordPanel;
 import org.vibehistorian.vibecomposer.Panels.ChordletPanel;
@@ -49,8 +42,6 @@ import org.vibehistorian.vibecomposer.Panels.SoloMuter;
 import org.vibehistorian.vibecomposer.Parts.ChordPart;
 import org.vibehistorian.vibecomposer.Popups.ChordTransformPopup;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
-import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.UITheme;
 import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 
@@ -60,7 +51,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -766,7 +756,6 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		context.copyGUItoConfig();
 		GUIConfig config = context.getGUIConfig();
 		MidiGenerator mg = new MidiGenerator(config);
-		mg.configureFromConfig(config);
 		mg.generatePrettyUserChords(new Random().nextInt(),
 				userChords.chordCount() > 0 ? userChords.chordCount()
 						: config.getFixedDuration(),
@@ -801,7 +790,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 			}
 
 		}
-		Collections.sort(removedPanels, Comparator.comparing(e1 -> e1.getPanelOrder()));
+		removedPanels.sort(Comparator.comparing(InstPanel::getPanelOrder));
 
 		panelCount -= remainingPanels.size();
 

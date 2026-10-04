@@ -69,6 +69,24 @@ public class MidiGenerator implements JMC {
 		}
 	}
 
+	/** Compose-time controls that are not persisted in {@link GUIConfig}. */
+	public static final class RunOptions {
+		private final int stretchPercent;
+		private final double globalDurationMultiplier;
+		private final boolean collapseDrumTracks;
+
+		public RunOptions(int stretchPercent, double globalDurationMultiplier,
+				boolean collapseDrumTracks) {
+			this.stretchPercent = stretchPercent;
+			this.globalDurationMultiplier = globalDurationMultiplier;
+			this.collapseDrumTracks = collapseDrumTracks;
+		}
+
+		public static RunOptions defaults() {
+			return new RunOptions(100, 0.95, true);
+		}
+	}
+
 	@FunctionalInterface
 	public interface SequenceTrackAssigner {
 		void assign(int instrument, int panelOrder, int trackNumber);
@@ -159,6 +177,7 @@ public class MidiGenerator implements JMC {
 	private final List<Double> userChordsDurations = new ArrayList<>();
 	private String firstChord;
 	private String lastChord;
+	private boolean validChordDurationConfiguration = true;
 
 	public List<String> getGeneratedChordNames() {
 		return java.util.Collections.unmodifiableList(generatedChordNames);
@@ -212,17 +231,11 @@ public class MidiGenerator implements JMC {
 		this(gc, NO_SEQUENCE_TRACK_ASSIGNER, ConsoleOutputController.noOp());
 	}
 
-	/** Applies config-backed generator inputs using fresh-window defaults. */
-	public boolean configureFromConfig(GUIConfig config) {
-		return configureFromConfig(config, 100, 0.95, true);
-	}
-
-	public boolean configureFromConfig(GUIConfig config, int stretchPercent,
-			double globalDurationMultiplier, boolean collapseDrumTracks) {
+	private boolean initializeFromConfig(GUIConfig config, RunOptions runOptions) {
 		Objects.requireNonNull(config, "config");
-		recalculateDurations(stretchPercent);
-		GLOBAL_DURATION_MULTIPLIER = globalDurationMultiplier;
-		COLLAPSE_DRUM_TRACKS = collapseDrumTracks;
+		recalculateDurations(runOptions.stretchPercent);
+		GLOBAL_DURATION_MULTIPLIER = runOptions.globalDurationMultiplier;
+		COLLAPSE_DRUM_TRACKS = runOptions.collapseDrumTracks;
 		START_TIME_DELAY = Durations.QUARTER_NOTE;
 		firstChord = MidiUtils.MAJOR_CHORDS.contains(config.getFirstChord())
 				? config.getFirstChord() : null;
@@ -245,7 +258,7 @@ public class MidiGenerator implements JMC {
 			try {
 				for (int i = 0; i < durationCount; i++) {
 					userChordsDurations.add(config.isCustomDurationsEnabled() && coversAllCustomChords
-							? stretchPercent * Double.parseDouble(durationValues[i]) / 100.0
+							? runOptions.stretchPercent * Double.parseDouble(durationValues[i]) / 100.0
 							: Durations.WHOLE_NOTE);
 				}
 			} catch (NumberFormatException e) {
@@ -254,6 +267,11 @@ public class MidiGenerator implements JMC {
 		}
 
 		return validDurations;
+	}
+
+	/** Returns whether the configured chord durations could be parsed for this run. */
+	public boolean hasValidChordDurationConfiguration() {
+		return validChordDurationConfiguration;
 	}
 
 	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner) {
@@ -274,6 +292,14 @@ public class MidiGenerator implements JMC {
 	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner,
 			ConsoleOutputController consoleOutputController, OutputOptions outputOptions,
 			MelodyGenerationSettings melodyGenerationSettings) {
+		this(gc, sequenceTrackAssigner, consoleOutputController, outputOptions,
+				melodyGenerationSettings, RunOptions.defaults());
+	}
+
+	public MidiGenerator(GUIConfig gc, SequenceTrackAssigner sequenceTrackAssigner,
+			ConsoleOutputController consoleOutputController, OutputOptions outputOptions,
+			MelodyGenerationSettings melodyGenerationSettings, RunOptions runOptions) {
+		Objects.requireNonNull(runOptions, "runOptions");
 		MidiGenerator.gc = gc;
 		this.sequenceTrackAssigner = Objects.requireNonNull(sequenceTrackAssigner);
 		this.consoleOutputController = Objects.requireNonNull(consoleOutputController);
@@ -296,6 +322,7 @@ public class MidiGenerator implements JMC {
                 MidiGenerator::fillVariations);
 		drumPhraseGenerator = new DrumPhraseGenerator(gc,
 				MidiGenerator::fillVariations);
+		validChordDurationConfiguration = initializeFromConfig(gc, runOptions);
 	}
 
 	private InstPhraseGenerator.Timing getInstrumentPhraseTiming() {

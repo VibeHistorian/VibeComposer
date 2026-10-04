@@ -9,6 +9,7 @@ import org.vibehistorian.vibecomposer.controllers.MidiCcController;
 import org.vibehistorian.vibecomposer.controllers.MidiDeviceController;
 import org.vibehistorian.vibecomposer.controllers.SoloMuteController;
 import org.vibehistorian.vibecomposer.generation.MidiGenerator;
+import org.vibehistorian.vibecomposer.generation.MelodyGenerationSettings;
 import org.vibehistorian.vibecomposer.gui.ArpGUI;
 import org.vibehistorian.vibecomposer.gui.ArrangementGUI;
 import org.vibehistorian.vibecomposer.gui.ChordGUI;
@@ -140,11 +141,18 @@ public final class ComposeCoordinator {
             GUIConfig midiConfig = new GUIConfig();
             context.copyGuiToConfig(midiConfig, true);
 
+            MelodyGenerationSettings melodySettings = melodyGUI.getGenerationSettings();
+            prepareMelodyGenerationSettings(midiConfig, regenerate, melodySettings);
             MidiGenerator midiGenerator = new MidiGenerator(midiConfig, context::assignSequenceTrack,
                     consoleOutputController, ExtraSettingsGUI.getMidiOutputOptions(),
-                    melodyGUI.getGenerationSettings());
+                    melodySettings, new MidiGenerator.RunOptions(
+                            ExtraSettingsGUI.stretchMidi.getInt(),
+                            ExtraSettingsGUI.globalNoteLengthMultiplier.getInt() / 1000.0,
+                            drumGUI.combineDrumTracks.isSelected()));
             midiEditorSession.setMidiGenerator(midiGenerator);
-            fillUserParameters(midiConfig, midiGenerator, regenerate, manual);
+            if (!midiGenerator.hasValidChordDurationConfiguration()) {
+                new TemporaryInfoPopup("Invalid durations!", 3000);
+            }
 
             File makeDir = new File(Constants.MIDIS_FOLDER);
             makeDir.mkdir();
@@ -234,23 +242,16 @@ public final class ComposeCoordinator {
                 + (System.currentTimeMillis() - systemTime) + " ms ==========================");
     }
 
-    private void fillUserParameters(GUIConfig config, MidiGenerator midiGenerator,
-                                    boolean regenerate, boolean manual) {
+    private void prepareMelodyGenerationSettings(GUIConfig config, boolean regenerate,
+                                                 MelodyGenerationSettings settings) {
         try {
-            boolean validChordDurations = midiGenerator.configureFromConfig(config,
-                    ExtraSettingsGUI.stretchMidi.getInt(),
-                    ExtraSettingsGUI.globalNoteLengthMultiplier.getInt() / 1000.0,
-                    drumGUI.combineDrumTracks.isSelected());
-            if (!validChordDurations) {
-                new TemporaryInfoPopup("Invalid durations!", 3000);
-            }
-            melodyGUI.getGenerationSettings().setRandomizeTargetNotes(false);
-            melodyGUI.getGenerationSettings().setTargetNotes(null);
-            midiGenerator.setUserMelody(config.getMelodyNotes() != null
+            settings.setRandomizeTargetNotes(false);
+            settings.setTargetNotes(null);
+            settings.setUserMelody(config.getMelodyNotes() != null
                     ? config.getMelodyNotes().makePhrase() : null);
-            melodyGUI.getGenerationSettings().setRandomizeTargetNotes(!regenerate
+            settings.setRandomizeTargetNotes(!regenerate
                     && melodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected());
-            melodyGUI.getGenerationSettings().setTargetNotes((melodyGUI.melody1ForcePatterns.isSelected()
+            settings.setTargetNotes((melodyGUI.melody1ForcePatterns.isSelected()
                     && !melodyGUI.getPanels().isEmpty()
                     && !melodyGUI.getPanels().get(0).getNoteTargetsButton().isEnabled())
                     ? melodyGUI.getPanels().stream()
@@ -259,7 +260,7 @@ public final class ComposeCoordinator {
                     : null);
 
             if (!melodyGUI.useUserMelody.isSelected()) {
-                midiGenerator.setUserMelody(null);
+                settings.setUserMelody(null);
             }
         } catch (Exception e) {
             LG.i("User screwed up his inputs!");

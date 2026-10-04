@@ -120,6 +120,8 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Progress 2026-10-04:** custom progression names, custom chord durations, and first/last chord choices are now instance state on `MidiGenerator`. `ComposeCoordinator`, `ChordGUI`, and melody chord inference use the active generator's inputs; `configureFromConfig` is now an instance operation. The regression test uses the same per-run setup, and both `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass with the byte-for-byte MIDI fixture unchanged. Shared config access, progression arrays, and mutable duration settings remain for later Phase 6 slices.
 
+**Progress 2026-10-04:** removed the post-construction `configureFromConfig` and `fillUserParameters` step. `MidiGenerator` now initializes config-backed values in its constructor. `RunOptions` carries stretch, global note-length multiplier, and drum-track combination because those values come from live controls outside `GUIConfig`; compose prepares its UI-owned melody settings before construction. Config initialization remains after collaborator construction to preserve the former operation order. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass with the byte-for-byte MIDI fixture unchanged.
+
 **Completion signal:** internal generation collaborators no longer depend on mutable global state for their inputs, and any remaining compatibility surface has known callers and a removal path.
 
 ### Phase 7 — Consolidate boundaries and document the result
@@ -131,7 +133,7 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Completion signal:** the two generator classes act as understandable coordinators, collaborators have focused inputs and outputs, and remaining shared state is deliberate and documented.
 
-**Progress 2026-10-04:** reviewed the Phase 6 ownership changes. Generated chord names are run-owned during generation and published through `GeneratedChordState` for application-session GUI use; custom progression inputs and bounds are run-owned by `MidiGenerator`. No callers of the removed `MidiGenerator.chordInts` field remain. Final API consolidation is still outstanding while config access, progression arrays, and mutable duration settings remain shared.
+**Progress 2026-10-04:** reviewed the Phase 6 ownership changes. Generated chord names are run-owned during generation and published through `GeneratedChordState` for application-session GUI use; custom progression inputs and bounds are run-owned by `MidiGenerator`. No callers of the removed `MidiGenerator.chordInts` field or post-construction configuration method remain. Final API consolidation is still outstanding while config access, progression arrays, and mutable duration settings remain shared.
 
 
 ---------------------------------------------------------------
