@@ -271,7 +271,7 @@ public class MidiGenerator implements JMC {
 		this.consoleOutputController = Objects.requireNonNull(consoleOutputController);
 		this.outputOptions = Objects.requireNonNull(outputOptions);
 		mgen = new MelodyGenerator(gc, this, melodyGenerationSettings);
-		melodyPhraseBuilder = new MelodyPhraseBuilder(gc, mgen,
+		melodyPhraseBuilder = new MelodyPhraseBuilder(gc, mgen, timing,
 				request -> overwriteWithCustomSectionMidi(request.section, request.phrase,
 						request.part),
 				request -> addPhraseNotesToSection(request.section, request.part, request.notes),

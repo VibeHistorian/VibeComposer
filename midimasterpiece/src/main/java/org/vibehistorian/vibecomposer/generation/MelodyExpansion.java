@@ -165,7 +165,7 @@ final class MelodyExpansion {
         return customDurationNotesMap;
     }
 
-    protected Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
+    Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
                                                                          List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
                                                                          List<int[]> chords, int measures,
                                                                          ScaleMode modScale) {

@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
+import org.vibehistorian.vibecomposer.Section;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,23 +18,28 @@ import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
 
 final class MelodyChordInference {
     private final GUIConfig gc;
-    private final MidiGenerator mg;
+    private final MidiTiming timing;
     private final MelodyGenerationState state;
+    private final RunStateUpdater runStateUpdater;
 
-    MelodyChordInference(GUIConfig gc, MidiGenerator mg, MelodyGenerationState state) {
+    MelodyChordInference(GUIConfig gc, MidiTiming timing, MelodyGenerationState state,
+            RunStateUpdater runStateUpdater) {
         this.gc = gc;
-        this.mg = mg;
+        this.timing = timing;
         this.state = state;
+        this.runStateUpdater = runStateUpdater;
     }
-    void processUserMelody(Phrase userMelody) {
-        if (!state.chordMelodyMap1.isEmpty() || !mg.getUserChords().isEmpty()) {
+    void processUserMelody(Phrase userMelody, Section currentSection, List<String> userChords,
+            List<Double> progressionDurations, List<int[]> rootProgression,
+            List<int[]> chordProgression) {
+        if (!state.chordMelodyMap1.isEmpty() || !userChords.isEmpty()) {
             return;
         }
 
         int chordCounter = 0;
 
-        double mult = MidiGenerator.getBeatDurationMult(gc, mg.currentSection);
-        double separatorValue = mg.getTiming().wholeNote * mult;
+        double mult = MidiGenerator.getBeatDurationMult(gc, currentSection);
+        double separatorValue = timing.wholeNote * mult;
         double chordSeparator = separatorValue;
         Vector<Note> noteList = userMelody.getNoteList();
         if (!state.chordMelodyMap1.containsKey(0)) {
@@ -69,8 +75,8 @@ final class MelodyChordInference {
                     .add(noteList.get(noteList.size() - 1));
         }
         LG.i("Processed melody, chords: " + (chordCounter + 1));
-        List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(1, mg.progressionDurations,
-                state.chordMelodyMap1, MidiUtils.freqMap, mg.getTiming());
+        List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(1, progressionDurations,
+                state.chordMelodyMap1, MidiUtils.freqMap, timing);
 		/*List<String> spicyChordStrings = getChordsFromMelodyPitches(1, state.chordMelodyMap1,
 				MidiUtils.freqMap);
 		for (int i = 0; i < spicyChordStrings.size(); i++) {
@@ -79,19 +85,20 @@ final class MelodyChordInference {
 			}
 		}*/
 
-        populateMelodyBasedProgression(chordStrings, 0, state.chordMelodyMap1.keySet().size());
-        mg.progressionDurations = progDurations;
-        mg.replaceGeneratedChordNames(chordStrings);
+        populateMelodyBasedProgression(chordStrings, 0, state.chordMelodyMap1.keySet().size(),
+                rootProgression, chordProgression);
+        runStateUpdater.userMelodyProgressionChanged(progDurations, chordStrings);
     }
 
-    void populateMelodyBasedProgression(List<String> chordStrings, int start, int end) {
+    void populateMelodyBasedProgression(List<String> chordStrings, int start, int end,
+            List<int[]> rootProgression, List<int[]> chordProgression) {
         List<int[]> altChordProg = new ArrayList<>();
 
         for (int i = 0; i < start; i++) {
             state.melodyBasedRootProgression
-                    .add(Arrays.copyOf(mg.rootProgression.get(i), mg.rootProgression.get(i).length));
+                    .add(Arrays.copyOf(rootProgression.get(i), rootProgression.get(i).length));
             altChordProg
-                    .add(Arrays.copyOf(mg.chordProgression.get(i), mg.chordProgression.get(i).length));
+                    .add(Arrays.copyOf(chordProgression.get(i), chordProgression.get(i).length));
         }
         for (int i = start; i < end; i++) {
             int[] mappedChord = MidiUtils.mappedChord(chordStrings.get(i));
@@ -100,9 +107,9 @@ final class MelodyChordInference {
         }
         for (int i = end; i < chordStrings.size(); i++) {
             state.melodyBasedRootProgression
-                    .add(Arrays.copyOf(mg.rootProgression.get(i), mg.rootProgression.get(i).length));
+                    .add(Arrays.copyOf(rootProgression.get(i), rootProgression.get(i).length));
             altChordProg
-                    .add(Arrays.copyOf(mg.chordProgression.get(i), mg.chordProgression.get(i).length));
+                    .add(Arrays.copyOf(chordProgression.get(i), chordProgression.get(i).length));
         }
 
         state.melodyBasedChordProgression = squishChordProgression(altChordProg,
@@ -110,9 +117,14 @@ final class MelodyChordInference {
                 gc.getChordGenSettings().getFlattenVoicingChance(), new ArrayList<>(), null);
 
 
-        mg.chordProgression = state.melodyBasedChordProgression;
-        mg.rootProgression = state.melodyBasedRootProgression;
+        runStateUpdater.progressionChanged(state.melodyBasedChordProgression,
+                state.melodyBasedRootProgression);
         LG.i(StringUtils.join(chordStrings, ","));
     }
 
+    interface RunStateUpdater {
+        void progressionChanged(List<int[]> chordProgression, List<int[]> rootProgression);
+
+        void userMelodyProgressionChanged(List<Double> progressionDurations, List<String> chordNames);
+    }
 }

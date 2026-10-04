@@ -124,6 +124,8 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Completion signal:** internal generation collaborators no longer depend on mutable global state for their inputs, and any remaining compatibility surface has known callers and a removal path.
 
+**Implemented 2026-10-04:** Phase 6 ownership migration is complete. Run-specific config, progression, chord, melody, and timing values are owned by the active `MidiGenerator` run or a melody-specific state object; application-session views remain in their session owners. Generation collaborators receive the inputs they need directly, with `MelodyChordInference` publishing updates through a narrow callback to preserve orchestration order. Remaining compatibility entry points have active callers.
+
 ### Phase 7 — Consolidate boundaries and document the result
 
 - Review collaborator APIs for leaked implementation details, duplicated state, or dependencies that point back to `MidiGenerator` or `MelodyGenerator` unnecessarily.
@@ -148,6 +150,16 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 **Progress 2026-10-04:** `MelodyExpansion` no longer keeps a back-reference to `MidiGenerator`. It receives timing and duration settings at construction, and section, progression, and scale inputs at the expansion call. `MelodyGenerator` remains the bridge for these values; skeleton generation and chord inference still use run state on `MidiGenerator` and need a separate boundary review. Compilation and `GeneratorRegressionTest` pass after this extraction, with the MIDI fixture unchanged.
 
 **Progress 2026-10-04:** removed `InstPhraseGenerator.Timing`, which copied beat lengths already held by `MidiTiming`. Instrument phrase generators now receive the run's `MidiTiming` and global duration multiplier directly. Filler-note minimum and floating-point tolerance remain constants. `mvn compile` and `GeneratorRegressionTest` pass with the MIDI fixture unchanged.
+
+**Progress 2026-10-04:** the initial Phase 7 boundary review found that neither melody skeleton generator retained the run coordinator, while `MelodyChordInference` still did. A return-value experiment delayed progression updates and broke the regression fixture. The callback extraction recorded below removed that dependency while preserving the update points.
+
+**Progress 2026-10-04:** the block and legacy melody skeleton generators no longer retain `MidiGenerator`. They receive `MidiTiming` and the global duration multiplier when constructed, and receive progression durations, generated chord names, and the modified scale for each generation call. `MelodyPhraseBuilder` also receives `MidiTiming` directly, so `MelodyGenerator.getTiming()` is removed. At this point, chord inference still held a direct run reference; the following callback extraction removed it while preserving update timing.
+
+**Progress 2026-10-04:** `MelodyChordInference` now receives timing, section, user-chord, duration, and progression inputs explicitly. A narrow `RunStateUpdater` callback publishes inferred progressions and user-melody outputs at the same points as before, removing its direct `MidiGenerator` dependency without moving side effects. `MelodyGenerator` remains the run-state bridge. Compilation and `GeneratorRegressionTest` pass with the MIDI fixture unchanged. The compatibility review confirmed the remaining generation entry points have active callers.
+
+**Progress 2026-10-04:** removed the unused `MelodyGenerator` forwarding methods between skeleton generation and expansion, and narrowed the collaborator methods to package scope. The remaining public `MidiGenerator` generation methods have active GUI, compose, or offline callers, so they stay as the compatibility facade.
+
+**Implemented 2026-10-04:** Phase 7 boundary review and API consolidation are complete. `MidiGenerator` and `MelodyGenerator` coordinate generation through focused collaborators; run-specific state is owned by the run or passed explicitly, with inference updates published at their original points through a narrow callback. The remaining compatibility entry points and package-level melody results have known active callers and are documented in `GENERATOR_REFACTOR_MAP.md`.
 
 
 ---------------------------------------------------------------

@@ -29,31 +29,39 @@ import static org.vibehistorian.vibecomposer.MidiUtils.getBasicChordsFromRoots;
 
 final class MelodyBlockSkeletonGenerator {
     private final GUIConfig gc;
-    private final MidiGenerator mg;
+    private final MidiTiming timing;
+    private final double globalDurationMultiplier;
     private final MelodyGenerationState state;
     private final MelodyChordInference inference;
     private final MelodyExpansion expansion;
     private final MelodyGenerationSettings settings;
 
-    MelodyBlockSkeletonGenerator(GUIConfig gc, MidiGenerator mg, MelodyGenerationState state,
+    MelodyBlockSkeletonGenerator(GUIConfig gc, MidiTiming timing, double globalDurationMultiplier,
+            MelodyGenerationState state,
             MelodyChordInference inference, MelodyExpansion expansion,
 			MelodyGenerationSettings settings) {
         this.gc = gc;
-        this.mg = mg;
+        this.timing = timing;
+        this.globalDurationMultiplier = globalDurationMultiplier;
         this.state = state;
         this.inference = inference;
         this.expansion = expansion;
 		this.settings = settings;
     }
-    protected Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
+    Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
                                                                  List<int[]> roots, int measures, int notesSeedOffset, Section sec,
-                                                                 List<Integer> variations, List<Integer> melodyBlockJumpPreference) {
+                                                                 List<Integer> variations, List<Integer> melodyBlockJumpPreference,
+                                                                 List<Double> progressionDurations,
+                                                                 List<String> generatedChordNames,
+                                                                 List<int[]> currentRootProgression,
+                                                                 List<int[]> currentChordProgression,
+                                                                 MidiUtils.ScaleMode modifiedScale) {
 
         boolean genVars = variations == null;
 
         boolean fillChordMelodyMap = false;
         if (state.chordMelodyMap1.isEmpty() && notesSeedOffset == 0
-                && (roots.size() == mg.getGeneratedChordNames().size())) {
+                && (roots.size() == generatedChordNames.size())) {
             fillChordMelodyMap = true;
         }
 
@@ -137,8 +145,8 @@ final class MelodyBlockSkeletonGenerator {
         Random soloGenerator = new Random(melodyBlockGeneratorSeed + 25);
         //Random surpriseGenerator = new Random(seed + notesSeedOffset + 15);
 
-        double[] melodySkeletonDurations = { mg.getTiming().quarterNote, mg.getTiming().halfNote,
-                mg.getTiming().dottedHalfNote, mg.getTiming().wholeNote };
+        double[] melodySkeletonDurations = { timing.quarterNote, timing.halfNote,
+                timing.dottedHalfNote, timing.wholeNote };
 
         List<int[]> usedChords = null;
         if (gc.isMelodyBasicChordsOnly()) {
@@ -155,7 +163,7 @@ final class MelodyBlockSkeletonGenerator {
         //List<int[]> stretchedChords = usedChords.stream()
         //		.map(e -> convertChordToLength(e, CHORD_STRETCH)).collect(Collectors.toList());
         //LG.d("Alt: " + alternateRhythm);
-        MidiUtils.ScaleMode scale = (mg.modScale != null) ? mg.modScale : gc.getScaleMode();
+        MidiUtils.ScaleMode scale = (modifiedScale != null) ? modifiedScale : gc.getScaleMode();
         List<Integer> emphasizeKeyNoteOrder = new ArrayList<>(MidiUtils.keyEmphasisOrder);
         if (scale != null && scale.modeTargetNote >= 0) {
             Integer ionianTargetNote = MidiUtils.MAJ_SCALE.get(scale.modeTargetNote);
@@ -235,7 +243,7 @@ final class MelodyBlockSkeletonGenerator {
                 boolean badDuration = false;
                 if (durations != null
                         && !MidiUtils.roughlyEqual(durations.stream().mapToDouble(e -> e).sum(),
-                        mg.progressionDurations.get(chordIndex))) {
+                                progressionDurations.get(chordIndex))) {
                     durations = null;
                     badDuration = true;
                 }
@@ -244,8 +252,8 @@ final class MelodyBlockSkeletonGenerator {
 
                 if (durations == null) {
                     double rhythmDuration = sameRhythmTwice
-                            ? mg.progressionDurations.get(chordIndex) / 2.0
-                            : mg.progressionDurations.get(chordIndex);
+                            ? progressionDurations.get(chordIndex) / 2.0
+                            : progressionDurations.get(chordIndex);
 
                     int speed = MidiGeneratorUtils.adjustChanceParamForTransition(mp.getSpeed(),
                             sec, chordIndex, chords.size(), 40, 0.25, false, false);
@@ -285,7 +293,7 @@ final class MelodyBlockSkeletonGenerator {
                 int originalBlockOffsetIndex = (originalBlockOffset < 0) ? (blockSeedOffsets.indexOf(originalBlockOffset * -1)) : blockSeedOffsets.indexOf(originalBlockOffset);
                 Map<Integer, List<PhraseNote>> customUserDurationsByBlock = expansion.convertCustomUserDurations(mp, melodyBlockGeneratorSeed,
                         chordIndex, (gc.isMelodyCustomDurationsRandomWeighting() && existingPattern != null) ? originalBlockOffsetIndex : blockOffset,
-                        mg.currentSection, mg.progressionDurations);
+                        sec, progressionDurations);
                 int numBlocks = !customUserDurationsByBlock.isEmpty() ? customUserDurationsByBlock.size() : durations.size();
                 if (existingPattern != null
                         && gc.getMelodyPatternEffect() > 0) {
@@ -458,9 +466,9 @@ final class MelodyBlockSkeletonGenerator {
                         }
                         Note n = new Note(pitch, swingDuration);
                         n.setDuration(swingDuration * (0.75 + durationGenerator.nextDouble() / 4)
-                                * mg.getGlobalDurationMultiplier());
+                                * globalDurationMultiplier);
                         if (embellish
-                                && (n.getRhythmValue() > mg.getTiming().dottedEighthNote - DBL_ERR)) {
+                                && (n.getRhythmValue() > timing.dottedEighthNote - DBL_ERR)) {
                             List<Note> embNotes = expansion.addEmbellishedNotes(n, embellishmentGenerator);
                             noteList.addAll(embNotes);
                             if (fillChordMelodyMap && o == 0) {
@@ -479,16 +487,17 @@ final class MelodyBlockSkeletonGenerator {
         }
 
         if (fillChordMelodyMap) {
-            List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2, mg.progressionDurations, state.chordMelodyMap1,
-                    MidiUtils.baseFreqMap, mg.getTiming());
+            List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2, progressionDurations, state.chordMelodyMap1,
+                    MidiUtils.baseFreqMap, timing);
             int start = 1;
             int end = state.chordMelodyMap1.size() - 1;
-            inference.populateMelodyBasedProgression(chordStrings, start, end);
+            inference.populateMelodyBasedProgression(chordStrings, start, end,
+                    currentRootProgression, currentChordProgression);
             for (int i = 0; i < start; i++) {
-                chordStrings.set(i, mg.getGeneratedChordNames().get(i));
+                chordStrings.set(i, generatedChordNames.get(i));
             }
             for (int i = end; i < chordStrings.size(); i++) {
-                chordStrings.set(i, mg.getGeneratedChordNames().get(i));
+                chordStrings.set(i, generatedChordNames.get(i));
             }
             state.alternateChords = StringUtils.join(chordStrings, ",");
         }
@@ -529,7 +538,7 @@ final class MelodyBlockSkeletonGenerator {
             speed = OMNI.clamp(speed, -100, 100);
             int addQuick = (speed - 50) * 2;
             int addSlow = addQuick * -1;
-            boolean shortNotes = blockDuration < mg.getTiming().quarterNote - DBL_ERR;
+            boolean shortNotes = blockDuration < timing.quarterNote - DBL_ERR;
             int[] melodySkeletonDurationWeights = shortNotes
                     ? MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 100 + addQuick, 300 + addQuick,
                     100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow)
@@ -538,8 +547,8 @@ final class MelodyBlockSkeletonGenerator {
 
             Rhythm blockRhythm = new Rhythm(offsettedMelodyGeneratorSeed + blockIndex,
                     blockDuration,
-                    shortNotes ? mg.getTiming().getShortMelodySkeletonDurations()
-                            : mg.getTiming().getMelodySkeletonDurations(),
+                    shortNotes ? timing.getShortMelodySkeletonDurations()
+                            : timing.getMelodySkeletonDurations(),
                     melodySkeletonDurationWeights);
             //int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
@@ -610,15 +619,15 @@ final class MelodyBlockSkeletonGenerator {
             List<Double> blockDurations = !customUserDurationsByBlock.isEmpty() && customUserDurationsByBlock.get(blockIndex).size() == blockNotes.size()
                     ? customUserDurationsByBlock.get(blockIndex).stream().filter(e -> e.getDynamic() > 0).map(PhraseNote::getDuration).collect(Collectors.toList())
                     : blockRhythm.makeDurations(blockNotes.size(), mp.getSpeed() < 20
-                            ? mg.getTiming().quarterNote : mg.getTiming().sixteenthNote);
+                            ? timing.quarterNote : timing.sixteenthNote);
 
 
             if (gc.isMelodyArpySurprises() && (blockNotes.size() == 4)
                     && (mp.getSpeed() < 20 || mp.getSpeed() > 80)) {
-                double wrongNoteLow = (mp.getSpeed() < 20) ? mg.getTiming().sixteenthNote * 0.99
-                        : mg.getTiming().dottedQuarterNote * 0.99;
-                double wrongNoteHigh = (mp.getSpeed() < 20) ? mg.getTiming().sixteenthNote * 1.01
-                        : mg.getTiming().wholeNote * 1.01;
+                double wrongNoteLow = (mp.getSpeed() < 20) ? timing.sixteenthNote * 0.99
+                        : timing.dottedQuarterNote * 0.99;
+                double wrongNoteHigh = (mp.getSpeed() < 20) ? timing.sixteenthNote * 1.01
+                        : timing.wholeNote * 1.01;
                 boolean containsWrongNote = blockDurations.stream()
                         .anyMatch(e -> (e > wrongNoteLow && e < wrongNoteHigh));
                 if (containsWrongNote) {

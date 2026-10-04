@@ -26,10 +26,10 @@ public class MelodyGenerator {
     private final MidiGenerator mg;
 
     // freely use via object
-    public Map<Integer, List<Note>> chordMelodyMap1 = new HashMap<>();
-    public List<int[]> melodyBasedChordProgression = new ArrayList<>();
-    public List<int[]> melodyBasedRootProgression = new ArrayList<>();
-    public String alternateChords = null;
+    Map<Integer, List<Note>> chordMelodyMap1 = new HashMap<>();
+    List<int[]> melodyBasedChordProgression = new ArrayList<>();
+    List<int[]> melodyBasedRootProgression = new ArrayList<>();
+    String alternateChords = null;
 
     private final MelodyGenerationState state;
     private final MelodyChordInference inference;
@@ -47,11 +47,28 @@ public class MelodyGenerator {
         this.mg = mg;
         this.settings = settings;
         this.state = new MelodyGenerationState(chordMelodyMap1, melodyBasedChordProgression, melodyBasedRootProgression);
-        this.inference = new MelodyChordInference(gc, mg, state);
+        this.inference = new MelodyChordInference(gc, mg.getTiming(), state,
+                new MelodyChordInference.RunStateUpdater() {
+                    @Override
+                    public void progressionChanged(List<int[]> chordProgression,
+                            List<int[]> rootProgression) {
+                        mg.chordProgression = chordProgression;
+                        mg.rootProgression = rootProgression;
+                    }
+
+                    @Override
+                    public void userMelodyProgressionChanged(List<Double> progressionDurations,
+                            List<String> chordNames) {
+                        mg.progressionDurations = progressionDurations;
+                        mg.replaceGeneratedChordNames(chordNames);
+                    }
+                });
         this.expansion = new MelodyExpansion(gc, mg.getTiming(), mg.getGlobalDurationMultiplier());
-        this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg, state, inference,
+        this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg.getTiming(),
+                mg.getGlobalDurationMultiplier(), state, inference,
 				 expansion, settings);
-        this.legacySkeletonGenerator = new LegacyMelodySkeletonGenerator(gc, mg, state, inference);
+        this.legacySkeletonGenerator = new LegacyMelodySkeletonGenerator(gc, mg.getTiming(),
+                mg.getGlobalDurationMultiplier(), state, inference);
     }
 
     public Map<Integer, List<Note>> makeFullMelodyMap(MelodyPart ip, List<int[]> actualProgression,
@@ -68,18 +85,22 @@ public class MelodyGenerator {
             if (gc.isMelodyLegacyMode()) {
                 LG.i("OLD MELODY ALGO");
                 skeletonNotes = legacySkeletonGenerator.generate(ip, actualProgression,
-                        generatedRootProgression, measures, notesSeedOffset, sec, variations);
+                        generatedRootProgression, measures, notesSeedOffset, sec, variations,
+                        mg.progressionDurations, mg.getGeneratedChordNames(),
+                        mg.rootProgression, mg.chordProgression);
             } else {
-                skeletonNotes = generateMelodyBlockSkeletonFromChords(ip, actualProgression,
-                        generatedRootProgression, measures, notesSeedOffset, sec, variations, melodyBlockJumpPreference);
+                skeletonNotes = blockSkeletonGenerator.generateMelodyBlockSkeletonFromChords(ip,
+                        actualProgression, generatedRootProgression, measures, notesSeedOffset, sec,
+                        variations, melodyBlockJumpPreference, mg.progressionDurations,
+                        mg.getGeneratedChordNames(), mg.rootProgression, mg.chordProgression, mg.modScale);
             }
         }
         alternateChords = state.alternateChords;
         melodyBasedChordProgression = state.melodyBasedChordProgression;
         melodyBasedRootProgression = state.melodyBasedRootProgression;
-        Map<Integer, List<Note>> fullMelodyMap = convertMelodySkeletonToFullMelody(ip,
+        Map<Integer, List<Note>> fullMelodyMap = expansion.convertMelodySkeletonToFullMelody(ip,
                 mg.progressionDurations, sec, skeletonNotes, notesSeedOffset, actualProgression,
-                measures);
+                measures, mg.modScale);
 
         for (int i = 0; i < generatedRootProgression.size() * measures; i++) {
             for (int j = 0; j < MidiUtils.MINOR_CHORDS.size(); j++) {
@@ -100,28 +121,9 @@ public class MelodyGenerator {
         return fullMelodyMap;
     }
 
-    public MidiTiming getTiming() {
-        return mg.getTiming();
-    }
-
-    protected Vector<Note> generateMelodyBlockSkeletonFromChords(MelodyPart mp, List<int[]> chords,
-            List<int[]> roots, int measures, int notesSeedOffset, Section sec,
-            List<Integer> variations, List<Integer> melodyBlockJumpPreference) {
-        Vector<Note> result = blockSkeletonGenerator.generateMelodyBlockSkeletonFromChords(mp, chords,
-                roots, measures, notesSeedOffset, sec, variations, melodyBlockJumpPreference);
-        alternateChords = state.alternateChords;
-        return result;
-    }
-
-    protected Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
-            List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
-            List<int[]> chords, int measures) {
-        return expansion.convertMelodySkeletonToFullMelody(mp, durations, sec, skeleton,
-                notesSeedOffset, chords, measures, mg.modScale);
-    }
-
     void processUserMelody(Phrase userMelody) {
-        inference.processUserMelody(userMelody);
+        inference.processUserMelody(userMelody, mg.currentSection, mg.getUserChords(),
+                mg.progressionDurations, mg.rootProgression, mg.chordProgression);
         melodyBasedChordProgression = state.melodyBasedChordProgression;
         melodyBasedRootProgression = state.melodyBasedRootProgression;
     }

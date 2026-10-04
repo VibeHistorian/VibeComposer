@@ -38,13 +38,14 @@ final class MelodyPhraseBuilder {
 
     private final GUIConfig config;
     private final MelodyGenerator melodyGenerator;
+    private final MidiTiming timing;
     private final Predicate<CustomMidiRequest> customMidiOverwriter;
     private final Consumer<SectionNotes> sectionNotePublisher;
     private final BiConsumer<Phrase, Integer> phraseSwinger;
     private final Consumer<PhrasePart> phraseOffsetter;
     private final Consumer<PatternResult> patternPublisher;
 
-    MelodyPhraseBuilder(GUIConfig config, MelodyGenerator melodyGenerator,
+    MelodyPhraseBuilder(GUIConfig config, MelodyGenerator melodyGenerator, MidiTiming timing,
                         Predicate<CustomMidiRequest> customMidiOverwriter,
                         Consumer<SectionNotes> sectionNotePublisher,
                         BiConsumer<Phrase, Integer> phraseSwinger,
@@ -52,6 +53,7 @@ final class MelodyPhraseBuilder {
                         Consumer<PatternResult> patternPublisher) {
         this.config = config;
         this.melodyGenerator = melodyGenerator;
+        this.timing = timing;
         this.customMidiOverwriter = customMidiOverwriter;
         this.sectionNotePublisher = sectionNotePublisher;
         this.phraseSwinger = phraseSwinger;
@@ -139,7 +141,7 @@ final class MelodyPhraseBuilder {
             List<Integer> notePattern = new ArrayList<>();
             Map<Integer, List<Integer>> notePatternMap = MelodyUtils.patternsFromNotes(fullMelodyMap,
                     progressionDurations, MidiGenerator.getBeatDurationMult(config, section),
-                    config.isMelodyPatternFlip(), melodyGenerator.getTiming());
+                    config.isMelodyPatternFlip(), timing);
             notePatternMap.keySet().forEach(key -> notePattern.addAll(notePatternMap.get(key)));
             patternResult = new PatternResult(notePattern, notePatternMap);
             patternPublisher.accept(patternResult);
