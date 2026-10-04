@@ -147,6 +147,8 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Progress 2026-10-04:** `MelodyExpansion` no longer keeps a back-reference to `MidiGenerator`. It receives timing and duration settings at construction, and section, progression, and scale inputs at the expansion call. `MelodyGenerator` remains the bridge for these values; skeleton generation and chord inference still use run state on `MidiGenerator` and need a separate boundary review. Compilation and `GeneratorRegressionTest` pass after this extraction, with the MIDI fixture unchanged.
 
+**Progress 2026-10-04:** removed `InstPhraseGenerator.Timing`, which copied beat lengths already held by `MidiTiming`. Instrument phrase generators now receive the run's `MidiTiming` and global duration multiplier directly. Filler-note minimum and floating-point tolerance remain constants. `mvn compile` and `GeneratorRegressionTest` pass with the MIDI fixture unchanged.
+
 
 ---------------------------------------------------------------
 

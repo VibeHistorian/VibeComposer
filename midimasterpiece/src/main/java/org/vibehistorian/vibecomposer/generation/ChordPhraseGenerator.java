@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.generation;
 import jm.constants.Pitches;
 import jm.music.data.Phrase;
 import org.vibehistorian.vibecomposer.Chord;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.GUIConfig;
@@ -54,7 +55,8 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
 
     ChordResult generate(ChordPart ip, List<int[]> actualProgression, List<Double> progressionDurations,
                     Map<Integer, List<Integer>> melodyNotePatternMap, Section sec,
-                    int sectionOrder, List<Integer> variations, int measures, Timing timing) {
+                    int sectionOrder, List<Integer> variations, int measures, MidiTiming timing,
+                    double globalDurationMultiplier) {
 		boolean genVars = variations == null;
 
 
@@ -292,7 +294,7 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
 
 				int p = 0;
 				int patternExtension = 0;
-				while (durationNow + timing.doubleError < progressionDurations.get(chordIndex)) {
+				while (durationNow + Constants.DBL_ERR < progressionDurations.get(chordIndex)) {
 
 					//LG.d("Duration counter: " + durationCounter);
 					Chord cC = Chord.copy(c);
@@ -317,10 +319,10 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
 						cC.setNotes(new int[] { Pitches.REST });
 					}
 
-					if (durationNow + duration > progressionDurations.get(chordIndex) - timing.doubleError) {
+					if (durationNow + duration > progressionDurations.get(chordIndex) - Constants.DBL_ERR) {
 						double fillerDuration = progressionDurations.get(chordIndex) - durationNow;
 						cC.setRhythmValue(fillerDuration);
-						if (fillerDuration < timing.fillerNoteMinDuration) {
+						if (fillerDuration < FILLER_NOTE_MIN_DURATION) {
 							cC.setNotes(new int[] { Pitches.REST });
 						}
 					} else {
@@ -334,7 +336,7 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
 						nextP = p + 1;
 						while (nextP < pattern.size()) {
 							if (durationNow + duration * durMultiplier
-									+ timing.doubleError > progressionDurations.get(chordIndex)) {
+									+ Constants.DBL_ERR > progressionDurations.get(chordIndex)) {
 								break;
 							}
 							if (Integer.signum(pattern.get(nextP)) == stretchedByNote
@@ -366,7 +368,7 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
 							cC.getDurationRatio() * (joinApplicable ? durMultiplier : 1.0))));
 					//LG.d("Dur multiplier after: " + cC.getDurationRatio());
 					cC.setFlam(flamming);
-					cC.makeAndStoreNotesBackwards(flamGenerator, timing.globalDurationMultiplier);
+					cC.makeAndStoreNotesBackwards(flamGenerator, globalDurationMultiplier);
 					chords.add(cC);
 					durationNow += duration;
 					p = (p + 1) % pattern.size();

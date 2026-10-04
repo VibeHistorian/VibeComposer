@@ -10,41 +10,12 @@ import java.util.List;
 
 /** Shared configuration and result shapes for instrument phrase renderers. */
 abstract class InstPhraseGenerator<P extends InstPart> {
+    static final double FILLER_NOTE_MIN_DURATION = 0.05;
+
     @FunctionalInterface
     interface VariationGenerator {
         List<Integer> fill(Section section, InstPart part, List<Integer> variations,
                            int instrumentGroup, List<Double> chanceMultipliers);
-    }
-
-    static final class Timing {
-        final double sixteenthNote;
-        final double eighthNote;
-        final double quarterNote;
-        final double dottedQuarterNote;
-        final double halfNote;
-        final double dottedHalfNote;
-        final double wholeNote;
-        final double noteMultiplier;
-        final double globalDurationMultiplier;
-        final double fillerNoteMinDuration;
-        final double doubleError;
-
-        Timing(double sixteenthNote, double eighthNote, double quarterNote,
-               double dottedQuarterNote, double halfNote, double dottedHalfNote,
-               double wholeNote, double noteMultiplier, double globalDurationMultiplier,
-               double fillerNoteMinDuration, double doubleError) {
-            this.sixteenthNote = sixteenthNote;
-            this.eighthNote = eighthNote;
-            this.quarterNote = quarterNote;
-            this.dottedQuarterNote = dottedQuarterNote;
-            this.halfNote = halfNote;
-            this.dottedHalfNote = dottedHalfNote;
-            this.wholeNote = wholeNote;
-            this.noteMultiplier = noteMultiplier;
-            this.globalDurationMultiplier = globalDurationMultiplier;
-            this.fillerNoteMinDuration = fillerNoteMinDuration;
-            this.doubleError = doubleError;
-        }
     }
 
     static class Result {

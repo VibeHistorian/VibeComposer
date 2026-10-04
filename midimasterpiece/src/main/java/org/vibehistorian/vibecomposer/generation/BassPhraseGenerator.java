@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.generation;
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.GUIConfig;
@@ -25,7 +26,8 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 
     Result generate(BassPart ip, List<int[]> generatedRootProgression,
 					List<Double> progressionDurations, Map<Integer, List<Integer>> melodyNotePatternMap,
-					Section sec, List<Integer> variations, int sectionOrder, Timing timing) {
+					Section sec, List<Integer> variations, int sectionOrder, MidiTiming timing,
+					double globalDurationMultiplier) {
 		boolean genVars = variations == null;
 
 		int measures = sec.getMeasures();
@@ -55,7 +57,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 		List<int[]> squishedChords = new ArrayList<>();
 		for (int i = 0; i < generatedRootProgression.size(); i++) {
 			double dist = generatedRootProgression.get(i)[0] - rootAverage;
-			if (Math.abs(dist) < 5 - timing.doubleError) {
+			if (Math.abs(dist) < 5 - Constants.DBL_ERR) {
 				squishedChords.add(generatedRootProgression.get(i));
 			} else {
 				int adjustment = dist > 0 ? -12 : 12;
@@ -142,7 +144,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 										ip.getNoteVariation(), sec, chordIndex,
 										squishedChords.size(), 40, 0.25, false, true)
 								: ip.getNoteVariation();
-						if (counter > 0 && dur < (timing.quarterNote + timing.doubleError)
+						if (counter > 0 && dur < (timing.quarterNote + Constants.DBL_ERR)
 								&& noteVariationGenerator.nextInt(100) < noteVaryChance
 								&& squishedChords.get(chordIndex).length > 1) {
 							randomNote = noteVariationGenerator
@@ -155,7 +157,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 
 						int velocity = bassDynamics.nextInt(velSpace) + minVel;
 						Note n = new Note(pitch, dur, velocity);
-						n.setDuration(dur * timing.globalDurationMultiplier);
+						n.setDuration(dur * globalDurationMultiplier);
 						phr.addNote(n);
 						counter++;
 					}
@@ -203,7 +205,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 					int nextP = -1;
 
 					int p = 0;
-					while (durationNow + timing.doubleError < progressionDurations.get(chordIndex)) {
+					while (durationNow + Constants.DBL_ERR < progressionDurations.get(chordIndex)) {
 						int velocity = velocityPattern != null
 								? velocityPattern.get(p % velocityPattern.size())
 								: (bassDynamics.nextInt(velSpace) + minVel);
@@ -218,12 +220,12 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 						}
 
 						if (durationNow + duration > progressionDurations.get(chordIndex)
-								- timing.doubleError) {
+								- Constants.DBL_ERR) {
 							double fillerDuration = progressionDurations.get(chordIndex)
 									- durationNow;
 							finalDuration = fillerDuration;
 							duration = fillerDuration;
-							if (fillerDuration < timing.fillerNoteMinDuration) {
+							if (fillerDuration < FILLER_NOTE_MIN_DURATION) {
 								pitch = Pitches.REST;
 							}
 						} else {
@@ -268,7 +270,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 											ip.getNoteVariation(), sec, chordIndex,
 											squishedChords.size(), 40, 0.25, false, true)
 									: ip.getNoteVariation();
-							if (p > 0 && finalDuration < (timing.quarterNote + timing.doubleError)
+							if (p > 0 && finalDuration < (timing.quarterNote + Constants.DBL_ERR)
 									&& noteVariationGenerator.nextInt(100) < noteVaryChance
 									&& squishedChords.get(chordIndex).length > 1) {
 								randomNote = noteVariationGenerator
@@ -279,7 +281,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 											: squishedChords.get(chordIndex)[randomNote];
 						}
 						Note n = new Note(pitch, duration, velocity);
-						n.setDuration(finalDuration * timing.globalDurationMultiplier);
+						n.setDuration(finalDuration * globalDurationMultiplier);
 						phr.addNote(n);
 
 						durationNow += duration;

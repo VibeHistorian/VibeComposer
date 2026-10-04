@@ -20,7 +20,7 @@ MidiGenerator
 ├── ChordPhraseGenerator            chord pattern generation
 ├── ArpPhraseGenerator              arpeggio pattern generation
 ├── DrumPhraseGenerator             drum pattern generation
-├── InstPhraseGenerator             shared phrase timing and variation support
+├── InstPhraseGenerator             shared phrase result and variation support
 └── MidiScoreBuilder                track assignment, combination, and score post-processing
 ```
 
@@ -32,7 +32,7 @@ MidiGenerator
 | --- | --- | --- |
 | GUI config, progression, custom chord inputs, generated chord names, melody patterns, section state, and generated measure length | `MidiGenerator` | One generator run |
 | Beat lengths, start delay, melody duration choices | `MidiTiming`, held by `MidiGenerator` | One generator run; immutable |
-| Global note duration multiplier and drum track collapse option | `MidiGenerator.RunOptions` copied to the generator | One generator run |
+| Global note duration multiplier and drum track collapse option | `MidiGenerator.RunOptions` copied to the generator; multiplier passed directly to phrase generators | One generator run |
 | User melody and target-note choices | `MelodyGenerationSettings` prepared by the melody GUI | Compose settings, passed into a run |
 | Melody algorithm intermediate outputs | `MelodyGenerationState` | One melody generator |
 | Chord names shown by GUI consumers between generation runs | `GeneratedChordState` | Application session snapshot |
@@ -51,4 +51,4 @@ The active editor timing snapshot is intentionally shared with static GUI and MI
 
 ## Verification status
 
-`mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass after the duration-state migration and `MelodyExpansion` API cleanup. The regression test confirms that generated MIDI remains byte-for-byte unchanged. Phase 7 remains open for the skeleton-generator and chord-inference dependency review.
+`mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass after the duration-state migration, `MelodyExpansion` API cleanup, and removal of the duplicate instrument timing bundle. The regression test confirms that generated MIDI remains byte-for-byte unchanged. Phase 7 remains open for the skeleton-generator and chord-inference dependency review.

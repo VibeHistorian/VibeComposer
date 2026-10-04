@@ -56,7 +56,7 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
                        List<Integer> baseMelodyPattern,
                        Map<Integer, List<Integer>> melodyPatternMap,
                        int chordCount, Section sec, List<Integer> variations, int sectionOrder,
-                       Timing timing) {
+                       MidiTiming timing, double globalDurationMultiplier) {
 		boolean genVars = variations == null;
 
 		int measures = sec.getMeasures();
@@ -306,11 +306,11 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
 					if (durationNow + usedDuration - Constants.DBL_ERR > progressionDurations
 							.get(chordIndex)) {
 						usedDuration = progressionDurations.get(chordIndex) - durationNow;
-						if (usedDuration < timing.fillerNoteMinDuration) {
+						if (usedDuration < FILLER_NOTE_MIN_DURATION) {
 							pitch = Pitches.REST;
 						}
 					}
-					double durMultiplier = timing.globalDurationMultiplier * ip.getChordSpan();
+					double durMultiplier = globalDurationMultiplier * ip.getChordSpan();
 					if (exceptionGenerator.nextInt(100) < ip.getExceptionChance() && pitch >= 0) {
 						double splitDuration = usedDuration / 2;
 						int patternNum2 = pitchPatternSpanned.get((pulse + 1) % pulseListSize);

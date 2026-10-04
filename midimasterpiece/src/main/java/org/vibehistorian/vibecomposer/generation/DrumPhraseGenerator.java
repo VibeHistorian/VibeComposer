@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.generation;
 import jm.constants.Pitches;
 import jm.music.data.Note;
 import jm.music.data.Phrase;
+import org.vibehistorian.vibecomposer.Constants;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
 import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
@@ -41,7 +42,7 @@ final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
                         Map<Integer, List<Integer>> melodyNotePatternMap,
                         boolean sectionForcedDynamics, Section sec, int measures,
                         List<Integer> variations,
-                        int sectionOrder, Timing timing) {
+                        int sectionOrder, MidiTiming timing, double globalDurationMultiplier) {
         boolean genVars = variations == null;
         Phrase phr = new PhraseExt(4, ip.getOrder(), sectionOrder);
 
@@ -118,7 +119,7 @@ final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
                 drumDuration *= halfDurMulti;
                 double durationNow = 0.0;
                 int k = 0;
-                while (durationNow + timing.doubleError < patternDurationTotal) {
+				while (durationNow + Constants.DBL_ERR < patternDurationTotal) {
                     int drum = drumPattern.get(k);
                     int velocity = drumVelocityPattern.get(k);
                     int pitch = (drum >= 0) ? drum : Pitches.REST;
@@ -127,7 +128,7 @@ final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
                         pitch = ip.getInstrument();
                     }
                     int chordNumAdd = 0;
-                    double durationNowCheck = durationNow + timing.doubleError
+					double durationNowCheck = durationNow + Constants.DBL_ERR
                             - progressionDurations.get(chordIndex);
                     while (durationNowCheck > 0.0) {
                         chordNumAdd++;
@@ -160,9 +161,9 @@ final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
                     boolean exception = exceptionGenerator.nextInt(100) < (ip.getExceptionChance()
                             + extraExceptionChance + drumFillExceptionChance);
 
-                    if (durationNow + usedDrumDuration - timing.doubleError > patternDurationTotal) {
+					if (durationNow + usedDrumDuration - Constants.DBL_ERR > patternDurationTotal) {
                         usedDrumDuration = patternDurationTotal - durationNow;
-                        if (usedDrumDuration < timing.fillerNoteMinDuration) {
+						if (usedDrumDuration < FILLER_NOTE_MIN_DURATION) {
                             pitch = Pitches.REST;
                         }
                     }
@@ -171,13 +172,13 @@ final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
                         int secondVelocity = (velocity * 8) / 10;
                         Note n1 = new Note(pitch, usedDrumDuration / 2, velocity);
                         Note n2 = new Note(pitch, usedDrumDuration / 2, secondVelocity);
-                        n1.setDuration(0.5 * n1.getRhythmValue() * timing.globalDurationMultiplier);
-                        n2.setDuration(0.5 * n2.getRhythmValue() * timing.globalDurationMultiplier);
+						n1.setDuration(0.5 * n1.getRhythmValue() * globalDurationMultiplier);
+						n2.setDuration(0.5 * n2.getRhythmValue() * globalDurationMultiplier);
                         phr.addNote(n1);
                         phr.addNote(n2);
                     } else {
                         Note n1 = new Note(pitch, usedDrumDuration, velocity);
-                        n1.setDuration(0.5 * n1.getRhythmValue() * timing.globalDurationMultiplier);
+						n1.setDuration(0.5 * n1.getRhythmValue() * globalDurationMultiplier);
                         phr.addNote(n1);
                     }
                     durationNow += usedDrumDuration;
