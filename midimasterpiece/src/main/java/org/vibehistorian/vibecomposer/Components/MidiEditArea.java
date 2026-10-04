@@ -973,13 +973,13 @@ public class MidiEditArea extends JComponent {
 	}
 
 	void setVal(int pos, int pitch) {
-		if (pitch == Pitches.REST) {
-			if (values.get(pos).getRv() < DBL_ERR) {
-				values.remove(pos);
-			}
+		if (pitch == Pitches.REST && values.get(pos).getRv() < DBL_ERR) {
+			values.remove(pos);
 		} else {
-			pitch = OMNI.clamp(pitch, rangeMin, rangeMax);
-			if (pop != null && pop.isSnapPitch()) {
+			if (pitch != Pitches.REST) {
+				pitch = OMNI.clamp(pitch, rangeMin, rangeMax);
+			}
+			if (pitch != Pitches.REST && pop != null && pop.isSnapPitch()) {
 				int closestNormalized = MidiUtils.getClosestFromList(MidiUtils.MAJ_SCALE,
 						pitch % 12);
 
