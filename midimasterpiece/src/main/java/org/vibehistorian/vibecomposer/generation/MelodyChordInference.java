@@ -32,7 +32,7 @@ final class MelodyChordInference {
 
         int chordCounter = 0;
 
-        double mult = MidiGenerator.getBeatDurationMult(mg.currentSection);
+        double mult = MidiGenerator.getBeatDurationMult(gc, mg.currentSection);
         double separatorValue = MidiGenerator.Durations.WHOLE_NOTE * mult;
         double chordSeparator = separatorValue;
         Vector<Note> noteList = userMelody.getNoteList();

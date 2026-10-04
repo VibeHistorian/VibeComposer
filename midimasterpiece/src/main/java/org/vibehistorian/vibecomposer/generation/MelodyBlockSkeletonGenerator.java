@@ -170,7 +170,7 @@ final class MelodyBlockSkeletonGenerator {
                 // either after first measure, or after first half of combined chord prog
 
                 if (genVars && (chordIndex == 0)) {
-                    variations = MidiGenerator.fillVariations(sec, mp, variations, 0);
+                    variations = MidiGenerator.fillVariations(gc, sec, mp, variations, 0);
                     // never generate MaxJump for important melodies
                     if ((variations != null) && sec.getTypeMelodyOffset() == 0) {
                         variations.removeIf(e -> e == 1);

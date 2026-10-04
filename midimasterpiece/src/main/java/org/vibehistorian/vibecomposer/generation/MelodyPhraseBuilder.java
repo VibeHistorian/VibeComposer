@@ -138,7 +138,7 @@ final class MelodyPhraseBuilder {
         if (part.getOrder() == 1) {
             List<Integer> notePattern = new ArrayList<>();
             Map<Integer, List<Integer>> notePatternMap = MelodyUtils.patternsFromNotes(fullMelodyMap,
-                    progressionDurations, MidiGenerator.getBeatDurationMult(section),
+                    progressionDurations, MidiGenerator.getBeatDurationMult(config, section),
                     config.isMelodyPatternFlip());
             notePatternMap.keySet().forEach(key -> notePattern.addAll(notePatternMap.get(key)));
             patternResult = new PatternResult(notePattern, notePatternMap);

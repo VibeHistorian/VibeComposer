@@ -5,7 +5,6 @@ import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Panels.InstPanel;
 import org.vibehistorian.vibecomposer.Popups.VisualArrayPopup;
 import org.vibehistorian.vibecomposer.SwingUtils;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 import org.vibehistorian.vibecomposer.GeneratedChordState;
 
 import javax.swing.*;
@@ -66,7 +65,7 @@ public class RandomIntegerListButton extends JButton {
 									});
 						}
 					} else if (isEnabled()) {
-						if (MidiGenerator.gc == null || !GeneratedChordState.hasChordNames()
+						if (!GeneratedChordState.hasChordNames()
 								|| textGenerator == null) {
 							return;
 						}

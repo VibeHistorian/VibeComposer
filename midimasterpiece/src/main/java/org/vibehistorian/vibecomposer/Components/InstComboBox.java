@@ -1,6 +1,7 @@
 package org.vibehistorian.vibecomposer.Components;
 
 import org.vibehistorian.vibecomposer.InstUtils;
+import org.vibehistorian.vibecomposer.GUIConfig;
 import org.vibehistorian.vibecomposer.LG;
 import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.generation.MidiGenerator;
@@ -8,6 +9,7 @@ import org.vibehistorian.vibecomposer.generation.MidiGenerator;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class InstComboBox extends ScrollComboBox<String> {
 
@@ -16,6 +18,11 @@ public class InstComboBox extends ScrollComboBox<String> {
 	public static Set<String> BANNED_INSTS = new HashSet<>();
 
 	private InstUtils.POOL instPool = InstUtils.POOL.ALL;
+	private Supplier<GUIConfig> configSupplier = () -> null;
+
+	public void setConfigSupplier(Supplier<GUIConfig> configSupplier) {
+		this.configSupplier = configSupplier == null ? () -> null : configSupplier;
+	}
 
 	public InstUtils.POOL getInstPool() {
 		return instPool;
@@ -45,7 +52,7 @@ public class InstComboBox extends ScrollComboBox<String> {
 				return null;
 			}
 			if (instPool == InstUtils.POOL.DRUM) {
-				int pitch = MidiGenerator.mapDrumPitchByCustomMapping(getInstrument(), false);
+				int pitch = MidiGenerator.mapDrumPitchByCustomMapping(getInstrument(), configSupplier.get());
 				box().putClientProperty(TOOL_TIP_TEXT_KEY,
 						(pitch + " / " + MidiUtils.pitchToString(pitch)));
 			}

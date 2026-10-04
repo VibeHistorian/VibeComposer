@@ -142,7 +142,7 @@ public class MidiGenerator implements JMC {
 
 	private static final boolean debugEnabled = true;
 	// big G
-	public static GUIConfig gc;
+	private final GUIConfig gc;
 
 	// constants
 	public static final int MELODY_PATTERN_RESOLUTION = 16;
@@ -167,11 +167,11 @@ public class MidiGenerator implements JMC {
 			Durations.QUARTER_NOTE, Durations.EIGHTH_NOTE };
 	public static final double[] MELODY_DUR_CHANCE = { 0.3, 0.6, 1.0, 1.0 };
 
-	private static Map<Integer, Integer> customDrumMappingNumbers = null;
+	private Map<Integer, Integer> customDrumMappingNumbers = null;
 
-	public List<Double> progressionDurations = new ArrayList<>();
-	public List<int[]> chordProgression = new ArrayList<>();
-	public List<int[]> rootProgression = new ArrayList<>();
+	List<Double> progressionDurations = new ArrayList<>();
+	List<int[]> chordProgression = new ArrayList<>();
+	List<int[]> rootProgression = new ArrayList<>();
 	private final List<String> generatedChordNames = new ArrayList<>();
 	private final List<String> userChords = new ArrayList<>();
 	private final List<Double> userChordsDurations = new ArrayList<>();
@@ -191,15 +191,35 @@ public class MidiGenerator implements JMC {
 		return java.util.Collections.unmodifiableList(userChordsDurations);
 	}
 
+	public List<int[]> getChordProgression() {
+		return copyProgression(chordProgression);
+	}
+
+	public List<int[]> getRootProgression() {
+		return copyProgression(rootProgression);
+	}
+
+	public void setProgressionDurations(List<Double> durations) {
+		progressionDurations = new ArrayList<>(durations);
+	}
+
+	private static List<int[]> copyProgression(List<int[]> progression) {
+		List<int[]> copy = new ArrayList<>(progression.size());
+		for (int[] chord : progression) {
+			copy.add(java.util.Arrays.copyOf(chord, chord.length));
+		}
+		return java.util.Collections.unmodifiableList(copy);
+	}
+
 	void replaceGeneratedChordNames(List<String> chordNames) {
 		generatedChordNames.clear();
 		generatedChordNames.addAll(chordNames);
 		GeneratedChordState.setChordNames(generatedChordNames);
 	}
 
-	public List<Double> progressionDurationsBackup = new ArrayList<>();
-	public List<int[]> chordProgressionBackup = new ArrayList<>();
-	public List<int[]> rootProgressionBackup = new ArrayList<>();
+	List<Double> progressionDurationsBackup = new ArrayList<>();
+	List<int[]> chordProgressionBackup = new ArrayList<>();
+	List<int[]> rootProgressionBackup = new ArrayList<>();
 
 	Section currentSection = null;
 
@@ -300,7 +320,7 @@ public class MidiGenerator implements JMC {
 			ConsoleOutputController consoleOutputController, OutputOptions outputOptions,
 			MelodyGenerationSettings melodyGenerationSettings, RunOptions runOptions) {
 		Objects.requireNonNull(runOptions, "runOptions");
-		MidiGenerator.gc = gc;
+		this.gc = Objects.requireNonNull(gc, "gc");
 		this.sequenceTrackAssigner = Objects.requireNonNull(sequenceTrackAssigner);
 		this.consoleOutputController = Objects.requireNonNull(consoleOutputController);
 		this.outputOptions = Objects.requireNonNull(outputOptions);
@@ -315,13 +335,16 @@ public class MidiGenerator implements JMC {
 					melodyNotePatternMap = result.patternMap;
 					melodyNotePattern = result.pattern;
 				});
-		arpPhraseGenerator = new ArpPhraseGenerator(gc, MidiGenerator::fillVariations);
+		InstPhraseGenerator.VariationGenerator variationGenerator = (section, part, variations,
+				instrumentGroup, chanceMultipliers) -> fillVariations(gc, section, part, variations,
+					instrumentGroup, chanceMultipliers);
+		arpPhraseGenerator = new ArpPhraseGenerator(gc, variationGenerator);
 		bassPhraseGenerator = new BassPhraseGenerator(gc,
-                MidiGenerator::fillVariations);
+                variationGenerator);
 		chordPhraseGenerator = new ChordPhraseGenerator(gc,
-                MidiGenerator::fillVariations);
+				variationGenerator);
 		drumPhraseGenerator = new DrumPhraseGenerator(gc,
-				MidiGenerator::fillVariations);
+				variationGenerator);
 		validChordDurationConfiguration = initializeFromConfig(gc, runOptions);
 	}
 
@@ -336,7 +359,7 @@ public class MidiGenerator implements JMC {
 		return part.getAbsoluteOrder(gc.getInstParts(part.getPartNum()));
 	}
 
-	public static double getBeatDurationMult(Section currSection) {
+	public static double getBeatDurationMult(GUIConfig gc, Section currSection) {
 		double mult = 1;
 		SectionConfig sc = (currSection != null) ? currSection.getSecConfig() : null;
 		int beatDurMultiIndex = (sc != null && sc.getBeatDurationMultiplierIndex() != null)
@@ -1195,7 +1218,7 @@ public class MidiGenerator implements JMC {
 		// REMINDER: melody and drums can have separate delays -> in that case, accenting is not guaranteed to sound good
 	}
 
-	private static List<Double> findDrumHitTimes(List<Phrase> drums, int melodyRhythmAccents,
+	private List<Double> findDrumHitTimes(List<Phrase> drums, int melodyRhythmAccents,
 			boolean drumCustomMapping) {
 		List<Double> drumHitTimes = new ArrayList<>();
 		Set<Integer> validPitches = new HashSet<>();
@@ -1837,13 +1860,13 @@ public class MidiGenerator implements JMC {
 		sec.putPattern(ip.getPartNum(), ip.getOrder(), pat);
 	}
 
-	public static List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,
-			int part) {
-		return fillVariations(sec, instPart, variations, part, new ArrayList<>());
+	public static List<Integer> fillVariations(GUIConfig gc, Section sec, InstPart instPart,
+			List<Integer> variations, int part) {
+		return fillVariations(gc, sec, instPart, variations, part, new ArrayList<>());
 	}
 
-	public static List<Integer> fillVariations(Section sec, InstPart instPart, List<Integer> variations,
-			int part, List<Double> chanceMultipliers) {
+	public static List<Integer> fillVariations(GUIConfig gc, Section sec, InstPart instPart,
+			List<Integer> variations, int part, List<Double> chanceMultipliers) {
 		if (variations != null) {
 			return variations;
 		}
@@ -1886,7 +1909,7 @@ public class MidiGenerator implements JMC {
 		return variations;
 	}
 
-	public static int mapDrumPitchByCustomMapping(int pitch, boolean cached) {
+	private int mapDrumPitchByCustomMapping(int pitch, boolean cached) {
 		if (cached && customDrumMappingNumbers != null) {
 			Integer mapped = customDrumMappingNumbers.get(pitch);
 			if (mapped == null) {
@@ -1895,30 +1918,32 @@ public class MidiGenerator implements JMC {
 			}
 			return mapped;
 		}
-		List<Integer> customMappingNumbers = null;
-		if (gc != null) {
-			String customMapping = gc.getDrumCustomMappingNumbers();
-			customMappingNumbers = OMNI.parseIntsString(customMapping);
-		} else {
-			customMappingNumbers = Arrays.asList(InstUtils.DRUM_INST_NUMBERS_SEMI);
+		Map<Integer, Integer> mapping = createDrumPitchMapping(gc, pitch);
+		if (cached) {
+			customDrumMappingNumbers = mapping;
 		}
+		return mapping.get(pitch);
+	}
 
+	public static int mapDrumPitchByCustomMapping(int pitch, GUIConfig config) {
+		return createDrumPitchMapping(config, pitch).get(pitch);
+	}
+
+	private static Map<Integer, Integer> createDrumPitchMapping(GUIConfig config, int pitch) {
+		List<Integer> customMappingNumbers = config == null
+				? Arrays.asList(InstUtils.DRUM_INST_NUMBERS_SEMI)
+				: OMNI.parseIntsString(config.getDrumCustomMappingNumbers());
 		List<Integer> defaultMappingNumbers = InstUtils.getInstNumbers(InstUtils.DRUM_INST_NAMES);
-		int defaultIndex = defaultMappingNumbers.indexOf(pitch);
-		if (defaultIndex < 0) {
+		if (!defaultMappingNumbers.contains(pitch)) {
 			throw new IllegalArgumentException("Pitch not found in default drum mapping: " + pitch);
 		} else if (defaultMappingNumbers.size() != customMappingNumbers.size()) {
 			throw new IllegalArgumentException("Custom mapping has incorrect number of elements!");
 		}
-		if (cached) {
-			customDrumMappingNumbers = new HashMap<>();
-			for (int i = 0; i < defaultMappingNumbers.size(); i++) {
-				customDrumMappingNumbers.put(defaultMappingNumbers.get(i),
-						customMappingNumbers.get(i));
-			}
+		Map<Integer, Integer> mapping = new HashMap<>();
+		for (int i = 0; i < defaultMappingNumbers.size(); i++) {
+			mapping.put(defaultMappingNumbers.get(i), customMappingNumbers.get(i));
 		}
-
-		return customMappingNumbers.get(defaultIndex);
+		return mapping;
 	}
 
 	public Phrase fillChordSlash(List<int[]> actualProgression, int measures) {

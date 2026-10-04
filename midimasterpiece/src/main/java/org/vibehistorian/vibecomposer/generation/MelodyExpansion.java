@@ -53,7 +53,7 @@ final class MelodyExpansion {
             PhraseNotes userCustomDurations = customDurationNotesMap.get(indexValue);
             int pitchValue = userCustomDurations.get(0).getPitch();
 
-            double mult = MidiGenerator.getBeatDurationMult(mg.currentSection);
+            double mult = MidiGenerator.getBeatDurationMult(gc, mg.currentSection);
             if (!MidiUtils.roughlyEqual(mult, 1.0)) {
                 userCustomDurations.stretch(mult, false);
             }

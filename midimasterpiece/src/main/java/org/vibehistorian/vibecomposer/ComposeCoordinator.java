@@ -352,8 +352,8 @@ public final class ComposeCoordinator {
         chordGUI.applyGeneratedChords(midiEditorSession.getMidiGenerator().getGeneratedChordNames(),
                 melodyGUI.getUserMelody() != null, context.getGUIConfig());
         melodyGUI.applyGeneratedTargetNotes(regenerate, context.getGUIConfig());
-        arpGUI.applyGeneratedPatterns(MidiGenerator.gc.getArpParts());
-        arrangementGUI.applyGeneratedArrangement(MidiGenerator.gc.getActualArrangement(),
+        arpGUI.applyGeneratedPatterns(context.getGUIConfig().getArpParts());
+        arrangementGUI.applyGeneratedArrangement(context.getGUIConfig().getActualArrangement(),
                 context.getGUIConfig());
         scoreGUI.pianoRoll();
         if (midiEditorSession.isVisible()) {

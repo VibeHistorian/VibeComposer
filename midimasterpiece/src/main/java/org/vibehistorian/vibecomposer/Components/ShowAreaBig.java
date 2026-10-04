@@ -519,7 +519,8 @@ public class ShowAreaBig extends JComponent {
 							if (pointInRect) {
 								noteDescription = Constants.instNames[phrase.part] + "#"
 										+ phrase.partOrder + "|" + MidiUtils
-												.pitchOrDrumToString(currNote, phrase.part, false);
+												.pitchOrDrumToString(currNote, phrase.part, false,
+													sp.isDrumCustomMapping());
 								mouseProcessed = true;
 								mouseHighlightedNote = true;
 							}

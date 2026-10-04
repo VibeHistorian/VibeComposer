@@ -1040,8 +1040,9 @@ public class MidiEditArea extends JComponent {
 
 			for (int i = 0; i < 1 + (currentMax - currentMin); i++) {
 				int drawnInt = currentMin + i;
-				String drawnValue = "" + (drawnInt) + (!drawNoteStrings ? "" : (" | "
-						+ MidiUtils.pitchOrDrumToString(drawnInt, partNum, true)));
+				String drawnValue = (drawnInt) + (!drawNoteStrings ? "" : (" | "
+						+ MidiUtils.pitchOrDrumToString(drawnInt, partNum, true,
+								pop != null && pop.getContext().getGUIConfig().isDrumCustomMapping())));
 				int valueLength = drawnValue.startsWith("-") ? drawnValue.length() + 1
 						: drawnValue.length();
 				int drawValueX = bottomLeft.x / 2 - (numWidth * valueLength) / 2;

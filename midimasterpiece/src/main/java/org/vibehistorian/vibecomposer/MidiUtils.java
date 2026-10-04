@@ -1396,11 +1396,12 @@ public class MidiUtils {
 		return MidiUtils.SEMITONE_LETTERS.get((pitch + 1200) % 12) + ((pitch / 12) - 1);
 	}
 
-	public static String pitchOrDrumToString(int pitch, int part, boolean forceGmNames) {
+	public static String pitchOrDrumToString(int pitch, int part, boolean forceGmNames,
+			boolean drumCustomMapping) {
 		if (part < 4) {
 			return pitchToString(pitch);
 		} else {
-			if (MidiGenerator.gc.isDrumCustomMapping() && !forceGmNames) {
+			if (drumCustomMapping && !forceGmNames) {
 				int drumIndex = OMNI.indexOf(pitch, InstUtils.DRUM_INST_NUMBERS_SEMI);
 				if (drumIndex < 0) {
 					return pitchToString(pitch);

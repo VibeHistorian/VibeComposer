@@ -381,6 +381,7 @@ public abstract class InstPanel extends JPanel {
 	public void setContext(Context context, InstrumentPanelController panelController) {
 		this.context = context;
 		this.panelController = panelController;
+		instrument.setConfigSupplier(context::getGUIConfig);
 		patternSeed.setCurrentSeedSupplier(context::getCurrentSeed);
 	}
 

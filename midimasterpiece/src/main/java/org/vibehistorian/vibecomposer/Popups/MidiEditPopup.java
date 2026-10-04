@@ -733,12 +733,14 @@ public class MidiEditPopup extends CloseablePopup {
 			mg.storeGlobalParts();
 			mg.replaceWithSectionCustomChordDurations(sec);
 
-			mg.progressionDurations = new ArrayList<>(sec.getGeneratedDurations());
+			mg.setProgressionDurations(sec.getGeneratedDurations());
 
 			sec.putPattern(part, partOrder, getSelectedPatternNone());
 
-			LG.i("Chord prog: " + mg.chordProgression.size());
-			InstPart ip = MidiGenerator.gc.getInstPartList(part).stream()
+			List<int[]> chordProgression = mg.getChordProgression();
+			List<int[]> rootProgression = mg.getRootProgression();
+			LG.i("Chord prog: " + chordProgression.size());
+			InstPart ip = context.getGUIConfig().getInstPartList(part).stream()
 					.filter(e -> e.getOrder() == partOrder).findFirst().get();
 
 			int seed = ip.getPatternSeed();
@@ -748,21 +750,21 @@ public class MidiEditPopup extends CloseablePopup {
 			List<Integer> variations = sec.getVariation(part, partOrder);
 			switch (INST.fromIndex(part)) {
 			case MELODY:
-				mg.fillMelodyFromPart((MelodyPart) ip, mg.chordProgression, mg.rootProgression,
+				mg.fillMelodyFromPart((MelodyPart) ip, chordProgression, rootProgression,
 						sec.getTypeMelodyOffset(), sec, variations, false,
 						context.getMelodyBlockChoicePreference());
 				break;
 			case BASS:
-				mg.fillBassFromPart((BassPart) ip, mg.rootProgression, sec, variations);
+				mg.fillBassFromPart((BassPart) ip, rootProgression, sec, variations);
 				break;
 			case CHORD:
-				mg.fillChordsFromPart((ChordPart) ip, mg.chordProgression, sec, variations);
+				mg.fillChordsFromPart((ChordPart) ip, chordProgression, sec, variations);
 				break;
 			case ARP:
-				mg.fillArpFromPart((ArpPart) ip, mg.chordProgression, sec, variations);
+				mg.fillArpFromPart((ArpPart) ip, chordProgression, sec, variations);
 				break;
 			case DRUM:
-				mg.fillDrumsFromPart((DrumPart) ip, mg.chordProgression, sec.isClimax(), sec,
+				mg.fillDrumsFromPart((DrumPart) ip, chordProgression, sec.isClimax(), sec,
 						variations);
 				break;
 			default:
@@ -778,7 +780,7 @@ public class MidiEditPopup extends CloseablePopup {
 		}
 		UsedPattern generatedPat = sec.getPattern(part, partOrder);
 		LG.i("Recompose, new pattern: " + generatedPat.toString());
-		PhraseNotes pn = MidiGenerator.gc.getPattern(generatedPat);
+		PhraseNotes pn = context.getGUIConfig().getPattern(generatedPat);
 		context.getGUIConfig().putPattern(generatedPat, pn);
 
 		mvea.setCurrentMin(110);

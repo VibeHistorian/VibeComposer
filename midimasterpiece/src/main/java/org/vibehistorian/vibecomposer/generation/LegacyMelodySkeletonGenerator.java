@@ -138,7 +138,7 @@ final class LegacyMelodySkeletonGenerator {
                 // either after first measure, or after first half of combined chord prog
 
                 if (genVars && (i == 0)) {
-                    variations = MidiGenerator.fillVariations(sec, mp, variations, 0);
+                    variations = MidiGenerator.fillVariations(gc, sec, mp, variations, 0);
                 }
 
                 if ((variations != null) && (i == 0)) {

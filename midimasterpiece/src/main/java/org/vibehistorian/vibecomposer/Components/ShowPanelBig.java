@@ -71,6 +71,7 @@ public class ShowPanelBig extends JPanel {
 		JComponent getInstrumentBoxForPanel(INST part, int panelOrder);
 		int getInstrumentPanelCount(INST instrument);
 		Set<Integer> getSoloMuterHighlightedTracks();
+		boolean isDrumCustomMapping();
 		void repaintScore();
 		List<Section> getArrangementSections();
 	}
@@ -104,6 +105,10 @@ public class ShowPanelBig extends JPanel {
 
 	public ShowPanelBig(PlaybackActions playbackActions) {
 		this(new Dimension(beatWidthBaseDefault, UITheme.scrollPaneDimension.height), playbackActions);
+	}
+
+	public boolean isDrumCustomMapping() {
+		return playbackActions.isDrumCustomMapping();
 	}
 
 	public ShowPanelBig(Dimension size, PlaybackActions playbackActions) {

@@ -652,6 +652,9 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 				}
 				return tracks;
 			}
+			@Override public boolean isDrumCustomMapping() {
+				return guiConfig.isDrumCustomMapping();
+			}
 			@Override public void repaintScore() { scoreGUI.repaintScoreDisplay(); }
 			@Override public List<Section> getArrangementSections() { return getGeneratedArrangementSections(); }
 		});
