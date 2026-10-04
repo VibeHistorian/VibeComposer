@@ -100,7 +100,7 @@ public class MelodyGenerator {
                     MidiUtils.transposeNotes(fullMelodyMap.get(i), MidiUtils.ScaleMode.IONIAN.noteAdjustScale,
                             MidiUtils.adjustScaleByChord(MidiUtils.ScaleMode.IONIAN.noteAdjustScale,
                                     minorChord),
-                            MidiGenerator.gc.isTransposedNotesForceScale());
+                            gc.isTransposedNotesForceScale());
                     LG.d("Transposing melody to match minor chord! Chord#: " + i);
                     break;
                 }

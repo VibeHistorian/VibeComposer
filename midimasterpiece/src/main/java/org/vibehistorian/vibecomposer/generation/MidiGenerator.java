@@ -126,9 +126,6 @@ public class MidiGenerator implements JMC {
 	// big G
 	public static GUIConfig gc;
 
-	// track map for Solo
-	public static List<InstPart> trackList = new ArrayList<>();
-
 	// constants
 	public static final int MELODY_PATTERN_RESOLUTION = 16;
 
@@ -628,7 +625,6 @@ public class MidiGenerator implements JMC {
 		long systemTime = System.currentTimeMillis();
 		boolean logPerformance = false;
 		customDrumMappingNumbers = null;
-		trackList.clear();
 		//MELODY_SCALE = gc.getScaleMode().absoluteNotesC;
 
 		Score score = new Score("MainScore", 120);

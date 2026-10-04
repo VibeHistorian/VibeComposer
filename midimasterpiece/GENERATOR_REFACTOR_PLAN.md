@@ -112,6 +112,8 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Progress 2026-10-04:** score history moved from `MidiGenerator` to the application-level `ScoreHistory` owner, and the score history views now read through it. Target-note choices and the attached user melody now live in `MelodyGUI`-owned `MelodyGenerationSettings`, passed into each compose run; generated melody patterns are instance state on `MidiGenerator`. Shared chord and progression state still has callers to migrate.
 
+**Progress 2026-10-04:** melody transposition now reads the run's `GUIConfig` held by `MelodyGenerator`. Melody target-note generation receives the progression-direction setting explicitly, and chord-spice generation receives its force-scale setting from `ChordProgressionGenerator`; these algorithms no longer read those choices through `MidiGenerator.gc`. Removed `MidiGenerator.trackList` after confirming its only operations were declaration and an unconditional clear. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass, including the existing MIDI fixture comparison. This is an incremental state migration: shared chord/progression values, other `MidiGenerator.gc` callers, and mutable duration settings remain for later slices.
+
 **Completion signal:** internal generation collaborators no longer depend on mutable global state for their inputs, and any remaining compatibility surface has known callers and a removal path.
 
 ### Phase 7 — Consolidate boundaries and document the result

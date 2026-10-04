@@ -95,7 +95,8 @@ final class MelodyBlockSkeletonGenerator {
                         ? (seed + 1)
                         : (seed + mp.getOrderOffset());
                 blockChordNoteChoices = MidiGeneratorUtils.generateNoteTargetOffsets(roots, targetNoteSeed,
-                        gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation(), gc.getNoteTargetDirectionChoice());
+                        gc.getMelodyBlockTargetMode(), gc.getMelodyTargetNoteVariation(),
+                        gc.getNoteTargetDirectionChoice(), gc.isMelodyUseDirectionsFromProgression());
             } else {
                 blockChordNoteChoices = targetNotes.get(mp.getOrderOffset());
             }

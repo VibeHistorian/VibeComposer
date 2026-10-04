@@ -228,20 +228,22 @@ public class MidiGeneratorUtils {
 	}
 
 	public static List<Integer> generateNoteTargetOffsets(List<String> chordStrings, int randomSeed,
-														  int targetMode, int targetNoteVariation, Boolean isPublic, MelodyUtils.NoteTargetDirection direction) {
+															  int targetMode, int targetNoteVariation, Boolean isPublic, MelodyUtils.NoteTargetDirection direction,
+															  boolean useDirectionsFromProgression) {
 		List<int[]> chords = new ArrayList<>();
         for (String chordString : chordStrings) {
             chords.add(MidiUtils.mappedChord(chordString));
         }
 		return MidiGeneratorUtils.generateNoteTargetOffsets(chords, randomSeed, targetMode,
-				targetNoteVariation, direction);
+				targetNoteVariation, direction, useDirectionsFromProgression);
 	}
 
 	static List<Integer> generateNoteTargetOffsets(List<int[]> chords, int randomSeed, int targetMode,
-												   int targetNoteVariation, MelodyUtils.NoteTargetDirection noteTargetDir) {
+														   int targetNoteVariation, MelodyUtils.NoteTargetDirection noteTargetDir,
+														   boolean useDirectionsFromProgression) {
 		List<Integer> chordOffsets = convertRootsToOffsets(getRootIndexes(chords), targetMode);
 		List<Integer> multipliedDirections = multipliedDirections(
-				MidiGenerator.gc != null && MidiGenerator.gc.isMelodyUseDirectionsFromProgression()
+				useDirectionsFromProgression
 						? generateMelodyOffsetDirectionsFromChordProgression(chords, true,
 								randomSeed)
 						: randomizedChordDirections(chords.size(), randomSeed),
@@ -628,12 +630,12 @@ public class MidiGeneratorUtils {
 	}
 
 	static String generateSpicyChordString(Random spiceGenerator, String chordString,
-			List<String> spicyChordList) {
+			List<String> spicyChordList, boolean forceScale) {
 		List<String> spicyChordListCopy = new ArrayList<>(spicyChordList);
 		String firstLetter = chordString.substring(0, 1);
 		List<Integer> targetScale = Arrays.asList(ScaleMode.IONIAN.noteAdjustScale);
 		int transposeByLetter = targetScale.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter));
-		if (MidiGenerator.gc != null && MidiGenerator.gc.isSpiceForceScale()) {
+		if (forceScale) {
 			spicyChordListCopy
 					.removeIf(e -> !MidiUtils.isSpiceValid(transposeByLetter, e, targetScale));
 		}

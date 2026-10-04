@@ -100,7 +100,8 @@ public final class ChordProgressionGenerator {
                 ? middleSpiceChords : otherSpiceChords;
         String spicyChordString = chordString;
         String tempSpicyChordString = MidiGeneratorUtils
-                .generateSpicyChordString(spiceGenerator, chordString, spiceChords);
+                .generateSpicyChordString(spiceGenerator, chordString, spiceChords,
+                        gc.isSpiceForceScale());
 
         if (generator.nextInt(100) < gc.getSpiceChance()
                 && (generatedChordCount < 7 || lastChord == null)) {

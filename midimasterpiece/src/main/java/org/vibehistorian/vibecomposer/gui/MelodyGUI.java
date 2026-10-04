@@ -131,7 +131,8 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public MelodyPanel createPanel(SoloMuter.Context soloMuterContext) {
 		return new MelodyPanel(soloMuterContext, seed -> MidiGeneratorUtils.generateNoteTargetOffsets(
 				MidiGenerator.chordInts, seed, melodyBlockTargetMode.getSelectedIndex(),
-				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem()),
+				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem(),
+				melodyUseDirectionsFromProgression.isSelected()),
 				context::getUserChordDurations);
 	}
 
