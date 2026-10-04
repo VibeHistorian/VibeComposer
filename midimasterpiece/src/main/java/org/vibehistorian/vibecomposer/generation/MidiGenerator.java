@@ -141,6 +141,8 @@ public class MidiGenerator implements JMC {
 
 	public static List<String> userChords = new ArrayList<>();
 	public static List<Double> userChordsDurations = new ArrayList<>();
+	/** Compatibility view for GUI consumers that have not migrated to the active run yet. */
+	@Deprecated
 	public static List<String> chordInts = new ArrayList<>();
 	public static double GENERATED_MEASURE_LENGTH = 0;
 
@@ -160,6 +162,17 @@ public class MidiGenerator implements JMC {
 	public List<Double> progressionDurations = new ArrayList<>();
 	public List<int[]> chordProgression = new ArrayList<>();
 	public List<int[]> rootProgression = new ArrayList<>();
+	private final List<String> generatedChordNames = new ArrayList<>();
+
+	public List<String> getGeneratedChordNames() {
+		return java.util.Collections.unmodifiableList(generatedChordNames);
+	}
+
+	void replaceGeneratedChordNames(List<String> chordNames) {
+		generatedChordNames.clear();
+		generatedChordNames.addAll(chordNames);
+		chordInts = new ArrayList<>(generatedChordNames);
+	}
 
 	public List<Double> progressionDurationsBackup = new ArrayList<>();
 	public List<int[]> chordProgressionBackup = new ArrayList<>();
@@ -483,15 +496,15 @@ public class MidiGenerator implements JMC {
 	}
 
 	private List<int[]> generateChordProgression(int mainGeneratorSeed, int fixedLength) {
-		chordInts.clear();
+		generatedChordNames.clear();
+		chordInts = new ArrayList<>();
 		ChordProgressionGenerator.MappedProgression generated =
 				ChordProgressionGenerator.generateMappedProgression(gc, mainGeneratorSeed,
 						fixedLength, FIRST_CHORD, LAST_CHORD, progressionDurations,
 						Durations.WHOLE_NOTE, Durations.QUARTER_NOTE, Constants.DBL_ERR);
 		progressionDurations.clear();
 		progressionDurations.addAll(generated.durations);
-		chordInts.clear();
-		chordInts.addAll(generated.chordNames);
+		replaceGeneratedChordNames(generated.chordNames);
 		return generated.chords;
 	}
 
@@ -515,8 +528,7 @@ public class MidiGenerator implements JMC {
 		if (!userChords.isEmpty()) {
 			userProgression = new ArrayList<>();
 			userRootProgression = new ArrayList<>();
-			chordInts.clear();
-			chordInts.addAll(userChords);
+			replaceGeneratedChordNames(userChords);
 			int chordNum = 0;
 			for (String chordString : userChords) {
 				userProgression.add(mappedChord(chordString));
@@ -933,7 +945,7 @@ public class MidiGenerator implements JMC {
 				replaceFirstChordForTwoFiveOne();
 			}
 
-			if (twoFiveOneChords && chordInts.size() > 2 && transToSet != null) {
+			if (twoFiveOneChords && generatedChordNames.size() > 2 && transToSet != null) {
 				twoFiveOneChanged = replaceLastChordsForTwoFiveOne(transToSet, scaleToSet);
 			}
 
@@ -1440,7 +1452,7 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void replaceFirstChordForTwoFiveOne() {
-		if (chordInts.get(0).startsWith("C")) {
+		if (generatedChordNames.get(0).startsWith("C")) {
 			return;
 		}
 
@@ -1622,7 +1634,7 @@ public class MidiGenerator implements JMC {
 		InstPhraseGenerator.Timing timing = getInstrumentPhraseTiming();
 		ArpPhraseGenerator.ArpResult result = arpPhraseGenerator.generate(ip, actualProgression,
 				rootProgression, progressionDurations, melodyNotePattern, melodyNotePatternMap,
-				chordInts.size(), sec, variations, secOrder, timing);
+				generatedChordNames.size(), sec, variations, secOrder, timing);
 		Phrase phr = result.getPhrase();
 		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[3]);
 
@@ -1695,7 +1707,7 @@ public class MidiGenerator implements JMC {
 		int swingPercentAmount = (ip.getHitsPerPattern() % 2 == 0) ? ip.getSwingPercent() : 50;
 		InstPhraseGenerator.Timing timing = getInstrumentPhraseTiming();
 		DrumPhraseGenerator.DrumResult result = drumPhraseGenerator.generate(ip, actualProgression,
-				progressionDurations, chordInts, melodyNotePattern, melodyNotePatternMap,
+				progressionDurations, generatedChordNames, melodyNotePattern, melodyNotePatternMap,
 				sectionForcedDynamics, sec, measures, variations, secOrder, timing);
 		Phrase phr = result.getPhrase();
 

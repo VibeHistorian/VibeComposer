@@ -81,7 +81,7 @@ final class MelodyChordInference {
 
         populateMelodyBasedProgression(chordStrings, 0, state.chordMelodyMap1.keySet().size());
         mg.progressionDurations = progDurations;
-        MidiGenerator.chordInts = chordStrings;
+        mg.replaceGeneratedChordNames(chordStrings);
     }
 
     void populateMelodyBasedProgression(List<String> chordStrings, int start, int end) {

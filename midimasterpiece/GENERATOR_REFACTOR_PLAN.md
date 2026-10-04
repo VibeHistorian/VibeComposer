@@ -114,6 +114,8 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 
 **Progress 2026-10-04:** melody transposition now reads the run's `GUIConfig` held by `MelodyGenerator`. Melody target-note generation receives the progression-direction setting explicitly, and chord-spice generation receives its force-scale setting from `ChordProgressionGenerator`; these algorithms no longer read those choices through `MidiGenerator.gc`. Removed `MidiGenerator.trackList` after confirming its only operations were declaration and an unconditional clear. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` pass, including the existing MIDI fixture comparison. This is an incremental state migration: shared chord/progression values, other `MidiGenerator.gc` callers, and mutable duration settings remain for later slices.
 
+**Progress 2026-10-04:** generated chord names are now stored on each `MidiGenerator` run and exposed as a read-only result. Melody skeleton generation, user-melody chord inference, arpeggio/drum generation, and `ComposeCoordinator` consume that run-owned value. The deprecated static `chordInts` field remains as a compatibility mirror for GUI consumers that still read or seed it; migrating those callers is still required before it can be removed. Shared custom-chord inputs, progression arrays, config access, and mutable duration settings also remain for later Phase 6 slices. `mvn compile` and `mvn -Dtest=GeneratorRegressionTest test` passed, including the byte-for-byte MIDI fixture comparison.
+
 **Completion signal:** internal generation collaborators no longer depend on mutable global state for their inputs, and any remaining compatibility surface has known callers and a removal path.
 
 ### Phase 7 — Consolidate boundaries and document the result
@@ -124,6 +126,8 @@ Perform this phase incrementally alongside earlier extractions when a collaborat
 - Use the project’s established compile check at appropriate migration boundaries; do not treat the number of classes or lines as a success metric.
 
 **Completion signal:** the two generator classes act as understandable coordinators, collaborators have focused inputs and outputs, and remaining shared state is deliberate and documented.
+
+**Progress 2026-10-04:** reviewed the Phase 6 ownership changes. `MidiGenerator` no longer uses its static generated-chord field internally, but direct GUI consumers remain, so the compatibility field and final consolidation are intentionally outstanding until those callers migrate.
 
 
 ---------------------------------------------------------------

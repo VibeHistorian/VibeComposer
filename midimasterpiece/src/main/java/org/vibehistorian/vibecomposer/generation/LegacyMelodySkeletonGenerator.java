@@ -45,7 +45,7 @@ final class LegacyMelodySkeletonGenerator {
 
         boolean fillChordMelodyMap = false;
         if (state.chordMelodyMap1.isEmpty() && notesSeedOffset == 0
-                && (roots.size() == MidiGenerator.chordInts.size())) {
+                && (roots.size() == mg.getGeneratedChordNames().size())) {
             fillChordMelodyMap = true;
         }
 

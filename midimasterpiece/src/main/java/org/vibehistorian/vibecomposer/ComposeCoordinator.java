@@ -183,7 +183,8 @@ public final class ComposeCoordinator {
             ScrollComboBox<GUIConfig> configHistory = mainWindowControls.getConfigHistory();
             if (ExtraSettingsGUI.configHistoryStoreRegeneratedTracks.isSelected() || !regenerate
                     || configHistory.getItemCount() == 0) {
-                midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+                midiConfig.setCustomChords(StringUtils.join(
+                        midiEditorSession.getMidiGenerator().getGeneratedChordNames(), ","));
                 midiConfig.setRegenerateCount(regenerateCount);
                 configHistory.addItem(midiConfig);
                 configHistory.setSelectedIndex(configHistory.getItemCount() - 1);
@@ -192,7 +193,8 @@ public final class ComposeCoordinator {
                 }
             } else {
                 // without 'configHistoryStoreRegeneratedTracks', regenerate will try to replace last history instead of creating new entries each time
-                midiConfig.setCustomChords(StringUtils.join(MidiGenerator.chordInts, ","));
+                midiConfig.setCustomChords(StringUtils.join(
+                        midiEditorSession.getMidiGenerator().getGeneratedChordNames(), ","));
                 midiConfig.setRegenerateCount(regenerateCount);
                 String oldBookmarkText = configHistory.getItemCount() > 0
                         ? configHistory.getLastVal().getBookmarkText()
@@ -346,7 +348,7 @@ public final class ComposeCoordinator {
     }
 
     private void cleanUpUIAfterCompose(boolean regenerate) {
-        chordGUI.applyGeneratedChords(MidiGenerator.chordInts,
+        chordGUI.applyGeneratedChords(midiEditorSession.getMidiGenerator().getGeneratedChordNames(),
                 melodyGUI.getUserMelody() != null, context.getGUIConfig());
         melodyGUI.applyGeneratedTargetNotes(regenerate, context.getGUIConfig());
         arpGUI.applyGeneratedPatterns(MidiGenerator.gc.getArpParts());
@@ -456,9 +458,10 @@ public final class ComposeCoordinator {
                                     / fullMeasureNoteDuration);
                         }
                     } else {
-                        for (int i = 1; i < MidiGenerator.chordInts.size(); i++) {
+                        int chordCount = midiEditorSession.getMidiGenerator().getGeneratedChordNames().size();
+                        for (int i = 1; i < chordCount; i++) {
                             sliderBeatStartTimes.add(
-                                    current + (i * measureWidth) / MidiGenerator.chordInts.size());
+                                    current + (i * measureWidth) / chordCount);
                         }
                     }
 
@@ -580,7 +583,7 @@ public final class ComposeCoordinator {
                     .setMax(!MidiGenerator.userChordsDurations.isEmpty()
                             ? (int) Math.ceil(
                             OMNI.sumListDouble(MidiGenerator.userChordsDurations) / divisor)
-                            : MidiGenerator.chordInts.size() * 4);
+                            : midiEditorSession.getMidiGenerator().getGeneratedChordNames().size() * 4);
             midiCcController.startMidiCcThread();
             context.recalculateTabPaneCounts();
             sequencer.setTempoFactor(1);

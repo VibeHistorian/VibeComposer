@@ -53,7 +53,7 @@ final class MelodyBlockSkeletonGenerator {
 
         boolean fillChordMelodyMap = false;
         if (state.chordMelodyMap1.isEmpty() && notesSeedOffset == 0
-                && (roots.size() == MidiGenerator.chordInts.size())) {
+                && (roots.size() == mg.getGeneratedChordNames().size())) {
             fillChordMelodyMap = true;
         }
 
@@ -484,10 +484,10 @@ final class MelodyBlockSkeletonGenerator {
             int end = state.chordMelodyMap1.size() - 1;
             inference.populateMelodyBasedProgression(chordStrings, start, end);
             for (int i = 0; i < start; i++) {
-                chordStrings.set(i, MidiGenerator.chordInts.get(i));
+                chordStrings.set(i, mg.getGeneratedChordNames().get(i));
             }
             for (int i = end; i < chordStrings.size(); i++) {
-                chordStrings.set(i, MidiGenerator.chordInts.get(i));
+                chordStrings.set(i, mg.getGeneratedChordNames().get(i));
             }
             state.alternateChords = StringUtils.join(chordStrings, ",");
         }
