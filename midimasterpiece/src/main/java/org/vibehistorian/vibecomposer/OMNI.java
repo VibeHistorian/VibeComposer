@@ -5,24 +5,16 @@ import jm.constants.Pitches;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
 public class OMNI {
 	public static final String EMPTYCOMBO = "---";
-	public static final List<Integer> PART_INTS = Arrays.asList(0, 1, 2, 3, 4);
 
 	public static Color alphen(Color c, int alphaValue) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(),
                 OMNI.clamp(alphaValue, 0, 255));
-	}
-
-	public static Color mult(Color c, double multer) {
-		return new Color(OMNI.clamp((int) (c.getRed() * multer), 0, 255),
-				OMNI.clamp((int) (c.getGreen() * multer), 0, 255),
-				OMNI.clamp((int) (c.getBlue() * multer), 0, 255), c.getAlpha());
 	}
 
 	public static List<Integer> parseIntsString(String ints) {
@@ -33,42 +25,12 @@ public class OMNI {
 		return intsList;
 	}
 
-	public static List<Double> parseDoublesString(String dbls) {
-		List<Double> dblsList = new ArrayList<>();
-		try {
-			for (String s : dbls.split(",")) {
-				dblsList.add(Double.valueOf(s.trim()));
-			}
-		} catch (Exception e) {
-			return null;
-		}
-		return dblsList;
-	}
-
-	public static int sumList(List<Integer> nums) {
-		int sum = 0;
-		for (Integer n : nums) {
-			sum += n;
-		}
-		return sum;
-	}
-
 	public static double sumListDouble(List<Double> nums) {
 		double sum = 0;
 		for (Double n : nums) {
 			sum += n;
 		}
 		return sum;
-	}
-
-	public static void clampIntList(List<Integer> list, int min, int max) {
-        list.replaceAll(num -> clamp(num, min, max));
-	}
-
-	public static void clampIntArray(Integer[] array, int min, int max) {
-		for (int i = 0; i < array.length; i++) {
-			array[i] = clamp(array[i], min, max);
-		}
 	}
 
 	public static int clamp(int num, int min, int max) {
