@@ -16,6 +16,10 @@
     .panel-heading { min-height: 80px; padding: 17px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
     .panel-heading .eyebrow, .inspector-heading .eyebrow { margin-bottom: 6px; }
     .chord-count { color: #777a70; font: 9px 'DM Mono', monospace; letter-spacing: .1em; }
+    .progression-actions { display: flex; align-items: center; gap: 12px; }
+    .generate-button { padding: 8px 11px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid #596344; border-radius: 6px; background: #292d20; color: var(--accent); font-size: 10px; }
+    .generate-button:hover { border-color: #8fa552; background: #303626; }
+    .generate-button span { font-size: 12px; }
     .progression-track { min-height: 251px; padding: 21px; display: flex; align-items: stretch; gap: 10px; overflow-x: auto; }
     .chord-card { min-width: 130px; flex: 1 1 130px; min-height: 207px; padding: 12px; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid #393d31; border-radius: 8px; background: #20221b; }
     .chord-card-top { width: 100%; display: flex; align-items: center; justify-content: space-between; }

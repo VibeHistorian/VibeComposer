@@ -34,7 +34,19 @@ export class ProjectService {
     this.commit({ ...this.state(), progression });
   }
 
+  setProgression(progression: readonly number[]): void {
+    const chords = getDiatonicChords(this.state().key, this.state().scale);
+    if (progression.length < 1 || progression.length > 32
+        || progression.some((degree) => !chords.some((chord) => chord.degree === degree))) {
+      return;
+    }
+    this.commit({ ...this.state(), progression: [...progression] });
+  }
+
   addChord(): void {
+    if (this.state().progression.length >= 32) {
+      return;
+    }
     const progression = [...this.state().progression, 1];
     this.commit({ ...this.state(), progression });
   }
@@ -124,6 +136,7 @@ export class ProjectService {
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
       && Array.isArray(project.progression)
       && project.progression.length > 0
+      && project.progression.length <= 32
       && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7);
   }
 

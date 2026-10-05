@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { getDiatonicChords, KEYS } from '../../core/music/harmony';
+import { generateDiatonicProgression } from '../../core/music/progression-generator';
 import type { DiatonicChord, ScaleMode } from '../../core/music/harmony';
 import { ProjectService } from '../../core/project/project.service';
 
@@ -22,6 +23,13 @@ export class CreateWorkspaceComponent {
   changeChord(index: number, event: Event): void {
     const degree = Number(this.valueFrom(event));
     this.projects.setChordDegree(index, degree);
+  }
+
+  generateProgression(): void {
+    this.projects.setProgression(generateDiatonicProgression(
+      BigInt(this.project().seed),
+      this.project().progression.length,
+    ));
   }
 
   updateName(event: Event): void {

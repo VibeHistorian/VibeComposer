@@ -18,7 +18,12 @@
               <p class="eyebrow">HARMONY</p>
               <h2 id="progression-title">Chord progression</h2>
             </div>
-            <span class="chord-count">{{ project().progression.length }} CHORDS</span>
+            <div class="progression-actions">
+              <span class="chord-count">{{ project().progression.length }} CHORDS</span>
+              <button type="button" class="generate-button" (click)="generateProgression()" title="Repeatable with the current seed">
+                <span aria-hidden="true">✦</span> Generate
+              </button>
+            </div>
           </div>
 
           <div class="progression-track">
@@ -43,7 +48,7 @@
                 </select>
               </article>
             }
-            <button type="button" class="add-chord" (click)="projects.addChord()">
+            <button type="button" class="add-chord" [disabled]="project().progression.length >= 32" (click)="projects.addChord()">
               <span aria-hidden="true">＋</span>
               <span>Add chord</span>
             </button>
