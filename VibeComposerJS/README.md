@@ -4,18 +4,6 @@ The starting point for the Angular rewrite of VibeComposer. The desktop window i
 
 This project is separate from the existing Java application. The rewrite can move feature by feature while the Java app remains available as a reference and working product.
 
-## Requirements
-
-- Go 1.23 or later
-- Node.js 20.19 or later and npm
-- Wails v2.10.2 and the platform build tools listed in the [Wails installation guide](https://wails.io/docs/gettingstarted/installation)
-
-Install the Wails CLI once:
-
-```powershell
-go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
-```
-
 Then start the desktop app from this directory:
 
 ```powershell
