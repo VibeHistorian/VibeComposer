@@ -30,6 +30,24 @@ import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 import static org.vibehistorian.vibecomposer.MidiUtils.ScaleMode;
 
 final class MelodyExpansion {
+    private static final class ExpandedSkeleton {
+        final Vector<Note> fullMelody;
+        final Map<Integer, List<Note>> fullMelodyMap;
+        final List<Integer> firstNotePitches;
+        final List<Integer> fillerPattern;
+        final Random pauseGenerator;
+
+        ExpandedSkeleton(Vector<Note> fullMelody, Map<Integer, List<Note>> fullMelodyMap,
+                List<Integer> firstNotePitches, List<Integer> fillerPattern,
+                Random pauseGenerator) {
+            this.fullMelody = fullMelody;
+            this.fullMelodyMap = fullMelodyMap;
+            this.firstNotePitches = firstNotePitches;
+            this.fillerPattern = fillerPattern;
+            this.pauseGenerator = pauseGenerator;
+        }
+    }
+
     private final GUIConfig gc;
     private final MidiTiming timing;
     private final double globalDurationMultiplier;
@@ -166,9 +184,20 @@ final class MelodyExpansion {
     }
 
     Map<Integer, List<Note>> convertMelodySkeletonToFullMelody(MelodyPart mp,
-                                                                         List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
-                                                                         List<int[]> chords, int measures,
-                                                                         ScaleMode modScale) {
+            List<Double> durations, Section sec, Vector<Note> skeleton, int notesSeedOffset,
+            List<int[]> chords, int measures, ScaleMode modScale) {
+        ExpandedSkeleton expanded = expandSkeletonNotes(mp, durations, sec, skeleton,
+                notesSeedOffset, chords, measures);
+        applySkeletonPitchAdjustments(expanded, notesSeedOffset, chords, sec, mp, modScale);
+        applySkeletonPausesAndFiller(expanded, durations, sec, mp);
+        finalizeExpandedMelody(expanded, mp, sec);
+        return expanded.fullMelodyMap;
+    }
+
+    /** Traverses skeleton notes, splits long notes, and groups the resulting notes by chord. */
+    private ExpandedSkeleton expandSkeletonNotes(MelodyPart mp, List<Double> durations,
+            Section sec, Vector<Note> skeleton, int notesSeedOffset, List<int[]> chords,
+            int measures) {
 
         int RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE = 4;
 
@@ -304,6 +333,15 @@ final class MelodyExpansion {
         List<Integer> fillerPattern = mp.getChordSpanFill()
                 .getPatternByLength(fullMelodyMap.size(), mp.isFillFlip());
 
+
+        return new ExpandedSkeleton(fullMelody, fullMelodyMap, firstNotePitches, fillerPattern, pauseGenerator);
+    }
+
+    /** Applies pitch targets and scale/chord safety rules to the chord-indexed notes. */
+    private void applySkeletonPitchAdjustments(ExpandedSkeleton expanded, int notesSeedOffset,
+            List<int[]> chords, Section sec, MelodyPart mp, ScaleMode modScale) {
+        Vector<Note> fullMelody = expanded.fullMelody;
+        Map<Integer, List<Note>> fullMelodyMap = expanded.fullMelodyMap;
         int[] pitches = new int[12];
         fullMelody.forEach(e -> {
             int pitch = e.getPitch();
@@ -323,6 +361,17 @@ final class MelodyExpansion {
                     mp.getPatternSeedWithPartOffset(), gc.getMelodyReplaceAvoidNotes(), timing);
         }
 
+    }
+
+    /** Applies pause selection and combines pauses with adjacent notes according to filler rules. */
+    private void applySkeletonPausesAndFiller(ExpandedSkeleton expanded,
+            List<Double> durations, Section sec, MelodyPart mp) {
+        Vector<Note> fullMelody = expanded.fullMelody;
+        Map<Integer, List<Note>> fullMelodyMap = expanded.fullMelodyMap;
+        List<Integer> fillerPattern = expanded.fillerPattern;
+        Random pauseGenerator = expanded.pauseGenerator;
+        int seed = mp.getPatternSeedWithPartOffset();
+        int orderSeed = seed + mp.getOrderOffset();
         // pause by %, sort not-paused into pitches
         for (int chordIndex = 0; chordIndex < fullMelodyMap.size(); chordIndex++) {
             List<Note> notes = MelodyUtils
@@ -403,6 +452,16 @@ final class MelodyExpansion {
             }
         }
 
+    }
+
+    /** Repairs chord starts and applies the final accent and variation timing adjustments. */
+    private void finalizeExpandedMelody(ExpandedSkeleton expanded, MelodyPart mp, Section sec) {
+        Vector<Note> fullMelody = expanded.fullMelody;
+        Map<Integer, List<Note>> fullMelodyMap = expanded.fullMelodyMap;
+        List<Integer> firstNotePitches = expanded.firstNotePitches;
+        List<Integer> fillerPattern = expanded.fillerPattern;
+        int seed = mp.getPatternSeedWithPartOffset();
+        int orderSeed = seed + mp.getOrderOffset();
         Random startNoteRand = new Random(orderSeed + 25);
 
         // repair target notes
@@ -479,8 +538,9 @@ final class MelodyExpansion {
             }
         }
 
-        return fullMelodyMap;
     }
+
+
 
     protected void applyNoteTargets(List<Note> fullMelody, Map<Integer, List<Note>> fullMelodyMap,
                                     int[] pitches, int notesSeedOffset, List<int[]> chords, Section sec,

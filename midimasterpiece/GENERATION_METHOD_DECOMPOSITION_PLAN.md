@@ -31,29 +31,19 @@ Split `fillOtherPartsForSection` into instrument-specific operations for bass, c
 
 Split `postprocessMelodyRhythmAccents` into drum-hit selection (including the pocket option), per-phrase accent processing, and note-splitting/pitch-or-dynamic adjustment. The note-level operation should receive drum-hit times, timing and accent settings, the melody part’s seeded random source, and a phrase; its result should be the adjusted note list. `findDrumHitTimes` is already a useful boundary for the first stage.
 
-### Phase 2 — Decompose block-based melody skeleton generation — IN PROGRESS
+### Phase 2 — Decompose block-based melody skeleton generation — COMPLETE
 
-**Completed substage:** `generateMelodyBlocksForDurations` now separates block duration/rhythm creation, seeded block-shape selection, forced-length resolution, and custom-duration reconciliation. The main skeleton-generation coordinator remains to be decomposed.
+**Completed:** 2026-10-05. `generateMelodyBlocksForDurations` separates block rhythm and shape selection, forced-length resolution, and custom-duration reconciliation. `generateMelodyBlockSkeletonFromChords` now accepts a `SkeletonGenerationRequest` and delegates preparation, per-chord rhythm selection, block reuse/generation, note assembly, and final progression/variation publication to named stages. Its measure/chord loop retains variation decisions and random draws at their original points.
 
-`MelodyBlockSkeletonGenerator.generateMelodyBlockSkeletonFromChords` (currently about 455 lines) has a long input list and combines configuration setup, random streams, chord-note choices, variation handling, block generation, note assembly, and alternate-progression inference.
-
-- Bundle the call inputs into a focused skeleton-generation request: melody part, section, chord and root progressions, measure count, seed offset, variations, block-jump preference, progression durations, generated chord names, current progression snapshots, and modified scale.
-- Extract preparation of effective chords, block seed offsets, target-note choices, and random streams. Keep each stream’s seed and first use unchanged.
-- Extract the per-chord rhythm/block selection step. Its inputs should describe one chord’s durations, chord/root data, prior block state, and applicable custom durations; its output should describe the selected blocks and any continuation state needed for assembly.
-- Extract note assembly and chord-indexed melody collection from the outer measure/chord loop. Keep inversion, transpose, solo, exception, and embellishment decisions at their current points in the random sequence.
-- Isolate the final alternate-progression inference and variation publication. Preserve the current timing of updates to `MelodyGenerationState` and section variations.
+The request carries the melody part, section, chord and root progressions, measure count, seed offset, variations, block-jump preference, progression durations, generated chord names, current progression snapshots, and modified scale. The preparation result owns effective chords, target-note choices, and seeded streams. Per-chord selection returns the reusable/new blocks and custom-duration mapping; assembly preserves note ordering and first-pass chord-map updates. Final inference and variation publication remain after the loop.
 
 Also decompose `generateMelodyBlocksForDurations` (currently about 140 lines). Separate block duration/rhythm selection, block-shape selection, and reconciliation with forced lengths or custom user durations. Keep the final `MelodyBlock` representation and its duration ordering stable. **Complete.**
 
-### Phase 3 — Decompose skeleton expansion and note targeting
+### Phase 3 — Decompose skeleton expansion and note targeting — COMPLETE
 
-`MelodyExpansion.convertMelodySkeletonToFullMelody` (currently about 315 lines) turns the skeleton into notes grouped by chord, then applies pitch, pause/filler, and timing adjustments before returning the chord-indexed map.
+**Completed:** 2026-10-05. `convertMelodySkeletonToFullMelody` now sequences skeleton traversal and splitting, pitch-target/scale adjustments, pause and filler processing, and final chord-start/accent/delay/variation timing repairs. The chord-indexed `Map<Integer, List<Note>>` remains the output, and `applyNoteTargets` remains the coordinator for tonic, mode, and chord targets.
 
-- Extract skeleton traversal and note splitting into a stage that receives the skeleton, melody part, durations, section, scale, and seeded random streams, and returns notes grouped by chord.
-- Extract scale/avoid-note adjustments and pause/filler selection as separate transformations over that chord-indexed map.
-- Extract chord-start repair, accent-length adjustment, delayed starts, and variation-specific timing changes into clearly named finalization steps.
-- Keep `applyNoteTargets` as the coordinator for tonic, mode, and chord targets. Its existing target-specific methods are useful seams; clarify their shared inputs and outputs before moving them into a separate collaborator.
-- Keep custom-duration mapping and conversion grouped with the expansion stage that consumes it. Its handoff should remain durations grouped by melody block.
+Custom-duration mapping and block conversion remain grouped in `MelodyExpansion`; their handoff remains durations grouped by melody block.
 
 The expansion method’s output remains `Map<Integer, List<Note>>`, indexed by chord. Preserve note identity and list ordering where later steps depend on them.
 

@@ -89,10 +89,12 @@ public class MelodyGenerator {
                         mg.progressionDurations, mg.getGeneratedChordNames(),
                         mg.rootProgression, mg.chordProgression);
             } else {
-                skeletonNotes = blockSkeletonGenerator.generateMelodyBlockSkeletonFromChords(ip,
-                        actualProgression, generatedRootProgression, measures, notesSeedOffset, sec,
-                        variations, melodyBlockJumpPreference, mg.progressionDurations,
-                        mg.getGeneratedChordNames(), mg.rootProgression, mg.chordProgression, mg.modScale);
+                skeletonNotes = blockSkeletonGenerator.generateMelodyBlockSkeletonFromChords(
+                        new MelodyBlockSkeletonGenerator.SkeletonGenerationRequest(ip,
+                                actualProgression, generatedRootProgression, measures,
+                                notesSeedOffset, sec, variations, melodyBlockJumpPreference,
+                                mg.progressionDurations, mg.getGeneratedChordNames(),
+                                mg.rootProgression, mg.chordProgression, mg.modScale));
             }
         }
         alternateChords = state.alternateChords;
