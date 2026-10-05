@@ -1,0 +1,105 @@
+    <main class="create-workspace">
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> CREATE WORKSPACE</p>
+          <h1 id="page-title">Start with a progression.</h1>
+          <p class="page-copy">Set a tonal center, shape the chords, and build from there.</p>
+        </div>
+        <div class="project-actions" aria-label="Project history">
+          <button type="button" class="icon-button" [disabled]="!projects.canUndo()" (click)="projects.undo()" aria-label="Undo" title="Undo">↶</button>
+          <button type="button" class="icon-button" [disabled]="!projects.canRedo()" (click)="projects.redo()" aria-label="Redo" title="Redo">↷</button>
+        </div>
+      </section>
+
+      <div class="create-layout">
+        <section class="progression-panel" aria-labelledby="progression-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">HARMONY</p>
+              <h2 id="progression-title">Chord progression</h2>
+            </div>
+            <span class="chord-count">{{ project().progression.length }} CHORDS</span>
+          </div>
+
+          <div class="progression-track">
+            @for (degree of project().progression; track $index; let index = $index) {
+              <article class="chord-card">
+                <div class="chord-card-top">
+                  <span class="slot-label">{{ (index + 1).toString().padStart(2, '0') }}</span>
+                  <button
+                    type="button"
+                    class="remove-button"
+                    [disabled]="project().progression.length <= 1"
+                    (click)="projects.removeChord(index)"
+                    [attr.aria-label]="'Remove chord ' + (index + 1)">×</button>
+                </div>
+                <strong>{{ chordFor(degree)?.symbol }}</strong>
+                <span class="roman-label">{{ chordFor(degree)?.romanNumeral }}</span>
+                <label class="visually-hidden" [for]="'chord-' + index">Chord {{ index + 1 }}</label>
+                <select [id]="'chord-' + index" [value]="degree" (change)="changeChord(index, $event)">
+                  @for (chord of chords(); track chord.degree) {
+                    <option [value]="chord.degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option>
+                  }
+                </select>
+              </article>
+            }
+            <button type="button" class="add-chord" (click)="projects.addChord()">
+              <span aria-hidden="true">＋</span>
+              <span>Add chord</span>
+            </button>
+          </div>
+
+          <div class="progression-footer">
+            <span>DIATONIC CHORDS <b>·</b> {{ project().key }} {{ project().scale === 'major' ? 'MAJOR' : 'MINOR' }}</span>
+            <button type="button" class="text-button" (click)="projects.resetProgression()">Reset to starter</button>
+          </div>
+        </section>
+
+        <aside class="inspector" aria-labelledby="settings-title">
+          <div class="inspector-heading">
+            <p class="eyebrow">PROJECT</p>
+            <h2 id="settings-title">Composition setup</h2>
+          </div>
+
+          <label class="field-label" for="project-name">Name</label>
+          <input id="project-name" class="text-input" maxlength="60" [value]="project().name" (change)="updateName($event)" />
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="key">Key</label>
+              <select id="key" class="select-input" [value]="project().key" (change)="updateKey($event)">
+                @for (key of keys; track key) { <option [value]="key">{{ key }}</option> }
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="scale">Scale</label>
+              <select id="scale" class="select-input" [value]="project().scale" (change)="updateScale($event)">
+                <option value="major">Major</option>
+                <option value="natural-minor">Natural minor</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="field-label" for="tempo">Tempo</label>
+          <div class="tempo-control">
+            <input id="tempo" class="text-input tempo-input" type="number" min="40" max="240" step="1"
+              [value]="project().tempoBpm" (change)="updateTempo($event)" />
+            <span>BPM</span>
+          </div>
+
+          <label class="field-label" for="seed">Generation seed</label>
+          <input id="seed" class="text-input seed-input" inputmode="text" [value]="project().seed" (change)="updateSeed($event)" />
+          <p class="field-help">Stored as decimal text to preserve Java's full 64-bit seed range.</p>
+        </aside>
+      </div>
+
+      <section class="next-step" aria-label="Next step">
+        <div class="next-icon" aria-hidden="true">♪</div>
+        <div>
+          <span class="eyebrow">NEXT</span>
+          <p>Choose a chord, then generation controls for bass, chords, arpeggios, and drums will live here.</p>
+        </div>
+        <span class="next-status">IN PROGRESS</span>
+      </section>
+    </main>
+  

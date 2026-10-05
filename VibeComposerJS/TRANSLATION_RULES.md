@@ -23,3 +23,5 @@ These rules guide the translation of VibeComposer's generation functionality int
 8. **Keep Wails thin at first.** Initially use Wails to package and run the Angular web app as a desktop application. Defer desktop-specific features and native Go APIs until later phases, keeping the browser app usable without the Wails bridge wherever practical.
 
 9. **Use modern angular signals, @for/@if/@else syntax, and zoneless/OnPush strategies for optimal performance.**
+
+10. **Keep Angular templates and styles in separate files.** Store component HTML in `.html` files and component CSS in `.css` files, referenced with `templateUrl` and `styleUrl` in the component metadata. Omit `standalone: true`; standalone is the default in Angular 19 and later.
