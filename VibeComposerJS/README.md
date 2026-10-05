@@ -49,3 +49,11 @@ VibeComposerJS/
 ```
 
 The starter bridge is intentionally small. Add generator operations to Go only when they need native or long-running work; keep presentation and interaction in Angular. Wails generates its JavaScript bindings during `wails dev` / `wails build`.
+
+## UI organization
+
+Build VibeComposerJS as a focused music workspace instead of keeping every generator, arrangement, and playback control visible at once. The main navigation should lead to four workspaces: **Create**, **Arrange**, **Edit**, and **Mix**. Keep project actions and a compact key/tempo summary in the header, and keep playback and loop controls in a persistent bottom dock.
+
+Each workspace should have one clear primary action and a central canvas suited to its task. Put detailed controls in an inspector that responds to the selected part, section, note, or track. Show common settings directly and group less-used generation, variation, and project options under labeled expandable sections. This keeps advanced capabilities available without crowding the working canvas.
+
+Use the feature and shared UI READMEs for the proposed workspace contents and Angular ownership boundaries. Preserve useful density in purpose-built editors such as piano rolls and drum grids; simplify surrounding chrome, repeated buttons, and always-visible settings. Apply role colors consistently to tracks and arrangement blocks, with neutral surfaces for the rest of the interface.
