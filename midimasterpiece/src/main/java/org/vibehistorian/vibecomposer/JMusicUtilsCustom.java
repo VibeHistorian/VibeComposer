@@ -21,7 +21,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Helpers.PartExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseExt;
 import org.vibehistorian.vibecomposer.Helpers.PhraseNotes;
-import org.vibehistorian.vibecomposer.generation.MidiGeneratorUtils;
+import org.vibehistorian.vibecomposer.generation.MelodyNoteUtils;
+import org.vibehistorian.vibecomposer.generation.RhythmOffsetUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -196,8 +197,8 @@ public class JMusicUtilsCustom implements JMC {
 		PhraseNotes phraseNotes = new PhraseNotes(notes);
 		phraseNotes.remakeNoteStartTimes();
 
-		List<Double> offsets = MidiGeneratorUtils.generateRhythmOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
-		List<Double> durations = MidiGeneratorUtils.generateRhythmOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
+		List<Double> offsets = RhythmOffsetUtils.generateRhythmOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
+		List<Double> durations = RhythmOffsetUtils.generateRhythmOffsets(notes.size() - 1, rhythmVariation, generator.nextLong());
 
 		for (int i = 0; i < notes.size(); i++) {
 			Note n = notes.get(i);
@@ -234,7 +235,7 @@ public class JMusicUtilsCustom implements JMC {
 			}
 		}
 		if (!isDrum) {
-			MidiGeneratorUtils.applySamePitchCollisionAvoidance(notes);
+			MelodyNoteUtils.applySamePitchCollisionAvoidance(notes);
 		}
 	}
 

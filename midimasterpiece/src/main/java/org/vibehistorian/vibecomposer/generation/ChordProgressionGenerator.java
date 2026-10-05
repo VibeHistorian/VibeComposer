@@ -52,6 +52,32 @@ public final class ChordProgressionGenerator {
     private ChordProgressionGenerator() {
     }
 
+    static String generateSpicyChordString(Random spiceGenerator, String chordString,
+            List<String> spicyChordList, boolean forceScale) {
+        List<String> spicyChordListCopy = new ArrayList<>(spicyChordList);
+        String firstLetter = chordString.substring(0, 1);
+        List<Integer> targetScale = Arrays.asList(ScaleMode.IONIAN.noteAdjustScale);
+        int transposeByLetter = targetScale.get(MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter));
+        if (forceScale) {
+            spicyChordListCopy
+                    .removeIf(e -> !MidiUtils.isSpiceValid(transposeByLetter, e, targetScale));
+        }
+
+        if (spicyChordListCopy.isEmpty()) {
+            return chordString;
+        }
+        String spicyChordString = firstLetter
+                + spicyChordListCopy.get(spiceGenerator.nextInt(spicyChordListCopy.size()));
+        if (chordString.endsWith("m") && spicyChordString.contains("maj")) {
+            spicyChordString = spicyChordString.replace("maj", "m");
+        } else if (chordString.length() == 1 && spicyChordString.contains("m")
+                && !spicyChordString.contains("dim") && !spicyChordString.contains("maj")
+                && !spicyChordString.contains("mM")) {
+            spicyChordString = spicyChordString.replace("m", "maj");
+        }
+        return spicyChordString;
+    }
+
     static RandomStreams createRandomStreams(long seed) {
         return new RandomStreams(seed);
     }
@@ -99,8 +125,7 @@ public final class ChordProgressionGenerator {
         List<String> spiceChords = (!isLastChord && hasPreviousChord)
                 ? middleSpiceChords : otherSpiceChords;
         String spicyChordString = chordString;
-        String tempSpicyChordString = MidiGeneratorUtils
-                .generateSpicyChordString(spiceGenerator, chordString, spiceChords,
+        String tempSpicyChordString = generateSpicyChordString(spiceGenerator, chordString, spiceChords,
                         gc.isSpiceForceScale());
 
         if (generator.nextInt(100) < gc.getSpiceChance()

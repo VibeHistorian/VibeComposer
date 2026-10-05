@@ -344,7 +344,7 @@ final class MelodyBlockSkeletonGenerator {
             double rhythmDuration = sameRhythmTwice
                     ? progressionDurations.get(chordIndex) / 2.0
                     : progressionDurations.get(chordIndex);
-            int speed = MidiGeneratorUtils.adjustChanceParamForTransition(mp.getSpeed(), sec,
+            int speed = PhraseEffectUtils.adjustChanceParamForTransition(mp.getSpeed(), sec,
                     chordIndex, chordCount, 40, 0.25, false, false);
             speed = OMNI.clamp(speed, -100, 100);
             int addQuick = (speed - 50) * 4;
@@ -503,9 +503,9 @@ final class MelodyBlockSkeletonGenerator {
         MelodyPart mp = request.melodyPart;
         Section sec = request.section;
         List<int[]> roots = request.roots;
-        int chord1 = MidiGeneratorUtils.getStartingNote(roots, setup.blockChordNoteChoices,
+        int chord1 = MelodyBlockUtils.getStartingNote(roots, setup.blockChordNoteChoices,
                 chordIndex, gc.getMelodyBlockTargetMode());
-        int chord2 = MidiGeneratorUtils.getStartingNote(roots, setup.blockChordNoteChoices,
+        int chord2 = MelodyBlockUtils.getStartingNote(roots, setup.blockChordNoteChoices,
                 chordIndex + 1, gc.getMelodyBlockTargetMode());
         int startingOct = chord1 / 7;
         Pair<Pair<List<Integer>, Integer>, List<MelodyBlock>> existingPattern = badDuration
@@ -734,7 +734,7 @@ final class MelodyBlockSkeletonGenerator {
     private void publishSkeletonResults(SkeletonGenerationRequest request,
             SkeletonGenerationSetup setup, List<Integer> variations) {
         if (setup.fillChordMelodyMap) {
-            List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2,
+            List<String> chordStrings = MelodyChordInference.getChordsFromMelodyPitches(2,
                     request.progressionDurations, state.chordMelodyMap1,
                     MidiUtils.baseFreqMap, timing);
             int start = 1;
@@ -842,7 +842,7 @@ final class MelodyBlockSkeletonGenerator {
 
     private Rhythm createBlockRhythm(MelodyPart mp, Section sec, int rootCount, int chordIndex,
             int blockSeed, double blockDuration) {
-        int speed = MidiGeneratorUtils.adjustChanceParamForTransition(mp.getSpeed(), sec,
+        int speed = PhraseEffectUtils.adjustChanceParamForTransition(mp.getSpeed(), sec,
                 chordIndex, rootCount, 40, 0.25, false, false);
         speed = OMNI.clamp(speed, -100, 100);
         int addQuick = (speed - 50) * 2;

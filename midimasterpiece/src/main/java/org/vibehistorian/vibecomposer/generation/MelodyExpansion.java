@@ -262,7 +262,7 @@ final class MelodyExpansion {
             int velocity = velocityGenerator.nextInt(maxVel - minVel) + minVel;
             double positionInChord = durCounter / durations.get(chordCounter);
             if (positionInChord < DBL_ERR && accentGenerator.nextInt(100) < mp.getAccents()) {
-                velocity = MidiGeneratorUtils.addAccent(velocity, accentGenerator, mp.getAccents());
+                velocity = MelodyNoteUtils.addAccent(velocity, accentGenerator, mp.getAccents());
             }
 
             n1.setDynamic(velocity);
@@ -288,14 +288,14 @@ final class MelodyExpansion {
                     if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
                         higherNote += RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
                     }
-                    pitch2 = MidiGeneratorUtils.getAllowedPitchFromRange(pitch2, higherNote,
+                    pitch2 = MelodyNoteUtils.getAllowedPitchFromRange(pitch2, higherNote,
                             positionInChord, splitNoteGenerator);
                 } else {
                     int lowerNote = pitch1;
                     if (splitNoteExceptionGenerator.nextInt(100) < 33 && !splitLastNoteInChord) {
                         lowerNote -= RANDOM_SPLIT_NOTE_PITCH_EXCEPTION_RANGE;
                     }
-                    pitch2 = MidiGeneratorUtils.getAllowedPitchFromRange(lowerNote, pitch2,
+                    pitch2 = MelodyNoteUtils.getAllowedPitchFromRange(lowerNote, pitch2,
                             positionInChord, splitNoteGenerator);
                 }
 
@@ -353,11 +353,11 @@ final class MelodyExpansion {
                 modScale);
 
         if (!ScaleMode.LOCRIAN.equals(gc.getScaleMode())) {
-            MidiGeneratorUtils.applyBadIntervalRemoval(fullMelody);
+            MelodyNoteUtils.applyBadIntervalRemoval(fullMelody);
         }
 
         if (gc.getMelodyReplaceAvoidNotes() > 0) {
-            MidiGeneratorUtils.replaceNearChordNotes(fullMelodyMap, chords,
+            MelodyNoteUtils.replaceNearChordNotes(fullMelodyMap, chords,
                     mp.getPatternSeedWithPartOffset(), gc.getMelodyReplaceAvoidNotes(), timing);
         }
 
@@ -374,11 +374,11 @@ final class MelodyExpansion {
         int orderSeed = seed + mp.getOrderOffset();
         // pause by %, sort not-paused into pitches
         for (int chordIndex = 0; chordIndex < fullMelodyMap.size(); chordIndex++) {
-            List<Note> notes = MelodyUtils
+            List<Note> notes = MelodyRhythmUtils
                     .sortNotesByRhythmicImportance(fullMelodyMap.get(chordIndex), timing);
             //Collections.sort(notes, Comparator.comparing(e -> e.getRhythmValue()));
             pauseGenerator.setSeed(orderSeed + 5);
-            int actualPauseChance = MidiGeneratorUtils.adjustChanceParamForTransition(
+            int actualPauseChance = PhraseEffectUtils.adjustChanceParamForTransition(
                     mp.getPauseChance(), sec, chordIndex, durations.size(), 40, 0.25, false, true);
             int pausedNotes = (int) Math.round(notes.size() * actualPauseChance / 100.0);
             int startIndex = (mp.isFillPauses())

@@ -1794,7 +1794,7 @@ public class MidiGenerator implements JMC {
 		int swingPercentAmount = (hits % 2 == 0) ? ip.getSwingPercent() : 50;
 		swingPhrase(phr, swingPercentAmount, timing.quarterNote);
 
-		MidiGeneratorUtils.processSectionTransition(sec, phr.getNoteList(),
+		PhraseEffectUtils.processSectionTransition(sec, phr.getNoteList(),
 				activeDurations.stream().mapToDouble(e -> e).sum() * measures, 0.25, 0.15,
 				0.9);
 
@@ -1813,7 +1813,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 		if (ip.getFeedbackCount() > 0) {
-			MidiGeneratorUtils.multiDelayPhrase(phr, ip.getFeedbackCount(),
+			PhraseEffectUtils.multiDelayPhrase(phr, ip.getFeedbackCount(),
 					ip.getFeedbackDuration() / 1000.0, ip.getFeedbackVol() / 100.0);
 		}
 	}
@@ -1861,9 +1861,9 @@ public class MidiGenerator implements JMC {
 					gc.isTransposedNotesForceScale());
 		}
 		Mod.transpose(phr, extraTranspose + modTrans);
-		MidiGeneratorUtils.applyNoteLengthMultiplier(phr.getNoteList(),
+		MelodyNoteUtils.applyNoteLengthMultiplier(phr.getNoteList(),
 				ip.getNoteLengthMultiplier());
-		MidiGeneratorUtils.processSectionTransition(sec, phr.getNoteList(),
+		PhraseEffectUtils.processSectionTransition(sec, phr.getNoteList(),
 				activeDurations.stream().mapToDouble(e -> e).sum() * measures, 0.25, 0.15,
 				0.9);
 
@@ -1953,7 +1953,7 @@ public class MidiGenerator implements JMC {
 			}
 		}
 
-		MidiGeneratorUtils.processSectionTransition(sec, phr.getNoteList(),
+		PhraseEffectUtils.processSectionTransition(sec, phr.getNoteList(),
 				activeDurations.stream().mapToDouble(e -> e).sum() * measures, 0.25, 0.15,
 				0.9);
 

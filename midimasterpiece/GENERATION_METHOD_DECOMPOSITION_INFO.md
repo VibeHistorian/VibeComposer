@@ -48,13 +48,15 @@ The outer block loop still updates variance and direction budgets, applies arpy-
 
 ## Phase 4 — Legacy melody algorithm and utility families
 
-**Status: In progress.** The legacy melody fallback now delegates setup to `prepareLegacySkeletonSetup`, chord rhythm selection and surprise handling to `generateLegacyChordDurations`, chord pitch/note generation to `generateLegacyChordNotes`, and final progression/variation publication to `publishLegacySkeletonResults`. Seeded random sources are created in the setup stage, and each chord continues to consume its rhythm, exception, pitch, and duration draws in the original order. Mutable pitch direction, jump range, and per-measure pitch carryover are explicit in small state objects.
+**Status: Complete.** The legacy melody fallback delegates setup to `prepareLegacySkeletonSetup`, chord rhythm selection and surprise handling to `generateLegacyChordDurations`, chord pitch/note generation to `generateLegacyChordNotes`, and final progression/variation publication to `publishLegacySkeletonResults`. Seeded random sources are created in the setup stage, and each chord continues to consume its rhythm, exception, pitch, and duration draws in the original order. Mutable pitch direction, jump range, and per-measure pitch carryover are explicit in small state objects. Legacy chord-index pitch selection now lives beside that algorithm.
 
-The remaining Phase 4 work is the cohesion review and any warranted extraction from `MelodyUtils` and `MidiGeneratorUtils`.
+The block utility family lives in `MelodyBlockUtils`: block selection, block-change sequences, shape measurements, weight normalization, generated block shapes, and the starting-note calculation for block generation. Existing `MelodyUtils` and `MidiGeneratorUtils` methods delegate for compatibility, and generation callers use the focused owner directly.
 
-The block utility family has also moved to `MelodyBlockUtils`: block selection, block-change sequences, shape measurements, weight normalization, and generated block shapes live there. Existing `MelodyUtils` methods delegate to it for compatibility, and `MelodyBlockSkeletonGenerator` calls the focused owner directly.
+Direction construction and chord-aware note-target selection live in `MelodyTargetUtils`. Melody block, legacy melody, and arpeggio generation call the focused owner directly. Existing `MidiGeneratorUtils` methods, including the public GUI entry point, delegate for compatibility.
 
-Direction construction and chord-aware note-target selection from `MidiGeneratorUtils` now live in `MelodyTargetUtils`. The melody block, legacy melody, and arpeggio generation paths call the focused owner directly. Existing `MidiGeneratorUtils` methods, including the public GUI entry point, delegate for compatibility.
+The remaining utility families now have focused owners: `MelodyPatternUtils` selects random melody patterns and converts notes to patterns; `MelodyChordInference` infers chord names from melody pitches; `MelodyRhythmUtils` sorts melody notes by rhythmic importance and reshapes surprise-trio durations; `RhythmOffsetUtils` creates seeded timing offsets; `MelodyNoteUtils` handles melody pitch, accent, articulation, and collision adjustments; and `PhraseEffectUtils` handles transition effects and delay phrases. Arp and drum pattern construction now lives with their respective phrase generators, and spicy chord-name selection lives with `ChordProgressionGenerator`.
+
+The old static utility entry points remain as delegates during migration. Shared velocity scaling and transition chance adjustment remain in `MidiGeneratorUtils` because their callers span several instrument generators. Other compatibility helpers remain there when they have no narrower caller owner.
 
 ## Verification
 
@@ -64,3 +66,4 @@ Direction construction and chord-aware note-target selection from `MidiGenerator
 - After the legacy melody algorithm extraction — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.
 - After the block utility extraction — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.
 - After the direction and target utility extraction — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.
+- After Phase 4 utility-family extraction — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.

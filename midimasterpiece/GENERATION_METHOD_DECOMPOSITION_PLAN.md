@@ -47,17 +47,15 @@ Custom-duration mapping and block conversion remain grouped in `MelodyExpansion`
 
 The expansion method’s output remains `Map<Integer, List<Note>>`, indexed by chord. Preserve note identity and list ordering where later steps depend on them.
 
-### Phase 4 — Isolate the legacy melody algorithm and utility families
+### Phase 4 — Isolate the legacy melody algorithm and utility families — COMPLETE
 
-**Legacy algorithm extraction completed:** `algoGen2GenerateMelodySkeletonFromChords` now delegates setup, chord rhythm generation, chord pitch/note generation, and final progression/variation publication to named stages. Keep the old-algorithm choice and its probability in `MelodyGenerator`; retain the legacy algorithm’s random streams and draw order.
+**Completed:** 2026-10-05. `algoGen2GenerateMelodySkeletonFromChords` delegates setup, chord rhythm generation, chord pitch/note generation, and final progression/variation publication to named stages. The old-algorithm choice and its probability remain in `MelodyGenerator`; the legacy algorithm retains its random streams and draw order. Legacy chord-index pitch selectors now live with the legacy generator.
 
-Block-shape selection, block changes, block measurements, and block duration/shape generation from `MelodyUtils` now live in `MelodyBlockUtils`; `MelodyUtils` retains delegating compatibility methods. Direction construction and chord-aware melody target selection from `MidiGeneratorUtils` now live in `MelodyTargetUtils`; `MidiGeneratorUtils` also retains delegating compatibility methods.
+Block-shape selection, block changes, block measurements, block duration/shape generation, and the block starting-note calculation live in `MelodyBlockUtils`. Direction construction and chord-aware melody target selection live in `MelodyTargetUtils`. Melody pattern selection and extraction, chord inference, and melody rhythm transforms live in `MelodyPatternUtils`, `MelodyChordInference`, and `MelodyRhythmUtils`. Seeded rhythm offset generation has its own `RhythmOffsetUtils` owner.
 
-The remaining Phase 4 work is to review the other large utility methods by cohesion:
+Pitch, accent, articulation, and collision changes for melody notes live in `MelodyNoteUtils`; transition effects and delayed phrase construction live in `PhraseEffectUtils`. Arp and drum pattern construction live with `ArpPhraseGenerator` and `DrumPhraseGenerator`, and spicy chord-name selection lives in `ChordProgressionGenerator`. Existing static entry points in `MelodyUtils` and `MidiGeneratorUtils` delegate for compatibility, while generation callers use the focused owners directly.
 
-- In `MelodyUtils`, review melody-note pattern extraction, chord inference helpers, and rhythm transforms for focused owners.
-- In `MidiGeneratorUtils`, review the remaining pitch/velocity helpers and note/phrase post-processing for focused owners.
-- Keep existing utility entry points as delegates during migration. Move a group only when its callers and dependencies confirm a focused owner; do not split methods solely to reduce file length.
+Shared velocity scaling and transition chance adjustment remain in `MidiGeneratorUtils` because several instrument generators use them. Other helpers remain there when their callers and dependencies do not identify a narrower owner. This completes the cohesion review without extracting methods solely to reduce file length.
 
 ## Handoffs and verification
 

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.vibehistorian.vibecomposer.Enums.BlockType;
 import org.vibehistorian.vibecomposer.LG;
+import org.vibehistorian.vibecomposer.MidiUtils;
 import org.vibehistorian.vibecomposer.OMNI;
 import org.vibehistorian.vibecomposer.Popups.TemporaryInfoPopup;
 
@@ -19,6 +20,27 @@ import static org.vibehistorian.vibecomposer.Enums.BlockType.getBlocksForType;
 public final class MelodyBlockUtils {
     private MelodyBlockUtils() {
     }
+
+	static int getStartingNote(List<int[]> stretchedChords, List<Integer> blockChordNoteChoices,
+			int chordNum, int blockTargetMode) {
+		int chordNumIndex = chordNum % stretchedChords.size();
+		int chordNoteChoiceIndex = (blockTargetMode == 2
+				&& chordNum == blockChordNoteChoices.size()) ? (chordNum - 1)
+						: (chordNum % blockChordNoteChoices.size());
+		int[] chord = stretchedChords.get(chordNumIndex);
+
+		int startingPitch = (blockTargetMode == 0)
+				? MidiUtils.getXthChordNote(blockChordNoteChoices.get(chordNoteChoiceIndex), chord)
+				: ((blockTargetMode == 1) ? chord[0] : (5 * 12));
+		int startingOct = startingPitch / 12;
+		int startingNote = MidiUtils.MAJ_SCALE.indexOf(startingPitch % 12);
+		if (startingNote < 0) {
+			startingNote = MidiUtils.MAJ_SCALE.indexOf(MidiUtils.getClosestPitchFromList(
+					MidiUtils.MAJ_SCALE, startingPitch % 12));
+		}
+		return startingNote + startingOct * 7
+				+ ((blockTargetMode > 0) ? blockChordNoteChoices.get(chordNoteChoiceIndex) : 0);
+	}
 	public static Integer[] getRandomForType(Integer type, Random melodyBlockGenerator) {
 		List<Integer[]> usedList = getBlocksForType(type);
 		int rand2 = melodyBlockGenerator.nextInt(usedList.size());

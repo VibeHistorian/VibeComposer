@@ -11,7 +11,12 @@ import org.vibehistorian.vibecomposer.Section;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import static org.vibehistorian.vibecomposer.Constants.DBL_ERR;
 import static org.vibehistorian.vibecomposer.MidiUtils.squishChordProgression;
@@ -29,6 +34,47 @@ final class MelodyChordInference {
         this.state = state;
         this.runStateUpdater = runStateUpdater;
     }
+
+    static List<String> getChordsFromMelodyPitches(int orderOfMatch, List<Double> durations,
+            Map<Integer, List<Note>> melodyMap, Map<String, Set<Integer>> freqMap,
+            MidiTiming timing) {
+        List<String> chordStrings = new ArrayList<>();
+        String prevChordString = null;
+
+        for (int i = 0; i < melodyMap.size(); i++) {
+            List<Integer> chordFreqs = new ArrayList<>();
+            double totalDuration = 0;
+            for (Note n : melodyMap.get(i)) {
+                double dur = n.getRhythmValue();
+                double durCounter = 0.0;
+                int index = i;
+                if (index >= durations.size()) {
+                    index = durations.size() - 1;
+                }
+                while (durCounter < dur && totalDuration < durations.get(index)) {
+                    chordFreqs.add(n.getPitch() % 12);
+                    durCounter += timing.eighthNote;
+                    totalDuration += timing.eighthNote;
+                }
+            }
+
+            Map<Integer, Long> freqCounts = chordFreqs.stream()
+                    .collect(Collectors.groupingBy(e -> e, Collectors.counting()));
+
+            Map<Integer, Long> top3 = freqCounts.entrySet().stream()
+                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(4)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                            (e1, e2) -> e1, LinkedHashMap::new));
+
+            String chordString = MidiUtils.applyChordFreqMap(top3, orderOfMatch, prevChordString,
+                    freqMap);
+            LG.d("Alternate chord #" + i + ": " + chordString);
+            chordStrings.add(chordString);
+            prevChordString = chordString;
+        }
+        return chordStrings;
+    }
+
     void processUserMelody(Phrase userMelody, Section currentSection, List<String> userChords,
             List<Double> progressionDurations, List<int[]> rootProgression,
             List<int[]> chordProgression) {
@@ -75,7 +121,7 @@ final class MelodyChordInference {
                     .add(noteList.get(noteList.size() - 1));
         }
         LG.i("Processed melody, chords: " + (chordCounter + 1));
-        List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(1, progressionDurations,
+        List<String> chordStrings = getChordsFromMelodyPitches(1, progressionDurations,
                 state.chordMelodyMap1, MidiUtils.freqMap, timing);
 		/*List<String> spicyChordStrings = getChordsFromMelodyPitches(1, state.chordMelodyMap1,
 				MidiUtils.freqMap);

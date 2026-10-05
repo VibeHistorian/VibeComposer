@@ -18,6 +18,39 @@ import java.util.Random;
 
 /** Creates the note pattern for one drum part in one section. */
 final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
+    static List<Integer> generateDrumPatternFromPart(DrumPart dp,
+            List<Integer> melodyNotePattern, int chordCount) {
+        Random uiGenerator1drumPattern = new Random(
+                dp.getPatternSeedWithPartOffset() + dp.getOrderOffset() - 1);
+        List<Integer> premadePattern;
+        if (melodyNotePattern != null && dp.getPattern() == RhythmPattern.MELODY1) {
+            dp.setHitsPerPattern(melodyNotePattern.size());
+            premadePattern = melodyNotePattern;
+            dp.setPatternShift(0);
+            dp.setChordSpan(chordCount);
+        } else {
+            premadePattern = dp.getFinalPatternCopy();
+        }
+
+        List<Integer> drumPattern = new ArrayList<>();
+        for (int j = 0; j < dp.getHitsPerPattern(); j++) {
+            boolean blankDrum = uiGenerator1drumPattern.nextInt(100) < dp.getPauseChance()
+                    || premadePattern.get(j) < 1;
+            if (dp.isPatternFlip()) {
+                blankDrum = !blankDrum;
+            }
+            if (blankDrum) {
+                drumPattern.add(-1);
+            } else if (dp.getInstrument() == 42
+                    && uiGenerator1drumPattern.nextInt(100) < MidiGenerator.OPENHAT_CHANCE) {
+                drumPattern.add(46);
+            } else {
+                drumPattern.add(dp.getInstrument());
+            }
+        }
+        return drumPattern;
+    }
+
     static final class DrumResult extends Result {
         private final boolean patternMissingForInstrument;
 
@@ -51,7 +84,7 @@ final class DrumPhraseGenerator extends InstPhraseGenerator<DrumPart> {
         sectionForcedDynamics &= (kicky || aboveSnarey);
 
         int chordsCount = actualProgression.size();
-        List<Integer> drumPattern = MidiGeneratorUtils.generateDrumPatternFromPart(ip,
+        List<Integer> drumPattern = generateDrumPatternFromPart(ip,
                 melodyNotePattern, chordInts.size());
 
         if (!ip.isVelocityPattern() && !drumPattern.contains(ip.getInstrument())) {

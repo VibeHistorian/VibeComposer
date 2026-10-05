@@ -30,6 +30,20 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
     private static final String ARP_OCTAVE_KEY = "ARP_OCTAVE";
     private static final String ARP_PAUSES_KEY = "ARP_PAUSES";
 
+    static List<Integer> makeRandomArpPattern(int hits, boolean repeatableNotes,
+            Random uiGenerator2arpPattern) {
+        int[] arpPatternArray = IntStream.iterate(0, e -> (e + 1) % MidiGenerator.MAXIMUM_PATTERN_LENGTH)
+                .limit(hits * 2).toArray();
+        List<Integer> arpPattern = Arrays.stream(arpPatternArray).boxed()
+                .collect(Collectors.toList());
+        if (repeatableNotes) {
+            arpPattern.addAll(arpPattern);
+        }
+        arpPattern = arpPattern.subList(0, hits);
+        Collections.shuffle(arpPattern, uiGenerator2arpPattern);
+        return arpPattern;
+    }
+
     static final class ArpResult extends Result {
         final boolean fillLastBeat;
         final int minVelocity;
@@ -405,7 +419,7 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
 		}
 
 		List<Integer> arpPattern = (ap.getArpPattern() != ArpPattern.RANDOM) ? new ArrayList<>()
-				: MidiGeneratorUtils.makeRandomArpPattern(ap.getHitsPerPattern(), true, uiGenerator2arpPattern);
+				: makeRandomArpPattern(ap.getHitsPerPattern(), true, uiGenerator2arpPattern);
 		arpOctavePattern = arpOctavePattern.subList(0, ap.getHitsPerPattern());
 
 		Collections.rotate(arpPattern, -1 * ap.getArpPatternRotate());

@@ -140,7 +140,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 						int randomNote = 0;
 						// note variation for short notes, low chance, only after first
 						int noteVaryChance = sec.isTransition()
-								? MidiGeneratorUtils.adjustChanceParamForTransition(
+							? PhraseEffectUtils.adjustChanceParamForTransition(
 										ip.getNoteVariation(), sec, chordIndex,
 										squishedChords.size(), 40, 0.25, false, true)
 								: ip.getNoteVariation();
@@ -266,7 +266,7 @@ final class BassPhraseGenerator extends InstPhraseGenerator<BassPart> {
 							int randomNote = 0;
 							// note variation for short notes, low chance, only after first
 							int noteVaryChance = sec.isTransition()
-									? MidiGeneratorUtils.adjustChanceParamForTransition(
+									? PhraseEffectUtils.adjustChanceParamForTransition(
 											ip.getNoteVariation(), sec, chordIndex,
 											squishedChords.size(), 40, 0.25, false, true)
 									: ip.getNoteVariation();

@@ -18,6 +18,44 @@ import java.util.stream.Collectors;
 import static org.vibehistorian.vibecomposer.MidiUtils.*;
 
 final class LegacyMelodySkeletonGenerator {
+
+    static int pickRandomBetweenIndexesInclusive(int[] chord, int startIndex, int endIndex,
+            Random generator, double posInChord) {
+        if (startIndex < 0) {
+            startIndex = 0;
+        }
+        if (endIndex > chord.length - 1) {
+            endIndex = chord.length - 1;
+        }
+        if (((chord[startIndex] % 12 == 11) && (chord[endIndex] % 12 == 11)) || posInChord > 0.66) {
+            // Preserve the B boundary notes when both ends allow them or the chord position calls for it.
+        } else if (chord[startIndex] % 12 == 11) {
+            startIndex++;
+        } else if (chord[endIndex] % 12 == 11) {
+            endIndex--;
+        }
+        int index = generator.nextInt(endIndex - startIndex + 1) + startIndex;
+        return chord[index];
+    }
+
+    static int selectClosestIndexFromChord(int[] chord, int previousNotePitch,
+            boolean directionUp) {
+        if (directionUp) {
+            for (int i = 0; i < chord.length; i++) {
+                if (previousNotePitch < chord[i]) {
+                    return i;
+                }
+            }
+            return chord.length - 1;
+        } else {
+            for (int i = chord.length - 1; i > 0; i--) {
+                if (previousNotePitch > chord[i]) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+    }
     private final GUIConfig gc;
     private final MidiTiming timing;
     private final double globalDurationMultiplier;
@@ -217,7 +255,7 @@ final class LegacyMelodySkeletonGenerator {
                 if ((chordIndex % 2 == 0) || (durations.size() < 3)) {
                     durations.addAll(durations);
                 } else {
-                    List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations,
+                    List<Double> arpedDurations = MelodyRhythmUtils.makeSurpriseTrioArpedDurations(durations,
                             timing);
                     if (arpedDurations != null) {
                         LG.d("Double pattern - surprise!");
@@ -227,7 +265,7 @@ final class LegacyMelodySkeletonGenerator {
                     }
                 }
             } else if (chordIndex % 2 == 1 && durations.size() >= 4) {
-                List<Double> arpedDurations = MelodyUtils.makeSurpriseTrioArpedDurations(durations,
+                List<Double> arpedDurations = MelodyRhythmUtils.makeSurpriseTrioArpedDurations(durations,
                         timing);
                 if (arpedDurations != null) {
                     LG.d("Single pattern - surprise!");
@@ -278,17 +316,17 @@ final class LegacyMelodySkeletonGenerator {
             int endIndex = chord.length - 1;
             if (measureState.previousNotePitch != 0) {
                 if (pitchGeneration.currentDirection) {
-                    startIndex = MidiGeneratorUtils.selectClosestIndexFromChord(chord,
+                    startIndex = selectClosestIndexFromChord(chord,
                             measureState.previousNotePitch, true);
                     endIndex = Math.min(endIndex, startIndex + pitchGeneration.maxJumpSkeletonChord);
                 } else {
-                    endIndex = MidiGeneratorUtils.selectClosestIndexFromChord(chord,
+                    endIndex = selectClosestIndexFromChord(chord,
                             measureState.previousNotePitch, false);
                     startIndex = Math.max(endIndex - pitchGeneration.maxJumpSkeletonChord, startIndex);
                 }
             }
             double positionInChord = durCounter / progressionDuration;
-            int pitch = MidiGeneratorUtils.pickRandomBetweenIndexesInclusive(chord, startIndex,
+            int pitch = pickRandomBetweenIndexesInclusive(chord, startIndex,
                     endIndex, pitchGeneration.pitchPickerGenerator, positionInChord);
             double swingDuration = durations.get(j);
             Note note = new Note(pitch, swingDuration, 100);
@@ -340,7 +378,7 @@ final class LegacyMelodySkeletonGenerator {
                                                        boolean genVars, List<Integer> variations,
                                                        Section sec, MelodyPart mp) {
         if (fillChordMelodyMap) {
-            List<String> chordStrings = MelodyUtils.getChordsFromMelodyPitches(2, progressionDurations,
+            List<String> chordStrings = MelodyChordInference.getChordsFromMelodyPitches(2, progressionDurations,
                     state.chordMelodyMap1, MidiUtils.baseFreqMap, timing);
             inference.populateMelodyBasedProgression(chordStrings, 1,
                     state.chordMelodyMap1.size() - 1,

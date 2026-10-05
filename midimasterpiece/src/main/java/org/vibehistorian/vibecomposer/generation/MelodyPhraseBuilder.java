@@ -139,7 +139,7 @@ final class MelodyPhraseBuilder {
         PatternResult patternResult = null;
         if (part.getOrder() == 1) {
             List<Integer> notePattern = new ArrayList<>();
-            Map<Integer, List<Integer>> notePatternMap = MelodyUtils.patternsFromNotes(fullMelodyMap,
+            Map<Integer, List<Integer>> notePatternMap = MelodyPatternUtils.patternsFromNotes(fullMelodyMap,
                     progressionDurations, MidiGenerator.getBeatDurationMult(config, section),
                     config.isMelodyPatternFlip(), timing);
             notePatternMap.keySet().forEach(key -> notePattern.addAll(notePatternMap.get(key)));
@@ -148,9 +148,9 @@ final class MelodyPhraseBuilder {
         }
 
         phraseSwinger.accept(phrase, part.getSwingPercent());
-        MidiGeneratorUtils.applyNoteLengthMultiplier(phrase.getNoteList(),
+        MelodyNoteUtils.applyNoteLengthMultiplier(phrase.getNoteList(),
                 part.getNoteLengthMultiplier());
-        MidiGeneratorUtils.processSectionTransition(section, phrase.getNoteList(),
+        PhraseEffectUtils.processSectionTransition(section, phrase.getNoteList(),
                 progressionDurations.stream().mapToDouble(value -> value).sum() * measures,
                 0.25, 0.25, 0.9);
 

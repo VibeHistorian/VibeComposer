@@ -47,9 +47,8 @@ import org.vibehistorian.vibecomposer.SwingUtils;
 import org.vibehistorian.vibecomposer.UITheme;
 import org.vibehistorian.vibecomposer.controllers.InstrumentPanelController;
 import org.vibehistorian.vibecomposer.generation.MelodyGenerationSettings;
+import org.vibehistorian.vibecomposer.generation.MelodyTargetUtils;
 import org.vibehistorian.vibecomposer.generation.MelodyUtils;
-import org.vibehistorian.vibecomposer.generation.MidiGenerator;
-import org.vibehistorian.vibecomposer.generation.MidiGeneratorUtils;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -130,7 +129,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 
 	@Override
 	public MelodyPanel createPanel(SoloMuter.Context soloMuterContext) {
-		return new MelodyPanel(soloMuterContext, seed -> MidiGeneratorUtils.generateNoteTargetOffsets(
+		return new MelodyPanel(soloMuterContext, seed -> MelodyTargetUtils.generateNoteTargetOffsets(
 				GeneratedChordState.getChordNames(), seed, melodyBlockTargetMode.getSelectedIndex(),
 				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem(),
 				melodyUseDirectionsFromProgression.isSelected()),
