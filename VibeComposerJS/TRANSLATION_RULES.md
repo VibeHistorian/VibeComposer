@@ -4,34 +4,7 @@ These rules guide the translation of VibeComposer's generation functionality int
 
 1. **Do not port legacy melody generation or its controls.** Treat the legacy melody generator and its associated settings as out of scope for the rewrite.
 
-2. **Match Java's seeded random behavior.** Use a shared `JavaRandom` helper rather than `Math.random()` in generation code. The helper should reproduce `java.util.Random`'s 48-bit state and the Java methods actually used by the generators. Start with this implementation and extend it as needed while preserving Java's semantics (including bounded `nextInt` behavior when used):
-
-   ```typescript
-   class JavaRandom {
-     private seed: bigint;
-
-     constructor(seed: bigint | number) {
-       this.seed = (BigInt(seed) ^ 0x5DEECE66Dn) & ((1n << 48n) - 1n);
-     }
-
-     next(bits: number): number {
-       this.seed =
-         (this.seed * 0x5DEECE66Dn + 0xBn) & ((1n << 48n) - 1n);
-
-       return Number(this.seed >> BigInt(48 - bits));
-     }
-
-     nextInt(): number {
-       return this.next(32) | 0;
-     }
-
-     nextDouble(): number {
-       const a = this.next(26);
-       const b = this.next(27);
-       return (a * 134217728 + b) / 9007199254740992;
-     }
-   }
-   ```
+2. **Match Java's seeded random behavior.** → Use the project's `java-random.ts`.
 
    Pass seeds as `bigint` whenever they may exceed JavaScript's safe integer range; converting an already-rounded `number` cannot preserve a Java `long` seed.
 
