@@ -138,7 +138,7 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
 							break;
 						case 4:
 							if (directions == null) {
-								directions = MidiGeneratorUtils
+								directions = MelodyTargetUtils
 										.generateMelodyDirectionsFromChordProgression(
 												actualProgression, true);
 							}

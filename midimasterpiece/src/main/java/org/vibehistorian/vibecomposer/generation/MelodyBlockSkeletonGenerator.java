@@ -253,7 +253,7 @@ final class MelodyBlockSkeletonGenerator {
                     || targetNotes.get(mp.getOrderOffset()) == null) {
                 int targetNoteSeed = gc.isMelody1ForcePatterns()
                         ? seed + 1 : seed + mp.getOrderOffset();
-                blockChordNoteChoices = MidiGeneratorUtils.generateNoteTargetOffsets(roots,
+                blockChordNoteChoices = MelodyTargetUtils.generateNoteTargetOffsets(roots,
                         targetNoteSeed, gc.getMelodyBlockTargetMode(),
                         gc.getMelodyTargetNoteVariation(), gc.getNoteTargetDirectionChoice(),
                         gc.isMelodyUseDirectionsFromProgression());
@@ -528,7 +528,7 @@ final class MelodyBlockSkeletonGenerator {
         if (existingPattern != null && gc.getMelodyPatternEffect() > 0) {
             blockChangesPair = existingPattern.getLeft();
         } else {
-            blockChangesPair = MelodyUtils.blockChangeSequence(chord1, chord2,
+            blockChangesPair = MelodyBlockUtils.blockChangeSequence(chord1, chord2,
                     setup.melodyBlockGeneratorSeed, numBlocks,
                     OMNI.clamp(mp.getMaxBlockChange() + maxBlockChangeAdjustment, 0, 7),
                     remainingDirChanges);
@@ -608,7 +608,7 @@ final class MelodyBlockSkeletonGenerator {
         for (int blockIndex = 0; blockIndex < melodyBlocks.size(); blockIndex++) {
             MelodyBlock mb = melodyBlocks.get(blockIndex);
             if (invertedPattern) {
-                mb = new MelodyBlock(MelodyUtils.inverse(mb.notes), mb.durations, true);
+                mb = new MelodyBlock(MelodyBlockUtils.inverse(mb.notes), mb.durations, true);
             }
             List<Integer> pitches = new ArrayList<>();
             if (blockIndex > 0) {
@@ -620,13 +620,13 @@ final class MelodyBlockSkeletonGenerator {
                 int pitch = startingOct * 12;
                 int combinedNote = startingNote + note;
                 //LG.d("1st combined: " + combinedNote);
-                Pair<Integer, Integer> notePitch = MidiGeneratorUtils
+                Pair<Integer, Integer> notePitch = MelodyTargetUtils
                         .normalizeNotePitch(combinedNote, pitch);
                 combinedNote = notePitch.getLeft();
                 pitch = notePitch.getRight();
                 if (adjustment != 0) {
                     combinedNote = combinedNote + adjustment;
-                    notePitch = MidiGeneratorUtils.normalizeNotePitch(combinedNote, pitch);
+                    notePitch = MelodyTargetUtils.normalizeNotePitch(combinedNote, pitch);
                     combinedNote = notePitch.getLeft();
                     pitch = notePitch.getRight();
                 }
@@ -794,9 +794,9 @@ final class MelodyBlockSkeletonGenerator {
             Integer[] blockNotesArray = blockShape.notes;
             int blockType = blockShape.type;
             remainingVariance = Math.max(0,
-                    remainingVariance - MelodyUtils.variance(blockNotesArray));
+                    remainingVariance - MelodyBlockUtils.variance(blockNotesArray));
             remainingDirChanges = Math.max(0,
-                    remainingDirChanges - MelodyUtils.interblockDirectionChange(blockNotesArray));
+                    remainingDirChanges - MelodyBlockUtils.interblockDirectionChange(blockNotesArray));
             List<Integer> blockNotes = Arrays.asList(blockNotesArray);
             List<Double> blockDurations = reconcileBlockDurations(blockIndex, blockNotes,
                     customUserDurationsByBlock, blockRhythm, mp);
@@ -882,10 +882,10 @@ final class MelodyBlockSkeletonGenerator {
             List<Integer> usedMelodyBlockJumpPreference, int adjustment, int previousBlockType) {
         int blockChange = blockChanges.get(blockIndex);
         Pair<Integer, Integer[]> selected = generateNewBlocks
-                ? MelodyUtils.generateBlockByBlockChangeAndLength(blockChange, maxJump,
+                ? MelodyBlockUtils.generateBlockByBlockChangeAndLength(blockChange, maxJump,
                         blockNotesGenerator, forcedBlockLength, remainingVariance,
                         remainingDirChanges)
-                : MelodyUtils.getRandomByApproxBlockChangeAndLength(blockChange, maxJump,
+                : MelodyBlockUtils.getRandomByApproxBlockChangeAndLength(blockChange, maxJump,
                         blockNotesGenerator, forcedBlockLength, remainingVariance,
                         remainingDirChanges, usedMelodyBlockJumpPreference,
                         gc.getMelodyBlockTypePreference());
@@ -915,7 +915,7 @@ final class MelodyBlockSkeletonGenerator {
             if (!typesToChoose.isEmpty()) {
                 int randomType = BlockType.getWeightedType(typesToChoose,
                         gc.getMelodyBlockTypePreference(), blockNotesGenerator.nextInt(100));
-                Integer[] typedBlock = MelodyUtils.getRandomForTypeAndBlockChangeAndLength(
+                Integer[] typedBlock = MelodyBlockUtils.getRandomForTypeAndBlockChangeAndLength(
                         randomType, blockChange, length, blockNotesGenerator, 0);
                 if (typedBlock != null) {
                     blockNotes = typedBlock;

@@ -49,12 +49,14 @@ The expansion method’s output remains `Map<Integer, List<Note>>`, indexed by c
 
 ### Phase 4 — Isolate the legacy melody algorithm and utility families
 
-`LegacyMelodySkeletonGenerator.algoGen2GenerateMelodySkeletonFromChords` (currently about 290 lines) remains the fallback path. Split it into setup, chord-by-chord rhythm and pitch generation, and final note assembly. Keep the old-algorithm choice and its probability in `MelodyGenerator`; retain the legacy algorithm’s random streams and draw order.
+**Legacy algorithm extraction completed:** `algoGen2GenerateMelodySkeletonFromChords` now delegates setup, chord rhythm generation, chord pitch/note generation, and final progression/variation publication to named stages. Keep the old-algorithm choice and its probability in `MelodyGenerator`; retain the legacy algorithm’s random streams and draw order.
 
-After the algorithm extractions, review the large utility classes by cohesion:
+Block-shape selection, block changes, block measurements, and block duration/shape generation from `MelodyUtils` now live in `MelodyBlockUtils`; `MelodyUtils` retains delegating compatibility methods. Direction construction and chord-aware melody target selection from `MidiGeneratorUtils` now live in `MelodyTargetUtils`; `MidiGeneratorUtils` also retains delegating compatibility methods.
 
-- In `MelodyUtils`, group block-shape and block-change operations separately from melody-note pattern extraction, chord inference helpers, and rhythm transforms.
-- In `MidiGeneratorUtils`, group direction/target-note selection separately from pitch/velocity helpers and note/phrase post-processing.
+The remaining Phase 4 work is to review the other large utility methods by cohesion:
+
+- In `MelodyUtils`, review melody-note pattern extraction, chord inference helpers, and rhythm transforms for focused owners.
+- In `MidiGeneratorUtils`, review the remaining pitch/velocity helpers and note/phrase post-processing for focused owners.
 - Keep existing utility entry points as delegates during migration. Move a group only when its callers and dependencies confirm a focused owner; do not split methods solely to reduce file length.
 
 ## Handoffs and verification

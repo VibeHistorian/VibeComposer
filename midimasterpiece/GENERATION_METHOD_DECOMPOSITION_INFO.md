@@ -46,8 +46,21 @@ The outer block loop still updates variance and direction budgets, applies arpy-
 
 `applyNoteTargets` remains the coordinator for tonic, mode, and chord targets. Custom-duration mapping and conversion remain in `MelodyExpansion`, with durations handed off by melody block.
 
+## Phase 4 — Legacy melody algorithm and utility families
+
+**Status: In progress.** The legacy melody fallback now delegates setup to `prepareLegacySkeletonSetup`, chord rhythm selection and surprise handling to `generateLegacyChordDurations`, chord pitch/note generation to `generateLegacyChordNotes`, and final progression/variation publication to `publishLegacySkeletonResults`. Seeded random sources are created in the setup stage, and each chord continues to consume its rhythm, exception, pitch, and duration draws in the original order. Mutable pitch direction, jump range, and per-measure pitch carryover are explicit in small state objects.
+
+The remaining Phase 4 work is the cohesion review and any warranted extraction from `MelodyUtils` and `MidiGeneratorUtils`.
+
+The block utility family has also moved to `MelodyBlockUtils`: block selection, block-change sequences, shape measurements, weight normalization, and generated block shapes live there. Existing `MelodyUtils` methods delegate to it for compatibility, and `MelodyBlockSkeletonGenerator` calls the focused owner directly.
+
+Direction construction and chord-aware note-target selection from `MidiGeneratorUtils` now live in `MelodyTargetUtils`. The melody block, legacy melody, and arpeggio generation paths call the focused owner directly. Existing `MidiGeneratorUtils` methods, including the public GUI entry point, delegate for compatibility.
+
 ## Verification
 
 - `mvn compile` — passed.
 - `mvn -Dtest=GeneratorRegressionTest test` — passed; 1 test, 0 failures, and generated MIDI matched the reference bytes.
 - After Phase 2 and Phase 3 — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.
+- After the legacy melody algorithm extraction — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.
+- After the block utility extraction — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.
+- After the direction and target utility extraction — `mvn compile` passed; `mvn -Dtest=GeneratorRegressionTest test` passed with 1 test, 0 failures, and generated MIDI matching the reference bytes.
