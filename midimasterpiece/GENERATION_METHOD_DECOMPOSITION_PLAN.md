@@ -16,7 +16,9 @@ Keep each change reviewable and behavior-preserving. Treat line count as a signa
 
 ## Phases
 
-### Phase 1 — Make arrangement-section processing explicit
+### Phase 1 — Make arrangement-section processing explicit — COMPLETE
+
+**Completed:** 2026-10-05. The section planning/rendering boundary, instrument-specific phrase stages, accent-hit selection, and note-level accent transformation are in place.
 
 `MidiGenerator.processArrangementSections` (currently about 245 lines) sequences progression pre-processing, section-level decisions, phrase generation, timeline updates, and configuration restoration. Keep the overall ordering in `MidiGenerator`, but make each section’s decisions visible as a stage boundary.
 
@@ -29,7 +31,9 @@ Split `fillOtherPartsForSection` into instrument-specific operations for bass, c
 
 Split `postprocessMelodyRhythmAccents` into drum-hit selection (including the pocket option), per-phrase accent processing, and note-splitting/pitch-or-dynamic adjustment. The note-level operation should receive drum-hit times, timing and accent settings, the melody part’s seeded random source, and a phrase; its result should be the adjusted note list. `findDrumHitTimes` is already a useful boundary for the first stage.
 
-### Phase 2 — Decompose block-based melody skeleton generation
+### Phase 2 — Decompose block-based melody skeleton generation — IN PROGRESS
+
+**Completed substage:** `generateMelodyBlocksForDurations` now separates block duration/rhythm creation, seeded block-shape selection, forced-length resolution, and custom-duration reconciliation. The main skeleton-generation coordinator remains to be decomposed.
 
 `MelodyBlockSkeletonGenerator.generateMelodyBlockSkeletonFromChords` (currently about 455 lines) has a long input list and combines configuration setup, random streams, chord-note choices, variation handling, block generation, note assembly, and alternate-progression inference.
 
@@ -39,7 +43,7 @@ Split `postprocessMelodyRhythmAccents` into drum-hit selection (including the po
 - Extract note assembly and chord-indexed melody collection from the outer measure/chord loop. Keep inversion, transpose, solo, exception, and embellishment decisions at their current points in the random sequence.
 - Isolate the final alternate-progression inference and variation publication. Preserve the current timing of updates to `MelodyGenerationState` and section variations.
 
-Also decompose `generateMelodyBlocksForDurations` (currently about 140 lines). Separate block duration/rhythm selection, block-shape selection, and reconciliation with forced lengths or custom user durations. Keep the final `MelodyBlock` representation and its duration ordering stable.
+Also decompose `generateMelodyBlocksForDurations` (currently about 140 lines). Separate block duration/rhythm selection, block-shape selection, and reconciliation with forced lengths or custom user durations. Keep the final `MelodyBlock` representation and its duration ordering stable. **Complete.**
 
 ### Phase 3 — Decompose skeleton expansion and note targeting
 

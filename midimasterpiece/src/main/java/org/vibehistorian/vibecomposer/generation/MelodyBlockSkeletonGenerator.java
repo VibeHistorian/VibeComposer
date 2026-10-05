@@ -28,6 +28,16 @@ import static org.vibehistorian.vibecomposer.MidiUtils.convertChordToLength;
 import static org.vibehistorian.vibecomposer.MidiUtils.getBasicChordsFromRoots;
 
 final class MelodyBlockSkeletonGenerator {
+    private static final class BlockShape {
+        final int type;
+        final Integer[] notes;
+
+        private BlockShape(int type, Integer[] notes) {
+            this.type = type;
+            this.notes = notes;
+        }
+    }
+
     private final GUIConfig gc;
     private final MidiTiming timing;
     private final double globalDurationMultiplier;
@@ -529,97 +539,29 @@ final class MelodyBlockSkeletonGenerator {
             if (blockIndex > 0) {
                 adjustment += blockChanges.get(blockIndex - 1);
             }
-            double blockDuration = !customUserDurationsByBlock.isEmpty()
-                    ? customUserDurationsByBlock.get(blockIndex).stream().filter(e -> e.getDynamic() > 0).mapToDouble(PhraseNote::getDuration).sum()
-                    : durations.get(blockIndex);
-
-            int speed = MidiGeneratorUtils.adjustChanceParamForTransition(mp.getSpeed(), sec,
-                    chordIndex, roots.size(), 40, 0.25, false, false);
-            speed = OMNI.clamp(speed, -100, 100);
-            int addQuick = (speed - 50) * 2;
-            int addSlow = addQuick * -1;
-            boolean shortNotes = blockDuration < timing.quarterNote - DBL_ERR;
-            int[] melodySkeletonDurationWeights = shortNotes
-                    ? MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 100 + addQuick, 300 + addQuick,
-                    100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow)
-                    : MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 300 + addQuick,
-                    100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow);
-
-            Rhythm blockRhythm = new Rhythm(offsettedMelodyGeneratorSeed + blockIndex,
-                    blockDuration,
-                    shortNotes ? timing.getShortMelodySkeletonDurations()
-                            : timing.getMelodySkeletonDurations(),
-                    melodySkeletonDurationWeights);
+            double blockDuration = getBlockDuration(blockIndex, durations,
+                    customUserDurationsByBlock);
+            Rhythm blockRhythm = createBlockRhythm(mp, sec, roots.size(), chordIndex,
+                    offsettedMelodyGeneratorSeed + blockIndex, blockDuration);
             //int length = blockNotesGenerator.nextInt(100) < gc.getMelodyQuickness() ? 4 : 3;
 
-            blockNotesGenerator.setSeed(offsettedMelodyGeneratorSeed + blockIndex);
-            Random generateNewBlocksDecider = new Random(offsettedMelodyGeneratorSeed + blockIndex);
-            boolean GENERATE_NEW_BLOCKS = generateNewBlocksDecider.nextInt(100) < gc
-                    .getMelodyNewBlocksChance();
-
-            Integer forcedBlockLength = (forcedLengths != null) ? forcedLengths.get(blockIndex) : null;
-            if (forcedBlockLength == null && !customUserDurationsByBlock.isEmpty()) {
-                forcedBlockLength = (int) customUserDurationsByBlock.get(blockIndex).stream().filter(e -> e.getDynamic() > 0).count();
-            }
-            Pair<Integer, Integer[]> typeBlock = (GENERATE_NEW_BLOCKS)
-                    ? MelodyUtils.generateBlockByBlockChangeAndLength(blockChanges.get(blockIndex),
-                    maxJump, blockNotesGenerator,
-                    forcedBlockLength,
-                    remainingVariance, remainingDirChanges)
-                    : MelodyUtils.getRandomByApproxBlockChangeAndLength(
-                    blockChanges.get(blockIndex), maxJump, blockNotesGenerator,
-                    forcedBlockLength,
-                    remainingVariance, remainingDirChanges, usedMelodyBlockJumpPreference, gc.getMelodyBlockTypePreference());
-            Integer[] blockNotesArray = typeBlock.getRight();
-            int blockType = typeBlock.getLeft();
-
-            boolean chordyBlockNotMatchingChord = false;
-            if (blockType == 3) {
-                int blockStart = (adjustment + 70) % 7;
-                chordyBlockNotMatchingChord = !MelodyUtils.cMajorSubstituteNotes
-                        .contains(blockStart);
-                if (chordyBlockNotMatchingChord) {
-                    LG.d("SWAPPING CHORDY BLOCK, blockStart: " + blockStart);
-                }
-            }
-
-            // try to find a different type for this block change (only for static/non generated blocks)
-            if (blockType != Integer.MAX_VALUE && (blockType == prevBlockType || chordyBlockNotMatchingChord)) {
-                int length = blockNotesArray.length;
-                List<Integer> typesToChoose = new ArrayList<>();
-                for (int j = 0; j < BlockType.values().length; j++) {
-                    if (j != blockType && BlockType.AVAILABLE_BLOCK_CHANGES_PER_TYPE.get(j)
-                            .contains(Math.abs(blockChanges.get(blockIndex)))) {
-                        typesToChoose.add(j);
-                    }
-                }
-                if (!typesToChoose.isEmpty()) {
-                    int randomType = BlockType.getWeightedType(typesToChoose, gc.getMelodyBlockTypePreference(), blockNotesGenerator.nextInt(100));
-                    Integer[] typedBlock = MelodyUtils.getRandomForTypeAndBlockChangeAndLength(
-                            randomType, blockChanges.get(blockIndex), length, blockNotesGenerator,
-                            0);
-                    if (typedBlock != null) {
-                        blockNotesArray = typedBlock;
-                        blockType = randomType;
-                        LG.d("Found new block!");
-                    } else {
-                        LG.d("Different block not found in other types!");
-                    }
-                } else {
-                    LG.d("Other types don't have this block!");
-                }
-
-
-            }
+            int blockSeed = offsettedMelodyGeneratorSeed + blockIndex;
+            boolean generateNewBlocks = shouldGenerateNewBlock(blockNotesGenerator, blockSeed);
+            Integer forcedBlockLength = getForcedBlockLength(blockIndex, forcedLengths,
+                    customUserDurationsByBlock);
+            BlockShape blockShape = selectBlockShape(blockIndex, blockChanges, maxJump,
+                    blockNotesGenerator, generateNewBlocks, forcedBlockLength,
+                    remainingVariance, remainingDirChanges,
+                    usedMelodyBlockJumpPreference, adjustment, prevBlockType);
+            Integer[] blockNotesArray = blockShape.notes;
+            int blockType = blockShape.type;
             remainingVariance = Math.max(0,
                     remainingVariance - MelodyUtils.variance(blockNotesArray));
             remainingDirChanges = Math.max(0,
                     remainingDirChanges - MelodyUtils.interblockDirectionChange(blockNotesArray));
             List<Integer> blockNotes = Arrays.asList(blockNotesArray);
-            List<Double> blockDurations = !customUserDurationsByBlock.isEmpty() && customUserDurationsByBlock.get(blockIndex).size() == blockNotes.size()
-                    ? customUserDurationsByBlock.get(blockIndex).stream().filter(e -> e.getDynamic() > 0).map(PhraseNote::getDuration).collect(Collectors.toList())
-                    : blockRhythm.makeDurations(blockNotes.size(), mp.getSpeed() < 20
-                            ? timing.quarterNote : timing.sixteenthNote);
+            List<Double> blockDurations = reconcileBlockDurations(blockIndex, blockNotes,
+                    customUserDurationsByBlock, blockRhythm, mp);
 
 
             if (gc.isMelodyArpySurprises() && (blockNotes.size() == 4)
@@ -649,5 +591,117 @@ final class MelodyBlockSkeletonGenerator {
             LG.d("Created block: " + StringUtils.join(blockNotes, ","));
         }
         return mbs;
+    }
+
+    private double getBlockDuration(int blockIndex, List<Double> durations,
+            Map<Integer, List<PhraseNote>> customUserDurationsByBlock) {
+        return !customUserDurationsByBlock.isEmpty()
+                ? customUserDurationsByBlock.get(blockIndex).stream()
+                        .filter(note -> note.getDynamic() > 0)
+                        .mapToDouble(PhraseNote::getDuration).sum()
+                : durations.get(blockIndex);
+    }
+
+    private Rhythm createBlockRhythm(MelodyPart mp, Section sec, int rootCount, int chordIndex,
+            int blockSeed, double blockDuration) {
+        int speed = MidiGeneratorUtils.adjustChanceParamForTransition(mp.getSpeed(), sec,
+                chordIndex, rootCount, 40, 0.25, false, false);
+        speed = OMNI.clamp(speed, -100, 100);
+        int addQuick = (speed - 50) * 2;
+        int addSlow = addQuick * -1;
+        boolean shortNotes = blockDuration < timing.quarterNote - DBL_ERR;
+        int[] durationWeights = shortNotes
+                ? MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 100 + addQuick,
+                        300 + addQuick, 100 + addQuick, 300 + addSlow,
+                        100 + addSlow, 100 + addSlow)
+                : MelodyUtils.normalizedCumulativeWeights(100 + addQuick, 300 + addQuick,
+                        100 + addQuick, 300 + addSlow, 100 + addSlow, 100 + addSlow);
+        return new Rhythm(blockSeed, blockDuration,
+                shortNotes ? timing.getShortMelodySkeletonDurations()
+                        : timing.getMelodySkeletonDurations(),
+                durationWeights);
+    }
+
+    private Integer getForcedBlockLength(int blockIndex, List<Integer> forcedLengths,
+            Map<Integer, List<PhraseNote>> customUserDurationsByBlock) {
+        Integer forcedBlockLength = (forcedLengths != null) ? forcedLengths.get(blockIndex) : null;
+        if (forcedBlockLength == null && !customUserDurationsByBlock.isEmpty()) {
+            forcedBlockLength = (int) customUserDurationsByBlock.get(blockIndex).stream()
+                    .filter(note -> note.getDynamic() > 0).count();
+        }
+        return forcedBlockLength;
+    }
+
+    private boolean shouldGenerateNewBlock(Random blockNotesGenerator, int blockSeed) {
+        blockNotesGenerator.setSeed(blockSeed);
+        Random generateNewBlocksDecider = new Random(blockSeed);
+        return generateNewBlocksDecider.nextInt(100) < gc.getMelodyNewBlocksChance();
+    }
+
+    private BlockShape selectBlockShape(int blockIndex, List<Integer> blockChanges, int maxJump,
+            Random blockNotesGenerator, boolean generateNewBlocks, Integer forcedBlockLength,
+            int remainingVariance, int remainingDirChanges,
+            List<Integer> usedMelodyBlockJumpPreference, int adjustment, int previousBlockType) {
+        int blockChange = blockChanges.get(blockIndex);
+        Pair<Integer, Integer[]> selected = generateNewBlocks
+                ? MelodyUtils.generateBlockByBlockChangeAndLength(blockChange, maxJump,
+                        blockNotesGenerator, forcedBlockLength, remainingVariance,
+                        remainingDirChanges)
+                : MelodyUtils.getRandomByApproxBlockChangeAndLength(blockChange, maxJump,
+                        blockNotesGenerator, forcedBlockLength, remainingVariance,
+                        remainingDirChanges, usedMelodyBlockJumpPreference,
+                        gc.getMelodyBlockTypePreference());
+        Integer[] blockNotes = selected.getRight();
+        int blockType = selected.getLeft();
+
+        boolean chordyBlockNotMatchingChord = false;
+        if (blockType == 3) {
+            int blockStart = (adjustment + 70) % 7;
+            chordyBlockNotMatchingChord = !MelodyUtils.cMajorSubstituteNotes.contains(blockStart);
+            if (chordyBlockNotMatchingChord) {
+                LG.d("SWAPPING CHORDY BLOCK, blockStart: " + blockStart);
+            }
+        }
+
+        // try to find a different type for this block change (only for static/non generated blocks)
+        if (blockType != Integer.MAX_VALUE
+                && (blockType == previousBlockType || chordyBlockNotMatchingChord)) {
+            int length = blockNotes.length;
+            List<Integer> typesToChoose = new ArrayList<>();
+            for (int j = 0; j < BlockType.values().length; j++) {
+                if (j != blockType && BlockType.AVAILABLE_BLOCK_CHANGES_PER_TYPE.get(j)
+                        .contains(Math.abs(blockChange))) {
+                    typesToChoose.add(j);
+                }
+            }
+            if (!typesToChoose.isEmpty()) {
+                int randomType = BlockType.getWeightedType(typesToChoose,
+                        gc.getMelodyBlockTypePreference(), blockNotesGenerator.nextInt(100));
+                Integer[] typedBlock = MelodyUtils.getRandomForTypeAndBlockChangeAndLength(
+                        randomType, blockChange, length, blockNotesGenerator, 0);
+                if (typedBlock != null) {
+                    blockNotes = typedBlock;
+                    blockType = randomType;
+                    LG.d("Found new block!");
+                } else {
+                    LG.d("Different block not found in other types!");
+                }
+            } else {
+                LG.d("Other types don't have this block!");
+            }
+        }
+        return new BlockShape(blockType, blockNotes);
+    }
+
+    private List<Double> reconcileBlockDurations(int blockIndex, List<Integer> blockNotes,
+            Map<Integer, List<PhraseNote>> customUserDurationsByBlock, Rhythm blockRhythm,
+            MelodyPart mp) {
+        return !customUserDurationsByBlock.isEmpty()
+                && customUserDurationsByBlock.get(blockIndex).size() == blockNotes.size()
+                ? customUserDurationsByBlock.get(blockIndex).stream()
+                        .filter(note -> note.getDynamic() > 0)
+                        .map(PhraseNote::getDuration).collect(Collectors.toList())
+                : blockRhythm.makeDurations(blockNotes.size(), mp.getSpeed() < 20
+                        ? timing.quarterNote : timing.sixteenthNote);
     }
 }
