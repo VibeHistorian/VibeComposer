@@ -47,6 +47,19 @@
     .tempo-control span { position: absolute; top: 11px; right: 11px; color: #74776d; font: 9px 'DM Mono', monospace; }
     .seed-input { font-family: 'DM Mono', monospace; }
     .field-help { margin: 7px 0 0; color: #777a70; font-size: 9px; line-height: 1.5; }
+    .bass-panel { margin-top: 14px; padding: 18px 20px 17px; border: 1px solid #30332b; border-radius: 11px; background: linear-gradient(145deg, #191b16, #151713 62%); }
+    .bass-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+    .bass-heading .eyebrow { margin-bottom: 6px; color: #8cad63; }
+    .bass-copy { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .part-count { padding-top: 4px; color: #777a70; white-space: nowrap; font: 9px 'DM Mono', monospace; letter-spacing: .1em; }
+    .bass-preview { position: relative; height: 58px; margin-top: 17px; overflow: hidden; border: 1px solid #363a2f; border-radius: 6px; background: repeating-linear-gradient(90deg, #1b1d17 0, #1b1d17 calc(12.5% - 1px), #33372c calc(12.5% - 1px), #33372c 12.5%); }
+    .bass-note { position: absolute; top: 11px; height: 34px; min-width: 3px; padding: 0 5px; display: flex; align-items: center; overflow: hidden; border: 1px solid #71854a; border-radius: 4px; background: linear-gradient(180deg, #414d30, #303a25); color: #e1efbf; white-space: nowrap; font: 9px 'DM Mono', monospace; }
+    .bass-divider { position: absolute; top: 0; bottom: 0; width: 1px; background: #656c51; opacity: .7; }
+    .bass-controls { margin-top: 16px; display: grid; grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr); gap: 20px; }
+    .bass-control .field-label { margin: 0 0 7px; }
+    .variation-label { display: flex; align-items: center; justify-content: space-between; }
+    .variation-label output { color: var(--accent); font: 9px 'DM Mono', monospace; }
+    .variation-control input { width: 100%; height: 36px; margin: 0; accent-color: var(--accent); }
     .next-step { margin-top: 14px; min-height: 76px; padding: 15px 18px; display: flex; align-items: center; gap: 13px; }
     .next-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 9px; background: #292d20; color: var(--accent); font-size: 19px; }
     .next-step .eyebrow { margin-bottom: 4px; color: var(--accent); }
@@ -54,5 +67,5 @@
     .next-status { margin-left: auto; color: #797c71; white-space: nowrap; font: 8px 'DM Mono', monospace; letter-spacing: .08em; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
     @media (max-width: 800px) { .create-layout { grid-template-columns: 1fr; } .inspector { display: grid; grid-template-columns: 1fr 1fr; column-gap: 13px; } .inspector-heading { grid-column: 1 / -1; } .inspector .field-label { margin-top: 10px; } }
-    @media (max-width: 560px) { .create-workspace { padding-top: 32px; } .progression-track { padding: 13px; } .chord-card { min-width: 115px; } .inspector { display: block; } .next-status { display: none; } .progression-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 9px 13px; } }
+    @media (max-width: 560px) { .create-workspace { padding-top: 32px; } .progression-track { padding: 13px; } .chord-card { min-width: 115px; } .inspector { display: block; } .bass-panel { padding: 15px 13px; } .bass-controls { grid-template-columns: 1fr; gap: 14px; } .next-status { display: none; } .progression-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 9px 13px; } }
   

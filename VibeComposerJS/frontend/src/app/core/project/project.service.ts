@@ -1,10 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords } from '../music/harmony';
+import type { BassSettings } from './project.model';
 import type { CompositionProject } from './project.model';
-import { DEFAULT_PROJECT } from './project.model';
+import { DEFAULT_BASS_SETTINGS, DEFAULT_PROJECT } from './project.model';
 
-const STORAGE_KEY = 'vibecomposer.project.v1';
+const STORAGE_KEY = 'vibecomposer.project.v2';
+const LEGACY_STORAGE_KEY = 'vibecomposer.project.v1';
 const MAX_HISTORY = 100;
+const BASS_RHYTHMS = ['alternating', 'full', 'half', 'tresillo', 'sparse'] as const;
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -20,6 +23,10 @@ export class ProjectService {
 
   updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'tempoBpm' | 'seed'>>): void {
     this.commit({ ...this.state(), ...patch });
+  }
+
+  updateBassSettings(patch: Partial<BassSettings>): void {
+    this.commit({ ...this.state(), bass: { ...this.state().bass, ...patch } });
   }
 
   setChordDegree(index: number, degree: number): void {
@@ -106,20 +113,80 @@ export class ProjectService {
   }
 
   private loadProject(): CompositionProject {
-    try {
-      const raw = globalThis.sessionStorage?.getItem(STORAGE_KEY);
-      if (!raw) {
-        return { ...DEFAULT_PROJECT, progression: [...DEFAULT_PROJECT.progression] };
+    for (const storageKey of [STORAGE_KEY, LEGACY_STORAGE_KEY]) {
+      try {
+        const raw = globalThis.sessionStorage?.getItem(storageKey);
+        if (raw) {
+          const decoded = this.decodeProject(JSON.parse(raw));
+          if (decoded) {
+            if (storageKey !== STORAGE_KEY) {
+              this.persist(decoded);
+            }
+            return decoded;
+          }
+        }
+      } catch {
+        // Storage can be unavailable or contain invalid JSON.
       }
-
-      const value: unknown = JSON.parse(raw);
-      if (this.isProject(value)) {
-        return value;
-      }
-    } catch {
-      // Storage can be unavailable in restricted browser contexts.
     }
-    return { ...DEFAULT_PROJECT, progression: [...DEFAULT_PROJECT.progression] };
+    return this.copyDefaultProject();
+  }
+
+  private decodeProject(value: unknown): CompositionProject | undefined {
+    if (!value || typeof value !== 'object') {
+      return undefined;
+    }
+
+    const project = value as Omit<Partial<CompositionProject>, 'schemaVersion' | 'bass'>
+      & { schemaVersion?: number; bass?: unknown };
+    const validBase = (project.schemaVersion === 1 || project.schemaVersion === 2)
+      && typeof project.name === 'string'
+      && typeof project.key === 'string' && KEYS.includes(project.key)
+      && (project.scale === 'major' || project.scale === 'natural-minor')
+      && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
+      && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
+      && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
+      && Array.isArray(project.progression)
+      && project.progression.length > 0 && project.progression.length <= 32
+      && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7);
+    if (!validBase) {
+      return undefined;
+    }
+
+    const bass = project.schemaVersion === 1 ? DEFAULT_BASS_SETTINGS : this.decodeBass(project.bass);
+    if (!bass) {
+      return undefined;
+    }
+    return {
+      schemaVersion: 2,
+      name: project.name!,
+      key: project.key!,
+      scale: project.scale!,
+      tempoBpm: project.tempoBpm!,
+      seed: project.seed!,
+      progression: [...project.progression!],
+      bass,
+    };
+  }
+
+  private decodeBass(value: unknown): BassSettings | undefined {
+    if (!value || typeof value !== 'object') {
+      return undefined;
+    }
+    const bass = value as Partial<BassSettings>;
+    if (!BASS_RHYTHMS.includes(bass.rhythm as typeof BASS_RHYTHMS[number])
+        || !Number.isInteger(bass.noteVariation) || (bass.noteVariation ?? -1) < 0 || (bass.noteVariation ?? 101) > 100) {
+      return undefined;
+    }
+    return { rhythm: bass.rhythm!, noteVariation: bass.noteVariation! };
+  }
+
+  private copyDefaultProject(): CompositionProject {
+    return {
+      ...DEFAULT_PROJECT,
+      progression: [...DEFAULT_PROJECT.progression],
+      bass: { ...DEFAULT_BASS_SETTINGS },
+    };
   }
 
   private isProject(value: unknown): value is CompositionProject {
@@ -127,7 +194,7 @@ export class ProjectService {
       return false;
     }
     const project = value as Partial<CompositionProject>;
-    return project.schemaVersion === 1
+    return project.schemaVersion === 2
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -137,7 +204,8 @@ export class ProjectService {
       && Array.isArray(project.progression)
       && project.progression.length > 0
       && project.progression.length <= 32
-      && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7);
+      && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7)
+      && this.decodeBass(project.bass) !== undefined;
   }
 
   private persist(project: CompositionProject): void {

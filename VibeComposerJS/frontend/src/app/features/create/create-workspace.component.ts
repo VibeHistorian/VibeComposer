@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { generateBassline } from '../../core/music/bass-generator';
 import { getDiatonicChords, KEYS } from '../../core/music/harmony';
 import { generateDiatonicProgression } from '../../core/music/progression-generator';
 import type { DiatonicChord, ScaleMode } from '../../core/music/harmony';
+import type { BassRhythm } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
 
 @Component({
@@ -15,6 +17,21 @@ export class CreateWorkspaceComponent {
   readonly project = this.projects.project;
   readonly keys = KEYS;
   readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
+  readonly bassRhythms: ReadonlyArray<{ value: BassRhythm; label: string }> = [
+    { value: 'alternating', label: 'Alternating phrase' },
+    { value: 'full', label: 'Every eighth note' },
+    { value: 'half', label: 'Alternating eighths' },
+    { value: 'tresillo', label: 'Tresillo' },
+    { value: 'sparse', label: 'Sparse quarters' },
+  ];
+  readonly bassNotes = computed(() => {
+    const project = this.project();
+    return generateBassline(
+      BigInt(project.seed), project.key, project.scale, project.progression,
+      project.bass.rhythm, project.bass.noteVariation,
+    );
+  });
+  readonly bassLengthBeats = computed(() => this.project().progression.length * 4);
 
   chordFor(degree: number): DiatonicChord | undefined {
     return this.chords().find((chord) => chord.degree === degree);
@@ -30,6 +47,33 @@ export class CreateWorkspaceComponent {
       BigInt(this.project().seed),
       this.project().progression.length,
     ));
+  }
+
+  updateBassRhythm(event: Event): void {
+    const rhythm = this.valueFrom(event);
+    if (this.bassRhythms.some((option) => option.value === rhythm)) {
+      this.projects.updateBassSettings({ rhythm: rhythm as BassRhythm });
+    }
+  }
+
+  updateBassNoteVariation(event: Event): void {
+    const variation = Number(this.valueFrom(event));
+    if (Number.isInteger(variation) && variation >= 0 && variation <= 100) {
+      this.projects.updateBassSettings({ noteVariation: variation });
+    }
+  }
+
+  bassNoteLeft(startBeat: number): number {
+    return startBeat / this.bassLengthBeats() * 100;
+  }
+
+  bassNoteWidth(durationBeats: number): number {
+    return durationBeats / this.bassLengthBeats() * 100;
+  }
+
+  bassNoteName(midi: number): string {
+    const noteNames = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+    return `${noteNames[midi % 12]}${Math.floor(midi / 12) - 1}`;
   }
 
   updateName(event: Event): void {

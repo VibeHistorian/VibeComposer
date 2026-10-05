@@ -15,6 +15,10 @@ const KEY_PITCHES: Readonly<Record<string, number>> = {
   'F♯': 6, 'G♭': 6, G: 7, 'G♯': 8, 'A♭': 8, A: 9, 'A♯': 10, 'B♭': 10, B: 11,
 };
 
+export function getPitchClass(noteName: string): number | undefined {
+  return KEY_PITCHES[noteName];
+}
+
 const MAJOR = [
   { offset: 0, roman: 'I', quality: 'major' },
   { offset: 2, roman: 'ii', quality: 'minor' },

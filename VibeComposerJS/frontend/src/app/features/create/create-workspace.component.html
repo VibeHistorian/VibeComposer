@@ -98,11 +98,50 @@
         </aside>
       </div>
 
+      <section class="bass-panel" aria-labelledby="bass-title">
+        <div class="bass-heading">
+          <div>
+            <p class="eyebrow">PART GENERATION</p>
+            <h2 id="bass-title">Bassline</h2>
+            <p class="bass-copy">A low register phrase follows each chord root. The seed makes its rhythm and variations repeatable.</p>
+          </div>
+          <span class="part-count">{{ bassNotes().length }} NOTES</span>
+        </div>
+        <div class="bass-preview" role="img" [attr.aria-label]="'Bass phrase with ' + bassNotes().length + ' notes across ' + project().progression.length + ' chords'">
+          @for (note of bassNotes(); track $index) {
+            <span class="bass-note"
+              [style.left.%]="bassNoteLeft(note.startBeat)"
+              [style.width.%]="bassNoteWidth(note.durationBeats)"
+              [title]="bassNoteName(note.midi) + ' · chord ' + (note.chordIndex + 1)">
+              {{ bassNoteName(note.midi) }}
+            </span>
+          }
+          @for (degree of project().progression; track $index) {
+            <span class="bass-divider" [style.left.%]="($index + 1) / project().progression.length * 100"></span>
+          }
+        </div>
+        <div class="bass-controls">
+          <label class="bass-control" for="bass-rhythm">
+            <span class="field-label">Rhythm</span>
+            <select id="bass-rhythm" class="select-input" [value]="project().bass.rhythm" (change)="updateBassRhythm($event)">
+              @for (rhythm of bassRhythms; track rhythm.value) {
+                <option [value]="rhythm.value">{{ rhythm.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="bass-control variation-control" for="bass-variation">
+            <span class="variation-label"><span class="field-label">Chord tone variation</span><output>{{ project().bass.noteVariation }}%</output></span>
+            <input id="bass-variation" type="range" min="0" max="100" step="1"
+              [value]="project().bass.noteVariation" (change)="updateBassNoteVariation($event)" />
+          </label>
+        </div>
+      </section>
+
       <section class="next-step" aria-label="Next step">
         <div class="next-icon" aria-hidden="true">♪</div>
         <div>
           <span class="eyebrow">NEXT</span>
-          <p>Choose a chord, then generation controls for bass, chords, arpeggios, and drums will live here.</p>
+          <p>Bass generation is ready. Chord voicings, arpeggios, and drums are the next parts to translate.</p>
         </div>
         <span class="next-status">IN PROGRESS</span>
       </section>
