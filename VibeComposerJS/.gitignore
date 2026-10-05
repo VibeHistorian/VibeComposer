@@ -4,5 +4,7 @@ frontend/dist/*
 frontend/dist/browser/*
 !frontend/dist/browser/.gitkeep
 frontend/.angular/
+frontend/package.json.md5
+frontend/wailsjs/
 build/
 *.log
