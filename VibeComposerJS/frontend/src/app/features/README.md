@@ -4,7 +4,7 @@ Organize the main experience into four workspaces. Each feature owns its screen 
 
 ## Workspaces
 
-- **Create** — Set the key, tempo, and chord progression, then generate or regenerate in-scope parts such as bass, chords, arpeggios, and drums. Show each role as a concise part card or row. Put detailed generation and variation parameters in the inspector for the selected part.
+- **Create** — Set the key, tempo, and chord progression, then generate in-scope parts such as bass, chords, arpeggios, and drums. Export the result as MIDI. Show each role as a concise part card or row. Put detailed generation and variation parameters in the inspector for the selected part.
 - **Arrange** — Show song sections on a timeline. Selecting a section opens its length, type, part inclusion, and variation controls in the inspector. Let users add, duplicate, reorder, and edit sections from the timeline itself rather than repeating an Edit button in every cell.
 - **Edit** — Provide the editor that matches the selected content: piano roll for pitched parts, step grid for drums, and score view where useful. Keep editing tools close to the canvas and selection-specific properties in the inspector.
 - **Mix** — Group instruments and sound controls by part, with direct access to levels, mute/solo, and instrument selection. Keep playback and loop controls in the shared bottom transport dock.

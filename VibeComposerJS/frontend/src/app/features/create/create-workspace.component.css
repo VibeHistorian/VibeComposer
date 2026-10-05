@@ -7,6 +7,7 @@
     h2 { margin: 0; font-size: 17px; font-weight: 500; letter-spacing: -.035em; }
     .page-copy { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
     .project-actions { display: flex; gap: 7px; }
+    .export-button { height: 35px; }
     button, input, select { font: inherit; }
     button { color: inherit; cursor: pointer; }
     button:disabled { opacity: .35; cursor: default; }
@@ -60,6 +61,33 @@
     .variation-label { display: flex; align-items: center; justify-content: space-between; }
     .variation-label output { color: var(--accent); font: 9px 'DM Mono', monospace; }
     .variation-control input { width: 100%; height: 36px; margin: 0; accent-color: var(--accent); }
+    .chord-part-panel, .arpeggio-panel, .drum-panel { margin-top: 14px; padding: 18px 20px 17px; border: 1px solid #30332b; border-radius: 11px; background: linear-gradient(145deg, #191b16, #151713 62%); }
+    .part-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+    .part-heading .eyebrow { margin-bottom: 6px; color: #86a5bc; }
+    .part-copy { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .chord-preview { position: relative; height: 58px; margin-top: 17px; overflow: hidden; border: 1px solid #363a2f; border-radius: 6px; background: repeating-linear-gradient(90deg, #1b1d17 0, #1b1d17 calc(12.5% - 1px), #33372c calc(12.5% - 1px), #33372c 12.5%); }
+    .chord-hit { position: absolute; top: 11px; height: 34px; min-width: 3px; padding: 0 4px; display: flex; align-items: center; overflow: hidden; border: 1px solid #55728a; border-radius: 4px; background: linear-gradient(180deg, #334958, #293a45); color: #d3e7f2; white-space: nowrap; font: 8px 'DM Mono', monospace; }
+    .part-divider { position: absolute; top: 0; bottom: 0; width: 1px; background: #657487; opacity: .7; }
+    .part-controls { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr minmax(180px, 1fr); gap: 16px; }
+    .part-control .field-label { margin: 0 0 7px; }
+    .chord-length-control input { width: 100%; height: 36px; margin: 0; accent-color: #8ab2ca; }
+    .arpeggio-panel .part-heading .eyebrow { color: #c2a16a; }
+    .arpeggio-preview { position: relative; height: 58px; margin-top: 17px; overflow: hidden; border: 1px solid #363a2f; border-radius: 6px; background: repeating-linear-gradient(90deg, #1b1d17 0, #1b1d17 calc(12.5% - 1px), #33372c calc(12.5% - 1px), #33372c 12.5%); }
+    .arpeggio-note { position: absolute; width: max(3px, 2%); height: 4px; border-radius: 2px; background: #d3ab61; box-shadow: 0 0 5px #d3ab6150; }
+    .drum-panel .part-heading .eyebrow { color: #c17c65; }
+    .drum-preview { position: relative; height: 52px; margin-top: 17px; overflow: hidden; border: 1px solid #363a2f; border-radius: 6px; background: repeating-linear-gradient(90deg, #1b1d17 0, #1b1d17 calc(6.25% - 1px), #33372c calc(6.25% - 1px), #33372c 6.25%); }
+    .drum-hit { position: absolute; z-index: 1; width: 9px; height: 9px; border-radius: 50%; transform: translateX(-50%); }
+    .kick-hit { background: #d68166; box-shadow: 0 0 7px #d6816650; }
+    .snare-hit { background: #e3c070; box-shadow: 0 0 7px #e3c07050; }
+    .hat-hit { width: 6px; height: 6px; background: #aab0a0; }
+    .drum-controls { grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto; align-items: end; }
+    .drum-swing-control input { width: 100%; height: 36px; margin: 0; accent-color: #d68166; }
+    .drum-legend { padding-bottom: 9px; display: flex; gap: 12px; color: #9a9d90; font-size: 9px; }
+    .drum-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .drum-legend i { width: 7px; height: 7px; display: inline-block; border-radius: 50%; }
+    .kick-dot { background: #d68166; }
+    .snare-dot { background: #e3c070; }
+    .hat-dot { background: #aab0a0; }
     .next-step { margin-top: 14px; min-height: 76px; padding: 15px 18px; display: flex; align-items: center; gap: 13px; }
     .next-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 9px; background: #292d20; color: var(--accent); font-size: 19px; }
     .next-step .eyebrow { margin-bottom: 4px; color: var(--accent); }
@@ -67,5 +95,6 @@
     .next-status { margin-left: auto; color: #797c71; white-space: nowrap; font: 8px 'DM Mono', monospace; letter-spacing: .08em; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
     @media (max-width: 800px) { .create-layout { grid-template-columns: 1fr; } .inspector { display: grid; grid-template-columns: 1fr 1fr; column-gap: 13px; } .inspector-heading { grid-column: 1 / -1; } .inspector .field-label { margin-top: 10px; } }
-    @media (max-width: 560px) { .create-workspace { padding-top: 32px; } .progression-track { padding: 13px; } .chord-card { min-width: 115px; } .inspector { display: block; } .bass-panel { padding: 15px 13px; } .bass-controls { grid-template-columns: 1fr; gap: 14px; } .next-status { display: none; } .progression-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 9px 13px; } }
+    @media (max-width: 800px) { .part-controls { grid-template-columns: 1fr 1fr; } .chord-length-control { grid-column: 1 / -1; } }
+    @media (max-width: 560px) { .create-workspace { padding-top: 32px; } .progression-track { padding: 13px; } .chord-card { min-width: 115px; } .inspector { display: block; } .bass-panel, .chord-part-panel, .arpeggio-panel, .drum-panel { padding: 15px 13px; } .bass-controls, .part-controls { grid-template-columns: 1fr; gap: 14px; } .chord-length-control { grid-column: auto; } .drum-legend { padding-bottom: 0; } .next-status { display: none; } .progression-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 9px 13px; } }
   

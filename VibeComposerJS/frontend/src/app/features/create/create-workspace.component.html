@@ -5,7 +5,8 @@
           <h1 id="page-title">Start with a progression.</h1>
           <p class="page-copy">Set a tonal center, shape the chords, and build from there.</p>
         </div>
-        <div class="project-actions" aria-label="Project history">
+        <div class="project-actions" aria-label="Project actions">
+          <button type="button" class="generate-button export-button" (click)="exportMidi()" title="Download this arrangement as a MIDI file">Export MIDI</button>
           <button type="button" class="icon-button" [disabled]="!projects.canUndo()" (click)="projects.undo()" aria-label="Undo" title="Undo">↶</button>
           <button type="button" class="icon-button" [disabled]="!projects.canRedo()" (click)="projects.redo()" aria-label="Redo" title="Redo">↷</button>
         </div>
@@ -137,11 +138,145 @@
         </div>
       </section>
 
+      <section class="chord-part-panel" aria-labelledby="chord-part-title">
+        <div class="part-heading">
+          <div>
+            <p class="eyebrow">PART GENERATION</p>
+            <h2 id="chord-part-title">Chord voicings</h2>
+            <p class="part-copy">Seeded triad hits follow the progression, with close and open voicings.</p>
+          </div>
+          <span class="part-count">{{ chordHits().length }} HITS</span>
+        </div>
+        <div class="chord-preview" role="img" [attr.aria-label]="'Chord phrase with ' + chordHits().length + ' chord hits across ' + project().progression.length + ' chords'">
+          @for (hit of chordHits(); track $index) {
+            <span class="chord-hit"
+              [style.left.%]="chordHitLeft(hit.startBeat)"
+              [style.width.%]="chordHitWidth(hit.durationBeats)"
+              [title]="chordHitTitle(hit.pitches, hit.symbol)">
+              {{ hit.symbol }}
+            </span>
+          }
+          @for (degree of project().progression; track $index) {
+            <span class="part-divider" [style.left.%]="($index + 1) / project().progression.length * 100"></span>
+          }
+        </div>
+        <div class="part-controls">
+          <label class="part-control" for="chord-rhythm">
+            <span class="field-label">Rhythm</span>
+            <select id="chord-rhythm" class="select-input" [value]="project().chords.rhythm" (change)="updateChordRhythm($event)">
+              @for (rhythm of chordRhythms; track rhythm.value) {
+                <option [value]="rhythm.value">{{ rhythm.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="part-control" for="chord-voicing">
+            <span class="field-label">Voicing</span>
+            <select id="chord-voicing" class="select-input" [value]="project().chords.voicing" (change)="updateChordVoicing($event)">
+              @for (voicing of chordVoicings; track voicing.value) {
+                <option [value]="voicing.value">{{ voicing.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="part-control chord-length-control" for="chord-length">
+            <span class="variation-label"><span class="field-label">Note length</span><output>{{ project().chords.noteLengthPercent }}%</output></span>
+            <input id="chord-length" type="range" min="25" max="125" step="1"
+              [value]="project().chords.noteLengthPercent" (change)="updateChordNoteLength($event)" />
+          </label>
+        </div>
+      </section>
+
+      <section class="arpeggio-panel" aria-labelledby="arpeggio-title">
+        <div class="part-heading">
+          <div>
+            <p class="eyebrow">PART GENERATION</p>
+            <h2 id="arpeggio-title">Arpeggio</h2>
+            <p class="part-copy">Seeded note sequences trace the current chord tones.</p>
+          </div>
+          <span class="part-count">{{ arpeggioNotes().length }} NOTES</span>
+        </div>
+        <div class="arpeggio-preview" role="img" [attr.aria-label]="'Arpeggio phrase with ' + arpeggioNotes().length + ' notes across ' + project().progression.length + ' chords'">
+          @for (note of arpeggioNotes(); track $index) {
+            <span class="arpeggio-note"
+              [style.left.%]="arpeggioNoteLeft(note.startBeat)"
+              [style.width.%]="arpeggioNoteWidth(note.durationBeats)"
+              [style.bottom.px]="(note.midi % 12) * 2.2 + 3"
+              [title]="bassNoteName(note.midi) + ' · chord ' + (note.chordIndex + 1)">
+            </span>
+          }
+          @for (degree of project().progression; track $index) {
+            <span class="part-divider" [style.left.%]="($index + 1) / project().progression.length * 100"></span>
+          }
+        </div>
+        <div class="part-controls">
+          <label class="part-control" for="arp-pattern">
+            <span class="field-label">Pattern</span>
+            <select id="arp-pattern" class="select-input" [value]="project().arpeggio.pattern" (change)="updateArpeggioPattern($event)">
+              @for (pattern of arpPatterns; track pattern.value) {
+                <option [value]="pattern.value">{{ pattern.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="part-control" for="arp-rate">
+            <span class="field-label">Rate</span>
+            <select id="arp-rate" class="select-input" [value]="project().arpeggio.rate" (change)="updateArpeggioRate($event)">
+              @for (rate of arpRates; track rate.value) {
+                <option [value]="rate.value">{{ rate.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="part-control" for="arp-octaves">
+            <span class="field-label">Range</span>
+            <select id="arp-octaves" class="select-input" [value]="project().arpeggio.octaves" (change)="updateArpeggioOctaves($event)">
+              <option [value]="1">1 octave</option>
+              <option [value]="2">2 octaves</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="drum-panel" aria-labelledby="drum-title">
+        <div class="part-heading">
+          <div>
+            <p class="eyebrow">PART GENERATION</p>
+            <h2 id="drum-title">Drums</h2>
+            <p class="part-copy">GM kick, snare, and closed hi-hat patterns follow the progression.</p>
+          </div>
+          <span class="part-count">{{ drumHits().length }} HITS</span>
+        </div>
+        <div class="drum-preview" role="img" [attr.aria-label]="project().drums.groove + ' drum groove with ' + drumHits().length + ' hits across ' + project().progression.length + ' bars'">
+          @for (hit of drumHits(); track $index) {
+            <span class="drum-hit" [class.kick-hit]="hit.voice === 'kick'" [class.snare-hit]="hit.voice === 'snare'" [class.hat-hit]="hit.voice === 'closed-hat'"
+              [style.left.%]="drumHitLeft(hit.startBeat)" [style.top.px]="drumHitTop(hit.voice)"
+              [title]="hit.voice + ' · bar ' + (hit.barIndex + 1) + ' · step ' + (hit.step + 1)">
+            </span>
+          }
+          @for (degree of project().progression; track $index) {
+            <span class="part-divider" [style.left.%]="($index + 1) / project().progression.length * 100"></span>
+          }
+        </div>
+        <div class="part-controls drum-controls">
+          <label class="part-control" for="drum-groove">
+            <span class="field-label">Groove</span>
+            <select id="drum-groove" class="select-input" [value]="project().drums.groove" (change)="updateDrumGroove($event)">
+              @for (groove of drumGrooves; track groove.value) {
+                <option [value]="groove.value">{{ groove.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="part-control drum-swing-control" for="drum-swing">
+            <span class="variation-label"><span class="field-label">Swing</span><output>{{ project().drums.swingPercent }}%</output></span>
+            <input id="drum-swing" type="range" min="50" max="75" step="1"
+              [value]="project().drums.swingPercent" (change)="updateDrumSwing($event)" />
+          </label>
+          <div class="drum-legend" aria-hidden="true"><span><i class="kick-dot"></i>Kick</span><span><i class="snare-dot"></i>Snare</span><span><i class="hat-dot"></i>Hat</span></div>
+        </div>
+      </section>
+
       <section class="next-step" aria-label="Next step">
         <div class="next-icon" aria-hidden="true">♪</div>
         <div>
           <span class="eyebrow">NEXT</span>
-          <p>Bass generation is ready. Chord voicings, arpeggios, and drums are the next parts to translate.</p>
+          <p>Bass, chords, arpeggios, and drum grooves now follow the progression. MIDI export is ready; real-time playback is the next layer.</p>
         </div>
         <span class="next-status">IN PROGRESS</span>
       </section>

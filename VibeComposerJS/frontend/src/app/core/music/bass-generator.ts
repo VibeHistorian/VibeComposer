@@ -34,7 +34,8 @@ export function generateBassline(
   noteVariation: number,
 ): BassNoteEvent[] {
   if (progression.length < 1 || progression.length > 32
-      || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100) {
+      || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100
+      || !['alternating', 'full', 'half', 'tresillo', 'sparse'].includes(rhythm)) {
     throw new RangeError('Bass generation settings are outside the supported range.');
   }
 
