@@ -1,0 +1,200 @@
+:root {
+  color-scheme: dark;
+  font-family: 'DM Sans', sans-serif;
+  background: #10120f;
+  color: #f1f1e9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --muted: #85877e;
+  --accent: #d4f36a;
+  --line: #292c25;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 360px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 50% 15%, rgb(83 99 46 / 13%), transparent 48%),
+    #10120f;
+}
+
+button, a { font: inherit; }
+
+.app-frame {
+  width: min(100% - 64px, 1100px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 0 36px;
+}
+
+.topbar {
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #f1f1e9;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.04em;
+}
+
+.brand-mark {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #171a10;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.brand-light { color: #aeb0a5; font-weight: 500; }
+
+.host-pill, .phase-tag, .eyebrow, .workspace-footer {
+  font-family: 'DM Mono', monospace;
+  letter-spacing: .09em;
+}
+
+.host-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #999b91;
+  font-size: 10px;
+}
+
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #81837a; }
+.host-pill.connected .status-dot { background: var(--accent); box-shadow: 0 0 10px #d4f36a80; }
+.host-pill.connected { color: var(--accent); }
+
+.intro { padding: 79px 0 48px; }
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 22px;
+  color: var(--accent);
+  font-size: 10px;
+}
+
+.eyebrow-line { width: 21px; height: 1px; background: var(--accent); }
+
+h1 {
+  margin: 0;
+  font-size: clamp(48px, 8vw, 78px);
+  line-height: .99;
+  letter-spacing: -.075em;
+  font-weight: 500;
+}
+
+h1 span { color: var(--accent); }
+
+.intro-copy {
+  margin: 21px 0 0;
+  color: #9b9d93;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.workspace {
+  overflow: hidden;
+  border: 1px solid #30332b;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #191b16, #151713 62%);
+  box-shadow: 0 20px 80px #0003;
+}
+
+.workspace-heading {
+  min-height: 98px;
+  padding: 22px 27px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.workspace-heading .eyebrow { margin: 0 0 7px; color: #86897d; font-size: 9px; }
+h2 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: -.035em; }
+.phase-tag { color: #85877e; font-size: 9px; }
+
+.empty-state {
+  min-height: 310px;
+  padding: 50px 22px 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.waveform {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  opacity: .78;
+}
+
+.waveform span {
+  width: 3px;
+  max-height: 48px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #d4f36a, #85a43b);
+}
+
+h3 { margin: 24px 0 7px; font-size: 17px; font-weight: 500; letter-spacing: -.025em; }
+.empty-state p { max-width: 440px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+.start-button {
+  margin-top: 24px;
+  padding: 10px 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #3a3d34;
+  border-radius: 7px;
+  background: #22251e;
+  color: #73766c;
+  font-size: 12px;
+}
+
+.start-button span { font-size: 16px; }
+.start-button:disabled { cursor: not-allowed; }
+
+.workspace-footer {
+  min-height: 43px;
+  padding: 0 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: #777a70;
+  font-size: 8px;
+}
+
+.workspace-footer b { padding: 0 4px; color: var(--accent); font-weight: 400; }
+.footer-note { margin: 19px 0 0; color: #73766d; text-align: center; font-size: 11px; }
+
+@media (max-width: 600px) {
+  .app-frame { width: min(100% - 36px, 1100px); }
+  .topbar { height: 68px; }
+  .intro { padding: 64px 0 37px; }
+  .workspace-heading { padding: 19px; }
+  .empty-state { min-height: 290px; }
+  .phase-tag { font-size: 8px; }
+}
