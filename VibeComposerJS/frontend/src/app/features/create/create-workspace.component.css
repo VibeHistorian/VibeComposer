@@ -1,4 +1,5 @@
-    :host { display: block; }
+/* Page layout and heading */
+:host { display: block; }
     .create-workspace { padding: 46px 0 34px; }
     .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 27px; }
     .eyebrow { margin: 0 0 10px; color: #8e9184; font: 9px 'DM Mono', monospace; letter-spacing: .12em; }
@@ -6,13 +7,15 @@
     h1 { margin: 0; font-size: clamp(29px, 4vw, 42px); line-height: 1.08; letter-spacing: -.06em; font-weight: 500; }
     h2 { margin: 0; font-size: 17px; font-weight: 500; letter-spacing: -.035em; }
     .page-copy { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
-    .project-actions { display: flex; gap: 7px; }
+/* Project actions and shared controls */
+.project-actions { display: flex; gap: 7px; }
     .export-button { height: 35px; }
     button, input, select { font: inherit; }
     button { color: inherit; cursor: pointer; }
     button:disabled { opacity: .35; cursor: default; }
     .icon-button { width: 37px; height: 35px; border: 1px solid var(--line); border-radius: 7px; background: #191b16; color: #b7b9ad; font-size: 20px; }
-    .create-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; align-items: start; gap: 14px; }
+/* Progression editor */
+.create-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; align-items: start; gap: 14px; }
     .progression-panel, .inspector, .next-step { border: 1px solid #30332b; border-radius: 11px; background: linear-gradient(145deg, #191b16, #151713 62%); }
     .panel-heading { min-height: 80px; padding: 17px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
     .panel-heading .eyebrow, .inspector-heading .eyebrow { margin-bottom: 6px; }
@@ -37,7 +40,8 @@
     .progression-footer b { color: var(--accent); font-weight: 400; }
     .text-button { padding: 5px 0; border: 0; background: transparent; color: #aeb0a4; font: 10px 'DM Sans', sans-serif; letter-spacing: 0; }
     .text-button:hover { color: var(--accent); }
-    .inspector { padding: 18px; }
+/* Project settings inspector */
+.inspector { padding: 18px; }
     .inspector-heading { margin-bottom: 19px; }
     .field-label { display: block; margin: 15px 0 7px; color: #b6b8ac; font-size: 10px; }
     .text-input, .select-input { width: 100%; height: 36px; padding: 0 10px; border: 1px solid #373a31; border-radius: 6px; outline: none; background: #131510; color: #e6e7de; font-size: 11px; }
@@ -48,7 +52,8 @@
     .tempo-control span { position: absolute; top: 11px; right: 11px; color: #74776d; font: 9px 'DM Mono', monospace; }
     .seed-input { font-family: 'DM Mono', monospace; }
     .field-help { margin: 7px 0 0; color: #777a70; font-size: 9px; line-height: 1.5; }
-    .bass-panel { margin-top: 14px; padding: 18px 20px 17px; border: 1px solid #30332b; border-radius: 11px; background: linear-gradient(145deg, #191b16, #151713 62%); }
+/* Bass part */
+.bass-panel { margin-top: 14px; padding: 18px 20px 17px; border: 1px solid #30332b; border-radius: 11px; background: linear-gradient(145deg, #191b16, #151713 62%); }
     .bass-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
     .bass-heading .eyebrow { margin-bottom: 6px; color: #8cad63; }
     .bass-copy { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
@@ -61,7 +66,8 @@
     .variation-label { display: flex; align-items: center; justify-content: space-between; }
     .variation-label output { color: var(--accent); font: 9px 'DM Mono', monospace; }
     .variation-control input { width: 100%; height: 36px; margin: 0; accent-color: var(--accent); }
-    .chord-part-panel, .arpeggio-panel, .drum-panel { margin-top: 14px; padding: 18px 20px 17px; border: 1px solid #30332b; border-radius: 11px; background: linear-gradient(145deg, #191b16, #151713 62%); }
+/* Chord part */
+.chord-part-panel, .arpeggio-panel, .drum-panel { margin-top: 14px; padding: 18px 20px 17px; border: 1px solid #30332b; border-radius: 11px; background: linear-gradient(145deg, #191b16, #151713 62%); }
     .part-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
     .part-heading .eyebrow { margin-bottom: 6px; color: #86a5bc; }
     .part-copy { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
@@ -71,10 +77,12 @@
     .part-controls { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr minmax(180px, 1fr); gap: 16px; }
     .part-control .field-label { margin: 0 0 7px; }
     .chord-length-control input { width: 100%; height: 36px; margin: 0; accent-color: #8ab2ca; }
-    .arpeggio-panel .part-heading .eyebrow { color: #c2a16a; }
+/* Arpeggio part */
+.arpeggio-panel .part-heading .eyebrow { color: #c2a16a; }
     .arpeggio-preview { position: relative; height: 58px; margin-top: 17px; overflow: hidden; border: 1px solid #363a2f; border-radius: 6px; background: repeating-linear-gradient(90deg, #1b1d17 0, #1b1d17 calc(12.5% - 1px), #33372c calc(12.5% - 1px), #33372c 12.5%); }
     .arpeggio-note { position: absolute; width: max(3px, 2%); height: 4px; border-radius: 2px; background: #d3ab61; box-shadow: 0 0 5px #d3ab6150; }
-    .drum-panel .part-heading .eyebrow { color: #c17c65; }
+/* Drum part */
+.drum-panel .part-heading .eyebrow { color: #c17c65; }
     .drum-preview { position: relative; height: 52px; margin-top: 17px; overflow: hidden; border: 1px solid #363a2f; border-radius: 6px; background: repeating-linear-gradient(90deg, #1b1d17 0, #1b1d17 calc(6.25% - 1px), #33372c calc(6.25% - 1px), #33372c 6.25%); }
     .drum-hit { position: absolute; z-index: 1; width: 9px; height: 9px; border-radius: 50%; transform: translateX(-50%); }
     .kick-hit { background: #d68166; box-shadow: 0 0 7px #d6816650; }
@@ -88,13 +96,15 @@
     .kick-dot { background: #d68166; }
     .snare-dot { background: #e3c070; }
     .hat-dot { background: #aab0a0; }
-    .next-step { margin-top: 14px; min-height: 76px; padding: 15px 18px; display: flex; align-items: center; gap: 13px; }
+/* Next step and accessibility */
+.next-step { margin-top: 14px; min-height: 76px; padding: 15px 18px; display: flex; align-items: center; gap: 13px; }
     .next-icon { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border-radius: 9px; background: #292d20; color: var(--accent); font-size: 19px; }
     .next-step .eyebrow { margin-bottom: 4px; color: var(--accent); }
     .next-step p { margin: 0; color: #a0a296; font-size: 10px; line-height: 1.45; }
     .next-status { margin-left: auto; color: #797c71; white-space: nowrap; font: 8px 'DM Mono', monospace; letter-spacing: .08em; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-    @media (max-width: 800px) { .create-layout { grid-template-columns: 1fr; } .inspector { display: grid; grid-template-columns: 1fr 1fr; column-gap: 13px; } .inspector-heading { grid-column: 1 / -1; } .inspector .field-label { margin-top: 10px; } }
+/* Responsive layouts */
+@media (max-width: 800px) { .create-layout { grid-template-columns: 1fr; } .inspector { display: grid; grid-template-columns: 1fr 1fr; column-gap: 13px; } .inspector-heading { grid-column: 1 / -1; } .inspector .field-label { margin-top: 10px; } }
     @media (max-width: 800px) { .part-controls { grid-template-columns: 1fr 1fr; } .chord-length-control { grid-column: 1 / -1; } }
     @media (max-width: 560px) { .create-workspace { padding-top: 32px; } .progression-track { padding: 13px; } .chord-card { min-width: 115px; } .inspector { display: block; } .bass-panel, .chord-part-panel, .arpeggio-panel, .drum-panel { padding: 15px 13px; } .bass-controls, .part-controls { grid-template-columns: 1fr; gap: 14px; } .chord-length-control { grid-column: auto; } .drum-legend { padding-bottom: 0; } .next-status { display: none; } .progression-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 9px 13px; } }
   

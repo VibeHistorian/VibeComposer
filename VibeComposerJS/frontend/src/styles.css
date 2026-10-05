@@ -1,3 +1,4 @@
+/* Theme tokens */
 :root {
   color-scheme: dark;
   font-family: 'DM Sans', sans-serif;
@@ -11,6 +12,7 @@
   --line: #292c25;
 }
 
+/* Base element styles */
 * { box-sizing: border-box; }
 
 body {
@@ -24,6 +26,7 @@ body {
 
 button, a, input, select { font: inherit; }
 
+/* Application header and navigation */
 .app-frame { width: min(100% - 64px, 1280px); min-height: 100vh; margin: 0 auto; padding-bottom: 24px; }
 .topbar { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: #f1f1e9; text-decoration: none; font-size: 14px; font-weight: 700; letter-spacing: -.04em; }
@@ -33,15 +36,20 @@ button, a, input, select { font: inherit; }
 .workspace-nav a { position: relative; padding: 0 14px; display: flex; align-items: center; color: #888b80; text-decoration: none; font-size: 11px; transition: color .15s ease; }
 .workspace-nav a:hover, .workspace-nav a.active { color: #f1f1e9; }
 .workspace-nav a.active::after { position: absolute; right: 14px; bottom: -1px; left: 14px; height: 2px; background: var(--accent); content: ''; }
+
+/* Header status */
 .header-summary { display: flex; align-items: center; gap: 10px; color: #b5b7aa; white-space: nowrap; font: 9px 'DM Mono', monospace; letter-spacing: .04em; }
 .summary-divider { width: 1px; height: 12px; background: #3a3d33; }
 .host-pill { margin-left: 8px; display: flex; align-items: center; gap: 6px; color: #85877e; font-size: 8px; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #81837a; }
 .host-pill.connected { color: var(--accent); }
 .host-pill.connected .status-dot { background: var(--accent); box-shadow: 0 0 8px #d4f36a80; }
+
+/* Footer */
 .app-footer { min-height: 36px; margin-top: 25px; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #686b61; font: 8px 'DM Mono', monospace; letter-spacing: .09em; }
 .app-footer b { padding: 0 3px; color: var(--accent); font-weight: 400; }
 
+/* Tablet layout */
 @media (max-width: 900px) {
   .app-frame { width: min(100% - 40px, 1280px); }
   .topbar { flex-wrap: wrap; justify-content: space-between; gap: 0 15px; padding-top: 12px; }
@@ -49,6 +57,7 @@ button, a, input, select { font: inherit; }
   .header-summary { margin-left: auto; }
 }
 
+/* Mobile layout */
 @media (max-width: 520px) {
   .app-frame { width: min(100% - 28px, 1280px); }
   .brand { font-size: 12px; }

@@ -25,3 +25,5 @@ These rules guide the translation of VibeComposer's generation functionality int
 9. **Use modern angular signals, @for/@if/@else syntax, and zoneless/OnPush strategies for optimal performance.**
 
 10. **Keep Angular templates and styles in separate files.** Store component HTML in `.html` files and component CSS in `.css` files, referenced with `templateUrl` and `styleUrl` in the component metadata. Omit `standalone: true`; standalone is the default in Angular 19 and later.
+
+11. **Separate logical CSS sections with single-line comments.** Use a concise `/* Section name */` comment on its own line between groups of related rules in every CSS file.
