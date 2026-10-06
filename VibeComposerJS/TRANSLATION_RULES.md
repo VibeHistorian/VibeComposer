@@ -29,3 +29,5 @@ These rules guide the translation of VibeComposer's generation functionality int
 10. **Keep Angular templates and styles in separate files.** Store component HTML in `.html` files and component CSS in `.css` files, referenced with `templateUrl` and `styleUrl` in the component metadata. Omit `standalone: true`; standalone is the default in Angular 19 and later.
 
 11. **Separate logical CSS sections with single-line comments.** Use a concise `/* Section name */` comment on its own line between groups of related rules in every CSS file.
+
+12. **Use the project's style theme throughout the Angular UI.** Reuse the semantic CSS custom properties in `frontend/src/styles.css` for colors, typography, surfaces, borders, radii, and other shared visual values. The theme is being extracted from existing components; as component styles are updated or added, use those tokens and add reusable theme tokens for missing shared values instead of introducing one-off hard-coded styles.

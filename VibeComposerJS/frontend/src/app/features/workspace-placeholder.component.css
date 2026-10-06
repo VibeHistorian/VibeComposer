@@ -3,10 +3,10 @@
 .placeholder { min-height: 62vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 
 /* Placeholder text */
-.eyebrow { color: var(--accent); font: 9px 'DM Mono', monospace; letter-spacing: .12em; }
+.eyebrow { color: var(--accent-primary); font: 9px var(--font-mono); letter-spacing: .12em; }
 h1 { margin: 8px 0; font-size: 38px; font-weight: 500; letter-spacing: -.06em; }
-p:not(.eyebrow) { color: var(--muted); font-size: 13px; }
+p:not(.eyebrow) { color: var(--text-muted); font-size: 13px; }
 
 /* Placeholder link */
-a { margin-top: 17px; color: var(--accent); font-size: 12px; text-decoration: none; }
+a { margin-top: 17px; color: var(--accent-primary); font-size: 12px; text-decoration: none; }
   
