@@ -149,7 +149,7 @@ export class ProjectService {
     }, 0) + 1;
     const id = `track-${role}-${nextNumber}`;
     const channel = role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
-    const track = { ...source, id, name: `${this.roleName(role)} ${nextNumber}`, midiChannel: channel,
+    const track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
     const arrangement = current.arrangement.map((section) => ({
@@ -528,10 +528,6 @@ export class ProjectService {
       updated = true;
       return { ...track, ...patch } as CompositionTrack;
     });
-  }
-
-  private roleName(role: ArrangedPart): string {
-    return role === 'arpeggio' ? 'Arpeggio' : role[0].toUpperCase() + role.slice(1);
   }
 
   private nextTrackId(tracks: readonly CompositionTrack[], role: ArrangedPart): string {

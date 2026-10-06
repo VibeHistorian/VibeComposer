@@ -188,10 +188,10 @@ export const DEFAULT_MIX: Readonly<Record<ArrangedPart, MixChannelSettings>> = {
 };
 
 export const DEFAULT_TRACKS: readonly CompositionTrack[] = [
-  { id: 'track-bass-1', role: 'bass', name: 'Bass', midiChannel: 1, generatorSettings: DEFAULT_BASS_SETTINGS, mix: DEFAULT_MIX.bass },
-  { id: 'track-chords-1', role: 'chords', name: 'Chords', midiChannel: 2, generatorSettings: DEFAULT_CHORD_SETTINGS, mix: DEFAULT_MIX.chords },
-  { id: 'track-arpeggio-1', role: 'arpeggio', name: 'Arpeggio', midiChannel: 3, generatorSettings: DEFAULT_ARPEGGIO_SETTINGS, mix: DEFAULT_MIX.arpeggio },
-  { id: 'track-drums-1', role: 'drums', name: 'Drums', midiChannel: 10, generatorSettings: DEFAULT_DRUM_SETTINGS, mix: DEFAULT_MIX.drums },
+  { id: 'track-bass-1', role: 'bass', name: 'B1', midiChannel: 1, generatorSettings: DEFAULT_BASS_SETTINGS, mix: DEFAULT_MIX.bass },
+  { id: 'track-chords-1', role: 'chords', name: 'C1', midiChannel: 2, generatorSettings: DEFAULT_CHORD_SETTINGS, mix: DEFAULT_MIX.chords },
+  { id: 'track-arpeggio-1', role: 'arpeggio', name: 'A1', midiChannel: 3, generatorSettings: DEFAULT_ARPEGGIO_SETTINGS, mix: DEFAULT_MIX.arpeggio },
+  { id: 'track-drums-1', role: 'drums', name: 'D1', midiChannel: 10, generatorSettings: DEFAULT_DRUM_SETTINGS, mix: DEFAULT_MIX.drums },
 ];
 
 export const DEFAULT_PROJECT: CompositionProject = {
