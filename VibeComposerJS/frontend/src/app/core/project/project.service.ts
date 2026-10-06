@@ -6,11 +6,11 @@ import type {
 import type { CompositionProject } from './project.model';
 import {
   ARRANGED_PARTS, DEFAULT_ARPEGGIO_SETTINGS, DEFAULT_ARRANGEMENT, DEFAULT_BASS_SETTINGS, DEFAULT_CHORD_SETTINGS,
-  DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, SECTION_TYPES,
+  DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, SECTION_TYPES,
 } from './project.model';
 
-const STORAGE_KEY = 'vibecomposer.project.v5';
-const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
+const STORAGE_KEY = 'vibecomposer.project.v6';
+const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v1';
 const MAX_HISTORY = 100;
 const MAX_ARRANGEMENT_SECTIONS = 32;
@@ -64,10 +64,14 @@ export class ProjectService {
       const match = /^section-(\d+)$/.exec(section.id);
       return match ? Math.max(maximum, Number(match[1])) : maximum;
     }, 0) + 1;
-    const template = sections[Math.max(0, Math.min(sections.length - 1, afterIndex))]
-      ?? DEFAULT_ARRANGEMENT[1];
     const next = [...sections];
-    next.splice(insertAt, 0, { ...template, id: `section-${nextId}`, type, measures: 4, parts: { ...template.parts } });
+    next.splice(insertAt, 0, {
+      id: `section-${nextId}`,
+      type,
+      measures: 4,
+      parts: { bass: true, chords: true, arpeggio: true, drums: true },
+      partChances: { ...DEFAULT_SECTION_PART_CHANCES[type] },
+    });
     this.commit({ ...this.state(), arrangement: next });
   }
 
@@ -122,6 +126,20 @@ export class ProjectService {
     }
     const next = [...sections];
     next[index] = { ...sections[index], parts: { ...sections[index].parts, [part]: included } };
+    this.commit({ ...this.state(), arrangement: next });
+  }
+
+  setSectionPartChance(index: number, part: ArrangedPart, chancePercent: number): void {
+    const sections = this.state().arrangement;
+    if (!Number.isInteger(index) || index < 0 || index >= sections.length || !ARRANGED_PARTS.includes(part)
+        || !Number.isInteger(chancePercent) || chancePercent < 0 || chancePercent > 100) {
+      return;
+    }
+    const next = [...sections];
+    next[index] = {
+      ...sections[index],
+      partChances: { ...sections[index].partChances, [part]: chancePercent },
+    };
     this.commit({ ...this.state(), arrangement: next });
   }
 
@@ -236,7 +254,8 @@ export class ProjectService {
     const project = value as Omit<Partial<CompositionProject>, 'schemaVersion' | 'bass' | 'chords' | 'arpeggio' | 'drums'>
       & { schemaVersion?: number; bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown };
     const validBase = (project.schemaVersion === 1 || project.schemaVersion === 2
-      || project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5)
+      || project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
+      || project.schemaVersion === 6)
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -252,18 +271,19 @@ export class ProjectService {
 
     const bass = project.schemaVersion === 1 ? DEFAULT_BASS_SETTINGS : this.decodeBass(project.bass);
     const chords = project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
+      || project.schemaVersion === 6
       ? this.decodeChords(project.chords) : DEFAULT_CHORD_SETTINGS;
-    const arpeggio = project.schemaVersion === 4 || project.schemaVersion === 5
+    const arpeggio = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
       ? this.decodeArpeggio(project.arpeggio) : DEFAULT_ARPEGGIO_SETTINGS;
-    const drums = project.schemaVersion === 4 || project.schemaVersion === 5
+    const drums = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
       ? this.decodeDrums(project.drums) : DEFAULT_DRUM_SETTINGS;
-    const arrangement = project.schemaVersion === 5
+    const arrangement = project.schemaVersion === 5 || project.schemaVersion === 6
       ? this.decodeArrangement(project.arrangement) : this.copyDefaultArrangement();
     if (!bass || !chords || !arpeggio || !drums || !arrangement) {
       return undefined;
     }
     return {
-      schemaVersion: 5,
+      schemaVersion: 6,
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
@@ -291,10 +311,14 @@ export class ProjectService {
       }
       const section = candidate as Partial<ArrangementSection>;
       const parts = section.parts as Partial<Record<ArrangedPart, unknown>> | undefined;
+      const sectionType = section.type as SectionType;
+      const chances = section.partChances as Partial<Record<ArrangedPart, unknown>> | undefined;
       if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
-          || !SECTION_TYPES.includes(section.type as SectionType)
+          || !SECTION_TYPES.includes(sectionType)
           || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
-          || !parts || ARRANGED_PARTS.some((part) => typeof parts[part] !== 'boolean')) {
+          || !parts || ARRANGED_PARTS.some((part) => typeof parts[part] !== 'boolean')
+          || (chances !== undefined && ARRANGED_PARTS.some((part) => !Number.isInteger(chances[part])
+            || (chances[part] as number) < 0 || (chances[part] as number) > 100))) {
         return undefined;
       }
       ids.add(section.id);
@@ -304,11 +328,17 @@ export class ProjectService {
       }
       sections.push({
         id: section.id,
-        type: section.type!,
+        type: sectionType,
         measures: section.measures!,
         parts: {
           bass: parts.bass as boolean, chords: parts.chords as boolean,
           arpeggio: parts.arpeggio as boolean, drums: parts.drums as boolean,
+        },
+        partChances: {
+          bass: (chances?.bass as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].bass,
+          chords: (chances?.chords as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].chords,
+          arpeggio: (chances?.arpeggio as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].arpeggio,
+          drums: (chances?.drums as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].drums,
         },
       });
     }
@@ -384,7 +414,11 @@ export class ProjectService {
   }
 
   private copyDefaultArrangement(): ArrangementSection[] {
-    return DEFAULT_ARRANGEMENT.map((section) => ({ ...section, parts: { ...section.parts } }));
+    return DEFAULT_ARRANGEMENT.map((section) => ({
+      ...section,
+      parts: { ...section.parts },
+      partChances: { ...section.partChances },
+    }));
   }
 
   private isProject(value: unknown): value is CompositionProject {
@@ -392,7 +426,7 @@ export class ProjectService {
       return false;
     }
     const project = value as Partial<CompositionProject>;
-    return project.schemaVersion === 5
+    return project.schemaVersion === 6
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')

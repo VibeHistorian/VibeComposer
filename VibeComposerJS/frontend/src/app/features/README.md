@@ -22,5 +22,5 @@ These are workspaces, not a forced wizard: users can move between them at any ti
 
 ## Visuals
 
-- rough visual design available in frontend/UI_design_moodboard.png
+- rough visual design available in frontend/UI_design_moodboard_split_parts.png
 - the **real** layout will differ (using the actual parameters and features available from the desktop VibeComposer), but the new modern styling should be approximated

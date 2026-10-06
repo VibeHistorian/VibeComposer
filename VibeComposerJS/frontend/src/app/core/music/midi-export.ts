@@ -2,6 +2,7 @@ import { Midi } from '@tonejs/midi';
 import type { CompositionProject } from '../project/project.model';
 import type { ArrangedPart } from '../project/project.model';
 import { generateArpeggio } from './arpeggio-generator';
+import { shouldGeneratePartInSection } from './arrangement-generator';
 import { generateBassline } from './bass-generator';
 import { generateChordPart } from './chord-generator';
 import { generateDrumPart } from './drum-generator';
@@ -90,8 +91,9 @@ function layOutPhrase<Event extends { readonly startBeat: number }>(
   const result: Array<Event & { readonly startBeat: number }> = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
+    const partEnters = shouldGeneratePartInSection(BigInt(project.seed), section, part);
     for (let measure = 0; measure < section.measures; measure++) {
-      if (section.parts[part]) {
+      if (partEnters) {
         const sourceMeasure = measure % project.progression.length;
         const sourceStartBeat = sourceMeasure * 4;
         const sourceEndBeat = sourceStartBeat + 4;

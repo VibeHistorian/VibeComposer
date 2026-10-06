@@ -41,7 +41,9 @@
             <span class="section-measures">{{ section.measures }} {{ section.measures === 1 ? 'BAR' : 'BARS' }}</span>
             <span class="section-parts" aria-hidden="true">
               @for (part of partOptions; track part.key) {
-                <i [class]="part.color" [class.inactive]="!section.parts[part.key]"></i>
+                <i [class]="part.color" [class.inactive]="!section.parts[part.key]"
+                   [style.opacity]="partWillPlay(section, part.key) ? 1 : 0.18"
+                   [attr.title]="part.label + ': ' + partChanceLabel(section, part.key)"></i>
               }
             </span>
           </button>
@@ -87,10 +89,19 @@
       <p class="field-label part-label">Parts in this section</p>
       <div class="part-list">
         @for (part of partOptions; track part.key) {
-          <label class="part-toggle">
-            <span class="part-name"><i class="legend-dot" [class]="part.color"></i>{{ part.label }}</span>
-            <input type="checkbox" [checked]="selectedSection().parts[part.key]" (change)="togglePart(part.key, $event)" />
-          </label>
+          <div class="part-control">
+            <label class="part-toggle">
+              <span class="part-name"><i class="legend-dot" [class]="part.color"></i>{{ part.label }}</span>
+              <input type="checkbox" [checked]="selectedSection().parts[part.key]" (change)="togglePart(part.key, $event)" />
+            </label>
+            <label class="chance-control">
+              <span class="visually-hidden">{{ part.label }} entrance chance</span>
+              <input type="range" min="0" max="100" step="1"
+                     [value]="selectedSection().partChances[part.key]"
+                     (change)="updatePartChance(part.key, $event)" />
+              <output>{{ selectedSection().partChances[part.key] }}%</output>
+            </label>
+          </div>
         }
       </div>
 

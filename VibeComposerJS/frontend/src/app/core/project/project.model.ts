@@ -16,6 +16,8 @@ export interface ArrangementSection {
   readonly type: SectionType;
   readonly measures: number;
   readonly parts: Readonly<Record<ArrangedPart, boolean>>;
+  /** Legacy Section part chance percentages for bass, chords, arpeggio, and drums. */
+  readonly partChances: Readonly<Record<ArrangedPart, number>>;
 }
 
 export interface BassSettings {
@@ -42,7 +44,7 @@ export interface DrumSettings {
 }
 
 export interface CompositionProject {
-  readonly schemaVersion: 5;
+  readonly schemaVersion: 6;
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
@@ -72,13 +74,41 @@ const ALL_PARTS: Readonly<Record<ArrangedPart, boolean>> = {
   drums: true,
 };
 
+/** Default role chances from Arrangement.defaultSections in the Java application. */
+export const DEFAULT_SECTION_PART_CHANCES: Readonly<Record<SectionType, Readonly<Record<ArrangedPart, number>>>> = {
+  INTRO: { bass: 10, chords: 40, arpeggio: 25, drums: 20 },
+  VERSE1: { bass: 60, chords: 30, arpeggio: 25, drums: 40 },
+  VERSE2: { bass: 60, chords: 40, arpeggio: 50, drums: 50 },
+  VERSE3: { bass: 80, chords: 40, arpeggio: 70, drums: 60 },
+  CHORUS1: { bass: 90, chords: 50, arpeggio: 35, drums: 60 },
+  CHORUS2: { bass: 100, chords: 60, arpeggio: 50, drums: 70 },
+  HALF_CHORUS: { bass: 100, chords: 60, arpeggio: 50, drums: 80 },
+  BREAKDOWN: { bass: 60, chords: 60, arpeggio: 25, drums: 40 },
+  CHILL: { bass: 30, chords: 70, arpeggio: 70, drums: 10 },
+  BUILDUP1: { bass: 40, chords: 10, arpeggio: 20, drums: 70 },
+  BUILDUP2: { bass: 60, chords: 20, arpeggio: 40, drums: 90 },
+  CHORUS3: { bass: 100, chords: 80, arpeggio: 80, drums: 85 },
+  CLIMAX: { bass: 100, chords: 100, arpeggio: 100, drums: 100 },
+  OUTRO: { bass: 70, chords: 60, arpeggio: 40, drums: 10 },
+};
+
+function defaultSection(id: string, type: SectionType, measures: number): ArrangementSection {
+  return {
+    id,
+    type,
+    measures,
+    parts: { ...ALL_PARTS },
+    partChances: { ...DEFAULT_SECTION_PART_CHANCES[type] },
+  };
+}
+
 export const DEFAULT_ARRANGEMENT: readonly ArrangementSection[] = [
-  { id: 'section-1', type: 'INTRO', measures: 2, parts: { ...ALL_PARTS, arpeggio: false, drums: false } },
-  { id: 'section-2', type: 'VERSE1', measures: 4, parts: { ...ALL_PARTS, arpeggio: false } },
-  { id: 'section-3', type: 'CHORUS1', measures: 4, parts: ALL_PARTS },
-  { id: 'section-4', type: 'VERSE2', measures: 4, parts: { ...ALL_PARTS, arpeggio: false } },
-  { id: 'section-5', type: 'CHORUS2', measures: 4, parts: ALL_PARTS },
-  { id: 'section-6', type: 'OUTRO', measures: 2, parts: { ...ALL_PARTS, arpeggio: false, drums: false } },
+  defaultSection('section-1', 'INTRO', 2),
+  defaultSection('section-2', 'VERSE1', 4),
+  defaultSection('section-3', 'CHORUS1', 4),
+  defaultSection('section-4', 'VERSE2', 4),
+  defaultSection('section-5', 'CHORUS2', 4),
+  defaultSection('section-6', 'OUTRO', 2),
 ];
 
 export const DEFAULT_BASS_SETTINGS: BassSettings = {
@@ -104,7 +134,7 @@ export const DEFAULT_DRUM_SETTINGS: DrumSettings = {
 };
 
 export const DEFAULT_PROJECT: CompositionProject = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',

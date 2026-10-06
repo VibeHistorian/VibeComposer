@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type { ArrangedPart, SectionType } from '../../core/project/project.model';
+import type { ArrangementSection } from '../../core/project/project.model';
 import { SECTION_TYPES } from '../../core/project/project.model';
+import { shouldGeneratePartInSection } from '../../core/music/arrangement-generator';
 import { ProjectService } from '../../core/project/project.service';
 
 @Component({
@@ -71,6 +73,18 @@ export class ArrangeWorkspaceComponent {
 
   togglePart(part: ArrangedPart, event: Event): void {
     this.projects.setSectionPart(this.selectedIndex(), part, (event.target as HTMLInputElement).checked);
+  }
+
+  updatePartChance(part: ArrangedPart, event: Event): void {
+    this.projects.setSectionPartChance(this.selectedIndex(), part, Number((event.target as HTMLInputElement).value));
+  }
+
+  partWillPlay(section: ArrangementSection, part: ArrangedPart): boolean {
+    return shouldGeneratePartInSection(BigInt(this.project().seed), section, part);
+  }
+
+  partChanceLabel(section: ArrangementSection, part: ArrangedPart): string {
+    return `${section.partChances[part]}% chance`;
   }
 
   sectionLabel(type: SectionType): string {

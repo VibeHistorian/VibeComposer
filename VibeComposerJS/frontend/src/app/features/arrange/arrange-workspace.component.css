@@ -63,11 +63,16 @@ button:disabled { opacity: .35; cursor: default; }
 .field-help { margin: 7px 0 0; color: #777a70; font-size: 9px; line-height: 1.5; }
 .part-divider { height: 1px; margin: 17px 0; background: var(--line); }
 .part-label { margin: 0 0 6px; }
-.part-list { display: grid; gap: 2px; }
-.part-toggle { min-height: 34px; display: flex; align-items: center; justify-content: space-between; color: #d1d2c9; font-size: 10px; cursor: pointer; }
+.part-list { display: grid; gap: 8px; }
+.part-control { padding: 3px 0; }
+.part-toggle { min-height: 26px; display: flex; align-items: center; justify-content: space-between; color: #d1d2c9; font-size: 10px; cursor: pointer; }
 .part-name { display: inline-flex; align-items: center; gap: 8px; }
 .part-toggle .legend-dot { width: 8px; height: 8px; }
 .part-toggle input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
+.chance-control { display: flex; align-items: center; gap: 9px; padding-left: 16px; }
+.chance-control input { width: 100%; height: 18px; margin: 0; accent-color: var(--accent); }
+.chance-control output { min-width: 31px; color: var(--accent); text-align: right; font: 8px 'DM Mono', monospace; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .section-actions { margin-top: 18px; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 7px; border-top: 1px solid var(--line); }
 .move-actions { display: flex; gap: 5px; margin-right: auto; }
 .secondary-button, .remove-button { min-height: 31px; padding: 0 9px; border: 1px solid #3a3d34; border-radius: 6px; background: #1c1e19; color: #afb1a6; font-size: 9px; }

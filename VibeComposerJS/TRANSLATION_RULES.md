@@ -2,6 +2,8 @@
 
 These rules guide the translation of VibeComposer's generation functionality into the TypeScript and Angular application. They are a starting point and can be refined as the rewrite progresses.
 
+0. **The Angular translation project is in a buildout stage** - it's OK for there to be breaking changes / compatibility of any loaded files is not required until the finishing touches are being laid down.
+
 1. **Do not port legacy melody generation or its controls.** Treat the legacy melody generator and its associated settings as out of scope for the rewrite.
 
 2. **Match Java's seeded random behavior.** → Use the project's `java-random.ts`.
