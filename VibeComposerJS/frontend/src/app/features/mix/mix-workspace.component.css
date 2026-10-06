@@ -37,9 +37,9 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .channel-heading { min-height: 45px; justify-content: space-between; gap: 8px; }
 .channel-identity { min-width: 0; gap: 9px; }
 .role-mark { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--surface-accent); color: var(--accent-primary); font-size: 12px; font-weight: 700; }
-.role-mark.chords { border-color: var(--border-blue); background: var(--surface-blue); color: var(--role-chords-strong); }
-.role-mark.arpeggio { border-color: var(--border-violet); background: var(--surface-violet); color: var(--role-arpeggio-strong); }
-.role-mark.drums { border-color: var(--border-warm); background: var(--surface-warm); color: var(--color-warning); }
+.role-mark.chords { border-color: var(--role-chords-border); background: var(--role-chords-surface); color: var(--role-chords-strong); }
+.role-mark.arpeggio { border-color: var(--role-arpeggio-border); background: var(--role-arpeggio-surface); color: var(--role-arpeggio-strong); }
+.role-mark.drums { border-color: var(--role-drum-border); background: var(--role-drum-surface); color: var(--role-drums); }
 .channel-identity h2 { margin: 0 0 4px; color: var(--text-primary); font-size: 13px; font-weight: 600; }
 .channel-identity p { margin: 0; color: var(--text-subtle); font-size: 8px; white-space: nowrap; }
 .channel-state { flex: 0 0 auto; gap: 5px; color: var(--accent-hover); font: 7px var(--font-mono); letter-spacing: .05em; }
