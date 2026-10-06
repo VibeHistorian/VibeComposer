@@ -63,7 +63,7 @@
         <p class="editor-help">Click a cell to add or remove a hit. The edited drum phrase is used in MIDI export.</p>
       } @else {
         <div class="roll-toolbar">
-          <span class="roll-hint">Select a note to change its pitch, timing, length, or velocity.</span>
+          <span class="roll-hint">Drag notes to change pitch and timing; drag the right edge to change length.</span>
           <button type="button" class="primary-button" (click)="addNote()" [disabled]="noteCount() >= 2048">＋ Add note</button>
         </div>
         <div class="roll-scroll">
@@ -81,16 +81,21 @@
                   </span>
                 }
               </div>
-              <div class="note-lane" [style.height.px]="laneHeight()" [style.--bar-count]="project().progression.length">
-                @for (note of notes(); track note.id) {
+              <div #noteLane class="note-lane" [style.height.px]="laneHeight()" [style.--bar-count]="project().progression.length"
+                (pointermove)="moveNotePointer($event)" (pointerup)="finishNotePointer($event)"
+                (pointercancel)="cancelNotePointer($event)" (lostpointercapture)="cancelNotePointer($event)">
+                @for (note of displayNotes(); track note.id) {
                   <button type="button" class="note-block" [class.selected]="selectedNoteId() === note.id"
                     [class.bass]="selectedPart() === 'bass'" [class.chords]="selectedPart() === 'chords'"
                     [class.arpeggio]="selectedPart() === 'arpeggio'"
                     [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.px]="noteTop(note)"
                     [attr.title]="noteName(note.midi) + ' · beat ' + (note.startBeat + 1)"
                     [attr.aria-label]="noteName(note.midi) + ', beat ' + (note.startBeat + 1)"
-                    [attr.aria-pressed]="selectedNoteId() === note.id" (click)="selectNote(note.id)">
-                    <span>{{ noteName(note.midi) }}</span>
+                    [attr.aria-pressed]="selectedNoteId() === note.id"
+                    (pointerdown)="beginNotePointer($event, note, 'move', noteLane)" (click)="selectNote(note.id)">
+                    <span class="note-label">{{ noteName(note.midi) }}</span>
+                    <span class="resize-handle" aria-hidden="true"
+                      (pointerdown)="$event.stopPropagation(); beginNotePointer($event, note, 'resize', noteLane)"></span>
                   </button>
                 }
                 @if (notes().length === 0) {

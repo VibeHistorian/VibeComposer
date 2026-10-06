@@ -55,11 +55,13 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .key-row.octave-key { border-bottom-color: var(--text-disabled); }
 .key-row i { font-style: normal; }
 .note-lane { position: relative; flex: 1 0 0; overflow: hidden; background-color: var(--surface-input); background-image: linear-gradient(to bottom, transparent 11px, var(--surface-hover) 11px), linear-gradient(to right, var(--border-grid) 1px, transparent 1px); background-size: 100% 12px, calc(100% / var(--bar-count)) 100%; }
-.note-block { position: absolute; z-index: 1; height: 10px; min-width: 4px; padding: 0 3px; overflow: hidden; border: 1px solid var(--role-bass-strong); border-radius: var(--radius-micro); background: var(--role-bass-dark); color: var(--role-bass-text); cursor: pointer; text-align: left; transform: translateY(1px); }
+.note-block { position: absolute; z-index: 1; height: 10px; min-width: 4px; padding: 0 8px 0 3px; overflow: hidden; border: 1px solid var(--role-bass-strong); border-radius: var(--radius-micro); background: var(--role-bass-dark); color: var(--role-bass-text); cursor: grab; text-align: left; touch-action: none; transform: translateY(1px); user-select: none; }
+.note-block:active { cursor: grabbing; }
 .note-block.chords { border-color: var(--role-chords-border); background: var(--role-chords-dark); }
 .note-block.arpeggio { border-color: var(--role-arpeggio-border); background: var(--role-arpeggio-dark); }
 .note-block.selected { z-index: 2; outline: 2px solid var(--text-primary); outline-offset: 1px; }
-.note-block span { display: block; overflow: hidden; font: 7px var(--font-mono); line-height: 8px; white-space: nowrap; }
+.note-label { display: block; overflow: hidden; font: 7px var(--font-mono); line-height: 8px; white-space: nowrap; }
+.resize-handle { position: absolute; top: 0; right: 0; bottom: 0; width: 6px; border-left: 1px solid var(--text-primary); cursor: ew-resize; opacity: .7; }
 .empty-phrase { position: absolute; top: 42%; left: 0; width: 100%; color: var(--text-subtle); font-size: 11px; text-align: center; }
 .editor-help { margin: 12px 0 0; color: var(--text-subtle); font-size: 9px; line-height: 1.6; }
 
