@@ -4,10 +4,11 @@ import { getAppInfo } from './core/wails/wails-api';
 import type { AppInfo } from './core/wails/wails-api';
 import { ProjectService } from './core/project/project.service';
 import { TransportDockComponent } from './shared/transport-dock.component';
+import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
 
 @Component({
   selector: 'vc-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, TransportDockComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, TransportDockComponent, WorkspaceCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })

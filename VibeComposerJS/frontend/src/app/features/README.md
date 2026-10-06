@@ -1,6 +1,6 @@
 # Feature areas
 
-Organize the main experience into four workspaces. Each feature owns its screen behavior and music-domain logic; the app shell provides navigation and persistent project controls.
+Organize the main experience into four workspaces. Each feature owns its screen behavior and music-domain logic; the app shell provides navigation, persistent project controls, the arrangement overview, and the all-part score preview.
 
 ## Workspaces
 
@@ -9,7 +9,7 @@ Organize the main experience into four workspaces. Each feature owns its screen 
 - **Edit** — The piano roll edits generated bass, chord, and arpeggio phrases; the drum grid edits one progression bar at a time. Phrase edits are saved with the project, included in MIDI export, and can be restored to the seeded generator output.
 - **Mix** — Each generated part has General MIDI instrument selection, level, pan, mute, and solo controls. These settings are saved with the project and written into MIDI export; browser preview and loop controls live in the shared transport dock.
 
-These are workspaces, not a forced wizard: users can move between them at any time. Keep the central canvas focused on the current task, give each workspace one primary action, and avoid showing every domain's controls simultaneously. A chord picker should open in the context of the selected progression slot; offer scale-aware choices and a way to browse the full chord collection without making a large chord matrix the default view.
+These are workspaces, not a forced wizard: users can move between them at any time while the shared song canvas remains visible.
 
 ## Angular ownership
 
