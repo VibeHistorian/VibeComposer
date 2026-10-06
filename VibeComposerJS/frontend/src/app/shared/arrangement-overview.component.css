@@ -1,0 +1,53 @@
+:host { min-width: 0; min-height: 0; display: block; }
+.arrangement-panel { min-width: 0; min-height: 0; height: 100%; padding: 13px 14px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
+.canvas-heading { min-height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.canvas-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 13px; font-weight: 600; letter-spacing: -.025em; }
+.eyebrow { margin: 0; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .11em; }
+.canvas-actions { display: flex; align-items: center; gap: 8px; }
+.measure-total { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
+.mixer-open-button { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 16px; }
+.mixer-open-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
+.overview-scroll { min-height: 0; margin-top: 8px; flex: 1 1 auto; overflow: auto; }
+.overview-grid { min-height: 100%; display: flex; flex-direction: column; }
+.overview-ruler, .overview-group-row { min-width: 0; display: grid; grid-template-columns: 88px minmax(0, 1fr); }
+.overview-ruler { position: sticky; z-index: 3; top: 0; min-height: 38px; border-bottom: 1px solid var(--border-subtle); background: var(--surface-base); }
+.overview-corner { padding: 0 6px 7px; display: flex; align-items: end; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; }
+.overview-ruler-sections, .overview-group-cells { min-width: 0; display: flex; }
+.overview-group-cells { position: relative; }
+.overview-section-heading { min-width: 170px; padding: 0 7px 6px; flex: 1 1 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: end; overflow: hidden; border: 0; border-left: 1px solid var(--border-subtle); background: transparent; color: var(--text-secondary); cursor: pointer; text-align: left; }
+.overview-section-heading strong { max-width: 100%; overflow: hidden; color: var(--text-primary); font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; text-transform: capitalize; }
+.overview-section-heading span { margin-top: 2px; color: var(--text-muted); font: 10px var(--font-mono); white-space: nowrap; }
+.overview-section-heading.active { background: var(--surface-accent); }
+.overview-group-row { min-height: 65px; flex: 1 0 65px; border-bottom: 1px solid var(--border-subtle); }
+.overview-group-label { min-width: 0; padding: 0 8px; display: flex; align-items: center; gap: 7px; border: 0; border-right: 1px solid var(--border-subtle); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; text-align: left; font-size: 10px; }
+.overview-group-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.overview-group-label.selected { color: var(--text-primary); background: var(--surface-accent); }
+.role-dot { width: 8px; height: 8px; flex: 0 0 auto; display: inline-block; border-radius: 50%; }
+.role-dot.bass { background: var(--role-bass); }.role-dot.chords { background: var(--role-chords); }.role-dot.arpeggio { background: var(--role-arpeggio); }.role-dot.drums { background: var(--role-drums); }
+.overview-cell { min-width: 170px; min-height: 0; padding: 5px 5px 4px; flex: 1 1 0; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; border-left: 1px solid var(--surface-base); cursor: pointer; }
+.overview-cell.active { box-shadow: inset 0 0 0 1px var(--accent-primary); }
+.overview-playhead { position: absolute; z-index: 2; top: 0; bottom: 0; width: 1px; background: var(--accent-primary); box-shadow: 0 0 4px var(--accent-glow); pointer-events: none; }
+.overview-group-row.bass .overview-cell { background-color: var(--role-bass-surface); }
+.overview-group-row.chords .overview-cell { background-color: var(--role-chords-surface); }
+.overview-group-row.arpeggio .overview-cell { background-color: var(--role-arpeggio-surface); }
+.overview-group-row.drums .overview-cell { background-color: var(--role-drum-surface); }
+.score-preview { position: relative; min-height: 0; flex: 1 1 auto; overflow: hidden; background-image: linear-gradient(to right, color-mix(in srgb, var(--border-subtle) 22%, transparent) 1px, transparent 1px); background-size: 25% 100%; }
+.score-preview-note { position: absolute; height: 2px; min-width: 1px; display: block; border-radius: 2px; transform: translateY(-50%); }
+.overview-group-row.bass .score-preview-note { background: var(--role-bass-strong); box-shadow: 0 0 3px var(--role-bass-glow); }
+.overview-group-row.chords .score-preview-note { background: var(--role-chords-strong); box-shadow: 0 0 3px var(--role-chords-glow); }
+.overview-group-row.arpeggio .score-preview-note { background: var(--role-arpeggio-strong); box-shadow: 0 0 3px var(--role-arpeggio-glow); }
+.overview-group-row.drums .score-preview-note { background: var(--role-drums); box-shadow: 0 0 3px var(--role-drum-glow, #f2bb3866); }
+.part-toggles { min-height: 17px; position: relative; padding: 1px 1px 2px; display: flex; align-items: center; justify-content: center; gap: 3px; }
+.part-toggle { width: 16px; height: 16px; position: relative; padding: 0 1px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--surface-button); color: var(--text-muted); cursor: pointer; font: 9px var(--font-mono); line-height: 14px; }
+.part-toggle::after { content: ''; position: absolute; bottom: -2px; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--text-faint); opacity: .42; pointer-events: none; transform: translateX(-50%); }
+.part-toggle.present { border-color: var(--role-bass-border); background: var(--role-bass-surface); color: var(--role-bass-text); }
+.overview-group-row.chords .part-toggle.present { border-color: var(--role-chords-border); background: var(--role-chords-surface); color: var(--role-chords-text); }
+.overview-group-row.arpeggio .part-toggle.present { border-color: var(--role-arpeggio-border); background: var(--role-arpeggio-surface); color: var(--role-arpeggio-text); }
+.overview-group-row.drums .part-toggle.present { border-color: var(--role-drum-border); background: var(--role-drum-surface); color: var(--role-drums); }
+.part-toggle.absent { opacity: .48; }
+.part-toggle:hover, .part-toggle:focus-visible { z-index: 1; border-color: var(--accent-primary); outline: none; filter: brightness(1.16); }
+@media (max-width: 680px) {
+  .arrangement-panel { min-height: 345px; padding: 11px; }
+  .overview-ruler, .overview-group-row { grid-template-columns: 72px minmax(0, 1fr); }
+  .overview-group-row { min-height: 58px; flex-basis: 58px; }
+}

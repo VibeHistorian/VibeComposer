@@ -69,44 +69,11 @@
     @if (editing()) {
       <vc-edit-workspace [initialNoteId]="editingNoteId()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     } @else {
-      <section class="arrangement-panel" aria-labelledby="arrangement-title">
-        <header class="canvas-heading">
-          <div><p class="eyebrow">SONG OVERVIEW</p><h2 id="arrangement-title">Arrangement</h2></div>
-          <div class="canvas-actions">
-            <span class="measure-total">{{ totalMeasures() }} BARS</span>
-            <button type="button" class="mixer-open-button" (click)="openMixer()" aria-label="Open mixer" title="Mixer">☷</button>
-          </div>
-        </header>
-
-        <div class="timeline-scroll">
-          <div class="timeline-ruler">
-            <span class="row-label">TRACK</span>
-            <div class="timeline-content ruler-sections">
-              @for (item of timelineSections(); track item.section.id) {
-                <button type="button" class="section-ruler-block" [style.width.%]="item.widthPercent"
-                  [class.active]="selectedSectionId() === item.section.id" (click)="selectSection(item.section, selectedTrackId())">
-                  <strong>{{ sectionLabel(item.section.type) }}</strong><span>{{ item.startMeasure.toString().padStart(2, '0') }}–{{ (item.startMeasure + item.section.measures - 1).toString().padStart(2, '0') }}</span>
-                </button>
-              }
-            </div>
-          </div>
-
-          @for (track of arrangedTracks(); track track.id) {
-            <div class="arrangement-row" [class.selected]="selectedTrackId() === track.id" [class.row-hidden]="!isVisible(track.id)">
-              <button type="button" class="row-label" (click)="selectTrack(track.id)"><i class="role-dot" [class]="track.role"></i>{{ track.name }}</button>
-              <div class="timeline-content arrangement-lane">
-                @for (item of timelineSections(); track item.section.id) {
-                  <button type="button" class="arrangement-block" [class]="'arrangement-block ' + track.role"
-                    [class.off]="!sectionPlays(item.section, track)" [class.active]="selectedSectionId() === item.section.id"
-                    [style.width.%]="item.widthPercent" [attr.aria-label]="track.name + ', ' + sectionLabel(item.section.type) + ', bars ' + item.startMeasure + ' to ' + (item.startMeasure + item.section.measures - 1)"
-                    (click)="selectSection(item.section, track.id)"></button>
-                }
-                <i class="timeline-playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
-              </div>
-            </div>
-          }
-        </div>
-      </section>
+      <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
+        [selectedSectionId]="selectedSectionId()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
+        (mixerRequested)="openMixer()" (groupSelected)="selectRole($event)"
+        (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId)"
+        (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.included)" />
 
       <section class="score-panel" aria-label="Song score">
         <div class="score-scroll">

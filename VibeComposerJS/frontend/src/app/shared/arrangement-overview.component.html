@@ -1,0 +1,58 @@
+<section class="arrangement-panel" aria-labelledby="arrangement-title">
+  <header class="canvas-heading">
+    <div><p class="eyebrow">SONG OVERVIEW</p><h2 id="arrangement-title">Arrangement</h2></div>
+    <div class="canvas-actions">
+      <span class="measure-total">{{ totalMeasures() }} BARS</span>
+      <button type="button" class="mixer-open-button" (click)="mixerRequested.emit()" aria-label="Open mixer" title="Mixer">☷</button>
+    </div>
+  </header>
+
+  <div class="overview-scroll">
+    <div class="overview-grid" [style.min-width.px]="minimumWidth()">
+      <div class="overview-ruler">
+        <span class="overview-corner">PART</span>
+        <div class="overview-ruler-sections">
+          @for (item of sections(); track item.section.id) {
+            <button type="button" class="overview-section-heading" [class.active]="selectedSectionId() === item.section.id"
+              [style.flex-basis.%]="item.widthPercent" (click)="selectSection(item.section.id)">
+              <strong>{{ sectionLabel(item.section.type) }}</strong><span>{{ measureLabel(item) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      @for (group of groups(); track group.role) {
+        <div class="overview-group-row" [class]="'overview-group-row ' + group.role">
+          <button type="button" class="overview-group-label" [class.selected]="isGroupSelected(group)"
+            (click)="groupSelected.emit(group.role)">
+            <i class="role-dot" [class]="group.role" aria-hidden="true"></i><span>{{ group.name }}</span>
+          </button>
+          <div class="overview-group-cells">
+            @for (item of sections(); track item.section.id) {
+              <div class="overview-cell" [class.active]="selectedSectionId() === item.section.id"
+                [style.flex-basis.%]="item.widthPercent" (click)="selectSection(item.section.id)"
+                [attr.aria-label]="group.name + ', ' + sectionLabel(item.section.type) + ', bars ' + measureLabel(item)">
+                <div class="score-preview" aria-hidden="true">
+                  @for (note of previewNotes(item.section.id, group.role); track note.id) {
+                    <i class="score-preview-note" [style.left.%]="note.leftPercent" [style.width.%]="note.widthPercent"
+                      [style.top.%]="note.topPercent" [style.opacity]="note.opacity"></i>
+                  }
+                </div>
+                <div class="part-toggles" [class.empty]="group.tracks.length === 0" (click)="$event.stopPropagation()">
+                  @for (track of group.tracks; track track.id; let index = $index) {
+                    <button type="button" class="part-toggle" [class.present]="trackIncluded(item.section, track)"
+                      [class.absent]="!trackIncluded(item.section, track)" [attr.aria-pressed]="trackIncluded(item.section, track)"
+                      [attr.title]="roleName(group.role) + ' track ' + (index + 1) + (trackIncluded(item.section, track) ? ' included' : ' excluded')"
+                      [attr.aria-label]="'Toggle ' + roleName(group.role) + ' track ' + (index + 1) + ' in ' + sectionLabel(item.section.type)"
+                      (click)="toggleTrack(item.section, track)">{{ index + 1 }}</button>
+                  }
+                </div>
+              </div>
+            }
+            <i class="overview-playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>

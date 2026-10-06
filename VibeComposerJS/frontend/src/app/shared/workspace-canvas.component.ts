@@ -6,11 +6,11 @@ import type {
 import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
-import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { generateDiatonicProgression } from '../core/music/progression-generator';
 import { getDiatonicChords, KEYS } from '../core/music/harmony';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
+import { ArrangementOverviewComponent } from './arrangement-overview.component';
 import { CompactKnobComponent } from './compact-knob.component';
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
@@ -51,7 +51,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [CompactKnobComponent, EditWorkspaceComponent, MixWorkspaceComponent],
+  imports: [ArrangementOverviewComponent, CompactKnobComponent, EditWorkspaceComponent, MixWorkspaceComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -168,6 +168,16 @@ export class WorkspaceCanvasComponent {
   selectSection(section: ArrangementSection, trackId: string): void {
     this.selectedSectionId.set(section.id);
     this.workspaceUi.selectTrack(trackId);
+  }
+
+  selectOverviewSection(sectionId: string, trackId: string): void {
+    const section = this.project().arrangement.find((item) => item.id === sectionId);
+    if (section) this.selectSection(section, trackId);
+  }
+
+  toggleArrangementTrack(sectionId: string, trackId: string, included: boolean): void {
+    const index = this.project().arrangement.findIndex((section) => section.id === sectionId);
+    if (index >= 0) this.projects.setSectionTrack(index, trackId, included);
   }
 
   openNoteEditor(note: ScoreNote): void {
@@ -357,10 +367,6 @@ export class WorkspaceCanvasComponent {
     if (!track) return;
     this.projects.updateTrack(trackId, { mix: { [setting]: !track.mix[setting] } });
     this.playback.updateMix(this.project());
-  }
-
-  sectionPlays(section: ArrangementSection, track: TrackRow): boolean {
-    return shouldGenerateTrackInSection(BigInt(this.project().seed), section, track);
   }
 
   noteLeft(note: ScoreNote): number { return note.startBeat / this.totalBeats() * 100; }
