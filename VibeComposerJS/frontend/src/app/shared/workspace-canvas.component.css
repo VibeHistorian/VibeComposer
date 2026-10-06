@@ -68,8 +68,7 @@
 .mixer-open-button { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 16px; }
 .mixer-open-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .arrangement-panel, .score-panel { padding: 13px 14px; overflow: hidden; }
-.measure-total, .score-legend { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
-.score-legend { display: flex; align-items: center; gap: 6px; letter-spacing: 0; text-transform: none; }
+.measure-total { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
 .timeline-scroll, .score-scroll { margin-top: 11px; overflow-x: auto; scrollbar-color: var(--border-default) transparent; }
 .timeline-ruler, .arrangement-row { min-width: 500px; display: grid; grid-template-columns: 72px minmax(0, 1fr); }
 .timeline-ruler { min-height: 31px; border-bottom: 1px solid var(--border-subtle); }
@@ -89,7 +88,7 @@ button.row-label { padding: 0 5px; border: 0; background: transparent; cursor: p
 .arrangement-block.off { opacity: .2; }.arrangement-block.active { outline: 1px solid var(--accent-primary); outline-offset: 1px; }
 .timeline-playhead { position: absolute; z-index: 3; top: 0; bottom: 0; width: 1px; background: var(--accent-primary); box-shadow: 0 0 4px var(--accent-glow); pointer-events: none; }
 .score-panel { display: flex; flex-direction: column; }
-.score-scroll { min-height: 0; flex: 1; display: flex; }
+.score-scroll { min-height: 0; margin-top: 0; flex: 1; display: flex; }
 .score-canvas { min-width: 500px; min-height: 290px; flex: 1; display: flex; flex-direction: column; }
 .score-ruler { min-height: 20px; display: grid; grid-template-columns: 72px minmax(0, 1fr); color: var(--text-muted); font: 10px var(--font-mono); }
 .score-ruler-label { padding: 3px 5px; }
@@ -134,6 +133,7 @@ button.row-label { padding: 0 5px; border: 0; background: transparent; cursor: p
 .velocity-stem.dimmed { filter: saturate(.65); }
 .playhead { position: absolute; z-index: 3; top: 0; bottom: 0; width: 1px; background: var(--accent-primary); box-shadow: 0 0 5px var(--accent-glow); pointer-events: none; }
 .score-footer { padding-top: 6px; display: flex; justify-content: space-between; color: var(--text-faint); font: 10px var(--font-mono); }
+.score-footer > span:nth-child(2) { color: var(--text-muted); }
 
 /* Selection inspector */
 .inspector-heading { align-items: flex-start; }

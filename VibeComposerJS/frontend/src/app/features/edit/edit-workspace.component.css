@@ -10,9 +10,6 @@ h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; letter-spacing: -.06em; }
 .page-copy { margin: 0; color: var(--text-muted); font-size: 12px; }
 .project-actions { display: flex; gap: 8px; }
-.icon-button { width: 34px; height: 34px; border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 18px; }
-.icon-button:disabled { opacity: .35; cursor: default; }
-
 /* Editor and inspector panels */
 .edit-layout { display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 15px; align-items: start; }
 .editor-panel, .inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel-large); background: linear-gradient(145deg, var(--surface-low), var(--surface-base)); }
@@ -45,7 +42,7 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 /* Piano roll */
 .roll-scroll { overflow: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-button); background: var(--surface-input); }
 .roll-canvas { min-width: 690px; }
-.bar-ruler { height: 34px; display: flex; border-bottom: 1px solid var(--border-subtle); background: var(--surface-low); }
+.bar-ruler { height: 34px; padding-left: 49px; display: flex; border-bottom: 1px solid var(--border-subtle); background: var(--surface-low); }
 .bar-ruler span { padding: 0 9px; display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--grid-measure); color: var(--text-secondary); font: 10px var(--font-mono); letter-spacing: .04em; }
 .bar-ruler i { color: var(--text-subtle); font-style: normal; }
 .roll-body { display: flex; min-height: 300px; }
