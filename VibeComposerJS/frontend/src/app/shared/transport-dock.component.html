@@ -1,0 +1,40 @@
+<section class="transport-dock" aria-label="Playback controls">
+  <div class="transport-project">
+    <span class="playback-indicator" [class.playing]="playback.state() === 'playing'" aria-hidden="true"></span>
+    <div>
+      <strong>{{ project().name }}</strong>
+      <span>{{ project().tempoBpm }} BPM</span>
+    </div>
+  </div>
+
+  <div class="transport-actions">
+    <button type="button" class="transport-button stop-button" (click)="stop()" aria-label="Stop" title="Stop">■</button>
+    <button type="button" class="transport-button play-button" (click)="togglePlayback()"
+      [attr.aria-label]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'"
+      [attr.title]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'">
+      @if (playback.state() === 'playing') { <span aria-hidden="true">Ⅱ</span> }
+      @else { <span aria-hidden="true">▶</span> }
+    </button>
+    <button type="button" class="transport-button loop-button" [class.active]="playback.loopEnabled()"
+      [attr.aria-pressed]="playback.loopEnabled()" (click)="toggleLoop()" aria-label="Toggle loop" title="Toggle loop">⟳</button>
+  </div>
+
+  <div class="transport-progress">
+    <div class="position-line">
+      <span>{{ positionText() }}</span>
+      <span>{{ totalMeasures() }} BARS</span>
+    </div>
+    <div class="progress-track" role="progressbar" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100">
+      <span [style.width.%]="progressPercent()"></span>
+    </div>
+  </div>
+
+  <div class="transport-key" aria-label="Current key and scale">
+    <strong>{{ project().key }}</strong>
+    <span>{{ project().scale === 'major' ? 'MAJ' : 'MIN' }}</span>
+  </div>
+
+  @if (playback.error()) {
+    <p class="playback-error" role="status">{{ playback.error() }}</p>
+  }
+</section>

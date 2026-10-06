@@ -1,4 +1,5 @@
 import type { ArrangedPart, CompositionProject, PhraseNote } from '../project/project.model';
+import { shouldGeneratePartInSection } from './arrangement-generator';
 import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';
 import { generateChordPart } from './chord-generator';
@@ -33,4 +34,31 @@ export function generatePhrase(project: CompositionProject, part: ArrangedPart):
 /** Return saved note edits when present, otherwise build the phrase from project settings. */
 export function phraseForProject(project: CompositionProject, part: ArrangedPart): readonly PhraseNote[] {
   return project.editedPhrases[part] ?? generatePhrase(project, part);
+}
+
+/** Repeat a phrase through arrangement sections where its part enters. */
+export function layOutPhrase<Event extends { readonly startBeat: number }>(
+  project: CompositionProject,
+  part: ArrangedPart,
+  phrase: readonly Event[],
+): Array<Event & { readonly startBeat: number }> {
+  const result: Array<Event & { readonly startBeat: number }> = [];
+  let arrangementBeat = 0;
+  for (const section of project.arrangement) {
+    const partEnters = shouldGeneratePartInSection(BigInt(project.seed), section, part);
+    for (let measure = 0; measure < section.measures; measure++) {
+      if (partEnters) {
+        const sourceMeasure = measure % project.progression.length;
+        const sourceStartBeat = sourceMeasure * 4;
+        const sourceEndBeat = sourceStartBeat + 4;
+        for (const event of phrase) {
+          if (event.startBeat >= sourceStartBeat && event.startBeat < sourceEndBeat) {
+            result.push({ ...event, startBeat: arrangementBeat + event.startBeat - sourceStartBeat });
+          }
+        }
+      }
+      arrangementBeat += 4;
+    }
+  }
+  return result;
 }

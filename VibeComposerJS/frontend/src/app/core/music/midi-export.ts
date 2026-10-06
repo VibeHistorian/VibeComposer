@@ -2,8 +2,7 @@ import { Midi } from '@tonejs/midi';
 import type { CompositionProject } from '../project/project.model';
 import type { ArrangedPart, MixChannelSettings } from '../project/project.model';
 import { ARRANGED_PARTS } from '../project/project.model';
-import { shouldGeneratePartInSection } from './arrangement-generator';
-import { phraseForProject } from './phrase';
+import { layOutPhrase, phraseForProject } from './phrase';
 
 /** Serialize the current generated parts to a standard MIDI file byte array. */
 export function generateCompositionMidi(project: CompositionProject): Uint8Array {
@@ -89,31 +88,4 @@ function configureMix(track: ReturnType<Midi['addTrack']>, project: CompositionP
   track.addCC({ number: 10, time: 0, value: Math.round((settings.panPercent + 100) * 127 / 200) / 127 });
   const anySolo = ARRANGED_PARTS.some((candidate) => project.mix[candidate].solo);
   return !settings.muted && (!anySolo || settings.solo);
-}
-
-/** Repeat one generated progression phrase through the arrangement's sections and part entrances. */
-function layOutPhrase<Event extends { readonly startBeat: number }>(
-  project: CompositionProject,
-  part: ArrangedPart,
-  phrase: readonly Event[],
-): Array<Event & { readonly startBeat: number }> {
-  const result: Array<Event & { readonly startBeat: number }> = [];
-  let arrangementBeat = 0;
-  for (const section of project.arrangement) {
-    const partEnters = shouldGeneratePartInSection(BigInt(project.seed), section, part);
-    for (let measure = 0; measure < section.measures; measure++) {
-      if (partEnters) {
-        const sourceMeasure = measure % project.progression.length;
-        const sourceStartBeat = sourceMeasure * 4;
-        const sourceEndBeat = sourceStartBeat + 4;
-        for (const event of phrase) {
-          if (event.startBeat >= sourceStartBeat && event.startBeat < sourceEndBeat) {
-            result.push({ ...event, startBeat: arrangementBeat + event.startBeat - sourceStartBeat });
-          }
-        }
-      }
-      arrangementBeat += 4;
-    }
-  }
-  return result;
 }

@@ -5,6 +5,7 @@ Place reusable presentation components and UI helpers here when multiple feature
 ## Visual conventions
 
 - Use a persistent project header for project actions and a compact key/tempo summary. Use the shared bottom dock for playback and loop controls.
+- Keep the transport dock present across routes; it owns playback buttons and position display while `core/audio` schedules Web Audio events outside Angular rendering.
 - Keep navigation focused on Create, Arrange, Edit, and Mix. Give each workspace a clear heading and one primary action.
 - Let the main canvas occupy the available space. Use a contextual inspector for settings belonging to the selected part, section, note, or track.
 - Show common controls directly; group advanced generation, variation, and project settings under clear expandable headings. Preserve dense grids when they support direct musical editing, as in piano rolls and drum sequencers.

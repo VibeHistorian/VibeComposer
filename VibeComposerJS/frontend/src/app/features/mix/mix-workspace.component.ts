@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
 import { phraseForProject } from '../../core/music/phrase';
 import type { ArrangedPart } from '../../core/project/project.model';
@@ -12,6 +13,7 @@ import { ProjectService } from '../../core/project/project.service';
 })
 export class MixWorkspaceComponent {
   readonly projects = inject(ProjectService);
+  readonly playback = inject(AudioPlaybackService);
   readonly project = this.projects.project;
   readonly parts: ReadonlyArray<{ key: ArrangedPart; label: string; color: string; description: string }> = [
     { key: 'bass', label: 'Bass', color: 'bass', description: 'Low end and pulse' },
@@ -57,6 +59,7 @@ export class MixWorkspaceComponent {
     const program = Number((event.target as HTMLSelectElement).value);
     if (this.instruments.some((instrument) => instrument.program === program)) {
       this.projects.updateMixSettings(part, { program });
+      this.playback.updateMix(this.project());
     }
   }
 
@@ -64,6 +67,7 @@ export class MixWorkspaceComponent {
     const volumePercent = Number((event.target as HTMLInputElement).value);
     if (Number.isInteger(volumePercent) && volumePercent >= 0 && volumePercent <= 100) {
       this.projects.updateMixSettings(part, { volumePercent });
+      this.playback.updateMix(this.project());
     }
   }
 
@@ -71,12 +75,14 @@ export class MixWorkspaceComponent {
     const panPercent = Number((event.target as HTMLInputElement).value);
     if (Number.isInteger(panPercent) && panPercent >= -100 && panPercent <= 100) {
       this.projects.updateMixSettings(part, { panPercent });
+      this.playback.updateMix(this.project());
     }
   }
 
   toggle(part: ArrangedPart, setting: 'muted' | 'solo'): void {
     const current = this.project().mix[part][setting];
     this.projects.updateMixSettings(part, { [setting]: !current });
+    this.playback.updateMix(this.project());
   }
 
   instrumentName(program: number): string {
