@@ -128,9 +128,15 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       arrangementBeat += 4;
     }
   }
-  return track.role === 'bass'
+  const notes = track.role === 'bass'
     ? withBassOctaveInterval(result, track.generatorSettings.octaveInterval)
     : result;
+  if (track.role === 'drums') return notes;
+  const transpose = project.transposeSemitones ?? 0;
+  return transpose === 0 ? notes : notes.map((note) => ({
+    ...note,
+    midi: Math.max(0, Math.min(127, note.midi + transpose)),
+  }));
 }
 
 function withTrackSeed(project: CompositionProject, track: CompositionTrack): CompositionProject {

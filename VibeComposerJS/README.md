@@ -40,8 +40,8 @@ The starter bridge is intentionally small. Add generator operations to Go only w
 
 ## UI organization
 
-Build VibeComposerJS as a focused music workspace instead of keeping every generator, arrangement, and playback control visible at once. The main navigation should lead to four workspaces: **Create**, **Arrange**, **Edit**, and **Mix**. Keep project actions and a compact key/tempo summary in the header, and keep playback and loop controls in a persistent bottom dock.
+Build VibeComposerJS as one persistent music workspace. Keep grouped instrument tracks at left, arrangement and dense score together in the center, selection-aware settings at right, and playback plus editable key, mode, transpose, and tempo in the bottom transport. Primary chord setup sits above Tracks, and a mixer icon opens the mixer popup.
 
-Each workspace should have one clear primary action and a central canvas suited to its task. Put detailed controls in an inspector that responds to the selected part, section, note, or track. Show common settings directly and group less-used generation, variation, and project options under labeled expandable sections. This keeps advanced capabilities available without crowding the working canvas.
+Arrange sections directly in the canvas. Selecting a score note opens the relevant piano roll or drum grid; Apply commits the phrase and returns to arrangement, while Cancel discards the draft. Group selection exposes settings shared by that instrument type, and track selection exposes its local generator and instrument settings.
 
-Use the feature and shared UI READMEs for the proposed workspace contents and Angular ownership boundaries. Preserve useful density in purpose-built editors such as piano rolls and drum grids; simplify surrounding chrome, repeated buttons, and always-visible settings. Apply role colors consistently to tracks and arrangement blocks, with neutral surfaces for the rest of the interface.
+Use the feature and shared UI READMEs for the workspace behavior and Angular ownership boundaries. Preserve useful density in piano rolls and drum grids, use role colors consistently, and use shared theme tokens for the rest of the interface.

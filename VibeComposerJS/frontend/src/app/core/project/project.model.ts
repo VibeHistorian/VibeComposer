@@ -88,6 +88,7 @@ export interface CompositionProject {
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
+  readonly transposeSemitones?: number;
   readonly tempoBpm: number;
   /** Decimal text preserves Java long seeds when JSON is exported or persisted. */
   readonly seed: string;
@@ -198,6 +199,7 @@ export const DEFAULT_PROJECT: CompositionProject = {
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',
+  transposeSemitones: 0,
   tempoBpm: 120,
   seed: '42',
   progression: [1, 5, 6, 4],

@@ -3,7 +3,7 @@
     <span class="playback-indicator" [class.playing]="playback.state() === 'playing'" aria-hidden="true"></span>
     <div>
       <strong>{{ project().name }}</strong>
-      <span>{{ project().tempoBpm }} BPM</span>
+      <span>{{ project().key }} {{ project().scale === 'major' ? 'MAJOR' : 'MINOR' }}</span>
     </div>
   </div>
 
@@ -29,9 +29,17 @@
     </div>
   </div>
 
-  <div class="transport-key" aria-label="Current key and scale">
-    <strong>{{ project().key }}</strong>
-    <span>{{ project().scale === 'major' ? 'MAJ' : 'MIN' }}</span>
+  <div class="transport-globals" aria-label="Global song settings">
+    <label><span>KEY</span><select aria-label="Key" [value]="project().key" (change)="updateKey($event)">
+      @for (key of keys; track key) { <option [value]="key">{{ key }}</option> }
+    </select></label>
+    <label><span>MODE</span><select aria-label="Mode" [value]="project().scale" (change)="updateScale($event)">
+      <option value="major">Major</option><option value="natural-minor">Minor</option>
+    </select></label>
+    <label><span>TRANSPOSE</span><input aria-label="Transpose in semitones" type="number" min="-24" max="24" step="1"
+      [value]="project().transposeSemitones ?? 0" (change)="updateTranspose($event)" /></label>
+    <label><span>TEMPO</span><input aria-label="Tempo in beats per minute" type="number" min="40" max="240" step="1"
+      [value]="project().tempoBpm" (change)="updateTempo($event)" /></label>
   </div>
 
   @if (playback.error()) {

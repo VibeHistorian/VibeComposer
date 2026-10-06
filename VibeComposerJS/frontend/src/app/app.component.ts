@@ -1,22 +1,19 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { getAppInfo } from './core/wails/wails-api';
 import type { AppInfo } from './core/wails/wails-api';
 import { ProjectService } from './core/project/project.service';
 import { TransportDockComponent } from './shared/transport-dock.component';
 import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
-import { WorkspaceUiService } from './shared/workspace-ui.service';
 
 @Component({
   selector: 'vc-root',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, TransportDockComponent, WorkspaceCanvasComponent],
+  imports: [TransportDockComponent, WorkspaceCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit {
   readonly appInfo = signal<AppInfo | null>(null);
   readonly projectMessage = signal('');
-  readonly workspaceUi = inject(WorkspaceUiService);
   private readonly projectService = inject(ProjectService);
   readonly project = this.projectService.project;
 

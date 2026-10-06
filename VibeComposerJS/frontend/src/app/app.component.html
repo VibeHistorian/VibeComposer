@@ -1,16 +1,9 @@
     <div class="app-frame">
       <header class="topbar">
-        <a class="brand" routerLink="/create" aria-label="VibeComposer home">
+        <div class="brand" aria-label="VibeComposer">
           <span class="brand-mark" aria-hidden="true">V</span>
           <span>vibe<span class="brand-light">composer</span></span>
-        </a>
-
-        <nav class="workspace-nav" aria-label="Workspaces">
-          <a routerLink="/create" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="workspaceUi.openTools()">Create</a>
-          <a routerLink="/arrange" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="workspaceUi.openTools()">Arrange</a>
-          <a routerLink="/edit" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="workspaceUi.openTools()">Edit</a>
-          <a routerLink="/mix" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="workspaceUi.openTools()">Mix</a>
-        </nav>
+        </div>
 
         <div class="header-summary">
           <span>{{ project().key }} {{ project().scale === 'major' ? 'major' : 'minor' }}</span>
@@ -34,17 +27,6 @@
       }
 
       <vc-workspace-canvas />
-
-      <section class="workspace-tools-drawer" aria-label="Workspace controls">
-        <button type="button" class="workspace-tools-toggle" [attr.aria-expanded]="workspaceUi.toolsOpen()"
-          aria-controls="workspace-tools-content" (click)="workspaceUi.toggleTools()">
-          <span><b>WORKSPACE TOOLS</b><strong>{{ workspaceUi.toolsOpen() ? 'Hide mode controls' : 'Open mode controls' }}</strong></span>
-          <span class="tools-toggle-icon" aria-hidden="true">{{ workspaceUi.toolsOpen() ? '−' : '＋' }}</span>
-        </button>
-        <div id="workspace-tools-content" class="workspace-tools-content" [hidden]="!workspaceUi.toolsOpen()">
-          <router-outlet />
-        </div>
-      </section>
 
       <vc-transport-dock />
 

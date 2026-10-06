@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
+import { KEYS } from '../core/music/harmony';
 
 @Component({
   selector: 'vc-transport-dock',
@@ -12,6 +13,7 @@ export class TransportDockComponent {
   readonly playback = inject(AudioPlaybackService);
   private readonly projects = inject(ProjectService);
   readonly project = this.projects.project;
+  readonly keys = KEYS;
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly progressPercent = computed(() => {
     const duration = this.playback.durationBeats();
@@ -36,5 +38,25 @@ export class TransportDockComponent {
 
   toggleLoop(): void {
     this.playback.toggleLoop();
+  }
+
+  updateKey(event: Event): void {
+    const key = (event.target as HTMLSelectElement).value;
+    if (KEYS.includes(key)) this.projects.updateSettings({ key });
+  }
+
+  updateScale(event: Event): void {
+    const scale = (event.target as HTMLSelectElement).value;
+    if (scale === 'major' || scale === 'natural-minor') this.projects.updateSettings({ scale });
+  }
+
+  updateTempo(event: Event): void {
+    const tempo = Number((event.target as HTMLInputElement).value);
+    if (Number.isInteger(tempo) && tempo >= 40 && tempo <= 240) this.projects.updateSettings({ tempoBpm: tempo });
+  }
+
+  updateTranspose(event: Event): void {
+    const transpose = Number((event.target as HTMLInputElement).value);
+    if (Number.isInteger(transpose) && transpose >= -24 && transpose <= 24) this.projects.updateSettings({ transposeSemitones: transpose });
   }
 }

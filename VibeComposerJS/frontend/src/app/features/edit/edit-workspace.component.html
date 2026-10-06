@@ -1,13 +1,13 @@
 <main class="edit-workspace">
   <section class="page-heading" aria-labelledby="page-title">
     <div>
-      <p class="eyebrow"><span class="eyebrow-line"></span> EDIT WORKSPACE</p>
-      <h1 id="page-title">Shape the notes.</h1>
-      <p class="page-copy">Edit a generated phrase once and hear that change through every matching section.</p>
+      <p class="eyebrow"><span class="eyebrow-line"></span> PIANO ROLL</p>
+      <h1 id="page-title">{{ selectedTrack().name }}</h1>
+      <p class="page-copy">Changes stay in this edit until you apply them.</p>
     </div>
-    <div class="project-actions" aria-label="Project actions">
-      <button type="button" class="icon-button" [disabled]="!projects.canUndo()" (click)="projects.undo()" aria-label="Undo" title="Undo">↶</button>
-      <button type="button" class="icon-button" [disabled]="!projects.canRedo()" (click)="projects.redo()" aria-label="Redo" title="Redo">↷</button>
+    <div class="project-actions" aria-label="Edit actions">
+      <button type="button" class="icon-button" (click)="cancelChanges()" aria-label="Discard note changes">Cancel</button>
+      <button type="button" class="primary-button" (click)="applyChanges()">Apply</button>
     </div>
   </section>
 
@@ -138,7 +138,7 @@
         </div>
         <button type="button" class="remove-note" (click)="deleteSelected()">Remove note</button>
       } @else {
-        <p class="inspector-copy">Select a note in the piano roll to edit its properties. Changes join the same undo history as project settings.</p>
+        <p class="inspector-copy">Select a note in the piano roll to edit its properties. Applying saves this phrase as one undo step.</p>
       }
 
       @if (isEdited()) {

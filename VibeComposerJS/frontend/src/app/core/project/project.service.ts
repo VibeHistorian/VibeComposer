@@ -50,8 +50,36 @@ export class ProjectService {
     }
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'tempoBpm' | 'seed'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed'>>): void {
+    if (patch.transposeSemitones !== undefined
+        && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;
     this.commit({ ...this.state(), ...patch });
+  }
+
+  updateRoleGeneratorSettings(role: ArrangedPart, patch: Partial<BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>): void {
+    const current = this.state();
+    if (!current.tracks.some((track) => track.role === role)) return;
+    if (role === 'bass') {
+      const bass = { ...current.bass, ...patch } as BassSettings;
+      if (!this.decodeBass(bass)) return;
+      this.commit({ ...current, bass, tracks: current.tracks.map((track) => track.role === role
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as BassSettings } : track) });
+    } else if (role === 'chords') {
+      const chords = { ...current.chords, ...patch } as ChordSettings;
+      if (!this.decodeChords(chords)) return;
+      this.commit({ ...current, chords, tracks: current.tracks.map((track) => track.role === role
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ChordSettings } : track) });
+    } else if (role === 'arpeggio') {
+      const arpeggio = { ...current.arpeggio, ...patch } as ArpeggioSettings;
+      if (!this.decodeArpeggio(arpeggio)) return;
+      this.commit({ ...current, arpeggio, tracks: current.tracks.map((track) => track.role === role
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ArpeggioSettings } : track) });
+    } else {
+      const drums = { ...current.drums, ...patch } as DrumSettings;
+      if (!this.decodeDrums(drums)) return;
+      this.commit({ ...current, drums, tracks: current.tracks.map((track) => track.role === role
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as DrumSettings } : track) });
+    }
   }
 
   updateBassSettings(patch: Partial<BassSettings>): void {
@@ -541,6 +569,7 @@ export class ProjectService {
     const validBase = typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
+      && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
@@ -570,6 +599,7 @@ export class ProjectService {
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
+      transposeSemitones: project.transposeSemitones ?? 0,
       tempoBpm: project.tempoBpm!,
       seed: project.seed!,
       progression: [...project.progression!],
@@ -867,6 +897,7 @@ export class ProjectService {
     return typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
+      && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n

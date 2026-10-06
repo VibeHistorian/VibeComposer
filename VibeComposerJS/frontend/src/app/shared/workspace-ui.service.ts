@@ -1,12 +1,13 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
+import type { ArrangedPart } from '../core/project/project.model';
 import { ProjectService } from '../core/project/project.service';
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceUiService {
   private readonly projects = inject(ProjectService);
-  private readonly expanded = signal(false);
   readonly selectedTrackId = signal('track-bass-1');
-  readonly toolsOpen = this.expanded.asReadonly();
+  readonly selectedRole = signal<ArrangedPart | null>(null);
+  readonly editingNoteId = signal<string | null>(null);
 
   constructor() {
     effect(() => {
@@ -19,13 +20,12 @@ export class WorkspaceUiService {
 
   selectTrack(trackId: string): void {
     this.selectedTrackId.set(trackId);
+    this.selectedRole.set(null);
   }
 
-  openTools(): void {
-    this.expanded.set(true);
-  }
-
-  toggleTools(): void {
-    this.expanded.update((open) => !open);
+  selectRole(role: ArrangedPart): void {
+    this.selectedRole.set(role);
+    const firstTrack = this.projects.project().tracks.find((track) => track.role === role);
+    if (firstTrack) this.selectedTrackId.set(firstTrack.id);
   }
 }

@@ -1,16 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import type {
-  ArpeggioPattern, ArpeggioRate, ArpeggioSettings, ArrangedPart, ArrangementSection, BassRhythm, BassSettings,
+  ArpeggioPattern, ArpeggioRate, ArpeggioSettings, ArrangedPart, ArrangementSection, BassRhythm, BassSettings, SectionType,
   ChordRhythm, ChordSettings, ChordVoicing, CompositionTrack, DrumGroove, DrumSettings, PhraseNote,
 } from '../core/project/project.model';
-import { ARRANGED_PARTS } from '../core/project/project.model';
+import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
+import { generateDiatonicProgression } from '../core/music/progression-generator';
+import { getDiatonicChords, KEYS } from '../core/music/harmony';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { CompactKnobComponent } from './compact-knob.component';
+import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
+import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 
 type TrackRow = CompositionTrack & {
   readonly color: ArrangedPart;
@@ -48,7 +51,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [RouterLink, CompactKnobComponent],
+  imports: [CompactKnobComponent, EditWorkspaceComponent, MixWorkspaceComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -59,6 +62,8 @@ export class WorkspaceCanvasComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly instruments = INSTRUMENTS;
+  readonly keys = KEYS;
+  readonly sectionTypes = SECTION_TYPES;
   readonly midiChannels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly roles = ARRANGED_PARTS.map((role) => ({ role, name: ROLE_NAMES[role] }));
   readonly bassRhythms: ReadonlyArray<{ value: BassRhythm; label: string }> = [
@@ -78,7 +83,12 @@ export class WorkspaceCanvasComponent {
     { value: 'half-time', label: 'Half time' }, { value: 'sparse', label: 'Sparse' },
   ];
   readonly selectedTrackId = this.workspaceUi.selectedTrackId;
+  readonly selectedRole = this.workspaceUi.selectedRole;
+  readonly editingNoteId = this.workspaceUi.editingNoteId;
   readonly selectedSectionId = signal<string | null>(null);
+  readonly editing = signal(false);
+  readonly mixerOpen = signal(false);
+  readonly newSectionType = signal<SectionType>('VERSE1');
   readonly hiddenTracks = signal(new Set<string>());
   readonly collapsedTracks = signal(new Set<string>());
 
@@ -107,6 +117,13 @@ export class WorkspaceCanvasComponent {
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id
     && track.midiChannel === this.selectedTrack().midiChannel));
   readonly selectedSection = computed(() => this.project().arrangement.find((section) => section.id === this.selectedSectionId()) ?? null);
+  readonly selectedSectionIndex = computed(() => this.project().arrangement.findIndex((section) => section.id === this.selectedSectionId()));
+  readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
+  readonly sectionChordDegrees = computed(() => {
+    const section = this.selectedSection();
+    return section ? Array.from({ length: section.measures }, (_, measure) =>
+      section.chordDegrees?.[measure] ?? this.project().progression[measure % this.project().progression.length]) : [];
+  });
   readonly scoreNotes = computed<ScoreNote[]>(() => this.tracks().flatMap((track) => {
     const notes = layOutTrackPhrase(this.project(), track);
     if (notes.length === 0) return [];
@@ -130,9 +147,127 @@ export class WorkspaceCanvasComponent {
     this.selectedSectionId.set(null);
   }
 
+  selectRole(role: ArrangedPart): void {
+    this.workspaceUi.selectRole(role);
+    this.selectedSectionId.set(null);
+  }
+
   selectSection(section: ArrangementSection, trackId: string): void {
     this.selectedSectionId.set(section.id);
     this.workspaceUi.selectTrack(trackId);
+  }
+
+  openNoteEditor(note: ScoreNote): void {
+    this.selectTrack(note.part);
+    this.editingNoteId.set(note.id);
+    this.editing.set(true);
+  }
+
+  closeEditor(): void {
+    this.editing.set(false);
+    this.editingNoteId.set(null);
+  }
+
+  openMixer(): void { this.mixerOpen.set(true); }
+  closeMixer(): void { this.mixerOpen.set(false); }
+
+  changeChord(index: number, event: Event): void {
+    this.projects.setChordDegree(index, Number(this.inputValue(event)));
+  }
+
+  addChord(): void { this.projects.addChord(); }
+  removeChord(index: number): void { this.projects.removeChord(index); }
+
+  generateProgression(): void {
+    this.projects.setProgression(generateDiatonicProgression(BigInt(this.project().seed), this.project().progression.length));
+  }
+
+  updateNewSectionType(event: Event): void {
+    const value = this.inputValue(event) as SectionType;
+    if (SECTION_TYPES.includes(value)) this.newSectionType.set(value);
+  }
+
+  addSection(): void {
+    const index = this.selectedSectionIndex() < 0 ? this.project().arrangement.length - 1 : this.selectedSectionIndex();
+    this.projects.addSection(this.newSectionType(), index);
+    const added = this.project().arrangement[index + 1];
+    if (added) this.selectedSectionId.set(added.id);
+  }
+
+  duplicateSection(): void {
+    const index = this.selectedSectionIndex();
+    if (index < 0) return;
+    this.projects.duplicateSection(index);
+    this.selectedSectionId.set(this.project().arrangement[index + 1]?.id ?? null);
+  }
+
+  removeSection(): void {
+    const index = this.selectedSectionIndex();
+    if (index < 0) return;
+    this.projects.removeSection(index);
+    this.selectedSectionId.set(this.project().arrangement[Math.min(index, this.project().arrangement.length - 1)]?.id ?? null);
+  }
+
+  moveSection(offset: -1 | 1): void {
+    const index = this.selectedSectionIndex();
+    if (index < 0) return;
+    this.projects.moveSection(index, offset);
+  }
+
+  updateSectionType(event: Event): void {
+    const type = this.inputValue(event) as SectionType;
+    if (SECTION_TYPES.includes(type) && this.selectedSectionIndex() >= 0) this.projects.updateSection(this.selectedSectionIndex(), { type });
+  }
+
+  updateSectionMeasures(event: Event): void {
+    const measures = Number(this.inputValue(event));
+    if (Number.isInteger(measures) && measures >= 1 && measures <= 32 && this.selectedSectionIndex() >= 0) {
+      this.projects.updateSection(this.selectedSectionIndex(), { measures });
+    }
+  }
+
+  updateSectionChord(measure: number, event: Event): void {
+    this.projects.setSectionChordDegree(this.selectedSectionIndex(), measure, Number(this.inputValue(event)));
+  }
+
+  clearSectionProgression(): void { this.projects.clearSectionChordOverrides(this.selectedSectionIndex()); }
+
+  trackIncluded(section: ArrangementSection, track: TrackRow): boolean {
+    return section.trackParts?.[track.id] ?? section.parts[track.role];
+  }
+
+  trackChance(section: ArrangementSection, track: TrackRow): number {
+    return section.trackPartChances?.[track.id] ?? section.partChances[track.role];
+  }
+
+  toggleSectionTrack(section: ArrangementSection, track: TrackRow, event: Event): void {
+    const index = this.project().arrangement.findIndex((item) => item.id === section.id);
+    this.projects.setSectionTrack(index, track.id, (event.target as HTMLInputElement).checked);
+  }
+
+  updateSectionTrackChance(section: ArrangementSection, track: TrackRow, event: Event): void {
+    const index = this.project().arrangement.findIndex((item) => item.id === section.id);
+    this.projects.setSectionTrackChance(index, track.id, Number(this.inputValue(event)));
+  }
+
+  updateKey(event: Event): void {
+    const key = this.inputValue(event);
+    if (KEYS.includes(key)) this.projects.updateSettings({ key });
+  }
+
+  updateScale(event: Event): void {
+    const scale = this.inputValue(event);
+    if (scale === 'major' || scale === 'natural-minor') this.projects.updateSettings({ scale });
+  }
+
+  updateTempo(event: Event): void {
+    const tempo = Number(this.inputValue(event));
+    if (Number.isInteger(tempo) && tempo >= 40 && tempo <= 240) this.projects.updateSettings({ tempoBpm: tempo });
+  }
+
+  updateTranspose(event: Event): void {
+    const transpose = Number(this.inputValue(event));
+    if (Number.isInteger(transpose) && transpose >= -24 && transpose <= 24) this.projects.updateSettings({ transposeSemitones: transpose });
   }
 
   addTrack(role: ArrangedPart): void {
@@ -204,6 +339,7 @@ export class WorkspaceCanvasComponent {
   noteWidth(note: ScoreNote): number { return Math.max(0.12, note.durationBeats / this.totalBeats() * 100); }
   velocityHeight(note: ScoreNote): number { return Math.max(8, note.velocity / 127 * 100); }
   sectionLabel(type: string): string { return type.replaceAll('_', ' '); }
+  roleName(role: ArrangedPart): string { return ROLE_NAMES[role]; }
 
   updateBassRhythm(event: Event): void {
     const value = this.inputValue(event);
@@ -283,7 +419,9 @@ export class WorkspaceCanvasComponent {
   }
 
   private updateGenerator(patch: Partial<BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>): void {
-    this.projects.updateTrackGeneratorSettings(this.selectedTrackId(), patch);
+    const role = this.selectedRole();
+    if (role) this.projects.updateRoleGeneratorSettings(role, patch);
+    else this.projects.updateTrackGeneratorSettings(this.selectedTrackId(), patch);
   }
 
   private inputValue(event: Event): string {

@@ -1,7 +1,14 @@
 :host { display: block; }
 
+/* Mixer popup */
+.mixer-backdrop { position: fixed; z-index: 100; inset: 0; padding: 22px; display: grid; place-items: center; background: #000a; backdrop-filter: blur(5px); }
+.mix-workspace { width: min(1120px, 96vw); max-height: min(86vh, 900px); padding: 22px; overflow: auto; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); box-shadow: 0 24px 80px var(--shadow-ink); }
+.mixer-dialog-heading { margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.mixer-dialog-heading h1 { margin: 5px 0 0; color: var(--text-primary); font-size: 20px; font-weight: 550; letter-spacing: -.04em; }
+.mixer-dialog-heading .eyebrow { color: var(--accent-primary); }
+
 /* Workspace heading */
-.mix-workspace { padding-top: 34px; }
+.mix-workspace { padding-top: 22px; }
 .page-heading { margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .eyebrow { margin: 0; color: var(--accent-primary); font: 9px var(--font-mono); letter-spacing: .13em; }
 .eyebrow-line { width: 18px; height: 1px; margin-right: 7px; display: inline-block; vertical-align: middle; background: var(--accent-primary); }
@@ -79,7 +86,9 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
   .mixer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
-  .mix-workspace { padding-top: 23px; }
+  .mixer-backdrop { padding: 8px; }
+  .mix-workspace { width: 100%; max-height: 96vh; padding: 15px; }
+  .mixer-dialog-heading h1 { font-size: 17px; }
   .page-heading { align-items: flex-start; flex-wrap: wrap; }
   .project-actions { margin-left: auto; }
   .mixer { grid-template-columns: minmax(0, 1fr); }

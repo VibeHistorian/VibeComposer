@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
-import { phraseForTrack } from '../../core/music/phrase';
+import { generateTrackPhrase, phraseForTrack } from '../../core/music/phrase';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 
@@ -35,6 +35,9 @@ export class EditWorkspaceComponent {
   readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
+  @Input() initialNoteId: string | null = null;
+  @Output() applied = new EventEmitter<void>();
+  @Output() cancelled = new EventEmitter<void>();
   readonly parts: ReadonlyArray<{ key: ArrangedPart; label: string; color: string }> = [
     { key: 'bass', label: 'Bass', color: 'bass' },
     { key: 'chords', label: 'Chords', color: 'chords' },
@@ -55,8 +58,8 @@ export class EditWorkspaceComponent {
   readonly drumBar = signal(0);
   readonly phraseBeats = computed(() => this.project().progression.length * 4);
   readonly canvasWidth = computed(() => Math.max(690, this.project().progression.length * 96 + 48));
-  readonly phrase = computed(() => phraseForTrack(this.project(), this.selectedTrack()));
-  readonly notes = computed(() => [...this.phrase()].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
+  readonly draftNotes = signal<PhraseNote[]>([]);
+  readonly notes = computed(() => [...this.draftNotes()].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
   readonly displayNotes = computed(() => {
     const notes = this.notes();
     const drag = this.noteDrag();
@@ -83,9 +86,18 @@ export class EditWorkspaceComponent {
   readonly laneHeight = computed(() => this.pitches().length * ROW_HEIGHT);
   readonly noteCount = computed(() => this.notes().length);
   private newNoteId = 0;
+  private baselineNotes: readonly PhraseNote[] = [];
+  private restoreOnApply = false;
+
+  ngOnInit(): void {
+    this.loadTrackDraft(this.selectedTrack());
+    if (this.initialNoteId) this.selectedNoteId.set(this.initialNoteId);
+  }
 
   selectTrack(trackId: string): void {
     this.workspaceUi.selectTrack(trackId);
+    const track = this.project().tracks.find((candidate) => candidate.id === trackId);
+    if (track) this.loadTrackDraft(track);
     this.selectedNoteId.set(null);
     this.noteDrag.set(null);
     this.drumBar.set(0);
@@ -155,7 +167,7 @@ export class EditWorkspaceComponent {
       const notes = this.notes().map((note) => note.id === drag.id
         ? { ...note, startBeat: drag.startBeat, durationBeats: drag.durationBeats, midi: drag.midi }
         : note);
-      this.projects.updateTrackPhrase(drag.trackId, notes);
+      this.draftNotes.set(notes);
     }
     this.noteDrag.set(null);
   }
@@ -186,7 +198,7 @@ export class EditWorkspaceComponent {
       ...notes,
       { id: this.makeNoteId(), midi, startBeat: beat, durationBeats: 0.2, velocity: midi === 42 ? 72 : 90 },
     ];
-    this.projects.updateTrackPhrase(this.selectedTrack().id, next);
+    this.draftNotes.set(next);
   }
 
   addNote(): void {
@@ -204,7 +216,7 @@ export class EditWorkspaceComponent {
     const note: PhraseNote = {
       id: this.makeNoteId(), midi: pitch, startBeat, durationBeats, velocity: 90,
     };
-    this.projects.updateTrackPhrase(this.selectedTrack().id, [...this.notes(), note]);
+    this.draftNotes.set([...this.notes(), note]);
     this.selectedNoteId.set(note.id);
   }
 
@@ -223,20 +235,29 @@ export class EditWorkspaceComponent {
       return;
     }
     const next = this.notes().map((note) => note.id === selected.id ? { ...note, [field]: value } : note);
-    this.projects.updateTrackPhrase(this.selectedTrack().id, next);
+    this.draftNotes.set(next);
   }
 
   deleteSelected(): void {
     const selected = this.selectedNote();
     if (!selected) return;
-    this.projects.updateTrackPhrase(this.selectedTrack().id, this.notes().filter((note) => note.id !== selected.id));
+    this.draftNotes.set(this.notes().filter((note) => note.id !== selected.id));
     this.selectedNoteId.set(null);
   }
 
   restoreGenerated(): void {
-    this.projects.clearTrackPhrase(this.selectedTrack().id);
+    this.draftNotes.set(generateTrackPhrase(this.project(), this.selectedTrack()));
+    this.restoreOnApply = true;
     this.selectedNoteId.set(null);
   }
+
+  applyChanges(): void {
+    if (this.restoreOnApply) this.projects.clearTrackPhrase(this.selectedTrack().id);
+    else if (this.draftNotesChanged()) this.projects.updateTrackPhrase(this.selectedTrack().id, this.draftNotes());
+    this.applied.emit();
+  }
+
+  cancelChanges(): void { this.cancelled.emit(); }
 
   updateDrumBar(event: Event): void {
     const value = Number((event.target as HTMLSelectElement).value);
@@ -256,5 +277,20 @@ export class EditWorkspaceComponent {
 
   private clamp(value: number, minimum: number, maximum: number): number {
     return Math.max(minimum, Math.min(maximum, value));
+  }
+
+  private loadTrackDraft(track: CompositionTrack): void {
+    this.baselineNotes = [...phraseForTrack(this.project(), track)].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
+    this.draftNotes.set([...this.baselineNotes]);
+    this.restoreOnApply = false;
+  }
+
+  private draftNotesChanged(): boolean {
+    const current = this.draftNotes();
+    return current.length !== this.baselineNotes.length || current.some((note, index) => {
+      const baseline = this.baselineNotes[index];
+      return !baseline || note.id !== baseline.id || note.midi !== baseline.midi || note.startBeat !== baseline.startBeat
+        || note.durationBeats !== baseline.durationBeats || note.velocity !== baseline.velocity;
+    });
   }
 }

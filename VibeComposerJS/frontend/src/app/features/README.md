@@ -1,26 +1,19 @@
 # Feature areas
 
-Organize the main experience into four workspaces. Each feature owns its screen behavior and music-domain logic; the app shell provides navigation, persistent project controls, the arrangement overview, and the all-part score preview.
+Keep translated music behavior in focused feature components, embedded where the single workspace needs it. Do not create separate Create, Arrange, Edit, or Mix routes.
 
-## Workspaces
-
-- **Create** — Set the key, tempo, and chord progression, then generate in-scope parts such as bass, chords, arpeggios, and drums. Export the result as MIDI. Show each role as a concise part card or row. Put detailed generation and variation parameters in the inspector for the selected part.
-- **Arrange** — Show song sections on a timeline. Selecting a section opens its length, type, per-bar chord progression, part inclusion, and variation controls in the inspector. A section can follow the Create progression or use its own diatonic chords. Let users add, duplicate, reorder, and edit sections from the timeline itself rather than repeating an Edit button in every cell.
-- **Edit** — The piano roll edits generated bass, chord, and arpeggio phrases; the drum grid edits one progression bar at a time. Phrase edits are saved with the project, included in MIDI export, and can be restored to the seeded generator output.
-- **Mix** — Each generated part has General MIDI instrument selection, level, pan, mute, and solo controls. These settings are saved with the project and written into MIDI export; browser preview and loop controls live in the shared transport dock.
-
-These are workspaces, not a forced wizard: users can move between them at any time while the shared song canvas remains visible. Put common selected-part controls in the inspector and keep detailed tools available in the collapsible workspace drawer as the migration proceeds.
+- **Create behavior** — Primary chord setup sits above the grouped Tracks list. Role-specific generation settings appear in the inspector, with role-group selection applying the chosen generator controls to every track of that type.
+- **Arrange behavior** — The arrangement and dense all-track score share the center canvas. Selecting a section exposes its type, length, chord overrides, track inclusion and chance, and section actions in the inspector.
+- **Edit behavior** — Selecting a score note opens its track's piano roll or drum grid in the center canvas. Apply saves the phrase as one history action and returns to arrangement; Cancel discards the draft.
+- **Mix behavior** — An icon opens the mixer popup. It edits each track's instrument, channel, level, pan, mute, and solo values used by playback and MIDI export.
 
 ## Angular ownership
 
-- Keep Create, Arrange, Edit, and Mix screens and their domain behavior in their respective feature areas. Split into smaller components when a concrete screen or interaction needs it.
-- Keep the piano roll, drum grid, arrangement timeline, chord picker, and generation controls with the feature that owns their musical behavior.
-- Put app-wide project/session services and the Wails bridge in `core/`.
+- Keep app-wide project/session services and the Wails bridge in `core/`.
+- Keep music-domain behavior with the feature component that owns the interaction, even when that component is embedded in the workspace canvas.
 - Promote presentation primitives to `shared/` only when they have a real use across features. See the shared UI README for the visual conventions and promotion rule.
-
------------------------
 
 ## Visuals
 
-- rough visual design available in frontend/UI_design_moodboard_split_parts.png
-- the **real** layout will differ (using the actual parameters and features available from the desktop VibeComposer), but the new modern styling should be approximated
+- Use [the split-parts moodboard](../../../UI_design_moodboard_split_parts.png) as layout direction.
+- Use actual translated parameters and the shared theme; the legacy Java layout is a reference for capability breadth, not a screen to reproduce.

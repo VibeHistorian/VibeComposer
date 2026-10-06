@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inject } from '@angular/core';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
 import { phraseForTrack } from '../../core/music/phrase';
@@ -13,6 +13,7 @@ import { WorkspaceUiService } from '../../shared/workspace-ui.service';
   styleUrl: './mix-workspace.component.css',
 })
 export class MixWorkspaceComponent {
+  @Output() closed = new EventEmitter<void>();
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);

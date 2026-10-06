@@ -1,18 +1,17 @@
 # Shared UI
 
-Place reusable presentation components and UI helpers here when multiple features have a concrete need for them. Examples include buttons, sliders, selects, segmented controls, menus, popovers, dialogs, tooltips, and generic inspector layout. Keep generator and music-domain behavior with the feature that owns it.
+Place reusable presentation components and UI helpers here when multiple features have a concrete need for them. Examples include buttons, sliders, selects, segmented controls, menus, popovers, dialogs, tooltips, and generic inspector layout. Keep generator and music-domain behavior with its feature component.
 
-## Visual conventions
+## Workspace conventions
 
-- Use a persistent project header for project actions and a compact key/tempo summary. Use the shared bottom dock for playback and loop controls.
-- Keep the transport dock present across routes; it owns playback buttons and position display while `core/audio` schedules Web Audio events outside Angular rendering.
-- Keep navigation focused on Create, Arrange, Edit, and Mix. Give each workspace a clear heading and one primary action.
-- Keep the arrangement overview and all-part score mounted in the app shell as users switch among Create, Arrange, Edit, and Mix. The shared canvas owns track selection and preview visibility; each feature continues to own its editing tools.
-- Some operations should always be available via header/footer, or as quick toggles (e.g. global volume, key, tempo, per-track/per-group/project-wide Solo/Mute) even if a dedicated view offers a full version (e.g. S/M buttons are always offered near tracks for convenience, while the dedicated Mix view offers per-track volume/pan/effects/etc.).
-- Put selected-part generation and mix quick controls in the shared inspector. Keep the existing full workspace forms in a collapsible tools drawer while their remaining controls move into contextual surfaces.
-- Show common controls directly; group advanced generation, variation, and project settings under clear expandable headings. Preserve dense grids when they support direct musical editing, as in piano rolls and drum sequencers.
-- Use neutral surfaces and restrained borders to establish hierarchy. Assign stable colors to musical roles and use them consistently in part lists and arrangement views; don't color unrelated controls just to distinguish them.
-- Prefer readable labels for important actions. Use icons for familiar secondary actions with accessible names and tooltips.
-- Keep layouts usable at narrower window sizes by allowing navigation and inspector panels to collapse while preserving access to the active canvas and transport.
+- Use one persistent workspace with grouped Tracks at left, arrangement and dense score in the center, a selection-aware inspector at right, and transport along the bottom.
+- Do not add route navigation or a mode-controls drawer for Create, Arrange, Edit, or Mix.
+- The transport owns playback, position, loop, key, mode, transpose, and tempo controls. Playback scheduling stays in `core/audio`, outside Angular rendering.
+- The mixer opens as a popup from a button with an accessible icon label.
+- Track-group selection shows shared generation settings; individual track selection shows local generator and instrument settings; section selection shows arrangement controls.
+- Clicking a score note opens the in-canvas piano roll or drum grid. Apply commits the draft phrase as one user action and returns to arrangement; Cancel discards it.
+- Keep common controls directly available and group detailed settings under clear labels. Preserve the density of piano rolls and drum grids.
+- Use stable role colors for tracks and arrangement blocks, with neutral surfaces for other controls. Reuse the shared theme tokens.
+- At narrower widths, let the track browser or inspector scroll and collapse while keeping a clear path to the song canvas and transport.
 
-Shared components should define consistent appearance and interaction, not absorb music-domain rules. If a control only makes sense for one feature, keep it in that feature even if it uses shared primitives.
+Shared components define consistent appearance and interaction. They should not absorb music-domain rules that belong to a feature.
