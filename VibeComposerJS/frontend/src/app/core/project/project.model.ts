@@ -51,8 +51,18 @@ export interface DrumSettings {
   readonly swingPercent: number;
 }
 
+export interface MixChannelSettings {
+  /** General MIDI program number, ignored by the percussion channel. */
+  readonly program: number;
+  readonly volumePercent: number;
+  /** Stereo position from -100 (left) to 100 (right). */
+  readonly panPercent: number;
+  readonly muted: boolean;
+  readonly solo: boolean;
+}
+
 export interface CompositionProject {
-  readonly schemaVersion: 7;
+  readonly schemaVersion: 8;
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
@@ -68,6 +78,7 @@ export interface CompositionProject {
   readonly arrangement: readonly ArrangementSection[];
   /** Phrase-level note edits. Missing parts continue to use their seeded generator output. */
   readonly editedPhrases: Readonly<Partial<Record<ArrangedPart, readonly PhraseNote[]>>>;
+  readonly mix: Readonly<Record<ArrangedPart, MixChannelSettings>>;
 }
 
 export const SECTION_TYPES: readonly SectionType[] = [
@@ -143,8 +154,15 @@ export const DEFAULT_DRUM_SETTINGS: DrumSettings = {
   swingPercent: 50,
 };
 
+export const DEFAULT_MIX: Readonly<Record<ArrangedPart, MixChannelSettings>> = {
+  bass: { program: 33, volumePercent: 100, panPercent: 0, muted: false, solo: false },
+  chords: { program: 0, volumePercent: 100, panPercent: 0, muted: false, solo: false },
+  arpeggio: { program: 11, volumePercent: 100, panPercent: 0, muted: false, solo: false },
+  drums: { program: 0, volumePercent: 100, panPercent: 0, muted: false, solo: false },
+};
+
 export const DEFAULT_PROJECT: CompositionProject = {
-  schemaVersion: 7,
+  schemaVersion: 8,
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',
@@ -157,4 +175,5 @@ export const DEFAULT_PROJECT: CompositionProject = {
   drums: DEFAULT_DRUM_SETTINGS,
   arrangement: DEFAULT_ARRANGEMENT,
   editedPhrases: {},
+  mix: DEFAULT_MIX,
 };

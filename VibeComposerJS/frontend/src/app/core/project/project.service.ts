@@ -1,16 +1,17 @@
 import { Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords } from '../music/harmony';
 import type {
-  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, DrumSettings, PhraseNote, SectionType,
+  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, DrumSettings, MixChannelSettings,
+  PhraseNote, SectionType,
 } from './project.model';
 import type { CompositionProject } from './project.model';
 import {
   ARRANGED_PARTS, DEFAULT_ARPEGGIO_SETTINGS, DEFAULT_ARRANGEMENT, DEFAULT_BASS_SETTINGS, DEFAULT_CHORD_SETTINGS,
-  DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, SECTION_TYPES,
+  DEFAULT_DRUM_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, SECTION_TYPES,
 } from './project.model';
 
-const STORAGE_KEY = 'vibecomposer.project.v7';
-const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v6', 'vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
+const STORAGE_KEY = 'vibecomposer.project.v8';
+const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v7', 'vibecomposer.project.v6', 'vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v1';
 const MAX_HISTORY = 100;
 const MAX_ARRANGEMENT_SECTIONS = 32;
@@ -52,6 +53,14 @@ export class ProjectService {
 
   updateDrumSettings(patch: Partial<DrumSettings>): void {
     this.commit({ ...this.state(), drums: { ...this.state().drums, ...patch } });
+  }
+
+  updateMixSettings(part: ArrangedPart, patch: Partial<MixChannelSettings>): void {
+    if (!ARRANGED_PARTS.includes(part)) {
+      return;
+    }
+    const current = this.state();
+    this.commit({ ...current, mix: { ...current.mix, [part]: { ...current.mix[part], ...patch } } });
   }
 
   updateEditedPhrase(part: ArrangedPart, notes: readonly PhraseNote[]): void {
@@ -274,7 +283,7 @@ export class ProjectService {
       & { schemaVersion?: number; bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown };
     const validBase = (project.schemaVersion === 1 || project.schemaVersion === 2
       || project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
-      || project.schemaVersion === 6 || project.schemaVersion === 7)
+      || project.schemaVersion === 6 || project.schemaVersion === 7 || project.schemaVersion === 8)
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -290,24 +299,26 @@ export class ProjectService {
 
     const bass = project.schemaVersion === 1 ? DEFAULT_BASS_SETTINGS : this.decodeBass(project.bass);
     const chords = project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
-      || project.schemaVersion === 6 || project.schemaVersion === 7
+      || project.schemaVersion === 6 || project.schemaVersion === 7 || project.schemaVersion === 8
       ? this.decodeChords(project.chords) : DEFAULT_CHORD_SETTINGS;
     const arpeggio = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
-      || project.schemaVersion === 7
+      || project.schemaVersion === 7 || project.schemaVersion === 8
       ? this.decodeArpeggio(project.arpeggio) : DEFAULT_ARPEGGIO_SETTINGS;
     const drums = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
-      || project.schemaVersion === 7
+      || project.schemaVersion === 7 || project.schemaVersion === 8
       ? this.decodeDrums(project.drums) : DEFAULT_DRUM_SETTINGS;
     const arrangement = project.schemaVersion === 5 || project.schemaVersion === 6
-      || project.schemaVersion === 7
+      || project.schemaVersion === 7 || project.schemaVersion === 8
       ? this.decodeArrangement(project.arrangement) : this.copyDefaultArrangement();
-    const editedPhrases = project.schemaVersion === 7
+    const editedPhrases = project.schemaVersion === 7 || project.schemaVersion === 8
       ? this.decodeEditedPhrases((value as Partial<CompositionProject>).editedPhrases) : {};
-    if (!bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases) {
+    const mix = project.schemaVersion === 8
+      ? this.decodeMix((value as Partial<CompositionProject>).mix) : this.copyDefaultMix();
+    if (!bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases || !mix) {
       return undefined;
     }
     return {
-      schemaVersion: 7,
+      schemaVersion: 8,
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
@@ -320,7 +331,34 @@ export class ProjectService {
       drums,
       arrangement,
       editedPhrases,
+      mix,
     };
+  }
+
+  private decodeMix(value: unknown): Record<ArrangedPart, MixChannelSettings> | undefined {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    const mix = value as Partial<Record<ArrangedPart, unknown>>;
+    if (Object.keys(mix).length !== ARRANGED_PARTS.length
+        || ARRANGED_PARTS.some((part) => !mix[part] || typeof mix[part] !== 'object')) {
+      return undefined;
+    }
+    const decoded = {} as Record<ArrangedPart, MixChannelSettings>;
+    for (const part of ARRANGED_PARTS) {
+      const settings = mix[part] as Partial<MixChannelSettings>;
+      if (!Number.isInteger(settings.program) || (settings.program ?? -1) < 0 || (settings.program ?? 128) > 127
+          || !Number.isInteger(settings.volumePercent) || (settings.volumePercent ?? -1) < 0 || (settings.volumePercent ?? 101) > 100
+          || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
+          || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') {
+        return undefined;
+      }
+      decoded[part] = {
+        program: settings.program!, volumePercent: settings.volumePercent!, panPercent: settings.panPercent!,
+        muted: settings.muted, solo: settings.solo,
+      };
+    }
+    return decoded;
   }
 
   private decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart, PhraseNote[]>> | undefined {
@@ -481,6 +519,7 @@ export class ProjectService {
       arpeggio: { ...DEFAULT_ARPEGGIO_SETTINGS },
       drums: { ...DEFAULT_DRUM_SETTINGS },
       arrangement: this.copyDefaultArrangement(),
+      mix: this.copyDefaultMix(),
     };
   }
 
@@ -492,12 +531,21 @@ export class ProjectService {
     }));
   }
 
+  private copyDefaultMix(): Record<ArrangedPart, MixChannelSettings> {
+    return {
+      bass: { ...DEFAULT_MIX.bass },
+      chords: { ...DEFAULT_MIX.chords },
+      arpeggio: { ...DEFAULT_MIX.arpeggio },
+      drums: { ...DEFAULT_MIX.drums },
+    };
+  }
+
   private isProject(value: unknown): value is CompositionProject {
     if (!value || typeof value !== 'object') {
       return false;
     }
     const project = value as Partial<CompositionProject>;
-    return project.schemaVersion === 7
+    return project.schemaVersion === 8
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -513,7 +561,8 @@ export class ProjectService {
       && this.decodeArpeggio(project.arpeggio) !== undefined
       && this.decodeDrums(project.drums) !== undefined
       && this.decodeArrangement(project.arrangement) !== undefined
-      && this.decodeEditedPhrases(project.editedPhrases) !== undefined;
+      && this.decodeEditedPhrases(project.editedPhrases) !== undefined
+      && this.decodeMix(project.mix) !== undefined;
   }
 
   private persist(project: CompositionProject): void {
