@@ -135,7 +135,7 @@ export class WorkspaceCanvasComponent {
       part: track.id,
       color: track.role,
       topPercent: (maxPitch - note.midi) / pitchSpan * 86 + 3,
-      opacity: 0.3 + note.velocity / 127 * 0.7,
+      opacity: 0.72 + note.velocity / 127 * 0.28,
     }));
   }));
 

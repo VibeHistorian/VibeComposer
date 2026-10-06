@@ -23,14 +23,17 @@
   --radius-micro: 3px;
 
   /* Core surfaces */
-  --surface-canvas: #061321;
-  --surface-input: #091a2a;
-  --surface-base: #0a1c2d;
-  --surface-low: #0d2236;
-  --surface-card: #112a40;
-  --surface-hover: #17364f;
-  --surface-accent: #10334b;
-  --surface-accent-hover: #17435d;
+  --surface-canvas: #020812;
+  --surface-input: #071727;
+  --surface-base: #0b1e30;
+  --surface-low: #10283d;
+  --surface-card: #17364f;
+  --surface-button: #1b4561;
+  --surface-button-hover: #235d79;
+  --surface-hover: #1b4059;
+  --surface-accent: #12354d;
+  --surface-accent-hover: #194861;
+  --surface-score: #061523;
   --surface-blue: #0d2d46;
   --surface-violet: #291b42;
   --surface-warm: #382b17;
@@ -45,10 +48,10 @@
   --text-subtle: #7d96b0;
   --text-faint: #6a829b;
   --text-disabled: #526b83;
-  --border-subtle: #183149;
-  --border-default: #25425c;
-  --border-strong: #31516d;
-  --border-contrast: #426582;
+  --border-subtle: #19334b;
+  --border-default: #2a4b67;
+  --border-strong: #3b607d;
+  --border-contrast: #537995;
   --border-focus: #31d8f5;
   --border-accent: #1683a4;
   --border-danger: #81445a;
@@ -56,6 +59,14 @@
   --border-violet: #624487;
   --border-warm: #765b2b;
   --border-grid: #29445e;
+  --grid-subdivision: #142b40;
+  --grid-beat: #254762;
+  --grid-measure: #466d89;
+  --score-row-odd: #091a2a;
+  --score-row-even: #0b1e30;
+  --score-pitch-a: #071a2b;
+  --score-pitch-b: #091e30;
+  --score-pitch-band: rgb(96 160 210 / 5%);
 
   /* Accent and arrangement roles */
   --accent-primary: #32d7f4;
@@ -64,12 +75,14 @@
   --accent-glow: #32d7f480;
   --accent-outline: #32d7f42e;
   --role-bass: #20cce8;
+  --role-bass-glow: #20cce866;
   --role-bass-strong: #42e2f7;
   --role-bass-dark: #087e9e;
   --role-bass-surface: #083b50;
   --role-bass-border: #087e9e;
   --role-bass-text: #c5f8ff;
   --role-chords: #45df89;
+  --role-chords-glow: #45df8966;
   --role-chords-strong: #68f5a4;
   --role-chords-dark: #16834e;
   --role-chords-surface: #0b3d32;
@@ -82,6 +95,10 @@
   --role-arpeggio-surface: #40143d;
   --role-arpeggio-border: #ae348d;
   --role-arpeggio-text: #ffe0f5;
+  --role-bass-header: #10445a;
+  --role-chords-header: #124a37;
+  --role-arpeggio-header: #4a2048;
+  --role-drums-header: #4a3918;
   --role-drums: #f2bb38;
   --role-kick: #ffad42;
   --role-kick-glow: #ffad4250;
@@ -98,7 +115,7 @@
   --color-warning: #ffc66b;
   --shadow-ink: #0009;
   --shadow-highlight: #ffffff08;
-  --ambient-glow: rgb(20 112 166 / 16%);
+  --ambient-glow: rgb(10 49 84 / 10%);
 
   /* Backwards-compatible theme aliases */
   --muted: var(--text-muted);
@@ -137,8 +154,8 @@ button, a, input, select { font: inherit; }
 
 /* Project file actions */
 .project-tools { display: flex; align-items: center; gap: 6px; }
-.project-tools button { min-height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; font-size: 9px; white-space: nowrap; }
-.project-tools button:hover { border-color: var(--border-accent); color: var(--accent-primary); }
+.project-tools button { min-height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 9px; white-space: nowrap; }
+.project-tools button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .project-message { position: absolute; z-index: 2; top: 62px; right: max(32px, calc((100vw - 1280px) / 2)); margin: 0; padding: 7px 10px; border: 1px solid var(--border-accent); border-radius: var(--radius-control); background: var(--surface-accent); color: var(--accent-primary); font-size: 10px; }
 
 /* Footer */

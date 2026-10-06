@@ -128,7 +128,7 @@
                 }
               </div>
             </div>
-            <div class="score-track-lanes" [style.grid-template-rows]="'repeat(' + tracks().length + ', minmax(40px, 1fr)) 34px'">
+            <div class="score-track-lanes" [style.grid-template-rows]="'repeat(' + tracks().length + ', minmax(40px, 1fr)) 34px'" [style.--bar-count]="totalMeasures()">
               @for (track of tracks(); track track.id) {
                 <div class="score-track-row" [class.selected]="selectedTrackId() === track.id" [class.row-hidden]="!isVisible(track.id)">
                   <span class="score-track-label"><i class="role-dot" [class]="track.role"></i>{{ track.name }}</span>
@@ -139,7 +139,7 @@
                       @if (note.part === track.id && isVisible(note.part)) {
                         <button type="button" class="score-note" [class]="'score-note ' + note.color"
                           [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.%]="note.topPercent"
-                          [style.opacity]="selectedTrackId() === note.part ? note.opacity : note.opacity * 0.38"
+                          [style.opacity]="selectedTrackId() === note.part ? note.opacity : note.opacity * 0.72"
                           [attr.title]="track.name + ' · MIDI ' + note.midi + ' · velocity ' + note.velocity"
                           [attr.aria-label]="'Edit ' + track.name + ' note, pitch ' + note.midi + ', velocity ' + note.velocity"
                           (click)="openNoteEditor(note)"></button>

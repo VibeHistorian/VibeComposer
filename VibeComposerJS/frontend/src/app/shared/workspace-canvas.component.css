@@ -13,15 +13,17 @@
 .primary-harmony { margin: -3px -2px 13px; padding: 9px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-low); }
 .harmony-heading { margin-bottom: 7px; display: flex; align-items: center; justify-content: space-between; }
 .harmony-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 11px; font-weight: 600; }
-.generate-progression { width: 24px; height: 24px; border: 1px solid var(--border-accent); border-radius: var(--radius-control); background: var(--surface-accent); color: var(--accent-primary); cursor: pointer; }
+.generate-progression { width: 24px; height: 24px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--accent-hover); cursor: pointer; }
+.generate-progression:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .progression-list { max-height: 178px; display: grid; gap: 4px; overflow-y: auto; }
 .progression-chord { min-width: 0; display: grid; grid-template-columns: 18px minmax(0, 1fr) 18px; align-items: center; gap: 4px; }
 .progression-chord > span { color: var(--text-muted); font: 7px var(--font-mono); }
 .progression-chord select, .primary-harmony select { min-width: 0; height: 25px; padding: 0 4px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-primary); font-size: 8px; }
 .progression-chord button { width: 18px; height: 20px; padding: 0; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; }
+.progression-chord button:hover:not(:disabled) { border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); }
 .progression-chord button:disabled { opacity: .25; cursor: default; }
-.add-chord-button { min-height: 26px; padding: 0 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-card); color: var(--text-secondary); cursor: pointer; font-size: 8px; }
-.add-chord-button:hover:not(:disabled) { border-color: var(--border-accent); color: var(--accent-primary); }
+.add-chord-button { min-height: 26px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 8px; }
+.add-chord-button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .add-chord-button:disabled { opacity: .4; cursor: default; }
 .chord-seed { margin-top: 7px; display: flex; align-items: center; justify-content: space-between; gap: 6px; color: var(--text-muted); font: 7px var(--font-mono); }
 .chord-seed input { width: 105px; min-width: 0; height: 23px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-secondary); font: 8px var(--font-mono); }
@@ -30,18 +32,20 @@
 .track-groups { min-height: 0; margin-top: 9px; flex: 1; display: grid; align-content: start; gap: 9px; overflow-y: auto; scrollbar-color: var(--border-default) transparent; }
 .track-group { min-width: 0; padding: 4px; border: 1px solid var(--border-subtle); border-left: 2px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); }
 .track-group.bass { border-left-color: var(--role-bass); }.track-group.chords { border-left-color: var(--role-chords); }.track-group.arpeggio { border-left-color: var(--role-arpeggio); }.track-group.drums { border-left-color: var(--role-drums); }
-.group-heading { min-height: 25px; padding-left: 4px; display: flex; align-items: center; gap: 6px; }
+.group-heading { min-height: 29px; padding: 2px 5px; display: flex; align-items: center; gap: 6px; border-radius: var(--radius-tight); }
+.track-group.bass .group-heading { background: var(--role-bass-header); }.track-group.chords .group-heading { background: var(--role-chords-header); }.track-group.arpeggio .group-heading { background: var(--role-arpeggio-header); }.track-group.drums .group-heading { background: var(--role-drums-header); }
 .group-select { min-width: 0; flex: 1; padding: 2px 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
 .group-select strong { min-width: 0; overflow: hidden; font-size: 9px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .group-selected { background: var(--surface-accent); }
 .group-count { margin-left: auto; color: var(--text-muted); font: 7px var(--font-mono); }
-.add-track-button { width: 22px; height: 22px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-card); color: var(--text-secondary); cursor: pointer; }
-.add-track-button:hover { border-color: var(--border-accent); color: var(--accent-primary); }
+.add-track-button { width: 22px; height: 22px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
+.add-track-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .track-row-card { min-width: 0; margin-top: 3px; padding: 3px 3px 4px; border: 1px solid transparent; border-radius: var(--radius-tight); }
 .track-row-card.selected { border-color: var(--border-default); background: var(--surface-base); }
 .track-row-card.is-hidden .track-select { color: var(--text-muted); }
 .track-line { display: flex; align-items: center; gap: 2px; }
 .collapse-button, .visibility-button { width: 21px; height: 24px; padding: 0; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; }
+.collapse-button:hover, .visibility-button:hover { border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); }
 .track-select { min-width: 0; flex: 1; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 9px; }
 .track-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .role-dot { width: 7px; height: 7px; flex: 0 0 auto; display: inline-block; border-radius: 50%; background: var(--role-bass); }
@@ -52,7 +56,8 @@
 .track-detail span:first-child { max-width: 62px; font-family: var(--font-ui); font-size: 7px; }
 .track-detail span:nth-child(2) { font-size: 6px; white-space: nowrap; }
 .track-detail span:nth-child(3) { margin-left: auto; font-family: var(--font-ui); font-size: 7px; white-space: nowrap; }
-.track-detail button { width: 19px; height: 18px; padding: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-tight); background: var(--surface-card); color: var(--text-muted); cursor: pointer; font: 8px var(--font-mono); }
+.track-detail button { width: 19px; height: 18px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 8px var(--font-mono); }
+.track-detail button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .track-detail button.active { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
 
 /* Arrangement and score canvas */
@@ -60,8 +65,8 @@
 .song-canvas.editing { display: block; }
 .song-canvas.editing vc-edit-workspace { display: block; }
 .canvas-actions { display: flex; align-items: center; gap: 8px; }
-.mixer-open-button { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; font-size: 16px; }
-.mixer-open-button:hover { border-color: var(--border-accent); color: var(--accent-primary); }
+.mixer-open-button { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 16px; }
+.mixer-open-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .arrangement-panel, .score-panel { padding: 13px 14px; overflow: hidden; }
 .measure-total, .score-legend { color: var(--text-muted); font: 8px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
 .score-legend { display: flex; align-items: center; gap: 6px; letter-spacing: 0; text-transform: none; }
@@ -90,21 +95,24 @@ button.row-label { padding: 0 5px; border: 0; background: transparent; cursor: p
 .score-ruler-label { padding: 3px 5px; }
 .score-ruler-sections { min-width: 0; display: flex; }
 .score-ruler-sections span { min-width: 0; padding: 3px 5px; overflow: hidden; border-left: 1px solid var(--border-subtle); text-overflow: ellipsis; white-space: nowrap; }
-.score-track-lanes { position: relative; min-height: 250px; flex: 1; display: grid; grid-template-rows: repeat(4, minmax(40px, 1fr)) 34px; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-input); }
+.score-track-lanes { position: relative; min-height: 250px; flex: 1; display: grid; grid-template-rows: repeat(4, minmax(40px, 1fr)) 34px; overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-score); }
 .score-track-row, .score-velocity-row { min-height: 0; display: grid; grid-template-columns: 72px minmax(0, 1fr); border-bottom: 1px solid var(--border-subtle); }
+.score-track-row:nth-child(odd) { background: var(--score-row-odd); }
+.score-track-row:nth-child(even) { background: var(--score-row-even); }
 .score-track-row.selected { background: var(--surface-low); }
 .score-track-row.row-hidden .score-track-label { opacity: .38; }
 .score-track-label { min-width: 0; padding: 0 6px; display: flex; align-items: center; gap: 6px; overflow: hidden; border-right: 1px solid var(--border-subtle); color: var(--text-muted); font: 7px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
 .score-track-row.selected .score-track-label { color: var(--text-primary); }
-.score-track-lane, .velocity-lane { position: relative; min-width: 0; overflow: hidden; background: repeating-linear-gradient(180deg, transparent 0, transparent 11px, var(--border-subtle) 11px, var(--border-subtle) 12px); }
+.score-track-lane, .velocity-lane { position: relative; min-width: 0; overflow: hidden; background-color: var(--surface-score); }
+.score-track-lane { background-color: transparent; background-image: repeating-linear-gradient(180deg, transparent 0 11px, var(--grid-subdivision) 11px 12px), repeating-linear-gradient(180deg, transparent 0 12px, var(--score-pitch-band) 12px 24px), linear-gradient(to right, var(--grid-measure) 0 1px, transparent 1px), linear-gradient(to right, transparent calc(25% - .5px), var(--grid-beat) calc(25% - .5px) 25%, transparent 25%), linear-gradient(to right, transparent calc(12.5% - .5px), var(--grid-subdivision) calc(12.5% - .5px) 12.5%, transparent 12.5%); background-size: 100% 12px, 100% 24px, calc(100% / var(--bar-count)) 100%, calc(100% / var(--bar-count)) 100%, calc(100% / var(--bar-count)) 100%; }
 .lane-hidden { position: absolute; top: 50%; left: 8px; color: var(--text-faint); font: 7px var(--font-mono); transform: translateY(-50%); }
 .velocity-label { color: var(--text-secondary); }
-.velocity-lane { background: repeating-linear-gradient(90deg, transparent 0, transparent calc(6.25% - 1px), var(--border-subtle) calc(6.25% - 1px), var(--border-subtle) 6.25%); }
-.section-divider { position: absolute; z-index: 1; top: 0; bottom: 0; width: 1px; background: var(--border-grid); pointer-events: none; }.section-divider.final { transform: translateX(-1px); }
-.score-note { position: absolute; z-index: 2; height: 5px; min-width: 2px; padding: 0; border: 0; border-radius: 2px; cursor: pointer; transition: opacity .12s ease; }
-.score-note.bass { background: var(--role-bass-strong); }.score-note.chords { background: var(--role-chords-strong); }.score-note.arpeggio { background: var(--role-arpeggio-strong); }.score-note.drums { background: var(--role-drums); }
+.velocity-lane { background-image: linear-gradient(to right, var(--grid-measure) 0 1px, transparent 1px), linear-gradient(to right, transparent calc(25% - .5px), var(--grid-beat) calc(25% - .5px) 25%, transparent 25%), linear-gradient(to right, transparent calc(12.5% - .5px), var(--grid-subdivision) calc(12.5% - .5px) 12.5%, transparent 12.5%); background-size: calc(100% / var(--bar-count)) 100%, calc(100% / var(--bar-count)) 100%, calc(100% / var(--bar-count)) 100%; }
+.section-divider { position: absolute; z-index: 1; top: 0; bottom: 0; width: 1px; background: var(--grid-measure); box-shadow: 0 0 3px var(--grid-measure); pointer-events: none; }.section-divider.final { transform: translateX(-1px); }
+.score-note { position: absolute; z-index: 2; height: 6px; min-width: 3px; padding: 0; border: 0; border-radius: 3px; cursor: pointer; transition: opacity .12s ease, box-shadow .12s ease, filter .12s ease; }
+.score-note.bass { background: var(--role-bass-strong); box-shadow: 0 0 6px var(--role-bass-glow); }.score-note.chords { background: var(--role-chords-strong); box-shadow: 0 0 6px var(--role-chords-glow); }.score-note.arpeggio { background: var(--role-arpeggio-strong); box-shadow: 0 0 6px var(--role-arpeggio-glow); }.score-note.drums { background: var(--role-snare); box-shadow: 0 0 6px var(--role-snare-glow); }
 .score-note { transform: translateY(-50%); }
-.score-note:hover, .score-note:focus-visible { z-index: 4; height: 8px; outline: 1px solid var(--text-primary); }
+.score-note:hover, .score-note:focus-visible { z-index: 4; height: 8px; outline: 1px solid var(--text-primary); filter: brightness(1.2); }
 .velocity-stem { position: absolute; bottom: 0; z-index: 2; width: 2px; min-height: 2px; border-radius: 1px 1px 0 0; }
 .velocity-stem.bass { background: var(--role-bass-strong); }.velocity-stem.chords { background: var(--role-chords-strong); }.velocity-stem.arpeggio { background: var(--role-arpeggio-strong); }.velocity-stem.drums { background: var(--role-drums); }
 .velocity-stem.dimmed { filter: saturate(.65); }
@@ -120,13 +128,13 @@ button.row-label { padding: 0 5px; border: 0; background: transparent; cursor: p
 .track-name-field input { width: 100%; min-width: 0; height: 28px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 9px; }
 .channel-warning { padding: 6px 7px; border: 1px solid var(--border-warm); border-radius: var(--radius-control); background: var(--surface-warm); color: var(--color-warning); font-size: 8px; line-height: 1.4; }
 .track-actions { display: flex; align-items: center; gap: 5px; }
-.track-actions button { min-height: 26px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; font-size: 8px; }
-.track-actions button:hover:not(:disabled) { border-color: var(--border-accent); color: var(--accent-primary); }
+.track-actions button { min-height: 26px; padding: 0 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 8px; }
+.track-actions button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .track-actions button:disabled { opacity: .38; cursor: default; }
 .track-actions .remove-track { margin-left: auto; color: var(--color-danger); }
 .inspector-selection > span:not(.selection-kicker) { color: var(--text-secondary); font-size: 9px; line-height: 1.5; }
-.restore-track-button { min-height: 27px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; font-size: 8px; }
-.restore-track-button:hover { border-color: var(--border-accent); color: var(--accent-primary); }
+.restore-track-button { min-height: 27px; padding: 0 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 8px; }
+.restore-track-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .status-dot { width: 6px; height: 6px; margin-top: 2px; flex: 0 0 auto; border-radius: 50%; background: var(--accent-primary); }
 
 /* Inspector quick controls */
@@ -137,7 +145,8 @@ button.row-label { padding: 0 5px; border: 0; background: transparent; cursor: p
 .quick-field select { width: 100%; min-width: 0; height: 29px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 9px; }
 .quick-field input[type="number"] { width: 100%; min-width: 0; height: 29px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 9px; }
 .section-actions { display: flex; align-items: center; gap: 4px; }
-.section-actions button { min-height: 25px; padding: 0 6px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; font-size: 8px; }
+.section-actions button { min-height: 25px; padding: 0 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 8px; }
+.section-actions button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .section-actions button:disabled { opacity: .35; cursor: default; }
 .section-actions .remove-track { margin-left: auto; color: var(--color-danger); }
 .section-chord-editor, .section-track-controls, .inspector-arrangement-add { padding-top: 10px; display: grid; gap: 7px; border-top: 1px solid var(--border-subtle); }
