@@ -1,0 +1,149 @@
+<main class="edit-workspace">
+  <section class="page-heading" aria-labelledby="page-title">
+    <div>
+      <p class="eyebrow"><span class="eyebrow-line"></span> EDIT WORKSPACE</p>
+      <h1 id="page-title">Shape the notes.</h1>
+      <p class="page-copy">Edit a generated phrase once and hear that change through every matching section.</p>
+    </div>
+    <div class="project-actions" aria-label="Project actions">
+      <button type="button" class="icon-button" [disabled]="!projects.canUndo()" (click)="projects.undo()" aria-label="Undo" title="Undo">↶</button>
+      <button type="button" class="icon-button" [disabled]="!projects.canRedo()" (click)="projects.redo()" aria-label="Redo" title="Redo">↷</button>
+    </div>
+  </section>
+
+  <div class="edit-layout">
+    <section class="editor-panel" aria-labelledby="editor-title">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">PHRASE EDITOR</p>
+          <h2 id="editor-title">{{ selectedPart() === 'drums' ? 'Drum step grid' : 'Piano roll' }}</h2>
+        </div>
+        <div class="editor-meta">
+          <span>{{ project().progression.length }} BARS</span>
+          <span>{{ noteCount() }} NOTES</span>
+        </div>
+      </div>
+
+      <div class="part-tabs" role="tablist" aria-label="Part to edit">
+        @for (part of parts; track part.key) {
+          <button type="button" role="tab" [attr.aria-selected]="selectedPart() === part.key"
+            [class.active]="selectedPart() === part.key" (click)="selectPart(part.key)">
+            <i class="role-dot" [class]="part.color"></i>{{ part.label }}
+          </button>
+        }
+      </div>
+
+      @if (selectedPart() === 'drums') {
+        <div class="drum-toolbar">
+          <label for="drum-bar">Progression bar</label>
+          <select id="drum-bar" [value]="drumBar()" (change)="updateDrumBar($event)">
+            @for (bar of drumBars(); track bar) {
+              <option [value]="bar">{{ (bar + 1).toString().padStart(2, '0') }}</option>
+            }
+          </select>
+          <span>16 steps · quarter-note grid</span>
+        </div>
+        <div class="drum-scroll">
+        <div class="drum-grid" role="grid" aria-label="Drum pattern">
+          <div class="drum-corner" aria-hidden="true">VOICE</div>
+          @for (step of drumSteps; track step) {
+            <span class="step-number" [class.beat-start]="step % 4 === 0">{{ step + 1 }}</span>
+          }
+          @for (voice of drumVoices; track voice.midi) {
+            <strong class="voice-label">{{ voice.label }}</strong>
+            @for (step of drumSteps; track step) {
+              <button type="button" class="step-cell" [class.active]="hasDrumHit(voice.midi, step)"
+                [class.beat-start]="step % 4 === 0" [attr.aria-pressed]="hasDrumHit(voice.midi, step)"
+                [attr.aria-label]="voice.label + ', step ' + (step + 1)"
+                (click)="toggleDrumHit(voice.midi, step)"></button>
+            }
+          }
+        </div>
+        </div>
+        <p class="editor-help">Click a cell to add or remove a hit. The edited drum phrase is used in MIDI export.</p>
+      } @else {
+        <div class="roll-toolbar">
+          <span class="roll-hint">Select a note to change its pitch, timing, length, or velocity.</span>
+          <button type="button" class="primary-button" (click)="addNote()" [disabled]="noteCount() >= 2048">＋ Add note</button>
+        </div>
+        <div class="roll-scroll">
+          <div class="roll-canvas" [style.min-width.px]="canvasWidth()">
+            <div class="bar-ruler" aria-hidden="true">
+              @for (degree of project().progression; track $index; let bar = $index) {
+                <span [style.width.%]="100 / project().progression.length">BAR {{ (bar + 1).toString().padStart(2, '0') }} <i>· {{ degree }}°</i></span>
+              }
+            </div>
+            <div class="roll-body">
+              <div class="keyboard" aria-hidden="true">
+                @for (pitch of pitches(); track pitch) {
+                  <span class="key-row" [class.black-key]="isBlackKey(pitch)" [class.octave-key]="pitch % 12 === 0">
+                    @if (pitch % 12 === 0 || pitch === pitches()[0]) { <i>{{ noteName(pitch) }}</i> }
+                  </span>
+                }
+              </div>
+              <div class="note-lane" [style.height.px]="laneHeight()" [style.--bar-count]="project().progression.length">
+                @for (note of notes(); track note.id) {
+                  <button type="button" class="note-block" [class.selected]="selectedNoteId() === note.id"
+                    [class.bass]="selectedPart() === 'bass'" [class.chords]="selectedPart() === 'chords'"
+                    [class.arpeggio]="selectedPart() === 'arpeggio'"
+                    [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.px]="noteTop(note)"
+                    [attr.title]="noteName(note.midi) + ' · beat ' + (note.startBeat + 1)"
+                    [attr.aria-label]="noteName(note.midi) + ', beat ' + (note.startBeat + 1)"
+                    [attr.aria-pressed]="selectedNoteId() === note.id" (click)="selectNote(note.id)">
+                    <span>{{ noteName(note.midi) }}</span>
+                  </button>
+                }
+                @if (notes().length === 0) {
+                  <p class="empty-phrase">This part has no notes. Add one to start editing.</p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="editor-help">Each bar follows the corresponding chord in Create. Phrase edits repeat wherever this part enters in Arrange.</p>
+      }
+    </section>
+
+    <aside class="inspector" aria-labelledby="inspector-title">
+      <div class="inspector-heading">
+        <div>
+          <p class="eyebrow">{{ isEdited() ? 'CUSTOM PHRASE' : 'SEEDED PHRASE' }}</p>
+          <h2 id="inspector-title">{{ selectedPart() | titlecase }} settings</h2>
+        </div>
+        <span class="edit-mark">{{ isEdited() ? '✎' : '♪' }}</span>
+      </div>
+
+      @if (selectedPart() === 'drums') {
+        <p class="inspector-copy">The step grid changes the selected progression bar. Untouched bars keep the seeded groove and swing.</p>
+      } @else if (selectedNote(); as note) {
+        <p class="selected-note-name">{{ noteName(note.midi) }} <span>NOTE SELECTED</span></p>
+        <label class="field-label" for="note-pitch">Pitch</label>
+        <div class="field-with-value">
+          <input id="note-pitch" type="number" min="0" max="127" step="1" [value]="note.midi" (change)="updateSelected('midi', $event)" />
+          <output>{{ noteName(note.midi) }}</output>
+        </div>
+        <label class="field-label" for="note-start">Start beat</label>
+        <input id="note-start" class="number-input" type="number" min="1" [max]="phraseBeats() - note.durationBeats + 1" step="0.25" [value]="note.startBeat + 1" (change)="updateSelected('startBeat', $event)" />
+        <label class="field-label" for="note-length">Length in beats</label>
+        <input id="note-length" class="number-input" type="number" min="0.05" [max]="phraseBeats() - note.startBeat" step="0.25" [value]="note.durationBeats" (change)="updateSelected('durationBeats', $event)" />
+        <label class="field-label" for="note-velocity">Velocity</label>
+        <div class="velocity-control">
+          <input id="note-velocity" type="range" min="1" max="127" step="1" [value]="note.velocity" (change)="updateSelected('velocity', $event)" />
+          <output>{{ note.velocity }}</output>
+        </div>
+        <button type="button" class="remove-note" (click)="deleteSelected()">Remove note</button>
+      } @else {
+        <p class="inspector-copy">Select a note in the piano roll to edit its properties. Changes join the same undo history as project settings.</p>
+      }
+
+      @if (isEdited()) {
+        <div class="restore-panel">
+          <p>Generated notes for this part have been replaced with your edited phrase.</p>
+          <button type="button" class="secondary-button" (click)="restoreGenerated()">Restore generated phrase</button>
+        </div>
+      } @else {
+        <div class="source-panel"><span class="status-dot"></span> Following current seed and generation settings</div>
+      }
+    </aside>
+  </div>
+</main>

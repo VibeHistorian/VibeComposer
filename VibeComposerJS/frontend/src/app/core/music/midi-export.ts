@@ -1,15 +1,11 @@
 import { Midi } from '@tonejs/midi';
 import type { CompositionProject } from '../project/project.model';
 import type { ArrangedPart } from '../project/project.model';
-import { generateArpeggio } from './arpeggio-generator';
 import { shouldGeneratePartInSection } from './arrangement-generator';
-import { generateBassline } from './bass-generator';
-import { generateChordPart } from './chord-generator';
-import { generateDrumPart } from './drum-generator';
+import { phraseForProject } from './phrase';
 
 /** Serialize the current generated parts to a standard MIDI file byte array. */
 export function generateCompositionMidi(project: CompositionProject): Uint8Array {
-  const seed = BigInt(project.seed);
   const midi = new Midi();
   midi.name = project.name;
   midi.header.setTempo(project.tempoBpm);
@@ -19,10 +15,7 @@ export function generateCompositionMidi(project: CompositionProject): Uint8Array
   bassTrack.name = 'Bass';
   bassTrack.channel = 0;
   bassTrack.instrument.number = 33;
-  const bassPhrase = generateBassline(
-    seed, project.key, project.scale, project.progression,
-    project.bass.rhythm, project.bass.noteVariation,
-  );
+  const bassPhrase = phraseForProject(project, 'bass');
   for (const note of layOutPhrase(project, 'bass', bassPhrase)) {
     bassTrack.addNote({
       midi: note.midi,
@@ -36,27 +29,21 @@ export function generateCompositionMidi(project: CompositionProject): Uint8Array
   chordTrack.name = 'Chords';
   chordTrack.channel = 1;
   chordTrack.instrument.number = 0;
-  const chordPhrase = generateChordPart(
-    seed, project.key, project.scale, project.progression, project.chords,
-  );
-  for (const hit of layOutPhrase(project, 'chords', chordPhrase)) {
-    for (const pitch of hit.pitches) {
-      chordTrack.addNote({
-        midi: pitch,
-        time: hit.startBeat * secondsPerBeat,
-        duration: hit.durationBeats * secondsPerBeat,
-        velocity: hit.velocity / 127,
-      });
-    }
+  const chordPhrase = phraseForProject(project, 'chords');
+  for (const note of layOutPhrase(project, 'chords', chordPhrase)) {
+    chordTrack.addNote({
+      midi: note.midi,
+      time: note.startBeat * secondsPerBeat,
+      duration: note.durationBeats * secondsPerBeat,
+      velocity: note.velocity / 127,
+    });
   }
 
   const arpeggioTrack = midi.addTrack();
   arpeggioTrack.name = 'Arpeggio';
   arpeggioTrack.channel = 2;
   arpeggioTrack.instrument.number = 11;
-  const arpeggioPhrase = generateArpeggio(
-    seed, project.key, project.scale, project.progression, project.arpeggio,
-  );
+  const arpeggioPhrase = phraseForProject(project, 'arpeggio');
   for (const note of layOutPhrase(project, 'arpeggio', arpeggioPhrase)) {
     arpeggioTrack.addNote({
       midi: note.midi,
@@ -69,7 +56,7 @@ export function generateCompositionMidi(project: CompositionProject): Uint8Array
   const drumTrack = midi.addTrack();
   drumTrack.name = 'Drums';
   drumTrack.channel = 9;
-  const drumPhrase = generateDrumPart(seed, project.progression.length, project.drums);
+  const drumPhrase = phraseForProject(project, 'drums');
   for (const hit of layOutPhrase(project, 'drums', drumPhrase)) {
     drumTrack.addNote({
       midi: hit.midi,

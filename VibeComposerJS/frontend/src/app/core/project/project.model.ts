@@ -11,6 +11,14 @@ export type SectionType =
   | 'BREAKDOWN' | 'CHILL' | 'BUILDUP1' | 'BUILDUP2' | 'CHORUS3' | 'CLIMAX' | 'OUTRO';
 export type ArrangedPart = 'bass' | 'chords' | 'arpeggio' | 'drums';
 
+export interface PhraseNote {
+  readonly id: string;
+  readonly midi: number;
+  readonly startBeat: number;
+  readonly durationBeats: number;
+  readonly velocity: number;
+}
+
 export interface ArrangementSection {
   readonly id: string;
   readonly type: SectionType;
@@ -44,7 +52,7 @@ export interface DrumSettings {
 }
 
 export interface CompositionProject {
-  readonly schemaVersion: 6;
+  readonly schemaVersion: 7;
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
@@ -58,6 +66,8 @@ export interface CompositionProject {
   readonly arpeggio: ArpeggioSettings;
   readonly drums: DrumSettings;
   readonly arrangement: readonly ArrangementSection[];
+  /** Phrase-level note edits. Missing parts continue to use their seeded generator output. */
+  readonly editedPhrases: Readonly<Partial<Record<ArrangedPart, readonly PhraseNote[]>>>;
 }
 
 export const SECTION_TYPES: readonly SectionType[] = [
@@ -134,7 +144,7 @@ export const DEFAULT_DRUM_SETTINGS: DrumSettings = {
 };
 
 export const DEFAULT_PROJECT: CompositionProject = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',
@@ -146,4 +156,5 @@ export const DEFAULT_PROJECT: CompositionProject = {
   arpeggio: DEFAULT_ARPEGGIO_SETTINGS,
   drums: DEFAULT_DRUM_SETTINGS,
   arrangement: DEFAULT_ARRANGEMENT,
+  editedPhrases: {},
 };

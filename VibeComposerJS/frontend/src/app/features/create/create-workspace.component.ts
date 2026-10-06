@@ -1,10 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { generateArpeggio } from '../../core/music/arpeggio-generator';
-import { generateBassline } from '../../core/music/bass-generator';
-import { generateChordPart } from '../../core/music/chord-generator';
-import { generateDrumPart } from '../../core/music/drum-generator';
 import { generateCompositionMidi } from '../../core/music/midi-export';
 import { getDiatonicChords, KEYS } from '../../core/music/harmony';
+import { phraseForProject } from '../../core/music/phrase';
 import { generateDiatonicProgression } from '../../core/music/progression-generator';
 import type { DiatonicChord, ScaleMode } from '../../core/music/harmony';
 import type {
@@ -59,27 +56,45 @@ export class CreateWorkspaceComponent {
   ];
   readonly bassNotes = computed(() => {
     const project = this.project();
-    return generateBassline(
-      BigInt(project.seed), project.key, project.scale, project.progression,
-      project.bass.rhythm, project.bass.noteVariation,
-    );
+    return phraseForProject(project, 'bass').map((note) => ({
+      ...note, chordIndex: Math.floor(note.startBeat / 4),
+    }));
   });
   readonly bassLengthBeats = computed(() => this.project().progression.length * 4);
   readonly chordHits = computed(() => {
     const project = this.project();
-    return generateChordPart(
-      BigInt(project.seed), project.key, project.scale, project.progression, project.chords,
-    );
+    const groups = new Map<number, ReturnType<typeof phraseForProject>[number][]>();
+    for (const note of phraseForProject(project, 'chords')) {
+      const group = groups.get(note.startBeat) ?? [];
+      group.push(note);
+      groups.set(note.startBeat, group);
+    }
+    return [...groups.values()].map((notes) => {
+      const first = notes[0];
+      const chord = this.chordFor(project.progression[Math.floor(first.startBeat / 4)]);
+      return {
+        pitches: notes.map((note) => note.midi),
+        symbol: project.editedPhrases.chords ? 'Custom' : chord?.symbol ?? 'Chord',
+        startBeat: first.startBeat,
+        durationBeats: Math.max(...notes.map((note) => note.durationBeats)),
+        velocity: first.velocity,
+      };
+    });
   });
   readonly arpeggioNotes = computed(() => {
     const project = this.project();
-    return generateArpeggio(
-      BigInt(project.seed), project.key, project.scale, project.progression, project.arpeggio,
-    );
+    return phraseForProject(project, 'arpeggio').map((note) => ({
+      ...note, chordIndex: Math.floor(note.startBeat / 4),
+    }));
   });
   readonly drumHits = computed(() => {
     const project = this.project();
-    return generateDrumPart(BigInt(project.seed), project.progression.length, project.drums);
+    return phraseForProject(project, 'drums').map((note) => ({
+      ...note,
+      voice: note.midi === 36 ? 'kick' : note.midi === 38 ? 'snare' : 'closed-hat',
+      barIndex: Math.floor(note.startBeat / 4),
+      step: Math.round((note.startBeat % 4) * 4),
+    }));
   });
 
   chordFor(degree: number): DiatonicChord | undefined {

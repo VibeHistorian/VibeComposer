@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords } from '../music/harmony';
 import type {
-  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, DrumSettings, SectionType,
+  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, DrumSettings, PhraseNote, SectionType,
 } from './project.model';
 import type { CompositionProject } from './project.model';
 import {
@@ -9,8 +9,8 @@ import {
   DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, SECTION_TYPES,
 } from './project.model';
 
-const STORAGE_KEY = 'vibecomposer.project.v6';
-const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
+const STORAGE_KEY = 'vibecomposer.project.v7';
+const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v6', 'vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v1';
 const MAX_HISTORY = 100;
 const MAX_ARRANGEMENT_SECTIONS = 32;
@@ -52,6 +52,25 @@ export class ProjectService {
 
   updateDrumSettings(patch: Partial<DrumSettings>): void {
     this.commit({ ...this.state(), drums: { ...this.state().drums, ...patch } });
+  }
+
+  updateEditedPhrase(part: ArrangedPart, notes: readonly PhraseNote[]): void {
+    if (!ARRANGED_PARTS.includes(part) || !this.isPhrase(notes)) {
+      return;
+    }
+    this.commit({
+      ...this.state(),
+      editedPhrases: { ...this.state().editedPhrases, [part]: notes.map((note) => ({ ...note })) },
+    });
+  }
+
+  clearEditedPhrase(part: ArrangedPart): void {
+    if (!this.state().editedPhrases[part]) {
+      return;
+    }
+    const editedPhrases = { ...this.state().editedPhrases };
+    delete editedPhrases[part];
+    this.commit({ ...this.state(), editedPhrases });
   }
 
   addSection(type: SectionType = 'VERSE1', afterIndex = this.state().arrangement.length - 1): void {
@@ -255,7 +274,7 @@ export class ProjectService {
       & { schemaVersion?: number; bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown };
     const validBase = (project.schemaVersion === 1 || project.schemaVersion === 2
       || project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
-      || project.schemaVersion === 6)
+      || project.schemaVersion === 6 || project.schemaVersion === 7)
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -271,19 +290,24 @@ export class ProjectService {
 
     const bass = project.schemaVersion === 1 ? DEFAULT_BASS_SETTINGS : this.decodeBass(project.bass);
     const chords = project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
-      || project.schemaVersion === 6
+      || project.schemaVersion === 6 || project.schemaVersion === 7
       ? this.decodeChords(project.chords) : DEFAULT_CHORD_SETTINGS;
     const arpeggio = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
+      || project.schemaVersion === 7
       ? this.decodeArpeggio(project.arpeggio) : DEFAULT_ARPEGGIO_SETTINGS;
     const drums = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
+      || project.schemaVersion === 7
       ? this.decodeDrums(project.drums) : DEFAULT_DRUM_SETTINGS;
     const arrangement = project.schemaVersion === 5 || project.schemaVersion === 6
+      || project.schemaVersion === 7
       ? this.decodeArrangement(project.arrangement) : this.copyDefaultArrangement();
-    if (!bass || !chords || !arpeggio || !drums || !arrangement) {
+    const editedPhrases = project.schemaVersion === 7
+      ? this.decodeEditedPhrases((value as Partial<CompositionProject>).editedPhrases) : {};
+    if (!bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases) {
       return undefined;
     }
     return {
-      schemaVersion: 6,
+      schemaVersion: 7,
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
@@ -295,7 +319,54 @@ export class ProjectService {
       arpeggio,
       drums,
       arrangement,
+      editedPhrases,
     };
+  }
+
+  private decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart, PhraseNote[]>> | undefined {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    const phrases = value as Partial<Record<ArrangedPart, unknown>>;
+    if (Object.keys(phrases).some((part) => !ARRANGED_PARTS.includes(part as ArrangedPart))) {
+      return undefined;
+    }
+    const decoded: Partial<Record<ArrangedPart, PhraseNote[]>> = {};
+    for (const part of ARRANGED_PARTS) {
+      const notes = phrases[part];
+      if (notes === undefined) {
+        continue;
+      }
+      if (!Array.isArray(notes) || !this.isPhrase(notes)) {
+        return undefined;
+      }
+      decoded[part] = notes.map((note) => ({ ...note }));
+    }
+    return decoded;
+  }
+
+  private isPhrase(value: unknown): value is readonly PhraseNote[] {
+    if (!Array.isArray(value) || value.length > 2048) {
+      return false;
+    }
+    const ids = new Set<string>();
+    for (const candidate of value) {
+      if (!candidate || typeof candidate !== 'object') {
+        return false;
+      }
+      const note = candidate as Partial<PhraseNote>;
+      if (typeof note.id !== 'string' || note.id.length < 1 || note.id.length > 120 || ids.has(note.id)
+          || !Number.isInteger(note.midi) || (note.midi ?? -1) < 0 || (note.midi ?? 128) > 127
+          || typeof note.startBeat !== 'number' || !Number.isFinite(note.startBeat)
+          || note.startBeat < 0 || note.startBeat >= 128
+          || typeof note.durationBeats !== 'number' || !Number.isFinite(note.durationBeats)
+          || note.durationBeats <= 0 || note.durationBeats > 128 - note.startBeat
+          || !Number.isInteger(note.velocity) || (note.velocity ?? 0) < 1 || (note.velocity ?? 128) > 127) {
+        return false;
+      }
+      ids.add(note.id);
+    }
+    return true;
   }
 
   private decodeArrangement(value: unknown): ArrangementSection[] | undefined {
@@ -426,7 +497,7 @@ export class ProjectService {
       return false;
     }
     const project = value as Partial<CompositionProject>;
-    return project.schemaVersion === 6
+    return project.schemaVersion === 7
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -441,7 +512,8 @@ export class ProjectService {
       && this.decodeChords(project.chords) !== undefined
       && this.decodeArpeggio(project.arpeggio) !== undefined
       && this.decodeDrums(project.drums) !== undefined
-      && this.decodeArrangement(project.arrangement) !== undefined;
+      && this.decodeArrangement(project.arrangement) !== undefined
+      && this.decodeEditedPhrases(project.editedPhrases) !== undefined;
   }
 
   private persist(project: CompositionProject): void {
