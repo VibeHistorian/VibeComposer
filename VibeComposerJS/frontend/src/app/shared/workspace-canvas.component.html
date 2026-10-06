@@ -31,7 +31,7 @@
         </section>
       }
     </div>
-    <a class="add-part-link" routerLink="/create">Open generation tools ↗</a>
+    <a class="add-part-link" routerLink="/create" (click)="workspaceUi.openTools()">Open generation tools ↗</a>
   </aside>
 
   <div class="song-canvas">
@@ -113,14 +113,85 @@
         <span class="selection-kicker">{{ selectedTrack().name }} · {{ sectionLabel(section.type) }}</span>
         <strong>{{ section.measures }} bars</strong>
         <span>Section inclusion follows the current arrangement settings.</span>
-        <a routerLink="/arrange">Open arrangement tools <b>↗</b></a>
+        <a routerLink="/arrange" (click)="workspaceUi.openTools()">Open arrangement tools <b>↗</b></a>
       </div>
     } @else {
       <div class="inspector-selection">
         <span class="selection-kicker">{{ selectedTrack().name }} · CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }}</span>
         <strong>{{ selectedTrack().noteCount }} notes</strong>
         <span>{{ selectedTrack().muted ? 'Muted' : selectedTrack().solo ? 'Soloed' : 'Active in the mix' }} · {{ project().mix[selectedPart()].volumePercent }}% level</span>
-        <div class="inspector-links"><a routerLink="/create">Generation</a><a routerLink="/edit">Edit notes</a><a routerLink="/mix">Instrument &amp; mix</a></div>
+        <div class="inspector-links"><a routerLink="/create" (click)="workspaceUi.openTools()">Generation</a><a routerLink="/edit" (click)="workspaceUi.openTools()">Edit notes</a><a routerLink="/mix" (click)="workspaceUi.openTools()">Instrument &amp; mix</a></div>
+      </div>
+    }
+    @if (!selectedSection()) {
+      <div class="inspector-editors">
+        <section class="quick-settings-group" aria-label="Selected part generation settings">
+          <p class="eyebrow">GENERATION</p>
+          @if (selectedPart() === 'bass') {
+            <label class="quick-field">Rhythm
+              <select [value]="project().bass.rhythm" (change)="updateBassRhythm($event)">
+                @for (option of bassRhythms; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+              </select>
+            </label>
+            <label class="quick-range"><span>Chord tones <output>{{ project().bass.noteVariation }}%</output></span>
+              <input type="range" min="0" max="100" [value]="project().bass.noteVariation" (change)="updateBassVariation($event)" />
+            </label>
+            <label class="quick-check"><input type="checkbox" [checked]="project().bass.octaveInterval" (change)="updateBassOctave($event)" /> Octave interval</label>
+          } @else if (selectedPart() === 'chords') {
+            <label class="quick-field">Rhythm
+              <select [value]="project().chords.rhythm" (change)="updateChordRhythm($event)">
+                @for (option of chordRhythms; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+              </select>
+            </label>
+            <label class="quick-field">Voicing
+              <select [value]="project().chords.voicing" (change)="updateChordVoicing($event)"><option value="close">Close</option><option value="open">Open</option></select>
+            </label>
+            <label class="quick-range"><span>Note length <output>{{ project().chords.noteLengthPercent }}%</output></span>
+              <input type="range" min="25" max="125" [value]="project().chords.noteLengthPercent" (change)="updateChordLength($event)" />
+            </label>
+          } @else if (selectedPart() === 'arpeggio') {
+            <label class="quick-field">Pattern
+              <select [value]="project().arpeggio.pattern" (change)="updateArpeggioPattern($event)">
+                @for (option of arpPatterns; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+              </select>
+            </label>
+            <label class="quick-field">Rate
+              <select [value]="project().arpeggio.rate" (change)="updateArpeggioRate($event)"><option value="eighth">Eighth</option><option value="sixteenth">Sixteenth</option></select>
+            </label>
+            <label class="quick-field">Range
+              <select [value]="project().arpeggio.octaves" (change)="updateArpeggioOctaves($event)"><option [value]="1">1 octave</option><option [value]="2">2 octaves</option></select>
+            </label>
+          } @else {
+            <label class="quick-field">Groove
+              <select [value]="project().drums.groove" (change)="updateDrumGroove($event)">
+                @for (option of drumGrooves; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+              </select>
+            </label>
+            <label class="quick-range"><span>Swing <output>{{ project().drums.swingPercent }}%</output></span>
+              <input type="range" min="50" max="75" [value]="project().drums.swingPercent" (change)="updateDrumSwing($event)" />
+            </label>
+          }
+        </section>
+
+        <section class="quick-settings-group mix-quick-settings" aria-label="Selected part instrument and mix">
+          <p class="eyebrow">INSTRUMENT &amp; MIX</p>
+          @if (selectedPart() === 'drums') {
+            <div class="quick-fixed">General MIDI percussion <span>CH 10</span></div>
+          } @else {
+            <label class="quick-field">Instrument
+              <select [value]="project().mix[selectedPart()].program" (change)="updateInstrument($event)">
+                @for (instrument of instruments; track instrument.program) { <option [value]="instrument.program">{{ instrument.name }}</option> }
+              </select>
+            </label>
+            <div class="quick-fixed">MIDI channel <span>CH {{ selectedTrack().midiChannel.toString().padStart(2, '0') }}</span></div>
+          }
+          <label class="quick-range"><span>Level <output>{{ project().mix[selectedPart()].volumePercent }}%</output></span>
+            <input type="range" min="0" max="100" [value]="project().mix[selectedPart()].volumePercent" (change)="updateVolume($event)" />
+          </label>
+          <label class="quick-range"><span>Pan <output>{{ panName(project().mix[selectedPart()].panPercent) }}</output></span>
+            <input type="range" min="-100" max="100" [value]="project().mix[selectedPart()].panPercent" (change)="updatePan($event)" />
+          </label>
+        </section>
       </div>
     }
     <div class="inspector-mode-note"><span class="status-dot"></span><span>The canvas stays in view as you switch workspace modes.</span></div>
