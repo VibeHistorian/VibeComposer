@@ -31,7 +31,7 @@ interface TimelineSection {
 interface ScoreNote extends PhraseNote {
   readonly part: ArrangedPart;
   readonly color: string;
-  readonly top: number;
+  readonly topPercent: number;
   readonly opacity: number;
 }
 
@@ -119,17 +119,20 @@ export class WorkspaceCanvasComponent {
   });
   readonly scoreNotes = computed<ScoreNote[]>(() => {
     const project = this.project();
-    const allNotes = PARTS.flatMap((part) => layOutPhrase(project, part.id, phraseForProject(project, part.id))
-      .map((note) => ({ ...note, part: part.id, color: part.color })));
-    if (allNotes.length === 0) return [];
-    const minPitch = Math.min(...allNotes.map((note) => note.midi));
-    const maxPitch = Math.max(...allNotes.map((note) => note.midi));
-    const pitchSpan = Math.max(12, maxPitch - minPitch);
-    return allNotes.map((note) => ({
-      ...note,
-      top: (maxPitch - note.midi) / pitchSpan * 160,
-      opacity: 0.28 + note.velocity / 127 * 0.72,
-    }));
+    return PARTS.flatMap((part) => {
+      const notes = layOutPhrase(project, part.id, phraseForProject(project, part.id));
+      if (notes.length === 0) return [];
+      const minPitch = Math.min(...notes.map((note) => note.midi));
+      const maxPitch = Math.max(...notes.map((note) => note.midi));
+      const pitchSpan = Math.max(12, maxPitch - minPitch);
+      return notes.map((note) => ({
+        ...note,
+        part: part.id,
+        color: part.color,
+        topPercent: (maxPitch - note.midi) / pitchSpan * 86 + 3,
+        opacity: 0.3 + note.velocity / 127 * 0.7,
+      }));
+    });
   });
   readonly selectedTrack = computed(() => this.tracks().find((track) => track.id === this.selectedPart())!);
 
@@ -173,6 +176,10 @@ export class WorkspaceCanvasComponent {
 
   noteWidth(note: ScoreNote): number {
     return Math.max(0.12, note.durationBeats / this.totalBeats() * 100);
+  }
+
+  velocityHeight(note: ScoreNote): number {
+    return Math.max(8, note.velocity / 127 * 100);
   }
 
   sectionLabel(type: string): string {

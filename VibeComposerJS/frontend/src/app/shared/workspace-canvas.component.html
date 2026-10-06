@@ -64,6 +64,7 @@
                   [style.width.%]="item.widthPercent" [attr.aria-label]="track.name + ', ' + sectionLabel(item.section.type) + ', bars ' + item.startMeasure + ' to ' + (item.startMeasure + item.section.measures - 1)"
                   (click)="selectSection(item.section, track.id)"></button>
               }
+              <i class="timeline-playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
             </div>
           </div>
         }
@@ -76,26 +77,55 @@
         <span class="score-legend"><i class="role-dot" [class]="selectedTrack().color"></i> Selected part is emphasized</span>
       </header>
       <div class="score-scroll">
-          <div class="score-canvas">
+        <div class="score-canvas">
           <div class="score-ruler">
+            <span class="score-ruler-label">PART</span>
+            <div class="score-ruler-sections">
             @for (item of timelineSections(); track item.section.id) {
               <span [style.width.%]="item.widthPercent">{{ item.startMeasure.toString().padStart(2, '0') }} · {{ sectionLabel(item.section.type) }}</span>
             }
+            </div>
           </div>
-          <div class="score-lanes">
-            @for (item of timelineSections(); track item.section.id) {
-              <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i>
+          <div class="score-track-lanes">
+            @for (track of tracks(); track track.id) {
+              <div class="score-track-row" [class.selected]="selectedPart() === track.id" [class.row-hidden]="!visibleParts().has(track.id)">
+                <span class="score-track-label"><i class="role-dot" [class]="track.color"></i>{{ track.name }}</span>
+                <div class="score-track-lane">
+                  @for (item of timelineSections(); track item.section.id) {
+                    <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i>
+                  }
+                  <i class="section-divider final" [style.left.%]="100"></i>
+                  @for (note of scoreNotes(); track note.id + '-' + note.part + '-' + note.startBeat) {
+                    @if (note.part === track.id && visibleParts().has(note.part)) {
+                      <span class="score-note" [class]="'score-note ' + note.color"
+                        [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.%]="note.topPercent"
+                        [style.opacity]="selectedPart() === note.part ? note.opacity : note.opacity * 0.38"
+                        [attr.title]="note.part + ' · MIDI ' + note.midi + ' · velocity ' + note.velocity"></span>
+                    }
+                  }
+                  @if (!visibleParts().has(track.id)) { <span class="lane-hidden">Hidden</span> }
+                  <i class="playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
+                </div>
+              </div>
             }
-            <i class="section-divider final" [style.left.%]="100"></i>
-            @for (note of scoreNotes(); track note.id + '-' + note.part + '-' + note.startBeat) {
-              @if (visibleParts().has(note.part)) {
-                <span class="score-note" [class]="'score-note ' + note.color" [class.dimmed]="selectedPart() !== note.part"
-                  [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.px]="note.top"
-                  [style.opacity]="selectedPart() === note.part ? note.opacity : note.opacity * 0.34"
-                  [attr.title]="note.part + ' · MIDI ' + note.midi + ' · velocity ' + note.velocity"></span>
-              }
-            }
-            <i class="playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
+            <div class="score-velocity-row">
+              <span class="score-track-label velocity-label">VEL</span>
+              <div class="velocity-lane">
+                @for (item of timelineSections(); track item.section.id) {
+                  <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i>
+                }
+                <i class="section-divider final" [style.left.%]="100"></i>
+                @for (note of scoreNotes(); track note.id + '-velocity-' + note.part + '-' + note.startBeat) {
+                  @if (visibleParts().has(note.part)) {
+                    <span class="velocity-stem" [class]="'velocity-stem ' + note.color"
+                      [class.dimmed]="selectedPart() !== note.part" [style.left.%]="noteLeft(note)"
+                       [style.height.%]="velocityHeight(note)" [style.opacity]="selectedPart() === note.part ? 0.9 : 0.32"
+                      [attr.title]="note.part + ' velocity ' + note.velocity"></span>
+                  }
+                }
+                <i class="playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
+              </div>
+            </div>
           </div>
         </div>
       </div>
