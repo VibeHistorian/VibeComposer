@@ -97,9 +97,10 @@
                     <div class="score-track-lane">
                       @for (item of timelineSections(); track item.section.id) { <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i> }
                       <i class="section-divider final" [style.left.%]="100"></i>
-                      @for (note of scoreNotes(); track note.id + '-' + note.part + '-' + note.startBeat) {
-                        @if (note.part === track.id && isVisible(note.part)) {
+                      @for (note of scoreNotesForTrack(track.id); track note.id + '-' + note.part + '-' + note.startBeat) {
+                        @if (isVisible(note.part)) {
                           <button type="button" class="score-note" [class]="'score-note ' + note.color"
+                            [class.selected-track-note]="selectedTrackId() === note.part"
                             [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.%]="note.topPercent"
                             [style.opacity]="selectedTrackId() === note.part ? note.opacity : note.opacity * 0.72"
                             [attr.title]="track.name + ' · MIDI ' + note.midi + ' · velocity ' + note.velocity"

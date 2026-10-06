@@ -35,6 +35,8 @@ interface ScoreNote extends PhraseNote {
   readonly opacity: number;
 }
 
+const EMPTY_SCORE_NOTES: readonly ScoreNote[] = [];
+
 const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
 };
@@ -141,6 +143,19 @@ export class WorkspaceCanvasComponent {
       opacity: 0.72 + note.velocity / 127 * 0.28,
     }));
   }));
+  readonly scoreNotesByTrack = computed<ReadonlyMap<string, readonly ScoreNote[]>>(() => {
+    const notesByTrack = new Map<string, ScoreNote[]>();
+    for (const note of this.scoreNotes()) {
+      const trackNotes = notesByTrack.get(note.part);
+      if (trackNotes) trackNotes.push(note);
+      else notesByTrack.set(note.part, [note]);
+    }
+    return notesByTrack;
+  });
+
+  scoreNotesForTrack(trackId: string): readonly ScoreNote[] {
+    return this.scoreNotesByTrack().get(trackId) ?? EMPTY_SCORE_NOTES;
+  }
 
   tracksFor(role: ArrangedPart): TrackRow[] { return this.tracks().filter((track) => track.role === role); }
 
