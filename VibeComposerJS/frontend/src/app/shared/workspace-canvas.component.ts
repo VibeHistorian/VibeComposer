@@ -5,6 +5,7 @@ import type {
 } from '../core/project/project.model';
 import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
+import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
 import { generateDiatonicProgression } from '../core/music/progression-generator';
 import { getDiatonicChords, KEYS } from '../core/music/harmony';
@@ -175,9 +176,9 @@ export class WorkspaceCanvasComponent {
     if (section) this.selectSection(section, trackId);
   }
 
-  toggleArrangementTrack(sectionId: string, trackId: string, included: boolean): void {
+  toggleArrangementTrack(sectionId: string, trackId: string, present: boolean): void {
     const index = this.project().arrangement.findIndex((section) => section.id === sectionId);
-    if (index >= 0) this.projects.setSectionTrack(index, trackId, included);
+    if (index >= 0) this.projects.setSectionTrackPresence(index, trackId, present);
   }
 
   openNoteEditor(note: ScoreNote): void {
@@ -264,8 +265,8 @@ export class WorkspaceCanvasComponent {
 
   clearSectionProgression(): void { this.projects.clearSectionChordOverrides(this.selectedSectionIndex()); }
 
-  trackIncluded(section: ArrangementSection, track: TrackRow): boolean {
-    return section.trackParts?.[track.id] ?? section.parts[track.role];
+  trackPresent(section: ArrangementSection, track: TrackRow): boolean {
+    return shouldGenerateTrackInSection(BigInt(this.project().seed), section, track);
   }
 
   trackChance(section: ArrangementSection, track: TrackRow): number {
@@ -274,7 +275,7 @@ export class WorkspaceCanvasComponent {
 
   toggleSectionTrack(section: ArrangementSection, track: TrackRow, event: Event): void {
     const index = this.project().arrangement.findIndex((item) => item.id === section.id);
-    this.projects.setSectionTrack(index, track.id, (event.target as HTMLInputElement).checked);
+    this.projects.setSectionTrackPresence(index, track.id, (event.target as HTMLInputElement).checked);
   }
 
   updateSectionTrackChance(section: ArrangementSection, track: TrackRow, event: Event): void {

@@ -35,6 +35,8 @@ export function shouldGenerateTrackInSection(
   if (typeof projectSeed === 'number' && !Number.isSafeInteger(projectSeed)) {
     throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
   }
+  const explicitPresence = section.trackPresence?.[track.id];
+  if (explicitPresence !== undefined) return explicitPresence;
   const included = section.trackParts?.[track.id] ?? section.parts[track.role];
   const chance = section.trackPartChances?.[track.id] ?? section.partChances[track.role];
   const seed = BigInt.asIntN(32, BigInt(projectSeed));

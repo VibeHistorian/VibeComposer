@@ -31,6 +31,8 @@ export interface ArrangementSection {
   /** Optional track-level overrides. Missing IDs inherit their role's legacy values. */
   readonly trackParts?: Readonly<Record<string, boolean>>;
   readonly trackPartChances?: Readonly<Record<string, number>>;
+  /** Explicit current arrangement presence, overriding the seeded chance decision for a track. */
+  readonly trackPresence?: Readonly<Record<string, boolean>>;
 }
 
 export interface BassSettings {

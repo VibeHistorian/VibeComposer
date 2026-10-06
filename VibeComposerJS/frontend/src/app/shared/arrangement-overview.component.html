@@ -40,9 +40,9 @@
                 </div>
                 <div class="part-toggles" [class.empty]="group.tracks.length === 0" (click)="$event.stopPropagation()">
                   @for (track of group.tracks; track track.id; let index = $index) {
-                    <button type="button" class="part-toggle" [class.present]="trackIncluded(item.section, track)"
-                      [class.absent]="!trackIncluded(item.section, track)" [attr.aria-pressed]="trackIncluded(item.section, track)"
-                      [attr.title]="roleName(group.role) + ' track ' + (index + 1) + (trackIncluded(item.section, track) ? ' included' : ' excluded')"
+                    <button type="button" class="part-toggle" [class.present]="trackPresent(item.section, track)"
+                      [class.absent]="!trackPresent(item.section, track)" [attr.aria-pressed]="trackPresent(item.section, track)"
+                      [attr.title]="roleName(group.role) + ' track ' + (index + 1) + (trackPresent(item.section, track) ? ' present' : ' absent')"
                       [attr.aria-label]="'Toggle ' + roleName(group.role) + ' track ' + (index + 1) + ' in ' + sectionLabel(item.section.type)"
                       (click)="toggleTrack(item.section, track)">{{ index + 1 }}</button>
                   }

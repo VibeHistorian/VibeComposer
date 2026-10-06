@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack } from '../core/project/project.model';
 import { ARRANGED_PARTS } from '../core/project/project.model';
+import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { layOutTrackPhrase } from '../core/music/phrase';
 
 interface OverviewSection {
@@ -43,7 +44,7 @@ export class ArrangementOverviewComponent {
   readonly mixerRequested = output<void>();
   readonly sectionSelected = output<{ readonly sectionId: string; readonly trackId: string }>();
   readonly groupSelected = output<ArrangedPart>();
-  readonly partToggled = output<{ readonly sectionId: string; readonly trackId: string; readonly included: boolean }>();
+  readonly partToggled = output<{ readonly sectionId: string; readonly trackId: string; readonly present: boolean }>();
 
   readonly sections = computed<OverviewSection[]>(() => {
     const project = this.project();
@@ -114,8 +115,8 @@ export class ArrangementOverviewComponent {
   previewNotes(sectionId: string, role: ArrangedPart): readonly PreviewNote[] {
     return this.cellNotes().get(this.cellKey(sectionId, role)) ?? [];
   }
-  trackIncluded(section: ArrangementSection, track: CompositionTrack): boolean {
-    return section.trackParts?.[track.id] ?? section.parts[track.role];
+  trackPresent(section: ArrangementSection, track: CompositionTrack): boolean {
+    return shouldGenerateTrackInSection(BigInt(this.project().seed), section, track);
   }
   isGroupSelected(group: InstrumentGroup): boolean {
     const selectedTrackId = this.selectedTrackId();
@@ -125,7 +126,7 @@ export class ArrangementOverviewComponent {
     this.partToggled.emit({
       sectionId: section.id,
       trackId: track.id,
-      included: !this.trackIncluded(section, track),
+      present: !this.trackPresent(section, track),
     });
   }
   selectSection(sectionId: string): void {
