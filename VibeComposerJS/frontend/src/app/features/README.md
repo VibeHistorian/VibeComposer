@@ -5,7 +5,7 @@ Organize the main experience into four workspaces. Each feature owns its screen 
 ## Workspaces
 
 - **Create** — Set the key, tempo, and chord progression, then generate in-scope parts such as bass, chords, arpeggios, and drums. Export the result as MIDI. Show each role as a concise part card or row. Put detailed generation and variation parameters in the inspector for the selected part.
-- **Arrange** — Show song sections on a timeline. Selecting a section opens its length, type, part inclusion, and variation controls in the inspector. Let users add, duplicate, reorder, and edit sections from the timeline itself rather than repeating an Edit button in every cell.
+- **Arrange** — Show song sections on a timeline. Selecting a section opens its length, type, per-bar chord progression, part inclusion, and variation controls in the inspector. A section can follow the Create progression or use its own diatonic chords. Let users add, duplicate, reorder, and edit sections from the timeline itself rather than repeating an Edit button in every cell.
 - **Edit** — The piano roll edits generated bass, chord, and arpeggio phrases; the drum grid edits one progression bar at a time. Phrase edits are saved with the project, included in MIDI export, and can be restored to the seeded generator output.
 - **Mix** — Each generated part has General MIDI instrument selection, level, pan, mute, and solo controls. These settings are saved with the project and written into MIDI export; browser preview and loop controls live in the shared transport dock.
 

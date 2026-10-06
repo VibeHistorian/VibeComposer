@@ -37,21 +37,26 @@ export function phraseForProject(project: CompositionProject, part: ArrangedPart
 }
 
 /** Repeat a phrase through arrangement sections where its part enters. */
-export function layOutPhrase<Event extends { readonly startBeat: number }>(
+export function layOutPhrase(
   project: CompositionProject,
   part: ArrangedPart,
-  phrase: readonly Event[],
-): Array<Event & { readonly startBeat: number }> {
-  const result: Array<Event & { readonly startBeat: number }> = [];
+  phrase: readonly PhraseNote[],
+): PhraseNote[] {
+  const result: PhraseNote[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
     const partEnters = shouldGeneratePartInSection(BigInt(project.seed), section, part);
+    const hasEditedPhrase = project.editedPhrases[part] !== undefined;
+    const progression = section.chordDegrees && !hasEditedPhrase ? section.chordDegrees : project.progression;
+    const sectionPhrase = section.chordDegrees && !hasEditedPhrase
+      ? generatePhrase({ ...project, progression }, part)
+      : phrase;
     for (let measure = 0; measure < section.measures; measure++) {
       if (partEnters) {
-        const sourceMeasure = measure % project.progression.length;
+        const sourceMeasure = measure % progression.length;
         const sourceStartBeat = sourceMeasure * 4;
         const sourceEndBeat = sourceStartBeat + 4;
-        for (const event of phrase) {
+        for (const event of sectionPhrase) {
           if (event.startBeat >= sourceStartBeat && event.startBeat < sourceEndBeat) {
             result.push({ ...event, startBeat: arrangementBeat + event.startBeat - sourceStartBeat });
           }

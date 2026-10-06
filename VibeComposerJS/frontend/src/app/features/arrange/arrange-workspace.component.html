@@ -52,7 +52,7 @@
 
       <div class="timeline-footer">
         <span><i class="legend-dot bass"></i>Bass <i class="legend-dot chords"></i>Chords <i class="legend-dot arpeggio"></i>Arpeggio <i class="legend-dot drums"></i>Drums</span>
-        <span>Each bar follows the progression from Create.</span>
+        <span>Sections can follow or replace the Create progression.</span>
       </div>
 
       <div class="timeline-add">
@@ -83,7 +83,30 @@
         <input id="section-measures" type="number" min="1" max="32" step="1" [value]="selectedSection().measures" (change)="updateMeasures($event)" />
         <span>MEASURES</span>
       </div>
-      <p class="field-help">Bars cycle through the current chord progression in Create.</p>
+      <p class="field-help">Bars repeat the Create progression unless you set a section progression below.</p>
+
+      <div class="part-divider"></div>
+      <div class="section-progression">
+        <div class="progression-heading">
+          <p class="field-label">Chord progression</p>
+          @if (selectedSection().chordDegrees) {
+            <button type="button" class="reset-progression" (click)="projects.clearSectionChordOverrides(selectedIndex())">Use Create progression</button>
+          }
+        </div>
+        <p class="field-help">Choose the harmony for each bar. Generated parts use these chords; edited phrases stay as saved.</p>
+        <div class="section-chord-grid">
+          @for (degree of sectionChordDegrees(); track $index; let measure = $index) {
+            <label class="section-chord-choice">
+              <span>BAR {{ (measure + 1).toString().padStart(2, '0') }}</span>
+              <select [value]="degree" (change)="updateSectionChord(measure, $event)">
+                @for (chord of chords(); track chord.degree) {
+                  <option [value]="chord.degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option>
+                }
+              </select>
+            </label>
+          }
+        </div>
+      </div>
 
       <div class="part-divider"></div>
       <p class="field-label part-label">Parts in this section</p>

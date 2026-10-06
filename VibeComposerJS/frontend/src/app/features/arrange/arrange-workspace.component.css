@@ -61,6 +61,17 @@ button:disabled { opacity: .35; cursor: default; }
 .measure-control input { width: 100%; height: 36px; padding: 0 74px 0 10px; border: 1px solid #373a31; border-radius: 6px; outline: 0; background: #131510; color: #e6e7de; font-size: 11px; }
 .measure-control span { position: absolute; top: 11px; right: 11px; color: #74776d; font: 8px 'DM Mono', monospace; }
 .field-help { margin: 7px 0 0; color: #777a70; font-size: 9px; line-height: 1.5; }
+
+/* Section chord progression */
+.section-progression { min-width: 0; }
+.progression-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.progression-heading .field-label { margin: 0; }
+.reset-progression { padding: 0; border: 0; background: transparent; color: var(--accent); font-size: 8px; }
+.reset-progression:hover { color: #efffc2; }
+.section-chord-grid { max-height: 174px; margin-top: 10px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; overflow-y: auto; }
+.section-chord-choice { min-width: 0; display: grid; gap: 4px; color: #777a70; font: 7px 'DM Mono', monospace; letter-spacing: .06em; }
+.section-chord-choice select { width: 100%; height: 30px; min-width: 0; padding: 0 5px; border: 1px solid #373a31; border-radius: 5px; outline: 0; background: #131510; color: #e6e7de; font: 9px 'DM Sans', sans-serif; }
+.section-chord-choice select:focus { border-color: #8fa552; }
 .part-divider { height: 1px; margin: 17px 0; background: var(--line); }
 .part-label { margin: 0 0 6px; }
 .part-list { display: grid; gap: 8px; }
@@ -91,7 +102,7 @@ button:disabled { opacity: .35; cursor: default; }
 @media (max-width: 800px) {
   .arrange-layout { grid-template-columns: 1fr; }
   .inspector { display: grid; grid-template-columns: 1fr 1fr; column-gap: 13px; }
-  .inspector-heading, .part-divider, .part-label, .part-list, .section-actions { grid-column: 1 / -1; }
+  .inspector-heading, .part-divider, .section-progression, .part-label, .part-list, .section-actions { grid-column: 1 / -1; }
   .inspector .field-label { margin-top: 10px; }
 }
 @media (max-width: 560px) {

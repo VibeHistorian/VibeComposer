@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import type { ArrangedPart, SectionType } from '../../core/project/project.model';
 import type { ArrangementSection } from '../../core/project/project.model';
 import { SECTION_TYPES } from '../../core/project/project.model';
+import { getDiatonicChords } from '../../core/music/harmony';
 import { shouldGeneratePartInSection } from '../../core/music/arrangement-generator';
 import { ProjectService } from '../../core/project/project.service';
 
@@ -19,6 +20,13 @@ export class ArrangeWorkspaceComponent {
   readonly selectedId = signal(this.project().arrangement[0].id);
   readonly selectedSection = computed(() => this.project().arrangement.find((section) => section.id === this.selectedId())
     ?? this.project().arrangement[0]);
+  readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
+  readonly sectionChordDegrees = computed(() => {
+    const section = this.selectedSection();
+    const progression = this.project().progression;
+    return Array.from({ length: section.measures }, (_, measure) =>
+      section.chordDegrees?.[measure] ?? progression[measure % progression.length]);
+  });
   readonly selectedIndex = computed(() => this.project().arrangement.findIndex((section) => section.id === this.selectedSection().id));
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly partOptions: ReadonlyArray<{ key: ArrangedPart; label: string; color: string }> = [
@@ -69,6 +77,11 @@ export class ArrangeWorkspaceComponent {
     if (Number.isInteger(measures) && measures >= 1 && measures <= 32) {
       this.projects.updateSection(this.selectedIndex(), { measures });
     }
+  }
+
+  updateSectionChord(measureIndex: number, event: Event): void {
+    const degree = Number((event.target as HTMLSelectElement).value);
+    this.projects.setSectionChordDegree(this.selectedIndex(), measureIndex, degree);
   }
 
   togglePart(part: ArrangedPart, event: Event): void {

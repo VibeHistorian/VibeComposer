@@ -23,6 +23,8 @@ export interface ArrangementSection {
   readonly id: string;
   readonly type: SectionType;
   readonly measures: number;
+  /** Optional one-chord-per-bar override; absent sections follow the Create progression. */
+  readonly chordDegrees?: readonly number[];
   readonly parts: Readonly<Record<ArrangedPart, boolean>>;
   /** Legacy Section part chance percentages for bass, chords, arpeggio, and drums. */
   readonly partChances: Readonly<Record<ArrangedPart, number>>;
@@ -62,7 +64,7 @@ export interface MixChannelSettings {
 }
 
 export interface CompositionProject {
-  readonly schemaVersion: 8;
+  readonly schemaVersion: 9;
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
@@ -162,7 +164,7 @@ export const DEFAULT_MIX: Readonly<Record<ArrangedPart, MixChannelSettings>> = {
 };
 
 export const DEFAULT_PROJECT: CompositionProject = {
-  schemaVersion: 8,
+  schemaVersion: 9,
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',
