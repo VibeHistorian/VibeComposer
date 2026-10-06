@@ -21,7 +21,7 @@
     </section>
 
     <header class="browser-heading">
-      <div><p class="eyebrow">TRACKS</p><h2>Instrument groups <span>{{ tracks().length }}</span></h2></div>
+      <h2>Tracks</h2>
     </header>
 
     <div class="track-groups">
@@ -35,26 +35,15 @@
               [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
           </header>
           @for (track of tracksFor(group.role); track track.id) {
-            <article class="track-row-card" [class.selected]="selectedTrackId() === track.id && !selectedRole()"
-              [class.is-hidden]="!isVisible(track.id)">
-              <div class="track-line">
-                <button type="button" class="track-select" [disabled]="editing()" (click)="selectTrack(track.id)"
+            <article class="track-row-card" [class.selected]="selectedTrackId() === track.id && !selectedRole()">
+              <div class="track-line" (click)="selectTrack(track.id)">
+                <button type="button" class="track-select" [disabled]="editing()"
                   [attr.aria-pressed]="selectedTrackId() === track.id && !selectedRole()">
                   <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                 </button>
-                <button type="button" class="visibility-button" (click)="toggleVisibility(track.id)"
-                  [attr.aria-pressed]="isVisible(track.id)" [attr.aria-label]="(isVisible(track.id) ? 'Hide ' : 'Show ') + track.name"
-                  [title]="isVisible(track.id) ? 'Hide in score' : 'Show in score'">◉</button>
-                <button type="button" class="collapse-button" (click)="toggleCollapsed(track.id)"
-                  [attr.aria-expanded]="!collapsedTracks().has(track.id)" [attr.aria-label]="(collapsedTracks().has(track.id) ? 'Expand ' : 'Collapse ') + track.name">
-                  {{ collapsedTracks().has(track.id) ? '›' : '⌄' }}
-                </button>
-              </div>
-              @if (!collapsedTracks().has(track.id)) {
-                <div class="track-detail" (click)="selectTrack(track.id)">
-                  <span title="{{ instrumentName(track) }}">{{ instrumentName(track) }}</span>
-                  <span>CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
-                  <span>{{ track.noteCount }} notes</span>
+                <span class="track-instrument" [title]="instrumentName(track)">{{ instrumentName(track) }}</span>
+                <span class="track-channel">CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
+                <div class="track-mix-controls">
                   <button type="button" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
                     [attr.aria-label]="(track.mix.muted ? 'Unmute ' : 'Mute ') + track.name"
                     (click)="$event.stopPropagation(); toggleMix(track.id, 'muted')">M</button>
@@ -62,7 +51,7 @@
                     [attr.aria-label]="(track.mix.solo ? 'Unsolo ' : 'Solo ') + track.name"
                     (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
                 </div>
-              }
+              </div>
             </article>
           }
         </section>

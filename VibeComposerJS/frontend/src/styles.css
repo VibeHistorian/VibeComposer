@@ -143,7 +143,7 @@ body {
 button, a, input, select { font: inherit; }
 
 /* Application header */
-.app-frame { width: min(100% - 48px, 1920px); height: 100vh; min-height: 0; margin: 0 auto; padding-bottom: 100px; display: flex; flex-direction: column; }
+.app-frame { width: min(100% - 48px, 1920px); height: 100vh; min-height: 0; margin: 0 auto; padding-bottom: 82px; display: flex; flex-direction: column; }
 .topbar { min-height: 72px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 700; letter-spacing: -.04em; }
 .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-card); background: var(--accent-primary); color: var(--surface-canvas); font-size: 16px; }
@@ -156,6 +156,7 @@ button, a, input, select { font: inherit; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-disabled); }
 .host-pill.connected { color: var(--accent); }
 .host-pill.connected .status-dot { background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-glow); }
+.session-status { margin-left: 2px; padding-left: 12px; border-left: 1px solid var(--border-subtle); color: var(--text-faint); font-size: 9px; }
 
 /* Project file actions */
 .project-tools { display: flex; align-items: center; gap: 6px; }
@@ -163,13 +164,9 @@ button, a, input, select { font: inherit; }
 .project-tools button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .project-message { position: absolute; z-index: 2; top: 62px; right: max(24px, calc((100vw - 1920px) / 2)); margin: 0; padding: 7px 10px; border: 1px solid var(--border-accent); border-radius: var(--radius-control); background: var(--surface-accent); color: var(--accent-primary); font-size: 10px; }
 
-/* Footer */
-.app-footer { min-height: 36px; margin-top: 8px; flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--text-faint); font: 10px var(--font-mono); letter-spacing: .09em; }
-.app-footer b { padding: 0 3px; color: var(--accent-primary); font-weight: 400; }
-
 /* Tablet layout */
 @media (max-width: 900px) {
-  .app-frame { width: min(100% - 40px, 1880px); height: auto; min-height: 100vh; padding-bottom: 128px; }
+  .app-frame { width: min(100% - 40px, 1880px); height: auto; min-height: 100vh; padding-bottom: 82px; }
   vc-workspace-canvas { flex: 0 0 auto; }
   .topbar { flex-wrap: wrap; justify-content: space-between; gap: 0 15px; padding-top: 12px; }
   .header-summary { margin-left: auto; }
@@ -178,7 +175,7 @@ button, a, input, select { font: inherit; }
 }
 
 @media (max-width: 1050px) {
-  .app-frame { height: auto; min-height: 100vh; padding-bottom: 128px; }
+  .app-frame { height: auto; min-height: 100vh; padding-bottom: 82px; }
   vc-workspace-canvas { flex: 0 0 auto; }
 }
 
@@ -190,5 +187,8 @@ button, a, input, select { font: inherit; }
   .project-tools { gap: 4px; }
   .project-tools button { min-height: 28px; padding: 0 7px; font-size: 10px; }
   .host-pill { display: none; }
-  .app-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 7px 0; font-size: 10px; }
+}
+
+@media (max-width: 620px) {
+  .app-frame { padding-bottom: 108px; }
 }

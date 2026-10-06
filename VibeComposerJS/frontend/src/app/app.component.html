@@ -11,6 +11,7 @@
             <span class="status-dot" aria-hidden="true"></span>
             {{ appInfo() ? 'DESKTOP' : 'BROWSER' }}
           </span>
+          <span class="session-status">{{ appInfo() ? appInfo()!.version : 'SESSION SAVED IN THIS BROWSER' }}</span>
         </div>
 
         <div class="project-tools">
@@ -29,10 +30,5 @@
       <vc-workspace-canvas />
 
       <vc-transport-dock />
-
-      <footer class="app-footer">
-        <span>VIBECOMPOSER STUDIO <b>·</b> {{ project().name }}</span>
-        <span>{{ appInfo() ? appInfo()!.version : 'SESSION SAVED IN THIS BROWSER' }}</span>
-      </footer>
     </div>
   

@@ -1,12 +1,11 @@
 /* Workspace frame */
-.workspace-canvas { min-height: 0; margin: 12px 0; flex: 1 1 auto; display: grid; grid-template-columns: clamp(240px, 16vw, 300px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: 16px; }
+.workspace-canvas { min-height: 0; margin: 12px 0; flex: 1 1 auto; display: grid; grid-template-columns: clamp(290px, calc(16vw + 50px), 350px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: 16px; }
 .track-browser, .arrangement-panel, .score-panel, .context-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
 .track-browser, .context-inspector { padding: 15px 13px; }
 .track-browser { height: 100%; max-height: none; display: flex; flex-direction: column; overflow: hidden; align-self: stretch; scrollbar-color: var(--border-default) transparent; }
 .context-inspector { height: 100%; max-height: none; overflow-y: auto; align-self: stretch; scrollbar-color: var(--border-default) transparent; }
 .browser-heading, .canvas-heading { min-height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .browser-heading h2, .canvas-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 13px; font-weight: 600; letter-spacing: -.025em; }
-.browser-heading h2 span { margin-left: 5px; color: var(--text-muted); font: 10px var(--font-mono); }
 .eyebrow { margin: 0; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .11em; }
 
 /* Primary chord setup */
@@ -42,23 +41,17 @@
 .add-track-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .track-row-card { min-width: 0; margin-top: 3px; padding: 3px 3px 4px; border: 1px solid transparent; border-radius: var(--radius-tight); }
 .track-row-card.selected { border-color: var(--border-default); background: var(--surface-base); }
-.track-row-card.is-hidden .track-select { color: var(--text-muted); }
-.track-line { display: flex; align-items: center; gap: 2px; }
-.collapse-button, .visibility-button { width: 21px; height: 24px; padding: 0; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; }
-.collapse-button:hover, .visibility-button:hover { border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); }
-.track-select { min-width: 0; flex: 1; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 10px; }
+.track-line { min-width: 0; display: grid; grid-template-columns: minmax(42px, .8fr) minmax(0, 1fr) auto auto; align-items: center; column-gap: 6px; }
+.track-select { min-width: 0; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 10px; }
 .track-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .role-dot { width: 7px; height: 7px; flex: 0 0 auto; display: inline-block; border-radius: 50%; background: var(--role-bass); }
 .role-dot.bass { background: var(--role-bass); }.role-dot.chords { background: var(--role-chords); }.role-dot.arpeggio { background: var(--role-arpeggio); }.role-dot.drums { background: var(--role-drums); }
-.visibility-button { opacity: .72; font-size: 11px; }.visibility-button[aria-pressed="false"] { opacity: .28; }
-.track-detail { margin: 2px 0 0 6px; display: flex; align-items: center; gap: 3px; color: var(--text-muted); font: 10px var(--font-mono); cursor: pointer; }
-.track-detail span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.track-detail span:first-child { max-width: 100px; font-family: var(--font-ui); font-size: 10px; }
-.track-detail span:nth-child(2) { font-size: 10px; white-space: nowrap; }
-.track-detail span:nth-child(3) { margin-left: auto; font-family: var(--font-ui); font-size: 10px; white-space: nowrap; }
-.track-detail button { width: 19px; height: 18px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 10px var(--font-mono); }
-.track-detail button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.track-detail button.active { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
+.track-instrument { min-width: 0; overflow: hidden; color: var(--text-muted); font: 10px var(--font-ui); text-overflow: ellipsis; white-space: nowrap; }
+.track-channel { color: var(--text-muted); font: 10px var(--font-mono); white-space: nowrap; }
+.track-mix-controls { display: flex; gap: 2px; }
+.track-mix-controls button { width: 19px; height: 18px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 10px var(--font-mono); }
+.track-mix-controls button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.track-mix-controls button.active { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
 
 /* Arrangement and score canvas */
 .song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: minmax(155px, .55fr) minmax(270px, 1.45fr); gap: 12px; }
@@ -187,7 +180,7 @@ button.row-label { padding: 0 5px; border: 0; background: transparent; cursor: p
 
 /* Responsive workspace */
 @media (max-width: 1050px) {
-  .workspace-canvas { min-height: 0; grid-template-columns: minmax(210px, 260px) minmax(0, 1fr); }
+  .workspace-canvas { min-height: 0; grid-template-columns: minmax(260px, 310px) minmax(0, 1fr); }
   .song-canvas { height: auto; grid-template-rows: minmax(171px, auto) minmax(300px, 1fr); }
   .context-inspector { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(180px, .7fr) 1fr; gap: 12px; }
   .context-inspector { max-height: none; }

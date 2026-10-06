@@ -90,7 +90,6 @@ export class WorkspaceCanvasComponent {
   readonly mixerOpen = signal(false);
   readonly newSectionType = signal<SectionType>('VERSE1');
   readonly hiddenTracks = signal(new Set<string>());
-  readonly collapsedTracks = signal(new Set<string>());
 
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly totalBeats = computed(() => this.totalMeasures() * 4);
@@ -341,13 +340,6 @@ export class WorkspaceCanvasComponent {
 
   isVisible(trackId: string): boolean {
     return !this.hiddenTracks().has(trackId);
-  }
-
-  toggleCollapsed(trackId: string): void {
-    const next = new Set(this.collapsedTracks());
-    if (next.has(trackId)) next.delete(trackId);
-    else next.add(trackId);
-    this.collapsedTracks.set(next);
   }
 
   toggleMix(trackId: string, setting: 'muted' | 'solo'): void {
