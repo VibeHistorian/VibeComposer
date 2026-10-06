@@ -60,8 +60,10 @@
   --border-warm: #765b2b;
   --border-grid: #29445e;
   --grid-subdivision: #142b40;
-  --grid-beat: #254762;
-  --grid-measure: #466d89;
+  --grid-step: #10243a;
+  --grid-eighth: #1b354c;
+  --grid-beat: #315673;
+  --grid-measure: #557f9e;
   --score-row-odd: #091a2a;
   --score-row-even: #0b1e30;
   --score-pitch-a: #071a2b;
@@ -126,6 +128,9 @@
 /* Base element styles */
 * { box-sizing: border-box; }
 
+vc-root { min-height: 100vh; display: block; }
+vc-workspace-canvas { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+
 body {
   min-width: 360px;
   min-height: 100vh;
@@ -138,46 +143,52 @@ body {
 button, a, input, select { font: inherit; }
 
 /* Application header */
-.app-frame { width: min(100% - 64px, 1280px); min-height: 100vh; margin: 0 auto; padding-bottom: 108px; }
-.topbar { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--line); }
+.app-frame { width: min(100% - 48px, 1920px); height: 100vh; min-height: 0; margin: 0 auto; padding-bottom: 100px; display: flex; flex-direction: column; }
+.topbar { min-height: 72px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 700; letter-spacing: -.04em; }
 .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-card); background: var(--accent-primary); color: var(--surface-canvas); font-size: 16px; }
 .brand-light { color: var(--text-secondary); font-weight: 500; }
 
 /* Header status */
-.header-summary { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); white-space: nowrap; font: 9px var(--font-mono); letter-spacing: .04em; }
-.project-name-field input { width: clamp(115px, 18vw, 220px); height: 29px; padding: 0 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font: 9px var(--font-ui); }
-.host-pill { margin-left: 8px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 8px; }
+.header-summary { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); white-space: nowrap; font: 10px var(--font-mono); letter-spacing: .04em; }
+.project-name-field input { width: clamp(115px, 18vw, 220px); height: 29px; padding: 0 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font: 10px var(--font-ui); }
+.host-pill { margin-left: 8px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 10px; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-disabled); }
 .host-pill.connected { color: var(--accent); }
 .host-pill.connected .status-dot { background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-glow); }
 
 /* Project file actions */
 .project-tools { display: flex; align-items: center; gap: 6px; }
-.project-tools button { min-height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 9px; white-space: nowrap; }
+.project-tools button { min-height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; white-space: nowrap; }
 .project-tools button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
-.project-message { position: absolute; z-index: 2; top: 62px; right: max(32px, calc((100vw - 1280px) / 2)); margin: 0; padding: 7px 10px; border: 1px solid var(--border-accent); border-radius: var(--radius-control); background: var(--surface-accent); color: var(--accent-primary); font-size: 10px; }
+.project-message { position: absolute; z-index: 2; top: 62px; right: max(24px, calc((100vw - 1920px) / 2)); margin: 0; padding: 7px 10px; border: 1px solid var(--border-accent); border-radius: var(--radius-control); background: var(--surface-accent); color: var(--accent-primary); font-size: 10px; }
 
 /* Footer */
-.app-footer { min-height: 36px; margin-top: 25px; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--text-faint); font: 8px var(--font-mono); letter-spacing: .09em; }
+.app-footer { min-height: 36px; margin-top: 8px; flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--text-faint); font: 10px var(--font-mono); letter-spacing: .09em; }
 .app-footer b { padding: 0 3px; color: var(--accent-primary); font-weight: 400; }
 
 /* Tablet layout */
 @media (max-width: 900px) {
-  .app-frame { width: min(100% - 40px, 1280px); }
+  .app-frame { width: min(100% - 40px, 1880px); height: auto; min-height: 100vh; padding-bottom: 128px; }
+  vc-workspace-canvas { flex: 0 0 auto; }
   .topbar { flex-wrap: wrap; justify-content: space-between; gap: 0 15px; padding-top: 12px; }
   .header-summary { margin-left: auto; }
   .project-tools { order: 2; }
   .project-message { top: 60px; right: 20px; }
 }
 
+@media (max-width: 1050px) {
+  .app-frame { height: auto; min-height: 100vh; padding-bottom: 128px; }
+  vc-workspace-canvas { flex: 0 0 auto; }
+}
+
 /* Mobile layout */
 @media (max-width: 520px) {
   .app-frame { width: min(100% - 28px, 1280px); }
   .brand { font-size: 12px; }
-  .header-summary { gap: 7px; font-size: 8px; }
+  .header-summary { gap: 7px; font-size: 10px; }
   .project-tools { gap: 4px; }
-  .project-tools button { min-height: 28px; padding: 0 7px; font-size: 8px; }
+  .project-tools button { min-height: 28px; padding: 0 7px; font-size: 10px; }
   .host-pill { display: none; }
-  .app-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 7px 0; font-size: 7px; }
+  .app-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 7px 0; font-size: 10px; }
 }

@@ -96,7 +96,7 @@
             </div>
           </div>
 
-          @for (track of tracks(); track track.id) {
+          @for (track of arrangedTracks(); track track.id) {
             <div class="arrangement-row" [class.selected]="selectedTrackId() === track.id" [class.row-hidden]="!isVisible(track.id)">
               <button type="button" class="row-label" (click)="selectTrack(track.id)"><i class="role-dot" [class]="track.role"></i>{{ track.name }}</button>
               <div class="timeline-content arrangement-lane">
@@ -128,8 +128,10 @@
                 }
               </div>
             </div>
-            <div class="score-track-lanes" [style.grid-template-rows]="'repeat(' + tracks().length + ', minmax(40px, 1fr)) 34px'" [style.--bar-count]="totalMeasures()">
-              @for (track of tracks(); track track.id) {
+            <div class="score-track-lanes" [style.grid-template-rows]="'repeat(' + arrangedTracks().length + ', minmax(40px, 1fr)) 34px'"
+              [style.--bar-count]="totalMeasures()" [style.--beat-count]="totalBeats()"
+              [style.--eighth-count]="totalBeats() * 2" [style.--sixteenth-count]="totalBeats() * 4">
+              @for (track of arrangedTracks(); track track.id) {
                 <div class="score-track-row" [class.selected]="selectedTrackId() === track.id" [class.row-hidden]="!isVisible(track.id)">
                   <span class="score-track-label"><i class="role-dot" [class]="track.role"></i>{{ track.name }}</span>
                   <div class="score-track-lane">

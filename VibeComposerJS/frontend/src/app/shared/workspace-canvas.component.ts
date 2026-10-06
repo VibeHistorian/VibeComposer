@@ -112,6 +112,8 @@ export class WorkspaceCanvasComponent {
     color: track.role,
     noteCount: phraseForTrack(this.project(), track).length,
   })));
+  readonly arrangedTracks = computed(() => [...this.tracks()].sort((left, right) =>
+    ARRANGED_PARTS.indexOf(left.role) - ARRANGED_PARTS.indexOf(right.role)));
   readonly selectedTrack = computed<TrackRow>(() => this.tracks().find((track) => track.id === this.selectedTrackId()) ?? this.tracks()[0]);
   readonly selectedPart = computed(() => this.selectedTrack().role);
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id

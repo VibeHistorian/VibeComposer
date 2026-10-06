@@ -4,7 +4,7 @@
 .edit-workspace { padding-top: 34px; }
 .page-heading, .panel-heading, .inspector-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .page-heading { margin-bottom: 25px; }
-.eyebrow { margin: 0; color: var(--accent-primary); font: 9px var(--font-mono); letter-spacing: .13em; }
+.eyebrow { margin: 0; color: var(--accent-primary); font: 10px var(--font-mono); letter-spacing: .13em; }
 .eyebrow-line { width: 18px; height: 1px; margin-right: 7px; display: inline-block; vertical-align: middle; background: var(--accent-primary); }
 h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; letter-spacing: -.06em; }
@@ -20,7 +20,7 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .inspector { padding: 20px; }
 .panel-heading { margin-bottom: 20px; }
 .panel-heading h2, .inspector-heading h2 { margin: 5px 0 0; font-size: 16px; font-weight: 500; letter-spacing: -.035em; }
-.editor-meta { display: flex; gap: 13px; color: var(--text-subtle); font: 8px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
+.editor-meta { display: flex; gap: 13px; color: var(--text-subtle); font: 10px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
 .inspector-heading { margin-bottom: 20px; align-items: flex-start; }
 .edit-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--radius-mark); background: var(--surface-accent); color: var(--accent-primary); font-size: 16px; }
 .field-label { margin: 17px 0 7px; display: block; color: var(--text-secondary); font-size: 10px; }
@@ -46,25 +46,44 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .roll-scroll { overflow: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-button); background: var(--surface-input); }
 .roll-canvas { min-width: 690px; }
 .bar-ruler { height: 34px; display: flex; border-bottom: 1px solid var(--border-subtle); background: var(--surface-low); }
-.bar-ruler span { padding: 0 9px; display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--grid-measure); color: var(--text-secondary); font: 8px var(--font-mono); letter-spacing: .04em; }
+.bar-ruler span { padding: 0 9px; display: flex; align-items: center; gap: 6px; border-right: 1px solid var(--grid-measure); color: var(--text-secondary); font: 10px var(--font-mono); letter-spacing: .04em; }
 .bar-ruler i { color: var(--text-subtle); font-style: normal; }
 .roll-body { display: flex; min-height: 300px; }
 .keyboard { width: 48px; flex: 0 0 48px; border-right: 1px solid var(--grid-measure); background: var(--surface-score); }
-.key-row { height: 12px; padding-left: 4px; display: block; border-bottom: 1px solid var(--grid-subdivision); background: var(--score-pitch-a); color: var(--text-subtle); font: 7px var(--font-mono); line-height: 11px; }
+.key-row { height: 12px; padding-left: 4px; display: block; border-bottom: 1px solid var(--grid-subdivision); background: var(--score-pitch-a); color: var(--text-subtle); font: 10px var(--font-mono); line-height: 11px; }
 .key-row:nth-child(even) { background: var(--score-pitch-b); }
 .key-row.black-key { background: #061321; }
 .key-row.octave-key { border-bottom-color: var(--grid-beat); }
 .key-row i { font-style: normal; }
-.note-lane { position: relative; flex: 1 0 0; overflow: hidden; background-color: var(--surface-score); background-image: linear-gradient(to bottom, transparent 11px, var(--grid-subdivision) 11px 12px), repeating-linear-gradient(to bottom, var(--score-pitch-a) 0 12px, var(--score-pitch-b) 12px 24px), linear-gradient(to right, var(--grid-measure) 0 1px, transparent 1px), linear-gradient(to right, transparent calc(25% - .5px), var(--grid-beat) calc(25% - .5px) 25%, transparent 25%), linear-gradient(to right, transparent calc(12.5% - .5px), var(--grid-subdivision) calc(12.5% - .5px) 12.5%, transparent 12.5%); background-size: 100% 12px, 100% 24px, calc(100% / var(--bar-count)) 100%, calc(100% / var(--bar-count)) 100%, calc(100% / var(--bar-count)) 100%; }
-.note-block { position: absolute; z-index: 1; height: 10px; min-width: 4px; padding: 0 8px 0 3px; overflow: hidden; border: 1px solid var(--role-bass-strong); border-radius: var(--radius-micro); background: var(--role-bass-strong); box-shadow: 0 0 6px var(--role-bass-glow); color: var(--surface-canvas); cursor: grab; text-align: left; touch-action: none; transform: translateY(1px); user-select: none; }
+.note-lane {
+  position: relative;
+  flex: 1 0 0;
+  overflow: hidden;
+  background-color: var(--surface-score);
+  background-image:
+    linear-gradient(to right, var(--grid-measure) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-beat) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-eighth) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--grid-step) 0 1px, transparent 1px),
+    repeating-linear-gradient(to bottom, var(--score-pitch-a) 0 12px, var(--score-pitch-b) 12px 24px),
+    linear-gradient(to bottom, transparent 11px, var(--grid-subdivision) 11px 12px);
+  background-size:
+    calc(100% / var(--bar-count)) 100%,
+    calc(100% / var(--beat-count)) 100%,
+    calc(100% / var(--eighth-count)) 100%,
+    calc(100% / var(--sixteenth-count)) 100%,
+    100% 24px,
+    100% 12px;
+}
+.note-block { position: absolute; z-index: 1; height: 12px; min-width: 4px; padding: 0 8px 0 3px; overflow: hidden; border: 1px solid var(--role-bass-strong); border-radius: var(--radius-micro); background: var(--role-bass-strong); box-shadow: 0 0 6px var(--role-bass-glow); color: var(--surface-canvas); cursor: grab; text-align: left; touch-action: none; transform: none; user-select: none; }
 .note-block:active { cursor: grabbing; }
 .note-block.chords { border-color: var(--role-chords-strong); background: var(--role-chords-strong); box-shadow: 0 0 6px var(--role-chords-glow); color: var(--surface-canvas); }
 .note-block.arpeggio { border-color: var(--role-arpeggio-strong); background: var(--role-arpeggio-strong); box-shadow: 0 0 6px var(--role-arpeggio-glow); color: var(--surface-canvas); }
 .note-block.selected { z-index: 2; outline: 2px solid var(--text-primary); outline-offset: 1px; }
-.note-label { display: block; overflow: hidden; font: 7px var(--font-mono); line-height: 8px; white-space: nowrap; }
+.note-label { display: block; overflow: hidden; font: 10px var(--font-mono); line-height: 10px; white-space: nowrap; }
 .resize-handle { position: absolute; top: 0; right: 0; bottom: 0; width: 6px; border-left: 1px solid var(--text-primary); cursor: ew-resize; opacity: .7; }
 .empty-phrase { position: absolute; top: 42%; left: 0; width: 100%; color: var(--text-subtle); font-size: 11px; text-align: center; }
-.editor-help { margin: 12px 0 0; color: var(--text-subtle); font-size: 9px; line-height: 1.6; }
+.editor-help { margin: 12px 0 0; color: var(--text-subtle); font-size: 10px; line-height: 1.6; }
 
 /* Drum step grid */
 .drum-toolbar { justify-content: flex-start; margin-top: 3px; }
@@ -72,7 +91,7 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .drum-toolbar select { min-width: 68px; height: 29px; padding: 0 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font-size: 10px; }
 .drum-scroll { overflow-x: auto; }
 .drum-grid { min-width: 580px; display: grid; grid-template-columns: minmax(76px, 1.6fr) repeat(16, minmax(19px, 1fr)); gap: 4px; align-items: center; }
-.drum-corner, .step-number { height: 21px; color: var(--text-subtle); font: 8px var(--font-mono); text-align: center; }
+.drum-corner, .step-number { height: 21px; color: var(--text-subtle); font: 10px var(--font-mono); text-align: center; }
 .drum-corner { text-align: left; line-height: 21px; letter-spacing: .08em; }
 .step-number { padding-top: 5px; }
 .step-number.beat-start { color: var(--text-secondary); }
@@ -84,7 +103,7 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 
 /* Note inspector */
 .selected-note-name { margin: -1px 0 4px; color: var(--text-primary); font-size: 15px; font-weight: 600; }
-.selected-note-name span { margin-left: 5px; color: var(--text-subtle); font: 8px var(--font-mono); letter-spacing: .06em; }
+.selected-note-name span { margin-left: 5px; color: var(--text-subtle); font: 10px var(--font-mono); letter-spacing: .06em; }
 .number-input, .field-with-value input { width: 100%; height: 34px; padding: 0 9px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font-size: 11px; }
 .field-with-value { display: flex; align-items: center; gap: 8px; }
 .field-with-value output { min-width: 40px; color: var(--accent-primary); font: 10px var(--font-mono); }
@@ -93,8 +112,8 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .velocity-control output { width: 25px; color: var(--accent-primary); font: 10px var(--font-mono); text-align: right; }
 .remove-note { width: 100%; height: 32px; margin-top: 22px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); cursor: pointer; font-size: 10px; }
 .restore-panel { margin-top: 23px; padding-top: 17px; border-top: 1px solid var(--border-subtle); }
-.restore-panel p { color: var(--text-muted); font-size: 9px; line-height: 1.6; }
-.source-panel { margin-top: 24px; padding-top: 15px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border-subtle); color: var(--text-subtle); font-size: 9px; line-height: 1.5; }
+.restore-panel p { color: var(--text-muted); font-size: 10px; line-height: 1.6; }
+.source-panel { margin-top: 24px; padding-top: 15px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border-subtle); color: var(--text-subtle); font-size: 10px; line-height: 1.5; }
 .source-panel .status-dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: var(--accent-primary); }
 
 /* Narrow layouts */
@@ -111,7 +130,7 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
   .page-heading { align-items: flex-start; }
   .page-copy { max-width: 280px; line-height: 1.5; }
   .editor-meta { flex-direction: column; gap: 5px; text-align: right; }
-  .part-tabs button { padding: 7px 8px; font-size: 9px; }
+  .part-tabs button { padding: 7px 8px; font-size: 10px; }
   .roll-toolbar { align-items: flex-start; }
   .roll-hint { max-width: 210px; line-height: 1.5; }
 }

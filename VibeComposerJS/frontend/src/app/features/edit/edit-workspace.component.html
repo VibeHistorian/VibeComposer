@@ -82,6 +82,7 @@
                 }
               </div>
               <div #noteLane class="note-lane" [style.height.px]="laneHeight()" [style.--bar-count]="project().progression.length"
+                [style.--beat-count]="phraseBeats()" [style.--eighth-count]="phraseBeats() * 2" [style.--sixteenth-count]="phraseBeats() * 4"
                 (pointermove)="moveNotePointer($event)" (pointerup)="finishNotePointer($event)"
                 (pointercancel)="cancelNotePointer($event)" (lostpointercapture)="cancelNotePointer($event)">
                 @for (note of displayNotes(); track note.id) {
