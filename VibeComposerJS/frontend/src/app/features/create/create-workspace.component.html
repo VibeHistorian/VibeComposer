@@ -108,9 +108,9 @@
           </div>
           <span class="part-count">{{ bassNotes().length }} NOTES</span>
         </div>
-        <div class="bass-preview" role="img" [attr.aria-label]="'Bass phrase with ' + bassNotes().length + ' notes across ' + project().progression.length + ' chords'">
+        <div class="bass-preview" [class.octave-interval]="project().bass.octaveInterval" role="img" [attr.aria-label]="'Bass phrase with ' + bassNotes().length + ' notes across ' + project().progression.length + ' chords'">
           @for (note of bassNotes(); track $index) {
-            <span class="bass-note"
+            <span class="bass-note" [class.octave-note]="note.isOctave"
               [style.left.%]="bassNoteLeft(note.startBeat)"
               [style.width.%]="bassNoteWidth(note.durationBeats)"
               [title]="bassNoteName(note.midi) + ' · chord ' + (note.chordIndex + 1)">
@@ -134,6 +134,14 @@
             <span class="variation-label"><span class="field-label">Chord tone variation</span><output>{{ project().bass.noteVariation }}%</output></span>
             <input id="bass-variation" type="range" min="0" max="100" step="1"
               [value]="project().bass.noteVariation" (change)="updateBassNoteVariation($event)" />
+          </label>
+          <label class="bass-control octave-control" for="bass-octave-interval">
+            <span class="field-label">Octave interval</span>
+            <span class="checkbox-field">
+              <input id="bass-octave-interval" type="checkbox" [checked]="project().bass.octaveInterval"
+                (change)="updateBassOctaveInterval($event)" />
+              <span>Add a quieter octave above</span>
+            </span>
           </label>
         </div>
       </section>

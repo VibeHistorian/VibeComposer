@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { generateCompositionMidi } from '../../core/music/midi-export';
 import { getDiatonicChords, KEYS } from '../../core/music/harmony';
-import { phraseForProject } from '../../core/music/phrase';
+import { phraseForProject, withBassOctaveInterval } from '../../core/music/phrase';
 import { generateDiatonicProgression } from '../../core/music/progression-generator';
 import type { DiatonicChord, ScaleMode } from '../../core/music/harmony';
 import type {
@@ -56,8 +56,8 @@ export class CreateWorkspaceComponent {
   ];
   readonly bassNotes = computed(() => {
     const project = this.project();
-    return phraseForProject(project, 'bass').map((note) => ({
-      ...note, chordIndex: Math.floor(note.startBeat / 4),
+    return withBassOctaveInterval(phraseForProject(project, 'bass'), project.bass.octaveInterval).map((note) => ({
+      ...note, isOctave: note.id.endsWith('-octave'), chordIndex: Math.floor(note.startBeat / 4),
     }));
   });
   readonly bassLengthBeats = computed(() => this.project().progression.length * 4);
@@ -125,6 +125,12 @@ export class CreateWorkspaceComponent {
     if (Number.isInteger(variation) && variation >= 0 && variation <= 100) {
       this.projects.updateBassSettings({ noteVariation: variation });
     }
+  }
+
+  updateBassOctaveInterval(event: Event): void {
+    this.projects.updateBassSettings({
+      octaveInterval: (event.target as HTMLInputElement).checked,
+    });
   }
 
   updateChordRhythm(event: Event): void {

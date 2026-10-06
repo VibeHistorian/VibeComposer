@@ -36,6 +36,20 @@ export function phraseForProject(project: CompositionProject, part: ArrangedPart
   return project.editedPhrases[part] ?? generatePhrase(project, part);
 }
 
+/** Add the legacy BassPart octave interval as a quieter upper octave. */
+export function withBassOctaveInterval(notes: readonly PhraseNote[], enabled: boolean): PhraseNote[] {
+  if (!enabled) return [...notes];
+  return [
+    ...notes,
+    ...notes.filter((note) => note.midi <= 115).map((note) => ({
+      ...note,
+      id: `${note.id}-octave`,
+      midi: note.midi + 12,
+      velocity: Math.max(1, note.velocity - 15),
+    })),
+  ];
+}
+
 /** Repeat a phrase through arrangement sections where its part enters. */
 export function layOutPhrase(
   project: CompositionProject,
@@ -65,5 +79,5 @@ export function layOutPhrase(
       arrangementBeat += 4;
     }
   }
-  return result;
+  return part === 'bass' ? withBassOctaveInterval(result, project.bass.octaveInterval) : result;
 }

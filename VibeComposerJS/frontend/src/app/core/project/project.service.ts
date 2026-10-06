@@ -10,8 +10,8 @@ import {
   DEFAULT_DRUM_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, SECTION_TYPES,
 } from './project.model';
 
-const STORAGE_KEY = 'vibecomposer.project.v9';
-const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v8', 'vibecomposer.project.v7', 'vibecomposer.project.v6', 'vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
+const STORAGE_KEY = 'vibecomposer.project.v10';
+const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v9', 'vibecomposer.project.v8', 'vibecomposer.project.v7', 'vibecomposer.project.v6', 'vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v1';
 const MAX_HISTORY = 100;
 const MAX_ARRANGEMENT_SECTIONS = 32;
@@ -337,7 +337,7 @@ export class ProjectService {
     const validBase = (project.schemaVersion === 1 || project.schemaVersion === 2
       || project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
       || project.schemaVersion === 6 || project.schemaVersion === 7 || project.schemaVersion === 8
-      || project.schemaVersion === 9)
+      || project.schemaVersion === 9 || project.schemaVersion === 10)
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -354,26 +354,30 @@ export class ProjectService {
     const bass = project.schemaVersion === 1 ? DEFAULT_BASS_SETTINGS : this.decodeBass(project.bass);
     const chords = project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
       || project.schemaVersion === 6 || project.schemaVersion === 7 || project.schemaVersion === 8
-      || project.schemaVersion === 9
+      || project.schemaVersion === 9 || project.schemaVersion === 10
       ? this.decodeChords(project.chords) : DEFAULT_CHORD_SETTINGS;
     const arpeggio = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
       || project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
+      || project.schemaVersion === 10
       ? this.decodeArpeggio(project.arpeggio) : DEFAULT_ARPEGGIO_SETTINGS;
     const drums = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
       || project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
+      || project.schemaVersion === 10
       ? this.decodeDrums(project.drums) : DEFAULT_DRUM_SETTINGS;
     const arrangement = project.schemaVersion === 5 || project.schemaVersion === 6
       || project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
+      || project.schemaVersion === 10
       ? this.decodeArrangement(project.arrangement) : this.copyDefaultArrangement();
     const editedPhrases = project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
+      || project.schemaVersion === 10
       ? this.decodeEditedPhrases((value as Partial<CompositionProject>).editedPhrases) : {};
-    const mix = project.schemaVersion === 8 || project.schemaVersion === 9
+    const mix = project.schemaVersion === 8 || project.schemaVersion === 9 || project.schemaVersion === 10
       ? this.decodeMix((value as Partial<CompositionProject>).mix) : this.copyDefaultMix();
     if (!bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases || !mix) {
       return undefined;
     }
     return {
-      schemaVersion: 9,
+      schemaVersion: 10,
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
@@ -519,10 +523,11 @@ export class ProjectService {
     }
     const bass = value as Partial<BassSettings>;
     if (!BASS_RHYTHMS.includes(bass.rhythm as typeof BASS_RHYTHMS[number])
-        || !Number.isInteger(bass.noteVariation) || (bass.noteVariation ?? -1) < 0 || (bass.noteVariation ?? 101) > 100) {
+        || !Number.isInteger(bass.noteVariation) || (bass.noteVariation ?? -1) < 0 || (bass.noteVariation ?? 101) > 100
+        || (bass.octaveInterval !== undefined && typeof bass.octaveInterval !== 'boolean')) {
       return undefined;
     }
-    return { rhythm: bass.rhythm!, noteVariation: bass.noteVariation! };
+    return { rhythm: bass.rhythm!, noteVariation: bass.noteVariation!, octaveInterval: bass.octaveInterval ?? false };
   }
 
   private decodeChords(value: unknown): ChordSettings | undefined {
@@ -605,7 +610,7 @@ export class ProjectService {
       return false;
     }
     const project = value as Partial<CompositionProject>;
-    return project.schemaVersion === 9
+    return project.schemaVersion === 10
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')

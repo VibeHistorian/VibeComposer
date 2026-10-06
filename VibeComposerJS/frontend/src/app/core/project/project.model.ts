@@ -34,6 +34,8 @@ export interface BassSettings {
   readonly rhythm: BassRhythm;
   /** Chance, in percent, of choosing a chord tone instead of its root. */
   readonly noteVariation: number;
+  /** Add a quieter note one octave above each generated bass note. */
+  readonly octaveInterval: boolean;
 }
 
 export interface ChordSettings {
@@ -64,7 +66,7 @@ export interface MixChannelSettings {
 }
 
 export interface CompositionProject {
-  readonly schemaVersion: 9;
+  readonly schemaVersion: 10;
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
@@ -137,6 +139,7 @@ export const DEFAULT_ARRANGEMENT: readonly ArrangementSection[] = [
 export const DEFAULT_BASS_SETTINGS: BassSettings = {
   rhythm: 'alternating',
   noteVariation: 20,
+  octaveInterval: false,
 };
 
 export const DEFAULT_CHORD_SETTINGS: ChordSettings = {
@@ -164,7 +167,7 @@ export const DEFAULT_MIX: Readonly<Record<ArrangedPart, MixChannelSettings>> = {
 };
 
 export const DEFAULT_PROJECT: CompositionProject = {
-  schemaVersion: 9,
+  schemaVersion: 10,
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',
