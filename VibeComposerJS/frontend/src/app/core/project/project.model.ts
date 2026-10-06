@@ -6,6 +6,17 @@ export type ChordVoicing = 'close' | 'open';
 export type ArpeggioPattern = 'up' | 'down' | 'up-down' | 'random';
 export type ArpeggioRate = 'eighth' | 'sixteenth';
 export type DrumGroove = 'rock' | 'four-on-floor' | 'half-time' | 'sparse';
+export type SectionType =
+  | 'INTRO' | 'VERSE1' | 'VERSE2' | 'VERSE3' | 'CHORUS1' | 'CHORUS2' | 'HALF_CHORUS'
+  | 'BREAKDOWN' | 'CHILL' | 'BUILDUP1' | 'BUILDUP2' | 'CHORUS3' | 'CLIMAX' | 'OUTRO';
+export type ArrangedPart = 'bass' | 'chords' | 'arpeggio' | 'drums';
+
+export interface ArrangementSection {
+  readonly id: string;
+  readonly type: SectionType;
+  readonly measures: number;
+  readonly parts: Readonly<Record<ArrangedPart, boolean>>;
+}
 
 export interface BassSettings {
   readonly rhythm: BassRhythm;
@@ -31,7 +42,7 @@ export interface DrumSettings {
 }
 
 export interface CompositionProject {
-  readonly schemaVersion: 4;
+  readonly schemaVersion: 5;
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
@@ -44,7 +55,31 @@ export interface CompositionProject {
   readonly chords: ChordSettings;
   readonly arpeggio: ArpeggioSettings;
   readonly drums: DrumSettings;
+  readonly arrangement: readonly ArrangementSection[];
 }
+
+export const SECTION_TYPES: readonly SectionType[] = [
+  'INTRO', 'VERSE1', 'VERSE2', 'VERSE3', 'CHORUS1', 'CHORUS2', 'HALF_CHORUS',
+  'BREAKDOWN', 'CHILL', 'BUILDUP1', 'BUILDUP2', 'CHORUS3', 'CLIMAX', 'OUTRO',
+];
+
+export const ARRANGED_PARTS: readonly ArrangedPart[] = ['bass', 'chords', 'arpeggio', 'drums'];
+
+const ALL_PARTS: Readonly<Record<ArrangedPart, boolean>> = {
+  bass: true,
+  chords: true,
+  arpeggio: true,
+  drums: true,
+};
+
+export const DEFAULT_ARRANGEMENT: readonly ArrangementSection[] = [
+  { id: 'section-1', type: 'INTRO', measures: 2, parts: { ...ALL_PARTS, arpeggio: false, drums: false } },
+  { id: 'section-2', type: 'VERSE1', measures: 4, parts: { ...ALL_PARTS, arpeggio: false } },
+  { id: 'section-3', type: 'CHORUS1', measures: 4, parts: ALL_PARTS },
+  { id: 'section-4', type: 'VERSE2', measures: 4, parts: { ...ALL_PARTS, arpeggio: false } },
+  { id: 'section-5', type: 'CHORUS2', measures: 4, parts: ALL_PARTS },
+  { id: 'section-6', type: 'OUTRO', measures: 2, parts: { ...ALL_PARTS, arpeggio: false, drums: false } },
+];
 
 export const DEFAULT_BASS_SETTINGS: BassSettings = {
   rhythm: 'alternating',
@@ -69,7 +104,7 @@ export const DEFAULT_DRUM_SETTINGS: DrumSettings = {
 };
 
 export const DEFAULT_PROJECT: CompositionProject = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',
@@ -80,4 +115,5 @@ export const DEFAULT_PROJECT: CompositionProject = {
   chords: DEFAULT_CHORD_SETTINGS,
   arpeggio: DEFAULT_ARPEGGIO_SETTINGS,
   drums: DEFAULT_DRUM_SETTINGS,
+  arrangement: DEFAULT_ARRANGEMENT,
 };

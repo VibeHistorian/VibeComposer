@@ -1,16 +1,20 @@
 import { Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords } from '../music/harmony';
-import type { ArpeggioSettings, BassSettings, ChordSettings, DrumSettings } from './project.model';
+import type {
+  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, DrumSettings, SectionType,
+} from './project.model';
 import type { CompositionProject } from './project.model';
 import {
-  DEFAULT_ARPEGGIO_SETTINGS, DEFAULT_BASS_SETTINGS, DEFAULT_CHORD_SETTINGS,
-  DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT,
+  ARRANGED_PARTS, DEFAULT_ARPEGGIO_SETTINGS, DEFAULT_ARRANGEMENT, DEFAULT_BASS_SETTINGS, DEFAULT_CHORD_SETTINGS,
+  DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, SECTION_TYPES,
 } from './project.model';
 
-const STORAGE_KEY = 'vibecomposer.project.v4';
-const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v3', 'vibecomposer.project.v2'];
+const STORAGE_KEY = 'vibecomposer.project.v5';
+const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v1';
 const MAX_HISTORY = 100;
+const MAX_ARRANGEMENT_SECTIONS = 32;
+const MAX_ARRANGEMENT_MEASURES = 128;
 const BASS_RHYTHMS = ['alternating', 'full', 'half', 'tresillo', 'sparse'] as const;
 const CHORD_RHYTHMS = ['full', 'half', 'tresillo', 'sparse', 'single'] as const;
 const CHORD_VOICINGS = ['close', 'open'] as const;
@@ -48,6 +52,77 @@ export class ProjectService {
 
   updateDrumSettings(patch: Partial<DrumSettings>): void {
     this.commit({ ...this.state(), drums: { ...this.state().drums, ...patch } });
+  }
+
+  addSection(type: SectionType = 'VERSE1', afterIndex = this.state().arrangement.length - 1): void {
+    const sections = this.state().arrangement;
+    if (sections.length >= MAX_ARRANGEMENT_SECTIONS || !SECTION_TYPES.includes(type)) {
+      return;
+    }
+    const insertAt = Math.max(0, Math.min(sections.length, afterIndex + 1));
+    const nextId = sections.reduce((maximum, section) => {
+      const match = /^section-(\d+)$/.exec(section.id);
+      return match ? Math.max(maximum, Number(match[1])) : maximum;
+    }, 0) + 1;
+    const template = sections[Math.max(0, Math.min(sections.length - 1, afterIndex))]
+      ?? DEFAULT_ARRANGEMENT[1];
+    const next = [...sections];
+    next.splice(insertAt, 0, { ...template, id: `section-${nextId}`, type, measures: 4, parts: { ...template.parts } });
+    this.commit({ ...this.state(), arrangement: next });
+  }
+
+  duplicateSection(index: number): void {
+    const sections = this.state().arrangement;
+    if (!Number.isInteger(index) || index < 0 || index >= sections.length
+        || sections.length >= MAX_ARRANGEMENT_SECTIONS) {
+      return;
+    }
+    const nextId = sections.reduce((maximum, section) => {
+      const match = /^section-(\d+)$/.exec(section.id);
+      return match ? Math.max(maximum, Number(match[1])) : maximum;
+    }, 0) + 1;
+    const next = [...sections];
+    next.splice(index + 1, 0, { ...sections[index], id: `section-${nextId}`, parts: { ...sections[index].parts } });
+    this.commit({ ...this.state(), arrangement: next });
+  }
+
+  removeSection(index: number): void {
+    const sections = this.state().arrangement;
+    if (!Number.isInteger(index) || index < 0 || index >= sections.length || sections.length <= 1) {
+      return;
+    }
+    this.commit({ ...this.state(), arrangement: sections.filter((_, sectionIndex) => sectionIndex !== index) });
+  }
+
+  moveSection(index: number, offset: -1 | 1): void {
+    const sections = this.state().arrangement;
+    const target = index + offset;
+    if (!Number.isInteger(index) || index < 0 || target < 0 || target >= sections.length) {
+      return;
+    }
+    const next = [...sections];
+    [next[index], next[target]] = [next[target], next[index]];
+    this.commit({ ...this.state(), arrangement: next });
+  }
+
+  updateSection(index: number, patch: Partial<Pick<ArrangementSection, 'type' | 'measures'>>): void {
+    const sections = this.state().arrangement;
+    if (!Number.isInteger(index) || index < 0 || index >= sections.length) {
+      return;
+    }
+    const next = [...sections];
+    next[index] = { ...sections[index], ...patch };
+    this.commit({ ...this.state(), arrangement: next });
+  }
+
+  setSectionPart(index: number, part: ArrangedPart, included: boolean): void {
+    const sections = this.state().arrangement;
+    if (!Number.isInteger(index) || index < 0 || index >= sections.length || !ARRANGED_PARTS.includes(part)) {
+      return;
+    }
+    const next = [...sections];
+    next[index] = { ...sections[index], parts: { ...sections[index].parts, [part]: included } };
+    this.commit({ ...this.state(), arrangement: next });
   }
 
   setChordDegree(index: number, degree: number): void {
@@ -161,7 +236,7 @@ export class ProjectService {
     const project = value as Omit<Partial<CompositionProject>, 'schemaVersion' | 'bass' | 'chords' | 'arpeggio' | 'drums'>
       & { schemaVersion?: number; bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown };
     const validBase = (project.schemaVersion === 1 || project.schemaVersion === 2
-      || project.schemaVersion === 3 || project.schemaVersion === 4)
+      || project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5)
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -176,15 +251,19 @@ export class ProjectService {
     }
 
     const bass = project.schemaVersion === 1 ? DEFAULT_BASS_SETTINGS : this.decodeBass(project.bass);
-    const chords = project.schemaVersion === 3 || project.schemaVersion === 4
+    const chords = project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
       ? this.decodeChords(project.chords) : DEFAULT_CHORD_SETTINGS;
-    const arpeggio = project.schemaVersion === 4 ? this.decodeArpeggio(project.arpeggio) : DEFAULT_ARPEGGIO_SETTINGS;
-    const drums = project.schemaVersion === 4 ? this.decodeDrums(project.drums) : DEFAULT_DRUM_SETTINGS;
-    if (!bass || !chords || !arpeggio || !drums) {
+    const arpeggio = project.schemaVersion === 4 || project.schemaVersion === 5
+      ? this.decodeArpeggio(project.arpeggio) : DEFAULT_ARPEGGIO_SETTINGS;
+    const drums = project.schemaVersion === 4 || project.schemaVersion === 5
+      ? this.decodeDrums(project.drums) : DEFAULT_DRUM_SETTINGS;
+    const arrangement = project.schemaVersion === 5
+      ? this.decodeArrangement(project.arrangement) : this.copyDefaultArrangement();
+    if (!bass || !chords || !arpeggio || !drums || !arrangement) {
       return undefined;
     }
     return {
-      schemaVersion: 4,
+      schemaVersion: 5,
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
@@ -195,7 +274,45 @@ export class ProjectService {
       chords,
       arpeggio,
       drums,
+      arrangement,
     };
+  }
+
+  private decodeArrangement(value: unknown): ArrangementSection[] | undefined {
+    if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ARRANGEMENT_SECTIONS) {
+      return undefined;
+    }
+    const sections: ArrangementSection[] = [];
+    const ids = new Set<string>();
+    let measureCount = 0;
+    for (const candidate of value) {
+      if (!candidate || typeof candidate !== 'object') {
+        return undefined;
+      }
+      const section = candidate as Partial<ArrangementSection>;
+      const parts = section.parts as Partial<Record<ArrangedPart, unknown>> | undefined;
+      if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
+          || !SECTION_TYPES.includes(section.type as SectionType)
+          || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
+          || !parts || ARRANGED_PARTS.some((part) => typeof parts[part] !== 'boolean')) {
+        return undefined;
+      }
+      ids.add(section.id);
+      measureCount += section.measures!;
+      if (measureCount > MAX_ARRANGEMENT_MEASURES) {
+        return undefined;
+      }
+      sections.push({
+        id: section.id,
+        type: section.type!,
+        measures: section.measures!,
+        parts: {
+          bass: parts.bass as boolean, chords: parts.chords as boolean,
+          arpeggio: parts.arpeggio as boolean, drums: parts.drums as boolean,
+        },
+      });
+    }
+    return sections;
   }
 
   private decodeBass(value: unknown): BassSettings | undefined {
@@ -262,7 +379,12 @@ export class ProjectService {
       chords: { ...DEFAULT_CHORD_SETTINGS },
       arpeggio: { ...DEFAULT_ARPEGGIO_SETTINGS },
       drums: { ...DEFAULT_DRUM_SETTINGS },
+      arrangement: this.copyDefaultArrangement(),
     };
+  }
+
+  private copyDefaultArrangement(): ArrangementSection[] {
+    return DEFAULT_ARRANGEMENT.map((section) => ({ ...section, parts: { ...section.parts } }));
   }
 
   private isProject(value: unknown): value is CompositionProject {
@@ -270,7 +392,7 @@ export class ProjectService {
       return false;
     }
     const project = value as Partial<CompositionProject>;
-    return project.schemaVersion === 4
+    return project.schemaVersion === 5
       && typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -284,7 +406,8 @@ export class ProjectService {
       && this.decodeBass(project.bass) !== undefined
       && this.decodeChords(project.chords) !== undefined
       && this.decodeArpeggio(project.arpeggio) !== undefined
-      && this.decodeDrums(project.drums) !== undefined;
+      && this.decodeDrums(project.drums) !== undefined
+      && this.decodeArrangement(project.arrangement) !== undefined;
   }
 
   private persist(project: CompositionProject): void {
