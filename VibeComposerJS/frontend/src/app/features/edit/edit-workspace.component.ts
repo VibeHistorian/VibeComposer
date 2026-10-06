@@ -168,6 +168,7 @@ export class EditWorkspaceComponent {
         ? { ...note, startBeat: drag.startBeat, durationBeats: drag.durationBeats, midi: drag.midi }
         : note);
       this.draftNotes.set(notes);
+      this.restoreOnApply = false;
     }
     this.noteDrag.set(null);
   }
@@ -199,6 +200,7 @@ export class EditWorkspaceComponent {
       { id: this.makeNoteId(), midi, startBeat: beat, durationBeats: 0.2, velocity: midi === 42 ? 72 : 90 },
     ];
     this.draftNotes.set(next);
+    this.restoreOnApply = false;
   }
 
   addNote(): void {
@@ -217,6 +219,7 @@ export class EditWorkspaceComponent {
       id: this.makeNoteId(), midi: pitch, startBeat, durationBeats, velocity: 90,
     };
     this.draftNotes.set([...this.notes(), note]);
+    this.restoreOnApply = false;
     this.selectedNoteId.set(note.id);
   }
 
@@ -236,12 +239,14 @@ export class EditWorkspaceComponent {
     }
     const next = this.notes().map((note) => note.id === selected.id ? { ...note, [field]: value } : note);
     this.draftNotes.set(next);
+    this.restoreOnApply = false;
   }
 
   deleteSelected(): void {
     const selected = this.selectedNote();
     if (!selected) return;
     this.draftNotes.set(this.notes().filter((note) => note.id !== selected.id));
+    this.restoreOnApply = false;
     this.selectedNoteId.set(null);
   }
 

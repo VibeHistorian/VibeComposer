@@ -142,12 +142,14 @@ export class WorkspaceCanvasComponent {
   tracksFor(role: ArrangedPart): TrackRow[] { return this.tracks().filter((track) => track.role === role); }
 
   selectTrack(trackId: string): void {
+    if (this.editing()) return;
     if (!this.project().tracks.some((track) => track.id === trackId)) return;
     this.workspaceUi.selectTrack(trackId);
     this.selectedSectionId.set(null);
   }
 
   selectRole(role: ArrangedPart): void {
+    if (this.editing()) return;
     this.workspaceUi.selectRole(role);
     this.selectedSectionId.set(null);
   }
@@ -188,6 +190,7 @@ export class WorkspaceCanvasComponent {
   }
 
   addSection(): void {
+    if (this.project().arrangement.length >= 32 || this.totalMeasures() + 4 > 128) return;
     const index = this.selectedSectionIndex() < 0 ? this.project().arrangement.length - 1 : this.selectedSectionIndex();
     this.projects.addSection(this.newSectionType(), index);
     const added = this.project().arrangement[index + 1];
@@ -196,7 +199,8 @@ export class WorkspaceCanvasComponent {
 
   duplicateSection(): void {
     const index = this.selectedSectionIndex();
-    if (index < 0) return;
+    if (index < 0 || this.project().arrangement.length >= 32
+        || this.totalMeasures() + this.project().arrangement[index].measures > 128) return;
     this.projects.duplicateSection(index);
     this.selectedSectionId.set(this.project().arrangement[index + 1]?.id ?? null);
   }
@@ -221,9 +225,16 @@ export class WorkspaceCanvasComponent {
 
   updateSectionMeasures(event: Event): void {
     const measures = Number(this.inputValue(event));
-    if (Number.isInteger(measures) && measures >= 1 && measures <= 32 && this.selectedSectionIndex() >= 0) {
+    const section = this.selectedSection();
+    if (Number.isInteger(measures) && measures >= 1 && measures <= 32 && section
+        && this.totalMeasures() - section.measures + measures <= 128 && this.selectedSectionIndex() >= 0) {
       this.projects.updateSection(this.selectedSectionIndex(), { measures });
     }
+  }
+
+  maxSectionMeasures(): number {
+    const section = this.selectedSection();
+    return section ? Math.min(32, 128 - (this.totalMeasures() - section.measures)) : 32;
   }
 
   updateSectionChord(measure: number, event: Event): void {
@@ -268,6 +279,19 @@ export class WorkspaceCanvasComponent {
   updateTranspose(event: Event): void {
     const transpose = Number(this.inputValue(event));
     if (Number.isInteger(transpose) && transpose >= -24 && transpose <= 24) this.projects.updateSettings({ transposeSemitones: transpose });
+  }
+
+  updateSeed(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const seed = input.value.trim();
+    if (/^-?\d+$/.test(seed)) {
+      const value = BigInt(seed);
+      if (value >= -(1n << 63n) && value <= (1n << 63n) - 1n) {
+        this.projects.updateSettings({ seed: value.toString() });
+        return;
+      }
+    }
+    input.value = this.project().seed;
   }
 
   addTrack(role: ArrangedPart): void {

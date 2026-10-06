@@ -23,6 +23,8 @@
 .add-chord-button { min-height: 26px; padding: 0 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-card); color: var(--text-secondary); cursor: pointer; font-size: 8px; }
 .add-chord-button:hover:not(:disabled) { border-color: var(--border-accent); color: var(--accent-primary); }
 .add-chord-button:disabled { opacity: .4; cursor: default; }
+.chord-seed { margin-top: 7px; display: flex; align-items: center; justify-content: space-between; gap: 6px; color: var(--text-muted); font: 7px var(--font-mono); }
+.chord-seed input { width: 105px; min-width: 0; height: 23px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-secondary); font: 8px var(--font-mono); }
 
 /* Track list */
 .track-groups { min-height: 0; margin-top: 9px; flex: 1; display: grid; align-content: start; gap: 9px; overflow-y: auto; scrollbar-color: var(--border-default) transparent; }

@@ -4,6 +4,7 @@ import type { AppInfo } from './core/wails/wails-api';
 import { ProjectService } from './core/project/project.service';
 import { TransportDockComponent } from './shared/transport-dock.component';
 import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
+import { WorkspaceUiService } from './shared/workspace-ui.service';
 
 @Component({
   selector: 'vc-root',
@@ -14,8 +15,9 @@ import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
 export class AppComponent implements OnInit {
   readonly appInfo = signal<AppInfo | null>(null);
   readonly projectMessage = signal('');
-  private readonly projectService = inject(ProjectService);
-  readonly project = this.projectService.project;
+  readonly projects = inject(ProjectService);
+  readonly workspaceUi = inject(WorkspaceUiService);
+  readonly project = this.projects.project;
 
   async ngOnInit(): Promise<void> {
     try {
@@ -27,7 +29,7 @@ export class AppComponent implements OnInit {
 
   exportProject(): void {
     const project = this.project();
-    const blob = new Blob([this.projectService.exportProjectJson()], { type: 'application/json' });
+    const blob = new Blob([this.projects.exportProjectJson()], { type: 'application/json' });
     const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     const fileName = project.name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-').trim().slice(0, 80) || 'VibeComposer';
@@ -40,6 +42,11 @@ export class AppComponent implements OnInit {
     this.projectMessage.set('Project settings exported.');
   }
 
+  updateProjectName(event: Event): void {
+    const name = (event.target as HTMLInputElement).value.trim();
+    this.projects.updateSettings({ name: name || 'Untitled composition' });
+  }
+
   async importProject(event: Event): Promise<void> {
     const input = event.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
@@ -47,7 +54,7 @@ export class AppComponent implements OnInit {
     if (!file) return;
 
     try {
-      const valid = this.projectService.importProjectJson(await file.text());
+      const valid = this.projects.importProjectJson(await file.text());
       this.projectMessage.set(valid ? `Loaded ${this.project().name}.` : 'That project file is invalid or unsupported.');
     } catch {
       this.projectMessage.set('Could not read that project file.');

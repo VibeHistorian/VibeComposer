@@ -128,7 +128,7 @@ button, a, input, select { font: inherit; }
 
 /* Header status */
 .header-summary { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); white-space: nowrap; font: 9px var(--font-mono); letter-spacing: .04em; }
-.summary-divider { width: 1px; height: 12px; background: var(--border-strong); }
+.project-name-field input { width: clamp(115px, 18vw, 220px); height: 29px; padding: 0 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font: 9px var(--font-ui); }
 .host-pill { margin-left: 8px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 8px; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-disabled); }
 .host-pill.connected { color: var(--accent); }

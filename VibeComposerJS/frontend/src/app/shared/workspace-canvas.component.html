@@ -17,6 +17,7 @@
         }
       </div>
       <button type="button" class="add-chord-button" [disabled]="project().progression.length >= 32" (click)="addChord()">＋ Add chord</button>
+      <label class="chord-seed">SEED<input aria-label="Generation seed" [value]="project().seed" (change)="updateSeed($event)" /></label>
     </section>
 
     <header class="browser-heading">
@@ -27,17 +28,17 @@
       @for (group of roles; track group.role) {
         <section class="track-group" [class]="'track-group ' + group.role" [class.group-selected]="selectedRole() === group.role">
           <header class="group-heading">
-            <button type="button" class="group-select" [attr.aria-pressed]="selectedRole() === group.role" (click)="selectRole(group.role)">
+            <button type="button" class="group-select" [disabled]="editing()" [attr.aria-pressed]="selectedRole() === group.role" (click)="selectRole(group.role)">
               <i class="role-dot" [class]="group.role"></i><strong>{{ group.name }}</strong><span class="group-count">{{ tracksFor(group.role).length }}</span>
             </button>
-            <button type="button" class="add-track-button" (click)="addTrack(group.role)"
+            <button type="button" class="add-track-button" [disabled]="editing()" (click)="addTrack(group.role)"
               [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
           </header>
           @for (track of tracksFor(group.role); track track.id) {
             <article class="track-row-card" [class.selected]="selectedTrackId() === track.id && !selectedRole()"
               [class.is-hidden]="!isVisible(track.id)">
               <div class="track-line">
-                <button type="button" class="track-select" (click)="selectTrack(track.id)"
+                <button type="button" class="track-select" [disabled]="editing()" (click)="selectTrack(track.id)"
                   [attr.aria-pressed]="selectedTrackId() === track.id && !selectedRole()">
                   <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                 </button>
@@ -189,12 +190,12 @@
             </select>
           </label>
           <label class="quick-field">Length in bars
-            <input type="number" min="1" max="32" [value]="section.measures" (change)="updateSectionMeasures($event)" />
+            <input type="number" min="1" [max]="maxSectionMeasures()" [value]="section.measures" (change)="updateSectionMeasures($event)" />
           </label>
           <div class="section-actions">
             <button type="button" (click)="moveSection(-1)" [disabled]="selectedSectionIndex() <= 0" aria-label="Move section earlier">↑</button>
             <button type="button" (click)="moveSection(1)" [disabled]="selectedSectionIndex() >= project().arrangement.length - 1" aria-label="Move section later">↓</button>
-            <button type="button" (click)="duplicateSection()" [disabled]="project().arrangement.length >= 32">Duplicate</button>
+            <button type="button" (click)="duplicateSection()" [disabled]="project().arrangement.length >= 32 || totalMeasures() + section.measures > 128">Duplicate</button>
             <button type="button" class="remove-track" (click)="removeSection()" [disabled]="project().arrangement.length <= 1">Remove</button>
           </div>
           <div class="section-chord-editor">
@@ -307,7 +308,7 @@
         <select [value]="newSectionType()" (change)="updateNewSectionType($event)">
           @for (type of sectionTypes; track type) { <option [value]="type">{{ sectionLabel(type) }}</option> }
         </select>
-        <button type="button" class="add-chord-button" [disabled]="project().arrangement.length >= 32" (click)="addSection()">＋ Add section</button>
+        <button type="button" class="add-chord-button" [disabled]="project().arrangement.length >= 32 || totalMeasures() + 4 > 128" (click)="addSection()">＋ Add section</button>
       </section>
     </aside>
   }

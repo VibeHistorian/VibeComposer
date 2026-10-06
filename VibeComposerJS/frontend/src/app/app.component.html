@@ -6,9 +6,7 @@
         </div>
 
         <div class="header-summary">
-          <span>{{ project().key }} {{ project().scale === 'major' ? 'major' : 'minor' }}</span>
-          <span class="summary-divider" aria-hidden="true"></span>
-          <span>{{ project().tempoBpm }} BPM</span>
+          <label class="project-name-field"><input [value]="project().name" maxlength="80" aria-label="Project name" (change)="updateProjectName($event)" /></label>
           <span class="host-pill" [class.connected]="appInfo()">
             <span class="status-dot" aria-hidden="true"></span>
             {{ appInfo() ? 'DESKTOP' : 'BROWSER' }}
@@ -16,6 +14,8 @@
         </div>
 
         <div class="project-tools">
+          <button type="button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>
+          <button type="button" (click)="projects.redo()" [disabled]="!projects.canRedo() || workspaceUi.editingNoteId() !== null" aria-label="Redo" title="Redo">↷</button>
           <button type="button" (click)="exportProject()">Export project</button>
           <button type="button" (click)="projectFile.click()">Open project</button>
           <input #projectFile type="file" accept="application/json,.json" hidden (change)="importProject($event)" />
