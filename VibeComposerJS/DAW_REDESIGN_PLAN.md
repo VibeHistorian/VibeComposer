@@ -2,117 +2,71 @@
 
 ## Goal
 
-Reshape the translated app from four form-oriented pages into one compact, DAW-like workspace. Keep the song visible while the user creates parts, arranges sections, edits notes, or balances tracks. Put frequently used actions near the track or canvas they affect, with a quick settings popover for small changes and a full inspector for detailed work.
+Consolidate the translated app into one editing workspace. Remove Create, Arrange, Edit, and Mix as route pages and remove the collapsible mode-controls section. Keep generation, arrangement, note editing, and mixing close to the song canvas, with a context-aware inspector for detailed settings.
 
-The supplied split-parts moodboard is the main layout reference: grouped tracks at left, an arrangement overview and note editor in the center, a contextual inspector at right, and persistent transport controls at the bottom. Reuse the existing dark theme and role-color tokens rather than adopting the moodboard's blue palette wholesale. The current app screenshot is useful as a reference for the form-like workflow to consolidate; the VibeComposer2.6 screenshot shows the dense legacy score and breadth of controls to organize.
+The split-parts moodboard is the primary layout reference: grouped tracks at left, arrangement and dense score in the center, a contextual inspector at right, and persistent transport at the bottom. The legacy Java screenshot is a reference for the breadth and grouping of generation controls, not a request to reproduce its control wall. Keep the current dark theme and role colors.
 
-References: [split-parts UI moodboard](frontend/UI_design_moodboard_split_parts.png) and [translation rules](TRANSLATION_RULES.md). [Legacy java VibeComposer2.6 screenshot](frontend/LEGACY_java_vibecomposer26.png). [Current form-like temporary design](frontend/CURRENT_formlike_design.png).
+References: [split-parts UI moodboard](frontend/UI_design_moodboard_split_parts.png), [legacy Java VibeComposer 2.6](frontend/LEGACY_java_vibecomposer26.png), and [translation rules](TRANSLATION_RULES.md).
 
-## Current starting point
+## Workspace behavior
 
-- The shell routes to separate Create, Arrange, Edit, and Mix pages. Create currently stacks chord, bass, chord, arpeggio, and drum forms/previews; other pages each own their own main canvas.
-- The shared shell already owns project actions, workspace navigation, and the transport dock. The feature README already calls for a timeline, contextual inspector, dense piano roll/drum grid, and role colors.
-- Project state currently stores one settings object per supported role (`bass`, `chords`, `arpeggio`, `drums`) and one mix object per role. Phrase edits are keyed by role, so two independent bass parts cannot yet keep separate settings, edits, instruments, or channels.
-- The current rewrite scope excludes the legacy melody generator and its controls. Keep the track model extensible, but initially expose only generation types that are actually implemented in the translation.
+- Use a single workspace route and persistent shell. The arrangement overview and dense all-track score remain in the center canvas, with grouped tracks on the left, contextual inspector on the right, and transport along the bottom.
+- Remove route navigation and page-level mode controls for Create, Arrange, Edit, and Mix. These names may remain as labels for grouped controls or canvas tools where useful, but they do not select separate pages or replace the song canvas.
+- Arrange all sections and edit section/track inclusion directly in the arrangement canvas. Provide context-aware section and track actions in the inspector and canvas context menus. Every arrangement operation must be reachable without navigating away from the canvas.
+- Clicking a note in the arrangement or score opens that track's piano roll or drum grid in the center canvas. Applying the edits commits them and returns to the arrangement view. Keep note properties in the inspector while editing.
+- Open the mixer from a mixer-icon button. The mixer is a popup over the workspace and edits the same per-track mix state used by playback and MIDI export.
+- Keep transport mounted at the bottom. Make key, transpose, tempo, and mode editable in the transport area. Retain playback, loop, position, and undo/redo access.
 
-## Target workspace
+## Create controls and track organization
 
-Use one persistent workspace frame instead of replacing the whole page when a workspace is chosen.
+- Place primary chord setup in a compact, dense panel above the Tracks list. It owns the progression and the primary chord-generation controls needed to establish harmony.
+- Put detailed chord-generation controls and other context-specific generation settings in the inspector. Selecting a role group shows generation settings that affect all tracks in that group; selecting an individual track shows that track's local generation and instrument settings.
+- Group instrument setups by implemented type in the left Tracks panel: Bass, Chords, Arpeggio, and Drums. Each group can contain multiple independently configured tracks, can scroll as the list grows, and has group-level selection and add-track actions.
+- Keep global project attributes (key, transpose, tempo, and mode) editable in the transport. Do not duplicate global controls in a route page.
+- Keep quick track actions near each row. Put full parameter sets in the inspector rather than expanding every track into a form.
 
-```text
-┌ Project / workspace modes / undo-redo  ─────────────────────────────────────┐
-│ Track groups │ Arrangement overview + section rows  │ Full inspector        │
-│              ├──────────────────────────────────────┤                       │
-│              │ Dense score for the whole song       │                       │
-│              │ Piano roll / drum grid editing       │                       │
-├ Persistent transport, loop, position, tempo and key ────────────────────────┤
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+## Canvas and editing
 
-### Persistent song canvas
+- Keep arrangement sections and the dense all-track score visible together in the center canvas during normal workspace use. Share the ruler, section boundaries, and playhead between them.
+- The score uses consistent role colors and velocity shading. Track selection can emphasize a track while leaving other notes as context.
+- Editing is an in-canvas state entered by selecting a note. Use a piano roll for pitched parts and a drum grid for percussion. Provide an explicit Apply/Done action that commits one coherent edit and returns to arrangement view; provide Cancel to discard the active edit session.
+- Keep precise note properties in the inspector while the editor is open. Velocity editing remains available and aligned to the selected note.
+- Responsive behavior may collapse either side panel, but always provide a clear way to restore it and retain the central song canvas.
 
-- Keep the arrangement overview visible in every mode. It shows section blocks across a shared ruler, a playhead, and one row for every defined track. Selecting a block or row updates the shared selection and inspector.
-- Keep a dense, color-coded all-notes score preview visible in every mode, below the arrangement overview. It spans the song and follows the same ruler and playhead. Selecting a track can emphasize its notes while retaining the other tracks as a quiet context layer. The Edit mode exposes direct piano-roll or drum-grid tools in this same canvas; other modes keep the score useful as a preview.
-- Treat Create, Arrange, Edit, and Mix as modes that change the primary tools and contextual actions, not as separate pages that remove the shared song view. For example, Create adds generation actions and progression controls around the selected track; Arrange emphasizes section editing; Edit enables note tools; Mix emphasizes track level, pan, mute, and solo controls.
-- Keep the bottom transport dock mounted independently of mode changes. Preserve playback, loop, position, tempo, key, and undo/redo access in the shell.
+## Project and track state
 
-### Track browser
-
-- Group tracks by implemented instrument/generator type (initially Bass, Chords, Arpeggio, and Drums). Each group can collapse and has an Add Track action that creates another independent track of that type.
-- Show each track's name, role color, instrument, and MIDI channel compactly. Provide selection, visibility, mute, solo, duplicate, reorder, and remove actions without opening a separate page.
-- Let a track's notes remain independent when the track is duplicated or regenerated. Do not treat a role group as the generated MIDI track; it is only an organizational group.
-- Give each track a stable ID so arrangement rows, phrase edits, selection, undo history, and MIDI export all refer to the same entity.
-
-### Quick controls and inspector
-
-- Add a track quick-settings popover from its row and from the selected-track header. Use it for common changes such as name, generation style/rhythm, instrument, channel, mute/solo, and regenerate. Keep it small, dismissible, and anchored to the invoking track.
-- Keep the inspector open as the full settings surface for the current selection. Organize its contents into clear sections or tabs: Generation, Variation, Instrument & MIDI, and Mix. Show track-level settings when a track is selected, section-level controls for a selected arrangement block, and note properties for a selected note.
-- Avoid duplicating entire forms in the track list. Keep quick actions and a few high-value status values there; put the complete parameter set in the inspector.
-
-### Dense score and velocity display
-
-- Render the notes for all tracks against a common song-time grid, including section boundaries and a synchronized playhead. Keep role color stable between the track list, arrangement rows, and score.
-- Encode note velocity as a visible change in color intensity (bounded so quiet notes remain findable). Keep note length and pitch readable at dense zoom levels; show exact velocity in the velocity lane and on selection/hover. The selected track and selected note should remain clear when tracks share similar pitches and times.
-- Include a velocity lane aligned with the score. In Edit mode, selecting a note exposes precise velocity editing; the all-notes preview remains readable in Create, Arrange, and Mix modes.
-- Use the existing drum grid for drum editing and the piano roll for pitched tracks. Switch the editor toolset based on selected track type without changing the persistent arrangement overview.
-
-### Compact parameter controls
-
-- Replace suitable numeric label/value/slider rows with compact rotary knobs in the inspector and quick-settings surfaces. Use short codes on the control face (for example `CMP` for complexity, `VAR` for variation, `LEN` for note length, and `SWG` for swing), with the complete parameter name and current value available on hover and keyboard focus.
-- Keep categorical choices as selects/segmented controls and booleans as toggles. Knobs are for bounded numeric parameters with a meaningful scale, not a universal replacement for every field.
-- Each knob needs a visible value, a tooltip with the full label and units, keyboard adjustment, focus styling, and an accessible name/description. Support fine adjustment for precision; do not make hover the only way to discover what a code means.
-- Prefer arranging related knobs in compact groups in the inspector, with advanced or infrequently changed controls collapsed under named sections.
-
-## Project and track state changes
-
-Move from role-keyed generation and mix settings toward a track collection. A draft shape is:
-
-```ts
-interface Track {
-  id: string;
-  role: 'melody' | 'bass' | 'chords' | 'arpeggio' | 'drums';
-  name: string;
-  colorRole: string;
-  generatorSettings: MelodySettings | BassSettings | ChordSettings | ArpeggioSettings | DrumSettings;
-  instrumentProgram: number;
-  midiChannel: number; // store zero-based or one-based consistently; display channels 1–16
-  mix: { volumePercent: number; panPercent: number; muted: boolean; solo: boolean };
-  editedPhrase?: readonly PhraseNote[];
-}
-```
-
-The final model should use a discriminated union so a track role can only have its matching settings type. Keep arrangement sections and represent their per-track inclusion/chance settings by track ID. Retain section-level chord overrides and the project's key, tempo, seed, progression, and name.
-
-Update generation APIs to accept a track ID and that track's settings. Generate, edit, mute, solo, instrument assignment, and export operations must act on one track when requested, even when multiple tracks share a role. Keep generation code framework-independent and random stream/seed derivation explicit per the translation rules.
-
-Serialize the per-track settings in exported JSON and session storage. During translation buildout, `schemaVersion` is informational: validate the current project structure and values without version-gated loading or compatibility migrations. Start new projects with one track per implemented role.
-
-Store the General MIDI program and MIDI channel on each track. Display MIDI channels 1–16 consistently; use the conventional channel 10 for percussion by default. Validate channel and program ranges, and surface channel collisions so users can intentionally share a channel or choose another. Export each defined track independently with its instrument, channel, notes, and applicable mix/controller data.
-
-Keep user interactions flowing through the project service/history boundary. A drag or knob gesture should produce one undo step when committed, rather than one history entry per pointer movement. Keep playback and MIDI processing asynchronous and outside Angular rendering work.
+- Keep stable track IDs and independent generator settings, edited phrases, General MIDI instrument programs, MIDI channels, and mix state for each track. Role groups are organizational and never replace the track entity.
+- Use a discriminated union so each track role has its matching generator settings. Start new projects with one track per implemented role, and support adding, duplicating, reordering, and removing tracks.
+- Store section inclusion and chance overrides by track ID, with role defaults where no track-specific override exists. Keep section chord overrides and project key, transpose, tempo, seed, progression, and name.
+- Generation, phrase editing, instrument assignment, mixing, undo history, and MIDI export must target track IDs when an operation applies to one track. Group-level generation controls update all tracks in that role group.
+- Persist per-track settings and phrase edits in project JSON and session storage. Treat `schemaVersion` as informational during buildout; validate the project structure without version-gated loading or compatibility migrations.
+- Keep generation logic framework-independent and seeded random streams explicit as required by [translation rules](TRANSLATION_RULES.md). Keep audio and MIDI processing asynchronous and outside Angular rendering work.
 
 ## Delivery sequence
 
-1. **Track-capable project model:** Add track IDs and typed per-track generation, phrase, instrument, channel, and mix state; update generation and export interfaces. Keep `schemaVersion` informational during buildout and create one default track per supported role.
-2. **Persistent shell and canvas:** Replace route-owned page frames with a shared workspace layout. Keep the arrangement overview, dense all-notes score preview, mode navigation, project header, and transport mounted across modes. Add track groups and selection.
-3. **Track-level actions and inspector:** Add new/duplicate/reorder/remove track actions, independent generation, quick-settings popover, and the full contextual inspector. Move current role settings into per-track inspector sections.
-4. **Editing and compact controls:** Integrate the existing piano-roll and drum-grid interactions with selected track IDs, add the aligned velocity lane and velocity-based score intensity, and convert suitable numeric rows into accessible knobs.
-5. **Polish and responsive behavior:** Collapse the track browser or inspector at smaller widths while keeping a clear path back to them. Provide a compact canvas layout, visible selected-track context, keyboard navigation, tooltips, empty states, and focus states. Retain the shared theme tokens and consistent role colors.
+1. **Single workspace shell:** Remove the four feature routes and mode-controls drawer. Keep one route with the track browser, persistent canvas, inspector, and transport.
+2. **Workspace selection model:** Add selected track-group, track, section, and note contexts. Show group-wide generation controls for a selected role group and local controls for a selected track.
+3. **Creation and arrangement controls:** Move primary chord setup above Tracks, expose detailed generation in the inspector, and make section and arrangement actions available directly from the canvas and its contextual inspector.
+4. **In-canvas note editing:** Open the piano roll or drum grid from a clicked canvas note. Support Apply and Cancel, commit edits as one history action, and return to arrangement on Apply.
+5. **Mixer and transport:** Replace the Mix page with an icon-triggered mixer popup. Make key, transpose, tempo, and mode editable in the persistent transport.
+6. **Responsive polish:** Preserve the central canvas and clear panel access at smaller widths. Keep controls keyboard-accessible and use shared theme tokens.
 
 ## Completion criteria
 
-- Users can create two or more tracks of the same implemented role, each with independent generator settings, phrase edits, General MIDI instrument, MIDI channel, and mix state.
-- The arrangement overview and dense all-track score preview remain available while switching among Create, Arrange, Edit, and Mix modes; the transport remains persistent too.
-- Track quick settings can be changed without leaving the canvas, and the full set of relevant settings is available in the inspector.
-- Score notes use consistent role colors, respond visibly to velocity, align with a velocity lane, and synchronize with the arrangement ruler and playhead.
-- Compact knobs replace appropriate numeric slider rows while remaining understandable and operable without a mouse hover.
-- Current project data persists per-track settings, and exported MIDI preserves separate tracks, instrument programs, and channels.
-- Generation remains reproducible for the same project and track settings, and edits remain undoable as coherent user actions.
-- The layout continues to apply the shared theme tokens and remains usable when either side panel is collapsed.
+- The app has no Create, Arrange, Edit, or Mix route pages and no collapsible mode-controls drawer.
+- The arrangement and dense score remain together in the center canvas, with grouped multi-track instrument types on the left, contextual inspector on the right, and persistent transport at the bottom.
+- Primary chord settings appear above Tracks; detailed generation settings appear in the inspector according to group or track selection.
+- Key, transpose, tempo, and mode can be changed in the transport.
+- Arrangement actions are available directly through the canvas and context-aware inspector.
+- Clicking an arrangement/score note opens the correct piano roll or drum grid; Apply commits and returns to arrangement view.
+- A mixer icon opens a popup with per-track instrument/channel and mix controls.
+- Multiple tracks of a type retain independent settings, notes, instrument, MIDI channel, and mix state; group generation settings can apply to all tracks of that type.
+- Track state persists, undo groups gestures into coherent actions, and MIDI export preserves separate track settings.
 
 ## Design guardrails
 
-- Keep legacy melody generation and its controls out of scope, as required by the translation rules. Add future generator roles only when their implementation is in scope.
-- Preserve quick access and dense editing, but make the song canvas the visual anchor. Avoid rebuilding the legacy Java control wall inside one large inspector.
-- Keep the all-notes view optimized as a preview; use the selected track's piano roll or drum grid for precise editing rather than shrinking every editor into the score overview.
-- Treat the moodboard as a direction, not a pixel-perfect specification. Use the current theme tokens, actual translated generator parameters, and clear typography to resolve visual details. -- Theme decisions can be changed later globally through the use of globally defined variables (styles.css).
+- Keep legacy melody generation and its controls out of scope until separately translated.
+- Treat the moodboard as a layout direction; use actual translated generator parameters and current theme tokens.
+- Keep full parameter sets in the inspector and the song canvas as the visual anchor. Avoid rebuilding the legacy Java control wall as one large form.
+- Keep the all-notes score useful for arrangement context, and use the selected track's piano roll or drum grid for precise edits.
+- Use semantic theme variables from `frontend/src/styles.css`; add shared tokens there when a reusable value is missing.

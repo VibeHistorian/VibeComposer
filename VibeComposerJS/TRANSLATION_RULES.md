@@ -12,7 +12,7 @@ These rules guide the translation of VibeComposer's generation functionality int
 
    Keep random streams and seed derivation explicit. Reproducibility depends on matching both the Java algorithm and the order in which each generator consumes random values.
 
-3. **Port generation behavior, not the current control layout.** Preserve the musical generation functionality that remains in scope, while redesigning how users reach its settings. Use the [UI design moodboard](frontend/UI_design_moodboard.png) as visual inspiration; it is not a requirement to reproduce the Java UI.
+3. **Port generation behavior, not the legacy control layout.** Preserve the musical generation functionality that remains in scope, while placing its controls in the consolidated workspace described in [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The split-parts moodboard at `frontend/UI_design_moodboard_split_parts.png` is visual inspiration, not a requirement to reproduce either the Java UI or a separate Create, Arrange, Edit, or Mix page.
 
 4. **Choose state boundaries and update flows that can support history a undo/redo model.** E.g. components mutating state through a service which records the interaction and produces a new historical state. Long interactions, such as mouse events, should only produce a new state once (e.g. on release) rather than on every occurrence.
 
@@ -33,3 +33,7 @@ These rules guide the translation of VibeComposer's generation functionality int
 12. **Use the project's style theme throughout the Angular UI.** Reuse the semantic CSS custom properties in `frontend/src/styles.css` for colors, typography, surfaces, borders, radii, and other shared visual values. The theme is being extracted from existing components; as component styles are updated or added, use those tokens and add reusable theme tokens for missing shared values instead of introducing one-off hard-coded styles.
 
 13. **Treat `schemaVersion` as informational during translation buildout.** Validate imported project structure and values, but do not gate loading on a schema version or add compatibility migrations. Backward compatibility can be considered during the finishing phase.
+
+14. **Keep the song canvas persistent and make editing contextual.** The app uses one workspace route: arrangement and dense score stay in the center canvas, note selection opens the selected track's piano roll or drum grid, and applying edits returns to arrangement. Mixing opens from a mixer icon as a popup. Do not add route pages or a mode-controls drawer for Create, Arrange, Edit, or Mix.
+
+15. **Separate global, group, and track settings.** Key, transpose, tempo, and mode are editable in transport. Primary chord setup sits above the grouped Tracks list; detailed generation settings live in the inspector. Selecting a role group exposes controls for all tracks of that type, while selecting an individual track exposes its local generator and instrument settings. Preserve independent track IDs, phrases, instruments, channels, and mix state.
