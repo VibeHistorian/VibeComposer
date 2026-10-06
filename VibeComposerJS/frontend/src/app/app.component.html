@@ -21,7 +21,17 @@
             {{ appInfo() ? 'DESKTOP' : 'BROWSER' }}
           </span>
         </div>
+
+        <div class="project-tools">
+          <button type="button" (click)="exportProject()">Export project</button>
+          <button type="button" (click)="projectFile.click()">Open project</button>
+          <input #projectFile type="file" accept="application/json,.json" hidden (change)="importProject($event)" />
+        </div>
       </header>
+
+      @if (projectMessage()) {
+        <p class="project-message" role="status">{{ projectMessage() }}</p>
+      }
 
       <router-outlet />
 

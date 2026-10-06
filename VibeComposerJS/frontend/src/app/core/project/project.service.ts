@@ -35,6 +35,23 @@ export class ProjectService {
   readonly canUndo = this.undoAvailable.asReadonly();
   readonly canRedo = this.redoAvailable.asReadonly();
 
+  exportProjectJson(): string {
+    return JSON.stringify(this.state(), null, 2);
+  }
+
+  importProjectJson(json: string): boolean {
+    try {
+      const project = this.decodeProject(JSON.parse(json));
+      if (!project) {
+        return false;
+      }
+      this.commit(project);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'tempoBpm' | 'seed'>>): void {
     this.commit({ ...this.state(), ...patch });
   }

@@ -45,6 +45,12 @@ button, a, input, select { font: inherit; }
 .host-pill.connected { color: var(--accent); }
 .host-pill.connected .status-dot { background: var(--accent); box-shadow: 0 0 8px #d4f36a80; }
 
+/* Project file actions */
+.project-tools { display: flex; align-items: center; gap: 6px; }
+.project-tools button { min-height: 30px; padding: 0 10px; border: 1px solid #34382e; border-radius: 6px; background: #191c17; color: #b7baad; cursor: pointer; font-size: 9px; white-space: nowrap; }
+.project-tools button:hover { border-color: #59643a; color: var(--accent); }
+.project-message { position: absolute; z-index: 2; top: 62px; right: max(32px, calc((100vw - 1280px) / 2)); margin: 0; padding: 7px 10px; border: 1px solid #414a2d; border-radius: 6px; background: #1b2015; color: var(--accent); font-size: 10px; }
+
 /* Footer */
 .app-footer { min-height: 36px; margin-top: 25px; display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #686b61; font: 8px 'DM Mono', monospace; letter-spacing: .09em; }
 .app-footer b { padding: 0 3px; color: var(--accent); font-weight: 400; }
@@ -55,6 +61,8 @@ button, a, input, select { font: inherit; }
   .topbar { flex-wrap: wrap; justify-content: space-between; gap: 0 15px; padding-top: 12px; }
   .workspace-nav { order: 3; width: 100%; height: 44px; justify-content: center; }
   .header-summary { margin-left: auto; }
+  .project-tools { order: 2; }
+  .project-message { top: 60px; right: 20px; }
 }
 
 /* Mobile layout */
@@ -62,6 +70,8 @@ button, a, input, select { font: inherit; }
   .app-frame { width: min(100% - 28px, 1280px); }
   .brand { font-size: 12px; }
   .header-summary { gap: 7px; font-size: 8px; }
+  .project-tools { gap: 4px; }
+  .project-tools button { min-height: 28px; padding: 0 7px; font-size: 8px; }
   .host-pill { display: none; }
   .workspace-nav a { padding: 0 11px; }
   .app-footer { align-items: flex-start; flex-direction: column; justify-content: center; padding: 7px 0; font-size: 7px; }
