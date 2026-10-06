@@ -3,6 +3,8 @@
     <div><p class="eyebrow">SONG OVERVIEW</p><h2 id="arrangement-title">Arrangement</h2></div>
     <div class="canvas-actions">
       <span class="measure-total">{{ totalMeasures() }} BARS</span>
+      <button type="button" class="reroll-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
+        title="Reroll track presence using section type chances">REROLL</button>
       <button type="button" class="mixer-open-button" (click)="mixerRequested.emit()" aria-label="Open mixer" title="Mixer">☷</button>
     </div>
   </header>

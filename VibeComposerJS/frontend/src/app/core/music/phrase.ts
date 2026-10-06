@@ -1,5 +1,5 @@
 import type { ArrangedPart, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
-import { shouldGeneratePartInSection, shouldGenerateTrackInSection } from './arrangement-generator';
+import { shouldGenerateTrackInSection } from './arrangement-generator';
 import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';
 import { generateChordPart } from './chord-generator';
@@ -79,7 +79,7 @@ export function layOutPhrase(
   const result: PhraseNote[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
-    const partEnters = shouldGeneratePartInSection(BigInt(project.seed), section, part);
+    const partEnters = project.tracks.some((track) => track.role === part && shouldGenerateTrackInSection(section, track));
     const hasEditedPhrase = project.editedPhrases[part] !== undefined;
     const progression = section.chordDegrees && !hasEditedPhrase ? section.chordDegrees : project.progression;
     const sectionPhrase = section.chordDegrees && !hasEditedPhrase
@@ -109,7 +109,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
   const result: PhraseNote[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
-    const partEnters = shouldGenerateTrackInSection(BigInt(trackProject.seed), section, track);
+    const partEnters = shouldGenerateTrackInSection(section, track);
     const progression = section.chordDegrees && track.editedPhrase === undefined
       ? section.chordDegrees : trackProject.progression;
     const sectionPhrase = section.chordDegrees && track.editedPhrase === undefined

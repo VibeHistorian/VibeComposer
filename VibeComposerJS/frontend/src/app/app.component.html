@@ -15,6 +15,7 @@
         </div>
 
         <div class="project-tools">
+          <button type="button" (click)="sectionTypeSettingsOpen.set(true)">Section types</button>
           <button type="button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>
           <button type="button" (click)="projects.redo()" [disabled]="!projects.canRedo() || workspaceUi.editingNoteId() !== null" aria-label="Redo" title="Redo">↷</button>
           <button type="button" (click)="exportProject()">Export project</button>
@@ -30,5 +31,8 @@
       <vc-workspace-canvas />
 
       <vc-transport-dock />
+      @if (sectionTypeSettingsOpen()) {
+        <vc-section-type-settings (closed)="sectionTypeSettingsOpen.set(false)" />
+      }
     </div>
   

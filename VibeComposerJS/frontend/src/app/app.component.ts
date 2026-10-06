@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { getAppInfo } from './core/wails/wails-api';
 import type { AppInfo } from './core/wails/wails-api';
 import { ProjectService } from './core/project/project.service';
+import { SectionTypeSettingsComponent } from './features/section-types/section-type-settings.component';
 import { TransportDockComponent } from './shared/transport-dock.component';
 import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
 import { WorkspaceUiService } from './shared/workspace-ui.service';
 
 @Component({
   selector: 'vc-root',
-  imports: [TransportDockComponent, WorkspaceCanvasComponent],
+  imports: [TransportDockComponent, WorkspaceCanvasComponent, SectionTypeSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })
@@ -18,6 +19,7 @@ export class AppComponent implements OnInit {
   readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
+  readonly sectionTypeSettingsOpen = signal(false);
 
   async ngOnInit(): Promise<void> {
     try {

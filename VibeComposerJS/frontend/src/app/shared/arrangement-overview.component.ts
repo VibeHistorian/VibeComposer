@@ -42,6 +42,7 @@ export class ArrangementOverviewComponent {
   readonly totalMeasures = input(0);
   readonly playheadPercent = input(0);
   readonly mixerRequested = output<void>();
+  readonly randomizeRequested = output<void>();
   readonly sectionSelected = output<{ readonly sectionId: string; readonly trackId: string }>();
   readonly groupSelected = output<ArrangedPart>();
   readonly partToggled = output<{ readonly sectionId: string; readonly trackId: string; readonly present: boolean }>();
@@ -116,7 +117,7 @@ export class ArrangementOverviewComponent {
     return this.cellNotes().get(this.cellKey(sectionId, role)) ?? [];
   }
   trackPresent(section: ArrangementSection, track: CompositionTrack): boolean {
-    return shouldGenerateTrackInSection(BigInt(this.project().seed), section, track);
+    return shouldGenerateTrackInSection(section, track);
   }
   isGroupSelected(group: InstrumentGroup): boolean {
     const selectedTrackId = this.selectedTrackId();

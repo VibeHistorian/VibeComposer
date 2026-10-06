@@ -181,6 +181,10 @@ export class WorkspaceCanvasComponent {
     if (index >= 0) this.projects.setSectionTrackPresence(index, trackId, present);
   }
 
+  randomizeArrangementPresence(): void {
+    this.projects.randomizeArrangementPresence();
+  }
+
   openNoteEditor(note: ScoreNote): void {
     this.selectTrack(note.part);
     this.editingNoteId.set(note.id);
@@ -266,11 +270,7 @@ export class WorkspaceCanvasComponent {
   clearSectionProgression(): void { this.projects.clearSectionChordOverrides(this.selectedSectionIndex()); }
 
   trackPresent(section: ArrangementSection, track: TrackRow): boolean {
-    return shouldGenerateTrackInSection(BigInt(this.project().seed), section, track);
-  }
-
-  trackChance(section: ArrangementSection, track: TrackRow): number {
-    return section.trackPartChances?.[track.id] ?? section.partChances[track.role];
+    return shouldGenerateTrackInSection(section, track);
   }
 
   toggleSectionTrack(section: ArrangementSection, track: TrackRow, event: Event): void {
@@ -278,9 +278,8 @@ export class WorkspaceCanvasComponent {
     this.projects.setSectionTrackPresence(index, track.id, (event.target as HTMLInputElement).checked);
   }
 
-  updateSectionTrackChance(section: ArrangementSection, track: TrackRow, event: Event): void {
-    const index = this.project().arrangement.findIndex((item) => item.id === section.id);
-    this.projects.setSectionTrackChance(index, track.id, Number(this.inputValue(event)));
+  randomizeSectionPresence(section: ArrangementSection): void {
+    this.projects.randomizeArrangementPresence(section.id);
   }
 
   updateKey(event: Event): void {

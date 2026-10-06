@@ -5,6 +5,8 @@
 .eyebrow { margin: 0; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .11em; }
 .canvas-actions { display: flex; align-items: center; gap: 8px; }
 .measure-total { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
+.reroll-button { height: 29px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 9px var(--font-mono); letter-spacing: .06em; }
+.reroll-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .mixer-open-button { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 16px; }
 .mixer-open-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .overview-scroll { min-height: 0; margin-top: 8px; flex: 1 1 auto; overflow: auto; }

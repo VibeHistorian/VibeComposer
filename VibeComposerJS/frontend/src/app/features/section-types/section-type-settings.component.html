@@ -1,0 +1,34 @@
+<div class="section-types-backdrop" (click)="closed.emit()">
+  <section class="section-types-dialog" role="dialog" aria-modal="true" aria-labelledby="section-types-title"
+    (click)="$event.stopPropagation()">
+    <header class="section-types-heading">
+      <div><p class="eyebrow">ARRANGEMENT DEFAULTS</p><h1 id="section-types-title">Section type chances</h1>
+        <p>These chances are used when a section is first generated or rerolled. Existing sections keep their current tracks.</p>
+      </div>
+      <div class="section-types-actions">
+        <button type="button" class="reset-button" (click)="settings.reset()">Reset defaults</button>
+        <button type="button" class="close-button" (click)="closed.emit()" aria-label="Close section type settings">×</button>
+      </div>
+    </header>
+
+    <div class="chance-table" role="table" aria-label="Instrument chances by section type">
+      <div class="chance-row chance-header" role="row">
+        <strong role="columnheader">SECTION TYPE</strong>
+        @for (part of parts; track part) { <span role="columnheader">{{ partName(part) }}</span> }
+      </div>
+      @for (type of sectionTypes; track type) {
+        <div class="chance-row" role="row">
+          <strong role="rowheader">{{ sectionLabel(type) }}</strong>
+          @for (part of parts; track part) {
+            <label class="chance-control" role="cell">
+              <span class="visually-hidden">{{ sectionLabel(type) }} {{ partName(part) }} chance</span>
+              <input type="range" min="0" max="100" step="1" [value]="chance(type, part)"
+                [attr.aria-valuetext]="chance(type, part) + ' percent'" (input)="updateChance(type, part, $event)" />
+              <output>{{ chance(type, part) }}%</output>
+            </label>
+          }
+        </div>
+      }
+    </div>
+  </section>
+</div>

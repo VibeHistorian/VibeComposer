@@ -72,6 +72,7 @@
       <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
         [selectedSectionId]="selectedSectionId()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
         (mixerRequested)="openMixer()" (groupSelected)="selectRole($event)"
+        (randomizeRequested)="randomizeArrangementPresence()"
         (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId)"
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
 
@@ -171,13 +172,14 @@
             }
           </div>
           <div class="section-track-controls">
-            <p class="eyebrow">TRACKS IN SECTION</p>
-            @for (track of tracks(); track track.id) {
+            <div class="inspector-section-heading"><p class="eyebrow">TRACKS IN SECTION</p>
+              <button type="button" (click)="randomizeSectionPresence(section)">Reroll</button>
+            </div>
+            @for (track of arrangedTracks(); track track.id) {
               <div class="section-track-control">
                 <label><span><i class="role-dot" [class]="track.role"></i>{{ track.name }}</span>
                   <input type="checkbox" [checked]="trackPresent(section, track)" (change)="toggleSectionTrack(section, track, $event)" />
                 </label>
-                <div><input type="range" min="0" max="100" [value]="trackChance(section, track)" (change)="updateSectionTrackChance(section, track, $event)" /><output>{{ trackChance(section, track) }}%</output></div>
               </div>
             }
           </div>

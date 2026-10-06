@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords } from '../music/harmony';
+import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
 import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
   MixChannelSettings, PhraseNote, SectionType,
@@ -7,10 +8,12 @@ import type {
 import type { CompositionProject } from './project.model';
 import {
   ARRANGED_PARTS, DEFAULT_ARPEGGIO_SETTINGS, DEFAULT_ARRANGEMENT, DEFAULT_BASS_SETTINGS, DEFAULT_CHORD_SETTINGS,
-  DEFAULT_DRUM_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, DEFAULT_TRACKS, SECTION_TYPES,
+  DEFAULT_DRUM_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_TRACKS, SECTION_TYPES,
 } from './project.model';
+import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './section-type-settings.service';
 
-const STORAGE_KEY = 'vibecomposer.project.v11';
+const STORAGE_KEY = 'vibecomposer.project.v12';
+const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
 const MAX_HISTORY = 100;
 const MAX_ARRANGEMENT_SECTIONS = 32;
 const MAX_ARRANGEMENT_MEASURES = 128;
@@ -23,6 +26,7 @@ const DRUM_GROOVES = ['rock', 'four-on-floor', 'half-time', 'sparse'] as const;
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
+  private readonly sectionTypeSettings = inject(SectionTypeSettingsService);
   private readonly state = signal<CompositionProject>(this.loadProject());
   private readonly past: CompositionProject[] = [];
   private readonly future: CompositionProject[] = [];
@@ -154,9 +158,7 @@ export class ProjectService {
       editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
     const arrangement = current.arrangement.map((section) => ({
       ...section,
-      trackParts: section.trackParts ? { ...section.trackParts, [id]: section.trackParts[source.id] ?? section.parts[role] } : undefined,
-      trackPartChances: section.trackPartChances ? { ...section.trackPartChances, [id]: section.trackPartChances[source.id] ?? section.partChances[role] } : undefined,
-      trackPresence: section.trackPresence ? { ...section.trackPresence } : undefined,
+      trackPresence: { ...section.trackPresence, ...generateTrackPresence([track], this.sectionTypeSettings.chances()[section.type]) },
     }));
     this.commit({ ...current, tracks: [...current.tracks, track], arrangement });
     return id;
@@ -178,9 +180,7 @@ export class ProjectService {
     tracks.splice(sourceIndex + 1, 0, duplicate);
     this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
       ...section,
-      trackParts: section.trackParts ? { ...section.trackParts, [id]: section.trackParts[source.id] ?? section.parts[source.role] } : undefined,
-      trackPartChances: section.trackPartChances ? { ...section.trackPartChances, [id]: section.trackPartChances[source.id] ?? section.partChances[source.role] } : undefined,
-      trackPresence: section.trackPresence ? { ...section.trackPresence } : undefined,
+      trackPresence: { ...section.trackPresence, [id]: section.trackPresence[source.id] ?? false },
     })) });
     return id;
   }
@@ -265,13 +265,9 @@ export class ProjectService {
     const track = current.tracks.find((candidate) => candidate.id === trackId);
     if (!track || current.tracks.filter((candidate) => candidate.role === track.role).length <= 1) return;
     const arrangement = current.arrangement.map((section) => {
-      const trackParts = section.trackParts ? { ...section.trackParts } : undefined;
-      const trackPartChances = section.trackPartChances ? { ...section.trackPartChances } : undefined;
-      const trackPresence = section.trackPresence ? { ...section.trackPresence } : undefined;
-      if (trackParts) delete trackParts[trackId];
-      if (trackPartChances) delete trackPartChances[trackId];
-      if (trackPresence) delete trackPresence[trackId];
-      return { ...section, trackParts, trackPartChances, trackPresence };
+      const trackPresence = { ...section.trackPresence };
+      delete trackPresence[trackId];
+      return { ...section, trackPresence };
     });
     this.commit({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement });
   }
@@ -292,10 +288,7 @@ export class ProjectService {
       id: `section-${nextId}`,
       type,
       measures: 4,
-      parts: { bass: true, chords: true, arpeggio: true, drums: true },
-      partChances: { ...DEFAULT_SECTION_PART_CHANCES[type] },
-      trackParts: Object.fromEntries(project.tracks.map((track) => [track.id, true])),
-      trackPartChances: Object.fromEntries(project.tracks.map((track) => [track.id, DEFAULT_SECTION_PART_CHANCES[type][track.role]])),
+      trackPresence: generateTrackPresence(project.tracks, this.sectionTypeSettings.chances()[type]),
     });
     this.commit({ ...this.state(), arrangement: next });
   }
@@ -314,10 +307,7 @@ export class ProjectService {
     next.splice(index + 1, 0, {
       ...sections[index], id: `section-${nextId}`,
       chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
-      parts: { ...sections[index].parts }, partChances: { ...sections[index].partChances },
-      trackParts: sections[index].trackParts ? { ...sections[index].trackParts } : undefined,
-      trackPartChances: sections[index].trackPartChances ? { ...sections[index].trackPartChances } : undefined,
-      trackPresence: sections[index].trackPresence ? { ...sections[index].trackPresence } : undefined,
+      trackPresence: { ...sections[index].trackPresence },
     });
     this.commit({ ...this.state(), arrangement: next });
   }
@@ -383,64 +373,23 @@ export class ProjectService {
     this.commit({ ...project, arrangement: next });
   }
 
-  setSectionPart(index: number, part: ArrangedPart, included: boolean): void {
-    const sections = this.state().arrangement;
-    if (!Number.isInteger(index) || index < 0 || index >= sections.length || !ARRANGED_PARTS.includes(part)) {
-      return;
-    }
-    const next = [...sections];
-    const trackParts = { ...sections[index].trackParts };
-    for (const track of this.state().tracks.filter((candidate) => candidate.role === part)) {
-      trackParts[track.id] = included;
-    }
-    next[index] = { ...sections[index], parts: { ...sections[index].parts, [part]: included }, trackParts };
-    this.commit({ ...this.state(), arrangement: next });
-  }
-
-  setSectionPartChance(index: number, part: ArrangedPart, chancePercent: number): void {
-    const sections = this.state().arrangement;
-    if (!Number.isInteger(index) || index < 0 || index >= sections.length || !ARRANGED_PARTS.includes(part)
-        || !Number.isInteger(chancePercent) || chancePercent < 0 || chancePercent > 100) {
-      return;
-    }
-    const next = [...sections];
-    const trackPartChances = { ...sections[index].trackPartChances };
-    const trackPresence = { ...sections[index].trackPresence };
-    for (const track of this.state().tracks.filter((candidate) => candidate.role === part)) {
-      trackPartChances[track.id] = chancePercent;
-      delete trackPresence[track.id];
-    }
-    next[index] = {
-      ...sections[index],
-      partChances: { ...sections[index].partChances, [part]: chancePercent },
-      trackPartChances,
-      trackPresence,
-    };
-    this.commit({ ...this.state(), arrangement: next });
-  }
-
   setSectionTrackPresence(index: number, trackId: string, present: boolean): void {
     const project = this.state();
     const section = project.arrangement[index];
-    if (!section || !project.tracks.some((candidate) => candidate.id === trackId)) return;
+    if (!section || typeof present !== 'boolean' || !project.tracks.some((candidate) => candidate.id === trackId)) return;
     const trackPresence = { ...section.trackPresence, [trackId]: present };
     this.commit({ ...project, arrangement: project.arrangement.map((candidate, candidateIndex) => candidateIndex === index
       ? { ...section, trackPresence } : candidate) });
   }
 
-  setSectionTrackChance(index: number, trackId: string, chancePercent: number): void {
+  randomizeArrangementPresence(sectionId?: string): void {
     const project = this.state();
-    const section = project.arrangement[index];
-    const track = project.tracks.find((candidate) => candidate.id === trackId);
-    if (!section || !track || !Number.isInteger(chancePercent) || chancePercent < 0 || chancePercent > 100) return;
-    const trackPartChances = { ...section.trackPartChances, [trackId]: chancePercent };
-    const trackPresence = { ...section.trackPresence };
-    delete trackPresence[trackId];
-    const sameRoleTracks = project.tracks.filter((candidate) => candidate.role === track.role);
-    const sameChance = sameRoleTracks.every((candidate) => (trackPartChances[candidate.id] ?? section.partChances[track.role]) === chancePercent);
-    const partChances = { ...section.partChances, [track.role]: sameChance ? chancePercent : section.partChances[track.role] };
-    this.commit({ ...project, arrangement: project.arrangement.map((candidate, candidateIndex) => candidateIndex === index
-      ? { ...section, partChances, trackPartChances, trackPresence } : candidate) });
+    const settings = this.sectionTypeSettings.chances();
+    const arrangement = project.arrangement.map((section) => sectionId === undefined || section.id === sectionId
+      ? { ...section, trackPresence: generateTrackPresence(project.tracks, settings[section.type]) }
+      : section);
+    if (sectionId !== undefined && !project.arrangement.some((section) => section.id === sectionId)) return;
+    this.commit({ ...project, arrangement });
   }
 
   setChordDegree(index: number, degree: number): void {
@@ -554,16 +503,22 @@ export class ProjectService {
   }
 
   private loadProject(): CompositionProject {
-    try {
-      const raw = globalThis.sessionStorage?.getItem(STORAGE_KEY);
-      if (raw) {
+    for (const key of [STORAGE_KEY, LEGACY_STORAGE_KEY]) {
+      try {
+        const raw = globalThis.sessionStorage?.getItem(key);
+        if (!raw) continue;
         const decoded = this.decodeProject(JSON.parse(raw));
-        if (decoded) return decoded;
+        if (decoded) {
+          if (key !== STORAGE_KEY) this.persist(decoded);
+          return decoded;
+        }
+      } catch {
+        // Storage can be unavailable or contain invalid JSON.
       }
-    } catch {
-      // Storage can be unavailable or contain invalid JSON.
     }
-    return this.copyDefaultProject();
+    const initial = this.copyDefaultProject();
+    this.persist(initial);
+    return initial;
   }
 
   private decodeProject(value: unknown): CompositionProject | undefined {
@@ -590,19 +545,17 @@ export class ProjectService {
     const chords = this.decodeChords(project.chords);
     const arpeggio = this.decodeArpeggio(project.arpeggio);
     const drums = this.decodeDrums(project.drums);
-    const arrangement = this.decodeArrangement(project.arrangement);
     const editedPhrases = this.decodeEditedPhrases(project.editedPhrases);
     const mix = this.decodeMix(project.mix);
     const tracks = this.decodeTracks(project.tracks);
+    const arrangement = tracks ? this.decodeArrangement(project.arrangement, tracks, BigInt(project.seed!)) : undefined;
     if (!bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases || !mix || !tracks) {
       return undefined;
     }
     const trackIds = new Set(tracks.map((track) => track.id));
-    if (arrangement.some((section) => [...Object.keys(section.trackParts ?? {}), ...Object.keys(section.trackPartChances ?? {}),
-      ...Object.keys(section.trackPresence ?? {})]
-      .some((trackId) => !trackIds.has(trackId)))) return undefined;
+    if (arrangement.some((section) => Object.keys(section.trackPresence).some((trackId) => !trackIds.has(trackId)))) return undefined;
     return {
-      schemaVersion: 11,
+      schemaVersion: 12,
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
@@ -747,23 +700,29 @@ export class ProjectService {
     return true;
   }
 
-  private decodeArrangement(value: unknown): ArrangementSection[] | undefined {
+  private decodeArrangement(value: unknown, tracks: readonly CompositionTrack[], projectSeed: bigint): ArrangementSection[] | undefined {
     if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ARRANGEMENT_SECTIONS) {
       return undefined;
     }
     const sections: ArrangementSection[] = [];
     const ids = new Set<string>();
+    const trackIds = new Set(tracks.map((track) => track.id));
     let measureCount = 0;
     for (const candidate of value) {
       if (!candidate || typeof candidate !== 'object') {
         return undefined;
       }
-      const section = candidate as Partial<ArrangementSection>;
-      const parts = section.parts as Partial<Record<ArrangedPart, unknown>> | undefined;
+      const section = candidate as Partial<ArrangementSection> & {
+        parts?: Partial<Record<ArrangedPart, unknown>>;
+        partChances?: Partial<Record<ArrangedPart, unknown>>;
+        trackParts?: Record<string, unknown>;
+        trackPartChances?: Record<string, unknown>;
+      };
       const sectionType = section.type as SectionType;
-      const chances = section.partChances as Partial<Record<ArrangedPart, unknown>> | undefined;
-      const trackParts = section.trackParts as Record<string, unknown> | undefined;
-      const trackPartChances = section.trackPartChances as Record<string, unknown> | undefined;
+      const parts = section.parts;
+      const chances = section.partChances;
+      const trackParts = section.trackParts;
+      const trackPartChances = section.trackPartChances;
       const trackPresence = section.trackPresence as Record<string, unknown> | undefined;
       const chordDegrees = section.chordDegrees;
       if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
@@ -771,9 +730,11 @@ export class ProjectService {
           || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
           || (chordDegrees !== undefined && (!Array.isArray(chordDegrees) || chordDegrees.length !== section.measures
             || chordDegrees.some((degree) => !Number.isInteger(degree) || degree < 1 || degree > 7)))
-          || !parts || ARRANGED_PARTS.some((part) => typeof parts[part] !== 'boolean')
-          || (chances !== undefined && ARRANGED_PARTS.some((part) => !Number.isInteger(chances[part])
-            || (chances[part] as number) < 0 || (chances[part] as number) > 100))
+          || (parts !== undefined && (!parts || typeof parts !== 'object' || Array.isArray(parts)
+            || ARRANGED_PARTS.some((part) => typeof parts[part] !== 'boolean')))
+          || (chances !== undefined && (!chances || typeof chances !== 'object' || Array.isArray(chances)
+            || ARRANGED_PARTS.some((part) => !Number.isInteger(chances[part])
+              || (chances[part] as number) < 0 || (chances[part] as number) > 100)))
           || (trackParts !== undefined && (!trackParts || typeof trackParts !== 'object' || Array.isArray(trackParts)
             || Object.entries(trackParts).some(([id, included]) => !/^[a-zA-Z0-9_-]{1,64}$/.test(id) || typeof included !== 'boolean')))
           || (trackPartChances !== undefined && (!trackPartChances || typeof trackPartChances !== 'object' || Array.isArray(trackPartChances)
@@ -783,29 +744,36 @@ export class ProjectService {
             || Object.entries(trackPresence).some(([id, present]) => !/^[a-zA-Z0-9_-]{1,64}$/.test(id) || typeof present !== 'boolean')))) {
         return undefined;
       }
+      if ([...Object.keys(trackParts ?? {}), ...Object.keys(trackPartChances ?? {}), ...Object.keys(trackPresence ?? {})]
+        .some((trackId) => !trackIds.has(trackId))) return undefined;
       ids.add(section.id);
       measureCount += section.measures!;
       if (measureCount > MAX_ARRANGEMENT_MEASURES) {
         return undefined;
+      }
+      const hasLegacyChanceData = parts !== undefined || chances !== undefined
+        || trackParts !== undefined || trackPartChances !== undefined;
+      const generatedPresence = hasLegacyChanceData ? {} : generateTrackPresence(tracks, this.sectionTypeSettings.chances()[sectionType]);
+      const presence: Record<string, boolean> = {};
+      for (const track of tracks) {
+        const explicit = trackPresence?.[track.id];
+        if (typeof explicit === 'boolean') {
+          presence[track.id] = explicit;
+        } else if (hasLegacyChanceData) {
+          const included = trackParts?.[track.id] ?? parts?.[track.role] ?? true;
+          const chance = trackPartChances?.[track.id] ?? chances?.[track.role]
+            ?? DEFAULT_SECTION_TYPE_CHANCES[sectionType][track.role];
+          presence[track.id] = legacyTrackPresence(projectSeed, track, included as boolean, chance as number);
+        } else {
+          presence[track.id] = generatedPresence[track.id];
+        }
       }
       sections.push({
         id: section.id,
         type: sectionType,
         measures: section.measures!,
         chordDegrees: chordDegrees === undefined ? undefined : [...chordDegrees],
-        parts: {
-          bass: parts.bass as boolean, chords: parts.chords as boolean,
-          arpeggio: parts.arpeggio as boolean, drums: parts.drums as boolean,
-        },
-        partChances: {
-          bass: (chances?.bass as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].bass,
-          chords: (chances?.chords as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].chords,
-          arpeggio: (chances?.arpeggio as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].arpeggio,
-          drums: (chances?.drums as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].drums,
-        },
-        trackParts: trackParts ? { ...trackParts } as Record<string, boolean> : undefined,
-        trackPartChances: trackPartChances ? { ...trackPartChances } as Record<string, number> : undefined,
-        trackPresence: trackPresence ? { ...trackPresence } as Record<string, boolean> : undefined,
+        trackPresence: presence,
       });
     }
     return sections;
@@ -869,6 +837,7 @@ export class ProjectService {
   }
 
   private copyDefaultProject(): CompositionProject {
+    const tracks = DEFAULT_TRACKS.map((track) => ({ ...track, mix: { ...track.mix }, generatorSettings: { ...track.generatorSettings } } as CompositionTrack));
     return {
       ...DEFAULT_PROJECT,
       progression: [...DEFAULT_PROJECT.progression],
@@ -876,18 +845,18 @@ export class ProjectService {
       chords: { ...DEFAULT_CHORD_SETTINGS },
       arpeggio: { ...DEFAULT_ARPEGGIO_SETTINGS },
       drums: { ...DEFAULT_DRUM_SETTINGS },
-      arrangement: this.copyDefaultArrangement(),
+      arrangement: this.copyDefaultArrangement(tracks),
       mix: this.copyDefaultMix(),
-      tracks: DEFAULT_TRACKS.map((track) => ({ ...track, mix: { ...track.mix }, generatorSettings: { ...track.generatorSettings } } as CompositionTrack)),
+      tracks,
     };
   }
 
-  private copyDefaultArrangement(): ArrangementSection[] {
+  private copyDefaultArrangement(tracks: readonly CompositionTrack[]): ArrangementSection[] {
+    const chances = this.sectionTypeSettings.chances();
     return DEFAULT_ARRANGEMENT.map((section) => ({
       ...section,
       chordDegrees: section.chordDegrees ? [...section.chordDegrees] : undefined,
-      parts: { ...section.parts },
-      partChances: { ...section.partChances },
+      trackPresence: generateTrackPresence(tracks, chances[section.type]),
     }));
   }
 
@@ -905,6 +874,7 @@ export class ProjectService {
       return false;
     }
     const project = value as Partial<CompositionProject>;
+    const tracks = this.decodeTracks(project.tracks);
     return typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
@@ -920,10 +890,10 @@ export class ProjectService {
       && this.decodeChords(project.chords) !== undefined
       && this.decodeArpeggio(project.arpeggio) !== undefined
       && this.decodeDrums(project.drums) !== undefined
-      && this.decodeArrangement(project.arrangement) !== undefined
+      && tracks !== undefined
+      && this.decodeArrangement(project.arrangement, tracks, BigInt(project.seed!)) !== undefined
       && this.decodeEditedPhrases(project.editedPhrases) !== undefined
-      && this.decodeMix(project.mix) !== undefined
-      && this.decodeTracks(project.tracks) !== undefined;
+      && this.decodeMix(project.mix) !== undefined;
   }
 
   private persist(project: CompositionProject): void {

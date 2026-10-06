@@ -1,4 +1,4 @@
-import type { ArrangedPart, ArrangementSection } from '../project/project.model';
+import type { ArrangedPart, ArrangementSection, CompositionTrack } from '../project/project.model';
 import { JavaRandom } from './java-random';
 
 const ARRANGEMENT_PART_SEED_OFFSETS: Readonly<Record<ArrangedPart, number>> = {
@@ -8,42 +8,48 @@ const ARRANGEMENT_PART_SEED_OFFSETS: Readonly<Record<ArrangedPart, number>> = {
   drums: 300,
 };
 
-/**
- * Decide whether a generated part enters a section using the Java planner's
- * per-role seed offsets and bounded nextInt(100) chance roll.
- */
-export function shouldGeneratePartInSection(
-  projectSeed: bigint | number,
-  section: ArrangementSection,
-  part: ArrangedPart,
-): boolean {
-  if (typeof projectSeed === 'number' && !Number.isSafeInteger(projectSeed)) {
-    throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
-  }
-  const javaIntSeed = BigInt.asIntN(32, BigInt(projectSeed));
-  const partSeed = BigInt.asIntN(32, javaIntSeed + BigInt(ARRANGEMENT_PART_SEED_OFFSETS[part]));
-  const chanceRoll = new JavaRandom(partSeed).nextInt(100);
-  return section.parts[part] && chanceRoll < section.partChances[part];
+/** Roll and materialize per-track presence once from app-level section type chances. */
+export function generateTrackPresence(
+  tracks: readonly CompositionTrack[],
+  chances: Readonly<Record<ArrangedPart, number>>,
+  random: () => number = Math.random,
+): Record<string, boolean> {
+  return Object.fromEntries(tracks.map((track) => [track.id, random() * 100 < chances[track.role]]));
 }
 
-/** Stable per-track entrance decisions, preserving the original Java stream for the first role track. */
+/** Current arrangement state is stored explicitly and does not reroll during rendering. */
 export function shouldGenerateTrackInSection(
-  projectSeed: bigint | number,
   section: ArrangementSection,
-  track: { readonly id: string; readonly role: ArrangedPart },
+  track: { readonly id: string },
 ): boolean {
+  return section.trackPresence[track.id] ?? false;
+}
+
+/** Preserve the former seeded chance result while migrating project files that stored chances per section. */
+export function legacyTrackPresence(
+  projectSeed: bigint | number,
+  track: { readonly id: string; readonly role: ArrangedPart },
+  included: boolean,
+  chance: number,
+): boolean {
+  if (!included) return false;
   if (typeof projectSeed === 'number' && !Number.isSafeInteger(projectSeed)) {
     throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
   }
-  const explicitPresence = section.trackPresence?.[track.id];
-  if (explicitPresence !== undefined) return explicitPresence;
-  const included = section.trackParts?.[track.id] ?? section.parts[track.role];
-  const chance = section.trackPartChances?.[track.id] ?? section.partChances[track.role];
-  const seed = BigInt.asIntN(32, BigInt(projectSeed));
-  const initialTrackId = `track-${track.role}-1`;
-  const idOffset = track.id === initialTrackId ? 0 : stableIdOffset(track.id);
+  const primaryId = `track-${track.role}-1`;
+  const idOffset = track.id === primaryId ? 0 : stableIdOffset(track.id);
+  let trackSeed = BigInt(projectSeed);
+  if (track.id !== primaryId) {
+    let hash = 0xcbf29ce484222325n;
+    for (let index = 0; index < track.id.length; index++) {
+      hash ^= BigInt(track.id.charCodeAt(index));
+      hash = BigInt.asUintN(64, hash * 0x100000001b3n);
+    }
+    trackSeed = BigInt.asIntN(64, trackSeed ^ hash);
+  }
+  const seed = BigInt.asIntN(32, trackSeed);
   const partSeed = BigInt.asIntN(32, seed + BigInt(ARRANGEMENT_PART_SEED_OFFSETS[track.role] + idOffset));
-  return included && new JavaRandom(partSeed).nextInt(100) < chance;
+  return new JavaRandom(partSeed).nextInt(100) < chance;
 }
 
 function stableIdOffset(value: string): number {
