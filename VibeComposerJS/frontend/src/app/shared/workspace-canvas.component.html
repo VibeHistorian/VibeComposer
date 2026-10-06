@@ -33,26 +33,32 @@
             </button>
             <button type="button" class="add-track-button" [disabled]="editing()" (click)="addTrack(group.role)"
               [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
+            <button type="button" class="collapse-group-button" [disabled]="editing()" [attr.aria-expanded]="!isGroupCollapsed(group.role)"
+              [attr.aria-label]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
+              [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
+              (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '⌄' }}</button>
           </header>
-          @for (track of tracksFor(group.role); track track.id) {
-            <article class="track-row-card" [class.selected]="selectedTrackId() === track.id && !selectedRole()">
-              <div class="track-line" (click)="selectTrack(track.id)">
-                <button type="button" class="track-select" [disabled]="editing()"
-                  [attr.aria-pressed]="selectedTrackId() === track.id && !selectedRole()">
-                  <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
-                </button>
-                <span class="track-instrument" [title]="instrumentName(track)">{{ instrumentName(track) }}</span>
-                <span class="track-channel">CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
-                <div class="track-mix-controls">
-                  <button type="button" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
-                    [attr.aria-label]="(track.mix.muted ? 'Unmute ' : 'Mute ') + track.name"
-                    (click)="$event.stopPropagation(); toggleMix(track.id, 'muted')">M</button>
-                  <button type="button" [class.active]="track.mix.solo" [attr.aria-pressed]="track.mix.solo"
-                    [attr.aria-label]="(track.mix.solo ? 'Unsolo ' : 'Solo ') + track.name"
-                    (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
+          @if (!isGroupCollapsed(group.role)) {
+            @for (track of tracksFor(group.role); track track.id) {
+              <article class="track-row-card" [class.selected]="selectedTrackId() === track.id && !selectedRole()">
+                <div class="track-line" (click)="selectTrack(track.id)">
+                  <button type="button" class="track-select" [disabled]="editing()"
+                    [attr.aria-pressed]="selectedTrackId() === track.id && !selectedRole()">
+                    <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
+                  </button>
+                  <span class="track-instrument" [title]="instrumentName(track)">{{ instrumentName(track) }}</span>
+                  <span class="track-channel">CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
+                  <div class="track-mix-controls">
+                    <button type="button" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
+                      [attr.aria-label]="(track.mix.muted ? 'Unmute ' : 'Mute ') + track.name"
+                      (click)="$event.stopPropagation(); toggleMix(track.id, 'muted')">M</button>
+                    <button type="button" [class.active]="track.mix.solo" [attr.aria-pressed]="track.mix.solo"
+                      [attr.aria-label]="(track.mix.solo ? 'Unsolo ' : 'Solo ') + track.name"
+                      (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </article>
+            }
           }
         </section>
       }

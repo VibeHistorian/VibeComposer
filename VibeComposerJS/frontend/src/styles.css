@@ -126,7 +126,13 @@
 }
 
 /* Base element styles */
-* { box-sizing: border-box; }
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--border-strong) var(--surface-canvas); }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { border: 2px solid var(--surface-canvas); border-radius: 999px; background: var(--surface-low); }
+*::-webkit-scrollbar-thumb { border: 2px solid var(--surface-canvas); border-radius: 999px; background: var(--border-strong); }
+*::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+*::-webkit-scrollbar-corner { background: var(--surface-canvas); }
+*::-webkit-scrollbar-button { width: 0; height: 0; display: none; }
 
 vc-root { min-height: 100vh; display: block; }
 vc-workspace-canvas { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }

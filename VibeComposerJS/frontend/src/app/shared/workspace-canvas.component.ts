@@ -90,6 +90,7 @@ export class WorkspaceCanvasComponent {
   readonly mixerOpen = signal(false);
   readonly newSectionType = signal<SectionType>('VERSE1');
   readonly hiddenTracks = signal(new Set<string>());
+  readonly collapsedGroups = signal(new Set<ArrangedPart>());
 
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly totalBeats = computed(() => this.totalMeasures() * 4);
@@ -141,6 +142,15 @@ export class WorkspaceCanvasComponent {
   }));
 
   tracksFor(role: ArrangedPart): TrackRow[] { return this.tracks().filter((track) => track.role === role); }
+
+  isGroupCollapsed(role: ArrangedPart): boolean { return this.collapsedGroups().has(role); }
+
+  toggleGroupCollapsed(role: ArrangedPart): void {
+    const next = new Set(this.collapsedGroups());
+    if (next.has(role)) next.delete(role);
+    else next.add(role);
+    this.collapsedGroups.set(next);
+  }
 
   selectTrack(trackId: string): void {
     if (this.editing()) return;
