@@ -1,5 +1,5 @@
-import type { ArrangedPart, CompositionProject, PhraseNote } from '../project/project.model';
-import { shouldGeneratePartInSection } from './arrangement-generator';
+import type { ArrangedPart, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
+import { shouldGeneratePartInSection, shouldGenerateTrackInSection } from './arrangement-generator';
 import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';
 import { generateChordPart } from './chord-generator';
@@ -34,6 +34,26 @@ export function generatePhrase(project: CompositionProject, part: ArrangedPart):
 /** Return saved note edits when present, otherwise build the phrase from project settings. */
 export function phraseForProject(project: CompositionProject, part: ArrangedPart): readonly PhraseNote[] {
   return project.editedPhrases[part] ?? generatePhrase(project, part);
+}
+
+/** Generate a phrase from one independent track while keeping the generator library role-based. */
+export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack): PhraseNote[] {
+  const trackProject = withTrackSeed(project, track);
+  const editedPhrases = { ...trackProject.editedPhrases, [track.role]: undefined };
+  switch (track.role) {
+    case 'bass':
+      return generatePhrase({ ...trackProject, bass: track.generatorSettings, editedPhrases }, 'bass');
+    case 'chords':
+      return generatePhrase({ ...trackProject, chords: track.generatorSettings, editedPhrases }, 'chords');
+    case 'arpeggio':
+      return generatePhrase({ ...trackProject, arpeggio: track.generatorSettings, editedPhrases }, 'arpeggio');
+    case 'drums':
+      return generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums');
+  }
+}
+
+export function phraseForTrack(project: CompositionProject, track: CompositionTrack): readonly PhraseNote[] {
+  return track.editedPhrase ?? generateTrackPhrase(project, track);
 }
 
 /** Add the legacy BassPart octave interval as a quieter upper octave. */
@@ -80,4 +100,46 @@ export function layOutPhrase(
     }
   }
   return part === 'bass' ? withBassOctaveInterval(result, project.bass.octaveInterval) : result;
+}
+
+/** Repeat a track phrase across sections using the same seeded section-entry rules as its role. */
+export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack): PhraseNote[] {
+  const trackProject = withTrackSeed(project, track);
+  const phrase = phraseForTrack(trackProject, track);
+  const result: PhraseNote[] = [];
+  let arrangementBeat = 0;
+  for (const section of project.arrangement) {
+    const partEnters = shouldGenerateTrackInSection(BigInt(trackProject.seed), section, track);
+    const progression = section.chordDegrees && track.editedPhrase === undefined
+      ? section.chordDegrees : trackProject.progression;
+    const sectionPhrase = section.chordDegrees && track.editedPhrase === undefined
+      ? generateTrackPhrase({ ...trackProject, progression }, track) : phrase;
+    for (let measure = 0; measure < section.measures; measure++) {
+      if (partEnters) {
+        const sourceMeasure = measure % progression.length;
+        const sourceStartBeat = sourceMeasure * 4;
+        const sourceEndBeat = sourceStartBeat + 4;
+        for (const note of sectionPhrase) {
+          if (note.startBeat >= sourceStartBeat && note.startBeat < sourceEndBeat) {
+            result.push({ ...note, startBeat: arrangementBeat + note.startBeat - sourceStartBeat });
+          }
+        }
+      }
+      arrangementBeat += 4;
+    }
+  }
+  return track.role === 'bass'
+    ? withBassOctaveInterval(result, track.generatorSettings.octaveInterval)
+    : result;
+}
+
+function withTrackSeed(project: CompositionProject, track: CompositionTrack): CompositionProject {
+  if (track.id === `track-${track.role}-1`) return project;
+  let hash = 0xcbf29ce484222325n;
+  for (let index = 0; index < track.id.length; index++) {
+    hash ^= BigInt(track.id.charCodeAt(index));
+    hash = BigInt.asUintN(64, hash * 0x100000001b3n);
+  }
+  const seed = BigInt.asIntN(64, BigInt(project.seed) ^ hash).toString();
+  return { ...project, seed };
 }

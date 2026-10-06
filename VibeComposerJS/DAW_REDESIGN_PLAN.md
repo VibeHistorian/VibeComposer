@@ -85,7 +85,7 @@ The final model should use a discriminated union so a track role can only have i
 
 Update generation APIs to accept a track ID and that track's settings. Generate, edit, mute, solo, instrument assignment, and export operations must act on one track when requested, even when multiple tracks share a role. Keep generation code framework-independent and random stream/seed derivation explicit per the translation rules.
 
-Bump the serialized schema version and add a migration from the current role-based schema. Map each existing role into one initial track, copying its generator settings, mix values, and edited phrase; preserve project metadata, progression, arrangement, seed, and section settings. Make old project files importable during this transition, and persist the new per-track settings in exported JSON and session storage.
+Serialize the per-track settings in exported JSON and session storage. During translation buildout, `schemaVersion` is informational: validate the current project structure and values without version-gated loading or compatibility migrations. Start new projects with one track per implemented role.
 
 Store the General MIDI program and MIDI channel on each track. Display MIDI channels 1–16 consistently; use the conventional channel 10 for percussion by default. Validate channel and program ranges, and surface channel collisions so users can intentionally share a channel or choose another. Export each defined track independently with its instrument, channel, notes, and applicable mix/controller data.
 
@@ -93,7 +93,7 @@ Keep user interactions flowing through the project service/history boundary. A d
 
 ## Delivery sequence
 
-1. **Track-capable project model:** Add track IDs and typed per-track generation, phrase, instrument, channel, and mix state; update generation and export interfaces; add schema migration from the current four-role project. Preserve a one-track-per-role default so the existing composition opens the same way.
+1. **Track-capable project model:** Add track IDs and typed per-track generation, phrase, instrument, channel, and mix state; update generation and export interfaces. Keep `schemaVersion` informational during buildout and create one default track per supported role.
 2. **Persistent shell and canvas:** Replace route-owned page frames with a shared workspace layout. Keep the arrangement overview, dense all-notes score preview, mode navigation, project header, and transport mounted across modes. Add track groups and selection.
 3. **Track-level actions and inspector:** Add new/duplicate/reorder/remove track actions, independent generation, quick-settings popover, and the full contextual inspector. Move current role settings into per-track inspector sections.
 4. **Editing and compact controls:** Integrate the existing piano-roll and drum-grid interactions with selected track IDs, add the aligned velocity lane and velocity-based score intensity, and convert suitable numeric rows into accessible knobs.
@@ -106,7 +106,7 @@ Keep user interactions flowing through the project service/history boundary. A d
 - Track quick settings can be changed without leaving the canvas, and the full set of relevant settings is available in the inspector.
 - Score notes use consistent role colors, respond visibly to velocity, align with a velocity lane, and synchronize with the arrangement ruler and playhead.
 - Compact knobs replace appropriate numeric slider rows while remaining understandable and operable without a mouse hover.
-- Existing project data migrates into a one-track-per-role starting arrangement, and exported MIDI preserves separate tracks, instrument programs, and channels.
+- Current project data persists per-track settings, and exported MIDI preserves separate tracks, instrument programs, and channels.
 - Generation remains reproducible for the same project and track settings, and edits remain undoable as coherent user actions.
 - The layout continues to apply the shared theme tokens and remains usable when either side panel is collapsed.
 

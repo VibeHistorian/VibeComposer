@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import type { ArrangedPart, SectionType } from '../../core/project/project.model';
+import type { SectionType } from '../../core/project/project.model';
 import type { ArrangementSection } from '../../core/project/project.model';
 import { SECTION_TYPES } from '../../core/project/project.model';
 import { getDiatonicChords } from '../../core/music/harmony';
-import { shouldGeneratePartInSection } from '../../core/music/arrangement-generator';
+import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
 import { ProjectService } from '../../core/project/project.service';
 
 @Component({
@@ -29,12 +29,7 @@ export class ArrangeWorkspaceComponent {
   });
   readonly selectedIndex = computed(() => this.project().arrangement.findIndex((section) => section.id === this.selectedSection().id));
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
-  readonly partOptions: ReadonlyArray<{ key: ArrangedPart; label: string; color: string }> = [
-    { key: 'bass', label: 'Bass', color: 'bass' },
-    { key: 'chords', label: 'Chords', color: 'chords' },
-    { key: 'arpeggio', label: 'Arpeggio', color: 'arpeggio' },
-    { key: 'drums', label: 'Drums', color: 'drums' },
-  ];
+  readonly tracks = this.project;
 
   selectSection(id: string): void {
     this.selectedId.set(id);
@@ -84,20 +79,27 @@ export class ArrangeWorkspaceComponent {
     this.projects.setSectionChordDegree(this.selectedIndex(), measureIndex, degree);
   }
 
-  togglePart(part: ArrangedPart, event: Event): void {
-    this.projects.setSectionPart(this.selectedIndex(), part, (event.target as HTMLInputElement).checked);
+  toggleTrack(trackId: string, event: Event): void {
+    this.projects.setSectionTrack(this.selectedIndex(), trackId, (event.target as HTMLInputElement).checked);
   }
 
-  updatePartChance(part: ArrangedPart, event: Event): void {
-    this.projects.setSectionPartChance(this.selectedIndex(), part, Number((event.target as HTMLInputElement).value));
+  updateTrackChance(trackId: string, event: Event): void {
+    this.projects.setSectionTrackChance(this.selectedIndex(), trackId, Number((event.target as HTMLInputElement).value));
   }
 
-  partWillPlay(section: ArrangementSection, part: ArrangedPart): boolean {
-    return shouldGeneratePartInSection(BigInt(this.project().seed), section, part);
+  trackWillPlay(section: ArrangementSection, trackId: string): boolean {
+    const track = this.project().tracks.find((candidate) => candidate.id === trackId);
+    return !!track && shouldGenerateTrackInSection(BigInt(this.project().seed), section, track);
   }
 
-  partChanceLabel(section: ArrangementSection, part: ArrangedPart): string {
-    return `${section.partChances[part]}% chance`;
+  trackIncluded(section: ArrangementSection, trackId: string): boolean {
+    const track = this.project().tracks.find((candidate) => candidate.id === trackId);
+    return !!track && (section.trackParts?.[trackId] ?? section.parts[track.role]);
+  }
+
+  trackChance(section: ArrangementSection, trackId: string): number {
+    const track = this.project().tracks.find((candidate) => candidate.id === trackId);
+    return track ? section.trackPartChances?.[trackId] ?? section.partChances[track.role] : 0;
   }
 
   sectionLabel(type: SectionType): string {

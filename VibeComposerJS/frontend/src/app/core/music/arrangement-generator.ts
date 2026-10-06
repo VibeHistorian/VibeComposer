@@ -25,3 +25,30 @@ export function shouldGeneratePartInSection(
   const chanceRoll = new JavaRandom(partSeed).nextInt(100);
   return section.parts[part] && chanceRoll < section.partChances[part];
 }
+
+/** Stable per-track entrance decisions, preserving the original Java stream for the first role track. */
+export function shouldGenerateTrackInSection(
+  projectSeed: bigint | number,
+  section: ArrangementSection,
+  track: { readonly id: string; readonly role: ArrangedPart },
+): boolean {
+  if (typeof projectSeed === 'number' && !Number.isSafeInteger(projectSeed)) {
+    throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
+  }
+  const included = section.trackParts?.[track.id] ?? section.parts[track.role];
+  const chance = section.trackPartChances?.[track.id] ?? section.partChances[track.role];
+  const seed = BigInt.asIntN(32, BigInt(projectSeed));
+  const initialTrackId = `track-${track.role}-1`;
+  const idOffset = track.id === initialTrackId ? 0 : stableIdOffset(track.id);
+  const partSeed = BigInt.asIntN(32, seed + BigInt(ARRANGEMENT_PART_SEED_OFFSETS[track.role] + idOffset));
+  return included && new JavaRandom(partSeed).nextInt(100) < chance;
+}
+
+function stableIdOffset(value: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index++) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash | 0;
+}

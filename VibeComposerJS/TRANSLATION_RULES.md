@@ -2,7 +2,7 @@
 
 These rules guide the translation of VibeComposer's generation functionality into the TypeScript and Angular application. They are a starting point and can be refined as the rewrite progresses.
 
-0. **The Angular translation project is in a buildout stage** - it's OK for there to be breaking changes / compatibility of any loaded files is not required until the finishing touches are being laid down.
+0. **The Angular translation project is in a buildout stage** - it's OK for there to be breaking changes, and it's OK to remove or replace existing TS/html/css if it doesn't align with the overall goals.
 
 1. **Do not port legacy melody generation or its controls.** Treat the legacy melody generator and its associated settings as out of scope for the rewrite.
 
@@ -31,3 +31,5 @@ These rules guide the translation of VibeComposer's generation functionality int
 11. **Separate logical CSS sections with single-line comments.** Use a concise `/* Section name */` comment on its own line between groups of related rules in every CSS file.
 
 12. **Use the project's style theme throughout the Angular UI.** Reuse the semantic CSS custom properties in `frontend/src/styles.css` for colors, typography, surfaces, borders, radii, and other shared visual values. The theme is being extracted from existing components; as component styles are updated or added, use those tokens and add reusable theme tokens for missing shared values instead of introducing one-off hard-coded styles.
+
+13. **Treat `schemaVersion` as informational during translation buildout.** Validate imported project structure and values, but do not gate loading on a schema version or add compatibility migrations. Backward compatibility can be considered during the finishing phase.

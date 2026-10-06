@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
-import { phraseForProject } from '../../core/music/phrase';
-import type { ArrangedPart } from '../../core/project/project.model';
+import { phraseForTrack } from '../../core/music/phrase';
+import type { CompositionTrack } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
 
 @Component({
@@ -15,12 +15,7 @@ export class MixWorkspaceComponent {
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);
   readonly project = this.projects.project;
-  readonly parts: ReadonlyArray<{ key: ArrangedPart; label: string; color: string; description: string }> = [
-    { key: 'bass', label: 'Bass', color: 'bass', description: 'Low end and pulse' },
-    { key: 'chords', label: 'Chords', color: 'chords', description: 'Harmony and sustain' },
-    { key: 'arpeggio', label: 'Arpeggio', color: 'arpeggio', description: 'Movement and detail' },
-    { key: 'drums', label: 'Drums', color: 'drums', description: 'Percussion channel' },
-  ];
+  readonly channels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly instruments: ReadonlyArray<{ program: number; name: string }> = [
     { program: 0, name: 'Acoustic Grand Piano' },
     { program: 4, name: 'Electric Piano' },
@@ -39,54 +34,75 @@ export class MixWorkspaceComponent {
     { program: 80, name: 'Square Lead' },
     { program: 88, name: 'Warm Pad' },
   ];
-  readonly hasSolo = computed(() => this.parts.some((part) => this.project().mix[part.key].solo));
-  readonly audibleCount = computed(() => this.parts.filter((part) => this.isAudible(part.key)).length);
-  readonly totalPhraseNotes = computed(() => this.parts.reduce(
-    (sum, part) => sum + phraseForProject(this.project(), part.key).length, 0,
+  readonly hasSolo = computed(() => this.project().tracks.some((track) => track.mix.solo));
+  readonly audibleCount = computed(() => this.project().tracks.filter((track) => this.isAudible(track.id)).length);
+  readonly totalPhraseNotes = computed(() => this.project().tracks.reduce(
+    (sum, track) => sum + phraseForTrack(this.project(), track).length, 0,
   ));
 
-  noteCount(part: ArrangedPart): number {
-    return phraseForProject(this.project(), part).length;
+  noteCount(trackId: string): number {
+    const track = this.project().tracks.find((candidate) => candidate.id === trackId);
+    return track ? phraseForTrack(this.project(), track).length : 0;
   }
 
-  isAudible(part: ArrangedPart): boolean {
-    const settings = this.project().mix[part];
+  isAudible(trackId: string): boolean {
+    const settings = this.project().tracks.find((track) => track.id === trackId)?.mix;
+    if (!settings) return false;
     return !settings.muted && (!this.hasSolo() || settings.solo);
   }
 
-  updateProgram(part: ArrangedPart, event: Event): void {
-    if (part === 'drums') return;
+  hasChannelCollision(trackId: string): boolean {
+    const selected = this.track(trackId);
+    return selected !== undefined && this.project().tracks.some((track) => track.id !== trackId && track.midiChannel === selected.midiChannel);
+  }
+
+  roleName(track: CompositionTrack): string {
+    return track.role === 'arpeggio' ? 'Arpeggio' : track.role[0].toUpperCase() + track.role.slice(1);
+  }
+
+  updateProgram(trackId: string, event: Event): void {
+    if (this.track(trackId)?.role === 'drums') return;
     const program = Number((event.target as HTMLSelectElement).value);
     if (this.instruments.some((instrument) => instrument.program === program)) {
-      this.projects.updateMixSettings(part, { program });
+      this.projects.updateTrack(trackId, { mix: { program } });
       this.playback.updateMix(this.project());
     }
   }
 
-  updateVolume(part: ArrangedPart, event: Event): void {
+  updateVolume(trackId: string, event: Event): void {
     const volumePercent = Number((event.target as HTMLInputElement).value);
     if (Number.isInteger(volumePercent) && volumePercent >= 0 && volumePercent <= 100) {
-      this.projects.updateMixSettings(part, { volumePercent });
+      this.projects.updateTrack(trackId, { mix: { volumePercent } });
       this.playback.updateMix(this.project());
     }
   }
 
-  updatePan(part: ArrangedPart, event: Event): void {
+  updatePan(trackId: string, event: Event): void {
     const panPercent = Number((event.target as HTMLInputElement).value);
     if (Number.isInteger(panPercent) && panPercent >= -100 && panPercent <= 100) {
-      this.projects.updateMixSettings(part, { panPercent });
+      this.projects.updateTrack(trackId, { mix: { panPercent } });
       this.playback.updateMix(this.project());
     }
   }
 
-  toggle(part: ArrangedPart, setting: 'muted' | 'solo'): void {
-    const current = this.project().mix[part][setting];
-    this.projects.updateMixSettings(part, { [setting]: !current });
+  toggle(trackId: string, setting: 'muted' | 'solo'): void {
+    const current = this.track(trackId)?.mix[setting];
+    if (current === undefined) return;
+    this.projects.updateTrack(trackId, { mix: { [setting]: !current } });
     this.playback.updateMix(this.project());
   }
 
   instrumentName(program: number): string {
     return this.instruments.find((instrument) => instrument.program === program)?.name ?? `GM patch ${program + 1}`;
+  }
+
+  updateChannel(trackId: string, event: Event): void {
+    const channel = Number((event.target as HTMLSelectElement).value);
+    if (Number.isInteger(channel)) this.projects.updateTrack(trackId, { midiChannel: channel });
+  }
+
+  private track(trackId: string): CompositionTrack | undefined {
+    return this.project().tracks.find((candidate) => candidate.id === trackId);
   }
 
   panName(value: number): string {

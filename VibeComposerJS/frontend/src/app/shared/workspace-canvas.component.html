@@ -5,28 +5,45 @@
     </header>
 
     <div class="track-groups">
-      @for (track of tracks(); track track.id) {
-        <section class="track-group" [class.selected]="selectedPart() === track.id" [class.is-hidden]="!visibleParts().has(track.id)">
+      @for (group of roles; track group.role) {
+        <section class="track-group" [class]="'track-group ' + group.role">
           <header class="group-heading">
-            <button type="button" class="collapse-button" (click)="toggleCollapsed(track.id)"
-              [attr.aria-expanded]="!collapsedParts().has(track.id)" [attr.aria-label]="(collapsedParts().has(track.id) ? 'Expand ' : 'Collapse ') + track.name">
-              {{ collapsedParts().has(track.id) ? '›' : '⌄' }}
-            </button>
-            <button type="button" class="track-select" (click)="selectTrack(track.id)" [attr.aria-pressed]="selectedPart() === track.id">
-              <i class="role-dot" [class]="track.color"></i><span>{{ track.name }}</span>
-            </button>
-            <button type="button" class="visibility-button" (click)="toggleVisibility(track.id)"
-              [attr.aria-pressed]="visibleParts().has(track.id)" [attr.aria-label]="(visibleParts().has(track.id) ? 'Hide ' : 'Show ') + track.name"
-              [title]="visibleParts().has(track.id) ? 'Hide in score' : 'Show in score'">◉</button>
+            <i class="role-dot" [class]="group.role"></i>
+            <strong>{{ group.name }}</strong>
+            <span class="group-count">{{ tracksFor(group.role).length }}</span>
+            <button type="button" class="add-track-button" (click)="addTrack(group.role)"
+              [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
           </header>
-          @if (!collapsedParts().has(track.id)) {
-            <div class="track-detail" (click)="selectTrack(track.id)">
-              <span>CH {{ track.midiChannel.toString().padStart(2, '0') }}</span><span>{{ track.noteCount }} notes</span>
-              <button type="button" [class.active]="project().mix[track.id].muted" [attr.aria-pressed]="track.muted"
-                [attr.aria-label]="(track.muted ? 'Unmute ' : 'Mute ') + track.name" (click)="$event.stopPropagation(); toggleMix(track.id, 'muted')">M</button>
-              <button type="button" [class.active]="track.solo" [attr.aria-pressed]="track.solo"
-                [attr.aria-label]="(track.solo ? 'Unsolo ' : 'Solo ') + track.name" (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
-            </div>
+          @for (track of tracksFor(group.role); track track.id) {
+            <article class="track-row-card" [class.selected]="selectedTrackId() === track.id"
+              [class.is-hidden]="!isVisible(track.id)">
+              <div class="track-line">
+                <button type="button" class="track-select" (click)="selectTrack(track.id)"
+                  [attr.aria-pressed]="selectedTrackId() === track.id">
+                  <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
+                </button>
+                <button type="button" class="visibility-button" (click)="toggleVisibility(track.id)"
+                  [attr.aria-pressed]="isVisible(track.id)" [attr.aria-label]="(isVisible(track.id) ? 'Hide ' : 'Show ') + track.name"
+                  [title]="isVisible(track.id) ? 'Hide in score' : 'Show in score'">◉</button>
+                <button type="button" class="collapse-button" (click)="toggleCollapsed(track.id)"
+                  [attr.aria-expanded]="!collapsedTracks().has(track.id)" [attr.aria-label]="(collapsedTracks().has(track.id) ? 'Expand ' : 'Collapse ') + track.name">
+                  {{ collapsedTracks().has(track.id) ? '›' : '⌄' }}
+                </button>
+              </div>
+              @if (!collapsedTracks().has(track.id)) {
+                <div class="track-detail" (click)="selectTrack(track.id)">
+                  <span title="{{ instrumentName(track) }}">{{ instrumentName(track) }}</span>
+                  <span>CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
+                  <span>{{ track.noteCount }} notes</span>
+                  <button type="button" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
+                    [attr.aria-label]="(track.mix.muted ? 'Unmute ' : 'Mute ') + track.name"
+                    (click)="$event.stopPropagation(); toggleMix(track.id, 'muted')">M</button>
+                  <button type="button" [class.active]="track.mix.solo" [attr.aria-pressed]="track.mix.solo"
+                    [attr.aria-label]="(track.mix.solo ? 'Unsolo ' : 'Solo ') + track.name"
+                    (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
+                </div>
+              }
+            </article>
           }
         </section>
       }
@@ -47,7 +64,7 @@
           <div class="timeline-content ruler-sections">
             @for (item of timelineSections(); track item.section.id) {
               <button type="button" class="section-ruler-block" [style.width.%]="item.widthPercent"
-                [class.active]="selectedSectionId() === item.section.id" (click)="selectSection(item.section, selectedPart())">
+                [class.active]="selectedSectionId() === item.section.id" (click)="selectSection(item.section, selectedTrackId())">
                 <strong>{{ sectionLabel(item.section.type) }}</strong><span>{{ item.startMeasure.toString().padStart(2, '0') }}–{{ (item.startMeasure + item.section.measures - 1).toString().padStart(2, '0') }}</span>
               </button>
             }
@@ -55,12 +72,12 @@
         </div>
 
         @for (track of tracks(); track track.id) {
-          <div class="arrangement-row" [class.selected]="selectedPart() === track.id" [class.row-hidden]="!visibleParts().has(track.id)">
-            <button type="button" class="row-label" (click)="selectTrack(track.id)"><i class="role-dot" [class]="track.color"></i>{{ track.name }}</button>
+          <div class="arrangement-row" [class.selected]="selectedTrackId() === track.id" [class.row-hidden]="!isVisible(track.id)">
+            <button type="button" class="row-label" (click)="selectTrack(track.id)"><i class="role-dot" [class]="track.role"></i>{{ track.name }}</button>
             <div class="timeline-content arrangement-lane">
               @for (item of timelineSections(); track item.section.id) {
-                <button type="button" class="arrangement-block" [class]="'arrangement-block ' + track.color"
-                  [class.off]="!sectionPlays(item.section, track.id)" [class.active]="selectedSectionId() === item.section.id"
+                <button type="button" class="arrangement-block" [class]="'arrangement-block ' + track.role"
+                  [class.off]="!sectionPlays(item.section, track)" [class.active]="selectedSectionId() === item.section.id"
                   [style.width.%]="item.widthPercent" [attr.aria-label]="track.name + ', ' + sectionLabel(item.section.type) + ', bars ' + item.startMeasure + ' to ' + (item.startMeasure + item.section.measures - 1)"
                   (click)="selectSection(item.section, track.id)"></button>
               }
@@ -74,36 +91,34 @@
     <section class="score-panel" aria-labelledby="score-title">
       <header class="canvas-heading score-heading">
         <div><p class="eyebrow">ALL PARTS · VELOCITY SHADING</p><h2 id="score-title">Song score</h2></div>
-        <span class="score-legend"><i class="role-dot" [class]="selectedTrack().color"></i> Selected part is emphasized</span>
+        <span class="score-legend"><i class="role-dot" [class]="selectedTrack().role"></i> Selected part is emphasized</span>
       </header>
       <div class="score-scroll">
         <div class="score-canvas">
           <div class="score-ruler">
             <span class="score-ruler-label">PART</span>
             <div class="score-ruler-sections">
-            @for (item of timelineSections(); track item.section.id) {
-              <span [style.width.%]="item.widthPercent">{{ item.startMeasure.toString().padStart(2, '0') }} · {{ sectionLabel(item.section.type) }}</span>
-            }
+              @for (item of timelineSections(); track item.section.id) {
+                <span [style.width.%]="item.widthPercent">{{ item.startMeasure.toString().padStart(2, '0') }} · {{ sectionLabel(item.section.type) }}</span>
+              }
             </div>
           </div>
-          <div class="score-track-lanes">
+          <div class="score-track-lanes" [style.grid-template-rows]="'repeat(' + tracks().length + ', minmax(40px, 1fr)) 34px'">
             @for (track of tracks(); track track.id) {
-              <div class="score-track-row" [class.selected]="selectedPart() === track.id" [class.row-hidden]="!visibleParts().has(track.id)">
-                <span class="score-track-label"><i class="role-dot" [class]="track.color"></i>{{ track.name }}</span>
+              <div class="score-track-row" [class.selected]="selectedTrackId() === track.id" [class.row-hidden]="!isVisible(track.id)">
+                <span class="score-track-label"><i class="role-dot" [class]="track.role"></i>{{ track.name }}</span>
                 <div class="score-track-lane">
-                  @for (item of timelineSections(); track item.section.id) {
-                    <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i>
-                  }
+                  @for (item of timelineSections(); track item.section.id) { <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i> }
                   <i class="section-divider final" [style.left.%]="100"></i>
                   @for (note of scoreNotes(); track note.id + '-' + note.part + '-' + note.startBeat) {
-                    @if (note.part === track.id && visibleParts().has(note.part)) {
+                    @if (note.part === track.id && isVisible(note.part)) {
                       <span class="score-note" [class]="'score-note ' + note.color"
                         [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.%]="note.topPercent"
-                        [style.opacity]="selectedPart() === note.part ? note.opacity : note.opacity * 0.38"
-                        [attr.title]="note.part + ' · MIDI ' + note.midi + ' · velocity ' + note.velocity"></span>
+                        [style.opacity]="selectedTrackId() === note.part ? note.opacity : note.opacity * 0.38"
+                        [attr.title]="track.name + ' · MIDI ' + note.midi + ' · velocity ' + note.velocity"></span>
                     }
                   }
-                  @if (!visibleParts().has(track.id)) { <span class="lane-hidden">Hidden</span> }
+                  @if (!isVisible(track.id)) { <span class="lane-hidden">Hidden</span> }
                   <i class="playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
                 </div>
               </div>
@@ -111,15 +126,13 @@
             <div class="score-velocity-row">
               <span class="score-track-label velocity-label">VEL</span>
               <div class="velocity-lane">
-                @for (item of timelineSections(); track item.section.id) {
-                  <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i>
-                }
+                @for (item of timelineSections(); track item.section.id) { <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i> }
                 <i class="section-divider final" [style.left.%]="100"></i>
                 @for (note of scoreNotes(); track note.id + '-velocity-' + note.part + '-' + note.startBeat) {
-                  @if (visibleParts().has(note.part)) {
+                  @if (isVisible(note.part)) {
                     <span class="velocity-stem" [class]="'velocity-stem ' + note.color"
-                      [class.dimmed]="selectedPart() !== note.part" [style.left.%]="noteLeft(note)"
-                       [style.height.%]="velocityHeight(note)" [style.opacity]="selectedPart() === note.part ? 0.9 : 0.32"
+                      [class.dimmed]="selectedTrackId() !== note.part" [style.left.%]="noteLeft(note)"
+                      [style.height.%]="velocityHeight(note)" [style.opacity]="selectedTrackId() === note.part ? 0.9 : 0.32"
                       [attr.title]="note.part + ' velocity ' + note.velocity"></span>
                   }
                 }
@@ -136,7 +149,7 @@
   <aside class="context-inspector" aria-label="Selection inspector">
     <header class="canvas-heading inspector-heading">
       <div><p class="eyebrow">INSPECTOR</p><h2>{{ selectedSection() ? 'Section' : 'Selected track' }}</h2></div>
-      <i class="role-dot" [class]="selectedTrack().color"></i>
+      <i class="role-dot" [class]="selectedTrack().role"></i>
     </header>
     @if (selectedSection(); as section) {
       <div class="inspector-selection">
@@ -147,79 +160,91 @@
       </div>
     } @else {
       <div class="inspector-selection">
-        <span class="selection-kicker">{{ selectedTrack().name }} · CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }}</span>
+        <span class="selection-kicker">{{ selectedTrack().role }} · CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }}</span>
+        <label class="track-name-field"><span>Track name</span><input [value]="selectedTrack().name" maxlength="48" (change)="updateTrackName($event)" /></label>
+        @if (hasChannelCollision()) { <span class="channel-warning" role="status">Another track also uses channel {{ selectedTrack().midiChannel }}.</span> }
+        <div class="track-actions" aria-label="Track actions">
+          <button type="button" (click)="duplicateTrack(selectedTrack().id)">Duplicate</button>
+          <button type="button" [disabled]="!canMoveTrack(selectedTrack().id, -1)" (click)="reorderTrack(selectedTrack().id, -1)" aria-label="Move track up">↑</button>
+          <button type="button" [disabled]="!canMoveTrack(selectedTrack().id, 1)" (click)="reorderTrack(selectedTrack().id, 1)" aria-label="Move track down">↓</button>
+          @if (canRemoveTrack(selectedTrack().id)) { <button type="button" class="remove-track" (click)="removeTrack(selectedTrack().id)">Remove</button> }
+        </div>
         <strong>{{ selectedTrack().noteCount }} notes</strong>
-        <span>{{ selectedTrack().muted ? 'Muted' : selectedTrack().solo ? 'Soloed' : 'Active in the mix' }} · {{ project().mix[selectedPart()].volumePercent }}% level</span>
+        <span>{{ selectedTrack().mix.muted ? 'Muted' : selectedTrack().mix.solo ? 'Soloed' : 'Active in the mix' }} · {{ selectedTrack().mix.volumePercent }}% level</span>
         <div class="inspector-links"><a routerLink="/create" (click)="workspaceUi.openTools()">Generation</a><a routerLink="/edit" (click)="workspaceUi.openTools()">Edit notes</a><a routerLink="/mix" (click)="workspaceUi.openTools()">Instrument &amp; mix</a></div>
       </div>
     }
     @if (!selectedSection()) {
       <div class="inspector-editors">
-        <section class="quick-settings-group" aria-label="Selected part generation settings">
+        <section class="quick-settings-group" aria-label="Selected track generation settings">
           <p class="eyebrow">GENERATION</p>
           @if (selectedPart() === 'bass') {
             <label class="quick-field">Rhythm
-              <select [value]="project().bass.rhythm" (change)="updateBassRhythm($event)">
+              <select [value]="$any(selectedTrack().generatorSettings).rhythm" (change)="updateBassRhythm($event)">
                 @for (option of bassRhythms; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
               </select>
             </label>
-            <label class="quick-range"><span>Chord tones <output>{{ project().bass.noteVariation }}%</output></span>
-              <input type="range" min="0" max="100" [value]="project().bass.noteVariation" (change)="updateBassVariation($event)" />
+            <label class="quick-range"><span>Chord tones <output>{{ $any(selectedTrack().generatorSettings).noteVariation }}%</output></span>
+              <input type="range" min="0" max="100" [value]="$any(selectedTrack().generatorSettings).noteVariation" (change)="updateBassVariation($event)" />
             </label>
-            <label class="quick-check"><input type="checkbox" [checked]="project().bass.octaveInterval" (change)="updateBassOctave($event)" /> Octave interval</label>
+            <label class="quick-check"><input type="checkbox" [checked]="$any(selectedTrack().generatorSettings).octaveInterval" (change)="updateBassOctave($event)" /> Octave interval</label>
           } @else if (selectedPart() === 'chords') {
             <label class="quick-field">Rhythm
-              <select [value]="project().chords.rhythm" (change)="updateChordRhythm($event)">
+              <select [value]="$any(selectedTrack().generatorSettings).rhythm" (change)="updateChordRhythm($event)">
                 @for (option of chordRhythms; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
               </select>
             </label>
             <label class="quick-field">Voicing
-              <select [value]="project().chords.voicing" (change)="updateChordVoicing($event)"><option value="close">Close</option><option value="open">Open</option></select>
+              <select [value]="$any(selectedTrack().generatorSettings).voicing" (change)="updateChordVoicing($event)"><option value="close">Close</option><option value="open">Open</option></select>
             </label>
-            <label class="quick-range"><span>Note length <output>{{ project().chords.noteLengthPercent }}%</output></span>
-              <input type="range" min="25" max="125" [value]="project().chords.noteLengthPercent" (change)="updateChordLength($event)" />
+            <label class="quick-range"><span>Note length <output>{{ $any(selectedTrack().generatorSettings).noteLengthPercent }}%</output></span>
+              <input type="range" min="25" max="125" [value]="$any(selectedTrack().generatorSettings).noteLengthPercent" (change)="updateChordLength($event)" />
             </label>
           } @else if (selectedPart() === 'arpeggio') {
             <label class="quick-field">Pattern
-              <select [value]="project().arpeggio.pattern" (change)="updateArpeggioPattern($event)">
+              <select [value]="$any(selectedTrack().generatorSettings).pattern" (change)="updateArpeggioPattern($event)">
                 @for (option of arpPatterns; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
               </select>
             </label>
             <label class="quick-field">Rate
-              <select [value]="project().arpeggio.rate" (change)="updateArpeggioRate($event)"><option value="eighth">Eighth</option><option value="sixteenth">Sixteenth</option></select>
+              <select [value]="$any(selectedTrack().generatorSettings).rate" (change)="updateArpeggioRate($event)"><option value="eighth">Eighth</option><option value="sixteenth">Sixteenth</option></select>
             </label>
             <label class="quick-field">Range
-              <select [value]="project().arpeggio.octaves" (change)="updateArpeggioOctaves($event)"><option [value]="1">1 octave</option><option [value]="2">2 octaves</option></select>
+              <select [value]="$any(selectedTrack().generatorSettings).octaves" (change)="updateArpeggioOctaves($event)"><option [value]="1">1 octave</option><option [value]="2">2 octaves</option></select>
             </label>
           } @else {
             <label class="quick-field">Groove
-              <select [value]="project().drums.groove" (change)="updateDrumGroove($event)">
+              <select [value]="$any(selectedTrack().generatorSettings).groove" (change)="updateDrumGroove($event)">
                 @for (option of drumGrooves; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
               </select>
             </label>
-            <label class="quick-range"><span>Swing <output>{{ project().drums.swingPercent }}%</output></span>
-              <input type="range" min="50" max="75" [value]="project().drums.swingPercent" (change)="updateDrumSwing($event)" />
+            <label class="quick-range"><span>Swing <output>{{ $any(selectedTrack().generatorSettings).swingPercent }}%</output></span>
+              <input type="range" min="50" max="75" [value]="$any(selectedTrack().generatorSettings).swingPercent" (change)="updateDrumSwing($event)" />
             </label>
           }
         </section>
 
-        <section class="quick-settings-group mix-quick-settings" aria-label="Selected part instrument and mix">
+        <section class="quick-settings-group mix-quick-settings" aria-label="Selected track instrument and mix">
           <p class="eyebrow">INSTRUMENT &amp; MIX</p>
           @if (selectedPart() === 'drums') {
-            <div class="quick-fixed">General MIDI percussion <span>CH 10</span></div>
+            <div class="quick-fixed">General MIDI percussion</div>
           } @else {
             <label class="quick-field">Instrument
-              <select [value]="project().mix[selectedPart()].program" (change)="updateInstrument($event)">
+              <select [value]="selectedTrack().mix.program" (change)="updateInstrument($event)">
                 @for (instrument of instruments; track instrument.program) { <option [value]="instrument.program">{{ instrument.name }}</option> }
               </select>
             </label>
-            <div class="quick-fixed">MIDI channel <span>CH {{ selectedTrack().midiChannel.toString().padStart(2, '0') }}</span></div>
           }
-          <label class="quick-range"><span>Level <output>{{ project().mix[selectedPart()].volumePercent }}%</output></span>
-            <input type="range" min="0" max="100" [value]="project().mix[selectedPart()].volumePercent" (change)="updateVolume($event)" />
+          <label class="quick-field">MIDI channel
+            <select [value]="selectedTrack().midiChannel" (change)="updateChannel($event)">
+              @for (channel of midiChannels; track channel) { <option [value]="channel">Channel {{ channel.toString().padStart(2, '0') }}</option> }
+            </select>
           </label>
-          <label class="quick-range"><span>Pan <output>{{ panName(project().mix[selectedPart()].panPercent) }}</output></span>
-            <input type="range" min="-100" max="100" [value]="project().mix[selectedPart()].panPercent" (change)="updatePan($event)" />
+          <label class="quick-range"><span>Level <output>{{ selectedTrack().mix.volumePercent }}%</output></span>
+            <input type="range" min="0" max="100" [value]="selectedTrack().mix.volumePercent" (change)="updateVolume($event)" />
+          </label>
+          <label class="quick-range"><span>Pan <output>{{ panName(selectedTrack().mix.panPercent) }}</output></span>
+            <input type="range" min="-100" max="100" [value]="selectedTrack().mix.panPercent" (change)="updatePan($event)" />
           </label>
         </section>
       </div>

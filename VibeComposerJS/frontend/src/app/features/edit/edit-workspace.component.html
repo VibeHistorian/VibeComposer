@@ -25,10 +25,10 @@
       </div>
 
       <div class="part-tabs" role="tablist" aria-label="Part to edit">
-        @for (part of parts; track part.key) {
-          <button type="button" role="tab" [attr.aria-selected]="selectedPart() === part.key"
-            [class.active]="selectedPart() === part.key" (click)="selectPart(part.key)">
-            <i class="role-dot" [class]="part.color"></i>{{ part.label }}
+        @for (track of project().tracks; track track.id) {
+          <button type="button" role="tab" [attr.aria-selected]="selectedTrack().id === track.id"
+            [class.active]="selectedTrack().id === track.id" (click)="selectTrack(track.id)">
+            <i class="role-dot" [class]="track.role"></i>{{ track.name }}
           </button>
         }
       </div>

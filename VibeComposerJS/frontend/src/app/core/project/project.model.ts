@@ -28,6 +28,9 @@ export interface ArrangementSection {
   readonly parts: Readonly<Record<ArrangedPart, boolean>>;
   /** Legacy Section part chance percentages for bass, chords, arpeggio, and drums. */
   readonly partChances: Readonly<Record<ArrangedPart, number>>;
+  /** Optional track-level overrides. Missing IDs inherit their role's legacy values. */
+  readonly trackParts?: Readonly<Record<string, boolean>>;
+  readonly trackPartChances?: Readonly<Record<string, number>>;
 }
 
 export interface BassSettings {
@@ -65,8 +68,23 @@ export interface MixChannelSettings {
   readonly solo: boolean;
 }
 
+interface TrackBase {
+  readonly id: string;
+  readonly name: string;
+  /** MIDI channels are stored one-based to match the channel numbers shown in the UI. */
+  readonly midiChannel: number;
+  readonly mix: MixChannelSettings;
+  readonly editedPhrase?: readonly PhraseNote[];
+}
+
+export type CompositionTrack =
+  | (TrackBase & { readonly role: 'bass'; readonly generatorSettings: BassSettings })
+  | (TrackBase & { readonly role: 'chords'; readonly generatorSettings: ChordSettings })
+  | (TrackBase & { readonly role: 'arpeggio'; readonly generatorSettings: ArpeggioSettings })
+  | (TrackBase & { readonly role: 'drums'; readonly generatorSettings: DrumSettings });
+
 export interface CompositionProject {
-  readonly schemaVersion: 10;
+  readonly schemaVersion: 11;
   readonly name: string;
   readonly key: string;
   readonly scale: ScaleMode;
@@ -83,6 +101,8 @@ export interface CompositionProject {
   /** Phrase-level note edits. Missing parts continue to use their seeded generator output. */
   readonly editedPhrases: Readonly<Partial<Record<ArrangedPart, readonly PhraseNote[]>>>;
   readonly mix: Readonly<Record<ArrangedPart, MixChannelSettings>>;
+  /** Independent instrument tracks. Legacy role fields above remain for the existing workspace tools. */
+  readonly tracks: readonly CompositionTrack[];
 }
 
 export const SECTION_TYPES: readonly SectionType[] = [
@@ -166,8 +186,15 @@ export const DEFAULT_MIX: Readonly<Record<ArrangedPart, MixChannelSettings>> = {
   drums: { program: 0, volumePercent: 100, panPercent: 0, muted: false, solo: false },
 };
 
+export const DEFAULT_TRACKS: readonly CompositionTrack[] = [
+  { id: 'track-bass-1', role: 'bass', name: 'Bass', midiChannel: 1, generatorSettings: DEFAULT_BASS_SETTINGS, mix: DEFAULT_MIX.bass },
+  { id: 'track-chords-1', role: 'chords', name: 'Chords', midiChannel: 2, generatorSettings: DEFAULT_CHORD_SETTINGS, mix: DEFAULT_MIX.chords },
+  { id: 'track-arpeggio-1', role: 'arpeggio', name: 'Arpeggio', midiChannel: 3, generatorSettings: DEFAULT_ARPEGGIO_SETTINGS, mix: DEFAULT_MIX.arpeggio },
+  { id: 'track-drums-1', role: 'drums', name: 'Drums', midiChannel: 10, generatorSettings: DEFAULT_DRUM_SETTINGS, mix: DEFAULT_MIX.drums },
+];
+
 export const DEFAULT_PROJECT: CompositionProject = {
-  schemaVersion: 10,
+  schemaVersion: 11,
   name: 'Untitled composition',
   key: 'C',
   scale: 'major',
@@ -181,4 +208,5 @@ export const DEFAULT_PROJECT: CompositionProject = {
   arrangement: DEFAULT_ARRANGEMENT,
   editedPhrases: {},
   mix: DEFAULT_MIX,
+  tracks: DEFAULT_TRACKS,
 };

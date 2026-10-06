@@ -2,8 +2,8 @@
   <section class="page-heading" aria-labelledby="page-title">
     <div>
       <p class="eyebrow"><span class="eyebrow-line"></span> MIX WORKSPACE</p>
-      <h1 id="page-title">Balance the parts.</h1>
-      <p class="page-copy">Set a sound and level for each part, then export the mix as MIDI.</p>
+      <h1 id="page-title">Balance the tracks.</h1>
+      <p class="page-copy">Set an instrument, MIDI channel, and level for each track.</p>
     </div>
     <div class="project-actions" aria-label="Project actions">
       <button type="button" class="primary-button export-button" (click)="exportMidi()">Export mixed MIDI</button>
@@ -13,66 +13,72 @@
   </section>
 
   <section class="mix-summary" aria-label="Mix summary">
-    <div class="summary-stat"><strong>{{ audibleCount() }}</strong><span>PARTS IN MIX</span></div>
+    <div class="summary-stat"><strong>{{ audibleCount() }}</strong><span>TRACKS IN MIX</span></div>
     <span class="summary-rule" aria-hidden="true"></span>
     <div class="summary-stat"><strong>{{ totalPhraseNotes() }}</strong><span>PHRASE NOTES</span></div>
     <span class="summary-rule" aria-hidden="true"></span>
-    <p>{{ hasSolo() ? 'Solo is active. Only soloed, unmuted parts are exported.' : 'All unmuted parts are included in the export.' }}</p>
+    <p>{{ hasSolo() ? 'Solo is active. Only soloed, unmuted tracks are exported.' : 'All unmuted tracks are included in the export.' }}</p>
   </section>
 
-  <section class="mixer" aria-label="Part mixer">
-    @for (part of parts; track part.key) {
-      <article class="channel-strip" [class.muted]="project().mix[part.key].muted" [class.solo]="project().mix[part.key].solo">
+  <section class="mixer" aria-label="Track mixer">
+    @for (track of project().tracks; track track.id) {
+      <article class="channel-strip" [class.muted]="track.mix.muted" [class.solo]="track.mix.solo">
         <header class="channel-heading">
           <div class="channel-identity">
-            <span class="role-mark" [class]="part.color" aria-hidden="true">{{ part.label.slice(0, 1) }}</span>
+            <span class="role-mark" [class]="track.role" aria-hidden="true">{{ track.role.slice(0, 1) }}</span>
             <div>
-              <h2>{{ part.label }}</h2>
-              <p>{{ part.description }}</p>
+              <h2>{{ track.name }}</h2>
+              <p>{{ roleName(track) }} · {{ noteCount(track.id) }} notes</p>
             </div>
           </div>
-          <span class="channel-state" [class.inactive]="!isAudible(part.key)">
-            <i></i>{{ isAudible(part.key) ? 'IN MIX' : 'SILENT' }}
+          <span class="channel-state" [class.inactive]="!isAudible(track.id)">
+            <i></i>{{ isAudible(track.id) ? 'IN MIX' : 'SILENT' }}
           </span>
         </header>
 
         <div class="instrument-setting">
-          @if (part.key === 'drums') {
+          @if (track.role === 'drums') {
             <div class="instrument-fixed"><span class="control-label">INSTRUMENT</span><strong>General MIDI percussion</strong></div>
           } @else {
             <label class="instrument-select">
               <span class="control-label">INSTRUMENT</span>
-              <select [value]="project().mix[part.key].program" (change)="updateProgram(part.key, $event)">
+              <select [value]="track.mix.program" (change)="updateProgram(track.id, $event)">
                 @for (instrument of instruments; track instrument.program) {
                   <option [value]="instrument.program">{{ instrument.name }}</option>
                 }
               </select>
             </label>
           }
-          <span class="phrase-count">{{ noteCount(part.key) }} NOTES IN PHRASE</span>
+          <label class="instrument-select channel-select">
+            <span class="control-label">MIDI CHANNEL</span>
+            <select [value]="track.midiChannel" (change)="updateChannel(track.id, $event)">
+              @for (channel of channels; track channel) { <option [value]="channel">CH {{ channel.toString().padStart(2, '0') }}</option> }
+            </select>
+          </label>
+          @if (hasChannelCollision(track.id)) { <span class="channel-collision">Channel shared</span> }
         </div>
 
         <div class="fader-control">
-          <div class="control-heading"><label [for]="part.key + '-volume'">Level</label><output>{{ project().mix[part.key].volumePercent }}%</output></div>
-          <input [id]="part.key + '-volume'" type="range" min="0" max="100" step="1"
-            [value]="project().mix[part.key].volumePercent" [style.--level]="project().mix[part.key].volumePercent + '%'"
-            (change)="updateVolume(part.key, $event)" />
+          <div class="control-heading"><label [for]="track.id + '-volume'">Level</label><output>{{ track.mix.volumePercent }}%</output></div>
+          <input [id]="track.id + '-volume'" type="range" min="0" max="100" step="1"
+            [value]="track.mix.volumePercent" [style.--level]="track.mix.volumePercent + '%'"
+            (change)="updateVolume(track.id, $event)" />
         </div>
 
         <div class="pan-control">
-          <div class="control-heading"><label [for]="part.key + '-pan'">Pan</label><output>{{ panName(project().mix[part.key].panPercent) }}</output></div>
-          <input [id]="part.key + '-pan'" type="range" min="-100" max="100" step="1"
-            [value]="project().mix[part.key].panPercent" (change)="updatePan(part.key, $event)" />
+          <div class="control-heading"><label [for]="track.id + '-pan'">Pan</label><output>{{ panName(track.mix.panPercent) }}</output></div>
+          <input [id]="track.id + '-pan'" type="range" min="-100" max="100" step="1"
+            [value]="track.mix.panPercent" (change)="updatePan(track.id, $event)" />
           <div class="pan-labels" aria-hidden="true"><span>L</span><span>C</span><span>R</span></div>
         </div>
 
         <div class="channel-actions">
-          <button type="button" class="mix-toggle mute-toggle" [class.active]="project().mix[part.key].muted"
-            [attr.aria-pressed]="project().mix[part.key].muted" (click)="toggle(part.key, 'muted')">
-            {{ project().mix[part.key].muted ? 'Unmute' : 'Mute' }}
+          <button type="button" class="mix-toggle mute-toggle" [class.active]="track.mix.muted"
+            [attr.aria-pressed]="track.mix.muted" (click)="toggle(track.id, 'muted')">
+            {{ track.mix.muted ? 'Unmute' : 'Mute' }}
           </button>
-          <button type="button" class="mix-toggle solo-toggle" [class.active]="project().mix[part.key].solo"
-            [attr.aria-pressed]="project().mix[part.key].solo" (click)="toggle(part.key, 'solo')">Solo</button>
+          <button type="button" class="mix-toggle solo-toggle" [class.active]="track.mix.solo"
+            [attr.aria-pressed]="track.mix.solo" (click)="toggle(track.id, 'solo')">Solo</button>
         </div>
       </article>
     }
@@ -80,7 +86,7 @@
 
   <section class="export-note" aria-label="MIDI mix behavior">
     <span class="note-mark" aria-hidden="true">♫</span>
-    <div><p class="eyebrow">MIDI EXPORT</p><p>Instrument, volume, pan, mute, and solo settings are written into the exported tracks. Browser preview uses synthesized timbres; MIDI players use the selected General MIDI patches.</p></div>
+    <div><p class="eyebrow">MIDI EXPORT</p><p>Instrument, channel, volume, pan, mute, and solo settings are written into each exported track.</p></div>
     <span class="project-key">{{ project().key }} {{ project().scale === 'major' ? 'MAJOR' : 'MINOR' }} · {{ project().tempoBpm }} BPM</span>
   </section>
 </main>

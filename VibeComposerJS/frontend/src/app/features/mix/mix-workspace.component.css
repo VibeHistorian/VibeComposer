@@ -47,6 +47,7 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .instrument-select select { width: 100%; height: 30px; padding: 0 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font-size: 9px; }
 .instrument-fixed { display: grid; gap: 6px; }
 .instrument-fixed strong { color: var(--text-strong); font-size: 9px; font-weight: 500; }
+.channel-collision { color: var(--color-warning); font-size: 8px; }
 .phrase-count { color: var(--text-faint); font: 7px var(--font-mono); letter-spacing: .04em; }
 .fader-control, .pan-control { margin-top: 17px; }
 .control-heading { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }

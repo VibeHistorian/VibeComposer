@@ -1,18 +1,16 @@
 import { Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords } from '../music/harmony';
 import type {
-  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, DrumSettings, MixChannelSettings,
-  PhraseNote, SectionType,
+  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
+  MixChannelSettings, PhraseNote, SectionType,
 } from './project.model';
 import type { CompositionProject } from './project.model';
 import {
   ARRANGED_PARTS, DEFAULT_ARPEGGIO_SETTINGS, DEFAULT_ARRANGEMENT, DEFAULT_BASS_SETTINGS, DEFAULT_CHORD_SETTINGS,
-  DEFAULT_DRUM_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, SECTION_TYPES,
+  DEFAULT_DRUM_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_SECTION_PART_CHANCES, DEFAULT_TRACKS, SECTION_TYPES,
 } from './project.model';
 
-const STORAGE_KEY = 'vibecomposer.project.v10';
-const PREVIOUS_STORAGE_KEYS = ['vibecomposer.project.v9', 'vibecomposer.project.v8', 'vibecomposer.project.v7', 'vibecomposer.project.v6', 'vibecomposer.project.v5', 'vibecomposer.project.v4', 'vibecomposer.project.v3', 'vibecomposer.project.v2'];
-const LEGACY_STORAGE_KEY = 'vibecomposer.project.v1';
+const STORAGE_KEY = 'vibecomposer.project.v11';
 const MAX_HISTORY = 100;
 const MAX_ARRANGEMENT_SECTIONS = 32;
 const MAX_ARRANGEMENT_MEASURES = 128;
@@ -57,19 +55,27 @@ export class ProjectService {
   }
 
   updateBassSettings(patch: Partial<BassSettings>): void {
-    this.commit({ ...this.state(), bass: { ...this.state().bass, ...patch } });
+    const current = this.state();
+    const bass = { ...current.bass, ...patch };
+    this.commit({ ...current, bass, tracks: this.updatePrimaryTrack(current.tracks, 'bass', { generatorSettings: bass }) });
   }
 
   updateChordSettings(patch: Partial<ChordSettings>): void {
-    this.commit({ ...this.state(), chords: { ...this.state().chords, ...patch } });
+    const current = this.state();
+    const chords = { ...current.chords, ...patch };
+    this.commit({ ...current, chords, tracks: this.updatePrimaryTrack(current.tracks, 'chords', { generatorSettings: chords }) });
   }
 
   updateArpeggioSettings(patch: Partial<ArpeggioSettings>): void {
-    this.commit({ ...this.state(), arpeggio: { ...this.state().arpeggio, ...patch } });
+    const current = this.state();
+    const arpeggio = { ...current.arpeggio, ...patch };
+    this.commit({ ...current, arpeggio, tracks: this.updatePrimaryTrack(current.tracks, 'arpeggio', { generatorSettings: arpeggio }) });
   }
 
   updateDrumSettings(patch: Partial<DrumSettings>): void {
-    this.commit({ ...this.state(), drums: { ...this.state().drums, ...patch } });
+    const current = this.state();
+    const drums = { ...current.drums, ...patch };
+    this.commit({ ...current, drums, tracks: this.updatePrimaryTrack(current.tracks, 'drums', { generatorSettings: drums }) });
   }
 
   updateMixSettings(part: ArrangedPart, patch: Partial<MixChannelSettings>): void {
@@ -77,16 +83,20 @@ export class ProjectService {
       return;
     }
     const current = this.state();
-    this.commit({ ...current, mix: { ...current.mix, [part]: { ...current.mix[part], ...patch } } });
+    const mix = { ...current.mix, [part]: { ...current.mix[part], ...patch } };
+    this.commit({ ...current, mix, tracks: this.updatePrimaryTrack(current.tracks, part, { mix: mix[part] }) });
   }
 
   updateEditedPhrase(part: ArrangedPart, notes: readonly PhraseNote[]): void {
     if (!ARRANGED_PARTS.includes(part) || !this.isPhrase(notes)) {
       return;
     }
+    const current = this.state();
+    const editedPhrase = notes.map((note) => ({ ...note }));
     this.commit({
-      ...this.state(),
-      editedPhrases: { ...this.state().editedPhrases, [part]: notes.map((note) => ({ ...note })) },
+      ...current,
+      editedPhrases: { ...current.editedPhrases, [part]: editedPhrase },
+      tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase }),
     });
   }
 
@@ -94,9 +104,144 @@ export class ProjectService {
     if (!this.state().editedPhrases[part]) {
       return;
     }
-    const editedPhrases = { ...this.state().editedPhrases };
+    const current = this.state();
+    const editedPhrases = { ...current.editedPhrases };
     delete editedPhrases[part];
-    this.commit({ ...this.state(), editedPhrases });
+    this.commit({ ...current, editedPhrases, tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase: undefined }) });
+  }
+
+  addTrack(role: ArrangedPart): string | undefined {
+    const current = this.state();
+    if (!ARRANGED_PARTS.includes(role) || current.tracks.length >= 64) return undefined;
+    const source = current.tracks.find((track) => track.role === role);
+    if (!source) return undefined;
+    const nextNumber = current.tracks.reduce((maximum, track) => {
+      const match = new RegExp(`^track-${role}-(\\d+)$`).exec(track.id);
+      return match ? Math.max(maximum, Number(match[1])) : maximum;
+    }, 0) + 1;
+    const id = `track-${role}-${nextNumber}`;
+    const channel = role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
+    const track = { ...source, id, name: `${this.roleName(role)} ${nextNumber}`, midiChannel: channel,
+      mix: { ...source.mix, muted: false, solo: false },
+      editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
+    const arrangement = current.arrangement.map((section) => ({
+      ...section,
+      trackParts: section.trackParts ? { ...section.trackParts, [id]: section.trackParts[source.id] ?? section.parts[role] } : undefined,
+      trackPartChances: section.trackPartChances ? { ...section.trackPartChances, [id]: section.trackPartChances[source.id] ?? section.partChances[role] } : undefined,
+    }));
+    this.commit({ ...current, tracks: [...current.tracks, track], arrangement });
+    return id;
+  }
+
+  duplicateTrack(trackId: string): string | undefined {
+    const current = this.state();
+    if (current.tracks.length >= 64) return undefined;
+    const sourceIndex = current.tracks.findIndex((track) => track.id === trackId);
+    if (sourceIndex < 0) return undefined;
+    const source = current.tracks[sourceIndex];
+    const id = this.nextTrackId(current.tracks, source.role);
+    const channel = source.role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
+    const duplicate = { ...source, id, name: `${source.name} copy`, midiChannel: channel,
+      mix: { ...source.mix, muted: false, solo: false },
+      generatorSettings: { ...source.generatorSettings },
+      editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
+    const tracks = [...current.tracks];
+    tracks.splice(sourceIndex + 1, 0, duplicate);
+    this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
+      ...section,
+      trackParts: section.trackParts ? { ...section.trackParts, [id]: section.trackParts[source.id] ?? section.parts[source.role] } : undefined,
+      trackPartChances: section.trackPartChances ? { ...section.trackPartChances, [id]: section.trackPartChances[source.id] ?? section.partChances[source.role] } : undefined,
+    })) });
+    return id;
+  }
+
+  updateTrack(trackId: string, patch: { name?: string; midiChannel?: number; mix?: Partial<MixChannelSettings> }): void {
+    const current = this.state();
+    const index = current.tracks.findIndex((track) => track.id === trackId);
+    if (index < 0 || (patch.name !== undefined && (!patch.name.trim() || patch.name.length > 48))
+        || (patch.midiChannel !== undefined && (!Number.isInteger(patch.midiChannel) || patch.midiChannel < 1 || patch.midiChannel > 16))
+        || (patch.mix?.program !== undefined && (!Number.isInteger(patch.mix.program) || patch.mix.program < 0 || patch.mix.program > 127))
+        || (patch.mix?.volumePercent !== undefined && (!Number.isInteger(patch.mix.volumePercent) || patch.mix.volumePercent < 0 || patch.mix.volumePercent > 100))
+        || (patch.mix?.panPercent !== undefined && (!Number.isInteger(patch.mix.panPercent) || patch.mix.panPercent < -100 || patch.mix.panPercent > 100))
+        || (patch.mix?.muted !== undefined && typeof patch.mix.muted !== 'boolean')
+        || (patch.mix?.solo !== undefined && typeof patch.mix.solo !== 'boolean')) return;
+    const tracks = [...current.tracks];
+    const track = tracks[index];
+    tracks[index] = { ...track, ...patch, name: patch.name?.trim() ?? track.name,
+      mix: patch.mix ? { ...track.mix, ...patch.mix } : track.mix };
+    const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
+    const mix = patch.mix && isPrimary ? { ...current.mix, [track.role]: tracks[index].mix } : current.mix;
+    this.commit({ ...current, tracks, mix });
+  }
+
+  updateTrackGeneratorSettings(trackId: string, patch: Partial<BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>): void {
+    const current = this.state();
+    const index = current.tracks.findIndex((track) => track.id === trackId);
+    if (index < 0) return;
+    const tracks = [...current.tracks];
+    const track = tracks[index];
+    const generatorSettings = { ...track.generatorSettings, ...patch };
+    const validSettings = track.role === 'bass' ? this.decodeBass(generatorSettings) !== undefined
+      : track.role === 'chords' ? this.decodeChords(generatorSettings) !== undefined
+        : track.role === 'arpeggio' ? this.decodeArpeggio(generatorSettings) !== undefined
+          : this.decodeDrums(generatorSettings) !== undefined;
+    if (!validSettings) return;
+    tracks[index] = { ...track, generatorSettings } as CompositionTrack;
+    const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
+    const legacySettings = isPrimary ? tracks[index].generatorSettings : undefined;
+    const next = track.role === 'bass' && legacySettings ? { ...current, bass: legacySettings as BassSettings, tracks }
+      : track.role === 'chords' && legacySettings ? { ...current, chords: legacySettings as ChordSettings, tracks }
+        : track.role === 'arpeggio' && legacySettings ? { ...current, arpeggio: legacySettings as ArpeggioSettings, tracks }
+          : track.role === 'drums' && legacySettings ? { ...current, drums: legacySettings as DrumSettings, tracks }
+            : { ...current, tracks };
+    this.commit(next);
+  }
+
+  updateTrackPhrase(trackId: string, notes: readonly PhraseNote[]): void {
+    const current = this.state();
+    const index = current.tracks.findIndex((track) => track.id === trackId);
+    if (index < 0 || !this.isPhrase(notes)) return;
+    const tracks = [...current.tracks];
+    tracks[index] = { ...tracks[index], editedPhrase: notes.map((note) => ({ ...note })) } as CompositionTrack;
+    const isPrimary = current.tracks.find((candidate) => candidate.role === tracks[index].role)?.id === trackId;
+    const editedPhrases = isPrimary ? { ...current.editedPhrases, [tracks[index].role]: tracks[index].editedPhrase } : current.editedPhrases;
+    this.commit({ ...current, tracks, editedPhrases });
+  }
+
+  clearTrackPhrase(trackId: string): void {
+    const current = this.state();
+    const track = current.tracks.find((candidate) => candidate.id === trackId);
+    if (!track?.editedPhrase) return;
+    const tracks = current.tracks.map((candidate) => candidate.id === trackId
+      ? { ...candidate, editedPhrase: undefined } as CompositionTrack : candidate);
+    const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === trackId;
+    const editedPhrases = { ...current.editedPhrases };
+    if (isPrimary) delete editedPhrases[track.role];
+    this.commit({ ...current, tracks, editedPhrases });
+  }
+
+  reorderTrack(trackId: string, offset: -1 | 1): void {
+    const current = this.state();
+    const index = current.tracks.findIndex((track) => track.id === trackId);
+    const target = index + offset;
+    if (index < 0 || target < 0 || target >= current.tracks.length) return;
+    const tracks = [...current.tracks];
+    [tracks[index], tracks[target]] = [tracks[target], tracks[index]];
+    this.commit({ ...current, tracks });
+  }
+
+  removeTrack(trackId: string): void {
+    const current = this.state();
+    const track = current.tracks.find((candidate) => candidate.id === trackId);
+    if (!track || current.tracks.filter((candidate) => candidate.role === track.role).length <= 1) return;
+    const arrangement = current.arrangement.map((section) => {
+      const trackParts = section.trackParts ? { ...section.trackParts } : undefined;
+      const trackPartChances = section.trackPartChances ? { ...section.trackPartChances } : undefined;
+      if (trackParts) delete trackParts[trackId];
+      if (trackPartChances) delete trackPartChances[trackId];
+      return { ...section, trackParts, trackPartChances };
+    });
+    this.commit({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement });
   }
 
   addSection(type: SectionType = 'VERSE1', afterIndex = this.state().arrangement.length - 1): void {
@@ -110,12 +255,15 @@ export class ProjectService {
       return match ? Math.max(maximum, Number(match[1])) : maximum;
     }, 0) + 1;
     const next = [...sections];
+    const project = this.state();
     next.splice(insertAt, 0, {
       id: `section-${nextId}`,
       type,
       measures: 4,
       parts: { bass: true, chords: true, arpeggio: true, drums: true },
       partChances: { ...DEFAULT_SECTION_PART_CHANCES[type] },
+      trackParts: Object.fromEntries(project.tracks.map((track) => [track.id, true])),
+      trackPartChances: Object.fromEntries(project.tracks.map((track) => [track.id, DEFAULT_SECTION_PART_CHANCES[type][track.role]])),
     });
     this.commit({ ...this.state(), arrangement: next });
   }
@@ -135,6 +283,8 @@ export class ProjectService {
       ...sections[index], id: `section-${nextId}`,
       chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
       parts: { ...sections[index].parts }, partChances: { ...sections[index].partChances },
+      trackParts: sections[index].trackParts ? { ...sections[index].trackParts } : undefined,
+      trackPartChances: sections[index].trackPartChances ? { ...sections[index].trackPartChances } : undefined,
     });
     this.commit({ ...this.state(), arrangement: next });
   }
@@ -206,7 +356,9 @@ export class ProjectService {
       return;
     }
     const next = [...sections];
-    next[index] = { ...sections[index], parts: { ...sections[index].parts, [part]: included } };
+    const trackParts = { ...sections[index].trackParts };
+    for (const track of this.state().tracks.filter((candidate) => candidate.role === part)) trackParts[track.id] = included;
+    next[index] = { ...sections[index], parts: { ...sections[index].parts, [part]: included }, trackParts };
     this.commit({ ...this.state(), arrangement: next });
   }
 
@@ -217,11 +369,40 @@ export class ProjectService {
       return;
     }
     const next = [...sections];
+    const trackPartChances = { ...sections[index].trackPartChances };
+    for (const track of this.state().tracks.filter((candidate) => candidate.role === part)) trackPartChances[track.id] = chancePercent;
     next[index] = {
       ...sections[index],
       partChances: { ...sections[index].partChances, [part]: chancePercent },
+      trackPartChances,
     };
     this.commit({ ...this.state(), arrangement: next });
+  }
+
+  setSectionTrack(index: number, trackId: string, included: boolean): void {
+    const project = this.state();
+    const section = project.arrangement[index];
+    const track = project.tracks.find((candidate) => candidate.id === trackId);
+    if (!section || !track) return;
+    const trackParts = { ...section.trackParts, [trackId]: included };
+    const sameRoleTracks = project.tracks.filter((candidate) => candidate.role === track.role);
+    const roleIncluded = sameRoleTracks.every((candidate) => trackParts[candidate.id] ?? section.parts[track.role]);
+    const parts = { ...section.parts, [track.role]: roleIncluded };
+    this.commit({ ...project, arrangement: project.arrangement.map((candidate, candidateIndex) => candidateIndex === index
+      ? { ...section, parts, trackParts } : candidate) });
+  }
+
+  setSectionTrackChance(index: number, trackId: string, chancePercent: number): void {
+    const project = this.state();
+    const section = project.arrangement[index];
+    const track = project.tracks.find((candidate) => candidate.id === trackId);
+    if (!section || !track || !Number.isInteger(chancePercent) || chancePercent < 0 || chancePercent > 100) return;
+    const trackPartChances = { ...section.trackPartChances, [trackId]: chancePercent };
+    const sameRoleTracks = project.tracks.filter((candidate) => candidate.role === track.role);
+    const sameChance = sameRoleTracks.every((candidate) => (trackPartChances[candidate.id] ?? section.partChances[track.role]) === chancePercent);
+    const partChances = { ...section.partChances, [track.role]: sameChance ? chancePercent : section.partChances[track.role] };
+    this.commit({ ...project, arrangement: project.arrangement.map((candidate, candidateIndex) => candidateIndex === index
+      ? { ...section, partChances, trackPartChances } : candidate) });
   }
 
   setChordDegree(index: number, degree: number): void {
@@ -307,22 +488,46 @@ export class ProjectService {
     this.redoAvailable.set(this.future.length > 0);
   }
 
+  private updatePrimaryTrack(
+    tracks: readonly CompositionTrack[],
+    role: ArrangedPart,
+    patch: { generatorSettings?: BassSettings | ChordSettings | ArpeggioSettings | DrumSettings;
+      mix?: MixChannelSettings; editedPhrase?: readonly PhraseNote[] },
+  ): CompositionTrack[] {
+    let updated = false;
+    return tracks.map((track) => {
+      if (updated || track.role !== role) return track;
+      updated = true;
+      return { ...track, ...patch } as CompositionTrack;
+    });
+  }
+
+  private roleName(role: ArrangedPart): string {
+    return role === 'arpeggio' ? 'Arpeggio' : role[0].toUpperCase() + role.slice(1);
+  }
+
+  private nextTrackId(tracks: readonly CompositionTrack[], role: ArrangedPart): string {
+    const used = new Set(tracks.map((track) => track.id));
+    let index = 1;
+    while (used.has(`track-${role}-${index}`)) index++;
+    return `track-${role}-${index}`;
+  }
+
+  private nextAvailableChannel(tracks: readonly CompositionTrack[]): number {
+    const used = new Set(tracks.filter((track) => track.role !== 'drums').map((track) => track.midiChannel));
+    for (let channel = 1; channel <= 16; channel++) if (channel !== 10 && !used.has(channel)) return channel;
+    return 1;
+  }
+
   private loadProject(): CompositionProject {
-    for (const storageKey of [STORAGE_KEY, ...PREVIOUS_STORAGE_KEYS, LEGACY_STORAGE_KEY]) {
-      try {
-        const raw = globalThis.sessionStorage?.getItem(storageKey);
-        if (raw) {
-          const decoded = this.decodeProject(JSON.parse(raw));
-          if (decoded) {
-            if (storageKey !== STORAGE_KEY) {
-              this.persist(decoded);
-            }
-            return decoded;
-          }
-        }
-      } catch {
-        // Storage can be unavailable or contain invalid JSON.
+    try {
+      const raw = globalThis.sessionStorage?.getItem(STORAGE_KEY);
+      if (raw) {
+        const decoded = this.decodeProject(JSON.parse(raw));
+        if (decoded) return decoded;
       }
+    } catch {
+      // Storage can be unavailable or contain invalid JSON.
     }
     return this.copyDefaultProject();
   }
@@ -332,13 +537,8 @@ export class ProjectService {
       return undefined;
     }
 
-    const project = value as Omit<Partial<CompositionProject>, 'schemaVersion' | 'bass' | 'chords' | 'arpeggio' | 'drums'>
-      & { schemaVersion?: number; bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown };
-    const validBase = (project.schemaVersion === 1 || project.schemaVersion === 2
-      || project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
-      || project.schemaVersion === 6 || project.schemaVersion === 7 || project.schemaVersion === 8
-      || project.schemaVersion === 9 || project.schemaVersion === 10)
-      && typeof project.name === 'string'
+    const project = value as Partial<CompositionProject> & { bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown; tracks?: unknown };
+    const validBase = typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
@@ -351,33 +551,22 @@ export class ProjectService {
       return undefined;
     }
 
-    const bass = project.schemaVersion === 1 ? DEFAULT_BASS_SETTINGS : this.decodeBass(project.bass);
-    const chords = project.schemaVersion === 3 || project.schemaVersion === 4 || project.schemaVersion === 5
-      || project.schemaVersion === 6 || project.schemaVersion === 7 || project.schemaVersion === 8
-      || project.schemaVersion === 9 || project.schemaVersion === 10
-      ? this.decodeChords(project.chords) : DEFAULT_CHORD_SETTINGS;
-    const arpeggio = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
-      || project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
-      || project.schemaVersion === 10
-      ? this.decodeArpeggio(project.arpeggio) : DEFAULT_ARPEGGIO_SETTINGS;
-    const drums = project.schemaVersion === 4 || project.schemaVersion === 5 || project.schemaVersion === 6
-      || project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
-      || project.schemaVersion === 10
-      ? this.decodeDrums(project.drums) : DEFAULT_DRUM_SETTINGS;
-    const arrangement = project.schemaVersion === 5 || project.schemaVersion === 6
-      || project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
-      || project.schemaVersion === 10
-      ? this.decodeArrangement(project.arrangement) : this.copyDefaultArrangement();
-    const editedPhrases = project.schemaVersion === 7 || project.schemaVersion === 8 || project.schemaVersion === 9
-      || project.schemaVersion === 10
-      ? this.decodeEditedPhrases((value as Partial<CompositionProject>).editedPhrases) : {};
-    const mix = project.schemaVersion === 8 || project.schemaVersion === 9 || project.schemaVersion === 10
-      ? this.decodeMix((value as Partial<CompositionProject>).mix) : this.copyDefaultMix();
-    if (!bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases || !mix) {
+    const bass = this.decodeBass(project.bass);
+    const chords = this.decodeChords(project.chords);
+    const arpeggio = this.decodeArpeggio(project.arpeggio);
+    const drums = this.decodeDrums(project.drums);
+    const arrangement = this.decodeArrangement(project.arrangement);
+    const editedPhrases = this.decodeEditedPhrases(project.editedPhrases);
+    const mix = this.decodeMix(project.mix);
+    const tracks = this.decodeTracks(project.tracks);
+    if (!bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases || !mix || !tracks) {
       return undefined;
     }
+    const trackIds = new Set(tracks.map((track) => track.id));
+    if (arrangement.some((section) => [...Object.keys(section.trackParts ?? {}), ...Object.keys(section.trackPartChances ?? {})]
+      .some((trackId) => !trackIds.has(trackId)))) return undefined;
     return {
-      schemaVersion: 10,
+      schemaVersion: 11,
       name: project.name!,
       key: project.key!,
       scale: project.scale!,
@@ -388,9 +577,10 @@ export class ProjectService {
       chords,
       arpeggio,
       drums,
-      arrangement,
       editedPhrases,
       mix,
+      tracks,
+      arrangement,
     };
   }
 
@@ -418,6 +608,60 @@ export class ProjectService {
       };
     }
     return decoded;
+  }
+
+  private decodeTracks(value: unknown): CompositionTrack[] | undefined {
+    if (!Array.isArray(value) || value.length === 0 || value.length > 64) return undefined;
+    const tracks: CompositionTrack[] = [];
+    const ids = new Set<string>();
+    for (const raw of value) {
+      if (!raw || typeof raw !== 'object') return undefined;
+      const track = raw as Partial<CompositionTrack> & { generatorSettings?: unknown; mix?: unknown; editedPhrase?: unknown };
+      if (typeof track.id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(track.id) || ids.has(track.id)
+          || typeof track.name !== 'string' || !track.name.trim() || track.name.length > 48
+          || !Number.isInteger(track.midiChannel) || (track.midiChannel ?? 0) < 1 || (track.midiChannel ?? 17) > 16) return undefined;
+      const mix = this.decodeTrackMix(track.mix);
+      const editedPhrase = track.editedPhrase === undefined ? undefined
+        : this.isPhrase(track.editedPhrase) ? track.editedPhrase.map((note) => ({ ...note })) : null;
+      if (!mix || editedPhrase === null) return undefined;
+      let decoded: CompositionTrack | undefined;
+      switch (track.role) {
+        case 'bass': {
+          const generatorSettings = this.decodeBass(track.generatorSettings);
+          if (generatorSettings) decoded = { id: track.id, role: 'bass', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
+          break;
+        }
+        case 'chords': {
+          const generatorSettings = this.decodeChords(track.generatorSettings);
+          if (generatorSettings) decoded = { id: track.id, role: 'chords', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
+          break;
+        }
+        case 'arpeggio': {
+          const generatorSettings = this.decodeArpeggio(track.generatorSettings);
+          if (generatorSettings) decoded = { id: track.id, role: 'arpeggio', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
+          break;
+        }
+        case 'drums': {
+          const generatorSettings = this.decodeDrums(track.generatorSettings);
+          if (generatorSettings) decoded = { id: track.id, role: 'drums', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
+          break;
+        }
+      }
+      if (!decoded) return undefined;
+      ids.add(decoded.id);
+      tracks.push(decoded);
+    }
+    return tracks;
+  }
+
+  private decodeTrackMix(value: unknown): MixChannelSettings | undefined {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const settings = value as Partial<MixChannelSettings>;
+    if (!Number.isInteger(settings.program) || (settings.program ?? -1) < 0 || (settings.program ?? 128) > 127
+        || !Number.isInteger(settings.volumePercent) || (settings.volumePercent ?? -1) < 0 || (settings.volumePercent ?? 101) > 100
+        || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
+        || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') return undefined;
+    return { program: settings.program!, volumePercent: settings.volumePercent!, panPercent: settings.panPercent!, muted: settings.muted, solo: settings.solo };
   }
 
   private decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart, PhraseNote[]>> | undefined {
@@ -481,6 +725,8 @@ export class ProjectService {
       const parts = section.parts as Partial<Record<ArrangedPart, unknown>> | undefined;
       const sectionType = section.type as SectionType;
       const chances = section.partChances as Partial<Record<ArrangedPart, unknown>> | undefined;
+      const trackParts = section.trackParts as Record<string, unknown> | undefined;
+      const trackPartChances = section.trackPartChances as Record<string, unknown> | undefined;
       const chordDegrees = section.chordDegrees;
       if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
           || !SECTION_TYPES.includes(sectionType)
@@ -489,7 +735,12 @@ export class ProjectService {
             || chordDegrees.some((degree) => !Number.isInteger(degree) || degree < 1 || degree > 7)))
           || !parts || ARRANGED_PARTS.some((part) => typeof parts[part] !== 'boolean')
           || (chances !== undefined && ARRANGED_PARTS.some((part) => !Number.isInteger(chances[part])
-            || (chances[part] as number) < 0 || (chances[part] as number) > 100))) {
+            || (chances[part] as number) < 0 || (chances[part] as number) > 100))
+          || (trackParts !== undefined && (!trackParts || typeof trackParts !== 'object' || Array.isArray(trackParts)
+            || Object.entries(trackParts).some(([id, included]) => !/^[a-zA-Z0-9_-]{1,64}$/.test(id) || typeof included !== 'boolean')))
+          || (trackPartChances !== undefined && (!trackPartChances || typeof trackPartChances !== 'object' || Array.isArray(trackPartChances)
+            || Object.entries(trackPartChances).some(([id, chance]) => !/^[a-zA-Z0-9_-]{1,64}$/.test(id)
+              || !Number.isInteger(chance) || (chance as number) < 0 || (chance as number) > 100)))) {
         return undefined;
       }
       ids.add(section.id);
@@ -512,6 +763,8 @@ export class ProjectService {
           arpeggio: (chances?.arpeggio as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].arpeggio,
           drums: (chances?.drums as number | undefined) ?? DEFAULT_SECTION_PART_CHANCES[sectionType].drums,
         },
+        trackParts: trackParts ? { ...trackParts } as Record<string, boolean> : undefined,
+        trackPartChances: trackPartChances ? { ...trackPartChances } as Record<string, number> : undefined,
       });
     }
     return sections;
@@ -584,6 +837,7 @@ export class ProjectService {
       drums: { ...DEFAULT_DRUM_SETTINGS },
       arrangement: this.copyDefaultArrangement(),
       mix: this.copyDefaultMix(),
+      tracks: DEFAULT_TRACKS.map((track) => ({ ...track, mix: { ...track.mix }, generatorSettings: { ...track.generatorSettings } } as CompositionTrack)),
     };
   }
 
@@ -610,8 +864,7 @@ export class ProjectService {
       return false;
     }
     const project = value as Partial<CompositionProject>;
-    return project.schemaVersion === 10
-      && typeof project.name === 'string'
+    return typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (project.scale === 'major' || project.scale === 'natural-minor')
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
@@ -627,7 +880,8 @@ export class ProjectService {
       && this.decodeDrums(project.drums) !== undefined
       && this.decodeArrangement(project.arrangement) !== undefined
       && this.decodeEditedPhrases(project.editedPhrases) !== undefined
-      && this.decodeMix(project.mix) !== undefined;
+      && this.decodeMix(project.mix) !== undefined
+      && this.decodeTracks(project.tracks) !== undefined;
   }
 
   private persist(project: CompositionProject): void {

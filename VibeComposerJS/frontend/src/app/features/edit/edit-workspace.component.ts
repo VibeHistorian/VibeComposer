@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import type { ArrangedPart, PhraseNote } from '../../core/project/project.model';
-import { phraseForProject } from '../../core/music/phrase';
+import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
+import { phraseForTrack } from '../../core/music/phrase';
 import { ProjectService } from '../../core/project/project.service';
+import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 
 const ROW_HEIGHT = 12;
 const BEAT_SNAP = 0.25;
 
 interface NoteDrag {
   readonly id: string;
-  readonly part: ArrangedPart;
+  readonly trackId: string;
   readonly pointerId: number;
   readonly mode: 'move' | 'resize';
   readonly originX: number;
@@ -32,6 +33,7 @@ interface NoteDrag {
 })
 export class EditWorkspaceComponent {
   readonly projects = inject(ProjectService);
+  readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly parts: ReadonlyArray<{ key: ArrangedPart; label: string; color: string }> = [
     { key: 'bass', label: 'Bass', color: 'bass' },
@@ -45,13 +47,15 @@ export class EditWorkspaceComponent {
     { midi: 42, label: 'Closed hat' },
   ] as const;
   readonly drumSteps = Array.from({ length: 16 }, (_, index) => index);
-  readonly selectedPart = signal<ArrangedPart>('bass');
+  readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
+    ?? this.project().tracks[0]);
+  readonly selectedPart = computed<ArrangedPart>(() => this.selectedTrack().role);
   readonly selectedNoteId = signal<string | null>(null);
   readonly noteDrag = signal<NoteDrag | null>(null);
   readonly drumBar = signal(0);
   readonly phraseBeats = computed(() => this.project().progression.length * 4);
   readonly canvasWidth = computed(() => Math.max(690, this.project().progression.length * 96 + 48));
-  readonly phrase = computed(() => phraseForProject(this.project(), this.selectedPart()));
+  readonly phrase = computed(() => phraseForTrack(this.project(), this.selectedTrack()));
   readonly notes = computed(() => [...this.phrase()].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
   readonly displayNotes = computed(() => {
     const notes = this.notes();
@@ -61,7 +65,7 @@ export class EditWorkspaceComponent {
       : note) : notes;
   });
   readonly selectedNote = computed(() => this.displayNotes().find((note) => note.id === this.selectedNoteId()) ?? null);
-  readonly isEdited = computed(() => this.project().editedPhrases[this.selectedPart()] !== undefined);
+  readonly isEdited = computed(() => this.selectedTrack().editedPhrase !== undefined);
   readonly drumBars = computed(() => Array.from({ length: this.project().progression.length }, (_, index) => index));
   readonly drumNotes = computed(() => this.notes().filter((note) => Math.floor(note.startBeat / 4) === this.drumBar()));
   readonly pitchRange = computed(() => {
@@ -80,8 +84,8 @@ export class EditWorkspaceComponent {
   readonly noteCount = computed(() => this.notes().length);
   private newNoteId = 0;
 
-  selectPart(part: ArrangedPart): void {
-    this.selectedPart.set(part);
+  selectTrack(trackId: string): void {
+    this.workspaceUi.selectTrack(trackId);
     this.selectedNoteId.set(null);
     this.noteDrag.set(null);
     this.drumBar.set(0);
@@ -109,7 +113,7 @@ export class EditWorkspaceComponent {
     lane.setPointerCapture(event.pointerId);
     this.noteDrag.set({
       id: note.id,
-      part: this.selectedPart(),
+      trackId: this.selectedTrack().id,
       pointerId: event.pointerId,
       mode,
       originX: event.clientX,
@@ -151,7 +155,7 @@ export class EditWorkspaceComponent {
       const notes = this.notes().map((note) => note.id === drag.id
         ? { ...note, startBeat: drag.startBeat, durationBeats: drag.durationBeats, midi: drag.midi }
         : note);
-      this.projects.updateEditedPhrase(drag.part, notes);
+      this.projects.updateTrackPhrase(drag.trackId, notes);
     }
     this.noteDrag.set(null);
   }
@@ -182,7 +186,7 @@ export class EditWorkspaceComponent {
       ...notes,
       { id: this.makeNoteId(), midi, startBeat: beat, durationBeats: 0.2, velocity: midi === 42 ? 72 : 90 },
     ];
-    this.projects.updateEditedPhrase('drums', next);
+    this.projects.updateTrackPhrase(this.selectedTrack().id, next);
   }
 
   addNote(): void {
@@ -200,7 +204,7 @@ export class EditWorkspaceComponent {
     const note: PhraseNote = {
       id: this.makeNoteId(), midi: pitch, startBeat, durationBeats, velocity: 90,
     };
-    this.projects.updateEditedPhrase(this.selectedPart(), [...this.notes(), note]);
+    this.projects.updateTrackPhrase(this.selectedTrack().id, [...this.notes(), note]);
     this.selectedNoteId.set(note.id);
   }
 
@@ -219,18 +223,18 @@ export class EditWorkspaceComponent {
       return;
     }
     const next = this.notes().map((note) => note.id === selected.id ? { ...note, [field]: value } : note);
-    this.projects.updateEditedPhrase(this.selectedPart(), next);
+    this.projects.updateTrackPhrase(this.selectedTrack().id, next);
   }
 
   deleteSelected(): void {
     const selected = this.selectedNote();
     if (!selected) return;
-    this.projects.updateEditedPhrase(this.selectedPart(), this.notes().filter((note) => note.id !== selected.id));
+    this.projects.updateTrackPhrase(this.selectedTrack().id, this.notes().filter((note) => note.id !== selected.id));
     this.selectedNoteId.set(null);
   }
 
   restoreGenerated(): void {
-    this.projects.clearEditedPhrase(this.selectedPart());
+    this.projects.clearTrackPhrase(this.selectedTrack().id);
     this.selectedNoteId.set(null);
   }
 

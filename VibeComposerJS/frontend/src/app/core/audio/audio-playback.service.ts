@@ -1,10 +1,9 @@
 import { Injectable, signal } from '@angular/core';
 import type { ArrangedPart, CompositionProject, PhraseNote } from '../project/project.model';
-import { ARRANGED_PARTS } from '../project/project.model';
-import { layOutPhrase, phraseForProject } from '../music/phrase';
+import { layOutTrackPhrase } from '../music/phrase';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
-interface ScheduledNote extends PhraseNote { readonly part: ArrangedPart; }
+interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
 interface PartBus { readonly gain: GainNode; readonly pan: StereoPannerNode; }
 
 const SCHEDULER_INTERVAL_MS = 25;
@@ -34,8 +33,8 @@ export class AudioPlaybackService {
   private notes: ScheduledNote[] = [];
   private nextNote = 0;
   private cycle = 0;
-  private readonly buses = new Map<ArrangedPart, PartBus>();
-  private readonly programs = new Map<ArrangedPart, number>();
+  private readonly buses = new Map<string, PartBus>();
+  private readonly programs = new Map<string, number>();
   private readonly activeSources = new Set<AudioScheduledSourceNode>();
 
   async toggle(project: CompositionProject): Promise<void> {
@@ -107,13 +106,13 @@ export class AudioPlaybackService {
 
   updateMix(project: CompositionProject): void {
     if (!this.context || this.state() === 'stopped') return;
-    const anySolo = ARRANGED_PARTS.some((part) => project.mix[part].solo);
+    const anySolo = project.tracks.some((track) => track.mix.solo);
     const now = this.context.currentTime;
-    for (const part of ARRANGED_PARTS) {
-      const settings = project.mix[part];
-      this.programs.set(part, settings.program);
+    for (const track of project.tracks) {
+      const settings = track.mix;
+      this.programs.set(track.id, settings.program);
       const audible = !settings.muted && (!anySolo || settings.solo);
-      const bus = this.buses.get(part);
+      const bus = this.buses.get(track.id);
       if (!bus) continue;
       bus.gain.gain.setTargetAtTime(audible ? settings.volumePercent / 100 : 0, now, 0.02);
       bus.pan.pan.setTargetAtTime(settings.panPercent / 100, now, 0.02);
@@ -139,11 +138,11 @@ export class AudioPlaybackService {
     this.master = context.createGain();
     this.master.gain.value = 0.8;
     this.master.connect(context.destination);
-    const anySolo = ARRANGED_PARTS.some((part) => project.mix[part].solo);
+    const anySolo = project.tracks.some((track) => track.mix.solo);
 
-    for (const part of ARRANGED_PARTS) {
-      const settings = project.mix[part];
-      this.programs.set(part, settings.program);
+    for (const track of project.tracks) {
+      const settings = track.mix;
+      this.programs.set(track.id, settings.program);
       const audible = !settings.muted && (!anySolo || settings.solo);
       const gain = context.createGain();
       gain.gain.value = audible ? settings.volumePercent / 100 : 0;
@@ -151,15 +150,14 @@ export class AudioPlaybackService {
       pan.pan.value = settings.panPercent / 100;
       gain.connect(pan);
       pan.connect(this.master);
-      this.buses.set(part, { gain, pan });
+      this.buses.set(track.id, { gain, pan });
     }
   }
 
   private createSchedule(project: CompositionProject): ScheduledNote[] {
-    return ARRANGED_PARTS.flatMap((part) => {
-      return layOutPhrase(project, part, phraseForProject(project, part))
-        .map((note) => ({ ...note, part }));
-    }).sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
+    return project.tracks.flatMap((track) => layOutTrackPhrase(project, track)
+      .map((note) => ({ ...note, trackId: track.id, role: track.role })))
+      .sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
   }
 
   private tick(): void {
@@ -201,13 +199,13 @@ export class AudioPlaybackService {
   private scheduleNote(note: ScheduledNote, absoluteBeat: number): void {
     if (!this.context) return;
     const context = this.context;
-    const bus = this.buses.get(note.part);
+    const bus = this.buses.get(note.trackId);
     if (!bus) return;
     const startTime = Math.max(context.currentTime + 0.003, this.originTime + absoluteBeat * this.secondsPerBeat);
     const duration = Math.max(0.035, note.durationBeats * this.secondsPerBeat);
-    if (note.part === 'drums' && note.midi === 36) {
+    if (note.role === 'drums' && note.midi === 36) {
       this.scheduleKick(bus.gain, note.velocity, startTime, duration);
-    } else if (note.part === 'drums') {
+    } else if (note.role === 'drums') {
       this.scheduleNoise(bus.gain, note.midi === 38 ? 'snare' : 'hat', note.velocity, startTime, duration);
     } else {
       this.scheduleTone(bus.gain, note, startTime, duration);
@@ -219,7 +217,7 @@ export class AudioPlaybackService {
     const context = this.context;
     const oscillator = context.createOscillator();
     const envelope = context.createGain();
-    oscillator.type = this.oscillatorType(note.part, this.programs.get(note.part) ?? 0);
+    oscillator.type = this.oscillatorType(note.role, this.programs.get(note.trackId) ?? 0);
     oscillator.frequency.value = 440 * 2 ** ((note.midi - 69) / 12);
     const release = Math.min(0.09, duration * 0.3);
     const peak = Math.max(0.0001, note.velocity / 127 * 0.18);

@@ -40,10 +40,10 @@
             <strong>{{ sectionLabel(section.type) }}</strong>
             <span class="section-measures">{{ section.measures }} {{ section.measures === 1 ? 'BAR' : 'BARS' }}</span>
             <span class="section-parts" aria-hidden="true">
-              @for (part of partOptions; track part.key) {
-                <i [class]="part.color" [class.inactive]="!section.parts[part.key]"
-                   [style.opacity]="partWillPlay(section, part.key) ? 1 : 0.18"
-                   [attr.title]="part.label + ': ' + partChanceLabel(section, part.key)"></i>
+              @for (track of project().tracks; track track.id) {
+                <i [class]="'legend-dot ' + track.role" [class.inactive]="!trackIncluded(section, track.id)"
+                   [style.opacity]="trackWillPlay(section, track.id) ? 1 : 0.18"
+                   [attr.title]="track.name + ': ' + trackChance(section, track.id) + '% chance'"></i>
               }
             </span>
           </button>
@@ -51,7 +51,7 @@
       </div>
 
       <div class="timeline-footer">
-        <span><i class="legend-dot bass"></i>Bass <i class="legend-dot chords"></i>Chords <i class="legend-dot arpeggio"></i>Arpeggio <i class="legend-dot drums"></i>Drums</span>
+        <span>Track color marks its role; dim tracks may not enter.</span>
         <span>Sections can follow or replace the Create progression.</span>
       </div>
 
@@ -109,20 +109,20 @@
       </div>
 
       <div class="part-divider"></div>
-      <p class="field-label part-label">Parts in this section</p>
+      <p class="field-label part-label">Tracks in this section</p>
       <div class="part-list">
-        @for (part of partOptions; track part.key) {
+        @for (track of project().tracks; track track.id) {
           <div class="part-control">
             <label class="part-toggle">
-              <span class="part-name"><i class="legend-dot" [class]="part.color"></i>{{ part.label }}</span>
-              <input type="checkbox" [checked]="selectedSection().parts[part.key]" (change)="togglePart(part.key, $event)" />
+              <span class="part-name"><i class="legend-dot" [class]="track.role"></i>{{ track.name }}</span>
+              <input type="checkbox" [checked]="trackIncluded(selectedSection(), track.id)" (change)="toggleTrack(track.id, $event)" />
             </label>
             <label class="chance-control">
-              <span class="visually-hidden">{{ part.label }} entrance chance</span>
+              <span class="visually-hidden">{{ track.name }} entrance chance</span>
               <input type="range" min="0" max="100" step="1"
-                     [value]="selectedSection().partChances[part.key]"
-                     (change)="updatePartChance(part.key, $event)" />
-              <output>{{ selectedSection().partChances[part.key] }}%</output>
+                     [value]="trackChance(selectedSection(), track.id)"
+                     (change)="updateTrackChance(track.id, $event)" />
+              <output>{{ trackChance(selectedSection(), track.id) }}%</output>
             </label>
           </div>
         }
