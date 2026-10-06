@@ -102,6 +102,8 @@ button.row-label { padding: 0 5px; border: 0; background: transparent; cursor: p
 .track-actions button:disabled { opacity: .38; cursor: default; }
 .track-actions .remove-track { margin-left: auto; color: var(--color-danger); }
 .inspector-selection > span:not(.selection-kicker) { color: var(--text-secondary); font-size: 9px; line-height: 1.5; }
+.restore-track-button { min-height: 27px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; font-size: 8px; }
+.restore-track-button:hover { border-color: var(--border-accent); color: var(--accent-primary); }
 .inspector-selection a { color: var(--text-secondary); text-decoration: none; font-size: 9px; }.inspector-selection a:hover { color: var(--accent-primary); }
 .inspector-selection a b { margin-left: 4px; color: var(--accent-primary); font-weight: 400; }
 .inspector-links { margin-top: 4px; display: grid; gap: 6px; }

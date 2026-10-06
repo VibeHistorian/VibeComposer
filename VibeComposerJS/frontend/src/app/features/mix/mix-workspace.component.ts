@@ -4,6 +4,7 @@ import { generateCompositionMidi } from '../../core/music/midi-export';
 import { phraseForTrack } from '../../core/music/phrase';
 import type { CompositionTrack } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
+import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 
 @Component({
   selector: 'vc-mix-workspace',
@@ -14,6 +15,7 @@ import { ProjectService } from '../../core/project/project.service';
 export class MixWorkspaceComponent {
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);
+  readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly channels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly instruments: ReadonlyArray<{ program: number; name: string }> = [
@@ -58,6 +60,10 @@ export class MixWorkspaceComponent {
 
   roleName(track: CompositionTrack): string {
     return track.role === 'arpeggio' ? 'Arpeggio' : track.role[0].toUpperCase() + track.role.slice(1);
+  }
+
+  selectTrack(trackId: string): void {
+    this.workspaceUi.selectTrack(trackId);
   }
 
   updateProgram(trackId: string, event: Event): void {

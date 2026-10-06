@@ -10,6 +10,7 @@ import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
+import { CompactKnobComponent } from './compact-knob.component';
 
 type TrackRow = CompositionTrack & {
   readonly color: ArrangedPart;
@@ -47,7 +48,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [RouterLink],
+  imports: [RouterLink, CompactKnobComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -208,8 +209,7 @@ export class WorkspaceCanvasComponent {
     const value = this.inputValue(event);
     if (this.bassRhythms.some((option) => option.value === value)) this.updateGenerator({ rhythm: value as BassRhythm });
   }
-  updateBassVariation(event: Event): void {
-    const value = Number(this.inputValue(event));
+  updateBassVariation(value: number): void {
     if (Number.isInteger(value) && value >= 0 && value <= 100) this.updateGenerator({ noteVariation: value });
   }
   updateBassOctave(event: Event): void {
@@ -223,8 +223,7 @@ export class WorkspaceCanvasComponent {
     const value = this.inputValue(event);
     if (value === 'close' || value === 'open') this.updateGenerator({ voicing: value as ChordVoicing });
   }
-  updateChordLength(event: Event): void {
-    const value = Number(this.inputValue(event));
+  updateChordLength(value: number): void {
     if (Number.isInteger(value) && value >= 25 && value <= 125) this.updateGenerator({ noteLengthPercent: value });
   }
   updateArpeggioPattern(event: Event): void {
@@ -243,8 +242,7 @@ export class WorkspaceCanvasComponent {
     const value = this.inputValue(event);
     if (this.drumGrooves.some((option) => option.value === value)) this.updateGenerator({ groove: value as DrumGroove });
   }
-  updateDrumSwing(event: Event): void {
-    const value = Number(this.inputValue(event));
+  updateDrumSwing(value: number): void {
     if (Number.isInteger(value) && value >= 50 && value <= 75) this.updateGenerator({ swingPercent: value });
   }
   updateTrackName(event: Event): void {
