@@ -3,6 +3,9 @@
     <div><p class="eyebrow">SONG OVERVIEW</p><h2 id="arrangement-title">Arrangement</h2></div>
     <div class="canvas-actions">
       <span class="measure-total">{{ totalMeasures() }} BARS</span>
+      @if (selectedSectionIds().length) {
+        <button type="button" class="reroll-button" (click)="selectionCleared.emit()" title="Clear section selection (Escape)">CLEAR</button>
+      }
       <button type="button" class="reroll-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
         title="Reroll track presence using section type chances">REROLL</button>
       <button type="button" class="mixer-open-button" (click)="mixerRequested.emit()" aria-label="Open mixer" title="Mixer">☷</button>
@@ -13,8 +16,8 @@
     <div class="overview-content" #scrollContent>
       <div class="overview-viewport" #viewport>
         <canvas #scoreCanvas tabindex="0" role="application"
-          aria-label="Arrangement overview. Use arrow keys to choose a section, group, or track toggle and Enter to activate."
-          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space"
+          aria-label="Arrangement overview. Ctrl-click to extend or trim selection, Shift-click to select a range. Escape clears selection. Use arrow keys and Enter to activate."
+          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space Escape"
           (click)="onCanvasClick($event)" (pointermove)="onPointerMove($event)"
           (keydown)="onCanvasKeydown($event)"></canvas>
         <canvas #playheadCanvas class="playhead-canvas" aria-hidden="true"></canvas>

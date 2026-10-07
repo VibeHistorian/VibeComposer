@@ -192,10 +192,12 @@ test('transport watches project changes and enabling LIVE without subscribing to
   const { playback, project, angular, load, context } = fixture();
   const projectSignal = angular.signal(project);
   const projects = { project: projectSignal };
-  angular.inject = (type) => type === 'audio' ? playback : projects;
+  const workspaceUi = { sectionRange: angular.signal(null), selectedSectionIds: () => [] };
+  angular.inject = (type) => type === 'audio' ? playback : type === 'ui' ? workspaceUi : projects;
   const { TransportDockComponent } = load('shared/transport-dock.component.ts', {
     '@angular/core': angular, '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
     '../core/project/project.service': { ProjectService: 'projects' }, '../core/music/harmony': { KEYS: [] },
+    './workspace-ui.service': { WorkspaceUiService: 'ui' },
   });
   let reloads = 0;
   const reload = playback.reload.bind(playback);
@@ -216,4 +218,80 @@ test('transport watches project changes and enabling LIVE without subscribing to
   transport.toggleLive();
   projectSignal.set(project);
   assert.equal(reloads, 2);
+});
+
+test('looping selected sections starts at their first beat and wraps within their boundaries', async () => {
+  const { playback, context, sources, project } = fixture();
+  playback.setLoopRange({ startBeat: 4, endBeat: 8 });
+  playback.toggleLoop();
+  await playback.start(project);
+  assert.equal(playback.beat(), 4);
+  assert.equal(sources.length, 1, 'notes outside the selection are excluded');
+  assert.equal(sources[0].frequency.value, 440 * 2 ** ((50 - 69) / 12));
+  context.currentTime = 1.9;
+  playback.tick();
+  assert.equal(sources.length, 2, 'next loop is scheduled ahead');
+  assert.equal(sources[1].startTime, 2);
+  context.currentTime = 2.1;
+  playback.tick();
+  assert.ok(Math.abs(playback.beat() - 4.2) < 1e-9);
+  playback.pause();
+  assert.ok(Math.abs(playback.beat() - 4.2) < 1e-9);
+  await playback.toggle(project);
+  assert.ok(Math.abs(playback.beat() - 4.2) < 1e-9, 'resume preserves selected-loop position');
+});
+
+test('changing or clearing the loop selection during playback updates the queued audio', async () => {
+  const { playback, context, sources, project } = fixture();
+  playback.setLoopRange({ startBeat: 4, endBeat: 8 });
+  playback.toggleLoop();
+  await playback.start(project);
+  context.currentTime = 1;
+  const oldSource = sources[0];
+  playback.setLoopRange({ startBeat: 0, endBeat: 4 });
+  assert.equal(playback.beat(), 0, 'moving to a different range seeks its start');
+  assert.equal(oldSource.stopTime, 1.012, 'old queued audio is cancelled');
+  assert.equal(playback.queuedNotes.length, 1);
+  context.currentTime = 2;
+  playback.tick();
+  assert.equal(playback.beat(), 2);
+  playback.setLoopRange(null);
+  assert.equal(playback.beat(), 2, 'clearing selection keeps an in-range position');
+  assert.equal(playback.queuedNotes.length, 2, 'whole arrangement is now looped');
+  context.currentTime = 9.5;
+  playback.tick();
+  assert.equal(playback.beat(), 1);
+});
+
+test('a selected loop works through silence and clips sustained notes to the range end', async () => {
+  const { playback, context, sources, project } = fixture();
+  playback.setLoopRange({ startBeat: 0, endBeat: 4 });
+  playback.toggleLoop();
+  await playback.start(project);
+  assert.equal(sources[0].stopTime, 2.023, 'the long note is clipped at the loop boundary');
+  playback.setLoopRange({ startBeat: 8, endBeat: 12 });
+  const count = sources.length;
+  context.currentTime = 3;
+  playback.tick();
+  assert.equal(sources.length, count, 'silent loops do not schedule notes from elsewhere');
+  assert.equal(playback.beat(), 10);
+});
+
+test('LIVE reload and disabling loop preserve the musical beat in a selected range', async () => {
+  const { playback, context, project } = fixture();
+  playback.setLoopRange({ startBeat: 4, endBeat: 8 });
+  playback.toggleLoop();
+  playback.toggleLive();
+  await playback.start(project);
+  context.currentTime = 3;
+  playback.reload({ ...project, tempoBpm: 60 });
+  assert.equal(playback.beat(), 6);
+  context.currentTime = 4;
+  playback.tick();
+  assert.equal(playback.beat(), 7);
+  playback.toggleLoop();
+  assert.equal(playback.beat(), 7);
+  context.currentTime = 6;
+  playback.tick();
+  assert.equal(playback.beat(), 9, 'loop disabled continues beyond the selected range');
 });

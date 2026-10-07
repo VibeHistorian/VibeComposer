@@ -83,13 +83,18 @@ export class WorkspaceCanvasComponent {
   readonly selectedTrackId = this.workspaceUi.selectedTrackId;
   readonly selectedRole = this.workspaceUi.selectedRole;
   readonly editingNoteId = this.workspaceUi.editingNoteId;
-  readonly selectedSectionId = signal<string | null>(null);
+  readonly selectedSectionId = this.workspaceUi.selectedSectionId;
+  readonly selectedSectionIds = this.workspaceUi.selectedSectionIds;
   readonly editing = signal(false);
   readonly mixerOpen = signal(false);
   readonly newSectionType = signal<SectionType>('VERSE1');
   readonly hiddenTracks = signal(new Set<string>());
   readonly collapsedGroups = signal(new Set<ArrangedPart>());
-  readonly scoreSectionFocus = signal<ScoreSectionFocus | null>(null);
+  readonly scoreSectionFocus = computed<ScoreSectionFocus>(() => {
+    this.selectedSectionIds();
+    // A changed selection must refit even when its bounds equal the full arrangement.
+    return { ...(this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: this.totalBeats() }) };
+  });
   readonly scoreViewport = signal<ScoreViewport>({ scale: 1, offsetPercent: 0, width: 0, laneHeight: 40, verticalOffset: 0, scoreHeight: 0 });
 
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
@@ -155,29 +160,23 @@ export class WorkspaceCanvasComponent {
     if (this.editing()) return;
     if (!this.project().tracks.some((track) => track.id === trackId)) return;
     this.workspaceUi.selectTrack(trackId);
-    this.selectedSectionId.set(null);
+    this.workspaceUi.clearSectionSelection();
   }
 
   selectRole(role: ArrangedPart): void {
     if (this.editing()) return;
     this.workspaceUi.selectRole(role);
-    this.selectedSectionId.set(null);
+    this.workspaceUi.clearSectionSelection();
   }
 
-  selectSection(section: ArrangementSection, trackId: string): void {
-    this.selectedSectionId.set(section.id);
+  selectSection(section: ArrangementSection, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
+    this.workspaceUi.selectSection(section.id, modifiers);
     this.workspaceUi.selectTrack(trackId);
-    this.focusScoreSection(section.id);
   }
 
-  private focusScoreSection(sectionId: string | null): void {
-    const item = this.timelineSections().find((candidate) => candidate.section.id === sectionId);
-    if (item) this.scoreSectionFocus.set({ startBeat: item.startBeat, endBeat: item.startBeat + item.section.measures * 4 });
-  }
-
-  selectOverviewSection(sectionId: string, trackId: string): void {
+  selectOverviewSection(sectionId: string, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
     const section = this.project().arrangement.find((item) => item.id === sectionId);
-    if (section) this.selectSection(section, trackId);
+    if (section) this.selectSection(section, trackId, modifiers);
   }
 
   toggleArrangementTrack(sectionId: string, trackId: string, present: boolean): void {
@@ -225,8 +224,7 @@ export class WorkspaceCanvasComponent {
     this.projects.addSection(this.newSectionType(), index);
     const added = this.project().arrangement[index + 1];
     if (added) {
-      this.selectedSectionId.set(added.id);
-      this.focusScoreSection(added.id);
+      this.workspaceUi.setSectionSelection(added.id);
     }
   }
 
@@ -235,16 +233,14 @@ export class WorkspaceCanvasComponent {
     if (index < 0 || this.project().arrangement.length >= 32
         || this.totalMeasures() + this.project().arrangement[index].measures > 128) return;
     this.projects.duplicateSection(index);
-    this.selectedSectionId.set(this.project().arrangement[index + 1]?.id ?? null);
-    this.focusScoreSection(this.selectedSectionId());
+    this.workspaceUi.setSectionSelection(this.project().arrangement[index + 1]?.id ?? null);
   }
 
   removeSection(): void {
     const index = this.selectedSectionIndex();
     if (index < 0) return;
     this.projects.removeSection(index);
-    this.selectedSectionId.set(this.project().arrangement[Math.min(index, this.project().arrangement.length - 1)]?.id ?? null);
-    this.focusScoreSection(this.selectedSectionId());
+    this.workspaceUi.setSectionSelection(this.project().arrangement[Math.min(index, this.project().arrangement.length - 1)]?.id ?? null);
   }
 
   moveSection(offset: -1 | 1): void {

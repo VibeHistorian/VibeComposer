@@ -70,10 +70,11 @@
       <vc-edit-workspace [initialNoteId]="editingNoteId()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     } @else {
       <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
-        [selectedSectionId]="selectedSectionId()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
+        [selectedSectionIds]="selectedSectionIds()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
         (mixerRequested)="openMixer()" (groupSelected)="selectRole($event)"
         (randomizeRequested)="randomizeArrangementPresence()"
-        (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId)"
+        (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId, $event)"
+        (selectionCleared)="workspaceUi.clearSectionSelection()"
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
 
       <section class="score-panel" aria-label="Song score">
@@ -127,6 +128,9 @@
       @if (selectedSection(); as section) {
         <div class="inspector-selection">
           <span class="selection-kicker">{{ selectedTrack().name }} · {{ sectionLabel(section.type) }}</span>
+          @if (selectedSectionIds().length > 1) {
+            <span class="selection-kicker">{{ selectedSectionIds().length }} sections selected · editing {{ sectionLabel(section.type) }}</span>
+          }
           <label class="quick-field">Section type
             <select [value]="section.type" (change)="updateSectionType($event)">
               @for (type of sectionTypes; track type) { <option [value]="type">{{ sectionLabel(type) }}</option> }

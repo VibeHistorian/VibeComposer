@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
+import { WorkspaceUiService } from './workspace-ui.service';
 import { KEYS } from '../core/music/harmony';
 
 @Component({
@@ -12,6 +13,7 @@ import { KEYS } from '../core/music/harmony';
 export class TransportDockComponent {
   readonly playback = inject(AudioPlaybackService);
   private readonly projects = inject(ProjectService);
+  readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly keys = KEYS;
   private readonly liveReloadEffect = effect(() => {
@@ -19,6 +21,10 @@ export class TransportDockComponent {
     const live = this.playback.liveEnabled();
     // Playback ticks must not trigger regeneration or subscribe this effect to position/state.
     if (live) untracked(() => this.playback.reload(project));
+  });
+  private readonly loopRangeEffect = effect(() => {
+    const range = this.workspaceUi.sectionRange();
+    untracked(() => this.playback.setLoopRange(range));
   });
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly progressPercent = computed(() => {

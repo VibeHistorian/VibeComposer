@@ -164,3 +164,27 @@ test('track toggles take precedence over section cells and preserve presence sem
   component.hits.find((candidate) => candidate.key === 'group:chords').activate();
   assert.equal(component.groupSelected.values.at(-1), 'chords');
 });
+
+test('section hit areas forward Ctrl/Shift modifiers and Escape clears selection', () => {
+  const { component } = fixture();
+  const heading = component.hits.find((area) => area.key === 'heading:verse');
+  component.onCanvasClick({ clientX: heading.x + 8, clientY: heading.y + 8,
+    ctrlKey: true, metaKey: false, shiftKey: false });
+  assert.deepEqual(component.sectionSelected.values.at(-1), {
+    sectionId: 'verse', trackId: 'bass-1', ctrlKey: true, metaKey: false, shiftKey: false,
+  });
+  component.focusedKey = heading.key;
+  component.onCanvasKeydown({ key: 'Enter', ctrlKey: false, metaKey: false, shiftKey: true, preventDefault() {} });
+  assert.equal(component.sectionSelected.values.at(-1).shiftKey, true);
+  component.onCanvasKeydown({ key: 'Escape', preventDefault() {} });
+  assert.equal(component.selectionCleared.values.length, 1);
+});
+
+test('all selected section headers receive the selection highlight', () => {
+  const { component, base } = fixture();
+  component.selectedSectionIds.set(['intro', 'verse']);
+  base.rectangles = [];
+  component.drawOverview();
+  const selectedHeaders = base.rectangles.filter((rect) => rect.color === '--surface-accent' && rect.bounds[1] === 0);
+  assert.equal(selectedHeaders.length, 2);
+});

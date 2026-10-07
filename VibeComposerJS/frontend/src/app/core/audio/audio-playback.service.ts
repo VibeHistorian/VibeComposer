@@ -5,6 +5,7 @@ import { layOutTrackPhrase } from '../music/phrase';
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
 interface PartBus { readonly gain: GainNode; readonly pan: StereoPannerNode; }
+export interface PlaybackRange { readonly startBeat: number; readonly endBeat: number; }
 
 const SCHEDULER_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_SECONDS = 0.18;
@@ -32,8 +33,10 @@ export class AudioPlaybackService {
   private scheduler?: ReturnType<typeof setInterval>;
   private originTime = 0;
   private secondsPerBeat = 0.5;
-  private stopAtBeat: number | null = null;
+  private selectedLoopRange: PlaybackRange | null = null;
+  private mixProject?: CompositionProject;
   private notes: ScheduledNote[] = [];
+  private queuedNotes: ScheduledNote[] = [];
   private nextNote = 0;
   private cycle = 0;
   private scheduleSignature = '';
@@ -63,13 +66,10 @@ export class AudioPlaybackService {
       this.duration.set(project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0));
       this.notes = this.createSchedule(project);
       this.scheduleSignature = this.signature(project, this.notes);
-      const safeStart = startBeat >= this.duration() ? 0 : Math.max(0, startBeat);
+      const safeStart = this.safeStartBeat(startBeat);
       this.position.set(safeStart);
       this.originTime = context.currentTime - safeStart * this.secondsPerBeat;
-      this.nextNote = this.notes.findIndex((note) => note.startBeat >= safeStart - 0.0001);
-      if (this.nextNote < 0) this.nextNote = this.notes.length;
-      this.cycle = 0;
-      this.stopAtBeat = null;
+      this.resetQueue(safeStart);
       this.playbackState.set('playing');
       this.resumeSustainedNotes(safeStart);
       this.scheduleAhead();
@@ -83,11 +83,7 @@ export class AudioPlaybackService {
 
   pause(): void {
     if (this.state() !== 'playing' || !this.context) return;
-    const absoluteBeat = this.currentAbsoluteBeat();
-    const beat = this.loopEnabled() && this.duration() > 0
-      ? absoluteBeat % this.duration()
-      : Math.min(absoluteBeat, this.duration());
-    this.position.set(beat);
+    this.position.set(this.currentSongBeat());
     this.clearScheduler();
     this.stopSources();
     this.playbackState.set('paused');
@@ -101,12 +97,18 @@ export class AudioPlaybackService {
   }
 
   toggleLoop(): void {
+    const beat = this.state() === 'playing' ? this.currentSongBeat() : this.beat();
     const enabled = !this.loopEnabled();
     this.loopState.set(enabled);
-    if (enabled) {
-      this.stopAtBeat = null;
-    } else if (this.state() === 'playing' && this.duration() > 0) {
-      this.stopAtBeat = (Math.floor(this.currentAbsoluteBeat() / this.duration()) + 1) * this.duration();
+    if (this.state() === 'playing') this.restartAt(this.safeStartBeat(beat));
+  }
+
+  setLoopRange(range: PlaybackRange | null): void {
+    if (range?.startBeat === this.selectedLoopRange?.startBeat && range?.endBeat === this.selectedLoopRange?.endBeat) return;
+    const beat = this.state() === 'playing' ? this.currentSongBeat() : this.beat();
+    this.selectedLoopRange = range;
+    if (this.loopEnabled() && this.state() === 'playing') {
+      this.restartAt(this.safeStartBeat(beat));
     }
   }
 
@@ -123,37 +125,23 @@ export class AudioPlaybackService {
     this.updateMix(project);
     if (signature === this.scheduleSignature) return;
 
-    const context = this.context;
-    const oldDuration = this.duration();
-    const absoluteBeat = this.currentAbsoluteBeat();
-    const beat = oldDuration > 0 ? absoluteBeat % oldDuration : 0;
+    const beat = this.currentSongBeat();
     const duration = project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0);
-    const oldStopAt = this.stopAtBeat ?? oldDuration;
-    if (duration <= 0 || (!this.loopEnabled() && (absoluteBeat >= oldStopAt || beat >= duration))) {
+    if (duration <= 0 || (!this.loopEnabled() && beat >= duration)) {
       this.stop();
       this.duration.set(duration);
       this.position.set(duration);
       return;
     }
-    const resumeAt = beat % duration;
-    const now = context.currentTime;
-    this.stopSources(now + RELOAD_FADE_SECONDS);
-    this.prepareMix(project, context, true);
     this.secondsPerBeat = 60 / project.tempoBpm;
     this.duration.set(duration);
     this.notes = notes;
     this.scheduleSignature = signature;
-    this.originTime = now - resumeAt * this.secondsPerBeat;
-    this.position.set(resumeAt);
-    this.nextNote = this.notes.findIndex((note) => note.startBeat >= resumeAt);
-    if (this.nextNote < 0) this.nextNote = this.notes.length;
-    this.cycle = 0;
-    this.stopAtBeat = null;
-    this.resumeSustainedNotes(resumeAt);
-    this.scheduleAhead();
+    this.restartAt(this.safeStartBeat(beat % duration));
   }
 
   updateMix(project: CompositionProject): void {
+    this.mixProject = project;
     if (!this.context || this.state() === 'stopped') return;
     const anySolo = project.tracks.some((track) => track.mix.solo);
     const now = this.context.currentTime;
@@ -178,6 +166,7 @@ export class AudioPlaybackService {
   }
 
   private prepareMix(project: CompositionProject, context: AudioContext, crossfade = false): void {
+    this.mixProject = project;
     const oldBuses = [...this.buses.values()];
     const oldMaster = this.master;
     const disconnect = () => {
@@ -234,16 +223,14 @@ export class AudioPlaybackService {
   }
 
   private resumeSustainedNotes(beat: number): void {
-    for (const note of this.notes) {
+    const { endBeat } = this.loopBounds();
+    for (const note of this.queuedNotes) {
       if (note.role === 'drums') continue;
-      const remaining = note.startBeat + note.durationBeats - beat;
+      const noteEnd = this.loopEnabled() ? Math.min(endBeat, note.startBeat + note.durationBeats)
+        : note.startBeat + note.durationBeats;
+      const remaining = noteEnd - beat;
       if (note.startBeat < beat && remaining > 0) {
         this.scheduleNote({ ...note, durationBeats: remaining }, beat);
-      }
-      // A sustained note from the preceding loop can also overlap the loop boundary.
-      const loopRemaining = note.startBeat + note.durationBeats - this.duration() - beat;
-      if (this.loopEnabled() && loopRemaining > 0) {
-        this.scheduleNote({ ...note, durationBeats: loopRemaining }, beat);
       }
     }
   }
@@ -251,7 +238,7 @@ export class AudioPlaybackService {
   private tick(): void {
     if (!this.context || this.state() !== 'playing') return;
     const absoluteBeat = this.currentAbsoluteBeat();
-    const stopAt = this.loopEnabled() ? Number.POSITIVE_INFINITY : this.stopAtBeat ?? this.duration();
+    const stopAt = this.loopEnabled() ? Number.POSITIVE_INFINITY : this.duration();
     if (absoluteBeat >= stopAt) {
       this.clearScheduler();
       this.stopSources();
@@ -259,7 +246,7 @@ export class AudioPlaybackService {
       this.playbackState.set('stopped');
       return;
     }
-    this.position.set(this.loopEnabled() && this.duration() > 0 ? absoluteBeat % this.duration() : absoluteBeat);
+    this.position.set(this.currentSongBeat());
     this.scheduleAhead();
   }
 
@@ -267,20 +254,23 @@ export class AudioPlaybackService {
     if (!this.context || !this.master || this.duration() <= 0) return;
     const currentBeat = this.currentAbsoluteBeat();
     const horizonBeat = currentBeat + SCHEDULE_AHEAD_SECONDS / this.secondsPerBeat;
+    const { startBeat, endBeat } = this.loopBounds();
+    const cycleBeats = endBeat - startBeat;
     let scheduled = 0;
     while (scheduled < 5000) {
-      if (this.nextNote >= this.notes.length) {
-        if (!this.loopEnabled() || this.notes.length === 0) return;
+      if (this.nextNote >= this.queuedNotes.length) {
+        if (!this.loopEnabled() || this.queuedNotes.length === 0) return;
         this.cycle++;
         this.nextNote = 0;
       }
-      const note = this.notes[this.nextNote];
-      const absoluteStartBeat = note.startBeat + this.cycle * this.duration();
+      const note = this.queuedNotes[this.nextNote];
+      const absoluteStartBeat = note.startBeat + this.cycle * cycleBeats;
       if (absoluteStartBeat > horizonBeat) return;
       this.nextNote++;
       scheduled++;
       if (absoluteStartBeat < currentBeat - 0.04) continue;
-      this.scheduleNote(note, absoluteStartBeat);
+      this.scheduleNote(this.loopEnabled()
+        ? { ...note, durationBeats: Math.min(note.durationBeats, endBeat - note.startBeat) } : note, absoluteStartBeat);
     }
   }
 
@@ -386,6 +376,50 @@ export class AudioPlaybackService {
 
   private currentAbsoluteBeat(): number {
     return this.context ? Math.max(0, (this.context.currentTime - this.originTime) / this.secondsPerBeat) : 0;
+  }
+
+  private loopBounds(): PlaybackRange {
+    const duration = this.duration();
+    const startBeat = Math.max(0, this.selectedLoopRange?.startBeat ?? 0);
+    const endBeat = Math.min(duration, this.selectedLoopRange?.endBeat ?? duration);
+    return endBeat > startBeat ? { startBeat, endBeat } : { startBeat: 0, endBeat: duration };
+  }
+
+  private currentSongBeat(): number {
+    const beat = this.currentAbsoluteBeat();
+    const { startBeat, endBeat } = this.loopBounds();
+    return this.loopEnabled() && endBeat > startBeat && beat >= endBeat
+      ? startBeat + (beat - startBeat) % (endBeat - startBeat)
+      : Math.min(beat, this.duration());
+  }
+
+  private safeStartBeat(beat: number): number {
+    if (this.loopEnabled()) {
+      const { startBeat, endBeat } = this.loopBounds();
+      return beat >= startBeat && beat < endBeat ? beat : startBeat;
+    }
+    return beat >= this.duration() ? 0 : Math.max(0, beat);
+  }
+
+  private resetQueue(beat: number): void {
+    const { startBeat, endBeat } = this.loopBounds();
+    this.queuedNotes = this.loopEnabled()
+      ? this.notes.filter((note) => note.startBeat >= startBeat && note.startBeat < endBeat) : this.notes;
+    this.nextNote = this.queuedNotes.findIndex((note) => note.startBeat >= beat);
+    if (this.nextNote < 0) this.nextNote = this.queuedNotes.length;
+    this.cycle = 0;
+  }
+
+  private restartAt(beat: number): void {
+    if (!this.context || !this.mixProject) return;
+    const now = this.context.currentTime;
+    this.stopSources(now + RELOAD_FADE_SECONDS);
+    this.prepareMix(this.mixProject, this.context, true);
+    this.originTime = now - beat * this.secondsPerBeat;
+    this.position.set(beat);
+    this.resetQueue(beat);
+    this.resumeSustainedNotes(beat);
+    this.scheduleAhead();
   }
 
   private clearScheduler(): void {
