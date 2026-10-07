@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type {
   ArpeggioPattern, ArpeggioRate, ArpeggioSettings, ArrangedPart, ArrangementSection, BassRhythm, BassSettings, SectionType,
-  ChordRhythm, ChordSettings, ChordVoicing, CompositionTrack, DrumGroove, DrumSettings, PhraseNote,
+  ChordRhythm, ChordSettings, ChordVoicing, CompositionTrack, DrumGroove, DrumSettings,
 } from '../core/project/project.model';
 import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
@@ -13,6 +13,8 @@ import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { ArrangementOverviewComponent } from './arrangement-overview.component';
 import { CompactKnobComponent } from './compact-knob.component';
+import { ScoreCanvasComponent } from './score-canvas.component';
+import type { ScoreCanvasNote } from './score-canvas.component';
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 
@@ -28,14 +30,7 @@ interface TimelineSection {
   readonly widthPercent: number;
 }
 
-interface ScoreNote extends PhraseNote {
-  readonly part: string;
-  readonly color: ArrangedPart;
-  readonly topPercent: number;
-  readonly opacity: number;
-}
-
-const EMPTY_SCORE_NOTES: readonly ScoreNote[] = [];
+type ScoreNote = ScoreCanvasNote;
 
 const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
@@ -54,7 +49,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, CompactKnobComponent, EditWorkspaceComponent, MixWorkspaceComponent],
+  imports: [ArrangementOverviewComponent, CompactKnobComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -143,20 +138,6 @@ export class WorkspaceCanvasComponent {
       opacity: 0.72 + note.velocity / 127 * 0.28,
     }));
   }));
-  readonly scoreNotesByTrack = computed<ReadonlyMap<string, readonly ScoreNote[]>>(() => {
-    const notesByTrack = new Map<string, ScoreNote[]>();
-    for (const note of this.scoreNotes()) {
-      const trackNotes = notesByTrack.get(note.part);
-      if (trackNotes) trackNotes.push(note);
-      else notesByTrack.set(note.part, [note]);
-    }
-    return notesByTrack;
-  });
-
-  scoreNotesForTrack(trackId: string): readonly ScoreNote[] {
-    return this.scoreNotesByTrack().get(trackId) ?? EMPTY_SCORE_NOTES;
-  }
-
   tracksFor(role: ArrangedPart): TrackRow[] { return this.tracks().filter((track) => track.role === role); }
 
   isGroupCollapsed(role: ArrangedPart): boolean { return this.collapsedGroups().has(role); }
@@ -384,9 +365,6 @@ export class WorkspaceCanvasComponent {
     this.playback.updateMix(this.project());
   }
 
-  noteLeft(note: ScoreNote): number { return note.startBeat / this.totalBeats() * 100; }
-  noteWidth(note: ScoreNote): number { return Math.max(0.12, note.durationBeats / this.totalBeats() * 100); }
-  velocityHeight(note: ScoreNote): number { return Math.max(8, note.velocity / 127 * 100); }
   sectionLabel(type: string): string { return type.replaceAll('_', ' '); }
   roleName(role: ArrangedPart): string { return ROLE_NAMES[role]; }
 

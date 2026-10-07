@@ -88,48 +88,21 @@
               </div>
             </div>
             <div class="score-track-scroll" tabindex="0" aria-label="Score tracks">
-              <div class="score-track-lanes" [style.grid-template-rows]="'repeat(' + arrangedTracks().length + ', minmax(40px, 1fr))'"
-                [style.--bar-count]="totalMeasures()" [style.--beat-count]="totalBeats()"
-                [style.--eighth-count]="totalBeats() * 2" [style.--sixteenth-count]="totalBeats() * 4">
-                @for (track of arrangedTracks(); track track.id) {
-                  <div class="score-track-row" [class.selected]="selectedTrackId() === track.id" [class.row-hidden]="!isVisible(track.id)">
-                    <span class="score-track-label"><i class="role-dot" [class]="track.role"></i>{{ track.name }}</span>
-                    <div class="score-track-lane">
-                      @for (item of timelineSections(); track item.section.id) { <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i> }
-                      <i class="section-divider final" [style.left.%]="100"></i>
-                      @for (note of scoreNotesForTrack(track.id); track note.id + '-' + note.part + '-' + note.startBeat) {
-                        @if (isVisible(note.part)) {
-                          <button type="button" class="score-note" [class]="'score-note ' + note.color"
-                            [class.selected-track-note]="selectedTrackId() === note.part"
-                            [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.%]="note.topPercent"
-                            [style.opacity]="selectedTrackId() === note.part ? note.opacity : note.opacity * 0.72"
-                            [attr.title]="track.name + ' · MIDI ' + note.midi + ' · velocity ' + note.velocity"
-                            [attr.aria-label]="'Edit ' + track.name + ' note, pitch ' + note.midi + ', velocity ' + note.velocity"
-                            (click)="openNoteEditor(note)"></button>
-                        }
-                      }
-                      @if (!isVisible(track.id)) { <span class="lane-hidden">Hidden</span> }
-                      <i class="playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-            <div class="score-velocity-row">
-              <span class="score-track-label velocity-label">VEL</span>
-              <div class="velocity-lane" [style.--bar-count]="totalMeasures()" [style.--beat-count]="totalBeats()"
-                [style.--eighth-count]="totalBeats() * 2" [style.--sixteenth-count]="totalBeats() * 4">
-                @for (item of timelineSections(); track item.section.id) { <i class="section-divider" [style.left.%]="item.startBeat / totalBeats() * 100"></i> }
-                <i class="section-divider final" [style.left.%]="100"></i>
-                @for (note of scoreNotes(); track note.id + '-velocity-' + note.part + '-' + note.startBeat) {
-                  @if (isVisible(note.part)) {
-                    <span class="velocity-stem" [class]="'velocity-stem ' + note.color"
-                      [class.dimmed]="selectedTrackId() !== note.part" [style.left.%]="noteLeft(note)"
-                      [style.height.%]="velocityHeight(note)" [style.opacity]="selectedTrackId() === note.part ? 0.9 : 0.32"
-                      [attr.title]="note.part + ' velocity ' + note.velocity"></span>
+              <div class="score-track-lanes"
+                [style.grid-template-rows]="'repeat(' + arrangedTracks().length + ', minmax(40px, 1fr)) 34px'">
+                @for (track of arrangedTracks(); track track.id; let trackIndex = $index) {
+                  <span class="score-track-label" [class.selected]="selectedTrackId() === track.id"
+                    [class.row-hidden]="!isVisible(track.id)" [style.grid-row]="trackIndex + 1">
+                    <i class="role-dot" [class]="track.role"></i>{{ track.name }}
+                  </span>
+                  @if (!isVisible(track.id)) {
+                    <span class="lane-hidden" [style.grid-row]="trackIndex + 1">Hidden</span>
                   }
                 }
-                <i class="playhead" [style.left.%]="playheadPercent()" aria-hidden="true"></i>
+                <vc-score-canvas [tracks]="arrangedTracks()" [notes]="scoreNotes()" [sections]="timelineSections()"
+                  [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
+                  [hiddenTrackIds]="hiddenTracks()" (noteSelected)="openNoteEditor($event)" />
+                <span class="score-track-label velocity-label" [style.grid-row]="arrangedTracks().length + 1">VEL</span>
               </div>
             </div>
           </div>
