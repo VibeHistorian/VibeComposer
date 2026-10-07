@@ -6,6 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "test:overview": "node --test scripts/arrangement-overview.test.cjs",
+    "test:playback": "node --test scripts/audio-playback.test.cjs",
     "watch": "ng build --watch --configuration development"
   },
   "dependencies": {

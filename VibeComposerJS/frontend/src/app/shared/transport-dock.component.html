@@ -17,6 +17,9 @@
     </button>
     <button type="button" class="transport-button loop-button" [class.active]="playback.loopEnabled()"
       [attr.aria-pressed]="playback.loopEnabled()" (click)="toggleLoop()" aria-label="Toggle loop" title="Toggle loop">⟳</button>
+    <button type="button" class="transport-button live-button" [class.active]="playback.liveEnabled()"
+      [attr.aria-pressed]="playback.liveEnabled()" (click)="toggleLive()" aria-label="Toggle live reload"
+      title="Live reload: hear MIDI edits while playing">LIVE</button>
   </div>
 
   <div class="transport-progress">

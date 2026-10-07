@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
 import { KEYS } from '../core/music/harmony';
@@ -14,6 +14,12 @@ export class TransportDockComponent {
   private readonly projects = inject(ProjectService);
   readonly project = this.projects.project;
   readonly keys = KEYS;
+  private readonly liveReloadEffect = effect(() => {
+    const project = this.project();
+    const live = this.playback.liveEnabled();
+    // Playback ticks must not trigger regeneration or subscribe this effect to position/state.
+    if (live) untracked(() => this.playback.reload(project));
+  });
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly progressPercent = computed(() => {
     const duration = this.playback.durationBeats();
@@ -38,6 +44,10 @@ export class TransportDockComponent {
 
   toggleLoop(): void {
     this.playback.toggleLoop();
+  }
+
+  toggleLive(): void {
+    this.playback.toggleLive();
   }
 
   updateKey(event: Event): void {

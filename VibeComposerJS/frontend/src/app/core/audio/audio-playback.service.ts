@@ -8,6 +8,7 @@ interface PartBus { readonly gain: GainNode; readonly pan: StereoPannerNode; }
 
 const SCHEDULER_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_SECONDS = 0.18;
+const RELOAD_FADE_SECONDS = 0.012;
 
 @Injectable({ providedIn: 'root' })
 export class AudioPlaybackService {
@@ -15,12 +16,14 @@ export class AudioPlaybackService {
   private readonly position = signal(0);
   private readonly duration = signal(0);
   private readonly loopState = signal(false);
+  private readonly liveState = signal(false);
   private readonly playbackError = signal('');
 
   readonly state = this.playbackState.asReadonly();
   readonly beat = this.position.asReadonly();
   readonly durationBeats = this.duration.asReadonly();
   readonly loopEnabled = this.loopState.asReadonly();
+  readonly liveEnabled = this.liveState.asReadonly();
   readonly error = this.playbackError.asReadonly();
 
   private context?: AudioContext;
@@ -33,6 +36,7 @@ export class AudioPlaybackService {
   private notes: ScheduledNote[] = [];
   private nextNote = 0;
   private cycle = 0;
+  private scheduleSignature = '';
   private readonly buses = new Map<string, PartBus>();
   private readonly programs = new Map<string, number>();
   private readonly activeSources = new Set<AudioScheduledSourceNode>();
@@ -58,6 +62,7 @@ export class AudioPlaybackService {
       this.secondsPerBeat = 60 / project.tempoBpm;
       this.duration.set(project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0));
       this.notes = this.createSchedule(project);
+      this.scheduleSignature = this.signature(project, this.notes);
       const safeStart = startBeat >= this.duration() ? 0 : Math.max(0, startBeat);
       this.position.set(safeStart);
       this.originTime = context.currentTime - safeStart * this.secondsPerBeat;
@@ -66,6 +71,7 @@ export class AudioPlaybackService {
       this.cycle = 0;
       this.stopAtBeat = null;
       this.playbackState.set('playing');
+      this.resumeSustainedNotes(safeStart);
       this.scheduleAhead();
       this.scheduler = setInterval(() => this.tick(), SCHEDULER_INTERVAL_MS);
     } catch (error: unknown) {
@@ -104,6 +110,49 @@ export class AudioPlaybackService {
     }
   }
 
+  toggleLive(): void {
+    this.liveState.set(!this.liveEnabled());
+  }
+
+  /** Replace queued audio at the current musical position without pausing the transport. */
+  reload(project: CompositionProject): void {
+    if (!this.liveEnabled() || this.state() !== 'playing' || !this.context) return;
+    // Build first so generation time does not leave a gap in the old audio.
+    const notes = this.createSchedule(project);
+    const signature = this.signature(project, notes);
+    this.updateMix(project);
+    if (signature === this.scheduleSignature) return;
+
+    const context = this.context;
+    const oldDuration = this.duration();
+    const absoluteBeat = this.currentAbsoluteBeat();
+    const beat = oldDuration > 0 ? absoluteBeat % oldDuration : 0;
+    const duration = project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0);
+    const oldStopAt = this.stopAtBeat ?? oldDuration;
+    if (duration <= 0 || (!this.loopEnabled() && (absoluteBeat >= oldStopAt || beat >= duration))) {
+      this.stop();
+      this.duration.set(duration);
+      this.position.set(duration);
+      return;
+    }
+    const resumeAt = beat % duration;
+    const now = context.currentTime;
+    this.stopSources(now + RELOAD_FADE_SECONDS);
+    this.prepareMix(project, context, true);
+    this.secondsPerBeat = 60 / project.tempoBpm;
+    this.duration.set(duration);
+    this.notes = notes;
+    this.scheduleSignature = signature;
+    this.originTime = now - resumeAt * this.secondsPerBeat;
+    this.position.set(resumeAt);
+    this.nextNote = this.notes.findIndex((note) => note.startBeat >= resumeAt);
+    if (this.nextNote < 0) this.nextNote = this.notes.length;
+    this.cycle = 0;
+    this.stopAtBeat = null;
+    this.resumeSustainedNotes(resumeAt);
+    this.scheduleAhead();
+  }
+
   updateMix(project: CompositionProject): void {
     if (!this.context || this.state() === 'stopped') return;
     const anySolo = project.tracks.some((track) => track.mix.solo);
@@ -128,15 +177,29 @@ export class AudioPlaybackService {
     return this.context;
   }
 
-  private prepareMix(project: CompositionProject, context: AudioContext): void {
-    for (const bus of this.buses.values()) {
-      bus.pan.disconnect();
-      bus.gain.disconnect();
+  private prepareMix(project: CompositionProject, context: AudioContext, crossfade = false): void {
+    const oldBuses = [...this.buses.values()];
+    const oldMaster = this.master;
+    const disconnect = () => {
+      for (const bus of oldBuses) {
+        bus.pan.disconnect();
+        bus.gain.disconnect();
+      }
+      oldMaster?.disconnect();
+    };
+    if (crossfade && oldMaster) {
+      oldMaster.gain.cancelScheduledValues(context.currentTime);
+      oldMaster.gain.setValueAtTime(oldMaster.gain.value, context.currentTime);
+      oldMaster.gain.linearRampToValueAtTime(0, context.currentTime + RELOAD_FADE_SECONDS);
+      setTimeout(disconnect, RELOAD_FADE_SECONDS * 1000 + SCHEDULER_INTERVAL_MS);
+    } else {
+      disconnect();
     }
     this.buses.clear();
-    this.master?.disconnect();
+    this.programs.clear();
     this.master = context.createGain();
-    this.master.gain.value = 0.8;
+    this.master.gain.value = crossfade ? 0 : 0.8;
+    if (crossfade) this.master.gain.linearRampToValueAtTime(0.8, context.currentTime + RELOAD_FADE_SECONDS);
     this.master.connect(context.destination);
     const anySolo = project.tracks.some((track) => track.mix.solo);
 
@@ -158,6 +221,31 @@ export class AudioPlaybackService {
     return project.tracks.flatMap((track) => layOutTrackPhrase(project, track)
       .map((note) => ({ ...note, trackId: track.id, role: track.role })))
       .sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
+  }
+
+  private signature(project: CompositionProject, notes: readonly ScheduledNote[]): string {
+    // Compare audible events, ignoring labels and note IDs; mix controls already update their buses.
+    return JSON.stringify([
+      project.tempoBpm,
+      project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0),
+      project.tracks.map((track) => [track.id, track.role, track.mix.program]),
+      notes.map((note) => [note.trackId, note.role, note.startBeat, note.durationBeats, note.midi, note.velocity]),
+    ]);
+  }
+
+  private resumeSustainedNotes(beat: number): void {
+    for (const note of this.notes) {
+      if (note.role === 'drums') continue;
+      const remaining = note.startBeat + note.durationBeats - beat;
+      if (note.startBeat < beat && remaining > 0) {
+        this.scheduleNote({ ...note, durationBeats: remaining }, beat);
+      }
+      // A sustained note from the preceding loop can also overlap the loop boundary.
+      const loopRemaining = note.startBeat + note.durationBeats - this.duration() - beat;
+      if (this.loopEnabled() && loopRemaining > 0) {
+        this.scheduleNote({ ...note, durationBeats: loopRemaining }, beat);
+      }
+    }
   }
 
   private tick(): void {
@@ -307,10 +395,10 @@ export class AudioPlaybackService {
     }
   }
 
-  private stopSources(): void {
+  private stopSources(stopTime?: number): void {
     for (const source of this.activeSources) {
-      try { source.stop(); } catch { /* It may have ended between scheduler ticks. */ }
+      try { source.stop(stopTime); } catch { /* It may have ended between scheduler ticks. */ }
     }
-    this.activeSources.clear();
+    if (stopTime === undefined) this.activeSources.clear();
   }
 }

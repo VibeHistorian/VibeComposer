@@ -16,7 +16,8 @@
 .play-button { width: 38px; height: 38px; border-color: var(--accent-primary); border-radius: 50%; background: var(--accent-primary); color: var(--surface-low); font-size: 13px; }
 .play-button:hover { border-color: var(--accent-hover); color: var(--surface-low); }
 .loop-button { font-size: 17px; }
-.loop-button.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.live-button { width: 43px; font: 10px var(--font-mono); letter-spacing: .04em; }
+.transport-button.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
 
 /* Timeline and song position */
 .transport-progress { min-width: 0; }
@@ -38,6 +39,7 @@
   .transport-actions { gap: 4px; }
   .transport-button { width: 27px; height: 27px; }
   .play-button { width: 34px; height: 34px; }
+  .live-button { width: 39px; }
   .transport-globals { grid-column: 1 / -1; grid-row: 2; }
   .transport-globals select, .transport-globals input { height: 24px; font-size: 10px; }
   .position-line { font-size: 10px; }
