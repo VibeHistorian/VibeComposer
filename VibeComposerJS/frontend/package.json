@@ -15,6 +15,7 @@
     "@angular/platform-browser": "22.2.1",
     "@angular/router": "22.2.1",
     "@tonejs/midi": "2.0.28",
+    "pixi.js": "8.22.0",
     "rxjs": "7.8.2",
     "tslib": "2.8.1"
   },
