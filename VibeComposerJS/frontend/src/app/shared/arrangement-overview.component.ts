@@ -154,6 +154,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private labelWidth = 88;
   private rowHeight = 65;
   private pixelsPerBeat = 12;
+  private horizontalScale = 1;
+  private pendingZoomAnchor: { beat: number; cursorFraction: number } | null = null;
   private offsetX = 0;
   private offsetY = 0;
   private hits: OverviewHitArea[] = [];
@@ -176,6 +178,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.ready = true;
+    this.scoreCanvas().nativeElement.addEventListener('wheel', this.onCanvasWheel, { passive: false });
     this.resizeObserver = new ResizeObserver(() => this.scheduleDraw());
     this.resizeObserver.observe(this.scrollHost().nativeElement);
     this.scheduleDraw();
@@ -183,11 +186,31 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.ready = false;
+    this.scoreCanvas().nativeElement.removeEventListener('wheel', this.onCanvasWheel);
     this.resizeObserver?.disconnect();
     cancelAnimationFrame(this.frame);
   }
 
   onScroll(): void { this.scheduleDraw(); }
+
+  private readonly onCanvasWheel = (event: WheelEvent): void => {
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.ready || this.width <= this.labelWidth) return;
+    const bounds = this.scoreCanvas().nativeElement.getBoundingClientRect();
+    const timelineWidth = this.width - this.labelWidth;
+    const cursorX = Math.min(timelineWidth, Math.max(0,
+      (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width) - this.labelWidth));
+    this.pendingZoomAnchor = {
+      beat: (this.scrollHost().nativeElement.scrollLeft + cursorX) / this.pixelsPerBeat,
+      cursorFraction: cursorX / timelineWidth,
+    };
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? timelineWidth : 1;
+    const delta = (event.deltaY || event.deltaX) * unit;
+    this.horizontalScale = Math.min(128, Math.max(1, this.horizontalScale * Math.exp(-delta * 0.002)));
+    this.scheduleDraw();
+  };
 
   private scheduleDraw(): void {
     if (!this.ready || this.frame) return;
@@ -208,9 +231,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const groups = this.groups();
     const totalBeats = sections.reduce((sum, item) => sum + item.section.measures * 4, 0);
     this.labelWidth = this.width <= 680 ? 72 : 88;
-    // All section widths are proportional to duration, including short sections.
-    const minimumBeatWidth = sections.reduce((width, item) => Math.max(width, 170 / Math.max(1, item.section.measures * 4)), 12);
-    this.pixelsPerBeat = Math.max(minimumBeatWidth, (this.width - this.labelWidth) / Math.max(1, totalBeats));
+    // Scale 1 fits the entire arrangement; sections always share a proportional time axis.
+    const timelineWidth = Math.max(1, this.width - this.labelWidth);
+    this.pixelsPerBeat = timelineWidth / Math.max(1, totalBeats) * this.horizontalScale;
     this.rowHeight = Math.max(65, (this.height - RULER_HEIGHT) / Math.max(1, groups.length));
     const content = this.scrollContent().nativeElement;
     content.style.width = `${Math.max(this.width, this.labelWidth + totalBeats * this.pixelsPerBeat)}px`;
@@ -218,6 +241,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const viewport = this.viewport().nativeElement;
     viewport.style.width = `${this.width}px`;
     viewport.style.height = `${this.height}px`;
+    const anchor = this.pendingZoomAnchor;
+    this.pendingZoomAnchor = null;
+    const offset = anchor ? anchor.beat * this.pixelsPerBeat - anchor.cursorFraction * timelineWidth : host.scrollLeft;
+    host.scrollLeft = Math.min(Math.max(0, totalBeats * this.pixelsPerBeat - timelineWidth), Math.max(0, offset));
     this.offsetX = host.scrollLeft;
     this.offsetY = host.scrollTop;
     const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);

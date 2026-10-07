@@ -46,6 +46,7 @@ function fixture() {
   global.document = { documentElement: {} };
   global.getComputedStyle = () => ({ getPropertyValue: (name) => name });
   global.devicePixelRatio = 2;
+  global.requestAnimationFrame = () => 1;
   const track = { id: 'bass-1', role: 'bass', notes: [
     { id: 'n1', startBeat: 0, durationBeats: 1, midi: 48, velocity: 100 },
     { id: 'n2', startBeat: 8, durationBeats: 1, midi: 50, velocity: 100 },
@@ -76,6 +77,7 @@ test('unequal section lengths share the exact beat mapping with notes and playba
 
 test('scrolling preserves cursor alignment and keeps both canvases viewport-sized', () => {
   const { component, refs, overlay } = fixture();
+  component.horizontalScale = 2;
   refs.get('scrollHost').scrollLeft = 60;
   component.drawOverview();
   component.drawPlayhead(25);
@@ -86,6 +88,57 @@ test('scrolling preserves cursor alignment and keeps both canvases viewport-size
   }
   component.drawPlayhead(0);
   assert.equal(overlay.rectangles.at(-1).bounds[0], component.beatX(8), 'offscreen cursor is cleared rather than pinned to the labels');
+});
+
+test('the arrangement fits the available timeline width by default, including after resizing', () => {
+  const { component, refs } = fixture();
+  assert.equal(component.beatX(0), component.labelWidth);
+  assert.equal(component.beatX(32), component.width);
+  assert.equal(parseFloat(refs.get('scrollContent').style.width), refs.get('scrollHost').clientWidth);
+  refs.get('scrollHost').clientWidth = 520;
+  component.drawOverview();
+  assert.equal(component.beatX(32), 520);
+  assert.equal(refs.get('scrollHost').scrollLeft, 0);
+});
+
+test('Ctrl+wheel zoom anchors the cursor after scrolling and cancels browser zoom', () => {
+  const { component, refs } = fixture();
+  const host = refs.get('scrollHost');
+  const cursorX = 400;
+  const beatAtCursor = () => (host.scrollLeft + cursorX - component.labelWidth) / component.pixelsPerBeat;
+  const initialBeat = beatAtCursor();
+  const event = { ctrlKey: true, clientX: cursorX, deltaMode: 0, deltaY: -200, deltaX: 0,
+    prevented: false, stopped: false,
+    preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; } };
+  component.onCanvasWheel(event);
+  component.drawOverview();
+  assert.equal(event.prevented, true);
+  assert.equal(event.stopped, true);
+  assert.ok(component.horizontalScale > 1);
+  assert.ok(Math.abs(beatAtCursor() - initialBeat) < 1e-9);
+  host.scrollLeft += 40;
+  component.drawOverview();
+  const scrolledBeat = beatAtCursor();
+  component.onCanvasWheel(event);
+  component.drawOverview();
+  assert.ok(Math.abs(beatAtCursor() - scrolledBeat) < 1e-9);
+  assert.equal(refs.get('scoreCanvas').width, 1600);
+  assert.equal(refs.get('scoreCanvas').height, 640);
+  component.onCanvasWheel({ ...event, deltaY: 100000 });
+  component.drawOverview();
+  assert.equal(component.horizontalScale, 1);
+  assert.equal(host.scrollLeft, 0);
+  assert.equal(component.beatX(32), component.width);
+});
+
+test('Alt, Shift, and unmodified wheel events keep their existing browser behavior', () => {
+  const { component } = fixture();
+  for (const keys of [{ altKey: true }, { shiftKey: true }, {}]) {
+    let prevented = false;
+    component.onCanvasWheel({ ...keys, ctrlKey: false, preventDefault() { prevented = true; } });
+    assert.equal(prevented, false);
+    assert.equal(component.horizontalScale, 1);
+  }
 });
 
 test('playback updates clear only the overlay and do not rebuild note previews', () => {
