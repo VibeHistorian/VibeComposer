@@ -5,6 +5,7 @@
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
+    "test:overview": "node --test scripts/arrangement-overview.test.cjs",
     "watch": "ng build --watch --configuration development"
   },
   "dependencies": {
