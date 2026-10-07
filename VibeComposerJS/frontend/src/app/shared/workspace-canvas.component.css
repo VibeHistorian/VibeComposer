@@ -59,21 +59,21 @@
 .song-canvas.editing { display: block; }
 .song-canvas.editing vc-edit-workspace { display: block; }
 .score-panel { padding: 13px 14px; overflow: hidden; }
-.score-scroll { margin-top: 11px; overflow-x: auto; }
 .score-panel { display: flex; flex-direction: column; }
-.score-scroll { min-height: 0; margin-top: 0; flex: 1; display: flex; overflow: auto; }
-.score-canvas { min-width: 500px; min-height: 0; flex: 1 0 auto; display: flex; flex-direction: column; }
+.score-scroll { min-width: 0; min-height: 0; flex: 1; display: flex; overflow: hidden; }
+.score-canvas { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; }
 .score-ruler { min-height: 20px; display: grid; grid-template-columns: 72px minmax(0, 1fr); color: var(--text-muted); font: 10px var(--font-mono); }
 .score-ruler-label { padding: 3px 5px; }
+.score-ruler-viewport { min-width: 0; overflow: hidden; margin-left: 1px; margin-right: 19px; }
 .score-ruler-sections { min-width: 0; display: flex; }
-.score-ruler-sections span { min-width: 0; padding: 3px 5px; overflow: hidden; border-left: 1px solid var(--border-subtle); text-overflow: ellipsis; white-space: nowrap; }
-.score-track-scroll { min-height: 0; flex: 1; overflow-x: hidden; overflow-y: auto; }
-.score-track-lanes { position: relative; min-height: 100%; display: grid; grid-template-columns: 72px minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-score); }
-.score-track-label { grid-column: 1; z-index: 1; min-width: 0; min-height: 0; padding: 0 6px; display: flex; align-items: center; gap: 6px; overflow: hidden; border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font: 10px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.score-ruler-sections span { min-width: 0; flex-shrink: 0; box-sizing: border-box; padding: 3px 5px; overflow: hidden; border-left: 1px solid var(--border-subtle); text-overflow: ellipsis; white-space: nowrap; }
+.score-track-lanes { position: relative; min-height: 0; flex: 1; display: grid; grid-template-columns: 72px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-score); }
+.score-track-labels { position: relative; grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
+.score-track-label { position: absolute; left: 0; width: 72px; box-sizing: border-box; z-index: 1; min-width: 0; min-height: 0; padding: 0 6px; display: flex; align-items: center; gap: 6px; overflow: hidden; border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font: 10px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
 .score-track-label.selected { background: var(--surface-low); color: var(--text-primary); }
 .score-track-label.row-hidden { opacity: .38; }
-.score-track-label.velocity-label { color: var(--text-secondary); border-bottom: 0; }
-.lane-hidden { grid-column: 2; z-index: 1; min-width: 0; align-self: center; justify-self: start; margin-left: 8px; color: var(--text-faint); font: 10px var(--font-mono); pointer-events: none; }
+.score-track-label.velocity-label { bottom: 18px; height: 34px; color: var(--text-secondary); border-top: 1px solid var(--border-default); border-bottom: 0; }
+.lane-hidden { position: absolute; right: 3px; z-index: 1; color: var(--text-faint); font: 9px var(--font-mono); pointer-events: none; }
 .score-footer { padding-top: 6px; display: flex; justify-content: space-between; color: var(--text-faint); font: 10px var(--font-mono); }
 .score-footer > span:nth-child(2) { color: var(--text-muted); }
 

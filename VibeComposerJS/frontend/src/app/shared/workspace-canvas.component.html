@@ -77,37 +77,42 @@
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
 
       <section class="score-panel" aria-label="Song score">
-        <div class="score-scroll" tabindex="0" aria-label="Scrollable song score">
+        <div class="score-scroll">
           <div class="score-canvas">
             <div class="score-ruler">
               <span class="score-ruler-label">PART</span>
-              <div class="score-ruler-sections">
-                @for (item of timelineSections(); track item.section.id) {
-                  <span [style.width.%]="item.widthPercent">{{ item.startMeasure.toString().padStart(2, '0') }} · {{ sectionLabel(item.section.type) }}</span>
-                }
+              <div class="score-ruler-viewport">
+                <div class="score-ruler-sections" [style.width.px]="scoreViewport().width * scoreViewport().scale"
+                  [style.transform]="'translateX(-' + scoreViewport().offsetPercent + '%)'">
+                  @for (item of timelineSections(); track item.section.id) {
+                    <span [style.width.%]="item.widthPercent">{{ item.startMeasure.toString().padStart(2, '0') }} · {{ sectionLabel(item.section.type) }}</span>
+                  }
+                </div>
               </div>
             </div>
-            <div class="score-track-scroll" tabindex="0" aria-label="Score tracks">
-              <div class="score-track-lanes"
-                [style.grid-template-rows]="'repeat(' + arrangedTracks().length + ', minmax(40px, 1fr)) 34px'">
+              <div class="score-track-lanes">
+                <div class="score-track-labels" [style.height.px]="scoreViewport().scoreHeight">
                 @for (track of arrangedTracks(); track track.id; let trackIndex = $index) {
                   <span class="score-track-label" [class.selected]="selectedTrackId() === track.id"
-                    [class.row-hidden]="!isVisible(track.id)" [style.grid-row]="trackIndex + 1">
+                    [class.row-hidden]="!isVisible(track.id)"
+                    [style.top.px]="trackIndex * scoreViewport().laneHeight - scoreViewport().verticalOffset"
+                    [style.height.px]="scoreViewport().laneHeight">
                     <i class="role-dot" [class]="track.role"></i>{{ track.name }}
                   </span>
                   @if (!isVisible(track.id)) {
-                    <span class="lane-hidden" [style.grid-row]="trackIndex + 1">Hidden</span>
+                    <span class="lane-hidden" [style.top.px]="(trackIndex + 0.5) * scoreViewport().laneHeight - scoreViewport().verticalOffset">Hidden</span>
                   }
                 }
+                </div>
                 <vc-score-canvas [tracks]="arrangedTracks()" [notes]="scoreNotes()" [sections]="timelineSections()"
                   [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
+                  [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   [hiddenTrackIds]="hiddenTracks()" (noteSelected)="openNoteEditor($event)" />
-                <span class="score-track-label velocity-label" [style.grid-row]="arrangedTracks().length + 1">VEL</span>
+                <span class="score-track-label velocity-label">VEL</span>
               </div>
-            </div>
           </div>
         </div>
-        <footer class="score-footer"><span>LOW</span><span>Select a note to edit</span><span>HIGH</span></footer>
+        <footer class="score-footer"><span>LOW</span><span>Ctrl + scroll: time zoom · Shift + scroll: pan · Alt + scroll: vertical zoom</span><span>HIGH</span></footer>
       </section>
     }
   </main>

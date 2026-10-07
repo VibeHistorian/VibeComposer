@@ -14,7 +14,7 @@ import { WorkspaceUiService } from './workspace-ui.service';
 import { ArrangementOverviewComponent } from './arrangement-overview.component';
 import { CompactKnobComponent } from './compact-knob.component';
 import { ScoreCanvasComponent } from './score-canvas.component';
-import type { ScoreCanvasNote } from './score-canvas.component';
+import type { ScoreCanvasNote, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 
@@ -89,6 +89,8 @@ export class WorkspaceCanvasComponent {
   readonly newSectionType = signal<SectionType>('VERSE1');
   readonly hiddenTracks = signal(new Set<string>());
   readonly collapsedGroups = signal(new Set<ArrangedPart>());
+  readonly scoreSectionFocus = signal<ScoreSectionFocus | null>(null);
+  readonly scoreViewport = signal<ScoreViewport>({ scale: 1, offsetPercent: 0, width: 0, laneHeight: 40, verticalOffset: 0, scoreHeight: 0 });
 
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly totalBeats = computed(() => this.totalMeasures() * 4);
@@ -165,6 +167,12 @@ export class WorkspaceCanvasComponent {
   selectSection(section: ArrangementSection, trackId: string): void {
     this.selectedSectionId.set(section.id);
     this.workspaceUi.selectTrack(trackId);
+    this.focusScoreSection(section.id);
+  }
+
+  private focusScoreSection(sectionId: string | null): void {
+    const item = this.timelineSections().find((candidate) => candidate.section.id === sectionId);
+    if (item) this.scoreSectionFocus.set({ startBeat: item.startBeat, endBeat: item.startBeat + item.section.measures * 4 });
   }
 
   selectOverviewSection(sectionId: string, trackId: string): void {
@@ -216,7 +224,10 @@ export class WorkspaceCanvasComponent {
     const index = this.selectedSectionIndex() < 0 ? this.project().arrangement.length - 1 : this.selectedSectionIndex();
     this.projects.addSection(this.newSectionType(), index);
     const added = this.project().arrangement[index + 1];
-    if (added) this.selectedSectionId.set(added.id);
+    if (added) {
+      this.selectedSectionId.set(added.id);
+      this.focusScoreSection(added.id);
+    }
   }
 
   duplicateSection(): void {
@@ -225,6 +236,7 @@ export class WorkspaceCanvasComponent {
         || this.totalMeasures() + this.project().arrangement[index].measures > 128) return;
     this.projects.duplicateSection(index);
     this.selectedSectionId.set(this.project().arrangement[index + 1]?.id ?? null);
+    this.focusScoreSection(this.selectedSectionId());
   }
 
   removeSection(): void {
@@ -232,6 +244,7 @@ export class WorkspaceCanvasComponent {
     if (index < 0) return;
     this.projects.removeSection(index);
     this.selectedSectionId.set(this.project().arrangement[Math.min(index, this.project().arrangement.length - 1)]?.id ?? null);
+    this.focusScoreSection(this.selectedSectionId());
   }
 
   moveSection(offset: -1 | 1): void {
