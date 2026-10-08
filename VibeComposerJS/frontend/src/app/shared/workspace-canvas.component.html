@@ -183,19 +183,8 @@
           @if (trackExceptionCount()) { <span>{{ trackExceptionCount() }} track exception(s) remain active.</span> }
           @if (manualTrackNames() && partGenerationAvailable()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="true" [overriddenKeys]="overriddenKeys()"
-              (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
-            <button type="button" class="restore-track-button" [disabled]="!overriddenKeys().length"
-              (click)="resetPartSettings(item.scope)">Reset this part to inherited</button>
-          }
-          @if (editableScopes().length) {
-            <vc-part-scope-actions [group]="localPartTarget()?.kind === 'section-role'"
-              [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
-              [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
-              [canCopyOverrides]="partCopyAvailability().overrides" [canCopyEffective]="partCopyAvailability().effective"
-              (feedbackDismissed)="dismissPartWorkflowFeedback()"
-              (freezeRequested)="runPartWorkflow('freeze')" (resetCellRequested)="runPartWorkflow('reset-cell')"
-              (applyRequested)="runPartWorkflow($event)" />
+            <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [overriddenKeys]="overriddenKeys()"
+              (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
           @for (track of contextTracks(); track track.id) {
             <section class="quick-settings-group">
@@ -306,13 +295,15 @@
           </section>
         }
       }
-      <section class="inspector-arrangement-add" aria-label="Add arrangement section">
-        <p class="eyebrow">ARRANGEMENT</p>
-        <select [value]="newSectionType()" (change)="updateNewSectionType($event)">
-          @for (type of sectionTypes; track type) { <option [value]="type">{{ sectionLabel(type) }}</option> }
-        </select>
-        <button type="button" class="add-chord-button" [disabled]="project().arrangement.length >= 32 || totalMeasures() + 4 > 128" (click)="addSection()">＋ Add section</button>
-      </section>
+      @if (settingsTarget().kind === 'section') {
+        <section class="inspector-arrangement-add" aria-label="Add arrangement section">
+          <p class="eyebrow">ARRANGEMENT</p>
+          <select [value]="newSectionType()" (change)="updateNewSectionType($event)">
+            @for (type of sectionTypes; track type) { <option [value]="type">{{ sectionLabel(type) }}</option> }
+          </select>
+          <button type="button" class="add-chord-button" [disabled]="project().arrangement.length >= 32 || totalMeasures() + 4 > 128" (click)="addSection()">＋ Add section</button>
+        </section>
+      }
     </aside>
   }
 </section>
