@@ -1,9 +1,8 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const os = require('node:os');
+const http = require('node:http');
 const path = require('node:path');
-const { pathToFileURL } = require('node:url');
-const { spawnSync } = require('node:child_process');
+const { spawn } = require('node:child_process');
 const test = require('node:test');
 const ts = require('typescript');
 
@@ -14,11 +13,43 @@ const browser = process.env.OVERVIEW_TEST_BROWSER || [
   '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome',
 ].find((file) => fs.existsSync(file));
 
+async function render(html, displayScale) {
+  let finish;
+  let reject;
+  const result = new Promise((resolve, fail) => { finish = resolve; reject = fail; });
+  const server = http.createServer((request, response) => {
+    if (request.url === '/result') {
+      let body = '';
+      request.on('data', (chunk) => { body += chunk; });
+      request.on('end', () => {
+        response.end('OK');
+        try { finish(JSON.parse(body)); } catch (error) { reject(error); }
+      });
+    } else {
+      response.setHeader('Content-Type', 'text/html'); response.end(html);
+    }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  // Run in real time: virtual-time dump-dom can finish before animation frames
+  // and ResizeObserver callbacks run, giving false confidence about resize loops.
+  const child = spawn(browser, ['--headless', '--disable-gpu', '--no-first-run',
+    '--disable-background-networking', '--disable-component-update', '--disable-sync',
+    '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
+    '--force-device-scale-factor=' + displayScale, '--no-default-browser-check',
+    `http://127.0.0.1:${server.address().port}/`], { stdio: ['ignore', 'ignore', 'pipe'] });
+  let errors = '';
+  child.stderr.on('data', (chunk) => { errors = (errors + chunk).slice(-4000); });
+  child.on('error', reject);
+  child.on('exit', (code) => reject(new Error(`Chromium exited (${code}): ${errors}`)));
+  const timeout = setTimeout(() => reject(new Error(`Chromium test timed out: ${errors}`)), 30000);
+  try { return await result; } finally {
+    clearTimeout(timeout); child.kill(); server.close();
+  }
+}
+
 test('arrangement scrollbar layout settles after local edits, zoom, and resizing', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
-}, () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'vc-overview-test-'));
-  try {
+}, async () => {
     const source = fs.readFileSync(path.join(__dirname, '../src/app/shared/arrangement-overview.component.ts'), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
@@ -68,6 +99,8 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       refs.get('playheadCanvas').width, refs.get('playheadCanvas').height,
       host.scrollWidth, host.scrollHeight];
     (async () => { try {
+      for (const pageZoom of [0.8, 1, 1.25, 1.5]) {
+      document.documentElement.style.zoom = pageZoom;
       for (const [width, height, scale] of [
         [1218, 384, 1], [1217.5, 383.5, 1], [1217.6, 383.6, 1],
         [1217.5, 383.5, 2], [1217.6, 365.6, 1], [830.5, 350.5, 2],
@@ -80,37 +113,28 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
           component.project.set({ ...project, arrangement: [{ ...project.arrangement[0],
             ...(draw % 2 ? { trackPartOverrides: { 'bass-1': { transpose: 12 } } }
               : { rolePartOverrides: { bass: { transpose: 12 } } }) }] });
-          component.drawOverview(); samples.push(sample());
+          component.drawOverview();
           if (draw === 0) { host.scrollLeft = host.scrollWidth; host.scrollTop = host.scrollHeight; }
-          await new Promise(resolve => setTimeout(resolve, 32));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          samples.push(sample());
         }
-        cases.push({ width, height, scale, samples });
+        cases.push({ width, height, scale, pageZoom, samples });
+      }
       }
       document.querySelector('#result').textContent = JSON.stringify({ cases });
+      await fetch('/result', { method: 'POST', body: JSON.stringify({ cases }) });
       component.ngOnDestroy();
     } catch (error) {
       document.querySelector('#result').textContent = JSON.stringify({ error: error.stack });
+      await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.stack }) });
     } })();
     </script></body></html>`;
-    const file = path.join(directory, 'overview.html');
-    fs.writeFileSync(file, html);
     for (const displayScale of [1, 1.25, 1.5]) {
-      const run = spawnSync(browser, ['--headless', '--disable-gpu', '--no-first-run',
-        '--disable-background-networking', '--disable-component-update', '--disable-sync',
-        '--force-device-scale-factor=' + displayScale,
-        '--no-default-browser-check', '--virtual-time-budget=6000', '--run-all-compositor-stages-before-draw',
-        '--dump-dom', pathToFileURL(file).href], {
-        encoding: 'utf8', timeout: 30000, maxBuffer: 4 * 1024 * 1024,
-      });
-      assert.ifError(run.error);
-      assert.equal(run.status, 0, run.stderr);
-      const match = run.stdout.match(/<pre id="result">(.*?)<\/pre>/s);
-      assert.ok(match, 'Chromium did not return the test results');
-      const result = JSON.parse(match[1].replaceAll('&quot;', '"').replaceAll('&amp;', '&'));
+      const result = await render(html, displayScale);
       assert.equal(result.error, undefined, result.error);
       for (const item of result.cases) {
         const last = item.samples.at(-1);
-        const message = `Layout at ${item.width}×${item.height}, zoom ${item.scale}, display scale ${displayScale}: ${JSON.stringify(item.samples)}`;
+        const message = `Layout at ${item.width}×${item.height}, timeline zoom ${item.scale}, page zoom ${item.pageZoom}, display scale ${displayScale}: ${JSON.stringify(item.samples)}`;
         assert.ok(parseFloat(last[2]) > 0 && parseFloat(last[3]) > 0, 'The canvas must actually render');
         for (const sample of item.samples.slice(-4)) assert.deepEqual(sample, last, message);
         assert.ok(parseFloat(last[4]) <= last[0] && parseFloat(last[5]) <= last[1], message);
@@ -121,8 +145,4 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
         else assert.ok(last[10] > last[0], 'Zoomed content must remain scrollable');
       }
     }
-  } finally {
-    // The path is the exact temporary directory created above, never the temp root.
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
 });

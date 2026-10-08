@@ -244,14 +244,21 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const host = this.scrollHost().nativeElement;
     const size = this.viewportSize;
     if (!size) return;
+    const sections = this.sections();
+    const groups = this.groups();
+    const totalBeats = sections.reduce((sum, item) => sum + item.section.measures * 4, 0);
+    const minimumHeight = RULER_HEIGHT + groups.length * 65;
+    // Page zoom can round native scrollbar sizes differently from CSS content.
+    // Decide each axis explicitly, rather than allowing our own size writes to
+    // toggle automatic scrollbars and invalidate the next observer measurement.
+    host.style.overflowX = totalBeats > 0 && this.horizontalScale > 1 ? 'scroll' : 'hidden';
+    // Resolve horizontal scrolling first: its scrollbar reduces available height.
+    host.style.overflowY = minimumHeight > host.clientHeight ? 'scroll' : 'hidden';
     // A model/scroll redraw can precede the next observer callback when the host
     // shrinks. Cap against the current client size until that measurement arrives.
     this.width = Math.floor(Math.min(host.clientWidth, size.width));
     this.height = Math.floor(Math.min(host.clientHeight, size.height));
     if (this.width <= 0 || this.height <= 0) return;
-    const sections = this.sections();
-    const groups = this.groups();
-    const totalBeats = sections.reduce((sum, item) => sum + item.section.measures * 4, 0);
     this.labelWidth = this.width <= 680 ? 72 : 88;
     // Scale 1 fits the entire arrangement; sections always share a proportional time axis.
     const timelineWidth = Math.max(1, this.width - this.labelWidth);
@@ -264,7 +271,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       ? Math.max(this.width, Math.round(this.labelWidth + timelineWidth * this.horizontalScale))
       : this.width;
     content.style.width = `${contentWidth}px`;
-    content.style.height = `${Math.max(this.height, RULER_HEIGHT + groups.length * 65)}px`;
+    content.style.height = `${Math.max(this.height, minimumHeight)}px`;
     const viewport = this.viewport().nativeElement;
     viewport.style.width = `${this.width}px`;
     viewport.style.height = `${this.height}px`;

@@ -41,7 +41,7 @@ function fixture() {
   const canvas = (ctx) => ({ width: 0, height: 0, style: {}, getContext: () => ctx,
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 320 }), setAttribute() {} });
   refs.set('scoreCanvas', canvas(base)); refs.set('playheadCanvas', canvas(overlay));
-  refs.set('scrollHost', { clientWidth: 800, clientHeight: 320, scrollLeft: 0, scrollTop: 0 });
+  refs.set('scrollHost', { clientWidth: 800, clientHeight: 320, scrollLeft: 0, scrollTop: 0, style: {} });
   component.viewportSize = {
     get width() { return refs.get('scrollHost').clientWidth; },
     get height() { return refs.get('scrollHost').clientHeight; },
@@ -143,6 +143,27 @@ test('fractional observed sizes round down and stale measurements cannot exceed 
   component.drawOverview();
   assert.equal(refs.get('viewport').style.width, '1178px');
   assert.equal(refs.get('viewport').style.height, '301px');
+});
+
+test('scrollbars follow timeline zoom and row space instead of automatic content overflow', () => {
+  const { component, refs } = fixture();
+  const host = refs.get('scrollHost');
+  assert.equal(host.style.overflowX, 'hidden');
+  assert.equal(host.style.overflowY, 'hidden');
+  component.horizontalScale = 2;
+  component.drawOverview();
+  assert.equal(host.style.overflowX, 'scroll');
+  assert.equal(host.style.overflowY, 'hidden');
+  host.clientHeight = 290;
+  component.drawOverview();
+  assert.equal(host.style.overflowY, 'scroll');
+  component.horizontalScale = 1;
+  component.drawOverview();
+  assert.equal(host.style.overflowX, 'hidden');
+  assert.equal(host.style.overflowY, 'scroll');
+  host.clientHeight = 311;
+  component.drawOverview();
+  assert.equal(host.style.overflowY, 'hidden');
 });
 
 test('Ctrl+wheel zoom anchors the cursor after scrolling and cancels browser zoom', () => {
