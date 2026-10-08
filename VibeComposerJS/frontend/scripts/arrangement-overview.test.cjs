@@ -42,6 +42,10 @@ function fixture() {
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 320 }), setAttribute() {} });
   refs.set('scoreCanvas', canvas(base)); refs.set('playheadCanvas', canvas(overlay));
   refs.set('scrollHost', { clientWidth: 800, clientHeight: 320, scrollLeft: 0, scrollTop: 0 });
+  component.viewportSize = {
+    get width() { return refs.get('scrollHost').clientWidth; },
+    get height() { return refs.get('scrollHost').clientHeight; },
+  };
   refs.set('scrollContent', { style: {} }); refs.set('viewport', { style: {} });
   global.document = { documentElement: {} };
   global.getComputedStyle = () => ({ getPropertyValue: (name) => name });
@@ -99,6 +103,46 @@ test('the arrangement fits the available timeline width by default, including af
   component.drawOverview();
   assert.equal(component.beatX(32), 520);
   assert.equal(refs.get('scrollHost').scrollLeft, 0);
+});
+
+test('section-local redraws fit exactly without introducing scrollbar-sized overflow', () => {
+  const { component, refs } = fixture();
+  const host = refs.get('scrollHost');
+  const content = refs.get('scrollContent');
+  // Eleven bars produce a fractional pixels-per-beat value at 800px.
+  // Reconstructing the fitted width from it used to yield 800.0000000000001px.
+  const project = component.project();
+  for (const [width, height] of [[800, 311], [1188, 311], [1178, 301]]) {
+    host.clientWidth = width;
+    host.clientHeight = height;
+    for (let transpose = 0; transpose <= 36; transpose += 12) {
+      component.project.set({ ...project, arrangement: project.arrangement.map((section, index) => ({
+        ...section, measures: index === 0 ? 5 : section.measures,
+        ...(index === 0 ? { rolePartOverrides: { bass: { transpose } } } : {}),
+      })) });
+      component.drawOverview();
+      assert.equal(content.style.width, `${width}px`);
+      assert.equal(content.style.height, `${height}px`);
+      assert.equal(refs.get('viewport').style.width, `${width}px`);
+      assert.equal(refs.get('viewport').style.height, `${height}px`);
+    }
+  }
+});
+
+test('fractional observed sizes round down and stale measurements cannot exceed a shrinking host', () => {
+  const { component, refs } = fixture();
+  const host = refs.get('scrollHost');
+  host.clientWidth = 1188; host.clientHeight = 311;
+  component.viewportSize = { width: 1187.9, height: 310.9 };
+  component.drawOverview();
+  assert.equal(refs.get('scrollContent').style.width, '1187px');
+  assert.equal(refs.get('scrollContent').style.height, '310px');
+  assert.equal(refs.get('scoreCanvas').width, 2374);
+  assert.equal(refs.get('playheadCanvas').height, 620);
+  host.clientWidth = 1178; host.clientHeight = 301;
+  component.drawOverview();
+  assert.equal(refs.get('viewport').style.width, '1178px');
+  assert.equal(refs.get('viewport').style.height, '301px');
 });
 
 test('Ctrl+wheel zoom anchors the cursor after scrolling and cancels browser zoom', () => {

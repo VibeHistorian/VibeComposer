@@ -155,6 +155,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private readonly scoreCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('scoreCanvas');
   private readonly playheadCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('playheadCanvas');
   private resizeObserver?: ResizeObserver;
+  private viewportSize: { readonly width: number; readonly height: number } | null = null;
   private frame = 0;
   private ready = false;
   private width = 0;
@@ -188,9 +189,17 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.ready = true;
     this.scoreCanvas().nativeElement.addEventListener('wheel', this.onCanvasWheel, { passive: false });
-    this.resizeObserver = new ResizeObserver(() => this.scheduleDraw());
-    this.resizeObserver.observe(this.scrollHost().nativeElement);
-    this.scheduleDraw();
+    const host = this.scrollHost().nativeElement;
+    this.resizeObserver = new ResizeObserver((entries) => {
+      const bounds = entries.find((entry) => entry.target === host)?.contentRect;
+      if (!bounds) return;
+      // Unlike clientWidth/clientHeight, contentRect preserves fractional CSS
+      // pixels and excludes scrollbars. Rounding up can create both scrollbars,
+      // then removing them on the next draw creates an endless resize loop.
+      this.viewportSize = { width: bounds.width, height: bounds.height };
+      this.scheduleDraw();
+    });
+    this.resizeObserver.observe(host);
   }
 
   ngOnDestroy(): void {
@@ -233,8 +242,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
 
   private drawOverview(): void {
     const host = this.scrollHost().nativeElement;
-    this.width = host.clientWidth;
-    this.height = host.clientHeight;
+    const size = this.viewportSize;
+    if (!size) return;
+    // A model/scroll redraw can precede the next observer callback when the host
+    // shrinks. Cap against the current client size until that measurement arrives.
+    this.width = Math.floor(Math.min(host.clientWidth, size.width));
+    this.height = Math.floor(Math.min(host.clientHeight, size.height));
     if (this.width <= 0 || this.height <= 0) return;
     const sections = this.sections();
     const groups = this.groups();
@@ -245,8 +258,13 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.pixelsPerBeat = timelineWidth / Math.max(1, totalBeats) * this.horizontalScale;
     this.rowHeight = Math.max(65, (this.height - RULER_HEIGHT) / Math.max(1, groups.length));
     const content = this.scrollContent().nativeElement;
-    content.style.width = `${Math.max(this.width, this.labelWidth + totalBeats * this.pixelsPerBeat)}px`;
-    content.style.height = `${Math.max(this.height, RULER_HEIGHT + groups.length * this.rowHeight)}px`;
+    // Use viewport dimensions directly when fitting. Reconstructing them from
+    // fractional beat/row sizes can overflow by a rounding error and add scrollbars.
+    const contentWidth = totalBeats > 0 && this.horizontalScale > 1
+      ? Math.max(this.width, Math.round(this.labelWidth + timelineWidth * this.horizontalScale))
+      : this.width;
+    content.style.width = `${contentWidth}px`;
+    content.style.height = `${Math.max(this.height, RULER_HEIGHT + groups.length * 65)}px`;
     const viewport = this.viewport().nativeElement;
     viewport.style.width = `${this.width}px`;
     viewport.style.height = `${this.height}px`;

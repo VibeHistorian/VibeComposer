@@ -6,6 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "test:overview": "node --test scripts/arrangement-overview.test.cjs",
+    "test:overview:browser": "node --test scripts/arrangement-overview-browser.test.cjs",
     "test:playback": "node --test scripts/audio-playback.test.cjs",
     "test:selection": "node --test scripts/section-selection.test.cjs",
     "test:parts": "node --test scripts/part-settings.test.cjs",
