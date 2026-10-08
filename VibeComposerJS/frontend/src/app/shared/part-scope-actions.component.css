@@ -1,0 +1,12 @@
+/* Local actions */
+:host { display: block; min-width: 0; }
+.scope-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+button { min-height: 26px; padding: 0 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
+button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+button:disabled { opacity: .38; cursor: default; }
+p { margin: 6px 0; color: var(--text-muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.workflow-message { color: var(--text-primary); }
+
+/* Range actions */
+.range-actions { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border-subtle); }
+summary { color: var(--text-secondary); cursor: pointer; font-size: 10px; }

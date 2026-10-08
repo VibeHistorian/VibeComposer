@@ -169,3 +169,16 @@ Source: [ExtraSettingsGUI](../midimasterpiece/src/main/java/org/vibehistorian/vi
 | Persistence/validation/export naming | `customFilenameAddTimestamp`, `configHistoryStoreRegeneratedTracks`, `allowValuesOutOfRange` | App preferences; keep current validation safe until explicitly designed |
 
 Implementation lookup workflow: search the exact symbol, follow save/load into GUIConfig/InstPart, then locate the phrase or reroll consumer. Record unsupported/no-op branches before deciding whether to reproduce or fix them. All newly active controls need matching generation, serialization, history, and scope support; inspector completeness is delivered with each implemented slice, while explicitly deferred capabilities remain in this backlog.
+
+## Implemented workflow slice — P7a
+
+The old MANUAL/Apply family (`ArrangementGUI.applyCustomPanelsToSection()`, `switchPanelsForSectionSelection()`, `Section.setInstPartList()`, and `ApplyCustomSectionPopup`) is now partially represented by explicit local actions in the quick panel and inspector. These are deliberate sparse-patch equivalents, rather than a Java full-list storage port:
+
+| New action | Scope and effect | Implementation lookup |
+| --- | --- | --- |
+| Apply cell/track overrides | Merge explicit source fields at the same layer in header-selected destinations; preserve destination track exceptions | `ProjectService.applyPartSettingsToSections(..., 'overrides')` |
+| Apply effective values | Replace current matching track patches with independent source-effective snapshots at each destination | `ProjectService.applyPartSettingsToSections(..., 'effective')` |
+| Freeze effective settings / Freeze current tracks | Snapshot supported part values per current track in the source section; preserve mixed values | `ProjectService.freezePartSettings()` |
+| Reset cell + track overrides | Clear both layers for the selected role and its current tracks | `ProjectService.resetCellPartSettings()` |
+
+All actions share `PartScopeActionsComponent` and `WorkspaceCanvasComponent.runPartWorkflow()`. The source section is excluded from range copying. Track presence, instruments, manual phrases and global values are preserved. Freeze covers implemented part controls only; global harmony/seed and future unported controls continue to follow their own settings. Apply to Global remains deferred.

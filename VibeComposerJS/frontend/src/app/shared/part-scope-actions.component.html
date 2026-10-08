@@ -1,0 +1,31 @@
+<div class="scope-actions">
+  <button type="button" (click)="freezeRequested.emit()"
+    title="Store all supported effective musical settings as individual track overrides in this section.">
+    {{ group() ? 'Freeze current tracks' : 'Freeze effective settings' }}
+  </button>
+  @if (group()) {
+    <button type="button" [disabled]="!hasOverrides() && !hasExceptions()" (click)="resetCellRequested.emit()"
+      title="Remove both this cell’s overrides and all its individual track overrides. Global settings and manual notes are preserved.">
+      Reset cell + track overrides
+    </button>
+  }
+</div>
+<details class="range-actions">
+  <summary>Apply to header-selected sections ({{ destinationCount() }})</summary>
+  @if (destinationCount()) {
+    <p>Destinations: {{ destinations() }}. The source section is excluded.</p>
+  } @else {
+    <p>Select destination section headers (Shift selects a range), then click the source cell or track. That keeps the header selection.</p>
+  }
+  <div class="scope-actions">
+    <button type="button" [disabled]="!destinationCount() || !hasOverrides()" (click)="applyRequested.emit('overrides')">
+      {{ group() ? 'Apply cell overrides' : 'Apply track overrides' }}
+    </button>
+    <button type="button" [disabled]="!destinationCount()" (click)="applyRequested.emit('effective')">Apply effective values</button>
+  </div>
+  <p>Overrides merge only the source’s explicit fields into the same destination layer; other fields and track exceptions stay active.
+    Effective values replace each current track’s musical overrides with a full snapshot, preserving mixed values across tracks.</p>
+</details>
+<p class="freeze-note">Frozen values stop following inherited settings. {{ group() ? 'New tracks continue to inherit cell settings. Reset cell + track overrides restores inheritance for all current tracks.' : 'Reset to inherited removes this track’s snapshot.' }}
+  Presence, instruments and saved manual notes are preserved.</p>
+@if (message()) { <p class="workflow-message" role="status">{{ message() }}</p> }

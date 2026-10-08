@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type {
-  ArrangedPart, ArrangementSection, SectionType, CompositionTrack, PartSettingsScope,
+  ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
 } from '../core/project/project.model';
 import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
@@ -16,6 +16,7 @@ import type { ScoreCanvasNote, ScoreSectionFocus, ScoreViewport } from './score-
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
+import { PartScopeActionsComponent } from './part-scope-actions.component';
 import { resolvePartTrack, settingsValues } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
@@ -49,7 +50,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent],
+  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -134,6 +135,15 @@ export class WorkspaceCanvasComponent {
       Object.keys(this.contextSection()?.trackPartOverrides?.[track.id] ?? {}).length).length : 0;
   });
   readonly manualTrackNames = computed(() => this.contextTracks().filter((track) => track.editedPhrase !== undefined).map((track) => track.name).join(', '));
+  readonly partDestinations = computed(() => this.project().arrangement.filter((section) =>
+    this.selectedSectionIds().includes(section.id) && section.id !== this.localPartTarget()?.sectionId));
+  readonly partDestinationLabel = computed(() => this.partDestinations().map((section) =>
+    `${this.project().arrangement.indexOf(section) + 1} · ${this.sectionLabel(section.type)}`).join(', '));
+  private readonly workflowFeedback = signal<{ scope: string; project: CompositionProject; message: string } | null>(null);
+  readonly partWorkflowMessage = computed(() => {
+    const feedback = this.workflowFeedback();
+    return feedback?.scope === JSON.stringify(this.localPartTarget()) && feedback.project === this.project() ? feedback.message : null;
+  });
   private readonly editFailure = signal<{ scope: string; message: string } | null>(null);
   readonly partEditError = computed(() => this.editFailure()?.scope === JSON.stringify(this.partScope()) ? this.editFailure()?.message : null);
   readonly editing = signal(false);
@@ -279,6 +289,23 @@ export class WorkspaceCanvasComponent {
 
   randomizeArrangementPresence(): void {
     this.projects.randomizeArrangementPresence();
+  }
+
+  runPartWorkflow(action: 'freeze' | 'overrides' | 'effective' | 'reset-cell'): void {
+    const scope = this.localPartTarget();
+    if (!scope || !this.partGenerationAvailable() || !this.contextTracks().length) return;
+    const destinations = this.partDestinations().map((section) => section.id);
+    const result = action === 'freeze' ? this.projects.freezePartSettings(scope)
+      : action === 'reset-cell' ? scope.kind === 'section-role' ? this.projects.resetCellPartSettings(scope) : 'invalid'
+      : this.projects.applyPartSettingsToSections(scope, destinations, action);
+    const message = result === 'invalid'
+      ? 'No settings changed. A destination or inherited velocity range conflicts with this action.'
+      : result === 'unchanged' ? 'Settings already match; no changes were needed.'
+      : action === 'freeze' ? 'Effective settings frozen for the current track(s) in this section.'
+      : action === 'reset-cell' ? 'Cell and individual track overrides reset to global inheritance.'
+      : `${action === 'overrides' ? 'Overrides' : 'Effective values'} applied to ${destinations.length} selected section(s).`;
+    this.editFailure.set(null);
+    this.workflowFeedback.set({ scope: JSON.stringify(scope), project: this.project(), message });
   }
 
   openTrackEditor(trackId: string): void {

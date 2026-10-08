@@ -82,6 +82,9 @@ export type PartSettingsScope =
   | { readonly kind: 'section-role'; readonly sectionId: string; readonly role: ArrangedPart }
   | { readonly kind: 'section-track'; readonly sectionId: string; readonly trackId: string };
 
+export type LocalPartSettingsScope = Extract<PartSettingsScope, { readonly sectionId: string }>;
+export type PartWorkflowResult = 'changed' | 'unchanged' | 'invalid';
+
 export interface MixChannelSettings {
   /** General MIDI program number, ignored by the percussion channel. */
   readonly program: number;

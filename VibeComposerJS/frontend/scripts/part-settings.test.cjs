@@ -5,6 +5,16 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+// The decoder materializes optional empty maps; compare musical data rather than property order/omission.
+function projectData(json) {
+  const project = JSON.parse(json);
+  for (const section of project.arrangement) {
+    section.rolePartOverrides ??= {};
+    section.trackPartOverrides ??= {};
+  }
+  return project;
+}
+
 function fixture() {
   const cache = new Map();
   const signal = (value) => {
@@ -378,6 +388,177 @@ test('unavailable melody settings and legacy algorithms are rejected without cha
     assert.equal(service.importProjectJson(JSON.stringify(saved)), false);
     assert.equal(service.exportProjectJson(), before);
   }
+});
+
+test('freezing mixed cells preserves each effective track, including omitted defaults, with one undo step', () => {
+  const { service, settings, phrase } = fixture();
+  const first = 'track-bass-1';
+  const second = service.duplicateTrack(first);
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'bass' };
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { transpose: 12, noteVariation: 80 });
+  service.updatePartSettings(cell, { octaveInterval: false, velocityMin: 70 });
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: second }, { transpose: 24 });
+  const original = service.exportProjectJson();
+  const source = () => service.project().arrangement.find((section) => section.id === sectionId);
+  const track = (id) => service.project().tracks.find((track) => track.id === id);
+  const effective = (id) => settings.settingsValues(settings.resolvePartTrack(track(id), source()).generatorSettings, 'bass');
+  const values = [effective(first), effective(second)];
+  const notes = phrase.layOutTrackPhrase(service.project(), track(second));
+  assert.equal(service.freezePartSettings(cell), 'changed');
+  assert.deepEqual(source().trackPartOverrides[first], values[0]);
+  assert.deepEqual(source().trackPartOverrides[second], values[1]);
+  assert.notStrictEqual(source().trackPartOverrides[first], source().trackPartOverrides[second]);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track(second)), notes);
+  service.undo();
+  assert.equal(service.exportProjectJson(), original);
+  service.redo();
+  assert.equal(service.freezePartSettings(cell), 'unchanged');
+  service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { transpose: -12, noteVariation: 0, velocityMin: 75 });
+  service.updatePartSettings(cell, { octaveInterval: true });
+  assert.deepEqual([effective(first), effective(second)], values, 'snapshots shield every supported field');
+  const third = service.addTrack('bass');
+  assert.equal(effective(third).transpose, -12);
+  assert.equal(effective(third).octaveInterval, true, 'new members keep inheriting the cell');
+  const beforeReset = service.exportProjectJson();
+  assert.equal(service.resetCellPartSettings(cell), 'changed');
+  assert.equal(effective(first).transpose, -12);
+  assert.equal(effective(first).velocityMin, 75);
+  assert.equal(source().rolePartOverrides.bass, undefined);
+  assert.equal(source().trackPartOverrides[first], undefined);
+  service.undo();
+  assert.equal(service.exportProjectJson(), beforeReset);
+});
+
+test('range override copying merges only its layer, preserves exceptions and presence, and is one undo step', () => {
+  const { service, settings } = fixture();
+  const first = 'track-bass-1';
+  const second = service.duplicateTrack(first);
+  const [source, destination, another] = service.project().arrangement;
+  const cell = { kind: 'section-role', sectionId: source.id, role: 'bass' };
+  service.updatePartSettings(cell, { transpose: 0, octaveInterval: false });
+  service.updatePartSettings({ ...cell, sectionId: destination.id }, { transpose: 12, noteVariation: 75 });
+  service.updatePartSettings({ kind: 'section-track', sectionId: destination.id, trackId: second }, { transpose: 24 });
+  const before = service.exportProjectJson();
+  const tracks = service.project().tracks;
+  const presence = service.project().arrangement.map((section) => section.trackPresence);
+  assert.equal(service.applyPartSettingsToSections(cell, [source.id, destination.id, another.id, destination.id], 'overrides'), 'changed');
+  const sections = service.project().arrangement;
+  assert.deepEqual(sections[1].rolePartOverrides.bass, { transpose: 0, noteVariation: 75, octaveInterval: false });
+  assert.equal(settings.resolvePartTrack(tracks.find((track) => track.id === second), sections[1]).generatorSettings.transpose, 24);
+  assert.strictEqual(service.project().tracks, tracks);
+  assert.deepEqual(sections.map((section) => section.trackPresence), presence);
+  assert.notStrictEqual(sections[0].rolePartOverrides.bass, sections[2].rolePartOverrides.bass);
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canRedo(), true);
+  assert.equal(service.applyPartSettingsToSections(cell, [source.id], 'overrides'), 'unchanged');
+  assert.equal(service.canRedo(), true, 'a no-op leaves redo intact');
+  service.redo();
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(projectData(service.exportProjectJson()), projectData(saved));
+  service.updatePartSettings({ ...cell, sectionId: another.id }, { transpose: -12 });
+  assert.equal(service.project().arrangement[0].rolePartOverrides.bass.transpose, 0);
+});
+
+test('track copying distinguishes explicit overrides from effective snapshots and shares parsed MIDI output', () => {
+  const { service, settings, phrase, midi, load } = fixture();
+  const trackId = 'track-chords-1';
+  const sections = service.project().arrangement;
+  const source = { kind: 'section-track', sectionId: sections[0].id, trackId };
+  const target = { ...source, sectionId: sections[1].id };
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
+  service.updatePartSettings({ kind: 'section-role', sectionId: source.sectionId, role: 'chords' }, { voicing: 'open', transpose: 12 });
+  service.updatePartSettings(source, { noteLengthPercent: 50 });
+  service.updatePartSettings(target, { transpose: -12, velocityMin: 110, velocityMax: 110 });
+  assert.equal(service.applyPartSettingsToSections(source, [target.sectionId], 'overrides'), 'changed');
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId],
+    { transpose: -12, velocityMin: 110, velocityMax: 110, noteLengthPercent: 50 });
+  const track = () => service.project().tracks.find((track) => track.id === trackId);
+  const sourceValues = settings.settingsValues(settings.resolvePartTrack(track(), service.project().arrangement[0]).generatorSettings, 'chords');
+  assert.equal(service.applyPartSettingsToSections(source, [target.sectionId], 'effective'), 'changed');
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId], sourceValues);
+  const notes = phrase.layOutTrackPhrase(service.project(), track());
+  const exported = new Midi(midi.generateCompositionMidi(service.project())).tracks.find((track) => track.name === 'C1');
+  assert.deepEqual(exported.notes.map((note) => note.midi), notes.map((note) => note.midi));
+  const saved = service.exportProjectJson();
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved), 'snapshots survive session restore');
+  service.resetPartSettings(target);
+  assert.equal(settings.resolvePartTrack(track(), service.project().arrangement[1]).generatorSettings.transpose, undefined);
+});
+
+test('range conflicts and stale targets reject atomically without losing history or manual phrases', () => {
+  const { service } = fixture();
+  const trackId = 'track-bass-1';
+  const sections = service.project().arrangement;
+  const cell = { kind: 'section-role', sectionId: sections[0].id, role: 'bass' };
+  service.updatePartSettings({ kind: 'global-track', trackId }, { velocityMax: 100 });
+  service.updatePartSettings(cell, { velocityMin: 90 });
+  service.updatePartSettings({ kind: 'section-track', sectionId: sections[1].id, trackId }, { velocityMax: 80 });
+  service.updateTrackPhrase(trackId, [{ id: 'saved', midi: 48, startBeat: 0, durationBeats: 1, velocity: 80 }]);
+  const before = service.exportProjectJson();
+  const reference = service.project();
+  assert.equal(service.applyPartSettingsToSections(cell, [sections[2].id, sections[1].id], 'overrides'), 'invalid');
+  assert.strictEqual(service.project(), reference);
+  assert.equal(service.applyPartSettingsToSections(cell, [sections[2].id, 'deleted'], 'effective'), 'invalid');
+  assert.equal(service.freezePartSettings({ ...cell, sectionId: 'deleted' }), 'invalid');
+  assert.equal(service.freezePartSettings({ kind: 'section-track', sectionId: cell.sectionId, trackId: 'deleted' }), 'invalid');
+  assert.equal(service.freezePartSettings({ ...cell, role: 'melody' }), 'invalid');
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.applyPartSettingsToSections(cell, [sections[1].id, sections[2].id], 'effective'), 'changed');
+  assert.deepEqual(service.project().tracks.find((track) => track.id === trackId).editedPhrase,
+    reference.tracks.find((track) => track.id === trackId).editedPhrase);
+  service.undo();
+  assert.equal(service.exportProjectJson(), before, 'a rejected action did not add a hidden history entry');
+});
+
+test('freezing imported semitone values retains their exact settings; empty and inherited scopes do not fabricate overrides', () => {
+  const { service } = fixture();
+  const saved = JSON.parse(service.exportProjectJson());
+  const trackId = 'track-arpeggio-1';
+  saved.tracks.find((track) => track.id === trackId).generatorSettings.transpose = 5;
+  assert.equal(service.importProjectJson(JSON.stringify(saved)), true);
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId };
+  assert.equal(service.applyPartSettingsToSections(scope, [service.project().arrangement[1].id], 'overrides'), 'unchanged');
+  assert.equal(service.freezePartSettings(scope), 'changed');
+  assert.equal(service.project().arrangement[0].trackPartOverrides[trackId].transpose, 5);
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  service.removeTrack('track-drums-1');
+  const empty = { kind: 'section-role', sectionId: scope.sectionId, role: 'drums' };
+  const before = service.exportProjectJson();
+  assert.equal(service.freezePartSettings(empty), 'invalid');
+  assert.equal(service.resetCellPartSettings(empty), 'unchanged');
+  assert.equal(service.exportProjectJson(), before);
+});
+
+test('workspace applies only to retained header destinations and reports the shared workflow result', () => {
+  const { service, ui, workspace } = fixture();
+  const sections = service.project().arrangement;
+  ui.selectSection(sections[1].id);
+  ui.selectSection(sections[2].id, { shiftKey: true });
+  ui.selectCell(sections[0].id, 'chords');
+  const selection = [...ui.selectedSectionIds()];
+  assert.deepEqual(workspace.partDestinations().map((section) => section.id), selection);
+  service.updatePartSettings(workspace.partScope(), { transpose: 12 });
+  const before = service.exportProjectJson();
+  workspace.runPartWorkflow('overrides');
+  assert.match(workspace.partWorkflowMessage(), /2 selected section/);
+  assert.deepEqual(ui.selectedSectionIds(), selection);
+  assert.deepEqual(ui.settingsTarget(), { kind: 'section-role', sectionId: sections[0].id, role: 'chords' });
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(workspace.partWorkflowMessage(), null, 'undo clears stale success feedback');
+  workspace.runPartWorkflow('freeze');
+  assert.match(workspace.partWorkflowMessage(), /frozen/);
+  assert.equal(workspace.trackExceptionCount(), 1);
+  workspace.runPartWorkflow('reset-cell');
+  assert.equal(workspace.trackExceptionCount(), 0);
+  assert.match(workspace.partWorkflowMessage(), /reset/);
+  ui.selectCell(sections[1].id, 'chords');
+  assert.equal(workspace.partDestinations().length, 1, 'the source is excluded even when inside the header range');
+  assert.equal(workspace.partWorkflowMessage(), null);
 });
 
 test('section chance preferences gain melody defaults while retaining saved probabilities for other roles', () => {

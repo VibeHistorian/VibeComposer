@@ -113,6 +113,13 @@
               <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
                 (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
             }
+            @if (localPartTarget() && editableScopes().length) {
+              <vc-part-scope-actions [group]="localPartTarget()?.kind === 'section-role'"
+                [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
+                [destinations]="partDestinationLabel()" [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
+                (freezeRequested)="runPartWorkflow('freeze')" (resetCellRequested)="runPartWorkflow('reset-cell')"
+                (applyRequested)="runPartWorkflow($event)" />
+            }
           </div>
         }
       </section>
@@ -178,6 +185,13 @@
               (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
             <button type="button" class="restore-track-button" [disabled]="!overriddenKeys().length"
               (click)="resetPartSettings(item.scope)">Reset this part to inherited</button>
+          }
+          @if (editableScopes().length) {
+            <vc-part-scope-actions [group]="localPartTarget()?.kind === 'section-role'"
+              [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
+              [destinations]="partDestinationLabel()" [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
+              (freezeRequested)="runPartWorkflow('freeze')" (resetCellRequested)="runPartWorkflow('reset-cell')"
+              (applyRequested)="runPartWorkflow($event)" />
           }
           @for (track of contextTracks(); track track.id) {
             <section class="quick-settings-group">
