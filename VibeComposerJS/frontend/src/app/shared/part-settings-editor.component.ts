@@ -7,6 +7,7 @@ import { CompactKnobComponent } from './compact-knob.component';
   selector: 'vc-part-settings-editor',
   imports: [CompactKnobComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[attr.data-control-role]': 'role()' },
   templateUrl: './part-settings-editor.component.html',
   styleUrl: './part-settings-editor.component.css',
 })

@@ -83,7 +83,7 @@
         (trackSelected)="selectSectionTrack($event.sectionId, $event.trackId)"
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
 
-      <section class="part-settings-panel" aria-label="Part settings">
+      <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
         <header class="part-settings-heading">
           <div class="part-heading-context">
           <button type="button" class="part-panel-toggle" [attr.aria-expanded]="partPanelExpanded()"
@@ -168,7 +168,7 @@
   </main>
 
   @if (!editing()) {
-    <aside id="part-inspector" class="context-inspector" tabindex="-1" aria-label="Selection inspector">
+    <aside id="part-inspector" class="context-inspector" [attr.data-control-role]="partScope() ? partRole() : null" tabindex="-1" aria-label="Selection inspector">
       <header class="canvas-heading inspector-heading">
         <div><p class="eyebrow">INSPECTOR</p><h2>{{ localPartTarget() ? 'Section part' : selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
         <i class="role-dot" [class]="partRole()"></i>
@@ -249,7 +249,7 @@
               <button type="button" (click)="randomizeSectionPresence(section)">Reroll</button>
             </div>
             @for (track of arrangedTracks(); track track.id) {
-              <div class="section-track-control">
+              <div class="section-track-control" [attr.data-control-role]="track.role">
                 <label><span><i class="role-dot" [class]="track.role"></i>{{ track.name }}</span>
                   <input type="checkbox" [checked]="trackPresent(section, track)" (change)="toggleSectionTrack(section, track, $event)" />
                 </label>

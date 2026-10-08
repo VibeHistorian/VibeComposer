@@ -133,6 +133,22 @@
   --line: var(--border-subtle);
 }
 
+/* Contextual role accents */
+[data-control-role="melody"] { --control-role-color: var(--role-melody); }
+[data-control-role="bass"] { --control-role-color: var(--role-bass); }
+[data-control-role="chords"] { --control-role-color: var(--role-chords); }
+[data-control-role="arpeggio"] { --control-role-color: var(--role-arpeggio); }
+[data-control-role="drums"] { --control-role-color: var(--role-drums); }
+[data-control-role] {
+  --accent-primary: var(--control-role-color);
+  --accent: var(--accent-primary);
+  --accent-hover: color-mix(in srgb, var(--control-role-color) 75%, var(--text-primary));
+  --accent-outline: color-mix(in srgb, var(--control-role-color) 18%, transparent);
+  --accent-shadow: color-mix(in srgb, var(--control-role-color) 15%, transparent);
+  --accent-glow: color-mix(in srgb, var(--control-role-color) 50%, transparent);
+  --border-focus: var(--control-role-color);
+}
+
 /* Base element styles */
 * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--border-strong) var(--surface-canvas); }
 *::-webkit-scrollbar { width: 10px; height: 10px; }

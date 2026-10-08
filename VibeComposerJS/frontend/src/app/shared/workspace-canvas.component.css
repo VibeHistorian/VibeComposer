@@ -88,6 +88,7 @@
 .inspector-selection strong { color: var(--text-primary); font-size: 20px; font-weight: 500; letter-spacing: -.04em; }
 .track-name-field { display: grid; gap: 4px; color: var(--text-muted); font-size: 10px; }
 .track-name-field input { width: 100%; min-width: 0; height: 28px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
+.context-inspector input:focus-visible, .context-inspector select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 .channel-warning { padding: 6px 7px; border: 1px solid var(--border-warm); border-radius: var(--radius-control); background: var(--surface-warm); color: var(--color-warning); font-size: 10px; line-height: 1.4; }
 .track-actions { display: flex; align-items: center; gap: 5px; }
 .track-actions button { min-height: 26px; padding: 0 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
@@ -119,6 +120,7 @@
 .section-track-control > label { justify-content: space-between; color: var(--text-secondary); font-size: 10px; }
 .section-track-control > label span { display: flex; align-items: center; gap: 5px; }
 .section-track-control > div input { min-width: 0; flex: 1; accent-color: var(--accent-primary); }
+.section-track-control input[type="checkbox"] { accent-color: var(--accent-primary); }
 .section-track-control output { color: var(--text-muted); font: 10px var(--font-mono); }
 .inspector-arrangement-add { margin-top: 12px; }
 .inspector-arrangement-add select { width: 100%; height: 27px; padding: 0 6px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; text-transform: capitalize; }

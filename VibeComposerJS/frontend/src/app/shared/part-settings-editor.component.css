@@ -6,6 +6,7 @@
 .part-control select { min-width: 95px; max-width: 140px; height: 29px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
 .part-check { max-width: 110px; }
 .part-check input { margin: 0; accent-color: var(--accent-primary); }
+.part-control select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 
 /* Inheritance */
 .inherit-field { padding: 2px 0; border: 0; background: transparent; color: var(--accent-primary); cursor: pointer; font-size: 9px; }
