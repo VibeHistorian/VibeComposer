@@ -64,8 +64,10 @@ function fixture() {
   return { playback, context, sources, project, angular, load };
 }
 
-test('LIVE defaults off and edits leave the playing schedule untouched', async () => {
+test('LIVE defaults on and disabling it leaves the playing schedule untouched on edits', async () => {
   const { playback, context, sources, project } = fixture();
+  assert.equal(playback.liveEnabled(), true);
+  playback.toggleLive();
   await playback.start(project);
   context.currentTime = 1;
   playback.reload({ ...project, tempoBpm: 60 });
@@ -78,7 +80,6 @@ test('LIVE defaults off and edits leave the playing schedule untouched', async (
 test('live note edits cancel queued voices, crossfade, and resume sustained notes at the current beat', async () => {
   const { playback, context, sources, project } = fixture();
   await playback.start(project);
-  playback.toggleLive();
   context.currentTime = 1.9;
   playback.tick(); // Queue the beat-four note before the edit.
   const oldSources = [...sources];
@@ -100,7 +101,6 @@ test('live note edits cancel queued voices, crossfade, and resume sustained note
 test('tempo changes preserve the beat and update subsequent timing', async () => {
   const { playback, context, project } = fixture();
   await playback.start(project);
-  playback.toggleLive();
   context.currentTime = 1;
   playback.reload({ ...project, tempoBpm: 60 });
   assert.equal(playback.beat(), 2);
@@ -112,7 +112,6 @@ test('tempo changes preserve the beat and update subsequent timing', async () =>
 test('section presence edits remove notes and added tracks receive audio buses', async () => {
   const { playback, context, sources, project } = fixture();
   await playback.start(project);
-  playback.toggleLive();
   context.currentTime = 1;
   playback.reload({ ...project, arrangement: [{ measures: 4, trackPresence: { bass: false } }] });
   assert.equal(playback.notes.length, 0);
@@ -128,7 +127,6 @@ test('mix and label edits do not restart unchanged notes, but program edits do',
   const { playback, context, sources, project } = fixture();
   project.tracks[0].role = 'chords';
   await playback.start(project);
-  playback.toggleLive();
   context.currentTime = 1;
   const track = { ...project.tracks[0], mix: { ...project.tracks[0].mix, muted: true } };
   const master = playback.master;
@@ -145,7 +143,6 @@ test('shortening stops at the new end or wraps when loop is enabled', async () =
   for (const loop of [false, true]) {
     const { playback, context, project } = fixture();
     await playback.start(project);
-    playback.toggleLive();
     if (loop) playback.toggleLoop();
     context.currentTime = 5;
     playback.reload({ ...project, arrangement: [{ measures: 2, trackPresence: {} }] });
@@ -158,7 +155,6 @@ test('shortening stops at the new end or wraps when loop is enabled', async () =
 test('reload after disabling loop during a later cycle continues to the cycle end', async () => {
   const { playback, context, project } = fixture();
   await playback.start(project);
-  playback.toggleLive();
   playback.toggleLoop();
   context.currentTime = 10;
   playback.toggleLoop();
@@ -173,7 +169,6 @@ test('reload after disabling loop during a later cycle continues to the cycle en
 test('paused and stopped playback stay inactive until resumed with the latest project', async () => {
   const { playback, context, project } = fixture();
   await playback.start(project);
-  playback.toggleLive();
   context.currentTime = 1;
   playback.pause();
   playback.reload({ ...project, tempoBpm: 60 });
@@ -202,6 +197,7 @@ test('transport watches project changes and enabling LIVE without subscribing to
   let reloads = 0;
   const reload = playback.reload.bind(playback);
   playback.reload = (next) => { reloads++; reload(next); };
+  playback.toggleLive(); // Explicitly disable the default before testing re-enabling.
   const transport = new TransportDockComponent();
   await playback.start(project);
   context.currentTime = 1;
@@ -281,7 +277,6 @@ test('LIVE reload and disabling loop preserve the musical beat in a selected ran
   const { playback, context, project } = fixture();
   playback.setLoopRange({ startBeat: 4, endBeat: 8 });
   playback.toggleLoop();
-  playback.toggleLive();
   await playback.start(project);
   context.currentTime = 3;
   playback.reload({ ...project, tempoBpm: 60 });

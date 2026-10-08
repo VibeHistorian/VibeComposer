@@ -17,7 +17,7 @@ export class AudioPlaybackService {
   private readonly position = signal(0);
   private readonly duration = signal(0);
   private readonly loopState = signal(false);
-  private readonly liveState = signal(false);
+  private readonly liveState = signal(true);
   private readonly playbackError = signal('');
 
   readonly state = this.playbackState.asReadonly();
