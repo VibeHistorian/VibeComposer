@@ -4,7 +4,7 @@ These rules guide the translation of VibeComposer's generation functionality int
 
 0. **The Angular translation project is in a buildout stage** - it's OK for there to be breaking changes, and it's OK to remove or replace existing TS/html/css if it doesn't align with the overall goals.
 
-1. **Do not port legacy melody generation or its controls.** Treat the legacy melody generator and its associated settings as out of scope for the rewrite.
+1. **Do not port the older legacy melody algorithm (LegacyMelodySkeletonGenerator) or its controls (only the newer block-based melody generation should be ported).** Treat the legacy melody algorithm and its associated settings as out of scope for the rewrite.
 
 2. **Match Java's seeded random behavior.** → Use the project's `java-random.ts`.
 
@@ -14,7 +14,7 @@ These rules guide the translation of VibeComposer's generation functionality int
 
 3. **Port generation behavior, not the legacy control layout.** Preserve the musical generation functionality that remains in scope, while placing its controls in the consolidated workspace described in [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The split-parts moodboard at `frontend/UI_design_moodboard_split_parts.png` is visual inspiration, not a requirement to reproduce either the Java UI or a separate Create, Arrange, Edit, or Mix page.
 
-4. **Choose state boundaries and update flows that can support history a undo/redo model.** E.g. components mutating state through a service which records the interaction and produces a new historical state. Long interactions, such as mouse events, should only produce a new state once (e.g. on release) rather than on every occurrence.
+4. **Choose state boundaries and update flows that can support history (undo/redo model).** E.g. components mutating state through a service which records the interaction and produces a new historical state. Long interactions, such as mouse events, should only produce a new state once (e.g. on release) rather than on every occurrence.
 
 5. **Use Web Audio and Web MIDI for audio and MIDI work.** Keep audio and MIDI processing asynchronous and non-blocking for the UI. Do not perform time-sensitive playback work in Angular rendering or change-detection paths.
 
