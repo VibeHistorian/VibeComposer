@@ -100,6 +100,12 @@ Part controls now use a shared `ControlHeadingComponent`: left-aligned name and 
 
 Knobs show their numeric value in the center instead of a code, with no value row by default. Mixed values show an em dash; full values, units and mixed status remain in tooltips and accessible slider text. `CompactKnobComponent.showValueBelow` / `PartControl.showValueBelow` opts into a full value row for future long values. Choice controls share the same heading; checkboxes sit below their name and align left. Labels remain linked to their inputs, and reset buttons are separate from labels. Validation: production build and all 81 existing functional tests pass. Pause for UI review before adding further controls.
 
+### Arrangement density refinement
+
+The overview now derives a minimum horizontal scale from the largest role's track count and the shortest section. Every cell has enough width for at most two track-button rows, keeping buttons within their role row and leaving a separate note-preview area. All sections still share a proportional beat axis; horizontal scrolling appears when needed. Ctrl-wheel zoom-out cannot cross the fit floor, and zoom-in starts immediately from the effective scale. The automatic floor is separate from deliberate user zoom, so removing tracks or widening the viewport can restore the fitted view without overwriting user zoom. Canvas allocation stays viewport-sized, and hit testing/playhead use the same effective beat mapping.
+
+Validation: production build and 84 functional tests pass. New cases exercise 1–64 tracks, shortest-section fitting, cell containment, note clearance, hit testing, zoom anchoring, track removal and resizing. Chromium regression coverage includes dense cells and transitions back to sparse cells across page zoom and device scaling.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.

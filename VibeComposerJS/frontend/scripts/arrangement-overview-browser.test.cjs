@@ -101,25 +101,35 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     (async () => { try {
       for (const pageZoom of [0.8, 1, 1.25, 1.5]) {
       document.documentElement.style.zoom = pageZoom;
-      for (const [width, height, scale] of [
+      for (const [width, height, scale, trackCount = 1] of [
         [1218, 384, 1], [1217.5, 383.5, 1], [1217.6, 383.6, 1],
         [1217.5, 383.5, 2], [1217.6, 365.6, 1], [830.5, 350.5, 2],
         [830.5, 350.5, 1], [1218, 384, 1], [1217.6, 365.6, 2.137],
         [1217.5, 500.5, 1], [1217.5, 500.5, 2],
+        [1217.5, 383.5, 1, 64], [686.5, 383.5, 1, 32],
+        [686.5, 363.5, 1, 32], [1217.5, 500.5, 1, 2],
       ]) {
         fixture.style.width = width + 'px'; fixture.style.height = height + 'px';
         component.horizontalScale = scale;
+        const currentProject = { ...project,
+          tracks: Array.from({ length: trackCount }, (_, index) => ({ id: 'bass-' + (index + 1), role: 'bass' })),
+          arrangement: trackCount > 1
+            ? [{ id: 'short', type: 'INTRO', measures: 1 }, { id: 'verse', type: 'VERSE1', measures: 10 }]
+            : project.arrangement };
         const samples = [];
         for (let draw = 0; draw < 12; draw++) {
-          component.project.set({ ...project, arrangement: [{ ...project.arrangement[0],
+          component.project.set({ ...currentProject, arrangement: currentProject.arrangement.map(section => ({ ...section,
             ...(draw % 2 ? { trackPartOverrides: { 'bass-1': { transpose: 12 } } }
-              : { rolePartOverrides: { bass: { transpose: 12 } } }) }] });
+              : { rolePartOverrides: { bass: { transpose: 12 } } }) })) });
           component.drawOverview();
           if (draw === 0) { host.scrollLeft = host.scrollWidth; host.scrollTop = host.scrollHeight; }
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           samples.push(sample());
         }
-        cases.push({ width, height, scale, pageZoom, samples });
+        const buttonRows = currentProject.arrangement.map(section =>
+          Math.ceil(trackCount / Math.max(1, Math.floor((section.measures * 4 * component.pixelsPerBeat - 10 + 1e-7) / 19))));
+        cases.push({ width, height, scale, pageZoom, samples, buttonRows,
+          effectiveScale: component.effectiveHorizontalScale });
       }
       }
       document.querySelector('#result').textContent = JSON.stringify({ cases });
@@ -142,7 +152,8 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
         assert.equal(last[6], Math.round(parseFloat(last[4]) * displayScale));
         assert.equal(last[7], Math.round(parseFloat(last[5]) * displayScale));
         assert.equal(last[8], last[6]); assert.equal(last[9], last[7]);
-        if (item.scale === 1) assert.equal(last[10], last[0], 'Fitted content must not overflow horizontally');
+        assert.ok(item.buttonRows.every(rows => rows <= 2), 'Track buttons must fit within two rows');
+        if (item.effectiveScale === 1) assert.equal(last[10], last[0], 'Fitted content must not overflow horizontally');
         else assert.ok(last[10] > last[0], 'Zoomed content must remain scrollable');
       }
     }

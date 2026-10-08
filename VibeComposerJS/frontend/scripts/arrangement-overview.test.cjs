@@ -208,6 +208,80 @@ test('Alt, Shift, and unmodified wheel events keep their existing browser behavi
   }
 });
 
+test('short cells enforce enough horizontal zoom for at most two track-button rows', () => {
+  const { component, refs } = fixture();
+  const original = component.project();
+  for (const count of [1, 2, 7, 15, 16, 31, 32, 63, 64]) {
+    const tracks = Array.from({ length: count }, (_, index) => ({ ...original.tracks[0], id: `bass-${index + 1}` }));
+    component.project.set({ ...original, tracks, arrangement: original.arrangement.map((section, index) => ({
+      ...section, measures: index === 0 ? 1 : index === 1 ? 2 : 8,
+      presentTracks: tracks.map((track) => track.id),
+    })) });
+    component.drawOverview();
+    const cell = component.hits.find((hit) => hit.key === 'cell:intro:bass');
+    const buttons = component.hits.filter((hit) => hit.key.startsWith('toggle:intro:'));
+    assert.equal(buttons.length, count, `${count} tracks are visible in the first short cell`);
+    assert.ok(new Set(buttons.map((button) => button.y)).size <= 2, `${count} tracks use at most two rows`);
+    for (const button of buttons) {
+      assert.ok(button.x >= cell.x && button.x + button.width <= cell.x + cell.width + 1e-7);
+      assert.ok(button.y >= cell.y + 25, 'buttons leave the top of the cell for notes');
+      assert.ok(button.y + button.height <= cell.y + cell.height);
+      assert.equal(component.hitAt({ clientX: button.x + 8, clientY: button.y + 8 }).key, button.key);
+    }
+    const shortestCellWidth = component.pixelsPerBeat * 4;
+    assert.ok(shortestCellWidth >= 10 + 19 * Math.ceil(count / 2) - 1e-7);
+    assert.equal(refs.get('scoreCanvas').width, 1600, 'zoom keeps the canvas viewport-sized');
+  }
+  assert.equal(refs.get('scrollHost').style.overflowX, 'scroll');
+});
+
+test('zoom-out stops at the button-fit floor and zoom-in starts immediately from that floor', () => {
+  const { component, refs } = fixture();
+  const original = component.project();
+  component.project.set({ ...original, tracks: Array.from({ length: 20 }, (_, index) =>
+    ({ ...original.tracks[0], id: `bass-${index + 1}` })),
+    arrangement: original.arrangement.map((section, index) => ({ ...section, measures: index === 0 ? 1 : 8 })) });
+  component.drawOverview();
+  const minimum = component.pixelsPerBeat;
+  const event = { ctrlKey: true, clientX: 200, deltaMode: 0, deltaY: 100000, deltaX: 0,
+    preventDefault() {}, stopPropagation() {} };
+  component.onCanvasWheel(event);
+  component.drawOverview();
+  assert.equal(component.pixelsPerBeat, minimum);
+  assert.equal(refs.get('scrollHost').style.overflowX, 'scroll');
+  const beatAtCursor = () => (refs.get('scrollHost').scrollLeft + 200 - component.labelWidth) / component.pixelsPerBeat;
+  const beat = beatAtCursor();
+  component.onCanvasWheel({ ...event, deltaY: -50 });
+  component.drawOverview();
+  assert.ok(component.pixelsPerBeat > minimum, 'one zoom-in gesture responds immediately');
+  assert.ok(Math.abs(beatAtCursor() - beat) < 1e-9);
+});
+
+test('the fit floor adapts to track removal and resize without overwriting deliberate zoom', () => {
+  const { component, refs } = fixture();
+  const original = component.project();
+  component.project.set({ ...original, tracks: Array.from({ length: 32 }, (_, index) =>
+    ({ ...original.tracks[0], id: `bass-${index + 1}` })) });
+  component.drawOverview();
+  assert.ok(component.effectiveHorizontalScale > 1);
+  assert.equal(component.horizontalScale, 1, 'automatic fit does not become a stored user zoom');
+  refs.get('scrollHost').clientWidth = 400;
+  component.drawOverview();
+  assert.ok(component.pixelsPerBeat * 8 >= 314 - 1e-7);
+  component.project.set(original);
+  component.drawOverview();
+  assert.equal(component.effectiveHorizontalScale, 1);
+  assert.equal(refs.get('scrollHost').style.overflowX, 'hidden');
+  assert.equal(component.beatX(32), 400);
+  component.horizontalScale = 4;
+  component.project.set({ ...original, tracks: Array.from({ length: 32 }, (_, index) =>
+    ({ ...original.tracks[0], id: `bass-${index + 1}` })) });
+  component.drawOverview();
+  component.project.set(original);
+  component.drawOverview();
+  assert.equal(component.effectiveHorizontalScale, 4);
+});
+
 test('playback updates clear only the overlay and do not rebuild note previews', () => {
   const { component, base, overlay } = fixture();
   const clears = base.clears;

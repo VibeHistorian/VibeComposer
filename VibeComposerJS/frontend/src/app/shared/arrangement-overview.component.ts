@@ -36,6 +36,9 @@ interface OverviewHitArea {
 }
 
 const RULER_HEIGHT = 38;
+const TRACK_BUTTON_PITCH = 19;
+const CELL_HORIZONTAL_PADDING = 10;
+const MAX_TRACK_BUTTON_ROWS = 2;
 const ROLE_COLORS: Readonly<Record<ArrangedPart, string>> = {
   melody: 'melody', bass: 'bass', chords: 'chords', arpeggio: 'arpeggio', drums: 'drum',
 };
@@ -164,6 +167,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private rowHeight = 65;
   private pixelsPerBeat = 12;
   private horizontalScale = 1;
+  private effectiveHorizontalScale = 1;
   private pendingZoomAnchor: { beat: number; cursorFraction: number } | null = null;
   private offsetX = 0;
   private offsetY = 0;
@@ -226,7 +230,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     };
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? timelineWidth : 1;
     const delta = (event.deltaY || event.deltaX) * unit;
-    this.horizontalScale = Math.min(128, Math.max(1, this.horizontalScale * Math.exp(-delta * 0.002)));
+    this.horizontalScale = Math.min(Math.max(128, this.effectiveHorizontalScale),
+      Math.max(1, this.effectiveHorizontalScale * Math.exp(-delta * 0.002)));
     this.scheduleDraw();
   };
 
@@ -248,27 +253,46 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const groups = this.groups();
     const totalBeats = sections.reduce((sum, item) => sum + item.section.measures * 4, 0);
     const minimumHeight = RULER_HEIGHT + groups.length * 65;
+    const trackCount = Math.max(0, ...groups.map((group) => group.tracks.length));
+    const minimumCellWidth = trackCount > 0
+      ? CELL_HORIZONTAL_PADDING + TRACK_BUTTON_PITCH * Math.ceil(trackCount / MAX_TRACK_BUTTON_ROWS) : 0;
+    const shortestSectionBeats = Math.min(...sections.map((item) => item.section.measures * 4));
+    const minimumPixelsPerBeat = sections.length ? minimumCellWidth / shortestSectionBeats : 0;
+    // Use the host's outer width for the label breakpoint so adding a vertical
+    // scrollbar cannot switch label widths and make horizontal scrolling oscillate.
+    this.labelWidth = (host.offsetWidth ?? host.clientWidth) <= 680 ? 72 : 88;
+    const needsHorizontalScroll = (): boolean => totalBeats > 0 && (this.horizontalScale > 1
+      || minimumPixelsPerBeat * totalBeats > Math.max(1,
+        Math.floor(Math.min(host.clientWidth, size.width)) - this.labelWidth) + 1e-7);
     // Page zoom can round native scrollbar sizes differently from CSS content.
     // Decide each axis explicitly, rather than allowing our own size writes to
     // toggle automatic scrollbars and invalidate the next observer measurement.
-    host.style.overflowX = totalBeats > 0 && this.horizontalScale > 1 ? 'scroll' : 'hidden';
+    host.style.overflowX = needsHorizontalScroll() ? 'scroll' : 'hidden';
     // Resolve horizontal scrolling first: its scrollbar reduces available height.
     host.style.overflowY = minimumHeight > host.clientHeight ? 'scroll' : 'hidden';
+    // A newly needed vertical scrollbar can reduce the timeline below its
+    // button-fit minimum. Resolve that extra dependency in the same draw.
+    if (host.style.overflowX === 'hidden' && needsHorizontalScroll()) {
+      host.style.overflowX = 'scroll';
+      host.style.overflowY = minimumHeight > host.clientHeight ? 'scroll' : 'hidden';
+    }
     // A model/scroll redraw can precede the next observer callback when the host
     // shrinks. Cap against the current client size until that measurement arrives.
     this.width = Math.floor(Math.min(host.clientWidth, size.width));
     this.height = Math.floor(Math.min(host.clientHeight, size.height));
     if (this.width <= 0 || this.height <= 0) return;
-    this.labelWidth = this.width <= 680 ? 72 : 88;
-    // Scale 1 fits the entire arrangement; sections always share a proportional time axis.
+    // User scale 1 fits the arrangement unless the shortest cell needs more
+    // width for at most two button rows. Keep that floor separate from user zoom.
     const timelineWidth = Math.max(1, this.width - this.labelWidth);
-    this.pixelsPerBeat = timelineWidth / Math.max(1, totalBeats) * this.horizontalScale;
+    this.effectiveHorizontalScale = Math.max(this.horizontalScale,
+      minimumPixelsPerBeat * totalBeats / timelineWidth);
+    this.pixelsPerBeat = timelineWidth / Math.max(1, totalBeats) * this.effectiveHorizontalScale;
     this.rowHeight = Math.max(65, (this.height - RULER_HEIGHT) / Math.max(1, groups.length));
     const content = this.scrollContent().nativeElement;
     // Use viewport dimensions directly when fitting. Reconstructing them from
     // fractional beat/row sizes can overflow by a rounding error and add scrollbars.
-    const contentWidth = totalBeats > 0 && this.horizontalScale > 1
-      ? Math.max(this.width, Math.round(this.labelWidth + timelineWidth * this.horizontalScale))
+    const contentWidth = totalBeats > 0 && this.effectiveHorizontalScale > 1
+      ? Math.max(this.width, Math.ceil(this.labelWidth + timelineWidth * this.effectiveHorizontalScale))
       : this.width;
     content.style.width = `${contentWidth}px`;
     content.style.height = `${Math.max(this.height, minimumHeight)}px`;
@@ -349,9 +373,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         hit({ key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
           label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}.`,
           activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }) }, this.labelWidth, RULER_HEIGHT);
-        const togglesPerRow = Math.max(1, Math.floor((width - 10) / 19));
+        const togglesPerRow = Math.max(1, Math.floor((width - CELL_HORIZONTAL_PADDING + 1e-7) / TRACK_BUTTON_PITCH));
         const toggleRows = Math.ceil(group.tracks.length / togglesPerRow);
-        const previewHeight = Math.max(12, this.rowHeight - 10 - Math.max(1, toggleRows) * 19);
+        const previewHeight = Math.max(12, this.rowHeight - 10 - Math.max(1, toggleRows) * TRACK_BUTTON_PITCH);
         context.save();
         context.beginPath(); context.rect(x, y + 5, width, previewHeight); context.clip();
         for (let bar = 1; bar < item.section.measures; bar++) fill(x + bar * 4 * this.pixelsPerBeat, y + 5, 1, previewHeight, '--border-subtle');
@@ -370,8 +394,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const track = group.tracks[index];
           const toggleRow = Math.floor(index / togglesPerRow);
           const rowCount = Math.min(togglesPerRow, group.tracks.length - toggleRow * togglesPerRow);
-          const centerX = x + (width - rowCount * 19 + 3) / 2 + index % togglesPerRow * 19 + 8;
-          const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * 19 - 12;
+          const centerX = x + (width - rowCount * TRACK_BUTTON_PITCH + 3) / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
+          const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * TRACK_BUTTON_PITCH - 12;
           const present = this.trackPresent(item.section, track);
           context.globalAlpha = present ? 1 : 0.48;
           context.beginPath(); context.arc(centerX, centerY, 8, 0, Math.PI * 2);
