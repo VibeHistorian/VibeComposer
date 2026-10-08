@@ -54,9 +54,27 @@ export class ProjectService {
     if (scope.kind === 'global-track') { this.updateTrackGeneratorSettings(scope.trackId, decoded); return; }
     const arrangement = current.arrangement.map((section) => {
       if (section.id !== scope.sectionId) return section;
+      const key = scope.kind === 'section-role' ? role : scope.trackId;
+      const overrides = scope.kind === 'section-role' ? section.rolePartOverrides : section.trackPartOverrides;
+      const previous = scope.kind === 'section-role' ? section.rolePartOverrides?.[role] : section.trackPartOverrides?.[scope.trackId];
+      const values: Record<string, string | number | boolean> = { ...previous };
+      // A manual edit equal to this layer's inherited value restores inheritance for that field.
+      // Cell inheritance uses all track bases, ignoring their higher-priority section exceptions.
+      // Track inheritance includes the cell patch but excludes its own patch.
+      const members = scope.kind === 'section-role' ? current.tracks.filter((item) => item.role === role) : track ? [track] : [];
+      const inherited = members.map((item) => settingsValues(scope.kind === 'section-role' ? item.generatorSettings
+        : resolvePartTrack(item, { ...section, trackPartOverrides: undefined }).generatorSettings, role));
+      for (const [field, value] of Object.entries(decoded)) {
+        if (inherited.length && inherited.every((settings) => settings[field] === value)) delete values[field];
+        else values[field] = value as string | number | boolean;
+      }
+      if (partPatchesEqual(previous, values as PartSettingsPatch)) return section;
+      const map: Record<string, PartSettingsPatch> = { ...overrides };
+      if (Object.keys(values).length) map[key] = values as PartSettingsPatch;
+      else delete map[key];
       return scope.kind === 'section-role'
-        ? { ...section, rolePartOverrides: { ...section.rolePartOverrides, [role]: { ...section.rolePartOverrides?.[role], ...decoded } } }
-        : { ...section, trackPartOverrides: { ...section.trackPartOverrides, [scope.trackId]: { ...section.trackPartOverrides?.[scope.trackId], ...decoded } } };
+        ? { ...section, rolePartOverrides: map as NonNullable<ArrangementSection['rolePartOverrides']> }
+        : { ...section, trackPartOverrides: map };
     });
     this.commit({ ...current, arrangement });
   }

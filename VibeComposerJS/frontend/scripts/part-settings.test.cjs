@@ -436,6 +436,7 @@ test('range override copying merges only its layer, preserves exceptions and pre
   const second = service.duplicateTrack(first);
   const [source, destination, another] = service.project().arrangement;
   const cell = { kind: 'section-role', sectionId: source.id, role: 'bass' };
+  service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { transpose: 12, octaveInterval: true });
   service.updatePartSettings(cell, { transpose: 0, octaveInterval: false });
   service.updatePartSettings({ ...cell, sectionId: destination.id }, { transpose: 12, noteVariation: 75 });
   service.updatePartSettings({ kind: 'section-track', sectionId: destination.id, trackId: second }, { transpose: 24 });
@@ -780,6 +781,90 @@ test('invalid fills fail at every scope and on import; omitted fields keep older
   const before = service.exportProjectJson();
   service.updatePartSettings({ kind: 'section-role', sectionId, role: 'melody' }, { chordSpanFill: 'ODD' });
   assert.equal(service.exportProjectJson(), before);
+});
+
+test('manually restoring numeric, choice and checkbox defaults removes local overrides and customized UI', () => {
+  const { service, ui, workspace, phrase } = fixture();
+  const sectionId = service.project().arrangement[1].id;
+  const trackId = 'track-chords-1';
+  ui.selectSectionTrack(sectionId, trackId);
+  const scope = workspace.partScope();
+  const track = () => service.project().tracks.find((track) => track.id === trackId);
+  const originalNotes = phrase.layOutTrackPhrase(service.project(), track());
+  for (const [key, custom, inherited] of [['transpose', 12, 0], ['chordSpanFill', 'ODD', 'ALL'],
+    ['fillFlip', true, false], ['velocityMin', 80, 69]]) {
+    workspace.editPartSettings(scope, { key, value: custom });
+    assert.deepEqual(workspace.overriddenKeys(), [key]);
+    assert.equal(workspace.inheritanceLabel(), 'Customized track part');
+    workspace.editPartSettings(scope, { key, value: inherited });
+    assert.deepEqual(workspace.overriddenKeys(), []);
+    assert.equal(workspace.inheritanceLabel(), 'Inherited from global tracks');
+    assert.equal(workspace.partEditError(), null);
+    assert.equal(service.project().arrangement[1].trackPartOverrides[trackId], undefined);
+    service.undo();
+    assert.equal(workspace.partValues()[key], custom);
+    service.redo();
+    assert.equal(workspace.partValues()[key], inherited);
+  }
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), originalNotes);
+  const before = service.project();
+  workspace.editPartSettings(scope, { key: 'transpose', value: 0 });
+  assert.strictEqual(service.project(), before, 'choosing an already inherited value does not add history');
+});
+
+test('cell cleanup compares all bases while track cleanup inherits its cell, preserving unrelated exceptions', () => {
+  const { service, ui, workspace } = fixture();
+  const first = 'track-bass-1';
+  const second = service.duplicateTrack(first);
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'bass' };
+  const part = { kind: 'section-track', sectionId, trackId: second };
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { transpose: 12 });
+  service.updatePartSettings(cell, { transpose: -12, chordSpanFill: 'ODD' });
+  service.updatePartSettings(cell, { transpose: 0 });
+  ui.selectCell(sectionId, 'bass');
+  assert.ok(workspace.overriddenKeys().includes('transpose'), 'one matching base is insufficient in a mixed group');
+  service.updatePartSettings(part, { transpose: 24, chordSpanFill: 'EVEN' });
+  service.updatePartSettings(part, { transpose: 0 });
+  ui.selectSectionTrack(sectionId, second);
+  assert.deepEqual(workspace.overriddenKeys(), ['chordSpanFill'], 'track inherits cell transpose 0, rather than global 12');
+  assert.equal(workspace.partValues().transpose, 0);
+  service.updatePartSettings(part, { chordSpanFill: 'ODD' });
+  assert.deepEqual(workspace.overriddenKeys(), []);
+  assert.equal(workspace.inheritanceLabel(), 'Inherited from cell settings');
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { transpose: 0 });
+  service.updatePartSettings(cell, { transpose: 0 });
+  ui.selectCell(sectionId, 'bass');
+  assert.deepEqual(workspace.overriddenKeys(), ['chordSpanFill']);
+  service.updatePartSettings(part, { transpose: 24 });
+  service.updatePartSettings(cell, { chordSpanFill: 'ALL' });
+  assert.deepEqual(workspace.overriddenKeys(), []);
+  assert.equal(workspace.trackExceptionCount(), 1, 'clearing the role layer preserves individual track exceptions');
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  assert.equal(workspace.trackExceptionCount(), 1);
+});
+
+test('manual cleanup does not normalize untouched frozen or copied snapshot fields', () => {
+  const { service, settings } = fixture();
+  const trackId = 'track-arpeggio-1';
+  const [first, second] = service.project().arrangement;
+  const scope = { kind: 'section-track', sectionId: first.id, trackId };
+  service.freezePartSettings(scope);
+  const snapshot = { ...service.project().arrangement[0].trackPartOverrides[trackId] };
+  service.updatePartSettings(scope, { transpose: 12 });
+  service.updatePartSettings(scope, { transpose: 0 });
+  const restored = service.project().arrangement[0].trackPartOverrides[trackId];
+  const { transpose, ...untouched } = snapshot;
+  assert.deepEqual(restored, untouched, 'only the manually restored field resumes inheritance');
+  assert.equal(service.applyPartSettingsToSections(scope, [second.id], 'effective'), 'changed');
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId], snapshot);
+  service.updatePartSettings({ kind: 'global-track', trackId }, { transpose: -12, rate: 'sixteenth' });
+  const track = service.project().tracks.find((track) => track.id === trackId);
+  const local = settings.resolvePartTrack(track, service.project().arrangement[0]).generatorSettings;
+  assert.equal(local.transpose, -12, 'manually restored transpose now follows global changes');
+  assert.equal(local.rate, 'eighth', 'untouched frozen fields remain explicit');
+  assert.equal(settings.resolvePartTrack(track, service.project().arrangement[1]).generatorSettings.transpose, 0);
 });
 
 test('section chance preferences gain melody defaults while retaining saved probabilities for other roles', () => {
