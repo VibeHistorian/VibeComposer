@@ -8,6 +8,8 @@ The split-parts moodboard is the primary layout reference: grouped tracks at lef
 
 References: [split-parts UI moodboard](frontend/UI_design_moodboard_split_parts.png), [legacy Java VibeComposer 2.6](frontend/LEGACY_java_vibecomposer26.png), and [translation rules](TRANSLATION_RULES.md).
 
+The next buildout phase is specified in [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md), with an implementer lookup inventory in [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md). It adds block-based Melody (type 0, red), header-only section selection, selectable section role/track cells, a default-expanded Part settings panel between canvases, and track-reroll policies in expanded Tracks headers. Its more specific selection and settings-placement contracts supersede the corresponding initial layout guidance below.
+
 ## Workspace behavior
 
 - Use a single workspace route and persistent shell. The arrangement overview and dense all-track score remain in the center canvas, with grouped tracks on the left, contextual inspector on the right, and transport along the bottom.
@@ -65,7 +67,7 @@ References: [split-parts UI moodboard](frontend/UI_design_moodboard_split_parts.
 
 ## Design guardrails
 
-- Keep legacy melody generation and its controls out of scope until separately translated.
+- Keep the older legacy melody algorithm and its exclusive controls out of scope. Add the current block-based melody generator as specified in the next-phase plan.
 - Treat the moodboard as a layout direction; use actual translated generator parameters and current theme tokens.
 - Keep full parameter sets in the inspector and the song canvas as the visual anchor. Avoid rebuilding the legacy Java control wall as one large form.
 - Keep the all-notes score useful for arrangement context, and use the selected track's piano roll or drum grid for precise edits.
