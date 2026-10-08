@@ -98,6 +98,8 @@
               <vc-part-scope-actions layout="header" [group]="target.kind === 'section-role'"
                 [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
                 [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
+                [canCopyOverrides]="partCopyAvailability().overrides" [canCopyEffective]="partCopyAvailability().effective"
+                (feedbackDismissed)="dismissPartWorkflowFeedback()"
                 (inheritRequested)="resetPartSettings(target)" (freezeRequested)="runPartWorkflow('freeze')"
                 (resetCellRequested)="runPartWorkflow('reset-cell')" (applyRequested)="runPartWorkflow($event)" />
             }
@@ -190,6 +192,8 @@
             <vc-part-scope-actions [group]="localPartTarget()?.kind === 'section-role'"
               [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
               [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
+              [canCopyOverrides]="partCopyAvailability().overrides" [canCopyEffective]="partCopyAvailability().effective"
+              (feedbackDismissed)="dismissPartWorkflowFeedback()"
               (freezeRequested)="runPartWorkflow('freeze')" (resetCellRequested)="runPartWorkflow('reset-cell')"
               (applyRequested)="runPartWorkflow($event)" />
           }

@@ -561,6 +561,61 @@ test('workspace applies only to retained header destinations and reports the sha
   assert.equal(workspace.partWorkflowMessage(), null);
 });
 
+test('copy previews follow stored patch changes without generation, history or property-order false positives', () => {
+  const { service, ui, workspace } = fixture();
+  const [source, destination, other] = service.project().arrangement;
+  const scope = { kind: 'section-role', sectionId: source.id, role: 'bass' };
+  ui.selectSection(destination.id);
+  ui.selectCell(source.id, 'bass');
+  const before = service.exportProjectJson();
+  assert.deepEqual(workspace.partCopyAvailability(), { overrides: false, effective: true },
+    'copy all still writes an explicit snapshot even when inherited effective values match');
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canUndo(), false, 'preview is read-only');
+  service.updatePartSettings(scope, { transpose: 12, octaveInterval: false });
+  service.updatePartSettings({ ...scope, sectionId: destination.id }, { octaveInterval: false, transpose: 12 });
+  assert.equal(workspace.partCopyAvailability().overrides, false);
+  const same = service.project();
+  assert.equal(service.applyPartSettingsToSections(scope, [destination.id], 'overrides'), 'unchanged');
+  assert.strictEqual(service.project(), same, 'key ordering cannot add a bogus undo step');
+  workspace.runPartWorkflow('effective');
+  assert.deepEqual(workspace.partCopyAvailability(), { overrides: false, effective: false });
+  service.undo();
+  assert.equal(workspace.partCopyAvailability().effective, true);
+  service.redo();
+  assert.equal(workspace.partCopyAvailability().effective, false);
+  service.updatePartSettings({ kind: 'section-track', sectionId: destination.id, trackId: 'track-bass-1' }, { transpose: 24 });
+  assert.deepEqual(workspace.partCopyAvailability(), { overrides: false, effective: true });
+  ui.selectSection(other.id);
+  ui.selectCell(source.id, 'bass');
+  assert.deepEqual(workspace.partCopyAvailability(), { overrides: true, effective: true });
+  ui.clearSectionSelection();
+  assert.deepEqual(workspace.partCopyAvailability(), { overrides: false, effective: false });
+});
+
+test('copy feedback is dismissible, clears for different destinations, and never displays a no-op checkmark', () => {
+  const { service, ui, workspace } = fixture();
+  const [source, destination, other] = service.project().arrangement;
+  ui.selectSection(destination.id);
+  ui.selectSectionTrack(source.id, 'track-chords-1');
+  workspace.runPartWorkflow('overrides');
+  assert.equal(workspace.partWorkflowMessage(), null);
+  workspace.runPartWorkflow('effective');
+  assert.match(workspace.partWorkflowMessage(), /applied/);
+  workspace.dismissPartWorkflowFeedback();
+  assert.equal(workspace.partWorkflowMessage(), null);
+  service.undo();
+  workspace.runPartWorkflow('effective');
+  assert.match(workspace.partWorkflowMessage(), /applied/);
+  ui.selectSection(other.id);
+  ui.selectSectionTrack(source.id, 'track-chords-1');
+  assert.equal(workspace.partWorkflowMessage(), null);
+  workspace.runPartWorkflow('effective');
+  assert.match(workspace.partWorkflowMessage(), /applied/);
+  workspace.runPartWorkflow('effective');
+  assert.equal(workspace.partWorkflowMessage(), null, 'a stale click or programmatic no-op clears feedback');
+});
+
 test('section chance preferences gain melody defaults while retaining saved probabilities for other roles', () => {
   const { load } = fixture();
   const previousStorage = global.localStorage;

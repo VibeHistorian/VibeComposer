@@ -12,7 +12,7 @@ import {
   DEFAULT_DRUM_SETTINGS, DEFAULT_MELODY_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_TRACKS, SECTION_TYPES,
 } from './project.model';
 import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './section-type-settings.service';
-import { decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
+import { decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -90,6 +90,13 @@ export class ProjectService {
     return this.copyLocalPartSettings(scope, sectionIds, mode, false);
   }
 
+  /** Read-only settings preview. No generation, project decoding, persistence or history work. */
+  partSettingsCopyWouldChange(scope: LocalPartSettingsScope, sectionIds: readonly string[],
+    mode: 'overrides' | 'effective'): boolean {
+    const candidate = this.buildLocalPartSettingsCopy(scope, sectionIds, mode, false);
+    return !!candidate && candidate !== this.state();
+  }
+
   /** Explicit whole-cell reset, including snapshots/exceptions for its current member tracks. */
   resetCellPartSettings(scope: Extract<LocalPartSettingsScope, { kind: 'section-role' }>): PartWorkflowResult {
     const current = this.state();
@@ -108,35 +115,54 @@ export class ProjectService {
 
   private copyLocalPartSettings(scope: LocalPartSettingsScope, sectionIds: readonly string[],
     mode: 'overrides' | 'effective', includeSource: boolean): PartWorkflowResult {
+    const candidate = this.buildLocalPartSettingsCopy(scope, sectionIds, mode, includeSource);
+    return candidate ? candidate === this.state() ? 'unchanged' : this.commitPartWorkflow(candidate) : 'invalid';
+  }
+
+  private buildLocalPartSettingsCopy(scope: LocalPartSettingsScope, sectionIds: readonly string[],
+    mode: 'overrides' | 'effective', includeSource: boolean): CompositionProject | undefined {
     const current = this.state();
     const source = current.arrangement.find((section) => section.id === scope.sectionId);
     const tracks = current.tracks.filter((track) => scope.kind === 'section-role'
       ? track.role === scope.role : track.id === scope.trackId);
     if (!source || !tracks.length || !PART_CONTROLS[tracks[0].role].length
       || (mode !== 'overrides' && mode !== 'effective') || !sectionIds.length
-      || sectionIds.some((id) => !current.arrangement.some((section) => section.id === id))) return 'invalid';
+      || sectionIds.some((id) => !current.arrangement.some((section) => section.id === id))) return undefined;
     const destinations = new Set(sectionIds.filter((id) => includeSource || id !== source.id));
     const sourcePatch = scope.kind === 'section-role'
       ? source.rolePartOverrides?.[scope.role] : source.trackPartOverrides?.[scope.trackId];
-    if (!destinations.size || (mode === 'overrides' && !Object.keys(sourcePatch ?? {}).length)) return 'unchanged';
+    if (!destinations.size || (mode === 'overrides' && !Object.keys(sourcePatch ?? {}).length)) return current;
     // Copy existing validated values, including imported semitone values. This action doesn't select new knob values.
-    const snapshots = tracks.map((track) => ({ id: track.id,
-      patch: settingsValues(resolvePartTrack(track, source).generatorSettings, track.role) as PartSettingsPatch }));
+    const snapshots = mode === 'effective' ? tracks.map((track) => ({ id: track.id,
+      patch: settingsValues(resolvePartTrack(track, source).generatorSettings, track.role) as PartSettingsPatch })) : [];
+    let changed = false;
     const arrangement = current.arrangement.map((section) => {
       if (!destinations.has(section.id)) return section;
-      if (mode === 'overrides' && scope.kind === 'section-role') return { ...section,
-        rolePartOverrides: { ...section.rolePartOverrides, [scope.role]: {
-          ...section.rolePartOverrides?.[scope.role], ...sourcePatch,
-        } } };
-      const trackPartOverrides = { ...section.trackPartOverrides };
-      if (mode === 'overrides' && scope.kind === 'section-track') {
-        trackPartOverrides[scope.trackId] = { ...trackPartOverrides[scope.trackId], ...sourcePatch };
-      } else {
-        for (const snapshot of snapshots) trackPartOverrides[snapshot.id] = { ...snapshot.patch };
+      if (mode === 'overrides' && scope.kind === 'section-role') {
+        const previous = section.rolePartOverrides?.[scope.role];
+        const patch = { ...previous, ...sourcePatch };
+        if (partPatchesEqual(previous, patch)) return section;
+        changed = true;
+        return { ...section, rolePartOverrides: { ...section.rolePartOverrides, [scope.role]: patch } };
       }
+      const trackPartOverrides = { ...section.trackPartOverrides };
+      let sectionChanged = false;
+      if (mode === 'overrides' && scope.kind === 'section-track') {
+        const previous = trackPartOverrides[scope.trackId];
+        const patch = { ...previous, ...sourcePatch };
+        sectionChanged = !partPatchesEqual(previous, patch);
+        trackPartOverrides[scope.trackId] = patch;
+      } else {
+        for (const snapshot of snapshots) {
+          if (!partPatchesEqual(trackPartOverrides[snapshot.id], snapshot.patch)) sectionChanged = true;
+          trackPartOverrides[snapshot.id] = { ...snapshot.patch };
+        }
+      }
+      if (!sectionChanged) return section;
+      changed = true;
       return { ...section, trackPartOverrides };
     });
-    return this.commitPartWorkflow({ ...current, arrangement });
+    return changed ? { ...current, arrangement } : current;
   }
 
   private commitPartWorkflow(next: CompositionProject): PartWorkflowResult {

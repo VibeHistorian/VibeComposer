@@ -137,10 +137,17 @@ export class WorkspaceCanvasComponent {
   readonly manualTrackNames = computed(() => this.contextTracks().filter((track) => track.editedPhrase !== undefined).map((track) => track.name).join(', '));
   readonly partDestinations = computed(() => this.project().arrangement.filter((section) =>
     this.selectedSectionIds().includes(section.id) && section.id !== this.localPartTarget()?.sectionId));
-  private readonly workflowFeedback = signal<{ scope: string; project: CompositionProject; message: string } | null>(null);
+  readonly partCopyAvailability = computed(() => {
+    const scope = this.localPartTarget();
+    const ids = this.partDestinations().map((section) => section.id);
+    return { overrides: !!scope && this.projects.partSettingsCopyWouldChange(scope, ids, 'overrides'),
+      effective: !!scope && this.projects.partSettingsCopyWouldChange(scope, ids, 'effective') };
+  });
+  private readonly workflowFeedback = signal<{ scope: string; destinations: string; project: CompositionProject; message: string } | null>(null);
   readonly partWorkflowMessage = computed(() => {
     const feedback = this.workflowFeedback();
-    return feedback?.scope === JSON.stringify(this.localPartTarget()) && feedback.project === this.project() ? feedback.message : null;
+    return feedback?.scope === JSON.stringify(this.localPartTarget()) && feedback.project === this.project()
+      && feedback.destinations === JSON.stringify(this.partDestinations().map((section) => section.id)) ? feedback.message : null;
   });
   private readonly editFailure = signal<{ scope: string; message: string } | null>(null);
   readonly partEditError = computed(() => this.editFailure()?.scope === JSON.stringify(this.partScope()) ? this.editFailure()?.message : null);
@@ -303,8 +310,12 @@ export class WorkspaceCanvasComponent {
       : action === 'reset-cell' ? 'Cell and individual track overrides reset to global inheritance.'
       : `${action === 'overrides' ? 'Overrides' : 'Effective values'} applied to ${destinations.length} selected section(s).`;
     this.editFailure.set(null);
-    this.workflowFeedback.set({ scope: JSON.stringify(scope), project: this.project(), message });
+    this.workflowFeedback.set(result === 'unchanged' ? null : {
+      scope: JSON.stringify(scope), destinations: JSON.stringify(destinations), project: this.project(), message,
+    });
   }
+
+  dismissPartWorkflowFeedback(): void { this.workflowFeedback.set(null); }
 
   openTrackEditor(trackId: string): void {
     if (this.editing() || !this.project().tracks.some((track) => track.id === trackId)) return;

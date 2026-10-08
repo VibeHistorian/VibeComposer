@@ -38,6 +38,14 @@ export function settingsValues(settings: PartSettingsPatch, role: ArrangedPart):
     (settings as Record<string, string | number | boolean>)[control.key] ?? control.defaultValue!]));
 }
 
+/** Patch equality includes explicit inheritance boundaries and ignores object property order. */
+export function partPatchesEqual(left: PartSettingsPatch | undefined, right: PartSettingsPatch | undefined): boolean {
+  const leftValues = left as Record<string, unknown> | undefined;
+  const rightValues = right as Record<string, unknown> | undefined;
+  return Object.keys(leftValues ?? {}).length === Object.keys(rightValues ?? {}).length
+    && Object.entries(leftValues ?? {}).every(([key, value]) => value === rightValues?.[key]);
+}
+
 export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps = false): PartSettingsPatch | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const result: Record<string, string | number | boolean> = {};

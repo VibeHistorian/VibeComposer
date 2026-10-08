@@ -16,18 +16,21 @@
     </button>
   }
   <span class="action-separator" aria-hidden="true">|</span>
-  <button type="button" [disabled]="!destinationCount()" (click)="applyRequested.emit('overrides')"
+  <button type="button" [disabled]="!destinationCount() || !canCopyOverrides()" (click)="applyRequested.emit('overrides')"
     title="Copy this cell or track’s explicit overrides to the other header-selected sections. Preserve their other settings and track exceptions; exclude the source section.">
     Copy to {{ destinationCount() > 1 ? 'Sections' : 'Section' }} ({{ destinationCount() }})
   </button>
-  <button type="button" [disabled]="!destinationCount()" (click)="applyRequested.emit('effective')"
+  <button type="button" [disabled]="!destinationCount() || !canCopyEffective()" (click)="applyRequested.emit('effective')"
     title="Copy all effective musical settings for the current tracks to the other header-selected sections, replacing those tracks’ overrides. Preserve mixed values, presence, instruments and manual notes; exclude the source section.">
     Copy All to {{ destinationCount() > 1 ? 'Sections' : 'Section' }} ({{ destinationCount() }})
   </button>
   @if (message(); as feedback) {
-    <span class="workflow-message" role="status" [title]="feedback">
+    <span role="status">
+    <button type="button" class="workflow-message" [title]="feedback + ' Click to dismiss.'"
+      [attr.aria-label]="feedback + ' Dismiss status.'" (click)="feedbackDismissed.emit()">
       <span aria-hidden="true">{{ feedback.startsWith('No settings changed') ? '!' : '✓' }}</span>
       <span class="feedback-text">{{ feedback }}</span>
+    </button>
     </span>
   }
 </div>
