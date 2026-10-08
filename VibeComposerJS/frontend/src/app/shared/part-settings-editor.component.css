@@ -12,3 +12,10 @@
 .inherit-field { padding: 2px 0; border: 0; background: transparent; color: var(--accent-primary); cursor: pointer; font-size: 9px; }
 .inherit-field:disabled { color: var(--text-muted); cursor: default; }
 .part-control.overridden { border-bottom: 1px solid var(--accent-primary); padding-bottom: 3px; }
+
+/* Rhythm preview */
+.rhythm-preview { display: grid; gap: 5px; width: 180px; max-width: 100%; }
+.rhythm-preview-label, .rhythm-preview-mixed { color: var(--text-secondary); font-size: 10px; }
+.rhythm-preview-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.rhythm-preview-slot { height: 10px; border: 1px solid var(--border-default); border-radius: var(--radius-micro); background: var(--surface-input); }
+.rhythm-preview-slot.active { border-color: var(--accent-primary); background: var(--accent-primary); }

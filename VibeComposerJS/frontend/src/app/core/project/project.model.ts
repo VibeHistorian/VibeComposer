@@ -2,7 +2,7 @@ import type { ScaleMode } from '../music/harmony';
 import type { ChordSpanFill } from '../music/chord-span-fill';
 
 export type BassRhythm = 'alternating' | 'full' | 'half' | 'tresillo' | 'sparse';
-export type ChordRhythm = 'full' | 'half' | 'tresillo' | 'sparse' | 'single' | 'one-six';
+export type ChordRhythm = 'full' | 'half' | 'tresillo' | 'sparse' | 'single' | 'one-six' | 'euclid';
 export type ChordVoicing = 'close' | 'open';
 export type ArpeggioPattern = 'up' | 'down' | 'up-down' | 'random';
 export type ArpeggioRate = 'eighth' | 'sixteenth';
@@ -61,6 +61,8 @@ export interface ChordSettings extends CommonPartSettings {
   readonly hitsPerPattern?: number;
   readonly patternShift?: number;
   readonly patternFlip?: boolean;
+  /** Requested Euclidean sounded slots; capped by hitsPerPattern when generating. */
+  readonly euclideanPulses?: number;
   readonly voicing: ChordVoicing;
   readonly noteLengthPercent: number;
 }

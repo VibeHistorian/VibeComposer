@@ -32,12 +32,14 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
   bass: [...fill, choice('rhythm', 'Rhythm', ['alternating', 'full', 'half', 'tresillo', 'sparse']),
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  chords: [...fill, { ...choice('rhythm', 'Rhythm pattern', ['full', 'half', 'tresillo', 'sparse', 'single', 'one-six']),
-    description: 'Java patterns: full = FULL, half = ALT, sparse = ONEPER4, one-six = ONESIX. This grid is separate from chord fill.' },
+  chords: [...fill, { ...choice('rhythm', 'Rhythm pattern', ['full', 'half', 'tresillo', 'sparse', 'single', 'one-six', 'euclid']),
+    description: 'Choose a rhythm within each chord. Euclid distributes Pulses across Hits; Fill independently selects which chords play.' },
     { ...number('hitsPerPattern', 'Hits', 1, 32, 8, ''),
       description: 'Grid subdivisions per four-beat chord. Pattern rests mean fewer sounded notes than the Hits value.' },
+    { ...number('euclideanPulses', 'Pulses', 0, 32, 4, ''),
+      description: 'Sounded slots in the Euclidean rhythm before Pattern flip. Uses at most Hits pulses; the requested value is retained when Hits is reduced.' },
     { ...number('patternShift', 'Shift', 0, 8, 0, ''),
-      description: 'Rotate the repeated eight-slot pattern right before trimming it to the Hits value, matching Java.' },
+      description: 'Rotate the rhythm right. Static patterns rotate padded eight-slot repeats before trimming; Euclid rotates the Hits-length grid.' },
     { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
       description: 'Invert notes and rests inside the chord rhythm grid. Fill still determines which chords play.' },
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 125), ...pitched],
@@ -96,7 +98,7 @@ export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): Co
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const common = Object.fromEntries(Object.entries(value).filter(([key]) =>
     ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier', 'chordSpanFill', 'fillFlip',
-      'hitsPerPattern', 'patternShift', 'patternFlip'].includes(key)));
+      'hitsPerPattern', 'patternShift', 'patternFlip', 'euclideanPulses'].includes(key)));
   const decoded = decodePartPatch(role, common);
   return decoded && validVelocityRange(decoded, role) ? decoded : undefined;
 }

@@ -4,7 +4,7 @@ import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
-import { rhythmPatternMask, type StaticRhythmPattern } from './rhythm-pattern';
+import { chordRhythmMask } from './rhythm-pattern';
 
 export interface ChordHitEvent {
   readonly pitches: readonly number[];
@@ -16,9 +16,6 @@ export interface ChordHitEvent {
 }
 
 const BEATS_PER_CHORD = 4;
-const CHORD_RHYTHMS: Readonly<Record<ChordSettings['rhythm'], StaticRhythmPattern>> = {
-  full: 'FULL', half: 'ALT', tresillo: 'TRESILLO', sparse: 'ONEPER4', single: 'SINGLE', 'one-six': 'ONESIX',
-};
 
 /** Generate seeded chord hits from diatonic progression degrees. */
 export function generateChordPart(
@@ -34,7 +31,6 @@ export function generateChordPart(
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(settings.noteLengthPercent)
       || settings.noteLengthPercent < 25 || settings.noteLengthPercent > 125
-      || !CHORD_RHYTHMS[settings.rhythm]
       || (settings.voicing !== 'close' && settings.voicing !== 'open')) {
     throw new RangeError('Chord generation settings are outside the supported range.');
   }
@@ -64,8 +60,7 @@ export function generateChordPart(
   const events: ChordHitEvent[] = [];
   const [velocityMin, velocityMax] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings);
-  const pattern = rhythmPatternMask(CHORD_RHYTHMS[settings.rhythm], settings.hitsPerPattern ?? 8,
-    settings.patternShift ?? 0, settings.patternFlip ?? false);
+  const pattern = chordRhythmMask(settings);
   const stepDuration = BEATS_PER_CHORD / pattern.length;
 
   for (let chordIndex = 0; chordIndex < chordDefinitions.length; chordIndex++) {

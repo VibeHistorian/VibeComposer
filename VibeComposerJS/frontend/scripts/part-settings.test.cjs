@@ -38,7 +38,7 @@ function fixture() {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'part-settings-editor.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };
@@ -994,13 +994,16 @@ test('unsupported roles and invalid rhythm controls reject edits/imports without
   const scopes = [{ kind: 'global-role', role: 'chords' }, { kind: 'global-track', trackId },
     { kind: 'section-role', sectionId, role: 'chords' }, { kind: 'section-track', sectionId, trackId }];
   const invalid = [{ hitsPerPattern: 0 }, { hitsPerPattern: 33 }, { hitsPerPattern: 1.5 },
-    { patternShift: -1 }, { patternShift: 9 }, { patternFlip: 1 }, { rhythm: 'custom' }, { rhythm: 'euclid' }];
+    { patternShift: -1 }, { patternShift: 9 }, { patternFlip: 1 }, { rhythm: 'custom' }, { rhythm: 'unknown' },
+    { euclideanPulses: -1 }, { euclideanPulses: 33 }, { euclideanPulses: 1.5 }, { euclideanPulses: '4' }];
   for (const scope of scopes) for (const patch of invalid) {
     service.updatePartSettings(scope, patch);
     assert.equal(service.exportProjectJson(), before);
   }
   for (const role of ['bass', 'arpeggio', 'drums', 'melody']) {
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { hitsPerPattern: 16 });
+    assert.equal(service.exportProjectJson(), before);
+    service.updatePartSettings({ kind: 'section-role', sectionId, role }, { euclideanPulses: 4 });
     assert.equal(service.exportProjectJson(), before);
   }
   for (const patch of invalid) {
@@ -1010,6 +1013,142 @@ test('unsupported roles and invalid rhythm controls reject edits/imports without
   }
   assert.equal(service.importProjectJson(before), true);
   assert.equal(service.project().tracks.find((track) => track.id === trackId).generatorSettings.hitsPerPattern, undefined);
+});
+
+test('Euclidean grids match production Java for all supported hits, pulse counts, shifts and flipped complements', () => {
+  const { load } = fixture();
+  const { euclideanPatternMask } = load('core/music/rhythm-pattern.ts');
+  const fixtures = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/euclidean-pattern.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(Object.keys(fixtures).length, 5040);
+  for (const [key, expected] of Object.entries(fixtures)) {
+    const args = key.split('/').map(Number);
+    assert.deepEqual(euclideanPatternMask(...args), expected, key);
+    assert.deepEqual(euclideanPatternMask(...args, true), expected.map((value) => 1 - value), key + ' flipped');
+    assert.equal(expected.length, args[0]);
+  }
+  for (const args of [[0, 0], [33, 4], [8, 9], [8, -1], [8, 1.5], [8, 3, 9], [8, 3, 0, 1]]) {
+    assert.throws(() => euclideanPatternMask(...args), RangeError);
+  }
+});
+
+test('Euclidean chord generation uses shifted/flipped subdivisions and preserves velocity draws for rests', () => {
+  const { service, load } = fixture();
+  const { generateChordPart } = load('core/music/chord-generator.ts');
+  const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
+  const { JavaRandom } = load('core/music/java-random.ts');
+  const seed = 9223372036854775807n;
+  const base = service.project().chords;
+  const settings = { ...base, rhythm: 'euclid', hitsPerPattern: 8, euclideanPulses: 3, patternShift: 1, noteLengthPercent: 75 };
+  const mask = chordRhythmMask(settings);
+  const notes = generateChordPart(seed, 'C', 'major', [1, 5], settings);
+  assert.deepEqual(notes.map((note) => note.startBeat), [0, 4].flatMap((start) => mask.flatMap((value, slot) => value ? [start + slot / 2] : [])));
+  assert.ok(notes.every((note) => note.durationBeats === 0.375));
+  const random = new JavaRandom(BigInt.asIntN(32, BigInt.asIntN(32, seed) + 20000n));
+  const velocities = Array.from({ length: 8 }, () => random.nextInt(21) + 69);
+  assert.deepEqual(notes.filter((note) => note.chordIndex === 0).map((note) => note.velocity), velocities.filter((_, slot) => mask[slot]));
+  const flipped = generateChordPart(seed, 'C', 'major', [1, 5], { ...settings, patternFlip: true, chordSpanFill: 'EVEN' });
+  assert.deepEqual(flipped.map((note) => note.startBeat), mask.flatMap((value, slot) => value ? [] : [slot / 2]));
+  assert.deepEqual(generateChordPart(seed, 'C', 'major', [1], { ...settings, euclideanPulses: 0 }), []);
+  assert.equal(generateChordPart(seed, 'C', 'major', [1], { ...settings, euclideanPulses: 0, patternFlip: true }).length, 8);
+  assert.deepEqual(chordRhythmMask({ ...settings, hitsPerPattern: 3, euclideanPulses: 32 }), [1, 1, 1]);
+  assert.equal(generateChordPart(seed, 'C', 'major', [1], { ...settings, hitsPerPattern: 3, euclideanPulses: 32 }).length, 3);
+  assert.deepEqual(generateChordPart(seed, 'C', 'major', [1], { ...base, euclideanPulses: 7 }),
+    generateChordPart(seed, 'C', 'major', [1], base), 'Pulses has no effect on static rhythms');
+});
+
+test('Euclidean pulse edits retain mixed values and requested counts across scope inheritance and hit reductions', () => {
+  const { service, ui, workspace } = fixture();
+  const first = 'track-chords-1';
+  const second = service.duplicateTrack(first);
+  service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { rhythm: 'euclid' });
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { euclideanPulses: 6 });
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'chords' };
+  ui.selectCell(sectionId, 'chords');
+  assert.equal(workspace.partValues().euclideanPulses, null);
+  service.updatePartSettings(cell, { euclideanPulses: 5 });
+  assert.equal(workspace.partValues().euclideanPulses, 5);
+  const part = { kind: 'section-track', sectionId, trackId: first };
+  service.updatePartSettings(part, { euclideanPulses: 7, hitsPerPattern: 3 });
+  ui.selectSectionTrack(sectionId, first);
+  assert.equal(workspace.partValues().euclideanPulses, 7, 'requested Pulses is retained even when Hits is smaller');
+  service.updatePartSettings(part, { euclideanPulses: 5, hitsPerPattern: 8 });
+  assert.deepEqual(workspace.overriddenKeys(), [], 'returning to inherited pulse count removes its override');
+  service.resetPartSettings(cell);
+  assert.equal(workspace.partValues().euclideanPulses, 4);
+  ui.selectSectionTrack(sectionId, second);
+  assert.equal(workspace.partValues().euclideanPulses, 6);
+});
+
+test('the chord rhythm preview shares generation masks and shows mixed values only for active rhythm inputs', () => {
+  const { service, load, settings } = fixture();
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
+  const editor = new PartSettingsEditorComponent();
+  editor.role.set('chords');
+  const values = settings.settingsValues(service.project().chords, 'chords');
+  editor.values.set(values);
+  assert.deepEqual(editor.rhythmPreview(), chordRhythmMask(service.project().chords));
+  assert.equal(editor.controls().some((control) => control.key === 'euclideanPulses'), false);
+  editor.values.set({ ...values, rhythm: 'euclid', hitsPerPattern: 5, euclideanPulses: 2, patternShift: 1, patternFlip: true });
+  assert.equal(editor.controls().some((control) => control.key === 'euclideanPulses'), true);
+  assert.deepEqual(editor.rhythmPreview(), chordRhythmMask(editor.values()));
+  editor.values.set({ ...editor.values(), euclideanPulses: null });
+  assert.equal(editor.rhythmPreview(), null);
+  assert.match(editor.rhythmPreviewLabel(), /Mixed/);
+  editor.values.set({ ...editor.values(), rhythm: 'half' });
+  assert.notEqual(editor.rhythmPreview(), null, 'mixed unused Pulses does not hide a static rhythm preview');
+  editor.values.set({ ...editor.values(), rhythm: null });
+  assert.equal(editor.rhythmPreview(), null);
+  editor.role.set('bass');
+  assert.equal(editor.rhythmPreview(), undefined);
+});
+
+test('Euclidean settings survive local generation, parsed MIDI, snapshots, duplication, undo and session restore', () => {
+  const { service, phrase, midi, settings, load } = fixture();
+  const trackId = 'track-chords-1';
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
+  const sectionId = service.project().arrangement[1].id;
+  const scope = { kind: 'section-track', sectionId, trackId };
+  const track = () => service.project().tracks.find((track) => track.id === trackId);
+  const original = phrase.layOutTrackPhrase(service.project(), track());
+  const before = service.exportProjectJson();
+  service.updatePartSettings(scope, { rhythm: 'euclid', hitsPerPattern: 5, euclideanPulses: 2, patternShift: 1 });
+  const after = phrase.layOutTrackPhrase(service.project(), track());
+  const start = service.project().arrangement[0].measures * 4;
+  const end = start + service.project().arrangement[1].measures * 4;
+  const outside = (notes) => notes.filter((note) => note.startBeat < start || note.startBeat >= end);
+  assert.deepEqual(outside(after), outside(original));
+  assert.notDeepEqual(after, original);
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const midiNotes = exported.tracks.find((track) => track.name === 'C1').notes;
+  assert.equal(midiNotes.length, after.length);
+  midiNotes.forEach((note, index) => {
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - after[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / exported.header.ppq - after[index].durationBeats) < 0.003);
+    assert.equal(note.midi, after[index].midi);
+  });
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+  service.redo();
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after);
+  assert.equal(service.freezePartSettings(scope), 'changed');
+  assert.equal(service.freezePartSettings(scope), 'unchanged');
+  const destination = service.project().arrangement[2].id;
+  assert.equal(service.applyPartSettingsToSections(scope, [destination], 'effective'), 'changed');
+  assert.equal(service.partSettingsCopyWouldChange(scope, [destination], 'effective'), false);
+  assert.equal(service.project().arrangement[2].trackPartOverrides[trackId].euclideanPulses, 2);
+  const copy = service.duplicateTrack(trackId);
+  assert.equal(service.project().arrangement[1].trackPartOverrides[copy].euclideanPulses, 2);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  const importedTrack = service.project().tracks.find((track) => track.id === trackId);
+  assert.equal(settings.resolvePartTrack(importedTrack, service.project().arrangement[1]).generatorSettings.euclideanPulses, 2);
+  const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  service.updateTrackPhrase(trackId, manual);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
 });
 
 test('section chance preferences gain melody defaults while retaining saved probabilities for other roles', () => {

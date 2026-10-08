@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import type { ArrangedPart } from '../core/project/project.model';
+import type { ArrangedPart, ChordRhythm } from '../core/project/project.model';
 import { PART_CONTROLS, type PartControl } from '../core/music/part-settings';
+import { chordRhythmMask } from '../core/music/rhythm-pattern';
 import { CompactKnobComponent } from './compact-knob.component';
 
 @Component({
@@ -18,7 +19,25 @@ export class PartSettingsEditorComponent {
   readonly local = input(false);
   readonly settingsChanged = output<{ readonly key: string; readonly value: string | number | boolean }>();
   readonly inheritRequested = output<string>();
-  readonly controls = computed(() => PART_CONTROLS[this.role()]);
+  readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
+    control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null));
+  readonly rhythmPreview = computed(() => {
+    if (this.role() !== 'chords') return undefined;
+    const values = this.values();
+    const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
+      ...(values['rhythm'] === 'euclid' ? ['euclideanPulses'] : [])];
+    if (keys.some((key) => values[key] === null)) return null;
+    return chordRhythmMask({ rhythm: values['rhythm'] as ChordRhythm,
+      hitsPerPattern: values['hitsPerPattern'] as number | undefined,
+      patternShift: values['patternShift'] as number | undefined,
+      patternFlip: values['patternFlip'] as boolean | undefined,
+      euclideanPulses: values['euclideanPulses'] as number | undefined });
+  });
+  readonly rhythmPreviewLabel = computed(() => {
+    const pattern = this.rhythmPreview();
+    return pattern ? `${pattern.filter((slot) => slot > 0).length} sounded slots in ${pattern.length} subdivisions per chord. Fill can suppress whole chords.`
+      : 'Mixed rhythm settings. Select an individual track to see its rhythm.';
+  });
 
   numericValue(control: PartControl): number {
     return (this.values()[control.key] as number | null)

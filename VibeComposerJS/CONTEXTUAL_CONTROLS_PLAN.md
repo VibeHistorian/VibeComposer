@@ -80,6 +80,20 @@ UI review: select a Chords cell, choose half or one-six, try Hits 3/5/16, Shift 
 
 Validation: 76 functional tests pass. The five new tests cover 192 masks emitted from the actual compiled Java enum plus their 192 flipped complements, default timings, seeded velocity consumption, changed note durations/onsets, dense grids, scoped resolution, inheritance, history/session/JSON, copied snapshots, retained manual notes and parsed MIDI. Production build passes with the existing Pixi CommonJS warning. The Chromium arrangement zoom regression passes across the existing 80–150% page zoom and 100–150% device scale matrix.
 
+### UI checkpoint 7 — Chord Euclidean rhythm and preview (P4c)
+
+Added `euclid` to Chords Rhythm pattern and a **Pulses** knob (0–32, default 4), shown for Euclidean or mixed rhythm selections. Pulses is the requested number of sounded subdivisions before flip. It is capped by Hits during generation but retained in settings, so reducing and restoring Hits does not silently change a second field. This is a deliberate scalar representation of Java's positive-cell count in `comboPanel.getTruePattern()` / `InstPart.customPattern`; Java does not store a separate Pulses field. Custom painting and velocities remain a later P4 slice.
+
+`core/music/rhythm-pattern.ts` ports `RhythmPattern.makeEuclideanPattern()` grouping and rotation. Shift rotates the grouped result before truncation, as in Java; Pattern flip complements it. The shared `chordRhythmMask()` feeds generated notes and a compact, role-colored rhythm preview in both editors. The preview shows Mixed when active rhythm inputs differ across tracks; unused mixed Pulses does not hide a static pattern preview. Fill can suppress entire chords independently. Existing static rhythms, default seeded output and note durations stay intact. Velocity draws still occur for every subdivision, including rests. Zero Pulses is silence before flip; Pulses ≥ Hits produces a full grid before flip.
+
+Global role/track and section role/track settings use the same validation, inheritance, mixed values, manual return to inherited values, copy/freeze, duplication, undo/redo, session/JSON, preview, playback and MIDI pipeline. Melody remains manual-only. No custom grids, velocities, repeat/span or reroll policies are exposed yet, and full Java chord-generator parity is not claimed.
+
+UI refinements since checkpoint 6: controls in Part settings and the inspector inherit the role accent; per-track section checkboxes use their own role color. Duplicate override/reset/freeze/clear/copy controls now live only in the central panel. Add section appears only for section-header context. Its initial displayed selection is synchronized with the stored type, and part choice options use the same explicit selection binding.
+
+UI review: select a Chords cell, choose euclid, and try Hits 8/Pulses 3, Hits 5/Pulses 2, Shift and Pattern flip. Check the preview against generated notes, then combine with Fill. Try Pulses 0 and Pulses greater than Hits, restore Hits, and verify the requested count stays intact. Check a track exception, mixed values, copy/freeze, undo/redo and save/reload. Pause here for UI testing.
+
+Validation: 81 functional tests pass, including all 5,040 production Java masks and flipped complements, seeded velocity consumption, generation timings, section isolation, parsed MIDI, scoped mixed values, snapshots, import/session, history and manual-note preservation. Production build passes with the existing Pixi CommonJS warning. The Chromium arrangement regression passes across the existing 80–150% page zoom and 100–150% device scale matrix.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
