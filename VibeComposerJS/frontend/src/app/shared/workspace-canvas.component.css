@@ -132,11 +132,13 @@
 .quick-fixed span { color: var(--text-muted); font: 10px var(--font-mono); white-space: nowrap; }
 
 /* Contextual part settings */
-.part-settings-panel { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
-.part-settings-heading { min-height: 38px; padding: 6px 10px; display: flex; align-items: center; gap: 10px; }
+.part-settings-panel { min-width: 0; container-type: inline-size; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
+.part-settings-heading { min-height: 38px; padding: 6px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.part-heading-context { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.part-settings-heading > .part-inspector-link { grid-column: 3; justify-self: end; }
 .part-panel-toggle, .part-inspector-link { min-height: 26px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
 .part-panel-toggle:hover, .part-inspector-link:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.part-inspector-link { margin-left: auto; flex-shrink: 0; }
+.part-inspector-link { flex-shrink: 0; }
 .part-context-label { min-width: 0; color: var(--text-primary); font: 10px var(--font-mono); overflow-wrap: anywhere; }
 .part-settings-content { max-height: 190px; overflow-y: auto; padding: 8px 12px; border-top: 1px solid var(--border-subtle); display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .part-settings-content vc-part-settings-editor { flex: 1 1 100%; }
@@ -148,6 +150,12 @@
 .part-summary strong { color: var(--text-primary); }
 
 /* Responsive workspace */
+@container (max-width: 600px) {
+  .part-settings-heading { display: flex; flex-wrap: wrap; }
+  .part-heading-context { flex: 1 1 160px; }
+  .part-settings-heading > .part-inspector-link { margin-left: auto; }
+  .part-settings-heading > vc-part-scope-actions { order: 1; flex: 1 1 100%; }
+}
 @media (max-width: 1050px) {
   .workspace-canvas { min-height: 0; grid-template-columns: minmax(260px, 310px) minmax(0, 1fr); }
   .song-canvas { height: auto; grid-template-rows: minmax(370px, auto) auto minmax(300px, 1fr); }

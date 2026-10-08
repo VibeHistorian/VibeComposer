@@ -85,15 +85,21 @@
 
       <section class="part-settings-panel" aria-label="Part settings">
         <header class="part-settings-heading">
+          <div class="part-heading-context">
           <button type="button" class="part-panel-toggle" [attr.aria-expanded]="partPanelExpanded()"
             aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
             {{ partPanelExpanded() ? '⌄' : '›' }} Part settings
           </button>
           @if (partScope()) { <i class="role-dot" [class]="partRole()"></i> }
           <span class="part-context-label">{{ contextLabel() }}</span>
+          </div>
           @if (localPartTarget(); as target) {
-            <button type="button" class="part-inspector-link" [disabled]="!overriddenKeys().length"
-              (click)="resetPartSettings(target)">Reset to inherited</button>
+            @if (editableScopes().length) {
+              <vc-part-scope-actions layout="header" [group]="target.kind === 'section-role'"
+                [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
+                (inheritRequested)="resetPartSettings(target)" (freezeRequested)="runPartWorkflow('freeze')"
+                (resetCellRequested)="runPartWorkflow('reset-cell')" />
+            }
           }
           <button type="button" class="part-inspector-link" (click)="openInspector()">Open inspector</button>
         </header>
@@ -114,7 +120,7 @@
                 (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
             }
             @if (localPartTarget() && editableScopes().length) {
-              <vc-part-scope-actions [group]="localPartTarget()?.kind === 'section-role'"
+              <vc-part-scope-actions layout="range" [group]="localPartTarget()?.kind === 'section-role'"
                 [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
                 [destinations]="partDestinationLabel()" [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
                 (freezeRequested)="runPartWorkflow('freeze')" (resetCellRequested)="runPartWorkflow('reset-cell')"

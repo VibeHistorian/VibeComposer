@@ -7,6 +7,11 @@ button:disabled { opacity: .38; cursor: default; }
 p { margin: 6px 0; color: var(--text-muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
 .workflow-message { color: var(--text-primary); }
 
+/* Header icons */
+.header-actions { align-items: center; justify-content: center; }
+.reset-icon { width: 28px; padding: 0; font-size: 18px; }
+.freeze-icon { width: 34px; min-height: 30px; padding: 0; font: bold 24px var(--font-mono); line-height: 1; }
+
 /* Range actions */
-.range-actions { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border-subtle); }
+.range-actions { padding-top: 6px; border-top: 1px solid var(--border-subtle); }
 summary { color: var(--text-secondary); cursor: pointer; font-size: 10px; }

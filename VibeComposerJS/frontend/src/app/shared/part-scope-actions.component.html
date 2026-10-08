@@ -1,15 +1,24 @@
-<div class="scope-actions">
-  <button type="button" (click)="freezeRequested.emit()"
+@if (layout() !== 'range') {
+<div class="scope-actions" [class.header-actions]="layout() === 'header'">
+  @if (layout() === 'header') {
+    <button type="button" class="reset-icon" [disabled]="!hasOverrides()" (click)="inheritRequested.emit()"
+      title="Reset to inherited" aria-label="Reset to inherited"><span aria-hidden="true">↺</span></button>
+  }
+  <button type="button" [class.freeze-icon]="layout() === 'header'" (click)="freezeRequested.emit()"
+    [attr.aria-label]="group() ? 'Freeze current tracks' : 'Freeze effective settings'"
     title="Store all supported effective musical settings as individual track overrides in this section.">
-    {{ group() ? 'Freeze current tracks' : 'Freeze effective settings' }}
+    @if (layout() === 'header') { <span aria-hidden="true">*</span> }
+    @else { {{ group() ? 'Freeze current tracks' : 'Freeze effective settings' }} }
   </button>
-  @if (group()) {
-    <button type="button" [disabled]="!hasOverrides() && !hasExceptions()" (click)="resetCellRequested.emit()"
+  @if (group() && (hasOverrides() || hasExceptions())) {
+    <button type="button" (click)="resetCellRequested.emit()"
       title="Remove both this cell’s overrides and all its individual track overrides. Global settings and manual notes are preserved.">
       Reset cell + track overrides
     </button>
   }
 </div>
+}
+@if (layout() !== 'header') {
 <details class="range-actions">
   <summary>Apply to header-selected sections ({{ destinationCount() }})</summary>
   @if (destinationCount()) {
@@ -25,7 +34,8 @@
   </div>
   <p>Overrides merge only the source’s explicit fields into the same destination layer; other fields and track exceptions stay active.
     Effective values replace each current track’s musical overrides with a full snapshot, preserving mixed values across tracks.</p>
-</details>
 <p class="freeze-note">Frozen values stop following inherited settings. {{ group() ? 'New tracks continue to inherit cell settings. Reset cell + track overrides restores inheritance for all current tracks.' : 'Reset to inherited removes this track’s snapshot.' }}
   Presence, instruments and saved manual notes are preserved.</p>
+</details>
 @if (message()) { <p class="workflow-message" role="status">{{ message() }}</p> }
+}
