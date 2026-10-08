@@ -97,8 +97,9 @@
             @if (editableScopes().length) {
               <vc-part-scope-actions layout="header" [group]="target.kind === 'section-role'"
                 [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
+                [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
                 (inheritRequested)="resetPartSettings(target)" (freezeRequested)="runPartWorkflow('freeze')"
-                (resetCellRequested)="runPartWorkflow('reset-cell')" />
+                (resetCellRequested)="runPartWorkflow('reset-cell')" (applyRequested)="runPartWorkflow($event)" />
             }
           }
           <button type="button" class="part-inspector-link" (click)="openInspector()">Open inspector</button>
@@ -118,13 +119,6 @@
             @for (item of editableScopes(); track item.key) {
               <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
                 (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
-            }
-            @if (localPartTarget() && editableScopes().length) {
-              <vc-part-scope-actions layout="range" [group]="localPartTarget()?.kind === 'section-role'"
-                [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
-                [destinations]="partDestinationLabel()" [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
-                (freezeRequested)="runPartWorkflow('freeze')" (resetCellRequested)="runPartWorkflow('reset-cell')"
-                (applyRequested)="runPartWorkflow($event)" />
             }
           </div>
         }
@@ -195,7 +189,7 @@
           @if (editableScopes().length) {
             <vc-part-scope-actions [group]="localPartTarget()?.kind === 'section-role'"
               [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
-              [destinations]="partDestinationLabel()" [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
+              [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
               (freezeRequested)="runPartWorkflow('freeze')" (resetCellRequested)="runPartWorkflow('reset-cell')"
               (applyRequested)="runPartWorkflow($event)" />
           }

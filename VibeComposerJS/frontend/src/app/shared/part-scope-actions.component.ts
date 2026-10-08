@@ -7,11 +7,10 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
   styleUrl: './part-scope-actions.component.css',
 })
 export class PartScopeActionsComponent {
-  readonly layout = input<'full' | 'header' | 'range'>('full');
+  readonly layout = input<'full' | 'header'>('full');
   readonly group = input(false);
   readonly hasOverrides = input(false);
   readonly hasExceptions = input(false);
-  readonly destinations = input('');
   readonly destinationCount = input(0);
   readonly message = input<string | null>(null);
   readonly freezeRequested = output<void>();

@@ -1,4 +1,3 @@
-@if (layout() !== 'range') {
 <div class="scope-actions" [class.header-actions]="layout() === 'header'">
   @if (layout() === 'header') {
     <button type="button" class="reset-icon" [disabled]="!hasOverrides()" (click)="inheritRequested.emit()"
@@ -16,26 +15,19 @@
       Reset cell + track overrides
     </button>
   }
-</div>
-}
-@if (layout() !== 'header') {
-<details class="range-actions">
-  <summary>Apply to header-selected sections ({{ destinationCount() }})</summary>
-  @if (destinationCount()) {
-    <p>Destinations: {{ destinations() }}. The source section is excluded.</p>
-  } @else {
-    <p>Select destination section headers (Shift selects a range), then click the source cell or track. That keeps the header selection.</p>
+  <span class="action-separator" aria-hidden="true">|</span>
+  <button type="button" [disabled]="!destinationCount()" (click)="applyRequested.emit('overrides')"
+    title="Copy this cell or track’s explicit overrides to the other header-selected sections. Preserve their other settings and track exceptions; exclude the source section.">
+    Copy to {{ destinationCount() > 1 ? 'Sections' : 'Section' }} ({{ destinationCount() }})
+  </button>
+  <button type="button" [disabled]="!destinationCount()" (click)="applyRequested.emit('effective')"
+    title="Copy all effective musical settings for the current tracks to the other header-selected sections, replacing those tracks’ overrides. Preserve mixed values, presence, instruments and manual notes; exclude the source section.">
+    Copy All to {{ destinationCount() > 1 ? 'Sections' : 'Section' }} ({{ destinationCount() }})
+  </button>
+  @if (message(); as feedback) {
+    <span class="workflow-message" role="status" [title]="feedback">
+      <span aria-hidden="true">{{ feedback.startsWith('No settings changed') ? '!' : '✓' }}</span>
+      <span class="feedback-text">{{ feedback }}</span>
+    </span>
   }
-  <div class="scope-actions">
-    <button type="button" [disabled]="!destinationCount() || !hasOverrides()" (click)="applyRequested.emit('overrides')">
-      {{ group() ? 'Apply cell overrides' : 'Apply track overrides' }}
-    </button>
-    <button type="button" [disabled]="!destinationCount()" (click)="applyRequested.emit('effective')">Apply effective values</button>
-  </div>
-  <p>Overrides merge only the source’s explicit fields into the same destination layer; other fields and track exceptions stay active.
-    Effective values replace each current track’s musical overrides with a full snapshot, preserving mixed values across tracks.</p>
-<p class="freeze-note">Frozen values stop following inherited settings. {{ group() ? 'New tracks continue to inherit cell settings. Reset cell + track overrides restores inheritance for all current tracks.' : 'Reset to inherited removes this track’s snapshot.' }}
-  Presence, instruments and saved manual notes are preserved.</p>
-</details>
-@if (message()) { <p class="workflow-message" role="status">{{ message() }}</p> }
-}
+</div>

@@ -142,7 +142,6 @@
 .part-context-label { min-width: 0; color: var(--text-primary); font: 10px var(--font-mono); overflow-wrap: anywhere; }
 .part-settings-content { max-height: 190px; overflow-y: auto; padding: 8px 12px; border-top: 1px solid var(--border-subtle); display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .part-settings-content vc-part-settings-editor { flex: 1 1 100%; }
-.part-settings-content vc-part-scope-actions { flex: 1 1 100%; }
 .part-inspector-link:disabled { color: var(--text-muted); cursor: default; }
 .part-inheritance { color: var(--text-secondary); font-size: 10px; line-height: 1.5; }
 .part-settings-content > .part-inheritance { flex-basis: 100%; }
@@ -150,7 +149,7 @@
 .part-summary strong { color: var(--text-primary); }
 
 /* Responsive workspace */
-@container (max-width: 600px) {
+@container (max-width: 850px) {
   .part-settings-heading { display: flex; flex-wrap: wrap; }
   .part-heading-context { flex: 1 1 160px; }
   .part-settings-heading > .part-inspector-link { margin-left: auto; }

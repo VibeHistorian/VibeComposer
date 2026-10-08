@@ -176,8 +176,8 @@ The old MANUAL/Apply family (`ArrangementGUI.applyCustomPanelsToSection()`, `swi
 
 | New action | Scope and effect | Implementation lookup |
 | --- | --- | --- |
-| Apply cell/track overrides | Merge explicit source fields at the same layer in header-selected destinations; preserve destination track exceptions | `ProjectService.applyPartSettingsToSections(..., 'overrides')` |
-| Apply effective values | Replace current matching track patches with independent source-effective snapshots at each destination | `ProjectService.applyPartSettingsToSections(..., 'effective')` |
+| Copy to Section(s) (n) | Merge explicit source fields at the same layer in header-selected destinations; preserve destination track exceptions | `ProjectService.applyPartSettingsToSections(..., 'overrides')` |
+| Copy All to Section(s) (n) | Replace current matching track patches with independent source-effective snapshots at each destination | `ProjectService.applyPartSettingsToSections(..., 'effective')` |
 | Freeze effective settings / Freeze current tracks | Snapshot supported part values per current track in the source section; preserve mixed values | `ProjectService.freezePartSettings()` |
 | Reset cell + track overrides | Clear both layers for the selected role and its current tracks | `ProjectService.resetCellPartSettings()` |
 

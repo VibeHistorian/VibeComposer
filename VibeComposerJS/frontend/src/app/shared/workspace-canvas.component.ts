@@ -137,8 +137,6 @@ export class WorkspaceCanvasComponent {
   readonly manualTrackNames = computed(() => this.contextTracks().filter((track) => track.editedPhrase !== undefined).map((track) => track.name).join(', '));
   readonly partDestinations = computed(() => this.project().arrangement.filter((section) =>
     this.selectedSectionIds().includes(section.id) && section.id !== this.localPartTarget()?.sectionId));
-  readonly partDestinationLabel = computed(() => this.partDestinations().map((section) =>
-    `${this.project().arrangement.indexOf(section) + 1} · ${this.sectionLabel(section.type)}`).join(', '));
   private readonly workflowFeedback = signal<{ scope: string; project: CompositionProject; message: string } | null>(null);
   readonly partWorkflowMessage = computed(() => {
     const feedback = this.workflowFeedback();

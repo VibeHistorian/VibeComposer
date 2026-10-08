@@ -4,14 +4,13 @@
 button { min-height: 26px; padding: 0 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
 button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 button:disabled { opacity: .38; cursor: default; }
-p { margin: 6px 0; color: var(--text-muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
-.workflow-message { color: var(--text-primary); }
+.workflow-message { color: var(--text-primary); font-size: 12px; }
+.feedback-text { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Header icons */
 .header-actions { align-items: center; justify-content: center; }
 .reset-icon { width: 28px; padding: 0; font-size: 18px; }
 .freeze-icon { width: 34px; min-height: 30px; padding: 0; font: bold 24px var(--font-mono); line-height: 1; }
 
-/* Range actions */
-.range-actions { padding-top: 6px; border-top: 1px solid var(--border-subtle); }
-summary { color: var(--text-secondary); cursor: pointer; font-size: 10px; }
+/* Copy actions */
+.action-separator { padding: 0 4px; color: var(--text-muted); }
