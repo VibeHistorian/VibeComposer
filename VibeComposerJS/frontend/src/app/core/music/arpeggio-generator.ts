@@ -3,6 +3,7 @@ import { getDiatonicChords, getPitchClass } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { velocityBounds } from './part-settings';
+import { partFillMask } from './chord-span-fill';
 
 export interface ArpeggioNoteEvent {
   readonly midi: number;
@@ -38,6 +39,7 @@ export function generateArpeggio(
   const notesPerChord = Math.round(4 / rate);
   const events: ArpeggioNoteEvent[] = [];
   const [velocityMin, velocityMax] = velocityBounds(settings);
+  const fill = partFillMask(progression.length, settings);
 
   progression.forEach((degree, chordIndex) => {
     const chord = diatonicChords.find((candidate) => candidate.degree === degree);
@@ -66,11 +68,14 @@ export function generateArpeggio(
       const pitchIndex = settings.pattern === 'random'
         ? pitchRandom.nextInt(ascending.length)
         : step % sequence.length;
+      // Java arp turns excluded chords into rests after consuming pitch/dynamic randomness.
+      const velocity = velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin;
+      if (!fill[chordIndex]) continue;
       events.push({
         midi: settings.pattern === 'random' ? ascending[pitchIndex] : sequence[pitchIndex],
         startBeat: chordIndex * 4 + step * rate,
         durationBeats: rate,
-        velocity: velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin,
+        velocity,
         chordIndex,
       });
     }

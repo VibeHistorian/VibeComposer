@@ -23,7 +23,7 @@ References: [InstPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibec
 | Transpose | `InstPanel.transpose` → `InstPart.transpose` | Q | P3; part transpose separate from transport transpose |
 | Length | `noteLengthMultiplier` | Q | P3; preserve percent units, not score timing length |
 | Velocity range | `minMaxVelSlider` → `velocityMin`, `velocityMax` | Q | P3; range control, not track volume; validate ordering |
-| Fill ALL/ODD/EVEN/F1…/HALF… | `chordSpanFill`, `fillFlip` → same fields | Q | P4; [ChordSpanFill](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Enums/ChordSpanFill.java); preserve actual Java masks rather than guessing parity from labels |
+| Fill ALL/ODD/EVEN/F1…/HALF… | `chordSpanFill`, `fillFlip` → same fields | Q | P4a implemented for Bass/Chords/Arp/Drums at all four scopes; [ChordSpanFill](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Enums/ChordSpanFill.java); Java ODD starts at the second chord, HALF1 uses floor(n/2), Flip complements the mask |
 | Hits, Span, Repeat | `hitsPerPattern`, `chordSpan`, `patternRepeat` | Q | P4; actual values, unlike reroll hit rules |
 | Rhythm pattern + inverse | `pattern`, `patternFlip` | Q | P4; [RhythmPattern](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Enums/RhythmPattern.java) |
 | Pattern grid, custom velocities | `comboPanel` → `customPattern`, `customVelocities` | Q | P4; grid editing and velocity detail share stored data |
@@ -56,6 +56,8 @@ References: [InstPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibec
 Current TS bass `noteVariation`/`octaveInterval` and chord `noteLengthPercent` already cover small parts of these families. The current bass/chord rhythm enums, two arp rates/octaves, and drum groove presets are simplified generators; preserve or replace deliberately as the full engine arrives.
 
 The P1a checkpoint adds Melody's role identity, red presentation, manual-note editing, instrument/mix/channel routing and section presence. Its musical generation controls above are still deferred to the actual current block-generator port (P1b/P5); no melody knobs or reroll controls are active yet. Melody presence defaults follow [Arrangement.defaultSections](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Arrangement.java), whose `Section` constructor arguments use Melody first, followed by Bass, Chords, Arp and Drums.
+
+P4a fill consumers: `BassPhraseGenerator` skips unfilled chords before shared random draws; `ChordPhraseGenerator` skips before chord-local dynamics; `ArpPhraseGenerator` and `DrumPhraseGenerator` convert excluded slots into rests while retaining their random draws. The translated role generators now consume `chordSpanFill`/`fillFlip` through `core/music/chord-span-fill.ts`. This ports fill masks and their supported consumer behavior without claiming that the remaining simplified rhythm engines have reached complete Java parity. Fill selection is musical Q; the checkbox choosing fills on track rerolls remains H/P6.
 
 ## Track-generation policies
 

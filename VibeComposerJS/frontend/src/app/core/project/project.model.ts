@@ -1,4 +1,5 @@
 import type { ScaleMode } from '../music/harmony';
+import type { ChordSpanFill } from '../music/chord-span-fill';
 
 export type BassRhythm = 'alternating' | 'full' | 'half' | 'tresillo' | 'sparse';
 export type ChordRhythm = 'full' | 'half' | 'tresillo' | 'sparse' | 'single';
@@ -32,6 +33,9 @@ export interface ArrangementSection {
 }
 
 export interface CommonPartSettings {
+  /** Which progression chord slots produce notes, independent of section presence. */
+  readonly chordSpanFill?: ChordSpanFill;
+  readonly fillFlip?: boolean;
   readonly transpose?: number;
   readonly noteLengthMultiplier?: number;
   readonly velocityMin?: number;

@@ -20,7 +20,8 @@ export class PartSettingsEditorComponent {
   readonly controls = computed(() => PART_CONTROLS[this.role()]);
 
   numericValue(control: PartControl): number {
-    return (this.values()[control.key] as number | null) ?? control.defaultValue ?? control.minimum!;
+    return (this.values()[control.key] as number | null)
+      ?? (typeof control.defaultValue === 'number' ? control.defaultValue : control.minimum!);
   }
 
   minimum(control: PartControl): number {

@@ -1,6 +1,6 @@
 <div class="part-controls">
   @for (control of controls(); track control.key) {
-    <div class="part-control" [class.overridden]="overriddenKeys().includes(control.key)">
+    <div class="part-control" [class.overridden]="overriddenKeys().includes(control.key)" [title]="control.description ?? ''">
       @if (control.kind === 'number') {
         <vc-compact-knob [value]="numericValue(control)" [mixed]="values()[control.key] === null"
           [minimum]="minimum(control)" [maximum]="maximum(control)" [code]="control.key.slice(0, 3).toUpperCase()"

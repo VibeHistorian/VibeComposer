@@ -3,6 +3,7 @@ import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import type { BassRhythm, CommonPartSettings } from '../project/project.model';
 import { velocityBounds } from './part-settings';
+import { partFillMask } from './chord-span-fill';
 
 export interface BassNoteEvent {
   readonly midi: number;
@@ -77,9 +78,12 @@ export function generateBassline(
   const noteVariationRandom = new JavaRandom(BigInt.asIntN(32, partSeed + 2n));
   const events: BassNoteEvent[] = [];
   const [velocityMin, velocityMax] = velocityBounds(settings);
+  const fill = partFillMask(triads.length, settings);
   let chordStart = 0;
 
   for (let chordIndex = 0; chordIndex < triads.length; chordIndex++) {
+    // Java bass skips the entire chord before consuming its shared dynamics/variation streams.
+    if (!fill[chordIndex]) { chordStart += BEATS_PER_CHORD; continue; }
     const durations = rhythm === 'alternating'
       ? makeAlternatingDurations(
         BigInt.asIntN(32, partSeed + BigInt(chordIndex % 2)),

@@ -1,4 +1,5 @@
 import type { ArrangedPart, ArrangementSection, CommonPartSettings, CompositionTrack, PartSettingsPatch } from '../project/project.model';
+import { CHORD_SPAN_FILLS } from './chord-span-fill';
 
 export interface PartControl {
   readonly key: string;
@@ -9,27 +10,34 @@ export interface PartControl {
   readonly step?: number;
   readonly unit?: string;
   readonly options?: readonly (string | number)[];
-  readonly defaultValue?: number;
+  readonly defaultValue?: string | number | boolean;
+  readonly description?: string;
 }
 
 const number = (key: string, label: string, minimum: number, maximum: number, defaultValue?: number, unit = '%'): PartControl =>
   ({ key, label, kind: 'number', minimum, maximum, defaultValue, unit });
 const choice = (key: string, label: string, options: readonly (string | number)[]): PartControl => ({ key, label, kind: 'choice', options });
+const fill: readonly PartControl[] = [
+  { ...choice('chordSpanFill', 'Fill', CHORD_SPAN_FILLS), defaultValue: 'ALL',
+    description: 'Choose active progression chords. Java ODD plays slots 2, 4, …; EVEN plays 1, 3, …. HALF1 uses the first floor(n/2) chords; HALF2 uses the rest.' },
+  { key: 'fillFlip', label: 'Fill flip', kind: 'boolean', defaultValue: false,
+    description: 'Invert which progression chords play. ALL + Fill flip produces silence.' },
+];
 const pitched: readonly PartControl[] = [{ ...number('transpose', 'Transpose', -36, 36, 0, ' st'), step: 12 },
   number('velocityMin', 'Min velocity', 1, 127, 69, ''), number('velocityMax', 'Max velocity', 1, 127, 89, '')];
 
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [],
-  bass: [choice('rhythm', 'Rhythm', ['alternating', 'full', 'half', 'tresillo', 'sparse']),
+  bass: [...fill, choice('rhythm', 'Rhythm', ['alternating', 'full', 'half', 'tresillo', 'sparse']),
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  chords: [choice('rhythm', 'Rhythm', ['full', 'half', 'tresillo', 'sparse', 'single']),
+  chords: [...fill, choice('rhythm', 'Rhythm', ['full', 'half', 'tresillo', 'sparse', 'single']),
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 125), ...pitched],
-  arpeggio: [choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
+  arpeggio: [...fill, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
     choice('rate', 'Rate', ['eighth', 'sixteenth']), choice('octaves', 'Octaves', [1, 2]),
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  drums: [choice('groove', 'Groove', ['rock', 'four-on-floor', 'half-time', 'sparse']),
+  drums: [...fill, choice('groove', 'Groove', ['rock', 'four-on-floor', 'half-time', 'sparse']),
     number('swingPercent', 'Swing', 50, 75), number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
 };
 
@@ -80,7 +88,7 @@ export function velocityBounds(settings: CommonPartSettings): readonly [number, 
 export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): CommonPartSettings | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const common = Object.fromEntries(Object.entries(value).filter(([key]) =>
-    ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier'].includes(key)));
+    ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier', 'chordSpanFill', 'fillFlip'].includes(key)));
   const decoded = decodePartPatch(role, common);
   return decoded && validVelocityRange(decoded, role) ? decoded : undefined;
 }

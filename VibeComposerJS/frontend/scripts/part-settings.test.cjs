@@ -616,6 +616,172 @@ test('copy feedback is dismissible, clears for different destinations, and never
   assert.equal(workspace.partWorkflowMessage(), null, 'a stale click or programmatic no-op clears feedback');
 });
 
+test('all fill masks match the actual Java enum, including odd halves, flipped silence and repeated slots', () => {
+  const { load } = fixture();
+  const { chordSpanFillMask, CHORD_SPAN_FILLS } = load('core/music/chord-span-fill.ts');
+  const expected = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/chord-span-fill.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(Object.keys(expected).length, 264);
+  for (const [key, mask] of Object.entries(expected)) {
+    const [fill, length, flipped] = key.split('/');
+    assert.deepEqual(chordSpanFillMask(Number(length), fill, flipped === 'true'), mask, key);
+  }
+  assert.equal(CHORD_SPAN_FILLS.length, 12);
+  assert.deepEqual(chordSpanFillMask(5, 'HALF1'), [1, 1, 0, 0, 0]);
+  assert.deepEqual(chordSpanFillMask(5, 'HALF2'), [0, 0, 1, 1, 1]);
+  assert.deepEqual(chordSpanFillMask(3, 'ODD'), [0, 1, 0]);
+  assert.deepEqual(chordSpanFillMask(3, 'EVEN'), [1, 0, 1]);
+  for (const args of [[33], [-1], [1.5], [3, 'UNKNOWN'], [3, 'ALL', 1]]) {
+    assert.throws(() => chordSpanFillMask(...args), RangeError);
+  }
+});
+
+test('fill produces rests in every supported generator and preserves role-specific random consumption', () => {
+  const { service, load } = fixture();
+  const seed = 9223372036854775807n;
+  const progression = [1, 1, 1, 1, 1];
+  const { generateBassline } = load('core/music/bass-generator.ts');
+  const { generateChordPart } = load('core/music/chord-generator.ts');
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const { generateDrumPart } = load('core/music/drum-generator.ts');
+  const calls = {
+    bass: (settings) => generateBassline(seed, 'C', 'major', progression, 'full', 100, settings),
+    chords: (settings) => generateChordPart(seed, 'C', 'major', progression, settings),
+    arpeggio: (settings) => generateArpeggio(seed, 'C', 'major', progression, { ...settings, pattern: 'random' }),
+    drums: (settings) => generateDrumPart(seed, progression.length, settings),
+  };
+  for (const [role, generate] of Object.entries(calls)) {
+    const settings = service.project()[role];
+    const baseline = generate(settings);
+    assert.deepEqual(generate({ ...settings, chordSpanFill: 'ALL', fillFlip: false }), baseline, role + ' defaults');
+    assert.deepEqual(generate({ ...settings, chordSpanFill: 'ALL', fillFlip: true }), [], role + ' silence');
+    const filled = generate({ ...settings, chordSpanFill: 'ODD' });
+    const slot = (event) => event.chordIndex ?? event.barIndex;
+    assert.ok(filled.length > 0);
+    assert.ok(filled.every((event) => slot(event) === 1 || slot(event) === 3), role);
+    if (role !== 'bass') assert.deepEqual(filled, baseline.filter((event) => slot(event) % 2 === 1), role + ' rests keep streams');
+    else {
+      const strip = (event) => ({ midi: event.midi, duration: event.durationBeats, velocity: event.velocity });
+      assert.deepEqual(filled.filter((event) => slot(event) === 1).map(strip),
+        baseline.filter((event) => slot(event) === 0).map(strip), 'bass skips dynamics/variation for silent chords');
+    }
+  }
+});
+
+test('fill controls respect mixed scopes, track exceptions, flips and per-field inheritance', () => {
+  const { service, ui, workspace, settings } = fixture();
+  const first = 'track-arpeggio-1';
+  const second = service.duplicateTrack(first);
+  const sectionId = service.project().arrangement[1].id;
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { chordSpanFill: 'EVEN' });
+  ui.selectCell(sectionId, 'arpeggio');
+  assert.equal(workspace.partValues().chordSpanFill, null);
+  assert.equal(workspace.partValues().fillFlip, false);
+  const cell = workspace.partScope();
+  service.updatePartSettings(cell, { chordSpanFill: 'HALF1', fillFlip: true });
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: second }, { chordSpanFill: 'F23', fillFlip: false });
+  assert.equal(workspace.partValues().chordSpanFill, null);
+  assert.equal(workspace.partValues().fillFlip, null);
+  service.resetPartSettings({ kind: 'section-track', sectionId, trackId: second }, 'fillFlip');
+  assert.equal(workspace.partValues().fillFlip, true);
+  const effective = (id) => settings.resolvePartTrack(service.project().tracks.find((track) => track.id === id),
+    service.project().arrangement[1]).generatorSettings;
+  assert.equal(effective(first).chordSpanFill, 'HALF1');
+  assert.equal(effective(second).chordSpanFill, 'F23');
+  service.resetPartSettings(cell);
+  assert.equal(effective(first).chordSpanFill, undefined);
+  assert.equal(effective(second).chordSpanFill, 'F23');
+});
+
+test('section fills repeat over the effective progression and reach score/preview/editor and MIDI without changing presence', () => {
+  const { service, ui, workspace, phrase, midi } = fixture();
+  const trackId = 'track-chords-1';
+  const sectionId = service.project().arrangement[1].id;
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
+  service.updateSection(1, { measures: 8 });
+  service.setSectionChordDegree(1, 0, 1);
+  // The section override covers all eight measures; use an odd global progression separately below.
+  const before = service.project();
+  const track = () => service.project().tracks.find((track) => track.id === trackId);
+  const base = phrase.layOutTrackPhrase(before, track());
+  const source = { kind: 'section-track', sectionId, trackId };
+  service.updatePartSettings(source, { chordSpanFill: 'ODD' });
+  const start = before.arrangement[0].measures * 4;
+  const end = start + before.arrangement[1].measures * 4;
+  const notes = phrase.layOutTrackPhrase(service.project(), track());
+  const expected = base.filter((note) => note.startBeat < start || note.startBeat >= end
+    || Math.floor((note.startBeat - start) / 4) % 2 === 1);
+  const withoutId = (notes) => notes.map(({ id, ...note }) => note);
+  assert.deepEqual(withoutId(notes), withoutId(expected));
+  assert.deepEqual(service.project().arrangement.map((section) => section.trackPresence), before.arrangement.map((section) => section.trackPresence));
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const midiNotes = exported.tracks.find((track) => track.name === 'C1').notes;
+  assert.equal(midiNotes.length, notes.length);
+  midiNotes.forEach((note, index) => {
+    assert.equal(note.midi, notes[index].midi);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
+  });
+  assert.equal(workspace.scoreNotes().filter((note) => note.part === trackId).length, notes.length);
+  ui.selectSectionTrack(sectionId, trackId);
+  assert.equal(workspace.partValues().chordSpanFill, 'ODD');
+  service.clearSectionChordOverrides(1);
+  service.setProgression([1, 5, 6]);
+  service.updatePartSettings(source, { chordSpanFill: 'HALF2' });
+  const local = phrase.layOutTrackPhrase(service.project(), track()).filter((note) => note.startBeat >= start && note.startBeat < end);
+  assert.deepEqual([...new Set(local.map((note) => Math.floor((note.startBeat - start) / 4)))], [1, 2, 4, 5, 7]);
+});
+
+test('fill values survive copy/freeze, one-entry history, duplication and session/JSON; manual notes keep masking them', () => {
+  const { service, phrase, load } = fixture();
+  const trackId = 'track-drums-1';
+  const [first, second] = service.project().arrangement;
+  const source = { kind: 'section-track', sectionId: first.id, trackId };
+  const before = service.exportProjectJson();
+  service.updatePartSettings(source, { chordSpanFill: 'F34', fillFlip: true });
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+  service.redo();
+  assert.equal(service.applyPartSettingsToSections(source, [second.id], 'overrides'), 'changed');
+  assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].fillFlip, true);
+  assert.equal(service.freezePartSettings(source), 'changed');
+  const copy = service.duplicateTrack(trackId);
+  assert.equal(service.project().arrangement[0].trackPartOverrides[copy].chordSpanFill, 'F34');
+  service.duplicateSection(0);
+  assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].chordSpanFill, 'F34');
+  const saved = service.exportProjectJson();
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true);
+  const manual = [{ id: 'manual', midi: 36, startBeat: 0, durationBeats: 0.5, velocity: 90 }];
+  service.updateTrackPhrase(trackId, manual);
+  service.updatePartSettings({ kind: 'global-track', trackId }, { chordSpanFill: 'ALL', fillFlip: true });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), service.project().tracks.find((track) => track.id === trackId)), manual);
+});
+
+test('invalid fills fail at every scope and on import; omitted fields keep older projects readable', () => {
+  const { service } = fixture();
+  const sectionId = service.project().arrangement[0].id;
+  for (const role of ['bass', 'chords', 'arpeggio', 'drums']) {
+    const trackId = service.project().tracks.find((track) => track.role === role).id;
+    const before = service.exportProjectJson();
+    const scopes = [{ kind: 'global-role', role }, { kind: 'global-track', trackId },
+      { kind: 'section-role', sectionId, role }, { kind: 'section-track', sectionId, trackId }];
+    for (const scope of scopes) {
+      for (const patch of [{ chordSpanFill: 'half' }, { chordSpanFill: null }, { fillFlip: 1 }]) {
+        service.updatePartSettings(scope, patch);
+        assert.equal(service.exportProjectJson(), before);
+      }
+    }
+    const invalid = JSON.parse(before);
+    invalid.tracks.find((track) => track.id === trackId).generatorSettings.chordSpanFill = 'UNKNOWN';
+    assert.equal(service.importProjectJson(JSON.stringify(invalid)), false);
+    assert.equal(service.importProjectJson(before), true);
+    assert.equal(service.project().tracks.find((track) => track.id === trackId).generatorSettings.chordSpanFill, undefined);
+  }
+  const before = service.exportProjectJson();
+  service.updatePartSettings({ kind: 'section-role', sectionId, role: 'melody' }, { chordSpanFill: 'ODD' });
+  assert.equal(service.exportProjectJson(), before);
+});
+
 test('section chance preferences gain melody defaults while retaining saved probabilities for other roles', () => {
   const { load } = fixture();
   const previousStorage = global.localStorage;

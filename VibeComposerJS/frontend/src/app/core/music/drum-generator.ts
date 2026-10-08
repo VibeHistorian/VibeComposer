@@ -1,5 +1,6 @@
 import type { DrumSettings } from '../project/project.model';
 import { JavaRandom } from './java-random';
+import { partFillMask } from './chord-span-fill';
 
 export type DrumVoice = 'kick' | 'snare' | 'closed-hat';
 
@@ -65,16 +66,20 @@ export function generateDrumPart(
     { voice: 'closed-hat', midi: 42, baseVelocity: 72 },
   ];
   const events: DrumHitEvent[] = [];
+  const fill = partFillMask(barCount, settings);
   for (let barIndex = 0; barIndex < barCount; barIndex++) {
     for (const drum of voices) {
       for (const step of groove[drum.voice]) {
         const swing = step % 4 === 2 ? (settings.swingPercent / 100 - 0.5) * 0.5 : 0;
+        // Fill creates rests without skipping the dynamics stream in Java drums.
+        const velocity = Math.min(127, drum.baseVelocity + velocityRandom.nextInt(13) - 6);
+        if (!fill[barIndex]) continue;
         events.push({
           midi: drum.midi,
           voice: drum.voice,
           startBeat: barIndex * 4 + step * SIXTEENTH_NOTE_BEATS + swing,
           durationBeats: drum.voice === 'closed-hat' ? 0.1 : 0.18,
-          velocity: Math.min(127, drum.baseVelocity + velocityRandom.nextInt(13) - 6),
+          velocity,
           barIndex,
           step,
         });
