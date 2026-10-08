@@ -299,7 +299,9 @@
         <section class="inspector-arrangement-add" aria-label="Add arrangement section">
           <p class="eyebrow">ARRANGEMENT</p>
           <select [value]="newSectionType()" (change)="updateNewSectionType($event)">
-            @for (type of sectionTypes; track type) { <option [value]="type">{{ sectionLabel(type) }}</option> }
+            @for (type of sectionTypes; track type) {
+              <option [value]="type" [selected]="type === newSectionType()">{{ sectionLabel(type) }}</option>
+            }
           </select>
           <button type="button" class="add-chord-button" [disabled]="project().arrangement.length >= 32 || totalMeasures() + 4 > 128" (click)="addSection()">＋ Add section</button>
         </section>
