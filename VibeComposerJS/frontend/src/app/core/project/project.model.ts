@@ -2,7 +2,7 @@ import type { ScaleMode } from '../music/harmony';
 import type { ChordSpanFill } from '../music/chord-span-fill';
 
 export type BassRhythm = 'alternating' | 'full' | 'half' | 'tresillo' | 'sparse';
-export type ChordRhythm = 'full' | 'half' | 'tresillo' | 'sparse' | 'single';
+export type ChordRhythm = 'full' | 'half' | 'tresillo' | 'sparse' | 'single' | 'one-six';
 export type ChordVoicing = 'close' | 'open';
 export type ArpeggioPattern = 'up' | 'down' | 'up-down' | 'random';
 export type ArpeggioRate = 'eighth' | 'sixteenth';
@@ -57,6 +57,10 @@ export interface BassSettings extends CommonPartSettings {
 
 export interface ChordSettings extends CommonPartSettings {
   readonly rhythm: ChordRhythm;
+  /** Grid subdivisions per four-beat chord; only enabled cells produce notes. */
+  readonly hitsPerPattern?: number;
+  readonly patternShift?: number;
+  readonly patternFlip?: boolean;
   readonly voicing: ChordVoicing;
   readonly noteLengthPercent: number;
 }

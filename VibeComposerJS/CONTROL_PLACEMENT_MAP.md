@@ -24,10 +24,10 @@ References: [InstPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibec
 | Length | `noteLengthMultiplier` | Q | P3; preserve percent units, not score timing length |
 | Velocity range | `minMaxVelSlider` → `velocityMin`, `velocityMax` | Q | P3; range control, not track volume; validate ordering |
 | Fill ALL/ODD/EVEN/F1…/HALF… | `chordSpanFill`, `fillFlip` → same fields | Q | P4a implemented for Bass/Chords/Arp/Drums at all four scopes; [ChordSpanFill](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Enums/ChordSpanFill.java); Java ODD starts at the second chord, HALF1 uses floor(n/2), Flip complements the mask |
-| Hits, Span, Repeat | `hitsPerPattern`, `chordSpan`, `patternRepeat` | Q | P4; actual values, unlike reroll hit rules |
-| Rhythm pattern + inverse | `pattern`, `patternFlip` | Q | P4; [RhythmPattern](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Enums/RhythmPattern.java) |
+| Hits, Span, Repeat | `hitsPerPattern`, `chordSpan`, `patternRepeat` | Q | P4b Chords Hits implemented (1–32 subdivisions); span/repeat and other roles remain deferred. Actual values, unlike reroll hit rules |
+| Rhythm pattern + inverse | `pattern`, `patternFlip` | Q | P4b Chords static patterns + flip implemented; [RhythmPattern](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Enums/RhythmPattern.java). Stored TS full/half/sparse map to FULL/ALT/ONEPER4; one-six maps to ONESIX. CUSTOM/EUCLID/MELODY1 remain deferred |
 | Pattern grid, custom velocities | `comboPanel` → `customPattern`, `customVelocities` | Q | P4; grid editing and velocity detail share stored data |
-| Shift | `patternShift` | Q | P4; actual rotation, distinct from Shift% reroll chance |
+| Shift | `patternShift` | Q | P4b Chords implemented (0–8); padded eight-slot repeats rotate before Hits truncation, per `RhythmPattern.getPatternByLength()`/`InstPart.getFinalPatternCopy()`. Distinct from Shift% reroll chance |
 | Pause%, Split% | `pauseChance`, `exceptionChance` | Q | P4; phrase-generation probabilities, not track-reroll rules |
 | Swing%, Accent | `swingPercent`, `accents` | Q / I for Accent initially | P4; document interaction with global/section swing |
 | Voices + enable | `chordNotesStretch`, `stretchEnabled` | Q for chords/arp | P5; actual voice expansion, not reroll VOICES mode/bounds |

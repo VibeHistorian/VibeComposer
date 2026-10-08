@@ -32,7 +32,14 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
   bass: [...fill, choice('rhythm', 'Rhythm', ['alternating', 'full', 'half', 'tresillo', 'sparse']),
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  chords: [...fill, choice('rhythm', 'Rhythm', ['full', 'half', 'tresillo', 'sparse', 'single']),
+  chords: [...fill, { ...choice('rhythm', 'Rhythm pattern', ['full', 'half', 'tresillo', 'sparse', 'single', 'one-six']),
+    description: 'Java patterns: full = FULL, half = ALT, sparse = ONEPER4, one-six = ONESIX. This grid is separate from chord fill.' },
+    { ...number('hitsPerPattern', 'Hits', 1, 32, 8, ''),
+      description: 'Grid subdivisions per four-beat chord. Pattern rests mean fewer sounded notes than the Hits value.' },
+    { ...number('patternShift', 'Shift', 0, 8, 0, ''),
+      description: 'Rotate the repeated eight-slot pattern right before trimming it to the Hits value, matching Java.' },
+    { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
+      description: 'Invert notes and rests inside the chord rhythm grid. Fill still determines which chords play.' },
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 125), ...pitched],
   arpeggio: [...fill, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
     choice('rate', 'Rate', ['eighth', 'sixteenth']), choice('octaves', 'Octaves', [1, 2]),
@@ -88,7 +95,8 @@ export function velocityBounds(settings: CommonPartSettings): readonly [number, 
 export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): CommonPartSettings | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const common = Object.fromEntries(Object.entries(value).filter(([key]) =>
-    ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier', 'chordSpanFill', 'fillFlip'].includes(key)));
+    ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier', 'chordSpanFill', 'fillFlip',
+      'hitsPerPattern', 'patternShift', 'patternFlip'].includes(key)));
   const decoded = decodePartPatch(role, common);
   return decoded && validVelocityRange(decoded, role) ? decoded : undefined;
 }

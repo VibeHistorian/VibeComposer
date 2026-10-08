@@ -50,4 +50,6 @@ Section part settings offer Freeze and Copy workflows in the quick panel header 
 
 Fill and Fill flip select which progression chords generate notes for Bass, Chords, Arpeggio and Drums at global or section-local scope. Java's ODD means the second/fourth/etc. chords, EVEN the first/third/etc.; HALF1 uses the first floor(n/2), HALF2 the remainder. Flip reverses the choice (flipped ALL is silence). Fill preserves section presence and timing; saved manual notes still replace generated notes. See the P4a checkpoint in [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md).
 
+Chords also expose Hits, Shift and Pattern flip beside their Rhythm pattern picker, including the one-six pattern. Hits subdivides each four-beat chord; Shift rotates the repeated eight-slot pattern before trimming, and Pattern flip swaps notes/rests within that grid. Fill still controls which whole chords play. See P4b in [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md).
+
 Use the feature and shared UI READMEs for the workspace behavior and Angular ownership boundaries. Preserve useful density in piano rolls and drum grids, use role colors consistently, and use shared theme tokens for the rest of the interface.

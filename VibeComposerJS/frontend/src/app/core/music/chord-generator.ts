@@ -4,6 +4,7 @@ import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
+import { rhythmPatternMask, type StaticRhythmPattern } from './rhythm-pattern';
 
 export interface ChordHitEvent {
   readonly pitches: readonly number[];
@@ -15,13 +16,8 @@ export interface ChordHitEvent {
 }
 
 const BEATS_PER_CHORD = 4;
-const EIGHTH_NOTE_BEATS = 0.5;
-const CHORD_RHYTHMS: Readonly<Record<ChordSettings['rhythm'], readonly number[]>> = {
-  full: [1, 1, 1, 1, 1, 1, 1, 1],
-  half: [1, 0, 1, 0, 1, 0, 1, 0],
-  tresillo: [1, 0, 0, 1, 0, 0, 1, 0],
-  sparse: [1, 0, 0, 0, 1, 0, 0, 0],
-  single: [1, 0, 0, 0, 0, 0, 0, 0],
+const CHORD_RHYTHMS: Readonly<Record<ChordSettings['rhythm'], StaticRhythmPattern>> = {
+  full: 'FULL', half: 'ALT', tresillo: 'TRESILLO', sparse: 'ONEPER4', single: 'SINGLE', 'one-six': 'ONESIX',
 };
 
 /** Generate seeded chord hits from diatonic progression degrees. */
@@ -68,11 +64,13 @@ export function generateChordPart(
   const events: ChordHitEvent[] = [];
   const [velocityMin, velocityMax] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings);
+  const pattern = rhythmPatternMask(CHORD_RHYTHMS[settings.rhythm], settings.hitsPerPattern ?? 8,
+    settings.patternShift ?? 0, settings.patternFlip ?? false);
+  const stepDuration = BEATS_PER_CHORD / pattern.length;
 
   for (let chordIndex = 0; chordIndex < chordDefinitions.length; chordIndex++) {
     if (!fill[chordIndex]) continue;
     const chord = chordDefinitions[chordIndex];
-    const pattern = CHORD_RHYTHMS[settings.rhythm];
     const velocityRandom = new JavaRandom(BigInt.asIntN(32, partSeed + BigInt(chordIndex)));
 
     for (let step = 0; step < pattern.length; step++) {
@@ -83,8 +81,8 @@ export function generateChordPart(
       events.push({
         pitches: chord.pitches,
         symbol: chord.symbol,
-        startBeat: chordIndex * BEATS_PER_CHORD + step * EIGHTH_NOTE_BEATS,
-        durationBeats: EIGHTH_NOTE_BEATS * settings.noteLengthPercent / 100,
+        startBeat: chordIndex * BEATS_PER_CHORD + step * stepDuration,
+        durationBeats: stepDuration * settings.noteLengthPercent / 100,
         velocity,
         chordIndex,
       });
