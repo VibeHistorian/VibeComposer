@@ -6,6 +6,7 @@ export interface PartControl {
   readonly kind: 'number' | 'choice' | 'boolean';
   readonly minimum?: number;
   readonly maximum?: number;
+  readonly step?: number;
   readonly unit?: string;
   readonly options?: readonly (string | number)[];
   readonly defaultValue?: number;
@@ -14,7 +15,7 @@ export interface PartControl {
 const number = (key: string, label: string, minimum: number, maximum: number, defaultValue?: number, unit = '%'): PartControl =>
   ({ key, label, kind: 'number', minimum, maximum, defaultValue, unit });
 const choice = (key: string, label: string, options: readonly (string | number)[]): PartControl => ({ key, label, kind: 'choice', options });
-const pitched: readonly PartControl[] = [number('transpose', 'Transpose', -36, 36, 0, ' st'),
+const pitched: readonly PartControl[] = [{ ...number('transpose', 'Transpose', -36, 36, 0, ' st'), step: 12 },
   number('velocityMin', 'Min velocity', 1, 127, 69, ''), number('velocityMax', 'Max velocity', 1, 127, 89, '')];
 
 /** Only expose settings with a working musical consumer in this buildout slice. */
@@ -36,13 +37,15 @@ export function settingsValues(settings: PartSettingsPatch, role: ArrangedPart):
     (settings as Record<string, string | number | boolean>)[control.key] ?? control.defaultValue!]));
 }
 
-export function decodePartPatch(role: ArrangedPart, value: unknown): PartSettingsPatch | undefined {
+export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps = false): PartSettingsPatch | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const result: Record<string, string | number | boolean> = {};
   for (const [key, field] of Object.entries(value)) {
     const control = PART_CONTROLS[role].find((candidate) => candidate.key === key);
     if (!control) return undefined;
     if (control.kind === 'number' && (!Number.isInteger(field) || (field as number) < control.minimum! || (field as number) > control.maximum!)) return undefined;
+    // Saved values remain readable; new edits follow the control's allowed steps.
+    if (enforceSteps && control.step && ((field as number) - control.minimum!) % control.step !== 0) return undefined;
     if (control.kind === 'choice' && !control.options!.includes(field as string | number)) return undefined;
     if (control.kind === 'boolean' && typeof field !== 'boolean') return undefined;
     result[key] = field as string | number | boolean;

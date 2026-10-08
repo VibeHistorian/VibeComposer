@@ -29,6 +29,8 @@ Separate two kinds of settings:
 
 Classification follows the consumer of a value, not its name or whether it uses randomness. For example, `exceptionChance` determines generated notes; `randomArpMaxExceptionChance` chooses that parameter on a track reroll. `randomArpCorrectMelodyNotes` and `randomArpUseOctaveAdjustments` are direct phrase-generation inputs despite their names. Some controls in the old tab headers therefore belong with part settings.
 
+Part transpose is locked to octave multiples within -36…36 for Bass, Chords and Arpeggio. Their quick-panel and inspector knobs use 12-semitone steps, and new scoped setting commands enforce those steps. Previously saved in-range values remain readable without discarding projects; the next knob edit selects an octave value. When Melody arrives, only its part knob additionally permits the 5- and 7-semitone offsets in each octave (the old Java melody set also included 4, which is excluded by the new requirement). A possible global preference to unlock all semitone values belongs to the later ExtraSettings stage. Transport/key transpose retains its existing semitone behavior.
+
 The inspector remains the complete editor. A quick control and its inspector equivalent bind to the same value, validation, effective-value resolver, and mutation command. Global harmony, transport, playback/mix, and application preferences retain distinct homes.
 
 ## Interaction and context

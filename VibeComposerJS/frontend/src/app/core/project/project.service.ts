@@ -47,7 +47,7 @@ export class ProjectService {
     const track = 'trackId' in scope ? current.tracks.find((candidate) => candidate.id === scope.trackId) : undefined;
     const role = 'role' in scope ? scope.role : track?.role;
     if (!role || !ARRANGED_PARTS.includes(role)) return;
-    const decoded = decodePartPatch(role, patch);
+    const decoded = decodePartPatch(role, patch, true);
     if (!decoded) return;
     if (scope.kind === 'global-role') { this.updateRoleGeneratorSettings(role, decoded); return; }
     if (scope.kind === 'global-track') { this.updateTrackGeneratorSettings(scope.trackId, decoded); return; }

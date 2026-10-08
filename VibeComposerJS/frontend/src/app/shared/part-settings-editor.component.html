@@ -4,6 +4,7 @@
       @if (control.kind === 'number') {
         <vc-compact-knob [value]="numericValue(control)" [mixed]="values()[control.key] === null"
           [minimum]="minimum(control)" [maximum]="maximum(control)" [code]="control.key.slice(0, 3).toUpperCase()"
+          [step]="control.step ?? 1"
           [label]="control.label" [unit]="control.unit ?? ''"
           (valueCommit)="settingsChanged.emit({ key: control.key, value: $event })" />
       } @else if (control.kind === 'choice') {

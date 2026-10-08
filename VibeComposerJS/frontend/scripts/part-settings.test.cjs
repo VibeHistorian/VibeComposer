@@ -109,12 +109,12 @@ test('mixed values are real aggregates and cell edits preserve track exceptions'
   const sectionId = service.project().arrangement[1].id;
   ui.selectCell(sectionId, 'chords');
   assert.equal(workspace.partValues().transpose, null);
-  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { transpose: 7 });
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { transpose: 24 });
   workspace.editPartSettings(workspace.partScope(), { key: 'transpose', value: -12 });
   assert.equal(workspace.partValues().transpose, null);
   assert.equal(workspace.trackExceptionCount(), 1);
   ui.selectSectionTrack(sectionId, id);
-  assert.equal(workspace.partValues().transpose, 7);
+  assert.equal(workspace.partValues().transpose, 24);
   workspace.resetPartSettings(workspace.partScope());
   assert.equal(workspace.partValues().transpose, -12);
 });
@@ -123,17 +123,17 @@ test('patches persist through history, JSON, presence rerolls, duplication, and 
   const { service } = fixture();
   const sectionId = service.project().arrangement[1].id;
   const scope = { kind: 'section-track', sectionId, trackId: 'track-arpeggio-1' };
-  service.updatePartSettings(scope, { transpose: 5, rate: 'sixteenth' });
+  service.updatePartSettings(scope, { transpose: 12, rate: 'sixteenth' });
   service.undo();
   assert.equal(service.project().arrangement[1].trackPartOverrides?.[scope.trackId], undefined);
   service.redo();
   const json = service.exportProjectJson();
   assert.equal(service.importProjectJson(json), true);
-  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[scope.trackId], { transpose: 5, rate: 'sixteenth' });
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[scope.trackId], { transpose: 12, rate: 'sixteenth' });
   service.randomizeArrangementPresence();
-  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[scope.trackId], { transpose: 5, rate: 'sixteenth' });
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[scope.trackId], { transpose: 12, rate: 'sixteenth' });
   const duplicate = service.duplicateTrack(scope.trackId);
-  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[duplicate], { transpose: 5, rate: 'sixteenth' });
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[duplicate], { transpose: 12, rate: 'sixteenth' });
   service.duplicateSection(1);
   assert.notEqual(service.project().arrangement[1].trackPartOverrides, service.project().arrangement[2].trackPartOverrides);
   service.removeTrack(duplicate);
@@ -197,4 +197,35 @@ test('secondary track seeds are applied once and layout matches the editor phras
   const generated = phrase.generateTrackPhrase(service.project(), track).filter((note) => note.startBeat < 8);
   const arranged = phrase.layOutTrackPhrase(service.project(), track).filter((note) => note.startBeat < 8);
   assert.deepEqual(arranged, generated);
+});
+
+test('part transpose edits use octave steps at every scope and preserve readable saved values', () => {
+  const { service, settings } = fixture();
+  const sectionId = service.project().arrangement[1].id;
+  for (const role of ['bass', 'chords', 'arpeggio']) {
+    assert.equal(settings.PART_CONTROLS[role].find((control) => control.key === 'transpose').step, 12);
+    const trackId = `track-${role}-1`;
+    const scopes = [{ kind: 'global-role', role }, { kind: 'global-track', trackId },
+      { kind: 'section-role', sectionId, role }, { kind: 'section-track', sectionId, trackId }];
+    for (const scope of scopes) {
+      for (const transpose of [-36, -24, -12, 0, 12, 24, 36]) {
+        service.updatePartSettings(scope, { transpose });
+        const track = service.project().tracks.find((candidate) => candidate.id === trackId);
+        const section = 'sectionId' in scope ? service.project().arrangement[1] : undefined;
+        assert.equal(settings.resolvePartTrack(track, section).generatorSettings.transpose, transpose);
+      }
+      const before = service.exportProjectJson();
+      for (const transpose of [-37, -7, -5, 1, 5, 7, 13, 37]) service.updatePartSettings(scope, { transpose });
+      assert.equal(service.exportProjectJson(), before);
+      if ('sectionId' in scope) service.resetPartSettings(scope);
+    }
+  }
+  const saved = JSON.parse(service.exportProjectJson());
+  saved.tracks[0].generatorSettings.transpose = 5;
+  saved.arrangement[1].trackPartOverrides = { [saved.tracks[0].id]: { transpose: 7 } };
+  assert.equal(service.importProjectJson(JSON.stringify(saved)), true, 'old saved values are not discarded');
+  assert.equal(service.project().tracks[0].generatorSettings.transpose, 5);
+  assert.equal(service.project().arrangement[1].trackPartOverrides[saved.tracks[0].id].transpose, 7);
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: saved.tracks[0].id }, { transpose: 12 });
+  assert.equal(service.project().arrangement[1].trackPartOverrides[saved.tracks[0].id].transpose, 12);
 });
