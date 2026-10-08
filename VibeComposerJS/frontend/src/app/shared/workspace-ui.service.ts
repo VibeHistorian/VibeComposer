@@ -2,11 +2,30 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import type { ArrangedPart } from '../core/project/project.model';
 import { ProjectService } from '../core/project/project.service';
 
+export type SettingsTarget =
+  | { readonly kind: 'global-role'; readonly role: ArrangedPart }
+  | { readonly kind: 'global-track'; readonly trackId: string }
+  | { readonly kind: 'section'; readonly sectionId: string }
+  | { readonly kind: 'section-role'; readonly sectionId: string; readonly role: ArrangedPart }
+  | { readonly kind: 'section-track'; readonly sectionId: string; readonly trackId: string };
+
 @Injectable({ providedIn: 'root' })
 export class WorkspaceUiService {
   private readonly projects = inject(ProjectService);
   readonly selectedTrackId = signal('track-bass-1');
-  readonly selectedRole = signal<ArrangedPart | null>(null);
+  private readonly target = signal<SettingsTarget>({ kind: 'global-track', trackId: 'track-bass-1' });
+  readonly settingsTarget = computed<SettingsTarget>(() => {
+    const target = this.target();
+    const project = this.projects.project();
+    const validSection = !('sectionId' in target) || project.arrangement.some((section) => section.id === target.sectionId);
+    const validTrack = !('trackId' in target) || project.tracks.some((track) => track.id === target.trackId);
+    if (validSection && validTrack) return target;
+    return { kind: 'global-track', trackId: project.tracks[0]?.id ?? '' };
+  });
+  readonly selectedRole = computed(() => {
+    const target = this.settingsTarget();
+    return target.kind === 'global-role' ? target.role : null;
+  });
   readonly editingNoteId = signal<string | null>(null);
   private readonly sectionSelection = signal<readonly string[]>([]);
   private readonly sectionAnchor = signal<string | null>(null);
@@ -47,12 +66,13 @@ export class WorkspaceUiService {
   }
 
   selectTrack(trackId: string): void {
+    if (!this.projects.project().tracks.some((track) => track.id === trackId)) return;
     this.selectedTrackId.set(trackId);
-    this.selectedRole.set(null);
+    this.target.set({ kind: 'global-track', trackId });
   }
 
   selectRole(role: ArrangedPart): void {
-    this.selectedRole.set(role);
+    this.target.set({ kind: 'global-role', role });
     const firstTrack = this.projects.project().tracks.find((track) => track.role === role);
     if (firstTrack) this.selectedTrackId.set(firstTrack.id);
   }
@@ -61,12 +81,33 @@ export class WorkspaceUiService {
     this.sectionSelection.set([]);
     this.sectionAnchor.set(null);
     this.focusedSection.set(null);
+    if (this.settingsTarget().kind === 'section') this.selectTrack(this.selectedTrackId());
+  }
+
+  clearSelection(): void {
+    this.clearSectionSelection();
+    this.selectTrack(this.selectedTrackId());
+  }
+
+  selectCell(sectionId: string, role: ArrangedPart): void {
+    if (!this.projects.project().arrangement.some((section) => section.id === sectionId)) return;
+    this.target.set({ kind: 'section-role', sectionId, role });
+  }
+
+  selectSectionTrack(sectionId: string, trackId: string): void {
+    const project = this.projects.project();
+    if (!project.arrangement.some((section) => section.id === sectionId)
+        || !project.tracks.some((track) => track.id === trackId)) return;
+    this.selectedTrackId.set(trackId);
+    this.target.set({ kind: 'section-track', sectionId, trackId });
   }
 
   setSectionSelection(sectionId: string | null): void {
     this.sectionSelection.set(sectionId ? [sectionId] : []);
     this.sectionAnchor.set(sectionId);
     this.focusedSection.set(sectionId);
+    if (sectionId) this.target.set({ kind: 'section', sectionId });
+    else this.selectTrack(this.selectedTrackId());
   }
 
   selectSection(sectionId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
@@ -96,5 +137,7 @@ export class WorkspaceUiService {
     this.sectionSelection.set(next);
     this.focusedSection.set(next.includes(sectionId) ? sectionId : next.at(-1) ?? null);
     if (!next.includes(this.sectionAnchor() ?? '')) this.sectionAnchor.set(next[0] ?? null);
+    if (next.length) this.target.set({ kind: 'section', sectionId: this.focusedSection()! });
+    else this.selectTrack(this.selectedTrackId());
   }
 }

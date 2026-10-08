@@ -9,6 +9,9 @@ Place reusable presentation components and UI helpers here when multiple feature
 - The transport owns playback, position, loop, key, mode, transpose, and tempo controls. Playback scheduling stays in `core/audio`, outside Angular rendering.
 - The mixer opens as a popup from a button with an accessible icon label.
 - Track-group selection shows shared generation settings; individual track selection shows local generator and instrument settings; section selection shows arrangement controls.
+- Arrangement headers exclusively select section ranges. Cell bodies select section-role settings; track buttons select section-track settings. Middle-click or I on a focused track button toggles presence without changing selection; the local inspector also provides an Include checkbox.
+- `WorkspaceUiService.settingsTarget` identifies the active settings scope independently from the header-selected range used for score focus and looping. Global track/group selections also preserve that range. CLEAR or Escape clears both contexts.
+- The Part settings panel between arrangement and score starts expanded and follows the settings target. At the first selection checkpoint it displays existing values; local musical editing remains read-only until the section-patch generation pipeline is implemented. The inspector's Edit global track settings action explicitly leaves section scope.
 - Clicking a score note opens the in-canvas piano roll or drum grid. Apply commits the draft phrase as one user action and returns to arrangement; Cancel discards it.
 - Keep common controls directly available and group detailed settings under clear labels. Preserve the density of piano rolls and drum grids.
 - Use stable role colors for tracks and arrangement blocks, with neutral surfaces for other controls. Reuse the shared theme tokens.

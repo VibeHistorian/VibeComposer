@@ -16,9 +16,10 @@
     <div class="overview-content" #scrollContent>
       <div class="overview-viewport" #viewport>
         <canvas #scoreCanvas tabindex="0" role="application"
-          aria-label="Arrangement overview. Ctrl-click to extend or trim selection, Shift-click to select a range. Escape clears selection. Use arrow keys and Enter to activate."
-          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space Escape"
+          aria-label="Arrangement overview. Click section headers to select sections; Ctrl-click extends or trims and Shift-click selects a range. Click cells or track buttons to select part settings. Middle-click a track button or press I to toggle presence. Escape clears selection. Use arrow keys and Enter to activate."
+          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space Escape I"
           (click)="onCanvasClick($event)" (pointermove)="onPointerMove($event)"
+          (pointerdown)="onCanvasPointerdown($event)" (auxclick)="onCanvasAuxclick($event)"
           (keydown)="onCanvasKeydown($event)"></canvas>
         <canvas #playheadCanvas class="playhead-canvas" aria-hidden="true"></canvas>
       </div>

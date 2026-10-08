@@ -85,6 +85,26 @@ export class WorkspaceCanvasComponent {
   readonly editingNoteId = this.workspaceUi.editingNoteId;
   readonly selectedSectionId = this.workspaceUi.selectedSectionId;
   readonly selectedSectionIds = this.workspaceUi.selectedSectionIds;
+  readonly settingsTarget = this.workspaceUi.settingsTarget;
+  readonly partPanelExpanded = signal(true);
+  readonly localPartTarget = computed(() => {
+    const target = this.settingsTarget();
+    return target.kind === 'section-role' || target.kind === 'section-track' ? target : null;
+  });
+  readonly contextTracks = computed(() => {
+    const target = this.settingsTarget();
+    if ('trackId' in target) return this.project().tracks.filter((track) => track.id === target.trackId);
+    if ('role' in target) return this.project().tracks.filter((track) => track.role === target.role);
+    return [];
+  });
+  readonly contextLabel = computed(() => {
+    const target = this.settingsTarget();
+    const section = 'sectionId' in target ? this.project().arrangement.find((item) => item.id === target.sectionId) : null;
+    const sectionLabel = section ? `${this.project().arrangement.indexOf(section) + 1} · ${this.sectionLabel(section.type)}` : 'Global';
+    if ('role' in target) return `${sectionLabel} · ${this.roleName(target.role)}`;
+    if ('trackId' in target) return `${sectionLabel} · ${this.contextTracks()[0]?.name ?? 'Track'}`;
+    return sectionLabel;
+  });
   readonly editing = signal(false);
   readonly mixerOpen = signal(false);
   readonly newSectionType = signal<SectionType>('VERSE1');
@@ -123,7 +143,10 @@ export class WorkspaceCanvasComponent {
   readonly selectedPart = computed(() => this.selectedTrack().role);
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id
     && track.midiChannel === this.selectedTrack().midiChannel));
-  readonly selectedSection = computed(() => this.project().arrangement.find((section) => section.id === this.selectedSectionId()) ?? null);
+  readonly selectedSection = computed(() => {
+    const target = this.settingsTarget();
+    return target.kind === 'section' ? this.project().arrangement.find((section) => section.id === target.sectionId) ?? null : null;
+  });
   readonly selectedSectionIndex = computed(() => this.project().arrangement.findIndex((section) => section.id === this.selectedSectionId()));
   readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
   readonly sectionChordDegrees = computed(() => {
@@ -160,18 +183,15 @@ export class WorkspaceCanvasComponent {
     if (this.editing()) return;
     if (!this.project().tracks.some((track) => track.id === trackId)) return;
     this.workspaceUi.selectTrack(trackId);
-    this.workspaceUi.clearSectionSelection();
   }
 
   selectRole(role: ArrangedPart): void {
     if (this.editing()) return;
     this.workspaceUi.selectRole(role);
-    this.workspaceUi.clearSectionSelection();
   }
 
   selectSection(section: ArrangementSection, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
     this.workspaceUi.selectSection(section.id, modifiers);
-    this.workspaceUi.selectTrack(trackId);
   }
 
   selectOverviewSection(sectionId: string, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
@@ -182,6 +202,42 @@ export class WorkspaceCanvasComponent {
   toggleArrangementTrack(sectionId: string, trackId: string, present: boolean): void {
     const index = this.project().arrangement.findIndex((section) => section.id === sectionId);
     if (index >= 0) this.projects.setSectionTrackPresence(index, trackId, present);
+  }
+
+  selectCell(sectionId: string, role: ArrangedPart): void {
+    if (!this.editing()) this.workspaceUi.selectCell(sectionId, role);
+  }
+
+  selectSectionTrack(sectionId: string, trackId: string): void {
+    if (!this.editing()) this.workspaceUi.selectSectionTrack(sectionId, trackId);
+  }
+
+  openInspector(): void {
+    const inspector = document.getElementById('part-inspector');
+    inspector?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    inspector?.focus({ preventScroll: true });
+  }
+
+  toggleContextTrackPresence(track: CompositionTrack): void {
+    const target = this.localPartTarget();
+    if (!target) return;
+    const section = this.project().arrangement.find((item) => item.id === target.sectionId);
+    if (section) this.toggleArrangementTrack(section.id, track.id, !shouldGenerateTrackInSection(section, track));
+  }
+
+  contextTrackPresent(track: CompositionTrack): boolean {
+    const target = this.localPartTarget();
+    const section = target ? this.project().arrangement.find((item) => item.id === target.sectionId) : null;
+    return section ? shouldGenerateTrackInSection(section, track) : true;
+  }
+
+  settingsSummary(track: CompositionTrack): string {
+    switch (track.role) {
+      case 'bass': return `${track.generatorSettings.rhythm} · Variation ${track.generatorSettings.noteVariation}%`;
+      case 'chords': return `${track.generatorSettings.rhythm} · ${track.generatorSettings.voicing} · Length ${track.generatorSettings.noteLengthPercent}%`;
+      case 'arpeggio': return `${track.generatorSettings.pattern} · ${track.generatorSettings.rate} · ${track.generatorSettings.octaves} octave(s)`;
+      case 'drums': return `${track.generatorSettings.groove} · Swing ${track.generatorSettings.swingPercent}%`;
+    }
   }
 
   randomizeArrangementPresence(): void {
@@ -455,6 +511,8 @@ export class WorkspaceCanvasComponent {
   }
 
   private updateGenerator(patch: Partial<BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>): void {
+    // Local controls are read-only until section patches are wired to the generators.
+    if (this.settingsTarget().kind !== 'global-role' && this.settingsTarget().kind !== 'global-track') return;
     const role = this.selectedRole();
     if (role) this.projects.updateRoleGeneratorSettings(role, patch);
     else this.projects.updateTrackGeneratorSettings(this.selectedTrackId(), patch);

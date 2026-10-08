@@ -152,17 +152,48 @@ test('playback updates clear only the overlay and do not rebuild note previews',
   assert.equal(overlay.clears, overlayClears + 2);
 });
 
-test('track toggles take precedence over section cells and preserve presence semantics', () => {
+test('track buttons select parts and middle-click toggles presence without selecting', () => {
   const { component } = fixture();
   const toggle = component.hits.find((area) => area.key === 'toggle:intro:bass-1');
   const area = component.hitAt({ clientX: toggle.x + 8, clientY: toggle.y + 8 });
   assert.equal(area.key, toggle.key);
   area.activate();
+  assert.deepEqual(component.trackSelected.values.at(-1), { sectionId: 'intro', trackId: 'bass-1' });
+  assert.equal(component.partToggled.values.length, 0);
+  let prevented = false;
+  component.onCanvasPointerdown({ button: 1, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true, 'middle-click autoscroll is prevented');
+  component.onCanvasAuxclick({ button: 1, clientX: toggle.x + 8, clientY: toggle.y + 8, preventDefault() {} });
   assert.deepEqual(component.partToggled.values.at(-1), { sectionId: 'intro', trackId: 'bass-1', present: false });
+  assert.equal(component.trackSelected.values.length, 1, 'toggle does not change settings selection');
+  assert.equal(component.cellSelected.values.length, 0, 'track hit wins over cell hit');
   component.hits.find((candidate) => candidate.key === 'heading:verse').activate();
   assert.deepEqual(component.sectionSelected.values.at(-1), { sectionId: 'verse', trackId: 'bass-1' });
   component.hits.find((candidate) => candidate.key === 'group:chords').activate();
   assert.equal(component.groupSelected.values.at(-1), 'chords');
+});
+
+test('cell bodies select role settings while section selection is header-only', () => {
+  const { component } = fixture();
+  const cell = component.hits.find((area) => area.key === 'cell:verse:bass');
+  component.onCanvasClick({ button: 0, clientX: cell.x + 5, clientY: cell.y + 5, ctrlKey: true });
+  assert.deepEqual(component.cellSelected.values, [{ sectionId: 'verse', role: 'bass' }]);
+  assert.equal(component.sectionSelected.values.length, 0);
+  assert.equal(component.partToggled.values.length, 0);
+  component.onCanvasAuxclick({ button: 1, clientX: cell.x + 5, clientY: cell.y + 5, preventDefault() {} });
+  assert.equal(component.partToggled.values.length, 0, 'cell bodies cannot toggle presence');
+});
+
+test('absent parts select without including them and keyboard presence toggle is separate', () => {
+  const { component } = fixture();
+  const area = component.hits.find((hit) => hit.key === 'toggle:verse:bass-1');
+  component.focusedKey = area.key;
+  component.onCanvasKeydown({ key: 'Enter', preventDefault() {} });
+  assert.deepEqual(component.trackSelected.values, [{ sectionId: 'verse', trackId: 'bass-1' }]);
+  assert.equal(component.partToggled.values.length, 0);
+  component.onCanvasKeydown({ key: 'i', preventDefault() {} });
+  assert.deepEqual(component.partToggled.values, [{ sectionId: 'verse', trackId: 'bass-1', present: true }]);
+  assert.equal(component.trackSelected.values.length, 1);
 });
 
 test('section hit areas forward Ctrl/Shift modifiers and Escape clears selection', () => {

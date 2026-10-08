@@ -3,6 +3,7 @@ import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionT
 import { ARRANGED_PARTS } from '../core/project/project.model';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { layOutTrackPhrase } from '../core/music/phrase';
+import type { SettingsTarget } from './workspace-ui.service';
 
 interface OverviewSection {
   readonly section: ArrangementSection;
@@ -31,6 +32,7 @@ interface OverviewHitArea {
   readonly height: number;
   readonly label: string;
   readonly activate: (event?: MouseEvent | KeyboardEvent) => void;
+  readonly togglePresence?: () => void;
 }
 
 const RULER_HEIGHT = 38;
@@ -52,6 +54,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly project = input.required<CompositionProject>();
   readonly selectedSectionIds = input<readonly string[]>([]);
   readonly selectedTrackId = input('');
+  readonly settingsTarget = input<SettingsTarget | null>(null);
   readonly totalMeasures = input(0);
   readonly playheadPercent = input(0);
   readonly mixerRequested = output<void>();
@@ -60,6 +63,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     readonly ctrlKey?: boolean; readonly metaKey?: boolean; readonly shiftKey?: boolean }>();
   readonly selectionCleared = output<void>();
   readonly groupSelected = output<ArrangedPart>();
+  readonly cellSelected = output<{ readonly sectionId: string; readonly role: ArrangedPart }>();
+  readonly trackSelected = output<{ readonly sectionId: string; readonly trackId: string }>();
   readonly partToggled = output<{ readonly sectionId: string; readonly trackId: string; readonly present: boolean }>();
 
   readonly sections = computed<OverviewSection[]>(() => {
@@ -127,8 +132,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     return shouldGenerateTrackInSection(section, track);
   }
   isGroupSelected(group: InstrumentGroup): boolean {
-    const selectedTrackId = this.selectedTrackId();
-    return !!selectedTrackId && group.tracks.some((track) => track.id === selectedTrackId);
+    const target = this.settingsTarget();
+    return target?.kind === 'global-role' && target.role === group.role;
   }
   toggleTrack(section: ArrangementSection, track: CompositionTrack): void {
     this.partToggled.emit({
@@ -171,6 +176,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.cellNotes();
     this.selectedSectionIds();
     this.selectedTrackId();
+    this.settingsTarget();
     this.scheduleDraw();
   });
 
@@ -307,13 +313,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         fill(x, y, width, this.rowHeight, `--role-${role}-surface`);
         fill(x, y, 1, this.rowHeight, '--surface-base');
         fill(x, y + this.rowHeight - 1, width, 1, '--border-subtle');
-        if (this.selectedSectionIds().includes(item.section.id)) {
+        const target = this.settingsTarget();
+        const cellSelected = target?.kind === 'section-role' && target.sectionId === item.section.id && target.role === group.role;
+        if (cellSelected) {
           context.strokeStyle = this.accent;
           context.strokeRect(x + 0.5, y + 0.5, width - 1, this.rowHeight - 1);
         }
-        hit({ key: `section:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
-          label: `${group.name}, ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}`,
-          activate: (event) => this.selectSection(item.section.id, event) }, this.labelWidth, RULER_HEIGHT);
+        hit({ key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
+          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}`,
+          activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }) }, this.labelWidth, RULER_HEIGHT);
         const togglesPerRow = Math.max(1, Math.floor((width - 10) / 19));
         const toggleRows = Math.ceil(group.tracks.length / togglesPerRow);
         const previewHeight = Math.max(12, this.rowHeight - 10 - Math.max(1, toggleRows) * 19);
@@ -344,9 +352,14 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.textAlign = 'center';
           text(String(index + 1), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', '9px monospace');
           context.textAlign = 'start'; context.globalAlpha = 1;
+          if (target?.kind === 'section-track' && target.sectionId === item.section.id && target.trackId === track.id) {
+            context.strokeStyle = this.accent;
+            context.strokeRect(centerX - 10, centerY - 10, 20, 20);
+          }
           hit({ key: `toggle:${item.section.id}:${track.id}`, x: centerX - 8, y: centerY - 8, width: 16, height: 16,
-            label: `Toggle ${group.name} track ${index + 1} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}.`,
-            activate: () => this.toggleTrack(item.section, track) }, this.labelWidth, RULER_HEIGHT);
+            label: `Select ${track.name ?? group.name + ' track ' + (index + 1)} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. Middle-click or press I to toggle presence.`,
+            activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
+            togglePresence: () => this.toggleTrack(item.section, track) }, this.labelWidth, RULER_HEIGHT);
         }
       }
     }
@@ -423,6 +436,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasClick(event: MouseEvent): void {
+    if (event.button && event.button !== 0) return;
     const area = this.hitAt(event);
     if (!area) {
       this.selectionCleared.emit();
@@ -431,6 +445,16 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.focusedKey = area.key;
     area.activate(event);
     this.scheduleDraw();
+  }
+
+  onCanvasPointerdown(event: PointerEvent): void {
+    if (event.button === 1) event.preventDefault();
+  }
+
+  onCanvasAuxclick(event: MouseEvent): void {
+    if (event.button !== 1) return;
+    event.preventDefault();
+    this.hitAt(event)?.togglePresence?.();
   }
 
   onPointerMove(event: PointerEvent): void {
@@ -448,7 +472,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     }
     if (!this.hits.length) return;
     const index = this.hits.findIndex((area) => area.key === this.focusedKey);
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key.toLowerCase() === 'i') {
+      const area = this.hits[Math.max(0, index)];
+      if (!area.togglePresence) return;
+      event.preventDefault();
+      area.togglePresence();
+    } else if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       this.hits[Math.max(0, index)].activate(event);
     } else if (event.key.startsWith('Arrow')) {

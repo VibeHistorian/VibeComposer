@@ -1,6 +1,12 @@
 # Contextual controls and melody buildout
 
-Status: proposed implementation plan, 2026-10-08. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). It is a planning deliverable; the application has not been changed. The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
+Status: implementation in progress, 2026-10-08. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
+
+### UI checkpoint 1 — Selection and contextual panel shell
+
+Implemented the P2 selection foundation ahead of melody: header-only section ranges, section-role/section-track settings targets, middle-click and keyboard I presence toggles, and distinct selection visuals. Header ranges remain separate from settings targets. Added the default-expanded between-canvas panel with breadcrumbs, current-value summaries, and an inspector link. The local inspector provides explicit presence editing and navigation to global track settings. Section-local musical controls remain read-only until P3 wires patches to generation; no local action writes global generator values implicitly.
+
+Validation: 34 overview, selection, and playback tests passed; production Angular build passed (existing Pixi CommonJS dependency warning). Ready for user UI testing. Melody, header reroll-policy controls, quick musical editors, and section patches remain outstanding. The batch intentionally pauses here before those additions.
 
 ## Product contract
 
@@ -151,4 +157,4 @@ Paths below are relative to `frontend/src/app/`:
 | Note editing/mix | `features/edit/*`, `features/mix/*` | Melody support, section phrase ownership, preserve track mix/channel identity |
 | Existing validation | `frontend/scripts/section-selection.test.cjs`, `arrangement-overview.test.cjs`, `audio-playback.test.cjs` (project-relative) | Update interaction expectations and protect existing behavior |
 
-No runtime implementation or build is required for this planning change. Implementation stages carry their own validation gates above.
+Implementation stages carry their own validation gates above; completed checkpoint evidence is recorded at the top of this document.

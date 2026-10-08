@@ -40,10 +40,10 @@
           </header>
           @if (!isGroupCollapsed(group.role)) {
             @for (track of tracksFor(group.role); track track.id) {
-              <article class="track-row-card" [class.selected]="selectedTrackId() === track.id && !selectedRole()">
+              <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                 <div class="track-line" (click)="selectTrack(track.id)">
                   <button type="button" class="track-select" [disabled]="editing()"
-                    [attr.aria-pressed]="selectedTrackId() === track.id && !selectedRole()">
+                    [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                     <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                   </button>
                   <span class="track-instrument" [title]="instrumentName(track)">{{ instrumentName(track) }}</span>
@@ -70,12 +70,41 @@
       <vc-edit-workspace [initialNoteId]="editingNoteId()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     } @else {
       <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
+        [settingsTarget]="settingsTarget()"
         [selectedSectionIds]="selectedSectionIds()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
         (mixerRequested)="openMixer()" (groupSelected)="selectRole($event)"
         (randomizeRequested)="randomizeArrangementPresence()"
         (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId, $event)"
-        (selectionCleared)="workspaceUi.clearSectionSelection()"
+        (selectionCleared)="workspaceUi.clearSelection()"
+        (cellSelected)="selectCell($event.sectionId, $event.role)"
+        (trackSelected)="selectSectionTrack($event.sectionId, $event.trackId)"
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
+
+      <section class="part-settings-panel" aria-label="Part settings">
+        <header class="part-settings-heading">
+          <button type="button" class="part-panel-toggle" [attr.aria-expanded]="partPanelExpanded()"
+            aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
+            {{ partPanelExpanded() ? '⌄' : '›' }} Part settings
+          </button>
+          @if (contextTracks()[0]; as track) { <i class="role-dot" [class]="track.role"></i> }
+          <span class="part-context-label">{{ contextLabel() }}</span>
+          <button type="button" class="part-inspector-link" (click)="openInspector()">Open inspector</button>
+        </header>
+        @if (partPanelExpanded()) {
+          <div id="part-settings-content" class="part-settings-content">
+            @if (localPartTarget()) { <span class="part-inheritance">Inherited from global tracks</span> }
+            @if (selectedSection()) {
+              <span class="part-inheritance">Select a group cell or track button to view its part settings.</span>
+            }
+            @for (track of contextTracks(); track track.id) {
+              <div class="part-summary">
+                <i class="role-dot" [class]="track.role"></i><strong>{{ track.name }}</strong>
+                <span>{{ settingsSummary(track) }}</span>
+              </div>
+            }
+          </div>
+        }
+      </section>
 
       <section class="score-panel" aria-label="Song score">
         <div class="score-scroll">
@@ -119,13 +148,29 @@
   </main>
 
   @if (!editing()) {
-    <aside class="context-inspector" aria-label="Selection inspector">
+    <aside id="part-inspector" class="context-inspector" tabindex="-1" aria-label="Selection inspector">
       <header class="canvas-heading inspector-heading">
-        <div><p class="eyebrow">INSPECTOR</p><h2>{{ selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
-        <i class="role-dot" [class]="selectedTrack().role"></i>
+        <div><p class="eyebrow">INSPECTOR</p><h2>{{ localPartTarget() ? 'Section part' : selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
+        <i class="role-dot" [class]="contextTracks()[0]?.role ?? selectedTrack().role"></i>
       </header>
 
-      @if (selectedSection(); as section) {
+      @if (localPartTarget()) {
+        <div class="inspector-selection">
+          <span class="selection-kicker">{{ contextLabel() }}</span>
+          <span>Inherited from global tracks</span>
+          @for (track of contextTracks(); track track.id) {
+            <section class="quick-settings-group">
+              <strong>{{ track.name }}</strong>
+              <span class="part-inheritance">{{ settingsSummary(track) }}</span>
+              <label class="quick-check">
+                <input type="checkbox" [checked]="contextTrackPresent(track)" (change)="toggleContextTrackPresence(track)" />
+                Include in this section
+              </label>
+              <button type="button" class="restore-track-button" (click)="selectTrack(track.id)">Edit global track settings</button>
+            </section>
+          }
+        </div>
+      } @else if (selectedSection(); as section) {
         <div class="inspector-selection">
           <span class="selection-kicker">{{ selectedTrack().name }} · {{ sectionLabel(section.type) }}</span>
           @if (selectedSectionIds().length > 1) {

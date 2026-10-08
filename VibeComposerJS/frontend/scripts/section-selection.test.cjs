@@ -122,6 +122,47 @@ test('workspace score focus follows the selection range or the full arrangement 
   assert.deepEqual(workspace.scoreSectionFocus(), { startBeat: 0, endBeat: 40 });
 });
 
+test('cell and section-track contexts preserve the header range and score focus', () => {
+  const { ui, workspace } = fixture();
+  ui.selectSection('b');
+  ui.selectSection('d', { shiftKey: true });
+  const range = workspace.scoreSectionFocus();
+  workspace.selectCell('e', 'bass');
+  assert.deepEqual(ui.settingsTarget(), { kind: 'section-role', sectionId: 'e', role: 'bass' });
+  assert.deepEqual(ui.selectedSectionIds(), ['b', 'c', 'd']);
+  assert.deepEqual(workspace.scoreSectionFocus(), range);
+  assert.equal(workspace.selectedSection(), null, 'range must not override the active cell inspector');
+  workspace.selectSectionTrack('a', 'track-bass-1');
+  assert.deepEqual(ui.settingsTarget(), { kind: 'section-track', sectionId: 'a', trackId: 'track-bass-1' });
+  assert.deepEqual(workspace.scoreSectionFocus(), range);
+  ui.selectSection('c');
+  assert.equal(workspace.selectedSection().id, 'c');
+  assert.equal(workspace.localPartTarget(), null);
+});
+
+test('global selection and cell selection do not create header ranges', () => {
+  const { ui, workspace } = fixture();
+  workspace.selectCell('b', 'bass');
+  assert.deepEqual(ui.selectedSectionIds(), []);
+  workspace.selectTrack('track-bass-1');
+  assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'track-bass-1' });
+  workspace.selectRole('bass');
+  assert.deepEqual(ui.settingsTarget(), { kind: 'global-role', role: 'bass' });
+  assert.equal(ui.selectedRole(), 'bass');
+  ui.clearSelection();
+  assert.equal(ui.selectedRole(), null);
+  assert.deepEqual(ui.selectedSectionIds(), []);
+});
+
+test('invalid or deleted part targets fall back safely without retaining a local scope', () => {
+  const { ui, project } = fixture();
+  ui.selectSectionTrack('b', 'missing-track');
+  assert.equal(ui.settingsTarget().kind, 'global-track');
+  ui.selectSectionTrack('b', 'track-bass-1');
+  project.set({ ...project(), arrangement: project().arrangement.filter((section) => section.id !== 'b') });
+  assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'track-bass-1' });
+});
+
 test('score canvas fits an unequal section range and restores full-score zoom on clearing', () => {
   const { load, ui, workspace } = fixture();
   const { ScoreCanvasComponent } = load('score-canvas.component.ts');
