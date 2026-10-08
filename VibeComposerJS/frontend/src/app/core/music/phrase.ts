@@ -4,6 +4,7 @@ import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';
 import { generateChordPart } from './chord-generator';
 import { generateDrumPart } from './drum-generator';
+import { resolvePartTrack } from './part-settings';
 
 /** Convert the seeded generators to note-level events shared by the editor and MIDI exporter. */
 export function generatePhrase(project: CompositionProject, part: ArrangedPart): PhraseNote[] {
@@ -11,7 +12,7 @@ export function generatePhrase(project: CompositionProject, part: ArrangedPart):
   switch (part) {
     case 'bass':
       return generateBassline(seed, project.key, project.scale, project.progression,
-        project.bass.rhythm, project.bass.noteVariation)
+        project.bass.rhythm, project.bass.noteVariation, project.bass)
         .map((note, index) => ({ id: `bass-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
     case 'chords':
@@ -40,16 +41,21 @@ export function phraseForProject(project: CompositionProject, part: ArrangedPart
 export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack): PhraseNote[] {
   const trackProject = withTrackSeed(project, track);
   const editedPhrases = { ...trackProject.editedPhrases, [track.role]: undefined };
+  let notes: PhraseNote[];
   switch (track.role) {
     case 'bass':
-      return generatePhrase({ ...trackProject, bass: track.generatorSettings, editedPhrases }, 'bass');
+      notes = generatePhrase({ ...trackProject, bass: track.generatorSettings, editedPhrases }, 'bass'); break;
     case 'chords':
-      return generatePhrase({ ...trackProject, chords: track.generatorSettings, editedPhrases }, 'chords');
+      notes = generatePhrase({ ...trackProject, chords: track.generatorSettings, editedPhrases }, 'chords'); break;
     case 'arpeggio':
-      return generatePhrase({ ...trackProject, arpeggio: track.generatorSettings, editedPhrases }, 'arpeggio');
+      notes = generatePhrase({ ...trackProject, arpeggio: track.generatorSettings, editedPhrases }, 'arpeggio'); break;
     case 'drums':
-      return generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums');
+      notes = generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums'); break;
   }
+  const length = track.generatorSettings.noteLengthMultiplier ?? 100;
+  const transpose = track.role === 'drums' ? 0 : track.generatorSettings.transpose ?? 0;
+  return notes.map((note) => ({ ...note, durationBeats: note.durationBeats * length / 100,
+    midi: Math.max(0, Math.min(127, note.midi + transpose)) }));
 }
 
 export function phraseForTrack(project: CompositionProject, track: CompositionTrack): readonly PhraseNote[] {
@@ -104,16 +110,18 @@ export function layOutPhrase(
 
 /** Repeat a track phrase across sections using the same seeded section-entry rules as its role. */
 export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack): PhraseNote[] {
-  const trackProject = withTrackSeed(project, track);
-  const phrase = phraseForTrack(trackProject, track);
+  const phrase = phraseForTrack(project, track);
   const result: PhraseNote[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
     const partEnters = shouldGenerateTrackInSection(section, track);
+    const effectiveTrack = resolvePartTrack(track, section);
     const progression = section.chordDegrees && track.editedPhrase === undefined
-      ? section.chordDegrees : trackProject.progression;
-    const sectionPhrase = section.chordDegrees && track.editedPhrase === undefined
-      ? generateTrackPhrase({ ...trackProject, progression }, track) : phrase;
+      ? section.chordDegrees : project.progression;
+    const generated = track.editedPhrase === undefined
+      ? generateTrackPhrase({ ...project, progression }, effectiveTrack) : phrase;
+    const sectionPhrase = effectiveTrack.role === 'bass' && track.editedPhrase === undefined
+      ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;
     for (let measure = 0; measure < section.measures; measure++) {
       if (partEnters) {
         const sourceMeasure = measure % progression.length;
@@ -128,9 +136,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       arrangementBeat += 4;
     }
   }
-  const notes = track.role === 'bass'
-    ? withBassOctaveInterval(result, track.generatorSettings.octaveInterval)
-    : result;
+  const notes = result;
   if (track.role === 'drums') return notes;
   const transpose = project.transposeSemitones ?? 0;
   return transpose === 0 ? notes : notes.map((note) => ({

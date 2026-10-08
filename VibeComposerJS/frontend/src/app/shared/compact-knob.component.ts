@@ -14,6 +14,7 @@ export class CompactKnobComponent {
   readonly code = input.required<string>();
   readonly label = input.required<string>();
   readonly unit = input('%');
+  readonly mixed = input(false);
   readonly valueCommit = output<number>();
   readonly preview = signal<number | null>(null);
   readonly shownValue = computed(() => this.preview() ?? this.value());
@@ -28,12 +29,16 @@ export class CompactKnobComponent {
   }
 
   commitValue(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
+    const input = event.target as HTMLInputElement;
+    const value = Number(input.value);
     if (Number.isFinite(value)) this.valueCommit.emit(value);
     this.preview.set(null);
+    // A rejected commit may leave the bound value unchanged; restore the native slider as well.
+    input.value = String(this.value());
   }
 
   tooltip(): string {
+    if (this.mixed() && this.preview() === null) return `${this.label()}: mixed values. Adjust to choose a shared value.`;
     return `${this.label()}: ${this.shownValue()}${this.unit()}. Use arrow keys to adjust.`;
   }
 }

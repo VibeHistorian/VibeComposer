@@ -8,6 +8,16 @@ Implemented the P2 selection foundation ahead of melody: header-only section ran
 
 Validation: 34 overview, selection, and playback tests passed; production Angular build passed (existing Pixi CommonJS dependency warning). Ready for user UI testing. Melody, header reroll-policy controls, quick musical editors, and section patches remain outstanding. The batch intentionally pauses here before those additions.
 
+### UI checkpoint 2 — Editable inherited part settings
+
+Implemented the P3 patch foundation and quick editing for the currently supported role generators. Section role and track patches are validated, sparse, immutable, and resolved before generating section notes. The shared editor in the between-canvas panel and inspector supports the existing role controls plus pitched transpose/velocity bounds and part note length. Mixed values are aggregated across effective track settings. Reset is available per field and per selected local scope; role edits/resets preserve track exceptions. Customized cells and track buttons carry an asterisk.
+
+Patches survive project JSON/session restore, undo/redo, section/track duplication, and presence rerolls. Track deletion removes associated track patches. Velocity bounds are checked against every effective track/section combination, including inherited bounds; invalid edits/resets leave valid settings intact and show feedback. Default pitched velocity bounds remain 69–89, preserving the current translated generators' seeded output until bounds are explicitly changed. Percussion transpose and velocity-range controls are deferred; percussion groove/swing/length controls work now.
+
+Saved track-wide manual phrases remain explicit replacements: generator patches are retained but masked by those notes. Both panels identify affected tracks, and the local inspector offers an explicitly whole-track Restore generated notes action. Section-local manual phrase ownership remains a later editor slice. Generated bass octave intervals are applied inside their resolved section; saved manual notes are no longer doubled implicitly. Secondary-track seed derivation is now applied once in arrangement generation, matching the editor; existing secondary tracks can therefore produce different notes from the previous twice-hashed arrangement path.
+
+Validation: 42 tests passed, including real resolver/service/generator/parsed-MIDI export tests and existing overview/selection/playback checks; production build passed with the existing Pixi CommonJS warning. Ready for UI testing; melody, the full pattern/fill engine, and header reroll policies remain outstanding.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.

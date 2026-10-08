@@ -27,9 +27,18 @@ export interface ArrangementSection {
   readonly chordDegrees?: readonly number[];
   /** Materialized arrangement state; chance settings live with section type preferences. */
   readonly trackPresence: Readonly<Record<string, boolean>>;
+  readonly rolePartOverrides?: Readonly<Partial<{ [R in ArrangedPart]: Partial<PartSettingsByRole[R]> }>>;
+  readonly trackPartOverrides?: Readonly<Record<string, PartSettingsPatch>>;
 }
 
-export interface BassSettings {
+export interface CommonPartSettings {
+  readonly transpose?: number;
+  readonly noteLengthMultiplier?: number;
+  readonly velocityMin?: number;
+  readonly velocityMax?: number;
+}
+
+export interface BassSettings extends CommonPartSettings {
   readonly rhythm: BassRhythm;
   /** Chance, in percent, of choosing a chord tone instead of its root. */
   readonly noteVariation: number;
@@ -37,22 +46,35 @@ export interface BassSettings {
   readonly octaveInterval: boolean;
 }
 
-export interface ChordSettings {
+export interface ChordSettings extends CommonPartSettings {
   readonly rhythm: ChordRhythm;
   readonly voicing: ChordVoicing;
   readonly noteLengthPercent: number;
 }
 
-export interface ArpeggioSettings {
+export interface ArpeggioSettings extends CommonPartSettings {
   readonly pattern: ArpeggioPattern;
   readonly rate: ArpeggioRate;
   readonly octaves: 1 | 2;
 }
 
-export interface DrumSettings {
+export interface DrumSettings extends CommonPartSettings {
   readonly groove: DrumGroove;
   readonly swingPercent: number;
 }
+
+export interface PartSettingsByRole {
+  readonly bass: BassSettings;
+  readonly chords: ChordSettings;
+  readonly arpeggio: ArpeggioSettings;
+  readonly drums: DrumSettings;
+}
+export type PartSettingsPatch = Partial<BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>;
+export type PartSettingsScope =
+  | { readonly kind: 'global-role'; readonly role: ArrangedPart }
+  | { readonly kind: 'global-track'; readonly trackId: string }
+  | { readonly kind: 'section-role'; readonly sectionId: string; readonly role: ArrangedPart }
+  | { readonly kind: 'section-track'; readonly sectionId: string; readonly trackId: string };
 
 export interface MixChannelSettings {
   /** General MIDI program number, ignored by the percussion channel. */

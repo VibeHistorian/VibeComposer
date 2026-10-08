@@ -3,7 +3,7 @@ import { KEYS, getDiatonicChords } from '../music/harmony';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
 import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
-  MixChannelSettings, PhraseNote, SectionType,
+  MixChannelSettings, PhraseNote, SectionType, PartSettingsPatch, PartSettingsScope,
 } from './project.model';
 import type { CompositionProject } from './project.model';
 import {
@@ -11,6 +11,7 @@ import {
   DEFAULT_DRUM_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_TRACKS, SECTION_TYPES,
 } from './project.model';
 import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './section-type-settings.service';
+import { decodeCommonPartSettings, decodePartPatch, resolvePartTrack, validVelocityRange } from '../music/part-settings';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -39,6 +40,42 @@ export class ProjectService {
 
   exportProjectJson(): string {
     return JSON.stringify(this.state(), null, 2);
+  }
+
+  updatePartSettings(scope: PartSettingsScope, patch: PartSettingsPatch): void {
+    const current = this.state();
+    const track = 'trackId' in scope ? current.tracks.find((candidate) => candidate.id === scope.trackId) : undefined;
+    const role = 'role' in scope ? scope.role : track?.role;
+    if (!role || !ARRANGED_PARTS.includes(role)) return;
+    const decoded = decodePartPatch(role, patch);
+    if (!decoded) return;
+    if (scope.kind === 'global-role') { this.updateRoleGeneratorSettings(role, decoded); return; }
+    if (scope.kind === 'global-track') { this.updateTrackGeneratorSettings(scope.trackId, decoded); return; }
+    const arrangement = current.arrangement.map((section) => {
+      if (section.id !== scope.sectionId) return section;
+      return scope.kind === 'section-role'
+        ? { ...section, rolePartOverrides: { ...section.rolePartOverrides, [role]: { ...section.rolePartOverrides?.[role], ...decoded } } }
+        : { ...section, trackPartOverrides: { ...section.trackPartOverrides, [scope.trackId]: { ...section.trackPartOverrides?.[scope.trackId], ...decoded } } };
+    });
+    this.commit({ ...current, arrangement });
+  }
+
+  resetPartSettings(scope: PartSettingsScope, field?: string): void {
+    if (scope.kind !== 'section-role' && scope.kind !== 'section-track') return;
+    const current = this.state();
+    const arrangement = current.arrangement.map((section) => {
+      if (section.id !== scope.sectionId) return section;
+      const key = scope.kind === 'section-role' ? scope.role : scope.trackId;
+      const map: Record<string, PartSettingsPatch> = { ...(scope.kind === 'section-role' ? section.rolePartOverrides : section.trackPartOverrides) };
+      const values: Record<string, unknown> = { ...map[key] };
+      if (field) delete values[field];
+      else for (const name of Object.keys(values)) delete values[name];
+      if (Object.keys(values).length) (map as Record<string, PartSettingsPatch>)[key] = values as PartSettingsPatch;
+      else delete (map as Record<string, PartSettingsPatch>)[key];
+      return scope.kind === 'section-role' ? { ...section, rolePartOverrides: map as NonNullable<ArrangementSection['rolePartOverrides']> }
+        : { ...section, trackPartOverrides: map };
+    });
+    this.commit({ ...current, arrangement });
   }
 
   importProjectJson(json: string): boolean {
@@ -181,6 +218,8 @@ export class ProjectService {
     this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
       ...section,
       trackPresence: { ...section.trackPresence, [id]: section.trackPresence[source.id] ?? false },
+      trackPartOverrides: section.trackPartOverrides?.[source.id]
+        ? { ...section.trackPartOverrides, [id]: { ...section.trackPartOverrides[source.id] } } : section.trackPartOverrides,
     })) });
     return id;
   }
@@ -267,7 +306,9 @@ export class ProjectService {
     const arrangement = current.arrangement.map((section) => {
       const trackPresence = { ...section.trackPresence };
       delete trackPresence[trackId];
-      return { ...section, trackPresence };
+      const trackPartOverrides = { ...section.trackPartOverrides };
+      delete trackPartOverrides[trackId];
+      return { ...section, trackPresence, trackPartOverrides };
     });
     this.commit({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement });
   }
@@ -308,6 +349,8 @@ export class ProjectService {
       ...sections[index], id: `section-${nextId}`,
       chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
       trackPresence: { ...sections[index].trackPresence },
+      rolePartOverrides: Object.fromEntries(Object.entries(sections[index].rolePartOverrides ?? {}).map(([role, patch]) => [role, { ...patch }])),
+      trackPartOverrides: Object.fromEntries(Object.entries(sections[index].trackPartOverrides ?? {}).map(([id, patch]) => [id, { ...patch }])),
     });
     this.commit({ ...this.state(), arrangement: next });
   }
@@ -746,6 +789,22 @@ export class ProjectService {
       }
       if ([...Object.keys(trackParts ?? {}), ...Object.keys(trackPartChances ?? {}), ...Object.keys(trackPresence ?? {})]
         .some((trackId) => !trackIds.has(trackId))) return undefined;
+      const rolePartOverrides: Partial<Record<ArrangedPart, PartSettingsPatch>> = {};
+      const trackPartOverrides: Record<string, PartSettingsPatch> = {};
+      for (const [raw, decoded, byTrack] of [[section.rolePartOverrides, rolePartOverrides, false],
+        [section.trackPartOverrides, trackPartOverrides, true]] as const) {
+        if (raw === undefined) continue;
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+        for (const [key, patch] of Object.entries(raw)) {
+          const role = byTrack ? tracks.find((track) => track.id === key)?.role : key as ArrangedPart;
+          if (!role || !ARRANGED_PARTS.includes(role)) return undefined;
+          const result = decodePartPatch(role, patch);
+          if (!result) return undefined;
+          (decoded as Record<string, PartSettingsPatch>)[key] = result;
+        }
+      }
+      const effectiveSection = { rolePartOverrides, trackPartOverrides } as ArrangementSection;
+      if (tracks.some((track) => !validVelocityRange(resolvePartTrack(track, effectiveSection).generatorSettings, track.role))) return undefined;
       ids.add(section.id);
       measureCount += section.measures!;
       if (measureCount > MAX_ARRANGEMENT_MEASURES) {
@@ -774,12 +833,16 @@ export class ProjectService {
         measures: section.measures!,
         chordDegrees: chordDegrees === undefined ? undefined : [...chordDegrees],
         trackPresence: presence,
+        rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,
+        trackPartOverrides,
       });
     }
     return sections;
   }
 
   private decodeBass(value: unknown): BassSettings | undefined {
+    const common = decodeCommonPartSettings('bass', value);
+    if (!common) return undefined;
     if (!value || typeof value !== 'object') {
       return undefined;
     }
@@ -789,10 +852,12 @@ export class ProjectService {
         || (bass.octaveInterval !== undefined && typeof bass.octaveInterval !== 'boolean')) {
       return undefined;
     }
-    return { rhythm: bass.rhythm!, noteVariation: bass.noteVariation!, octaveInterval: bass.octaveInterval ?? false };
+    return { ...common, rhythm: bass.rhythm!, noteVariation: bass.noteVariation!, octaveInterval: bass.octaveInterval ?? false };
   }
 
   private decodeChords(value: unknown): ChordSettings | undefined {
+    const common = decodeCommonPartSettings('chords', value);
+    if (!common) return undefined;
     if (!value || typeof value !== 'object') {
       return undefined;
     }
@@ -804,6 +869,7 @@ export class ProjectService {
       return undefined;
     }
     return {
+      ...common,
       rhythm: chords.rhythm!,
       voicing: chords.voicing!,
       noteLengthPercent: chords.noteLengthPercent!,
@@ -811,6 +877,8 @@ export class ProjectService {
   }
 
   private decodeArpeggio(value: unknown): ArpeggioSettings | undefined {
+    const common = decodeCommonPartSettings('arpeggio', value);
+    if (!common) return undefined;
     if (!value || typeof value !== 'object') {
       return undefined;
     }
@@ -820,10 +888,12 @@ export class ProjectService {
         || (arpeggio.octaves !== 1 && arpeggio.octaves !== 2)) {
       return undefined;
     }
-    return { pattern: arpeggio.pattern!, rate: arpeggio.rate!, octaves: arpeggio.octaves! };
+    return { ...common, pattern: arpeggio.pattern!, rate: arpeggio.rate!, octaves: arpeggio.octaves! };
   }
 
   private decodeDrums(value: unknown): DrumSettings | undefined {
+    const common = decodeCommonPartSettings('drums', value);
+    if (!common) return undefined;
     if (!value || typeof value !== 'object') {
       return undefined;
     }
@@ -833,7 +903,7 @@ export class ProjectService {
         || (drums.swingPercent ?? 49) < 50 || (drums.swingPercent ?? 76) > 75) {
       return undefined;
     }
-    return { groove: drums.groove!, swingPercent: drums.swingPercent! };
+    return { ...common, groove: drums.groove!, swingPercent: drums.swingPercent! };
   }
 
   private copyDefaultProject(): CompositionProject {

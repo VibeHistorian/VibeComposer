@@ -2,6 +2,7 @@ import type { ChordSettings } from '../project/project.model';
 import { getDiatonicChords, getPitchClass } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
+import { velocityBounds } from './part-settings';
 
 export interface ChordHitEvent {
   readonly pitches: readonly number[];
@@ -64,6 +65,7 @@ export function generateChordPart(
   const signedSeed = BigInt.asIntN(32, BigInt(seed));
   const partSeed = BigInt.asIntN(32, signedSeed + 20_000n);
   const events: ChordHitEvent[] = [];
+  const [velocityMin, velocityMax] = velocityBounds(settings);
 
   for (let chordIndex = 0; chordIndex < chordDefinitions.length; chordIndex++) {
     const chord = chordDefinitions[chordIndex];
@@ -71,7 +73,7 @@ export function generateChordPart(
     const velocityRandom = new JavaRandom(BigInt.asIntN(32, partSeed + BigInt(chordIndex)));
 
     for (let step = 0; step < pattern.length; step++) {
-      const velocity = velocityRandom.nextInt(21) + 69;
+      const velocity = velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin;
       if (pattern[step] < 1) {
         continue;
       }

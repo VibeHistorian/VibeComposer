@@ -1,7 +1,8 @@
 import { getDiatonicChords, getPitchClass } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
-import type { BassRhythm } from '../project/project.model';
+import type { BassRhythm, CommonPartSettings } from '../project/project.model';
+import { velocityBounds } from './part-settings';
 
 export interface BassNoteEvent {
   readonly midi: number;
@@ -32,6 +33,7 @@ export function generateBassline(
   progression: readonly number[],
   rhythm: BassRhythm,
   noteVariation: number,
+  settings: CommonPartSettings = {},
 ): BassNoteEvent[] {
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100
@@ -74,6 +76,7 @@ export function generateBassline(
   const dynamics = new JavaRandom(partSeed);
   const noteVariationRandom = new JavaRandom(BigInt.asIntN(32, partSeed + 2n));
   const events: BassNoteEvent[] = [];
+  const [velocityMin, velocityMax] = velocityBounds(settings);
   let chordStart = 0;
 
   for (let chordIndex = 0; chordIndex < triads.length; chordIndex++) {
@@ -87,7 +90,7 @@ export function generateBassline(
 
     for (let noteIndex = 0; noteIndex < durations.length; noteIndex++) {
       const duration = durations[noteIndex];
-      const velocity = dynamics.nextInt(21) + 69;
+      const velocity = dynamics.nextInt(velocityMax - velocityMin + 1) + velocityMin;
       const isActive = rhythm === 'alternating' || RHYTHM_PATTERNS[rhythm][noteIndex % 8] > 0;
       let pitch = triads[chordIndex][0];
 

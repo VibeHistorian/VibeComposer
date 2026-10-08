@@ -88,19 +88,24 @@
           </button>
           @if (contextTracks()[0]; as track) { <i class="role-dot" [class]="track.role"></i> }
           <span class="part-context-label">{{ contextLabel() }}</span>
+          @if (localPartTarget(); as target) {
+            <button type="button" class="part-inspector-link" [disabled]="!overriddenKeys().length"
+              (click)="resetPartSettings(target)">Reset to inherited</button>
+          }
           <button type="button" class="part-inspector-link" (click)="openInspector()">Open inspector</button>
         </header>
         @if (partPanelExpanded()) {
           <div id="part-settings-content" class="part-settings-content">
-            @if (localPartTarget()) { <span class="part-inheritance">Inherited from global tracks</span> }
+            <span class="part-inheritance">{{ inheritanceLabel() }}</span>
+            @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
+            @if (trackExceptionCount()) { <span class="part-inheritance">{{ trackExceptionCount() }} track exception(s) remain active.</span> }
+            @if (manualTrackNames()) { <span class="part-inheritance">Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
             @if (selectedSection()) {
               <span class="part-inheritance">Select a group cell or track button to view its part settings.</span>
             }
-            @for (track of contextTracks(); track track.id) {
-              <div class="part-summary">
-                <i class="role-dot" [class]="track.role"></i><strong>{{ track.name }}</strong>
-                <span>{{ settingsSummary(track) }}</span>
-              </div>
+            @for (item of editableScopes(); track item.key) {
+              <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
+                (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
             }
           </div>
         }
@@ -157,16 +162,27 @@
       @if (localPartTarget()) {
         <div class="inspector-selection">
           <span class="selection-kicker">{{ contextLabel() }}</span>
-          <span>Inherited from global tracks</span>
+          <span>{{ inheritanceLabel() }}</span>
+          @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
+          @if (trackExceptionCount()) { <span>{{ trackExceptionCount() }} track exception(s) remain active.</span> }
+          @if (manualTrackNames()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
+          @for (item of editableScopes(); track item.key) {
+            <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="true" [overriddenKeys]="overriddenKeys()"
+              (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
+            <button type="button" class="restore-track-button" [disabled]="!overriddenKeys().length"
+              (click)="resetPartSettings(item.scope)">Reset this part to inherited</button>
+          }
           @for (track of contextTracks(); track track.id) {
             <section class="quick-settings-group">
               <strong>{{ track.name }}</strong>
-              <span class="part-inheritance">{{ settingsSummary(track) }}</span>
               <label class="quick-check">
                 <input type="checkbox" [checked]="contextTrackPresent(track)" (change)="toggleContextTrackPresence(track)" />
                 Include in this section
               </label>
               <button type="button" class="restore-track-button" (click)="selectTrack(track.id)">Edit global track settings</button>
+              @if (track.editedPhrase) {
+                <button type="button" class="restore-track-button" (click)="projects.clearTrackPhrase(track.id)">Restore generated notes for entire track</button>
+              }
             </section>
           }
         </div>
@@ -235,48 +251,14 @@
           }
         </div>
 
-        <section class="quick-settings-group" aria-label="Generation settings">
-          <p class="eyebrow">{{ selectedRole() ? 'GROUP GENERATION' : 'GENERATION' }}</p>
-          @if (selectedPart() === 'bass') {
-            <label class="quick-field">Rhythm
-              <select [value]="$any(selectedTrack().generatorSettings).rhythm" (change)="updateBassRhythm($event)">
-                @for (option of bassRhythms; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
-              </select>
-            </label>
-            <vc-compact-knob [value]="$any(selectedTrack().generatorSettings).noteVariation" [minimum]="0" [maximum]="100" [step]="1" code="VAR" label="Chord tone variation" (valueCommit)="updateBassVariation($event)" />
-            <label class="quick-check"><input type="checkbox" [checked]="$any(selectedTrack().generatorSettings).octaveInterval" (change)="updateBassOctave($event)" /> Octave interval</label>
-          } @else if (selectedPart() === 'chords') {
-            <label class="quick-field">Rhythm
-              <select [value]="$any(selectedTrack().generatorSettings).rhythm" (change)="updateChordRhythm($event)">
-                @for (option of chordRhythms; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
-              </select>
-            </label>
-            <label class="quick-field">Voicing
-              <select [value]="$any(selectedTrack().generatorSettings).voicing" (change)="updateChordVoicing($event)"><option value="close">Close</option><option value="open">Open</option></select>
-            </label>
-            <vc-compact-knob [value]="$any(selectedTrack().generatorSettings).noteLengthPercent" [minimum]="25" [maximum]="125" [step]="1" code="LEN" label="Note length" (valueCommit)="updateChordLength($event)" />
-          } @else if (selectedPart() === 'arpeggio') {
-            <label class="quick-field">Pattern
-              <select [value]="$any(selectedTrack().generatorSettings).pattern" (change)="updateArpeggioPattern($event)">
-                @for (option of arpPatterns; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
-              </select>
-            </label>
-            <label class="quick-field">Rate
-              <select [value]="$any(selectedTrack().generatorSettings).rate" (change)="updateArpeggioRate($event)"><option value="eighth">Eighth</option><option value="sixteenth">Sixteenth</option></select>
-            </label>
-            <label class="quick-field">Range
-              <select [value]="$any(selectedTrack().generatorSettings).octaves" (change)="updateArpeggioOctaves($event)"><option [value]="1">1 octave</option><option [value]="2">2 octaves</option></select>
-            </label>
-          } @else {
-            <label class="quick-field">Groove
-              <select [value]="$any(selectedTrack().generatorSettings).groove" (change)="updateDrumGroove($event)">
-                @for (option of drumGrooves; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
-              </select>
-            </label>
-            <vc-compact-knob [value]="$any(selectedTrack().generatorSettings).swingPercent" [minimum]="50" [maximum]="75" [step]="1" code="SWG" label="Swing" (valueCommit)="updateDrumSwing($event)" />
+        <section class="quick-settings-group" aria-label="Part settings">
+          <p class="eyebrow">PART SETTINGS</p>
+          @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
+          @for (item of editableScopes(); track item.key) {
+            <vc-part-settings-editor [role]="partRole()" [values]="partValues()"
+              (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
-
         @if (!selectedRole()) {
           <section class="quick-settings-group mix-quick-settings" aria-label="Track instrument and MIDI settings">
             <p class="eyebrow">INSTRUMENT &amp; MIDI</p>

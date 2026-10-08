@@ -314,13 +314,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         fill(x, y, 1, this.rowHeight, '--surface-base');
         fill(x, y + this.rowHeight - 1, width, 1, '--border-subtle');
         const target = this.settingsTarget();
+        const customized = Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0
+          || group.tracks.some((track) => Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0);
         const cellSelected = target?.kind === 'section-role' && target.sectionId === item.section.id && target.role === group.role;
         if (cellSelected) {
           context.strokeStyle = this.accent;
           context.strokeRect(x + 0.5, y + 0.5, width - 1, this.rowHeight - 1);
         }
         hit({ key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
-          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}`,
+          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}.`,
           activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }) }, this.labelWidth, RULER_HEIGHT);
         const togglesPerRow = Math.max(1, Math.floor((width - 10) / 19));
         const toggleRows = Math.ceil(group.tracks.length / togglesPerRow);
@@ -338,6 +340,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         }
         context.globalAlpha = 1;
         context.restore();
+        if (customized) text('*', x + width - 9, y + 12, '--text-primary', 'bold 12px monospace');
         for (let index = 0; index < group.tracks.length; index++) {
           const track = group.tracks[index];
           const toggleRow = Math.floor(index / togglesPerRow);
@@ -356,8 +359,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             context.strokeStyle = this.accent;
             context.strokeRect(centerX - 10, centerY - 10, 20, 20);
           }
+          const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0;
+          if (trackCustomized) text('*', centerX + 8, centerY - 7, '--text-primary', 'bold 10px monospace');
           hit({ key: `toggle:${item.section.id}:${track.id}`, x: centerX - 8, y: centerY - 8, width: 16, height: 16,
-            label: `Select ${track.name ?? group.name + ' track ' + (index + 1)} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. Middle-click or press I to toggle presence.`,
+            label: `Select ${track.name ?? group.name + ' track ' + (index + 1)} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             togglePresence: () => this.toggleTrack(item.section, track) }, this.labelWidth, RULER_HEIGHT);
         }

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type {
-  ArpeggioPattern, ArpeggioRate, ArpeggioSettings, ArrangedPart, ArrangementSection, BassRhythm, BassSettings, SectionType,
-  ChordRhythm, ChordSettings, ChordVoicing, CompositionTrack, DrumGroove, DrumSettings,
+  ArrangedPart, ArrangementSection, SectionType, CompositionTrack, PartSettingsScope,
 } from '../core/project/project.model';
 import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
@@ -12,11 +11,12 @@ import { getDiatonicChords, KEYS } from '../core/music/harmony';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { ArrangementOverviewComponent } from './arrangement-overview.component';
-import { CompactKnobComponent } from './compact-knob.component';
 import { ScoreCanvasComponent } from './score-canvas.component';
 import type { ScoreCanvasNote, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
+import { PartSettingsEditorComponent } from './part-settings-editor.component';
+import { resolvePartTrack, settingsValues } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
   readonly color: ArrangedPart;
@@ -49,7 +49,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, CompactKnobComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent],
+  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -64,22 +64,6 @@ export class WorkspaceCanvasComponent {
   readonly sectionTypes = SECTION_TYPES;
   readonly midiChannels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly roles = ARRANGED_PARTS.map((role) => ({ role, name: ROLE_NAMES[role] }));
-  readonly bassRhythms: ReadonlyArray<{ value: BassRhythm; label: string }> = [
-    { value: 'alternating', label: 'Alternating' }, { value: 'full', label: 'Full' },
-    { value: 'half', label: 'Half time' }, { value: 'tresillo', label: 'Tresillo' }, { value: 'sparse', label: 'Sparse' },
-  ];
-  readonly chordRhythms: ReadonlyArray<{ value: ChordRhythm; label: string }> = [
-    { value: 'full', label: 'Full' }, { value: 'half', label: 'Half time' },
-    { value: 'tresillo', label: 'Tresillo' }, { value: 'sparse', label: 'Sparse' }, { value: 'single', label: 'Single hit' },
-  ];
-  readonly arpPatterns: ReadonlyArray<{ value: ArpeggioPattern; label: string }> = [
-    { value: 'up', label: 'Up' }, { value: 'down', label: 'Down' },
-    { value: 'up-down', label: 'Up and down' }, { value: 'random', label: 'Random' },
-  ];
-  readonly drumGrooves: ReadonlyArray<{ value: DrumGroove; label: string }> = [
-    { value: 'rock', label: 'Rock' }, { value: 'four-on-floor', label: 'Four on floor' },
-    { value: 'half-time', label: 'Half time' }, { value: 'sparse', label: 'Sparse' },
-  ];
   readonly selectedTrackId = this.workspaceUi.selectedTrackId;
   readonly selectedRole = this.workspaceUi.selectedRole;
   readonly editingNoteId = this.workspaceUi.editingNoteId;
@@ -105,6 +89,48 @@ export class WorkspaceCanvasComponent {
     if ('trackId' in target) return `${sectionLabel} · ${this.contextTracks()[0]?.name ?? 'Track'}`;
     return sectionLabel;
   });
+  readonly partScope = computed<PartSettingsScope | null>(() => {
+    const target = this.settingsTarget();
+    return target.kind === 'section' ? null : target;
+  });
+  readonly editableScopes = computed(() => {
+    const scope = this.partScope();
+    if (!scope || !this.contextTracks().length) return [];
+    return [{ scope, key: JSON.stringify(scope) }];
+  });
+  readonly partRole = computed(() => this.contextTracks()[0]?.role ?? 'bass');
+  readonly contextSection = computed(() => {
+    const target = this.localPartTarget();
+    return target ? this.project().arrangement.find((section) => section.id === target.sectionId) : undefined;
+  });
+  readonly effectiveContextTracks = computed(() => this.contextTracks().map((track) => resolvePartTrack(track, this.contextSection())));
+  readonly partValues = computed(() => {
+    const values = this.effectiveContextTracks().map((track) => settingsValues(track.generatorSettings, track.role));
+    return Object.fromEntries(Object.keys(values[0] ?? {}).map((key) => [key,
+      values.every((value) => value[key] === values[0][key]) ? values[0][key] : null]));
+  });
+  readonly overriddenKeys = computed(() => {
+    const target = this.localPartTarget();
+    const section = this.contextSection();
+    if (!target || !section) return [];
+    return Object.keys(target.kind === 'section-role' ? section.rolePartOverrides?.[target.role] ?? {}
+      : section.trackPartOverrides?.[target.trackId] ?? {});
+  });
+  readonly inheritanceLabel = computed(() => {
+    const target = this.localPartTarget();
+    if (!target) return 'Global part settings';
+    if (this.overriddenKeys().length) return target.kind === 'section-role' ? 'Customized cell' : 'Customized track part';
+    return target.kind === 'section-track' && Object.keys(this.contextSection()?.rolePartOverrides?.[this.partRole()] ?? {}).length
+      ? 'Inherited from cell settings' : 'Inherited from global tracks';
+  });
+  readonly trackExceptionCount = computed(() => {
+    const target = this.localPartTarget();
+    return target?.kind === 'section-role' ? this.contextTracks().filter((track) =>
+      Object.keys(this.contextSection()?.trackPartOverrides?.[track.id] ?? {}).length).length : 0;
+  });
+  readonly manualTrackNames = computed(() => this.contextTracks().filter((track) => track.editedPhrase !== undefined).map((track) => track.name).join(', '));
+  private readonly editFailure = signal<{ scope: string; message: string } | null>(null);
+  readonly partEditError = computed(() => this.editFailure()?.scope === JSON.stringify(this.partScope()) ? this.editFailure()?.message : null);
   readonly editing = signal(false);
   readonly mixerOpen = signal(false);
   readonly newSectionType = signal<SectionType>('VERSE1');
@@ -231,13 +257,20 @@ export class WorkspaceCanvasComponent {
     return section ? shouldGenerateTrackInSection(section, track) : true;
   }
 
-  settingsSummary(track: CompositionTrack): string {
-    switch (track.role) {
-      case 'bass': return `${track.generatorSettings.rhythm} · Variation ${track.generatorSettings.noteVariation}%`;
-      case 'chords': return `${track.generatorSettings.rhythm} · ${track.generatorSettings.voicing} · Length ${track.generatorSettings.noteLengthPercent}%`;
-      case 'arpeggio': return `${track.generatorSettings.pattern} · ${track.generatorSettings.rate} · ${track.generatorSettings.octaves} octave(s)`;
-      case 'drums': return `${track.generatorSettings.groove} · Swing ${track.generatorSettings.swingPercent}%`;
-    }
+  editPartSettings(scope: PartSettingsScope, change: { key: string; value: string | number | boolean }): void {
+    // The emitted scope belongs to this editor instance; never redirect a delayed gesture into a new selection.
+    const before = this.project();
+    this.projects.updatePartSettings(scope, { [change.key]: change.value });
+    this.editFailure.set(this.project() === before && this.partValues()[change.key] !== change.value
+      ? { scope: JSON.stringify(scope), message: 'This value conflicts with another track or cell setting. Keep each velocity minimum at or below its maximum.' } : null);
+  }
+
+  resetPartSettings(scope: PartSettingsScope, field?: string): void {
+    const before = this.project();
+    const hadOverride = field ? this.overriddenKeys().includes(field) : this.overriddenKeys().length > 0;
+    this.projects.resetPartSettings(scope, field);
+    this.editFailure.set(this.project() === before && hadOverride ? { scope: JSON.stringify(scope),
+      message: 'Reset would conflict with another velocity setting. Reset both bounds together or adjust the other bound first.' } : null);
   }
 
   randomizeArrangementPresence(): void {
@@ -433,46 +466,6 @@ export class WorkspaceCanvasComponent {
   sectionLabel(type: string): string { return type.replaceAll('_', ' '); }
   roleName(role: ArrangedPart): string { return ROLE_NAMES[role]; }
 
-  updateBassRhythm(event: Event): void {
-    const value = this.inputValue(event);
-    if (this.bassRhythms.some((option) => option.value === value)) this.updateGenerator({ rhythm: value as BassRhythm });
-  }
-  updateBassVariation(value: number): void {
-    if (Number.isInteger(value) && value >= 0 && value <= 100) this.updateGenerator({ noteVariation: value });
-  }
-  updateBassOctave(event: Event): void {
-    this.updateGenerator({ octaveInterval: (event.target as HTMLInputElement).checked });
-  }
-  updateChordRhythm(event: Event): void {
-    const value = this.inputValue(event);
-    if (this.chordRhythms.some((option) => option.value === value)) this.updateGenerator({ rhythm: value as ChordRhythm });
-  }
-  updateChordVoicing(event: Event): void {
-    const value = this.inputValue(event);
-    if (value === 'close' || value === 'open') this.updateGenerator({ voicing: value as ChordVoicing });
-  }
-  updateChordLength(value: number): void {
-    if (Number.isInteger(value) && value >= 25 && value <= 125) this.updateGenerator({ noteLengthPercent: value });
-  }
-  updateArpeggioPattern(event: Event): void {
-    const value = this.inputValue(event);
-    if (this.arpPatterns.some((option) => option.value === value)) this.updateGenerator({ pattern: value as ArpeggioPattern });
-  }
-  updateArpeggioRate(event: Event): void {
-    const value = this.inputValue(event);
-    if (value === 'eighth' || value === 'sixteenth') this.updateGenerator({ rate: value as ArpeggioRate });
-  }
-  updateArpeggioOctaves(event: Event): void {
-    const value = Number(this.inputValue(event));
-    if (value === 1 || value === 2) this.updateGenerator({ octaves: value });
-  }
-  updateDrumGroove(event: Event): void {
-    const value = this.inputValue(event);
-    if (this.drumGrooves.some((option) => option.value === value)) this.updateGenerator({ groove: value as DrumGroove });
-  }
-  updateDrumSwing(value: number): void {
-    if (Number.isInteger(value) && value >= 50 && value <= 75) this.updateGenerator({ swingPercent: value });
-  }
   updateTrackName(event: Event): void {
     this.projects.updateTrack(this.selectedTrackId(), { name: this.inputValue(event) });
   }
@@ -508,14 +501,6 @@ export class WorkspaceCanvasComponent {
   panName(value: number): string {
     if (value === 0) return 'Center';
     return `${Math.abs(value)}% ${value < 0 ? 'Left' : 'Right'}`;
-  }
-
-  private updateGenerator(patch: Partial<BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>): void {
-    // Local controls are read-only until section patches are wired to the generators.
-    if (this.settingsTarget().kind !== 'global-role' && this.settingsTarget().kind !== 'global-track') return;
-    const role = this.selectedRole();
-    if (role) this.projects.updateRoleGeneratorSettings(role, patch);
-    else this.projects.updateTrackGeneratorSettings(this.selectedTrackId(), patch);
   }
 
   private inputValue(event: Event): string {

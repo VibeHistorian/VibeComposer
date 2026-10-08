@@ -1,0 +1,29 @@
+<div class="part-controls">
+  @for (control of controls(); track control.key) {
+    <div class="part-control" [class.overridden]="overriddenKeys().includes(control.key)">
+      @if (control.kind === 'number') {
+        <vc-compact-knob [value]="numericValue(control)" [mixed]="values()[control.key] === null"
+          [minimum]="minimum(control)" [maximum]="maximum(control)" [code]="control.key.slice(0, 3).toUpperCase()"
+          [label]="control.label" [unit]="control.unit ?? ''"
+          (valueCommit)="settingsChanged.emit({ key: control.key, value: $event })" />
+      } @else if (control.kind === 'choice') {
+        <label>{{ control.label }}
+          <select [value]="values()[control.key] ?? ''" (change)="choose(control, $event)">
+            @if (values()[control.key] === null) { <option value="" disabled>Mixed</option> }
+            @for (option of control.options; track option) { <option [value]="option">{{ option }}</option> }
+          </select>
+        </label>
+      } @else {
+        <label class="part-check"><input type="checkbox" [checked]="values()[control.key] === true"
+          [indeterminate]="values()[control.key] === null"
+          (change)="settingsChanged.emit({ key: control.key, value: $any($event.target).checked })" />{{ control.label }}</label>
+      }
+      @if (local()) {
+        <button type="button" class="inherit-field" [disabled]="!overriddenKeys().includes(control.key)"
+          [attr.aria-label]="'Inherit ' + control.label" (click)="inheritRequested.emit(control.key)">
+          {{ overriddenKeys().includes(control.key) ? 'Reset to inherited' : 'Inherited' }}
+        </button>
+      }
+    </div>
+  }
+</div>

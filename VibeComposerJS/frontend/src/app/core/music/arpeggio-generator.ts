@@ -2,6 +2,7 @@ import type { ArpeggioSettings } from '../project/project.model';
 import { getDiatonicChords, getPitchClass } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
+import { velocityBounds } from './part-settings';
 
 export interface ArpeggioNoteEvent {
   readonly midi: number;
@@ -36,6 +37,7 @@ export function generateArpeggio(
   const rate = settings.rate === 'eighth' ? 0.5 : 0.25;
   const notesPerChord = Math.round(4 / rate);
   const events: ArpeggioNoteEvent[] = [];
+  const [velocityMin, velocityMax] = velocityBounds(settings);
 
   progression.forEach((degree, chordIndex) => {
     const chord = diatonicChords.find((candidate) => candidate.degree === degree);
@@ -68,7 +70,7 @@ export function generateArpeggio(
         midi: settings.pattern === 'random' ? ascending[pitchIndex] : sequence[pitchIndex],
         startBeat: chordIndex * 4 + step * rate,
         durationBeats: rate,
-        velocity: velocityRandom.nextInt(21) + 69,
+        velocity: velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin,
         chordIndex,
       });
     }
