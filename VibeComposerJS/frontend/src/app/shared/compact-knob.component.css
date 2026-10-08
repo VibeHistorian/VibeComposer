@@ -1,13 +1,11 @@
 :host { display: block; min-width: 0; }
 
 /* Knob layout */
-.compact-knob { position: relative; min-height: 78px; display: grid; justify-items: center; align-content: start; gap: 4px; color: var(--text-secondary); cursor: ns-resize; text-align: center; }
-.knob-label { max-width: 100%; overflow: hidden; color: var(--text-secondary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-.knob-face { width: 42px; height: 42px; padding: 3px; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: 50%; background: conic-gradient(from -135deg, var(--accent-primary) 0deg var(--knob-progress), var(--border-subtle) var(--knob-progress) 270deg, transparent 270deg 360deg); box-shadow: inset 0 0 0 2px var(--surface-base); transition: border-color .12s ease, box-shadow .12s ease; }
-.knob-face > span { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border-subtle); border-radius: 50%; background: var(--surface-low); color: var(--text-primary); font: 10px var(--font-mono); }
-.knob-value { color: var(--text-primary); font: 10px var(--font-mono); }
+.compact-knob { position: relative; display: grid; align-content: start; gap: 4px; color: var(--text-secondary); }
+.knob-face { justify-self: center; width: 42px; height: 42px; padding: 3px; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: 50%; background: conic-gradient(from -135deg, var(--accent-primary) 0deg var(--knob-progress), var(--border-subtle) var(--knob-progress) 270deg, transparent 270deg 360deg); box-shadow: inset 0 0 0 2px var(--surface-base); transition: border-color .12s ease, box-shadow .12s ease; }
+.knob-face > span { width: 30px; height: 30px; padding: 0 2px; overflow: hidden; align-content: center; border: 1px solid var(--border-subtle); border-radius: 50%; background: var(--surface-low); color: var(--text-primary); font: 10px var(--font-mono); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.knob-value { justify-self: center; color: var(--text-primary); font: 10px var(--font-mono); }
 
 /* Native keyboard and pointer control */
-.compact-knob input { position: absolute; top: 14px; left: 50%; width: 42px; height: 42px; margin: 0; transform: translateX(-50%); opacity: .015; cursor: ns-resize; }
-.compact-knob input:focus-visible + .knob-value { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-.compact-knob:focus-within .knob-face { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-outline), inset 0 0 0 2px var(--surface-base); }
+.compact-knob input { position: absolute; top: 22px; left: 50%; width: 42px; height: 42px; margin: 0; transform: translateX(-50%); opacity: .015; cursor: ns-resize; }
+.compact-knob:has(input:focus-visible) .knob-face { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-outline), inset 0 0 0 2px var(--surface-base); }

@@ -183,8 +183,8 @@
           @if (trackExceptionCount()) { <span>{{ trackExceptionCount() }} track exception(s) remain active.</span> }
           @if (manualTrackNames() && partGenerationAvailable()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [overriddenKeys]="overriddenKeys()"
-              (settingsChanged)="editPartSettings(item.scope, $event)" />
+            <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="true" [overriddenKeys]="overriddenKeys()"
+              (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
           }
           @for (track of contextTracks(); track track.id) {
             <section class="quick-settings-group">

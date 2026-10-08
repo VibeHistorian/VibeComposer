@@ -1,8 +1,10 @@
-<label class="compact-knob" [title]="tooltip()">
-  <span class="knob-label">{{ label() }}</span>
-  <span class="knob-face" [style.--knob-progress]="angle()" aria-hidden="true"><span>{{ code() }}</span></span>
-  <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : shownValue() + unit() }}</output>
-  <input type="range" [min]="minimum()" [max]="maximum()" [step]="step()" [value]="value()"
+<div class="compact-knob" [title]="tooltip()">
+  <vc-control-heading #heading [label]="label()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
+  <span class="knob-face" [style.--knob-progress]="angle()" aria-hidden="true"><span>{{ mixed() && preview() === null ? '—' : shownValue() }}</span></span>
+  @if (showValueBelow()) {
+    <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : shownValue() + unit() }}</output>
+  }
+  <input [id]="heading.controlId" type="range" [min]="minimum()" [max]="maximum()" [step]="step()" [value]="value()"
     [attr.aria-label]="label()" [attr.aria-valuetext]="mixed() && preview() === null ? 'Mixed' : shownValue() + unit()"
     (input)="previewValue($event)" (change)="commitValue($event)" />
-</label>
+</div>

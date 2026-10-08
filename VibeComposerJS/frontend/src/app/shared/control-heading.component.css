@@ -1,0 +1,7 @@
+/* Name and inheritance status */
+:host { min-width: 0; height: 18px; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+.control-name { min-width: 0; overflow: hidden; color: var(--text-secondary); font-size: 10px; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.inherit-snowflake { flex: 0 0 18px; width: 18px; height: 18px; padding: 0; border: 0; border-radius: var(--radius-micro); background: transparent; color: var(--text-disabled); font-size: 15px; line-height: 1; cursor: default; }
+.inherit-snowflake.custom { color: var(--accent-primary); cursor: pointer; }
+.inherit-snowflake.custom:hover { background: var(--surface-hover); color: var(--accent-hover); }
+.inherit-snowflake:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }

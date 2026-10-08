@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
 
 @Component({
   selector: 'vc-compact-knob',
+  imports: [ControlHeadingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './compact-knob.component.html',
   styleUrl: './compact-knob.component.css',
@@ -11,10 +13,12 @@ export class CompactKnobComponent {
   readonly minimum = input.required<number>();
   readonly maximum = input.required<number>();
   readonly step = input(1);
-  readonly code = input.required<string>();
   readonly label = input.required<string>();
   readonly unit = input('%');
   readonly mixed = input(false);
+  readonly showValueBelow = input(false);
+  readonly inheritance = input<ControlInheritance>('global');
+  readonly inheritRequested = output<void>();
   readonly valueCommit = output<number>();
   readonly preview = signal<number | null>(null);
   readonly shownValue = computed(() => this.preview() ?? this.value());

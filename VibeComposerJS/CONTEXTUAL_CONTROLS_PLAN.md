@@ -94,6 +94,12 @@ UI review: select a Chords cell, choose euclid, and try Hits 8/Pulses 3, Hits 5/
 
 Validation: 81 functional tests pass, including all 5,040 production Java masks and flipped complements, seeded velocity consumption, generation timings, section isolation, parsed MIDI, scoped mixed values, snapshots, import/session, history and manual-note preservation. Production build passes with the existing Pixi CommonJS warning. The Chromium arrangement regression passes across the existing 80–150% page zoom and 100–150% device scale matrix.
 
+### Compact control refinement
+
+Part controls now use a shared `ControlHeadingComponent`: left-aligned name and an always-present snowflake at the right. Inherited local values show a grey, inactive snowflake; explicit local fields show the role accent and reset just that field on click. Global values show a grey marker with a Global setting tooltip because there is no parent layer to restore. Both Part settings and the inspector use these per-field markers; duplicate bulk workflow buttons remain only in the central header. Reset preserves track exceptions and the existing history flow.
+
+Knobs show their numeric value in the center instead of a code, with no value row by default. Mixed values show an em dash; full values, units and mixed status remain in tooltips and accessible slider text. `CompactKnobComponent.showValueBelow` / `PartControl.showValueBelow` opts into a full value row for future long values. Choice controls share the same heading; checkboxes sit below their name and align left. Labels remain linked to their inputs, and reset buttons are separate from labels. Validation: production build and all 81 existing functional tests pass. Pause for UI review before adding further controls.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.

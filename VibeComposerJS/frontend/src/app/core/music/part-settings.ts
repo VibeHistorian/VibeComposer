@@ -12,6 +12,8 @@ export interface PartControl {
   readonly options?: readonly (string | number)[];
   readonly defaultValue?: string | number | boolean;
   readonly description?: string;
+  /** Opt in when a numeric value is too long for the knob's center. */
+  readonly showValueBelow?: boolean;
 }
 
 const number = (key: string, label: string, minimum: number, maximum: number, defaultValue?: number, unit = '%'): PartControl =>

@@ -1,0 +1,4 @@
+<label class="control-name" [for]="controlId" [title]="label()">{{ label() }}</label>
+<button type="button" class="inherit-snowflake" [class.custom]="inheritance() === 'custom'"
+  [disabled]="inheritance() !== 'custom'" [title]="statusLabel()" [attr.aria-label]="statusLabel()"
+  (click)="inheritRequested.emit()"><span aria-hidden="true">❄</span></button>

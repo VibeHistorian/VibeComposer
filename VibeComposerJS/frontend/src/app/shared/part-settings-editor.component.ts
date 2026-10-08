@@ -3,10 +3,11 @@ import type { ArrangedPart, ChordRhythm } from '../core/project/project.model';
 import { PART_CONTROLS, type PartControl } from '../core/music/part-settings';
 import { chordRhythmMask } from '../core/music/rhythm-pattern';
 import { CompactKnobComponent } from './compact-knob.component';
+import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [CompactKnobComponent],
+  imports: [CompactKnobComponent, ControlHeadingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()' },
   templateUrl: './part-settings-editor.component.html',
@@ -38,6 +39,10 @@ export class PartSettingsEditorComponent {
     return pattern ? `${pattern.filter((slot) => slot > 0).length} sounded slots in ${pattern.length} subdivisions per chord. Fill can suppress whole chords.`
       : 'Mixed rhythm settings. Select an individual track to see its rhythm.';
   });
+
+  inheritanceFor(control: PartControl): ControlInheritance {
+    return this.local() ? this.overriddenKeys().includes(control.key) ? 'custom' : 'inherited' : 'global';
+  }
 
   numericValue(control: PartControl): number {
     return (this.values()[control.key] as number | null)
