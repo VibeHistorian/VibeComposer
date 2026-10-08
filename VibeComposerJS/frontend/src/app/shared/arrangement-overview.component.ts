@@ -37,11 +37,11 @@ interface OverviewHitArea {
 
 const RULER_HEIGHT = 38;
 const ROLE_COLORS: Readonly<Record<ArrangedPart, string>> = {
-  bass: 'bass', chords: 'chords', arpeggio: 'arpeggio', drums: 'drum',
+  melody: 'melody', bass: 'bass', chords: 'chords', arpeggio: 'arpeggio', drums: 'drum',
 };
 
 const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
-  bass: 'Bass', chords: 'Chords', arpeggio: 'Arp', drums: 'Drums',
+  melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arp', drums: 'Drums',
 };
 
 @Component({

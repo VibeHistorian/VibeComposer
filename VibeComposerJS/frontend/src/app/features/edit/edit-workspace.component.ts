@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
+import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project/project.model';
 import { generateTrackPhrase, phraseForTrack } from '../../core/music/phrase';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
@@ -39,6 +40,7 @@ export class EditWorkspaceComponent {
   @Output() applied = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
   readonly parts: ReadonlyArray<{ key: ArrangedPart; label: string; color: string }> = [
+    { key: 'melody', label: 'Melody', color: 'melody' },
     { key: 'bass', label: 'Bass', color: 'bass' },
     { key: 'chords', label: 'Chords', color: 'chords' },
     { key: 'arpeggio', label: 'Arpeggio', color: 'arpeggio' },
@@ -53,6 +55,8 @@ export class EditWorkspaceComponent {
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);
   readonly selectedPart = computed<ArrangedPart>(() => this.selectedTrack().role);
+  readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
+  readonly generationAvailable = computed(() => PART_GENERATION_AVAILABLE[this.selectedPart()]);
   readonly selectedNoteId = signal<string | null>(null);
   readonly noteDrag = signal<NoteDrag | null>(null);
   readonly drumBar = signal(0);
@@ -251,6 +255,7 @@ export class EditWorkspaceComponent {
   }
 
   restoreGenerated(): void {
+    if (!this.generationAvailable()) return;
     this.draftNotes.set(generateTrackPhrase(this.project(), this.selectedTrack()));
     this.restoreOnApply = true;
     this.selectedNoteId.set(null);

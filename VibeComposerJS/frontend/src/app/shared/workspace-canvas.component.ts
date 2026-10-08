@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, PartSettingsScope,
 } from '../core/project/project.model';
-import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
+import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
@@ -33,7 +33,7 @@ interface TimelineSection {
 type ScoreNote = ScoreCanvasNote;
 
 const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
-  bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
+  melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
 };
 
 const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
@@ -64,6 +64,7 @@ export class WorkspaceCanvasComponent {
   readonly sectionTypes = SECTION_TYPES;
   readonly midiChannels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly roles = ARRANGED_PARTS.map((role) => ({ role, name: ROLE_NAMES[role] }));
+  readonly generationAvailable = PART_GENERATION_AVAILABLE;
   readonly selectedTrackId = this.workspaceUi.selectedTrackId;
   readonly selectedRole = this.workspaceUi.selectedRole;
   readonly editingNoteId = this.workspaceUi.editingNoteId;
@@ -95,10 +96,14 @@ export class WorkspaceCanvasComponent {
   });
   readonly editableScopes = computed(() => {
     const scope = this.partScope();
-    if (!scope || !this.contextTracks().length) return [];
+    if (!scope || !this.contextTracks().length || !this.partGenerationAvailable()) return [];
     return [{ scope, key: JSON.stringify(scope) }];
   });
-  readonly partRole = computed(() => this.contextTracks()[0]?.role ?? 'bass');
+  readonly partRole = computed(() => {
+    const target = this.settingsTarget();
+    return 'role' in target ? target.role : this.contextTracks()[0]?.role ?? 'bass';
+  });
+  readonly partGenerationAvailable = computed(() => this.generationAvailable[this.partRole()]);
   readonly contextSection = computed(() => {
     const target = this.localPartTarget();
     return target ? this.project().arrangement.find((section) => section.id === target.sectionId) : undefined;
@@ -163,8 +168,7 @@ export class WorkspaceCanvasComponent {
     color: track.role,
     noteCount: phraseForTrack(this.project(), track).length,
   })));
-  readonly arrangedTracks = computed(() => [...this.tracks()].sort((left, right) =>
-    ARRANGED_PARTS.indexOf(left.role) - ARRANGED_PARTS.indexOf(right.role)));
+  readonly arrangedTracks = computed(() => tracksInRoleOrder(this.tracks()));
   readonly selectedTrack = computed<TrackRow>(() => this.tracks().find((track) => track.id === this.selectedTrackId()) ?? this.tracks()[0]);
   readonly selectedPart = computed(() => this.selectedTrack().role);
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id
@@ -277,10 +281,17 @@ export class WorkspaceCanvasComponent {
     this.projects.randomizeArrangementPresence();
   }
 
-  openNoteEditor(note: ScoreNote): void {
-    this.selectTrack(note.part);
-    this.editingNoteId.set(note.id);
+  openTrackEditor(trackId: string): void {
+    if (this.editing() || !this.project().tracks.some((track) => track.id === trackId)) return;
+    this.selectTrack(trackId);
+    this.editingNoteId.set(null);
     this.editing.set(true);
+  }
+
+  openNoteEditor(note: ScoreNote): void {
+    if (this.editing() || !this.project().tracks.some((track) => track.id === note.part)) return;
+    this.openTrackEditor(note.part);
+    this.editingNoteId.set(note.id);
   }
 
   closeEditor(): void {
@@ -422,14 +433,14 @@ export class WorkspaceCanvasComponent {
   removeTrack(trackId: string): void {
     const current = this.tracks();
     const index = current.findIndex((track) => track.id === trackId);
-    if (index < 0 || current.filter((track) => track.role === current[index].role).length <= 1) return;
+    if (index < 0 || current.length <= 1) return;
     this.projects.removeTrack(trackId);
     if (this.selectedTrackId() === trackId) this.selectTrack(this.project().tracks[Math.max(0, index - 1)].id);
   }
 
   canRemoveTrack(trackId: string): boolean {
     const track = this.project().tracks.find((candidate) => candidate.id === trackId);
-    return !!track && this.tracks().filter((candidate) => candidate.role === track.role).length > 1;
+    return !!track && this.tracks().length > 1;
   }
 
   canMoveTrack(trackId: string, offset: -1 | 1): boolean {
@@ -470,6 +481,7 @@ export class WorkspaceCanvasComponent {
     this.projects.updateTrack(this.selectedTrackId(), { name: this.inputValue(event) });
   }
   restoreTrackPhrase(): void {
+    if (!this.generationAvailable[this.selectedTrack().role]) return;
     this.projects.clearTrackPhrase(this.selectedTrackId());
   }
   updateChannel(event: Event): void {

@@ -20,6 +20,7 @@ const pitched: readonly PartControl[] = [{ ...number('transpose', 'Transpose', -
 
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
+  melody: [],
   bass: [choice('rhythm', 'Rhythm', ['alternating', 'full', 'half', 'tresillo', 'sparse']),
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
@@ -55,7 +56,7 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
 
 export function validVelocityRange(settings: PartSettingsPatch, role: ArrangedPart): boolean {
   const values = settingsValues(settings, role);
-  return role === 'drums' || (values['velocityMin'] as number) <= (values['velocityMax'] as number);
+  return role === 'melody' || role === 'drums' || (values['velocityMin'] as number) <= (values['velocityMax'] as number);
 }
 
 export function velocityBounds(settings: CommonPartSettings): readonly [number, number] {

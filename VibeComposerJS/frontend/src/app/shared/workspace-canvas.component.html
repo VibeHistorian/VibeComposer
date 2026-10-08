@@ -39,6 +39,9 @@
               (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '⌄' }}</button>
           </header>
           @if (!isGroupCollapsed(group.role)) {
+            @if (!generationAvailable[group.role]) {
+              <p class="generation-status">Manual notes · automatic generation coming later</p>
+            }
             @for (track of tracksFor(group.role); track track.id) {
               <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                 <div class="track-line" (click)="selectTrack(track.id)">
@@ -86,7 +89,7 @@
             aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
             {{ partPanelExpanded() ? '⌄' : '›' }} Part settings
           </button>
-          @if (contextTracks()[0]; as track) { <i class="role-dot" [class]="track.role"></i> }
+          @if (partScope()) { <i class="role-dot" [class]="partRole()"></i> }
           <span class="part-context-label">{{ contextLabel() }}</span>
           @if (localPartTarget(); as target) {
             <button type="button" class="part-inspector-link" [disabled]="!overriddenKeys().length"
@@ -97,9 +100,12 @@
         @if (partPanelExpanded()) {
           <div id="part-settings-content" class="part-settings-content">
             <span class="part-inheritance">{{ inheritanceLabel() }}</span>
+            @if (!partGenerationAvailable()) {
+              <span class="part-inheritance">Automatic melody generation is not available yet. Add notes in the track’s piano roll.</span>
+            }
             @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
             @if (trackExceptionCount()) { <span class="part-inheritance">{{ trackExceptionCount() }} track exception(s) remain active.</span> }
-            @if (manualTrackNames()) { <span class="part-inheritance">Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
+            @if (manualTrackNames() && partGenerationAvailable()) { <span class="part-inheritance">Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
             @if (selectedSection()) {
               <span class="part-inheritance">Select a group cell or track button to view its part settings.</span>
             }
@@ -156,16 +162,17 @@
     <aside id="part-inspector" class="context-inspector" tabindex="-1" aria-label="Selection inspector">
       <header class="canvas-heading inspector-heading">
         <div><p class="eyebrow">INSPECTOR</p><h2>{{ localPartTarget() ? 'Section part' : selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
-        <i class="role-dot" [class]="contextTracks()[0]?.role ?? selectedTrack().role"></i>
+        <i class="role-dot" [class]="partRole()"></i>
       </header>
 
       @if (localPartTarget()) {
         <div class="inspector-selection">
           <span class="selection-kicker">{{ contextLabel() }}</span>
           <span>{{ inheritanceLabel() }}</span>
+          @if (!partGenerationAvailable()) { <span>Automatic melody generation is not available yet. Use Edit notes on the global track.</span> }
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
           @if (trackExceptionCount()) { <span>{{ trackExceptionCount() }} track exception(s) remain active.</span> }
-          @if (manualTrackNames()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
+          @if (manualTrackNames() && partGenerationAvailable()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
           @for (item of editableScopes(); track item.key) {
             <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="true" [overriddenKeys]="overriddenKeys()"
               (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
@@ -180,7 +187,8 @@
                 Include in this section
               </label>
               <button type="button" class="restore-track-button" (click)="selectTrack(track.id)">Edit global track settings</button>
-              @if (track.editedPhrase) {
+              <button type="button" class="restore-track-button" (click)="openTrackEditor(track.id)">Edit notes for entire track</button>
+              @if (track.editedPhrase && generationAvailable[track.role]) {
                 <button type="button" class="restore-track-button" (click)="projects.clearTrackPhrase(track.id)">Restore generated notes for entire track</button>
               }
             </section>
@@ -240,6 +248,7 @@
             <label class="track-name-field"><span>Track name</span><input [value]="selectedTrack().name" maxlength="48" (change)="updateTrackName($event)" /></label>
             @if (hasChannelCollision()) { <span class="channel-warning" role="status">Another track also uses channel {{ selectedTrack().midiChannel }}.</span> }
             <div class="track-actions" aria-label="Track actions">
+              <button type="button" (click)="openTrackEditor(selectedTrack().id)">Edit notes</button>
               <button type="button" (click)="duplicateTrack(selectedTrack().id)">Duplicate</button>
               <button type="button" [disabled]="!canMoveTrack(selectedTrack().id, -1)" (click)="reorderTrack(selectedTrack().id, -1)" aria-label="Move track up">↑</button>
               <button type="button" [disabled]="!canMoveTrack(selectedTrack().id, 1)" (click)="reorderTrack(selectedTrack().id, 1)" aria-label="Move track down">↓</button>
@@ -247,12 +256,13 @@
             </div>
             <strong>{{ selectedTrack().noteCount }} notes</strong>
             <span>{{ selectedTrack().mix.muted ? 'Muted' : selectedTrack().mix.solo ? 'Soloed' : 'Active in the mix' }} · {{ selectedTrack().mix.volumePercent }}% level</span>
-            @if (selectedTrack().editedPhrase) { <button type="button" class="restore-track-button" (click)="restoreTrackPhrase()">Restore generated notes</button> }
+            @if (selectedTrack().editedPhrase && partGenerationAvailable()) { <button type="button" class="restore-track-button" (click)="restoreTrackPhrase()">Restore generated notes</button> }
           }
         </div>
 
         <section class="quick-settings-group" aria-label="Part settings">
           <p class="eyebrow">PART SETTINGS</p>
+          @if (!partGenerationAvailable()) { <span class="part-inheritance">Automatic melody generation is not available yet. Add notes with Edit notes.</span> }
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
           @for (item of editableScopes(); track item.key) {
             <vc-part-settings-editor [role]="partRole()" [values]="partValues()"

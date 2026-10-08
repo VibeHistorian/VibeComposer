@@ -30,6 +30,9 @@
 /* Track list */
 .track-groups { min-height: 0; margin-top: 9px; flex: 1; display: grid; align-content: start; gap: 9px; overflow-y: auto; }
 .track-group { min-width: 0; padding: 4px; border: 1px solid var(--border-subtle); border-left: 2px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); }
+.track-group.melody { border-left-color: var(--role-melody); }
+.track-group.melody .group-heading { background: var(--role-melody-header); }
+.generation-status { margin: 5px 6px; color: var(--text-muted); font-size: 9px; line-height: 1.4; }
 .track-group.bass { border-left-color: var(--role-bass); }.track-group.chords { border-left-color: var(--role-chords); }.track-group.arpeggio { border-left-color: var(--role-arpeggio); }.track-group.drums { border-left-color: var(--role-drums); }
 .group-heading { min-height: 29px; padding: 2px 5px; display: flex; align-items: center; gap: 6px; border-radius: var(--radius-tight); }
 .track-group.bass .group-heading { background: var(--role-bass-header); }.track-group.chords .group-heading { background: var(--role-chords-header); }.track-group.arpeggio .group-heading { background: var(--role-arpeggio-header); }.track-group.drums .group-heading { background: var(--role-drums-header); }
@@ -46,6 +49,7 @@
 .track-select { min-width: 0; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 10px; }
 .track-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .role-dot { width: 7px; height: 7px; flex: 0 0 auto; display: inline-block; border-radius: 50%; background: var(--role-bass); }
+.role-dot.melody { background: var(--role-melody); }
 .role-dot.bass { background: var(--role-bass); }.role-dot.chords { background: var(--role-chords); }.role-dot.arpeggio { background: var(--role-arpeggio); }.role-dot.drums { background: var(--role-drums); }
 .track-instrument { min-width: 0; overflow: hidden; color: var(--text-muted); font: 10px var(--font-ui); text-overflow: ellipsis; white-space: nowrap; }
 .track-channel { color: var(--text-muted); font: 10px var(--font-mono); white-space: nowrap; }
@@ -55,7 +59,7 @@
 .track-mix-controls button.active { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
 
 /* Arrangement and score canvas */
-.song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: minmax(370px, .8fr) auto minmax(270px, 1.05fr); gap: 12px; }
+.song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: minmax(370px, .89fr) auto minmax(270px, 1.05fr); gap: 12px; }
 .song-canvas.editing { display: block; }
 .song-canvas.editing vc-edit-workspace { display: block; }
 .score-panel { padding: 13px 14px; overflow: hidden; }

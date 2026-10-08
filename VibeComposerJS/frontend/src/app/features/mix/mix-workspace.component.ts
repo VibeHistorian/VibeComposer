@@ -3,6 +3,7 @@ import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
 import { phraseForTrack } from '../../core/music/phrase';
 import type { CompositionTrack } from '../../core/project/project.model';
+import { tracksInRoleOrder } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 
@@ -18,6 +19,7 @@ export class MixWorkspaceComponent {
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
+  readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
   readonly channels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly instruments: ReadonlyArray<{ program: number; name: string }> = [
     { program: 0, name: 'Acoustic Grand Piano' },

@@ -290,3 +290,17 @@ test('LIVE reload and disabling loop preserve the musical beat in a selected ran
   playback.tick();
   assert.equal(playback.beat(), 9, 'loop disabled continues beyond the selected range');
 });
+
+test('melody notes receive a pitched audio bus and retain normal mix routing', async () => {
+  const { playback, sources, project } = fixture();
+  const melody = { ...project.tracks[0], id: 'melody', role: 'melody',
+    mix: { ...project.tracks[0].mix, program: 73, panPercent: -25 },
+    notes: [{ id: 'melody-note', midi: 72, startBeat: 0, durationBeats: 1, velocity: 95 }] };
+  await playback.start({ ...project, tracks: [melody] });
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.notes[0].role, 'melody');
+  assert.equal(playback.buses.has('melody'), true);
+  assert.equal(playback.buses.get('melody').pan.pan.value, -0.25);
+  assert.equal(sources[0].frequency.value, 440 * 2 ** ((72 - 69) / 12));
+  playback.stop();
+});

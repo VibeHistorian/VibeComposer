@@ -17,7 +17,7 @@
     </section>
 
     <section class="mixer" aria-label="Track mixer">
-      @for (track of project().tracks; track track.id) {
+      @for (track of tracks(); track track.id) {
         <article class="channel-strip" [class.muted]="track.mix.muted" [class.solo]="track.mix.solo" (click)="selectTrack(track.id)">
           <header class="channel-heading">
             <div class="channel-identity">

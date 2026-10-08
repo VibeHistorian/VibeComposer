@@ -10,8 +10,8 @@
 .reset-button { padding: 0 10px; font-size: 10px; }
 .close-button { width: 32px; font-size: 19px; }
 .reset-button:hover, .close-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.chance-table { min-width: 680px; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-section); }
-.chance-row { min-height: 37px; display: grid; grid-template-columns: minmax(145px, 1.2fr) repeat(4, minmax(115px, 1fr)); align-items: center; border-top: 1px solid var(--border-subtle); }
+.chance-table { min-width: 760px; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-section); }
+.chance-row { min-height: 37px; display: grid; grid-template-columns: minmax(145px, 1.2fr) repeat(5, minmax(115px, 1fr)); align-items: center; border-top: 1px solid var(--border-subtle); }
 .chance-row:first-child { border-top: 0; }
 .chance-row:nth-child(odd):not(.chance-header) { background: var(--surface-low); }
 .chance-row > strong, .chance-header > span { padding: 0 10px; color: var(--text-secondary); font-size: 10px; font-weight: 500; text-transform: capitalize; }

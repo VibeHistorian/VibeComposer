@@ -76,6 +76,14 @@
   --accent-shadow: #32d7f426;
   --accent-glow: #32d7f480;
   --accent-outline: #32d7f42e;
+  --role-melody: #f26772;
+  --role-melody-glow: #f2677250;
+  --role-melody-strong: #ff8891;
+  --role-melody-dark: #9c3341;
+  --role-melody-surface: #481e2a;
+  --role-melody-border: #a94352;
+  --role-melody-text: #ffe0e3;
+  --role-melody-header: #562332;
   --role-bass: #20cce8;
   --role-bass-glow: #20cce866;
   --role-bass-strong: #42e2f7;

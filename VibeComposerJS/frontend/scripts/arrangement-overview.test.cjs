@@ -23,7 +23,7 @@ function fixture() {
   const module = { exports: {} };
   const dependencies = {
     '@angular/core': angular,
-    '../core/project/project.model': { ARRANGED_PARTS: ['bass', 'chords', 'arpeggio', 'drums'] },
+    '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
     '../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
     '../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes },
   };
@@ -122,7 +122,7 @@ test('section-local redraws fit exactly without introducing scrollbar-sized over
       })) });
       component.drawOverview();
       assert.equal(content.style.width, `${width}px`);
-      assert.equal(content.style.height, `${height}px`);
+      assert.equal(content.style.height, `${Math.max(height, 363)}px`);
       assert.equal(refs.get('viewport').style.width, `${width}px`);
       assert.equal(refs.get('viewport').style.height, `${height}px`);
     }
@@ -136,7 +136,7 @@ test('fractional observed sizes round down and stale measurements cannot exceed 
   component.viewportSize = { width: 1187.9, height: 310.9 };
   component.drawOverview();
   assert.equal(refs.get('scrollContent').style.width, '1187px');
-  assert.equal(refs.get('scrollContent').style.height, '310px');
+  assert.equal(refs.get('scrollContent').style.height, '363px');
   assert.equal(refs.get('scoreCanvas').width, 2374);
   assert.equal(refs.get('playheadCanvas').height, 620);
   host.clientWidth = 1178; host.clientHeight = 301;
@@ -148,6 +148,8 @@ test('fractional observed sizes round down and stale measurements cannot exceed 
 test('scrollbars follow timeline zoom and row space instead of automatic content overflow', () => {
   const { component, refs } = fixture();
   const host = refs.get('scrollHost');
+  host.clientHeight = 400;
+  component.drawOverview();
   assert.equal(host.style.overflowX, 'hidden');
   assert.equal(host.style.overflowY, 'hidden');
   component.horizontalScale = 2;
@@ -161,7 +163,7 @@ test('scrollbars follow timeline zoom and row space instead of automatic content
   component.drawOverview();
   assert.equal(host.style.overflowX, 'hidden');
   assert.equal(host.style.overflowY, 'scroll');
-  host.clientHeight = 311;
+  host.clientHeight = 400;
   component.drawOverview();
   assert.equal(host.style.overflowY, 'hidden');
 });
@@ -283,4 +285,26 @@ test('all selected section headers receive the selection highlight', () => {
   component.drawOverview();
   const selectedHeaders = base.rectangles.filter((rect) => rect.color === '--surface-accent' && rect.bounds[1] === 0);
   assert.equal(selectedHeaders.length, 2);
+});
+
+test('melody is the first row with red-theme notes and independent selection/presence controls', () => {
+  const { component, base } = fixture();
+  const project = component.project();
+  const melody = { id: 'melody-1', role: 'melody', notes: [
+    { id: 'melody-note', startBeat: 0, durationBeats: 1, midi: 72, velocity: 95 },
+  ] };
+  component.project.set({ ...project, tracks: [...project.tracks, melody], arrangement: project.arrangement.map((section) => ({
+    ...section, presentTracks: [...section.presentTracks, melody.id],
+  })) });
+  component.drawOverview();
+  assert.equal(component.groups()[0].role, 'melody');
+  const label = component.hits.find((area) => area.key === 'group:melody');
+  assert.equal(label.y, 38);
+  assert.ok(base.rectangles.some((rect) => rect.color === '--role-melody-strong' && rect.bounds[3] === 2));
+  const track = component.hits.find((area) => area.key === 'toggle:intro:melody-1');
+  track.activate();
+  assert.deepEqual(component.trackSelected.values.at(-1), { sectionId: 'intro', trackId: 'melody-1' });
+  track.togglePresence();
+  assert.deepEqual(component.partToggled.values.at(-1), { sectionId: 'intro', trackId: 'melody-1', present: false });
+  assert.equal(component.sectionSelected.values.length, 0);
 });

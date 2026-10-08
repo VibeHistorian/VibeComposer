@@ -1,5 +1,6 @@
 import { Midi } from '@tonejs/midi';
 import type { CompositionProject, CompositionTrack } from '../project/project.model';
+import { tracksInRoleOrder } from '../project/project.model';
 import { layOutTrackPhrase } from './phrase';
 
 /** Serialize every independent instrument track with its assigned channel and mix controls. */
@@ -10,7 +11,7 @@ export function generateCompositionMidi(project: CompositionProject): Uint8Array
   const secondsPerBeat = 60 / project.tempoBpm;
   const anySolo = project.tracks.some((track) => track.mix.solo);
 
-  for (const compositionTrack of project.tracks) {
+  for (const compositionTrack of tracksInRoleOrder(project.tracks)) {
     const track = midi.addTrack();
     track.name = compositionTrack.name;
     track.channel = compositionTrack.midiChannel - 1;

@@ -4,7 +4,7 @@ import { ARRANGED_PARTS, SECTION_TYPES } from '../../core/project/project.model'
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
 
 const PART_NAMES: Readonly<Record<ArrangedPart, string>> = {
-  bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
+  melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
 };
 
 @Component({

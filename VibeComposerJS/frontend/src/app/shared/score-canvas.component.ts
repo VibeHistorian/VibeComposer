@@ -56,6 +56,7 @@ interface ScoreCanvasModel {
 const VELOCITY_HEIGHT = 34;
 const HIT_BUCKET_WIDTH = 96;
 const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; glow: string }>> = {
+  melody: { note: '--role-melody-strong', velocity: '--role-melody-strong', glow: '--role-melody-glow' },
   bass: { note: '--role-bass-strong', velocity: '--role-bass-strong', glow: '--role-bass-glow' },
   chords: { note: '--role-chords-strong', velocity: '--role-chords-strong', glow: '--role-chords-glow' },
   arpeggio: { note: '--role-arpeggio-strong', velocity: '--role-arpeggio-strong', glow: '--role-arpeggio-glow' },

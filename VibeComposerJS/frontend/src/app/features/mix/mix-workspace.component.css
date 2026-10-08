@@ -37,6 +37,7 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 .channel-heading { min-height: 45px; justify-content: space-between; gap: 8px; }
 .channel-identity { min-width: 0; gap: 9px; }
 .role-mark { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--surface-accent); color: var(--accent-primary); font-size: 12px; font-weight: 700; }
+.role-mark.melody { border-color: var(--role-melody-border); background: var(--role-melody-surface); color: var(--role-melody-strong); }
 .role-mark.chords { border-color: var(--role-chords-border); background: var(--role-chords-surface); color: var(--role-chords-strong); }
 .role-mark.arpeggio { border-color: var(--role-arpeggio-border); background: var(--role-arpeggio-surface); color: var(--role-arpeggio-strong); }
 .role-mark.drums { border-color: var(--role-drum-border); background: var(--role-drum-surface); color: var(--role-drums); }

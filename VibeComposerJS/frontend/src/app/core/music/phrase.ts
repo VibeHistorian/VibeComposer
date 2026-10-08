@@ -10,6 +10,8 @@ import { resolvePartTrack } from './part-settings';
 export function generatePhrase(project: CompositionProject, part: ArrangedPart): PhraseNote[] {
   const seed = BigInt(project.seed);
   switch (part) {
+    // Role-shell checkpoint: no substitute or legacy melody generator.
+    case 'melody': return [];
     case 'bass':
       return generateBassline(seed, project.key, project.scale, project.progression,
         project.bass.rhythm, project.bass.noteVariation, project.bass)
@@ -43,6 +45,7 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
   const editedPhrases = { ...trackProject.editedPhrases, [track.role]: undefined };
   let notes: PhraseNote[];
   switch (track.role) {
+    case 'melody': notes = []; break;
     case 'bass':
       notes = generatePhrase({ ...trackProject, bass: track.generatorSettings, editedPhrases }, 'bass'); break;
     case 'chords':

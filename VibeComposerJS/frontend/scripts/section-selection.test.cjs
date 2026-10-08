@@ -32,7 +32,10 @@ function fixture() {
       '@angular/core': angular, '../core/project/project.service': { ProjectService: 'project' },
       '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
       './workspace-ui.service': { WorkspaceUiService: 'ui' },
-      '../core/project/project.model': { ARRANGED_PARTS: ['bass', 'chords', 'arpeggio', 'drums'], SECTION_TYPES: [] },
+      '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'], SECTION_TYPES: [],
+        PART_GENERATION_AVAILABLE: { melody: false, bass: true, chords: true, arpeggio: true, drums: true },
+        tracksInRoleOrder: (tracks) => [...tracks].sort((left, right) =>
+          ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(left.role) - ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(right.role)) },
       '../core/music/harmony': { KEYS: [] },
     };
     new Function('require', 'module', 'exports', compiled)(

@@ -77,7 +77,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       computed: read => read, effect: () => {}, input, output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
-      '../core/project/project.model': { ARRANGED_PARTS: ['bass', 'chords', 'arpeggio', 'drums'] },
+      '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
       '../core/music/arrangement-generator': { shouldGenerateTrackInSection: () => true },
       '../core/music/phrase': { layOutTrackPhrase: () => [] } };
     const module = { exports: {} }; const exports = module.exports;
@@ -105,6 +105,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
         [1218, 384, 1], [1217.5, 383.5, 1], [1217.6, 383.6, 1],
         [1217.5, 383.5, 2], [1217.6, 365.6, 1], [830.5, 350.5, 2],
         [830.5, 350.5, 1], [1218, 384, 1], [1217.6, 365.6, 2.137],
+        [1217.5, 500.5, 1], [1217.5, 500.5, 2],
       ]) {
         fixture.style.width = width + 'px'; fixture.style.height = height + 'px';
         component.horizontalScale = scale;

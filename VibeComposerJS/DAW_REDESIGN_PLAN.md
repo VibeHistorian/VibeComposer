@@ -23,7 +23,7 @@ The next buildout phase is specified in [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL
 
 - Place primary chord setup in a compact, dense panel above the Tracks list. It owns the progression and the primary chord-generation controls needed to establish harmony.
 - Put detailed chord-generation controls and other context-specific generation settings in the inspector. Selecting a role group shows generation settings that affect all tracks in that group; selecting an individual track shows that track's local generation and instrument settings.
-- Group instrument setups by implemented type in the left Tracks panel: Bass, Chords, Arpeggio, and Drums. Each group can contain multiple independently configured tracks, can scroll as the list grows, and has group-level selection and add-track actions.
+- Group instrument setups in the left Tracks panel: Melody, Bass, Chords, Arpeggio, and Drums. Each group can contain multiple independently configured tracks, can scroll as the list grows, and has group-level selection and add-track actions. Melody's role shell currently supports manual notes; automatic block generation is the next slice.
 - Keep global project attributes (key, transpose, tempo, and mode) editable in the transport. Do not duplicate global controls in a route page.
 - Keep quick track actions near each row. Put full parameter sets in the inspector rather than expanding every track into a form.
 

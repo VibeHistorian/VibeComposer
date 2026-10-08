@@ -55,6 +55,8 @@ References: [InstPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibec
 
 Current TS bass `noteVariation`/`octaveInterval` and chord `noteLengthPercent` already cover small parts of these families. The current bass/chord rhythm enums, two arp rates/octaves, and drum groove presets are simplified generators; preserve or replace deliberately as the full engine arrives.
 
+The P1a checkpoint adds Melody's role identity, red presentation, manual-note editing, instrument/mix/channel routing and section presence. Its musical generation controls above are still deferred to the actual current block-generator port (P1b/P5); no melody knobs or reroll controls are active yet. Melody presence defaults follow [Arrangement.defaultSections](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Arrangement.java), whose `Section` constructor arguments use Melody first, followed by Bass, Chords, Arp and Drums.
+
 ## Track-generation policies
 
 Shared [InstGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/InstGUI.java) owns `addPanelButton`, `generatePanelButton`, `randomPanelsToGenerate`: compact Add/Reroll in header (H), explicit Generate N action in inspector (HI). Existing tracks retain IDs when rerolled. `enabledCheckBox` is role enable (musical/arrangement control), and `groupFilterSlider` (LP) is mix/device control, not randomization policy. [PartManagerPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/PartManagerPanel.java) presets/overwrite actions belong in inspector/header menu later; do not mix them into pattern controls.

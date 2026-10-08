@@ -18,6 +18,20 @@ Saved track-wide manual phrases remain explicit replacements: generator patches 
 
 Validation: 42 tests passed, including real resolver/service/generator/parsed-MIDI export tests and existing overview/selection/playback checks; production build passed with the existing Pixi CommonJS warning. Ready for UI testing; melody, the full pattern/fill engine, and header reroll policies remain outstanding.
 
+### UI checkpoint 3 — Melody role foundation (P1a)
+
+Added the fifth role with explicit Java type correspondence: Melody 0, Bass 1, Chords 2, Arpeggio 3, Drums 4. Melody appears first in Tracks, arrangement, score, editor tabs, mixer and MIDI export, using a red theme. New projects include M1 on free pitched channel 4; the existing defaults remain Bass 1, Chords 2, Arpeggio 3 and Drums 10. Existing saved projects retain their original tracks and channels; a missing melody default/mix is decoded as an optional default, without a schema gate or injected track.
+
+This checkpoint deliberately delivers the role shell allowed by P1, **not automatic melody generation**. The UI marks Melody as manual notes, exposes no inactive musical knobs, and hides/guards Restore generated notes. A fixed `algorithm: 'block'` identity is serialized; legacy algorithms and unsupported melody parameters are rejected. The actual current block generator and its irregular transpose choices (octaves plus 5/7 offsets) remain the next P1 slice, with Java fixed-seed validation still required before generation is enabled.
+
+Added explicit Edit notes actions so empty tracks can open the piano roll. Manual melody notes participate in section presence, pitched audio, instrument/channel/mix controls, score/overview rendering, duplication, history, session/JSON restore, and MIDI export. The local inspector names its note-edit action **Edit notes for entire track**, keeping section phrase ownership deferred. Melody probabilities come from `Arrangement.defaultSections` in the Java app; stored probabilities for the other roles remain intact.
+
+Add now works for every empty role using its stored defaults. A role may have zero tracks; only the final project track is protected from removal. Empty role selections keep their own context rather than falling back to bass settings. Adding Melody does not change other roles' phrase seed derivation or fixed part seed offsets.
+
+UI review: in an existing project use Melody’s + button, select M1, choose Edit notes, add notes and Apply. Check red notes in score/overview, section inclusion with middle-click, playback/MIDI, the mixer, duplicate/delete/undo, and save/reload. Also delete a role’s last member and add it back. Pause at this checkpoint before the block generator port.
+
+Validation: 54 functional tests passed, including real service/editor/history/session and parsed-MIDI tests for Melody plus pitched-audio/canvas checks. The Chromium regression with five arrangement rows passed at 80%, 100%, 125% and 150% page zoom combined with 100%, 125% and 150% device scale; production build passed with the existing Pixi CommonJS warning. Ready for UI testing.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.

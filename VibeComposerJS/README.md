@@ -42,6 +42,8 @@ The starter bridge is intentionally small. Add generator operations to Go only w
 
 Build VibeComposerJS as one persistent music workspace. Keep grouped instrument tracks at left, arrangement and dense score together in the center, selection-aware settings at right, and playback plus editable key, mode, transpose, and tempo in the bottom transport. Primary chord setup sits above Tracks, and a mixer icon opens the mixer popup.
 
-Arrange sections directly in the canvas. Selecting a score note opens the relevant piano roll or drum grid; Apply commits the phrase and returns to arrangement, while Cancel discards the draft. Group selection exposes settings shared by that instrument type, and track selection exposes its local generator and instrument settings.
+Arrange sections directly in the canvas. Selecting a score note or choosing Edit notes in the track inspector opens the relevant piano roll or drum grid, including empty tracks; Apply commits the phrase and returns to arrangement, while Cancel discards the draft. Group selection exposes settings shared by that instrument type, and track selection exposes its local generator and instrument settings.
+
+Melody is the first role and uses a red theme. Its current role shell supports manual notes, independent instruments/channels/mixing, arrangement presence and MIDI export; automatic melody generation is not available yet. Existing saved projects retain their tracks: use + in Melody to add the first melody track. Any role may be empty and added back; the project retains at least one track. See the P1a checkpoint in [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md) for the next block-generator slice.
 
 Use the feature and shared UI READMEs for the workspace behavior and Angular ownership boundaries. Preserve useful density in piano rolls and drum grids, use role colors consistently, and use shared theme tokens for the rest of the interface.

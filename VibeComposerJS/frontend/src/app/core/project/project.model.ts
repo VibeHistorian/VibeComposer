@@ -9,7 +9,7 @@ export type DrumGroove = 'rock' | 'four-on-floor' | 'half-time' | 'sparse';
 export type SectionType =
   | 'INTRO' | 'VERSE1' | 'VERSE2' | 'VERSE3' | 'CHORUS1' | 'CHORUS2' | 'HALF_CHORUS'
   | 'BREAKDOWN' | 'CHILL' | 'BUILDUP1' | 'BUILDUP2' | 'CHORUS3' | 'CLIMAX' | 'OUTRO';
-export type ArrangedPart = 'bass' | 'chords' | 'arpeggio' | 'drums';
+export type ArrangedPart = 'melody' | 'bass' | 'chords' | 'arpeggio' | 'drums';
 
 export interface PhraseNote {
   readonly id: string;
@@ -38,6 +38,11 @@ export interface CommonPartSettings {
   readonly velocityMax?: number;
 }
 
+/** Fixed current-algorithm identity; musical controls arrive with the block generator. */
+export interface MelodySettings extends CommonPartSettings {
+  readonly algorithm: 'block';
+}
+
 export interface BassSettings extends CommonPartSettings {
   readonly rhythm: BassRhythm;
   /** Chance, in percent, of choosing a chord tone instead of its root. */
@@ -64,12 +69,13 @@ export interface DrumSettings extends CommonPartSettings {
 }
 
 export interface PartSettingsByRole {
+  readonly melody: MelodySettings;
   readonly bass: BassSettings;
   readonly chords: ChordSettings;
   readonly arpeggio: ArpeggioSettings;
   readonly drums: DrumSettings;
 }
-export type PartSettingsPatch = Partial<BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>;
+export type PartSettingsPatch = Partial<MelodySettings | BassSettings | ChordSettings | ArpeggioSettings | DrumSettings>;
 export type PartSettingsScope =
   | { readonly kind: 'global-role'; readonly role: ArrangedPart }
   | { readonly kind: 'global-track'; readonly trackId: string }
@@ -96,6 +102,7 @@ interface TrackBase {
 }
 
 export type CompositionTrack =
+  | (TrackBase & { readonly role: 'melody'; readonly generatorSettings: MelodySettings })
   | (TrackBase & { readonly role: 'bass'; readonly generatorSettings: BassSettings })
   | (TrackBase & { readonly role: 'chords'; readonly generatorSettings: ChordSettings })
   | (TrackBase & { readonly role: 'arpeggio'; readonly generatorSettings: ArpeggioSettings })
@@ -112,6 +119,7 @@ export interface CompositionProject {
   readonly seed: string;
   /** One-based diatonic chord degrees in the selected key and scale. */
   readonly progression: readonly number[];
+  readonly melody: MelodySettings;
   readonly bass: BassSettings;
   readonly chords: ChordSettings;
   readonly arpeggio: ArpeggioSettings;
@@ -129,7 +137,17 @@ export const SECTION_TYPES: readonly SectionType[] = [
   'BREAKDOWN', 'CHILL', 'BUILDUP1', 'BUILDUP2', 'CHORUS3', 'CLIMAX', 'OUTRO',
 ];
 
-export const ARRANGED_PARTS: readonly ArrangedPart[] = ['bass', 'chords', 'arpeggio', 'drums'];
+/** Explicit Java group correspondence, independent of track IDs and seed derivation. */
+export const PART_TYPES: Readonly<Record<ArrangedPart, number>> = { melody: 0, bass: 1, chords: 2, arpeggio: 3, drums: 4 };
+export const ARRANGED_PARTS: readonly ArrangedPart[] = ['melody', 'bass', 'chords', 'arpeggio', 'drums'];
+/** The melody role shell is usable for note editing; automatic block generation is a later slice. */
+export const PART_GENERATION_AVAILABLE: Readonly<Record<ArrangedPart, boolean>> = {
+  melody: false, bass: true, chords: true, arpeggio: true, drums: true,
+};
+
+export function tracksInRoleOrder<T extends { readonly role: ArrangedPart }>(tracks: readonly T[]): T[] {
+  return [...tracks].sort((left, right) => PART_TYPES[left.role] - PART_TYPES[right.role]);
+}
 
 function defaultSection(id: string, type: SectionType, measures: number): ArrangementSection {
   return {
@@ -148,6 +166,8 @@ export const DEFAULT_ARRANGEMENT: readonly ArrangementSection[] = [
   defaultSection('section-5', 'CHORUS2', 4),
   defaultSection('section-6', 'OUTRO', 2),
 ];
+
+export const DEFAULT_MELODY_SETTINGS: MelodySettings = { algorithm: 'block' };
 
 export const DEFAULT_BASS_SETTINGS: BassSettings = {
   rhythm: 'alternating',
@@ -173,6 +193,7 @@ export const DEFAULT_DRUM_SETTINGS: DrumSettings = {
 };
 
 export const DEFAULT_MIX: Readonly<Record<ArrangedPart, MixChannelSettings>> = {
+  melody: { program: 73, volumePercent: 100, panPercent: 0, muted: false, solo: false },
   bass: { program: 33, volumePercent: 100, panPercent: 0, muted: false, solo: false },
   chords: { program: 0, volumePercent: 100, panPercent: 0, muted: false, solo: false },
   arpeggio: { program: 11, volumePercent: 100, panPercent: 0, muted: false, solo: false },
@@ -180,6 +201,7 @@ export const DEFAULT_MIX: Readonly<Record<ArrangedPart, MixChannelSettings>> = {
 };
 
 export const DEFAULT_TRACKS: readonly CompositionTrack[] = [
+  { id: 'track-melody-1', role: 'melody', name: 'M1', midiChannel: 4, generatorSettings: DEFAULT_MELODY_SETTINGS, mix: DEFAULT_MIX.melody },
   { id: 'track-bass-1', role: 'bass', name: 'B1', midiChannel: 1, generatorSettings: DEFAULT_BASS_SETTINGS, mix: DEFAULT_MIX.bass },
   { id: 'track-chords-1', role: 'chords', name: 'C1', midiChannel: 2, generatorSettings: DEFAULT_CHORD_SETTINGS, mix: DEFAULT_MIX.chords },
   { id: 'track-arpeggio-1', role: 'arpeggio', name: 'A1', midiChannel: 3, generatorSettings: DEFAULT_ARPEGGIO_SETTINGS, mix: DEFAULT_MIX.arpeggio },
@@ -195,6 +217,7 @@ export const DEFAULT_PROJECT: CompositionProject = {
   tempoBpm: 120,
   seed: '42',
   progression: [1, 5, 6, 4],
+  melody: DEFAULT_MELODY_SETTINGS,
   bass: DEFAULT_BASS_SETTINGS,
   chords: DEFAULT_CHORD_SETTINGS,
   arpeggio: DEFAULT_ARPEGGIO_SETTINGS,

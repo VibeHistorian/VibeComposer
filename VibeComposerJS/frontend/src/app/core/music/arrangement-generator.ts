@@ -2,6 +2,7 @@ import type { ArrangedPart, ArrangementSection, CompositionTrack } from '../proj
 import { JavaRandom } from './java-random';
 
 const ARRANGEMENT_PART_SEED_OFFSETS: Readonly<Record<ArrangedPart, number>> = {
+  melody: 0,
   bass: 50,
   chords: 100,
   arpeggio: 200,

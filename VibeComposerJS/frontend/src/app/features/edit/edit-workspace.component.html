@@ -25,7 +25,7 @@
       </div>
 
       <div class="part-tabs" role="tablist" aria-label="Part to edit">
-        @for (track of project().tracks; track track.id) {
+        @for (track of tracks(); track track.id) {
           <button type="button" role="tab" [attr.aria-selected]="selectedTrack().id === track.id"
             [class.active]="selectedTrack().id === track.id" (click)="selectTrack(track.id)">
             <i class="role-dot" [class]="track.role"></i>{{ track.name }}
@@ -87,7 +87,7 @@
                 (pointercancel)="cancelNotePointer($event)" (lostpointercapture)="cancelNotePointer($event)">
                 @for (note of displayNotes(); track note.id) {
                   <button type="button" class="note-block" [class.selected]="selectedNoteId() === note.id"
-                    [class.bass]="selectedPart() === 'bass'" [class.chords]="selectedPart() === 'chords'"
+                    [class.melody]="selectedPart() === 'melody'" [class.bass]="selectedPart() === 'bass'" [class.chords]="selectedPart() === 'chords'"
                     [class.arpeggio]="selectedPart() === 'arpeggio'"
                     [style.left.%]="noteLeft(note)" [style.width.%]="noteWidth(note)" [style.top.px]="noteTop(note)"
                     [attr.title]="noteName(note.midi) + ' · beat ' + (note.startBeat + 1)"
@@ -144,11 +144,11 @@
 
       @if (isEdited()) {
         <div class="restore-panel">
-          <p>Generated notes for this part have been replaced with your edited phrase.</p>
-          <button type="button" class="secondary-button" (click)="restoreGenerated()">Restore generated phrase</button>
+          <p>{{ generationAvailable() ? 'Generated notes for this part have been replaced with your edited phrase.' : 'This track uses your saved melody notes.' }}</p>
+          @if (generationAvailable()) { <button type="button" class="secondary-button" (click)="restoreGenerated()">Restore generated phrase</button> }
         </div>
       } @else {
-        <div class="source-panel"><span class="status-dot"></span> Following current seed and generation settings</div>
+        <div class="source-panel"><span class="status-dot"></span> {{ generationAvailable() ? 'Following current seed and generation settings' : 'Add melody notes here. Automatic generation is not available yet.' }}</div>
       }
     </aside>
   </div>
