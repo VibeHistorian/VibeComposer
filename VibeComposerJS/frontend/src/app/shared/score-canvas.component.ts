@@ -55,6 +55,7 @@ interface ScoreCanvasModel {
 
 const VELOCITY_HEIGHT = 34;
 const HIT_BUCKET_WIDTH = 96;
+const MIN_TIME_GRID_SPACING = 8;
 const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; glow: string }>> = {
   melody: { note: '--role-melody-strong', velocity: '--role-melody-strong', glow: '--role-melody-glow' },
   bass: { note: '--role-bass-strong', velocity: '--role-bass-strong', glow: '--role-bass-glow' },
@@ -427,21 +428,28 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
 
     const beatWidth = this.width * this.horizontalScale / totalBeats;
-    const firstStep = Math.max(0, Math.floor(this.horizontalOffset * totalBeats * 4));
+    // Reveal successively finer divisions only when they have room in CSS
+    // pixels. At overview scale, continue thinning beyond individual bars.
+    let gridStep = 1;
+    while (beatWidth * gridStep / 4 < MIN_TIME_GRID_SPACING) gridStep *= 2;
+    // Fade smoothly with zoom rather than jumping in brightness at each
+    // subdivision threshold. Keep a faint floor for orientation at song scale.
+    const timeGridAlpha = Math.max(0.22, Math.min(1, Math.sqrt(beatWidth / (MIN_TIME_GRID_SPACING * 4))));
+    const firstStep = Math.max(0, Math.ceil(this.horizontalOffset * totalBeats * 4 / gridStep) * gridStep);
     const lastStep = Math.min(totalBeats * 4, Math.ceil((this.horizontalOffset + 1 / this.horizontalScale) * totalBeats * 4));
-    for (let sixteenth = firstStep; sixteenth <= lastStep; sixteenth++) {
+    for (let sixteenth = firstStep; sixteenth <= lastStep; sixteenth += gridStep) {
       const x = Math.floor(this.scoreX(sixteenth / 4)) + 0.5;
       const beat = sixteenth / 4;
       const gridColor = sixteenth % 16 === 0 ? '--grid-measure'
         : sixteenth % 4 === 0 ? '--grid-beat'
           : sixteenth % 2 === 0 ? '--grid-eighth' : '--grid-step';
-      line(x, 0, x, this.height, gridColor, sixteenth % 16 === 0 ? 1 : 0.92);
+      line(x, 0, x, this.height, gridColor, timeGridAlpha * (sixteenth % 16 === 0 ? 1 : 0.92));
       if (beat === totalBeats) break;
     }
     for (const section of sections) {
       const x = Math.floor(this.scoreX(section.startBeat)) + 0.5;
       if (x < 0 || x > this.width) continue;
-      line(x, 0, x, scoreHeight, '--grid-measure');
+      line(x, 0, x, scoreHeight, '--grid-measure', timeGridAlpha);
     }
     line(0, scoreHeight + 0.5, this.width, scoreHeight + 0.5, '--border-default');
     line(0, 0.5, this.width, 0.5, '--border-default');

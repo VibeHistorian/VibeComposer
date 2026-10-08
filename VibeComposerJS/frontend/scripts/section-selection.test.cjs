@@ -205,3 +205,53 @@ test('score canvas fits an unequal section range and restores full-score zoom on
   assert.equal(score.horizontalScale, 1, 'clearing a full-arrangement selection still refits');
   assert.equal(score.horizontalOffset, 0);
 });
+
+test('score time grid progressively reveals subdivisions with at least eight pixels between regular lines', () => {
+  const { load } = fixture();
+  const { ScoreCanvasComponent } = load('score-canvas.component.ts');
+  const score = new ScoreCanvasComponent();
+  score.model = { tracks: [], notes: [], sections: [], totalBeats: 512, selectedTrackId: '', hiddenTrackIds: new Set() };
+  score.app = { render() {}, canvas: { setAttribute() {} } };
+  score.width = 512;
+  score.height = 300;
+  const lines = [];
+  let start, end;
+  score.staticGraphics = { clear() { lines.length = 0; }, rect() { return this; }, fill() { return this; },
+    moveTo(x, y) { start = [x, y]; return this; }, lineTo(x, y) { end = [x, y]; return this; },
+    stroke(style) { lines.push({ start, end, color: style.color, alpha: style.alpha }); return this; } };
+  score.colorClass = class { constructor(value) { this.value = value; } alpha = 1; toNumber() { return this.value; } };
+  global.document = { documentElement: {} };
+  global.getComputedStyle = () => ({ getPropertyValue: (name) => name });
+  const gridLines = () => lines.filter((line) => line.color.startsWith('--grid-'));
+  let previousAlpha = 0;
+  for (const [scale, finest] of [[1, '--grid-measure'], [2, '--grid-measure'], [4, '--grid-beat'],
+    [8, '--grid-beat'], [16, '--grid-eighth'], [32, '--grid-step'], [64, '--grid-step']]) {
+    score.horizontalScale = scale;
+    score.horizontalOffset = scale === 1 ? 0 : 0.137;
+    score.drawStatic();
+    const grid = gridLines();
+    const measureAlpha = grid.find((line) => line.color === '--grid-measure').alpha;
+    assert.ok(measureAlpha >= previousAlpha, 'the grid brightens progressively as finer divisions become visible');
+    assert.ok(measureAlpha >= 0.22 && measureAlpha <= 1);
+    if (scale < 32) assert.ok(measureAlpha < 1, 'coarser grids dim their main divisions');
+    else assert.equal(measureAlpha, 1, 'full-detail grid retains its normal brightness');
+    previousAlpha = measureAlpha;
+    assert.ok(grid.some((line) => line.color === finest), `finest level at scale ${scale}`);
+    const allowed = ['--grid-measure', '--grid-beat', '--grid-eighth', '--grid-step'];
+    assert.ok(grid.every((line) => allowed.indexOf(line.color) <= allowed.indexOf(finest)));
+    for (let index = 1; index < grid.length; index++) {
+      assert.ok(grid[index].start[0] - grid[index - 1].start[0] >= 8);
+    }
+    for (const line of grid) {
+      const beat = (line.start[0] - 0.5) / scale + score.horizontalOffset * 512;
+      assert.ok(Math.abs(beat * 4 - Math.round(beat * 4)) <= 4 / scale + 1e-7, 'grid stays aligned with musical subdivisions while scrolling');
+    }
+  }
+  score.horizontalScale = 1;
+  score.horizontalOffset = 0;
+  score.model = { ...score.model, sections: [{ startBeat: 3 }, { startBeat: 17 }] };
+  score.drawStatic();
+  assert.ok(gridLines().some((line) => line.start[0] === 3.5), 'section boundaries remain visible between coarse bar lines');
+  assert.ok(gridLines().some((line) => line.start[0] === 17.5));
+  assert.ok(gridLines().every((line) => line.alpha < 1), 'section markers also dim at overview scale');
+});

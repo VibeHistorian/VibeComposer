@@ -106,6 +106,10 @@ The overview now derives a minimum horizontal scale from the largest role's trac
 
 Validation: production build and 84 functional tests pass. New cases exercise 1–64 tracks, shortest-section fitting, cell containment, note clearance, hit testing, zoom anchoring, track removal and resizing. Chromium regression coverage includes dense cells and transitions back to sparse cells across page zoom and device scaling.
 
+### Score grid density refinement
+
+The score's regular time grid now requires at least 8 CSS pixels between lines. Zooming out progressively removes sixteenth and eighth subdivisions, then beat detail, and eventually shows spaced multiples of bars. Zooming in restores those divisions. Lines remain aligned to the song's beat origin while scrolling, preserve their existing hierarchy colors, and cover the note and velocity areas. Section boundaries remain visible independently of the regular-grid threshold. Note positions, hit testing, playback and editing behavior are unchanged. Validation: production build and 85 functional tests pass, including a renderer-level check of spacing, progressive detail, scrolled alignment and section markers.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
