@@ -43,7 +43,7 @@ export class PartSettingsEditorComponent {
   private painting: { pointerId: number; values: Readonly<Record<string, PartSettingValue | null>>; sounded: number; lastIndex: number } | null = null;
   readonly rhythmPreview = computed(() => {
     const draft = this.patternDraft();
-    if (this.role() !== 'chords') return undefined;
+    if (this.role() !== 'chords' && this.role() !== 'drums') return undefined;
     const values = this.values();
     const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
       ...(values['rhythm'] === 'euclid' ? ['euclideanPulses'] : []),

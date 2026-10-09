@@ -41,7 +41,7 @@
               <option [value]="bar" [selected]="bar === drumBar()">{{ (bar + 1).toString().padStart(2, '0') }}</option>
             }
           </select>
-          <span>16 steps · quarter-note grid</span>
+          <span>16 steps · sixteenth-note grid</span>
         </div>
         <div class="drum-scroll">
         <div class="drum-grid" role="grid" aria-label="Drum pattern">
@@ -49,7 +49,7 @@
           @for (step of drumSteps; track step) {
             <span class="step-number" [class.beat-start]="step % 4 === 0">{{ step + 1 }}</span>
           }
-          @for (voice of drumVoices; track voice.midi) {
+          @for (voice of drumVoices(); track voice.midi) {
             <strong class="voice-label">{{ voice.label }}</strong>
             @for (step of drumSteps; track step) {
               <button type="button" class="step-cell" [class.active]="hasDrumHit(voice.midi, step)"
@@ -120,7 +120,7 @@
       </div>
 
       @if (selectedPart() === 'drums') {
-        <p class="inspector-copy">The step grid changes the selected progression bar. Untouched bars keep the seeded groove and swing.</p>
+        <p class="inspector-copy">The step grid changes the selected progression bar. Untouched bars keep the generated rhythm and swing.</p>
       } @else if (selectedNote(); as note) {
         <p class="selected-note-name">{{ noteName(note.midi) }} <span>NOTE SELECTED</span></p>
         <label class="field-label" for="note-pitch">Pitch</label>

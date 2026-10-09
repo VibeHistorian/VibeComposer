@@ -32,7 +32,13 @@
 
           <div class="instrument-setting">
             @if (track.role === 'drums') {
-              <div class="instrument-fixed"><span class="control-label">INSTRUMENT</span><strong>General MIDI percussion</strong></div>
+              <label class="instrument-select"><span class="control-label">PERCUSSION INSTRUMENT</span>
+                <select [attr.aria-label]="'Percussion instrument ' + track.name" [value]="track.generatorSettings.pitch" (change)="updateDrumPitch(track.id, $event)">
+                  @for (instrument of drumInstruments; track instrument.midi) {
+                    <option [value]="instrument.midi" [selected]="instrument.midi === track.generatorSettings.pitch">{{ instrument.name }} · {{ instrument.midi }}</option>
+                  }
+                </select>
+              </label>
             } @else {
               <label class="instrument-select"><span class="control-label">INSTRUMENT</span>
                 <select [value]="track.mix.program" (change)="updateProgram(track.id, $event)">
@@ -41,7 +47,7 @@
               </label>
             }
             <label class="instrument-select channel-select"><span class="control-label">MIDI CHANNEL</span>
-              <select [value]="track.midiChannel" (change)="updateChannel(track.id, $event)">
+              <select [value]="track.midiChannel" [disabled]="track.role === 'drums'" (change)="updateChannel(track.id, $event)">
                 @for (channel of channels; track channel) { <option [value]="channel" [selected]="channel === track.midiChannel">CH {{ channel.toString().padStart(2, '0') }}</option> }
               </select>
             </label>

@@ -5,6 +5,7 @@ import type {
 import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
+import { DRUM_INSTRUMENTS, drumInstrumentName } from '../core/music/drum-instruments';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
 import { generateDiatonicProgression } from '../core/music/progression-generator';
 import { getDiatonicChords, KEYS } from '../core/music/harmony';
@@ -63,6 +64,7 @@ export class WorkspaceCanvasComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly instruments = INSTRUMENTS;
+  readonly drumInstruments = DRUM_INSTRUMENTS;
   readonly keys = KEYS;
   readonly sectionTypes = SECTION_TYPES;
   readonly midiChannels = Array.from({ length: 16 }, (_, index) => index + 1);
@@ -189,6 +191,7 @@ export class WorkspaceCanvasComponent {
   readonly selectedTrack = computed<TrackRow>(() => this.tracks().find((track) => track.id === this.selectedTrackId()) ?? this.tracks()[0]);
   readonly selectedPart = computed(() => this.selectedTrack().role);
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id
+    && !(track.role === 'drums' && this.selectedTrack().role === 'drums')
     && track.midiChannel === this.selectedTrack().midiChannel));
   readonly selectedSection = computed(() => {
     const target = this.settingsTarget();
@@ -487,7 +490,15 @@ export class WorkspaceCanvasComponent {
   }
 
   instrumentName(track: TrackRow): string {
-    return track.role === 'drums' ? 'GM Percussion' : this.instruments.find((item) => item.program === track.mix.program)?.name ?? `GM ${track.mix.program + 1}`;
+    return track.role === 'drums' ? drumInstrumentName(track.generatorSettings.pitch) : this.instruments.find((item) => item.program === track.mix.program)?.name ?? `GM ${track.mix.program + 1}`;
+  }
+
+  drumPitch(track: CompositionTrack): number | undefined {
+    return track.role === 'drums' ? track.generatorSettings.pitch : undefined;
+  }
+
+  updateDrumPitch(event: Event): void {
+    if (this.selectedPart() === 'drums') this.projects.updateTrackGeneratorSettings(this.selectedTrackId(), { pitch: Number(this.inputValue(event)) });
   }
 
   reorderTrack(trackId: string, offset: -1 | 1): void {

@@ -281,10 +281,10 @@ export class AudioPlaybackService {
     if (!bus) return;
     const startTime = Math.max(context.currentTime + 0.003, this.originTime + absoluteBeat * this.secondsPerBeat);
     const duration = Math.max(0.035, note.durationBeats * this.secondsPerBeat);
-    if (note.role === 'drums' && note.midi === 36) {
+    if (note.role === 'drums' && (note.midi === 35 || note.midi === 36)) {
       this.scheduleKick(bus.gain, note.velocity, startTime, duration);
     } else if (note.role === 'drums') {
-      this.scheduleNoise(bus.gain, note.midi === 38 ? 'snare' : 'hat', note.velocity, startTime, duration);
+      this.scheduleNoise(bus.gain, [38, 39, 40].includes(note.midi) ? 'snare' : 'hat', note.velocity, startTime, duration);
     } else {
       this.scheduleTone(bus.gain, note, startTime, duration);
     }

@@ -7,7 +7,6 @@ export type ChordRhythm = RhythmPattern;
 export type ChordVoicing = 'close' | 'open';
 export type ArpeggioPattern = 'up' | 'down' | 'up-down' | 'random';
 export type ArpeggioRate = 'eighth' | 'sixteenth';
-export type DrumGroove = 'rock' | 'four-on-floor' | 'half-time' | 'sparse';
 export type SectionType =
   | 'INTRO' | 'VERSE1' | 'VERSE2' | 'VERSE3' | 'CHORUS1' | 'CHORUS2' | 'HALF_CHORUS'
   | 'BREAKDOWN' | 'CHILL' | 'BUILDUP1' | 'BUILDUP2' | 'CHORUS3' | 'CLIMAX' | 'OUTRO';
@@ -68,8 +67,9 @@ export interface BassSettings extends CommonPartSettings {
   readonly octaveInterval: boolean;
 }
 
-export interface ChordSettings extends CommonPartSettings {
-  readonly rhythm: ChordRhythm;
+/** Pattern/grid settings shared by the currently supported chord and percussion consumers. */
+export interface RhythmSettings {
+  readonly rhythm: RhythmPattern;
   /** Grid subdivisions per four-beat chord; only enabled cells produce notes. */
   readonly hitsPerPattern?: number;
   readonly patternShift?: number;
@@ -82,6 +82,9 @@ export interface ChordSettings extends CommonPartSettings {
   readonly useCustomVelocities?: boolean;
   /** 32 audible-subdivision velocities, independent of rhythm Shift/Flip; zero is silent. */
   readonly customVelocities?: readonly number[];
+}
+
+export interface ChordSettings extends CommonPartSettings, RhythmSettings {
   readonly voicing: ChordVoicing;
   readonly noteLengthPercent: number;
 }
@@ -92,8 +95,9 @@ export interface ArpeggioSettings extends CommonPartSettings {
   readonly octaves: 1 | 2;
 }
 
-export interface DrumSettings extends CommonPartSettings {
-  readonly groove: DrumGroove;
+export interface DrumSettings extends CommonPartSettings, RhythmSettings {
+  /** Track identity, edited globally; section musical patches cannot change the instrument. */
+  readonly pitch: number;
   readonly swingPercent: number;
 }
 
@@ -220,7 +224,9 @@ export const DEFAULT_ARPEGGIO_SETTINGS: ArpeggioSettings = {
 };
 
 export const DEFAULT_DRUM_SETTINGS: DrumSettings = {
-  groove: 'rock',
+  pitch: 36,
+  rhythm: 'full',
+  hitsPerPattern: 4,
   swingPercent: 50,
 };
 

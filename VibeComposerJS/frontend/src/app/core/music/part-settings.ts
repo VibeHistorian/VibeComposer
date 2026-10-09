@@ -36,6 +36,25 @@ const pitched: readonly PartControl[] = [{ ...number('transpose', 'Transpose', -
 export const MELODY_TRANSPOSES: readonly number[] = Object.freeze(Array.from({ length: 7 }, (_, index) => index * 12 - 36)
   .flatMap((octave) => [octave, octave + 5, octave + 7]).filter((value) => value <= 36));
 
+const rhythmControls: readonly PartControl[] = [
+  { ...choice('rhythm', 'Rhythm pattern', RHYTHM_PATTERNS),
+    description: 'Choose a rhythm within each chord. Euclid distributes Pulses across Hits; Fill independently selects which chords play.' },
+    { ...number('hitsPerPattern', 'Hits', 1, 32, 8, ''),
+      description: 'Grid subdivisions per four-beat chord. Pattern rests mean fewer sounded notes than the Hits value.' },
+    { ...number('euclideanPulses', 'Pulses', 0, 32, 4, ''),
+      description: 'Sounded slots in the Euclidean rhythm before Pattern flip. Uses at most Hits pulses; the requested value is retained when Hits is reduced.' },
+    { ...number('patternShift', 'Shift', 0, 8, 0, ''),
+      description: 'Rotate the rhythm right. Static patterns rotate padded eight-slot repeats before trimming; Euclid rotates the Hits-length grid.' },
+    { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
+      description: 'Invert notes and rests inside the chord rhythm grid. Fill still determines which chords play.' },
+    { key: 'customPattern', label: 'Custom grid', kind: 'pattern', defaultValue: Object.freeze(Array(32).fill(1)),
+      description: 'Click or drag to paint sounded slots and rests; Enter or Space toggles a slot. Edits follow Shift and Pattern flip. Hidden cells are retained when Hits changes.' },
+    { key: 'useCustomVelocities', label: 'Custom velocities', kind: 'boolean', defaultValue: false,
+      description: 'Use the velocity grid instead of random Min/Max velocity. Disabling retains your grid.' },
+    { key: 'customVelocities', label: 'Velocity grid', kind: 'velocities', defaultValue: DEFAULT_CUSTOM_VELOCITIES,
+      description: 'Velocity per displayed subdivision (0–127). Zero silences a hit. Values stay at their subdivision when rhythm Shift/Flip changes, and hidden cells survive Hits changes.' }
+];
+
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [...fill, number('speed', 'Speed', -100, 100, 50, ''),
@@ -58,27 +77,13 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
   bass: [...fill, choice('rhythm', 'Rhythm', BASS_RHYTHMS),
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  chords: [...fill, { ...choice('rhythm', 'Rhythm pattern', RHYTHM_PATTERNS),
-    description: 'Choose a rhythm within each chord. Euclid distributes Pulses across Hits; Fill independently selects which chords play.' },
-    { ...number('hitsPerPattern', 'Hits', 1, 32, 8, ''),
-      description: 'Grid subdivisions per four-beat chord. Pattern rests mean fewer sounded notes than the Hits value.' },
-    { ...number('euclideanPulses', 'Pulses', 0, 32, 4, ''),
-      description: 'Sounded slots in the Euclidean rhythm before Pattern flip. Uses at most Hits pulses; the requested value is retained when Hits is reduced.' },
-    { ...number('patternShift', 'Shift', 0, 8, 0, ''),
-      description: 'Rotate the rhythm right. Static patterns rotate padded eight-slot repeats before trimming; Euclid rotates the Hits-length grid.' },
-    { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
-      description: 'Invert notes and rests inside the chord rhythm grid. Fill still determines which chords play.' },
-    { key: 'customPattern', label: 'Custom grid', kind: 'pattern', defaultValue: Object.freeze(Array(32).fill(1)),
-      description: 'Click or drag to paint sounded slots and rests; Enter or Space toggles a slot. Edits follow Shift and Pattern flip. Hidden cells are retained when Hits changes.' },
-    { key: 'useCustomVelocities', label: 'Custom velocities', kind: 'boolean', defaultValue: false,
-      description: 'Use the velocity grid instead of random Min/Max velocity. Disabling retains your grid.' },
-    { key: 'customVelocities', label: 'Velocity grid', kind: 'velocities', defaultValue: DEFAULT_CUSTOM_VELOCITIES,
-      description: 'Velocity per displayed subdivision (0–127). Zero silences a hit. Values stay at their subdivision when rhythm Shift/Flip changes, and hidden cells survive Hits changes.' },
+  chords: [...fill, ...rhythmControls,
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 125), ...pitched],
   arpeggio: [...fill, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
     choice('rate', 'Rate', ['eighth', 'sixteenth']), choice('octaves', 'Octaves', [1, 2]),
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  drums: [...fill, choice('groove', 'Groove', ['rock', 'four-on-floor', 'half-time', 'sparse']),
+  drums: [...fill, ...rhythmControls.map(control => control.key === 'hitsPerPattern' ? { ...control, defaultValue: 4 } : control),
+    number('velocityMin', 'Min velocity', 1, 127, 69, ''), number('velocityMax', 'Max velocity', 1, 127, 89, ''),
     number('swingPercent', 'Swing', 50, 75), number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
 };
 
@@ -131,7 +136,7 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
 
 export function validVelocityRange(settings: PartSettingsPatch, role: ArrangedPart): boolean {
   const values = settingsValues(settings, role);
-  return role === 'drums' || (values['velocityMin'] as number) <= (values['velocityMax'] as number);
+  return (values['velocityMin'] as number) <= (values['velocityMax'] as number);
 }
 
 export function velocityBounds(settings: CommonPartSettings, defaults: readonly [number, number] = [69, 89]): readonly [number, number] {

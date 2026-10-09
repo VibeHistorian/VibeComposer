@@ -3,6 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
 import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project/project.model';
 import { generateTrackPhrase, phraseForTrack } from '../../core/music/phrase';
+import { drumInstrumentName } from '../../core/music/drum-instruments';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 import { WheelSelectDirective } from '../../shared/wheel-select.directive';
@@ -47,11 +48,13 @@ export class EditWorkspaceComponent {
     { key: 'arpeggio', label: 'Arpeggio', color: 'arpeggio' },
     { key: 'drums', label: 'Drums', color: 'drums' },
   ];
-  readonly drumVoices = [
-    { midi: 36, label: 'Kick' },
-    { midi: 38, label: 'Snare' },
-    { midi: 42, label: 'Closed hat' },
-  ] as const;
+  readonly drumVoices = computed(() => {
+    const track = this.selectedTrack();
+    if (track.role !== 'drums') return [];
+    // Manual phrases keep all their pitches editable without adding preset groove lanes.
+    return [...new Set([track.generatorSettings.pitch, ...this.notes().map(note => note.midi)])]
+      .sort((left, right) => left - right).map(midi => ({ midi, label: drumInstrumentName(midi) }));
+  });
   readonly drumSteps = Array.from({ length: 16 }, (_, index) => index);
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);

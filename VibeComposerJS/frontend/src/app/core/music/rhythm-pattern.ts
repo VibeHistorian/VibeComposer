@@ -1,4 +1,4 @@
-import type { ChordSettings } from '../project/project.model';
+import type { RhythmSettings } from '../project/project.model';
 import { STATIC_RHYTHM_DEFINITIONS, STATIC_RHYTHM_PATTERNS, type StaticRhythmPattern } from './rhythm-patterns';
 export { STATIC_RHYTHM_PATTERNS, type StaticRhythmPattern } from './rhythm-patterns';
 
@@ -56,7 +56,7 @@ export function customPatternMask(pattern: readonly number[], hits: number, shif
 }
 
 /** Shared by generation and the contextual preview; Pulses is stored independently of Hits. */
-export function chordRhythmMask(settings: Pick<ChordSettings,
+export function partRhythmMask(settings: Pick<RhythmSettings,
   'rhythm' | 'hitsPerPattern' | 'patternShift' | 'patternFlip' | 'euclideanPulses' | 'customPattern'>): number[] {
   const hits = settings.hitsPerPattern ?? 8;
   const shift = settings.patternShift ?? 0;
@@ -70,3 +70,6 @@ export function chordRhythmMask(settings: Pick<ChordSettings,
     ? euclideanPatternMask(hits, Math.min(pulses, hits), shift, flipped)
     : rhythmPatternMask(STATIC_RHYTHM_DEFINITIONS[settings.rhythm]?.javaName, hits, shift, flipped);
 }
+
+/** Retained for existing chord callers. */
+export const chordRhythmMask = partRhythmMask;

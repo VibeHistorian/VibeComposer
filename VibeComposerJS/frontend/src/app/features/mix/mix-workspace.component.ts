@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inj
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
 import { phraseForTrack } from '../../core/music/phrase';
+import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
 import type { CompositionTrack } from '../../core/project/project.model';
 import { tracksInRoleOrder } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
@@ -23,6 +24,7 @@ export class MixWorkspaceComponent {
   readonly project = this.projects.project;
   readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
   readonly channels = Array.from({ length: 16 }, (_, index) => index + 1);
+  readonly drumInstruments = DRUM_INSTRUMENTS;
   readonly instruments: ReadonlyArray<{ program: number; name: string }> = [
     { program: 0, name: 'Acoustic Grand Piano' },
     { program: 4, name: 'Electric Piano' },
@@ -60,7 +62,8 @@ export class MixWorkspaceComponent {
 
   hasChannelCollision(trackId: string): boolean {
     const selected = this.track(trackId);
-    return selected !== undefined && this.project().tracks.some((track) => track.id !== trackId && track.midiChannel === selected.midiChannel);
+    return selected !== undefined && this.project().tracks.some((track) => track.id !== trackId
+      && !(track.role === 'drums' && selected.role === 'drums') && track.midiChannel === selected.midiChannel);
   }
 
   roleName(track: CompositionTrack): string {
@@ -78,6 +81,10 @@ export class MixWorkspaceComponent {
       this.projects.updateTrack(trackId, { mix: { program } });
       this.playback.updateMix(this.project());
     }
+  }
+
+  updateDrumPitch(trackId: string, event: Event): void {
+    if (this.track(trackId)?.role === 'drums') this.projects.updateTrackGeneratorSettings(trackId, { pitch: Number((event.target as HTMLSelectElement).value) });
   }
 
   updateVolume(trackId: string, event: Event): void {

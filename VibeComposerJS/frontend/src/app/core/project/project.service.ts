@@ -14,6 +14,7 @@ import {
 import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './section-type-settings.service';
 import { copyPartSettings, decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
+import { isDrumPitch } from '../music/drum-instruments';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -23,7 +24,6 @@ const MAX_ARRANGEMENT_MEASURES = 128;
 const CHORD_VOICINGS = ['close', 'open'] as const;
 const ARPEGGIO_PATTERNS = ['up', 'down', 'up-down', 'random'] as const;
 const ARPEGGIO_RATES = ['eighth', 'sixteenth'] as const;
-const DRUM_GROOVES = ['rock', 'four-on-floor', 'half-time', 'sparse'] as const;
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -211,6 +211,7 @@ export class ProjectService {
 
   updateRoleGeneratorSettings(role: ArrangedPart, patch: PartSettingsPatch): void {
     const current = this.state();
+    if (role === 'drums' && 'pitch' in patch) return;
     if (!current.tracks.some((track) => track.role === role)) return;
     if (role === 'melody') {
       const melody = this.decodeMelody({ ...current.melody, ...patch });
@@ -311,8 +312,8 @@ export class ProjectService {
     const channel = role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
     const track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
-      generatorSettings: copyPartSettings(source.generatorSettings),
-      editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
+      generatorSettings: copyPartSettings(role === 'drums' ? DEFAULT_DRUM_SETTINGS : source.generatorSettings),
+      editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
     const arrangement = current.arrangement.map((section) => ({
       ...section,
       trackPresence: { ...section.trackPresence, ...generateTrackPresence([track], this.sectionTypeSettings.chances()[section.type]) },
@@ -356,6 +357,8 @@ export class ProjectService {
         || (patch.mix?.solo !== undefined && typeof patch.mix.solo !== 'boolean')) return;
     const tracks = [...current.tracks];
     const track = tracks[index];
+    if (track.role === 'drums' && ((patch.midiChannel !== undefined && patch.midiChannel !== 10)
+      || patch.mix?.program !== undefined)) return;
     tracks[index] = { ...track, ...patch, name: patch.name?.trim() ?? track.name,
       mix: patch.mix ? { ...track.mix, ...patch.mix } : track.mix };
     const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
@@ -806,7 +809,7 @@ export class ProjectService {
         }
         case 'drums': {
           const generatorSettings = this.decodeDrums(track.generatorSettings);
-          if (generatorSettings) decoded = { id: track.id, role: 'drums', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
+          if (generatorSettings && track.midiChannel === 10) decoded = { id: track.id, role: 'drums', name: track.name.trim(), midiChannel: 10, mix, generatorSettings, editedPhrase };
           break;
         }
       }
@@ -1030,18 +1033,11 @@ export class ProjectService {
   }
 
   private decodeDrums(value: unknown): DrumSettings | undefined {
-    const common = decodeCommonPartSettings('drums', value);
-    if (!common) return undefined;
-    if (!value || typeof value !== 'object') {
-      return undefined;
-    }
-    const drums = value as Partial<DrumSettings>;
-    if (!DRUM_GROOVES.includes(drums.groove as typeof DRUM_GROOVES[number])
-        || !Number.isInteger(drums.swingPercent)
-        || (drums.swingPercent ?? 49) < 50 || (drums.swingPercent ?? 76) > 75) {
-      return undefined;
-    }
-    return { ...common, groove: drums.groove!, swingPercent: drums.swingPercent! };
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const { pitch, ...fields } = value as DrumSettings;
+    const decoded = decodePartPatch('drums', fields);
+    return isDrumPitch(pitch) && decoded && fields.rhythm && fields.swingPercent !== undefined
+      && validVelocityRange(decoded, 'drums') ? { pitch, ...decoded } as DrumSettings : undefined;
   }
 
   private copyDefaultProject(): CompositionProject {

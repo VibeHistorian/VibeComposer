@@ -287,7 +287,15 @@
         @if (!selectedRole()) {
           <section class="quick-settings-group mix-quick-settings" aria-label="Track instrument and MIDI settings">
             <p class="eyebrow">INSTRUMENT &amp; MIDI</p>
-            @if (selectedPart() === 'drums') { <div class="quick-fixed">General MIDI percussion</div> }
+            @if (selectedPart() === 'drums') {
+              <label class="quick-field">Percussion instrument
+                <select aria-label="Percussion instrument" [value]="drumPitch(selectedTrack())" (change)="updateDrumPitch($event)">
+                  @for (instrument of drumInstruments; track instrument.midi) {
+                    <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(selectedTrack())">{{ instrument.name }} · {{ instrument.midi }}</option>
+                  }
+                </select>
+              </label>
+            }
             @else {
               <label class="quick-field">Instrument
                 <select [value]="selectedTrack().mix.program" (change)="updateInstrument($event)">
@@ -296,7 +304,7 @@
               </label>
             }
             <label class="quick-field">MIDI channel
-              <select [value]="selectedTrack().midiChannel" (change)="updateChannel($event)">
+              <select [value]="selectedTrack().midiChannel" [disabled]="selectedPart() === 'drums'" (change)="updateChannel($event)">
                 @for (channel of midiChannels; track channel) { <option [value]="channel" [selected]="channel === selectedTrack().midiChannel">Channel {{ channel.toString().padStart(2, '0') }}</option> }
               </select>
             </label>

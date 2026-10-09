@@ -5,6 +5,136 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('single-pitch drums match 96 complete production Java phrases at fixed seeds', () => {
+  const { load } = fixture();
+  const { generateDrumPart } = load('core/music/drum-generator.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/drum-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 96);
+  for (const [caseIndex, sample] of cases.entries()) {
+    const actual = generateDrumPart(BigInt(sample.seed), sample.barCount, sample.settings);
+    assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
+    actual.forEach((note, index) => {
+      const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;
+      assert.equal(note.midi, expected[0], `${label} pitch`);
+      assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-10, `${label} onset: ${note.startBeat} vs ${expected[1]}`);
+      assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-10, `${label} duration: ${note.durationBeats} vs ${expected[2]}`);
+      assert.equal(note.velocity, expected[3], `${label} dynamics`);
+    });
+  }
+});
+
+test('drum identities are independent, named, fixed to channel 10 and preserved by history and manual editing', () => {
+  const { service, phrase, workspace, ui, load, settings } = fixture();
+  const first = 'track-drums-1', track = id => service.project().tracks.find(track => track.id === id);
+  assert.equal(track(first).generatorSettings.pitch, 36);
+  assert.ok(phrase.phraseForTrack(service.project(), track(first)).every(note => note.midi === 36));
+  const before = service.exportProjectJson();
+  service.updateTrackGeneratorSettings(first, { pitch: 38 });
+  assert.equal(workspace.instrumentName(track(first)), 'Snare');
+  assert.ok(phrase.phraseForTrack(service.project(), track(first)).every(note => note.midi === 38));
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  const manual = [{ id: 'manual', midi: 39, startBeat: 0, durationBeats: 0.2, velocity: 95 }];
+  service.updateTrackPhrase(first, manual);
+  service.updateTrackGeneratorSettings(first, { pitch: 42 });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track(first)), manual);
+  const added = service.addTrack('drums');
+  assert.equal(track(added).generatorSettings.pitch, 36);
+  assert.equal(track(added).editedPhrase, undefined);
+  const duplicate = service.duplicateTrack(first);
+  assert.equal(track(duplicate).generatorSettings.pitch, 42);
+  assert.notStrictEqual(track(duplicate).editedPhrase, track(first).editedPhrase);
+  assert.ok(service.project().tracks.filter(track => track.role === 'drums').every(track => track.midiChannel === 10));
+  ui.selectTrack(first);
+  assert.equal(workspace.hasChannelCollision(), false);
+  const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
+  const editor = new EditWorkspaceComponent(); editor.ngOnInit();
+  assert.deepEqual(editor.drumVoices(), [{ midi: 39, label: 'Clap' }, { midi: 42, label: 'Closed hi-hat' }]);
+  const saved = service.exportProjectJson();
+  service.updateTrack(first, { midiChannel: 1 }); service.updateTrack(first, { mix: { program: 5 } });
+  service.updateRoleGeneratorSettings('drums', { pitch: 38 });
+  assert.equal(service.exportProjectJson(), saved);
+  assert.equal(settings.PART_CONTROLS.drums.some(control => ['pitch', 'groove', 'transpose', 'accents'].includes(control.key)), false);
+  assert.equal(service.importProjectJson(saved), true);
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+});
+
+test('drum rhythm and dynamics resolve all scopes, mixed values, frozen snapshots and parsed MIDI without changing identity', () => {
+  const { service, settings, ui, workspace, phrase, midi } = fixture();
+  const first = 'track-drums-1', second = service.duplicateTrack(first);
+  service.updateTrackGeneratorSettings(second, { pitch: 38 });
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'drums' }, scope = { kind: 'section-track', sectionId, trackId: second };
+  service.updatePartSettings({ kind: 'global-role', role: 'drums' }, { rhythm: 'half', hitsPerPattern: 8 });
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { rhythm: 'sparse', hitsPerPattern: 16 });
+  ui.selectRole('drums'); assert.equal(workspace.partValues().rhythm, null);
+  service.updatePartSettings(cell, { rhythm: 'custom', hitsPerPattern: 8, customPattern: Array.from({ length: 32 }, (_, index) => +(index % 3 === 0)),
+    useCustomVelocities: true, customVelocities: Array.from({ length: 32 }, (_, index) => index === 0 ? 0 : 100), swingPercent: 66, noteLengthMultiplier: 50 });
+  service.updatePartSettings(scope, { hitsPerPattern: 4 });
+  ui.selectCell(sectionId, 'drums'); assert.equal(workspace.partValues().hitsPerPattern, null);
+  const before = service.exportProjectJson();
+  assert.equal(service.freezePartSettings(cell), 'changed');
+  const frozen = service.project().arrangement[1];
+  assert.equal(frozen.trackPartOverrides[first].hitsPerPattern, 8);
+  assert.equal(frozen.trackPartOverrides[second].hitsPerPattern, 4);
+  assert.equal(frozen.trackPartOverrides[first].pitch, undefined);
+  assert.equal(settings.resolvePartTrack(service.project().tracks.find(track => track.id === second), frozen).generatorSettings.pitch, 38);
+  service.undo(); assert.equal(service.exportProjectJson(), before); service.redo();
+  assert.equal(service.applyPartSettingsToSections(cell, [service.project().arrangement[2].id], 'effective'), 'changed');
+  service.project().arrangement.forEach((_, index) => {
+    service.setSectionTrackPresence(index, first, true); service.setSectionTrackPresence(index, second, true);
+  });
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  for (const id of [first, second]) {
+    const track = service.project().tracks.find(track => track.id === id);
+    const notes = phrase.layOutTrackPhrase(service.project(), track);
+    assert.ok(notes.length > 0 && notes.every(note => note.midi === track.generatorSettings.pitch));
+    const midiTrack = exported.tracks.find(item => item.name === track.name);
+    assert.equal(midiTrack.channel, 9); assert.equal(midiTrack.notes.length, notes.length);
+    midiTrack.notes.forEach((note, index) => {
+      assert.equal(note.midi, notes[index].midi);
+      assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
+      assert.ok(Math.abs(note.durationTicks / exported.header.ppq - notes[index].durationBeats) < 0.003,
+        `${id} note ${index}: ${note.durationTicks / exported.header.ppq} vs ${notes[index].durationBeats}`);
+      assert.ok(Math.abs(note.velocity * 127 - notes[index].velocity) < 0.001);
+    });
+    assert.equal(workspace.scoreNotes().filter(note => note.part === id).length, notes.length);
+  }
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  assert.equal(service.resetCellPartSettings(cell), 'changed');
+  assert.equal(service.project().tracks.find(track => track.id === second).generatorSettings.pitch, 38);
+});
+
+test('drums reject obsolete groove models, invalid identities and malformed musical fields atomically', () => {
+  const { service, load } = fixture();
+  const { generateDrumPart } = load('core/music/drum-generator.ts');
+  const first = 'track-drums-1', sectionId = service.project().arrangement[0].id;
+  service.updateSettings({ name: 'future' }); service.undo();
+  const before = service.exportProjectJson();
+  const invalid = [{ pitch: 0 }, { pitch: 36.5 }, { pitch: '36' }, { groove: 'rock' }, { velocityMin: 100 },
+    { hitsPerPattern: 33 }, { patternShift: 9 }, { rhythm: 'melody1' }, { swingPercent: 76 },
+    { customPattern: Array(32).fill(2) }, { customVelocities: Array(31).fill(80) }, { useCustomVelocities: 1 }];
+  for (const patch of invalid) {
+    service.updateTrackGeneratorSettings(first, patch);
+    const project = JSON.parse(before);
+    Object.assign(project.tracks.find(track => track.id === first).generatorSettings, patch);
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+    assert.throws(() => generateDrumPart(42n, 4, { ...service.project().drums, ...patch }), RangeError);
+  }
+  for (const scope of [{ kind: 'global-role', role: 'drums' }, { kind: 'global-track', trackId: first },
+    { kind: 'section-role', sectionId, role: 'drums' }, { kind: 'section-track', sectionId, trackId: first }]) {
+    for (const patch of [...invalid, { pitch: 38 }]) service.updatePartSettings(scope, patch);
+  }
+  const obsolete = JSON.parse(before); obsolete.drums = { groove: 'rock', swingPercent: 50 };
+  assert.equal(service.importProjectJson(JSON.stringify(obsolete)), false);
+  const wrongChannel = JSON.parse(before); wrongChannel.tracks.find(track => track.id === first).midiChannel = 1;
+  assert.equal(service.importProjectJson(JSON.stringify(wrongChannel)), false);
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+  assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
+});
+
 test('current block melody matches 80 complete production Java phrases at fixed seeds', () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
@@ -1181,7 +1311,7 @@ test('unsupported roles and invalid rhythm controls reject edits/imports without
     service.updatePartSettings(scope, patch);
     assert.equal(service.exportProjectJson(), before);
   }
-  for (const role of ['bass', 'arpeggio', 'drums', 'melody']) {
+  for (const role of ['bass', 'arpeggio', 'melody']) {
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { hitsPerPattern: 16 });
     assert.equal(service.exportProjectJson(), before);
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { euclideanPulses: 4 });
@@ -1651,7 +1781,7 @@ test('velocity grids reject invalid shape, values and unsupported roles at every
     assert.equal(service.importProjectJson(JSON.stringify(project)), false);
   }
   for (const scope of scopes) service.updatePartSettings(scope, { useCustomVelocities: 1 });
-  for (const role of ['melody', 'bass', 'arpeggio', 'drums']) {
+  for (const role of ['melody', 'bass', 'arpeggio']) {
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { useCustomVelocities: true, customVelocities: Array(32).fill(80) });
   }
   assert.equal(service.exportProjectJson(), before);
@@ -1826,7 +1956,7 @@ test('custom grids validate shape and binary slots at all scopes and imports wit
     project.tracks.find((track) => track.id === trackId).generatorSettings.customPattern = grid;
     assert.equal(service.importProjectJson(JSON.stringify(project)), false);
   }
-  for (const role of ['melody', 'bass', 'arpeggio', 'drums']) {
+  for (const role of ['melody', 'bass', 'arpeggio']) {
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { customPattern: Array(32).fill(1) });
   }
   assert.equal(service.exportProjectJson(), before);
