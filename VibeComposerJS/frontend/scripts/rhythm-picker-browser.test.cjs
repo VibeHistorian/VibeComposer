@@ -35,14 +35,33 @@ test('production Angular controls initialize selects from settings and support r
       try {
         sessionStorage.clear();
         const initialMidi = await waitFor(() => {
-          const selects = [...document.querySelectorAll('.mix-quick-settings select')];
+          const selects = [...document.querySelectorAll('.track-group.bass .track-inline-select')];
           return selects.length === 2 && selects.every(select => select.options.length) ? selects : null;
         }, 'initial track instrument and channel');
         const initialSelection = initialMidi.map(select => select.value);
+        const readTrack = role => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === role);
+        const melodyRow = document.querySelector('.track-group.melody');
+        const melodyInstrument = melodyRow.querySelector('.track-instrument');
+        const melodyChannel = melodyRow.querySelector('.track-channel');
+        // Edit a row while the inspector still targets Bass; identity changes belong to that row.
+        melodyInstrument.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        melodyInstrument.value = '0'; melodyInstrument.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => readTrack('melody').mix.program === 0, 'unselected row instrument commit');
+        melodyChannel.value = '5'; melodyChannel.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => readTrack('melody').midiChannel === 5, 'unselected row channel commit');
+        const inlineIdentity = { program: readTrack('melody').mix.program, channel: readTrack('melody').midiChannel,
+          bassProgram: readTrack('bass').mix.program, bassChannel: readTrack('bass').midiChannel,
+          selectionPreserved: document.querySelector('.track-group.bass .track-select').getAttribute('aria-pressed') === 'true',
+          noInspectorIdentity: !document.querySelector('#part-inspector .mix-quick-settings'),
+          noG: !document.querySelector('.generation-toggle'),
+          hiddenArrow: getComputedStyle(melodyInstrument).appearance === 'none' };
+        melodyInstrument.value = '73'; melodyInstrument.dispatchEvent(new Event('change', { bubbles: true }));
+        melodyChannel.value = '4'; melodyChannel.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => readTrack('melody').mix.program === 73 && readTrack('melody').midiChannel === 4, 'restored melody identity');
         const initialChords = [...document.querySelectorAll('select[aria-label^="Chord "]')].map(select => select.value);
         document.querySelector('.track-group.melody .track-select').click();
         await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 04'), 'melody inspector');
-        const melodySelection = [...document.querySelectorAll('.mix-quick-settings select')].map(select => select.value);
+        const melodySelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.value);
         document.querySelector('button[aria-label="Open mixer"]').click();
         const strips = await waitFor(() => {
           const items = [...document.querySelectorAll('.channel-strip')];
@@ -68,7 +87,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid button:first-child')]
           .every(button => button.getAttribute('aria-pressed') === 'false'));
         const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        const result = { initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
+        const result = { inlineIdentity, initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
           rhythm: project.chords.rhythm, grid: project.chords.customPattern };
         const wheel = (element, deltaY, shiftKey = false) => element.dispatchEvent(
           new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
@@ -148,8 +167,8 @@ test('production Angular controls initialize selects from settings and support r
         result.melodyHasSpeed = document.querySelectorAll('input[aria-label="Speed"]').length;
         result.melodyHasAccent = document.querySelectorAll('input[aria-label="Accent"]').length;
         document.querySelector('.track-group.melody .track-select').click();
-        await waitFor(() => document.querySelectorAll('.mix-quick-settings select').length === 2, 'recreated melody selects');
-        result.recreatedSelection = [...document.querySelectorAll('.mix-quick-settings select')].map(select => select.value);
+        await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 04'), 'melody track context');
+        result.recreatedSelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.value);
         result.sharedRoles = [];
         for (const role of ['bass', 'arpeggio']) {
           document.querySelector('.track-group.' + role + ' .group-select').click();
@@ -170,9 +189,9 @@ test('production Angular controls initialize selects from settings and support r
           const delays = document.querySelector('input[aria-label="Delays"]');
           delays.value = '2'; delays.dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => [...document.querySelectorAll('input[aria-label="Delays"]')].every(input => input.value === '2'), role + ' feedback sync');
-          document.querySelector('.track-group.' + role + ' .generation-toggle').click();
+          document.querySelector('#part-inspector input[aria-label="Generate notes"]').click();
           await waitFor(() => [...document.querySelectorAll('input[aria-label="Generate notes"]')].every(input => !input.checked), role + ' generation toggle');
-          document.querySelector('.track-group.' + role + ' .generation-toggle').click();
+          document.querySelector('#part-inspector input[aria-label="Generate notes"]').click();
           await waitFor(() => [...document.querySelectorAll('input[aria-label="Generate notes"]')].every(input => input.checked), role + ' generation restored');
           [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Clear seed').click();
           await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
@@ -228,10 +247,11 @@ test('production Angular controls initialize selects from settings and support r
         bassRhythm.value = 'custom'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
         result.bassJoinRetained = (await waitFor(() => document.querySelector('select[aria-label="Pattern join"]'), 'grid restores join')).value;
         document.querySelector('.track-group.drums .track-select').click();
-        const drumPitch = await waitFor(() => document.querySelector('select[aria-label="Percussion instrument"]'), 'drum pitch picker');
+        await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="drums"]'), 'drum musical context');
+        const drumPitch = await waitFor(() => document.querySelector('.track-group.drums .track-instrument'), 'drum pitch picker');
         result.initialDrumPitch = drumPitch.value;
         drumPitch.value = '38'; drumPitch.dispatchEvent(new Event('change', { bubbles: true }));
-        await waitFor(() => document.querySelector('.track-group.drums .track-instrument').textContent === 'Snare', 'drum track name');
+        await waitFor(() => document.querySelector('.track-group.drums .track-instrument').selectedOptions[0].textContent === 'Snare · 38', 'drum track name');
         const drumRhythms = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
         result.drumRhythmOptions = drumRhythms.map(select => [...select.options].map(option => option.value));
         drumRhythms[0].value = 'custom'; drumRhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
@@ -246,10 +266,10 @@ test('production Angular controls initialize selects from settings and support r
         drumVelocities[0].click();
         await waitFor(() => document.querySelectorAll('.velocity-pattern-grid').length === 2, 'drum velocity grids');
         result.drumVelocityCounts = [...document.querySelectorAll('.velocity-pattern-grid')].map(grid => grid.querySelectorAll('input').length);
-        result.drumChannelLocked = document.querySelectorAll('.mix-quick-settings select')[1].disabled;
+        result.drumChannelLocked = document.querySelector('.track-group.drums .track-channel').disabled;
         result.drumSettings = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'drums').generatorSettings;
         document.querySelector('button[aria-label="Open mixer"]').click();
-        const mixerDrum = await waitFor(() => document.querySelector('select[aria-label="Percussion instrument D1"]'), 'mixer drum identity');
+        const mixerDrum = await waitFor(() => document.querySelector('.channel-strip select[aria-label="Percussion instrument D1"]'), 'mixer drum identity');
         result.mixerDrumPitch = mixerDrum.value;
         result.mixerDrumName = mixerDrum.selectedOptions[0].textContent;
         document.querySelector('button[aria-label="Close mixer"]').click();
@@ -317,7 +337,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => generateGroup.querySelectorAll('.track-select').length === 3, 'Generate N adds tracks');
         result.generatedChords = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length;
         document.querySelector('.track-group.drums .track-select').click();
-        await waitFor(() => document.querySelector('select[aria-label="Percussion instrument"]')?.value === '38', 'original snare inspector');
+        await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 10'), 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
         await waitFor(() => document.querySelector('.voice-label'), 'single-pitch drum editor');
         result.drumEditorVoices = [...document.querySelectorAll('.voice-label')].map(label => label.textContent);
@@ -367,6 +387,8 @@ test('production Angular controls initialize selects from settings and support r
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.deepEqual(actual.initialSelection, ['33', '1']);
+    assert.deepEqual(actual.inlineIdentity, { program: 0, channel: 5, bassProgram: 33, bassChannel: 1,
+      selectionPreserved: true, noInspectorIdentity: true, noG: true, hiddenArrow: true });
     assert.deepEqual(actual.melodySelection, ['73', '4']);
     assert.deepEqual(actual.recreatedSelection, ['73', '4']);
     assert.deepEqual(actual.mixerSelections, [['73', '4'], ['33', '1'], ['0', '2'], ['11', '3'], ['36', '10']]);

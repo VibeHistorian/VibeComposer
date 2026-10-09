@@ -281,6 +281,10 @@ Collapsed Tracks groups retain Count/Generate N; expanded groups show all suppor
 
 Validation: production build, all 96 part-setting tests, and the production browser control suite pass. Browser coverage includes collapsed Generate N, retained count on expansion, advanced header rules, Inspector policy removal, boxed count placement, blue Bass, and category accent/background consistency across both editors and all five roles. The existing Pixi CommonJS build warning remains.
 
+### P6 inline track identity follow-up (2026-10-09)
+
+Moved instrument/percussion and MIDI-channel selection from the Inspector into compact, arrowless native comboboxes on each track row. The selectors use existing input surfaces, borders and focus styles within the same line width. Updates use the row track ID independently of the active selection, and percussion channel stays fixed at 10. Removed the G quick toggle; Generate notes remains in the musical editors.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
@@ -322,7 +326,7 @@ The **Part settings** panel sits inside the center column, immediately after arr
 
 Use two compact rows where space permits: fill + pattern selector/grid, then knobs for transpose, hits, span, repeat, shift, pause, split, length, swing, and velocity range. Add a small role-specific subset from the placement map. Show only supported controls; never ship active controls that have no generator effect. A role cell aggregates its member tracks: unequal values show Mixed, not the first track's value. A mixed pattern shows a summary until the user explicitly chooses a common pattern. Narrow widths wrap or scroll the quick controls while leaving score usable.
 
-Tracks group headers show a boxed track count beside the name plus Add/Reroll. Count and Generate N remain visible when collapsed. Expansion exposes all supported track-generation rules directly above the track rows. The Inspector has no track-generation policy, reroll action, roll count or explanatory policy text. Header expansion and group selection are separate actions. Track rows retain instrument summary, channel, mute/solo, visibility, and optional reroll lock/action. Randomization rules do not appear as controls in the central Part settings panel.
+Tracks group headers show a boxed track count beside the name plus Add/Reroll. Count and Generate N remain visible when collapsed. Expansion exposes all supported track-generation rules directly above the track rows. The Inspector has no track-generation policy, reroll action, roll count or explanatory policy text. Header expansion and group selection are separate actions. Track rows contain compact instrument/percussion and MIDI-channel selectors, mute/solo, visibility, and optional reroll lock/action. Identity controls edit their own track without switching selection. The Inspector has no duplicate instrument/channel section. The row G toggle is removed; Generate notes remains in both musical editors. Randomization rules do not appear as controls in the central Part settings panel.
 
 Do not replace the old removed mode-controls drawer with this panel: it edits the active musical context and does not change workspace routes or modes.
 

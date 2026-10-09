@@ -55,14 +55,32 @@
                     [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                     <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                   </button>
-                  <span class="track-instrument" [title]="instrumentName(track)">{{ instrumentName(track) }}</span>
-                  <span class="track-channel">CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
+                  @if (track.role === 'drums') {
+                    <select class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
+                      [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
+                      (click)="$event.stopPropagation()" (change)="updateDrumPitch(track, $event)">
+                      @for (instrument of drumInstruments; track instrument.midi) {
+                        <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(track)">{{ instrument.name }} · {{ instrument.midi }}</option>
+                      }
+                    </select>
+                  } @else {
+                    <select class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
+                      [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
+                      (click)="$event.stopPropagation()" (change)="updateInstrument(track, $event)">
+                      @for (instrument of instruments; track instrument.program) {
+                        <option [value]="instrument.program" [selected]="instrument.program === track.mix.program">{{ instrument.name }}</option>
+                      }
+                    </select>
+                  }
+                  <select class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
+                    [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
+                    [title]="track.role === 'drums' ? 'Percussion uses MIDI channel 10' : 'MIDI channel ' + track.midiChannel"
+                    (click)="$event.stopPropagation()" (change)="updateChannel(track, $event)">
+                    @for (channel of midiChannels; track channel) {
+                      <option [value]="channel" [selected]="channel === track.midiChannel">CH {{ channel.toString().padStart(2, '0') }}</option>
+                    }
+                  </select>
                   <div class="track-mix-controls" (click)="$event.stopPropagation()">
-                    <button type="button" class="generation-toggle" [class.active]="track.generatorSettings.generationEnabled !== false"
-                      [disabled]="editing()" [attr.aria-pressed]="track.generatorSettings.generationEnabled !== false"
-                      [attr.aria-label]="(track.generatorSettings.generationEnabled === false ? 'Enable generation for ' : 'Exclude generation for ') + track.name"
-                      title="Generate notes (saved manual phrases remain replacements)"
-                      (click)="projects.updatePartSettings({ kind: 'global-track', trackId: track.id }, { generationEnabled: track.generatorSettings.generationEnabled === false })">G</button>
                     <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name"
                       [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
                       (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"
@@ -302,32 +320,7 @@
               (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
-        @if (!selectedRole()) {
-          <section class="quick-settings-group mix-quick-settings" aria-label="Track instrument and MIDI settings">
-            <p class="eyebrow">INSTRUMENT &amp; MIDI</p>
-            @if (selectedPart() === 'drums') {
-              <label class="quick-field">Percussion instrument
-                <select aria-label="Percussion instrument" [value]="drumPitch(selectedTrack())" (change)="updateDrumPitch($event)">
-                  @for (instrument of drumInstruments; track instrument.midi) {
-                    <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(selectedTrack())">{{ instrument.name }} · {{ instrument.midi }}</option>
-                  }
-                </select>
-              </label>
-            }
-            @else {
-              <label class="quick-field">Instrument
-                <select [value]="selectedTrack().mix.program" (change)="updateInstrument($event)">
-                  @for (instrument of instruments; track instrument.program) { <option [value]="instrument.program" [selected]="instrument.program === selectedTrack().mix.program">{{ instrument.name }}</option> }
-                </select>
-              </label>
-            }
-            <label class="quick-field">MIDI channel
-              <select [value]="selectedTrack().midiChannel" [disabled]="selectedPart() === 'drums'" (change)="updateChannel($event)">
-                @for (channel of midiChannels; track channel) { <option [value]="channel" [selected]="channel === selectedTrack().midiChannel">Channel {{ channel.toString().padStart(2, '0') }}</option> }
-              </select>
-            </label>
-          </section>
-        }
+
       }
       @if (settingsTarget().kind === 'section') {
         <section class="inspector-arrangement-add" aria-label="Add arrangement section">

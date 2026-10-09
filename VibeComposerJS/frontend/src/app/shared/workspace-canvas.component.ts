@@ -543,8 +543,8 @@ export class WorkspaceCanvasComponent {
     return track.role === 'drums' ? track.generatorSettings.pitch : undefined;
   }
 
-  updateDrumPitch(event: Event): void {
-    if (this.selectedPart() === 'drums') this.projects.updateTrackGeneratorSettings(this.selectedTrackId(), { pitch: Number(this.inputValue(event)) });
+  updateDrumPitch(track: CompositionTrack, event: Event): void {
+    if (!this.editing() && track.role === 'drums') this.projects.updateTrackGeneratorSettings(track.id, { pitch: Number(this.inputValue(event)) });
   }
 
   reorderTrack(trackId: string, offset: -1 | 1): void {
@@ -598,15 +598,16 @@ export class WorkspaceCanvasComponent {
     if (!this.generationAvailable[this.selectedTrack().role]) return;
     this.projects.clearTrackPhrase(this.selectedTrackId());
   }
-  updateChannel(event: Event): void {
+  updateChannel(track: CompositionTrack, event: Event): void {
+    if (this.editing() || track.role === 'drums') return;
     const channel = Number(this.inputValue(event));
-    if (Number.isInteger(channel)) this.projects.updateTrack(this.selectedTrackId(), { midiChannel: channel });
+    if (Number.isInteger(channel)) this.projects.updateTrack(track.id, { midiChannel: channel });
   }
-  updateInstrument(event: Event): void {
-    if (this.selectedPart() === 'drums') return;
+  updateInstrument(track: CompositionTrack, event: Event): void {
+    if (this.editing() || track.role === 'drums') return;
     const program = Number(this.inputValue(event));
     if (this.instruments.some((instrument) => instrument.program === program)) {
-      this.projects.updateTrack(this.selectedTrackId(), { mix: { program } });
+      this.projects.updateTrack(track.id, { mix: { program } });
       this.playback.updateMix(this.project());
     }
   }
