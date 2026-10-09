@@ -13,7 +13,7 @@ import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { ArrangementOverviewComponent } from './arrangement-overview.component';
 import { ScoreCanvasComponent } from './score-canvas.component';
-import type { ScoreCanvasNote, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
+import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
@@ -188,6 +188,14 @@ export class WorkspaceCanvasComponent {
     noteCount: phraseForTrack(this.project(), track).length,
   })));
   readonly arrangedTracks = computed(() => tracksInRoleOrder(this.tracks()));
+  readonly scoreTracks = computed(() => {
+    const tracks = this.arrangedTracks();
+    const drums = tracks.filter(track => track.role === 'drums');
+    return [...tracks.filter(track => track.role !== 'drums'), ...(drums.length ? [{
+      id: 'role:drums', name: 'Drums', role: 'drums' as const, color: 'drums' as const,
+      trackIds: drums.map(track => track.id),
+    }] : [])];
+  });
   readonly selectedTrack = computed<TrackRow>(() => this.tracks().find((track) => track.id === this.selectedTrackId()) ?? this.tracks()[0]);
   readonly selectedPart = computed(() => this.selectedTrack().role);
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id
@@ -204,20 +212,26 @@ export class WorkspaceCanvasComponent {
     return section ? Array.from({ length: section.measures }, (_, measure) =>
       section.chordDegrees?.[measure] ?? this.project().progression[measure % this.project().progression.length]) : [];
   });
-  readonly scoreNotes = computed<ScoreNote[]>(() => this.tracks().flatMap((track) => {
-    const notes = layOutTrackPhrase(this.project(), track);
-    if (notes.length === 0) return [];
-    const minPitch = Math.min(...notes.map((note) => note.midi));
-    const maxPitch = Math.max(...notes.map((note) => note.midi));
-    const pitchSpan = Math.max(12, maxPitch - minPitch);
-    return notes.map((note) => ({
-      ...note,
-      part: track.id,
-      color: track.role,
-      topPercent: (maxPitch - note.midi) / pitchSpan * 86 + 3,
-      opacity: 0.72 + note.velocity / 127 * 0.28,
-    }));
-  }));
+  readonly scoreNotes = computed<ScoreNote[]>(() => {
+    const phrases = this.tracks().map(track => ({ track, notes: layOutTrackPhrase(this.project(), track) }));
+    const drumPitches = phrases.filter(item => item.track.role === 'drums').flatMap(item => item.notes.map(note => note.midi));
+    const drumMin = drumPitches.reduce((minimum, pitch) => Math.min(minimum, pitch), Infinity);
+    const drumMax = drumPitches.reduce((maximum, pitch) => Math.max(maximum, pitch), -Infinity);
+    return phrases.flatMap(({ track, notes }) => {
+      if (notes.length === 0) return [];
+      const minPitch = track.role === 'drums' ? drumMin : Math.min(...notes.map((note) => note.midi));
+      const maxPitch = track.role === 'drums' ? drumMax : Math.max(...notes.map((note) => note.midi));
+      const pitchSpan = Math.max(12, maxPitch - minPitch);
+      return notes.map((note) => ({
+        ...note,
+        part: track.id,
+        trackName: track.name,
+        color: track.role,
+        topPercent: (maxPitch - note.midi) / pitchSpan * 86 + 3,
+        opacity: 0.72 + note.velocity / 127 * 0.28,
+      }));
+    });
+  });
   tracksFor(role: ArrangedPart): TrackRow[] { return this.tracks().filter((track) => track.role === role); }
 
   isGroupCollapsed(role: ArrangedPart): boolean { return this.collapsedGroups().has(role); }
@@ -514,6 +528,14 @@ export class WorkspaceCanvasComponent {
 
   isVisible(trackId: string): boolean {
     return !this.hiddenTracks().has(trackId);
+  }
+
+  isScoreTrackVisible(track: ScoreCanvasTrack): boolean {
+    return (track.trackIds ?? [track.id]).some(id => this.isVisible(id));
+  }
+
+  isScoreTrackSelected(track: ScoreCanvasTrack): boolean {
+    return (track.trackIds ?? [track.id]).includes(this.selectedTrackId());
   }
 
   toggleMix(trackId: string, setting: 'muted' | 'solo'): void {

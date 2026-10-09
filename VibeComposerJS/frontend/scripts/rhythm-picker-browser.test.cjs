@@ -176,6 +176,14 @@ test('production Angular controls initialize selects from settings and support r
         result.mixerDrumPitch = mixerDrum.value;
         result.mixerDrumName = mixerDrum.selectedOptions[0].textContent;
         document.querySelector('button[aria-label="Close mixer"]').click();
+        document.querySelector('button[aria-label="Add Drums track"]').click();
+        await waitFor(() => document.querySelectorAll('.track-group.drums .track-select').length === 2, 'second drum track');
+        document.querySelector('button[aria-label="Add Drums track"]').click();
+        await waitFor(() => document.querySelectorAll('.track-group.drums .track-select').length === 3, 'third drum track');
+        result.scoreRowLabels = [...document.querySelectorAll('.score-track-labels .score-track-label')].map(label => label.textContent.trim());
+        result.selectedDrumRow = document.querySelector('.score-track-labels .score-track-label.selected')?.textContent.trim();
+        document.querySelector('.track-group.drums .track-select').click();
+        await waitFor(() => document.querySelector('select[aria-label="Percussion instrument"]')?.value === '38', 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
         await waitFor(() => document.querySelector('.voice-label'), 'single-pitch drum editor');
         result.drumEditorVoices = [...document.querySelectorAll('.voice-label')].map(label => label.textContent);
@@ -239,6 +247,8 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.drumSettings.useCustomVelocities, true);
     assert.equal(actual.mixerDrumPitch, '38');
     assert.equal(actual.mixerDrumName, 'Snare · 38');
+    assert.deepEqual(actual.scoreRowLabels, ['M1', 'B1', 'C1', 'A1', 'Drums']);
+    assert.equal(actual.selectedDrumRow, 'Drums');
     assert.deepEqual(actual.drumEditorVoices, ['Snare']);
     assert.deepEqual(actual.initialChords, ['1', '5', '6', '4']);
     assert.deepEqual(actual.options, [expected, expected]);

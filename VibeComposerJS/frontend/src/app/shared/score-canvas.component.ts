@@ -8,10 +8,13 @@ export interface ScoreCanvasTrack {
   readonly id: string;
   readonly name: string;
   readonly color: ArrangedPart;
+  /** A combined score lane retains the IDs of its independent source tracks. */
+  readonly trackIds?: readonly string[];
 }
 
 export interface ScoreCanvasNote extends PhraseNote {
   readonly part: string;
+  readonly trackName?: string;
   readonly color: ArrangedPart;
   readonly topPercent: number;
   readonly opacity: number;
@@ -294,7 +297,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (!canvas) return;
     const area = this.hitAreaAt(event);
     canvas.style.cursor = area ? 'pointer' : 'default';
-    const trackName = area && this.model?.tracks.find((track) => track.id === area.note.part)?.name;
+    const trackName = area && (area.note.trackName ?? this.model?.tracks.find((track) => track.id === area.note.part)?.name);
     const title = area ? `${trackName ?? area.note.color} · MIDI ${area.note.midi} · velocity ${area.note.velocity}` : '';
     if (canvas.title !== title) canvas.title = title;
   };
@@ -415,7 +418,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const track = tracks[index];
       const y = index * laneHeight - this.verticalOffset;
       if (y + laneHeight <= 0 || y >= scoreHeight) continue;
-      fill(0, y, this.width, laneHeight, track.id === selectedTrackId
+      fill(0, y, this.width, laneHeight, (track.trackIds ?? [track.id]).includes(selectedTrackId)
         ? '--surface-low' : index % 2 === 0 ? '--score-row-odd' : '--score-row-even');
       const pitchStep = 12 * this.verticalScale;
       for (let bandY = y + pitchStep; bandY < Math.min(scoreHeight, y + laneHeight); bandY += pitchStep * 2) {
@@ -456,7 +459,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     line(0.5, 0, 0.5, this.height, '--border-default');
     line(this.width - 0.5, 0, this.width - 0.5, this.height, '--border-default');
 
-    const trackIndexes = new Map(tracks.map((track, index) => [track.id, index]));
+    const trackIndexes = new Map(tracks.flatMap((track, index) => (track.trackIds ?? [track.id]).map(id => [id, index] as const)));
     for (const note of notes) {
       const trackIndex = trackIndexes.get(note.part);
       if (trackIndex === undefined || hiddenTrackIds.has(note.part)) continue;

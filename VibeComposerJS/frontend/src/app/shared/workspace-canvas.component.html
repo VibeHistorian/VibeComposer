@@ -150,19 +150,19 @@
             </div>
               <div class="score-track-lanes">
                 <div class="score-track-labels" [style.height.px]="scoreViewport().scoreHeight">
-                @for (track of arrangedTracks(); track track.id; let trackIndex = $index) {
-                  <span class="score-track-label" [class.selected]="selectedTrackId() === track.id"
-                    [class.row-hidden]="!isVisible(track.id)"
+                @for (track of scoreTracks(); track track.id; let trackIndex = $index) {
+                  <span class="score-track-label" [class.selected]="isScoreTrackSelected(track)"
+                    [class.row-hidden]="!isScoreTrackVisible(track)"
                     [style.top.px]="trackIndex * scoreViewport().laneHeight - scoreViewport().verticalOffset"
                     [style.height.px]="scoreViewport().laneHeight">
                     <i class="role-dot" [class]="track.role"></i>{{ track.name }}
                   </span>
-                  @if (!isVisible(track.id)) {
+                  @if (!isScoreTrackVisible(track)) {
                     <span class="lane-hidden" [style.top.px]="(trackIndex + 0.5) * scoreViewport().laneHeight - scoreViewport().verticalOffset">Hidden</span>
                   }
                 }
                 </div>
-                <vc-score-canvas [tracks]="arrangedTracks()" [notes]="scoreNotes()" [sections]="timelineSections()"
+                <vc-score-canvas [tracks]="scoreTracks()" [notes]="scoreNotes()" [sections]="timelineSections()"
                   [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   [hiddenTrackIds]="hiddenTracks()" (noteSelected)="openNoteEditor($event)" />

@@ -5,6 +5,56 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('score combines drums on a shared pitch axis while preserving note ownership and individual visibility', () => {
+  const { service, workspace, ui, load } = fixture();
+  const kick = 'track-drums-1', snare = service.addTrack('drums'), otherKick = service.addTrack('drums');
+  service.updateTrackGeneratorSettings(snare, { pitch: 38 });
+  for (const id of [kick, snare, otherKick]) service.setSectionTrackPresence(1, id, true);
+  const rows = workspace.scoreTracks(), drumRow = rows.find(row => row.color === 'drums');
+  assert.equal(rows.length, 5);
+  assert.equal(drumRow.name, 'Drums');
+  assert.deepEqual(drumRow.trackIds, [kick, snare, otherKick]);
+  assert.equal(workspace.arrangedTracks().length, 7, 'arrangement and independent tracks stay intact');
+  const notes = workspace.scoreNotes();
+  const kickNote = notes.find(note => note.part === kick), snareNote = notes.find(note => note.part === snare);
+  assert.ok(kickNote.topPercent > snareNote.topPercent);
+  assert.equal(notes.find(note => note.part === otherKick).topPercent, kickNote.topPercent);
+  ui.selectTrack(snare); assert.equal(workspace.isScoreTrackSelected(drumRow), true);
+  workspace.toggleVisibility(kick); assert.equal(workspace.isScoreTrackVisible(drumRow), true);
+  workspace.toggleVisibility(snare); workspace.toggleVisibility(otherKick);
+  assert.equal(workspace.isScoreTrackVisible(drumRow), false);
+  workspace.toggleVisibility(snare);
+  const { ScoreCanvasComponent } = load('shared/score-canvas.component.ts');
+  const score = new ScoreCanvasComponent();
+  score.model = { tracks: rows, notes, sections: [], totalBeats: workspace.totalBeats(),
+    selectedTrackId: snare, hiddenTrackIds: workspace.hiddenTracks() };
+  score.width = 800; score.height = 400;
+  score.app = { render() {}, canvas: { style: {}, setAttribute() {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 400 }) } };
+  score.staticGraphics = { clear() {}, rect() { return this; }, fill() { return this; },
+    moveTo() { return this; }, lineTo() { return this; }, stroke() { return this; }, roundRect() { return this; } };
+  score.colorClass = class { alpha = 1; toNumber() { return 0; } };
+  const savedStyle = global.getComputedStyle, savedDocument = global.document;
+  global.getComputedStyle = () => ({ getPropertyValue: () => '#000000' });
+  global.document = { documentElement: {} };
+  try {
+    score.drawStatic();
+    const drumHits = score.hitAreas.filter(area => area.note.color === 'drums');
+    assert.ok(drumHits.length > 0);
+    assert.ok(drumHits.every(area => area.trackIndex === 4 && area.note.part === snare));
+    const area = drumHits[0];
+    let selected;
+    score.noteSelected.emit = note => { selected = note; workspace.openNoteEditor(note); };
+    score.onCanvasClick({ clientX: area.x + 1, clientY: area.y + area.height / 2 });
+    assert.equal(selected.part, snare);
+    assert.equal(workspace.selectedTrackId(), snare);
+    assert.equal(workspace.editingNoteId(), selected.id);
+    score.model.hiddenTrackIds = new Set(); score.drawStatic();
+    assert.ok(score.hitAreas.filter(area => area.note.color === 'drums').every(area => area.trackIndex === 4));
+  } finally { global.getComputedStyle = savedStyle; global.document = savedDocument; }
+  for (const id of [kick, snare, otherKick]) service.removeTrack(id);
+  assert.equal(workspace.scoreTracks().some(row => row.color === 'drums'), false);
+});
+
 test('single-pitch drums match 96 complete production Java phrases at fixed seeds', () => {
   const { load } = fixture();
   const { generateDrumPart } = load('core/music/drum-generator.ts');
@@ -349,7 +399,7 @@ function fixture() {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };
