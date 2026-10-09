@@ -71,8 +71,8 @@ h1 { margin-bottom: 7px; font-size: clamp(27px, 4vw, 37px); font-weight: 500; le
 /* Mute and solo controls */
 .channel-actions { margin-top: 17px; padding-top: 13px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; border-top: 1px solid var(--border-subtle); }
 .mix-toggle { height: 30px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 10px var(--font-mono); letter-spacing: .04em; }
-.mute-toggle.active { border-color: var(--border-danger); background: var(--surface-danger); color: var(--color-danger); }
-.solo-toggle.active { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
+.mute-toggle.active { border-color: var(--mix-mute-active); background: var(--mix-mute-active); color: var(--surface-input); }
+.solo-toggle.active { border-color: var(--mix-solo-active); background: var(--mix-solo-active); color: var(--surface-input); }
 
 /* Export note */
 .export-note { min-height: 68px; margin-top: 15px; padding: 13px 16px; display: flex; align-items: center; gap: 13px; border: 1px solid var(--border-subtle); border-radius: var(--radius-section); background: var(--surface-low); }

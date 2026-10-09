@@ -12,7 +12,7 @@ const browser = process.env.OVERVIEW_TEST_BROWSER || [
   '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome',
 ].find((file) => fs.existsSync(file));
 
-test('production Angular rhythm pickers expose the catalogue and selecting custom opens both editable grids', {
+test('production Angular controls support custom rhythm, wheel edits, vertical mix dragging and bright mute/solo states', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
 }, async () => {
   const root = path.resolve(__dirname, '../dist/browser');
@@ -54,6 +54,35 @@ test('production Angular rhythm pickers expose the catalogue and selecting custo
         const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
         const result = { options, counts, selected: pickers.map(select => select.value),
           rhythm: project.chords.rhythm, grid: project.chords.customPattern };
+        const wheel = (element, deltaY, shiftKey = false) => element.dispatchEvent(
+          new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
+        wheel(pickers[0], 100);
+        await waitFor(() => pickers.every(select => select.value === 'full'));
+        result.wheelRhythm = pickers.map(select => select.value);
+        const track = document.querySelector('.track-group.chords .track-row-card');
+        const pan = track.querySelector('input[aria-label="Pan C1"]');
+        const volume = track.querySelector('input[aria-label="Volume C1"]');
+        wheel(pan, -100, true);
+        await waitFor(() => pan.value === '1');
+        // Synthetic pointer events exercise Angular's actual handlers and signals;
+        // unit coverage separately checks pointer capture and vertical-only movement.
+        volume.setPointerCapture = () => {};
+        const pointer = (type, y) => volume.dispatchEvent(new PointerEvent(type,
+          { pointerId: 17, button: 0, clientY: y, bubbles: true, cancelable: true }));
+        pointer('pointerdown', 100); pointer('pointermove', 175);
+        await waitFor(() => volume.closest('.compact-knob').querySelector('output').textContent.trim() === '-6.0 dB');
+        result.volumeBeforeRelease = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).mix.chords.volumePercent;
+        pointer('pointerup', 175);
+        await waitFor(() => volume.value === '50');
+        track.querySelector('.mute-toggle').click(); track.querySelector('.solo-toggle').click();
+        await waitFor(() => track.querySelector('.mute-toggle').classList.contains('active')
+          && track.querySelector('.solo-toggle').classList.contains('active'));
+        result.quickMix = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).mix.chords;
+        result.panLabel = pan.closest('.compact-knob').querySelector('output').textContent.trim();
+        result.colors = ['.mute-toggle', '.solo-toggle'].map(selector => getComputedStyle(track.querySelector(selector)).backgroundColor);
+        const bounds = track.getBoundingClientRect();
+        result.controlsFit = track.querySelector('.track-mix-controls').getBoundingClientRect().right <= bounds.right;
+        result.groupStillSelected = group.getAttribute('aria-pressed');
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
         await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message }) });
@@ -105,6 +134,14 @@ test('production Angular rhythm pickers expose the catalogue and selecting custo
     assert.equal(actual.rhythm, 'custom');
     assert.equal(actual.grid.length, 32);
     assert.deepEqual(actual.grid.slice(0, 8), [0, 1, 1, 1, 1, 1, 1, 1]);
+    assert.deepEqual(actual.wheelRhythm, ['full', 'full']);
+    assert.equal(actual.volumeBeforeRelease, 100);
+    assert.equal(actual.quickMix.volumePercent, 50);
+    assert.equal(actual.quickMix.panPercent, 1);
+    assert.equal(actual.panLabel, '1% R');
+    assert.deepEqual(actual.colors, ['rgb(255, 255, 50)', 'rgb(145, 255, 40)']);
+    assert.equal(actual.controlsFit, true);
+    assert.equal(actual.groupStillSelected, 'true');
   } finally {
     clearTimeout(timeout); child.kill(); server.close();
     // Remove only the fresh profile created by this test after Chromium exits.

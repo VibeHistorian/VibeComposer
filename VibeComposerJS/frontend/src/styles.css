@@ -40,6 +40,10 @@
   --surface-danger: #38202b;
   --surface-glass: rgb(7 25 42 / 96%);
 
+  /* Mixer status, distinct from role colors */
+  --mix-mute-active: #ffff32;
+  --mix-solo-active: #91ff28;
+
   /* Text and borders */
   --text-primary: #f2f7ff;
   --text-strong: #dce9f7;

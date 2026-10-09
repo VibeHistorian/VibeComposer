@@ -3,9 +3,11 @@ import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { KEYS } from '../core/music/harmony';
+import { WheelSelectDirective } from './wheel-select.directive';
 
 @Component({
   selector: 'vc-transport-dock',
+  imports: [WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transport-dock.component.html',
   styleUrl: './transport-dock.component.css',

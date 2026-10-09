@@ -5,6 +5,7 @@ import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project
 import { generateTrackPhrase, phraseForTrack } from '../../core/music/phrase';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
 
 const ROW_HEIGHT = 12;
 const BEAT_SNAP = 0.25;
@@ -27,7 +28,7 @@ interface NoteDrag {
 
 @Component({
   selector: 'vc-edit-workspace',
-  imports: [TitleCasePipe],
+  imports: [TitleCasePipe, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-workspace.component.html',
   styleUrl: './edit-workspace.component.css',

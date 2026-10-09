@@ -3,11 +3,12 @@ import type { ArrangedPart, ChordRhythm } from '../core/project/project.model';
 import { PART_CONTROLS, type PartControl, type PartSettingValue, partValuesEqual } from '../core/music/part-settings';
 import { chordRhythmMask } from '../core/music/rhythm-pattern';
 import { CompactKnobComponent } from './compact-knob.component';
+import { WheelSelectDirective } from './wheel-select.directive';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [CompactKnobComponent, ControlHeadingComponent],
+  imports: [CompactKnobComponent, ControlHeadingComponent, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()' },
   templateUrl: './part-settings-editor.component.html',

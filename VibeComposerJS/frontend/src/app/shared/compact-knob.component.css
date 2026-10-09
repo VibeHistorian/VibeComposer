@@ -7,5 +7,13 @@
 .knob-value { justify-self: center; color: var(--text-primary); font: 10px var(--font-mono); }
 
 /* Native keyboard and pointer control */
-.compact-knob input { position: absolute; top: 22px; left: 50%; width: 42px; height: 42px; margin: 0; transform: translateX(-50%); opacity: .015; cursor: ns-resize; }
+.compact-knob input { position: absolute; top: 22px; left: 50%; width: 42px; height: 42px; margin: 0; transform: translateX(-50%); opacity: .015; cursor: ns-resize; touch-action: none; }
 .compact-knob:has(input:focus-visible) .knob-face { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-outline), inset 0 0 0 2px var(--surface-base); }
+
+/* Track mixer mini knobs */
+.mini { width: 48px; gap: 2px; }
+.mini vc-control-heading { display: none; }
+.mini .knob-face { width: 24px; height: 24px; padding: 2px; }
+.mini .knob-face > span { width: 16px; height: 16px; font-size: 9px; }
+.mini input { top: 0; width: 24px; height: 24px; }
+.mini .knob-value { font: 10px var(--font-ui); white-space: nowrap; }

@@ -17,6 +17,8 @@ import { EditWorkspaceComponent } from '../features/edit/edit-workspace.componen
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
 import { PartScopeActionsComponent } from './part-scope-actions.component';
+import { CompactKnobComponent } from './compact-knob.component';
+import { WheelSelectDirective } from './wheel-select.directive';
 import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
@@ -50,7 +52,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent],
+  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -508,6 +510,17 @@ export class WorkspaceCanvasComponent {
     if (!track) return;
     this.projects.updateTrack(trackId, { mix: { [setting]: !track.mix[setting] } });
     this.playback.updateMix(this.project());
+  }
+
+  updateTrackMix(trackId: string, setting: 'panPercent' | 'volumePercent', value: number): void {
+    this.projects.updateTrack(trackId, { mix: { [setting]: value } });
+    this.playback.updateMix(this.project());
+  }
+
+  previewTrackMix(trackId: string, setting: 'panPercent' | 'volumePercent', value: number): void {
+    const project = this.project();
+    this.playback.updateMix({ ...project, tracks: project.tracks.map((track) => track.id === trackId
+      ? { ...track, mix: { ...track.mix, [setting]: value } } : track) });
   }
 
   sectionLabel(type: string): string { return type.replaceAll('_', ' '); }

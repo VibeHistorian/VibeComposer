@@ -6,9 +6,11 @@ import type { CompositionTrack } from '../../core/project/project.model';
 import { tracksInRoleOrder } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
 
 @Component({
   selector: 'vc-mix-workspace',
+  imports: [WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mix-workspace.component.html',
   styleUrl: './mix-workspace.component.css',

@@ -51,11 +51,19 @@
                   </button>
                   <span class="track-instrument" [title]="instrumentName(track)">{{ instrumentName(track) }}</span>
                   <span class="track-channel">CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
-                  <div class="track-mix-controls">
-                    <button type="button" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
+                  <div class="track-mix-controls" (click)="$event.stopPropagation()">
+                    <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name"
+                      [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
+                      (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"
+                      (valueCommit)="updateTrackMix(track.id, 'panPercent', $event)" />
+                    <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name"
+                      [value]="track.mix.volumePercent" [minimum]="0" [maximum]="100" valueFormat="decibels"
+                      (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
+                      (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
+                    <button type="button" class="mute-toggle" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
                       [attr.aria-label]="(track.mix.muted ? 'Unmute ' : 'Mute ') + track.name"
                       (click)="$event.stopPropagation(); toggleMix(track.id, 'muted')">M</button>
-                    <button type="button" [class.active]="track.mix.solo" [attr.aria-pressed]="track.mix.solo"
+                    <button type="button" class="solo-toggle" [class.active]="track.mix.solo" [attr.aria-pressed]="track.mix.solo"
                       [attr.aria-label]="(track.mix.solo ? 'Unsolo ' : 'Solo ') + track.name"
                       (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
                   </div>

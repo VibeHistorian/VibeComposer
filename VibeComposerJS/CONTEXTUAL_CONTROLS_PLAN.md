@@ -128,6 +128,14 @@ Validation: 90 functional tests pass. New coverage includes 1,152 masks from com
 
 Validation: 91 functional tests pass, including catalogue acceptance at all four scopes, import and generation. The production build passes. A new Chromium regression loads the actual built Angular app, verifies both chord pickers contain the full catalogue including custom, selects custom, edits a slot, and checks both grids and persisted settings. Run `npm run build` before `npm run test:rhythm:browser`. The source and rebuilt UI expose custom; the user's previous missing option was not reproduced in the new bundle.
 
+### Quick control and mixer refinement
+
+Knobs use vertical pointer dragging (up increases, down decreases), with local preview and one history commit on release. Horizontal motion does not alter values. Wheel scrolling adjusts values using Java's roughly range/20 coarse increments, respecting stepped controls such as octave transpose; Shift uses finer increments. Escape, pointer cancellation/lost capture and changed value/bounds cancel pending drags. Native keyboard range controls remain accessible. All workspace, inspector, transport, mixer and editor comboboxes share `WheelSelectDirective`: wheel down chooses the next enabled option, wheel up the previous, with Java-style wraparound. Ctrl/Meta-wheel retains browser zoom, and handled wheel input does not scroll its parent.
+
+Track rows include mini Pan and Volume knobs immediately before M/S. Their 10px readouts show `100% L` through `C` to `100% R`, and `0dB` through negative decibels to `-Inf`. Volume remains the existing 0–100 linear gain setting; the readout uses 20×log10(volume/100), so 50% is -6.0 dB. These controls edit the same track mix as the mixer popup and audition drag previews through AudioPlaybackService without project/history mutations. Release commits one action; cancellation restores the stored mix. Mute uses bright lemon yellow and Solo bright lime green through shared theme tokens, both in track rows and mixer, distinct from drum gold and chord green.
+
+Validation: 94 functional tests and production build pass. The built-app Chromium regression verifies wheel selection in both editors, mini-pan scrolling, vertical volume drag preview/commit, persisted mixer values, exact M/S highlight colors, row fit, and unchanged selection. The existing Pixi CommonJS build warning remains.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.

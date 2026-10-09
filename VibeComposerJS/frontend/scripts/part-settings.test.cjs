@@ -26,10 +26,10 @@ function fixture() {
   const input = (value) => signal(value);
   input.required = () => signal(undefined);
   let service, ui;
-  const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
+  const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
     signal, computed: (read) => read, effect: () => {}, input,
-    output: () => ({ emit() {} }), ChangeDetectionStrategy: { OnPush: 0 },
+    output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type.name === 'ProjectService' ? service : type.name === 'WorkspaceUiService' ? ui
       : type.name === 'AudioPlaybackService' ? {} : preferences,
@@ -38,7 +38,7 @@ function fixture() {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'part-settings-editor.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };
@@ -1206,6 +1206,89 @@ test('rhythm catalogue options agree with every scope, import decoder and suppor
       }
     }
   }
+});
+
+test('knobs drag vertically, commit once, cancel safely, and scroll with stepped/fine bounds', () => {
+  const { load } = fixture();
+  const { CompactKnobComponent } = load('shared/compact-knob.component.ts');
+  const knob = new CompactKnobComponent();
+  knob.value.set(50); knob.minimum.set(0); knob.maximum.set(100); knob.label.set('Length');
+  const commits = [], previews = [];
+  knob.valueCommit.emit = value => commits.push(value);
+  knob.valuePreview.emit = value => previews.push(value);
+  const control = { focus() {}, setPointerCapture() {} };
+  const event = (y, extra = {}) => ({ pointerId: 1, button: 0, clientY: y, clientX: 0,
+    currentTarget: control, preventDefault() {}, stopPropagation() {}, shiftKey: false, ...extra });
+  knob.startDrag(event(100));
+  knob.moveDrag(event(100, { clientX: 200 }));
+  assert.equal(knob.shownValue(), 50, 'horizontal movement cannot change the knob');
+  knob.moveDrag(event(25));
+  assert.equal(knob.shownValue(), 100);
+  assert.deepEqual(commits, []);
+  knob.finishDrag(event(25));
+  assert.deepEqual(commits, [100]);
+  knob.startDrag(event(100)); knob.moveDrag(event(175)); knob.cancelDrag();
+  assert.equal(knob.shownValue(), 50);
+  assert.equal(previews.at(-1), 50, 'cancel restores audio preview');
+  knob.finishDrag(event(175));
+  assert.deepEqual(commits, [100]);
+  knob.startDrag(event(100)); knob.moveDrag(event(25)); knob.value.set(60); knob.finishDrag(event(25));
+  assert.deepEqual(commits, [100], 'external changes cancel pending drag');
+  knob.onWheel(event(0, { deltaY: -1 }));
+  assert.equal(commits.at(-1), 65);
+  knob.onWheel(event(0, { deltaY: 1, shiftKey: true }));
+  assert.equal(commits.at(-1), 59);
+  const count = commits.length;
+  knob.onWheel(event(0, { deltaY: 1, ctrlKey: true }));
+  assert.equal(commits.length, count, 'browser zoom stays available');
+  knob.minimum.set(-36); knob.maximum.set(36); knob.step.set(12); knob.value.set(0);
+  knob.onWheel(event(0, { deltaY: -1 }));
+  assert.equal(commits.at(-1), 12, 'transpose respects octave steps');
+  knob.value.set(36); knob.onWheel(event(0, { deltaY: -1 }));
+  assert.equal(commits.at(-1), 12, 'bound does not create another history entry');
+});
+
+test('wheel selects skip disabled options, wrap, emit existing change events, and preserve zoom', () => {
+  const { load } = fixture();
+  const { WheelSelectDirective } = load('shared/wheel-select.directive.ts');
+  const directive = new WheelSelectDirective();
+  const previous = global.HTMLOptGroupElement;
+  global.HTMLOptGroupElement = class {};
+  try {
+    const changes = [];
+    const select = { selectedIndex: 1, disabled: false,
+      options: [{ disabled: true }, { disabled: false }, { disabled: false }],
+      dispatchEvent: event => changes.push(event.type) };
+    directive.element = { nativeElement: select };
+    const event = (deltaY, extra = {}) => ({ deltaY, preventDefault() {}, stopPropagation() {}, ...extra });
+    directive.onWheel(event(1)); assert.equal(select.selectedIndex, 2);
+    directive.onWheel(event(1)); assert.equal(select.selectedIndex, 1);
+    directive.onWheel(event(-1)); assert.equal(select.selectedIndex, 2);
+    assert.deepEqual(changes, ['change', 'change', 'change']);
+    directive.onWheel(event(1, { ctrlKey: true })); assert.equal(changes.length, 3);
+    select.disabled = true; directive.onWheel(event(1)); assert.equal(changes.length, 3);
+  } finally { global.HTMLOptGroupElement = previous; }
+});
+
+test('quick mixer knobs format linear gain and pan, audition without history, and commit one track only', () => {
+  const { load, service, workspace } = fixture();
+  const { panLabel, volumeDecibels } = load('core/audio/mix-values.ts');
+  assert.deepEqual([-100, -50, 0, 50, 100].map(panLabel), ['100% L', '50% L', 'C', '50% R', '100% R']);
+  assert.deepEqual([100, 50, 1, 0].map(volumeDecibels), ['0dB', '-6.0 dB', '-40.0 dB', '-Inf']);
+  const heard = [];
+  workspace.playback.updateMix = project => heard.push(project);
+  const before = service.exportProjectJson();
+  workspace.previewTrackMix('track-bass-1', 'panPercent', -50);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(heard.at(-1).tracks.find(track => track.id === 'track-bass-1').mix.panPercent, -50);
+  workspace.updateTrackMix('track-bass-1', 'panPercent', -50);
+  assert.equal(service.project().tracks.find(track => track.id === 'track-bass-1').mix.panPercent, -50);
+  assert.equal(service.project().tracks.find(track => track.id === 'track-chords-1').mix.panPercent, 0);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo();
+  workspace.updateTrackMix('track-bass-1', 'volumePercent', 50);
+  assert.equal(service.project().mix.bass.volumePercent, 50);
+  assert.equal(heard.at(-1).tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, 50);
 });
 
 test('custom masks match 1152 production Java list rotations and flipped complements', () => {

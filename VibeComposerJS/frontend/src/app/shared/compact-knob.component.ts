@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
+import { panLabel, volumeDecibels } from '../core/audio/mix-values';
 
 @Component({
   selector: 'vc-compact-knob',
@@ -17,11 +18,17 @@ export class CompactKnobComponent {
   readonly unit = input('%');
   readonly mixed = input(false);
   readonly showValueBelow = input(false);
+  readonly mini = input(false);
+  readonly valueFormat = input<'number' | 'pan' | 'decibels'>('number');
   readonly inheritance = input<ControlInheritance>('global');
   readonly inheritRequested = output<void>();
   readonly valueCommit = output<number>();
+  readonly valuePreview = output<number>();
   readonly preview = signal<number | null>(null);
   readonly shownValue = computed(() => this.preview() ?? this.value());
+  readonly formattedValue = computed(() => this.valueFormat() === 'pan' ? panLabel(this.shownValue())
+    : this.valueFormat() === 'decibels' ? volumeDecibels(this.shownValue()) : this.shownValue() + this.unit());
+  private drag: { pointerId: number; y: number; value: number; minimum: number; maximum: number; step: number } | null = null;
   readonly angle = computed(() => {
     const span = this.maximum() - this.minimum();
     const progress = span > 0 ? (this.shownValue() - this.minimum()) / span : 0;
@@ -29,7 +36,7 @@ export class CompactKnobComponent {
   });
 
   previewValue(event: Event): void {
-    this.preview.set(Number((event.target as HTMLInputElement).value));
+    this.setPreview(Number((event.target as HTMLInputElement).value));
   }
 
   commitValue(event: Event): void {
@@ -43,6 +50,63 @@ export class CompactKnobComponent {
 
   tooltip(): string {
     if (this.mixed() && this.preview() === null) return `${this.label()}: mixed values. Adjust to choose a shared value.`;
-    return `${this.label()}: ${this.shownValue()}${this.unit()}. Use arrow keys to adjust.`;
+    return `${this.label()}: ${this.formattedValue()}. Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work.`;
   }
+
+  private setPreview(value: number): void {
+    this.preview.set(value);
+    this.valuePreview.emit(value);
+  }
+
+  private snap(value: number): number {
+    return Math.max(this.minimum(), Math.min(this.maximum(),
+      this.minimum() + Math.round((value - this.minimum()) / this.step()) * this.step()));
+  }
+
+  onWheel(event: WheelEvent): void {
+    if (event.ctrlKey || event.metaKey || event.deltaY === 0 || this.drag) return;
+    event.preventDefault(); event.stopPropagation();
+    const increment = event.shiftKey ? this.step() : Math.max(this.step(), Math.floor((this.maximum() - this.minimum()) / 20 / this.step()) * this.step());
+    const value = this.snap(this.value() + (event.deltaY < 0 ? increment : -increment));
+    if (value !== this.value()) this.valueCommit.emit(value);
+  }
+
+  startDrag(event: PointerEvent): void {
+    if (event.button !== 0 || this.drag) return;
+    event.preventDefault(); event.stopPropagation();
+    const control = event.currentTarget as HTMLInputElement;
+    control.focus(); control.setPointerCapture(event.pointerId);
+    this.drag = { pointerId: event.pointerId, y: event.clientY, value: this.value(),
+      minimum: this.minimum(), maximum: this.maximum(), step: this.step() };
+  }
+
+  moveDrag(event: PointerEvent): void {
+    if (event.pointerId !== this.drag?.pointerId) return;
+    if (!this.dragStillValid()) { this.cancelDrag(); return; }
+    const sensitivity = (this.maximum() - this.minimum()) / 150 / (event.shiftKey ? 5 : 1);
+    this.setPreview(this.snap(this.drag.value + (this.drag.y - event.clientY) * sensitivity));
+  }
+
+  finishDrag(event: PointerEvent): void {
+    if (event.pointerId !== this.drag?.pointerId) return;
+    const value = this.preview();
+    const valid = this.dragStillValid();
+    this.drag = null;
+    this.preview.set(null);
+    if (valid && value !== null && value !== this.value()) this.valueCommit.emit(value);
+    else this.valuePreview.emit(this.value());
+  }
+
+  private dragStillValid(): boolean {
+    return !!this.drag && this.drag.value === this.value() && this.drag.minimum === this.minimum()
+      && this.drag.maximum === this.maximum() && this.drag.step === this.step();
+  }
+
+  cancelDrag(): void {
+    if (!this.drag) return;
+    this.drag = null; this.preview.set(null);
+    this.valuePreview.emit(this.value());
+  }
+
+  ngOnDestroy(): void { this.cancelDrag(); }
 }
