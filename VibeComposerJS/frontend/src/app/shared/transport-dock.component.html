@@ -35,7 +35,7 @@
 
   <div class="transport-globals" aria-label="Global song settings">
     <label><span>KEY</span><select aria-label="Key" [value]="project().key" (change)="updateKey($event)">
-      @for (key of keys; track key) { <option [value]="key">{{ key }}</option> }
+      @for (key of keys; track key) { <option [value]="key" [selected]="key === project().key">{{ key }}</option> }
     </select></label>
     <label><span>MODE</span><select aria-label="Mode" [value]="project().scale" (change)="updateScale($event)">
       <option value="major">Major</option><option value="natural-minor">Minor</option>

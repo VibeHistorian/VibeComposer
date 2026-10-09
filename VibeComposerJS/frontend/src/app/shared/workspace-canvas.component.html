@@ -10,7 +10,7 @@
           <label class="progression-chord">
             <span>{{ (chordIndex + 1).toString().padStart(2, '0') }}</span>
             <select [value]="degree" [attr.aria-label]="'Chord ' + (chordIndex + 1)" (change)="changeChord(chordIndex, $event)">
-              @for (chord of chords(); track chord.degree) { <option [value]="chord.degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option> }
+              @for (chord of chords(); track chord.degree) { <option [value]="chord.degree" [selected]="chord.degree === degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option> }
             </select>
             <button type="button" [disabled]="project().progression.length <= 1" (click)="removeChord(chordIndex)" [attr.aria-label]="'Remove chord ' + (chordIndex + 1)">×</button>
           </label>
@@ -217,7 +217,7 @@
           }
           <label class="quick-field">Section type
             <select [value]="section.type" (change)="updateSectionType($event)">
-              @for (type of sectionTypes; track type) { <option [value]="type">{{ sectionLabel(type) }}</option> }
+              @for (type of sectionTypes; track type) { <option [value]="type" [selected]="type === section.type">{{ sectionLabel(type) }}</option> }
             </select>
           </label>
           <label class="quick-field">Length in bars
@@ -236,7 +236,7 @@
             @for (degree of sectionChordDegrees(); track $index; let bar = $index) {
               <label class="quick-field">Bar {{ bar + 1 }}
                 <select [value]="degree" (change)="updateSectionChord(bar, $event)">
-                  @for (chord of chords(); track chord.degree) { <option [value]="chord.degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option> }
+                  @for (chord of chords(); track chord.degree) { <option [value]="chord.degree" [selected]="chord.degree === degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option> }
                 </select>
               </label>
             }
@@ -291,13 +291,13 @@
             @else {
               <label class="quick-field">Instrument
                 <select [value]="selectedTrack().mix.program" (change)="updateInstrument($event)">
-                  @for (instrument of instruments; track instrument.program) { <option [value]="instrument.program">{{ instrument.name }}</option> }
+                  @for (instrument of instruments; track instrument.program) { <option [value]="instrument.program" [selected]="instrument.program === selectedTrack().mix.program">{{ instrument.name }}</option> }
                 </select>
               </label>
             }
             <label class="quick-field">MIDI channel
               <select [value]="selectedTrack().midiChannel" (change)="updateChannel($event)">
-                @for (channel of midiChannels; track channel) { <option [value]="channel">Channel {{ channel.toString().padStart(2, '0') }}</option> }
+                @for (channel of midiChannels; track channel) { <option [value]="channel" [selected]="channel === selectedTrack().midiChannel">Channel {{ channel.toString().padStart(2, '0') }}</option> }
               </select>
             </label>
           </section>

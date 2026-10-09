@@ -38,7 +38,7 @@
           <label for="drum-bar">Progression bar</label>
           <select id="drum-bar" [value]="drumBar()" (change)="updateDrumBar($event)">
             @for (bar of drumBars(); track bar) {
-              <option [value]="bar">{{ (bar + 1).toString().padStart(2, '0') }}</option>
+              <option [value]="bar" [selected]="bar === drumBar()">{{ (bar + 1).toString().padStart(2, '0') }}</option>
             }
           </select>
           <span>16 steps · quarter-note grid</span>

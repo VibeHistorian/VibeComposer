@@ -36,13 +36,13 @@
             } @else {
               <label class="instrument-select"><span class="control-label">INSTRUMENT</span>
                 <select [value]="track.mix.program" (change)="updateProgram(track.id, $event)">
-                  @for (instrument of instruments; track instrument.program) { <option [value]="instrument.program">{{ instrument.name }}</option> }
+                  @for (instrument of instruments; track instrument.program) { <option [value]="instrument.program" [selected]="instrument.program === track.mix.program">{{ instrument.name }}</option> }
                 </select>
               </label>
             }
             <label class="instrument-select channel-select"><span class="control-label">MIDI CHANNEL</span>
               <select [value]="track.midiChannel" (change)="updateChannel(track.id, $event)">
-                @for (channel of channels; track channel) { <option [value]="channel">CH {{ channel.toString().padStart(2, '0') }}</option> }
+                @for (channel of channels; track channel) { <option [value]="channel" [selected]="channel === track.midiChannel">CH {{ channel.toString().padStart(2, '0') }}</option> }
               </select>
             </label>
             @if (hasChannelCollision(track.id)) { <span class="channel-collision">Channel shared</span> }

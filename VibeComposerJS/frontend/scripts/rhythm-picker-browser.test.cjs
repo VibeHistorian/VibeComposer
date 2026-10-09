@@ -12,7 +12,7 @@ const browser = process.env.OVERVIEW_TEST_BROWSER || [
   '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome',
 ].find((file) => fs.existsSync(file));
 
-test('production Angular controls support custom rhythm, wheel edits, vertical mix dragging and bright mute/solo states', {
+test('production Angular controls initialize selects from settings and support rhythm, wheel and mix edits', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
 }, async () => {
   const root = path.resolve(__dirname, '../dist/browser');
@@ -34,6 +34,22 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
       };
       try {
         sessionStorage.clear();
+        const initialMidi = await waitFor(() => {
+          const selects = [...document.querySelectorAll('.mix-quick-settings select')];
+          return selects.length === 2 && selects.every(select => select.options.length) ? selects : null;
+        }, 'initial track instrument and channel');
+        const initialSelection = initialMidi.map(select => select.value);
+        const initialChords = [...document.querySelectorAll('select[aria-label^="Chord "]')].map(select => select.value);
+        document.querySelector('.track-group.melody .track-select').click();
+        await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 04'), 'melody inspector');
+        const melodySelection = [...document.querySelectorAll('.mix-quick-settings select')].map(select => select.value);
+        document.querySelector('button[aria-label="Open mixer"]').click();
+        const strips = await waitFor(() => {
+          const items = [...document.querySelectorAll('.channel-strip')];
+          return items.length === 5 ? items : null;
+        }, 'initial mixer strips');
+        const mixerSelections = strips.map(strip => [...strip.querySelectorAll('select')].map(select => select.value));
+        document.querySelector('button[aria-label="Close mixer"]').click();
         const group = await waitFor(() => document.querySelector('.track-group.chords .group-select'));
         group.click();
         const pickers = await waitFor(() => {
@@ -52,7 +68,7 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
         await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid button:first-child')]
           .every(button => button.getAttribute('aria-pressed') === 'false'));
         const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        const result = { options, counts, selected: pickers.map(select => select.value),
+        const result = { initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
           rhythm: project.chords.rhythm, grid: project.chords.customPattern };
         const wheel = (element, deltaY, shiftKey = false) => element.dispatchEvent(
           new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
@@ -131,6 +147,9 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
         result.melody = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).melody;
         result.melodyHasSpeed = document.querySelectorAll('input[aria-label="Speed"]').length;
         result.melodyHasAccent = document.querySelectorAll('input[aria-label="Accent"]').length;
+        document.querySelector('.track-group.melody .track-select').click();
+        await waitFor(() => document.querySelectorAll('.mix-quick-settings select').length === 2, 'recreated melody selects');
+        result.recreatedSelection = [...document.querySelectorAll('.mix-quick-settings select')].map(select => select.value);
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
         await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message }) });
@@ -176,6 +195,11 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
   try {
     const actual = await result;
     assert.equal(actual.error, undefined);
+    assert.deepEqual(actual.initialSelection, ['33', '1']);
+    assert.deepEqual(actual.melodySelection, ['73', '4']);
+    assert.deepEqual(actual.recreatedSelection, ['73', '4']);
+    assert.deepEqual(actual.mixerSelections, [['73', '4'], ['33', '1'], ['0', '2'], ['11', '3'], ['10']]);
+    assert.deepEqual(actual.initialChords, ['1', '5', '6', '4']);
     assert.deepEqual(actual.options, [expected, expected]);
     assert.deepEqual(actual.counts, [8, 8]);
     assert.deepEqual(actual.selected, ['custom', 'custom']);
