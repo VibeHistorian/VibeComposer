@@ -48,7 +48,7 @@
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }
 .track-policy-header > button, .track-reroll-actions button { padding: 3px 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); font: 9px var(--font-ui); cursor: pointer; }
 .track-reroll-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 3px; }
-.track-reroll-actions button[aria-pressed="true"] { border-color: var(--role-arpeggio); }
+.track-reroll-actions button[aria-pressed="true"] { border-color: var(--text-primary); }
 /* Track rows */
 .track-row-card { min-width: 0; margin-top: 3px; padding: 3px 3px 4px; border: 1px solid transparent; border-radius: var(--radius-tight); }
 .track-row-card.selected { border-color: var(--border-default); background: var(--surface-base); }

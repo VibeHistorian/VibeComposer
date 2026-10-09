@@ -5,6 +5,213 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('role rerolls match production melody patterns, drum blueprint data and audited seeded BassGUI branches', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  const { STATIC_RHYTHM_DEFINITIONS } = load('core/music/rhythm-patterns.ts');
+  const names = Object.fromEntries(Object.entries(STATIC_RHYTHM_DEFINITIONS).map(([key, value]) => [value.javaName, key]));
+  names.CUSTOM = 'custom';
+  const expected = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/role-policy.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  for (const sample of expected.melodyPatterns) assert.deepEqual(core.chooseMelodyPattern(sample.seed), sample.pattern);
+  for (const sample of expected.bass) {
+    const source = { ...service.project().tracks.find(track => track.role === 'bass'), generatorSettings: { ...service.project().bass, chordSpan: sample.span } };
+    const [actual] = core.rerollRoleSettings(BigInt(sample.seed), 'bass', {}, [source], [sample.order]);
+    for (const [key, value] of Object.entries(sample.values)) {
+      if (key === 'javaRhythm') assert.equal(actual.rhythm, names[value]);
+      else assert.deepEqual(actual[key], key === 'velocityMax' ? Math.max(value - 1, sample.values.velocityMin) : value);
+    }
+  }
+  [36,38,42,53,60].forEach((pitch, family) => {
+    const seen = new Set();
+    for (let seed = 0; seed < 100; seed++) {
+      const source = { ...service.project().tracks.find(track => track.role === 'drums'), generatorSettings: { ...service.project().drums, pitch } };
+      const [actual] = core.rerollRoleSettings(BigInt(seed), 'drums', { ...core.DEFAULT_TRACK_POLICIES.drums, shiftChance: 0 }, [source], [1]);
+      const tuple = [actual.rhythm, actual.hitsPerPattern, actual.chordSpan, actual.patternShift];
+      const blueprints = expected.drums[family].map(([rhythm, ...values]) => [names[rhythm], ...values]);
+      assert.ok(blueprints.some(candidate => JSON.stringify(candidate) === JSON.stringify(tuple)));
+      seen.add(JSON.stringify(tuple));
+      if (actual.rhythm === 'custom') assert.ok(expected.customDrums.some(pattern => JSON.stringify([...pattern,...pattern]) === JSON.stringify(actual.customPattern)));
+    }
+    assert.equal(seen.size, new Set(expected.drums[family].map(tuple => JSON.stringify(tuple))).size, 'all blueprint variants exercised');
+  });
+});
+
+test('other role rules leave musical values untouched and strictly validate persisted metadata', () => {
+  const { service, load, phrase } = fixture();
+  const core = load('core/music/track-generation.ts');
+  for (const [role, patch] of Object.entries({ chords: { varyLength: false, voicesMode: 'FIXED', voices: 6 },
+    drums: { maxSwing: 0, hitsMultiplier: '2' }, melody: { sameSeed: true, patterns: false } })) {
+    const track = service.project().tracks.find(track => track.role === role);
+    const before = phrase.layOutTrackPhrase(service.project(), track);
+    assert.equal(service.updateTrackGenerationPolicy(role, patch), 'changed');
+    assert.strictEqual(service.project().tracks.find(item => item.id === track.id), track);
+    assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track), before);
+  }
+  assert.equal(service.project().trackRerollCounts, undefined);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.deepEqual(restored.project().trackGenerationPolicies, service.project().trackGenerationPolicies);
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const before = service.exportProjectJson();
+  for (const [role, patch] of [['bass', { patterns: true }], ['chords', { velocityMin: 100, velocityMax: 90 }],
+    ['chords', { voices: 2 }], ['chords', { strum: true }], ['drums', { maxSwing: 51 }], ['drums', { hitsMultiplier: '3' }],
+    ['drums', { ghosts: true }], ['melody', { sameSeed: 1 }], ['melody', { targets: true }]]) {
+    assert.equal(service.updateTrackGenerationPolicy(role, patch), 'invalid');
+    const project = JSON.parse(before);
+    project.trackGenerationPolicies = { [role]: { ...core.DEFAULT_TRACK_POLICIES[role], ...patch } };
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  }
+  for (const role of ['bass', 'chords', 'drums', 'melody']) {
+    for (const value of [-1, 2147483648, '1', null]) {
+      const project = JSON.parse(before); project.trackRerollCounts = { [role]: value };
+      assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+    }
+  }
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+});
+
+for (const role of ['bass', 'chords', 'drums', 'melody']) {
+  test(`${role} rerolls preserve identity, manual notes, locks, local patches and exact replay`, () => {
+    const { service, phrase, settings, midi, workspace, ui, load } = fixture();
+    const primaryId = `track-${role}-1`, manualId = service.addTrack(role), lockedId = service.addTrack(role);
+    const track = id => service.project().tracks.find(track => track.id === id);
+    service.updateSettings({ seed: '9007199254740993' });
+    const section = service.project().arrangement[0];
+    service.updatePartSettings({ kind: 'section-role', sectionId: section.id, role }, { velocityMin: 45, velocityMax: 95 });
+    service.freezePartSettings({ kind: 'section-track', sectionId: section.id, trackId: primaryId });
+    const effective = settings.resolvePartTrack(track(primaryId), service.project().arrangement[0]);
+    const manual = [{ id: 'manual', midi: role === 'drums' ? 36 : 60, startBeat: 0, durationBeats: 1, velocity: 90 }];
+    service.updateTrackPhrase(manualId, manual);
+    service.setTrackRerollLock(lockedId, true);
+    const before = service.exportProjectJson(), others = service.project().tracks.filter(track => track.role !== role);
+    const locked = track(lockedId), arrangement = service.project().arrangement;
+    assert.equal(service.rerollRoleTracks(role), 'changed');
+    const after = service.exportProjectJson();
+    assert.equal(service.project().trackRerollCounts[role], 1);
+    assert.deepEqual(service.project().tracks.filter(track => track.role !== role), others);
+    assert.strictEqual(track(lockedId), locked); assert.strictEqual(service.project().arrangement, arrangement);
+    assert.deepEqual(phrase.phraseForTrack(service.project(), track(manualId)), manual);
+    for (const id of [primaryId, manualId]) {
+      const previous = JSON.parse(before).tracks.find(track => track.id === id);
+      for (const key of ['id', 'name', 'mix', 'midiChannel', 'editedPhrase']) assert.deepEqual(track(id)[key], previous[key]);
+      if (role === 'drums') assert.equal(track(id).generatorSettings.pitch, previous.generatorSettings.pitch);
+    }
+    assert.deepEqual(settings.resolvePartTrack(track(primaryId), service.project().arrangement[0]).generatorSettings, effective.generatorSettings);
+    ui.selectTrack(primaryId);
+    const field = role === 'melody' ? 'speed' : role === 'drums' ? 'hitsPerPattern' : 'velocityMax';
+    assert.equal(workspace.partValues()[field], track(primaryId).generatorSettings[field]);
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    assert.equal(service.rerollRoleTracks(role), 'changed'); assert.equal(service.exportProjectJson(), after);
+    service.undo(); service.redo(); assert.equal(service.exportProjectJson(), after);
+    assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+    const restored = new (load('core/project/project.service.ts').ProjectService)();
+    assert.equal(service.rerollRoleTracks(role, primaryId), 'changed');
+    assert.equal(restored.rerollRoleTracks(role, primaryId), 'changed');
+    assert.deepEqual(JSON.parse(restored.exportProjectJson()), JSON.parse(service.exportProjectJson()));
+    assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+    const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+    assert.equal(parsed.tracks.find(item => item.name === track(primaryId).name).notes.length,
+      phrase.layOutTrackPhrase(service.project(), track(primaryId)).length);
+    const policies = service.project().trackGenerationPolicies, counts = service.project().trackRerollCounts;
+    const bases = service.project().tracks.map(track => track.generatorSettings);
+    service.randomizeArrangementPresence();
+    assert.deepEqual(service.project().tracks.map(track => track.generatorSettings), bases);
+    assert.deepEqual(service.project().trackGenerationPolicies, policies); assert.deepEqual(service.project().trackRerollCounts, counts);
+  });
+
+  test(`${role} conflicts and unavailable reroll targets preserve history and counters`, () => {
+    const { service } = fixture();
+    const id = `track-${role}-1`, sectionId = service.project().arrangement[0].id;
+    service.updatePartSettings({ kind: 'global-role', role }, { velocityMax: 127 });
+    service.updatePartSettings({ kind: 'section-role', sectionId, role }, { velocityMin: 120 });
+    service.updateSettings({ name: 'redo' }); service.undo(); const before = service.exportProjectJson();
+    assert.equal(service.rerollRoleTracks(role), 'invalid');
+    assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+    assert.equal(service.rerollRoleTracks(role, 'deleted'), 'unchanged');
+    assert.equal(service.rerollRoleTracks(role, 'track-arpeggio-1'), 'unchanged');
+    service.setTrackRerollLock(id, true); const locked = service.exportProjectJson();
+    assert.equal(service.rerollRoleTracks(role), 'unchanged'); assert.equal(service.exportProjectJson(), locked);
+  });
+}
+
+test('role-specific policies preserve opt-outs and share only eligible seeds and swing', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  const tracks = role => service.project().tracks.filter(track => track.role === role);
+  const source = { ...tracks('chords')[0], generatorSettings: { ...service.project().chords,
+    rhythm: 'custom', patternFlip: true, patternShift: 4, customPattern: Array(32).fill(1),
+    useCustomVelocities: true, chordSpanFill: 'HALF1', fillFlip: true, transpose: 24, offset: 125, noteLengthPercent: 150 } };
+  const policy = { ...core.DEFAULT_TRACK_POLICIES.chords, fills: false, patterns: false, varyLength: false, transpose: false, delay: false };
+  const [result] = core.rerollRoleSettings(42n, 'chords', policy, [source], [1]);
+  for (const key of ['rhythm','patternFlip','patternShift','customPattern','useCustomVelocities','chordSpanFill','fillFlip','transpose','offset','noteLengthPercent'])
+    assert.deepEqual(result[key], source.generatorSettings[key]);
+  service.addTrack('melody'); service.addTrack('melody');
+  service.updateTrackGenerationPolicy('melody', { sameSeed: true, patterns: false });
+  service.setTrackRerollLock(tracks('melody')[0].id, true);
+  const lockedSeed = tracks('melody')[0].generatorSettings.patternSeed;
+  service.rerollRoleTracks('melody');
+  assert.equal(tracks('melody')[0].generatorSettings.patternSeed, lockedSeed);
+  assert.equal(tracks('melody')[1].generatorSettings.patternSeed, tracks('melody')[2].generatorSettings.patternSeed);
+  for (const track of tracks('melody')) assert.deepEqual(track.generatorSettings.melodyPatternOffsets, service.project().melody.melodyPatternOffsets);
+  const drums = [42, 60, 38].map(pitch => ({ ...tracks('drums')[0], generatorSettings: { ...service.project().drums, pitch } }));
+  const generated = core.rerollRoleSettings(42n, 'drums', { ...core.DEFAULT_TRACK_POLICIES.drums, maxSwing: 50, randomOffset: true, hitsMultiplier: '2' }, drums, [1,2,3]);
+  assert.equal(generated[0].swingPercent, generated[1].swingPercent); assert.equal(generated[0].offset, generated[1].offset);
+  assert.equal(generated[2].swingPercent, 50);
+  assert.ok(generated.every(track => track.hitsPerPattern >= 1 && track.hitsPerPattern <= 32));
+});
+
+test('Generate N appends generated tracks atomically with one history entry for every role', () => {
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const { service, load } = fixture();
+    service.updateTrackPhrase(`track-${role}-1`, [{ id:'manual', midi:60, startBeat:0, durationBeats:1, velocity:80 }]);
+    const before = service.exportProjectJson(), existing = service.project().tracks;
+    assert.equal(service.generateRoleTracks(role, 3), 'changed');
+    const created = service.project().tracks.slice(existing.length);
+    assert.equal(created.length, 3); assert.equal(service.project().trackRerollCounts[role], 1);
+    assert.deepEqual(service.project().tracks.slice(0, existing.length), existing);
+    assert.ok(created.every(track => track.role === role && !track.editedPhrase && track.rerollLocked === false));
+    assert.equal(new Set(service.project().tracks.map(track => track.id)).size, service.project().tracks.length);
+    if (role === 'drums') assert.ok(created.every(track => track.midiChannel === 10));
+    const after = service.exportProjectJson(); service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+    service.undo(); service.generateRoleTracks(role, 3); assert.equal(service.exportProjectJson(), after);
+    assert.equal(service.importProjectJson(after), true);
+    const restored = new (load('core/project/project.service.ts').ProjectService)();
+    assert.deepEqual(restored.project(), service.project());
+    service.updateSettings({ name: 'redo' }); service.undo(); const state = service.exportProjectJson();
+    for (const count of [0, 17, 1.5, NaN]) assert.equal(service.generateRoleTracks(role, count), 'invalid');
+    assert.equal(service.exportProjectJson(), state); assert.equal(service.canRedo(), true);
+  }
+});
+
+test('generation handles empty roles, project capacity and no-op rerolls without consuming history', () => {
+  const { service, load } = fixture();
+  service.removeTrack('track-melody-1');
+  assert.equal(service.generateRoleTracks('melody', 2), 'changed');
+  assert.ok(service.project().tracks.some(track => track.id === 'track-melody-1'));
+  service.updateTrackGenerationPolicy('chords', { fills: false, patterns: false, transpose: false, varyLength: false, delay: false, voicesMode: 'NONE' });
+  service.rerollRoleTracks('chords'); service.updateSettings({ name: 'redo' }); service.undo();
+  const before = service.exportProjectJson();
+  assert.equal(service.rerollRoleTracks('chords'), 'unchanged');
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+  const core = load('core/music/track-generation.ts');
+  const source = service.project().tracks.find(track => track.role === 'bass');
+  for (let seed = 0; seed < 1000; seed++) {
+    const [settings] = core.rerollRoleSettings(BigInt(seed), 'bass', {}, [source], [1]);
+    assert.ok(settings.velocityMin <= settings.velocityMax, 'Java independently chooses crossing Bass bounds; normalize safely without redrawing');
+  }
+  const project = JSON.parse(before), original = project.tracks[0];
+  project.tracks = [...project.tracks, ...Array.from({ length: 63 - project.tracks.length }, (_, index) => ({
+    ...original, id: 'capacity-' + index, name: 'Capacity ' + index,
+  }))];
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  service.updateSettings({ name: 'redo-capacity' }); service.undo(); const full = service.exportProjectJson();
+  assert.equal(service.generateRoleTracks('drums', 2), 'invalid'); assert.equal(service.exportProjectJson(), full);
+  assert.equal(service.canRedo(), true); assert.equal(service.generateRoleTracks('drums', 1), 'changed');
+  assert.equal(service.project().tracks.length, 64);
+});
+
 test('Arpeggio hit choices and fill weights match Java policy helper evidence', () => {
   const { load } = fixture();
   const { JavaRandom } = load('core/music/java-random.ts');
@@ -121,7 +328,7 @@ test('Arpeggio reroll rejects invalid rules and effective conflicts atomically, 
     assert.equal(service.importProjectJson(JSON.stringify(project)), false);
   }
   for (const metadata of [{ trackRerollCounts: { arpeggio: -1 } }, { trackRerollCounts: { arpeggio: '1' } },
-    { trackRerollCounts: { bass: 0 } }, { trackGenerationPolicies: { drums: {} } }]) {
+    { trackRerollCounts: { unknown: 0 } }, { trackGenerationPolicies: { drums: {} } }]) {
     assert.equal(service.importProjectJson(JSON.stringify({ ...JSON.parse(before), ...metadata })), false);
   }
   const invalidLock = JSON.parse(before); invalidLock.tracks[0].rerollLocked = 1;

@@ -202,3 +202,13 @@ The old MANUAL/Apply family (`ArrangementGUI.applyCustomPanelsToSection()`, `swi
 | Reset cell + track overrides | Clear both layers for the selected role and its current tracks | `ProjectService.resetCellPartSettings()` |
 
 All actions share `PartScopeActionsComponent` and `WorkspaceCanvasComponent.runPartWorkflow()` in the central Part settings header. Duplicate reset/freeze/clear/copy controls were removed from the inspector; it retains editing and customization markers. The source section is excluded from range copying. Track presence, instruments, manual phrases and global values are preserved. Freeze covers implemented part controls only; global harmony/seed and future unported controls continue to follow their own settings. Apply to Global remains deferred.
+
+## Implemented P6b policy placement
+
+All Tracks groups now share group/per-track Reroll, locks and a distinct Generate N action that appends new generated tracks. Headers show supported frequent policies; Advanced opens the global role inspector. Part settings remain between arrangement and score. Policies never become section musical overrides. See checkpoint 15 in [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md) for deterministic streams, program-pool translation and branch exclusions.
+
+- Bass uses primary/secondary creation choices without new checkbox policies. Java Pause is GUI pattern baking and remains excluded from this consumer.
+- Chords: Vary Length/Fills/Patterns/Transpose in H; Delay/Shift/Voices/velocity bounds in I. Strum/transition/Expand policies await P5. Flatten Voicing stays with harmony.
+- Drums: Patterns/Fills/Max Swing/Random Offset/On reroll hits multiplier in H; Shift in I. Blueprint pitch is retained. Dynamic/Ghosts, Overrandomize and melody-following remain deferred; the immediate Multiply Hits action is separate and still deferred.
+- Melody: supported creation parameters plus explicit Reroll seeds/Same seed/Block patterns in H/I. Automatic Compose/Regenerate and note-target triggers remain deferred; target lists remain musical part values.
+- Arpeggio retains P6a controls and gains Generate N. Instrument permission/pools and automatic triggers remain deferred for all roles.

@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import type { ArpeggioGenerationPolicy } from '../core/project/project.model';
-import { ARPEGGIO_POLICY_CONTROLS, type PolicyControl } from '../core/music/track-generation';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import type { ArrangedPart, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../core/project/project.model';
+import { TRACK_POLICY_CONTROLS, type PolicyControl } from '../core/music/track-generation';
 
 @Component({
   selector: 'vc-track-generation-policy',
@@ -9,17 +9,30 @@ import { ARPEGGIO_POLICY_CONTROLS, type PolicyControl } from '../core/music/trac
   styleUrl: './track-generation-policy.component.css',
 })
 export class TrackGenerationPolicyComponent {
-  readonly policy = input.required<ArpeggioGenerationPolicy>();
+  readonly role = input<ArrangedPart>('arpeggio');
+  readonly policy = input.required<TrackGenerationPolicy>();
+  readonly values = computed(() => this.policy() as unknown as Record<string, string | number | boolean>);
   readonly advanced = input(false);
   readonly disabled = input(false);
-  readonly policyChanged = output<Partial<ArpeggioGenerationPolicy>>();
-  readonly controls = computed(() => ARPEGGIO_POLICY_CONTROLS.filter(control => this.advanced() || !control.advanced));
+  readonly policyChanged = output<TrackGenerationPolicyPatch>();
+  readonly generationRequested = output<number>();
+  readonly capacity = input(16);
+  readonly generateCount = signal(1);
+  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control => this.advanced() || !control.advanced));
+
+  changeCount(event: Event): void {
+    const element = event.target as HTMLInputElement;
+    const count = Number(element.value);
+    if (Number.isInteger(count) && count >= 1 && count <= 16) this.generateCount.set(count);
+    element.value = String(this.generateCount());
+  }
 
   inactive(control: PolicyControl): boolean {
-    return this.disabled() || (control.key === 'fixedHits' && this.policy().randomHits)
-      || (control.key === 'powerOfTwo' && !this.policy().randomHits)
-      || (control.key === 'shiftChance' && !this.policy().patterns)
-      || (['voices', 'voicesChance'].includes(control.key) && this.policy().voicesMode === 'NONE');
+    return this.disabled() || (control.key === 'fixedHits' && this.values()['randomHits'] === true)
+      || (control.key === 'sameSeed' && this.values()['rerollSeeds'] === false)
+      || (control.key === 'powerOfTwo' && this.values()['randomHits'] === false)
+      || (control.key === 'shiftChance' && this.values()['patterns'] === false)
+      || (['voices', 'voicesChance'].includes(control.key) && this.values()['voicesMode'] === 'NONE');
   }
 
   change(control: PolicyControl, event: Event): void {
@@ -28,6 +41,6 @@ export class TrackGenerationPolicyComponent {
     const value = control.options ? element.value : control.minimum !== undefined ? Number(element.value) : element.checked;
     this.policyChanged.emit({ [control.key]: value });
     // Invalid commits may leave the parent value unchanged; restore the visible canonical value.
-    element.value = String(this.policy()[control.key]);
+    element.value = String(this.values()[control.key]);
   }
 }

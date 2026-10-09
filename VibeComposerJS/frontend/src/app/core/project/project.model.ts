@@ -184,6 +184,46 @@ export interface ArpeggioGenerationPolicy {
   readonly velocityMax: number;
 }
 
+export interface ChordGenerationPolicy {
+  readonly fills: boolean;
+  readonly patterns: boolean;
+  readonly transpose: boolean;
+  readonly varyLength: boolean;
+  readonly delay: boolean;
+  readonly shiftChance: number;
+  readonly voicesMode: 'NONE' | 'FIXED' | 'AT_MOST';
+  readonly voices: number;
+  readonly voicesChance: number;
+  readonly velocityMin: number;
+  readonly velocityMax: number;
+}
+
+export interface DrumGenerationPolicy {
+  readonly patterns: boolean;
+  readonly fills: boolean;
+  readonly maxSwing: number;
+  readonly randomOffset: boolean;
+  readonly hitsMultiplier: '1' | '1/2' | '3/4' | '3/2' | '2';
+  readonly shiftChance: number;
+}
+
+export interface MelodyGenerationPolicy {
+  readonly rerollSeeds: boolean;
+  readonly sameSeed: boolean;
+  readonly patterns: boolean;
+}
+
+/** Bass uses its audited creation branches without adding legacy policy checkboxes. */
+export interface TrackGenerationPolicies {
+  readonly bass: Readonly<Record<string, never>>;
+  readonly chords: ChordGenerationPolicy;
+  readonly arpeggio: ArpeggioGenerationPolicy;
+  readonly drums: DrumGenerationPolicy;
+  readonly melody: MelodyGenerationPolicy;
+}
+export type TrackGenerationPolicy = TrackGenerationPolicies[ArrangedPart];
+export type TrackGenerationPolicyPatch = Partial<ChordGenerationPolicy & ArpeggioGenerationPolicy & DrumGenerationPolicy & MelodyGenerationPolicy>;
+
 export type CompositionTrack =
   | (TrackBase & { readonly role: 'melody'; readonly generatorSettings: MelodySettings })
   | (TrackBase & { readonly role: 'bass'; readonly generatorSettings: BassSettings })
@@ -213,8 +253,8 @@ export interface CompositionProject {
   readonly mix: Readonly<Record<ArrangedPart, MixChannelSettings>>;
   /** Independent instrument tracks. Legacy role fields above remain for the existing workspace tools. */
   readonly tracks: readonly CompositionTrack[];
-  readonly trackGenerationPolicies?: { readonly arpeggio?: ArpeggioGenerationPolicy };
-  readonly trackRerollCounts?: { readonly arpeggio?: number };
+  readonly trackGenerationPolicies?: Readonly<Partial<TrackGenerationPolicies>>;
+  readonly trackRerollCounts?: Readonly<Partial<Record<ArrangedPart, number>>>;
 }
 
 export const SECTION_TYPES: readonly SectionType[] = [

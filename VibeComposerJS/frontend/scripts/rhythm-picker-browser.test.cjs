@@ -259,6 +259,38 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => document.querySelectorAll('.track-group.drums .track-select').length === 3, 'third drum track');
         result.scoreRowLabels = [...document.querySelectorAll('.score-track-labels .score-track-label')].map(label => label.textContent.trim());
         result.selectedDrumRow = document.querySelector('.score-track-labels .score-track-label.selected')?.textContent.trim();
+        result.otherRoleRerolls = [];
+        for (const role of ['bass', 'chords', 'drums', 'melody']) {
+          const group = document.querySelector('.track-group.' + role);
+          group.querySelector('.group-select').click();
+          await waitFor(() => document.querySelector('#part-inspector [aria-label="' + role + ' track reroll rules"]'), role + ' rules');
+          const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+          const track = read().tracks.find(track => track.role === role);
+          const before = JSON.stringify(track.generatorSettings);
+          const checkbox = group.querySelector('.track-policy-header input[type="checkbox"]');
+          let unchanged = true, synced = true;
+          if (checkbox) {
+            const label = checkbox.getAttribute('aria-label'); checkbox.click();
+            await waitFor(() => document.querySelector('#part-inspector input[aria-label="' + label + '"]').checked === checkbox.checked, role + ' synchronized rules');
+            unchanged = JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) === before;
+            synced = document.querySelector('#part-inspector input[aria-label="' + label + '"]').checked === checkbox.checked;
+            checkbox.click();
+          }
+          group.querySelector('button[aria-label="Lock reroll for ' + track.name + '"]').click();
+          await waitFor(() => group.querySelector('button[aria-label="Reroll ' + track.name + '"]').disabled, role + ' lock');
+          group.querySelector('button[aria-label="Unlock reroll for ' + track.name + '"]').click();
+          await waitFor(() => !group.querySelector('button[aria-label="Reroll ' + track.name + '"]').disabled, role + ' unlock');
+          group.querySelector('button[aria-label="Reroll ' + track.name + '"]').click();
+          await waitFor(() => read().trackRerollCounts?.[role] === 1, role + ' rerolled');
+          result.otherRoleRerolls.push({ role, unchanged, synced, changed: JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) !== before });
+        }
+        const generateGroup = document.querySelector('.track-group.chords');
+        const countInput = generateGroup.querySelector('input[aria-label="Generate chords track count"]');
+        countInput.value = '2'; countInput.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => generateGroup.querySelector('button[aria-label="Generate chords tracks"]').textContent.includes('2'), 'generate count');
+        generateGroup.querySelector('button[aria-label="Generate chords tracks"]').click();
+        await waitFor(() => generateGroup.querySelectorAll('.track-select').length === 3, 'Generate N adds tracks');
+        result.generatedChords = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length;
         document.querySelector('.track-group.drums .track-select').click();
         await waitFor(() => document.querySelector('select[aria-label="Percussion instrument"]')?.value === '38', 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
@@ -327,6 +359,8 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.rerollId, 'track-arpeggio-1');
     assert.deepEqual(actual.rerollDisplayedHits, ['16', '16']);
     assert.equal(actual.rerollAllLocked, true);
+    assert.deepEqual(actual.otherRoleRerolls, ['bass','chords','drums','melody'].map(role => ({ role, unchanged: true, synced: true, changed: true })));
+    assert.equal(actual.generatedChords, 3);
     assert.deepEqual(actual.sharedRoles, [
       { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 2, pause: 0, split: 0, repeat: 0 },
       { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 2, pause: 2, split: 2, repeat: 2 },

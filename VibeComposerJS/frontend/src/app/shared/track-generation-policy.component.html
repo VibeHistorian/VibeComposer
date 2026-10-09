@@ -1,18 +1,27 @@
-<div class="policy-controls" role="group" aria-label="Arpeggio track reroll rules">
+<div class="policy-controls" role="group" [attr.aria-label]="role() + ' track reroll rules'">
   @for (control of controls(); track control.key) {
     <label [class.check-control]="control.minimum === undefined && !control.options">
       <span>{{ control.label }}</span>
       @if (control.options) {
-        <select [attr.aria-label]="'Reroll ' + control.label" [value]="policy()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">
-          @for (option of control.options; track option) { <option [value]="option" [selected]="policy()[control.key] === option">{{ option }}</option> }
+        <select [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">
+          @for (option of control.options; track option) { <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option> }
         </select>
       } @else if (control.minimum !== undefined) {
         <input type="number" [attr.aria-label]="'Reroll ' + control.label" [min]="control.minimum" [max]="control.maximum!" step="1"
-          [value]="policy()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)" />
+          [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)" />
       } @else {
-        <input type="checkbox" [attr.aria-label]="'Reroll ' + control.label" [checked]="policy()[control.key]" [disabled]="inactive(control)"
+        <input type="checkbox" [attr.aria-label]="'Reroll ' + control.label" [checked]="values()[control.key]" [disabled]="inactive(control)"
           (change)="change(control, $event)" />
       }
     </label>
   }
+</div>
+
+@if (role() === 'bass') { <span>Bass rerolls use primary and secondary track creation rules.</span> }
+<div class="generate-tracks">
+  <label>Count<input type="number" [attr.aria-label]="'Generate ' + role() + ' track count'" min="1" max="16" step="1"
+    [value]="generateCount()" [disabled]="disabled()" (change)="changeCount($event)" /></label>
+  <button type="button" [disabled]="disabled() || generateCount() > capacity()"
+    [attr.aria-label]="'Generate ' + role() + ' tracks'" title="Add new generated tracks using these rules; existing tracks remain intact"
+    (click)="generationRequested.emit(generateCount())">Generate {{ generateCount() }}</button>
 </div>

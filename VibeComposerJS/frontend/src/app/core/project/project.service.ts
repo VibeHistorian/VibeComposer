@@ -5,7 +5,7 @@ import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
   MixChannelSettings, PhraseNote, SectionType, PartSettingsPatch, PartSettingsScope, MelodySettings,
   LocalPartSettingsScope, PartWorkflowResult,
-  ArpeggioGenerationPolicy,
+  ArpeggioGenerationPolicy, TrackGenerationPolicyPatch, TrackGenerationPolicies,
 } from './project.model';
 import type { CompositionProject } from './project.model';
 import {
@@ -16,7 +16,8 @@ import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './sect
 import { copyPartSettings, decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 import { isDrumPitch } from '../music/drum-instruments';
-import { DEFAULT_ARPEGGIO_POLICY, decodeArpeggioPolicy, rerollArpeggioSettings, validTrackGenerationMetadata } from '../music/track-generation';
+import { JavaRandom } from '../music/java-random';
+import { DEFAULT_TRACK_POLICIES, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -45,12 +46,17 @@ export class ProjectService {
   }
 
   updateArpeggioPolicy(patch: Partial<ArpeggioGenerationPolicy>): PartWorkflowResult {
+    return this.updateTrackGenerationPolicy('arpeggio', patch);
+  }
+
+  updateTrackGenerationPolicy(role: ArrangedPart, patch: TrackGenerationPolicyPatch): PartWorkflowResult {
+    if (!ARRANGED_PARTS.includes(role)) return 'invalid';
     const current = this.state();
-    const policy = decodeArpeggioPolicy({ ...DEFAULT_ARPEGGIO_POLICY, ...current.trackGenerationPolicies?.arpeggio, ...patch });
+    const previous = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
+    const policy = decodeTrackGenerationPolicy(role, { ...previous, ...patch });
     if (!policy) return 'invalid';
-    const previous = current.trackGenerationPolicies?.arpeggio ?? DEFAULT_ARPEGGIO_POLICY;
-    if (Object.entries(policy).every(([key, value]) => value === previous[key as keyof ArpeggioGenerationPolicy])) return 'unchanged';
-    return this.commitPartWorkflow({ ...current, trackGenerationPolicies: { ...current.trackGenerationPolicies, arpeggio: policy } });
+    if (Object.entries(policy).every(([key, value]) => value === (previous as unknown as Record<string, unknown>)[key])) return 'unchanged';
+    return this.commitPartWorkflow({ ...current, trackGenerationPolicies: { ...current.trackGenerationPolicies, [role]: policy } });
   }
 
   setTrackRerollLock(trackId: string, locked: boolean): void {
@@ -62,22 +68,66 @@ export class ProjectService {
   }
 
   /** Reroll existing global track bases. Local overrides, identity and saved manual notes remain owned. */
-  rerollArpeggioTracks(trackId?: string): PartWorkflowResult {
+  rerollArpeggioTracks(trackId?: string): PartWorkflowResult { return this.rerollRoleTracks('arpeggio', trackId); }
+
+  /** Append explicitly generated tracks in one transaction; never replace existing members. */
+  generateRoleTracks(role: ArrangedPart, amount: number): PartWorkflowResult {
     const current = this.state();
-    const sources = current.tracks.filter((track): track is Extract<CompositionTrack, { role: 'arpeggio' }> =>
-      track.role === 'arpeggio' && !track.rerollLocked && (trackId === undefined || track.id === trackId));
-    if (!sources.length) return 'unchanged';
-    const policy = current.trackGenerationPolicies?.arpeggio ?? DEFAULT_ARPEGGIO_POLICY;
-    const count = current.trackRerollCounts?.arpeggio ?? 0;
+    if (!ARRANGED_PARTS.includes(role) || !Number.isInteger(amount) || amount < 1 || amount > 16
+      || current.tracks.length + amount > 64) return 'invalid';
+    const count = current.trackRerollCounts?.[role] ?? 0;
     if (count >= 2147483647) return 'invalid';
-    const seed = BigInt.asIntN(64, BigInt(current.seed) + 300000n + BigInt(count) * 0x9e3779b97f4a7c15n);
-    const settings = rerollArpeggioSettings(seed, policy, sources.map(track => track.generatorSettings));
+    const tracks = [...current.tracks];
+    const source = tracks.find(track => track.role === role) ?? {
+      ...DEFAULT_TRACKS.find(track => track.role === role)!, generatorSettings: current[role], mix: current.mix[role],
+    } as CompositionTrack;
+    const created: CompositionTrack[] = [];
+    for (let index = 0; index < amount; index++) {
+      const id = this.nextTrackId(tracks, role);
+      const number = Number(id.split('-').at(-1));
+      const track = { ...source, id, name: `${role[0].toUpperCase()}${number}`,
+        midiChannel: role === 'drums' ? 10 : this.nextAvailableChannel(tracks),
+        generatorSettings: copyPartSettings(source.generatorSettings),
+        mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, editedPhrase: undefined } as CompositionTrack;
+      created.push(track); tracks.push(track);
+    }
+    const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
+    const seed = this.trackRerollSeed(current, role, count);
+    const members = tracks.filter(track => track.role === role);
+    const settings = rerollRoleSettings(seed, role, policy, created, created.map(track => members.indexOf(track) + 1));
+    const generated = created.map((track, index) => ({ ...track, generatorSettings: settings[index] } as CompositionTrack));
+    const replacements = new Map(generated.map(track => [track.id, track]));
+    const primary = replacements.get(`track-${role}-1`);
+    const presenceRandom = new JavaRandom(BigInt.asIntN(64, seed ^ 0x50524553454e4345n));
+    return this.commitPartWorkflow({ ...current, tracks: tracks.map(track => replacements.get(track.id) ?? track),
+      [role]: primary?.generatorSettings ?? current[role],
+      arrangement: current.arrangement.map(section => ({ ...section, trackPresence: { ...section.trackPresence,
+        ...generateTrackPresence(generated, this.sectionTypeSettings.chances()[section.type], () => presenceRandom.nextDouble()) } })),
+      trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } });
+  }
+
+  private trackRerollSeed(project: CompositionProject, role: ArrangedPart, count: number): bigint {
+    const offset = { melody: 0n, bass: 100000n, chords: 200000n, arpeggio: 300000n, drums: 400000n }[role];
+    return BigInt.asIntN(64, BigInt(project.seed) + offset + BigInt(count) * 0x9e3779b97f4a7c15n);
+  }
+
+  rerollRoleTracks(role: ArrangedPart, trackId?: string): PartWorkflowResult {
+    if (!ARRANGED_PARTS.includes(role)) return 'invalid';
+    const current = this.state();
+    const roleTracks = current.tracks.filter(track => track.role === role);
+    const sources = roleTracks.filter(track => !track.rerollLocked && (trackId === undefined || track.id === trackId));
+    if (!sources.length) return 'unchanged';
+    const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
+    const count = current.trackRerollCounts?.[role] ?? 0;
+    if (count >= 2147483647) return 'invalid';
+    const seed = this.trackRerollSeed(current, role, count);
+    const settings = rerollRoleSettings(seed, role, policy, sources, sources.map(track => roleTracks.indexOf(track) + 1));
     if (sources.every((track, index) => partPatchesEqual(track.generatorSettings, settings[index]))) return 'unchanged';
-    const replacements = new Map(sources.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] }]));
-    const primary = replacements.get('track-arpeggio-1');
+    const replacements = new Map(sources.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] } as CompositionTrack]));
+    const primary = replacements.get('track-' + role + '-1');
     const next = { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
-      arpeggio: primary?.generatorSettings ?? current.arpeggio,
-      trackRerollCounts: { ...current.trackRerollCounts, arpeggio: count + 1 } };
+      [role]: primary?.generatorSettings ?? current[role],
+      trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
     return this.commitPartWorkflow(next);
   }
 
@@ -781,8 +831,9 @@ export class ProjectService {
       mix,
       tracks,
       arrangement,
-      ...(project.trackGenerationPolicies !== undefined ? { trackGenerationPolicies: project.trackGenerationPolicies.arpeggio
-        ? { arpeggio: decodeArpeggioPolicy(project.trackGenerationPolicies.arpeggio)! } : {} } : {}),
+      ...(project.trackGenerationPolicies !== undefined ? { trackGenerationPolicies: Object.fromEntries(
+        Object.entries(project.trackGenerationPolicies).map(([role, policy]) => [role, decodeTrackGenerationPolicy(role as ArrangedPart, policy)!])
+      ) as Partial<TrackGenerationPolicies> } : {}),
       ...(project.trackRerollCounts !== undefined ? { trackRerollCounts: { ...project.trackRerollCounts } } : {}),
     };
   }

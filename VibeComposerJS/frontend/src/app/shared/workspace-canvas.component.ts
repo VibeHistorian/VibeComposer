@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
-  ArpeggioGenerationPolicy,
+  TrackGenerationPolicyPatch,
 } from '../core/project/project.model';
 import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
@@ -22,7 +22,7 @@ import { PartScopeActionsComponent } from './part-scope-actions.component';
 import { CompactKnobComponent } from './compact-knob.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { TrackGenerationPolicyComponent } from './track-generation-policy.component';
-import { DEFAULT_ARPEGGIO_POLICY } from '../core/music/track-generation';
+import { DEFAULT_TRACK_POLICIES } from '../core/music/track-generation';
 import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
@@ -80,27 +80,36 @@ export class WorkspaceCanvasComponent {
   readonly selectedSectionIds = this.workspaceUi.selectedSectionIds;
   readonly settingsTarget = this.workspaceUi.settingsTarget;
   readonly partPanelExpanded = signal(true);
-  readonly arpeggioPolicy = computed(() => this.project().trackGenerationPolicies?.arpeggio ?? DEFAULT_ARPEGGIO_POLICY);
-  readonly canRerollArpeggios = computed(() => this.project().tracks.some(track => track.role === 'arpeggio' && !track.rerollLocked));
-  private readonly rerollFeedback = signal<{ project: CompositionProject; message: string } | null>(null);
+  private readonly rerollFeedback = signal<{ project: CompositionProject; role: ArrangedPart; message: string } | null>(null);
   readonly rerollMessage = computed(() => this.rerollFeedback()?.project === this.project() ? this.rerollFeedback()?.message : null);
 
-  updateArpeggioPolicy(patch: Partial<ArpeggioGenerationPolicy>): void {
+  policyFor(role: ArrangedPart) { return this.project().trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]; }
+  canRerollRole(role: ArrangedPart): boolean { return this.project().tracks.some(track => track.role === role && !track.rerollLocked); }
+  rerollMessageFor(role: ArrangedPart): string | null | undefined { return this.rerollFeedback()?.role === role ? this.rerollMessage() : null; }
+
+  generateRole(role: ArrangedPart, count: number): void {
     if (this.editing()) return;
-    const result = this.projects.updateArpeggioPolicy(patch);
-    this.rerollFeedback.set({ project: this.project(), message: result === 'invalid'
+    const result = this.projects.generateRoleTracks(role, count);
+    this.rerollFeedback.set({ project: this.project(), role, message: result === 'invalid'
+      ? 'Cannot generate these tracks. Check capacity and local settings.' : `${count} new tracks generated. Existing tracks remain intact.` });
+  }
+
+  updateRolePolicy(role: ArrangedPart, patch: TrackGenerationPolicyPatch): void {
+    if (this.editing()) return;
+    const result = this.projects.updateTrackGenerationPolicy(role, patch);
+    this.rerollFeedback.set({ project: this.project(), role, message: result === 'invalid'
       ? 'Invalid reroll limits. Minimum values must not exceed maximum values.' : 'Reroll rules saved. Press Reroll to change track settings.' });
   }
 
-  rerollArpeggios(trackId?: string): void {
+  rerollRole(role: ArrangedPart, trackId?: string): void {
     if (this.editing()) return;
-    const result = this.projects.rerollArpeggioTracks(trackId);
-    this.rerollFeedback.set({ project: this.project(), message: result === 'invalid'
+    const result = this.projects.rerollRoleTracks(role, trackId);
+    this.rerollFeedback.set({ project: this.project(), role, message: result === 'invalid'
       ? 'Reroll conflicts with local settings. Adjust the rules or local overrides.'
       : result === 'unchanged' ? 'No track settings changed.' : 'Track settings rerolled. Local overrides and saved manual notes remain active.' });
   }
 
-  openArpeggioPolicy(): void { this.selectRole('arpeggio'); this.openInspector(); }
+  openRolePolicy(role: ArrangedPart): void { this.selectRole(role); this.openInspector(); }
   readonly localPartTarget = computed(() => {
     const target = this.settingsTarget();
     return target.kind === 'section-role' || target.kind === 'section-track' ? target : null;

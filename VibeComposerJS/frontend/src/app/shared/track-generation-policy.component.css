@@ -2,7 +2,15 @@
 .policy-controls { display: flex; flex-wrap: wrap; gap: 6px 8px; }
 label { display: grid; gap: 3px; color: var(--text-muted); font: 9px var(--font-ui); }
 .check-control { display: flex; align-items: center; gap: 4px; }
-.check-control input { width: auto; margin: 0; accent-color: var(--role-arpeggio); }
+.check-control input { width: auto; margin: 0; accent-color: var(--text-primary); }
 input, select { box-sizing: border-box; width: 58px; min-width: 0; padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-mono); }
 select { width: 87px; }
 input:disabled, select:disabled { opacity: .5; }
+
+/* Creation guidance */
+span { color: var(--text-muted); font: 9px var(--font-ui); }
+
+/* Track generation action */
+.generate-tracks { display: flex; align-items: end; gap: 6px; margin-top: 6px; }
+button { padding: 4px 6px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-ui); cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
