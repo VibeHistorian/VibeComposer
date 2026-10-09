@@ -1,6 +1,6 @@
 # Contextual controls and melody buildout
 
-Status: implementation in progress, 2026-10-09; P1b's supported block path, P4f single-pitch drums and P4g shared musical controls are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
+Status: implementation in progress, 2026-10-09; P1b's supported block path, P4f single-pitch drums, P4g shared musical controls and P5a bass pattern articulation are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
 
 ### Pre-P5 alignment — required prerequisites (2026-10-09)
 
@@ -221,6 +221,20 @@ The Chromium arrangement regression also passes its page-zoom/device-scale/resiz
 
 UI review: try Bass's alternating versus custom rhythm, then Arpeggio Hits/Span/Repeat and Pause/Split/Swing. Enable Chords/Arpeggio Use voices. Compare the quick panel and inspector; change Offset/Delays and Seed, clear the seed, and toggle track G. Check a section cell versus a track exception, Copy/Freeze/reset, undo/reload and MIDI. P5/P6 role slices can follow this checkpoint after review.
 
+### UI checkpoint 13 — Bass pattern articulation (P5a)
+
+The first bounded P5 role slice adds Bass **Pattern join** to the inspector at global role/track and section role/track scopes. NOJOIN keeps individual subdivisions, EXPAND sustains notes through rests and inserted span slots, and JOIN sustains through consecutive hits while suppressing their retriggers. The port follows `BassPhraseGenerator`'s actual loop, including its boundary suppression, unflipped next-chord lookahead within a span group, fill skips and random draws on silent subdivisions. Note variance uses the resulting sounding duration when deciding whether a chord tone can replace the root. Sustains can cross chord/section boundaries; arrangement length and presence still determine eligible onsets.
+
+The quick panel retains Note variance, Octave interval and the shared rhythm picker. Choosing `alternating` is the translation's existing equivalent of Random Alt. Rhythm; it hides grid/span/velocity-grid and Pattern join controls, retaining their saved values for switching back. Pattern join is advanced and appears only in the inspector. Omitted join mode deliberately resolves to NOJOIN to retain preceding translated output; Java's BassPart default is EXPAND. Explicit choices use Java semantics. No schema gate or migration is added.
+
+All three modes use the existing registry, resolver and commands: mixed groups, sparse resets, track exceptions, Copy/Copy All, Freeze, duplication, one history entry per edit, JSON/session validation and manual-note replacement preservation. Score, playback, editor previews and parsed MIDI use the same generated articulation. Octave interval remains the existing quieter upper-octave wrapper, and pitched transpose/length/timing remain shared processing.
+
+Audit: `BassPanel` does not add its Use Pattern (`useRhythm`) or Melody1 Pattern (`melodyPattern`) checkboxes, and their BassPart getters are used only for panel reload, not generation. They receive no active translated controls. The separate `RhythmPattern.MELODY1` consumer is real but requires a section melody rhythm map and remains a later dependency slice. Java section-type variation seed offsets, transition adjustments, variable chord durations and arrangement variation/velocity scaling are outside this bounded comparison; none is exposed here.
+
+Validation: **120 functional tests pass**, including **432 complete production Java bass phrases** across four exact long/int-overflow seeds, explicit part seeds, C/B/F major and natural minor, all nine supported rhythms, Hits 1/3/4/5/8/10/16/32, Span 1–4, joins, shift/flip, custom grids/velocities/zeros, fills and note variance. These use the current compiled `BassPhraseGenerator`, with documented fixed context in [the fixture instructions](frontend/scripts/java/README.md); they are complete consumer phrases, not helper masks or full-song parity. Scoped history, snapshots, resets, imports/session, manual masking and sustained parsed MIDI are covered. Production build passes with the existing Pixi CommonJS warning. Chromium arrangement regression passes its zoom/device-scale/resize matrix; the production controls regression covers inspector-only join placement, initialized mode, persistence and retained mode when switching alternating/grid rhythm.
+
+UI review: select Bass or B1, choose a grid rhythm and open the inspector. Compare NOJOIN/EXPAND on a sparse grid, then JOIN on FULL; try Span 2–4 and Pattern flip. Edit a section cell and a track exception, Copy/Freeze/reset, undo/reload and export MIDI. The next P5 role slice is Chords strum/transitions; melody-following rhythm and the other role slices remain open.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
@@ -354,7 +368,7 @@ Exit: keyboard/device alternatives, expanded/collapsed layouts, mixed values, in
 
 Port remaining app/playback/device/export preferences separately. Musical settings from ExtraSettingsGUI remain in a later global musical-settings inspector, not automatically in a reroll header. See the deferred inventory. Java-specific soundbanks and device behavior require deliberate Web Audio/Web MIDI equivalents; Wails remains thin.
 
-Remaining order after the recorded checkpoints: **P5/P6 in role slices**, then remaining P7 and P8 work. The supported P1b, P4f and P4g prerequisites are delivered in checkpoints 10–12; their documented advanced exclusions remain in the appropriate later slices.
+Remaining order after the recorded checkpoints: **continue P5/P6 in role slices**, starting with Chords strum/transitions after P5a Bass, then remaining P7 and P8 work. The supported P1b, P4f and P4g prerequisites are delivered in checkpoints 10–12; their documented advanced exclusions remain in the appropriate later slices.
 
 ## Current TypeScript implementation touchpoints
 

@@ -5,6 +5,108 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('bass join modes match 432 complete production Java phrases', () => {
+  const { load } = fixture();
+  const { generateBassline } = load('core/music/bass-generator.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/bass-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 432);
+  for (const [caseIndex, sample] of cases.entries()) {
+    const actual = generateBassline(BigInt(sample.seed), sample.key, sample.scale, sample.progression,
+      sample.settings.rhythm, sample.settings.noteVariation, sample.settings);
+    assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
+    actual.forEach((note, index) => {
+      const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;
+      assert.equal(note.midi, expected[0], `${label} pitch`);
+      assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-10, `${label} onset ${note.startBeat} vs ${expected[1]}`);
+      assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-10, `${label} duration ${note.durationBeats} vs ${expected[2]}`);
+      assert.equal(note.velocity, expected[3], `${label} velocity`);
+    });
+  }
+});
+
+test('bass join articulation resolves at all scopes, persists snapshots and exports sustained MIDI', () => {
+  const { service, settings, phrase, midi, ui, workspace, load } = fixture();
+  const id = 'track-bass-1', track = () => service.project().tracks.find(track => track.id === id);
+  const [first, second] = service.project().arrangement;
+  const global = { kind: 'global-track', trackId: id };
+  const cell = { kind: 'section-role', sectionId: first.id, role: 'bass' };
+  const part = { kind: 'section-track', sectionId: first.id, trackId: id };
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, id, true));
+  service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { rhythm: 'half', hitsPerPattern: 8, noteVariation: 100 });
+  assert.equal(settings.settingsValues(track().generatorSettings, 'bass').patternJoinMode, 'NOJOIN');
+  const subdivisions = phrase.layOutTrackPhrase(service.project(), track());
+  service.updatePartSettings(cell, { patternJoinMode: 'EXPAND' });
+  const expanded = phrase.layOutTrackPhrase(service.project(), track());
+  assert.ok(expanded.some(note => note.startBeat < first.measures * 4 && note.durationBeats === 1));
+  assert.deepEqual(expanded.filter(note => note.startBeat >= first.measures * 4), subdivisions.filter(note => note.startBeat >= first.measures * 4));
+  service.undo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), subdivisions);
+  service.redo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), expanded);
+  service.updatePartSettings(part, { patternJoinMode: 'JOIN', rhythm: 'full' });
+  const joined = phrase.layOutTrackPhrase(service.project(), track());
+  assert.equal(joined.filter(note => note.startBeat < first.measures * 4).length, first.measures);
+  assert.ok(joined.filter(note => note.startBeat < first.measures * 4).every(note => note.durationBeats === 4));
+  const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+  const exported = parsed.tracks.find(candidate => candidate.name === track().name).notes;
+  for (const note of joined) assert.ok(exported.some(candidate => candidate.midi === note.midi
+    && Math.abs(candidate.ticks / parsed.header.ppq - note.startBeat) < 0.003
+    && Math.abs(candidate.durationTicks / parsed.header.ppq - note.durationBeats) < 0.003));
+  service.freezePartSettings(part);
+  assert.equal(service.project().arrangement[0].trackPartOverrides[id].patternJoinMode, 'JOIN');
+  service.applyPartSettingsToSections(part, [second.id], 'overrides');
+  assert.equal(service.project().arrangement[1].trackPartOverrides[id].patternJoinMode, 'JOIN');
+  service.applyPartSettingsToSections(part, [second.id], 'effective');
+  service.updatePartSettings(global, { patternJoinMode: 'EXPAND' });
+  assert.equal(settings.resolvePartTrack(track(), service.project().arrangement[0]).generatorSettings.patternJoinMode, 'JOIN');
+  const duplicate = service.duplicateTrack(id);
+  service.updatePartSettings({ kind: 'section-track', sectionId: first.id, trackId: duplicate }, { patternJoinMode: 'NOJOIN' });
+  ui.selectCell(first.id, 'bass'); assert.equal(workspace.partValues().patternJoinMode, null);
+  const saved = service.exportProjectJson(), beforeImport = phrase.layOutTrackPhrase(service.project(), track());
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(service.project().arrangement[0].trackPartOverrides, JSON.parse(saved).arrangement[0].trackPartOverrides);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), beforeImport);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.project().arrangement[0].trackPartOverrides[id].patternJoinMode, 'JOIN');
+  service.resetPartSettings(part, 'patternJoinMode');
+  assert.equal(settings.resolvePartTrack(track(), service.project().arrangement[0]).generatorSettings.patternJoinMode, 'EXPAND');
+  const manual = [{ id: 'manual-bass', midi: 40, startBeat: 0, durationBeats: 0.75, velocity: 77 }];
+  service.updateTrackPhrase(id, manual); service.updatePartSettings(part, { patternJoinMode: 'JOIN', octaveInterval: true });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+  assert.ok(phrase.layOutTrackPhrase(service.project(), track()).every(note => note.midi === 40 && note.durationBeats === 0.75));
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const editor = new PartSettingsEditorComponent(); editor.role.set('bass'); editor.values.set({ rhythm: 'full' });
+  assert.ok(editor.controls().some(control => control.key === 'patternJoinMode'));
+  editor.advanced.set(false); assert.equal(editor.controls().some(control => control.key === 'patternJoinMode'), false);
+  editor.advanced.set(true); editor.values.set({ rhythm: 'alternating' });
+  assert.equal(editor.controls().some(control => control.key === 'patternJoinMode'), false);
+});
+
+test('bass join validation rejects malformed and wrong-role patches without losing redo', () => {
+  const { service, settings, load } = fixture();
+  const { generateBassline } = load('core/music/bass-generator.ts');
+  const omitted = generateBassline(42n, 'C', 'major', [1, 6, 4, 5], 'half', 100);
+  assert.deepEqual(omitted, generateBassline(42n, 'C', 'major', [1, 6, 4, 5], 'half', 100, { patternJoinMode: 'NOJOIN' }));
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const saved = service.exportProjectJson(), first = service.project().arrangement[0];
+  for (const value of ['expand', 'LEGATO', false, 1, null]) {
+    const patch = { patternJoinMode: value };
+    for (const scope of [{ kind: 'global-role', role: 'bass' }, { kind: 'global-track', trackId: 'track-bass-1' },
+      { kind: 'section-role', sectionId: first.id, role: 'bass' }, { kind: 'section-track', sectionId: first.id, trackId: 'track-bass-1' }]) {
+      service.updatePartSettings(scope, patch);
+    }
+    assert.throws(() => generateBassline(42n, 'C', 'major', [1], 'full', 0, patch), RangeError);
+    for (const location of ['track', 'role', 'section-role', 'section-track']) {
+      const project = JSON.parse(saved);
+      if (location === 'track') Object.assign(project.tracks.find(track => track.role === 'bass').generatorSettings, patch);
+      if (location === 'role') Object.assign(project.bass, patch);
+      if (location === 'section-role') project.arrangement[0].rolePartOverrides = { bass: patch };
+      if (location === 'section-track') project.arrangement[0].trackPartOverrides = { 'track-bass-1': patch };
+      assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+    }
+  }
+  for (const role of ['melody', 'chords', 'arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, { patternJoinMode: 'JOIN' }), undefined);
+  assert.equal(service.exportProjectJson(), saved); assert.equal(service.canRedo(), true);
+});
+
 test('shared drum controls match 96 complete Java phrases with spans, pauses, split hits and extreme swing', () => {
   const { load } = fixture();
   const { generateDrumPart } = load('core/music/drum-generator.ts');

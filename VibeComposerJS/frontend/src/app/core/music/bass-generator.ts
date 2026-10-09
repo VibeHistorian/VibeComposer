@@ -1,7 +1,7 @@
 import { getDiatonicChords, getPitchClass } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
-import type { BassRhythm, CommonPartSettings } from '../project/project.model';
+import type { BassRhythm, BassSettings } from '../project/project.model';
 import { decodePartPatch, velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
 import { effectivePartSeed, spannedPattern, spannedVelocities } from './part-processing';
@@ -30,7 +30,7 @@ export function generateBassline(
   progression: readonly number[],
   rhythm: BassRhythm,
   noteVariation: number,
-  settings: CommonPartSettings = {},
+  settings: Partial<BassSettings> = {},
 ): BassNoteEvent[] {
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100
@@ -77,13 +77,20 @@ export function generateBassline(
   const [velocityMin, velocityMax] = velocityBounds(settings);
   const fill = partFillMask(triads.length, settings);
   let chordStart = 0;
+  let skipNotes = 0;
+  const joinMode = settings.patternJoinMode ?? 'NOJOIN';
+  const stretchedByNote = joinMode === 'JOIN' ? 1 : 0;
 
   for (let chordIndex = 0; chordIndex < triads.length; chordIndex++) {
     // Java bass skips the entire chord before consuming its shared dynamics/variation streams.
-    if (!fill[chordIndex]) { chordStart += BEATS_PER_CHORD; continue; }
+    if (!fill[chordIndex]) { skipNotes = 0; chordStart += BEATS_PER_CHORD; continue; }
     const gridSettings = { ...settings, rhythm: rhythm === 'alternating' ? 'full' as const : rhythm };
     const grid = rhythm === 'alternating' ? undefined : spannedPattern(gridSettings, chordIndex);
     const velocities = rhythm === 'alternating' ? undefined : spannedVelocities(gridSettings, chordIndex);
+    // Java's lookahead deliberately uses the next slice before Pattern flip, independently of Fill.
+    const span = settings.chordSpan ?? 1;
+    const nextGrid = grid && joinMode !== 'NOJOIN' && chordIndex % span < span - 1
+      ? spannedPattern({ ...gridSettings, patternFlip: false }, chordIndex + 1) : undefined;
     const durations = rhythm === 'alternating'
       ? makeAlternatingDurations(
         BigInt.asIntN(32, partSeed + BigInt(chordIndex % 2)),
@@ -91,14 +98,33 @@ export function generateBassline(
       )
       : Array(grid!.length).fill(BEATS_PER_CHORD / grid!.length) as number[];
     let noteStart = chordStart;
+    let nextP = -1;
 
     for (let noteIndex = 0; noteIndex < durations.length; noteIndex++) {
       const duration = durations[noteIndex];
       const velocity = velocities ? velocities[noteIndex % velocities.length] : dynamics.nextInt(velocityMax - velocityMin + 1) + velocityMin;
-      const isActive = rhythm === 'alternating' || grid![noteIndex] > 0;
+      const isActive = rhythm === 'alternating' || (grid![noteIndex] > 0
+        && !(noteIndex <= nextP && stretchedByNote === 1) && skipNotes === 0);
+      if (grid && skipNotes > 0) skipNotes--;
+      let durationMultiplier = 1;
+      if (grid && joinMode !== 'NOJOIN' && grid[noteIndex] > 0 && noteIndex >= nextP) {
+        nextP = noteIndex + 1;
+        while (nextP < grid.length) {
+          if (noteStart - chordStart + duration * durationMultiplier > BEATS_PER_CHORD) break;
+          if (Math.sign(grid[nextP]) !== stretchedByNote && grid[nextP] !== -1) break;
+          durationMultiplier++;
+          nextP++;
+        }
+      }
+      if (grid && nextP >= grid.length && nextGrid) {
+        skipNotes = 0;
+        while (skipNotes < nextGrid.length && (nextGrid[skipNotes] === stretchedByNote || nextGrid[skipNotes] === -1)) skipNotes++;
+        durationMultiplier += skipNotes;
+      }
+      const soundingDuration = duration * durationMultiplier;
       let pitch = triads[chordIndex][0];
 
-      if (isActive && noteIndex > 0 && duration < QUARTER + 1e-9
+      if (isActive && noteIndex > 0 && soundingDuration < QUARTER + 1e-9
           && noteVariationRandom.nextInt(100) < noteVariation) {
         pitch = triads[chordIndex][noteVariationRandom.nextInt(triads[chordIndex].length - 1) + 1];
       }
@@ -107,7 +133,7 @@ export function generateBassline(
         events.push({
           midi: pitch,
           startBeat: noteStart,
-          durationBeats: duration,
+          durationBeats: soundingDuration,
           velocity,
           chordIndex,
         });

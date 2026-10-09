@@ -132,7 +132,7 @@
               <span class="part-inheritance">Select a group cell or track button to view its part settings.</span>
             }
             @for (item of editableScopes(); track item.key) {
-              <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
+              <vc-part-settings-editor [role]="partRole()" [values]="partValues()" [advanced]="false" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
                 (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
             }
           </div>

@@ -82,6 +82,8 @@ export interface MelodySettings extends CommonPartSettings {
 
 export interface BassSettings extends CommonPartSettings {
   readonly rhythm: BassRhythm;
+  /** Omission preserves the translated subdivision path; Java's part default is EXPAND. */
+  readonly patternJoinMode?: 'NOJOIN' | 'EXPAND' | 'JOIN';
   /** Chance, in percent, of choosing a chord tone instead of its root. */
   readonly noteVariation: number;
   /** Add a quieter note one octave above each generated bass note. */

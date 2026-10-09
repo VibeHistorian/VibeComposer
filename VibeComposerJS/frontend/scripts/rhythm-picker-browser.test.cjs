@@ -183,6 +183,20 @@ test('production Angular controls initialize selects from settings and support r
             split: document.querySelectorAll('input[aria-label="Split"]').length,
             repeat: document.querySelectorAll('input[aria-label="Repeat"]').length });
         }
+        document.querySelector('.track-group.bass .group-select').click();
+        const bassJoin = await waitFor(() => document.querySelector('select[aria-label="Pattern join"]'), 'bass advanced join');
+        result.bassJoinInitial = bassJoin.value;
+        result.bassJoinOptions = [...bassJoin.options].map(option => option.value);
+        result.bassJoinInspectorOnly = document.querySelectorAll('select[aria-label="Pattern join"]').length === 1
+          && !!bassJoin.closest('#part-inspector');
+        bassJoin.value = 'JOIN'; bassJoin.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).bass.patternJoinMode === 'JOIN', 'persisted bass join');
+        result.bassJoinSaved = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'bass').generatorSettings.patternJoinMode;
+        const bassRhythm = document.querySelector('select[aria-label="Rhythm pattern"]');
+        bassRhythm.value = 'alternating'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => !document.querySelector('select[aria-label="Pattern join"]'), 'alternating hides join');
+        bassRhythm.value = 'custom'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
+        result.bassJoinRetained = (await waitFor(() => document.querySelector('select[aria-label="Pattern join"]'), 'grid restores join')).value;
         document.querySelector('.track-group.drums .track-select').click();
         const drumPitch = await waitFor(() => document.querySelector('select[aria-label="Percussion instrument"]'), 'drum pitch picker');
         result.initialDrumPitch = drumPitch.value;
@@ -270,6 +284,11 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.recreatedSelection, ['73', '4']);
     assert.deepEqual(actual.mixerSelections, [['73', '4'], ['33', '1'], ['0', '2'], ['11', '3'], ['36', '10']]);
     assert.equal(actual.initialDrumPitch, '36');
+    assert.equal(actual.bassJoinInitial, 'NOJOIN');
+    assert.deepEqual(actual.bassJoinOptions, ['NOJOIN', 'EXPAND', 'JOIN']);
+    assert.equal(actual.bassJoinInspectorOnly, true);
+    assert.equal(actual.bassJoinSaved, 'JOIN');
+    assert.equal(actual.bassJoinRetained, 'JOIN');
     assert.deepEqual(actual.sharedRoles, [
       { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 2, pause: 0, split: 0, repeat: 0 },
       { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 2, pause: 2, split: 2, repeat: 2 },

@@ -19,6 +19,7 @@ export interface PartControl {
   readonly description?: string;
   /** Opt in when a numeric value is too long for the knob's center. */
   readonly showValueBelow?: boolean;
+  readonly advanced?: boolean;
 }
 
 const number = (key: string, label: string, minimum: number, maximum: number, defaultValue?: number, unit = '%'): PartControl =>
@@ -91,7 +92,9 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     number('noteLengthMultiplier', 'Note length', 25, 200, 100),
     ...common],
   bass: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: BASS_RHYTHMS } : control), span,
-    number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
+    number('noteVariation', 'Note variance', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
+    { ...choice('patternJoinMode', 'Pattern join', ['NOJOIN', 'EXPAND', 'JOIN']), defaultValue: 'NOJOIN', advanced: true,
+      description: 'Grid rhythms only. NOJOIN keeps subdivisions; EXPAND sustains through rests; JOIN sustains through consecutive hits and suppresses their retriggers. Java also looks into the next chord within a Span group, before its flip/fill. Omission retains NOJOIN in this translation.' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
   chords: [...fill, ...rhythmControls, span, pause, swing, ...voices,
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 200), ...pitched, ...common],

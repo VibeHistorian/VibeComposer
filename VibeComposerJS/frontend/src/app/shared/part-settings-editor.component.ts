@@ -21,12 +21,14 @@ export class PartSettingsEditorComponent {
   readonly values = input.required<Readonly<Record<string, PartSettingValue | null>>>();
   readonly overriddenKeys = input<readonly string[]>([]);
   readonly local = input(false);
+  readonly advanced = input(true);
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
   readonly inheritRequested = output<string>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
+    (!control.advanced || this.advanced()) &&
     (!(this.role() === 'bass' && this.values()['rhythm'] === 'alternating')
-      || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities'].includes(control.key))
+      || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities', 'patternJoinMode'].includes(control.key))
     &&
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
     && (control.key !== 'customPattern' || this.values()['rhythm'] === 'custom')
