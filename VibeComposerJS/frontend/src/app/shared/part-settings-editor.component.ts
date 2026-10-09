@@ -16,12 +16,14 @@ import { ControlHeadingComponent, type ControlInheritance } from './control-head
   styleUrl: './part-settings-editor.component.css',
 })
 export class PartSettingsEditorComponent {
+  readonly emptyAllowedValues: readonly number[] = [];
   readonly role = input.required<ArrangedPart>();
   readonly values = input.required<Readonly<Record<string, PartSettingValue | null>>>();
   readonly overriddenKeys = input<readonly string[]>([]);
   readonly local = input(false);
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
   readonly inheritRequested = output<string>();
+  private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
     && (control.key !== 'customPattern' || this.values()['rhythm'] === 'custom')
@@ -84,6 +86,36 @@ export class PartSettingsEditorComponent {
     const value = (event.target as HTMLSelectElement).value;
     if (value === '') return;
     this.settingsChanged.emit({ key: control.key, value: typeof control.options?.[0] === 'number' ? Number(value) : value });
+  }
+
+  textValue(control: PartControl): string {
+    const value = this.values()[control.key];
+    return value === null ? '' : Array.isArray(value) ? value.join(', ') : String(value ?? control.defaultValue ?? '');
+  }
+
+  startTextEdit(): void { this.textEditValues = this.values(); }
+
+  cancelTextEdit(control: PartControl, event: Event): void {
+    const element = event.target as HTMLInputElement;
+    element.value = this.textValue(control);
+    element.setCustomValidity('');
+    this.textEditValues = null;
+  }
+
+  commitText(control: PartControl, event: Event): void {
+    const element = event.target as HTMLInputElement;
+    if (this.textEditValues && this.textEditValues !== this.values()) { this.cancelTextEdit(control, event); return; }
+    const pieces = control.kind === 'integers' ? element.value.split(',').map((piece) => piece.trim()) : [element.value.trim()];
+    const valid = pieces.length >= 1 && pieces.length <= 32 && pieces.every((piece) => /^-?\d+$/.test(piece)
+      && Number.isSafeInteger(Number(piece)) && Number(piece) >= control.minimum! && Number(piece) <= control.maximum!);
+    if (!valid) {
+      element.setCustomValidity(control.kind === 'integers' ? `Enter 1–32 comma-separated integers from ${control.minimum} to ${control.maximum}.`
+        : `Enter an integer from ${control.minimum} to ${control.maximum}.`);
+      element.reportValidity(); return;
+    }
+    element.setCustomValidity('');
+    this.textEditValues = null;
+    this.settingsChanged.emit({ key: control.key, value: control.kind === 'integers' ? pieces.map(Number) : Number(pieces[0]) });
   }
 
   useFullGrid(): void {

@@ -1,5 +1,16 @@
 # Java pattern fixtures
 
+`MelodyCoreFixture.java` supplies `../fixtures/melody-core.java.json`: **80 complete supported melody phrases**, rather than helper-only masks. It invokes the current production `MelodyGenerator`, `MelodyBlockSkeletonGenerator`, `MelodyExpansion` and `MelodyPhraseBuilder`, including production swing and note-length preparation. It covers four seeds (including exact longs above JavaScript's safe range and int overflow), seed offsets, explicit part seeds, four keys, major/natural minor, 1/3/4/7/8 chord slots, speed -100/0/50/100, repeated/inverted/zero block identities, target lists, Flex, Max Block Change, Block Jump, pauses/fill, accents, swing and length. TypeScript compares pitch/dynamics exactly and beat timing/duration within 1e-10.
+
+The supported P1b configuration fixes New Blocks to 100%, tonic-relative target mode 2, rhythm+notes pattern effect 2 and maximum direction changes 2. Doubled rhythm, note exceptions, splitting/leading, arpy surprises, key emphasis, target percentages, custom durations, avoid-note replacement, transitions, section variations and arrangement velocity scaling are disabled; Start% is 100 and Fill Pauses Per Chord is false. It supplies root-only progression inputs, so chord-driven minor-chord remapping/inference is outside this comparison. Extended configurations remain P5. The Java melody role's seed offset is zero and orderOffset is 1; secondary TypeScript tracks continue using the existing stable-ID seed derivation once, before the Java int narrowing.
+
+Compile the Java app's **current production sources** first (`mvn -DskipTests compile` from `midimasterpiece`), then regenerate from the repository root. `target/classes` precedes the dependency JAR so its older bundled generator classes cannot supply the oracle. The fixture disables logging and emits ASCII-safe JSON for Windows console encoding.
+
+```powershell
+& 'C:/Java/jdk-24.0.2/bin/javac.exe' -encoding UTF-8 -cp 'midimasterpiece/target/classes;midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar' -d VibeComposerJS/frontend/.angular/melody-fixtures VibeComposerJS/frontend/scripts/java/MelodyCoreFixture.java
+& 'C:/Java/jdk-24.0.2/bin/java.exe' '-Djava.awt.headless=true' -cp 'VibeComposerJS/frontend/.angular/melody-fixtures;midimasterpiece/target/classes;midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar' org.vibehistorian.vibecomposer.generation.MelodyCoreFixture | Set-Content -Encoding utf8 VibeComposerJS/frontend/scripts/fixtures/melody-core.java.json
+```
+
 `VelocityPatternFixture.java` supplies `../fixtures/velocity-pattern.java.json`: 84 cases across four 32-cell velocity grids, seven Hits values and three shifts. It uses production `ChordPart`/`InstPart` storage and `MidiGeneratorUtils.multiplyVelocity` with 100% volume. Its selection loop mirrors the audited `ChordPhraseGenerator` loop (first Hits entries, no rhythm Shift/Flip). This validates stored velocity selection and unscaled zero handling, not full phrase generation.
 
 ```powershell

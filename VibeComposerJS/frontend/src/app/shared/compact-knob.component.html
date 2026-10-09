@@ -4,7 +4,7 @@
   @if (showValueBelow()) {
     <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : formattedValue() }}</output>
   }
-  <input [id]="heading.controlId" type="range" [min]="minimum()" [max]="maximum()" [step]="step()" [value]="value()"
+  <input [id]="heading.controlId" type="range" [min]="sliderMinimum()" [max]="sliderMaximum()" [step]="sliderStep()" [value]="sliderValue()"
     [attr.aria-label]="label()" [attr.aria-valuetext]="mixed() && preview() === null ? 'Mixed' : accessibleValue()"
     (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)" (pointerup)="finishDrag($event)"
     (pointercancel)="cancelDrag()" (lostpointercapture)="cancelDrag()" (keydown.escape)="cancelDrag()"

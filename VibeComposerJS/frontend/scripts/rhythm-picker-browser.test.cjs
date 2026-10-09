@@ -111,6 +111,26 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
         velocitySwitches[0].click();
         await waitFor(() => document.querySelector('.velocity-pattern-grid input')?.value === '22', 'velocity grids restored');
         result.velocitiesEnabled = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.useCustomVelocities;
+        document.querySelector('.track-group.melody .group-select').click();
+        const targets = await waitFor(() => {
+          const inputs = [...document.querySelectorAll('input[aria-label="Note targets"]')];
+          return inputs.length === 2 ? inputs : null;
+        }, 'melody minimum editors');
+        result.melodyInitialTargets = targets.map(input => input.value);
+        targets[0].focus(); targets[0].value = '0, 4, -2';
+        targets[0].dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => targets.every(input => input.value === '0, 4, -2'), 'shared melody target commit');
+        const structure = document.querySelector('input[aria-label="Block structure"]');
+        structure.focus(); structure.value = '1, -1, 2';
+        structure.dispatchEvent(new Event('change', { bubbles: true }));
+        const transpose = document.querySelector('input[aria-label="Transpose"]');
+        wheel(transpose, -100, true);
+        await waitFor(() => transpose.getAttribute('aria-valuetext') === '5 st', 'melody discrete transpose');
+        wheel(transpose, -100, true);
+        await waitFor(() => transpose.getAttribute('aria-valuetext') === '7 st', 'melody next discrete transpose');
+        result.melody = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).melody;
+        result.melodyHasSpeed = document.querySelectorAll('input[aria-label="Speed"]').length;
+        result.melodyHasAccent = document.querySelectorAll('input[aria-label="Accent"]').length;
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
         await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message }) });
@@ -181,6 +201,12 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
     assert.deepEqual(actual.retainedVelocities, actual.customVelocities);
     assert.equal(actual.randomBoundsHidden, true);
     assert.equal(actual.velocitiesEnabled, true);
+    assert.deepEqual(actual.melodyInitialTargets, ['0, 2, 2, 4', '0, 2, 2, 4']);
+    assert.deepEqual(actual.melody.chordNoteChoices, [0, 4, -2]);
+    assert.deepEqual(actual.melody.melodyPatternOffsets, [1, -1, 2]);
+    assert.equal(actual.melody.transpose, 7);
+    assert.equal(actual.melodyHasSpeed, 2);
+    assert.equal(actual.melodyHasAccent, 2);
   } finally {
     clearTimeout(timeout); child.kill(); server.close();
     // Remove only the fresh profile created by this test after Chromium exits.

@@ -5,6 +5,7 @@
         <vc-compact-knob [value]="numericValue(control)" [mixed]="values()[control.key] === null"
           [minimum]="minimum(control)" [maximum]="maximum(control)"
           [step]="control.step ?? 1"
+          [allowedValues]="control.allowedValues ?? emptyAllowedValues"
           [label]="control.label" [unit]="control.unit ?? ''"
           [showValueBelow]="control.showValueBelow ?? false" [inheritance]="inheritanceFor(control)"
           (inheritRequested)="inheritRequested.emit(control.key)"
@@ -12,7 +13,12 @@
       } @else {
         <vc-control-heading #heading [label]="control.label" [inheritance]="inheritanceFor(control)"
           (inheritRequested)="inheritRequested.emit(control.key)" />
-        @if (control.kind === 'choice') {
+        @if (control.kind === 'integers' || control.kind === 'integer') {
+          <input [id]="heading.controlId" class="part-list" type="text" [value]="textValue(control)"
+            [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
+            (focus)="startTextEdit()" (change)="commitText(control, $event)"
+            (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
+        } @else if (control.kind === 'choice') {
           <select [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (change)="choose(control, $event)">
             @if (values()[control.key] === null) { <option value="" disabled [selected]="true">Mixed</option> }
             @for (option of control.options; track option) {

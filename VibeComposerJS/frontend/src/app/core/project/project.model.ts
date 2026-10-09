@@ -43,9 +43,21 @@ export interface CommonPartSettings {
   readonly velocityMax?: number;
 }
 
-/** Fixed current-algorithm identity; musical controls arrive with the block generator. */
+/** Minimum supported current block-generation inputs; advanced options are staged separately. */
 export interface MelodySettings extends CommonPartSettings {
   readonly algorithm: 'block';
+  readonly speed?: number;
+  readonly fillPauses?: boolean;
+  readonly chordNoteChoices?: readonly number[];
+  readonly melodyPatternOffsets?: readonly number[];
+  readonly maxBlockChange?: number;
+  readonly blockJump?: number;
+  readonly patternFlexible?: boolean;
+  readonly pauseChance?: number;
+  readonly swingPercent?: number;
+  readonly accents?: number;
+  /** Java int part seed; zero follows the project's exact long seed narrowed at generation. */
+  readonly patternSeed?: number;
 }
 
 export interface BassSettings extends CommonPartSettings {
@@ -160,9 +172,9 @@ export const SECTION_TYPES: readonly SectionType[] = [
 /** Explicit Java group correspondence, independent of track IDs and seed derivation. */
 export const PART_TYPES: Readonly<Record<ArrangedPart, number>> = { melody: 0, bass: 1, chords: 2, arpeggio: 3, drums: 4 };
 export const ARRANGED_PARTS: readonly ArrangedPart[] = ['melody', 'bass', 'chords', 'arpeggio', 'drums'];
-/** The melody role shell is usable for note editing; automatic block generation is a later slice. */
+/** All five roles have active phrase consumers. */
 export const PART_GENERATION_AVAILABLE: Readonly<Record<ArrangedPart, boolean>> = {
-  melody: false, bass: true, chords: true, arpeggio: true, drums: true,
+  melody: true, bass: true, chords: true, arpeggio: true, drums: true,
 };
 
 export function tracksInRoleOrder<T extends { readonly role: ArrangedPart }>(tracks: readonly T[]): T[] {

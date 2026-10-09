@@ -14,6 +14,7 @@ export class CompactKnobComponent {
   readonly minimum = input.required<number>();
   readonly maximum = input.required<number>();
   readonly step = input(1);
+  readonly allowedValues = input<readonly number[]>([]);
   readonly label = input.required<string>();
   readonly unit = input('%');
   readonly mixed = input(false);
@@ -29,7 +30,13 @@ export class CompactKnobComponent {
   readonly formattedValue = computed(() => this.valueFormat() === 'pan' ? panLabel(this.shownValue())
     : this.valueFormat() === 'decibels' ? volumeDecibels(this.shownValue()) : this.shownValue() + this.unit());
   readonly accessibleValue = computed(() => this.formattedValue() + (this.valueFormat() === 'decibels' ? ' dB' : ''));
-  private drag: { pointerId: number; y: number; value: number; minimum: number; maximum: number; step: number } | null = null;
+  private drag: { pointerId: number; y: number; value: number; minimum: number; maximum: number; step: number;
+    allowedValues: readonly number[] } | null = null;
+  readonly sliderMinimum = computed(() => this.allowedValues().length ? 0 : this.minimum());
+  readonly sliderMaximum = computed(() => this.allowedValues().length ? this.allowedValues().length - 1 : this.maximum());
+  readonly sliderStep = computed(() => this.allowedValues().length ? 1 : this.step());
+  readonly sliderValue = computed(() => this.allowedValues().length
+    ? this.allowedValues().indexOf(this.snap(this.value())) : this.value());
   readonly angle = computed(() => {
     const span = this.maximum() - this.minimum();
     const progress = span > 0 ? (this.shownValue() - this.minimum()) / span : 0;
@@ -37,16 +44,16 @@ export class CompactKnobComponent {
   });
 
   previewValue(event: Event): void {
-    this.setPreview(Number((event.target as HTMLInputElement).value));
+    this.setPreview(this.fromSlider(Number((event.target as HTMLInputElement).value)));
   }
 
   commitValue(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const value = Number(input.value);
+    const value = this.fromSlider(Number(input.value));
     if (Number.isFinite(value)) this.valueCommit.emit(value);
     this.preview.set(null);
     // A rejected commit may leave the bound value unchanged; restore the native slider as well.
-    input.value = String(this.value());
+    input.value = String(this.sliderValue());
   }
 
   tooltip(): string {
@@ -60,15 +67,24 @@ export class CompactKnobComponent {
   }
 
   private snap(value: number): number {
+    if (this.allowedValues().length) return this.allowedValues().reduce((closest, candidate) =>
+      Math.abs(candidate - value) < Math.abs(closest - value) ? candidate : closest);
     return Math.max(this.minimum(), Math.min(this.maximum(),
       this.minimum() + Math.round((value - this.minimum()) / this.step()) * this.step()));
+  }
+
+  private fromSlider(value: number): number {
+    return this.allowedValues().length ? this.allowedValues()[value] ?? this.value() : value;
   }
 
   onWheel(event: WheelEvent): void {
     if (event.ctrlKey || event.metaKey || event.deltaY === 0 || this.drag) return;
     event.preventDefault(); event.stopPropagation();
     const increment = event.shiftKey ? this.step() : Math.max(this.step(), Math.floor((this.maximum() - this.minimum()) / 20 / this.step()) * this.step());
-    const value = this.snap(this.value() + (event.deltaY < 0 ? increment : -increment));
+    const direction = event.deltaY < 0 ? 1 : -1;
+    const allowed = this.allowedValues();
+    const value = allowed.length ? allowed[Math.max(0, Math.min(allowed.length - 1,
+      allowed.indexOf(this.snap(this.value())) + direction))] : this.snap(this.value() + direction * increment);
     if (value !== this.value()) this.valueCommit.emit(value);
   }
 
@@ -78,7 +94,7 @@ export class CompactKnobComponent {
     const control = event.currentTarget as HTMLInputElement;
     control.focus(); control.setPointerCapture(event.pointerId);
     this.drag = { pointerId: event.pointerId, y: event.clientY, value: this.value(),
-      minimum: this.minimum(), maximum: this.maximum(), step: this.step() };
+      minimum: this.minimum(), maximum: this.maximum(), step: this.step(), allowedValues: this.allowedValues() };
   }
 
   moveDrag(event: PointerEvent): void {
@@ -100,7 +116,8 @@ export class CompactKnobComponent {
 
   private dragStillValid(): boolean {
     return !!this.drag && this.drag.value === this.value() && this.drag.minimum === this.minimum()
-      && this.drag.maximum === this.maximum() && this.drag.step === this.step();
+      && this.drag.maximum === this.maximum() && this.drag.step === this.step()
+      && this.drag.allowedValues === this.allowedValues();
   }
 
   cancelDrag(): void {

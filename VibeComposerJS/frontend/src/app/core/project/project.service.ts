@@ -12,7 +12,7 @@ import {
   DEFAULT_DRUM_SETTINGS, DEFAULT_MELODY_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_TRACKS, SECTION_TYPES,
 } from './project.model';
 import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './section-type-settings.service';
-import { decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
+import { copyPartSettings, decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
@@ -157,7 +157,7 @@ export class ProjectService {
       if (!destinations.has(section.id)) return section;
       if (mode === 'overrides' && scope.kind === 'section-role') {
         const previous = section.rolePartOverrides?.[scope.role];
-        const patch = { ...previous, ...sourcePatch };
+        const patch = copyPartSettings({ ...previous, ...sourcePatch });
         if (partPatchesEqual(previous, patch)) return section;
         changed = true;
         return { ...section, rolePartOverrides: { ...section.rolePartOverrides, [scope.role]: patch } };
@@ -166,13 +166,13 @@ export class ProjectService {
       let sectionChanged = false;
       if (mode === 'overrides' && scope.kind === 'section-track') {
         const previous = trackPartOverrides[scope.trackId];
-        const patch = { ...previous, ...sourcePatch };
+        const patch = copyPartSettings({ ...previous, ...sourcePatch });
         sectionChanged = !partPatchesEqual(previous, patch);
         trackPartOverrides[scope.trackId] = patch;
       } else {
         for (const snapshot of snapshots) {
           if (!partPatchesEqual(trackPartOverrides[snapshot.id], snapshot.patch)) sectionChanged = true;
-          trackPartOverrides[snapshot.id] = { ...snapshot.patch };
+          trackPartOverrides[snapshot.id] = copyPartSettings(snapshot.patch);
         }
       }
       if (!sectionChanged) return section;
@@ -311,7 +311,7 @@ export class ProjectService {
     const channel = role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
     const track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
-      generatorSettings: { ...source.generatorSettings },
+      generatorSettings: copyPartSettings(source.generatorSettings),
       editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
     const arrangement = current.arrangement.map((section) => ({
       ...section,
@@ -331,7 +331,7 @@ export class ProjectService {
     const channel = source.role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
     const duplicate = { ...source, id, name: `${source.name} copy`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
-      generatorSettings: { ...source.generatorSettings },
+      generatorSettings: copyPartSettings(source.generatorSettings),
       editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
     const tracks = [...current.tracks];
     tracks.splice(sourceIndex + 1, 0, duplicate);
@@ -339,7 +339,7 @@ export class ProjectService {
       ...section,
       trackPresence: { ...section.trackPresence, [id]: section.trackPresence[source.id] ?? false },
       trackPartOverrides: section.trackPartOverrides?.[source.id]
-        ? { ...section.trackPartOverrides, [id]: { ...section.trackPartOverrides[source.id] } } : section.trackPartOverrides,
+        ? { ...section.trackPartOverrides, [id]: copyPartSettings(section.trackPartOverrides[source.id]) } : section.trackPartOverrides,
     })) });
     return id;
   }
@@ -471,8 +471,8 @@ export class ProjectService {
       ...sections[index], id: `section-${nextId}`,
       chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
       trackPresence: { ...sections[index].trackPresence },
-      rolePartOverrides: Object.fromEntries(Object.entries(sections[index].rolePartOverrides ?? {}).map(([role, patch]) => [role, { ...patch }])),
-      trackPartOverrides: Object.fromEntries(Object.entries(sections[index].trackPartOverrides ?? {}).map(([id, patch]) => [id, { ...patch }])),
+      rolePartOverrides: Object.fromEntries(Object.entries(sections[index].rolePartOverrides ?? {}).map(([role, patch]) => [role, copyPartSettings(patch)])),
+      trackPartOverrides: Object.fromEntries(Object.entries(sections[index].trackPartOverrides ?? {}).map(([id, patch]) => [id, copyPartSettings(patch)])),
     });
     this.commit({ ...this.state(), arrangement: next });
   }
@@ -972,8 +972,10 @@ export class ProjectService {
 
   private decodeMelody(value: unknown): MelodySettings | undefined {
     if (!value || typeof value !== 'object' || Array.isArray(value)
-        || (value as MelodySettings).algorithm !== 'block' || Object.keys(value).some((key) => key !== 'algorithm')) return undefined;
-    return { algorithm: 'block' };
+        || (value as MelodySettings).algorithm !== 'block') return undefined;
+    const { algorithm, ...fields } = value as MelodySettings;
+    const decoded = decodePartPatch('melody', fields);
+    return decoded && validVelocityRange(decoded, 'melody') ? { algorithm, ...decoded } : undefined;
   }
 
   private decodeBass(value: unknown): BassSettings | undefined {

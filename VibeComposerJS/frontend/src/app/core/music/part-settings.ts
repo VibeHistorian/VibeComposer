@@ -8,10 +8,11 @@ export type PartSettingValue = string | number | boolean | readonly number[];
 export interface PartControl {
   readonly key: string;
   readonly label: string;
-  readonly kind: 'number' | 'choice' | 'boolean' | 'pattern' | 'velocities';
+  readonly kind: 'number' | 'integer' | 'integers' | 'choice' | 'boolean' | 'pattern' | 'velocities';
   readonly minimum?: number;
   readonly maximum?: number;
   readonly step?: number;
+  readonly allowedValues?: readonly number[];
   readonly unit?: string;
   readonly options?: readonly (string | number)[];
   readonly defaultValue?: PartSettingValue;
@@ -32,9 +33,28 @@ const fill: readonly PartControl[] = [
 const pitched: readonly PartControl[] = [{ ...number('transpose', 'Transpose', -36, 36, 0, ' st'), step: 12 },
   number('velocityMin', 'Min velocity', 1, 127, 69, ''), number('velocityMax', 'Max velocity', 1, 127, 89, '')];
 
+export const MELODY_TRANSPOSES: readonly number[] = Object.freeze(Array.from({ length: 7 }, (_, index) => index * 12 - 36)
+  .flatMap((octave) => [octave, octave + 5, octave + 7]).filter((value) => value <= 36));
+
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
-  melody: [],
+  melody: [...fill, number('speed', 'Speed', -100, 100, 50, ''),
+    { key: 'fillPauses', label: 'Fill pauses', kind: 'boolean', defaultValue: false,
+      description: 'Extend preceding notes through generated pauses. Fill determines which pauses add note duration.' },
+    { key: 'chordNoteChoices', label: 'Note targets', kind: 'integers', minimum: -14, maximum: 14, defaultValue: [0, 2, 2, 4],
+      description: 'Comma-separated diatonic offsets from the tonic (0) in the fourth octave. The list repeats across progression chords.' },
+    { key: 'melodyPatternOffsets', label: 'Block structure', kind: 'integers', minimum: -16, maximum: 16, defaultValue: [1, 2, 1, 3],
+      description: 'Comma-separated block identities. Repeated numbers reuse a pattern; negative numbers invert it. This is separate from a rhythm grid.' },
+    number('maxBlockChange', 'Max block change', 0, 7, 7, ''), number('blockJump', 'Block jump', 0, 4, 1, ''),
+    { key: 'patternFlexible', label: 'Flex', kind: 'boolean', defaultValue: true,
+      description: 'Adapt the last block of a reused pattern toward its new target.' },
+    number('pauseChance', 'Pause', 0, 100, 0), number('swingPercent', 'Swing', 0, 100, 50),
+    number('accents', 'Accent', 0, 100, 100),
+    { ...number('transpose', 'Transpose', -36, 36, 0, ' st'), allowedValues: MELODY_TRANSPOSES },
+    number('velocityMin', 'Min velocity', 1, 127, 80, ''), number('velocityMax', 'Max velocity', 1, 127, 105, ''),
+    number('noteLengthMultiplier', 'Note length', 25, 200, 100),
+    { key: 'patternSeed', label: 'Seed', kind: 'integer', minimum: -2147483648, maximum: 2147483647, defaultValue: 0,
+      description: 'Seed for this part. Zero follows the project seed; editing this does not reroll track settings.' }],
   bass: [...fill, choice('rhythm', 'Rhythm', BASS_RHYTHMS),
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
@@ -81,20 +101,29 @@ export function partPatchesEqual(left: PartSettingsPatch | undefined, right: Par
     && Object.entries(leftValues ?? {}).every(([key, value]) => partValuesEqual(value, rightValues?.[key]));
 }
 
+/** Array-valued settings belong to their copied track/snapshot, including melody target lists. */
+export function copyPartSettings<T extends PartSettingsPatch>(settings: T): T {
+  return Object.fromEntries(Object.entries(settings).map(([key, value]) => [key,
+    Array.isArray(value) ? [...value] : value])) as T;
+}
+
 export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps = false): PartSettingsPatch | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const result: Record<string, PartSettingValue> = {};
   for (const [key, field] of Object.entries(value)) {
     const control = PART_CONTROLS[role].find((candidate) => candidate.key === key);
     if (!control) return undefined;
-    if (control.kind === 'number' && (!Number.isInteger(field) || (field as number) < control.minimum! || (field as number) > control.maximum!)) return undefined;
+    if ((control.kind === 'number' || control.kind === 'integer') && (!Number.isInteger(field) || (field as number) < control.minimum! || (field as number) > control.maximum!)) return undefined;
     // Saved values remain readable; new edits follow the control's allowed steps.
     if (enforceSteps && control.step && ((field as number) - control.minimum!) % control.step !== 0) return undefined;
+    if (enforceSteps && control.allowedValues && !control.allowedValues.includes(field as number)) return undefined;
     if (control.kind === 'choice' && !control.options!.includes(field as string | number)) return undefined;
     if (control.kind === 'boolean' && typeof field !== 'boolean') return undefined;
     if (control.kind === 'pattern' && (!Array.isArray(field) || field.length !== 32
       || Array.from(field).some((slot) => slot !== 0 && slot !== 1))) return undefined;
     if (control.kind === 'velocities' && !isVelocityPattern(field)) return undefined;
+    if (control.kind === 'integers' && (!Array.isArray(field) || field.length < 1 || field.length > 32
+      || Array.from(field).some((slot) => !Number.isInteger(slot) || slot < control.minimum! || slot > control.maximum!))) return undefined;
     result[key] = Array.isArray(field) ? [...field] : field as PartSettingValue;
   }
   return result as PartSettingsPatch;
@@ -102,12 +131,12 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
 
 export function validVelocityRange(settings: PartSettingsPatch, role: ArrangedPart): boolean {
   const values = settingsValues(settings, role);
-  return role === 'melody' || role === 'drums' || (values['velocityMin'] as number) <= (values['velocityMax'] as number);
+  return role === 'drums' || (values['velocityMin'] as number) <= (values['velocityMax'] as number);
 }
 
-export function velocityBounds(settings: CommonPartSettings): readonly [number, number] {
-  const minimum = settings.velocityMin ?? 69;
-  const maximum = settings.velocityMax ?? 89;
+export function velocityBounds(settings: CommonPartSettings, defaults: readonly [number, number] = [69, 89]): readonly [number, number] {
+  const minimum = settings.velocityMin ?? defaults[0];
+  const maximum = settings.velocityMax ?? defaults[1];
   if (!Number.isInteger(minimum) || !Number.isInteger(maximum) || minimum < 1 || maximum > 127 || minimum > maximum) {
     throw new RangeError('Velocity bounds are outside the supported range.');
   }

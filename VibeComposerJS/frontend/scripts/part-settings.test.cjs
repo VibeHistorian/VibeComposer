@@ -5,6 +5,187 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('current block melody matches 80 complete production Java phrases at fixed seeds', () => {
+  const { load } = fixture();
+  const { generateMelody } = load('core/music/melody-generator.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/melody-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 80);
+  for (const [caseIndex, sample] of cases.entries()) {
+    const progression = Array(sample.chordCount).fill(1);
+    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset);
+    assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
+    actual.forEach((note, index) => {
+      const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;
+      assert.equal(note.midi, expected[0], `${label} pitch`);
+      assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-10, `${label} onset: ${note.startBeat} vs ${expected[1]}`);
+      assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-10, `${label} duration: ${note.durationBeats} vs ${expected[2]}`);
+      assert.equal(note.velocity, expected[3], `${label} dynamics`);
+    });
+  }
+});
+
+test('melody scope resolution reaches parsed MIDI, isolates sections and survives history and restore', () => {
+  const { service, phrase, midi, load, settings } = fixture();
+  const trackId = 'track-melody-1', second = service.duplicateTrack(trackId);
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
+  const sectionId = service.project().arrangement[1].id;
+  const scope = { kind: 'section-track', sectionId, trackId };
+  const track = () => service.project().tracks.find((track) => track.id === trackId);
+  const before = phrase.layOutTrackPhrase(service.project(), track());
+  const savedBefore = service.exportProjectJson();
+  service.updatePartSettings(scope, { speed: 100, chordNoteChoices: [0, 4, 1, 3], melodyPatternOffsets: [1, -1, 2, 1],
+    velocityMin: 100, velocityMax: 100, accents: 0, noteLengthMultiplier: 50, transpose: 12 });
+  const after = phrase.layOutTrackPhrase(service.project(), track());
+  const start = service.project().arrangement[0].measures * 4, end = start + service.project().arrangement[1].measures * 4;
+  const outside = notes => notes.filter(note => note.startBeat < start || note.startBeat >= end);
+  assert.deepEqual(outside(after), outside(before));
+  assert.notDeepEqual(after, before);
+  assert.ok(after.filter(note => note.startBeat >= start && note.startBeat < end).every(note => note.velocity === 100));
+  const section = service.project().arrangement[1];
+  assert.equal(settings.resolvePartTrack(service.project().tracks.find(track => track.id === second), section).generatorSettings.speed, undefined);
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const notes = exported.tracks.find(track => track.name === 'M1').notes;
+  assert.equal(notes.length, after.length);
+  notes.forEach((note, index) => {
+    assert.equal(note.midi, after[index].midi);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - after[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / exported.header.ppq - after[index].durationBeats) < 0.003);
+    assert.ok(Math.abs(note.velocity * 127 - after[index].velocity) < 0.001);
+  });
+  const saved = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), savedBefore);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.importProjectJson(saved), true);
+  const { ProjectService } = load('core/project/project.service.ts');
+  const restored = new ProjectService();
+  assert.deepEqual(phrase.layOutTrackPhrase(restored.project(), restored.project().tracks.find(track => track.id === trackId)), after);
+  const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  service.updateTrackPhrase(trackId, manual);
+  service.updatePartSettings(scope, { speed: -100 });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+  service.clearTrackPhrase(trackId);
+  assert.notDeepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+});
+
+test('melody target/block arrays support mixed groups, snapshots, independent duplication and inherited reset', () => {
+  const { service, ui, workspace } = fixture();
+  const trackId = 'track-melody-1', second = service.duplicateTrack(trackId);
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'melody' }, scope = { kind: 'section-track', sectionId, trackId: second };
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { chordNoteChoices: [0, 4] });
+  ui.selectCell(sectionId, 'melody');
+  assert.equal(workspace.partValues().chordNoteChoices, null);
+  service.updatePartSettings(cell, { chordNoteChoices: [1, 3], melodyPatternOffsets: [1, -1, 2], speed: 25 });
+  service.updatePartSettings(scope, { speed: 80 });
+  const before = service.exportProjectJson();
+  assert.equal(service.freezePartSettings(cell), 'changed');
+  assert.equal(service.project().arrangement[1].trackPartOverrides[second].speed, 80);
+  assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].speed, 25);
+  assert.notStrictEqual(service.project().arrangement[1].trackPartOverrides[second].chordNoteChoices,
+    service.project().arrangement[1].trackPartOverrides[trackId].chordNoteChoices);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.updatePartSettings(cell, { chordNoteChoices: [0, 2, 2, 4] });
+  assert.ok(service.project().arrangement[1].rolePartOverrides.melody.chordNoteChoices, 'mixed global bases cannot clear the cell');
+  service.resetPartSettings(scope, 'speed');
+  assert.equal(workspace.partValues().speed, 25);
+  const duplicate = service.duplicateTrack(second);
+  assert.notStrictEqual(service.project().tracks.find(track => track.id === duplicate).generatorSettings.chordNoteChoices,
+    service.project().tracks.find(track => track.id === second).generatorSettings.chordNoteChoices);
+});
+
+test('melody imports and every scope reject malformed core inputs without losing redo', () => {
+  const { service, load } = fixture();
+  const { generateMelody } = load('core/music/melody-generator.ts');
+  const sectionId = service.project().arrangement[1].id;
+  service.updateSettings({ name: 'later' }); service.undo();
+  const before = service.exportProjectJson();
+  const invalid = [{ speed: 101 }, { speed: -101 }, { chordNoteChoices: [] }, { chordNoteChoices: [15] },
+    { melodyPatternOffsets: Array(33).fill(1) }, { melodyPatternOffsets: [1.5] }, { patternSeed: 2147483648 },
+    { patternFlexible: 1 }, { velocityMin: 106 }, { splitChance: 50 }, { accents: -1 }];
+  for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: 'track-melody-1' },
+    { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: 'track-melody-1' }]) {
+    for (const patch of [...invalid, { transpose: 4 }]) {
+      service.updatePartSettings(scope, patch);
+      assert.equal(service.exportProjectJson(), before);
+    }
+  }
+  for (const patch of invalid) {
+    const saved = JSON.parse(before);
+    saved.tracks[0].generatorSettings = { algorithm: 'block', ...patch };
+    assert.equal(service.importProjectJson(JSON.stringify(saved)), false);
+    assert.throws(() => generateMelody(42n, 'C', 'major', [1], { algorithm: 'block', ...patch }), RangeError);
+  }
+  assert.equal(service.canRedo(), true);
+  assert.throws(() => generateMelody(9007199254740992, 'C', 'major', [1], { algorithm: 'block' }), RangeError);
+});
+
+test('melody integer-list editors commit once and reject invalid or stale drafts', () => {
+  const { service, settings, load } = fixture();
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const editor = new PartSettingsEditorComponent();
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId: 'track-melody-1' };
+  editor.role.set('melody'); editor.values.set(settings.settingsValues({ algorithm: 'block' }, 'melody'));
+  const targets = settings.PART_CONTROLS.melody.find(control => control.key === 'chordNoteChoices');
+  const commits = [];
+  editor.settingsChanged.emit = change => { commits.push(change); service.updatePartSettings(scope, { [change.key]: change.value }); };
+  const input = { value: '0, 4, -2', setCustomValidity(value) { this.error = value; }, reportValidity() {} };
+  const before = service.exportProjectJson();
+  editor.startTextEdit();
+  assert.equal(service.exportProjectJson(), before);
+  editor.commitText(targets, { target: input });
+  assert.equal(commits.length, 1);
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[scope.trackId].chordNoteChoices, [0, 4, -2]);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  input.value = '1,,2'; editor.startTextEdit(); editor.commitText(targets, { target: input });
+  assert.ok(input.error); assert.equal(commits.length, 1);
+  input.value = '1, 2'; editor.startTextEdit(); editor.values.set({ ...editor.values(), speed: 100 });
+  editor.commitText(targets, { target: input });
+  assert.equal(commits.length, 1);
+  assert.equal(input.value, '0, 2, 2, 4');
+  assert.equal(input.error, '');
+});
+
+test('melody transpose knobs use discrete 5/7 offsets for keyboard, wheel and drag', () => {
+  const { load, settings } = fixture();
+  const { CompactKnobComponent } = load('shared/compact-knob.component.ts');
+  const knob = new CompactKnobComponent();
+  knob.minimum.set(-36); knob.maximum.set(36); knob.value.set(0); knob.label.set('Transpose');
+  knob.allowedValues.set(settings.MELODY_TRANSPOSES);
+  const commits = []; knob.valueCommit.emit = value => { commits.push(value); knob.value.set(value); };
+  const wheel = { deltaY: -1, shiftKey: true, preventDefault() {}, stopPropagation() {} };
+  knob.onWheel(wheel); knob.onWheel(wheel);
+  assert.deepEqual(commits, [5, 7]);
+  knob.commitValue({ target: { value: String(settings.MELODY_TRANSPOSES.indexOf(12)) } });
+  assert.equal(knob.value(), 12);
+  const element = { focus() {}, setPointerCapture() {} };
+  knob.startDrag({ button: 0, pointerId: 11, currentTarget: element, clientY: 100, preventDefault() {}, stopPropagation() {} });
+  knob.moveDrag({ pointerId: 11, clientY: 87, shiftKey: false });
+  assert.equal(commits.length, 3);
+  assert.ok(settings.MELODY_TRANSPOSES.includes(knob.preview()));
+  knob.finishDrag({ pointerId: 11 });
+  assert.ok(settings.MELODY_TRANSPOSES.includes(knob.value()));
+});
+
+test('restoring generated melody in the note editor is a draft until Apply and is one undo action', () => {
+  const { service, workspace, phrase, load } = fixture();
+  const trackId = 'track-melody-1';
+  const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  service.updateTrackPhrase(trackId, manual);
+  service.updatePartSettings({ kind: 'global-track', trackId }, { speed: 100 });
+  workspace.openTrackEditor(trackId);
+  const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
+  const editor = new EditWorkspaceComponent(); editor.ngOnInit();
+  const before = service.exportProjectJson();
+  editor.restoreGenerated();
+  assert.notDeepEqual(editor.draftNotes(), manual);
+  assert.equal(service.exportProjectJson(), before);
+  editor.applyChanges();
+  const track = service.project().tracks.find(track => track.id === trackId);
+  assert.equal(track.editedPhrase, undefined);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track), editor.draftNotes());
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+});
+
 // The decoder materializes optional empty maps; compare musical data rather than property order/omission.
 function projectData(json) {
   const project = JSON.parse(json);
@@ -245,7 +426,7 @@ test('part transpose edits use octave steps at every scope and preserve readable
   assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].transpose, 12);
 });
 
-test('melody has explicit type zero and manual-only tracks, with stable existing role seeds and channels', () => {
+test('melody has explicit type zero and generated tracks, with stable existing role seeds and channels', () => {
   const { service, ui, workspace, phrase, load } = fixture();
   const model = load('core/project/project.model.ts');
   assert.deepEqual(model.ARRANGED_PARTS.map((role) => model.PART_TYPES[role]), [0, 1, 2, 3, 4]);
@@ -253,10 +434,10 @@ test('melody has explicit type zero and manual-only tracks, with stable existing
   const melody = service.project().tracks.find((track) => track.role === 'melody');
   assert.equal(melody.midiChannel, 4);
   assert.equal(service.project().tracks.find((track) => track.role === 'drums').midiChannel, 10);
-  assert.deepEqual(phrase.generateTrackPhrase(service.project(), melody), []);
+  assert.ok(phrase.generateTrackPhrase(service.project(), melody).length > 0);
   ui.selectRole('melody');
-  assert.equal(workspace.partGenerationAvailable(), false);
-  assert.deepEqual(workspace.editableScopes(), []);
+  assert.equal(workspace.partGenerationAvailable(), true);
+  assert.ok(workspace.editableScopes().length > 0);
   const existing = service.project().tracks.filter((track) => track.role !== 'melody');
   const notes = existing.map((track) => phrase.generateTrackPhrase(service.project(), track));
   const saved = JSON.parse(service.exportProjectJson());
@@ -310,21 +491,19 @@ test('manual melody notes work through the editor, scoped presence, history, per
   const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
   const editor = new EditWorkspaceComponent();
   editor.ngOnInit();
-  assert.equal(editor.generationAvailable(), false);
+  assert.equal(editor.generationAvailable(), true);
   assert.equal(editor.tracks()[0].role, 'melody');
   const before = service.exportProjectJson();
   editor.addNote();
-  assert.equal(editor.noteCount(), 1);
+  assert.ok(editor.noteCount() > 0);
   assert.equal(service.exportProjectJson(), before, 'draft edits do not write project history');
   const draft = [...editor.draftNotes()];
-  editor.restoreGenerated();
-  assert.deepEqual(editor.draftNotes(), draft, 'unavailable generation cannot discard the draft');
   editor.applyChanges();
   workspace.closeEditor();
   const track = () => service.project().tracks.find((candidate) => candidate.id === id);
   assert.deepEqual(track().editedPhrase, draft);
   const laidOut = phrase.layOutTrackPhrase(service.project(), track());
-  assert.equal(laidOut.length, 1);
+  assert.ok(laidOut.length > 0);
   const exported = new Midi(midi.generateCompositionMidi(service.project()));
   assert.equal(exported.tracks[0].name, 'M1');
   assert.equal(exported.tracks[0].channel, 3);
@@ -334,7 +513,7 @@ test('manual melody notes work through the editor, scoped presence, history, per
   const { MixWorkspaceComponent } = load('features/mix/mix-workspace.component.ts');
   const mixer = new MixWorkspaceComponent();
   assert.equal(mixer.tracks()[0].role, 'melody');
-  assert.equal(mixer.noteCount(id), 1);
+  assert.equal(mixer.noteCount(id), draft.length);
   service.undo();
   assert.equal(service.exportProjectJson(), before, 'Apply writes exactly one history entry');
   service.redo();
@@ -364,7 +543,8 @@ test('melody duplication keeps independent notes/mix and removing its final role
   assert.equal(service.project().tracks.find((track) => track.id === id).mix.panPercent, -20);
   ui.selectTrack(copy);
   workspace.restoreTrackPhrase();
-  assert.deepEqual(service.project().tracks.find((track) => track.id === copy).editedPhrase, notes);
+  assert.equal(service.project().tracks.find((track) => track.id === copy).editedPhrase, undefined);
+  service.undo();
   service.removeTrack(copy);
   service.removeTrack(id);
   assert.equal(service.project().tracks.some((track) => track.role === 'melody'), false);
@@ -373,16 +553,16 @@ test('melody duplication keeps independent notes/mix and removing its final role
   assert.deepEqual(service.project().tracks.find((track) => track.id === id).editedPhrase, notes);
 });
 
-test('unavailable melody settings and legacy algorithms are rejected without changing the project', () => {
+test('unsupported melody settings and legacy algorithms are rejected without changing the project', () => {
   const { service } = fixture();
   const sectionId = service.project().arrangement[0].id;
   const before = service.exportProjectJson();
   for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: 'track-melody-1' },
     { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: 'track-melody-1' }]) {
-    service.updatePartSettings(scope, { transpose: 7 });
+    service.updatePartSettings(scope, { transpose: 4 });
     assert.equal(service.exportProjectJson(), before);
   }
-  for (const settings of [{ algorithm: 'legacy' }, {}, { algorithm: 'block', melodyLegacyMode: true }, { algorithm: 'block', transpose: 12 }]) {
+  for (const settings of [{ algorithm: 'legacy' }, {}, { algorithm: 'block', melodyLegacyMode: true }, { algorithm: 'block', speed: 101 }]) {
     const saved = JSON.parse(before);
     saved.tracks.find((track) => track.role === 'melody').generatorSettings = settings;
     assert.equal(service.importProjectJson(JSON.stringify(saved)), false);
@@ -506,7 +686,6 @@ test('range conflicts and stale targets reject atomically without losing history
   assert.equal(service.applyPartSettingsToSections(cell, [sections[2].id, 'deleted'], 'effective'), 'invalid');
   assert.equal(service.freezePartSettings({ ...cell, sectionId: 'deleted' }), 'invalid');
   assert.equal(service.freezePartSettings({ kind: 'section-track', sectionId: cell.sectionId, trackId: 'deleted' }), 'invalid');
-  assert.equal(service.freezePartSettings({ ...cell, role: 'melody' }), 'invalid');
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.applyPartSettingsToSections(cell, [sections[1].id, sections[2].id], 'effective'), 'changed');
   assert.deepEqual(service.project().tracks.find((track) => track.id === trackId).editedPhrase,
@@ -780,6 +959,8 @@ test('invalid fills fail at every scope and on import; omitted fields keep older
   }
   const before = service.exportProjectJson();
   service.updatePartSettings({ kind: 'section-role', sectionId, role: 'melody' }, { chordSpanFill: 'ODD' });
+  assert.equal(service.project().arrangement[0].rolePartOverrides.melody.chordSpanFill, 'ODD');
+  service.undo();
   assert.equal(service.exportProjectJson(), before);
 });
 

@@ -4,14 +4,14 @@ import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';
 import { generateChordPart } from './chord-generator';
 import { generateDrumPart } from './drum-generator';
+import { generateMelody } from './melody-generator';
 import { resolvePartTrack } from './part-settings';
 
 /** Convert the seeded generators to note-level events shared by the editor and MIDI exporter. */
 export function generatePhrase(project: CompositionProject, part: ArrangedPart): PhraseNote[] {
   const seed = BigInt(project.seed);
   switch (part) {
-    // Role-shell checkpoint: no substitute or legacy melody generator.
-    case 'melody': return [];
+    case 'melody': return generateMelody(seed, project.key, project.scale, project.progression, project.melody);
     case 'bass':
       return generateBassline(seed, project.key, project.scale, project.progression,
         project.bass.rhythm, project.bass.noteVariation, project.bass)
@@ -45,7 +45,8 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
   const editedPhrases = { ...trackProject.editedPhrases, [track.role]: undefined };
   let notes: PhraseNote[];
   switch (track.role) {
-    case 'melody': notes = []; break;
+    case 'melody':
+      notes = generatePhrase({ ...trackProject, melody: track.generatorSettings, editedPhrases }, 'melody'); break;
     case 'bass':
       notes = generatePhrase({ ...trackProject, bass: track.generatorSettings, editedPhrases }, 'bass'); break;
     case 'chords':
@@ -55,6 +56,8 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
     case 'drums':
       notes = generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums'); break;
   }
+  // Melody applies transpose before interval repair and length before mode conversion, as Java does.
+  if (track.role === 'melody') return notes;
   const length = track.generatorSettings.noteLengthMultiplier ?? 100;
   const transpose = track.role === 'drums' ? 0 : track.generatorSettings.transpose ?? 0;
   return notes.map((note) => ({ ...note, durationBeats: note.durationBeats * length / 100,
