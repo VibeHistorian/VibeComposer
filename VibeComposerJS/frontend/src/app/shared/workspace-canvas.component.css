@@ -58,6 +58,7 @@
 .track-mix-controls button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .track-mix-controls .mute-toggle.active { border-color: var(--mix-mute-active); background: var(--mix-mute-active); color: var(--surface-input); }
 .track-mix-controls .solo-toggle.active { border-color: var(--mix-solo-active); background: var(--mix-solo-active); color: var(--surface-input); }
+.track-mix-controls .generation-toggle.active { border-color: var(--accent-primary); color: var(--accent-primary); }
 
 /* Arrangement and score canvas */
 .song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: minmax(370px, 1fr) auto minmax(270px, 1.05fr); gap: 12px; }

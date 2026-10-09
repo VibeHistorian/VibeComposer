@@ -1006,7 +1006,7 @@ export class ProjectService {
     if (!RHYTHM_PATTERNS.includes(chords.rhythm as typeof RHYTHM_PATTERNS[number])
         || !CHORD_VOICINGS.includes(chords.voicing as typeof CHORD_VOICINGS[number])
         || !Number.isInteger(chords.noteLengthPercent)
-        || (chords.noteLengthPercent ?? 0) < 25 || (chords.noteLengthPercent ?? 126) > 125) {
+        || (chords.noteLengthPercent ?? 0) < 25 || (chords.noteLengthPercent ?? 201) > 200) {
       return undefined;
     }
     return {

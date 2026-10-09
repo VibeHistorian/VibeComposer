@@ -12,6 +12,7 @@ import java.util.*;
 /** Complete single-pitch phrases through the production drum consumer and swing processor. */
 public class DrumCoreFixture {
     public static void main(String[] args) {
+        boolean extended = args.length > 0 && args[0].equals("shared");
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
         String[] seeds = { "42", "-2147483648", "9223372036854775807", "9007199254740993" };
@@ -29,10 +30,12 @@ public class DrumCoreFixture {
             part.setOrder(1); part.setOrderOffset(1); part.setPatternSeed((int) Long.parseLong(seed));
             part.setInstrument(pitches[sample % pitches.length]); part.setHitsPerPattern(hits);
             part.setPattern(patterns[sample % patterns.length]); part.setPatternShift(shift);
-            part.setPatternFlip(sample % 3 == 1); part.setChordSpan(1);
-            part.setPauseChance(0); part.setExceptionChance(0); part.setVelocityPattern(false);
+            part.setPatternFlip(sample % 3 == 1); part.setChordSpan(extended ? 1 + sample % 4 : 1);
+            part.setPauseChance(extended ? new int[] { 0, 35, 100 }[sample % 3] : 0);
+            part.setExceptionChance(extended ? new int[] { 0, 40, 100 }[(sample / 3) % 3] : 0);
+            part.setVelocityPattern(false);
             part.setVelocityMin(69); part.setVelocityMax(90); // UI maximum 89 is inclusive.
-            part.setSwingPercent(sample % 3 == 0 ? 66 : 50);
+            part.setSwingPercent(extended ? new int[] { 0, 25, 50, 66, 100 }[sample % 5] : sample % 3 == 0 ? 66 : 50);
             part.setChordSpanFill(sample % 4 == 0 ? ChordSpanFill.ODD : ChordSpanFill.ALL);
             part.setFillFlip(sample == 23);
             List<Integer> grid = new ArrayList<>(), velocities = new ArrayList<>();
@@ -61,6 +64,8 @@ public class DrumCoreFixture {
                     .append(",\"euclideanPulses\":").append(pulses).append(",\"customPattern\":").append(grid)
                     .append(",\"useCustomVelocities\":").append(customVelocities).append(",\"customVelocities\":").append(velocities)
                     .append(",\"velocityMin\":69,\"velocityMax\":89,\"swingPercent\":").append(part.getSwingPercent())
+                    .append(extended ? ",\"chordSpan\":" + part.getChordSpan() + ",\"pauseChance\":" + part.getPauseChance()
+                            + ",\"exceptionChance\":" + part.getExceptionChance() : "")
                     .append(",\"chordSpanFill\":\"").append(part.getChordSpanFill()).append("\",\"fillFlip\":").append(part.isFillFlip())
                     .append("},\"notes\":[");
             double time = 0; boolean firstNote = true;

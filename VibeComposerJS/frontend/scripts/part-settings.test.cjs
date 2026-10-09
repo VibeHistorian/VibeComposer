@@ -5,6 +5,163 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('shared drum controls match 96 complete Java phrases with spans, pauses, split hits and extreme swing', () => {
+  const { load } = fixture();
+  const { generateDrumPart } = load('core/music/drum-generator.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/drum-shared.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 96);
+  for (const [caseIndex, sample] of cases.entries()) {
+    const actual = generateDrumPart(BigInt(sample.seed), sample.barCount, sample.settings);
+    assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
+    actual.forEach((note, index) => {
+      const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;
+      assert.equal(note.midi, expected[0], label);
+      assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-10, `${label} onset ${note.startBeat} vs ${expected[1]}`);
+      assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-10, `${label} duration`);
+      assert.equal(note.velocity, expected[3], `${label} velocity`);
+    });
+  }
+});
+
+test('span/repeat slicing, custom velocities, voice expansion and feedback match 578 production Java helper cases', () => {
+  const { load } = fixture();
+  const processing = load('core/music/part-processing.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/shared-part.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 578);
+  for (const [index, sample] of cases.entries()) {
+    if (sample.kind === 'span') {
+      assert.deepEqual(processing.spannedPattern(sample.settings, sample.chordIndex, sample.arp), sample.pattern, `pattern ${index}`);
+      assert.deepEqual(processing.spannedVelocities(sample.settings, sample.chordIndex, sample.arp), sample.velocities, `velocities ${index}`);
+    } else if (sample.kind === 'voices') {
+      assert.deepEqual(processing.expandedVoices(sample.pitches, sample.settings), sample.result, `voices ${index}`);
+    } else {
+      const actual = processing.applyPartTiming([{ id: 'source', midi: 60, startBeat: 12, durationBeats: 0.75, velocity: 90 }], sample.settings)
+        .map(note => [note.midi, note.startBeat, note.durationBeats, note.velocity]);
+      const sort = notes => notes.sort((a, b) => a[1] - b[1] || a[3] - b[3]);
+      assert.deepEqual(sort(actual), sort(sample.notes), `feedback ${index}`);
+    }
+  }
+});
+
+test('every applicable shared control has a role consumer and genuine Java exceptions remain excluded', () => {
+  const { service, settings, phrase, load } = fixture();
+  const keys = role => settings.PART_CONTROLS[role].map(control => control.key);
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    for (const key of ['generationEnabled', 'patternSeed', 'offset', 'feedbackCount', 'feedbackDuration', 'feedbackVol']) assert.ok(keys(role).includes(key));
+    assert.equal(keys(role).includes('accents'), role === 'melody');
+    assert.equal(keys(role).includes('patternRepeat'), role === 'arpeggio');
+    assert.equal(keys(role).includes('exceptionChance'), ['arpeggio', 'drums'].includes(role));
+    assert.equal(keys(role).includes('pauseChance'), role !== 'bass');
+    assert.equal(keys(role).includes('swingPercent'), role !== 'bass');
+    assert.equal(keys(role).includes('stretchEnabled'), ['chords', 'arpeggio'].includes(role));
+    const track = service.project().tracks.find(track => track.role === role);
+    const generate = patch => phrase.generateTrackPhrase(service.project(), { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
+    assert.deepEqual(generate({ generationEnabled: false }), []);
+    assert.deepEqual(generate({ patternSeed: 123 }), phrase.generateTrackPhrase({ ...service.project(), seed: '123' }, track));
+    assert.notDeepEqual(generate({ patternSeed: 123 }), generate({}));
+    const delayed = generate({ offset: 250, feedbackCount: 2, feedbackDuration: 750, feedbackVol: 65 });
+    assert.equal(delayed.length, generate({}).length * 3);
+    assert.ok(delayed.every(note => note.startBeat >= 0.25));
+  }
+  for (const role of ['bass', 'chords', 'arpeggio', 'drums']) {
+    const track = service.project().tracks.find(track => track.role === role);
+    const generate = patch => phrase.generateTrackPhrase(service.project(), { ...track,
+      generatorSettings: { ...track.generatorSettings, rhythm: 'full', hitsPerPattern: 4, ...patch } });
+    const full = generate({});
+    assert.equal(full.length, (role === 'chords' ? 3 : 1) * 16);
+    assert.equal(generate({ chordSpan: 2 }).length, full.length / 2);
+    assert.deepEqual(generate({ patternFlip: true }), []);
+    assert.deepEqual(generate({ useCustomVelocities: true, customVelocities: Array(32).fill(0) }), []);
+    assert.ok(generate({ useCustomVelocities: true, customVelocities: Array(32).fill(101) }).every(note => note.velocity === 101));
+    if (role !== 'bass') {
+      assert.deepEqual(generate({ pauseChance: 100 }), []);
+      assert.notDeepEqual(generate({ swingPercent: 66 }), full);
+      assert.deepEqual(generate({ hitsPerPattern: 3, swingPercent: 66 }), generate({ hitsPerPattern: 3 }));
+    }
+    if (role === 'arpeggio' || role === 'drums') assert.equal(generate({ exceptionChance: 100 }).length, full.length * 2);
+    if (role === 'chords') assert.equal(generate({ stretchEnabled: true, chordNotesStretch: 6 }).length, full.length * 2);
+    if (role === 'arpeggio') {
+      assert.equal(generate({ patternRepeat: 2 }).length, full.length * 2);
+      assert.notDeepEqual(generate({ stretchEnabled: true, chordNotesStretch: 2 }), full);
+    }
+  }
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const editor = new PartSettingsEditorComponent(); editor.role.set('bass');
+  editor.values.set({ ...settings.settingsValues(service.project().bass, 'bass'), useCustomVelocities: true });
+  assert.equal(editor.controls().some(control => control.key === 'hitsPerPattern'), false);
+  assert.equal(editor.controls().some(control => control.key === 'velocityMin'), true);
+});
+
+test('all-role scoped timing, seeds and generation enable survive history, snapshots, JSON and manual replacements', () => {
+  const { service, settings, phrase, midi, ui, workspace } = fixture();
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const id = `track-${role}-1`, track = () => service.project().tracks.find(track => track.id === id);
+    service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, id, true));
+    const [first, second] = service.project().arrangement;
+    const cell = { kind: 'section-role', sectionId: first.id, role };
+    const part = { kind: 'section-track', sectionId: first.id, trackId: id };
+    service.updatePartSettings({ kind: 'global-role', role }, { patternSeed: 123 });
+    service.updatePartSettings({ kind: 'global-track', trackId: id }, { feedbackVol: 80 });
+    const before = phrase.layOutTrackPhrase(service.project(), track());
+    service.updatePartSettings(cell, { offset: 250, feedbackCount: 1, feedbackDuration: 500 });
+    service.updatePartSettings(part, { feedbackVol: 50 });
+    const after = phrase.layOutTrackPhrase(service.project(), track());
+    const end = first.measures * 4;
+    assert.deepEqual(after.filter(note => note.startBeat >= end + 1), before.filter(note => note.startBeat >= end + 1));
+    assert.equal(after.length - before.length, before.filter(note => note.startBeat < end).length,
+      'feedback survives even when its onset crosses the section boundary');
+    const exported = new Midi(midi.generateCompositionMidi(service.project()));
+    const notes = exported.tracks.find(midiTrack => midiTrack.name === track().name).notes;
+    assert.equal(notes.length, after.length);
+    for (const note of after) assert.ok(notes.some(exportedNote => exportedNote.midi === note.midi
+      && Math.abs(exportedNote.ticks / exported.header.ppq - note.startBeat) < 0.003
+      && Math.abs(exportedNote.velocity * 127 - note.velocity) < 0.001));
+    service.updatePartSettings(part, { generationEnabled: false });
+    assert.ok(service.project().arrangement[0].trackPresence[id]);
+    assert.equal(phrase.layOutTrackPhrase(service.project(), track()).some(note => note.startBeat < end), false);
+    service.undo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after);
+    service.redo(); service.undo();
+    service.freezePartSettings(part);
+    const frozen = service.project().arrangement[0].trackPartOverrides[id];
+    assert.equal(frozen.feedbackCount, 1); assert.equal(frozen.feedbackVol, 50); assert.equal(frozen.patternSeed, 123);
+    service.applyPartSettingsToSections(part, [second.id], 'effective');
+    assert.deepEqual(service.project().arrangement[1].trackPartOverrides[id], frozen);
+    const added = service.duplicateTrack(id);
+    service.updatePartSettings({ kind: 'section-track', sectionId: first.id, trackId: added }, { offset: -250 });
+    ui.selectCell(first.id, role); assert.equal(workspace.partValues().offset, null);
+    assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+    const manual = [{ id: 'manual', midi: role === 'drums' ? 38 : 60, startBeat: 0, durationBeats: 1, velocity: 90 }];
+    service.updateTrackPhrase(id, manual);
+    service.updatePartSettings(part, { generationEnabled: false, feedbackCount: 5 });
+    assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+    assert.ok(phrase.layOutTrackPhrase(service.project(), track()).some(note => note.startBeat === 0));
+    assert.equal(service.resetCellPartSettings(cell), 'changed');
+    assert.equal(service.project().arrangement[0].rolePartOverrides?.[role], undefined);
+  }
+});
+
+test('shared fields reject malformed and wrong-role values atomically at all scopes and on import', () => {
+  const { service } = fixture();
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const before = service.exportProjectJson(), first = service.project().arrangement[0];
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const id = `track-${role}-1`;
+    const scopes = [{ kind: 'global-role', role }, { kind: 'global-track', trackId: id },
+      { kind: 'section-role', sectionId: first.id, role }, { kind: 'section-track', sectionId: first.id, trackId: id }];
+    const invalid = [{ generationEnabled: 0 }, { patternSeed: 2147483648 }, { patternSeed: '42' }, { offset: -1001 },
+      { feedbackCount: 6 }, { feedbackDuration: 2001 }, { feedbackVol: 9 }, { feedbackVol: 151 },
+      ...(role === 'melody' ? [{ chordSpan: 2 }] : [{ chordSpan: 0 }, { chordSpan: 5 }]),
+      ...(role === 'bass' ? [{ pauseChance: 20 }, { swingPercent: 66 }] : [{ pauseChance: 101 }]),
+      ...(role === 'arpeggio' ? [{ patternRepeat: 5 }] : [{ patternRepeat: 2 }])];
+    for (const patch of invalid) {
+      for (const scope of scopes) service.updatePartSettings(scope, patch);
+      const project = JSON.parse(before); Object.assign(project.tracks.find(track => track.id === id).generatorSettings, patch);
+      assert.equal(service.importProjectJson(JSON.stringify(project)), false, `${role} ${JSON.stringify(patch)}`);
+    }
+  }
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+});
+
 test('score combines drums on a shared pitch axis while preserving note ownership and individual visibility', () => {
   const { service, workspace, ui, load } = fixture();
   const kick = 'track-drums-1', snare = service.addTrack('drums'), otherKick = service.addTrack('drums');
@@ -164,7 +321,7 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   service.updateSettings({ name: 'future' }); service.undo();
   const before = service.exportProjectJson();
   const invalid = [{ pitch: 0 }, { pitch: 36.5 }, { pitch: '36' }, { groove: 'rock' }, { velocityMin: 100 },
-    { hitsPerPattern: 33 }, { patternShift: 9 }, { rhythm: 'melody1' }, { swingPercent: 76 },
+    { hitsPerPattern: 33 }, { patternShift: 9 }, { rhythm: 'melody1' }, { swingPercent: 101 },
     { customPattern: Array(32).fill(2) }, { customVelocities: Array(31).fill(80) }, { useCustomVelocities: 1 }];
   for (const patch of invalid) {
     service.updateTrackGeneratorSettings(first, patch);
@@ -523,7 +680,7 @@ test('imports and mutations reject wrong-role fields, unknown tracks, and invali
   assert.equal(service.exportProjectJson(), initial);
   service.updatePartSettings({ kind: 'section-role', sectionId, role: 'bass' }, { velocityMin: 100 });
   assert.equal(service.exportProjectJson(), initial, 'effective min cannot exceed inherited max');
-  for (const patch of [null, [], { rhythm: 'single' }, { octaveInterval: 0 }, { transpose: 99 }, { unknown: 1 }]) {
+  for (const patch of [null, [], { rhythm: 'melody1' }, { octaveInterval: 0 }, { transpose: 99 }, { unknown: 1 }]) {
     const imported = JSON.parse(initial);
     imported.arrangement[1].rolePartOverrides = { bass: patch };
     assert.equal(service.importProjectJson(JSON.stringify(imported)), false);
@@ -1220,11 +1377,11 @@ test('manual cleanup does not normalize untouched frozen or copied snapshot fiel
   assert.deepEqual(restored, untouched, 'only the manually restored field resumes inheritance');
   assert.equal(service.applyPartSettingsToSections(scope, [second.id], 'effective'), 'changed');
   assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId], snapshot);
-  service.updatePartSettings({ kind: 'global-track', trackId }, { transpose: -12, rate: 'sixteenth' });
+  service.updatePartSettings({ kind: 'global-track', trackId }, { transpose: -12, hitsPerPattern: 16 });
   const track = service.project().tracks.find((track) => track.id === trackId);
   const local = settings.resolvePartTrack(track, service.project().arrangement[0]).generatorSettings;
   assert.equal(local.transpose, -12, 'manually restored transpose now follows global changes');
-  assert.equal(local.rate, 'eighth', 'untouched frozen fields remain explicit');
+  assert.equal(local.hitsPerPattern, 8, 'untouched frozen fields remain explicit');
   assert.equal(settings.resolvePartTrack(track, service.project().arrangement[1]).generatorSettings.transpose, 0);
 });
 
@@ -1361,7 +1518,7 @@ test('unsupported roles and invalid rhythm controls reject edits/imports without
     service.updatePartSettings(scope, patch);
     assert.equal(service.exportProjectJson(), before);
   }
-  for (const role of ['bass', 'arpeggio', 'melody']) {
+  for (const role of ['melody']) {
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { hitsPerPattern: 16 });
     assert.equal(service.exportProjectJson(), before);
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { euclideanPulses: 4 });
@@ -1462,6 +1619,7 @@ test('the chord rhythm preview shares generation masks and shows mixed values on
   editor.values.set({ ...editor.values(), rhythm: null });
   assert.equal(editor.rhythmPreview(), null);
   editor.role.set('bass');
+  editor.values.set({ ...editor.values(), rhythm: 'alternating' });
   assert.equal(editor.rhythmPreview(), undefined);
 });
 
@@ -1831,7 +1989,7 @@ test('velocity grids reject invalid shape, values and unsupported roles at every
     assert.equal(service.importProjectJson(JSON.stringify(project)), false);
   }
   for (const scope of scopes) service.updatePartSettings(scope, { useCustomVelocities: 1 });
-  for (const role of ['melody', 'bass', 'arpeggio']) {
+  for (const role of ['melody']) {
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { useCustomVelocities: true, customVelocities: Array(32).fill(80) });
   }
   assert.equal(service.exportProjectJson(), before);
@@ -2006,7 +2164,7 @@ test('custom grids validate shape and binary slots at all scopes and imports wit
     project.tracks.find((track) => track.id === trackId).generatorSettings.customPattern = grid;
     assert.equal(service.importProjectJson(JSON.stringify(project)), false);
   }
-  for (const role of ['melody', 'bass', 'arpeggio']) {
+  for (const role of ['melody']) {
     service.updatePartSettings({ kind: 'section-role', sectionId, role }, { customPattern: Array(32).fill(1) });
   }
   assert.equal(service.exportProjectJson(), before);

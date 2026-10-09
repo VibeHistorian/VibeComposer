@@ -33,6 +33,27 @@ export interface ArrangementSection {
 }
 
 export interface CommonPartSettings {
+  readonly generationEnabled?: boolean;
+  readonly patternSeed?: number;
+  /** Thousandths of a beat, matching Java's noteMultiplier units at normal stretch. */
+  readonly offset?: number;
+  readonly feedbackCount?: number;
+  readonly feedbackDuration?: number;
+  readonly feedbackVol?: number;
+  readonly chordSpan?: number;
+  readonly patternRepeat?: number;
+  readonly pauseChance?: number;
+  readonly exceptionChance?: number;
+  readonly swingPercent?: number;
+  readonly chordNotesStretch?: number;
+  readonly stretchEnabled?: boolean;
+  readonly hitsPerPattern?: number;
+  readonly patternShift?: number;
+  readonly patternFlip?: boolean;
+  readonly euclideanPulses?: number;
+  readonly customPattern?: readonly number[];
+  readonly useCustomVelocities?: boolean;
+  readonly customVelocities?: readonly number[];
   /** Which progression chord slots produce notes, independent of section presence. */
   readonly chordSpanFill?: ChordSpanFill;
   readonly fillFlip?: boolean;
@@ -67,7 +88,7 @@ export interface BassSettings extends CommonPartSettings {
   readonly octaveInterval: boolean;
 }
 
-/** Pattern/grid settings shared by the currently supported chord and percussion consumers. */
+/** Shared grid shape; Bass also permits alternating, and old Arpeggio projects may omit rhythm. */
 export interface RhythmSettings {
   readonly rhythm: RhythmPattern;
   /** Grid subdivisions per four-beat chord; only enabled cells produce notes. */
@@ -90,6 +111,7 @@ export interface ChordSettings extends CommonPartSettings, RhythmSettings {
 }
 
 export interface ArpeggioSettings extends CommonPartSettings {
+  readonly rhythm?: RhythmPattern;
   readonly pattern: ArpeggioPattern;
   readonly rate: ArpeggioRate;
   readonly octaves: 1 | 2;

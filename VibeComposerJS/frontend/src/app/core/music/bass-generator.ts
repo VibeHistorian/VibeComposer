@@ -2,9 +2,10 @@ import { getDiatonicChords, getPitchClass } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import type { BassRhythm, CommonPartSettings } from '../project/project.model';
-import { velocityBounds } from './part-settings';
+import { decodePartPatch, velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
-import { BASS_RHYTHMS, STATIC_RHYTHM_DEFINITIONS } from './rhythm-patterns';
+import { effectivePartSeed, spannedPattern, spannedVelocities } from './part-processing';
+import { BASS_RHYTHMS } from './rhythm-patterns';
 
 export interface BassNoteEvent {
   readonly midi: number;
@@ -33,10 +34,11 @@ export function generateBassline(
 ): BassNoteEvent[] {
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100
-      || !BASS_RHYTHMS.includes(rhythm)) {
+      || !BASS_RHYTHMS.includes(rhythm) || !decodePartPatch('bass', settings)) {
     throw new RangeError('Bass generation settings are outside the supported range.');
   }
 
+  if (settings.generationEnabled === false) return [];
   const chords = getDiatonicChords(key, scale);
   const triads = progression.map((degree) => {
     const chord = chords.find((candidate) => candidate.degree === degree);
@@ -67,7 +69,7 @@ export function generateBassline(
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) {
     throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
   }
-  const javaSeed = BigInt.asIntN(32, BigInt(seed));
+  const javaSeed = effectivePartSeed(seed, settings);
   const partSeed = BigInt.asIntN(32, javaSeed + 10_000n);
   const dynamics = new JavaRandom(partSeed);
   const noteVariationRandom = new JavaRandom(BigInt.asIntN(32, partSeed + 2n));
@@ -79,18 +81,21 @@ export function generateBassline(
   for (let chordIndex = 0; chordIndex < triads.length; chordIndex++) {
     // Java bass skips the entire chord before consuming its shared dynamics/variation streams.
     if (!fill[chordIndex]) { chordStart += BEATS_PER_CHORD; continue; }
+    const gridSettings = { ...settings, rhythm: rhythm === 'alternating' ? 'full' as const : rhythm };
+    const grid = rhythm === 'alternating' ? undefined : spannedPattern(gridSettings, chordIndex);
+    const velocities = rhythm === 'alternating' ? undefined : spannedVelocities(gridSettings, chordIndex);
     const durations = rhythm === 'alternating'
       ? makeAlternatingDurations(
         BigInt.asIntN(32, partSeed + BigInt(chordIndex % 2)),
         BEATS_PER_CHORD,
       )
-      : makePatternDurations(rhythm, BEATS_PER_CHORD);
+      : Array(grid!.length).fill(BEATS_PER_CHORD / grid!.length) as number[];
     let noteStart = chordStart;
 
     for (let noteIndex = 0; noteIndex < durations.length; noteIndex++) {
       const duration = durations[noteIndex];
-      const velocity = dynamics.nextInt(velocityMax - velocityMin + 1) + velocityMin;
-      const isActive = rhythm === 'alternating' || STATIC_RHYTHM_DEFINITIONS[rhythm].mask[noteIndex % 8] > 0;
+      const velocity = velocities ? velocities[noteIndex % velocities.length] : dynamics.nextInt(velocityMax - velocityMin + 1) + velocityMin;
+      const isActive = rhythm === 'alternating' || grid![noteIndex] > 0;
       let pitch = triads[chordIndex][0];
 
       if (isActive && noteIndex > 0 && duration < QUARTER + 1e-9
@@ -98,7 +103,7 @@ export function generateBassline(
         pitch = triads[chordIndex][noteVariationRandom.nextInt(triads[chordIndex].length - 1) + 1];
       }
 
-      if (isActive) {
+      if (isActive && velocity > 0) {
         events.push({
           midi: pitch,
           startBeat: noteStart,
@@ -113,19 +118,6 @@ export function generateBassline(
   }
 
   return events;
-}
-
-function makePatternDurations(rhythm: Exclude<BassRhythm, 'alternating'>, limit: number): number[] {
-  const pattern = STATIC_RHYTHM_DEFINITIONS[rhythm].mask;
-  const stepDuration = BEATS_PER_CHORD / pattern.length;
-  const result: number[] = [];
-  let remaining = limit;
-  while (remaining > 1e-9) {
-    const duration = Math.min(stepDuration, remaining);
-    result.push(duration);
-    remaining -= duration;
-  }
-  return result;
 }
 
 /** Port of Rhythm.regenerateDurations(4, sixteenthNote / 2) for a four beat chord. */

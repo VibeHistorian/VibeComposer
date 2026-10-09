@@ -25,10 +25,14 @@ export class PartSettingsEditorComponent {
   readonly inheritRequested = output<string>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
+    (!(this.role() === 'bass' && this.values()['rhythm'] === 'alternating')
+      || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities'].includes(control.key))
+    &&
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
     && (control.key !== 'customPattern' || this.values()['rhythm'] === 'custom')
     && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
-    && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true)));
+    && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true
+      || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating'))));
   readonly velocityDraft = signal<readonly number[] | null>(null);
   private velocityEdit: { index: number; values: Readonly<Record<string, PartSettingValue | null>> } | null = null;
   readonly velocitySlots = computed(() => {
@@ -43,7 +47,7 @@ export class PartSettingsEditorComponent {
   private painting: { pointerId: number; values: Readonly<Record<string, PartSettingValue | null>>; sounded: number; lastIndex: number } | null = null;
   readonly rhythmPreview = computed(() => {
     const draft = this.patternDraft();
-    if (this.role() !== 'chords' && this.role() !== 'drums') return undefined;
+    if (this.role() === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating')) return undefined;
     const values = this.values();
     const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
       ...(values['rhythm'] === 'euclid' ? ['euclideanPulses'] : []),
@@ -59,7 +63,7 @@ export class PartSettingsEditorComponent {
   });
   readonly rhythmPreviewLabel = computed(() => {
     const pattern = this.rhythmPreview();
-    return pattern ? `${pattern.filter((slot) => slot > 0).length} rhythm-enabled slots in ${pattern.length} subdivisions per chord. Fill can suppress whole chords; zero velocity silences individual hits.`
+    return pattern ? `${pattern.filter((slot) => slot > 0).length} enabled slots in the ${pattern.length}-cell base rhythm. Span and Repeat change its placement; Pause and Fill can suppress notes; zero velocity silences individual hits.`
       : 'Mixed rhythm settings. Select an individual track to see its rhythm.';
   });
 

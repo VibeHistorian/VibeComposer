@@ -52,6 +52,11 @@
                   <span class="track-instrument" [title]="instrumentName(track)">{{ instrumentName(track) }}</span>
                   <span class="track-channel">CH {{ track.midiChannel.toString().padStart(2, '0') }}</span>
                   <div class="track-mix-controls" (click)="$event.stopPropagation()">
+                    <button type="button" class="generation-toggle" [class.active]="track.generatorSettings.generationEnabled !== false"
+                      [disabled]="editing()" [attr.aria-pressed]="track.generatorSettings.generationEnabled !== false"
+                      [attr.aria-label]="(track.generatorSettings.generationEnabled === false ? 'Enable generation for ' : 'Exclude generation for ') + track.name"
+                      title="Generate notes (saved manual phrases remain replacements)"
+                      (click)="projects.updatePartSettings({ kind: 'global-track', trackId: track.id }, { generationEnabled: track.generatorSettings.generationEnabled === false })">G</button>
                     <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name"
                       [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
                       (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"

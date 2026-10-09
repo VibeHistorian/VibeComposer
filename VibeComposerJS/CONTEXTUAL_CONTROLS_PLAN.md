@@ -1,10 +1,10 @@
 # Contextual controls and melody buildout
 
-Status: implementation in progress, 2026-10-09; P1b's supported block path and P4f single-pitch drums are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
+Status: implementation in progress, 2026-10-09; P1b's supported block path, P4f single-pitch drums and P4g shared musical controls are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
 
 ### Pre-P5 alignment — required prerequisites (2026-10-09)
 
-P5 is gated on the three foundations below. P1b and P4f are now delivered in checkpoints 10 and 11; P4g remains open. The earlier Chords-only P4b–P4e and P1a melody-shell checkpoints are historical slices and do not establish cross-role completion.
+P5 is gated on the three foundations below, now delivered in checkpoints 10–12. The earlier Chords-only P4b–P4e and P1a melody-shell checkpoints are historical slices and do not establish cross-role completion.
 
 1. **P1b — Current block melody with a usable minimum editor.** Port a coherent path through `MelodyGenerator`, `MelodyBlockSkeletonGenerator` and the required block, target, rhythm and note-processing helpers. Enable generation only when that path produces deterministic notes. The minimum musical editor includes Speed, Fill Pauses, editable note targets (`chordNoteChoices`) and block structure (`melodyPatternOffsets`), plus the applicable shared controls. Keep block structure separate from the shared rhythm grid. Max Block Change, Block Jump and Flex belong to this core slice when required by the supported path; document fixed inputs for any deferred options. Do not defer the entire block generator to extended melody in P5 or substitute bass/arp output. Compare supported complete phrases against production Java at fixed seeds, including seed offsets, repeated block identities and section boundaries. Playback, score, note editing, MIDI, scope resolution, history and persistence must use that output.
 2. **P4f — One percussion pitch per drum track.** Replace the current per-track `groove` model and multi-voice preset generator with a selected GM percussion note and its own shared rhythm/velocity settings. A newly added/default drum track starts with one pitch (Java `DrumPanel` starts at 36); kick, snare and hat tracks together create the groove. Select the drum note as track identity, rather than a pitched GM program. Keep independent IDs, phrases, settings, mix and presence, with channel 10 for percussion. If a later group action creates a groove, it must create/configure distinct tracks. Pitch-changing variations, including Java's occasional open-hat substitution, are outside this initial single-pitch contract. No automatic conversion of saved groove presets is required during buildout; validate the replacement model without schema gates or migrations.
@@ -188,6 +188,39 @@ Score refinement: all percussion tracks share one **Drums** score row and one pi
 
 UI review: select D1, change Percussion instrument to Snare or Clap, and check its Tracks label and mixer. Add separate Kick and Closed hi-hat tracks, set their rhythms independently, and check the combined Drums score row. Click a note to edit its owning track; hide one track and then all drum tracks. Try a drum cell override, custom grid/velocities, Copy/Freeze, undo/redo and save/reload. P4g remains the next prerequisite before P5.
 
+### UI checkpoint 12 — Shared musical consumers and controls (P4g)
+
+Both part editors now use the same shared control registry and commands for every applicable role, at global-role/global-track and section-role/section-track scopes. Bass and Arpeggio join Chords and Drums in the complete static/Euclidean/custom rhythm and velocity-grid editor. Span is 1–4; Arpeggio Repeat is 1–4. Arpeggio keeps pitch direction separate from rhythm. Hits replaces its coarse Rate selector; existing serialized `rate` values and patches remain readable and supply Hits 8/16 when Hits is omitted. Explicit Hits takes precedence. Bass's alternating duration path hides grid/span/custom-velocity controls and continues using random velocity bounds, retaining stored grids for switching back.
+
+The applicability audit follows `InstPanel`/`InstPart` through the current consumers:
+
+| Control family | Melody | Bass | Chords | Arpeggio | Drums |
+| --- | --- | --- | --- | --- | --- |
+| Generic rhythm/grid/Hits/Shift/Flip/custom velocities | Block rhythm instead | Grid paths; alternating bypasses these | Yes | Yes | Yes |
+| Span | Block structure instead | Grid paths | Yes | Yes | Yes |
+| Repeat | — | — | — | Yes | — |
+| Pause | Yes | — | Yes | Yes | Yes |
+| Split (`exceptionChance`) | Extended melody remains P5 | — | Chord transition split remains P5 | Yes | Yes |
+| Swing | Yes | — | Yes | Yes | Yes |
+| Accent | Yes | — | — | — | — |
+| Voices + enable | — | — | Yes | Yes | — |
+| Length, velocity range, seed, timing/feedback, generation enable | Yes | Yes | Yes | Yes | Yes |
+| Part transpose | Melody discrete offsets | Octaves | Octaves | Octaves | Selected percussion pitch instead |
+
+These are consumer exceptions, not missing ports: `BassPhraseGenerator` does not read `pauseChance`, `exceptionChance` or `patternRepeat`; its alternate path bypasses the stored rhythm grid, custom velocities and span. `MidiGenerator`'s Bass wrapper does not call `swingPhrase`. `ChordPhraseGenerator` does not read shared `exceptionChance` or `patternRepeat`; its separate transition split is advanced role work. `DrumPhraseGenerator` does not read `patternRepeat`. Accent has a Melody expansion consumer only. Voices uses `MidiUtils.convertChordToLength` for Chords/Arpeggio, including reduction and octave expansion.
+
+`part-processing.ts` shares Java span slicing and velocity addressing, voice conversion, exact int seed narrowing and note feedback. Bass/Chords insert sentinel rests when spanning; Arpeggio inserts zeros, repeats then slices, and cycles its spanned velocity list. Drums play one pattern continuously across a span and crop incomplete final groups. Pause and flip ordering follows each role: Chords pauses after mask selection; Arpeggio pauses its base pattern before expansion/flip; Drums draws pauses before flip and preserves the closed-hat random draw without substituting the track pitch. Arpeggio/drum splits produce a quieter second note. Swing includes rests and is suppressed for odd Hits. Existing defaults retain their preceding output. Bass/Chord join/strum articulation and Arpeggio's fuller Java pitch/octave/randomization engine remain P5: the existing translated Bass/Chord subdivision articulation and Arpeggio pitch/dynamics streams are retained. Helper agreement is not a claim of complete Java Bass/Chord/Arpeggio phrase parity.
+
+Every role gains Generate notes, Seed/Clear seed, Offset, Delays, FB duration and FB velocity. The Tracks `G` button edits that track's global generation-enable setting; mixer M/S and section presence remain independent. Saved manual phrases still mask generator fields, including generation enable and feedback, until explicitly restored. Seed 0 follows the exact project/derived track seed; a nonzero Java int seed overrides it before role stream offsets. Seed edits do not reroll settings. Offset is −1000…1000 thousandths of a beat; feedback duration is −2000…2000 in the same units, count 0…5, and velocity 10…150%. Each successive MIDI-note echo multiplies velocity again, truncates/clamps to 0…127 and drops silent events. Timing applies after arrangement repetition/cropping so echoes can cross section boundaries; negative onsets clip at arrangement/editor beat zero. There is no new global/section swing override in this slice; existing track → cell → section-track precedence determines effective swing.
+
+All new values participate in mixed display, sparse inheritance/reset, Copy/Copy All, Freeze, history, strict role/bounds validation, JSON/session storage and manual replacement preservation. Chord length now accepts 25–200%, matching the shared length bound.
+
+Validation: **117 functional tests pass**, production Angular build passes with the existing Pixi CommonJS warning, and the built-app Chromium controls regression passes. The original 96 drum and 80 melody complete-phrase comparisons remain green. Another **96 complete Java drum phrases** cover span, pauses, split hits and swing extremes; **578 production Java helper cases** cover span/repeat slicing, custom velocity addressing, voice conversion and feedback. Scoped generated notes are checked through parsed MIDI, history, snapshots and imports. Chromium verifies synchronized Bass/Arpeggio grids/Hits, seed editing/clearing, feedback, generation enable, role exceptions and the earlier select initialization/drum identity/combined score behavior. Fixture commands and comparison limits are in [the fixture instructions](frontend/scripts/java/README.md).
+
+The Chromium arrangement regression also passes its page-zoom/device-scale/resize matrix after adding the track generation action.
+
+UI review: try Bass's alternating versus custom rhythm, then Arpeggio Hits/Span/Repeat and Pause/Split/Swing. Enable Chords/Arpeggio Use voices. Compare the quick panel and inspector; change Offset/Delays and Seed, clear the seed, and toggle track G. Check a section cell versus a track exception, Copy/Freeze/reset, undo/reload and MIDI. P5/P6 role slices can follow this checkpoint after review.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
@@ -321,7 +354,7 @@ Exit: keyboard/device alternatives, expanded/collapsed layouts, mixed values, in
 
 Port remaining app/playback/device/export preferences separately. Musical settings from ExtraSettingsGUI remain in a later global musical-settings inspector, not automatically in a reroll header. See the deferred inventory. Java-specific soundbanks and device behavior require deliberate Web Audio/Web MIDI equivalents; Wails remains thin.
 
-Remaining order after the recorded checkpoints: **P1b block melody → P4f single-pitch drum tracks → P4g shared consumers/controls → P5/P6 in role slices**, then remaining P7 and P8 work. Shared-helper work may be prepared alongside the first two prerequisites. Panel shells and selection can be prepared while melody core is still being translated, provided generation remains clearly unavailable until implemented.
+Remaining order after the recorded checkpoints: **P5/P6 in role slices**, then remaining P7 and P8 work. The supported P1b, P4f and P4g prerequisites are delivered in checkpoints 10–12; their documented advanced exclusions remain in the appropriate later slices.
 
 ## Current TypeScript implementation touchpoints
 

@@ -6,6 +6,7 @@ import { generateChordPart } from './chord-generator';
 import { generateDrumPart } from './drum-generator';
 import { generateMelody } from './melody-generator';
 import { resolvePartTrack } from './part-settings';
+import { applyPartTiming } from './part-processing';
 
 /** Convert the seeded generators to note-level events shared by the editor and MIDI exporter. */
 export function generatePhrase(project: CompositionProject, part: ArrangedPart): PhraseNote[] {
@@ -40,7 +41,7 @@ export function phraseForProject(project: CompositionProject, part: ArrangedPart
 }
 
 /** Generate a phrase from one independent track while keeping the generator library role-based. */
-export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack): PhraseNote[] {
+export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack, includeTiming = true): PhraseNote[] {
   const trackProject = withTrackSeed(project, track);
   const editedPhrases = { ...trackProject.editedPhrases, [track.role]: undefined };
   let notes: PhraseNote[];
@@ -57,11 +58,12 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
       notes = generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums'); break;
   }
   // Melody applies transpose before interval repair and length before mode conversion, as Java does.
-  if (track.role === 'melody') return notes;
+  if (track.role === 'melody') return includeTiming ? applyPartTiming(notes, track.generatorSettings) : notes;
   const length = track.generatorSettings.noteLengthMultiplier ?? 100;
   const transpose = track.role === 'drums' ? 0 : track.generatorSettings.transpose ?? 0;
-  return notes.map((note) => ({ ...note, durationBeats: note.durationBeats * length / 100,
+  const prepared = notes.map((note) => ({ ...note, durationBeats: note.durationBeats * length / 100,
     midi: Math.max(0, Math.min(127, note.midi + transpose)) }));
+  return includeTiming ? applyPartTiming(prepared, track.generatorSettings) : prepared;
 }
 
 export function phraseForTrack(project: CompositionProject, track: CompositionTrack): readonly PhraseNote[] {
@@ -125,9 +127,10 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
     const progression = section.chordDegrees && track.editedPhrase === undefined
       ? section.chordDegrees : project.progression;
     const generated = track.editedPhrase === undefined
-      ? generateTrackPhrase({ ...project, progression }, effectiveTrack) : phrase;
+      ? generateTrackPhrase({ ...project, progression }, effectiveTrack, false) : phrase;
     const sectionPhrase = effectiveTrack.role === 'bass' && track.editedPhrase === undefined
       ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;
+    const sectionNotes: PhraseNote[] = [];
     for (let measure = 0; measure < section.measures; measure++) {
       if (partEnters) {
         const sourceMeasure = measure % progression.length;
@@ -135,12 +138,13 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
         const sourceEndBeat = sourceStartBeat + 4;
         for (const note of sectionPhrase) {
           if (note.startBeat >= sourceStartBeat && note.startBeat < sourceEndBeat) {
-            result.push({ ...note, startBeat: arrangementBeat + note.startBeat - sourceStartBeat });
+            sectionNotes.push({ ...note, startBeat: arrangementBeat + note.startBeat - sourceStartBeat });
           }
         }
       }
       arrangementBeat += 4;
     }
+    result.push(...(track.editedPhrase === undefined ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes));
   }
   const notes = result;
   if (track.role === 'drums') return notes;

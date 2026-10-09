@@ -55,6 +55,23 @@ const rhythmControls: readonly PartControl[] = [
       description: 'Velocity per displayed subdivision (0–127). Zero silences a hit. Values stay at their subdivision when rhythm Shift/Flip changes, and hidden cells survive Hits changes.' }
 ];
 
+const span = number('chordSpan', 'Span', 1, 4, 1, ' chords');
+const pause = number('pauseChance', 'Pause', 0, 100, 0);
+const split = number('exceptionChance', 'Split', 0, 100, 0);
+const swing = number('swingPercent', 'Swing', 0, 100, 50);
+const voices: readonly PartControl[] = [number('chordNotesStretch', 'Voices', 2, 6, 3, ''),
+  { key: 'stretchEnabled', label: 'Use voices', kind: 'boolean', defaultValue: false }];
+const common: readonly PartControl[] = [
+  { key: 'generationEnabled', label: 'Generate notes', kind: 'boolean', defaultValue: true,
+    description: 'Enable generated notes for this part. Saved manual phrases remain explicit replacements; mixer mute and section presence are independent.' },
+  { key: 'patternSeed', label: 'Seed', kind: 'integer', minimum: -2147483648, maximum: 2147483647, defaultValue: 0,
+    description: 'Java int part seed. Zero follows the project/track seed; this changes notes without rerolling settings.' },
+  number('offset', 'Offset', -1000, 1000, 0, ' /1000 beat'),
+  number('feedbackCount', 'Delays', 0, 5, 0, ''),
+  number('feedbackDuration', 'FB duration', -2000, 2000, 750, ' /1000 beat'),
+  number('feedbackVol', 'FB velocity', 10, 150, 65),
+];
+
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [...fill, number('speed', 'Speed', -100, 100, 50, ''),
@@ -72,24 +89,25 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     { ...number('transpose', 'Transpose', -36, 36, 0, ' st'), allowedValues: MELODY_TRANSPOSES },
     number('velocityMin', 'Min velocity', 1, 127, 80, ''), number('velocityMax', 'Max velocity', 1, 127, 105, ''),
     number('noteLengthMultiplier', 'Note length', 25, 200, 100),
-    { key: 'patternSeed', label: 'Seed', kind: 'integer', minimum: -2147483648, maximum: 2147483647, defaultValue: 0,
-      description: 'Seed for this part. Zero follows the project seed; editing this does not reroll track settings.' }],
-  bass: [...fill, choice('rhythm', 'Rhythm', BASS_RHYTHMS),
+    ...common],
+  bass: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: BASS_RHYTHMS } : control), span,
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
-    ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  chords: [...fill, ...rhythmControls,
-    choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 125), ...pitched],
-  arpeggio: [...fill, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
-    choice('rate', 'Rate', ['eighth', 'sixteenth']), choice('octaves', 'Octaves', [1, 2]),
-    ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
+    ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
+  chords: [...fill, ...rhythmControls, span, pause, swing, ...voices,
+    choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 200), ...pitched, ...common],
+  arpeggio: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, defaultValue: 'full' } : control), span,
+    number('patternRepeat', 'Repeat', 1, 4, 1, ''), pause, split, swing, ...voices, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
+    choice('octaves', 'Octaves', [1, 2]),
+    ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
   drums: [...fill, ...rhythmControls.map(control => control.key === 'hitsPerPattern' ? { ...control, defaultValue: 4 } : control),
     number('velocityMin', 'Min velocity', 1, 127, 69, ''), number('velocityMax', 'Max velocity', 1, 127, 89, ''),
-    number('swingPercent', 'Swing', 50, 75), number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
+    span, pause, split, swing, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
 };
 
 export function settingsValues(settings: PartSettingsPatch, role: ArrangedPart): Readonly<Record<string, PartSettingValue>> {
   return Object.fromEntries(PART_CONTROLS[role].map((control) => [control.key,
-    (settings as Record<string, PartSettingValue>)[control.key] ?? control.defaultValue!]));
+    (settings as Record<string, PartSettingValue>)[control.key]
+      ?? (role === 'arpeggio' && control.key === 'hitsPerPattern' && (settings as { rate?: string }).rate === 'sixteenth' ? 16 : control.defaultValue!)]));
 }
 
 /** Arrays are complete musical values, compared by content rather than reference. */
@@ -116,6 +134,12 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const result: Record<string, PartSettingValue> = {};
   for (const [key, field] of Object.entries(value)) {
+    // Existing scoped rate values remain readable. Hits replaces this coarse UI control.
+    if (role === 'arpeggio' && key === 'rate') {
+      if (field !== 'eighth' && field !== 'sixteenth') return undefined;
+      result[key] = field;
+      continue;
+    }
     const control = PART_CONTROLS[role].find((candidate) => candidate.key === key);
     if (!control) return undefined;
     if ((control.kind === 'number' || control.kind === 'integer') && (!Number.isInteger(field) || (field as number) < control.minimum! || (field as number) > control.maximum!)) return undefined;
@@ -151,11 +175,7 @@ export function velocityBounds(settings: CommonPartSettings, defaults: readonly 
 /** Keep omitted common fields omitted on import, rather than creating implicit overrides. */
 export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): CommonPartSettings | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const common = Object.fromEntries(Object.entries(value).filter(([key]) =>
-    ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier', 'chordSpanFill', 'fillFlip',
-      'hitsPerPattern', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern',
-      'useCustomVelocities', 'customVelocities'].includes(key)));
-  const decoded = decodePartPatch(role, common);
+  const decoded = decodePartPatch(role, value);
   return decoded && validVelocityRange(decoded, role) ? decoded : undefined;
 }
 

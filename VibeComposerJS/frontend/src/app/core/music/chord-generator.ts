@@ -2,10 +2,11 @@ import type { ChordSettings } from '../project/project.model';
 import { getDiatonicChords, getPitchClass } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
-import { velocityBounds } from './part-settings';
+import { decodePartPatch, velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
-import { chordRhythmMask } from './rhythm-pattern';
-import { chordVelocityPattern } from './velocity-pattern';
+import { effectivePartSeed, spannedPattern, spannedVelocities, expandedVoices } from './part-processing';
+import { swingNotes } from './phrase-swing';
+
 
 export interface ChordHitEvent {
   readonly pitches: readonly number[];
@@ -31,11 +32,12 @@ export function generateChordPart(
   }
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(settings.noteLengthPercent)
-      || settings.noteLengthPercent < 25 || settings.noteLengthPercent > 125
-      || (settings.voicing !== 'close' && settings.voicing !== 'open')) {
+      || settings.noteLengthPercent < 25 || settings.noteLengthPercent > 200
+      || (settings.voicing !== 'close' && settings.voicing !== 'open') || !decodePartPatch('chords', settings)) {
     throw new RangeError('Chord generation settings are outside the supported range.');
   }
 
+  if (settings.generationEnabled === false) return [];
   const diatonicChords = getDiatonicChords(key, scale);
   const chordDefinitions = progression.map((degree) => {
     const chord = diatonicChords.find((candidate) => candidate.degree === degree);
@@ -53,29 +55,29 @@ export function generateChordPart(
     const pitches = settings.voicing === 'open'
       ? [root, root + fifth, root + 12 + third]
       : [root, root + third, root + fifth];
-    return { symbol: chord.symbol, pitches };
+    return { symbol: chord.symbol, pitches: expandedVoices(pitches, settings) };
   });
 
-  const signedSeed = BigInt.asIntN(32, BigInt(seed));
+  const signedSeed = effectivePartSeed(seed, settings);
   const partSeed = BigInt.asIntN(32, signedSeed + 20_000n);
   const events: ChordHitEvent[] = [];
   const [velocityMin, velocityMax] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings);
-  const pattern = chordRhythmMask(settings);
-  const velocityPattern = chordVelocityPattern(settings);
-  const stepDuration = BEATS_PER_CHORD / pattern.length;
+  const pauseRandom = new JavaRandom(BigInt.asIntN(32, partSeed + 51n));
+  const timeline: Array<ChordHitEvent & { rhythm: number; duration: number; active: boolean }> = [];
 
   for (let chordIndex = 0; chordIndex < chordDefinitions.length; chordIndex++) {
-    if (!fill[chordIndex]) continue;
+    if (!fill[chordIndex]) { timeline.push({ pitches: [], symbol: '', startBeat: chordIndex * 4, durationBeats: 4, velocity: 0, chordIndex, rhythm: 4, duration: 4, active: false }); continue; }
     const chord = chordDefinitions[chordIndex];
+    const pattern = spannedPattern(settings, chordIndex);
+    const velocityPattern = spannedVelocities(settings, chordIndex);
+    const stepDuration = BEATS_PER_CHORD / pattern.length;
     const velocityRandom = new JavaRandom(BigInt.asIntN(32, partSeed + BigInt(chordIndex)));
 
     for (let step = 0; step < pattern.length; step++) {
-      const velocity = velocityPattern ? velocityPattern[step] : velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin;
-      if (pattern[step] < 1 || velocity === 0) {
-        continue;
-      }
-      events.push({
+      const velocity = velocityPattern ? velocityPattern[step % velocityPattern.length] : velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin;
+      const paused = pauseRandom.nextInt(100) < (settings.pauseChance ?? 0);
+      timeline.push({ rhythm: stepDuration, duration: stepDuration * settings.noteLengthPercent / 100, active: pattern[step] > 0 && velocity > 0 && !paused,
         pitches: chord.pitches,
         symbol: chord.symbol,
         startBeat: chordIndex * BEATS_PER_CHORD + step * stepDuration,
@@ -86,5 +88,11 @@ export function generateChordPart(
     }
   }
 
+  swingNotes(timeline, (settings.hitsPerPattern ?? 8) % 2 === 0 ? settings.swingPercent ?? 50 : 50);
+  let time = 0;
+  for (const note of timeline) {
+    if (note.active) events.push({ pitches: note.pitches, symbol: note.symbol, startBeat: time, durationBeats: note.duration, velocity: note.velocity, chordIndex: note.chordIndex });
+    time += note.rhythm;
+  }
   return events;
 }

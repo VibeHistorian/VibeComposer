@@ -18,6 +18,10 @@
             [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
             (focus)="startTextEdit()" (change)="commitText(control, $event)"
             (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
+          @if (control.key === 'patternSeed') {
+            <button type="button" class="common-grid-button" [disabled]="values()[control.key] === 0"
+              (click)="settingsChanged.emit({ key: control.key, value: 0 })">Clear seed</button>
+          }
         } @else if (control.kind === 'choice') {
           <select [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (change)="choose(control, $event)">
             @if (values()[control.key] === null) { <option value="" disabled [selected]="true">Mixed</option> }

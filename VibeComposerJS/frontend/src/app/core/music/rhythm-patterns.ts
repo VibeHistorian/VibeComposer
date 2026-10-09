@@ -15,7 +15,6 @@ export const STATIC_RHYTHM_PATTERNS = Object.values(STATIC_RHYTHM_DEFINITIONS).m
 export const RHYTHM_PATTERNS = [...STATIC_RHYTHMS, 'euclid', 'custom'] as const;
 export type RhythmPattern = typeof RHYTHM_PATTERNS[number];
 
-/** The current bass consumer supports static subsets plus its own generated alternating durations. */
-export const BASS_RHYTHMS = ['alternating', ...RHYTHM_PATTERNS.filter((pattern) =>
-  pattern !== 'single' && pattern !== 'one-six' && pattern !== 'euclid' && pattern !== 'custom')] as const;
+/** Bass supports the shared grid catalogue plus generated alternating durations. */
+export const BASS_RHYTHMS = ['alternating', ...RHYTHM_PATTERNS] as const;
 export type BassRhythm = typeof BASS_RHYTHMS[number];

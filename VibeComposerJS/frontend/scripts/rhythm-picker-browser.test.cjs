@@ -150,6 +150,39 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('.track-group.melody .track-select').click();
         await waitFor(() => document.querySelectorAll('.mix-quick-settings select').length === 2, 'recreated melody selects');
         result.recreatedSelection = [...document.querySelectorAll('.mix-quick-settings select')].map(select => select.value);
+        result.sharedRoles = [];
+        for (const role of ['bass', 'arpeggio']) {
+          document.querySelector('.track-group.' + role + ' .group-select').click();
+          await waitFor(() => [...document.querySelectorAll('vc-part-settings-editor')]
+            .every(editor => editor.getAttribute('data-control-role') === role), role + ' editor context');
+          const rhythms = await waitFor(() => {
+            const controls = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
+            return controls.length === 2 ? controls : null;
+          }, role + ' rhythm controls');
+          rhythms[0].value = 'custom'; rhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
+          await waitFor(() => document.querySelectorAll('.custom-pattern-grid').length === 2, role + ' grids');
+          const hits = document.querySelector('input[aria-label="Hits"]');
+          hits.value = '5'; hits.dispatchEvent(new Event('change', { bubbles: true }));
+          await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid')].every(grid => grid.children.length === 5), role + ' Hits');
+          const seeds = [...document.querySelectorAll('input[aria-label="Seed"]')];
+          seeds[0].focus(); seeds[0].value = '-123'; seeds[0].dispatchEvent(new Event('change', { bubbles: true }));
+          await waitFor(() => seeds.every(seed => seed.value === '-123'), role + ' seed sync');
+          const delays = document.querySelector('input[aria-label="Delays"]');
+          delays.value = '2'; delays.dispatchEvent(new Event('change', { bubbles: true }));
+          await waitFor(() => [...document.querySelectorAll('input[aria-label="Delays"]')].every(input => input.value === '2'), role + ' feedback sync');
+          document.querySelector('.track-group.' + role + ' .generation-toggle').click();
+          await waitFor(() => [...document.querySelectorAll('input[aria-label="Generate notes"]')].every(input => !input.checked), role + ' generation toggle');
+          document.querySelector('.track-group.' + role + ' .generation-toggle').click();
+          await waitFor(() => [...document.querySelectorAll('input[aria-label="Generate notes"]')].every(input => input.checked), role + ' generation restored');
+          [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Clear seed').click();
+          await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
+          const state = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))[role];
+          result.sharedRoles.push({ role, hits: state.hitsPerPattern, seed: state.patternSeed, delays: state.feedbackCount,
+            grids: document.querySelectorAll('.custom-pattern-grid').length,
+            pause: document.querySelectorAll('input[aria-label="Pause"]').length,
+            split: document.querySelectorAll('input[aria-label="Split"]').length,
+            repeat: document.querySelectorAll('input[aria-label="Repeat"]').length });
+        }
         document.querySelector('.track-group.drums .track-select').click();
         const drumPitch = await waitFor(() => document.querySelector('select[aria-label="Percussion instrument"]'), 'drum pitch picker');
         result.initialDrumPitch = drumPitch.value;
@@ -237,6 +270,10 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.recreatedSelection, ['73', '4']);
     assert.deepEqual(actual.mixerSelections, [['73', '4'], ['33', '1'], ['0', '2'], ['11', '3'], ['36', '10']]);
     assert.equal(actual.initialDrumPitch, '36');
+    assert.deepEqual(actual.sharedRoles, [
+      { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 2, pause: 0, split: 0, repeat: 0 },
+      { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 2, pause: 2, split: 2, repeat: 2 },
+    ]);
     assert.deepEqual(actual.drumRhythmOptions, [expected, expected]);
     assert.deepEqual(actual.drumGridCounts, [4, 4]);
     assert.deepEqual(actual.drumVelocityCounts, [4, 4]);
