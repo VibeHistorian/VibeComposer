@@ -161,7 +161,54 @@ test('role-specific policies preserve opt-outs and share only eligible seeds and
   assert.ok(generated.every(track => track.hitsPerPattern >= 1 && track.hitsPerPattern <= 32));
 });
 
-test('Generate N appends generated tracks atomically with one history entry for every role', () => {
+test('role totals shrink highest numbers first, preserve locks and references, and undo atomically', () => {
+  const { service } = fixture();
+  service.setRoleTrackCount('chords', 5);
+  service.setTrackRerollLock('track-chords-4', true);
+  const section = service.project().arrangement[0];
+  service.updatePartSettings({ kind: 'section-track', sectionId: section.id, trackId: 'track-chords-5' }, { transpose: 12 });
+  service.reorderTrack('track-chords-5', -1);
+  const before = service.exportProjectJson();
+  const locked = service.project().tracks.find(track => track.id === 'track-chords-4');
+  assert.equal(service.setRoleTrackCount('chords', 3), 'changed');
+  assert.deepEqual(service.project().tracks.filter(track => track.role === 'chords').map(track => track.id),
+    ['track-chords-1', 'track-chords-2', 'track-chords-4']);
+  for (const section of service.project().arrangement) {
+    assert.equal('track-chords-5' in section.trackPresence, false);
+    assert.equal('track-chords-5' in (section.trackPartOverrides ?? {}), false);
+  }
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canRedo(), true);
+  assert.equal(service.setRoleTrackCount('chords', 5), 'unchanged');
+  assert.equal(service.canRedo(), true);
+  service.redo();
+  assert.equal(service.setRoleTrackCount('chords', 0), 'changed');
+  assert.deepEqual(service.project().tracks.filter(track => track.role === 'chords'), [locked]);
+  const unchanged = service.exportProjectJson();
+  assert.equal(service.setRoleTrackCount('chords', 0), 'unchanged');
+  assert.equal(service.exportProjectJson(), unchanged);
+  service.setRoleTrackCount('chords', 2);
+  assert.equal(service.project().tracks.at(-1).id, 'track-chords-5');
+});
+
+test('role totals support empty projects, large increases and strict capacity without consuming redo', () => {
+  const { service, load } = fixture();
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) assert.equal(service.setRoleTrackCount(role, 0), 'changed');
+  assert.equal(service.project().tracks.length, 0);
+  const empty = service.exportProjectJson();
+  assert.equal(service.importProjectJson(empty), true);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.project().tracks.length, 0);
+  assert.equal(service.setRoleTrackCount('drums', 64), 'changed');
+  assert.equal(service.project().tracks.length, 64);
+  assert.equal(service.setRoleTrackCount('bass', 1), 'invalid');
+  service.undo(); assert.equal(service.project().tracks.length, 0);
+  for (const count of [-1, 65, 1.5, NaN]) assert.equal(service.setRoleTrackCount('drums', count), 'invalid');
+  assert.equal(service.setRoleTrackCount('drums', 0), 'unchanged');
+  assert.equal(service.canRedo(), true);
+});
+
+test('generated tracks append atomically with one history entry for every role', () => {
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     const { service, load } = fixture();
     service.updateTrackPhrase(`track-${role}-1`, [{ id:'manual', midi:60, startBeat:0, durationBeats:1, velocity:80 }]);
@@ -180,7 +227,7 @@ test('Generate N appends generated tracks atomically with one history entry for 
     const restored = new (load('core/project/project.service.ts').ProjectService)();
     assert.deepEqual(restored.project(), service.project());
     service.updateSettings({ name: 'redo' }); service.undo(); const state = service.exportProjectJson();
-    for (const count of [0, 17, 1.5, NaN]) assert.equal(service.generateRoleTracks(role, count), 'invalid');
+    for (const count of [0, 65, 1.5, NaN]) assert.equal(service.generateRoleTracks(role, count), 'invalid');
     assert.equal(service.exportProjectJson(), state); assert.equal(service.canRedo(), true);
   }
 });

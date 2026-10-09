@@ -20,7 +20,7 @@ All Java paths in this document are relative to [the Java package](../midimaster
 
 - **Q:** between-canvas Part settings panel, with the same complete control in inspector. Available for global role/track and section role/track, where musically supported.
 - **I:** detailed musical settings in inspector; no default quick-panel slot. Old global-only values stay global/role settings until a scoped generator consumer exists.
-- **H:** track-generation policy directly in expanded Tracks group header. Count and Generate N remain visible when collapsed.
+- **H:** track-generation policy directly in expanded Tracks group header. The editable total beside the role name remains visible when collapsed; separate Count/Generate N controls are removed.
 - **HI:** advanced track-generation policy, now shown directly in the expanded Tracks group alongside H controls (P6 visual addendum). No reroll policy or actions in the part inspector.
 - **Other:** transport, harmony panel, arrangement toolbar/section inspector, track row, mixer, editor, or deferred preferences as specified.
 
@@ -77,7 +77,7 @@ P4a fill consumers: `BassPhraseGenerator` skips unfilled chords before shared ra
 
 ## Track-generation policies
 
-Shared [InstGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/InstGUI.java) owns `addPanelButton`, `generatePanelButton`, `randomPanelsToGenerate`: compact Add/Reroll in header (H), explicit Generate N action in inspector (HI). Existing tracks retain IDs when rerolled. `enabledCheckBox` is role enable (musical/arrangement control), and `groupFilterSlider` (LP) is mix/device control, not randomization policy. [PartManagerPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/PartManagerPanel.java) presets/overwrite actions belong in inspector/header menu later; do not mix them into pattern controls.
+Shared [InstGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/InstGUI.java) owns `addPanelButton`, `generatePanelButton`, `randomPanelsToGenerate`: translated as compact Add/Reroll and an editable total beside the role name (H). Separate Count/Generate N controls are removed. Existing tracks retain IDs when rerolled. `enabledCheckBox` is role enable (musical/arrangement control), and `groupFilterSlider` (LP) is mix/device control, not randomization policy. [PartManagerPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/PartManagerPanel.java) presets/overwrite actions belong in inspector/header menu later; do not mix them into pattern controls.
 
 ### Arpeggio
 
@@ -215,8 +215,12 @@ All Tracks groups now share group/per-track Reroll, locks and a distinct Generat
 
 ## P6 visual organization addendum (2026-10-09)
 
-This placement supersedes earlier inspector-policy references and compact/advanced header splits. Count and Generate N stay visible in collapsed role groups; expanding shows every supported policy control without roll counters or explanatory text. Reroll actions remain in Tracks. The Inspector contains musical settings, identity and existing scoped workflows.
+This placement supersedes earlier inspector-policy references and compact/advanced header splits. The editable boxed role total stays visible in collapsed role groups; separate Count/Generate N controls are removed; expanding shows every supported policy control without roll counters or explanatory text. Reroll actions remain in Tracks. The Inspector contains musical settings, identity and existing scoped workflows.
 
 Part settings and the Inspector share Core, Rhythm, Pitch, Shape, Dynamics, Structure and Other areas, omitting empty areas. The shared pastel category palette is independent of role colors; Drums has no Pitch area. Bass now uses blue, and the track count sits in a bordered box beside the role name. Control applicability, values, scope and generator semantics are unchanged.
 
 P6 inline identity follow-up: each expanded Tracks group contains compact instrument/percussion and MIDI-channel selectors on each track line. They edit that track by ID without changing the active settings selection. Native arrows are hidden; borders, input surfaces, hover and keyboard focus communicate editability. Percussion remains on channel 10. The duplicate Inspector instrument/channel section and row G toggle are removed.
+
+## P6 count interaction revision (2026-10-10)
+
+Click the boxed total beside the role name to edit it, including while collapsed. This supersedes historical Generate N placement above. The effective total is max(locked track count, requested total). Less removes unlocked tracks starting with the highest number; more appends newly generated tracks; same does nothing. Use one undo entry, clean up removed tracks' section references, preserve surviving tracks and locks, allow zero, and respect the 64-track project capacity. New generated tracks have numbers above surviving members.

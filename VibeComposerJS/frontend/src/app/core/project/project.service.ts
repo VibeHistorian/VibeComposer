@@ -70,10 +70,30 @@ export class ProjectService {
   /** Reroll existing global track bases. Local overrides, identity and saved manual notes remain owned. */
   rerollArpeggioTracks(trackId?: string): PartWorkflowResult { return this.rerollRoleTracks('arpeggio', trackId); }
 
+  /** Set a role's total, protecting locks and deleting highest numbered members first. */
+  setRoleTrackCount(role: ArrangedPart, requested: number): PartWorkflowResult {
+    if (!ARRANGED_PARTS.includes(role) || !Number.isInteger(requested) || requested < 0 || requested > 64) return 'invalid';
+    const current = this.state();
+    const members = current.tracks.filter(track => track.role === role);
+    const target = Math.max(requested, members.filter(track => track.rerollLocked).length);
+    if (target === members.length) return 'unchanged';
+    if (target > members.length) return this.generateRoleTracks(role, target - members.length);
+    const removable = members.filter(track => !track.rerollLocked)
+      .sort((a, b) => Number(b.id.match(/(\d+)$/)?.[1] ?? members.indexOf(b) + 1)
+        - Number(a.id.match(/(\d+)$/)?.[1] ?? members.indexOf(a) + 1));
+    const removed = new Set(removable.slice(0, members.length - target).map(track => track.id));
+    return this.commitPartWorkflow({ ...current, tracks: current.tracks.filter(track => !removed.has(track.id)),
+      arrangement: current.arrangement.map(section => ({ ...section,
+        trackPresence: Object.fromEntries(Object.entries(section.trackPresence).filter(([id]) => !removed.has(id))),
+        ...(section.trackPartOverrides !== undefined ? { trackPartOverrides: Object.fromEntries(
+          Object.entries(section.trackPartOverrides).filter(([id]) => !removed.has(id))) } : {}),
+      })) });
+  }
+
   /** Append explicitly generated tracks in one transaction; never replace existing members. */
   generateRoleTracks(role: ArrangedPart, amount: number): PartWorkflowResult {
     const current = this.state();
-    if (!ARRANGED_PARTS.includes(role) || !Number.isInteger(amount) || amount < 1 || amount > 16
+    if (!ARRANGED_PARTS.includes(role) || !Number.isInteger(amount) || amount < 1 || amount > 64
       || current.tracks.length + amount > 64) return 'invalid';
     const count = current.trackRerollCounts?.[role] ?? 0;
     if (count >= 2147483647) return 'invalid';
@@ -83,8 +103,9 @@ export class ProjectService {
     } as CompositionTrack;
     const created: CompositionTrack[] = [];
     for (let index = 0; index < amount; index++) {
-      const id = this.nextTrackId(tracks, role);
-      const number = Number(id.split('-').at(-1));
+      const number = Math.max(0, ...tracks.filter(track => track.role === role)
+        .map(track => Number(track.id.match(/(\d+)$/)?.[1] ?? 0))) + 1;
+      const id = `track-${role}-${number}`;
       const track = { ...source, id, name: `${role[0].toUpperCase()}${number}`,
         midiChannel: role === 'drums' ? 10 : this.nextAvailableChannel(tracks),
         generatorSettings: copyPartSettings(source.generatorSettings),
@@ -866,7 +887,7 @@ export class ProjectService {
   }
 
   private decodeTracks(value: unknown): CompositionTrack[] | undefined {
-    if (!Array.isArray(value) || value.length === 0 || value.length > 64) return undefined;
+    if (!Array.isArray(value) || value.length > 64) return undefined;
     const tracks: CompositionTrack[] = [];
     const ids = new Set<string>();
     for (const raw of value) {

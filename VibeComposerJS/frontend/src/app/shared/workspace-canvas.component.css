@@ -36,10 +36,13 @@
 .track-group.bass { border-left-color: var(--role-bass); }.track-group.chords { border-left-color: var(--role-chords); }.track-group.arpeggio { border-left-color: var(--role-arpeggio); }.track-group.drums { border-left-color: var(--role-drums); }
 .group-heading { min-height: 29px; padding: 2px 5px; display: flex; align-items: center; gap: 6px; border-radius: var(--radius-tight); }
 .track-group.bass .group-heading { background: var(--role-bass-header); }.track-group.chords .group-heading { background: var(--role-chords-header); }.track-group.arpeggio .group-heading { background: var(--role-arpeggio-header); }.track-group.drums .group-heading { background: var(--role-drums-header); }
-.group-select { min-width: 0; flex: 1; padding: 2px 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
+.group-select { min-width: 0; padding: 2px 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
 .group-select strong { min-width: 0; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .group-selected { background: var(--surface-accent); }
-.group-count { min-width: 22px; height: 22px; padding: 0 5px; flex: 0 0 auto; display: inline-grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-tight); background: var(--shadow-highlight); color: var(--text-secondary); font: 10px var(--font-mono); }
+.group-count { box-sizing: border-box; width: 34px; min-width: 22px; height: 22px; margin-right: auto; padding: 0 3px; flex: 0 0 auto; text-align: center; appearance: textfield; border: 1px solid var(--border-strong); border-radius: var(--radius-tight); background: var(--shadow-highlight); color: var(--text-secondary); font: 10px var(--font-mono); }
+.group-count::-webkit-inner-spin-button, .group-count::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.group-count:focus { outline: 1px solid var(--accent-primary); }
+.track-policy-header:has(vc-track-generation-policy:empty):not(:has([role="status"])) { display: none; }
 .add-track-button, .collapse-group-button { width: 22px; height: 22px; padding: 0; flex: 0 0 auto; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
 .add-track-button:hover, .collapse-group-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .collapse-group-button { font-size: 14px; line-height: 1; }

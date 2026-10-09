@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import type { ArrangedPart, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../core/project/project.model';
 import { TRACK_POLICY_CONTROLS, type PolicyControl } from '../core/music/track-generation';
 
@@ -15,17 +15,7 @@ export class TrackGenerationPolicyComponent {
   readonly expanded = input(false);
   readonly disabled = input(false);
   readonly policyChanged = output<TrackGenerationPolicyPatch>();
-  readonly generationRequested = output<number>();
-  readonly capacity = input(16);
-  readonly generateCount = signal(1);
   readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()]);
-
-  changeCount(event: Event): void {
-    const element = event.target as HTMLInputElement;
-    const count = Number(element.value);
-    if (Number.isInteger(count) && count >= 1 && count <= 16) this.generateCount.set(count);
-    element.value = String(this.generateCount());
-  }
 
   inactive(control: PolicyControl): boolean {
     return this.disabled() || (control.key === 'fixedHits' && this.values()['randomHits'] === true)

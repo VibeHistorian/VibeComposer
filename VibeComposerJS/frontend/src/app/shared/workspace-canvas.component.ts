@@ -87,11 +87,13 @@ export class WorkspaceCanvasComponent {
   canRerollRole(role: ArrangedPart): boolean { return this.project().tracks.some(track => track.role === role && !track.rerollLocked); }
   rerollMessageFor(role: ArrangedPart): string | null | undefined { return this.rerollFeedback()?.role === role ? this.rerollMessage() : null; }
 
-  generateRole(role: ArrangedPart, count: number): void {
+  changeRoleCount(role: ArrangedPart, event: Event): void {
     if (this.editing()) return;
-    const result = this.projects.generateRoleTracks(role, count);
+    const element = event.target as HTMLInputElement;
+    const result = this.projects.setRoleTrackCount(role, element.value.trim() === '' ? NaN : Number(element.value));
+    element.value = String(this.tracksFor(role).length);
     this.rerollFeedback.set(result === 'invalid' ? { project: this.project(), role,
-      message: 'Cannot generate these tracks. Check capacity and local settings.' } : null);
+      message: 'Cannot change the track count. Check capacity and local settings.' } : null);
   }
 
   updateRolePolicy(role: ArrangedPart, patch: TrackGenerationPolicyPatch): void {

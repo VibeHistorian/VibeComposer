@@ -6,8 +6,3 @@ label { display: grid; gap: 3px; color: var(--text-muted); font: 9px var(--font-
 input, select { box-sizing: border-box; width: 58px; min-width: 0; padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-mono); }
 select { width: 87px; }
 input:disabled, select:disabled { opacity: .5; }
-
-/* Track generation action */
-.generate-tracks { display: flex; flex-wrap: wrap; align-items: end; gap: 6px; }
-button { padding: 4px 6px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-ui); cursor: pointer; }
-button:disabled { opacity: .5; cursor: default; }
