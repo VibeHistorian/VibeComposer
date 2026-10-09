@@ -70,7 +70,7 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
         const pointer = (type, y) => volume.dispatchEvent(new PointerEvent(type,
           { pointerId: 17, button: 0, clientY: y, bubbles: true, cancelable: true }));
         pointer('pointerdown', 100); pointer('pointermove', 175);
-        await waitFor(() => volume.closest('.compact-knob').querySelector('output').textContent.trim() === '-6.0 dB');
+        await waitFor(() => volume.closest('.compact-knob').querySelector('output').textContent.trim() === '-6.0');
         result.volumeBeforeRelease = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).mix.chords.volumePercent;
         pointer('pointerup', 175);
         await waitFor(() => volume.value === '50');
@@ -79,6 +79,9 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
           && track.querySelector('.solo-toggle').classList.contains('active'));
         result.quickMix = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).mix.chords;
         result.panLabel = pan.closest('.compact-knob').querySelector('output').textContent.trim();
+        result.miniWidths = [pan, volume].map(input => input.closest('.compact-knob').getBoundingClientRect().width);
+        result.volumeCenter = volume.closest('.compact-knob').querySelector('.knob-face > span').textContent.trim();
+        result.volumeAccessibleValue = volume.getAttribute('aria-valuetext');
         result.colors = ['.mute-toggle', '.solo-toggle'].map(selector => getComputedStyle(track.querySelector(selector)).backgroundColor);
         const bounds = track.getBoundingClientRect();
         result.controlsFit = track.querySelector('.track-mix-controls').getBoundingClientRect().right <= bounds.right;
@@ -139,6 +142,9 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
     assert.equal(actual.quickMix.volumePercent, 50);
     assert.equal(actual.quickMix.panPercent, 1);
     assert.equal(actual.panLabel, '1% R');
+    assert.deepEqual(actual.miniWidths, [34, 34]);
+    assert.equal(actual.volumeCenter, 'dB');
+    assert.equal(actual.volumeAccessibleValue, '-6.0 dB');
     assert.deepEqual(actual.colors, ['rgb(255, 255, 50)', 'rgb(145, 255, 40)']);
     assert.equal(actual.controlsFit, true);
     assert.equal(actual.groupStillSelected, 'true');

@@ -11,9 +11,10 @@
 .compact-knob:has(input:focus-visible) .knob-face { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-outline), inset 0 0 0 2px var(--surface-base); }
 
 /* Track mixer mini knobs */
-.mini { width: 48px; gap: 2px; }
+.mini { width: 34px; gap: 2px; }
 .mini vc-control-heading { display: none; }
-.mini .knob-face { width: 24px; height: 24px; padding: 2px; }
-.mini .knob-face > span { width: 16px; height: 16px; font-size: 9px; }
+.mini .knob-face { width: 24px; height: 24px; padding: 2px; box-shadow: none; }
+.mini:has(input:focus-visible) .knob-face { box-shadow: 0 0 0 2px var(--accent-outline); }
+.mini .knob-face > span { width: 18px; height: 18px; padding: 0; font-size: 9px; }
 .mini input { top: 0; width: 24px; height: 24px; }
 .mini .knob-value { font: 10px var(--font-ui); white-space: nowrap; }

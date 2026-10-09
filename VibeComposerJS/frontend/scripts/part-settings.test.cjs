@@ -1274,7 +1274,7 @@ test('quick mixer knobs format linear gain and pan, audition without history, an
   const { load, service, workspace } = fixture();
   const { panLabel, volumeDecibels } = load('core/audio/mix-values.ts');
   assert.deepEqual([-100, -50, 0, 50, 100].map(panLabel), ['100% L', '50% L', 'C', '50% R', '100% R']);
-  assert.deepEqual([100, 50, 1, 0].map(volumeDecibels), ['0dB', '-6.0 dB', '-40.0 dB', '-Inf']);
+  assert.deepEqual([100, 50, 1, 0].map(volumeDecibels), ['-0.0', '-6.0', '-40.0', '-Inf']);
   const heard = [];
   workspace.playback.updateMix = project => heard.push(project);
   const before = service.exportProjectJson();

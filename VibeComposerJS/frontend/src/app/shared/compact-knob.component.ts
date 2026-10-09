@@ -28,6 +28,7 @@ export class CompactKnobComponent {
   readonly shownValue = computed(() => this.preview() ?? this.value());
   readonly formattedValue = computed(() => this.valueFormat() === 'pan' ? panLabel(this.shownValue())
     : this.valueFormat() === 'decibels' ? volumeDecibels(this.shownValue()) : this.shownValue() + this.unit());
+  readonly accessibleValue = computed(() => this.formattedValue() + (this.valueFormat() === 'decibels' ? ' dB' : ''));
   private drag: { pointerId: number; y: number; value: number; minimum: number; maximum: number; step: number } | null = null;
   readonly angle = computed(() => {
     const span = this.maximum() - this.minimum();
@@ -50,7 +51,7 @@ export class CompactKnobComponent {
 
   tooltip(): string {
     if (this.mixed() && this.preview() === null) return `${this.label()}: mixed values. Adjust to choose a shared value.`;
-    return `${this.label()}: ${this.formattedValue()}. Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work.`;
+    return `${this.label()}: ${this.accessibleValue()}. Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work.`;
   }
 
   private setPreview(value: number): void {
