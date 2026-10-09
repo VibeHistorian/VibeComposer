@@ -159,6 +159,29 @@ interface TrackBase {
   readonly midiChannel: number;
   readonly mix: MixChannelSettings;
   readonly editedPhrase?: readonly PhraseNote[];
+  readonly rerollLocked?: boolean;
+}
+
+/** Rules for choosing stored part values, separate from phrase generation inputs. */
+export interface ArpeggioGenerationPolicy {
+  readonly fixedHits: number;
+  readonly randomHits: boolean;
+  readonly sameHits: boolean;
+  readonly powerOfTwo: boolean;
+  readonly fills: boolean;
+  readonly patterns: boolean;
+  readonly transpose: boolean;
+  readonly randomSpan: boolean;
+  readonly maxSplit: number;
+  readonly lengthMin: number;
+  readonly lengthMax: number;
+  readonly maxRepeat: number;
+  readonly shiftChance: number;
+  readonly voicesMode: 'NONE' | 'FIXED' | 'AT_MOST';
+  readonly voices: number;
+  readonly voicesChance: number;
+  readonly velocityMin: number;
+  readonly velocityMax: number;
 }
 
 export type CompositionTrack =
@@ -190,6 +213,8 @@ export interface CompositionProject {
   readonly mix: Readonly<Record<ArrangedPart, MixChannelSettings>>;
   /** Independent instrument tracks. Legacy role fields above remain for the existing workspace tools. */
   readonly tracks: readonly CompositionTrack[];
+  readonly trackGenerationPolicies?: { readonly arpeggio?: ArpeggioGenerationPolicy };
+  readonly trackRerollCounts?: { readonly arpeggio?: number };
 }
 
 export const SECTION_TYPES: readonly SectionType[] = [

@@ -5,6 +5,7 @@ import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
   MixChannelSettings, PhraseNote, SectionType, PartSettingsPatch, PartSettingsScope, MelodySettings,
   LocalPartSettingsScope, PartWorkflowResult,
+  ArpeggioGenerationPolicy,
 } from './project.model';
 import type { CompositionProject } from './project.model';
 import {
@@ -15,6 +16,7 @@ import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './sect
 import { copyPartSettings, decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 import { isDrumPitch } from '../music/drum-instruments';
+import { DEFAULT_ARPEGGIO_POLICY, decodeArpeggioPolicy, rerollArpeggioSettings, validTrackGenerationMetadata } from '../music/track-generation';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -40,6 +42,43 @@ export class ProjectService {
 
   exportProjectJson(): string {
     return JSON.stringify(this.state(), null, 2);
+  }
+
+  updateArpeggioPolicy(patch: Partial<ArpeggioGenerationPolicy>): PartWorkflowResult {
+    const current = this.state();
+    const policy = decodeArpeggioPolicy({ ...DEFAULT_ARPEGGIO_POLICY, ...current.trackGenerationPolicies?.arpeggio, ...patch });
+    if (!policy) return 'invalid';
+    const previous = current.trackGenerationPolicies?.arpeggio ?? DEFAULT_ARPEGGIO_POLICY;
+    if (Object.entries(policy).every(([key, value]) => value === previous[key as keyof ArpeggioGenerationPolicy])) return 'unchanged';
+    return this.commitPartWorkflow({ ...current, trackGenerationPolicies: { ...current.trackGenerationPolicies, arpeggio: policy } });
+  }
+
+  setTrackRerollLock(trackId: string, locked: boolean): void {
+    if (typeof locked !== 'boolean') return;
+    const current = this.state();
+    const track = current.tracks.find(item => item.id === trackId);
+    if (!track || (track.rerollLocked ?? false) === locked) return;
+    this.commit({ ...current, tracks: current.tracks.map(item => item.id === trackId ? { ...item, rerollLocked: locked } : item) });
+  }
+
+  /** Reroll existing global track bases. Local overrides, identity and saved manual notes remain owned. */
+  rerollArpeggioTracks(trackId?: string): PartWorkflowResult {
+    const current = this.state();
+    const sources = current.tracks.filter((track): track is Extract<CompositionTrack, { role: 'arpeggio' }> =>
+      track.role === 'arpeggio' && !track.rerollLocked && (trackId === undefined || track.id === trackId));
+    if (!sources.length) return 'unchanged';
+    const policy = current.trackGenerationPolicies?.arpeggio ?? DEFAULT_ARPEGGIO_POLICY;
+    const count = current.trackRerollCounts?.arpeggio ?? 0;
+    if (count >= 2147483647) return 'invalid';
+    const seed = BigInt.asIntN(64, BigInt(current.seed) + 300000n + BigInt(count) * 0x9e3779b97f4a7c15n);
+    const settings = rerollArpeggioSettings(seed, policy, sources.map(track => track.generatorSettings));
+    if (sources.every((track, index) => partPatchesEqual(track.generatorSettings, settings[index]))) return 'unchanged';
+    const replacements = new Map(sources.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] }]));
+    const primary = replacements.get('track-arpeggio-1');
+    const next = { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
+      arpeggio: primary?.generatorSettings ?? current.arpeggio,
+      trackRerollCounts: { ...current.trackRerollCounts, arpeggio: count + 1 } };
+    return this.commitPartWorkflow(next);
   }
 
   updatePartSettings(scope: PartSettingsScope, patch: PartSettingsPatch): void {
@@ -313,6 +352,7 @@ export class ProjectService {
     const track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(role === 'drums' ? DEFAULT_DRUM_SETTINGS : source.generatorSettings),
+      rerollLocked: false,
       editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
     const arrangement = current.arrangement.map((section) => ({
       ...section,
@@ -705,7 +745,7 @@ export class ProjectService {
       && Array.isArray(project.progression)
       && project.progression.length > 0 && project.progression.length <= 32
       && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7);
-    if (!validBase) {
+    if (!validBase || !validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)) {
       return undefined;
     }
 
@@ -741,6 +781,9 @@ export class ProjectService {
       mix,
       tracks,
       arrangement,
+      ...(project.trackGenerationPolicies !== undefined ? { trackGenerationPolicies: project.trackGenerationPolicies.arpeggio
+        ? { arpeggio: decodeArpeggioPolicy(project.trackGenerationPolicies.arpeggio)! } : {} } : {}),
+      ...(project.trackRerollCounts !== undefined ? { trackRerollCounts: { ...project.trackRerollCounts } } : {}),
     };
   }
 
@@ -784,7 +827,7 @@ export class ProjectService {
       const mix = this.decodeTrackMix(track.mix);
       const editedPhrase = track.editedPhrase === undefined ? undefined
         : this.isPhrase(track.editedPhrase) ? track.editedPhrase.map((note) => ({ ...note })) : null;
-      if (!mix || editedPhrase === null) return undefined;
+      if (!mix || editedPhrase === null || (track.rerollLocked !== undefined && typeof track.rerollLocked !== 'boolean')) return undefined;
       let decoded: CompositionTrack | undefined;
       switch (track.role) {
         case 'melody': {
@@ -814,6 +857,7 @@ export class ProjectService {
         }
       }
       if (!decoded) return undefined;
+      if (track.rerollLocked !== undefined) decoded = { ...decoded, rerollLocked: track.rerollLocked };
       ids.add(decoded.id);
       tracks.push(decoded);
     }
@@ -1100,7 +1144,8 @@ export class ProjectService {
       && tracks !== undefined
       && this.decodeArrangement(project.arrangement, tracks, BigInt(project.seed!)) !== undefined
       && this.decodeEditedPhrases(project.editedPhrases) !== undefined
-      && this.decodeMix(project.mix) !== undefined;
+      && this.decodeMix(project.mix) !== undefined
+      && validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts);
   }
 
   private persist(project: CompositionProject): void {

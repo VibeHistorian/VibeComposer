@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
+  ArpeggioGenerationPolicy,
 } from '../core/project/project.model';
 import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
@@ -20,6 +21,8 @@ import { PartSettingsEditorComponent } from './part-settings-editor.component';
 import { PartScopeActionsComponent } from './part-scope-actions.component';
 import { CompactKnobComponent } from './compact-knob.component';
 import { WheelSelectDirective } from './wheel-select.directive';
+import { TrackGenerationPolicyComponent } from './track-generation-policy.component';
+import { DEFAULT_ARPEGGIO_POLICY } from '../core/music/track-generation';
 import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
@@ -53,7 +56,7 @@ const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, WheelSelectDirective],
+  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -77,6 +80,27 @@ export class WorkspaceCanvasComponent {
   readonly selectedSectionIds = this.workspaceUi.selectedSectionIds;
   readonly settingsTarget = this.workspaceUi.settingsTarget;
   readonly partPanelExpanded = signal(true);
+  readonly arpeggioPolicy = computed(() => this.project().trackGenerationPolicies?.arpeggio ?? DEFAULT_ARPEGGIO_POLICY);
+  readonly canRerollArpeggios = computed(() => this.project().tracks.some(track => track.role === 'arpeggio' && !track.rerollLocked));
+  private readonly rerollFeedback = signal<{ project: CompositionProject; message: string } | null>(null);
+  readonly rerollMessage = computed(() => this.rerollFeedback()?.project === this.project() ? this.rerollFeedback()?.message : null);
+
+  updateArpeggioPolicy(patch: Partial<ArpeggioGenerationPolicy>): void {
+    if (this.editing()) return;
+    const result = this.projects.updateArpeggioPolicy(patch);
+    this.rerollFeedback.set({ project: this.project(), message: result === 'invalid'
+      ? 'Invalid reroll limits. Minimum values must not exceed maximum values.' : 'Reroll rules saved. Press Reroll to change track settings.' });
+  }
+
+  rerollArpeggios(trackId?: string): void {
+    if (this.editing()) return;
+    const result = this.projects.rerollArpeggioTracks(trackId);
+    this.rerollFeedback.set({ project: this.project(), message: result === 'invalid'
+      ? 'Reroll conflicts with local settings. Adjust the rules or local overrides.'
+      : result === 'unchanged' ? 'No track settings changed.' : 'Track settings rerolled. Local overrides and saved manual notes remain active.' });
+  }
+
+  openArpeggioPolicy(): void { this.selectRole('arpeggio'); this.openInspector(); }
   readonly localPartTarget = computed(() => {
     const target = this.settingsTarget();
     return target.kind === 'section-role' || target.kind === 'section-track' ? target : null;

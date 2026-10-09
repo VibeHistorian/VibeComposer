@@ -5,6 +5,167 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('Arpeggio hit choices and fill weights match Java policy helper evidence', () => {
+  const { load } = fixture();
+  const { JavaRandom } = load('core/music/java-random.ts');
+  const core = load('core/music/track-generation.ts');
+  const expected = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/arpeggio-policy.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.deepEqual(Array.from({ length: 100 }, (_, index) => core.weightedChordFill(index)), expected.fills);
+  for (const sample of expected.hits) {
+    const random = new JavaRandom(BigInt(sample.seed));
+    assert.deepEqual(Array.from({ length: 32 }, () => core.chooseArpeggioHits(random,
+      { ...core.DEFAULT_ARPEGGIO_POLICY, powerOfTwo: sample.powerOfTwo })), sample.hits);
+  }
+});
+
+test('Arpeggio reroll policy edits leave part settings and notes untouched, with history and persistence', () => {
+  const { service, phrase, load } = fixture();
+  const track = () => service.project().tracks.find(track => track.role === 'arpeggio');
+  const before = phrase.layOutTrackPhrase(service.project(), track()), settings = track().generatorSettings;
+  const policy = { randomHits: false, fixedHits: 16, maxSplit: 90, lengthMin: 150, lengthMax: 150 };
+  assert.equal(service.updateArpeggioPolicy(policy), 'changed');
+  assert.deepEqual(track().generatorSettings, settings);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), before);
+  assert.equal(service.project().trackRerollCounts, undefined);
+  service.undo(); assert.equal(service.project().trackGenerationPolicies, undefined);
+  service.redo(); assert.equal(service.project().trackGenerationPolicies.arpeggio.fixedHits, 16);
+  const saved = service.exportProjectJson(); assert.equal(service.importProjectJson(saved), true);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.deepEqual(restored.project().trackGenerationPolicies, service.project().trackGenerationPolicies);
+  const reordered = JSON.parse(saved);
+  reordered.trackGenerationPolicies.arpeggio = Object.fromEntries(Object.entries(reordered.trackGenerationPolicies.arpeggio).reverse());
+  assert.equal(service.importProjectJson(JSON.stringify(reordered)), true);
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const canonical = service.exportProjectJson();
+  assert.equal(service.updateArpeggioPolicy(policy), 'unchanged');
+  assert.equal(service.exportProjectJson(), canonical); assert.equal(service.canRedo(), true);
+});
+
+test('Arpeggio group rerolls preserve ownership, locks, local overrides and manual replacements in one undo action', () => {
+  const { service, settings, phrase, midi, ui, workspace, load } = fixture();
+  const id = 'track-arpeggio-1', secondId = service.addTrack('arpeggio'), lockedId = service.addTrack('arpeggio');
+  const track = target => service.project().tracks.find(track => track.id === target);
+  const first = service.project().arrangement[0];
+  const cell = { kind: 'section-role', sectionId: first.id, role: 'arpeggio' };
+  service.updatePartSettings(cell, { hitsPerPattern: 3, noteLengthMultiplier: 125 });
+  service.setTrackRerollLock(lockedId, true);
+  const manual = [{ id: 'saved', midi: 65, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  service.updateTrackPhrase(secondId, manual);
+  service.updateArpeggioPolicy({ randomHits: false, fixedHits: 16, maxSplit: 90, lengthMin: 150, lengthMax: 150,
+    randomSpan: false, maxRepeat: 1, patterns: false, fills: false, transpose: false });
+  const before = service.exportProjectJson(), locked = track(lockedId), others = service.project().tracks.filter(track => track.role !== 'arpeggio');
+  const arrangement = service.project().arrangement;
+  assert.equal(service.rerollArpeggioTracks(), 'changed');
+  const after = service.exportProjectJson();
+  assert.equal(service.project().trackRerollCounts.arpeggio, 1);
+  assert.equal(track(id).generatorSettings.hitsPerPattern, 16);
+  assert.equal(track(secondId).generatorSettings.hitsPerPattern, 16);
+  assert.equal(track(id).generatorSettings.noteLengthMultiplier, 150);
+  assert.ok(track(id).generatorSettings.exceptionChance <= 30, 'fast arp split cap is divided by three');
+  assert.deepEqual(service.project().tracks.filter(track => track.role !== 'arpeggio'), others);
+  assert.deepEqual(track(lockedId), locked); assert.strictEqual(service.project().arrangement, arrangement);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track(secondId)), manual);
+  assert.equal(settings.resolvePartTrack(track(id), service.project().arrangement[0]).generatorSettings.hitsPerPattern, 3);
+  ui.selectTrack(id); assert.equal(workspace.partValues().hitsPerPattern, 16);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  for (const target of [id, secondId]) {
+    const prev = JSON.parse(before).tracks.find(track => track.id === target);
+    assert.deepEqual(track(target).mix, prev.mix); assert.equal(track(target).midiChannel, prev.midiChannel);
+    assert.equal(track(target).id, prev.id); assert.equal(track(target).name, prev.name);
+  }
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, id, true));
+  const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+  assert.equal(parsed.tracks.find(exported => exported.name === track(id).name).notes.length,
+    phrase.layOutTrackPhrase(service.project(), track(id)).length);
+  const saved = service.exportProjectJson(); assert.equal(service.importProjectJson(saved), true);
+  assert.equal(track(lockedId).rerollLocked, true);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.deepEqual(restored.project().trackRerollCounts, service.project().trackRerollCounts);
+  const bases = service.project().tracks.map(track => track.generatorSettings);
+  const policies = service.project().trackGenerationPolicies, counts = service.project().trackRerollCounts;
+  service.randomizeArrangementPresence();
+  assert.deepEqual(service.project().tracks.map(track => track.generatorSettings), bases);
+  assert.deepEqual(service.project().trackGenerationPolicies, policies);
+  assert.deepEqual(service.project().trackRerollCounts, counts);
+});
+
+test('Arpeggio rerolls are deterministic across undo, exact long seeds and restored roll counts', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  const source = service.project().arpeggio;
+  for (const seed of [42n, -2147483648n, 9007199254740993n, 9223372036854775807n]) {
+    assert.deepEqual(core.rerollArpeggioSettings(seed, core.DEFAULT_ARPEGGIO_POLICY, [source, source]),
+      core.rerollArpeggioSettings(seed, core.DEFAULT_ARPEGGIO_POLICY, [source, source]));
+  }
+  service.updateSettings({ seed: '9007199254740993' });
+  const before = service.exportProjectJson(); service.rerollArpeggioTracks(); const first = service.project().arpeggio;
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.rerollArpeggioTracks(); assert.deepEqual(service.project().arpeggio, first);
+  service.rerollArpeggioTracks(); assert.equal(service.project().trackRerollCounts.arpeggio, 2);
+  assert.notDeepEqual(service.project().arpeggio, first);
+  const saved = service.exportProjectJson();
+  service.rerollArpeggioTracks(); const third = service.project().arpeggio;
+  assert.equal(service.importProjectJson(saved), true); service.rerollArpeggioTracks();
+  assert.deepEqual(service.project().arpeggio, third);
+});
+
+test('Arpeggio reroll rejects invalid rules and effective conflicts atomically, retaining redo on locks and stale targets', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  service.updateSettings({ name: 'redo' }); service.undo(); const before = service.exportProjectJson();
+  for (const patch of [{ fixedHits: 0 }, { maxSplit: 101 }, { randomHits: 1 }, { lengthMin: 101, lengthMax: 100 },
+    { velocityMin: 100, velocityMax: 90 }, { voices: 2 }, { voicesMode: 'random' }, { maxRepeat: 0 }, { extra: true }]) {
+    assert.equal(service.updateArpeggioPolicy(patch), 'invalid');
+    const project = JSON.parse(before); project.trackGenerationPolicies = { arpeggio: { ...core.DEFAULT_ARPEGGIO_POLICY, ...patch } };
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  }
+  for (const metadata of [{ trackRerollCounts: { arpeggio: -1 } }, { trackRerollCounts: { arpeggio: '1' } },
+    { trackRerollCounts: { bass: 0 } }, { trackGenerationPolicies: { drums: {} } }]) {
+    assert.equal(service.importProjectJson(JSON.stringify({ ...JSON.parse(before), ...metadata })), false);
+  }
+  const invalidLock = JSON.parse(before); invalidLock.tracks[0].rerollLocked = 1;
+  assert.equal(service.importProjectJson(JSON.stringify(invalidLock)), false);
+  assert.equal(service.rerollArpeggioTracks('deleted'), 'unchanged');
+  assert.equal(service.rerollArpeggioTracks('track-bass-1'), 'unchanged');
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+  // Reroll candidate max is 89; local Min 100 with an inherited max makes the entire batch invalid.
+  const first = service.project().arrangement[0];
+  service.updatePartSettings({ kind: 'global-role', role: 'arpeggio' }, { velocityMax: 110 });
+  service.updatePartSettings({ kind: 'section-role', sectionId: first.id, role: 'arpeggio' }, { velocityMin: 100 });
+  service.updateSettings({ name: 'redo-conflict' }); service.undo();
+  const conflict = service.exportProjectJson();
+  assert.equal(service.rerollArpeggioTracks(), 'invalid'); assert.equal(service.exportProjectJson(), conflict); assert.equal(service.canRedo(), true);
+  service.setTrackRerollLock('track-arpeggio-1', true); const locked = service.exportProjectJson();
+  assert.equal(service.rerollArpeggioTracks(), 'unchanged'); assert.equal(service.exportProjectJson(), locked);
+});
+
+test('Arpeggio policy preserves opted-out fields, shared counts and no-op history', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  const source = { ...service.project().arpeggio, rhythm: 'custom', customPattern: Array(32).fill(1),
+    useCustomVelocities: true, customVelocities: Array(32).fill(77), patternFlip: true, patternShift: 3,
+    chordSpanFill: 'HALF1', fillFlip: true, transpose: 24, chordSpan: 4 };
+  const policy = { ...core.DEFAULT_ARPEGGIO_POLICY, randomHits: false, fixedHits: 32, randomSpan: false,
+    patterns: false, fills: false, transpose: false };
+  const result = core.rerollArpeggioSettings(42n, policy, [source, source]);
+  for (const generated of result) {
+    for (const key of ['rhythm', 'customPattern', 'customVelocities', 'useCustomVelocities', 'patternFlip', 'patternShift', 'chordSpanFill', 'fillFlip', 'transpose', 'chordSpan']) {
+      assert.deepEqual(generated[key], source[key]);
+    }
+    assert.equal(generated.hitsPerPattern, 32); assert.equal(generated.patternRepeat, 1);
+  }
+  const shared = core.rerollArpeggioSettings(42n, core.DEFAULT_ARPEGGIO_POLICY, Array(12).fill(source));
+  assert.equal(new Set(shared.map(settings => settings.hitsPerPattern)).size, 1);
+  const separate = core.rerollArpeggioSettings(42n, { ...core.DEFAULT_ARPEGGIO_POLICY, sameHits: false }, Array(12).fill(source));
+  assert.ok(new Set(separate.map(settings => settings.hitsPerPattern)).size > 1);
+  service.updateArpeggioPolicy({ randomHits: false, fixedHits: 4, randomSpan: false, maxRepeat: 1,
+    maxSplit: 0, lengthMin: 100, lengthMax: 100, patterns: false, fills: false, transpose: false, voicesMode: 'NONE' });
+  service.rerollArpeggioTracks(); service.updateSettings({ name: 'redo' }); service.undo();
+  const before = service.exportProjectJson();
+  assert.equal(service.rerollArpeggioTracks(), 'unchanged'); assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+});
+
 test('bass join modes match 432 complete production Java phrases', () => {
   const { load } = fixture();
   const { generateBassline } = load('core/music/bass-generator.ts');

@@ -33,12 +33,23 @@
             </button>
             <button type="button" class="add-track-button" [disabled]="editing()" (click)="addTrack(group.role)"
               [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
+            @if (group.role === 'arpeggio') {
+              <button type="button" class="add-track-button" aria-label="Reroll Arpeggio tracks" title="Reroll unlocked Arpeggio track settings"
+                [disabled]="editing() || !canRerollArpeggios()" (click)="rerollArpeggios()">↻</button>
+            }
             <button type="button" class="collapse-group-button" [disabled]="editing()" [attr.aria-expanded]="!isGroupCollapsed(group.role)"
               [attr.aria-label]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
               [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
               (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '⌄' }}</button>
           </header>
           @if (!isGroupCollapsed(group.role)) {
+            @if (group.role === 'arpeggio') {
+              <div class="track-policy-header">
+                <vc-track-generation-policy [policy]="arpeggioPolicy()" [disabled]="editing()" (policyChanged)="updateArpeggioPolicy($event)" />
+                <button type="button" [disabled]="editing()" (click)="openArpeggioPolicy()">Advanced reroll rules</button>
+                @if (rerollMessage()) { <span role="status">{{ rerollMessage() }}</span> }
+              </div>
+            }
             @if (!generationAvailable[group.role]) {
               <p class="generation-status">Manual notes · automatic generation coming later</p>
             }
@@ -73,6 +84,15 @@
                       (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
                   </div>
                 </div>
+                @if (track.role === 'arpeggio') {
+                  <div class="track-reroll-actions">
+                    <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
+                      [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
+                      (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">{{ track.rerollLocked ? 'Locked' : 'Lock' }}</button>
+                    <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name"
+                      (click)="rerollArpeggios(track.id)">↻ Reroll</button>
+                  </div>
+                }
               </article>
             }
           }
@@ -289,6 +309,14 @@
               (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
+        @if (partRole() === 'arpeggio') {
+          <section class="quick-settings-group" aria-label="Arpeggio track generation policy">
+            <p class="eyebrow">TRACK REROLL RULES · GLOBAL ARPEGGIO</p>
+            <vc-track-generation-policy [policy]="arpeggioPolicy()" [advanced]="true" [disabled]="editing()" (policyChanged)="updateArpeggioPolicy($event)" />
+            <button type="button" [disabled]="editing() || !canRerollArpeggios()" (click)="rerollArpeggios()">Reroll unlocked Arpeggio tracks</button>
+            <span>Roll {{ project().trackRerollCounts?.arpeggio ?? 0 }} · rerolls follow the project seed. Rules take effect when you press Reroll; local overrides and manual notes can mask the result.</span>
+          </section>
+        }
         @if (!selectedRole()) {
           <section class="quick-settings-group mix-quick-settings" aria-label="Track instrument and MIDI settings">
             <p class="eyebrow">INSTRUMENT &amp; MIDI</p>

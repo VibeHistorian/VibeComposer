@@ -1,6 +1,6 @@
 # Contextual controls and melody buildout
 
-Status: implementation in progress, 2026-10-09; P1b's supported block path, P4f single-pitch drums, P4g shared musical controls and P5a bass pattern articulation are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
+Status: implementation in progress, 2026-10-09; P1b's supported block path, P4f single-pitch drums, P4g shared musical controls, P5a bass pattern articulation and P6a Arpeggio reroll policies are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
 
 ### Pre-P5 alignment — required prerequisites (2026-10-09)
 
@@ -235,6 +235,24 @@ Validation: **120 functional tests pass**, including **432 complete production J
 
 UI review: select Bass or B1, choose a grid rhythm and open the inspector. Compare NOJOIN/EXPAND on a sparse grid, then JOIN on FULL; try Span 2–4 and Pattern flip. Edit a section cell and a track exception, Copy/Freeze/reset, undo/reload and export MIDI. The next P5 role slice is Chords strum/transitions; melody-following rhythm and the other role slices remain open.
 
+### UI checkpoint 14 — Arpeggio track reroll rules (P6a)
+
+User review accepted P5a and requested prioritizing P6 to support testing later phases. Chords still needs Pattern join as well as strum/transitions; Bass's completed join port does not cover Chords. P6 proceeds in supported role slices ahead of the remaining P5 work.
+
+Expanded Arpeggio Tracks headers now expose Reroll plus fixed/random hits, One hit count, weighted Limit 2ⁿ, Fills, Patterns, Max split and length bounds. Advanced reroll rules opens the global role inspector, which also supplies Transpose, Random span, Max repeat, Shift chance, Voices NONE/FIXED/AT_MOST with count/chance, and velocity bounds. Both forms share a policy component and commit rules independently of part settings: editing rules alone leaves generated notes unchanged. The central quick panel continues to show actual musical values, including the results of a reroll. Group collapse/selection remain separate actions.
+
+Group Reroll updates all unlocked existing Arpeggio track bases; each track also has Lock and Reroll actions. A lock blocks both paths, independently of G, presence and mixer mute. Track IDs, order, channels, instruments/mix, saved manual notes and section overrides remain intact. A manual phrase or frozen/local settings can mask a new base value; feedback identifies this explicitly. Local velocity conflicts reject the entire candidate without changing history or consuming a roll. A successful group/individual reroll is one undo entry. Empty/locked/stale/no-op targets preserve history and redo; Add still uses existing defaults/settings, and Duplicate retains its source lock. New Add tracks are unlocked.
+
+The typed optional `trackGenerationPolicies.arpeggio` is separate from `generatorSettings`, with independent `trackRerollCounts.arpeggio` and per-track `rerollLocked`. They round-trip through strict JSON/session validation and history; omitted metadata stays omitted, with implicit defaults and no schema gate or migration. Rules cannot be stored in section part patches. Primary Arpeggio role values update with the primary track; other bases and role defaults remain owned. Reroll never changes arrangement presence, and presence reroll never changes policies, counters or base settings.
+
+The framework-independent `track-generation.ts` uses exact bigint project seed + 300000 + roll count × 0x9e3779b97f4a7c15, narrowed as a Java long. Successful changed rolls advance the saved counter. Undo/restoring the same project reproduces the next roll. This is an intentional deterministic translation: Java ArpGUI creates unseeded Random instances, so complete UI-reroll seed parity is not claimed. Production fill weights and the audited hit-choice branch are checked separately.
+
+Supported musical choices follow the Java branches: weighted powers [2,4,4,8,8,8,8], unrestricted random hits 2–8 with the one-time 5 redraw and 7→8, random spans 1–2, repeats only for Span 1, and Max split divided by three at effective density ≥16. Length is chosen inclusively within bounds. Shared hits guarantees equal final counts for eligible tracks, intentionally omitting Java's later per-track span multiplication; locked tracks do not contribute a shared value. Pattern rerolls choose FULL or one of the six supported static rhythms (30% candidate chance); MELODY1, GUI pause baking/growth, later-track weighting and advanced pitch direction rerolls remain deferred. Pattern and Fill off preserve existing values (Java overwrites FULL/ALL); Transpose off now preserves its value, deliberately fixing the ineffective Java toggle. Pattern reroll clears its flip and disables retained custom velocities so random velocity bounds are usable, while retained grid arrays survive. Fills uses production weighted choices and clears fill flip. Span, repeat, split, length, voices and velocity bounds are selected on every explicit reroll; no automatic Compose or instrument randomization is exposed yet.
+
+Validation: **126 functional tests pass** and production build passes with the existing Pixi CommonJS warning. Coverage includes rule-only edits, mixed/shared counts, lock/manual/identity/local ownership, atomic conflicts, one-entry undo/redo, exact long seed replay, saved counters, session/JSON, parsed MIDI, no-op/stale-target redo and malformed metadata. Java fixture evidence covers all **100 production fill weights** plus **256 seeded hit choices** using production OMNI or the audited ArpGUI branch, not complete GUI/phrase parity. Existing Bass/Melody/Drum complete phrase fixtures remain green. Chromium checks synchronized header/inspector rules, rule-only preservation, per-track reroll, actual part-control refresh and all-locked group disabling; the arrangement zoom/device-scale/resize matrix also passes.
+
+UI review: expand Arpeggio, choose random/fixed hits and bounds, press header Reroll, and compare the central part settings. Add a second track, test One hit count and per-track locks/rerolls, then undo/reload. Check frozen/local patches and manual notes remain explicit. Remaining P6 work includes other role policies, Generate N, instruments/seed triggers and automatic Compose; remaining P5 includes Chords Pattern join/strum/transitions and the other advanced musical slices.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
@@ -368,7 +386,7 @@ Exit: keyboard/device alternatives, expanded/collapsed layouts, mixed values, in
 
 Port remaining app/playback/device/export preferences separately. Musical settings from ExtraSettingsGUI remain in a later global musical-settings inspector, not automatically in a reroll header. See the deferred inventory. Java-specific soundbanks and device behavior require deliberate Web Audio/Web MIDI equivalents; Wails remains thin.
 
-Remaining order after the recorded checkpoints: **continue P5/P6 in role slices**, starting with Chords strum/transitions after P5a Bass, then remaining P7 and P8 work. The supported P1b, P4f and P4g prerequisites are delivered in checkpoints 10–12; their documented advanced exclusions remain in the appropriate later slices.
+Remaining order after the recorded checkpoints: **prioritize P6 role slices for testing**, after P6a Arpeggio; resume P5 role work including Chords Pattern join/strum/transitions afterward, then remaining P7 and P8. The supported P1b, P4f and P4g prerequisites are delivered in checkpoints 10–12; their documented advanced exclusions remain in the appropriate later slices.
 
 ## Current TypeScript implementation touchpoints
 

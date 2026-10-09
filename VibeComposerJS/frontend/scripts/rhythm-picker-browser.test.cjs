@@ -183,6 +183,36 @@ test('production Angular controls initialize selects from settings and support r
             split: document.querySelectorAll('input[aria-label="Split"]').length,
             repeat: document.querySelectorAll('input[aria-label="Repeat"]').length });
         }
+        document.querySelector('.track-group.arpeggio .group-select').click();
+        await waitFor(() => document.querySelector('[aria-label="Arpeggio track generation policy"]'), 'Arpeggio policy inspector');
+        const readArp = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'arpeggio');
+        const beforePolicy = JSON.stringify(readArp().generatorSettings);
+        const randomHits = [...document.querySelectorAll('input[aria-label="Reroll Random hits"]')];
+        randomHits[0].click();
+        await waitFor(() => randomHits.every(input => !input.checked), 'synchronized reroll rules');
+        const setPolicyNumber = async (label, value) => {
+          const input = document.querySelector('input[aria-label="Reroll ' + label + '"]');
+          input.value = String(value); input.dispatchEvent(new Event('change', { bubbles: true }));
+          await waitFor(() => [...document.querySelectorAll('input[aria-label="Reroll ' + label + '"]')].every(input => input.value === String(value)), label);
+        };
+        await setPolicyNumber('Arp hits', 16);
+        await setPolicyNumber('Max split %', 0);
+        await setPolicyNumber('Min length %', 100);
+        await setPolicyNumber('Max repeat', 1);
+        document.querySelector('input[aria-label="Reroll Random span"]').click();
+        result.rerollPolicyLeavesSettings = JSON.stringify(readArp().generatorSettings) === beforePolicy;
+        result.rerollRuleCopies = randomHits.length;
+        document.querySelector('button[aria-label="Reroll A1"]').click();
+        await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).trackRerollCounts?.arpeggio === 1, 'track reroll applied');
+        result.rerollSettings = readArp().generatorSettings;
+        result.rerollId = readArp().id;
+        await waitFor(() => [...document.querySelectorAll('input[aria-label="Hits"]')].every(input => input.value === '16'), 'rerolled part controls');
+        result.rerollDisplayedHits = [...document.querySelectorAll('input[aria-label="Hits"]')].map(input => input.value);
+        document.querySelector('button[aria-label="Lock reroll for A1"]').click();
+        await waitFor(() => document.querySelector('button[aria-label="Reroll A1"]').disabled, 'reroll lock');
+        result.rerollAllLocked = document.querySelector('button[aria-label="Reroll Arpeggio tracks"]').disabled;
+        document.querySelector('button[aria-label="Unlock reroll for A1"]').click();
+        await waitFor(() => !document.querySelector('button[aria-label="Reroll A1"]').disabled, 'reroll unlock');
         document.querySelector('.track-group.bass .group-select').click();
         const bassJoin = await waitFor(() => document.querySelector('select[aria-label="Pattern join"]'), 'bass advanced join');
         result.bassJoinInitial = bassJoin.value;
@@ -289,6 +319,14 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.bassJoinInspectorOnly, true);
     assert.equal(actual.bassJoinSaved, 'JOIN');
     assert.equal(actual.bassJoinRetained, 'JOIN');
+    assert.equal(actual.rerollPolicyLeavesSettings, true);
+    assert.equal(actual.rerollRuleCopies, 2);
+    assert.equal(actual.rerollSettings.hitsPerPattern, 16);
+    assert.equal(actual.rerollSettings.exceptionChance, 0);
+    assert.equal(actual.rerollSettings.noteLengthMultiplier, 100);
+    assert.equal(actual.rerollId, 'track-arpeggio-1');
+    assert.deepEqual(actual.rerollDisplayedHits, ['16', '16']);
+    assert.equal(actual.rerollAllLocked, true);
     assert.deepEqual(actual.sharedRoles, [
       { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 2, pause: 0, split: 0, repeat: 0 },
       { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 2, pause: 2, split: 2, repeat: 2 },
