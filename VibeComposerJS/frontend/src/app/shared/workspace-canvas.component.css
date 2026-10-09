@@ -39,14 +39,14 @@
 .group-select { min-width: 0; flex: 1; padding: 2px 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
 .group-select strong { min-width: 0; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .group-selected { background: var(--surface-accent); }
-.group-count { margin-left: auto; color: var(--text-muted); font: 10px var(--font-mono); }
+.group-count { min-width: 22px; height: 22px; padding: 0 5px; flex: 0 0 auto; display: inline-grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-tight); background: var(--shadow-highlight); color: var(--text-secondary); font: 10px var(--font-mono); }
 .add-track-button, .collapse-group-button { width: 22px; height: 22px; padding: 0; flex: 0 0 auto; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
 .add-track-button:hover, .collapse-group-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .collapse-group-button { font-size: 14px; line-height: 1; }
 /* Track reroll controls */
 .track-policy-header { display: grid; gap: 5px; padding: 6px 3px; border-bottom: 1px solid var(--border-subtle); }
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }
-.track-policy-header > button, .track-reroll-actions button { padding: 3px 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); font: 9px var(--font-ui); cursor: pointer; }
+.track-reroll-actions button { padding: 3px 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); font: 9px var(--font-ui); cursor: pointer; }
 .track-reroll-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 3px; }
 .track-reroll-actions button[aria-pressed="true"] { border-color: var(--text-primary); }
 /* Track rows */

@@ -20,8 +20,8 @@ All Java paths in this document are relative to [the Java package](../midimaster
 
 - **Q:** between-canvas Part settings panel, with the same complete control in inspector. Available for global role/track and section role/track, where musically supported.
 - **I:** detailed musical settings in inspector; no default quick-panel slot. Old global-only values stay global/role settings until a scoped generator consumer exists.
-- **H:** track-generation policy directly in expanded Tracks group header, also in its inspector policy section.
-- **HI:** advanced track-generation policy in inspector; header offers access, not the full control wall.
+- **H:** track-generation policy directly in expanded Tracks group header. Count and Generate N remain visible when collapsed.
+- **HI:** advanced track-generation policy, now shown directly in the expanded Tracks group alongside H controls (P6 visual addendum). No reroll policy or actions in the part inspector.
 - **Other:** transport, harmony panel, arrangement toolbar/section inspector, track row, mixer, editor, or deferred preferences as specified.
 
 Quick priority is a proposed product decision. Preserve old parameter semantics, not old widget positions. The model/control reference distinguishes a selected value from the policy that chooses it.
@@ -212,3 +212,9 @@ All Tracks groups now share group/per-track Reroll, locks and a distinct Generat
 - Drums: Patterns/Fills/Max Swing/Random Offset/On reroll hits multiplier in H; Shift in I. Blueprint pitch is retained. Dynamic/Ghosts, Overrandomize and melody-following remain deferred; the immediate Multiply Hits action is separate and still deferred.
 - Melody: supported creation parameters plus explicit Reroll seeds/Same seed/Block patterns in H/I. Automatic Compose/Regenerate and note-target triggers remain deferred; target lists remain musical part values.
 - Arpeggio retains P6a controls and gains Generate N. Instrument permission/pools and automatic triggers remain deferred for all roles.
+
+## P6 visual organization addendum (2026-10-09)
+
+This placement supersedes earlier inspector-policy references and compact/advanced header splits. Count and Generate N stay visible in collapsed role groups; expanding shows every supported policy control without roll counters or explanatory text. Reroll actions remain in Tracks. The Inspector contains musical settings, identity and existing scoped workflows.
+
+Part settings and the Inspector share Core, Rhythm, Pitch, Shape, Dynamics, Structure and Other areas, omitting empty areas. The shared pastel category palette is independent of role colors; Drums has no Pitch area. Bass now uses blue, and the track count sits in a bordered box beside the role name. Control applicability, values, scope and generator semantics are unchanged.

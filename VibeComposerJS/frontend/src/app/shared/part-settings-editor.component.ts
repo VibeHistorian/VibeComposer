@@ -6,6 +6,7 @@ import { DEFAULT_CUSTOM_VELOCITIES } from '../core/music/velocity-pattern';
 import { CompactKnobComponent } from './compact-knob.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
+import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
 
 @Component({
   selector: 'vc-part-settings-editor',
@@ -35,6 +36,10 @@ export class PartSettingsEditorComponent {
     && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
     && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true
       || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating'))));
+  readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
+    id: group.id, label: group.label,
+    controls: this.controls().filter(control => partControlGroup(control.key) === group.id),
+  })).filter(group => group.controls.length > 0));
   readonly velocityDraft = signal<readonly number[] | null>(null);
   private velocityEdit: { index: number; values: Readonly<Record<string, PartSettingValue | null>> } | null = null;
   readonly velocitySlots = computed(() => {

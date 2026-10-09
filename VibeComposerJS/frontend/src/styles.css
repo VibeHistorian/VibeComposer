@@ -88,13 +88,13 @@
   --role-melody-border: #a94352;
   --role-melody-text: #ffe0e3;
   --role-melody-header: #562332;
-  --role-bass: #20cce8;
-  --role-bass-glow: #20cce866;
-  --role-bass-strong: #42e2f7;
-  --role-bass-dark: #087e9e;
-  --role-bass-surface: #083b50;
-  --role-bass-border: #087e9e;
-  --role-bass-text: #c5f8ff;
+  --role-bass: #22a7f2;
+  --role-bass-glow: #22a7f266;
+  --role-bass-strong: #62bcff;
+  --role-bass-dark: #176ab0;
+  --role-bass-surface: #0a2f50;
+  --role-bass-border: #176ab0;
+  --role-bass-text: #d1ebff;
   --role-chords: #45df89;
   --role-chords-glow: #45df8966;
   --role-chords-strong: #68f5a4;
@@ -109,7 +109,7 @@
   --role-arpeggio-surface: #40143d;
   --role-arpeggio-border: #ae348d;
   --role-arpeggio-text: #ffe0f5;
-  --role-bass-header: #10445a;
+  --role-bass-header: #103b60;
   --role-chords-header: #124a37;
   --role-arpeggio-header: #4a2048;
   --role-drums-header: #4a3918;
@@ -122,6 +122,15 @@
   --role-hat: #b4c8da;
   --role-drum-surface: #3a2b12;
   --role-drum-border: #806221;
+
+  /* Parameter impact palette, independent of instrument roles */
+  --parameter-core: #94a3b8;
+  --parameter-rhythm: #56b6bc;
+  --parameter-pitch: #a49ac9;
+  --parameter-shape: #d29a79;
+  --parameter-dynamics: #b5be82;
+  --parameter-structure: #8dafc7;
+  --parameter-other: #748596;
 
   /* Feedback and shadows */
   --color-danger: #ff9fb5;
@@ -143,7 +152,7 @@
 [data-control-role="chords"] { --control-role-color: var(--role-chords); }
 [data-control-role="arpeggio"] { --control-role-color: var(--role-arpeggio); }
 [data-control-role="drums"] { --control-role-color: var(--role-drums); }
-[data-control-role] {
+[data-control-role], [data-control-category] {
   --accent-primary: var(--control-role-color);
   --accent: var(--accent-primary);
   --accent-hover: color-mix(in srgb, var(--control-role-color) 75%, var(--text-primary));
@@ -151,6 +160,21 @@
   --accent-shadow: color-mix(in srgb, var(--control-role-color) 15%, transparent);
   --accent-glow: color-mix(in srgb, var(--control-role-color) 50%, transparent);
   --border-focus: var(--control-role-color);
+}
+
+/* Parameter accents override the enclosing role inside each musical area */
+[data-control-category="core"] { --control-role-color: var(--parameter-core); }
+[data-control-category="rhythm"] { --control-role-color: var(--parameter-rhythm); }
+[data-control-category="pitch"] { --control-role-color: var(--parameter-pitch); }
+[data-control-category="shape"] { --control-role-color: var(--parameter-shape); }
+[data-control-category="dynamics"] { --control-role-color: var(--parameter-dynamics); }
+[data-control-category="structure"] { --control-role-color: var(--parameter-structure); }
+[data-control-category="other"] { --control-role-color: var(--parameter-other); }
+[data-control-category] {
+  --parameter-surface: color-mix(in srgb, var(--control-role-color) 9%, var(--surface-canvas));
+  --border-default: color-mix(in srgb, var(--control-role-color) 30%, var(--surface-canvas));
+  --surface-input: color-mix(in srgb, var(--control-role-color) 6%, var(--surface-canvas));
+  --surface-low: color-mix(in srgb, var(--control-role-color) 14%, var(--surface-canvas));
 }
 
 /* Base element styles */

@@ -184,12 +184,12 @@ test('production Angular controls initialize selects from settings and support r
             repeat: document.querySelectorAll('input[aria-label="Repeat"]').length });
         }
         document.querySelector('.track-group.arpeggio .group-select').click();
-        await waitFor(() => document.querySelector('[aria-label="Arpeggio track generation policy"]'), 'Arpeggio policy inspector');
+        await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="arpeggio"]'), 'Arpeggio musical inspector');
         const readArp = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'arpeggio');
         const beforePolicy = JSON.stringify(readArp().generatorSettings);
         const randomHits = [...document.querySelectorAll('input[aria-label="Reroll Random hits"]')];
         randomHits[0].click();
-        await waitFor(() => randomHits.every(input => !input.checked), 'synchronized reroll rules');
+        await waitFor(() => !document.querySelector('input[aria-label="Reroll Arp hits"]').disabled, 'fixed hits enabled');
         const setPolicyNumber = async (label, value) => {
           const input = document.querySelector('input[aria-label="Reroll ' + label + '"]');
           input.value = String(value); input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -263,7 +263,7 @@ test('production Angular controls initialize selects from settings and support r
         for (const role of ['bass', 'chords', 'drums', 'melody']) {
           const group = document.querySelector('.track-group.' + role);
           group.querySelector('.group-select').click();
-          await waitFor(() => document.querySelector('#part-inspector [aria-label="' + role + ' track reroll rules"]'), role + ' rules');
+          await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="' + role + '"]'), role + ' musical settings');
           const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
           const track = read().tracks.find(track => track.role === role);
           const before = JSON.stringify(track.generatorSettings);
@@ -271,9 +271,10 @@ test('production Angular controls initialize selects from settings and support r
           let unchanged = true, synced = true;
           if (checkbox) {
             const label = checkbox.getAttribute('aria-label'); checkbox.click();
-            await waitFor(() => document.querySelector('#part-inspector input[aria-label="' + label + '"]').checked === checkbox.checked, role + ' synchronized rules');
+            const key = { chords: 'varyLength', drums: 'patterns', melody: 'rerollSeeds' }[role];
+            await waitFor(() => read().trackGenerationPolicies[role][key] === checkbox.checked, role + ' stored policy');
             unchanged = JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) === before;
-            synced = document.querySelector('#part-inspector input[aria-label="' + label + '"]').checked === checkbox.checked;
+            synced = read().trackGenerationPolicies[role][key] === checkbox.checked;
             checkbox.click();
           }
           group.querySelector('button[aria-label="Lock reroll for ' + track.name + '"]').click();
@@ -284,11 +285,35 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => read().trackRerollCounts?.[role] === 1, role + ' rerolled');
           result.otherRoleRerolls.push({ role, unchanged, synced, changed: JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) !== before });
         }
+        result.parameterAreas = [];
+        for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+          document.querySelector('.track-group.' + role + ' .group-select').click();
+          await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="' + role + '"]'), role + ' categories');
+          const editors = [...document.querySelectorAll('vc-part-settings-editor')];
+          const pitch = editors.map(editor => editor.querySelector('[data-control-category="pitch"]'));
+          const rhythm = editors.map(editor => editor.querySelector('[data-control-category="rhythm"]'));
+          result.parameterAreas.push({ role, pitch: pitch.map(area => area ? getComputedStyle(area).getPropertyValue('--accent-primary').trim() : null),
+            rhythm: rhythm.map(area => getComputedStyle(area).getPropertyValue('--accent-primary').trim()),
+            backgrounds: rhythm.map(area => getComputedStyle(area).backgroundColor),
+            knobs: rhythm.map(area => getComputedStyle(area.querySelector('.knob-face')).backgroundImage.includes('86, 182, 188')) });
+        }
+        result.inspectorPolicyRemoved = !document.querySelector('#part-inspector vc-track-generation-policy');
+        result.bassBlue = getComputedStyle(document.querySelector('.track-group.bass .role-dot')).backgroundColor;
+        const countBox = document.querySelector('.track-group.bass .group-count');
+        result.countNearName = countBox.getBoundingClientRect().left - countBox.previousElementSibling.getBoundingClientRect().right < 10;
+        result.countBox = getComputedStyle(countBox).borderTopStyle;
         const generateGroup = document.querySelector('.track-group.chords');
         const countInput = generateGroup.querySelector('input[aria-label="Generate chords track count"]');
         countInput.value = '2'; countInput.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => generateGroup.querySelector('button[aria-label="Generate chords tracks"]').textContent.includes('2'), 'generate count');
+        generateGroup.querySelector('button[aria-label="Collapse Chords tracks"]').click();
+        await waitFor(() => !generateGroup.querySelector('.policy-controls') && !generateGroup.querySelector('.track-select'), 'collapsed group');
+        result.collapsedGenerate = generateGroup.querySelector('input[aria-label="Generate chords track count"]').value;
         generateGroup.querySelector('button[aria-label="Generate chords tracks"]').click();
+        await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length === 3, 'generate while collapsed');
+        generateGroup.querySelector('button[aria-label="Expand Chords tracks"]').click();
+        await waitFor(() => generateGroup.querySelector('.policy-controls'), 'expanded rules');
+        result.countAfterExpand = generateGroup.querySelector('input[aria-label="Generate chords track count"]').value;
         await waitFor(() => generateGroup.querySelectorAll('.track-select').length === 3, 'Generate N adds tracks');
         result.generatedChords = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length;
         document.querySelector('.track-group.drums .track-select').click();
@@ -298,7 +323,7 @@ test('production Angular controls initialize selects from settings and support r
         result.drumEditorVoices = [...document.querySelectorAll('.voice-label')].map(label => label.textContent);
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
-        await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message }) });
+        await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, diagnostic: { hits: [...document.querySelectorAll('input[aria-label="Hits"]')].map(input => input.value), role: document.querySelector('#part-inspector vc-part-settings-editor')?.getAttribute('data-control-role'), policy: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.trackGenerationPolicies?.arpeggio, track: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.arpeggio } }) });
       }
     })();
   </script>`;
@@ -340,7 +365,7 @@ test('production Angular controls initialize selects from settings and support r
   const timeout = setTimeout(() => reject(new Error('Chromium timed out: ' + errors)), 30000);
   try {
     const actual = await result;
-    assert.equal(actual.error, undefined);
+    assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.deepEqual(actual.initialSelection, ['33', '1']);
     assert.deepEqual(actual.melodySelection, ['73', '4']);
     assert.deepEqual(actual.recreatedSelection, ['73', '4']);
@@ -352,7 +377,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.bassJoinSaved, 'JOIN');
     assert.equal(actual.bassJoinRetained, 'JOIN');
     assert.equal(actual.rerollPolicyLeavesSettings, true);
-    assert.equal(actual.rerollRuleCopies, 2);
+    assert.equal(actual.rerollRuleCopies, 1);
     assert.equal(actual.rerollSettings.hitsPerPattern, 16);
     assert.equal(actual.rerollSettings.exceptionChance, 0);
     assert.equal(actual.rerollSettings.noteLengthMultiplier, 100);
@@ -361,6 +386,19 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.rerollAllLocked, true);
     assert.deepEqual(actual.otherRoleRerolls, ['bass','chords','drums','melody'].map(role => ({ role, unchanged: true, synced: true, changed: true })));
     assert.equal(actual.generatedChords, 3);
+    assert.equal(actual.collapsedGenerate, '2');
+    assert.equal(actual.countAfterExpand, '2');
+    assert.equal(actual.inspectorPolicyRemoved, true);
+    assert.equal(actual.bassBlue, 'rgb(34, 167, 242)');
+    assert.equal(actual.countNearName, true);
+    assert.equal(actual.countBox, 'solid');
+    for (const areas of actual.parameterAreas) {
+      assert.deepEqual(areas.pitch, areas.role === 'drums' ? [null, null] : ['#a49ac9', '#a49ac9']);
+      assert.deepEqual(areas.rhythm, ['#56b6bc', '#56b6bc']);
+      assert.equal(areas.backgrounds[0], areas.backgrounds[1]);
+      assert.deepEqual(areas.knobs, [true, true]);
+    }
+    assert.equal(new Set(actual.parameterAreas.map(areas => areas.backgrounds[0])).size, 1);
     assert.deepEqual(actual.sharedRoles, [
       { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 2, pause: 0, split: 0, repeat: 0 },
       { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 2, pause: 2, split: 2, repeat: 2 },

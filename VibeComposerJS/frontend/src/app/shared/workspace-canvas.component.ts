@@ -90,26 +90,25 @@ export class WorkspaceCanvasComponent {
   generateRole(role: ArrangedPart, count: number): void {
     if (this.editing()) return;
     const result = this.projects.generateRoleTracks(role, count);
-    this.rerollFeedback.set({ project: this.project(), role, message: result === 'invalid'
-      ? 'Cannot generate these tracks. Check capacity and local settings.' : `${count} new tracks generated. Existing tracks remain intact.` });
+    this.rerollFeedback.set(result === 'invalid' ? { project: this.project(), role,
+      message: 'Cannot generate these tracks. Check capacity and local settings.' } : null);
   }
 
   updateRolePolicy(role: ArrangedPart, patch: TrackGenerationPolicyPatch): void {
     if (this.editing()) return;
     const result = this.projects.updateTrackGenerationPolicy(role, patch);
-    this.rerollFeedback.set({ project: this.project(), role, message: result === 'invalid'
-      ? 'Invalid reroll limits. Minimum values must not exceed maximum values.' : 'Reroll rules saved. Press Reroll to change track settings.' });
+    this.rerollFeedback.set(result === 'invalid' ? { project: this.project(), role,
+      message: 'Invalid reroll limits. Minimum values must not exceed maximum values.' } : null);
   }
 
   rerollRole(role: ArrangedPart, trackId?: string): void {
     if (this.editing()) return;
     const result = this.projects.rerollRoleTracks(role, trackId);
-    this.rerollFeedback.set({ project: this.project(), role, message: result === 'invalid'
+    this.rerollFeedback.set(result === 'changed' ? null : { project: this.project(), role, message: result === 'invalid'
       ? 'Reroll conflicts with local settings. Adjust the rules or local overrides.'
-      : result === 'unchanged' ? 'No track settings changed.' : 'Track settings rerolled. Local overrides and saved manual notes remain active.' });
+      : 'No track settings changed.' });
   }
 
-  openRolePolicy(role: ArrangedPart): void { this.selectRole(role); this.openInspector(); }
   readonly localPartTarget = computed(() => {
     const target = this.settingsTarget();
     return target.kind === 'section-role' || target.kind === 'section-track' ? target : null;

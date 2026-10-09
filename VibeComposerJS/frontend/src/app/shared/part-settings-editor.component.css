@@ -1,7 +1,16 @@
 /* Part controls */
 :host { display: block; min-width: 0; }
 .part-list { width: 150px; max-width: 100%; box-sizing: border-box; }
-.part-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 14px; }
+.part-controls { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+
+/* Shared musical impact areas */
+.part-control-area { flex: 1 1 180px; min-width: 0; max-width: 100%; margin: 0; padding: 9px 10px 10px; border: 1px solid var(--border-default); border-left: 3px solid var(--accent-primary); border-radius: var(--radius-section); background: var(--parameter-surface); }
+.part-control-area h3 { margin: 0 0 9px; color: var(--accent-primary); font: 600 10px var(--font-ui); letter-spacing: .04em; }
+.part-area-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 12px; }
+.part-control-area:has(.pattern-control) { flex-basis: 260px; }
+.part-control-area select, .part-control-area input[type="text"] { accent-color: var(--accent-primary); }
+
+/* Individual parameters */
 .part-control { min-width: 75px; max-width: 160px; display: grid; gap: 4px; }
 .part-control select { min-width: 95px; max-width: 140px; height: 29px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
 .part-check { justify-self: start; margin: 0; accent-color: var(--accent-primary); }

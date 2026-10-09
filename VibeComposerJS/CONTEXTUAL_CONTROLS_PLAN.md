@@ -275,6 +275,12 @@ Validation: **139 functional tests pass**, including exact long replay, locks, r
 
 UI review: expand each role, change its rules, and compare notes before/after Reroll. Lock a member, reroll the group, compare the central part values, undo/reload, and verify local freezes/manual notes remain active. Generate 2 tracks and undo once to remove both. For Drums choose hat/percussion pitches to hear shared swing/offset, then compare kick/snare. Remaining P6 includes instruments and automatic Compose/Regenerate/target triggers; remaining P5 includes Chords Pattern join/strum/transitions and other advanced musical slices.
 
+### P6 visual organization addendum (2026-10-09)
+
+Collapsed Tracks groups retain Count/Generate N; expanded groups show all supported reroll controls. Removed the Inspector policy form, its reroll action, counter and explanation, plus the Advanced link and Bass creation explanation. Operational errors still appear beside the Tracks controls. Musical editors now share labeled pastel areas by impact: Core, Rhythm, Pitch, Shape, Dynamics, Structure and Other; empty categories are omitted, including Pitch for Drums. Bass uses a purer blue and each group count has a box beside its name. This supersedes earlier header/inspector placement descriptions; supported policy and musical behavior remains unchanged.
+
+Validation: production build, all 96 part-setting tests, and the production browser control suite pass. Browser coverage includes collapsed Generate N, retained count on expansion, advanced header rules, Inspector policy removal, boxed count placement, blue Bass, and category accent/background consistency across both editors and all five roles. The existing Pixi CommonJS build warning remains.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
@@ -316,7 +322,7 @@ The **Part settings** panel sits inside the center column, immediately after arr
 
 Use two compact rows where space permits: fill + pattern selector/grid, then knobs for transpose, hits, span, repeat, shift, pause, split, length, swing, and velocity range. Add a small role-specific subset from the placement map. Show only supported controls; never ship active controls that have no generator effect. A role cell aggregates its member tracks: unequal values show Mixed, not the first track's value. A mixed pattern shows a summary until the user explicitly chooses a common pattern. Narrow widths wrap or scroll the quick controls while leaving score usable.
 
-Expanded Tracks group headers show track count/Add/Reroll plus the most-used track-generation rules. Keep them directly accessible above the track rows; use an Advanced link to the corresponding inspector policy rather than a second full form. Header expansion and group selection are separate actions. Track rows retain instrument summary, channel, mute/solo, visibility, and optional reroll lock/action. Randomization rules do not appear as controls in the central Part settings panel.
+Tracks group headers show a boxed track count beside the name plus Add/Reroll. Count and Generate N remain visible when collapsed. Expansion exposes all supported track-generation rules directly above the track rows. The Inspector has no track-generation policy, reroll action, roll count or explanatory policy text. Header expansion and group selection are separate actions. Track rows retain instrument summary, channel, mute/solo, visibility, and optional reroll lock/action. Randomization rules do not appear as controls in the central Part settings panel.
 
 Do not replace the old removed mode-controls drawer with this panel: it edits the active musical context and does not change workspace routes or modes.
 
@@ -392,7 +398,7 @@ Exit per role: every active mapped control has an audible/exported effect, corre
 
 ### P6 — Track-generation policies in Tracks headers
 
-Port reroll policies and distinct actions from `createRandom*Panels` with the placement map. Start with arp hits/Random#/One#/2^n, fills, max split and length bounds; then chords vary length/strum/split; drum rules; melody seed/pattern/target reroll triggers. Bass has fewer exposed rules: preserve its creation behavior without inventing legacy checkboxes. Show current generated part values in the central panel after reroll.
+Port reroll policies and distinct actions from `createRandom*Panels` with the placement map. Start with arp hits/Random#/One#/2^n, fills, max split and length bounds; then chords vary length/strum/split; drum rules; melody seed/pattern/target reroll triggers. Bass has fewer exposed rules: preserve its creation behavior without inventing legacy checkboxes. Show current generated part values in the central panel after reroll. Keep Count/Generate N visible when collapsed and show all supported policy controls on expansion; omit reroll policy from the Inspector.
 
 Header controls can be implemented role by role after the corresponding P3–P5 musical consumer exists. P6 need not wait for every advanced melody control. Separate instrument randomization permission, parameter randomization, shared-hit constraints and automatic Compose/Regenerate triggers.
 

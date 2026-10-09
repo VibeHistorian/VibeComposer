@@ -12,13 +12,13 @@ export class TrackGenerationPolicyComponent {
   readonly role = input<ArrangedPart>('arpeggio');
   readonly policy = input.required<TrackGenerationPolicy>();
   readonly values = computed(() => this.policy() as unknown as Record<string, string | number | boolean>);
-  readonly advanced = input(false);
+  readonly expanded = input(false);
   readonly disabled = input(false);
   readonly policyChanged = output<TrackGenerationPolicyPatch>();
   readonly generationRequested = output<number>();
   readonly capacity = input(16);
   readonly generateCount = signal(1);
-  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control => this.advanced() || !control.advanced));
+  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()]);
 
   changeCount(event: Event): void {
     const element = event.target as HTMLInputElement;

@@ -40,12 +40,11 @@
               [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
               (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '⌄' }}</button>
           </header>
+          <div class="track-policy-header">
+            <vc-track-generation-policy [role]="group.role" [policy]="policyFor(group.role)" [expanded]="!isGroupCollapsed(group.role)" [disabled]="editing()" [capacity]="64 - project().tracks.length" (policyChanged)="updateRolePolicy(group.role, $event)" (generationRequested)="generateRole(group.role, $event)" />
+            @if (rerollMessageFor(group.role)) { <span role="status">{{ rerollMessageFor(group.role) }}</span> }
+          </div>
           @if (!isGroupCollapsed(group.role)) {
-              <div class="track-policy-header">
-                <vc-track-generation-policy [role]="group.role" [policy]="policyFor(group.role)" [disabled]="editing()" [capacity]="64 - project().tracks.length" (policyChanged)="updateRolePolicy(group.role, $event)" (generationRequested)="generateRole(group.role, $event)" />
-                <button type="button" [disabled]="editing()" (click)="openRolePolicy(group.role)">Advanced reroll rules</button>
-                @if (rerollMessageFor(group.role)) { <span role="status">{{ rerollMessageFor(group.role) }}</span> }
-              </div>
             @if (!generationAvailable[group.role]) {
               <p class="generation-status">Manual notes · automatic generation coming later</p>
             }
@@ -303,15 +302,6 @@
               (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
-        @if (partScope()) {
-          <section class="quick-settings-group" [attr.aria-label]="roleName(partRole()) + ' track generation policy'">
-            <p class="eyebrow">TRACK REROLL RULES · GLOBAL {{ roleName(partRole()).toUpperCase() }}</p>
-            <vc-track-generation-policy [role]="partRole()" [policy]="policyFor(partRole())" [advanced]="true" [disabled]="editing()" [capacity]="64 - project().tracks.length" (policyChanged)="updateRolePolicy(partRole(), $event)" (generationRequested)="generateRole(partRole(), $event)" />
-            <button type="button" [disabled]="editing() || !canRerollRole(partRole())" (click)="rerollRole(partRole())">Reroll unlocked {{ roleName(partRole()) }} tracks</button>
-            @if (rerollMessageFor(partRole())) { <span role="status">{{ rerollMessageFor(partRole()) }}</span> }
-            <span>Roll {{ project().trackRerollCounts?.[partRole()] ?? 0 }} · rerolls follow the project seed. Rules take effect when you press Reroll; local overrides and manual notes can mask the result.</span>
-          </section>
-        }
         @if (!selectedRole()) {
           <section class="quick-settings-group mix-quick-settings" aria-label="Track instrument and MIDI settings">
             <p class="eyebrow">INSTRUMENT &amp; MIDI</p>
