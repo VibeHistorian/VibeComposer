@@ -4,7 +4,7 @@
 .part-controls { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
 
 /* Shared musical impact areas */
-.part-control-area { flex: 1 1 180px; min-width: 0; max-width: 100%; margin: 0; padding: 9px 10px 10px; border: 1px solid var(--border-default); border-left: 3px solid var(--accent-primary); border-radius: var(--radius-section); background: var(--parameter-surface); }
+.part-control-area { flex: 1 1 180px; min-width: 0; max-width: 100%; margin: 0; padding: 9px 10px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-section); background: var(--parameter-surface); }
 .part-control-area h3 { margin: 0 0 9px; color: var(--accent-primary); font: 600 10px var(--font-ui); letter-spacing: .04em; }
 .part-area-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 12px; }
 .part-control-area:has(.pattern-control) { flex-basis: 260px; }
