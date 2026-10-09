@@ -25,12 +25,12 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const script = `<script>
     (async () => {
-      const waitFor = async read => {
+      const waitFor = async (read, label = 'initial controls') => {
         for (let attempt = 0; attempt < 300; attempt++) {
           const result = read(); if (result) return result;
           await new Promise(resolve => setTimeout(resolve, 50));
         }
-        throw new Error('Angular UI did not reach expected state');
+        throw new Error('Angular UI did not reach expected state: ' + label);
       };
       try {
         sessionStorage.clear();
@@ -86,6 +86,31 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
         const bounds = track.getBoundingClientRect();
         result.controlsFit = track.querySelector('.track-mix-controls').getBoundingClientRect().right <= bounds.right;
         result.groupStillSelected = group.getAttribute('aria-pressed');
+        const velocitySwitches = [...document.querySelectorAll('input[aria-label="Custom velocities"]')];
+        velocitySwitches[0].click();
+        const velocityGrids = await waitFor(() => {
+          const result = [...document.querySelectorAll('.velocity-pattern-grid')];
+          return result.length === 2 ? result : null;
+        }, 'velocity grids enabled');
+        result.velocityCounts = velocityGrids.map(grid => grid.querySelectorAll('input').length);
+        const velocity = velocityGrids[0].querySelector('input');
+        velocity.value = '22'; velocity.dispatchEvent(new Event('input', { bubbles: true }));
+        await waitFor(() => velocityGrids[0].querySelector('output').textContent.trim() === '22', 'velocity preview');
+        result.velocityBeforeCommit = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities;
+        result.inspectorBeforeCommit = velocityGrids[1].querySelector('input').value;
+        velocity.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => velocityGrids.every(grid => grid.querySelector('input').value === '22'), 'velocity commit reflected in both editors');
+        const secondVelocity = velocityGrids[0].querySelectorAll('input')[1];
+        wheel(secondVelocity, -100, true);
+        await waitFor(() => secondVelocity.value === '80', 'velocity wheel update');
+        result.customVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities;
+        result.randomBoundsHidden = !document.querySelector('input[aria-label="Min velocity"]');
+        velocitySwitches[0].click();
+        await waitFor(() => !document.querySelector('.velocity-pattern-grid'), 'velocity grids disabled');
+        result.retainedVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities;
+        velocitySwitches[0].click();
+        await waitFor(() => document.querySelector('.velocity-pattern-grid input')?.value === '22', 'velocity grids restored');
+        result.velocitiesEnabled = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.useCustomVelocities;
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
         await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message }) });
@@ -148,6 +173,14 @@ test('production Angular controls support custom rhythm, wheel edits, vertical m
     assert.deepEqual(actual.colors, ['rgb(255, 255, 50)', 'rgb(145, 255, 40)']);
     assert.equal(actual.controlsFit, true);
     assert.equal(actual.groupStillSelected, 'true');
+    assert.deepEqual(actual.velocityCounts, [8, 8]);
+    assert.equal(actual.velocityBeforeCommit, undefined);
+    assert.equal(actual.inspectorBeforeCommit, '79');
+    assert.equal(actual.customVelocities.length, 32);
+    assert.deepEqual(actual.customVelocities.slice(0, 3), [22, 80, 79]);
+    assert.deepEqual(actual.retainedVelocities, actual.customVelocities);
+    assert.equal(actual.randomBoundsHidden, true);
+    assert.equal(actual.velocitiesEnabled, true);
   } finally {
     clearTimeout(timeout); child.kill(); server.close();
     // Remove only the fresh profile created by this test after Chromium exits.

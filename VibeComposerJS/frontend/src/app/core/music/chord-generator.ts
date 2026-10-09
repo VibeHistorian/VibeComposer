@@ -5,6 +5,7 @@ import { JavaRandom } from './java-random';
 import { velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
 import { chordRhythmMask } from './rhythm-pattern';
+import { chordVelocityPattern } from './velocity-pattern';
 
 export interface ChordHitEvent {
   readonly pitches: readonly number[];
@@ -61,6 +62,7 @@ export function generateChordPart(
   const [velocityMin, velocityMax] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings);
   const pattern = chordRhythmMask(settings);
+  const velocityPattern = chordVelocityPattern(settings);
   const stepDuration = BEATS_PER_CHORD / pattern.length;
 
   for (let chordIndex = 0; chordIndex < chordDefinitions.length; chordIndex++) {
@@ -69,8 +71,8 @@ export function generateChordPart(
     const velocityRandom = new JavaRandom(BigInt.asIntN(32, partSeed + BigInt(chordIndex)));
 
     for (let step = 0; step < pattern.length; step++) {
-      const velocity = velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin;
-      if (pattern[step] < 1) {
+      const velocity = velocityPattern ? velocityPattern[step] : velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin;
+      if (pattern[step] < 1 || velocity === 0) {
         continue;
       }
       events.push({

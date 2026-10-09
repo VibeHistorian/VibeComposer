@@ -66,6 +66,10 @@ export interface ChordSettings extends CommonPartSettings {
   readonly euclideanPulses?: number;
   /** Unshifted 32-cell binary grid. Hidden cells survive changes to Hits. */
   readonly customPattern?: readonly number[];
+  /** Explicit counterpart of Java's non-null customVelocities; disabling retains the grid. */
+  readonly useCustomVelocities?: boolean;
+  /** 32 audible-subdivision velocities, independent of rhythm Shift/Flip; zero is silent. */
+  readonly customVelocities?: readonly number[];
   readonly voicing: ChordVoicing;
   readonly noteLengthPercent: number;
 }

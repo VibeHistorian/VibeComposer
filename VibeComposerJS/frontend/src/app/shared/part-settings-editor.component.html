@@ -1,6 +1,6 @@
 <div class="part-controls">
   @for (control of controls(); track control.key) {
-    <div class="part-control" [class.pattern-control]="control.kind === 'pattern'" [title]="control.description ?? ''">
+    <div class="part-control" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.description ?? ''">
       @if (control.kind === 'number') {
         <vc-compact-knob [value]="numericValue(control)" [mixed]="values()[control.key] === null"
           [minimum]="minimum(control)" [maximum]="maximum(control)"
@@ -36,6 +36,27 @@
             <span class="rhythm-preview-mixed">Mixed grid or rhythm settings</span>
             @if (values()['customPattern'] === null) {
               <button type="button" class="common-grid-button" (click)="useFullGrid()">Use full grid</button>
+            }
+          }
+        } @else if (control.kind === 'velocities') {
+          @if (velocitySlots(); as slots) {
+            <div class="velocity-pattern-grid" role="group" [attr.aria-label]="control.label">
+              @for (velocity of slots; track $index) {
+                <label class="velocity-slot" [class.rest]="rhythmPreview()?.[$index] === 0">
+                  <span aria-hidden="true">{{ $index + 1 }}</span>
+                  <input type="range" min="0" max="127" step="1" [value]="velocity"
+                    [attr.aria-label]="'Velocity subdivision ' + ($index + 1)" [attr.aria-valuetext]="velocity === 0 ? '0, silent' : velocity"
+                    (input)="previewVelocity($index, $event)" (change)="commitVelocity($index, $event)"
+                    (wheel)="wheelVelocity($index, $event)" (pointercancel)="cancelVelocity()"
+                    (keydown.escape)="cancelVelocity()" (blur)="cancelVelocity()" />
+                  <output>{{ velocity }}</output>
+                </label>
+              }
+            </div>
+          } @else {
+            <span class="rhythm-preview-mixed">Mixed velocities or Hits</span>
+            @if (values()['customVelocities'] === null) {
+              <button type="button" class="common-grid-button" (click)="useDefaultVelocities()">Use default velocities</button>
             }
           }
         } @else {

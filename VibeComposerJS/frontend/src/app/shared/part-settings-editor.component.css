@@ -20,3 +20,10 @@
 .custom-pattern-slot.active { border-color: var(--accent-primary); background: var(--accent-primary); color: var(--surface-input); }
 .custom-pattern-slot:focus-visible, .common-grid-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 .common-grid-button { border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; padding: 5px; }
+
+/* Per-subdivision velocities */
+.velocity-pattern-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px 3px; }
+.velocity-slot { min-width: 0; display: grid; justify-items: center; gap: 3px; color: var(--text-secondary); font: 10px var(--font-mono); }
+.velocity-slot input { writing-mode: vertical-lr; direction: rtl; width: 22px; height: 60px; margin: 0; accent-color: var(--accent-primary); cursor: ns-resize; touch-action: none; }
+.velocity-slot.rest > span { color: var(--text-muted); text-decoration: line-through; }
+.velocity-slot input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }

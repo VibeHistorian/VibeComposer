@@ -1,13 +1,14 @@
 import type { ArrangedPart, ArrangementSection, CommonPartSettings, CompositionTrack, PartSettingsPatch } from '../project/project.model';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from './rhythm-patterns';
+import { DEFAULT_CUSTOM_VELOCITIES, isVelocityPattern } from './velocity-pattern';
 
 export type PartSettingValue = string | number | boolean | readonly number[];
 
 export interface PartControl {
   readonly key: string;
   readonly label: string;
-  readonly kind: 'number' | 'choice' | 'boolean' | 'pattern';
+  readonly kind: 'number' | 'choice' | 'boolean' | 'pattern' | 'velocities';
   readonly minimum?: number;
   readonly maximum?: number;
   readonly step?: number;
@@ -49,6 +50,10 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
       description: 'Invert notes and rests inside the chord rhythm grid. Fill still determines which chords play.' },
     { key: 'customPattern', label: 'Custom grid', kind: 'pattern', defaultValue: Object.freeze(Array(32).fill(1)),
       description: 'Click or drag to paint sounded slots and rests; Enter or Space toggles a slot. Edits follow Shift and Pattern flip. Hidden cells are retained when Hits changes.' },
+    { key: 'useCustomVelocities', label: 'Custom velocities', kind: 'boolean', defaultValue: false,
+      description: 'Use the velocity grid instead of random Min/Max velocity. Disabling retains your grid.' },
+    { key: 'customVelocities', label: 'Velocity grid', kind: 'velocities', defaultValue: DEFAULT_CUSTOM_VELOCITIES,
+      description: 'Velocity per displayed subdivision (0–127). Zero silences a hit. Values stay at their subdivision when rhythm Shift/Flip changes, and hidden cells survive Hits changes.' },
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 125), ...pitched],
   arpeggio: [...fill, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
     choice('rate', 'Rate', ['eighth', 'sixteenth']), choice('octaves', 'Octaves', [1, 2]),
@@ -89,6 +94,7 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
     if (control.kind === 'boolean' && typeof field !== 'boolean') return undefined;
     if (control.kind === 'pattern' && (!Array.isArray(field) || field.length !== 32
       || Array.from(field).some((slot) => slot !== 0 && slot !== 1))) return undefined;
+    if (control.kind === 'velocities' && !isVelocityPattern(field)) return undefined;
     result[key] = Array.isArray(field) ? [...field] : field as PartSettingValue;
   }
   return result as PartSettingsPatch;
@@ -113,7 +119,8 @@ export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): Co
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const common = Object.fromEntries(Object.entries(value).filter(([key]) =>
     ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier', 'chordSpanFill', 'fillFlip',
-      'hitsPerPattern', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern'].includes(key)));
+      'hitsPerPattern', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern',
+      'useCustomVelocities', 'customVelocities'].includes(key)));
   const decoded = decodePartPatch(role, common);
   return decoded && validVelocityRange(decoded, role) ? decoded : undefined;
 }

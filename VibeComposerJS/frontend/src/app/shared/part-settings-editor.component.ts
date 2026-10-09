@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import type { ArrangedPart, ChordRhythm } from '../core/project/project.model';
 import { PART_CONTROLS, type PartControl, type PartSettingValue, partValuesEqual } from '../core/music/part-settings';
 import { chordRhythmMask } from '../core/music/rhythm-pattern';
+import { DEFAULT_CUSTOM_VELOCITIES } from '../core/music/velocity-pattern';
 import { CompactKnobComponent } from './compact-knob.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
@@ -23,7 +24,19 @@ export class PartSettingsEditorComponent {
   readonly inheritRequested = output<string>();
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
-    && (control.key !== 'customPattern' || this.values()['rhythm'] === 'custom')));
+    && (control.key !== 'customPattern' || this.values()['rhythm'] === 'custom')
+    && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
+    && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true)));
+  readonly velocityDraft = signal<readonly number[] | null>(null);
+  private velocityEdit: { index: number; values: Readonly<Record<string, PartSettingValue | null>> } | null = null;
+  readonly velocitySlots = computed(() => {
+    const draft = this.velocityDraft();
+    const values = this.values();
+    if (values['hitsPerPattern'] === null || values['customVelocities'] === null) return null;
+    const grid = (this.velocityEdit?.values === values ? draft : null)
+      ?? values['customVelocities'] as readonly number[] | undefined ?? DEFAULT_CUSTOM_VELOCITIES;
+    return grid.slice(0, values['hitsPerPattern'] as number | undefined ?? 8);
+  });
   readonly patternDraft = signal<readonly number[] | null>(null);
   private painting: { pointerId: number; values: Readonly<Record<string, PartSettingValue | null>>; sounded: number; lastIndex: number } | null = null;
   readonly rhythmPreview = computed(() => {
@@ -44,7 +57,7 @@ export class PartSettingsEditorComponent {
   });
   readonly rhythmPreviewLabel = computed(() => {
     const pattern = this.rhythmPreview();
-    return pattern ? `${pattern.filter((slot) => slot > 0).length} sounded slots in ${pattern.length} subdivisions per chord. Fill can suppress whole chords.`
+    return pattern ? `${pattern.filter((slot) => slot > 0).length} rhythm-enabled slots in ${pattern.length} subdivisions per chord. Fill can suppress whole chords; zero velocity silences individual hits.`
       : 'Mixed rhythm settings. Select an individual track to see its rhythm.';
   });
 
@@ -135,5 +148,48 @@ export class PartSettingsEditorComponent {
   slotClick(event: MouseEvent, index: number): void {
     // Pointer gestures commit on release; native keyboard and assistive clicks commit here.
     if (event.detail === 0) this.toggleSlot(index);
+  }
+
+  useDefaultVelocities(): void {
+    this.settingsChanged.emit({ key: 'customVelocities', value: [...DEFAULT_CUSTOM_VELOCITIES] });
+  }
+
+  previewVelocity(index: number, event: Event): void {
+    if (!this.velocitySlots()) return;
+    const value = Number((event.target as HTMLInputElement).value);
+    if (!Number.isInteger(value) || value < 0 || value > 127) return;
+    if (this.velocityEdit && (this.velocityEdit.values !== this.values() || this.velocityEdit.index !== index)) {
+      this.cancelVelocity(); return;
+    }
+    this.velocityEdit ??= { index, values: this.values() };
+    const grid = [...(this.velocityDraft() ?? this.values()['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
+    grid[index] = value;
+    this.velocityDraft.set(grid);
+  }
+
+  commitVelocity(index: number, event: Event): void {
+    const unchangedContext = !this.velocityEdit || this.velocityEdit.values === this.values();
+    if (unchangedContext) this.previewVelocity(index, event);
+    const draft = this.velocityDraft();
+    this.cancelVelocity();
+    if (unchangedContext && draft && !partValuesEqual(draft, this.values()['customVelocities'])) {
+      this.settingsChanged.emit({ key: 'customVelocities', value: draft });
+    }
+  }
+
+  cancelVelocity(): void {
+    this.velocityEdit = null;
+    this.velocityDraft.set(null);
+  }
+
+  wheelVelocity(index: number, event: WheelEvent): void {
+    const slots = this.velocitySlots();
+    if (!slots || this.velocityEdit || event.ctrlKey || event.metaKey || event.deltaY === 0) return;
+    event.preventDefault(); event.stopPropagation();
+    const grid = [...(this.values()['customVelocities'] as readonly number[] | undefined ?? DEFAULT_CUSTOM_VELOCITIES)];
+    const value = Math.max(0, Math.min(127, slots[index] + (event.deltaY < 0 ? 1 : -1) * (event.shiftKey ? 1 : 6)));
+    if (value === slots[index]) return;
+    grid[index] = value;
+    this.settingsChanged.emit({ key: 'customVelocities', value: grid });
   }
 }

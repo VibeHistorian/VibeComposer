@@ -1291,6 +1291,192 @@ test('quick mixer knobs format linear gain and pan, audition without history, an
   assert.equal(heard.at(-1).tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, 50);
 });
 
+test('velocity patterns match Java stored subdivision selection and retain zero, independent of shift/flip', () => {
+  const { load } = fixture();
+  const { chordVelocityPattern } = load('core/music/velocity-pattern.ts');
+  const fixtures = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/velocity-pattern.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(Object.keys(fixtures).length, 84);
+  for (const [key, expected] of Object.entries(fixtures)) {
+    const [sample, hits, shift] = key.split('/').map(Number);
+    const grid = Array.from({ length: 32 }, (_, index) => sample === 0 ? 0 : sample === 1 ? 127
+      : sample === 2 ? index * 7 % 128 : index % 2 === 0 ? 1 : 79);
+    for (const patternFlip of [false, true]) {
+      assert.deepEqual(chordVelocityPattern({ useCustomVelocities: true, customVelocities: grid,
+        hitsPerPattern: hits, patternShift: shift, patternFlip }), expected, key);
+    }
+  }
+  assert.deepEqual(chordVelocityPattern({ useCustomVelocities: true, hitsPerPattern: 3 }), [79, 79, 79]);
+  assert.equal(chordVelocityPattern({ customVelocities: Array(32).fill(127) }), undefined);
+});
+
+test('custom velocities replace dynamics without changing rhythm timing and zero hits remain silent', () => {
+  const { service, load } = fixture();
+  const { generateChordPart } = load('core/music/chord-generator.ts');
+  const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
+  const base = service.project().chords;
+  const generate = (patch = {}) => generateChordPart(42n, 'C', 'major', [1, 4, 5], { ...base, ...patch });
+  const original = generate();
+  assert.deepEqual(generate({ useCustomVelocities: false, customVelocities: Array(32).fill(0) }), original);
+  assert.deepEqual(generate({ customVelocities: Array(32).fill(127) }), original);
+  const grid = Array.from({ length: 32 }, (_, index) => index % 3 === 0 ? 0 : index * 7 % 128);
+  const patch = { rhythm: 'euclid', hitsPerPattern: 5, euclideanPulses: 3, patternShift: 1, patternFlip: true,
+    useCustomVelocities: true, customVelocities: grid, noteLengthPercent: 75, velocityMin: 110, velocityMax: 110 };
+  const mask = chordRhythmMask(patch);
+  const notes = generate(patch);
+  assert.ok(notes.length > 0);
+  assert.ok(notes.every(note => note.velocity < 110), 'custom values are not clamped to random velocity bounds');
+  for (const note of notes) {
+    const subdivision = Math.round((note.startBeat % 4) / (4 / 5));
+    assert.equal(mask[subdivision], 1);
+    assert.equal(note.velocity, grid[subdivision]);
+    assert.ok(Math.abs(note.durationBeats - 4 / 5 * .75) < 1e-12);
+  }
+  assert.deepEqual(generate({ ...patch, customVelocities: Array(32).fill(0) }), []);
+  assert.deepEqual(generate({ ...patch, chordSpanFill: 'ALL', fillFlip: true }), []);
+  assert.deepEqual(generate({ useCustomVelocities: true }).map(note => note.velocity), original.map(() => 79));
+});
+
+test('velocity enable and arrays preserve mixed scopes, inherited resets, snapshots and hidden subdivisions', () => {
+  const { service, ui, workspace, settings } = fixture();
+  const trackId = 'track-chords-1';
+  const second = service.duplicateTrack(trackId);
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'chords' };
+  const part = { kind: 'section-track', sectionId, trackId: second };
+  const grid = Array.from({ length: 32 }, (_, index) => 30 + index);
+  service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { useCustomVelocities: true, customVelocities: grid });
+  grid[0] = 0;
+  assert.equal(service.project().chords.customVelocities[0], 30);
+  const override = Array(32).fill(120);
+  service.updatePartSettings(part, { customVelocities: override, useCustomVelocities: false });
+  ui.selectCell(sectionId, 'chords');
+  assert.equal(workspace.partValues().customVelocities, null);
+  assert.equal(workspace.partValues().useCustomVelocities, null);
+  service.updatePartSettings(cell, { customVelocities: Array(32).fill(60) });
+  let effective = settings.resolvePartTrack(service.project().tracks.find(track => track.id === second), service.project().arrangement[1]).generatorSettings;
+  assert.deepEqual(effective.customVelocities, override);
+  assert.equal(effective.useCustomVelocities, false);
+  service.updatePartSettings(part, { customVelocities: Array(32).fill(60), useCustomVelocities: true });
+  assert.equal(service.project().arrangement[1].trackPartOverrides[second], undefined, 'same-content arrays and booleans restore inheritance');
+  const source = { kind: 'section-track', sectionId, trackId };
+  assert.equal(service.freezePartSettings(source), 'changed');
+  assert.equal(service.freezePartSettings(source), 'unchanged');
+  const destination = service.project().arrangement[2].id;
+  assert.equal(service.applyPartSettingsToSections(source, [destination], 'effective'), 'changed');
+  assert.equal(service.partSettingsCopyWouldChange(source, [destination], 'effective'), false);
+  service.updatePartSettings(source, { hitsPerPattern: 3 });
+  assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].customVelocities.length, 32);
+  service.updatePartSettings(source, { useCustomVelocities: false });
+  assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].customVelocities[31], 60);
+  service.undo();
+  assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].useCustomVelocities, true);
+  service.duplicateSection(1);
+  const copy = service.duplicateTrack(trackId);
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[copy].customVelocities, Array(32).fill(60));
+});
+
+test('velocity grids preview during slider gestures, commit once, support wheel, and reject stale/mixed edits', () => {
+  const { service, load, settings } = fixture();
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const editor = new PartSettingsEditorComponent();
+  editor.role.set('chords');
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId: 'track-chords-1' };
+  editor.values.set({ ...settings.settingsValues(service.project().chords, 'chords'), useCustomVelocities: true });
+  const commits = [];
+  editor.settingsChanged.emit = change => { commits.push(change); service.updatePartSettings(scope, { [change.key]: change.value }); };
+  assert.equal(editor.controls().some(control => control.key === 'customVelocities'), true);
+  assert.equal(editor.controls().some(control => control.key === 'velocityMin'), false);
+  const before = service.exportProjectJson();
+  const input = { value: '25' }; const event = { target: input };
+  editor.previewVelocity(1, event);
+  input.value = '110'; editor.previewVelocity(1, event);
+  assert.equal(editor.velocitySlots()[1], 110);
+  assert.equal(service.exportProjectJson(), before);
+  editor.commitVelocity(1, event);
+  assert.equal(commits.length, 1);
+  assert.equal(commits[0].value[1], 110);
+  assert.equal(commits[0].value.length, 32);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  input.value = '0'; editor.previewVelocity(2, event); editor.cancelVelocity();
+  assert.equal(editor.velocitySlots()[2], 79);
+  assert.equal(commits.length, 1);
+  editor.previewVelocity(2, event);
+  editor.values.set({ ...editor.values(), hitsPerPattern: 5 });
+  editor.commitVelocity(2, event);
+  assert.equal(commits.length, 1);
+  editor.wheelVelocity(3, { deltaY: -1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
+  assert.equal(commits[1].value[3], 80);
+  editor.values.set({ ...editor.values(), customVelocities: null });
+  assert.equal(editor.velocitySlots(), null);
+  editor.previewVelocity(1, event); assert.equal(editor.velocityDraft(), null);
+  editor.useDefaultVelocities(); assert.deepEqual(commits[2].value, Array(32).fill(79));
+  editor.values.set({ ...editor.values(), useCustomVelocities: false });
+  assert.equal(editor.controls().some(control => control.key === 'customVelocities'), false);
+  assert.equal(editor.controls().some(control => control.key === 'velocityMin'), true);
+});
+
+test('custom velocities survive section MIDI, history, session and JSON while manual notes keep masking them', () => {
+  const { service, phrase, midi, load } = fixture();
+  const trackId = 'track-chords-1';
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId };
+  const track = () => service.project().tracks.find(track => track.id === trackId);
+  const original = phrase.layOutTrackPhrase(service.project(), track());
+  const before = service.exportProjectJson();
+  const grid = Array.from({ length: 32 }, (_, index) => index === 0 ? 0 : index % 2 === 0 ? 127 : 20);
+  service.updatePartSettings(scope, { useCustomVelocities: true, customVelocities: grid });
+  const after = phrase.layOutTrackPhrase(service.project(), track());
+  const start = service.project().arrangement[0].measures * 4;
+  const end = start + service.project().arrangement[1].measures * 4;
+  const outside = notes => notes.filter(note => note.startBeat < start || note.startBeat >= end);
+  assert.deepEqual(outside(after), outside(original));
+  assert.notDeepEqual(after, original);
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const notes = exported.tracks.find(track => track.name === 'C1').notes;
+  assert.equal(notes.length, after.length);
+  notes.forEach((note, index) => {
+    assert.equal(Math.round(note.velocity * 127), after[index].velocity);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - after[index].startBeat) < .003);
+  });
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  service.updateTrackPhrase(trackId, manual);
+  service.updatePartSettings(scope, { customVelocities: Array(32).fill(0) });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+});
+
+test('velocity grids reject invalid shape, values and unsupported roles at every scope/import', () => {
+  const { service, settings, load } = fixture();
+  const { chordVelocityPattern } = load('core/music/velocity-pattern.ts');
+  const trackId = 'track-chords-1';
+  const sectionId = service.project().arrangement[1].id;
+  const scopes = [{ kind: 'global-role', role: 'chords' }, { kind: 'global-track', trackId },
+    { kind: 'section-role', sectionId, role: 'chords' }, { kind: 'section-track', sectionId, trackId }];
+  service.updateSettings({ name: 'Velocity test' }); service.undo();
+  const before = service.exportProjectJson();
+  const invalid = [null, [], Array(31).fill(80), Array(33).fill(80), Array(32).fill(-1), Array(32).fill(128),
+    Array(32).fill(1.5), Array(32).fill('80'), Array(32).fill(true), Array(32)];
+  for (const grid of invalid) {
+    assert.equal(settings.decodePartPatch('chords', { customVelocities: grid }), undefined);
+    assert.throws(() => chordVelocityPattern({ customVelocities: grid }), RangeError);
+    for (const scope of scopes) service.updatePartSettings(scope, { customVelocities: grid });
+    const project = JSON.parse(before);
+    project.tracks.find(track => track.id === trackId).generatorSettings.customVelocities = grid;
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  }
+  for (const scope of scopes) service.updatePartSettings(scope, { useCustomVelocities: 1 });
+  for (const role of ['melody', 'bass', 'arpeggio', 'drums']) {
+    service.updatePartSettings({ kind: 'section-role', sectionId, role }, { useCustomVelocities: true, customVelocities: Array(32).fill(80) });
+  }
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canRedo(), true);
+});
+
 test('custom masks match 1152 production Java list rotations and flipped complements', () => {
   const { load } = fixture();
   const { customPatternMask, chordRhythmMask } = load('core/music/rhythm-pattern.ts');

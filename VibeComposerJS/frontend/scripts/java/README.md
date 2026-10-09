@@ -1,5 +1,12 @@
 # Java pattern fixtures
 
+`VelocityPatternFixture.java` supplies `../fixtures/velocity-pattern.java.json`: 84 cases across four 32-cell velocity grids, seven Hits values and three shifts. It uses production `ChordPart`/`InstPart` storage and `MidiGeneratorUtils.multiplyVelocity` with 100% volume. Its selection loop mirrors the audited `ChordPhraseGenerator` loop (first Hits entries, no rhythm Shift/Flip). This validates stored velocity selection and unscaled zero handling, not full phrase generation.
+
+```powershell
+& 'C:/Java/jdk-24.0.2/bin/javac.exe' -cp midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar -d VibeComposerJS/frontend/.angular/fill-fixtures midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Parts/InstPart.java midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Parts/ChordPart.java midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/generation/MidiGeneratorUtils.java VibeComposerJS/frontend/scripts/java/VelocityPatternFixture.java
+& 'C:/Java/jdk-24.0.2/bin/java.exe' -cp 'VibeComposerJS/frontend/.angular/fill-fixtures;midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar' VelocityPatternFixture | Set-Content -Encoding utf8 VibeComposerJS/frontend/scripts/fixtures/velocity-pattern.java.json
+```
+
 `CustomPatternFixture.java` supplies `../fixtures/custom-pattern.java.json`: 1,152 cases across four 32-cell grids, Hits 1–32 and Shift 0–8. It invokes production `InstPart.getFinalPatternCopy()` through `ChordPart`, then takes Hits as the chord consumer does. Tests check these masks and their flipped complements. The fixture validates custom-grid rotation and truncation, not full Java chord generation or widget painting behavior.
 
 ```powershell
