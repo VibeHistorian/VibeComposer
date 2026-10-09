@@ -1,13 +1,6 @@
 import type { ChordSettings } from '../project/project.model';
-
-export const STATIC_RHYTHM_PATTERNS = ['FULL', 'ALT', 'ONEPER4', 'TRESILLO', 'SINGLE', 'ONESIX'] as const;
-export type StaticRhythmPattern = typeof STATIC_RHYTHM_PATTERNS[number];
-
-const PATTERNS: Readonly<Record<StaticRhythmPattern, readonly number[]>> = {
-  FULL: [1, 1, 1, 1, 1, 1, 1, 1], ALT: [1, 0, 1, 0, 1, 0, 1, 0],
-  ONEPER4: [1, 0, 0, 0, 1, 0, 0, 0], TRESILLO: [1, 0, 0, 1, 0, 0, 1, 0],
-  SINGLE: [1, 0, 0, 0, 0, 0, 0, 0], ONESIX: [1, 0, 0, 0, 0, 1, 0, 0],
-};
+import { STATIC_RHYTHM_DEFINITIONS, STATIC_RHYTHM_PATTERNS, type StaticRhythmPattern } from './rhythm-patterns';
+export { STATIC_RHYTHM_PATTERNS, type StaticRhythmPattern } from './rhythm-patterns';
 
 /** Java RhythmPattern.getPatternByLength: rotate the padded eight-slot repeats before truncation. */
 export function rhythmPatternMask(pattern: StaticRhythmPattern, hits: number, shift = 0, flipped = false): number[] {
@@ -15,9 +8,10 @@ export function rhythmPatternMask(pattern: StaticRhythmPattern, hits: number, sh
     || !Number.isInteger(shift) || shift < 0 || shift > 8 || typeof flipped !== 'boolean') {
     throw new RangeError('Rhythm pattern settings are outside the supported range.');
   }
+  const definition = Object.values(STATIC_RHYTHM_DEFINITIONS).find((candidate) => candidate.javaName === pattern)!;
   const length = Math.ceil(hits / 8) * 8;
   return Array.from({ length: hits }, (_, index) => {
-    const value = PATTERNS[pattern][((index - shift + length) % length) % 8];
+    const value = definition.mask[((index - shift + length) % length) % 8];
     return flipped ? 1 - value : value;
   });
 }
@@ -50,13 +44,20 @@ export function euclideanPatternMask(hits: number, pulses: number, shift = 0, fl
   });
 }
 
-const CHORD_RHYTHMS: Readonly<Record<Exclude<ChordSettings['rhythm'], 'euclid'>, StaticRhythmPattern>> = {
-  full: 'FULL', half: 'ALT', tresillo: 'TRESILLO', sparse: 'ONEPER4', single: 'SINGLE', 'one-six': 'ONESIX',
-};
+/** InstPart.getFinalPatternCopy rotates the complete custom list, then the consumer takes Hits. */
+export function customPatternMask(pattern: readonly number[], hits: number, shift = 0, flipped = false): number[] {
+  if (!Array.isArray(pattern) || pattern.length !== 32 || Array.from(pattern).some((slot) => slot !== 0 && slot !== 1)
+    || !Number.isInteger(hits) || hits < 1 || hits > 32 || !Number.isInteger(shift) || shift < 0 || shift > 8
+    || typeof flipped !== 'boolean') throw new RangeError('Custom rhythm settings are outside the supported range.');
+  return Array.from({ length: hits }, (_, index) => {
+    const value = pattern[(index - shift + 32) % 32];
+    return flipped ? 1 - value : value;
+  });
+}
 
 /** Shared by generation and the contextual preview; Pulses is stored independently of Hits. */
 export function chordRhythmMask(settings: Pick<ChordSettings,
-  'rhythm' | 'hitsPerPattern' | 'patternShift' | 'patternFlip' | 'euclideanPulses'>): number[] {
+  'rhythm' | 'hitsPerPattern' | 'patternShift' | 'patternFlip' | 'euclideanPulses' | 'customPattern'>): number[] {
   const hits = settings.hitsPerPattern ?? 8;
   const shift = settings.patternShift ?? 0;
   const flipped = settings.patternFlip ?? false;
@@ -64,7 +65,8 @@ export function chordRhythmMask(settings: Pick<ChordSettings,
   if (!Number.isInteger(pulses) || pulses < 0 || pulses > 32) {
     throw new RangeError('Euclidean pulses are outside the supported range.');
   }
+  if (settings.rhythm === 'custom') return customPatternMask(settings.customPattern ?? Array(32).fill(1), hits, shift, flipped);
   return settings.rhythm === 'euclid'
     ? euclideanPatternMask(hits, Math.min(pulses, hits), shift, flipped)
-    : rhythmPatternMask(CHORD_RHYTHMS[settings.rhythm], hits, shift, flipped);
+    : rhythmPatternMask(STATIC_RHYTHM_DEFINITIONS[settings.rhythm]?.javaName, hits, shift, flipped);
 }

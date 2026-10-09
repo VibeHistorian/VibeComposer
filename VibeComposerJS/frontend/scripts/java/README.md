@@ -1,5 +1,12 @@
 # Java pattern fixtures
 
+`CustomPatternFixture.java` supplies `../fixtures/custom-pattern.java.json`: 1,152 cases across four 32-cell grids, Hits 1–32 and Shift 0–8. It invokes production `InstPart.getFinalPatternCopy()` through `ChordPart`, then takes Hits as the chord consumer does. Tests check these masks and their flipped complements. The fixture validates custom-grid rotation and truncation, not full Java chord generation or widget painting behavior.
+
+```powershell
+& 'C:/Java/jdk-24.0.2/bin/javac.exe' -cp midimasterpiece/target/VibeComposer-2.6-beta-JAR.jar -d VibeComposerJS/frontend/.angular/fill-fixtures midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Parts/InstPart.java midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Parts/ChordPart.java VibeComposerJS/frontend/scripts/java/CustomPatternFixture.java
+& 'C:/Java/jdk-24.0.2/bin/java.exe' -cp 'VibeComposerJS/frontend/.angular/fill-fixtures;midimasterpiece/target/VibeComposer-2.6-beta-JAR.jar' CustomPatternFixture | Set-Content -Encoding utf8 VibeComposerJS/frontend/scripts/fixtures/custom-pattern.java.json
+```
+
 `ChordSpanFillFixture.java` calls the production Java enum, including flipped masks, at lengths 0, 1, 2, 3, 4, 5, 7, 8, 9, 16 and 32. The resulting 264 cases are saved in `../fixtures/chord-span-fill.java.json` and checked by `part-settings.test.cjs`. The fixture validates fill masks, not full phrase-generator parity.
 
 To regenerate from the repository root, use a JDK and the Java app's built dependency JAR (the example uses the available local JDK):

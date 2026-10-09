@@ -12,3 +12,11 @@
 .rhythm-preview-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
 .rhythm-preview-slot { height: 10px; border: 1px solid var(--border-default); border-radius: var(--radius-micro); background: var(--surface-input); }
 .rhythm-preview-slot.active { border-color: var(--accent-primary); background: var(--accent-primary); }
+
+/* Custom rhythm painting */
+.part-control.pattern-control { width: 240px; max-width: 100%; }
+.custom-pattern-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; touch-action: none; }
+.custom-pattern-slot { min-width: 0; height: 24px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-micro); background: var(--surface-input); color: var(--text-secondary); font-size: 10px; user-select: none; }
+.custom-pattern-slot.active { border-color: var(--accent-primary); background: var(--accent-primary); color: var(--surface-input); }
+.custom-pattern-slot:focus-visible, .common-grid-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.common-grid-button { border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; padding: 5px; }

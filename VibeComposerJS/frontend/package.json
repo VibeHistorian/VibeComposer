@@ -10,6 +10,7 @@
     "test:playback": "node --test scripts/audio-playback.test.cjs",
     "test:selection": "node --test scripts/section-selection.test.cjs",
     "test:parts": "node --test scripts/part-settings.test.cjs",
+    "test:rhythm:browser": "node --test scripts/rhythm-picker-browser.test.cjs",
     "watch": "ng build --watch --configuration development"
   },
   "dependencies": {

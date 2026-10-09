@@ -12,15 +12,14 @@ import {
   DEFAULT_DRUM_SETTINGS, DEFAULT_MELODY_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_TRACKS, SECTION_TYPES,
 } from './project.model';
 import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './section-type-settings.service';
-import { decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
+import { decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
+import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
 const MAX_HISTORY = 100;
 const MAX_ARRANGEMENT_SECTIONS = 32;
 const MAX_ARRANGEMENT_MEASURES = 128;
-const BASS_RHYTHMS = ['alternating', 'full', 'half', 'tresillo', 'sparse'] as const;
-const CHORD_RHYTHMS = ['full', 'half', 'tresillo', 'sparse', 'single', 'one-six', 'euclid'] as const;
 const CHORD_VOICINGS = ['close', 'open'] as const;
 const ARPEGGIO_PATTERNS = ['up', 'down', 'up-down', 'random'] as const;
 const ARPEGGIO_RATES = ['eighth', 'sixteenth'] as const;
@@ -57,7 +56,7 @@ export class ProjectService {
       const key = scope.kind === 'section-role' ? role : scope.trackId;
       const overrides = scope.kind === 'section-role' ? section.rolePartOverrides : section.trackPartOverrides;
       const previous = scope.kind === 'section-role' ? section.rolePartOverrides?.[role] : section.trackPartOverrides?.[scope.trackId];
-      const values: Record<string, string | number | boolean> = { ...previous };
+      const values: Record<string, PartSettingValue> = { ...previous };
       // A manual edit equal to this layer's inherited value restores inheritance for that field.
       // Cell inheritance uses all track bases, ignoring their higher-priority section exceptions.
       // Track inheritance includes the cell patch but excludes its own patch.
@@ -65,8 +64,8 @@ export class ProjectService {
       const inherited = members.map((item) => settingsValues(scope.kind === 'section-role' ? item.generatorSettings
         : resolvePartTrack(item, { ...section, trackPartOverrides: undefined }).generatorSettings, role));
       for (const [field, value] of Object.entries(decoded)) {
-        if (inherited.length && inherited.every((settings) => settings[field] === value)) delete values[field];
-        else values[field] = value as string | number | boolean;
+        if (inherited.length && inherited.every((settings) => partValuesEqual(settings[field], value))) delete values[field];
+        else values[field] = value as PartSettingValue;
       }
       if (partPatchesEqual(previous, values as PartSettingsPatch)) return section;
       const map: Record<string, PartSettingsPatch> = { ...overrides };
@@ -999,7 +998,7 @@ export class ProjectService {
       return undefined;
     }
     const chords = value as Partial<ChordSettings>;
-    if (!CHORD_RHYTHMS.includes(chords.rhythm as typeof CHORD_RHYTHMS[number])
+    if (!RHYTHM_PATTERNS.includes(chords.rhythm as typeof RHYTHM_PATTERNS[number])
         || !CHORD_VOICINGS.includes(chords.voicing as typeof CHORD_VOICINGS[number])
         || !Number.isInteger(chords.noteLengthPercent)
         || (chords.noteLengthPercent ?? 0) < 25 || (chords.noteLengthPercent ?? 126) > 125) {

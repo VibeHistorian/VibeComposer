@@ -994,7 +994,7 @@ test('unsupported roles and invalid rhythm controls reject edits/imports without
   const scopes = [{ kind: 'global-role', role: 'chords' }, { kind: 'global-track', trackId },
     { kind: 'section-role', sectionId, role: 'chords' }, { kind: 'section-track', sectionId, trackId }];
   const invalid = [{ hitsPerPattern: 0 }, { hitsPerPattern: 33 }, { hitsPerPattern: 1.5 },
-    { patternShift: -1 }, { patternShift: 9 }, { patternFlip: 1 }, { rhythm: 'custom' }, { rhythm: 'unknown' },
+    { patternShift: -1 }, { patternShift: 9 }, { patternFlip: 1 }, { rhythm: 'melody1' }, { rhythm: 'unknown' },
     { euclideanPulses: -1 }, { euclideanPulses: 33 }, { euclideanPulses: 1.5 }, { euclideanPulses: '4' }];
   for (const scope of scopes) for (const patch of invalid) {
     service.updatePartSettings(scope, patch);
@@ -1170,4 +1170,215 @@ test('section chance preferences gain melody defaults while retaining saved prob
     assert.equal(new SectionTypeSettingsService().chances().CHORUS1.melody, 87);
     assert.equal(preferences.chances().CHORUS1.bass, 13);
   } finally { global.localStorage = previousStorage; }
+});
+
+test('rhythm catalogue options agree with every scope, import decoder and supported generator', () => {
+  const { load, service, settings } = fixture();
+  const catalogue = load('core/music/rhythm-patterns.ts');
+  const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
+  const { generateBassline } = load('core/music/bass-generator.ts');
+  const { generateChordPart } = load('core/music/chord-generator.ts');
+  const chordOptions = settings.PART_CONTROLS.chords.find(control => control.key === 'rhythm').options;
+  const bassOptions = settings.PART_CONTROLS.bass.find(control => control.key === 'rhythm').options;
+  assert.strictEqual(chordOptions, catalogue.RHYTHM_PATTERNS);
+  assert.strictEqual(bassOptions, catalogue.BASS_RHYTHMS);
+  assert.ok(chordOptions.includes('custom'));
+  assert.equal(new Set(chordOptions).size, chordOptions.length);
+  const sectionId = service.project().arrangement[1].id;
+  for (const [role, options] of [['chords', chordOptions], ['bass', bassOptions]]) {
+    const trackId = `track-${role}-1`;
+    const scopes = [{ kind: 'global-role', role }, { kind: 'global-track', trackId },
+      { kind: 'section-role', sectionId, role }, { kind: 'section-track', sectionId, trackId }];
+    for (const rhythm of options) {
+      for (const scope of scopes) {
+        service.updatePartSettings(scope, { rhythm });
+        const track = service.project().tracks.find(track => track.id === trackId);
+        const section = scope.kind.startsWith('section') ? service.project().arrangement[1] : undefined;
+        const effective = settings.resolvePartTrack(track, section).generatorSettings;
+        assert.equal(effective.rhythm, rhythm);
+        if (role === 'chords') {
+          assert.doesNotThrow(() => generateChordPart(42n, 'C', 'major', [1], effective));
+          assert.equal(chordRhythmMask(effective).length, effective.hitsPerPattern ?? 8);
+        } else {
+          assert.doesNotThrow(() => generateBassline(42n, 'C', 'major', [1], rhythm, effective.noteVariation, effective));
+        }
+        assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+      }
+    }
+  }
+});
+
+test('custom masks match 1152 production Java list rotations and flipped complements', () => {
+  const { load } = fixture();
+  const { customPatternMask, chordRhythmMask } = load('core/music/rhythm-pattern.ts');
+  const fixtures = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/custom-pattern.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(Object.keys(fixtures).length, 1152);
+  for (const [key, expected] of Object.entries(fixtures)) {
+    const [sample, hits, shift] = key.split('/').map(Number);
+    const grid = Array.from({ length: 32 }, (_, slot) => sample === 0 ? 0 : sample === 1 ? 1
+      : sample === 2 ? +(slot % 5 === 0) : +((slot * 7 + Math.floor(slot / 3)) % 11 < 4));
+    assert.deepEqual(customPatternMask(grid, hits, shift), expected, key);
+    assert.deepEqual(customPatternMask(grid, hits, shift, true), expected.map((value) => 1 - value), key + ' flip');
+  }
+  assert.deepEqual(chordRhythmMask({ rhythm: 'custom', hitsPerPattern: 3 }), [1, 1, 1]);
+});
+
+test('custom grid arrays resolve by content, replace whole values, and restore inheritance without losing exceptions', () => {
+  const { service, ui, workspace, settings } = fixture();
+  const trackId = 'track-chords-1';
+  const second = service.duplicateTrack(trackId);
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'chords' };
+  const part = { kind: 'section-track', sectionId, trackId: second };
+  const base = Array.from({ length: 32 }, (_, index) => +(index % 3 === 0));
+  service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { rhythm: 'custom', customPattern: base });
+  base[0] = 0;
+  assert.equal(service.project().chords.customPattern[0], 1, 'caller array is copied');
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { customPattern: [...service.project().chords.customPattern] });
+  ui.selectCell(sectionId, 'chords');
+  assert.ok(Array.isArray(workspace.partValues().customPattern), 'separate equal arrays are not Mixed');
+  const exception = Array(32).fill(0); exception[31] = 1;
+  service.updatePartSettings(part, { customPattern: exception });
+  assert.equal(workspace.partValues().customPattern, null);
+  const common = Array(32).fill(1); common[4] = 0;
+  service.updatePartSettings(cell, { customPattern: common });
+  const effective = () => settings.resolvePartTrack(service.project().tracks.find((track) => track.id === second), service.project().arrangement[1]).generatorSettings;
+  assert.deepEqual(effective().customPattern, exception, 'track array replaces role array in its entirety');
+  service.updatePartSettings(part, { customPattern: [...common] });
+  assert.equal(service.project().arrangement[1].trackPartOverrides[second], undefined);
+  assert.deepEqual(effective().customPattern, common);
+  service.updatePartSettings(cell, { customPattern: [...service.project().chords.customPattern] });
+  assert.equal(service.project().arrangement[1].rolePartOverrides.chords, undefined);
+  assert.equal(service.freezePartSettings(part), 'changed');
+  assert.equal(service.freezePartSettings(part), 'unchanged');
+  const destination = service.project().arrangement[2].id;
+  assert.equal(service.applyPartSettingsToSections(part, [destination], 'effective'), 'changed');
+  assert.equal(service.partSettingsCopyWouldChange(part, [destination], 'effective'), false);
+  const saved = service.exportProjectJson();
+  const duplicate = service.duplicateTrack(second);
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: duplicate }, { customPattern: exception });
+  assert.notDeepEqual(service.project().arrangement[1].trackPartOverrides[duplicate].customPattern,
+    service.project().arrangement[1].trackPartOverrides[second].customPattern);
+  service.undo(); service.undo();
+  assert.equal(service.exportProjectJson(), saved);
+});
+
+test('custom chord grids retain seeded dynamics, hidden cells, section isolation and parsed MIDI across reload', () => {
+  const { service, phrase, midi, load } = fixture();
+  const { generateChordPart } = load('core/music/chord-generator.ts');
+  const trackId = 'track-chords-1';
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
+  const track = () => service.project().tracks.find((track) => track.id === trackId);
+  const base = track().generatorSettings;
+  const grid = Array.from({ length: 32 }, (_, index) => +(index % 3 === 0));
+  const full = generateChordPart(42n, 'C', 'major', [1], base);
+  const sparse = generateChordPart(42n, 'C', 'major', [1], { ...base, rhythm: 'custom', customPattern: grid });
+  assert.deepEqual(sparse, full.filter((_, index) => grid[index] > 0), 'rests still consume velocity draws');
+  const original = phrase.layOutTrackPhrase(service.project(), track());
+  const sectionId = service.project().arrangement[1].id;
+  const scope = { kind: 'section-track', sectionId, trackId };
+  service.updatePartSettings(scope, { rhythm: 'custom', customPattern: grid, hitsPerPattern: 5, patternShift: 1, patternFlip: true });
+  const after = phrase.layOutTrackPhrase(service.project(), track());
+  const start = service.project().arrangement[0].measures * 4;
+  const end = start + service.project().arrangement[1].measures * 4;
+  const outside = (notes) => notes.filter((note) => note.startBeat < start || note.startBeat >= end);
+  assert.deepEqual(outside(after), outside(original));
+  assert.notDeepEqual(after, original);
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const notes = exported.tracks.find((track) => track.name === 'C1').notes;
+  assert.equal(notes.length, after.length);
+  notes.forEach((note, index) => {
+    assert.equal(note.midi, after[index].midi);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - after[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / exported.header.ppq - after[index].durationBeats) < 0.003);
+  });
+  service.updatePartSettings(scope, { hitsPerPattern: 2 });
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId].customPattern, grid);
+  service.undo();
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  const { ProjectService } = load('core/project/project.service.ts');
+  const restored = new ProjectService();
+  assert.deepEqual(projectData(restored.exportProjectJson()), projectData(saved));
+  const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  service.updateTrackPhrase(trackId, manual);
+  service.updatePartSettings(scope, { customPattern: Array(32).fill(0) });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+});
+
+test('custom painting previews until release, commits once, supports keyboard and cancels stale gestures', () => {
+  const { service, settings, load } = fixture();
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const editor = new PartSettingsEditorComponent();
+  const trackId = 'track-chords-1';
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId };
+  service.updatePartSettings(scope, { rhythm: 'custom', patternShift: 3, patternFlip: true });
+  const base = settings.settingsValues(service.project().tracks.find((track) => track.id === trackId).generatorSettings, 'chords');
+  editor.role.set('chords');
+  editor.values.set({ ...base, rhythm: 'custom', patternShift: 3, patternFlip: true });
+  const commits = [];
+  editor.settingsChanged.emit = (change) => { commits.push(change); service.updatePartSettings(scope, { [change.key]: change.value }); };
+  const button = { focus() {}, setPointerCapture() {} };
+  const before = service.exportProjectJson();
+  editor.startPainting({ button: 0, pointerId: 9, target: button, currentTarget: button, preventDefault() {} }, 0);
+  assert.equal(commits.length, 0);
+  assert.equal(editor.rhythmPreview()[0], 1);
+  const slot = { dataset: { rhythmSlot: '2' } };
+  const grid = { ownerDocument: { elementFromPoint: () => ({ closest: () => slot }) }, contains: () => true };
+  editor.movePainting({ pointerId: 9, currentTarget: grid, clientX: 1, clientY: 1 });
+  assert.equal(editor.rhythmPreview()[2], 1);
+  assert.equal(service.exportProjectJson(), before);
+  editor.finishPainting({ pointerId: 9 });
+  assert.equal(commits.length, 1);
+  assert.equal(commits[0].value[29], 0, 'unshift and unflip visible subdivision 1');
+  assert.equal(commits[0].value[30], 0, 'paint intervening slots when pointer events skip a subdivision');
+  assert.equal(commits[0].value[31], 0);
+  service.undo();
+  assert.equal(service.exportProjectJson(), before, 'whole paint gesture is one history entry');
+  service.redo();
+  editor.values.set({ ...editor.values(), customPattern: commits[0].value });
+  editor.slotClick({ detail: 1 }, 1);
+  assert.equal(commits.length, 1, 'synthetic pointer click after release cannot double-toggle');
+  editor.slotClick({ detail: 0 }, 1);
+  assert.equal(commits.length, 2, 'keyboard/assistive activation toggles the slot');
+  editor.startPainting({ button: 0, pointerId: 10, target: button, currentTarget: button, preventDefault() {} }, 0);
+  editor.cancelPainting();
+  editor.finishPainting({ pointerId: 10 });
+  assert.equal(commits.length, 2);
+  editor.startPainting({ button: 0, pointerId: 11, target: button, currentTarget: button, preventDefault() {} }, 0);
+  editor.values.set({ ...editor.values(), hitsPerPattern: 3 });
+  editor.finishPainting({ pointerId: 11 });
+  assert.equal(commits.length, 2, 'context/project change rejects pending painting');
+  editor.values.set({ ...editor.values(), customPattern: null });
+  assert.equal(editor.rhythmPreview(), null, 'mixed grid never picks a representative track');
+  editor.useFullGrid();
+  assert.deepEqual(commits[2].value, Array(32).fill(1));
+});
+
+test('custom grids validate shape and binary slots at all scopes and imports without losing redo', () => {
+  const { service, settings, load } = fixture();
+  const trackId = 'track-chords-1';
+  const sectionId = service.project().arrangement[1].id;
+  service.updatePartSettings({ kind: 'global-track', trackId }, { rhythm: 'custom' });
+  service.undo();
+  const before = service.exportProjectJson();
+  const invalid = [null, {}, [], Array(31).fill(1), Array(33).fill(1), Array(32).fill(2), Array(32).fill(true),
+    Array(32).fill('1'), [...Array(31).fill(1), 0.5], Array(32)];
+  const scopes = [{ kind: 'global-role', role: 'chords' }, { kind: 'global-track', trackId },
+    { kind: 'section-role', sectionId, role: 'chords' }, { kind: 'section-track', sectionId, trackId }];
+  const { customPatternMask } = load('core/music/rhythm-pattern.ts');
+  for (const grid of invalid) {
+    assert.equal(settings.decodePartPatch('chords', { customPattern: grid }), undefined);
+    assert.throws(() => customPatternMask(grid, 8), RangeError);
+    for (const scope of scopes) service.updatePartSettings(scope, { customPattern: grid });
+    const project = JSON.parse(before);
+    project.tracks.find((track) => track.id === trackId).generatorSettings.customPattern = grid;
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  }
+  for (const role of ['melody', 'bass', 'arpeggio', 'drums']) {
+    service.updatePartSettings({ kind: 'section-role', sectionId, role }, { customPattern: Array(32).fill(1) });
+  }
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canRedo(), true);
 });

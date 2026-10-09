@@ -4,6 +4,7 @@ import { JavaRandom } from './java-random';
 import type { BassRhythm, CommonPartSettings } from '../project/project.model';
 import { velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
+import { BASS_RHYTHMS, STATIC_RHYTHM_DEFINITIONS } from './rhythm-patterns';
 
 export interface BassNoteEvent {
   readonly midi: number;
@@ -19,12 +20,6 @@ const EIGHTH = 0.5;
 const QUARTER = 1;
 const DURATION_POOL = [SIXTEENTH, EIGHTH, QUARTER, 1.5, 2, 2.5, 3, 4] as const;
 const DURATION_WEIGHTS = [5, 25, 45, 55, 75, 85, 95, 100] as const;
-const RHYTHM_PATTERNS: Readonly<Record<Exclude<BassRhythm, 'alternating'>, readonly number[]>> = {
-  full: [1, 1, 1, 1, 1, 1, 1, 1],
-  half: [1, 0, 1, 0, 1, 0, 1, 0],
-  tresillo: [1, 0, 0, 1, 0, 0, 1, 0],
-  sparse: [1, 0, 0, 0, 1, 0, 0, 0],
-};
 
 /** Build a bass phrase from the current diatonic roots and serialized settings. */
 export function generateBassline(
@@ -38,7 +33,7 @@ export function generateBassline(
 ): BassNoteEvent[] {
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100
-      || !['alternating', 'full', 'half', 'tresillo', 'sparse'].includes(rhythm)) {
+      || !BASS_RHYTHMS.includes(rhythm)) {
     throw new RangeError('Bass generation settings are outside the supported range.');
   }
 
@@ -95,7 +90,7 @@ export function generateBassline(
     for (let noteIndex = 0; noteIndex < durations.length; noteIndex++) {
       const duration = durations[noteIndex];
       const velocity = dynamics.nextInt(velocityMax - velocityMin + 1) + velocityMin;
-      const isActive = rhythm === 'alternating' || RHYTHM_PATTERNS[rhythm][noteIndex % 8] > 0;
+      const isActive = rhythm === 'alternating' || STATIC_RHYTHM_DEFINITIONS[rhythm].mask[noteIndex % 8] > 0;
       let pitch = triads[chordIndex][0];
 
       if (isActive && noteIndex > 0 && duration < QUARTER + 1e-9
@@ -121,7 +116,7 @@ export function generateBassline(
 }
 
 function makePatternDurations(rhythm: Exclude<BassRhythm, 'alternating'>, limit: number): number[] {
-  const pattern = RHYTHM_PATTERNS[rhythm];
+  const pattern = STATIC_RHYTHM_DEFINITIONS[rhythm].mask;
   const stepDuration = BEATS_PER_CHORD / pattern.length;
   const result: number[] = [];
   let remaining = limit;

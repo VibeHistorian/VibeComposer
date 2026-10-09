@@ -1,6 +1,6 @@
 <div class="part-controls">
   @for (control of controls(); track control.key) {
-    <div class="part-control" [title]="control.description ?? ''">
+    <div class="part-control" [class.pattern-control]="control.kind === 'pattern'" [title]="control.description ?? ''">
       @if (control.kind === 'number') {
         <vc-compact-knob [value]="numericValue(control)" [mixed]="values()[control.key] === null"
           [minimum]="minimum(control)" [maximum]="maximum(control)"
@@ -19,6 +19,25 @@
               <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option>
             }
           </select>
+        } @else if (control.kind === 'pattern') {
+          @if (rhythmPreview(); as pattern) {
+            <div class="custom-pattern-grid" role="group" [attr.aria-label]="control.label"
+              (pointermove)="movePainting($event)" (pointerup)="finishPainting($event)"
+              (pointercancel)="cancelPainting()" (lostpointercapture)="cancelPainting()"
+              (keydown.escape)="cancelPainting()">
+              @for (slot of pattern; track $index) {
+                <button type="button" class="custom-pattern-slot" [class.active]="slot > 0"
+                  [attr.data-rhythm-slot]="$index" [attr.aria-label]="'Subdivision ' + ($index + 1)"
+                  [attr.aria-pressed]="slot > 0" (pointerdown)="startPainting($event, $index)"
+                  (click)="slotClick($event, $index)">{{ $index + 1 }}</button>
+              }
+            </div>
+          } @else {
+            <span class="rhythm-preview-mixed">Mixed grid or rhythm settings</span>
+            @if (values()['customPattern'] === null) {
+              <button type="button" class="common-grid-button" (click)="useFullGrid()">Use full grid</button>
+            }
+          }
         } @else {
           <input [id]="heading.controlId" class="part-check" type="checkbox" [attr.aria-label]="control.label" [checked]="values()[control.key] === true"
             [indeterminate]="values()[control.key] === null"

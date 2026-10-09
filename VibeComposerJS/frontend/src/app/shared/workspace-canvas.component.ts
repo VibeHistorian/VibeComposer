@@ -17,7 +17,7 @@ import { EditWorkspaceComponent } from '../features/edit/edit-workspace.componen
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
 import { PartScopeActionsComponent } from './part-scope-actions.component';
-import { resolvePartTrack, settingsValues } from '../core/music/part-settings';
+import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
   readonly color: ArrangedPart;
@@ -113,7 +113,7 @@ export class WorkspaceCanvasComponent {
   readonly partValues = computed(() => {
     const values = this.effectiveContextTracks().map((track) => settingsValues(track.generatorSettings, track.role));
     return Object.fromEntries(Object.keys(values[0] ?? {}).map((key) => [key,
-      values.every((value) => value[key] === values[0][key]) ? values[0][key] : null]));
+      values.every((value) => partValuesEqual(value[key], values[0][key])) ? values[0][key] : null]));
   });
   readonly overriddenKeys = computed(() => {
     const target = this.localPartTarget();
@@ -276,11 +276,11 @@ export class WorkspaceCanvasComponent {
     return section ? shouldGenerateTrackInSection(section, track) : true;
   }
 
-  editPartSettings(scope: PartSettingsScope, change: { key: string; value: string | number | boolean }): void {
+  editPartSettings(scope: PartSettingsScope, change: { key: string; value: PartSettingValue }): void {
     // The emitted scope belongs to this editor instance; never redirect a delayed gesture into a new selection.
     const before = this.project();
     this.projects.updatePartSettings(scope, { [change.key]: change.value });
-    this.editFailure.set(this.project() === before && this.partValues()[change.key] !== change.value
+    this.editFailure.set(this.project() === before && !partValuesEqual(this.partValues()[change.key], change.value)
       ? { scope: JSON.stringify(scope), message: 'This value conflicts with another track or cell setting. Keep each velocity minimum at or below its maximum.' } : null);
   }
 

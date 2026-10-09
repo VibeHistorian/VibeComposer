@@ -1,16 +1,19 @@
 import type { ArrangedPart, ArrangementSection, CommonPartSettings, CompositionTrack, PartSettingsPatch } from '../project/project.model';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
+import { BASS_RHYTHMS, RHYTHM_PATTERNS } from './rhythm-patterns';
+
+export type PartSettingValue = string | number | boolean | readonly number[];
 
 export interface PartControl {
   readonly key: string;
   readonly label: string;
-  readonly kind: 'number' | 'choice' | 'boolean';
+  readonly kind: 'number' | 'choice' | 'boolean' | 'pattern';
   readonly minimum?: number;
   readonly maximum?: number;
   readonly step?: number;
   readonly unit?: string;
   readonly options?: readonly (string | number)[];
-  readonly defaultValue?: string | number | boolean;
+  readonly defaultValue?: PartSettingValue;
   readonly description?: string;
   /** Opt in when a numeric value is too long for the knob's center. */
   readonly showValueBelow?: boolean;
@@ -31,10 +34,10 @@ const pitched: readonly PartControl[] = [{ ...number('transpose', 'Transpose', -
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [],
-  bass: [...fill, choice('rhythm', 'Rhythm', ['alternating', 'full', 'half', 'tresillo', 'sparse']),
+  bass: [...fill, choice('rhythm', 'Rhythm', BASS_RHYTHMS),
     number('noteVariation', 'Chord tone variation', 0, 100), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
-  chords: [...fill, { ...choice('rhythm', 'Rhythm pattern', ['full', 'half', 'tresillo', 'sparse', 'single', 'one-six', 'euclid']),
+  chords: [...fill, { ...choice('rhythm', 'Rhythm pattern', RHYTHM_PATTERNS),
     description: 'Choose a rhythm within each chord. Euclid distributes Pulses across Hits; Fill independently selects which chords play.' },
     { ...number('hitsPerPattern', 'Hits', 1, 32, 8, ''),
       description: 'Grid subdivisions per four-beat chord. Pattern rests mean fewer sounded notes than the Hits value.' },
@@ -44,6 +47,8 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
       description: 'Rotate the rhythm right. Static patterns rotate padded eight-slot repeats before trimming; Euclid rotates the Hits-length grid.' },
     { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
       description: 'Invert notes and rests inside the chord rhythm grid. Fill still determines which chords play.' },
+    { key: 'customPattern', label: 'Custom grid', kind: 'pattern', defaultValue: Object.freeze(Array(32).fill(1)),
+      description: 'Click or drag to paint sounded slots and rests; Enter or Space toggles a slot. Edits follow Shift and Pattern flip. Hidden cells are retained when Hits changes.' },
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 125), ...pitched],
   arpeggio: [...fill, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
     choice('rate', 'Rate', ['eighth', 'sixteenth']), choice('octaves', 'Octaves', [1, 2]),
@@ -52,9 +57,15 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     number('swingPercent', 'Swing', 50, 75), number('noteLengthMultiplier', 'Note length', 25, 200, 100)],
 };
 
-export function settingsValues(settings: PartSettingsPatch, role: ArrangedPart): Readonly<Record<string, string | number | boolean>> {
+export function settingsValues(settings: PartSettingsPatch, role: ArrangedPart): Readonly<Record<string, PartSettingValue>> {
   return Object.fromEntries(PART_CONTROLS[role].map((control) => [control.key,
-    (settings as Record<string, string | number | boolean>)[control.key] ?? control.defaultValue!]));
+    (settings as Record<string, PartSettingValue>)[control.key] ?? control.defaultValue!]));
+}
+
+/** Arrays are complete musical values, compared by content rather than reference. */
+export function partValuesEqual(left: unknown, right: unknown): boolean {
+  return Array.isArray(left) && Array.isArray(right)
+    ? left.length === right.length && left.every((value, index) => value === right[index]) : left === right;
 }
 
 /** Patch equality includes explicit inheritance boundaries and ignores object property order. */
@@ -62,12 +73,12 @@ export function partPatchesEqual(left: PartSettingsPatch | undefined, right: Par
   const leftValues = left as Record<string, unknown> | undefined;
   const rightValues = right as Record<string, unknown> | undefined;
   return Object.keys(leftValues ?? {}).length === Object.keys(rightValues ?? {}).length
-    && Object.entries(leftValues ?? {}).every(([key, value]) => value === rightValues?.[key]);
+    && Object.entries(leftValues ?? {}).every(([key, value]) => partValuesEqual(value, rightValues?.[key]));
 }
 
 export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps = false): PartSettingsPatch | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const result: Record<string, string | number | boolean> = {};
+  const result: Record<string, PartSettingValue> = {};
   for (const [key, field] of Object.entries(value)) {
     const control = PART_CONTROLS[role].find((candidate) => candidate.key === key);
     if (!control) return undefined;
@@ -76,7 +87,9 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
     if (enforceSteps && control.step && ((field as number) - control.minimum!) % control.step !== 0) return undefined;
     if (control.kind === 'choice' && !control.options!.includes(field as string | number)) return undefined;
     if (control.kind === 'boolean' && typeof field !== 'boolean') return undefined;
-    result[key] = field as string | number | boolean;
+    if (control.kind === 'pattern' && (!Array.isArray(field) || field.length !== 32
+      || Array.from(field).some((slot) => slot !== 0 && slot !== 1))) return undefined;
+    result[key] = Array.isArray(field) ? [...field] : field as PartSettingValue;
   }
   return result as PartSettingsPatch;
 }
@@ -100,7 +113,7 @@ export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): Co
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const common = Object.fromEntries(Object.entries(value).filter(([key]) =>
     ['transpose', 'velocityMin', 'velocityMax', 'noteLengthMultiplier', 'chordSpanFill', 'fillFlip',
-      'hitsPerPattern', 'patternShift', 'patternFlip', 'euclideanPulses'].includes(key)));
+      'hitsPerPattern', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern'].includes(key)));
   const decoded = decodePartPatch(role, common);
   return decoded && validVelocityRange(decoded, role) ? decoded : undefined;
 }
