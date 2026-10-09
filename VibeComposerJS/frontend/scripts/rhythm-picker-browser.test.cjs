@@ -39,6 +39,15 @@ test('production Angular controls initialize selects from settings and support r
           return selects.length === 2 && selects.every(select => select.options.length) ? selects : null;
         }, 'initial track instrument and channel');
         const initialSelection = initialMidi.map(select => select.value);
+        const inlineActions = [...document.querySelectorAll('.track-line')].map(line => {
+          const items = [...line.children];
+          const bounds = items.map(item => item.getBoundingClientRect());
+          const row = line.getBoundingClientRect();
+          return { symbols: [...line.querySelectorAll('.track-reroll-actions button')].map(button => button.textContent.trim()),
+            actionsBeforeInstrument: items[1].classList.contains('track-reroll-actions') && items[2].classList.contains('track-instrument'),
+            oneLine: bounds.every(box => Math.abs(box.top + box.height / 2 - (row.top + row.height / 2)) < 1),
+            fits: bounds.every(box => box.left >= row.left && box.right <= row.right + 1) };
+        });
         const readTrack = role => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === role);
         const melodyRow = document.querySelector('.track-group.melody');
         const melodyInstrument = melodyRow.querySelector('.track-instrument');
@@ -87,7 +96,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid button:first-child')]
           .every(button => button.getAttribute('aria-pressed') === 'false'));
         const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        const result = { inlineIdentity, initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
+        const result = { inlineActions, inlineIdentity, initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
           rhythm: project.chords.rhythm, grid: project.chords.customPattern };
         const wheel = (element, deltaY, shiftKey = false) => element.dispatchEvent(
           new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
@@ -387,6 +396,10 @@ test('production Angular controls initialize selects from settings and support r
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.deepEqual(actual.initialSelection, ['33', '1']);
+    assert.equal(actual.inlineActions.length, 5);
+    for (const actions of actual.inlineActions) {
+      assert.deepEqual(actions, { symbols: ['⍟', '↻'], actionsBeforeInstrument: true, oneLine: true, fits: true });
+    }
     assert.deepEqual(actual.inlineIdentity, { program: 0, channel: 5, bassProgram: 33, bassChannel: 1,
       selectionPreserved: true, noInspectorIdentity: true, noG: true, hiddenArrow: true });
     assert.deepEqual(actual.melodySelection, ['73', '4']);

@@ -1,5 +1,5 @@
 /* Workspace frame */
-.workspace-canvas { min-height: 0; margin: 12px 0; flex: 1 1 auto; display: grid; grid-template-columns: clamp(290px, calc(16vw + 50px), 350px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: 16px; }
+.workspace-canvas { min-height: 0; margin: 12px 0; flex: 1 1 auto; display: grid; grid-template-columns: clamp(320px, calc(16vw + 80px), 380px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: 16px; }
 .track-browser, .score-panel, .context-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
 .track-browser, .context-inspector { padding: 15px 13px; }
 .track-browser { height: 100%; max-height: none; display: flex; flex-direction: column; overflow: hidden; align-self: stretch; }
@@ -12,7 +12,7 @@
 .primary-harmony { margin: -3px -2px 13px; padding: 9px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-low); }
 .harmony-heading { margin-bottom: 7px; display: flex; align-items: center; justify-content: space-between; }
 .harmony-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 11px; font-weight: 600; }
-.generate-progression { width: 24px; height: 24px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--accent-hover); cursor: pointer; }
+.generate-progression { width: 26px; height: 26px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--accent-hover); cursor: pointer; }
 .generate-progression:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .progression-list { max-height: 178px; display: grid; gap: 4px; overflow-y: auto; }
 .progression-chord { min-width: 0; display: grid; grid-template-columns: 18px minmax(0, 1fr) 18px; align-items: center; gap: 4px; }
@@ -46,13 +46,16 @@
 /* Track reroll controls */
 .track-policy-header { display: grid; gap: 5px; padding: 6px 3px; border-bottom: 1px solid var(--border-subtle); }
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }
-.track-reroll-actions button { padding: 3px 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); font: 9px var(--font-ui); cursor: pointer; }
-.track-reroll-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 3px; }
-.track-reroll-actions button[aria-pressed="true"] { border-color: var(--text-primary); }
+.track-reroll-actions button { width: 18px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-muted); font: 13px var(--font-ui); cursor: pointer; }
+.track-reroll-actions { display: flex; align-items: center; gap: 2px; }
+.track-reroll-actions button[aria-pressed="true"] { border-color: var(--text-primary); color: var(--text-primary); }
+.track-reroll-actions button:hover:not(:disabled) { border-color: var(--border-strong); background: var(--surface-button-hover); color: var(--text-primary); }
+.track-reroll-actions button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.track-reroll-actions button:disabled { opacity: .5; cursor: default; }
 /* Track rows */
 .track-row-card { min-width: 0; margin-top: 3px; padding: 3px 3px 4px; border: 1px solid transparent; border-radius: var(--radius-tight); }
 .track-row-card.selected { border-color: var(--border-default); background: var(--surface-base); }
-.track-line { min-width: 0; display: grid; grid-template-columns: minmax(30px, .6fr) minmax(0, 1fr) auto auto; align-items: center; column-gap: 4px; }
+.track-line { min-width: 0; display: grid; grid-template-columns: minmax(30px, .4fr) auto minmax(0, 1fr) auto auto; align-items: center; column-gap: 3px; }
 .track-select { min-width: 0; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 10px; }
 .track-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .role-dot { width: 7px; height: 7px; flex: 0 0 auto; display: inline-block; border-radius: 50%; background: var(--role-bass); }
@@ -174,7 +177,7 @@
   .part-settings-heading > vc-part-scope-actions { order: 1; flex: 1 1 100%; }
 }
 @media (max-width: 1050px) {
-  .workspace-canvas { min-height: 0; grid-template-columns: minmax(260px, 310px) minmax(0, 1fr); }
+  .workspace-canvas { min-height: 0; grid-template-columns: minmax(290px, 340px) minmax(0, 1fr); }
   .song-canvas { height: auto; grid-template-rows: minmax(370px, auto) auto minmax(300px, 1fr); }
   .context-inspector { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(180px, .7fr) 1fr; gap: 12px; }
   .context-inspector { max-height: none; }

@@ -38,7 +38,7 @@
             <button type="button" class="collapse-group-button" [disabled]="editing()" [attr.aria-expanded]="!isGroupCollapsed(group.role)"
               [attr.aria-label]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
               [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
-              (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '⌄' }}</button>
+              (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '▵' }}</button>
           </header>
           <div class="track-policy-header">
             <vc-track-generation-policy [role]="group.role" [policy]="policyFor(group.role)" [expanded]="!isGroupCollapsed(group.role)" [disabled]="editing()" [capacity]="64 - project().tracks.length" (policyChanged)="updateRolePolicy(group.role, $event)" (generationRequested)="generateRole(group.role, $event)" />
@@ -55,6 +55,14 @@
                     [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                     <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                   </button>
+                  <div class="track-reroll-actions" (click)="$event.stopPropagation()">
+                    <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
+                      [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
+                      [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
+                      (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">⍟</button>
+                    <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
+                      (click)="rerollRole(track.role, track.id)">↻</button>
+                  </div>
                   @if (track.role === 'drums') {
                     <select class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
                       [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
@@ -97,13 +105,7 @@
                       (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
                   </div>
                 </div>
-                  <div class="track-reroll-actions">
-                    <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
-                      [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
-                      (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">{{ track.rerollLocked ? 'Locked' : 'Lock' }}</button>
-                    <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name"
-                      (click)="rerollRole(track.role, track.id)">↻ Reroll</button>
-                  </div>
+
               </article>
             }
           }
@@ -132,7 +134,7 @@
           <div class="part-heading-context">
           <button type="button" class="part-panel-toggle" [attr.aria-expanded]="partPanelExpanded()"
             aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
-            {{ partPanelExpanded() ? '⌄' : '›' }} Part settings
+            {{ partPanelExpanded() ? '▵' : '›' }} Part settings
           </button>
           @if (partScope()) { <i class="role-dot" [class]="partRole()"></i> }
           <span class="part-context-label">{{ contextLabel() }}</span>
