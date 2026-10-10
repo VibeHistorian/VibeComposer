@@ -221,6 +221,12 @@ Part settings and the Inspector share Core, Rhythm, Pitch, Shape, Dynamics, Stru
 
 P6 inline identity follow-up: each expanded Tracks group contains compact instrument/percussion and MIDI-channel selectors on each track line. They edit that track by ID without changing the active settings selection. Native arrows are hidden; borders, input surfaces, hover and keyboard focus communicate editability. Percussion remains on channel 10. The duplicate Inspector instrument/channel section and row G toggle are removed.
 
+## P6e / P7b automatic triggers and global copy (2026-10-10)
+
+Expanded Melody/Chords/Arpeggio/Drums groups now expose **On Compose**. Melody also has **On Regenerate**, **Automatic targets** and **Automatic block patterns**; these are role-wide event rules, separate from explicit reroll policies and section part settings. Transport's ✦ Compose and ↻ Regenerate call `ProjectService.generateComposition()`. Setting edits, live reload and playback do not run them. Compose retains the current track totals and displayed seed/progression. See contextual P6e for defaults, Java trigger correspondence and the fixed supported target inputs.
+
+The central local workflow header now exposes **Copy to Globals**, backed by `ProjectService.copyPartSettingsToGlobals()`. It promotes each selected current track's effective values, preserving mixed cell values and individual exceptions independently. All section patches remain explicit; this action updates global musical bases only and validates every effective section range atomically. It supersedes earlier deferred Apply to Global notes. At narrow widths Tracks uses one column, and the wrapped transport has reserved document space.
+
 ## P6 count interaction revision (2026-10-10)
 
 Click the boxed total beside the role name to edit it, including while collapsed. This supersedes historical Generate N placement above. The effective total is max(locked track count, requested total). Less removes unlocked tracks starting with the highest number; more appends newly generated tracks; same does nothing. Use one undo entry, clean up removed tracks' section references, preserve surviving tracks and locks, allow zero, and respect the 64-track project capacity. New generated tracks have numbers above surviving members.

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked, signal } from '@angular/core';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
@@ -19,6 +19,15 @@ export class TransportDockComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly keys = KEYS;
+  private readonly generationFeedback = signal<{ project: unknown; message: string } | null>(null);
+  readonly generationMessage = computed(() => this.generationFeedback()?.project === this.project() ? this.generationFeedback()?.message : null);
+
+  generate(event: 'compose' | 'regenerate'): void {
+    const result = this.projects.generateComposition(event);
+    this.generationFeedback.set({ project: this.project(), message: result === 'invalid'
+      ? 'No settings changed. Generation conflicts with local settings.'
+      : result === 'unchanged' ? 'Settings already match the generation rules.' : `${event === 'compose' ? 'Compose' : 'Regenerate'} settings applied.` });
+  }
   readonly trackIds = computed(() => this.project().tracks.map(track => track.id));
   private readonly liveReloadEffect = effect(() => {
     const project = this.project();

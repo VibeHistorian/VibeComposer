@@ -174,6 +174,7 @@ export interface InstrumentGenerationPolicy {
 
 /** Rules for choosing stored part values, separate from phrase generation inputs. */
 export interface ArpeggioGenerationPolicy {
+  readonly onCompose?: boolean;
   readonly fixedHits: number;
   readonly randomHits: boolean;
   readonly sameHits: boolean;
@@ -195,6 +196,7 @@ export interface ArpeggioGenerationPolicy {
 }
 
 export interface ChordGenerationPolicy {
+  readonly onCompose?: boolean;
   readonly fills: boolean;
   readonly patterns: boolean;
   readonly transpose: boolean;
@@ -209,6 +211,7 @@ export interface ChordGenerationPolicy {
 }
 
 export interface DrumGenerationPolicy {
+  readonly onCompose?: boolean;
   readonly patterns: boolean;
   readonly fills: boolean;
   readonly maxSwing: number;
@@ -218,6 +221,10 @@ export interface DrumGenerationPolicy {
 }
 
 export interface MelodyGenerationPolicy {
+  readonly onCompose?: boolean;
+  readonly onRegenerate?: boolean;
+  readonly targetsOnCompose?: boolean;
+  readonly patternsOnCompose?: boolean;
   readonly rerollSeeds: boolean;
   readonly sameSeed: boolean;
   readonly patterns: boolean;

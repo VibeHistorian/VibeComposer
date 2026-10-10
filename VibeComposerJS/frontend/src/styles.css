@@ -248,5 +248,13 @@ button, a, input, select { font: inherit; }
 }
 
 @media (max-width: 620px) {
-  .app-frame { padding-bottom: 108px; }
+  .app-frame { padding-bottom: 140px; }
+}
+
+/* Room for the wrapped transport at tablet widths */
+@media (min-width: 621px) and (max-width: 1050px) {
+  .app-frame { padding-bottom: 130px; }
+}
+@media (max-width: 480px) {
+  .app-frame { padding-bottom: 160px; }
 }

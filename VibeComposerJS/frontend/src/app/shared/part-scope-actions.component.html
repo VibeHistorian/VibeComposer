@@ -24,6 +24,10 @@
     title="Copy all effective musical settings for the current tracks to the other header-selected sections, replacing those tracks’ overrides. Preserve mixed values, presence, instruments and manual notes; exclude the source section.">
     Copy All to {{ destinationCount() > 1 ? 'Sections' : 'Section' }} ({{ destinationCount() }})
   </button>
+  <button type="button" [disabled]="!canCopyGlobals()" (click)="globalsRequested.emit()"
+    title="Copy all effective musical settings to each current track’s global settings, including individual track exceptions. Preserve mixed values per track and retain all section overrides, instruments, presence and manual notes.">
+    Copy to Globals
+  </button>
   @if (message(); as feedback) {
     <span role="status">
     <button type="button" class="workflow-message" [title]="feedback + ' Click to dismiss.'"

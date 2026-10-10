@@ -348,11 +348,17 @@ export class WorkspaceCanvasComponent {
     this.projects.randomizeArrangementPresence();
   }
 
-  runPartWorkflow(action: 'freeze' | 'overrides' | 'effective' | 'reset-cell'): void {
+  readonly canCopyPartGlobals = computed(() => {
+    const scope = this.localPartTarget();
+    return !!scope && this.projects.partSettingsGlobalsWouldChange(scope);
+  });
+
+  runPartWorkflow(action: 'freeze' | 'overrides' | 'effective' | 'reset-cell' | 'globals'): void {
     const scope = this.localPartTarget();
     if (!scope || !this.partGenerationAvailable() || !this.contextTracks().length) return;
     const destinations = this.partDestinations().map((section) => section.id);
     const result = action === 'freeze' ? this.projects.freezePartSettings(scope)
+      : action === 'globals' ? this.projects.copyPartSettingsToGlobals(scope)
       : action === 'reset-cell' ? scope.kind === 'section-role' ? this.projects.resetCellPartSettings(scope) : 'invalid'
       : this.projects.applyPartSettingsToSections(scope, destinations, action);
     const message = result === 'invalid'
@@ -360,6 +366,7 @@ export class WorkspaceCanvasComponent {
       : result === 'unchanged' ? 'Settings already match; no changes were needed.'
       : action === 'freeze' ? 'Effective settings frozen for the current track(s) in this section.'
       : action === 'reset-cell' ? 'Cell and individual track overrides reset to global inheritance.'
+      : action === 'globals' ? 'Effective values copied to each current track’s global settings. Section overrides retained.'
       : `${action === 'overrides' ? 'Overrides' : 'Effective values'} applied to ${destinations.length} selected section(s).`;
     this.editFailure.set(null);
     this.workflowFeedback.set(result === 'unchanged' ? null : {

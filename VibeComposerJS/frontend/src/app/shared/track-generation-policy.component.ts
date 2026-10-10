@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../core/project/project.model';
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../core/music/instrument-generation';
-import { TRACK_POLICY_CONTROLS, type PolicyControl } from '../core/music/track-generation';
+import { TRACK_POLICY_CONTROLS, automaticPolicyDefault, type PolicyControl } from '../core/music/track-generation';
 
 @Component({
   selector: 'vc-track-generation-policy',
@@ -12,7 +12,9 @@ import { TRACK_POLICY_CONTROLS, type PolicyControl } from '../core/music/track-g
 export class TrackGenerationPolicyComponent {
   readonly role = input<ArrangedPart>('arpeggio');
   readonly policy = input.required<TrackGenerationPolicy>();
-  readonly values = computed(() => this.policy() as unknown as Record<string, string | number | boolean>);
+  readonly values = computed(() => ({ onCompose: false, onRegenerate: false,
+    targetsOnCompose: automaticPolicyDefault('targetsOnCompose'), patternsOnCompose: automaticPolicyDefault('patternsOnCompose'),
+    ...this.policy() }) as unknown as Record<string, string | number | boolean>);
   readonly expanded = input(false);
   readonly disabled = input(false);
   readonly policyChanged = output<TrackGenerationPolicyPatch>();

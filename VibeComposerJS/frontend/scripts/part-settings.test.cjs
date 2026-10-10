@@ -5,6 +5,158 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('automatic events are atomic, replayable and preserve locks, local settings and manual notes', () => {
+  const { service, load, stored, midi } = fixture();
+  service.updateSettings({ seed: '9007199254740993' });
+  service.addTrack('melody');
+  service.addTrack('drums');
+  service.setTrackRerollLock('track-melody-2', true);
+  service.updateTrackPhrase('track-melody-1', [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: 'track-arpeggio-1' };
+  service.freezePartSettings(scope);
+  for (const role of ['melody', 'chords', 'arpeggio', 'drums']) service.updateTrackGenerationPolicy(role, { onCompose: true });
+  const before = service.exportProjectJson(), arrangement = service.project().arrangement;
+  const locked = service.project().tracks.find(track => track.id === 'track-melody-2');
+  assert.equal(service.generateComposition('compose'), 'changed');
+  const after = service.exportProjectJson();
+  for (const role of ['melody','chords','arpeggio','drums']) assert.equal(service.project().trackRerollCounts[role], 1);
+  assert.strictEqual(service.project().arrangement, arrangement);
+  assert.strictEqual(service.project().tracks.find(track => track.id === locked.id), locked);
+  assert.deepEqual(service.project().tracks[0].editedPhrase, [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  assert.equal(new Midi(midi.generateCompositionMidi(service.project())).tracks[0].notes[0].midi, 72);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.undo(); service.generateComposition('compose'); assert.equal(service.exportProjectJson(), after);
+  assert.deepEqual(projectData(stored.get('vibecomposer.project.v12')), projectData(after));
+  assert.equal(service.importProjectJson(after), true);
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(after));
+});
+
+test('Regenerate changes only enabled Melody seeds, patterns and targets, respecting shared seeds', () => {
+  const { service } = fixture();
+  service.addTrack('melody'); service.addTrack('melody');
+  service.setTrackRerollLock('track-melody-3', true);
+  service.updateTrackGenerationPolicy('melody', { onRegenerate: true, sameSeed: true });
+  const before = service.project(), locked = before.tracks.find(track => track.id === 'track-melody-3');
+  assert.equal(service.generateComposition('regenerate'), 'changed');
+  const next = service.project(), members = next.tracks.filter(track => track.role === 'melody');
+  assert.equal(members[0].generatorSettings.patternSeed, members[1].generatorSettings.patternSeed);
+  assert.strictEqual(members[2], locked);
+  for (const track of next.tracks.filter(track => track.role !== 'melody')) assert.strictEqual(track, before.tracks.find(item => item.id === track.id));
+  for (const track of members.slice(0, 2)) {
+    const old = before.tracks.find(item => item.id === track.id).generatorSettings;
+    for (const [key, value] of Object.entries(old)) {
+      if (!['patternSeed', 'melodyPatternOffsets', 'chordNoteChoices'].includes(key)) assert.deepEqual(track.generatorSettings[key], value);
+    }
+  }
+  service.updateTrackGenerationPolicy('melody', { onRegenerate: false });
+  const json = service.exportProjectJson();
+  assert.equal(service.generateComposition('regenerate'), 'unchanged'); assert.equal(service.exportProjectJson(), json);
+  service.updateTrackGenerationPolicy('melody', { onRegenerate: true, rerollSeeds: false, targetsOnCompose: false, patternsOnCompose: false });
+  assert.equal(service.generateComposition('regenerate'), 'unchanged');
+});
+
+test('automatic batch failures and no-ops preserve state, counters and redo', () => {
+  const { service } = fixture();
+  service.updateTrackGenerationPolicy('arpeggio', { onCompose: true, velocityMin: 65 });
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: 'track-arpeggio-1' };
+  service.updateTrackGeneratorSettings('track-arpeggio-1', { velocityMin: 50 });
+  service.updatePartSettings(scope, { velocityMax: 60 });
+  service.updateTrackGenerationPolicy('chords', { onCompose: true });
+  const before = service.exportProjectJson();
+  service.updateSettings({ tempoBpm: 130 }); service.undo();
+  assert.equal(service.generateComposition('compose'), 'invalid');
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+  assert.equal(service.generateComposition('regenerate'), 'unchanged'); assert.equal(service.canRedo(), true);
+  assert.equal(service.generateComposition('bad'), 'invalid');
+});
+
+test('automatic policy import accepts omission and rejects invalid or unknown fields', () => {
+  const { service } = fixture();
+  for (const role of ['melody', 'chords', 'arpeggio', 'drums']) {
+    assert.equal(service.updateTrackGenerationPolicy(role, { onCompose: true }), 'changed');
+    const data = JSON.parse(service.exportProjectJson());
+    data.trackGenerationPolicies[role].onCompose = 'true';
+    assert.equal(service.importProjectJson(JSON.stringify(data)), false);
+  }
+  assert.equal(service.updateTrackGenerationPolicy('bass', { onCompose: true }), 'invalid');
+  assert.equal(service.updateTrackGenerationPolicy('drums', { onRegenerate: true }), 'invalid');
+});
+
+test('copy to globals preserves mixed cell members, track exceptions and local ownership with one history entry', () => {
+  const { service, settings, load } = fixture();
+  service.addTrack('bass');
+  const sectionId = service.project().arrangement[0].id;
+  const cell = { kind: 'section-role', sectionId, role: 'bass' };
+  service.updatePartSettings(cell, { transpose: -12 });
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: 'track-bass-2' }, { transpose: 12, octaveInterval: true });
+  service.updateTrackPhrase('track-bass-1', [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 80 }]);
+  service.setTrackRerollLock('track-bass-2', true);
+  const before = service.exportProjectJson(), previous = service.project();
+  assert.equal(service.partSettingsGlobalsWouldChange(cell), true);
+  assert.equal(service.copyPartSettingsToGlobals(cell), 'changed');
+  const next = service.project(), after = service.exportProjectJson();
+  assert.strictEqual(next.arrangement, previous.arrangement);
+  for (const track of previous.tracks) {
+    const result = next.tracks.find(item => item.id === track.id);
+    if (track.role !== 'bass') assert.strictEqual(result, track);
+    else {
+      assert.deepEqual(settings.settingsValues(result.generatorSettings, 'bass'), settings.settingsValues(settings.resolvePartTrack(track, previous.arrangement[0]).generatorSettings, 'bass'));
+      for (const key of ['mix', 'editedPhrase', 'rerollLocked', 'midiChannel']) assert.deepEqual(result[key], track[key]);
+    }
+  }
+  assert.equal(next.bass.transpose, -12);
+  assert.equal(next.tracks.find(track => track.id === 'track-bass-2').generatorSettings.transpose, 12);
+  assert.equal(service.partSettingsGlobalsWouldChange(cell), false);
+  assert.equal(service.copyPartSettingsToGlobals(cell), 'unchanged');
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(after));
+});
+
+test('copy to globals rejects cross-section velocity conflicts atomically and stale targets safely', () => {
+  const { service } = fixture();
+  const [source, destination] = service.project().arrangement;
+  const scope = { kind: 'section-track', sectionId: source.id, trackId: 'track-bass-1' };
+  service.updatePartSettings(scope, { velocityMin: 80, velocityMax: 100 });
+  service.updatePartSettings({ ...scope, sectionId: destination.id }, { velocityMax: 75 });
+  const before = service.exportProjectJson();
+  service.updateSettings({ tempoBpm: 131 }); service.undo();
+  assert.equal(service.copyPartSettingsToGlobals(scope), 'invalid');
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+  assert.equal(service.copyPartSettingsToGlobals({ ...scope, trackId: 'deleted' }), 'invalid');
+  assert.equal(service.copyPartSettingsToGlobals({ ...scope, sectionId: 'deleted' }), 'invalid');
+});
+
+test('global copy ignores inherited defaults and a single-track copy leaves other mixed members intact', () => {
+  const { service } = fixture();
+  const sectionId = service.project().arrangement[0].id;
+  for (const role of ['melody','bass','chords','arpeggio','drums']) {
+    const cell = { kind: 'section-role', sectionId, role };
+    assert.equal(service.partSettingsGlobalsWouldChange(cell), false);
+    assert.equal(service.copyPartSettingsToGlobals(cell), 'unchanged');
+  }
+  service.addTrack('bass');
+  const scope = { kind: 'section-track', sectionId, trackId: 'track-bass-2' };
+  service.updatePartSettings({ kind: 'section-role', sectionId, role: 'bass' }, { noteVariation: 35 });
+  service.updatePartSettings(scope, { noteVariation: 45 });
+  const before = service.project();
+  assert.equal(service.copyPartSettingsToGlobals(scope), 'changed');
+  assert.strictEqual(service.project().tracks.find(track => track.id === 'track-bass-1'), before.tracks.find(track => track.id === 'track-bass-1'));
+  assert.strictEqual(service.project().bass, before.bass);
+  assert.equal(service.project().tracks.find(track => track.id === scope.trackId).generatorSettings.noteVariation, 45);
+});
+
+test('Melody automatic targets match production Java for the supported diatonic target path', () => {
+  const { load } = fixture();
+  const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
+  const oracle = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/melody-targets.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(oracle.length, 128);
+  for (const sample of oracle) assert.deepEqual(chooseMelodyTargets(sample.seed, sample.progression), sample.targets);
+});
+
 test('mute/solo controls clear the opposite state across track and legacy mix updates', () => {
   const { service } = fixture();
   const track = service.project().tracks[0];

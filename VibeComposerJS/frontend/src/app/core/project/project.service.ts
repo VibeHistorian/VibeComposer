@@ -17,7 +17,8 @@ import { copyPartSettings, decodeCommonPartSettings, decodePartPatch, resolvePar
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 import { isDrumPitch } from '../music/drum-instruments';
 import { JavaRandom } from '../music/java-random';
-import { DEFAULT_TRACK_POLICIES, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
+import { chooseMelodyTargets } from '../music/melody-targets';
+import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
@@ -175,26 +176,73 @@ export class ProjectService {
 
   rerollRoleTracks(role: ArrangedPart, trackId?: string): PartWorkflowResult {
     if (!ARRANGED_PARTS.includes(role)) return 'invalid';
-    const current = this.state();
+    const candidate = this.buildRoleReroll(this.state(), role, trackId);
+    return candidate ? candidate === this.state() ? 'unchanged' : this.commitPartWorkflow(candidate) : 'invalid';
+  }
+
+  private buildRoleReroll(current: CompositionProject, role: ArrangedPart, trackId?: string): CompositionProject | undefined {
     const roleTracks = current.tracks.filter(track => track.role === role);
     const sources = roleTracks.filter(track => !track.rerollLocked && (trackId === undefined || track.id === trackId));
-    if (!sources.length) return 'unchanged';
+    if (!sources.length) return current;
     const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
     const count = current.trackRerollCounts?.[role] ?? 0;
-    if (count >= 2147483647) return 'invalid';
+    if (count >= 2147483647) return undefined;
     const seed = this.trackRerollSeed(current, role, count);
     const drumContext = { totalTracks: roleTracks.length,
       remaining: roleTracks.filter(track => !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) };
     const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, false, drumContext);
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1), drumContext);
-    if (sources.every((track, index) => track === instrumentTracks[index] && partPatchesEqual(track.generatorSettings, settings[index]))) return 'unchanged';
+    if (sources.every((track, index) => track === instrumentTracks[index] && partPatchesEqual(track.generatorSettings, settings[index]))) return current;
     const replacements = new Map(instrumentTracks.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] } as CompositionTrack]));
     const primary = replacements.get('track-' + role + '-1');
     const next = { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
       [role]: primary?.generatorSettings ?? current[role],
       mix: primary && role !== 'drums' ? { ...current.mix, [role]: primary.mix } : current.mix,
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
-    return this.commitPartWorkflow(next);
+    return next;
+  }
+
+  /** User-triggered events only. Live reload, playback and ordinary edits never run policies. */
+  generateComposition(event: 'compose' | 'regenerate'): PartWorkflowResult {
+    if (event !== 'compose' && event !== 'regenerate') return 'invalid';
+    const current = this.state();
+    let next = current;
+    if (event === 'compose') {
+      for (const role of ['melody', 'chords', 'arpeggio', 'drums'] as const) {
+        if (!(current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose) continue;
+        const candidate = this.buildRoleReroll(next, role);
+        if (!candidate) return 'invalid';
+        next = candidate;
+      }
+    }
+    const policy = current.trackGenerationPolicies?.melody ?? DEFAULT_TRACK_POLICIES.melody;
+    if (event === 'compose' || policy.onRegenerate) {
+      const count = current.trackRerollCounts?.melody ?? 0;
+      const sources = next.tracks.filter(track => track.role === 'melody' && !track.rerollLocked);
+      if (sources.length && ((policy.patternsOnCompose ?? true) || (policy.targetsOnCompose ?? true)
+        || event === 'regenerate' && policy.rerollSeeds)) {
+        if (count >= 2147483647) return 'invalid';
+        const seed = this.trackRerollSeed(next, 'melody', count);
+        const random = new JavaRandom(seed);
+        const sharedSeed = random.nextInt(); // randomizeMelodySeeds draws once even for independent seeds.
+        let changed = false;
+        const tracks = next.tracks.map(track => {
+          if (track.role !== 'melody' || track.rerollLocked) return track;
+          const settings = { ...track.generatorSettings };
+          if (event === 'regenerate' && policy.rerollSeeds) settings.patternSeed = policy.sameSeed ? sharedSeed : random.nextInt();
+          const order = next.tracks.filter(item => item.role === 'melody').indexOf(track) + 1;
+          const patternSeed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(next.seed)))) + order) | 0;
+          if (policy.patternsOnCompose ?? true) settings.melodyPatternOffsets = chooseMelodyPattern(patternSeed);
+          if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression);
+          if (partPatchesEqual(track.generatorSettings, settings)) return track;
+          changed = true;
+          return { ...track, generatorSettings: settings };
+        });
+        if (changed) next = { ...next, tracks, melody: tracks.find(track => track.id === 'track-melody-1')?.generatorSettings as MelodySettings ?? next.melody,
+          trackRerollCounts: { ...next.trackRerollCounts, melody: count + 1 } };
+      }
+    }
+    return next === current ? 'unchanged' : this.commitPartWorkflow(next);
   }
 
   updatePartSettings(scope: PartSettingsScope, patch: PartSettingsPatch): void {
@@ -254,6 +302,33 @@ export class ProjectService {
   /** Snapshot each current member independently; mixed cells never pick a representative track. */
   freezePartSettings(scope: LocalPartSettingsScope): PartWorkflowResult {
     return this.copyLocalPartSettings(scope, [scope.sectionId], 'effective', true);
+  }
+
+  /** Promote each member's effective musical values independently, including track exceptions. */
+  copyPartSettingsToGlobals(scope: LocalPartSettingsScope): PartWorkflowResult {
+    const candidate = this.buildPartSettingsGlobals(scope);
+    return candidate ? candidate === this.state() ? 'unchanged' : this.commitPartWorkflow(candidate) : 'invalid';
+  }
+
+  partSettingsGlobalsWouldChange(scope: LocalPartSettingsScope): boolean {
+    const candidate = this.buildPartSettingsGlobals(scope);
+    return !!candidate && candidate !== this.state();
+  }
+
+  private buildPartSettingsGlobals(scope: LocalPartSettingsScope): CompositionProject | undefined {
+    const current = this.state(), section = current.arrangement.find(item => item.id === scope.sectionId);
+    const members = current.tracks.filter(track => scope.kind === 'section-role' ? track.role === scope.role : track.id === scope.trackId);
+    if (!section || !members.length) return undefined;
+    const replacements = new Map(members.map(track => {
+      const values = settingsValues(resolvePartTrack(track, section).generatorSettings, track.role);
+      if (partPatchesEqual(settingsValues(track.generatorSettings, track.role), values)) return [track.id, track] as const;
+      const settings = copyPartSettings({ ...track.generatorSettings, ...values });
+      return [track.id, partPatchesEqual(track.generatorSettings, settings) ? track : { ...track, generatorSettings: settings } as CompositionTrack];
+    }));
+    if (members.every(track => replacements.get(track.id) === track)) return current;
+    const role = members[0].role, primary = replacements.get(`track-${role}-1`);
+    return { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
+      [role]: primary?.generatorSettings ?? current[role] };
   }
 
   /** Merge only the chosen musical layer, or snapshot effective values into each destination track. */

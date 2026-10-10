@@ -148,6 +148,7 @@
                 [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
                 [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
                 [canCopyOverrides]="partCopyAvailability().overrides" [canCopyEffective]="partCopyAvailability().effective"
+                [canCopyGlobals]="canCopyPartGlobals()" (globalsRequested)="runPartWorkflow('globals')"
                 (feedbackDismissed)="dismissPartWorkflowFeedback()"
                 (inheritRequested)="resetPartSettings(target)" (freezeRequested)="runPartWorkflow('freeze')"
                 (resetCellRequested)="runPartWorkflow('reset-cell')" (applyRequested)="runPartWorkflow($event)" />

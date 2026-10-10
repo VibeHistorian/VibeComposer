@@ -14,10 +14,12 @@ export class PartScopeActionsComponent {
   readonly destinationCount = input(0);
   readonly canCopyOverrides = input(false);
   readonly canCopyEffective = input(false);
+  readonly canCopyGlobals = input(false);
   readonly message = input<string | null>(null);
   readonly freezeRequested = output<void>();
   readonly inheritRequested = output<void>();
   readonly resetCellRequested = output<void>();
   readonly applyRequested = output<'overrides' | 'effective'>();
+  readonly globalsRequested = output<void>();
   readonly feedbackDismissed = output<void>();
 }

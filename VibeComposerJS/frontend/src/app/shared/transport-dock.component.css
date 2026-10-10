@@ -31,6 +31,10 @@
 .playback-error { position: absolute; right: 12px; bottom: calc(100% + 6px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); font-size: 10px; }
 
 /* Compact dock layout */
+@media (max-width: 1050px) {
+  .transport-dock { grid-template-columns: minmax(80px, 1fr) auto minmax(120px, 1fr); }
+  .transport-globals { grid-column: 1 / -1; }
+}
 @media (max-width: 620px) {
   .transport-dock { bottom: 8px; width: calc(100vw - 20px); min-height: 100px; padding: 8px 10px; grid-template-columns: minmax(60px, 1fr) auto minmax(78px, 1.2fr); grid-template-rows: auto auto; gap: 7px 9px; }
   .transport-project { gap: 7px; }
@@ -43,4 +47,13 @@
   .transport-globals { grid-column: 1 / -1; grid-row: 2; }
   .transport-globals select, .transport-globals input { height: 24px; font-size: 10px; }
   .position-line { font-size: 10px; }
+}
+
+/* Generation feedback */
+.generation-message { position: absolute; left: 12px; bottom: calc(100% + 6px); max-width: calc(100% - 24px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-button); background: var(--surface-base); color: var(--text-primary); font-size: 10px; }
+.transport-button:disabled { opacity: .35; cursor: default; }
+@media (max-width: 480px) {
+  .transport-dock { grid-template-columns: minmax(0, 1fr) auto; }
+  .transport-progress { grid-column: 1 / -1; }
+  .transport-globals { grid-row: auto; }
 }

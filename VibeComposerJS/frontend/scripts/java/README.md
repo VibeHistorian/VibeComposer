@@ -7,6 +7,13 @@ P6b adds `RolePolicyFixture.java` / `../fixtures/role-policy.java.json`: 64 prod
 
 # Java pattern fixtures
 
+P6e adds `MelodyTargetFixture.java` / `../fixtures/melody-targets.java.json`: 128 production `MelodyTargetUtils.generateNoteTargetOffsets` outputs across 32 int seeds and four diatonic progressions. The supported target path fixes mode 2, variation 3, ASC and randomized directions. Compile the current `MidiUtils`, `MelodyUtils` and `MelodyTargetUtils` alongside the fixture so stale target classes do not become the oracle. This is helper parity, not complete advanced Melody phrase parity.
+
+```powershell
+& 'C:/Java/jdk-24.0.2/bin/javac.exe' -encoding UTF-8 -cp 'midimasterpiece/target/classes;midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar' -d VibeComposerJS/frontend/.angular/melody-target-fixtures midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/MidiUtils.java midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/generation/MelodyUtils.java midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/generation/MelodyTargetUtils.java VibeComposerJS/frontend/scripts/java/MelodyTargetFixture.java
+& 'C:/Java/jdk-24.0.2/bin/java.exe' '-Djava.awt.headless=true' -cp 'VibeComposerJS/frontend/.angular/melody-target-fixtures;midimasterpiece/target/classes;midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar' org.vibehistorian.vibecomposer.generation.MelodyTargetFixture | Set-Content -Encoding utf8 VibeComposerJS/frontend/scripts/fixtures/melody-targets.java.json
+```
+
 P6a adds `ArpeggioPolicyFixture.java` and `../fixtures/arpeggio-policy.java.json`: **100 production `ChordSpanFill.getWeighted` outputs** and **256 hit-choice draws** across four exact long seeds, using production `OMNI.getRandomFromArray` for powers [2,4,4,8,8,8,8] and the audited ArpGUI 2–8/5-redraw/7→8 branch for unrestricted hits. The latter injects a deterministic Random in place of Java GUI's unseeded Random. This is policy-helper/branch evidence, not complete GUI-reroll or phrase parity. TS rerolls use a separately documented deterministic project seed/counter stream; unsupported MELODY1, later-panel weighting, pattern growth/pause baking and pitch-direction rerolls are excluded.
 
 ```powershell

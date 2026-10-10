@@ -23,6 +23,7 @@ export interface PolicyControl {
   readonly advanced?: boolean;
 }
 export const ARPEGGIO_POLICY_CONTROLS: readonly PolicyControl[] = [
+  { key: 'onCompose', label: 'On Compose' },
   { key: 'fixedHits', label: 'Arp hits', minimum: 1, maximum: 32 },
   { key: 'randomHits', label: 'Random hits' }, { key: 'sameHits', label: 'One hit count' },
   { key: 'powerOfTwo', label: 'Limit 2ⁿ' }, { key: 'fills', label: 'Fills' }, { key: 'patterns', label: 'Patterns' },
@@ -53,27 +54,37 @@ export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly Polic
   arpeggio: ARPEGGIO_POLICY_CONTROLS,
   bass: [],
   chords: [
+    { key: 'onCompose', label: 'On Compose' },
     { key: 'varyLength', label: 'Vary length' }, { key: 'fills', label: 'Fills' }, { key: 'patterns', label: 'Patterns' },
     { key: 'transpose', label: 'Transpose' }, { key: 'delay', label: 'Delay', advanced: true },
     ...ARPEGGIO_POLICY_CONTROLS.filter(control => ['shiftChance', 'voicesMode', 'voices', 'voicesChance', 'velocityMin', 'velocityMax'].includes(control.key)),
   ],
   drums: [
+    { key: 'onCompose', label: 'On Compose' },
     { key: 'patterns', label: 'Patterns' }, { key: 'fills', label: 'Fills' },
     { key: 'maxSwing', label: 'Max swing ±', minimum: 0, maximum: 50 },
     { key: 'randomOffset', label: 'Random offset' },
     { key: 'hitsMultiplier', label: 'On reroll hits ×', options: ['1', '1/2', '3/4', '3/2', '2'] },
     { key: 'shiftChance', label: 'Shift chance %', minimum: 0, maximum: 100, advanced: true },
   ],
-  melody: [{ key: 'rerollSeeds', label: 'Reroll seeds' }, { key: 'sameSeed', label: 'Same seed' },
+  melody: [{ key: 'onCompose', label: 'On Compose' }, { key: 'onRegenerate', label: 'On Regenerate' },
+    { key: 'targetsOnCompose', label: 'Automatic targets' }, { key: 'patternsOnCompose', label: 'Automatic block patterns' },
+    { key: 'rerollSeeds', label: 'Reroll seeds' }, { key: 'sameSeed', label: 'Same seed' },
     { key: 'patterns', label: 'Block patterns' }],
 };
+
+const AUTOMATIC_POLICY_KEYS = ['onCompose', 'onRegenerate', 'targetsOnCompose', 'patternsOnCompose'];
+export function automaticPolicyDefault(key: string): boolean {
+  return key === 'targetsOnCompose' || key === 'patternsOnCompose';
+}
 
 export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, value: unknown): TrackGenerationPolicies[R] | undefined {
   if (!ARRANGED_PARTS.includes(role) || !value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const fields = value as Record<string, unknown>, controls = TRACK_POLICY_CONTROLS[role];
-  if (Object.keys(fields).length !== controls.length) return undefined;
+  if (Object.keys(fields).some(key => !controls.some(control => control.key === key))) return undefined;
   for (const control of controls) {
     const field = fields[control.key];
+    if (field === undefined && AUTOMATIC_POLICY_KEYS.includes(control.key)) continue;
     if (control.options ? !control.options.includes(field as string)
       : control.minimum !== undefined ? !Number.isInteger(field) || (field as number) < control.minimum || (field as number) > control.maximum!
         : typeof field !== 'boolean') return undefined;
@@ -86,9 +97,10 @@ export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, val
 export function decodeArpeggioPolicy(value: unknown): ArpeggioGenerationPolicy | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const fields = value as Record<string, unknown>;
-  if (Object.keys(fields).length !== ARPEGGIO_POLICY_CONTROLS.length) return undefined;
+  if (Object.keys(fields).some(key => !ARPEGGIO_POLICY_CONTROLS.some(control => control.key === key))) return undefined;
   for (const control of ARPEGGIO_POLICY_CONTROLS) {
     const field = fields[control.key];
+    if (field === undefined && AUTOMATIC_POLICY_KEYS.includes(control.key)) continue;
     if (control.options ? !control.options.includes(field as string)
       : control.minimum !== undefined ? !Number.isInteger(field) || (field as number) < control.minimum || (field as number) > control.maximum!
         : typeof field !== 'boolean') return undefined;

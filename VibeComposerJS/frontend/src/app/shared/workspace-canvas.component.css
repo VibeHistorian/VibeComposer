@@ -192,7 +192,7 @@
   .workspace-canvas { grid-template-columns: 1fr; }
   .track-browser { padding: 12px; }
   .track-browser { max-height: none; }
-  .track-groups { max-height: 330px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .track-groups { max-height: 330px; grid-template-columns: minmax(0, 1fr); }
   .song-canvas { grid-template-rows: auto auto minmax(350px, auto); }
   .score-panel { min-height: 350px; }
   .context-inspector { grid-template-columns: 1fr; }
