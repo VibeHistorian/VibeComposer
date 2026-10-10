@@ -2,6 +2,8 @@
 
 Companion to [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md). Symbols reflect the Java source inspected on 2026-10-08. Multiple symbols on a row form a related control family; each must be traced independently before porting. This is a placement backlog, not a claim of completed TypeScript parity.
 
+P5b/P6f (2026-10-10) completes the supported Chords Pattern join, Transition chance/split, Strum/type and Strum pause consumers with scoped editors. Expanded Tracks headers now expose Strum/Struminess, Split/Max transition, Max strum pause and Expand; Sustain chance already belongs to instrument policy. Struminess deliberately fixes Java's ignored argument while preserving its weights at 50. See the contextual checkpoint for seed/duration alignment changes and remaining advanced exclusions; the 288-case oracle compares complete musical phrases, not unseeded GUI rerolls.
+
 ## Pre-P5 alignment (2026-10-09)
 
 The contextual plan's **P1b → P4f → P4g** gates take precedence over earlier stage labels in this inventory. Before P5, deliver current block-based Melody with minimum controls, single-pitch drum tracks, and shared musical controls in every applicable role. Earlier Chords-only pattern/grid/velocity slices are implementation starting points, not role restrictions. Existing checkpoint descriptions remain historical evidence of the current build.

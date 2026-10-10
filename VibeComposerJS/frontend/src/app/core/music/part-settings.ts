@@ -2,6 +2,7 @@ import type { ArrangedPart, ArrangementSection, CommonPartSettings, CompositionT
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from './rhythm-patterns';
 import { DEFAULT_CUSTOM_VELOCITIES, isVelocityPattern } from './velocity-pattern';
+import { STRUM_TYPES } from './chord-strum';
 
 export type PartSettingValue = string | number | boolean | readonly number[];
 
@@ -97,6 +98,18 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
       description: 'Grid rhythms only. NOJOIN keeps subdivisions; EXPAND sustains through rests; JOIN sustains through consecutive hits and suppresses their retriggers. Java also looks into the next chord within a Span group, before its flip/fill. Omission retains NOJOIN in this translation.' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
   chords: [...fill, ...rhythmControls, span, pause, swing, ...voices,
+    { ...number('strum', 'Strum', 0, 2000, 0, ' /1000 beat'), showValueBelow: true,
+      description: 'Spread individual chord tones in time. Zero keeps simultaneous onsets. 31/62/333/666 retain Java’s fractional beat choices.' },
+    { ...choice('strumType', 'Strum type', STRUM_TYPES), defaultValue: 'ARP_U',
+      description: 'ARP rolls evenly; RAND spreads or shuffles tone onsets; HUMAN adds small offsets. U/D determines pitch direction; one tone anchors the hit.' },
+    { ...number('strumPauseChance', 'Strum pause', 0, 100, 0), advanced: true,
+      description: 'Chance to omit each individual chord tone, independently of the whole-hit Pause setting.' },
+    { ...choice('patternJoinMode', 'Pattern join', ['NOJOIN', 'EXPAND', 'JOIN']), defaultValue: 'NOJOIN', advanced: true,
+      description: 'NOJOIN keeps subdivisions; EXPAND sustains through rests; JOIN sustains through consecutive hits and suppresses retriggers. Lookahead crosses into the next chord within a Span group, before its flip/fill. Long strums cap spillover at 15%.' },
+    { ...number('transitionChance', 'Transition chance', 0, 100, 0), advanced: true,
+      description: 'Chance to switch later rhythm hits to the next progression chord. Java draws activation and next-chord selection independently; transitions do not create extra rhythm hits.' },
+    { ...number('transitionSplit', 'Transition split', 0, 1000, 625, ' /1000 chord'), advanced: true, showValueBelow: true,
+      description: 'Position within the current chord at which an activated transition can switch pitch. 625 means 62.5%; 0 starts immediately and 1000 leaves the chord unchanged.' },
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 200), ...pitched, ...common],
   arpeggio: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, defaultValue: 'full' } : control), span,
     number('patternRepeat', 'Repeat', 1, 4, 1, ''), pause, split, swing, ...voices, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),

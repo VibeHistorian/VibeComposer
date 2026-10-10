@@ -1,6 +1,7 @@
 import type { ScaleMode } from '../music/harmony';
 import type { ChordSpanFill } from '../music/chord-span-fill';
 import type { BassRhythm, RhythmPattern } from '../music/rhythm-patterns';
+import type { StrumType } from '../music/chord-strum';
 export type { BassRhythm } from '../music/rhythm-patterns';
 
 export type ChordRhythm = RhythmPattern;
@@ -108,6 +109,13 @@ export interface RhythmSettings {
 }
 
 export interface ChordSettings extends CommonPartSettings, RhythmSettings {
+  readonly patternJoinMode?: 'NOJOIN' | 'EXPAND' | 'JOIN';
+  readonly transitionChance?: number;
+  /** Thousandths of the current chord duration; 625 starts transitions at 62.5%. */
+  readonly transitionSplit?: number;
+  readonly strum?: number;
+  readonly strumType?: StrumType;
+  readonly strumPauseChance?: number;
   readonly voicing: ChordVoicing;
   readonly noteLengthPercent: number;
 }
@@ -197,6 +205,12 @@ export interface ArpeggioGenerationPolicy {
 
 export interface ChordGenerationPolicy {
   readonly onCompose?: boolean;
+  readonly strum?: boolean;
+  readonly struminess?: number;
+  readonly split?: boolean;
+  readonly maxSplit?: number;
+  readonly maxStrumPause?: number;
+  readonly expandChance?: number;
   readonly fills: boolean;
   readonly patterns: boolean;
   readonly transpose: boolean;

@@ -28,7 +28,7 @@
 @if (expanded() && controls().length) {
   <div class="policy-controls" role="group" [attr.aria-label]="role() + ' track reroll rules'">
     @for (control of controls(); track control.key) {
-      <label [class.check-control]="control.minimum === undefined && !control.options">
+      <label [class.check-control]="control.minimum === undefined && !control.options" [attr.title]="control.description ?? null">
         <span>{{ control.label }}</span>
         @if (control.options) {
           <select [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">

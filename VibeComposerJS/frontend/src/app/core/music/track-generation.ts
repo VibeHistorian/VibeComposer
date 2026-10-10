@@ -6,6 +6,10 @@ import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { partPatchesEqual } from './part-settings';
 import { STATIC_RHYTHM_DEFINITIONS, type StaticRhythm, type RhythmPattern } from './rhythm-patterns';
 import { bakeDrumPattern, type DrumRerollContext } from './drum-reroll';
+import type { StrumType } from './chord-strum';
+
+export const DEFAULT_CHORD_POLICY_EXTENSION = Object.freeze({ strum: true, struminess: 50, split: false,
+  maxSplit: 25, maxStrumPause: 35, expandChance: 70 });
 
 export const DEFAULT_ARPEGGIO_POLICY: ArpeggioGenerationPolicy = Object.freeze({
   fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
@@ -21,6 +25,7 @@ export interface PolicyControl {
   readonly maximum?: number;
   readonly options?: readonly string[];
   readonly advanced?: boolean;
+  readonly description?: string;
 }
 export const ARPEGGIO_POLICY_CONTROLS: readonly PolicyControl[] = [
   { key: 'onCompose', label: 'On Compose' },
@@ -45,6 +50,7 @@ export const DEFAULT_TRACK_POLICIES: TrackGenerationPolicies = Object.freeze({
   arpeggio: DEFAULT_ARPEGGIO_POLICY,
   bass: Object.freeze({}),
   chords: Object.freeze({ fills: true, patterns: true, transpose: true, varyLength: true, delay: false,
+    ...DEFAULT_CHORD_POLICY_EXTENSION,
     shiftChance: 60, voicesMode: 'AT_MOST', voices: 5, voicesChance: 50, velocityMin: 65, velocityMax: 89 }),
   drums: Object.freeze({ patterns: true, fills: true, maxSwing: 20, randomOffset: false, hitsMultiplier: '1', shiftChance: 50 }),
   melody: Object.freeze({ rerollSeeds: true, sameSeed: false, patterns: true }),
@@ -56,6 +62,14 @@ export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly Polic
   chords: [
     { key: 'onCompose', label: 'On Compose' },
     { key: 'varyLength', label: 'Vary length' }, { key: 'fills', label: 'Fills' }, { key: 'patterns', label: 'Patterns' },
+    { key: 'strum', label: 'Strum', description: 'Choose tone timing on reroll. Off writes simultaneous tones and zero strum pauses.' },
+    { key: 'split', label: 'Split', description: 'Choose transition positions at 62.5%, 75% or 87.5%. Off uses 62.5%; Max transition still controls the chance.' },
+    { key: 'struminess', label: 'Struminess %', minimum: 0, maximum: 100,
+      description: '0 favors humanized strums; 100 favors arpeggiated strums. 50 retains Java’s 27/3/70 weighting.' },
+    { key: 'maxSplit', label: 'Max transition %', minimum: 0, maximum: 100,
+      description: 'Choose each track’s transition chance between zero and this limit, inclusive.' },
+    { key: 'maxStrumPause', label: 'Max strum pause %', minimum: 0, maximum: 100, advanced: true },
+    { key: 'expandChance', label: 'Expand chance %', minimum: 0, maximum: 100, advanced: true },
     { key: 'transpose', label: 'Transpose' }, { key: 'delay', label: 'Delay', advanced: true },
     ...ARPEGGIO_POLICY_CONTROLS.filter(control => ['shiftChance', 'voicesMode', 'voices', 'voicesChance', 'velocityMin', 'velocityMax'].includes(control.key)),
   ],
@@ -84,7 +98,8 @@ export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, val
   if (Object.keys(fields).some(key => !controls.some(control => control.key === key))) return undefined;
   for (const control of controls) {
     const field = fields[control.key];
-    if (field === undefined && AUTOMATIC_POLICY_KEYS.includes(control.key)) continue;
+    if (field === undefined && (AUTOMATIC_POLICY_KEYS.includes(control.key)
+      || role === 'chords' && control.key in DEFAULT_CHORD_POLICY_EXTENSION)) continue;
     if (control.options ? !control.options.includes(field as string)
       : control.minimum !== undefined ? !Number.isInteger(field) || (field as number) < control.minimum || (field as number) > control.maximum!
         : typeof field !== 'boolean') return undefined;
@@ -216,6 +231,7 @@ function rerollChords(random: JavaRandom, policy: TrackGenerationPolicies['chord
   const pluck = identified ? pool === 'PLUCK' : [1,3,5,8,10,11,12,13,15,25,27,33,34,35,36,45,46,88].includes(program);
   const pad = identified ? pool === 'LONG_PAD' : program >= 89 && program <= 95;
   const next = { ...source, velocityMin: policy.velocityMin, velocityMax: policy.velocityMax };
+  let selectedPattern = false;
   if (policy.transpose) Object.assign(next, { transpose: (random.nextInt(3) - 1) * 12 });
   if (policy.delay) Object.assign(next, { offset: [0, 62, 125, 250, 333][random.nextInt(5)] });
   if (policy.fills) Object.assign(next, { chordSpanFill: pad ? 'ALL' : weightedChordFill(random.nextInt(100)), fillFlip: false });
@@ -224,7 +240,8 @@ function rerollChords(random: JavaRandom, policy: TrackGenerationPolicies['chord
   if (useVoices) Object.assign(next, { chordNotesStretch: policy.voicesMode === 'FIXED' ? policy.voices : random.nextInt(policy.voices - 2) + 3 });
   if (policy.varyLength) Object.assign(next, { noteLengthPercent: random.nextInt(26) + (pluck ? 50 : 85) });
   if (policy.patterns) {
-    const rhythm = !pad && random.nextInt(100) < (pluck ? 25 : 10) ? VIABLE_RHYTHMS[random.nextInt(7)] : 'single';
+    selectedPattern = !pad && random.nextInt(100) < (pluck ? 25 : 10);
+    const rhythm = selectedPattern ? VIABLE_RHYTHMS[random.nextInt(7)] : 'single';
     let maxShift = Math.min(rhythm === 'full' ? 0 : rhythm === 'half' ? 1 : rhythm === 'sparse' ? 3 : 7, (source.hitsPerPattern ?? 8) - 1);
     let shift = 0;
     if (random.nextInt(100) < policy.shiftChance) {
@@ -235,7 +252,30 @@ function rerollChords(random: JavaRandom, policy: TrackGenerationPolicies['chord
     Object.assign(next, { rhythm, patternShift: shift, patternFlip: false, useCustomVelocities: false,
       pauseChance: random.nextInt(Math.floor(50 * frequency) + 1) });
   }
+  const rules = { ...DEFAULT_CHORD_POLICY_EXTENSION, ...policy };
+  const pair = rules.strum ? chooseChordStrum(random, rules.struminess) : { type: source.strumType ?? 'ARP_U', amount: 0 };
+  let strum = pair.amount;
+  if (selectedPattern && strum > 501) strum = Math.trunc(strum / 2);
+  if (useVoices && (next.chordNotesStretch ?? 3) > 3 && strum > 999) strum = Math.trunc(strum / 2);
+  if (next.rhythm === 'full' && strum > 499) strum = Math.trunc(strum / 4);
+  Object.assign(next, { strum, strumType: pair.type,
+    transitionChance: random.nextInt(rules.maxSplit + 1),
+    transitionSplit: rules.split ? [625, 750, 875][random.nextInt(3)] : 625,
+    strumPauseChance: rules.strum ? random.nextInt(rules.maxStrumPause + 1) : 0,
+    patternJoinMode: pad || random.nextInt(100) < rules.expandChance ? 'EXPAND' : 'NOJOIN' });
   return next;
+}
+
+/** At 50 retain Java's 27/3/70 weights; endpoints favor humanized/arpeggiated strums.
+ * Java's GUI ignores its Struminess argument, so this bias is an intentional correction.
+ */
+export function chooseChordStrum(random: JavaRandom, struminess: number): { type: StrumType; amount: number } {
+  const arp = struminess <= 50 ? Math.floor(27 * struminess / 50) : 27 + Math.floor(73 * (struminess - 50) / 50);
+  const rand = struminess <= 50 ? Math.floor(3 * struminess / 50) : 3 - Math.floor(3 * (struminess - 50) / 50);
+  const weight = random.nextInt(100);
+  const types: readonly StrumType[] = weight < arp ? ['ARP_U', 'ARP_D'] : weight < arp + rand ? ['RAND_WU'] : ['HUMAN_U', 'HUMAN', 'HUMAN_D'];
+  const amounts = weight < arp ? [250,333,375,500,666,1000,1500,2000] : weight < arp + rand ? [62,125,250,333,375] : [31,62,125];
+  return { type: types[random.nextInt(types.length)], amount: amounts[random.nextInt(amounts.length)] };
 }
 
 // Production DrumDefaults/DrumSettings blueprint tuples: rhythm, hits, span, initial shift.

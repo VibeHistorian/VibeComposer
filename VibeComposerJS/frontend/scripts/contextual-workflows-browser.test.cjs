@@ -80,6 +80,36 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => read().tracks.find(track => track.id === 'track-bass-1').generatorSettings.noteVariation === 35, 'copy redo');
       document.querySelector('.part-inspector-link').click();
       result.inspectorFocused = document.activeElement.id === 'part-inspector';
+      document.querySelector('.track-group.chords .group-select').click();
+      await wait(() => document.querySelector('#part-inspector [data-control-role="chords"]'), 'chord inspector');
+      const join = await wait(() => document.querySelector('#part-inspector [aria-label="Pattern join"]'), 'chord join');
+      change(join, 'EXPAND');
+      await wait(() => read().chords.patternJoinMode === 'EXPAND', 'chord join commit');
+      const strum = await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]'), 'chord strum');
+      change(strum, '333');
+      change(document.querySelector('.part-settings-panel [aria-label="Strum type"]'), 'ARP_D');
+      change(document.querySelector('#part-inspector [aria-label="Transition chance"]'), '100');
+      change(document.querySelector('#part-inspector [aria-label="Transition split"]'), '750');
+      change(document.querySelector('#part-inspector [aria-label="Strum pause"]'), '20');
+      await wait(() => read().chords.strum === 333 && read().chords.strumPauseChance === 20, 'chord articulation commit');
+      await wait(() => document.querySelector('#part-inspector [aria-label="Strum"]').value === '333'
+        && document.querySelector('#part-inspector [aria-label="Strum type"]').value === 'ARP_D', 'chord editors synchronized');
+      result.chordEditors = document.querySelector('#part-inspector [aria-label="Strum"]').value === '333'
+        && document.querySelector('#part-inspector [aria-label="Strum type"]').value === 'ARP_D'
+        && read().chords.patternJoinMode === 'EXPAND' && read().chords.transitionChance === 100 && read().chords.transitionSplit === 750;
+      const chords = document.querySelector('.track-group.chords');
+      const tracksBeforePolicy = JSON.stringify(read().tracks);
+      change(chords.querySelector('[aria-label="Reroll Struminess %"]'), '100');
+      change(chords.querySelector('[aria-label="Reroll Max transition %"]'), '0');
+      change(chords.querySelector('[aria-label="Reroll Max strum pause %"]'), '0');
+      change(chords.querySelector('[aria-label="Reroll Expand chance %"]'), '100');
+      result.chordPolicyOnly = JSON.stringify(read().tracks) === tracksBeforePolicy;
+      chords.querySelector('[aria-label="Reroll On Compose"]').click();
+      document.querySelector('[aria-label="Compose"]').click();
+      await wait(() => read().trackRerollCounts?.chords === 1, 'chord automatic reroll');
+      result.chordPolicies = read().tracks.filter(track => track.role === 'chords').every(track =>
+        track.generatorSettings.strumType.startsWith('ARP') && track.generatorSettings.transitionChance === 0
+        && track.generatorSettings.strumPauseChance === 0 && track.generatorSettings.patternJoinMode === 'EXPAND');
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
       result.trackRowsFit = [...document.querySelectorAll('.track-line')].every(row => {
@@ -95,6 +125,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
   })();</script>`;
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
+  result.catch(() => {}); // Startup failure can precede awaiting the browser result.
   const server = http.createServer((request, response) => {
     if (request.url === '/result') {
       let body = ''; request.on('data', chunk => body += chunk);
@@ -117,8 +148,13 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
   let socket;
   try {
     const portFile = path.join(profile, 'DevToolsActivePort');
-    for (let i = 0; !fs.existsSync(portFile) && i < 100; i++) await new Promise(done => setTimeout(done, 50));
-    const port = Number(fs.readFileSync(portFile, 'utf8').split('\n')[0]);
+    let port;
+    for (let i = 0; !port && i < 100; i++) {
+      try { port = Number(fs.readFileSync(portFile, 'utf8').split('\n')[0]); }
+      catch (error) { if (!['ENOENT','EBUSY','EPERM'].includes(error.code)) throw error; }
+      if (!port) await new Promise(done => setTimeout(done, 50));
+    }
+    if (!port) throw new Error('Chromium debugging port unavailable: ' + errors);
     let target;
     for (let i = 0; !target && i < 100; i++) {
       target = (await (await fetch('http://127.0.0.1:' + port + '/json/list')).json()).find(item => item.type === 'page');
@@ -140,11 +176,12 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
-    for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+    for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
+      'chordEditors','chordPolicyOnly','chordPolicies','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();
     await new Promise(done => child.exitCode !== null ? done() : child.once('exit', done));
-    fs.rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
   }
 });

@@ -21,8 +21,8 @@ export function generatePhrase(project: CompositionProject, part: ArrangedPart):
     case 'chords':
       return generateChordPart(seed, project.key, project.scale, project.progression, project.chords)
         .flatMap((hit, hitIndex) => hit.pitches.map((midi, pitchIndex) => ({
-          id: `chords-${hitIndex}-${pitchIndex}`, midi, startBeat: hit.startBeat,
-          durationBeats: hit.durationBeats, velocity: hit.velocity,
+          id: `chords-${hitIndex}-${pitchIndex}`, midi, startBeat: hit.startBeat + (hit.pitchOffsets?.[pitchIndex] ?? 0),
+          durationBeats: hit.pitchDurations?.[pitchIndex] ?? hit.durationBeats, velocity: hit.velocity,
         })));
     case 'arpeggio':
       return generateArpeggio(seed, project.key, project.scale, project.progression, project.arpeggio)

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../core/project/project.model';
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../core/music/instrument-generation';
-import { TRACK_POLICY_CONTROLS, automaticPolicyDefault, type PolicyControl } from '../core/music/track-generation';
+import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../core/music/track-generation';
 
 @Component({
   selector: 'vc-track-generation-policy',
@@ -14,7 +14,7 @@ export class TrackGenerationPolicyComponent {
   readonly policy = input.required<TrackGenerationPolicy>();
   readonly values = computed(() => ({ onCompose: false, onRegenerate: false,
     targetsOnCompose: automaticPolicyDefault('targetsOnCompose'), patternsOnCompose: automaticPolicyDefault('patternsOnCompose'),
-    ...this.policy() }) as unknown as Record<string, string | number | boolean>);
+    ...DEFAULT_TRACK_POLICIES[this.role()], ...this.policy() }) as unknown as Record<string, string | number | boolean>);
   readonly expanded = input(false);
   readonly disabled = input(false);
   readonly policyChanged = output<TrackGenerationPolicyPatch>();
@@ -27,6 +27,7 @@ export class TrackGenerationPolicyComponent {
 
   inactive(control: PolicyControl): boolean {
     return this.disabled() || (control.key === 'fixedHits' && this.values()['randomHits'] === true)
+      || (['struminess', 'maxStrumPause'].includes(control.key) && this.values()['strum'] === false)
       || (control.key === 'sameSeed' && this.values()['rerollSeeds'] === false)
       || (control.key === 'powerOfTwo' && this.values()['randomHits'] === false)
       || (control.key === 'shiftChance' && this.values()['patterns'] === false)

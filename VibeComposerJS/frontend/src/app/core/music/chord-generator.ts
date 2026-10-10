@@ -6,6 +6,7 @@ import { decodePartPatch, velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
 import { effectivePartSeed, spannedPattern, spannedVelocities, expandedVoices } from './part-processing';
 import { swingNotes } from './phrase-swing';
+import { strumChord } from './chord-strum';
 
 
 export interface ChordHitEvent {
@@ -15,6 +16,8 @@ export interface ChordHitEvent {
   readonly durationBeats: number;
   readonly velocity: number;
   readonly chordIndex: number;
+  readonly pitchOffsets?: readonly number[];
+  readonly pitchDurations?: readonly number[];
 }
 
 const BEATS_PER_CHORD = 4;
@@ -59,27 +62,63 @@ export function generateChordPart(
   });
 
   const signedSeed = effectivePartSeed(seed, settings);
-  const partSeed = BigInt.asIntN(32, signedSeed + 20_000n);
+  // ChordPart offset plus the primary part's order offset, matching the Java phrase consumer.
+  const partSeed = BigInt.asIntN(32, signedSeed + 20_001n);
   const events: ChordHitEvent[] = [];
   const [velocityMin, velocityMax] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings);
-  const pauseRandom = new JavaRandom(BigInt.asIntN(32, partSeed + 51n));
-  const timeline: Array<ChordHitEvent & { rhythm: number; duration: number; active: boolean }> = [];
+  const pauseRandom = new JavaRandom(BigInt.asIntN(32, partSeed + 50n));
+  const transitionRandom = new JavaRandom(partSeed);
+  const timeline: Array<ChordHitEvent & { rhythm: number; duration: number; active: boolean; transitionPitches?: number[] }> = [];
+  const joinMode = settings.patternJoinMode ?? 'NOJOIN';
+  const stretchedByNote = joinMode === 'JOIN' ? 1 : 0;
+  let skipNotes = 0;
 
   for (let chordIndex = 0; chordIndex < chordDefinitions.length; chordIndex++) {
-    if (!fill[chordIndex]) { timeline.push({ pitches: [], symbol: '', startBeat: chordIndex * 4, durationBeats: 4, velocity: 0, chordIndex, rhythm: 4, duration: 4, active: false }); continue; }
+    if (!fill[chordIndex]) { skipNotes = 0; timeline.push({ pitches: [], symbol: '', startBeat: chordIndex * 4, durationBeats: 4, velocity: 0, chordIndex, rhythm: 4, duration: 4, active: false }); continue; }
     const chord = chordDefinitions[chordIndex];
+    const transition = transitionRandom.nextInt(100) < (settings.transitionChance ?? 0);
+    const transitionChord = chordDefinitions[transitionRandom.nextInt(100) < (settings.transitionChance ?? 0)
+      ? (chordIndex + 1) % chordDefinitions.length : chordIndex];
+    const transitionPitches = [...transitionChord.pitches];
     const pattern = spannedPattern(settings, chordIndex);
     const velocityPattern = spannedVelocities(settings, chordIndex);
     const stepDuration = BEATS_PER_CHORD / pattern.length;
     const velocityRandom = new JavaRandom(BigInt.asIntN(32, partSeed + BigInt(chordIndex)));
+    const span = settings.chordSpan ?? 1;
+    const nextPattern = joinMode !== 'NOJOIN' && chordIndex % span < span - 1
+      ? spannedPattern({ ...settings, patternFlip: false }, chordIndex + 1) : undefined;
+    let nextP = -1;
 
     for (let step = 0; step < pattern.length; step++) {
       const velocity = velocityPattern ? velocityPattern[step % velocityPattern.length] : velocityRandom.nextInt(velocityMax - velocityMin + 1) + velocityMin;
       const paused = pauseRandom.nextInt(100) < (settings.pauseChance ?? 0);
-      timeline.push({ rhythm: stepDuration, duration: stepDuration * settings.noteLengthPercent / 100, active: pattern[step] > 0 && velocity > 0 && !paused,
-        pitches: chord.pitches,
-        symbol: chord.symbol,
+      const active = pattern[step] > 0 && !(step <= nextP && stretchedByNote === 1) && skipNotes === 0;
+      if (skipNotes > 0) skipNotes--;
+      let durationMultiplier = 1;
+      const joinApplicable = pattern[step] > 0 && step >= nextP;
+      if (joinApplicable) {
+        nextP = step + 1;
+        while (nextP < pattern.length) {
+          if (stepDuration * (step + durationMultiplier) + 0.01 > BEATS_PER_CHORD) break;
+          if (Math.sign(pattern[nextP]) !== stretchedByNote && pattern[nextP] !== -1) break;
+          durationMultiplier++; nextP++;
+        }
+      }
+      if (nextP >= pattern.length && nextPattern) {
+        skipNotes = 0;
+        while (skipNotes < nextPattern.length && (nextPattern[skipNotes] === stretchedByNote || nextPattern[skipNotes] === -1)) skipNotes++;
+        durationMultiplier += skipNotes;
+      }
+      const ratio = Math.min(((settings.strum ?? 0) > 750 ? 1.15 : 5) * (BEATS_PER_CHORD - step * stepDuration) / stepDuration,
+        durationMultiplier, settings.noteLengthPercent / 100 * (joinApplicable && joinMode !== 'NOJOIN' ? durationMultiplier : 1));
+      timeline.push({ rhythm: stepDuration, duration: stepDuration * ratio, active: active && !paused,
+        ...(active && !paused && transition && step * stepDuration >= BEATS_PER_CHORD * (settings.transitionSplit ?? 625) / 1000
+          ? { transitionPitches } : {}),
+        pitches: transition && step * stepDuration >= BEATS_PER_CHORD * (settings.transitionSplit ?? 625) / 1000
+          ? transitionChord.pitches : chord.pitches,
+        symbol: transition && step * stepDuration >= BEATS_PER_CHORD * (settings.transitionSplit ?? 625) / 1000
+          ? transitionChord.symbol : chord.symbol,
         startBeat: chordIndex * BEATS_PER_CHORD + step * stepDuration,
         durationBeats: stepDuration * settings.noteLengthPercent / 100,
         velocity,
@@ -88,11 +127,36 @@ export function generateChordPart(
     }
   }
 
-  swingNotes(timeline, (settings.hitsPerPattern ?? 8) % 2 === 0 ? settings.swingPercent ?? 50 : 50);
+  // Java stores chord tones backwards: only the final (lowest) tone advances the rhythm.
+  // Swing therefore adjusts that tone's duration, independently of the other voices.
+  const flamRandoms = new Map<number, JavaRandom>();
+  const rendered = timeline.flatMap(hit => {
+    if (!flamRandoms.has(hit.chordIndex)) flamRandoms.set(hit.chordIndex,
+      new JavaRandom(BigInt.asIntN(32, partSeed + 30n + BigInt(hit.chordIndex % 4))));
+    const tones = hit.symbol === '' ? [{ midi: -1, offset: 0 }]
+      : strumChord(hit.active ? hit.transitionPitches ?? hit.pitches : [-1], flamRandoms.get(hit.chordIndex)!,
+        settings.strumType ?? 'ARP_U', settings.strum ?? 0, settings.strumPauseChance ?? 0);
+    // Java's transition array is shared by subsequent transition hits in this chord.
+    if (hit.transitionPitches) tones.forEach((tone, index) => hit.transitionPitches![tones.length - index - 1] = tone.midi);
+    return tones.map((tone, index) => ({ ...tone, hit,
+      rhythm: index === tones.length - 1 ? hit.rhythm : 0, duration: hit.duration }));
+  });
+  swingNotes(rendered, (settings.hitsPerPattern ?? 8) % 2 === 0 ? settings.swingPercent ?? 50 : 50);
   let time = 0;
-  for (const note of timeline) {
-    if (note.active) events.push({ pitches: note.pitches, symbol: note.symbol, startBeat: time, durationBeats: note.duration, velocity: note.velocity, chordIndex: note.chordIndex });
+  const grouped = new Map<typeof timeline[number], { start: number; tones: typeof rendered }>();
+  for (const note of rendered) {
+    if (!grouped.has(note.hit)) grouped.set(note.hit, { start: time, tones: [] });
+    if (note.midi >= 0 && note.hit.velocity > 0) grouped.get(note.hit)!.tones.push(note);
     time += note.rhythm;
+  }
+  for (const [hit, group] of grouped) {
+    if (!group.tones.length) continue;
+    const tones = group.tones.reverse();
+    const duration = tones[0].duration;
+    events.push({ pitches: tones.map(tone => tone.midi), symbol: hit.symbol, startBeat: group.start,
+      durationBeats: duration, velocity: hit.velocity, chordIndex: hit.chordIndex,
+      ...(tones.some(tone => tone.offset !== 0) ? { pitchOffsets: tones.map(tone => tone.offset) } : {}),
+      ...(tones.some(tone => tone.duration !== duration) ? { pitchDurations: tones.map(tone => tone.duration) } : {}) });
   }
   return events;
 }

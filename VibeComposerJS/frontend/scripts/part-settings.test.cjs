@@ -5,6 +5,150 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('chord joins, transitions and per-tone strums match 288 production Java phrases', () => {
+  const { load } = fixture();
+  const { generateChordPart } = load('core/music/chord-generator.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/chord-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 288);
+  const sort = notes => notes.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+  for (const [caseIndex, sample] of cases.entries()) {
+    const hits = generateChordPart(BigInt(sample.seed), sample.key, sample.scale, sample.progression, sample.settings);
+    const actual = sort(hits.flatMap(hit => hit.pitches.map((pitch, index) => [pitch,
+      hit.startBeat + (hit.pitchOffsets?.[index] ?? 0), hit.pitchDurations?.[index] ?? hit.durationBeats, hit.velocity])));
+    const expected = sort(sample.notes);
+    assert.equal(actual.length, expected.length, `case ${caseIndex} count`);
+    actual.forEach((note, index) => {
+      const label = `case ${caseIndex}, note ${index}`;
+      assert.equal(note[0], expected[index][0], `${label} pitch`);
+      assert.ok(Math.abs(note[1] - expected[index][1]) < 1e-10, `${label} onset ${note[1]} vs ${expected[index][1]}`);
+      assert.ok(Math.abs(note[2] - expected[index][2]) < 1e-10, `${label} duration ${note[2]} vs ${expected[index][2]}`);
+      assert.equal(note[3], expected[index][3], `${label} velocity`);
+    });
+  }
+});
+
+test('chord articulation resolves scopes, mixed values, snapshots, manual ownership and MIDI', () => {
+  const { service, settings, phrase, midi, ui, workspace, load } = fixture();
+  const id = 'track-chords-1', track = () => service.project().tracks.find(track => track.id === id);
+  const [first, second] = service.project().arrangement;
+  const cell = { kind: 'section-role', sectionId: first.id, role: 'chords' };
+  const part = { kind: 'section-track', sectionId: first.id, trackId: id };
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, id, true));
+  service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { rhythm: 'half', hitsPerPattern: 8 });
+  const baseline = phrase.layOutTrackPhrase(service.project(), track());
+  const patch = { patternJoinMode: 'EXPAND', transitionChance: 100, transitionSplit: 625, strum: 250,
+    strumType: 'ARP_U', strumPauseChance: 0 };
+  service.updatePartSettings(cell, patch);
+  const notes = phrase.layOutTrackPhrase(service.project(), track());
+  assert.notDeepEqual(notes.filter(note => note.startBeat < first.measures * 4), baseline.filter(note => note.startBeat < first.measures * 4));
+  assert.deepEqual(notes.filter(note => note.startBeat >= first.measures * 4), baseline.filter(note => note.startBeat >= first.measures * 4));
+  service.undo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), baseline);
+  service.redo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), notes);
+  const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+  const exported = parsed.tracks.find(candidate => candidate.name === track().name).notes;
+  for (const note of notes) assert.ok(exported.some(candidate => candidate.midi === note.midi
+    && Math.abs(candidate.ticks / parsed.header.ppq - note.startBeat) < 0.003
+    && Math.abs(candidate.durationTicks / parsed.header.ppq - note.durationBeats) < 0.003));
+  service.freezePartSettings(part);
+  for (const [key, value] of Object.entries(patch)) assert.equal(service.project().arrangement[0].trackPartOverrides[id][key], value);
+  service.applyPartSettingsToSections(part, [second.id], 'effective');
+  service.updatePartSettings({ kind: 'global-track', trackId: id }, { strum: 1000, strumType: 'ARP_D' });
+  assert.equal(settings.resolvePartTrack(track(), service.project().arrangement[0]).generatorSettings.strum, 250);
+  const duplicate = service.duplicateTrack(id);
+  service.updatePartSettings({ kind: 'section-track', sectionId: first.id, trackId: duplicate }, { strum: 500 });
+  ui.selectCell(first.id, 'chords'); assert.equal(workspace.partValues().strum, null);
+  assert.equal(service.copyPartSettingsToGlobals(cell), 'changed');
+  assert.equal(track().generatorSettings.strum, 250);
+  assert.equal(service.project().tracks.find(item => item.id === duplicate).generatorSettings.strum, 500);
+  const saved = service.exportProjectJson(), beforeImport = phrase.layOutTrackPhrase(service.project(), track());
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), beforeImport);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.project().arrangement[0].trackPartOverrides[id].strumType, 'ARP_U');
+  service.updateTrackPhrase(id, [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 80 }]);
+  service.updatePartSettings(part, { strumPauseChance: 100, transitionChance: 0 });
+  assert.ok(phrase.layOutTrackPhrase(service.project(), track()).every(note => note.midi === 60 && note.durationBeats === 1));
+});
+
+test('chord articulation rejects malformed imports and wrong-role controls without losing redo', () => {
+  const { service, settings } = fixture();
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const saved = service.exportProjectJson();
+  for (const patch of [{ strum: -1 }, { strum: 2001 }, { strum: 1.5 }, { strumType: 'UP' }, { strumPauseChance: 101 },
+    { transitionChance: null }, { transitionSplit: 1001 }, { patternJoinMode: 'expand' }]) {
+    service.updatePartSettings({ kind: 'global-role', role: 'chords' }, patch);
+    for (const location of ['role', 'track', 'section-role', 'section-track']) {
+      const data = JSON.parse(saved);
+      if (location === 'role') Object.assign(data.chords, patch);
+      if (location === 'track') Object.assign(data.tracks.find(track => track.role === 'chords').generatorSettings, patch);
+      if (location === 'section-role') data.arrangement[0].rolePartOverrides = { chords: patch };
+      if (location === 'section-track') data.arrangement[0].trackPartOverrides = { 'track-chords-1': patch };
+      assert.equal(service.importProjectJson(JSON.stringify(data)), false);
+    }
+  }
+  for (const role of ['melody', 'bass', 'arpeggio', 'drums']) {
+    assert.equal(settings.decodePartPatch(role, { strum: 100 }), undefined);
+    assert.equal(settings.decodePartPatch(role, { transitionSplit: 625 }), undefined);
+  }
+  assert.equal(service.exportProjectJson(), saved); assert.equal(service.canRedo(), true);
+});
+
+test('chord policies bias strums, bound transitions/pauses, enforce Expand and retain reroll ownership', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts'), { JavaRandom } = load('core/music/java-random.ts');
+  const legacy = { ...core.DEFAULT_TRACK_POLICIES.chords };
+  for (const key of Object.keys(core.DEFAULT_CHORD_POLICY_EXTENSION)) delete legacy[key];
+  assert.ok(core.decodeTrackGenerationPolicy('chords', legacy), 'old policies remain readable');
+  const categories = new Set();
+  for (let seed = 0; seed < 200; seed++) {
+    assert.ok(core.chooseChordStrum(new JavaRandom(seed), 0).type.startsWith('HUMAN'));
+    assert.ok(core.chooseChordStrum(new JavaRandom(seed), 100).type.startsWith('ARP'));
+    const neutral = core.chooseChordStrum(new JavaRandom(seed), 50).type;
+    categories.add(neutral.startsWith('ARP') ? 'ARP' : neutral.startsWith('RAND') ? 'RAND' : 'HUMAN');
+  }
+  assert.equal(categories.size, 3);
+  service.updateInstrumentPolicy('chords', { randomize: false });
+  const source = service.project().tracks.find(track => track.role === 'chords');
+  const policy = { ...core.DEFAULT_TRACK_POLICIES.chords, struminess: 100, maxSplit: 35, split: true,
+    maxStrumPause: 20, expandChance: 100, patterns: false, voicesMode: 'NONE' };
+  for (let seed = 0; seed < 100; seed++) {
+    const [next] = core.rerollRoleSettings(BigInt(seed), 'chords', policy, [source], [1]);
+    assert.ok(next.transitionChance >= 0 && next.transitionChance <= 35);
+    assert.ok([625,750,875].includes(next.transitionSplit));
+    assert.ok(next.strumPauseChance >= 0 && next.strumPauseChance <= 20);
+    assert.equal(next.patternJoinMode, 'EXPAND'); assert.ok(next.strumType.startsWith('ARP'));
+    const [disabled] = core.rerollRoleSettings(BigInt(seed), 'chords', { ...policy, strum: false, split: false, maxSplit: 0, expandChance: 0 }, [source], [1]);
+    assert.equal(disabled.strum, 0); assert.equal(disabled.strumPauseChance, 0);
+    assert.equal(disabled.transitionChance, 0); assert.equal(disabled.transitionSplit, 625); assert.equal(disabled.patternJoinMode, 'NOJOIN');
+    const [pad] = core.rerollRoleSettings(BigInt(seed), 'chords', { ...policy, expandChance: 0 }, [{ ...source, instrumentPool: 'LONG_PAD' }], [1]);
+    assert.equal(pad.patternJoinMode, 'EXPAND');
+    const [dense] = core.rerollRoleSettings(BigInt(seed), 'chords', { ...policy, voicesMode: 'FIXED', voices: 6, voicesChance: 100 },
+      [{ ...source, generatorSettings: { ...source.generatorSettings, rhythm: 'full' } }], [1]);
+    assert.ok(dense.strum < 500, 'long strums halve for expanded voices then quarter for FULL');
+  }
+  service.addTrack('chords'); service.setTrackRerollLock('track-chords-2', true);
+  const section = service.project().arrangement[0];
+  service.updatePartSettings({ kind: 'section-track', sectionId: section.id, trackId: source.id }, { strum: 333 });
+  service.updateTrackPhrase(source.id, [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 80 }]);
+  const beforeRules = service.project().tracks;
+  service.updateTrackGenerationPolicy('chords', policy);
+  assert.strictEqual(service.project().tracks, beforeRules);
+  const before = service.exportProjectJson();
+  assert.equal(service.rerollRoleTracks('chords'), 'changed');
+  const after = service.exportProjectJson();
+  assert.strictEqual(service.project().tracks.find(track => track.id === 'track-chords-2'), beforeRules.find(track => track.id === 'track-chords-2'));
+  assert.deepEqual(service.project().tracks.find(track => track.id === source.id).editedPhrase, beforeRules.find(track => track.id === source.id).editedPhrase);
+  assert.equal(service.project().arrangement[0].trackPartOverrides[source.id].strum, 333);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.rerollRoleTracks('chords'); assert.equal(service.exportProjectJson(), after);
+  assert.equal(service.importProjectJson(after), true);
+  service.updateTrackGenerationPolicy('chords', { onCompose: true });
+  assert.equal(service.generateComposition('compose'), 'changed');
+  for (const patch of [{ struminess: 101 }, { maxSplit: -1 }, { split: 0 }, { maxStrumPause: 1.5 }, { expandChance: 101 }]) {
+    assert.equal(service.updateTrackGenerationPolicy('chords', patch), 'invalid');
+  }
+});
+
 test('automatic events are atomic, replayable and preserve locks, local settings and manual notes', () => {
   const { service, load, stored, midi } = fixture();
   service.updateSettings({ seed: '9007199254740993' });
@@ -393,6 +537,7 @@ for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     service.updateSettings({ seed: '9007199254740993' });
     service.setTrackInstrumentLock(second, true); service.setTrackRerollLock(locked, true);
     service.updateTrackPhrase(id, [{ id: 'manual', midi: role === 'drums' ? 36 : 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+    service.setSectionTrackPresence(0, id, true); // Ensure MIDI has a note event from which its parser reads the channel.
     service.freezePartSettings({ kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: id });
     const before = service.exportProjectJson(), previous = track(id), arrangement = service.project().arrangement;
     const previousSecond = track(second), previousLocked = track(locked);
@@ -577,7 +722,7 @@ test('other role rules leave musical values untouched and strictly validate pers
   service.updateSettings({ name: 'redo' }); service.undo();
   const before = service.exportProjectJson();
   for (const [role, patch] of [['bass', { patterns: true }], ['chords', { velocityMin: 100, velocityMax: 90 }],
-    ['chords', { voices: 2 }], ['chords', { strum: true }], ['drums', { maxSwing: 51 }], ['drums', { hitsMultiplier: '3' }],
+    ['chords', { voices: 2 }], ['chords', { strum: 1 }], ['drums', { maxSwing: 51 }], ['drums', { hitsMultiplier: '3' }],
     ['drums', { ghosts: true }], ['melody', { sameSeed: 1 }], ['melody', { targets: true }]]) {
     assert.equal(service.updateTrackGenerationPolicy(role, patch), 'invalid');
     const project = JSON.parse(before);
@@ -761,7 +906,8 @@ test('generation handles empty roles, project capacity and no-op rerolls without
   service.removeTrack('track-melody-1');
   assert.equal(service.generateRoleTracks('melody', 2), 'changed');
   assert.ok(service.project().tracks.some(track => track.id === 'track-melody-1'));
-  service.updateTrackGenerationPolicy('chords', { fills: false, patterns: false, transpose: false, varyLength: false, delay: false, voicesMode: 'NONE' });
+  service.updateTrackGenerationPolicy('chords', { fills: false, patterns: false, transpose: false, varyLength: false, delay: false,
+    voicesMode: 'NONE', strum: false, maxSplit: 0, split: false, expandChance: 0 });
   service.rerollRoleTracks('chords'); service.updateSettings({ name: 'redo' }); service.undo();
   const before = service.exportProjectJson();
   assert.equal(service.rerollRoleTracks('chords'), 'unchanged');
@@ -1048,7 +1194,7 @@ test('bass join validation rejects malformed and wrong-role patches without losi
       assert.equal(service.importProjectJson(JSON.stringify(project)), false);
     }
   }
-  for (const role of ['melody', 'chords', 'arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, { patternJoinMode: 'JOIN' }), undefined);
+  for (const role of ['melody', 'arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, { patternJoinMode: 'JOIN' }), undefined);
   assert.equal(service.exportProjectJson(), saved); assert.equal(service.canRedo(), true);
 });
 
@@ -2471,7 +2617,7 @@ test('chord rhythm hits, shift and flip affect note onsets/durations while retai
   const shifted = generate({ rhythm: 'half', hitsPerPattern: 3, patternShift: 1, noteLengthPercent: 75 });
   assert.deepEqual(shifted.map((note) => note.startBeat), [4 / 3, 4 + 4 / 3]);
   assert.ok(shifted.every((note) => note.durationBeats === 1));
-  const random = new JavaRandom(BigInt.asIntN(32, BigInt.asIntN(32, seed) + 20000n));
+  const random = new JavaRandom(BigInt.asIntN(32, BigInt.asIntN(32, seed) + 20001n));
   random.nextInt(21);
   assert.equal(shifted[0].velocity, random.nextInt(21) + 69, 'rest at step 0 consumes its velocity draw');
   const dense = generate({ hitsPerPattern: 32 });
@@ -2608,7 +2754,7 @@ test('Euclidean chord generation uses shifted/flipped subdivisions and preserves
   const notes = generateChordPart(seed, 'C', 'major', [1, 5], settings);
   assert.deepEqual(notes.map((note) => note.startBeat), [0, 4].flatMap((start) => mask.flatMap((value, slot) => value ? [start + slot / 2] : [])));
   assert.ok(notes.every((note) => note.durationBeats === 0.375));
-  const random = new JavaRandom(BigInt.asIntN(32, BigInt.asIntN(32, seed) + 20000n));
+  const random = new JavaRandom(BigInt.asIntN(32, BigInt.asIntN(32, seed) + 20001n));
   const velocities = Array.from({ length: 8 }, () => random.nextInt(21) + 69);
   assert.deepEqual(notes.filter((note) => note.chordIndex === 0).map((note) => note.velocity), velocities.filter((_, slot) => mask[slot]));
   const flipped = generateChordPart(seed, 'C', 'major', [1, 5], { ...settings, patternFlip: true, chordSpanFill: 'EVEN' });
