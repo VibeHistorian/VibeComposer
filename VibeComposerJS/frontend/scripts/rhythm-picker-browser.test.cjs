@@ -49,6 +49,28 @@ test('production Angular controls initialize selects from settings and support r
             fits: bounds.every(box => box.left >= row.left && box.right <= row.right + 1) };
         });
         const readTrack = role => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === role);
+        const compactButton = document.querySelector('.project-tools .compact-history');
+        const undo = document.querySelector('.project-tools button[aria-label="Undo"]');
+        const redo = document.querySelector('.project-tools button[aria-label="Redo"]');
+        const tempo = document.querySelector('input[aria-label="Tempo in beats per minute"]');
+        const originalTempo = Number(tempo.value);
+        if (compactButton.getAttribute('aria-pressed') !== 'false' || compactButton.previousElementSibling !== redo) {
+          throw new Error('Compact history must start off beside Undo/Redo');
+        }
+        compactButton.click();
+        await waitFor(() => compactButton.getAttribute('aria-pressed') === 'true', 'compact history on');
+        for (let i = 1; i <= 3; i++) {
+          tempo.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, shiftKey: true, bubbles: true, cancelable: true }));
+          await waitFor(() => Number(tempo.value) === originalTempo + i, 'live compact tempo edit');
+        }
+        undo.click();
+        await waitFor(() => Number(tempo.value) === originalTempo, 'one undo restores compact burst');
+        redo.click();
+        await waitFor(() => Number(tempo.value) === originalTempo + 3, 'one redo restores final compact value');
+        undo.click();
+        await waitFor(() => Number(tempo.value) === originalTempo, 'restore tempo');
+        compactButton.click();
+        await waitFor(() => compactButton.getAttribute('aria-pressed') === 'false', 'compact history off');
         const initiallyCollapsed = [...document.querySelectorAll('.collapse-group-button')].every(button => button.getAttribute('aria-expanded') === 'false');
         const instrumentDefaultChecks = [];
         // Preserve parameter-only scenarios with explicit instrument opt-outs; selection opens each role's rules.

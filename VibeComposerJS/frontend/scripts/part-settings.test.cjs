@@ -5,6 +5,81 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('compact history groups same-control bursts while keeping live state, persistence and final redo', (t) => {
+  let now = 0;
+  t.mock.method(performance, 'now', () => now);
+  const { service, stored } = fixture();
+  const before = service.exportProjectJson();
+  assert.equal(service.compactHistory(), false);
+  service.toggleCompactHistory();
+  assert.equal(service.canUndo(), false, 'preference does not create project history');
+  for (const tempoBpm of [130, 131, 132]) {
+    now += 200;
+    service.updateSettings({ tempoBpm });
+    assert.equal(service.project().tempoBpm, tempoBpm);
+    assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).tempoBpm, tempoBpm);
+  }
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before); assert.equal(service.canUndo(), false);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.updateSettings({ tempoBpm: 133 });
+  service.undo(); assert.equal(service.exportProjectJson(), after, 'redo ends a burst');
+  service.updateSettings({ tempoBpm: 134 });
+  assert.equal(service.canRedo(), false, 'new edits clear the redo branch');
+  service.undo(); assert.equal(service.exportProjectJson(), after, 'undo ends a burst');
+});
+
+test('compact history separates fields, scopes, delayed edits, actions and multi-control patches', (t) => {
+  let now = 0;
+  t.mock.method(performance, 'now', () => now);
+  const { service } = fixture();
+  service.toggleCompactHistory();
+  const track = { kind: 'global-track', trackId: 'track-chords-1' };
+  const snapshots = [service.exportProjectJson()];
+  const step = (edit) => { edit(); snapshots.push(service.exportProjectJson()); };
+  step(() => {
+    service.updatePartSettings(track, { strum: 100 });
+    now += 100; service.updatePartSettings(track, { strum: 200 });
+  });
+  step(() => service.updatePartSettings(track, { pauseChance: 10 }));
+  step(() => service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { pauseChance: 20 }));
+  step(() => service.updatePartSettings({ kind: 'section-track', sectionId: service.project().arrangement[0].id,
+    trackId: 'track-chords-1' }, { pauseChance: 30 }));
+  step(() => service.updateSettings({ tempoBpm: 130 }));
+  now += 1000;
+  step(() => service.updateSettings({ tempoBpm: 140 }));
+  step(() => service.addChord());
+  step(() => service.updateSettings({ tempoBpm: 150 }));
+  step(() => service.updateSettings({ tempoBpm: 160, transposeSemitones: 1 }));
+  step(() => service.updateSettings({ tempoBpm: 170, transposeSemitones: 2 }));
+  for (let i = snapshots.length - 2; i >= 0; i--) {
+    service.undo(); assert.equal(service.exportProjectJson(), snapshots[i], 'separate undo step ' + i);
+  }
+  assert.equal(service.canUndo(), false);
+  for (const snapshot of snapshots.slice(1)) { service.redo(); assert.equal(service.exportProjectJson(), snapshot); }
+});
+
+test('compact history covers mixer and policies and switching it off preserves individual edits', (t) => {
+  t.mock.method(performance, 'now', () => 0);
+  const { service } = fixture();
+  service.toggleCompactHistory();
+  const before = service.exportProjectJson();
+  service.updateTrack('track-bass-1', { mix: { volumePercent: 90 } });
+  service.updateTrack('track-bass-1', { mix: { volumePercent: 80 } });
+  const mixed = service.exportProjectJson();
+  assert.equal(service.updateTrackGenerationPolicy('arpeggio', { maxSplit: 10 }), 'changed');
+  assert.equal(service.updateTrackGenerationPolicy('arpeggio', { maxSplit: 20 }), 'changed');
+  service.undo(); assert.equal(service.exportProjectJson(), mixed);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.toggleCompactHistory();
+  service.updateSettings({ tempoBpm: 130 });
+  service.updateSettings({ tempoBpm: 140 });
+  service.undo(); assert.equal(service.project().tempoBpm, 130);
+  service.toggleCompactHistory();
+  service.updateSettings({ tempoBpm: 150 });
+  service.undo(); assert.equal(service.project().tempoBpm, 130, 'toggling starts a fresh burst');
+});
+
 test('Chordlet roots, spice and inversions match all 2244 production Java voicings', () => {
   const { load } = fixture(), harmony = load('core/music/harmony.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/chordlet-harmony.java.json'), 'utf8').replace(/^\uFEFF/, ''));

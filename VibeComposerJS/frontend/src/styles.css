@@ -226,6 +226,7 @@ button, a, input, select { font: inherit; }
 .project-tools { display: flex; align-items: center; gap: 6px; }
 .project-tools button { min-height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; white-space: nowrap; }
 .project-tools button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
+.project-tools .compact-history[aria-pressed="true"] { border-color: var(--accent-primary); color: var(--accent-primary); background: var(--surface-button-hover); }
 .project-message { position: absolute; z-index: 2; top: 62px; right: max(24px, calc((100vw - 1920px) / 2)); margin: 0; padding: 7px 10px; border: 1px solid var(--border-accent); border-radius: var(--radius-control); background: var(--surface-accent); color: var(--accent-primary); font-size: 10px; }
 
 /* Tablet layout */

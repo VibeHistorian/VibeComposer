@@ -24,6 +24,7 @@ import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
 const MAX_HISTORY = 100;
+const COMPACT_HISTORY_WINDOW_MS = 1000;
 const MAX_ARRANGEMENT_SECTIONS = 32;
 const MAX_ARRANGEMENT_MEASURES = 128;
 const CHORD_VOICINGS = ['close', 'open'] as const;
@@ -38,10 +39,24 @@ export class ProjectService {
   private readonly future: CompositionProject[] = [];
   private readonly undoAvailable = signal(false);
   private readonly redoAvailable = signal(false);
+  private readonly compactHistoryEnabled = signal(false);
+  private lastControlEdit: { key: string; time: number } | null = null;
 
   readonly project = this.state.asReadonly();
   readonly canUndo = this.undoAvailable.asReadonly();
   readonly canRedo = this.redoAvailable.asReadonly();
+  readonly compactHistory = this.compactHistoryEnabled.asReadonly();
+
+  toggleCompactHistory(): void {
+    this.compactHistoryEnabled.set(!this.compactHistoryEnabled());
+    this.lastControlEdit = null;
+  }
+
+  /** Only single-control edits can join a burst; scope and field identify the control. */
+  private controlHistoryKey(target: readonly string[], patch: object): string | undefined {
+    const keys = Object.keys(patch);
+    return keys.length === 1 ? JSON.stringify([...target, keys[0]]) : undefined;
+  }
 
   exportProjectJson(): string {
     return JSON.stringify(this.state(), null, 2);
@@ -58,7 +73,8 @@ export class ProjectService {
     const policy = decodeTrackGenerationPolicy(role, { ...previous, ...patch });
     if (!policy) return 'invalid';
     if (Object.entries(policy).every(([key, value]) => value === (previous as unknown as Record<string, unknown>)[key])) return 'unchanged';
-    return this.commitPartWorkflow({ ...current, trackGenerationPolicies: { ...current.trackGenerationPolicies, [role]: policy } });
+    return this.commitPartWorkflow({ ...current, trackGenerationPolicies: { ...current.trackGenerationPolicies, [role]: policy } },
+      this.controlHistoryKey(['policy', role], patch));
   }
 
   setTrackRerollLock(trackId: string, locked: boolean): void {
@@ -82,7 +98,8 @@ export class ProjectService {
     const policy = decodeInstrumentPolicy(role, { ...previous, ...patch });
     if (!policy) return 'invalid';
     if (Object.entries(policy).every(([key, value]) => value === previous[key as keyof InstrumentGenerationPolicy])) return 'unchanged';
-    return this.commitPartWorkflow({ ...current, instrumentGenerationPolicies: { ...current.instrumentGenerationPolicies, [role]: policy } });
+    return this.commitPartWorkflow({ ...current, instrumentGenerationPolicies: { ...current.instrumentGenerationPolicies, [role]: policy } },
+      this.controlHistoryKey(['instrument-policy', role], patch));
   }
 
   /** Explicit instrument-only action ignores permission, but respects both locks. */
@@ -278,7 +295,8 @@ export class ProjectService {
         ? { ...section, rolePartOverrides: map as NonNullable<ArrangementSection['rolePartOverrides']> }
         : { ...section, trackPartOverrides: map };
     });
-    this.commit({ ...current, arrangement });
+    this.commit({ ...current, arrangement }, this.controlHistoryKey(
+      ['part', scope.kind, scope.sectionId, scope.kind === 'section-role' ? scope.role : scope.trackId], decoded));
   }
 
   resetPartSettings(scope: PartSettingsScope, field?: string): void {
@@ -412,11 +430,11 @@ export class ProjectService {
     return changed ? { ...current, arrangement } : current;
   }
 
-  private commitPartWorkflow(next: CompositionProject): PartWorkflowResult {
+  private commitPartWorkflow(next: CompositionProject, controlKey?: string): PartWorkflowResult {
     // Validate the complete candidate before committing: a conflict in one destination rejects the entire batch.
     if (!this.isProject(next)) return 'invalid';
     const before = this.state();
-    this.commit(next);
+    this.commit(next, controlKey);
     return before === this.state() ? 'unchanged' : 'changed';
   }
 
@@ -436,63 +454,68 @@ export class ProjectService {
   updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed'>>): void {
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;
-    this.commit({ ...this.state(), ...patch });
+    this.commit({ ...this.state(), ...patch }, this.controlHistoryKey(['project'], patch));
   }
 
   updateRoleGeneratorSettings(role: ArrangedPart, patch: PartSettingsPatch): void {
     const current = this.state();
+    const controlKey = this.controlHistoryKey(['part', 'global-role', role], patch);
     if (role === 'drums' && 'pitch' in patch) return;
     if (!current.tracks.some((track) => track.role === role)) return;
     if (role === 'melody') {
       const melody = this.decodeMelody({ ...current.melody, ...patch });
       if (!melody) return;
       this.commit({ ...current, melody, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: melody } : track) });
+        ? { ...track, generatorSettings: melody } : track) }, controlKey);
     } else if (role === 'bass') {
       const bass = { ...current.bass, ...patch } as BassSettings;
       if (!this.decodeBass(bass)) return;
       this.commit({ ...current, bass, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as BassSettings } : track) });
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as BassSettings } : track) }, controlKey);
     } else if (role === 'chords') {
       const chords = { ...current.chords, ...patch } as ChordSettings;
       if (!this.decodeChords(chords)) return;
       this.commit({ ...current, chords, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ChordSettings } : track) });
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ChordSettings } : track) }, controlKey);
     } else if (role === 'arpeggio') {
       const arpeggio = { ...current.arpeggio, ...patch } as ArpeggioSettings;
       if (!this.decodeArpeggio(arpeggio)) return;
       this.commit({ ...current, arpeggio, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ArpeggioSettings } : track) });
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ArpeggioSettings } : track) }, controlKey);
     } else {
       const drums = { ...current.drums, ...patch } as DrumSettings;
       if (!this.decodeDrums(drums)) return;
       this.commit({ ...current, drums, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as DrumSettings } : track) });
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as DrumSettings } : track) }, controlKey);
     }
   }
 
   updateBassSettings(patch: Partial<BassSettings>): void {
     const current = this.state();
     const bass = { ...current.bass, ...patch };
-    this.commit({ ...current, bass, tracks: this.updatePrimaryTrack(current.tracks, 'bass', { generatorSettings: bass }) });
+    this.commit({ ...current, bass, tracks: this.updatePrimaryTrack(current.tracks, 'bass', { generatorSettings: bass }) },
+      this.controlHistoryKey(['primary-part', 'bass'], patch));
   }
 
   updateChordSettings(patch: Partial<ChordSettings>): void {
     const current = this.state();
     const chords = { ...current.chords, ...patch };
-    this.commit({ ...current, chords, tracks: this.updatePrimaryTrack(current.tracks, 'chords', { generatorSettings: chords }) });
+    this.commit({ ...current, chords, tracks: this.updatePrimaryTrack(current.tracks, 'chords', { generatorSettings: chords }) },
+      this.controlHistoryKey(['primary-part', 'chords'], patch));
   }
 
   updateArpeggioSettings(patch: Partial<ArpeggioSettings>): void {
     const current = this.state();
     const arpeggio = { ...current.arpeggio, ...patch };
-    this.commit({ ...current, arpeggio, tracks: this.updatePrimaryTrack(current.tracks, 'arpeggio', { generatorSettings: arpeggio }) });
+    this.commit({ ...current, arpeggio, tracks: this.updatePrimaryTrack(current.tracks, 'arpeggio', { generatorSettings: arpeggio }) },
+      this.controlHistoryKey(['primary-part', 'arpeggio'], patch));
   }
 
   updateDrumSettings(patch: Partial<DrumSettings>): void {
     const current = this.state();
     const drums = { ...current.drums, ...patch };
-    this.commit({ ...current, drums, tracks: this.updatePrimaryTrack(current.tracks, 'drums', { generatorSettings: drums }) });
+    this.commit({ ...current, drums, tracks: this.updatePrimaryTrack(current.tracks, 'drums', { generatorSettings: drums }) },
+      this.controlHistoryKey(['primary-part', 'drums'], patch));
   }
 
   updateMixSettings(part: ArrangedPart, patch: Partial<MixChannelSettings>): void {
@@ -502,7 +525,8 @@ export class ProjectService {
     const current = this.state();
     const mix = { ...current.mix, [part]: { ...current.mix[part], ...patch,
       ...(patch.solo === true ? { muted: false } : patch.muted === true ? { solo: false } : {}) } };
-    this.commit({ ...current, mix, tracks: this.updatePrimaryTrack(current.tracks, part, { mix: mix[part] }) });
+    this.commit({ ...current, mix, tracks: this.updatePrimaryTrack(current.tracks, part, { mix: mix[part] }) },
+      this.controlHistoryKey(['primary-mix', part], patch));
   }
 
   /** Group/global mix gestures commit once, including exclusive solo. */
@@ -623,7 +647,8 @@ export class ProjectService {
     }
     const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
     const mix = patch.mix && isPrimary ? { ...current.mix, [track.role]: tracks[index].mix } : current.mix;
-    this.commit({ ...current, tracks, mix });
+    this.commit({ ...current, tracks, mix }, Object.keys(patch).length === 1
+      ? this.controlHistoryKey(['track', trackId, ...(patch.mix ? ['mix'] : [])], patch.mix ?? patch) : undefined);
   }
 
   updateTrackGeneratorSettings(trackId: string, patch: PartSettingsPatch): void {
@@ -648,7 +673,7 @@ export class ProjectService {
         : track.role === 'arpeggio' && legacySettings ? { ...current, arpeggio: legacySettings as ArpeggioSettings, tracks }
           : track.role === 'drums' && legacySettings ? { ...current, drums: legacySettings as DrumSettings, tracks }
             : { ...current, tracks };
-    this.commit(next);
+    this.commit(next, this.controlHistoryKey(['part', 'global-track', trackId], patch));
   }
 
   updateTrackPhrase(trackId: string, notes: readonly PhraseNote[]): void {
@@ -774,7 +799,7 @@ export class ProjectService {
       updated.chordDegrees = this.matchesMainProgression(chordDegrees) ? undefined : chordDegrees;
     }
     next[index] = updated;
-    this.commit({ ...this.state(), arrangement: next });
+    this.commit({ ...this.state(), arrangement: next }, this.controlHistoryKey(['section', current.id], patch));
   }
 
   setSectionChordDegree(sectionIndex: number, measureIndex: number, degree: number): void {
@@ -880,6 +905,7 @@ export class ProjectService {
   }
 
   undo(): void {
+    this.lastControlEdit = null;
     const previous = this.past.pop();
     if (!previous) {
       return;
@@ -891,6 +917,7 @@ export class ProjectService {
   }
 
   redo(): void {
+    this.lastControlEdit = null;
     const next = this.future.pop();
     if (!next) {
       return;
@@ -901,16 +928,21 @@ export class ProjectService {
     this.refreshHistoryAvailability();
   }
 
-  private commit(next: CompositionProject): void {
+  private commit(next: CompositionProject, controlKey?: string): void {
     const current = this.state();
     if (!this.isProject(next) || JSON.stringify(current) === JSON.stringify(next)) {
       return;
     }
 
-    this.past.push(current);
-    if (this.past.length > MAX_HISTORY) {
-      this.past.shift();
+    const time = performance.now();
+    const compact = this.compactHistoryEnabled() && controlKey !== undefined
+      && this.lastControlEdit?.key === controlKey && this.past.length > 0 && this.future.length === 0
+      && time - this.lastControlEdit.time < COMPACT_HISTORY_WINDOW_MS;
+    if (!compact) {
+      this.past.push(current);
+      if (this.past.length > MAX_HISTORY) this.past.shift();
     }
+    this.lastControlEdit = this.compactHistoryEnabled() && controlKey !== undefined ? { key: controlKey, time } : null;
     this.future.length = 0;
     this.state.set(next);
     this.persist(next);
