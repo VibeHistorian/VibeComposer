@@ -42,6 +42,8 @@
 .group-count { box-sizing: border-box; width: 34px; min-width: 22px; height: 22px; margin-right: auto; padding: 0 3px; flex: 0 0 auto; text-align: center; appearance: textfield; border: 1px solid var(--border-strong); border-radius: var(--radius-tight); background: var(--shadow-highlight); color: var(--text-secondary); font: 10px var(--font-mono); }
 .group-count::-webkit-inner-spin-button, .group-count::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .group-count:focus { outline: 1px solid var(--accent-primary); }
+.group-count { margin-right: 0; }
+.group-mix-controls { margin-right: auto; }
 .track-policy-header:has(vc-track-generation-policy:empty):not(:has([role="status"])) { display: none; }
 .add-track-button, .collapse-group-button { width: 22px; height: 22px; padding: 0; flex: 0 0 auto; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
 .add-track-button:hover, .collapse-group-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
@@ -76,10 +78,7 @@
 
 /* Track mix actions */
 .track-mix-controls { display: flex; align-items: flex-start; gap: 2px; }
-.track-mix-controls button { width: 19px; height: 18px; margin-top: 3px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 10px var(--font-mono); }
-.track-mix-controls button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.track-mix-controls .mute-toggle.active { border-color: var(--mix-mute-active); background: var(--mix-mute-active); color: var(--surface-input); }
-.track-mix-controls .solo-toggle.active { border-color: var(--mix-solo-active); background: var(--mix-solo-active); color: var(--surface-input); }
+.track-mix-controls vc-mix-buttons { margin-top: 3px; }
 
 /* Arrangement and score canvas */
 .song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: minmax(370px, 1fr) auto minmax(270px, 1.05fr); gap: 12px; }

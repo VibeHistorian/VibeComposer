@@ -28,13 +28,15 @@
       @for (group of roles; track group.role) {
         <section class="track-group" [class]="'track-group ' + group.role" [class.group-selected]="selectedRole() === group.role">
           <header class="group-heading">
-            <button type="button" class="group-select" [disabled]="editing()" [attr.aria-pressed]="selectedRole() === group.role" (click)="selectRole(group.role)">
+            <button type="button" class="group-select" [disabled]="editing()" [attr.aria-pressed]="selectedRole() === group.role" (click)="selectRole(group.role)"
+              title="Select role; middle-click to solo only this role" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, roleTrackIds(group.role))">
               <i class="role-dot" [class]="group.role"></i><strong>{{ group.name }}</strong>
             </button>
             <input class="group-count" type="number" min="0" [max]="64 - project().tracks.length + tracksFor(group.role).length" step="1"
               [attr.aria-label]="group.name + ' track count'" title="Change total tracks; locked tracks are kept"
               [value]="tracksFor(group.role).length" [disabled]="editing()" (focus)="$any($event.target).select()"
               (keydown.enter)="$any($event.target).blur()" (change)="changeRoleCount(group.role, $event)" />
+            <vc-mix-buttons class="group-mix-controls" [trackIds]="roleTrackIds(group.role)" [label]="group.name + ' tracks'" />
             <button type="button" class="add-track-button" [disabled]="editing()" (click)="addTrack(group.role)"
               [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
               <button type="button" class="add-track-button" [attr.aria-label]="'Reroll ' + group.name + ' tracks'" [title]="'Reroll unlocked ' + group.name + ' track settings'"
@@ -57,6 +59,7 @@
               <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                 <div class="track-line" (click)="selectTrack(track.id)">
                   <button type="button" class="track-select" [disabled]="editing()"
+                    title="Select track; middle-click to solo only this track" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, [track.id])"
                     [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                     <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                   </button>
@@ -102,12 +105,7 @@
                       [value]="track.mix.volumePercent" [minimum]="0" [maximum]="100" valueFormat="decibels"
                       (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
                       (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
-                    <button type="button" class="mute-toggle" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
-                      [attr.aria-label]="(track.mix.muted ? 'Unmute ' : 'Mute ') + track.name"
-                      (click)="$event.stopPropagation(); toggleMix(track.id, 'muted')">M</button>
-                    <button type="button" class="solo-toggle" [class.active]="track.mix.solo" [attr.aria-pressed]="track.mix.solo"
-                      [attr.aria-label]="(track.mix.solo ? 'Unsolo ' : 'Solo ') + track.name"
-                      (click)="$event.stopPropagation(); toggleMix(track.id, 'solo')">S</button>
+                    <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />
                   </div>
                 </div>
 

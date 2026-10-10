@@ -21,6 +21,7 @@ import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
 import { PartScopeActionsComponent } from './part-scope-actions.component';
 import { CompactKnobComponent } from './compact-knob.component';
+import { MixButtonsComponent } from './mix-buttons.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { TrackGenerationPolicyComponent } from './track-generation-policy.component';
 import { DEFAULT_TRACK_POLICIES } from '../core/music/track-generation';
@@ -48,7 +49,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -575,6 +576,22 @@ export class WorkspaceCanvasComponent {
     if (!track) return;
     this.projects.updateTrack(trackId, { mix: { [setting]: !track.mix[setting] } });
     this.playback.updateMix(this.project());
+  }
+
+  roleTrackIds(role: ArrangedPart): string[] {
+    return this.tracksFor(role).map(track => track.id);
+  }
+
+  soloSelection(event: MouseEvent, trackIds: readonly string[]): void {
+    if (event.button !== 1 || this.editing()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.projects.toggleTrackMix(trackIds, 'solo', true);
+    this.playback.updateMix(this.project());
+  }
+
+  preventSelectionScroll(event: MouseEvent): void {
+    if (event.button === 1) event.preventDefault();
   }
 
   updateTrackMix(trackId: string, setting: 'panPercent' | 'volumePercent', value: number): void {

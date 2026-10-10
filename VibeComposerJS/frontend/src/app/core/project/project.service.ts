@@ -425,8 +425,32 @@ export class ProjectService {
       return;
     }
     const current = this.state();
-    const mix = { ...current.mix, [part]: { ...current.mix[part], ...patch } };
+    const mix = { ...current.mix, [part]: { ...current.mix[part], ...patch,
+      ...(patch.solo === true ? { muted: false } : patch.muted === true ? { solo: false } : {}) } };
     this.commit({ ...current, mix, tracks: this.updatePrimaryTrack(current.tracks, part, { mix: mix[part] }) });
+  }
+
+  /** Group/global mix gestures commit once, including exclusive solo. */
+  toggleTrackMix(trackIds: readonly string[], setting: 'muted' | 'solo', exclusive = false): void {
+    const current = this.state();
+    const ids = new Set(trackIds);
+    const selected = current.tracks.filter(track => ids.has(track.id));
+    if (!selected.length) return;
+    const enabled = exclusive || !selected.some(track => track.mix[setting]);
+    const opposite = setting === 'solo' ? 'muted' : 'solo';
+    const tracks = current.tracks.map(track => {
+      const mix = ids.has(track.id)
+        ? { ...track.mix, [setting]: enabled, ...(enabled ? { [opposite]: false } : {}) }
+        : exclusive && setting === 'solo' ? { ...track.mix, solo: false } : track.mix;
+      return mix.muted === track.mix.muted && mix.solo === track.mix.solo ? track : { ...track, mix };
+    });
+    if (tracks.every((track, index) => track === current.tracks[index])) return;
+    const mix = { ...current.mix };
+    for (const role of ARRANGED_PARTS) {
+      const primary = tracks.find(track => track.role === role);
+      if (primary) mix[role] = primary.mix;
+    }
+    this.commit({ ...current, tracks, mix });
   }
 
   updateEditedPhrase(part: ArrangedPart, notes: readonly PhraseNote[]): void {
@@ -517,7 +541,8 @@ export class ProjectService {
     if (track.role === 'drums' && ((patch.midiChannel !== undefined && patch.midiChannel !== 10)
       || patch.mix?.program !== undefined)) return;
     tracks[index] = { ...track, ...patch, name: patch.name?.trim() ?? track.name,
-      mix: patch.mix ? { ...track.mix, ...patch.mix } : track.mix };
+      mix: patch.mix ? { ...track.mix, ...patch.mix,
+        ...(patch.mix.solo === true ? { muted: false } : patch.mix.muted === true ? { solo: false } : {}) } : track.mix };
     if (patch.mix?.program !== undefined && patch.mix.program !== track.mix.program) {
       delete (tracks[index] as { instrumentPool?: string }).instrumentPool;
     }

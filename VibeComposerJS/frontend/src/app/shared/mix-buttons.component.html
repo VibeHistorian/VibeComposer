@@ -1,0 +1,11 @@
+<button type="button" class="mute-toggle" [class.active]="state('muted') === 'true'" [class.partial]="state('muted') === 'mixed'"
+  [disabled]="empty()" [attr.aria-pressed]="state('muted')"
+  [attr.aria-label]="(state('muted') === 'false' ? 'Mute ' : 'Unmute ') + label()"
+  [title]="(state('muted') === 'false' ? 'Mute ' : 'Unmute ') + label()"
+  (click)="$event.stopPropagation(); toggle('muted')">M</button>
+<button type="button" class="solo-toggle" [class.active]="state('solo') === 'true'" [class.partial]="state('solo') === 'mixed'"
+  [disabled]="empty()" [attr.aria-pressed]="state('solo')"
+  [attr.aria-label]="(state('solo') === 'false' ? 'Solo ' : 'Unsolo ') + label()"
+  [title]="(state('solo') === 'false' ? 'Solo ' : 'Unsolo ') + label() + (allowExclusive() ? '; middle-click to solo only this selection' : '')"
+  (mousedown)="preventMiddleScroll($event)" (auxclick)="exclusiveSolo($event)"
+  (click)="$event.stopPropagation(); toggle('solo')">S</button>

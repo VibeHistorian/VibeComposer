@@ -4,10 +4,11 @@ import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { KEYS } from '../core/music/harmony';
 import { WheelSelectDirective } from './wheel-select.directive';
+import { MixButtonsComponent } from './mix-buttons.component';
 
 @Component({
   selector: 'vc-transport-dock',
-  imports: [WheelSelectDirective],
+  imports: [WheelSelectDirective, MixButtonsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transport-dock.component.html',
   styleUrl: './transport-dock.component.css',
@@ -18,6 +19,7 @@ export class TransportDockComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly keys = KEYS;
+  readonly trackIds = computed(() => this.project().tracks.map(track => track.id));
   private readonly liveReloadEffect = effect(() => {
     const project = this.project();
     const live = this.playback.liveEnabled();

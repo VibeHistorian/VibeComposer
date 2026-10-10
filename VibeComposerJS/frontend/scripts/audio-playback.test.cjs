@@ -229,6 +229,7 @@ test('transport watches project changes and enabling LIVE without subscribing to
     '../core/project/project.service': { ProjectService: 'projects' }, '../core/music/harmony': { KEYS: [] },
     './workspace-ui.service': { WorkspaceUiService: 'ui' },
     './wheel-select.directive': { WheelSelectDirective: class {} },
+    './mix-buttons.component': { MixButtonsComponent: class {} },
   });
   let reloads = 0;
   const reload = playback.reload.bind(playback);

@@ -5,6 +5,68 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('mute/solo controls clear the opposite state across track and legacy mix updates', () => {
+  const { service } = fixture();
+  const track = service.project().tracks[0];
+  service.updateTrack(track.id, { mix: { muted: true } });
+  service.updateTrack(track.id, { mix: { solo: true } });
+  assert.equal(service.project().tracks[0].mix.muted, false);
+  service.updateMixSettings(track.role, { muted: true });
+  assert.equal(service.project().tracks[0].mix.solo, false);
+  assert.deepEqual(service.project().mix[track.role], service.project().tracks[0].mix);
+});
+
+test('role/global mute and solo clear partial states and commit a whole gesture in one undo step', () => {
+  const { service } = fixture();
+  service.addTrack('bass');
+  const ids = service.project().tracks.filter(track => track.role === 'bass').map(track => track.id);
+  service.updateTrack(ids[0], { mix: { muted: true } });
+  service.toggleTrackMix(ids, 'muted');
+  assert.ok(service.project().tracks.filter(track => ids.includes(track.id)).every(track => !track.mix.muted));
+  const before = service.exportProjectJson();
+  service.toggleTrackMix(ids, 'solo');
+  const after = service.exportProjectJson();
+  assert.ok(service.project().tracks.filter(track => ids.includes(track.id)).every(track => track.mix.solo && !track.mix.muted));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  const all = service.project().tracks.map(track => track.id);
+  service.toggleTrackMix(all, 'solo');
+  assert.ok(service.project().tracks.every(track => !track.mix.solo));
+  service.toggleTrackMix(all, 'muted');
+  assert.ok(service.project().tracks.every(track => track.mix.muted && !track.mix.solo));
+  service.toggleTrackMix(all, 'solo');
+  assert.ok(service.project().tracks.every(track => track.mix.solo && !track.mix.muted));
+  const unchanged = service.project();
+  service.toggleTrackMix([], 'solo');
+  assert.strictEqual(service.project(), unchanged);
+});
+
+test('middle-click solos only the selected track/group, unmutes it, and ignores other buttons', () => {
+  const { service, load } = fixture();
+  service.addTrack('bass');
+  const bass = service.project().tracks.filter(track => track.role === 'bass').map(track => track.id);
+  service.toggleTrackMix(service.project().tracks.map(track => track.id), 'muted');
+  const { MixButtonsComponent } = load('shared/mix-buttons.component.ts');
+  const buttons = new MixButtonsComponent();
+  buttons.trackIds.set(bass); buttons.label.set('Bass tracks');
+  let updates = 0, prevented = 0, stopped = 0;
+  buttons.playback = { updateMix: () => updates++ };
+  const click = button => ({ button, preventDefault: () => prevented++, stopPropagation: () => stopped++ });
+  const before = service.exportProjectJson();
+  buttons.exclusiveSolo(click(2)); assert.equal(service.exportProjectJson(), before);
+  buttons.exclusiveSolo(click(1));
+  assert.ok(service.project().tracks.every(track => track.mix.solo === bass.includes(track.id)));
+  assert.ok(service.project().tracks.filter(track => bass.includes(track.id)).every(track => !track.mix.muted));
+  assert.equal(buttons.state('solo'), 'true');
+  buttons.trackIds.set([bass[0]]); buttons.exclusiveSolo(click(1));
+  assert.deepEqual(service.project().tracks.filter(track => track.mix.solo).map(track => track.id), [bass[0]]);
+  buttons.trackIds.set(bass); assert.equal(buttons.state('solo'), 'mixed');
+  assert.equal(updates, 2); assert.equal(prevented, 2); assert.equal(stopped, 2);
+  buttons.allowExclusive.set(false);
+  const unchanged = service.project(); buttons.exclusiveSolo(click(1));
+  assert.strictEqual(service.project(), unchanged);
+});
+
 test('drum pitch selection matches 480 cases extracted verbatim from production DrumGUI', () => {
   const { load } = fixture();
   const { chooseDrumPitches } = load('core/music/drum-reroll.ts');
@@ -1389,7 +1451,7 @@ function fixture() {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };

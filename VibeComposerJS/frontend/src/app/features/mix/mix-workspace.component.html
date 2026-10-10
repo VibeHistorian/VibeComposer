@@ -67,10 +67,7 @@
           </div>
 
           <div class="channel-actions">
-            <button type="button" class="mix-toggle mute-toggle" [class.active]="track.mix.muted" [attr.aria-pressed]="track.mix.muted"
-              (click)="$event.stopPropagation(); toggle(track.id, 'muted')">{{ track.mix.muted ? 'Unmute' : 'Mute' }}</button>
-            <button type="button" class="mix-toggle solo-toggle" [class.active]="track.mix.solo" [attr.aria-pressed]="track.mix.solo"
-              (click)="$event.stopPropagation(); toggle(track.id, 'solo')">Solo</button>
+            <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />
           </div>
         </article>
       }

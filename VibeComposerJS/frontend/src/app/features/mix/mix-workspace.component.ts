@@ -9,10 +9,11 @@ import { tracksInRoleOrder } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { MixButtonsComponent } from '../../shared/mix-buttons.component';
 
 @Component({
   selector: 'vc-mix-workspace',
-  imports: [WheelSelectDirective],
+  imports: [WheelSelectDirective, MixButtonsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './mix-workspace.component.html',
   styleUrl: './mix-workspace.component.css',
