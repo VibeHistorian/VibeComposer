@@ -171,16 +171,17 @@ test('production Angular controls initialize selects from settings and support r
         velocitySwitches[0].click();
         const velocityGrids = await waitFor(() => {
           const result = [...document.querySelectorAll('.velocity-pattern-grid')];
-          return result.length === 2 ? result : null;
+          return result.length === 1 ? result : null;
         }, 'velocity grids enabled');
         result.velocityCounts = velocityGrids.map(grid => grid.querySelectorAll('input').length);
         const velocity = velocityGrids[0].querySelector('input');
         velocity.value = '22'; velocity.dispatchEvent(new Event('input', { bubbles: true }));
         await waitFor(() => velocityGrids[0].querySelector('output').textContent.trim() === '22', 'velocity preview');
         result.velocityBeforeCommit = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities;
-        result.inspectorBeforeCommit = velocityGrids[1].querySelector('input').value;
+        result.storedBeforeCommit = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities?.[0] ?? 79;
         velocity.dispatchEvent(new Event('change', { bubbles: true }));
-        await waitFor(() => velocityGrids.every(grid => grid.querySelector('input').value === '22'), 'velocity commit reflected in both editors');
+        await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities?.[0] === 22, 'inspector velocity commit persisted');
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const secondVelocity = velocityGrids[0].querySelectorAll('input')[1];
         wheel(secondVelocity, -100, true);
         await waitFor(() => secondVelocity.value === '80', 'velocity wheel update');
@@ -189,7 +190,7 @@ test('production Angular controls initialize selects from settings and support r
         velocitySwitches[0].click();
         await waitFor(() => !document.querySelector('.velocity-pattern-grid'), 'velocity grids disabled');
         result.retainedVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities;
-        velocitySwitches[0].click();
+        document.querySelector('#part-inspector button[aria-label="Custom velocities"]').click();
         await waitFor(() => document.querySelector('.velocity-pattern-grid input')?.value === '22', 'velocity grids restored');
         result.velocitiesEnabled = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.useCustomVelocities;
         document.querySelector('.track-group.melody .group-select').click();
@@ -310,7 +311,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => drumGrids.every(grid => grid.querySelector('button').getAttribute('aria-pressed') === 'false'), 'shared drum custom grid edit');
         const drumVelocities = [...document.querySelectorAll('button[aria-label="Custom velocities"]')];
         drumVelocities[0].click();
-        await waitFor(() => document.querySelectorAll('.velocity-pattern-grid').length === 2, 'drum velocity grids');
+        await waitFor(() => document.querySelectorAll('.velocity-pattern-grid').length === 1, 'drum inspector velocity grid');
         result.drumVelocityCounts = [...document.querySelectorAll('.velocity-pattern-grid')].map(grid => grid.querySelectorAll('input').length);
         result.drumChannelLocked = document.querySelector('.track-group.drums .track-channel').disabled;
         result.drumSettings = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'drums').generatorSettings;
@@ -572,7 +573,7 @@ test('production Angular controls initialize selects from settings and support r
     ]);
     assert.deepEqual(actual.drumRhythmOptions, [expected, expected]);
     assert.deepEqual(actual.drumGridCounts, [4, 4]);
-    assert.deepEqual(actual.drumVelocityCounts, [4, 4]);
+    assert.deepEqual(actual.drumVelocityCounts, [4]);
     assert.equal(actual.drumChannelLocked, true);
     assert.equal(actual.drumSettings.pitch, 38);
     assert.equal(actual.drumSettings.rhythm, 'custom');
@@ -606,9 +607,9 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.colors, ['rgb(255, 255, 50)', 'rgb(145, 255, 40)']);
     assert.equal(actual.controlsFit, true);
     assert.equal(actual.groupStillSelected, 'true');
-    assert.deepEqual(actual.velocityCounts, [8, 8]);
+    assert.deepEqual(actual.velocityCounts, [8]);
     assert.equal(actual.velocityBeforeCommit, undefined);
-    assert.equal(actual.inspectorBeforeCommit, '79');
+    assert.equal(actual.storedBeforeCommit, 79);
     assert.equal(actual.customVelocities.length, 32);
     assert.deepEqual(actual.customVelocities.slice(0, 3), [22, 80, 79]);
     assert.deepEqual(actual.retainedVelocities, actual.customVelocities);

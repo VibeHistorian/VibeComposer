@@ -51,9 +51,9 @@ const rhythmControls: readonly PartControl[] = [
       description: 'Invert notes and rests inside the chord rhythm grid. Fill still determines which chords play.' },
     { key: 'customPattern', label: 'Custom grid', kind: 'pattern', defaultValue: Object.freeze(Array(32).fill(1)),
       description: 'Click or drag to paint sounded slots and rests; Enter or Space toggles a slot. Edits follow Shift and Pattern flip. Hidden cells are retained when Hits changes.' },
-    { key: 'useCustomVelocities', label: 'Custom velocities', kind: 'boolean', defaultValue: false,
+    { key: 'useCustomVelocities', label: 'Custom velocities', kind: 'boolean', defaultValue: false, advanced: true,
       description: 'Use the velocity grid instead of random Min/Max velocity. Disabling retains your grid.' },
-    { key: 'customVelocities', label: 'Velocity grid', kind: 'velocities', defaultValue: DEFAULT_CUSTOM_VELOCITIES,
+    { key: 'customVelocities', label: 'Velocity grid', kind: 'velocities', defaultValue: DEFAULT_CUSTOM_VELOCITIES, advanced: true,
       description: 'Velocity per displayed subdivision (0–127). Zero silences a hit. Values stay at their subdivision when rhythm Shift/Flip changes, and hidden cells survive Hits changes.' }
 ];
 
@@ -66,12 +66,12 @@ const voices: readonly PartControl[] = [number('chordNotesStretch', 'Voices', 2,
 const common: readonly PartControl[] = [
   { key: 'generationEnabled', label: 'Generate notes', kind: 'boolean', defaultValue: true,
     description: 'Enable generated notes for this part. Saved manual phrases remain explicit replacements; mixer mute and section presence are independent.' },
-  { key: 'patternSeed', label: 'Seed', kind: 'integer', minimum: -2147483648, maximum: 2147483647, defaultValue: 0,
+  { key: 'patternSeed', label: 'Seed', kind: 'integer', minimum: -2147483648, maximum: 2147483647, defaultValue: 0, advanced: true,
     description: 'Java int part seed. Zero follows the project/track seed; this changes notes without rerolling settings.' },
   number('offset', 'Offset', -1000, 1000, 0, ' /1000 beat'),
-  number('feedbackCount', 'Delays', 0, 5, 0, ''),
-  number('feedbackDuration', 'FB duration', -2000, 2000, 750, ' /1000 beat'),
-  number('feedbackVol', 'FB velocity', 10, 150, 65),
+  { ...number('feedbackCount', 'Delays', 0, 5, 0, ''), advanced: true },
+  { ...number('feedbackDuration', 'FB duration', -2000, 2000, 750, ' /1000 beat'), advanced: true },
+  { ...number('feedbackVol', 'FB velocity', 10, 150, 65), advanced: true },
 ];
 
 /** Only expose settings with a working musical consumer in this buildout slice. */

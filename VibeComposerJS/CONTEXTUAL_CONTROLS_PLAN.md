@@ -394,6 +394,8 @@ Provide keyboard selection and an explicit Include/Exclude action in inspector/c
 
 ## Quick panel and expanded Tracks headers
 
+For every role and settings scope, delay count/duration/velocity, part Seed/Clear seed, rhythm preview, and VGRID/custom-velocity toggle/grid appear only in the Inspector. The editable custom rhythm grid stays in quick Part settings as well as the Inspector. Both editors continue to resolve the same scoped settings and commands.
+
 The **Part settings** panel sits inside the center column, immediately after arrangement and before score. It starts expanded. Its always-visible heading contains collapse/expand, role color, scope breadcrumb (for example `VERSE1 · Chords · C2`), inherited/customized status, Reset to inherited, and Open inspector. Collapsing it preserves context and values. Expansion is UI state, not a musical history entry.
 
 Use two compact rows where space permits: fill + pattern selector/grid, then knobs for transpose, hits, span, repeat, shift, pause, split, length, swing, and velocity range. Add a small role-specific subset from the placement map. Show only supported controls; never ship active controls that have no generator effect. A role cell aggregates its member tracks: unequal values show Mixed, not the first track's value. A mixed pattern shows a summary until the user explicitly chooses a common pattern. Narrow widths wrap or scroll the quick controls while leaving score usable.

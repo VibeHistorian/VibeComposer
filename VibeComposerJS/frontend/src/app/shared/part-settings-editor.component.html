@@ -83,7 +83,7 @@
             }
           </div>
         }
-        @if (group.id === 'rhythm' && rhythmPreview() !== undefined) {
+        @if (advanced() && group.id === 'rhythm' && rhythmPreview() !== undefined) {
           <div class="rhythm-preview" [title]="rhythmPreviewLabel()">
             <span class="rhythm-preview-label">Rhythm preview</span>
             @if (rhythmPreview(); as pattern) {
