@@ -1,9 +1,5 @@
 <section class="workspace-canvas" aria-label="Song workspace">
   <aside class="track-browser" aria-label="Tracks">
-    <header class="browser-heading">
-      <h2>Tracks</h2>
-    </header>
-
     <div class="track-groups">
       @for (group of roles; track group.role) {
         <section class="track-group" [class]="'track-group ' + group.role" [class.group-selected]="selectedRole() === group.role">
@@ -22,8 +18,8 @@
               <button type="button" class="add-track-button" [attr.aria-label]="'Reroll ' + group.name + ' tracks'" [title]="'Reroll unlocked ' + group.name + ' track settings'"
                 [disabled]="editing() || !canRerollRole(group.role)" (click)="rerollRole(group.role)">↻</button>
             <button type="button" class="collapse-group-button" [disabled]="editing()" [attr.aria-expanded]="!isGroupCollapsed(group.role)"
-              [attr.aria-label]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
-              [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' tracks'"
+              [attr.aria-label]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' randomization settings'"
+              [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' randomization settings'"
               (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '▵' }}</button>
           </header>
           <div class="track-policy-header">
@@ -31,66 +27,64 @@
               [instrumentPolicy]="instrumentPolicyFor(group.role)" (instrumentPolicyChanged)="updateInstrumentPolicy(group.role, $event)" />
             @if (rerollMessageFor(group.role)) { <span role="status">{{ rerollMessageFor(group.role) }}</span> }
           </div>
-          @if (!isGroupCollapsed(group.role)) {
-            @if (!generationAvailable[group.role]) {
-              <p class="generation-status">Manual notes · automatic generation coming later</p>
-            }
-            @for (track of tracksFor(group.role); track track.id) {
-              <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
-                <div class="track-line" (click)="selectTrack(track.id)">
-                  <button type="button" class="track-select" [disabled]="editing()"
-                    title="Select track; middle-click to solo only this track" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, [track.id])"
-                    [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
-                    <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
-                  </button>
-                  <div class="track-reroll-actions" (click)="$event.stopPropagation()">
-                    <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
-                      [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
-                      [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
-                      (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">⍟</button>
-                    <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
-                      (click)="rerollRole(track.role, track.id)">↻</button>
-                  </div>
-                  @if (track.role === 'drums') {
-                    <select class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
-                      [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
-                      (click)="$event.stopPropagation()" (change)="updateDrumPitch(track, $event)">
-                      @for (instrument of drumInstruments; track instrument.midi) {
-                        <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(track)">{{ instrument.name }} · {{ instrument.midi }}</option>
-                      }
-                    </select>
-                  } @else {
-                    <select class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
-                      [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
-                      (click)="$event.stopPropagation()" (change)="updateInstrument(track, $event)">
-                      @for (instrument of instruments; track instrument.program) {
-                        <option [value]="instrument.program" [selected]="instrument.program === track.mix.program">{{ instrument.name }}</option>
-                      }
-                    </select>
-                  }
-                  <select class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
-                    [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
-                    [title]="track.role === 'drums' ? 'Percussion uses MIDI channel 10' : 'MIDI channel ' + track.midiChannel"
-                    (click)="$event.stopPropagation()" (change)="updateChannel(track, $event)">
-                    @for (channel of midiChannels; track channel) {
-                      <option [value]="channel" [selected]="channel === track.midiChannel">CH {{ channel.toString().padStart(2, '0') }}</option>
+          @if (!generationAvailable[group.role]) {
+            <p class="generation-status">Manual notes · automatic generation coming later</p>
+          }
+          @for (track of tracksFor(group.role); track track.id) {
+            <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
+              <div class="track-line" (click)="selectTrack(track.id)">
+                <button type="button" class="track-select" [disabled]="editing()"
+                  title="Select track; middle-click to solo only this track" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, [track.id])"
+                  [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
+                  <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
+                </button>
+                <div class="track-reroll-actions" (click)="$event.stopPropagation()">
+                  <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
+                    [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
+                    [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
+                    (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">⍟</button>
+                  <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
+                    (click)="rerollRole(track.role, track.id)">↻</button>
+                </div>
+                @if (track.role === 'drums') {
+                  <select class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
+                    [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
+                    (click)="$event.stopPropagation()" (change)="updateDrumPitch(track, $event)">
+                    @for (instrument of drumInstruments; track instrument.midi) {
+                      <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(track)">{{ instrument.name }} · {{ instrument.midi }}</option>
                     }
                   </select>
-                  <div class="track-mix-controls" (click)="$event.stopPropagation()">
-                    <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name"
-                      [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
-                      (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"
-                      (valueCommit)="updateTrackMix(track.id, 'panPercent', $event)" />
-                    <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name"
-                      [value]="track.mix.volumePercent" [minimum]="0" [maximum]="100" valueFormat="decibels"
-                      (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
-                      (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
-                    <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />
-                  </div>
+                } @else {
+                  <select class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
+                    [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
+                    (click)="$event.stopPropagation()" (change)="updateInstrument(track, $event)">
+                    @for (instrument of instruments; track instrument.program) {
+                      <option [value]="instrument.program" [selected]="instrument.program === track.mix.program">{{ instrument.name }}</option>
+                    }
+                  </select>
+                }
+                <select class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
+                  [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
+                  [title]="track.role === 'drums' ? 'Percussion uses MIDI channel 10' : 'MIDI channel ' + track.midiChannel"
+                  (click)="$event.stopPropagation()" (change)="updateChannel(track, $event)">
+                  @for (channel of midiChannels; track channel) {
+                    <option [value]="channel" [selected]="channel === track.midiChannel">CH {{ channel.toString().padStart(2, '0') }}</option>
+                  }
+                </select>
+                <div class="track-mix-controls" (click)="$event.stopPropagation()">
+                  <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name"
+                    [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
+                    (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"
+                    (valueCommit)="updateTrackMix(track.id, 'panPercent', $event)" />
+                  <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name"
+                    [value]="track.mix.volumePercent" [minimum]="0" [maximum]="100" valueFormat="decibels"
+                    (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
+                    (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
+                  <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />
                 </div>
+              </div>
 
-              </article>
-            }
+            </article>
           }
         </section>
       }

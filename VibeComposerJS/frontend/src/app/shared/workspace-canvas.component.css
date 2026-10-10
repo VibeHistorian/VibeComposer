@@ -1,15 +1,15 @@
 /* Workspace frame */
 .workspace-canvas { min-height: 0; margin: 12px 0; flex: 1 1 auto; display: grid; grid-template-columns: clamp(320px, calc(16vw + 80px), 380px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: 16px; }
-.track-browser, .score-panel, .context-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
-.track-browser, .context-inspector { padding: 15px 13px; }
-.track-browser { height: 100%; max-height: none; display: flex; flex-direction: column; overflow: hidden; align-self: stretch; }
+.score-panel, .context-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
+.context-inspector { padding: 15px 13px; }
+.track-browser { min-width: 0; height: 100%; max-height: none; display: flex; flex-direction: column; overflow: hidden; align-self: stretch; }
 .context-inspector { height: 100%; max-height: none; overflow-y: auto; align-self: stretch; }
-.browser-heading, .canvas-heading { min-height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.browser-heading h2, .canvas-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 13px; font-weight: 600; letter-spacing: -.025em; }
+.canvas-heading { min-height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.canvas-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 13px; font-weight: 600; letter-spacing: -.025em; }
 .eyebrow { margin: 0; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .11em; }
 
 /* Track list */
-.track-groups { min-height: 0; margin-top: 9px; flex: 1; display: grid; align-content: start; gap: 9px; overflow-y: auto; }
+.track-groups { min-height: 0; flex: 1; display: grid; align-content: start; gap: 9px; overflow-y: auto; }
 .track-group { min-width: 0; padding: 4px; border: 1px solid var(--border-subtle); border-left: 2px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); }
 .track-group.melody { border-left-color: var(--role-melody); }
 .track-group.melody .group-heading { background: var(--role-melody-header); }
@@ -171,7 +171,6 @@
 }
 @media (max-width: 680px) {
   .workspace-canvas { grid-template-columns: 1fr; }
-  .track-browser { padding: 12px; }
   .track-browser { max-height: none; }
   .track-groups { max-height: 330px; grid-template-columns: minmax(0, 1fr); }
   .song-canvas { grid-template-rows: auto auto minmax(350px, auto); }

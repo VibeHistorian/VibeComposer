@@ -360,13 +360,15 @@ test('production Angular controls initialize selects from settings and support r
         result.countBox = getComputedStyle(countBox).borderTopStyle;
         const generateGroup = document.querySelector('.track-group.chords');
         const countInput = generateGroup.querySelector('input[aria-label="Chords track count"]');
-        generateGroup.querySelector('button[aria-label="Collapse Chords tracks"]').click();
-        await waitFor(() => !generateGroup.querySelector('.policy-controls') && !generateGroup.querySelector('.track-select'), 'collapsed group');
+        const visibleChordTracks = generateGroup.querySelectorAll('.track-select').length;
+        generateGroup.querySelector('button[aria-label="Collapse Chords randomization settings"]').click();
+        await waitFor(() => !generateGroup.querySelector('.policy-controls') && generateGroup.querySelectorAll('.track-select').length === visibleChordTracks, 'collapsed settings keep tracks visible');
         countInput.focus(); countInput.value = '3'; countInput.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length === 3, 'generate while collapsed');
         result.collapsedGenerate = countInput.value;
+        await waitFor(() => generateGroup.querySelectorAll('.track-select').length === 3, 'new tracks visible while settings collapsed');
         result.separateGenerateRemoved = !generateGroup.querySelector('.generate-tracks');
-        generateGroup.querySelector('button[aria-label="Expand Chords tracks"]').click();
+        generateGroup.querySelector('button[aria-label="Expand Chords randomization settings"]').click();
         await waitFor(() => generateGroup.querySelector('.policy-controls'), 'expanded rules');
         result.countAfterExpand = countInput.value;
         await waitFor(() => generateGroup.querySelectorAll('.track-select').length === 3, 'Generate N adds tracks');

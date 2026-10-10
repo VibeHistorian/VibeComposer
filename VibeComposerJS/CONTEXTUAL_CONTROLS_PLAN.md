@@ -494,6 +494,8 @@ Remaining order after the recorded checkpoints: **prioritize P6 role slices for 
 
 ## P6 count interaction revision (2026-10-10)
 
+The Tracks column has no enclosing panel surface, border, padding or title; each of the five roles is its own panel. Role headers collapse only the randomization settings, leaving track rows and the editable total visible. The first policy section sits directly below the header without an extra separator; separators between policy sections and before track rows remain.
+
 The editable boxed total beside the role name supersedes the Count/Generate N controls described in checkpoints 15–16. Less removes unlocked tracks by descending track number; the effective total is max(locked track count, requested total). More appends generated tracks to the end, with new numbers above surviving members. Same is a no-op, preserving history, redo and generation counters. Removed tracks lose their section presence/patch references; surviving identities, settings, manual notes, mix and overrides remain intact. Zero is supported, including an empty project. Increases retain deterministic role-policy generation, atomic validation and the project limit of 64 tracks.
 
 ## Current TypeScript implementation touchpoints
