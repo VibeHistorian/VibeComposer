@@ -172,12 +172,14 @@
               <div class="score-track-lanes">
                 <div class="score-track-labels" [style.height.px]="scoreViewport().scoreHeight">
                 @for (track of scoreTracks(); track track.id; let trackIndex = $index) {
-                  <span class="score-track-label" [class.selected]="isScoreTrackSelected(track)"
+                  <button type="button" class="score-track-label" [class.selected]="isScoreTrackSelected(track)"
+                    [attr.aria-pressed]="isScoreTrackSelected(track)" [title]="'Select global ' + track.name + ' track settings'"
+                    (click)="selectScoreTrack(track)"
                     [class.row-hidden]="!isScoreTrackVisible(track)"
                     [style.top.px]="trackIndex * scoreViewport().laneHeight - scoreViewport().verticalOffset"
                     [style.height.px]="scoreViewport().laneHeight">
                     <i class="role-dot" [class]="track.role"></i>{{ track.name }}
-                  </span>
+                  </button>
                   @if (!isScoreTrackVisible(track)) {
                     <span class="lane-hidden" [style.top.px]="(trackIndex + 0.5) * scoreViewport().laneHeight - scoreViewport().verticalOffset">Hidden</span>
                   }
@@ -187,6 +189,7 @@
                   [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   (seekRequested)="seek($event)"
+                  (trackSelected)="selectScoreTrack($event)"
                   [hiddenTrackIds]="hiddenTracks()" (noteSelected)="openNoteEditor($event)" />
                 <span class="score-track-label velocity-label">VEL</span>
               </div>
@@ -219,10 +222,9 @@
           @for (track of contextTracks(); track track.id) {
             <section class="quick-settings-group">
               <strong>{{ track.name }}</strong>
-              <label class="quick-check">
-                <input type="checkbox" [checked]="contextTrackPresent(track)" (change)="toggleContextTrackPresence(track)" />
-                Include in this section
-              </label>
+              <vc-compact-toggle [attr.data-control-role]="track.role" label="Include in this section"
+                [description]="'Include ' + track.name + ' in the selected section.'"
+                [active]="contextTrackPresent(track)" (toggled)="toggleContextTrackPresence(track)" />
               <button type="button" class="restore-track-button" (click)="selectTrack(track.id)">Edit global track settings</button>
               <button type="button" class="restore-track-button" (click)="openTrackEditor(track.id)">Edit notes for entire track</button>
               @if (track.editedPhrase && generationAvailable[track.role]) {
@@ -269,9 +271,8 @@
             </div>
             @for (track of arrangedTracks(); track track.id) {
               <div class="section-track-control" [attr.data-control-role]="track.role">
-                <label><span><i class="role-dot" [class]="track.role"></i>{{ track.name }}</span>
-                  <input type="checkbox" [checked]="trackPresent(section, track)" (change)="toggleSectionTrack(section, track, $event)" />
-                </label>
+                <vc-compact-toggle [label]="track.name" [description]="'Include ' + track.name + ' in this section.'"
+                  [active]="trackPresent(section, track)" (toggled)="toggleArrangementTrack(section.id, track.id, !trackPresent(section, track))" />
               </div>
             }
           </div>

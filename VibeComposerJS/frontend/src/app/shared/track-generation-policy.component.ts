@@ -2,9 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../core/project/project.model';
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../core/music/instrument-generation';
 import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../core/music/track-generation';
+import { CompactToggleComponent } from './compact-toggle.component';
 
 @Component({
   selector: 'vc-track-generation-policy',
+  imports: [CompactToggleComponent],
+  host: { '[attr.data-control-role]': 'role()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './track-generation-policy.component.html',
   styleUrl: './track-generation-policy.component.css',
@@ -24,6 +27,14 @@ export class TrackGenerationPolicyComponent {
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
     PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Percussion' };
   readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()]);
+
+  toggle(control: PolicyControl): void {
+    if (!this.inactive(control)) this.policyChanged.emit({ [control.key]: !this.values()[control.key] });
+  }
+
+  toggleInstrument(key: 'randomize' | 'sameInstrument'): void {
+    if (!this.disabled()) this.instrumentPolicyChanged.emit({ [key]: !this.instrumentPolicy()[key] });
+  }
 
   inactive(control: PolicyControl): boolean {
     return this.disabled() || (control.key === 'fixedHits' && this.values()['randomHits'] === true)

@@ -1,5 +1,5 @@
-<div class="compact-knob" [class.mini]="mini()" [class.dense]="dense()" [title]="tooltip()" (wheel)="onWheel($event)">
-  <vc-control-heading #heading [label]="shortLabel() ?? label()" [showStatus]="!dense()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
+<div class="compact-knob" [class.mini]="mini()" [class.dense]="dense()" [class.coded]="compact()" [title]="tooltip()" (wheel)="onWheel($event)">
+  <vc-control-heading #heading [label]="label()" [shortLabel]="shortLabel()" [showStatus]="!dense() && !compact()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
   <span class="knob-face" [style.--knob-progress]="angle()" aria-hidden="true"><span>{{ mini() ? valueFormat() === 'decibels' ? 'dB' : label().slice(0, 1) : mixed() && preview() === null ? '—' : shownValue() }}</span></span>
   @if (showValueBelow()) {
     <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : formattedValue() }}</output>
@@ -10,4 +10,8 @@
     (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)" (pointerup)="finishDrag($event)"
     (pointercancel)="cancelDrag()" (lostpointercapture)="cancelDrag()" (keydown.escape)="cancelDrag()"
     (input)="previewValue($event)" (change)="commitValue($event)" />
+  @if (compact()) {
+    <vc-control-heading class="knob-status" [label]="label()" [statusOnly]="true" [inheritance]="inheritance()"
+      (inheritRequested)="inheritRequested.emit()" />
+  }
 </div>

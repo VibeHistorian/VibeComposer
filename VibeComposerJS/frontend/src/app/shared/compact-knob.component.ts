@@ -22,6 +22,8 @@ export class CompactKnobComponent {
   readonly mini = input(false);
   readonly dense = input(false);
   readonly shortLabel = input<string | null>(null);
+  readonly compact = input(false);
+  readonly description = input('');
   readonly caption = input<string | null>(null);
   readonly valueFormat = input<'number' | 'pan' | 'decibels'>('number');
   readonly inheritance = input<ControlInheritance>('global');
@@ -61,7 +63,7 @@ export class CompactKnobComponent {
 
   tooltip(): string {
     if (this.mixed() && this.preview() === null) return `${this.label()}: mixed values. Adjust to choose a shared value.`;
-    return `${this.label()}: ${this.accessibleValue()}. Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work.`;
+    return `${this.label()}: ${this.accessibleValue()}. ${this.description()} Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work.`;
   }
 
   private setPreview(value: number): void {

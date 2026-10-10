@@ -5,3 +5,7 @@
 .inherit-snowflake.custom { color: var(--accent-primary); cursor: pointer; }
 .inherit-snowflake.custom:hover { background: var(--surface-hover); color: var(--accent-hover); }
 .inherit-snowflake:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+
+/* Status embedded in compact controls */
+:host(.status-only) { justify-content: center; }
+:host(.status-only) .inherit-snowflake { flex-basis: 14px; width: 14px; height: 14px; font-size: 12px; }

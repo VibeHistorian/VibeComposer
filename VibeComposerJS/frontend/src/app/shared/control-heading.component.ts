@@ -5,6 +5,7 @@ let nextControlId = 0;
 
 @Component({
   selector: 'vc-control-heading',
+  host: { '[class.status-only]': 'statusOnly()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './control-heading.component.html',
   styleUrl: './control-heading.component.css',
@@ -12,6 +13,8 @@ let nextControlId = 0;
 export class ControlHeadingComponent {
   readonly controlId = `part-control-${nextControlId++}`;
   readonly label = input.required<string>();
+  readonly shortLabel = input<string | null>(null);
+  readonly statusOnly = input(false);
   readonly inheritance = input<ControlInheritance>('global');
   readonly showStatus = input(true);
   readonly inheritRequested = output<void>();

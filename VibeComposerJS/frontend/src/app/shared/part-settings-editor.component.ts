@@ -4,19 +4,34 @@ import { PART_CONTROLS, type PartControl, type PartSettingValue, partValuesEqual
 import { chordRhythmMask } from '../core/music/rhythm-pattern';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../core/music/velocity-pattern';
 import { CompactKnobComponent } from './compact-knob.component';
+import { CompactToggleComponent } from './compact-toggle.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
 import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [CompactKnobComponent, ControlHeadingComponent, WheelSelectDirective],
+  imports: [CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()' },
   templateUrl: './part-settings-editor.component.html',
   styleUrl: './part-settings-editor.component.css',
 })
 export class PartSettingsEditorComponent {
+  code(control: PartControl): string {
+    const codes: Readonly<Record<string, string>> = {
+      generationEnabled: 'GEN', fillFlip: 'FILL↔', patternFlip: 'PAT↔', useCustomVelocities: 'VGRID',
+      stretchEnabled: 'VOICE', fillPauses: 'HOLD', patternFlexible: 'FLEX', octaveInterval: 'OCT±',
+      transpose: 'TRANS', velocityMin: 'VEL↓', velocityMax: 'VEL↑', noteLengthMultiplier: 'LEN', noteLengthPercent: 'LEN',
+      feedbackDuration: 'D.TIM', feedbackVol: 'D.VEL', feedbackCount: 'DELAY',
+      maxBlockChange: 'B.MAX', blockJump: 'B.JMP', hitsPerPattern: 'HITS', euclideanPulses: 'PULSE',
+      patternShift: 'SHIFT', chordSpan: 'SPAN', chordNotesStretch: 'VOICE', patternRepeat: 'REPT',
+      noteVariation: 'VAR', pauseChance: 'PAUSE', exceptionChance: 'SPLIT', swingPercent: 'SWING',
+      strumPauseChance: 'S.PAU', transitionChance: 'TR.CH', transitionSplit: 'TR.AT',
+      offset: 'OFFS', accents: 'ACCNT',
+    };
+    return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
+  }
   readonly emptyAllowedValues: readonly number[] = [];
   readonly role = input.required<ArrangedPart>();
   readonly values = input.required<Readonly<Record<string, PartSettingValue | null>>>();

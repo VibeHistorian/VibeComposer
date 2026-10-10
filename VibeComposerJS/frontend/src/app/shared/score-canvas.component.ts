@@ -83,6 +83,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly hiddenTrackIds = input.required<ReadonlySet<string>>();
   readonly sectionFocus = input<ScoreSectionFocus | null>(null);
   readonly noteSelected = output<ScoreCanvasNote>();
+  readonly trackSelected = output<ScoreCanvasTrack>();
   readonly seekRequested = output<number>();
   readonly viewportChanged = output<ScoreViewport>();
 
@@ -274,7 +275,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private readonly onCanvasClick = (event: MouseEvent): void => {
-    if (event.button !== 0) return;
+    if (event.button && event.button !== 0) return;
     const area = this.hitAreaAt(event);
     this.focusedNoteIndex = area ? this.hitAreas.indexOf(area) : -1;
     this.describeCanvas(area?.note);
@@ -282,6 +283,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (area) this.noteSelected.emit(area.note);
     else if (this.app && this.model && this.width > 0) {
       const bounds = this.app.canvas.getBoundingClientRect();
+      const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+      if (y >= 0 && y < this.scoreHeight) {
+        const track = this.model.tracks[Math.floor((y + this.verticalOffset) / this.laneHeight)];
+        if (track) this.trackSelected.emit(track);
+      }
       const fraction = (event.clientX - bounds.left) / Math.max(1, bounds.width);
       const beat = (this.horizontalOffset + fraction / this.horizontalScale) * this.model.totalBeats;
       this.seekRequested.emit(Math.max(0, Math.min(this.model.totalBeats, beat)));

@@ -1,0 +1,13 @@
+/* Toggle surface */
+:host { display: inline-block; min-width: 0; }
+.toggle-control { position: relative; }
+.toggle-button { min-height: 25px; padding: 4px 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 10px var(--font-ui); cursor: pointer; }
+.toggle-button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.toggle-button.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.toggle-button.mixed { border-style: dashed; }
+.toggle-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.toggle-button:disabled { opacity: .5; cursor: default; }
+
+/* Compact codes and independent inheritance target */
+.coded .toggle-button { width: 58px; min-height: 50px; padding: 18px 3px 8px; font: 10px var(--font-mono); }
+.toggle-status { position: absolute; top: 1px; right: 1px; width: 18px; height: 18px; }

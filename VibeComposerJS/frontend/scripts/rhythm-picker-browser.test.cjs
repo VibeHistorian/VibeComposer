@@ -49,9 +49,19 @@ test('production Angular controls initialize selects from settings and support r
             fits: bounds.every(box => box.left >= row.left && box.right <= row.right + 1) };
         });
         const readTrack = role => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === role);
-        const instrumentDefaultChecks = [...document.querySelectorAll('input[aria-label="Randomize instruments"]')].map(input => input.checked);
-        // Preserve the earlier parameter-only scenarios with explicit instrument opt-outs.
-        document.querySelectorAll('input[aria-label="Randomize instruments"]').forEach(input => input.click());
+        const initiallyCollapsed = [...document.querySelectorAll('.collapse-group-button')].every(button => button.getAttribute('aria-expanded') === 'false');
+        const instrumentDefaultChecks = [];
+        // Preserve parameter-only scenarios with explicit instrument opt-outs; selection opens each role's rules.
+        for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+          const group = document.querySelector('.track-group.' + role);
+          group.querySelector('.group-select').click();
+          const toggle = await waitFor(() => group.querySelector('button[aria-label="Randomize instruments"]'), role + ' policy opened');
+          instrumentDefaultChecks.push(toggle.getAttribute('aria-pressed') === 'true');
+          toggle.click();
+          await waitFor(() => toggle.getAttribute('aria-pressed') === 'false', role + ' instrument opt-out');
+        }
+        document.querySelector('.track-group.bass .track-select').click();
+        await waitFor(() => [...document.querySelectorAll('.collapse-group-button')].every(button => button.getAttribute('aria-expanded') === 'false'), 'track selection collapses roles');
         const melodyRow = document.querySelector('.track-group.melody');
         const melodyInstrument = melodyRow.querySelector('.track-instrument');
         const melodyChannel = melodyRow.querySelector('.track-channel');
@@ -157,7 +167,7 @@ test('production Angular controls initialize selects from settings and support r
         const bounds = track.getBoundingClientRect();
         result.controlsFit = track.querySelector('.track-mix-controls').getBoundingClientRect().right <= bounds.right;
         result.groupStillSelected = group.getAttribute('aria-pressed');
-        const velocitySwitches = [...document.querySelectorAll('input[aria-label="Custom velocities"]')];
+        const velocitySwitches = [...document.querySelectorAll('button[aria-label="Custom velocities"]')];
         velocitySwitches[0].click();
         const velocityGrids = await waitFor(() => {
           const result = [...document.querySelectorAll('.velocity-pattern-grid')];
@@ -225,10 +235,10 @@ test('production Angular controls initialize selects from settings and support r
           const delays = document.querySelector('input[aria-label="Delays"]');
           delays.value = '2'; delays.dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => [...document.querySelectorAll('input[aria-label="Delays"]')].every(input => input.value === '2'), role + ' feedback sync');
-          document.querySelector('#part-inspector input[aria-label="Generate notes"]').click();
-          await waitFor(() => [...document.querySelectorAll('input[aria-label="Generate notes"]')].every(input => !input.checked), role + ' generation toggle');
-          document.querySelector('#part-inspector input[aria-label="Generate notes"]').click();
-          await waitFor(() => [...document.querySelectorAll('input[aria-label="Generate notes"]')].every(input => input.checked), role + ' generation restored');
+          document.querySelector('#part-inspector button[aria-label="Generate notes"]').click();
+          await waitFor(() => [...document.querySelectorAll('button[aria-label="Generate notes"]')].every(button => button.getAttribute('aria-pressed') === 'false'), role + ' generation toggle');
+          document.querySelector('#part-inspector button[aria-label="Generate notes"]').click();
+          await waitFor(() => [...document.querySelectorAll('button[aria-label="Generate notes"]')].every(button => button.getAttribute('aria-pressed') === 'true'), role + ' generation restored');
           [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Clear seed').click();
           await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
           const state = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))[role];
@@ -242,7 +252,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="arpeggio"]'), 'Arpeggio musical inspector');
         const readArp = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'arpeggio');
         const beforePolicy = JSON.stringify(readArp().generatorSettings);
-        const randomHits = [...document.querySelectorAll('input[aria-label="Reroll Random hits"]')];
+        const randomHits = [...document.querySelectorAll('button[aria-label="Random hits"]')];
         randomHits[0].click();
         await waitFor(() => !document.querySelector('input[aria-label="Reroll Arp hits"]').disabled, 'fixed hits enabled');
         const setPolicyNumber = async (label, value) => {
@@ -254,7 +264,7 @@ test('production Angular controls initialize selects from settings and support r
         await setPolicyNumber('Max split %', 0);
         await setPolicyNumber('Min length %', 100);
         await setPolicyNumber('Max repeat', 1);
-        document.querySelector('input[aria-label="Reroll Random span"]').click();
+        document.querySelector('button[aria-label="Random span"]').click();
         result.rerollPolicyLeavesSettings = JSON.stringify(readArp().generatorSettings) === beforePolicy;
         result.rerollRuleCopies = randomHits.length;
         document.querySelector('button[aria-label="Reroll A1"]').click();
@@ -298,7 +308,7 @@ test('production Angular controls initialize selects from settings and support r
         result.drumGridCounts = drumGrids.map(grid => grid.querySelectorAll('button').length);
         drumGrids[0].querySelector('button').click();
         await waitFor(() => drumGrids.every(grid => grid.querySelector('button').getAttribute('aria-pressed') === 'false'), 'shared drum custom grid edit');
-        const drumVelocities = [...document.querySelectorAll('input[aria-label="Custom velocities"]')];
+        const drumVelocities = [...document.querySelectorAll('button[aria-label="Custom velocities"]')];
         drumVelocities[0].click();
         await waitFor(() => document.querySelectorAll('.velocity-pattern-grid').length === 2, 'drum velocity grids');
         result.drumVelocityCounts = [...document.querySelectorAll('.velocity-pattern-grid')].map(grid => grid.querySelectorAll('input').length);
@@ -323,14 +333,15 @@ test('production Angular controls initialize selects from settings and support r
           const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
           const track = read().tracks.find(track => track.role === role);
           const before = JSON.stringify(track.generatorSettings);
-          const checkbox = group.querySelector('.policy-controls:not(.instrument-policy) input[type="checkbox"]');
+          const toggleLabel = { chords: 'Vary length', drums: 'Patterns', melody: 'Reroll seeds' }[role];
+          const checkbox = toggleLabel ? group.querySelector('button[aria-label="' + toggleLabel + '"]') : null;
           let unchanged = true, synced = true;
           if (checkbox) {
             const label = checkbox.getAttribute('aria-label'); checkbox.click();
             const key = { chords: 'varyLength', drums: 'patterns', melody: 'rerollSeeds' }[role];
-            await waitFor(() => read().trackGenerationPolicies[role][key] === checkbox.checked, role + ' stored policy');
+            await waitFor(() => read().trackGenerationPolicies[role][key] === (checkbox.getAttribute('aria-pressed') === 'true'), role + ' stored policy');
             unchanged = JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) === before;
-            synced = read().trackGenerationPolicies[role][key] === checkbox.checked;
+            synced = read().trackGenerationPolicies[role][key] === (checkbox.getAttribute('aria-pressed') === 'true');
             checkbox.click();
           }
           group.querySelector('button[aria-label="Lock reroll for ' + track.name + '"]').click();
@@ -359,6 +370,8 @@ test('production Angular controls initialize selects from settings and support r
         result.countNearName = countBox.getBoundingClientRect().left - countBox.previousElementSibling.getBoundingClientRect().right < 10;
         result.countBox = getComputedStyle(countBox).borderTopStyle;
         const generateGroup = document.querySelector('.track-group.chords');
+        generateGroup.querySelector('.group-select').click();
+        await waitFor(() => generateGroup.querySelector('.policy-controls'), 'chords expanded by selection');
         const countInput = generateGroup.querySelector('input[aria-label="Chords track count"]');
         const visibleChordTracks = generateGroup.querySelectorAll('.track-select').length;
         generateGroup.querySelector('button[aria-label="Collapse Chords randomization settings"]').click();
@@ -380,8 +393,10 @@ test('production Angular controls initialize selects from settings and support r
         const arpGroup = document.querySelector('.track-group.arpeggio');
         const readProject = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
         const beforeInstrumentRules = JSON.stringify(readProject().tracks);
-        arpGroup.querySelector('input[aria-label="Randomize instruments"]').click();
-        arpGroup.querySelector('input[aria-label="One instrument"]').click();
+        arpGroup.querySelector('.group-select').click();
+        await waitFor(() => arpGroup.querySelector('.policy-controls'), 'arpeggio expanded by selection');
+        arpGroup.querySelector('button[aria-label="Randomize instruments"]').click();
+        arpGroup.querySelector('button[aria-label="One instrument"]').click();
         const poolSelect = arpGroup.querySelector('select[aria-label="Instrument pool"]');
         poolSelect.value = 'MELODY'; poolSelect.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => readProject().instrumentGenerationPolicies?.arpeggio?.pool === 'MELODY', 'instrument policy');
@@ -413,7 +428,9 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('button[aria-label="Discard note changes"]').click();
         await waitFor(() => !document.querySelector('.voice-label'), 'close drum editor');
         const drumGroup = document.querySelector('.track-group.drums');
-        drumGroup.querySelector('input[aria-label="Randomize instruments"]').click();
+        drumGroup.querySelector('.group-select').click();
+        await waitFor(() => drumGroup.querySelector('.policy-controls'), 'drums expanded by selection');
+        drumGroup.querySelector('button[aria-label="Randomize instruments"]').click();
         const drumCount = drumGroup.querySelector('input[aria-label="Drums track count"]');
         drumCount.value = '5'; drumCount.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => drumGroup.querySelectorAll('.track-select').length === 5, 'generated drum kit');
@@ -426,6 +443,19 @@ test('production Angular controls initialize selects from settings and support r
           snares: kit.filter(track => [38,40].includes(track.generatorSettings.pitch)).length,
           channels: kit.every(track => track.midiChannel === 10),
           pickersSynced: [...drumGroup.querySelectorAll('.track-instrument')].every((picker, index) => Number(picker.value) === kit[index].generatorSettings.pitch) };
+        result.initiallyCollapsed = initiallyCollapsed;
+        result.compactControls = [...document.querySelectorAll('.part-control.compact-control')].map(control => {
+          const code = control.querySelector('.control-name, .toggle-button');
+          const status = control.querySelector('.knob-status .inherit-snowflake, .toggle-status .inherit-snowflake');
+          const owner = status?.closest('.compact-knob, .toggle-control');
+          const box = owner?.getBoundingClientRect(), snow = status?.getBoundingClientRect();
+          return { code: code.textContent.trim(), width: control.getBoundingClientRect().width,
+            tooltip: control.title, statusInside: !!box && snow.left >= box.left && snow.right <= box.right + 1 && snow.bottom <= box.bottom + 1 };
+        });
+        const bassLabel = [...document.querySelectorAll('button.score-track-label')].find(button => button.textContent.trim() === 'B1');
+        bassLabel.click();
+        await waitFor(() => document.querySelector('.track-group.bass .track-select').getAttribute('aria-pressed') === 'true', 'score label selects global track');
+        result.scoreSelectsTrack = document.querySelector('#part-inspector .selection-kicker').textContent.includes('CHANNEL');
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
         await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, diagnostic: { hits: [...document.querySelectorAll('input[aria-label="Hits"]')].map(input => input.value), role: document.querySelector('#part-inspector vc-part-settings-editor')?.getAttribute('data-control-role'), policy: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.trackGenerationPolicies?.arpeggio, track: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.arpeggio } }) });
@@ -509,6 +539,10 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.instrumentButtonsRemoved, true);
     assert.deepEqual(actual.coreDrumKit, { kicks: 2, snares: 1, channels: true, pickersSynced: true });
     assert.equal(actual.countAfterExpand, '3');
+    assert.equal(actual.initiallyCollapsed, true);
+    assert.equal(actual.scoreSelectsTrack, true);
+    assert.ok(actual.compactControls.length > 0);
+    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 59 && control.tooltip && control.statusInside), JSON.stringify(actual.compactControls));
     assert.equal(actual.inspectorPolicyRemoved, true);
     assert.equal(actual.bassBlue, 'rgb(34, 167, 242)');
     assert.equal(actual.countNearName, true);

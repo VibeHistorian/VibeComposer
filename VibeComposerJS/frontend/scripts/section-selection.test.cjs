@@ -5,6 +5,7 @@ const test = require('node:test');
 const ts = require('typescript');
 
 function fixture() {
+  const effects = [];
   const signal = (value) => Object.assign(() => value, { set: (next) => { value = next; } });
   const project = signal({ tracks: [{ id: 'track-bass-1', role: 'bass' }], arrangement: [
     { id: 'a', measures: 2 }, { id: 'b', measures: 4 }, { id: 'c', measures: 1 },
@@ -15,7 +16,7 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = () => () => undefined;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
-    signal, computed: (read) => read, effect: () => {}, input, viewChild,
+    signal, computed: (read) => read, effect: callback => { effects.push(callback); }, input, viewChild,
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     ChangeDetectionStrategy: { OnPush: 0 },
   };
@@ -46,8 +47,39 @@ function fixture() {
   ui = new WorkspaceUiService();
   const { WorkspaceCanvasComponent } = load('workspace-canvas.component.ts');
   const workspace = new WorkspaceCanvasComponent();
-  return { ui, project, workspace, load };
+  return { ui, project, workspace, load, flushEffects: () => effects.forEach(callback => callback()) };
 }
+
+test('role settings default collapsed, follow role selection and retain manual toggles until selection changes', () => {
+  const { workspace, flushEffects } = fixture();
+  const roles = ['melody', 'bass', 'chords', 'arpeggio', 'drums'];
+  assert.ok(roles.every(role => workspace.isGroupCollapsed(role)));
+  workspace.selectRole('bass'); flushEffects();
+  assert.equal(workspace.isGroupCollapsed('bass'), false);
+  assert.ok(roles.filter(role => role !== 'bass').every(role => workspace.isGroupCollapsed(role)));
+  workspace.toggleGroupCollapsed('bass');
+  assert.equal(workspace.isGroupCollapsed('bass'), true);
+  workspace.toggleGroupCollapsed('chords');
+  assert.equal(workspace.isGroupCollapsed('chords'), false);
+  workspace.selectRole('melody'); flushEffects();
+  assert.equal(workspace.isGroupCollapsed('melody'), false);
+  assert.equal(workspace.isGroupCollapsed('chords'), true);
+  workspace.selectTrack('track-bass-1'); flushEffects();
+  assert.ok(roles.every(role => workspace.isGroupCollapsed(role)));
+});
+
+test('score lane selection chooses global tracks and preserves the active member of combined drum lanes', () => {
+  const { workspace, ui, project } = fixture();
+  project.set({ ...project(), tracks: [...project().tracks,
+    { id: 'kick', role: 'drums' }, { id: 'snare', role: 'drums' }] });
+  workspace.selectScoreTrack({ id: 'role:drums', trackIds: ['kick', 'snare'] });
+  assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'kick' });
+  workspace.selectTrack('snare');
+  workspace.selectScoreTrack({ id: 'role:drums', trackIds: ['kick', 'snare'] });
+  assert.equal(ui.selectedTrackId(), 'snare');
+  workspace.selectScoreTrack({ id: 'track-bass-1' });
+  assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'track-bass-1' });
+});
 
 test('Ctrl-click fills intervening sections in either direction', () => {
   const { ui } = fixture();

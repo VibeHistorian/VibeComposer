@@ -4,16 +4,22 @@
       <h3>{{ group.label }}</h3>
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.description ?? ''">
+          <div class="part-control" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind === 'number') {
               <vc-compact-knob [value]="numericValue(control)" [mixed]="values()[control.key] === null"
                 [minimum]="minimum(control)" [maximum]="maximum(control)"
                 [step]="control.step ?? 1"
                 [allowedValues]="control.allowedValues ?? emptyAllowedValues"
-                [label]="control.label" [unit]="control.unit ?? ''"
+                [label]="control.label" [shortLabel]="code(control)" [compact]="true" [description]="control.description ?? ''" [unit]="control.unit ?? ''"
                 [showValueBelow]="control.showValueBelow ?? false" [inheritance]="inheritanceFor(control)"
                 (inheritRequested)="inheritRequested.emit(control.key)"
                 (valueCommit)="settingsChanged.emit({ key: control.key, value: $event })" />
+            } @else if (control.kind === 'boolean') {
+              <vc-compact-toggle [attr.data-control-role]="role()" [label]="control.label" [shortLabel]="code(control)"
+                [description]="control.description ?? ''" [active]="values()[control.key] === true" [mixed]="values()[control.key] === null"
+                [showStatus]="true" [inheritance]="inheritanceFor(control)"
+                (inheritRequested)="inheritRequested.emit(control.key)"
+                (toggled)="settingsChanged.emit({ key: control.key, value: values()[control.key] !== true })" />
             } @else {
               <vc-control-heading #heading [label]="control.label" [inheritance]="inheritanceFor(control)"
                 (inheritRequested)="inheritRequested.emit(control.key)" />
@@ -73,10 +79,6 @@
                     <button type="button" class="common-grid-button" (click)="useDefaultVelocities()">Use default velocities</button>
                   }
                 }
-              } @else {
-                <input [id]="heading.controlId" class="part-check" type="checkbox" [attr.aria-label]="control.label" [checked]="values()[control.key] === true"
-                  [indeterminate]="values()[control.key] === null"
-                  (change)="settingsChanged.emit({ key: control.key, value: $any($event.target).checked })" />
               }
             }
           </div>

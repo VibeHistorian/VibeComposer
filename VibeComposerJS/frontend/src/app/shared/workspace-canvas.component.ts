@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
   TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
@@ -22,6 +22,7 @@ import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
 import { PartScopeActionsComponent } from './part-scope-actions.component';
 import { CompactKnobComponent } from './compact-knob.component';
+import { CompactToggleComponent } from './compact-toggle.component';
 import { MixButtonsComponent } from './mix-buttons.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { TrackGenerationPolicyComponent } from './track-generation-policy.component';
@@ -50,7 +51,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -193,7 +194,12 @@ export class WorkspaceCanvasComponent {
   readonly mixerOpen = signal(false);
   readonly newSectionType = signal<SectionType>('VERSE1');
   readonly hiddenTracks = signal(new Set<string>());
-  readonly collapsedGroups = signal(new Set<ArrangedPart>());
+  readonly collapsedGroups = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
+  private readonly groupExpansionEffect = effect(() => {
+    this.settingsTarget();
+    const selected = this.selectedRole();
+    this.collapsedGroups.set(new Set(ARRANGED_PARTS.filter(role => role !== selected)));
+  });
   readonly scoreSectionFocus = computed<ScoreSectionFocus>(() => {
     this.selectedSectionIds();
     // A changed selection must refit even when its bounds equal the full arrangement.
@@ -286,6 +292,11 @@ export class WorkspaceCanvasComponent {
     if (this.editing()) return;
     if (!this.project().tracks.some((track) => track.id === trackId)) return;
     this.workspaceUi.selectTrack(trackId);
+  }
+
+  selectScoreTrack(track: ScoreCanvasTrack): void {
+    const ids = track.trackIds ?? [track.id];
+    this.selectTrack(ids.includes(this.selectedTrackId()) ? this.selectedTrackId() : ids[0]);
   }
 
   selectRole(role: ArrangedPart): void {

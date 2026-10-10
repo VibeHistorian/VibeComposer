@@ -1,10 +1,7 @@
 @if (expanded()) {
   <div class="policy-controls instrument-policy" role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
-    <label class="check-control" title="Choose instruments on settings rerolls and when increasing the track total.">
-      <span>Randomize instruments</span>
-      <input type="checkbox" aria-label="Randomize instruments" [checked]="instrumentPolicy().randomize" [disabled]="disabled()"
-        (change)="changeInstrument('randomize', $event)" />
-    </label>
+    <vc-compact-toggle label="Randomize instruments" description="Choose instruments on settings rerolls and when increasing the track total."
+      [active]="instrumentPolicy().randomize" [disabled]="disabled()" (toggled)="toggleInstrument('randomize')" />
     @if (role() !== 'drums') {
       <label><span>Instrument pool</span>
         <select aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">
@@ -19,16 +16,19 @@
         [value]="instrumentPolicy().sustainChance" [disabled]="disabled()" (change)="changeInstrument('sustainChance', $event)" /></label>
     }
     @if (role() === 'arpeggio') {
-      <label class="check-control" title="Choose one instrument for all eligible targets in this reroll."><span>One instrument</span>
-        <input type="checkbox" aria-label="One instrument" [checked]="instrumentPolicy().sameInstrument" [disabled]="disabled()"
-          (change)="changeInstrument('sameInstrument', $event)" /></label>
+      <vc-compact-toggle label="One instrument" description="Choose one instrument for all eligible targets in this reroll."
+        [active]="instrumentPolicy().sameInstrument === true" [disabled]="disabled()" (toggled)="toggleInstrument('sameInstrument')" />
     }
   </div>
 }
 @if (expanded() && controls().length) {
   <div class="policy-controls" role="group" [attr.aria-label]="role() + ' track reroll rules'">
     @for (control of controls(); track control.key) {
-      <label [class.check-control]="control.minimum === undefined && !control.options" [attr.title]="control.description ?? null">
+      @if (control.minimum === undefined && !control.options) {
+        <vc-compact-toggle [label]="control.label" [description]="control.description ?? ''" [active]="values()[control.key] === true"
+          [disabled]="inactive(control)" (toggled)="toggle(control)" />
+      } @else {
+      <label [attr.title]="control.label + (control.description ? ': ' + control.description : '')">
         <span>{{ control.label }}</span>
         @if (control.options) {
           <select [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">
@@ -37,11 +37,9 @@
         } @else if (control.minimum !== undefined) {
           <input type="number" [attr.aria-label]="'Reroll ' + control.label" [min]="control.minimum" [max]="control.maximum!" step="1"
             [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)" />
-        } @else {
-          <input type="checkbox" [attr.aria-label]="'Reroll ' + control.label" [checked]="values()[control.key]" [disabled]="inactive(control)"
-            (change)="change(control, $event)" />
         }
       </label>
+      }
     }
   </div>
 }
