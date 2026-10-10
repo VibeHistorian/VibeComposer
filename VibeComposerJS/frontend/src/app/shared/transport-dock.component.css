@@ -23,7 +23,7 @@
 .transport-progress { min-width: 0; }
 .position-line { margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; }
 .progress-track { height: 4px; overflow: hidden; border-radius: var(--radius-tight); background: var(--border-default); }
-.progress-track span { height: 100%; display: block; border-radius: inherit; background: var(--accent-primary); transition: width .04s linear; }
+.progress-track span { width: 100%; height: 100%; display: block; border-radius: inherit; background: var(--accent-primary); transform-origin: left; transition: transform .04s linear; }
 .transport-globals { min-width: 0; display: flex; align-items: center; gap: 10px; }
 .global-knobs { display: flex; align-items: start; gap: 4px; flex: 0 0 auto; }
 .mode-seed { width: 112px; flex: 0 0 auto; display: grid; gap: 5px; }

@@ -34,7 +34,7 @@
       <span>{{ totalMeasures() }} BARS</span>
     </div>
     <div class="progress-track" role="progressbar" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100">
-      <span [style.width.%]="progressPercent()"></span>
+      <span [style.transform]="'scaleX(' + progressPercent() / 100 + ')'"></span>
     </div>
   </div>
 
