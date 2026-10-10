@@ -4,6 +4,7 @@ import { ARRANGED_PARTS } from '../core/project/project.model';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { layOutTrackPhrase } from '../core/music/phrase';
 import type { SettingsTarget } from './workspace-ui.service';
+import type { PlaybackRange } from '../core/audio/audio-playback.service';
 
 interface OverviewSection {
   readonly section: ArrangementSection;
@@ -60,6 +61,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly settingsTarget = input<SettingsTarget | null>(null);
   readonly totalMeasures = input(0);
   readonly playheadPercent = input(0);
+  readonly loopRange = input<PlaybackRange | null>(null);
   readonly mixerRequested = output<void>();
   readonly randomizeRequested = output<void>();
   readonly sectionSelected = output<{ readonly sectionId: string; readonly trackId: string;
@@ -182,6 +184,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.selectedSectionIds();
     this.selectedTrackId();
     this.settingsTarget();
+    this.loopRange();
     this.scheduleDraw();
   });
 
@@ -454,6 +457,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     fill(0, 0, this.labelWidth, RULER_HEIGHT, '--surface-base');
     text('PART', 6, 30, '--text-muted');
     fill(0, RULER_HEIGHT - 1, this.width, 1, '--border-subtle');
+    const loop = this.loopRange();
+    if (loop) {
+      const left = Math.max(this.labelWidth, this.beatX(loop.startBeat));
+      const right = Math.min(this.width, this.beatX(loop.endBeat));
+      if (right > left) fill(left, RULER_HEIGHT - 2, right - left, 2, '--loop-line');
+    }
     fill(this.labelWidth - 1, RULER_HEIGHT, 1, this.height - RULER_HEIGHT, '--border-subtle');
     const focused = this.hits.find((area) => area.key === this.focusedKey);
     if (focused) {

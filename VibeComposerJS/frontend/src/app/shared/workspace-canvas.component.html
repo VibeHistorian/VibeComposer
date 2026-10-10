@@ -96,6 +96,7 @@
       <vc-edit-workspace [initialNoteId]="editingNoteId()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     } @else {
       <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
+        [loopRange]="loopRange()"
         [settingsTarget]="settingsTarget()"
         [selectedSectionIds]="selectedSectionIds()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
         (mixerRequested)="openMixer()" (groupSelected)="selectRole($event)"
@@ -161,6 +162,10 @@
                   @for (item of timelineSections(); track item.section.id) {
                     <span [style.width.%]="item.widthPercent">{{ item.startMeasure.toString().padStart(2, '0') }} · {{ sectionLabel(item.section.type) }}</span>
                   }
+                  @if (loopRange(); as range) {
+                    <i class="score-loop-line" [style.left.%]="range.startBeat / totalBeats() * 100"
+                      [style.width.%]="(range.endBeat - range.startBeat) / totalBeats() * 100" aria-hidden="true"></i>
+                  }
                 </div>
               </div>
             </div>
@@ -181,6 +186,7 @@
                 <vc-score-canvas [tracks]="scoreTracks()" [notes]="scoreNotes()" [sections]="timelineSections()"
                   [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
+                  (seekRequested)="seek($event)"
                   [hiddenTrackIds]="hiddenTracks()" (noteSelected)="openNoteEditor($event)" />
                 <span class="score-track-label velocity-label">VEL</span>
               </div>

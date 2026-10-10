@@ -72,7 +72,8 @@
 .score-ruler { min-height: 20px; display: grid; grid-template-columns: 72px minmax(0, 1fr); color: var(--text-muted); font: 10px var(--font-mono); }
 .score-ruler-label { padding: 3px 5px; }
 .score-ruler-viewport { min-width: 0; overflow: hidden; margin-left: 1px; margin-right: 19px; }
-.score-ruler-sections { min-width: 0; display: flex; }
+.score-ruler-sections { position: relative; min-width: 0; display: flex; }
+.score-loop-line { position: absolute; bottom: 0; height: 2px; background: var(--loop-line); pointer-events: none; }
 .score-ruler-sections span { min-width: 0; flex-shrink: 0; box-sizing: border-box; padding: 3px 5px; overflow: hidden; border-left: 1px solid var(--border-subtle); text-overflow: ellipsis; white-space: nowrap; }
 .score-track-lanes { position: relative; min-height: 0; flex: 1; display: grid; grid-template-columns: 72px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-score); }
 .score-track-labels { position: relative; grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }

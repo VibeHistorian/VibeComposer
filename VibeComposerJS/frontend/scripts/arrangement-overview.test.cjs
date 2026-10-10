@@ -67,6 +67,23 @@ function fixture() {
   return { component, refs, base, overlay };
 }
 
+test('loop markers align with section beats and clip to the scrolled timeline', () => {
+  const { component, refs, base } = fixture();
+  component.loopRange.set({ startBeat: 8, endBeat: 24 });
+  component.drawOverview();
+  let marker = base.rectangles.filter(rect => rect.color === '--loop-line').at(-1);
+  assert.deepEqual(marker.bounds, [component.beatX(8), 36, component.beatX(24) - component.beatX(8), 2]);
+  component.horizontalScale = 4;
+  refs.get('scrollHost').scrollLeft = 900;
+  component.drawOverview();
+  marker = base.rectangles.filter(rect => rect.color === '--loop-line').at(-1);
+  assert.deepEqual(marker.bounds, [component.labelWidth, 36, component.width - component.labelWidth, 2]);
+  const count = base.rectangles.filter(rect => rect.color === '--loop-line').length;
+  component.loopRange.set(null);
+  component.drawOverview();
+  assert.equal(base.rectangles.filter(rect => rect.color === '--loop-line').length, count);
+});
+
 test('unequal section lengths share the exact beat mapping with notes and playback', () => {
   const { component, base, overlay } = fixture();
   const intro = component.hits.find((area) => area.key === 'heading:intro');

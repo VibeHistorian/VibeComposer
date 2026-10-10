@@ -42,8 +42,29 @@ export class TransportDockComponent {
     untracked(() => this.playback.setLoopRange(range));
   });
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
+  readonly loopRegion = computed(() => {
+    const duration = this.totalMeasures() * 4;
+    if (!this.playback.loopEnabled() || duration <= 0) return null;
+    const range = this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: duration };
+    return { left: range.startBeat / duration * 100, width: (range.endBeat - range.startBeat) / duration * 100 };
+  });
+
+  seek(event: MouseEvent): void {
+    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    if (bounds.width <= 0) return;
+    this.playback.seek(this.project(), (event.clientX - bounds.left) / bounds.width * this.totalMeasures() * 4);
+  }
+
+  seekKey(event: KeyboardEvent): void {
+    const duration = this.totalMeasures() * 4;
+    const beat = event.key === 'Home' ? 0 : event.key === 'End' ? duration
+      : event.key === 'ArrowLeft' ? this.playback.beat() - 1 : event.key === 'ArrowRight' ? this.playback.beat() + 1 : null;
+    if (beat === null) return;
+    event.preventDefault();
+    this.playback.seek(this.project(), beat);
+  }
   readonly progressPercent = computed(() => {
-    const duration = this.playback.durationBeats();
+    const duration = this.totalMeasures() * 4;
     return duration > 0 ? Math.min(100, this.playback.beat() / duration * 100) : 0;
   });
   readonly positionText = computed(() => {

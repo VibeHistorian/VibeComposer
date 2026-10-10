@@ -33,8 +33,12 @@
       <span>{{ positionText() }}</span>
       <span>{{ totalMeasures() }} BARS</span>
     </div>
-    <div class="progress-track" role="progressbar" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100">
-      <span [style.transform]="'scaleX(' + progressPercent() / 100 + ')'"></span>
+    <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"
+      [attr.aria-valuetext]="positionText()" (click)="seek($event)" (keydown)="seekKey($event)">
+      <div class="progress-rail"><span [style.transform]="'scaleX(' + progressPercent() / 100 + ')'"></span></div>
+      @if (loopRegion(); as region) {
+        <i class="progress-loop-line" [style.left.%]="region.left" [style.width.%]="region.width" aria-hidden="true"></i>
+      }
     </div>
   </div>
 

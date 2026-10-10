@@ -50,7 +50,7 @@ export class AudioPlaybackService {
       this.pause();
       return;
     }
-    const resumeAt = this.state() === 'paused' ? this.beat() : 0;
+    const resumeAt = this.state() === 'paused' || this.beat() < this.duration() ? this.beat() : 0;
     await this.start(project, resumeAt);
   }
 
@@ -104,6 +104,18 @@ export class AudioPlaybackService {
     const enabled = !this.loopEnabled();
     this.loopState.set(enabled);
     if (this.state() === 'playing') this.restartAt(this.safeStartBeat(beat));
+  }
+
+  /** Seek without starting audio; leaving the loop range disables looping. */
+  seek(project: CompositionProject, targetBeat: number): void {
+    if (!Number.isFinite(targetBeat)) return;
+    const playing = this.state() === 'playing';
+    if (!playing) this.duration.set(project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0));
+    const beat = Math.min(this.duration(), Math.max(0, targetBeat));
+    const { startBeat, endBeat } = this.loopBounds();
+    if (this.loopEnabled() && (beat < startBeat || beat >= endBeat)) this.loopState.set(false);
+    if (playing) this.restartAt(beat);
+    else this.position.set(beat);
   }
 
   setLoopRange(range: PlaybackRange | null): void {

@@ -74,6 +74,61 @@ function fixture() {
   return { playback, context, sources, project, angular, load };
 }
 
+test('seeking while stopped positions the song without audio and Play starts there', async () => {
+  const { playback, project, sources } = fixture();
+  playback.seek(project, 6);
+  assert.equal(playback.state(), 'stopped');
+  assert.equal(playback.beat(), 6);
+  assert.equal(sources.length, 0);
+  await playback.toggle(project);
+  assert.equal(playback.beat(), 6);
+  assert.equal(playback.state(), 'playing');
+  assert.equal(sources.length, 1, 'the note sustained across the seek point resumes');
+  playback.stop();
+  await playback.toggle(project);
+  assert.equal(playback.beat(), 0, 'Stop resets the next Play position');
+});
+
+test('seeking within a playing loop preserves it; seeking outside cancels queued voices and disables it', async () => {
+  const { playback, project, context, sources } = fixture();
+  playback.setLoopRange({ startBeat: 4, endBeat: 8 });
+  playback.toggleLoop();
+  await playback.start(project);
+  playback.seek(project, 5);
+  assert.equal(playback.loopEnabled(), true);
+  assert.equal(playback.beat(), 5);
+  assert.equal(playback.state(), 'playing');
+  const oldSources = [...sources];
+  playback.seek(project, 2);
+  assert.equal(playback.loopEnabled(), false);
+  assert.equal(playback.beat(), 2);
+  assert.ok(oldSources.every(source => source.stopTime === .012));
+  context.currentTime = .5;
+  playback.tick();
+  assert.equal(playback.beat(), 3, 'the playback clock advances from the seek target');
+});
+
+test('paused seeking keeps audio paused, clamps positions and treats the loop end as outside', async () => {
+  const { playback, project, sources } = fixture();
+  playback.setLoopRange({ startBeat: 4, endBeat: 8 });
+  playback.toggleLoop();
+  await playback.start(project);
+  playback.pause();
+  const count = sources.length;
+  playback.seek(project, 4);
+  assert.equal(playback.loopEnabled(), true);
+  playback.seek(project, 8);
+  assert.equal(playback.loopEnabled(), false);
+  assert.equal(playback.state(), 'paused');
+  assert.equal(sources.length, count);
+  playback.seek(project, 999);
+  assert.equal(playback.beat(), 16);
+  playback.seek(project, -10);
+  assert.equal(playback.beat(), 0);
+  playback.seek(project, NaN);
+  assert.equal(playback.beat(), 0);
+});
+
 test('LIVE defaults on and disabling it leaves the playing schedule untouched on edits', async () => {
   const { playback, context, sources, project } = fixture();
   assert.equal(playback.liveEnabled(), true);

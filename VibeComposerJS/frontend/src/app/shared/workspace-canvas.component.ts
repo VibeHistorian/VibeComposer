@@ -203,6 +203,12 @@ export class WorkspaceCanvasComponent {
 
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly totalBeats = computed(() => this.totalMeasures() * 4);
+  readonly loopRange = computed(() => this.playback.loopEnabled()
+    ? this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: this.totalBeats() } : null);
+
+  seek(beat: number): void {
+    this.playback.seek(this.project(), beat);
+  }
   readonly playheadPercent = computed(() => this.totalBeats() > 0
     ? Math.min(100, Math.max(0, this.playback.beat() / this.totalBeats() * 100)) : 0);
   readonly timelineSections = computed<TimelineSection[]>(() => {

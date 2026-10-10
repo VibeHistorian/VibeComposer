@@ -70,23 +70,8 @@ const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; gl
 @Component({
   selector: 'vc-score-canvas',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="score-canvas-host" #rendererHost></div>
-    <div class="horizontal-scroll" #horizontalScroll (scroll)="onHorizontalScroll()" tabindex="0" aria-label="Score horizontal scroll">
-      <div #horizontalContent></div>
-    </div>
-    <div class="vertical-scroll" #verticalScroll (scroll)="onVerticalScroll()" tabindex="0" aria-label="Score vertical scroll">
-      <div #verticalContent></div>
-    </div>
-  `,
-  styles: `
-    :host { display: grid; grid-column: 2; min-width: 0; min-height: 0; overflow: hidden; grid-template-columns: minmax(0, 1fr) 18px; grid-template-rows: minmax(0, 1fr) 18px; }
-    .score-canvas-host { min-width: 0; min-height: 0; overflow: hidden; }
-    .horizontal-scroll { grid-column: 1; grid-row: 2; overflow-x: scroll; overflow-y: hidden; }
-    .horizontal-scroll > div { height: 1px; }
-    .vertical-scroll { grid-column: 2; grid-row: 1; overflow-y: scroll; overflow-x: hidden; margin-bottom: 34px; }
-    .vertical-scroll > div { width: 1px; }
-  `,
+  templateUrl: './score-canvas.component.html',
+  styleUrl: './score-canvas.component.css',
 })
 export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly tracks = input.required<readonly ScoreCanvasTrack[]>();
@@ -98,6 +83,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly hiddenTrackIds = input.required<ReadonlySet<string>>();
   readonly sectionFocus = input<ScoreSectionFocus | null>(null);
   readonly noteSelected = output<ScoreCanvasNote>();
+  readonly seekRequested = output<number>();
   readonly viewportChanged = output<ScoreViewport>();
 
   private readonly rendererHost = viewChild.required<ElementRef<HTMLDivElement>>('rendererHost');
@@ -135,6 +121,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private hitAreaBuckets = new Map<number, NoteHitArea[]>();
   private hitColumnCount = 0;
   private playhead = 0;
+  private hoverX: number | null = null;
   private focusedNoteIndex = -1;
   private destroyed = false;
   private width = 0;
@@ -159,6 +146,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const canvas = this.app?.canvas;
     canvas?.removeEventListener('click', this.onCanvasClick);
     canvas?.removeEventListener('pointermove', this.onPointerMove);
+    canvas?.removeEventListener('pointerleave', this.onPointerLeave);
     canvas?.removeEventListener('keydown', this.onCanvasKeydown);
     canvas?.removeEventListener('focus', this.onCanvasFocus);
     canvas?.removeEventListener('wheel', this.onCanvasWheel);
@@ -203,6 +191,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       host.appendChild(canvas);
       canvas.addEventListener('click', this.onCanvasClick);
       canvas.addEventListener('pointermove', this.onPointerMove);
+      canvas.addEventListener('pointerleave', this.onPointerLeave);
       canvas.addEventListener('keydown', this.onCanvasKeydown);
       canvas.addEventListener('focus', this.onCanvasFocus);
       // A non-passive listener is required to suppress browser Ctrl+wheel zoom.
@@ -285,21 +274,36 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private readonly onCanvasClick = (event: MouseEvent): void => {
+    if (event.button !== 0) return;
     const area = this.hitAreaAt(event);
     this.focusedNoteIndex = area ? this.hitAreas.indexOf(area) : -1;
     this.describeCanvas(area?.note);
     this.drawDynamic();
     if (area) this.noteSelected.emit(area.note);
+    else if (this.app && this.model && this.width > 0) {
+      const bounds = this.app.canvas.getBoundingClientRect();
+      const fraction = (event.clientX - bounds.left) / Math.max(1, bounds.width);
+      const beat = (this.horizontalOffset + fraction / this.horizontalScale) * this.model.totalBeats;
+      this.seekRequested.emit(Math.max(0, Math.min(this.model.totalBeats, beat)));
+    }
   };
 
   private readonly onPointerMove = (event: PointerEvent): void => {
     const canvas = this.app?.canvas;
     if (!canvas) return;
+    const bounds = canvas.getBoundingClientRect();
+    this.hoverX = Math.min(this.width, Math.max(0, (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width)));
+    this.drawDynamic();
     const area = this.hitAreaAt(event);
     canvas.style.cursor = area ? 'pointer' : 'default';
     const trackName = area && (area.note.trackName ?? this.model?.tracks.find((track) => track.id === area.note.part)?.name);
     const title = area ? `${trackName ?? area.note.color} · MIDI ${area.note.midi} · velocity ${area.note.velocity}` : '';
     if (canvas.title !== title) canvas.title = title;
+  };
+
+  private readonly onPointerLeave = (): void => {
+    this.hoverX = null;
+    this.drawDynamic();
   };
 
   private readonly onCanvasFocus = (): void => {
@@ -512,6 +516,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (!graphics || !Color) return;
     graphics.clear();
     const accent = new Color(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#32d7f4');
+    if (this.hoverX !== null) {
+      const hoverX = Math.floor(this.hoverX) + 0.5;
+      graphics.moveTo(hoverX, 0).lineTo(hoverX, this.height)
+        .stroke({ color: accent.toNumber(), alpha: accent.alpha * 0.25, width: 1 });
+    }
     const x = (this.playhead / 100 - this.horizontalOffset) * this.width * this.horizontalScale;
     if (x >= 0 && x <= this.width) {
       graphics.moveTo(Math.floor(x) + 0.5, 0).lineTo(Math.floor(x) + 0.5, this.height)

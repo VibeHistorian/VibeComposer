@@ -1,0 +1,9 @@
+/* Score viewport */
+:host { display: grid; grid-column: 2; min-width: 0; min-height: 0; overflow: hidden; grid-template-columns: minmax(0, 1fr) 18px; grid-template-rows: minmax(0, 1fr) 18px; }
+.score-canvas-host { min-width: 0; min-height: 0; overflow: hidden; }
+
+/* Native scroll controls */
+.horizontal-scroll { grid-column: 1; grid-row: 2; overflow-x: scroll; overflow-y: hidden; }
+.horizontal-scroll > div { height: 1px; }
+.vertical-scroll { grid-column: 2; grid-row: 1; overflow-y: scroll; overflow-x: hidden; margin-bottom: 34px; }
+.vertical-scroll > div { width: 1px; }

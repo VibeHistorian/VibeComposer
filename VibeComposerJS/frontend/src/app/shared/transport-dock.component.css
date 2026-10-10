@@ -18,11 +18,15 @@
 .loop-button { font-size: 17px; }
 .live-button { width: 43px; font: 10px var(--font-mono); letter-spacing: .04em; }
 .transport-button.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.loop-button.active { border-color: var(--loop-accent); background: var(--loop-surface); color: var(--loop-accent); box-shadow: 0 0 8px var(--loop-outline); }
 
 /* Timeline and song position */
 .transport-progress { min-width: 0; }
 .position-line { margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; }
-.progress-track { height: 4px; overflow: hidden; border-radius: var(--radius-tight); background: var(--border-default); }
+.progress-track { position: relative; height: 14px; cursor: pointer; }
+.progress-track:focus-visible { outline: 1px solid var(--border-focus); outline-offset: 2px; }
+.progress-rail { position: absolute; top: 3px; width: 100%; height: 4px; overflow: hidden; border-radius: var(--radius-tight); background: var(--border-default); }
+.progress-loop-line { position: absolute; top: 10px; height: 2px; background: var(--loop-line); pointer-events: none; }
 .progress-track span { width: 100%; height: 100%; display: block; border-radius: inherit; background: var(--accent-primary); transform-origin: left; transition: transform .04s linear; }
 .transport-globals { min-width: 0; display: flex; align-items: center; gap: 10px; }
 .global-knobs { display: flex; align-items: start; gap: 4px; flex: 0 0 auto; }
