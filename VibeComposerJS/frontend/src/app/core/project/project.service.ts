@@ -93,7 +93,8 @@ export class ProjectService {
     if (!sources.length) return 'unchanged';
     if (count >= 2147483647) return 'invalid';
     const targets = rerollInstruments(this.trackRerollSeed(current, role, count), role,
-      current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, true);
+      current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, true,
+      { remaining: current.tracks.filter(track => track.role === 'drums' && !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) });
     if (targets.every((track, index) => track === sources[index])) return 'unchanged';
     const replacements = new Map(targets.map(track => [track.id, track]));
     const primary = replacements.get(`track-${role}-1`);
@@ -151,8 +152,10 @@ export class ProjectService {
     const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
     const seed = this.trackRerollSeed(current, role, count);
     const members = tracks.filter(track => track.role === role);
-    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], created);
-    const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, created.map(track => members.indexOf(track) + 1));
+    const drumContext = { onlyAdd: true, totalTracks: members.length,
+      remaining: current.tracks.filter(track => track.role === 'drums').map(track => track.generatorSettings as DrumSettings) };
+    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], created, false, drumContext);
+    const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, created.map(track => members.indexOf(track) + 1), drumContext);
     const generated = instrumentTracks.map((track, index) => ({ ...track, generatorSettings: settings[index] } as CompositionTrack));
     const replacements = new Map(generated.map(track => [track.id, track]));
     const primary = replacements.get(`track-${role}-1`);
@@ -180,8 +183,10 @@ export class ProjectService {
     const count = current.trackRerollCounts?.[role] ?? 0;
     if (count >= 2147483647) return 'invalid';
     const seed = this.trackRerollSeed(current, role, count);
-    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources);
-    const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1));
+    const drumContext = { totalTracks: roleTracks.length,
+      remaining: roleTracks.filter(track => !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) };
+    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, false, drumContext);
+    const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1), drumContext);
     if (sources.every((track, index) => track === instrumentTracks[index] && partPatchesEqual(track.generatorSettings, settings[index]))) return 'unchanged';
     const replacements = new Map(instrumentTracks.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] } as CompositionTrack]));
     const primary = replacements.get('track-' + role + '-1');

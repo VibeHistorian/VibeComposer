@@ -5,6 +5,7 @@ import { JavaRandom } from './java-random';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { partPatchesEqual } from './part-settings';
 import { STATIC_RHYTHM_DEFINITIONS, type StaticRhythm, type RhythmPattern } from './rhythm-patterns';
+import { bakeDrumPattern, type DrumRerollContext } from './drum-reroll';
 
 export const DEFAULT_ARPEGGIO_POLICY: ArpeggioGenerationPolicy = Object.freeze({
   fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
@@ -239,16 +240,19 @@ const COOL_DRUM_PATTERNS = [
   [1,0,0,1,0,0,0,1,0,1,0,1,0,0,0,0], [1,0,0,0,0,0,0,1,0,0,1,0,0,0,1,0],
 ];
 
-function rerollDrums(random: JavaRandom, policy: TrackGenerationPolicies['drums'], source: DrumSettings, swing: number, offset: number): DrumSettings {
+function rerollDrums(random: JavaRandom, policy: TrackGenerationPolicies['drums'], source: DrumSettings, swing: number, offset: number,
+  totalTracks: number): DrumSettings {
   const family = source.pitch <= 37 ? 0 : source.pitch <= 41 ? 1 : source.pitch <= 45 ? 2 : source.pitch <= 53 ? 3 : 4;
   const flexible = family === 2 || family === 4;
-  const next = { ...source, swingPercent: flexible ? swing : 50,
-    ...(policy.randomOffset && flexible ? { offset } : {}) };
+  const next = { ...source, feedbackCount: 0, swingPercent: flexible ? swing : 50,
+    ...(policy.patterns ? { offset: policy.randomOffset && flexible ? offset : 0 }
+      : policy.randomOffset && flexible ? { offset } : {}) };
   if (policy.patterns) {
     const candidates = DRUM_BLUEPRINTS[family], [rhythm, hits, span, shift] = candidates[random.nextInt(candidates.length)];
     const multipliers = { '1': 1, '1/2': .5, '3/4': .75, '3/2': 1.5, '2': 2 };
     Object.assign(next, { rhythm, hitsPerPattern: Math.max(1, Math.min(32, Math.floor(hits * multipliers[policy.hitsMultiplier]))),
       chordSpan: span, patternShift: shift, patternFlip: false, useCustomVelocities: false,
+      noteLengthMultiplier: 100, patternSeed: 0, feedbackDuration: 750, feedbackVol: 65,
       velocityMin: source.pitch === 37 ? 50 : flexible ? 40 : family === 3 ? 50 : 65,
       velocityMax: source.pitch === 37 ? 74 : flexible ? 74 : family === 3 ? 84 : 99,
       pauseChance: rhythm === 'full' ? random.nextInt(flexible ? 21 : 1) : 0,
@@ -257,10 +261,11 @@ function rerollDrums(random: JavaRandom, policy: TrackGenerationPolicies['drums'
       const pattern = COOL_DRUM_PATTERNS[random.nextInt(4)];
       Object.assign(next, { customPattern: [...pattern, ...pattern] });
     }
+    if (totalTracks > 10 && next.rhythm === 'full' && random.nextInt(100) < 30) next.rhythm = 'half';
     if (family >= 2 && random.nextInt(100) < policy.shiftChance) Object.assign(next, { patternShift: random.nextInt(shift + 1) });
   }
   if (policy.fills) Object.assign(next, { chordSpanFill: flexible ? weightedChordFill(random.nextInt(100)) : 'ALL', fillFlip: false });
-  return next;
+  return policy.patterns ? bakeDrumPattern(random, next) : next;
 }
 
 function rerollMelody(random: JavaRandom, seed: bigint, policy: TrackGenerationPolicies['melody'], source: MelodySettings, order: number, sharedSeed?: number): MelodySettings {
@@ -283,7 +288,7 @@ function rerollMelody(random: JavaRandom, seed: bigint, policy: TrackGenerationP
 
 /** Stable role order is supplied separately so locked tracks do not renumber the primary/secondary branches. */
 export function rerollRoleSettings(seed: bigint, role: ArrangedPart, policy: TrackGenerationPolicy,
-  sources: readonly CompositionTrack[], orders: readonly number[]): CompositionTrack['generatorSettings'][] {
+  sources: readonly CompositionTrack[], orders: readonly number[], drumContext: DrumRerollContext = {}): CompositionTrack['generatorSettings'][] {
   if (!decodeTrackGenerationPolicy(role, policy) || sources.some(track => track.role !== role) || sources.length !== orders.length)
     throw new RangeError('Invalid role reroll inputs.');
   if (role === 'arpeggio') return rerollArpeggioSettings(seed, policy as ArpeggioGenerationPolicy, sources.map(track => track.generatorSettings as ArpeggioSettings));
@@ -291,14 +296,16 @@ export function rerollRoleSettings(seed: bigint, role: ArrangedPart, policy: Tra
   const variance = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4241535356415249n));
   const drumPolicy = policy as TrackGenerationPolicies['drums'];
   const offset = role === 'drums' && drumPolicy.randomOffset ? random.nextInt(100) - 50 : 0;
-  const swing = role === 'drums' ? 50 + random.nextInt(drumPolicy.maxSwing * 2 + 1) - drumPolicy.maxSwing : 50;
+  const existingSwing = drumContext.onlyAdd ? drumContext.remaining?.find(settings => settings.swingPercent !== undefined && settings.swingPercent !== 50)?.swingPercent : undefined;
+  const swing = role === 'drums' ? existingSwing ?? 50 + random.nextInt(drumPolicy.maxSwing * 2 + 1) - drumPolicy.maxSwing : 50;
   const melodyPolicy = policy as TrackGenerationPolicies['melody'];
   const sharedSeed = role === 'melody' && melodyPolicy.rerollSeeds && melodyPolicy.sameSeed ? random.nextInt() : undefined;
   return sources.map((track, index) => {
     const source = track.generatorSettings;
     const next = role === 'bass' ? { ...rerollBass(random, seed, source as BassSettings, orders[index]), noteVariation: variance.nextInt(51) }
       : role === 'chords' ? rerollChords(random, policy as TrackGenerationPolicies['chords'], source as ChordSettings, track.mix.program, track.instrumentPool)
-      : role === 'drums' ? rerollDrums(random, drumPolicy, source as DrumSettings, swing, offset)
+      : role === 'drums' ? rerollDrums(random, drumPolicy, source as DrumSettings, swing, offset,
+        drumContext.totalTracks ?? sources.length + (drumContext.remaining?.length ?? 0))
       : rerollMelody(random, seed, melodyPolicy, source as MelodySettings, orders[index], sharedSeed);
     return partPatchesEqual(source, next) ? source : next;
   });

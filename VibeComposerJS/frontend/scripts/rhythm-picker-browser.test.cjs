@@ -384,6 +384,22 @@ test('production Angular controls initialize selects from settings and support r
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
         await waitFor(() => document.querySelector('.voice-label'), 'single-pitch drum editor');
         result.drumEditorVoices = [...document.querySelectorAll('.voice-label')].map(label => label.textContent);
+        document.querySelector('button[aria-label="Discard note changes"]').click();
+        await waitFor(() => !document.querySelector('.voice-label'), 'close drum editor');
+        const drumGroup = document.querySelector('.track-group.drums');
+        drumGroup.querySelector('input[aria-label="Randomize instruments"]').click();
+        const drumCount = drumGroup.querySelector('input[aria-label="Drums track count"]');
+        drumCount.value = '5'; drumCount.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => drumGroup.querySelectorAll('.track-select').length === 5, 'generated drum kit');
+        const beforeKitRoll = readProject().trackRerollCounts.drums;
+        drumGroup.querySelector('button[aria-label="Reroll Drums tracks"]').click();
+        await waitFor(() => readProject().trackRerollCounts.drums > beforeKitRoll, 'drum kit reroll');
+        const kit = readProject().tracks.filter(track => track.role === 'drums');
+        await waitFor(() => [...drumGroup.querySelectorAll('.track-instrument')].every((picker, index) => Number(picker.value) === kit[index].generatorSettings.pitch), 'drum kit picker rendering');
+        result.coreDrumKit = { kicks: kit.filter(track => [35,36].includes(track.generatorSettings.pitch)).length,
+          snares: kit.filter(track => [38,40].includes(track.generatorSettings.pitch)).length,
+          channels: kit.every(track => track.midiChannel === 10),
+          pickersSynced: [...drumGroup.querySelectorAll('.track-instrument')].every((picker, index) => Number(picker.value) === kit[index].generatorSettings.pitch) };
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
         await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, diagnostic: { hits: [...document.querySelectorAll('input[aria-label="Hits"]')].map(input => input.value), role: document.querySelector('#part-inspector vc-part-settings-editor')?.getAttribute('data-control-role'), policy: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.trackGenerationPolicies?.arpeggio, track: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.arpeggio } }) });
@@ -465,6 +481,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.lockedArpInstrument, 127);
     assert.equal(actual.lockedTrackPreserved, true);
     assert.equal(actual.instrumentButtonsRemoved, true);
+    assert.deepEqual(actual.coreDrumKit, { kicks: 2, snares: 1, channels: true, pickersSynced: true });
     assert.equal(actual.countAfterExpand, '3');
     assert.equal(actual.inspectorPolicyRemoved, true);
     assert.equal(actual.bassBlue, 'rgb(34, 167, 242)');

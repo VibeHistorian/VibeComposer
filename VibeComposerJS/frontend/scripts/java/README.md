@@ -88,6 +88,14 @@ New-Item -ItemType Directory -Force -Path VibeComposerJS/frontend/.angular/fill-
 
 The enum itself is compiled from current source rather than read from the JAR. The JAR only supplies dependencies; compiler output stays in the ignored `.angular` directory.
 
+P6d adds `DrumRerollFixture.java.template` / `../fixtures/drum-reroll.java.json`: **480 exact pitch-selection cases** covering four exact long seeds, target counts 0/1/2/3/4/8/16/64, reroll/add modes and eight remaining-kit combinations. The generator inserts the pitch-selection block **verbatim from current `DrumGUI.createRandomDrumPanels`** into a small deterministic harness with lightweight remaining-panel records and compiles production `InstUtils` for its percussion catalogue. Only the parent Random is seeded explicitly; the pitch branch is not rewritten in the fixture. This validates core reservation, duplicate thinning, sorting, modulo sampling and Java's literal indexed add-pool removals, rather than claiming complete GUI random draw or phrase parity. Pause baking/growth, supported family defaults, history/ownership and MIDI are checked separately by functional tests.
+
+Regenerate from the repository root (compiler outputs stay in `.angular`):
+
+```powershell
+& 'VibeComposerJS/frontend/scripts/java/generate-drum-reroll-fixtures.ps1' -Jdk 'C:/Java/jdk-24.0.2'
+```
+
 `RhythmPatternFixture.java` supplies `../fixtures/rhythm-pattern.java.json`: 192 static rhythm masks from the production enum across six patterns, eight lengths (including 3, 5, 9 and 31), and four shifts. Tests also compare each mask's flipped complement. These fixtures validate padded-pattern rotation before truncation, rather than full Java phrase-generation parity. CUSTOM and MELODY1 remain deferred; EUCLID has its own fixture below.
 
 ```powershell

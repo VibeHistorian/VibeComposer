@@ -5,6 +5,101 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('drum pitch selection matches 480 cases extracted verbatim from production DrumGUI', () => {
+  const { load } = fixture();
+  const { chooseDrumPitches } = load('core/music/drum-reroll.ts');
+  const { JavaRandom } = load('core/music/java-random.ts');
+  const oracle = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/drum-reroll.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(oracle.pitches.length, 480);
+  for (const sample of oracle.pitches) {
+    assert.deepEqual(chooseDrumPitches(new JavaRandom(BigInt(sample.seed)), sample.count, sample.remaining, sample.onlyAdd), sample.result);
+  }
+});
+
+test('drum group rerolls reserve a core kit, respect remaining drums, and retain patches/manual notes through MIDI and replay', () => {
+  const { service, midi, load } = fixture();
+  service.setRoleTrackCount('drums', 6);
+  const tracks = () => service.project().tracks.filter(track => track.role === 'drums');
+  service.updateTrackGeneratorSettings(tracks()[0].id, { pitch: 35 });
+  service.setTrackRerollLock(tracks()[0].id, true);
+  service.updateTrackGeneratorSettings(tracks()[1].id, { pitch: 40 });
+  service.setTrackRerollLock(tracks()[1].id, true);
+  const manualId = tracks()[2].id;
+  service.updateTrackPhrase(manualId, [{ id: 'manual', midi: 82, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  const sectionId = service.project().arrangement[0].id;
+  service.freezePartSettings({ kind: 'section-track', sectionId, trackId: tracks()[3].id });
+  const locked = tracks().slice(0, 2), arrangement = service.project().arrangement;
+  const before = service.exportProjectJson();
+  assert.equal(service.rerollRoleTracks('drums'), 'changed');
+  assert.deepEqual(tracks().slice(0, 2), locked);
+  assert.strictEqual(service.project().arrangement, arrangement);
+  assert.ok(tracks().some(track => [35,36].includes(track.generatorSettings.pitch)));
+  assert.ok(tracks().some(track => [38,40].includes(track.generatorSettings.pitch)));
+  assert.ok(tracks().every(track => track.midiChannel === 10));
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  assert.equal(exported.tracks.find(track => track.name === tracks()[2].name).notes[0].midi, 82);
+  const after = service.exportProjectJson(); service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.rerollRoleTracks('drums'); assert.equal(service.exportProjectJson(), after);
+  assert.equal(service.importProjectJson(after), true);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  restored.rerollRoleTracks('drums'); service.rerollRoleTracks('drums'); assert.deepEqual(restored.project(), service.project());
+  for (const track of tracks()) service.setTrackRerollLock(track.id, false);
+  for (let roll = 0; roll < 30; roll++) {
+    service.rerollRoleTracks('drums');
+    const pitches = tracks().map(track => track.generatorSettings.pitch);
+    assert.ok(pitches.includes(35) && pitches.includes(36));
+    assert.equal(pitches.filter(pitch => [38,40].includes(pitch)).length, 1);
+  }
+  service.updateInstrumentPolicy('drums', { randomize: false });
+  const pitches = tracks().map(track => track.generatorSettings.pitch);
+  service.rerollRoleTracks('drums'); assert.deepEqual(tracks().map(track => track.generatorSettings.pitch), pitches);
+});
+
+test('drum additions fill missing core voices without modifying existing tracks and reuse existing swing', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  service.setRoleTrackCount('drums', 0);
+  service.generateRoleTracks('drums', 1);
+  const first = service.project().tracks.find(track => track.role === 'drums');
+  assert.ok([35,36].includes(first.generatorSettings.pitch));
+  service.generateRoleTracks('drums', 1);
+  const drums = service.project().tracks.filter(track => track.role === 'drums');
+  assert.strictEqual(drums[0], first); assert.ok([38,40].includes(drums[1].generatorSettings.pitch));
+  const source = { ...first, generatorSettings: { ...first.generatorSettings, pitch: 42 } };
+  const context = { onlyAdd: true, totalTracks: 4, remaining: [{ ...source.generatorSettings, swingPercent: 67 }] };
+  const [chosen] = core.rerollRoleSettings(42n, 'drums', core.DEFAULT_TRACK_POLICIES.drums, [source], [3], context);
+  assert.equal(chosen.swingPercent, 67);
+});
+
+test('drum blueprint baking keeps one hit, stores growth as CUSTOM and applies family timing/dynamics', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts'), { bakeDrumPattern } = load('core/music/drum-reroll.ts');
+  const { JavaRandom } = load('core/music/java-random.ts');
+  const { partRhythmMask } = load('core/music/rhythm-pattern.ts');
+  const source = service.project().tracks.find(track => track.role === 'drums');
+  const paused = bakeDrumPattern(new JavaRandom(42n), { ...source.generatorSettings, rhythm: 'full', hitsPerPattern: 8, pauseChance: 100 });
+  assert.equal(paused.pauseChance, 0); assert.equal(paused.rhythm, 'custom');
+  assert.equal(partRhythmMask(paused).filter(Boolean).length, 1);
+  const families = [[35,65,99,false], [37,50,74,false], [38,65,99,false], [42,40,74,true], [46,50,84,false], [53,50,84,false], [60,40,74,true]];
+  let grown = false, sparseDense = false;
+  for (let sample = 0n; sample < 120n; sample++) {
+    const seed = BigInt.asIntN(64, sample * 0x9e3779b97f4a7c15n);
+    for (const [pitch, min, max, swingable] of families) {
+      const track = { ...source, generatorSettings: { ...source.generatorSettings, pitch, feedbackCount: 3, noteLengthMultiplier: 170 } };
+      const policy = { ...core.DEFAULT_TRACK_POLICIES.drums, maxSwing: 0, randomOffset: true };
+      const [chosen] = core.rerollRoleSettings(seed, 'drums', policy, [track], [1], { totalTracks: 12 });
+      assert.equal(chosen.velocityMin, min); assert.equal(chosen.velocityMax, max);
+      assert.equal(chosen.feedbackCount, 0); assert.equal(chosen.noteLengthMultiplier, 100);
+      assert.equal(chosen.patternSeed, 0); assert.equal(chosen.pauseChance, 0); assert.equal(chosen.swingPercent, 50);
+      if (!swingable) assert.equal(chosen.offset, 0);
+      assert.ok(partRhythmMask(chosen).some(Boolean));
+      if (pitch === 38 && chosen.rhythm === 'custom') grown = true;
+      if (pitch === 42 && chosen.rhythm === 'half' && chosen.chordSpan === 2) sparseDense = true;
+    }
+  }
+  assert.equal(grown, true); assert.equal(sparseDense, true);
+});
+
 test('main rerolls randomize instruments by default for every role and preserve explicit opt-outs', () => {
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     const { service, workspace, load } = fixture();
@@ -239,9 +334,11 @@ test('role rerolls match production melody patterns, drum blueprint data and aud
       const [actual] = core.rerollRoleSettings(BigInt(seed), 'drums', { ...core.DEFAULT_TRACK_POLICIES.drums, shiftChance: 0 }, [source], [1]);
       const tuple = [actual.rhythm, actual.hitsPerPattern, actual.chordSpan, actual.patternShift];
       const blueprints = expected.drums[family].map(([rhythm, ...values]) => [names[rhythm], ...values]);
-      assert.ok(blueprints.some(candidate => JSON.stringify(candidate) === JSON.stringify(tuple)));
-      seen.add(JSON.stringify(tuple));
-      if (actual.rhythm === 'custom') assert.ok(expected.customDrums.some(pattern => JSON.stringify([...pattern,...pattern]) === JSON.stringify(actual.customPattern)));
+      const candidates = blueprints.filter(candidate => candidate.slice(1).every((value, index) => value === tuple[index + 1])
+        && (actual.rhythm === candidate[0] || actual.rhythm === 'custom'));
+      assert.ok(candidates.length, 'baking retains the family blueprint hits/span/shift');
+      candidates.forEach(candidate => seen.add(JSON.stringify(candidate)));
+      if (actual.rhythm === 'custom') assert.equal(actual.customPattern.length, 32);
     }
     assert.equal(seen.size, new Set(expected.drums[family].map(tuple => JSON.stringify(tuple))).size, 'all blueprint variants exercised');
   });

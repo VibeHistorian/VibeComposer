@@ -2,6 +2,7 @@ import { ARRANGED_PARTS, type ArrangedPart, type CompositionTrack, type DrumSett
   type InstrumentGenerationPolicy, type InstrumentPool } from '../project/project.model';
 import { JavaRandom } from './java-random';
 import { DRUM_INSTRUMENTS } from './drum-instruments';
+import { chooseDrumPitches, type DrumRerollContext } from './drum-reroll';
 
 /** Ordered production InstUtils catalogues. ALL excludes Java's effects/noise programs 120–127. */
 export const INSTRUMENT_POOLS: Readonly<Record<Exclude<InstrumentPool, 'AUTO'>, readonly number[]>> = {
@@ -43,10 +44,23 @@ export function validInstrumentPolicies(value: unknown): boolean {
  * Shared Arp instruments apply to eligible targets only; locked/non-target tracks never anchor them.
  */
 export function rerollInstruments(seed: bigint, role: ArrangedPart, policy: InstrumentGenerationPolicy,
-  tracks: readonly CompositionTrack[], force = false): CompositionTrack[] {
+  tracks: readonly CompositionTrack[], force = false, drumContext: DrumRerollContext = {}): CompositionTrack[] {
   if (!decodeInstrumentPolicy(role, policy) || tracks.some(track => track.role !== role)) throw new RangeError('Invalid instrument reroll.');
   if (!force && !policy.randomize) return [...tracks];
   const random = new JavaRandom(BigInt.asIntN(64, seed ^ 0x494e535452554d45n));
+  if (role === 'drums') {
+    const eligible = tracks.filter(track => !track.rerollLocked && !track.instrumentLocked);
+    const remaining = [...(drumContext.remaining ?? []), ...tracks.filter(track => track.rerollLocked || track.instrumentLocked)
+      .map(track => track.generatorSettings as DrumSettings)];
+    const pitches = chooseDrumPitches(random, eligible.length, remaining.map(settings => settings.pitch), drumContext.onlyAdd);
+    let index = 0;
+    return tracks.map(track => {
+      if (track.rerollLocked || track.instrumentLocked) return track;
+      const pitch = pitches[index++];
+      return (track.generatorSettings as DrumSettings).pitch === pitch ? track
+        : { ...track, generatorSettings: { ...track.generatorSettings, pitch } as DrumSettings } as CompositionTrack;
+    });
+  }
   let shared: number | undefined;
   return tracks.map(track => {
     if (track.rerollLocked || track.instrumentLocked) return track;
@@ -54,8 +68,6 @@ export function rerollInstruments(seed: bigint, role: ArrangedPart, policy: Inst
     const candidates = INSTRUMENT_POOLS[pool];
     const instrument = shared ?? candidates[random.nextInt(candidates.length)];
     if (role === 'arpeggio' && policy.sameInstrument) shared = instrument;
-    if (role === 'drums') return (track.generatorSettings as DrumSettings).pitch === instrument ? track
-      : { ...track, generatorSettings: { ...track.generatorSettings, pitch: instrument } as DrumSettings } as CompositionTrack;
     return track.mix.program === instrument && track.instrumentPool === pool ? track
       : { ...track, instrumentPool: pool, mix: { ...track.mix, program: instrument } };
   });

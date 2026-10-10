@@ -1,0 +1,33 @@
+import java.util.*;
+import org.vibehistorian.vibecomposer.InstUtils;
+
+/** The marked method body is inserted verbatim from current production DrumGUI.java. */
+public class DrumRerollFixture {
+    private static final List<Integer> KICK_DRUMS = Arrays.asList(35, 36);
+    private static final List<Integer> SNARE_DRUMS = Arrays.asList(38, 40);
+    record Panel(int instrument) { int getInstrument() { return instrument; } }
+    static List<Integer> choose(long seed, int panelCount, boolean onlyAdd, List<Panel> remainingPanels) {
+        Random panelGenerator = new Random(seed);
+        /* PITCH_BRANCH */
+        return pitches;
+    }
+    public static void main(String[] args) {
+        StringBuilder json = new StringBuilder("{\"pitches\":[");
+        boolean first = true;
+        for (long seed : new long[] {42L, -2147483648L, 9007199254740993L, Long.MAX_VALUE}) {
+            for (int count : new int[] {0, 1, 2, 3, 4, 8, 16, 64}) {
+                for (boolean add : new boolean[] {false, true}) {
+                    if (add && count == 0) continue; // Java onlyAdd always supplies at least one panel.
+                    for (List<Integer> remaining : List.of(List.<Integer>of(), List.of(35), List.of(36),
+                        List.of(38), List.of(40), List.of(35,38), List.of(35,36,38), List.of(42,44,60))) {
+                        if (!first) json.append(','); first = false;
+                        json.append("{\"seed\":\"").append(seed).append("\",\"count\":").append(count)
+                            .append(",\"onlyAdd\":").append(add).append(",\"remaining\":").append(remaining)
+                            .append(",\"result\":").append(choose(seed, count, add, remaining.stream().map(Panel::new).toList())).append('}');
+                    }
+                }
+            }
+        }
+        System.out.println(json.append("]}"));
+    }
+}
