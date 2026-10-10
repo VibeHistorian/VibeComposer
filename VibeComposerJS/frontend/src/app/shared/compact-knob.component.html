@@ -1,11 +1,11 @@
-<div class="compact-knob" [class.mini]="mini()" [class.dense]="dense()" [class.coded]="compact()" [title]="tooltip()" (wheel)="onWheel($event)">
-  <vc-control-heading #heading [label]="label()" [shortLabel]="shortLabel()" [showStatus]="!dense() && !compact()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
-  <span class="knob-face" [style.--knob-progress]="angle()" aria-hidden="true"><span>{{ mini() ? valueFormat() === 'decibels' ? 'dB' : label().slice(0, 1) : mixed() && preview() === null ? '—' : shownValue() }}</span></span>
+<div class="compact-knob" [class.mini]="mini()" [class.named-mini]="mini() && shortLabel() !== null" [class.dense]="dense()" [class.coded]="compact()" [class.disabled]="disabled()" [title]="tooltip()" (wheel)="onWheel($event)">
+  <vc-control-heading #heading [label]="label()" [shortLabel]="shortLabel()" [showStatus]="!mini() && !dense() && !compact()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
+  <span class="knob-face" [style.--knob-progress]="angle()" aria-hidden="true"><span>{{ mini() && shortLabel() === null ? valueFormat() === 'decibels' ? 'dB' : label().slice(0, 1) : mixed() && preview() === null ? '—' : shownValue() }}</span></span>
   @if (showValueBelow()) {
     <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : formattedValue() }}</output>
   }
   @if (caption()) { <output class="knob-caption">{{ caption() }}</output> }
-  <input [id]="heading.controlId" type="range" [min]="sliderMinimum()" [max]="sliderMaximum()" [step]="sliderStep()" [value]="sliderValue()"
+  <input [id]="heading.controlId" type="range" [disabled]="disabled()" [min]="sliderMinimum()" [max]="sliderMaximum()" [step]="sliderStep()" [value]="sliderValue()"
     [attr.aria-label]="label()" [attr.aria-valuetext]="mixed() && preview() === null ? 'Mixed' : accessibleValue()"
     (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)" (pointerup)="finishDrag($event)"
     (pointercancel)="cancelDrag()" (lostpointercapture)="cancelDrag()" (keydown.escape)="cancelDrag()"

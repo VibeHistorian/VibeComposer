@@ -3,10 +3,11 @@ import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, T
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../core/music/instrument-generation';
 import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../core/music/track-generation';
 import { CompactToggleComponent } from './compact-toggle.component';
+import { CompactKnobComponent } from './compact-knob.component';
 
 @Component({
   selector: 'vc-track-generation-policy',
-  imports: [CompactToggleComponent],
+  imports: [CompactToggleComponent, CompactKnobComponent],
   host: { '[attr.data-control-role]': 'role()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './track-generation-policy.component.html',
@@ -27,6 +28,26 @@ export class TrackGenerationPolicyComponent {
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
     PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Percussion' };
   readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()]);
+
+  numericValue(control: PolicyControl): number { return Number(this.values()[control.key]); }
+
+  code(control: PolicyControl): string {
+    const codes: Readonly<Record<string, string>> = {
+      fixedHits: 'HITS', maxSplit: 'TR.CH', lengthMin: 'LEN↓', lengthMax: 'LEN↑',
+      maxRepeat: 'REPT', shiftChance: 'SHIFT', voices: 'VOICE', voicesChance: 'V.CH',
+      velocityMin: 'VEL↓', velocityMax: 'VEL↑', struminess: 'STRUM',
+      maxStrumPause: 'S.PAU', expandChance: 'EXP', maxSwing: 'SWING',
+    };
+    return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
+  }
+
+  changeNumber(control: PolicyControl, value: number): void {
+    if (!this.inactive(control)) this.policyChanged.emit({ [control.key]: value });
+  }
+
+  changeSustain(value: number): void {
+    if (!this.disabled()) this.instrumentPolicyChanged.emit({ sustainChance: value });
+  }
 
   toggle(control: PolicyControl): void {
     if (!this.inactive(control)) this.policyChanged.emit({ [control.key]: !this.values()[control.key] });

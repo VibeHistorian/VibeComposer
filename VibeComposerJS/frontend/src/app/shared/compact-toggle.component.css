@@ -9,5 +9,5 @@
 .toggle-button:disabled { opacity: .5; cursor: default; }
 
 /* Compact codes and independent inheritance target */
-.coded .toggle-button { width: 58px; min-height: 50px; padding: 18px 3px 8px; font: 10px var(--font-mono); }
+.coded .toggle-button { width: 58px; min-height: 25px; padding: 4px 17px 4px 4px; font: 9px var(--font-mono); }
 .toggle-status { position: absolute; top: 1px; right: 1px; width: 18px; height: 18px; }

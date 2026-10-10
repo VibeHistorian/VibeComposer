@@ -353,12 +353,19 @@ test('production Angular controls initialize selects from settings and support r
           result.otherRoleRerolls.push({ role, unchanged, synced, changed: JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) !== before });
         }
         result.parameterAreas = [];
+        result.generationMiniKnobs = [];
         for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
           document.querySelector('.track-group.' + role + ' .group-select').click();
           await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="' + role + '"]'), role + ' categories');
           const editors = [...document.querySelectorAll('vc-part-settings-editor')];
           const pitch = editors.map(editor => editor.querySelector('[data-control-category="pitch"]'));
           const rhythm = editors.map(editor => editor.querySelector('[data-control-category="rhythm"]'));
+          result.generationMiniKnobs.push(...[...document.querySelectorAll('.track-group.' + role + ' .named-mini')].map(knob => ({
+            role, type: knob.querySelector('input').type, width: knob.getBoundingClientRect().width,
+            diameter: knob.querySelector('.knob-face').getBoundingClientRect().width,
+            code: knob.querySelector('.control-name').textContent.trim(),
+            value: knob.querySelector('.knob-face > span').textContent.trim(), tooltip: knob.title,
+          })));
           result.parameterAreas.push({ role, pitch: pitch.map(area => area ? getComputedStyle(area).getPropertyValue('--accent-primary').trim() : null),
             rhythm: rhythm.map(area => getComputedStyle(area).getPropertyValue('--accent-primary').trim()),
             backgrounds: rhythm.map(area => getComputedStyle(area).backgroundColor),
@@ -450,6 +457,7 @@ test('production Angular controls initialize selects from settings and support r
           const owner = status?.closest('.compact-knob, .toggle-control');
           const box = owner?.getBoundingClientRect(), snow = status?.getBoundingClientRect();
           return { code: code.textContent.trim(), width: control.getBoundingClientRect().width,
+            toggleHeight: control.querySelector('.toggle-button')?.getBoundingClientRect().height ?? null,
             tooltip: control.title, statusInside: !!box && snow.left >= box.left && snow.right <= box.right + 1 && snow.bottom <= box.bottom + 1 };
         });
         const bassLabel = [...document.querySelectorAll('button.score-track-label')].find(button => button.textContent.trim() === 'B1');
@@ -543,6 +551,10 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.scoreSelectsTrack, true);
     assert.ok(actual.compactControls.length > 0);
     assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 59 && control.tooltip && control.statusInside), JSON.stringify(actual.compactControls));
+    assert.ok(actual.compactControls.filter(control => control.toggleHeight !== null).every(control => control.toggleHeight <= 26));
+    assert.ok(actual.generationMiniKnobs.length > 10);
+    assert.ok(actual.generationMiniKnobs.every(knob => knob.type === 'range' && knob.width <= 48 && knob.diameter <= 28
+      && [...knob.code].length <= 5 && Number.isFinite(Number(knob.value)) && knob.tooltip), JSON.stringify(actual.generationMiniKnobs));
     assert.equal(actual.inspectorPolicyRemoved, true);
     assert.equal(actual.bassBlue, 'rgb(34, 167, 242)');
     assert.equal(actual.countNearName, true);

@@ -18,6 +18,7 @@ export class CompactKnobComponent {
   readonly label = input.required<string>();
   readonly unit = input('%');
   readonly mixed = input(false);
+  readonly disabled = input(false);
   readonly showValueBelow = input(false);
   readonly mini = input(false);
   readonly dense = input(false);
@@ -49,13 +50,14 @@ export class CompactKnobComponent {
   });
 
   previewValue(event: Event): void {
+    if (this.disabled()) return;
     this.setPreview(this.fromSlider(Number((event.target as HTMLInputElement).value)));
   }
 
   commitValue(event: Event): void {
     const input = event.target as HTMLInputElement;
     const value = this.fromSlider(Number(input.value));
-    if (Number.isFinite(value)) this.valueCommit.emit(value);
+    if (!this.disabled() && Number.isFinite(value)) this.valueCommit.emit(value);
     this.preview.set(null);
     // A rejected commit may leave the bound value unchanged; restore the native slider as well.
     input.value = String(this.sliderValue());
@@ -83,7 +85,7 @@ export class CompactKnobComponent {
   }
 
   onWheel(event: WheelEvent): void {
-    if (event.ctrlKey || event.metaKey || event.deltaY === 0 || this.drag) return;
+    if (this.disabled() || event.ctrlKey || event.metaKey || event.deltaY === 0 || this.drag) return;
     event.preventDefault(); event.stopPropagation();
     const increment = event.shiftKey ? this.step() : Math.max(this.step(), Math.floor((this.maximum() - this.minimum()) / 20 / this.step()) * this.step());
     const direction = event.deltaY < 0 ? 1 : -1;
@@ -94,7 +96,7 @@ export class CompactKnobComponent {
   }
 
   startDrag(event: PointerEvent): void {
-    if (event.button !== 0 || this.drag) return;
+    if (this.disabled() || event.button !== 0 || this.drag) return;
     event.preventDefault(); event.stopPropagation();
     const control = event.currentTarget as HTMLInputElement;
     control.focus(); control.setPointerCapture(event.pointerId);
@@ -120,7 +122,7 @@ export class CompactKnobComponent {
   }
 
   private dragStillValid(): boolean {
-    return !!this.drag && this.drag.value === this.value() && this.drag.minimum === this.minimum()
+    return !this.disabled() && !!this.drag && this.drag.value === this.value() && this.drag.minimum === this.minimum()
       && this.drag.maximum === this.maximum() && this.drag.step === this.step()
       && this.drag.allowedValues === this.allowedValues();
   }

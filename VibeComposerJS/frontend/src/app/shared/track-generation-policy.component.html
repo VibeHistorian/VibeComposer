@@ -12,8 +12,10 @@
       </label>
     }
     @if (role() === 'chords' && instrumentPolicy().pool === 'AUTO') {
-      <label><span>Sustain chance %</span><input type="number" aria-label="Instrument sustain chance %" min="0" max="100" step="1"
-        [value]="instrumentPolicy().sustainChance" [disabled]="disabled()" (change)="changeInstrument('sustainChance', $event)" /></label>
+      <vc-compact-knob [mini]="true" label="Instrument sustain chance %" shortLabel="SUST" unit="%"
+        description="Chance to choose a sustained chord instrument from the automatic pool."
+        [minimum]="0" [maximum]="100" [value]="instrumentPolicy().sustainChance ?? 50" [disabled]="disabled()"
+        (valueCommit)="changeSustain($event)" />
     }
     @if (role() === 'arpeggio') {
       <vc-compact-toggle label="One instrument" description="Choose one instrument for all eligible targets in this reroll."
@@ -27,6 +29,11 @@
       @if (control.minimum === undefined && !control.options) {
         <vc-compact-toggle [label]="control.label" [description]="control.description ?? ''" [active]="values()[control.key] === true"
           [disabled]="inactive(control)" (toggled)="toggle(control)" />
+      } @else if (control.minimum !== undefined) {
+        <vc-compact-knob [mini]="true" [label]="'Reroll ' + control.label" [shortLabel]="code(control)"
+          [description]="control.description ?? ''" [unit]="control.label.includes('%') ? '%' : ''"
+          [minimum]="control.minimum" [maximum]="control.maximum!" [value]="numericValue(control)" [disabled]="inactive(control)"
+          (valueCommit)="changeNumber(control, $event)" />
       } @else {
       <label [attr.title]="control.label + (control.description ? ': ' + control.description : '')">
         <span>{{ control.label }}</span>
@@ -34,9 +41,6 @@
           <select [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">
             @for (option of control.options; track option) { <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option> }
           </select>
-        } @else if (control.minimum !== undefined) {
-          <input type="number" [attr.aria-label]="'Reroll ' + control.label" [min]="control.minimum" [max]="control.maximum!" step="1"
-            [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)" />
         }
       </label>
       }
