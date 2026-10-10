@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { KEYS, getDiatonicChords } from '../music/harmony';
+import { KEYS, getDiatonicChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
 import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
@@ -829,7 +829,24 @@ export class ProjectService {
 
     const progression = [...this.state().progression];
     progression[index] = degree;
-    this.commit({ ...this.state(), progression });
+    this.commit({ ...this.state(), progression,
+      progressionChords: this.state().progressionChords?.map((chord, i) => i === index ? null : chord) });
+  }
+
+  setProgressionChord(index: number, chord: ProgressionChord | null): void {
+    const current = this.state();
+    if (!Number.isInteger(index) || index < 0 || index >= current.progression.length) return;
+    const custom = current.progression.map((_, i) => i === index ? chord : current.progressionChords?.[i] ?? null);
+    if (!validProgressionChords(custom, current.progression.length)) return;
+    this.commit({ ...current, progressionChords: custom.some(Boolean) ? custom.map(chord => chord ? { ...chord } : null) : undefined });
+  }
+
+  moveProgressionChord(from: number, to: number): void {
+    const current = this.state();
+    if (![from,to].every(index => Number.isInteger(index) && index >= 0 && index < current.progression.length) || from === to) return;
+    const reorder = <T>(values: readonly T[]): T[] => { const next = [...values]; next.splice(to, 0, next.splice(from, 1)[0]); return next; };
+    this.commit({ ...current, progression: reorder(current.progression),
+      progressionChords: current.progressionChords ? reorder(current.progressionChords) : undefined });
   }
 
   setProgression(progression: readonly number[]): void {
@@ -838,7 +855,7 @@ export class ProjectService {
         || progression.some((degree) => !chords.some((chord) => chord.degree === degree))) {
       return;
     }
-    this.commit({ ...this.state(), progression: [...progression] });
+    this.commit({ ...this.state(), progression: [...progression], progressionChords: undefined });
   }
 
   addChord(): void {
@@ -846,18 +863,20 @@ export class ProjectService {
       return;
     }
     const progression = [...this.state().progression, 1];
-    this.commit({ ...this.state(), progression });
+    this.commit({ ...this.state(), progression,
+      progressionChords: this.state().progressionChords ? [...this.state().progressionChords!, null] : undefined });
   }
 
   removeChord(index: number): void {
     const progression = this.state().progression.filter((_, chordIndex) => chordIndex !== index);
     if (progression.length > 0 && progression.length !== this.state().progression.length) {
-      this.commit({ ...this.state(), progression });
+      this.commit({ ...this.state(), progression,
+        progressionChords: this.state().progressionChords?.filter((_, chordIndex) => chordIndex !== index) });
     }
   }
 
   resetProgression(): void {
-    this.commit({ ...this.state(), progression: [...DEFAULT_PROJECT.progression] });
+    this.commit({ ...this.state(), progression: [...DEFAULT_PROJECT.progression], progressionChords: undefined });
   }
 
   undo(): void {
@@ -966,7 +985,8 @@ export class ProjectService {
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
       && Array.isArray(project.progression)
       && project.progression.length > 0 && project.progression.length <= 32
-      && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7);
+      && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7)
+      && validProgressionChords(project.progressionChords, project.progression.length);
     if (!validBase || !validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
       || !validInstrumentPolicies(project.instrumentGenerationPolicies)) {
       return undefined;
@@ -995,6 +1015,7 @@ export class ProjectService {
       tempoBpm: project.tempoBpm!,
       seed: project.seed!,
       progression: [...project.progression!],
+      ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
       melody,
       bass,
       chords,
@@ -1369,6 +1390,7 @@ export class ProjectService {
       && project.progression.length > 0
       && project.progression.length <= 32
       && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7)
+      && validProgressionChords(project.progressionChords, project.progression.length)
       && this.decodeMelody(project.melody) !== undefined
       && this.decodeBass(project.bass) !== undefined
       && this.decodeChords(project.chords) !== undefined
@@ -1391,6 +1413,7 @@ export class ProjectService {
   }
 
   private matchesMainProgression(chordDegrees: readonly number[]): boolean {
+    if (this.state().progressionChords?.some(Boolean)) return false;
     const progression = this.state().progression;
     return chordDegrees.every((degree, index) => degree === progression[index % progression.length]);
   }

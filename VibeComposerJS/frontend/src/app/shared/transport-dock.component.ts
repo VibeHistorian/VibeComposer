@@ -2,13 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
-import { KEYS } from '../core/music/harmony';
+import { effectiveKey } from '../core/music/harmony';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { MixButtonsComponent } from './mix-buttons.component';
+import { CompactKnobComponent } from './compact-knob.component';
+import { ChordletEditorComponent } from './chordlet-editor.component';
 
 @Component({
   selector: 'vc-transport-dock',
-  imports: [WheelSelectDirective, MixButtonsComponent],
+  imports: [WheelSelectDirective, MixButtonsComponent, CompactKnobComponent, ChordletEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transport-dock.component.html',
   styleUrl: './transport-dock.component.css',
@@ -18,7 +20,7 @@ export class TransportDockComponent {
   private readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
-  readonly keys = KEYS;
+  readonly key = computed(() => effectiveKey(this.project().key, this.project().transposeSemitones ?? 0));
   private readonly generationFeedback = signal<{ project: unknown; message: string } | null>(null);
   readonly generationMessage = computed(() => this.generationFeedback()?.project === this.project() ? this.generationFeedback()?.message : null);
 
@@ -69,23 +71,24 @@ export class TransportDockComponent {
     this.playback.toggleLive();
   }
 
-  updateKey(event: Event): void {
-    const key = (event.target as HTMLSelectElement).value;
-    if (KEYS.includes(key)) this.projects.updateSettings({ key });
-  }
-
   updateScale(event: Event): void {
     const scale = (event.target as HTMLSelectElement).value;
     if (scale === 'major' || scale === 'natural-minor') this.projects.updateSettings({ scale });
   }
 
-  updateTempo(event: Event): void {
-    const tempo = Number((event.target as HTMLInputElement).value);
+  updateTempo(tempo: number): void {
     if (Number.isInteger(tempo) && tempo >= 40 && tempo <= 240) this.projects.updateSettings({ tempoBpm: tempo });
   }
 
-  updateTranspose(event: Event): void {
-    const transpose = Number((event.target as HTMLInputElement).value);
+  updateTranspose(transpose: number): void {
     if (Number.isInteger(transpose) && transpose >= -24 && transpose <= 24) this.projects.updateSettings({ transposeSemitones: transpose });
+  }
+  updateSeed(event: Event): void {
+    const input = event.target as HTMLInputElement, seed = input.value.trim();
+    if (/^-?\d+$/.test(seed)) {
+      const value = BigInt(seed);
+      if (value >= -(1n << 63n) && value <= (1n << 63n) - 1n) this.projects.updateSettings({ seed: value.toString() });
+    }
+    input.value = this.project().seed;
   }
 }

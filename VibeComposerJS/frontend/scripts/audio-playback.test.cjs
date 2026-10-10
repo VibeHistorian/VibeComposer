@@ -230,6 +230,8 @@ test('transport watches project changes and enabling LIVE without subscribing to
     './workspace-ui.service': { WorkspaceUiService: 'ui' },
     './wheel-select.directive': { WheelSelectDirective: class {} },
     './mix-buttons.component': { MixButtonsComponent: class {} },
+    './compact-knob.component': { CompactKnobComponent: class {} },
+    './chordlet-editor.component': { ChordletEditorComponent: class {} },
   });
   let reloads = 0;
   const reload = playback.reload.bind(playback);

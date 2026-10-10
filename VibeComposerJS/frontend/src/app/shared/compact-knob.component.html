@@ -1,9 +1,10 @@
-<div class="compact-knob" [class.mini]="mini()" [title]="tooltip()" (wheel)="onWheel($event)">
-  <vc-control-heading #heading [label]="label()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
+<div class="compact-knob" [class.mini]="mini()" [class.dense]="dense()" [title]="tooltip()" (wheel)="onWheel($event)">
+  <vc-control-heading #heading [label]="shortLabel() ?? label()" [showStatus]="!dense()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
   <span class="knob-face" [style.--knob-progress]="angle()" aria-hidden="true"><span>{{ mini() ? valueFormat() === 'decibels' ? 'dB' : label().slice(0, 1) : mixed() && preview() === null ? '—' : shownValue() }}</span></span>
   @if (showValueBelow()) {
     <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : formattedValue() }}</output>
   }
+  @if (caption()) { <output class="knob-caption">{{ caption() }}</output> }
   <input [id]="heading.controlId" type="range" [min]="sliderMinimum()" [max]="sliderMaximum()" [step]="sliderStep()" [value]="sliderValue()"
     [attr.aria-label]="label()" [attr.aria-valuetext]="mixed() && preview() === null ? 'Mixed' : accessibleValue()"
     (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)" (pointerup)="finishDrag($event)"

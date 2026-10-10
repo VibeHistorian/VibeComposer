@@ -1,5 +1,46 @@
 export type ScaleMode = 'major' | 'natural-minor';
 
+export const CHORD_SPICES = ['', 'm', 'maj7', 'm7', '7', 'mM7', 'sus2', 'sus4', 'sus7',
+  'maj6', 'm6', 'maj9', 'm9', 'maj13', 'm13', 'aug', 'dim'] as const;
+export type ChordSpice = typeof CHORD_SPICES[number];
+export interface ProgressionChord { readonly root: number; readonly spice: ChordSpice; readonly inversion: number }
+// Production MidiUtils spice intervals (including its identical maj9/m9 voicing).
+const SPICE_INTERVALS: readonly (readonly number[])[] = [[0,4,7],[0,3,7],[0,4,7,11],[0,3,7,10],[0,4,7,10],
+  [0,3,7,11],[0,2,7],[0,5,7],[0,5,7,10],[0,4,7,9],[0,3,7,9],[0,4,7,11,14],
+  [0,4,7,11,14],[0,4,7,11,14,21],[0,3,7,10,14,21],[0,4,8],[0,3,6]];
+
+export function validProgressionChords(value: unknown, count: number): value is readonly (ProgressionChord | null)[] | undefined {
+  return value === undefined || Array.isArray(value) && value.length === count && value.every(chord => chord === null
+    || chord && typeof chord === 'object' && !Array.isArray(chord)
+      && Object.keys(chord).every(key => ['root','spice','inversion'].includes(key))
+      && Number.isInteger(chord.root) && chord.root >= 0 && chord.root < 12
+      && CHORD_SPICES.includes(chord.spice) && Number.isInteger(chord.inversion) && Math.abs(chord.inversion) <= 5);
+}
+
+export function progressionChords(key: string, scale: ScaleMode, degrees: readonly number[],
+  custom?: readonly (ProgressionChord | null)[]): ProgressionChord[] {
+  const diatonic = getDiatonicChords(key, scale);
+  return degrees.map((degree, index) => custom?.[index] ?? (() => {
+    const chord = diatonic.find(chord => chord.degree === degree)!;
+    return { root: getPitchClass(chord.root)!, spice: chord.quality === 'minor' ? 'm' : chord.quality === 'diminished' ? 'dim' : '', inversion: 0 };
+  })());
+}
+
+export function chordPitches(chord: ProgressionChord, octaveBase: number, open = false): number[] {
+  const intervals = SPICE_INTERVALS[CHORD_SPICES.indexOf(chord.spice)];
+  const notes = intervals.map(interval => octaveBase + chord.root + interval);
+  if (open && notes.length === 3) { notes[1] += 12; notes.sort((a,b) => a-b); }
+  const change = (chord.inversion + notes.length * 100) % notes.length;
+  const minimum = 12 * Math.floor(Math.abs(chord.inversion) / notes.length);
+  const maximum = change === 0 ? minimum : minimum + 12;
+  return notes.map((note, index) => note + (chord.inversion < 0
+    ? -(index >= change ? maximum : minimum) : index >= change ? minimum : maximum)).sort((a,b) => a-b);
+}
+
+export function effectiveKey(key: string, transpose: number): string {
+  return KEYS[((getPitchClass(key) ?? 0) + transpose % 12 + 12) % 12];
+}
+
 export interface DiatonicChord {
   degree: number;
   romanNumeral: string;

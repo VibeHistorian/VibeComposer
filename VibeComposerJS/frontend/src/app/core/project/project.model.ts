@@ -273,6 +273,8 @@ export interface CompositionProject {
   readonly seed: string;
   /** One-based diatonic chord degrees in the selected key and scale. */
   readonly progression: readonly number[];
+  /** Explicit Chordlet edits; null entries continue to follow the diatonic mode. */
+  readonly progressionChords?: readonly (import('../music/harmony').ProgressionChord | null)[];
   readonly melody: MelodySettings;
   readonly bass: BassSettings;
   readonly chords: ChordSettings;

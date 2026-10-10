@@ -1,5 +1,5 @@
 import type { ChordSettings } from '../project/project.model';
-import { getDiatonicChords, getPitchClass } from './harmony';
+import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { decodePartPatch, velocityBounds } from './part-settings';
@@ -29,6 +29,7 @@ export function generateChordPart(
   scale: ScaleMode,
   progression: readonly number[],
   settings: ChordSettings,
+  customChords?: readonly (ProgressionChord | null)[],
 ): ChordHitEvent[] {
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) {
     throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
@@ -42,7 +43,7 @@ export function generateChordPart(
 
   if (settings.generationEnabled === false) return [];
   const diatonicChords = getDiatonicChords(key, scale);
-  const chordDefinitions = progression.map((degree) => {
+  const chordDefinitions = progression.map((degree, index) => {
     const chord = diatonicChords.find((candidate) => candidate.degree === degree);
     if (!chord) {
       throw new RangeError(`Chord degree ${degree} is not available in ${key} ${scale}.`);
@@ -58,7 +59,8 @@ export function generateChordPart(
     const pitches = settings.voicing === 'open'
       ? [root, root + fifth, root + 12 + third]
       : [root, root + third, root + fifth];
-    return { symbol: chord.symbol, pitches: expandedVoices(pitches, settings) };
+    return { symbol: chord.symbol, pitches: expandedVoices(customChords?.[index]
+      ? chordPitches(customChords[index]!, 60, settings.voicing === 'open') : pitches, settings) };
   });
 
   const signedSeed = effectivePartSeed(seed, settings);

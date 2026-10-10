@@ -7,6 +7,13 @@ P6b adds `RolePolicyFixture.java` / `../fixtures/role-policy.java.json`: 64 prod
 
 # Java pattern fixtures
 
+`ChordletHarmonyFixture.java` supplies `../fixtures/chordlet-harmony.java.json`: **2,244 production chord voicings**, calling current `MidiUtils.getNormalMappedChord`/`chordInversion` for 12 roots, all 17 spice names and inversions -5…5. This is harmonic helper parity, not Swing gesture or advanced melody-target parity. It preserves Java's maj9/m9 equivalence. Compile current MidiUtils with the fixture, not the stale JAR class:
+
+```powershell
+& 'C:/Java/jdk-24.0.2/bin/javac.exe' -encoding UTF-8 -cp 'midimasterpiece/target/classes;midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar' -d VibeComposerJS/frontend/.angular/chord-fixtures midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/MidiUtils.java VibeComposerJS/frontend/scripts/java/ChordletHarmonyFixture.java
+& 'C:/Java/jdk-24.0.2/bin/java.exe' '-Djava.awt.headless=true' -cp 'VibeComposerJS/frontend/.angular/chord-fixtures;midimasterpiece/target/classes;midimasterpiece/target/VibeComposer-2.6r-beta-JAR.jar' ChordletHarmonyFixture | Set-Content -Encoding utf8 VibeComposerJS/frontend/scripts/fixtures/chordlet-harmony.java.json
+```
+
 P5b adds `ChordCoreFixture.java` / `../fixtures/chord-core.java.json`: **288 complete production Chords phrases**, using current `ChordPhraseGenerator`, `Chord.makeAndStoreNotesBackwards`, `StrumType.adjustNoteOffsets`, phrase assembly and swing. Cases cover four exact long seeds, explicit part seeds, C/B/F major/minor, 1/3/4/7 chords, eight rhythms, Hits 1–32, Span 1–4, all join modes, fills/flips, velocity grids with zeros, voice expansion, independent transition draws/split extremes, all nine strum types and per-tone pauses. The harness fixes arrangement variations off, uses explicit close/open diatonic triads, four-beat chords and global duration multiplier 1.0 (swing retains production 0.95). This validates the supported musical consumer, not advanced harmony/MELODY1 or deterministic GUI policies. TS corrects the primary order seed to +20001. Struminess is a documented GUI no-op correction outside this oracle.
 
 From the repository root, with existing compiled Java dependencies:

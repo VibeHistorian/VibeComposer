@@ -1,4 +1,4 @@
-import { getDiatonicChords, getPitchClass } from './harmony';
+import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import type { BassRhythm, BassSettings } from '../project/project.model';
@@ -31,6 +31,7 @@ export function generateBassline(
   rhythm: BassRhythm,
   noteVariation: number,
   settings: Partial<BassSettings> = {},
+  customChords?: readonly (ProgressionChord | null)[],
 ): BassNoteEvent[] {
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100
@@ -40,7 +41,7 @@ export function generateBassline(
 
   if (settings.generationEnabled === false) return [];
   const chords = getDiatonicChords(key, scale);
-  const triads = progression.map((degree) => {
+  const triads = progression.map((degree, index) => {
     const chord = chords.find((candidate) => candidate.degree === degree);
     if (!chord) {
       throw new RangeError(`Chord degree ${degree} is not available in ${key} ${scale}.`);
@@ -52,7 +53,8 @@ export function generateBassline(
     const third = chord.quality === 'major' ? 4 : 3;
     const fifth = chord.quality === 'diminished' ? 6 : 7;
     const midiRoot = 36 + root;
-    return [midiRoot, midiRoot + third, midiRoot + fifth];
+    return customChords?.[index] ? chordPitches({ ...customChords[index]!, inversion: 0 }, 36)
+      : [midiRoot, midiRoot + third, midiRoot + fifth];
   });
 
   const roots = triads.map(([root]) => root);

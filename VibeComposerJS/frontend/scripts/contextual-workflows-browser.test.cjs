@@ -42,6 +42,51 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       change(seed, '9007199254740995');
       await wait(() => read().seed === '9007199254740995', 'canonical project');
       const result = { width: innerWidth };
+      result.createRemoved = !document.querySelector('.primary-harmony') && !document.querySelector('.track-browser [aria-label="Generation seed"]');
+      result.seedInDock = !!seed.closest('.transport-dock');
+      result.noKeySelector = !document.querySelector('select[aria-label="Key"]');
+      const transpose = document.querySelector('.transport-dock [aria-label="Transpose in semitones"]');
+      change(transpose, '7');
+      await wait(() => read().transposeSemitones === 7 && document.querySelector('.knob-caption')?.textContent === 'G', 'transpose key label');
+      result.transposeKey = transpose.type === 'range'; change(transpose, '0');
+      const tempo = document.querySelector('.transport-dock [aria-label="Tempo in beats per minute"]');
+      change(tempo, '149'); await wait(() => read().tempoBpm === 149, 'tempo knob');
+      result.tempoKnob = tempo.type === 'range'; change(tempo, '128');
+      const mode = document.querySelector('.transport-dock [aria-label="Mode"]');
+      result.modeCompact = getComputedStyle(mode).appearance === 'none' && mode.getBoundingClientRect().width < 70;
+      change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode change');
+      change(mode, 'major'); await wait(() => read().scale === 'major' && read().transposeSemitones === 0, 'mode restore');
+      const chordlet = () => document.querySelector('.chordlet-label');
+      chordlet().dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
+      const rootMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord root"]'), 'root menu');
+      result.rootMenuFits = rootMenu.getBoundingClientRect().left >= 0 && rootMenu.getBoundingClientRect().right <= innerWidth
+        && rootMenu.getBoundingClientRect().top >= 0 && rootMenu.getBoundingClientRect().bottom <= innerHeight;
+      [...rootMenu.querySelectorAll('button')].find(button => button.textContent === 'F♯').click();
+      await wait(() => read().progressionChords?.[0]?.root === 6, 'root selection');
+      chordlet().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 1 }));
+      const spiceMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord spice"]'), 'spice menu');
+      await wait(() => spiceMenu.contains(document.activeElement), 'spice menu keyboard focus');
+      const beforeArrow = document.activeElement;
+      beforeArrow.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'ArrowRight' }));
+      result.menuKeyboard = spiceMenu.contains(document.activeElement) && document.activeElement !== beforeArrow;
+      [...spiceMenu.querySelectorAll('button')].find(button => button.textContent === 'sus4').click();
+      await wait(() => read().progressionChords[0].spice === 'sus4', 'spice selection');
+      chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 }));
+      await wait(() => read().progressionChords[0].inversion === 1, 'inversion wheel');
+      chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100, shiftKey: true }));
+      await wait(() => read().progressionChords[0].root === 7, 'root wheel');
+      chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100, ctrlKey: true }));
+      await wait(() => read().progressionChords[0].spice === 'sus7', 'spice wheel');
+      const degree = read().progression[0];
+      chordlet().dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'ArrowRight', altKey: true }));
+      await wait(() => read().progressionChords[1]?.spice === 'sus7' && read().progression[1] === degree, 'keyboard move');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().progressionChords[0]?.spice === 'sus7', 'move undo');
+      document.querySelector('[aria-label="Add chord"]').click();
+      await wait(() => read().progression.length === 5, 'chord add');
+      (await wait(() => document.querySelector('[aria-label="Remove chord 5"]'), 'fifth chord rendered')).click();
+      await wait(() => read().progression.length === 4, 'chord remove');
+      result.chordletGestures = true;
       const beforeRules = JSON.stringify(read().tracks);
       const melody = document.querySelector('.track-group.melody');
       melody.querySelector('[aria-label="Reroll On Regenerate"]').click();
@@ -121,7 +166,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       result.trackScroll = document.querySelector('.track-groups').scrollHeight > document.querySelector('.track-groups').clientHeight || document.documentElement.scrollHeight > innerHeight;
       await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
     } catch(error) { await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, context: document.querySelector('.part-context-label')?.textContent,
-      canvas: document.querySelector('.arrangement-panel canvas[tabindex]')?.getAttribute('aria-label') }) }); }
+      stack: error.stack, canvas: document.querySelector('.arrangement-panel canvas[tabindex]')?.getAttribute('aria-label') }) }); }
   })();</script>`;
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
@@ -171,12 +216,28 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     });
     await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
     const actual = await result;
+    assert.equal(actual.error, undefined, JSON.stringify(actual));
+    // Real left-button pointer capture/reorder through CDP, committing exactly once.
+    const snapshot = await command('Runtime.evaluate', { expression: `(() => {
+      const buttons = [...document.querySelectorAll('.chordlet-label')];
+      const points = buttons.slice(0,2).map(button => { const b = button.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+      return { points, project: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')) };
+    })()`, returnByValue: true });
+    const beforeDrag = snapshot.result.value;
+    await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...beforeDrag.points[0], button: 'left', clickCount: 1 });
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...beforeDrag.points[1], button: 'left', buttons: 1 });
+    await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...beforeDrag.points[1], button: 'left', clickCount: 1 });
+    await new Promise(done => setTimeout(done, 100));
+    const moved = await command('Runtime.evaluate', { expression: `JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))`, returnByValue: true });
+    assert.equal(moved.result.value.progression[1], beforeDrag.project.progression[0]);
+    assert.deepEqual(moved.result.value.progressionChords[1], beforeDrag.project.progressionChords[0]);
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
+      'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
       'chordEditors','chordPolicyOnly','chordPolicies','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();

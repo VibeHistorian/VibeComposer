@@ -13,6 +13,7 @@ export class ControlHeadingComponent {
   readonly controlId = `part-control-${nextControlId++}`;
   readonly label = input.required<string>();
   readonly inheritance = input<ControlInheritance>('global');
+  readonly showStatus = input(true);
   readonly inheritRequested = output<void>();
   readonly statusLabel = computed(() => this.inheritance() === 'custom'
     ? `Reset ${this.label()} to inherited`

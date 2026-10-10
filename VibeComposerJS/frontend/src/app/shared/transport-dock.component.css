@@ -1,7 +1,7 @@
 :host { display: block; }
 
 /* Dock surface and fixed placement */
-.transport-dock { position: fixed; z-index: 50; right: 0; bottom: 14px; left: 0; width: min(calc(100vw - 48px), 1920px); min-height: 68px; margin: 0 auto; padding: 10px 15px; display: grid; grid-template-columns: minmax(105px, .8fr) auto minmax(150px, 1.3fr) minmax(330px, 2fr); align-items: center; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-glass); box-shadow: 0 10px 35px var(--shadow-ink), inset 0 1px var(--shadow-highlight); backdrop-filter: blur(16px); }
+.transport-dock { position: fixed; z-index: 50; right: 0; bottom: 14px; left: 0; width: min(calc(100vw - 48px), 1920px); min-height: 68px; margin: 0 auto; padding: 10px 15px; display: grid; grid-template-columns: minmax(70px, .5fr) auto minmax(85px, .7fr) minmax(350px, 3fr); align-items: center; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); box-shadow: 0 10px 35px var(--shadow-ink), inset 0 1px var(--shadow-highlight);  }
 .transport-project { min-width: 0; display: flex; align-items: center; gap: 10px; }
 .transport-project > div { min-width: 0; display: grid; gap: 4px; }
 .transport-project strong { overflow: hidden; color: var(--text-strong); font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -24,11 +24,15 @@
 .position-line { margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; }
 .progress-track { height: 4px; overflow: hidden; border-radius: var(--radius-tight); background: var(--border-default); }
 .progress-track span { height: 100%; display: block; border-radius: inherit; background: var(--accent-primary); transition: width .04s linear; }
-.transport-globals { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.transport-globals label { min-width: 0; display: grid; gap: 4px; }
-.transport-globals label > span { color: var(--text-subtle); font: 10px var(--font-mono); letter-spacing: .07em; }
-.transport-globals select, .transport-globals input { width: 100%; min-width: 0; height: 27px; padding: 0 6px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font-size: 10px; }
-.playback-error { position: absolute; right: 12px; bottom: calc(100% + 6px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); font-size: 10px; }
+.transport-globals { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.global-knobs { display: flex; align-items: start; gap: 4px; flex: 0 0 auto; }
+.mode-seed { width: 112px; flex: 0 0 auto; display: grid; gap: 5px; }
+.transport-globals label { min-width: 0; display: flex; align-items: center; gap: 5px; }
+.transport-globals label > span { color: var(--text-subtle); font: 9px var(--font-mono); }
+.transport-globals select, .transport-globals input { min-width: 0; height: 24px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font: 10px var(--font-mono); }
+.mode-control select { appearance: none; field-sizing: content; width: auto; cursor: pointer; }
+.seed-control input { width: 80px; }
+.transport-globals vc-chordlet-editor { flex: 1; min-width: 0; }.playback-error { position: absolute; right: 12px; bottom: calc(100% + 6px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); font-size: 10px; }
 
 /* Compact dock layout */
 @media (max-width: 1050px) {
@@ -56,4 +60,12 @@
   .transport-dock { grid-template-columns: minmax(0, 1fr) auto; }
   .transport-progress { grid-column: 1 / -1; }
   .transport-globals { grid-row: auto; }
+}
+
+@media (max-width: 620px) {
+  .transport-globals { flex-wrap: wrap; gap: 5px 10px; }
+  .transport-globals vc-chordlet-editor { flex: 1 0 100%; }
+  .global-knobs { margin-right: auto; }
+  .mode-seed { width: 145px; }
+  .seed-control input { width: 112px; }
 }

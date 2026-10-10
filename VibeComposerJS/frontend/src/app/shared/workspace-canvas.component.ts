@@ -9,8 +9,9 @@ import { shouldGenerateTrackInSection } from '../core/music/arrangement-generato
 import { DRUM_INSTRUMENTS, drumInstrumentName } from '../core/music/drum-instruments';
 import { GM_INSTRUMENTS } from '../core/music/gm-instruments';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
-import { generateDiatonicProgression } from '../core/music/progression-generator';
-import { getDiatonicChords, KEYS } from '../core/music/harmony';
+import { getDiatonicChords } from '../core/music/harmony';
+
+
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { ArrangementOverviewComponent } from './arrangement-overview.component';
@@ -61,8 +62,8 @@ export class WorkspaceCanvasComponent {
   readonly project = this.projects.project;
   readonly instruments = GM_INSTRUMENTS;
   readonly drumInstruments = DRUM_INSTRUMENTS;
-  readonly keys = KEYS;
   readonly sectionTypes = SECTION_TYPES;
+  readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
   readonly midiChannels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly roles = ARRANGED_PARTS.map((role) => ({ role, name: ROLE_NAMES[role] }));
   readonly generationAvailable = PART_GENERATION_AVAILABLE;
@@ -239,7 +240,6 @@ export class WorkspaceCanvasComponent {
     return target.kind === 'section' ? this.project().arrangement.find((section) => section.id === target.sectionId) ?? null : null;
   });
   readonly selectedSectionIndex = computed(() => this.project().arrangement.findIndex((section) => section.id === this.selectedSectionId()));
-  readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
   readonly sectionChordDegrees = computed(() => {
     const section = this.selectedSection();
     return section ? Array.from({ length: section.measures }, (_, measure) =>
@@ -397,17 +397,6 @@ export class WorkspaceCanvasComponent {
   openMixer(): void { this.mixerOpen.set(true); }
   closeMixer(): void { this.mixerOpen.set(false); }
 
-  changeChord(index: number, event: Event): void {
-    this.projects.setChordDegree(index, Number(this.inputValue(event)));
-  }
-
-  addChord(): void { this.projects.addChord(); }
-  removeChord(index: number): void { this.projects.removeChord(index); }
-
-  generateProgression(): void {
-    this.projects.setProgression(generateDiatonicProgression(BigInt(this.project().seed), this.project().progression.length));
-  }
-
   updateNewSectionType(event: Event): void {
     const value = this.inputValue(event) as SectionType;
     if (SECTION_TYPES.includes(value)) this.newSectionType.set(value);
@@ -482,11 +471,6 @@ export class WorkspaceCanvasComponent {
     this.projects.randomizeArrangementPresence(section.id);
   }
 
-  updateKey(event: Event): void {
-    const key = this.inputValue(event);
-    if (KEYS.includes(key)) this.projects.updateSettings({ key });
-  }
-
   updateScale(event: Event): void {
     const scale = this.inputValue(event);
     if (scale === 'major' || scale === 'natural-minor') this.projects.updateSettings({ scale });
@@ -500,19 +484,6 @@ export class WorkspaceCanvasComponent {
   updateTranspose(event: Event): void {
     const transpose = Number(this.inputValue(event));
     if (Number.isInteger(transpose) && transpose >= -24 && transpose <= 24) this.projects.updateSettings({ transposeSemitones: transpose });
-  }
-
-  updateSeed(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const seed = input.value.trim();
-    if (/^-?\d+$/.test(seed)) {
-      const value = BigInt(seed);
-      if (value >= -(1n << 63n) && value <= (1n << 63n) - 1n) {
-        this.projects.updateSettings({ seed: value.toString() });
-        return;
-      }
-    }
-    input.value = this.project().seed;
   }
 
   addTrack(role: ArrangedPart): void {

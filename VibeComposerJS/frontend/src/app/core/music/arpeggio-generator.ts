@@ -1,5 +1,5 @@
 import type { ArpeggioSettings } from '../project/project.model';
-import { getDiatonicChords, getPitchClass } from './harmony';
+import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { decodePartPatch, velocityBounds } from './part-settings';
@@ -25,6 +25,7 @@ export function generateArpeggio(
   scale: ScaleMode,
   progression: readonly number[],
   settings: ArpeggioSettings,
+  customChords?: readonly (ProgressionChord | null)[],
 ): ArpeggioNoteEvent[] {
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) {
     throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
@@ -61,7 +62,8 @@ export function generateArpeggio(
     }
     const third = chord.quality === 'major' ? 4 : 3;
     const fifth = chord.quality === 'diminished' ? 6 : 7;
-    const ascending = expandedVoices(Array.from({ length: settings.octaves }, (_, octave) => [
+    const ascending = expandedVoices(Array.from({ length: settings.octaves }, (_, octave) => customChords?.[chordIndex]
+      ? chordPitches(customChords[chordIndex]!, 48 + octave * 12) : [
       48 + rootPitchClass + octave * 12,
       48 + rootPitchClass + third + octave * 12,
       48 + rootPitchClass + fifth + octave * 12,

@@ -8,25 +8,6 @@
 .browser-heading h2, .canvas-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 13px; font-weight: 600; letter-spacing: -.025em; }
 .eyebrow { margin: 0; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .11em; }
 
-/* Primary chord setup */
-.primary-harmony { margin: -3px -2px 13px; padding: 9px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-low); }
-.harmony-heading { margin-bottom: 7px; display: flex; align-items: center; justify-content: space-between; }
-.harmony-heading h2 { margin: 3px 0 0; color: var(--text-primary); font-size: 11px; font-weight: 600; }
-.generate-progression { width: 26px; height: 26px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--accent-hover); cursor: pointer; }
-.generate-progression:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.progression-list { max-height: 178px; display: grid; gap: 4px; overflow-y: auto; }
-.progression-chord { min-width: 0; display: grid; grid-template-columns: 18px minmax(0, 1fr) 18px; align-items: center; gap: 4px; }
-.progression-chord > span { color: var(--text-muted); font: 10px var(--font-mono); }
-.progression-chord select, .primary-harmony select { min-width: 0; height: 25px; padding: 0 4px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
-.progression-chord button { width: 18px; height: 20px; padding: 0; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; }
-.progression-chord button:hover:not(:disabled) { border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); }
-.progression-chord button:disabled { opacity: .25; cursor: default; }
-.add-chord-button { min-height: 26px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
-.add-chord-button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
-.add-chord-button:disabled { opacity: .4; cursor: default; }
-.chord-seed { margin-top: 7px; display: flex; align-items: center; justify-content: space-between; gap: 6px; color: var(--text-muted); font: 10px var(--font-mono); }
-.chord-seed input { width: 105px; min-width: 0; height: 23px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-secondary); font: 10px var(--font-mono); }
-
 /* Track list */
 .track-groups { min-height: 0; margin-top: 9px; flex: 1; display: grid; align-content: start; gap: 9px; overflow-y: auto; }
 .track-group { min-width: 0; padding: 4px; border: 1px solid var(--border-subtle); border-left: 2px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-low); }

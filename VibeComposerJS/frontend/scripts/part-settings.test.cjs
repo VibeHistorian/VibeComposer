@@ -5,6 +5,75 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('Chordlet roots, spice and inversions match all 2244 production Java voicings', () => {
+  const { load } = fixture(), harmony = load('core/music/harmony.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/chordlet-harmony.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 2244);
+  for (const sample of cases) assert.deepEqual(harmony.chordPitches(sample, 60), sample.notes, JSON.stringify(sample));
+  assert.equal(harmony.effectiveKey('C', -1), 'B');
+  assert.equal(harmony.effectiveKey('F♯', 8), 'D');
+  assert.equal(harmony.effectiveKey('B', -24), 'B');
+});
+
+test('Chordlet edits follow reorder/add/remove through history, persistence and pitched MIDI', () => {
+  const { service, phrase, midi, load } = fixture();
+  service.project().tracks.forEach(track => service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, track.id, true)));
+  service.setProgression([1]);
+  service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { rhythm: 'single', voicing: 'close' });
+  service.updatePartSettings({ kind: 'global-role', role: 'arpeggio' }, { pattern: 'up', stretchEnabled: false, octaves: 1 });
+  service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { rhythm: 'full', noteVariation: 0 });
+  const chord = { root: 1, spice: '7', inversion: 1 };
+  const before = service.exportProjectJson();
+  service.setProgressionChord(0, chord);
+  const after = service.exportProjectJson();
+  const byRole = role => service.project().tracks.find(track => track.role === role);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), byRole('chords')).slice(0, 4).map(note => note.midi), [65,68,71,73]);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), byRole('arpeggio')).slice(0, 4).map(note => note.midi), [53,56,59,61]);
+  assert.ok(phrase.phraseForTrack(service.project(), byRole('bass')).every(note => note.midi === 37));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.setSectionChordDegree(0, 0, 1);
+  assert.ok(service.project().arrangement[0].chordDegrees, 'explicit local degree overrides a custom primary chord');
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), byRole('chords')).slice(0,3).map(note => note.midi), [60,64,67]);
+  service.clearSectionChordOverrides(0);
+  service.updateSettings({ transposeSemitones: 5, tempoBpm: 150 });
+  const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+  assert.deepEqual(parsed.tracks.find(track => track.name === byRole('chords').name).notes.slice(0,4).map(note => note.midi).sort((a,b)=>a-b), [70,73,76,78]);
+  const drums = phrase.layOutTrackPhrase(service.project(), byRole('drums'));
+  service.updateSettings({ transposeSemitones: -5 });
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), byRole('drums')), drums);
+  service.addChord(); service.addChord();
+  service.setProgressionChord(2, { root: 7, spice: 'sus4', inversion: -2 });
+  service.moveProgressionChord(0, 2);
+  assert.equal(service.project().progressionChords[2].spice, '7');
+  assert.equal(service.project().progressionChords[1].spice, 'sus4');
+  service.removeChord(1); assert.equal(service.project().progressionChords.length, 2);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  assert.equal(new (load('core/project/project.service.ts').ProjectService)().project().progressionChords[1].root, 1);
+  service.setChordDegree(1, 5); assert.equal(service.project().progressionChords[1], null);
+  service.setProgression([1,6,4,5]); assert.equal(service.project().progressionChords, undefined);
+});
+
+test('Chordlet commands and imports reject malformed harmony atomically', () => {
+  const { service } = fixture();
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const before = service.exportProjectJson();
+  for (const chord of [{ root: 12, spice: '', inversion: 0 }, { root: 1, spice: 'broken', inversion: 0 },
+    { root: 0, spice: 'm', inversion: 6 }, { root: 0, spice: 'm', inversion: -6 },
+    { root: 1.5, spice: '', inversion: 0 }, { root: 0, spice: '', inversion: 0, extra: true }]) {
+    service.setProgressionChord(0, chord); assert.equal(service.exportProjectJson(), before);
+    const data = JSON.parse(before); data.progressionChords = data.progression.map((_,i) => i === 0 ? chord : null);
+    assert.equal(service.importProjectJson(JSON.stringify(data)), false);
+  }
+  for (const pair of [[-1,0],[0,32],[NaN,0],[0,1.5],[0,0]]) service.moveProgressionChord(...pair);
+  for (const custom of [[], [null], {}, [null,null,null,null,null]]) {
+    const data = JSON.parse(before); data.progressionChords = custom;
+    assert.equal(service.importProjectJson(JSON.stringify(data)), false);
+  }
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+});
+
 test('chord joins, transitions and per-tone strums match 288 production Java phrases', () => {
   const { load } = fixture();
   const { generateChordPart } = load('core/music/chord-generator.ts');

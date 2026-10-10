@@ -20,6 +20,9 @@ export class CompactKnobComponent {
   readonly mixed = input(false);
   readonly showValueBelow = input(false);
   readonly mini = input(false);
+  readonly dense = input(false);
+  readonly shortLabel = input<string | null>(null);
+  readonly caption = input<string | null>(null);
   readonly valueFormat = input<'number' | 'pan' | 'decibels'>('number');
   readonly inheritance = input<ControlInheritance>('global');
   readonly inheritRequested = output<void>();

@@ -1,25 +1,5 @@
 <section class="workspace-canvas" aria-label="Song workspace">
   <aside class="track-browser" aria-label="Tracks">
-    <section class="primary-harmony" aria-label="Primary chord setup">
-      <header class="harmony-heading">
-        <div><p class="eyebrow">CREATE</p><h2>Primary chords</h2></div>
-        <button type="button" class="generate-progression" (click)="generateProgression()" title="Generate a seeded progression">✦</button>
-      </header>
-      <div class="progression-list">
-        @for (degree of project().progression; track $index; let chordIndex = $index) {
-          <label class="progression-chord">
-            <span>{{ (chordIndex + 1).toString().padStart(2, '0') }}</span>
-            <select [value]="degree" [attr.aria-label]="'Chord ' + (chordIndex + 1)" (change)="changeChord(chordIndex, $event)">
-              @for (chord of chords(); track chord.degree) { <option [value]="chord.degree" [selected]="chord.degree === degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option> }
-            </select>
-            <button type="button" [disabled]="project().progression.length <= 1" (click)="removeChord(chordIndex)" [attr.aria-label]="'Remove chord ' + (chordIndex + 1)">×</button>
-          </label>
-        }
-      </div>
-      <button type="button" class="add-chord-button" [disabled]="project().progression.length >= 32" (click)="addChord()">＋ Add chord</button>
-      <label class="chord-seed">SEED<input aria-label="Generation seed" [value]="project().seed" (change)="updateSeed($event)" /></label>
-    </section>
-
     <header class="browser-heading">
       <h2>Tracks</h2>
     </header>

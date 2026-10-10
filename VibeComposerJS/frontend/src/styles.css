@@ -201,7 +201,7 @@ body {
 button, a, input, select { font: inherit; }
 
 /* Application header */
-.app-frame { width: min(100% - 48px, 1920px); height: 100vh; min-height: 0; margin: 0 auto; padding-bottom: 82px; display: flex; flex-direction: column; }
+.app-frame { width: min(100% - 48px, 1920px); height: 100vh; min-height: 0; margin: 0 auto; padding-bottom: 112px; display: flex; flex-direction: column; }
 .topbar { min-height: 72px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 700; letter-spacing: -.04em; }
 .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-card); background: var(--accent-primary); color: var(--surface-canvas); font-size: 16px; }
@@ -224,7 +224,7 @@ button, a, input, select { font: inherit; }
 
 /* Tablet layout */
 @media (max-width: 900px) {
-  .app-frame { width: min(100% - 40px, 1880px); height: auto; min-height: 100vh; padding-bottom: 82px; }
+  .app-frame { width: min(100% - 40px, 1880px); height: auto; min-height: 100vh; padding-bottom: 112px; }
   vc-workspace-canvas { flex: 0 0 auto; }
   .topbar { flex-wrap: wrap; justify-content: space-between; gap: 0 15px; padding-top: 12px; }
   .header-summary { margin-left: auto; }
@@ -233,7 +233,7 @@ button, a, input, select { font: inherit; }
 }
 
 @media (max-width: 1050px) {
-  .app-frame { height: auto; min-height: 100vh; padding-bottom: 82px; }
+  .app-frame { height: auto; min-height: 100vh; padding-bottom: 112px; }
   vc-workspace-canvas { flex: 0 0 auto; }
 }
 
@@ -248,13 +248,13 @@ button, a, input, select { font: inherit; }
 }
 
 @media (max-width: 620px) {
-  .app-frame { padding-bottom: 140px; }
+  .app-frame { padding-bottom: 215px; }
 }
 
 /* Room for the wrapped transport at tablet widths */
 @media (min-width: 621px) and (max-width: 1050px) {
-  .app-frame { padding-bottom: 130px; }
+  .app-frame { padding-bottom: 155px; }
 }
 @media (max-width: 480px) {
-  .app-frame { padding-bottom: 160px; }
+  .app-frame { padding-bottom: 240px; }
 }

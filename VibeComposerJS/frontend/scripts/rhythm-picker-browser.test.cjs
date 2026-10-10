@@ -70,7 +70,7 @@ test('production Angular controls initialize selects from settings and support r
         melodyInstrument.value = '73'; melodyInstrument.dispatchEvent(new Event('change', { bubbles: true }));
         melodyChannel.value = '4'; melodyChannel.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => readTrack('melody').mix.program === 73 && readTrack('melody').midiChannel === 4, 'restored melody identity');
-        const initialChords = [...document.querySelectorAll('select[aria-label^="Chord "]')].map(select => select.value);
+        const initialChords = [...document.querySelectorAll('.chordlet-label')].map(button => button.textContent.trim());
         document.querySelector('.track-group.melody .track-select').click();
         await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 04'), 'melody inspector');
         const melodySelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.value);
@@ -535,7 +535,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.scoreRowLabels, ['M1', 'B1', 'C1', 'A1', 'Drums']);
     assert.equal(actual.selectedDrumRow, 'Drums');
     assert.deepEqual(actual.drumEditorVoices, ['Snare']);
-    assert.deepEqual(actual.initialChords, ['1', '5', '6', '4']);
+    assert.deepEqual(actual.initialChords, ['C', 'G', 'Am', 'F']);
     assert.deepEqual(actual.options, [expected, expected]);
     assert.deepEqual(actual.counts, [8, 8]);
     assert.deepEqual(actual.selected, ['custom', 'custom']);
