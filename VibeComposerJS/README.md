@@ -38,6 +38,16 @@ VibeComposerJS/
 
 The starter bridge is intentionally small. Add generator operations to Go only when they need native or long-running work; keep presentation and interaction in Angular. Wails generates its JavaScript bindings during `wails dev` / `wails build`.
 
+## Audio playback
+
+Browser and desktop playback use `webaudio-tinysynth` 1.1.3 with its higher-quality GM synthesis bank. Instrument programs select individual presets; percussion pitches 35–81 select the GM drum map. Sounds are synthesized locally without sample downloads. These are synthesized approximations of acoustic instruments.
+
+`frontend/src/app/core/audio/tiny-synth-engine.ts` adapts the bank to the existing playback scheduler and per-track mixer buses. One engine and AudioContext are reused across transport starts and LIVE reloads. Each note owns its sources, envelopes and release time, preserving overlapping notes and independent track programs even when exported MIDI channels match. Stop, pause and LIVE crossfades cancel every operator, including queued percussion. MIDI export still uses the stored track programs and channels.
+
+The adapter deliberately uses the pinned library's `_note`, `_releaseNote`, timbre bank and voice handles: the public channel/pitch note-off API cannot express independent overlapping voices. Revalidate this bridge before upgrading TinySynth. The engine's internal housekeeping timer remains a single app-lifetime timer; it is not recreated per track or reload.
+
+From `frontend/`, run `npm run test:playback` for transport/routing checks and `npm run test:synth:browser` for actual Chromium offline audio rendering of GM presets, percussion, distinct bass timbres and voice cancellation. The browser test auto-detects Chrome/Edge, or accepts `OVERVIEW_TEST_BROWSER` pointing to a Chromium executable.
+
 ## UI organization
 
 Build VibeComposerJS as one persistent music workspace. Keep grouped instrument tracks at left, arrangement and dense score together in the center, selection-aware settings at right, and playback plus editable key, mode, transpose, and tempo in the bottom transport. Primary chord setup sits above Tracks, and a mixer icon opens the mixer popup.

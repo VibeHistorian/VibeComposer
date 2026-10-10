@@ -51,11 +51,21 @@ function fixture() {
   };
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts', {
     '@angular/core': angular,
+    './tiny-synth-engine': { TinySynthEngine: class {} },
     '../music/phrase': { layOutTrackPhrase: (project, track) =>
       project.arrangement[0].trackPresence[track.id] === false ? [] : track.notes },
   });
   const playback = new AudioPlaybackService();
   playback.context = context;
+  playback.synth = { schedule(destination, program, percussion, midi, velocity, start, duration) {
+    const source = context.createOscillator();
+    source.program = program;
+    source.percussion = percussion;
+    source.destination = destination;
+    source.frequency.value = 440 * 2 ** ((midi - 69) / 12);
+    source.start(start);
+    return [{ source, envelope: node(), stopTime: start + duration + 0.02, disconnect() {} }];
+  } };
   const project = { name: 'Song', tempoBpm: 120, arrangement: [{ measures: 4, trackPresence: {} }],
     tracks: [{ id: 'bass', role: 'bass', notes: [
       { id: 'sustain', midi: 48, startBeat: 0, durationBeats: 8, velocity: 100 },
@@ -136,7 +146,32 @@ test('mix and label edits do not restart unchanged notes, but program edits do',
   assert.equal(playback.buses.get('bass').gain.gain.events.at(-1).value, 0);
   playback.reload({ ...project, tracks: [{ ...track, mix: { ...track.mix, program: 0 } }] });
   assert.notEqual(playback.master, master);
-  assert.equal(sources.at(-1).type, 'sine');
+  assert.equal(sources.at(-1).program, 0);
+});
+
+test('bass playback follows its selected program on start and during LIVE changes', async () => {
+  const { playback, context, sources, project } = fixture();
+  await playback.start(project);
+  assert.equal(sources[0].program, 32);
+  const frequency = sources[0].frequency.value;
+  context.currentTime = 1;
+
+  for (const program of [0, 16, 40, 32]) {
+    const oldSource = sources.at(-1);
+    playback.reload({ ...project, tracks: [{ ...project.tracks[0],
+      mix: { ...project.tracks[0].mix, program } }] });
+    assert.equal(oldSource.stopTime, 1.012, 'the previous sustained voice is cancelled');
+    assert.equal(sources.at(-1).program, program, `bass uses program ${program}`);
+    assert.equal(sources.at(-1).frequency.value, frequency, 'instrument changes preserve pitch');
+    assert.equal(playback.beat(), 2, 'instrument changes preserve the playhead');
+    assert.equal(playback.state(), 'playing');
+  }
+  playback.stop();
+
+  await playback.start({ ...project, tracks: [{ ...project.tracks[0],
+    mix: { ...project.tracks[0].mix, program: 40 } }] });
+  assert.equal(sources.at(-1).program, 40, 'starting playback uses the selected bass program');
+  playback.stop();
 });
 
 test('shortening stops at the new end or wraps when loop is enabled', async () => {
@@ -304,4 +339,55 @@ test('melody notes receive a pitched audio bus and retain normal mix routing', a
   assert.equal(playback.buses.get('melody').pan.pan.value, -0.25);
   assert.equal(sources[0].frequency.value, 440 * 2 ** ((72 - 69) / 12));
   playback.stop();
+});
+
+test('tracks sharing a MIDI channel retain independent programs and mixer buses', async () => {
+  const { playback, sources, project } = fixture();
+  const tracks = [
+    { ...project.tracks[0], midiChannel: 1 },
+    { ...project.tracks[0], id: 'other-bass', midiChannel: 1,
+      mix: { ...project.tracks[0].mix, program: 38, panPercent: 50 } },
+  ];
+  await playback.start({ ...project, tracks });
+  assert.deepEqual(sources.map(source => source.program), [32, 38]);
+  assert.equal(sources[0].destination, playback.buses.get('bass').gain);
+  assert.equal(sources[1].destination, playback.buses.get('other-bass').gain);
+  assert.notEqual(sources[0].destination, sources[1].destination);
+  assert.equal(playback.buses.get('other-bass').pan.pan.value, .5);
+  playback.stop();
+});
+
+test('percussion pitches reach the synth drum bank instead of generic kick/snare/hat sounds', async () => {
+  const { playback, sources, project } = fixture();
+  const drums = { ...project.tracks[0], id: 'drums', role: 'drums', midiChannel: 10,
+    notes: [36, 38, 42, 46, 49, 56, 81].map(midi => ({
+      id: String(midi), midi, startBeat: 0, durationBeats: .25, velocity: 90,
+    })) };
+  await playback.start({ ...project, tracks: [drums] });
+  assert.equal(sources.length, drums.notes.length);
+  assert.ok(sources.every(source => source.percussion));
+  playback.pause();
+  assert.ok(sources.every(source => source.stopTime === undefined), 'pause cancels all drum operators');
+});
+
+test('transport cancellation and source completion clean up every synth operator', async () => {
+  const { playback, context, sources, project } = fixture();
+  const schedule = playback.synth.schedule;
+  let disconnected = 0;
+  playback.synth.schedule = (...args) => {
+    const voices = [...schedule(...args), ...schedule(...args)];
+    return voices.map(voice => ({ ...voice, disconnect() { disconnected++; } }));
+  };
+  await playback.start(project);
+  assert.equal(playback.activeSources.size, 2);
+  context.currentTime = 1;
+  playback.reload({ ...project, tempoBpm: 60 });
+  assert.ok(sources.slice(0, 2).every(source => source.stopTime === 1.012));
+  sources.slice(0, 2).forEach(source => source.onended());
+  assert.equal(disconnected, 2);
+  assert.equal(playback.activeSources.size, 2, 'only replacement operators remain');
+  playback.stop();
+  assert.equal(playback.activeSources.size, 0);
+  sources.slice(2).forEach(source => source.onended());
+  assert.equal(disconnected, 4);
 });

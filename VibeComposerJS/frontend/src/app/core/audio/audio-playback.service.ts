@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import type { ArrangedPart, CompositionProject, PhraseNote } from '../project/project.model';
 import { layOutTrackPhrase } from '../music/phrase';
+import { TinySynthEngine } from './tiny-synth-engine';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
@@ -29,7 +30,7 @@ export class AudioPlaybackService {
 
   private context?: AudioContext;
   private master?: GainNode;
-  private noise?: AudioBuffer;
+  private synth?: TinySynthEngine;
   private scheduler?: ReturnType<typeof setInterval>;
   private originTime = 0;
   private secondsPerBeat = 0.5;
@@ -75,6 +76,8 @@ export class AudioPlaybackService {
       this.scheduleAhead();
       this.scheduler = setInterval(() => this.tick(), SCHEDULER_INTERVAL_MS);
     } catch (error: unknown) {
+      this.clearScheduler();
+      this.stopSources();
       this.playbackState.set('stopped');
       this.playbackError.set(error instanceof Error ? error.message : 'Audio playback could not start.');
       console.error('Audio playback could not start.', error);
@@ -161,7 +164,8 @@ export class AudioPlaybackService {
     if (!globalThis.AudioContext) {
       throw new Error('This browser does not support Web Audio playback.');
     }
-    this.context = new AudioContext();
+    this.synth = new TinySynthEngine();
+    this.context = this.synth.context;
     return this.context;
   }
 
@@ -281,97 +285,19 @@ export class AudioPlaybackService {
     if (!bus) return;
     const startTime = Math.max(context.currentTime + 0.003, this.originTime + absoluteBeat * this.secondsPerBeat);
     const duration = Math.max(0.035, note.durationBeats * this.secondsPerBeat);
-    if (note.role === 'drums' && (note.midi === 35 || note.midi === 36)) {
-      this.scheduleKick(bus.gain, note.velocity, startTime, duration);
-    } else if (note.role === 'drums') {
-      this.scheduleNoise(bus.gain, [38, 39, 40].includes(note.midi) ? 'snare' : 'hat', note.velocity, startTime, duration);
-    } else {
-      this.scheduleTone(bus.gain, note, startTime, duration);
+    if (!this.synth) return;
+    const voices = this.synth.schedule(bus.gain, this.programs.get(note.trackId) ?? 0,
+      note.role === 'drums', note.midi, note.velocity, startTime, duration);
+    for (const voice of voices) {
+      this.activeSources.add(voice.source);
+      voice.source.onended = () => {
+        this.activeSources.delete(voice.source);
+        voice.disconnect();
+        voice.source.disconnect();
+        voice.envelope.disconnect();
+      };
+      voice.source.stop(voice.stopTime);
     }
-  }
-
-  private scheduleTone(destination: AudioNode, note: ScheduledNote, start: number, duration: number): void {
-    if (!this.context) return;
-    const context = this.context;
-    const oscillator = context.createOscillator();
-    const envelope = context.createGain();
-    oscillator.type = this.oscillatorType(note.role, this.programs.get(note.trackId) ?? 0);
-    oscillator.frequency.value = 440 * 2 ** ((note.midi - 69) / 12);
-    const release = Math.min(0.09, duration * 0.3);
-    const peak = Math.max(0.0001, note.velocity / 127 * 0.18);
-    envelope.gain.setValueAtTime(0.0001, start);
-    envelope.gain.linearRampToValueAtTime(peak, start + 0.008);
-    envelope.gain.setValueAtTime(peak, Math.max(start + 0.009, start + duration - release));
-    envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    oscillator.connect(envelope);
-    envelope.connect(destination);
-    this.startSource(oscillator, start, start + duration + 0.02, envelope);
-  }
-
-  private scheduleKick(destination: AudioNode, velocity: number, start: number, duration: number): void {
-    if (!this.context) return;
-    const oscillator = this.context.createOscillator();
-    const envelope = this.context.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(125, start);
-    oscillator.frequency.exponentialRampToValueAtTime(43, start + Math.min(0.12, duration));
-    const peak = Math.max(0.0001, velocity / 127 * 0.4);
-    envelope.gain.setValueAtTime(peak, start);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, start + Math.min(0.2, duration + 0.04));
-    oscillator.connect(envelope);
-    envelope.connect(destination);
-    this.startSource(oscillator, start, start + Math.min(0.2, duration + 0.04), envelope);
-  }
-
-  private scheduleNoise(destination: AudioNode, type: 'snare' | 'hat', velocity: number, start: number, duration: number): void {
-    if (!this.context) return;
-    const source = this.context.createBufferSource();
-    const envelope = this.context.createGain();
-    const filter = this.context.createBiquadFilter();
-    source.buffer = this.getNoiseBuffer();
-    filter.type = 'highpass';
-    filter.frequency.value = type === 'hat' ? 6500 : 1500;
-    const soundDuration = Math.min(type === 'hat' ? 0.055 : 0.16, Math.max(0.035, duration));
-    const peak = Math.max(0.0001, velocity / 127 * (type === 'hat' ? 0.09 : 0.22));
-    envelope.gain.setValueAtTime(peak, start);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, start + soundDuration);
-    source.connect(filter);
-    filter.connect(envelope);
-    envelope.connect(destination);
-    this.startSource(source, start, start + soundDuration + 0.01, filter, envelope);
-  }
-
-  private startSource(source: AudioScheduledSourceNode, start: number, stop: number, ...nodes: AudioNode[]): void {
-    this.activeSources.add(source);
-    source.onended = () => {
-      this.activeSources.delete(source);
-      source.disconnect();
-      for (const node of nodes) node.disconnect();
-    };
-    source.start(start);
-    source.stop(stop);
-  }
-
-  private getNoiseBuffer(): AudioBuffer {
-    if (this.noise) return this.noise;
-    if (!this.context) throw new Error('Audio is not initialized.');
-    const length = Math.floor(this.context.sampleRate * 0.2);
-    const buffer = this.context.createBuffer(1, length, this.context.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let index = 0; index < length; index++) data[index] = Math.random() * 2 - 1;
-    this.noise = buffer;
-    return buffer;
-  }
-
-  private oscillatorType(part: ArrangedPart, program: number): OscillatorType {
-    if (part === 'bass' || (program >= 24 && program <= 39)) return 'triangle';
-    if (program <= 15) return 'sine';
-    if (program <= 23) return 'square';
-    if (program >= 40 && program <= 55) return 'sawtooth';
-    if (program >= 56 && program <= 79) return 'square';
-    if (program >= 80 && program <= 87) return 'sawtooth';
-    if (program >= 88 && program <= 95) return 'triangle';
-    return part === 'arpeggio' ? 'square' : 'sine';
   }
 
   private currentAbsoluteBeat(): number {
