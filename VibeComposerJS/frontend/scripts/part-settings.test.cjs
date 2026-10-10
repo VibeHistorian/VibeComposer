@@ -5,6 +5,157 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('instrument pool catalogues retain production Java membership and order', () => {
+  const { load } = fixture();
+  const { INSTRUMENT_POOLS } = load('core/music/instrument-generation.ts');
+  const java = fs.readFileSync(path.resolve(__dirname, '../../../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/InstUtils.java'), 'utf8');
+  for (const [pool, symbol] of Object.entries({ ALL: 'ALL', MELODY: 'MELODY', BASS: 'BASS', CHORD: 'CHORD', PLUCK: 'PLUCK', LONG_PAD: 'LONG', DRUM: 'DRUM' })) {
+    const declaration = java.match(new RegExp(symbol + '_INST_NAMES\\s*=\\s*\\{([\\s\\S]*?)\\};'))[1];
+    assert.deepEqual(INSTRUMENT_POOLS[pool], [...declaration.matchAll(/"(\d+):/g)].map(match => Number(match[1])));
+  }
+});
+
+for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+  test(`${role} instrument-only reroll preserves ownership, locks, exact replay and MIDI identity`, () => {
+    const { service, load, midi } = fixture();
+    const { INSTRUMENT_POOLS, DEFAULT_INSTRUMENT_POLICIES } = load('core/music/instrument-generation.ts');
+    const id = `track-${role}-1`, second = service.addTrack(role), locked = service.addTrack(role);
+    const track = id => service.project().tracks.find(item => item.id === id);
+    service.updateSettings({ seed: '9007199254740993' });
+    service.setTrackInstrumentLock(second, true); service.setTrackRerollLock(locked, true);
+    service.updateTrackPhrase(id, [{ id: 'manual', midi: role === 'drums' ? 36 : 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+    service.freezePartSettings({ kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: id });
+    const before = service.exportProjectJson(), previous = track(id), arrangement = service.project().arrangement;
+    const previousSecond = track(second), previousLocked = track(locked);
+    const result = service.rerollRoleInstruments(role);
+    assert.equal(result, 'changed');
+    const after = service.exportProjectJson();
+    assert.strictEqual(track(second), previousSecond);
+    assert.strictEqual(track(locked), previousLocked);
+    assert.strictEqual(service.project().arrangement, arrangement);
+    for (const key of ['id', 'name', 'midiChannel', 'editedPhrase']) assert.deepEqual(track(id)[key], previous[key]);
+    assert.deepEqual({ ...track(id).mix, program: previous.mix.program }, previous.mix);
+    assert.deepEqual({ ...track(id).generatorSettings, ...(role === 'drums' ? { pitch: previous.generatorSettings.pitch } : {}) }, previous.generatorSettings);
+    const pool = DEFAULT_INSTRUMENT_POLICIES[role].pool;
+    const choices = pool === 'AUTO' ? [...INSTRUMENT_POOLS.CHORD, ...INSTRUMENT_POOLS.PLUCK] : INSTRUMENT_POOLS[pool];
+    assert.ok(choices.includes(role === 'drums' ? track(id).generatorSettings.pitch : track(id).mix.program));
+    const exported = new Midi(midi.generateCompositionMidi(service.project())).tracks.find(item => item.name === previous.name);
+    assert.equal(exported.channel, previous.midiChannel - 1);
+    if (role !== 'drums') assert.equal(exported.instrument.number, track(id).mix.program);
+    assert.equal(exported.notes[0].midi, previous.editedPhrase[0].midi);
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    assert.equal(service.rerollRoleInstruments(role), 'changed'); assert.equal(service.exportProjectJson(), after);
+    service.undo(); service.redo(); assert.equal(service.exportProjectJson(), after);
+    assert.equal(service.importProjectJson(after), true);
+    const restored = new (load('core/project/project.service.ts').ProjectService)();
+    assert.deepEqual(restored.project().tracks, service.project().tracks);
+    assert.equal(restored.rerollRoleInstruments(role), service.rerollRoleInstruments(role));
+    assert.deepEqual(restored.project(), service.project());
+  });
+}
+
+test('instrument permission is independent of parameter streams and shared instruments exclude locks', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/instrument-generation.ts');
+  const first = 'track-arpeggio-1', second = service.addTrack('arpeggio'), locked = service.addTrack('arpeggio');
+  service.setTrackInstrumentLock(locked, true);
+  const previous = service.project(), bases = previous.tracks.filter(track => track.role === 'arpeggio');
+  assert.equal(service.updateInstrumentPolicy('arpeggio', { randomize: true, sameInstrument: true }), 'changed');
+  assert.deepEqual(service.project().tracks, previous.tracks);
+  service.rerollRoleTracks('arpeggio');
+  const enabled = service.project().tracks.filter(track => track.role === 'arpeggio');
+  assert.equal(enabled[0].mix.program, enabled[1].mix.program);
+  assert.equal(enabled[2].mix.program, bases[2].mix.program);
+  service.undo(); service.updateInstrumentPolicy('arpeggio', { randomize: false }); service.rerollRoleTracks('arpeggio');
+  const disabled = service.project().tracks.filter(track => track.role === 'arpeggio');
+  assert.deepEqual(disabled.map(track => track.generatorSettings), enabled.map(track => track.generatorSettings));
+  assert.deepEqual(disabled.map(track => track.mix.program), bases.map(track => track.mix.program));
+  service.updateInstrumentPolicy('arpeggio', { randomize: true });
+  const existing = service.project().tracks;
+  service.generateRoleTracks('arpeggio', 3);
+  const created = service.project().tracks.slice(existing.length);
+  assert.equal(new Set(created.map(track => track.mix.program)).size, 1);
+  assert.ok(created.every(track => !track.instrumentLocked));
+  assert.deepEqual(service.project().tracks.slice(0, existing.length), existing);
+  for (const chance of [0, 100]) {
+    const results = core.rerollInstruments(123n, 'chords', { ...core.DEFAULT_INSTRUMENT_POLICIES.chords, sustainChance: chance },
+      [service.project().tracks.find(track => track.role === 'chords')], true);
+    assert.ok(core.INSTRUMENT_POOLS[chance === 0 ? 'PLUCK' : 'CHORD'].includes(results[0].mix.program));
+  }
+  service.setTrackInstrumentLock(first, true); service.setTrackRerollLock(second, true);
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const before = service.exportProjectJson();
+  assert.equal(service.rerollRoleInstruments('arpeggio', first), 'unchanged');
+  assert.equal(service.rerollRoleInstruments('arpeggio', 'deleted'), 'unchanged');
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+});
+
+test('instrument rules and locks strictly validate and persist without schema gates', () => {
+  const { service, load } = fixture();
+  const before = service.project();
+  assert.equal(before.instrumentGenerationPolicies, undefined);
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) service.updateInstrumentPolicy(role, { randomize: true });
+  service.setTrackInstrumentLock('track-bass-1', true);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(new (load('core/project/project.service.ts').ProjectService)().project(), service.project());
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const snapshot = service.exportProjectJson();
+  for (const [role, patch] of [['bass', { randomize: 1 }], ['drums', { pool: 'ALL' }], ['melody', { pool: 'DRUM' }],
+    ['arpeggio', { sameInstrument: 'yes' }], ['bass', { sameInstrument: true }], ['chords', { sustainChance: 101 }], ['chords', { sustainChance: 1.5 }]]) {
+    assert.equal(service.updateInstrumentPolicy(role, patch), 'invalid');
+    const project = JSON.parse(snapshot); Object.assign(project.instrumentGenerationPolicies[role], patch);
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  }
+  for (const value of [null, [], { unknown: {} }]) {
+    const project = JSON.parse(snapshot); project.instrumentGenerationPolicies = value;
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  }
+  const project = JSON.parse(snapshot); project.tracks[0].instrumentLocked = 'yes';
+  assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  for (const pool of [['MELODY'], 'AUTO', 'DRUM', 'unknown']) {
+    const project = JSON.parse(snapshot); project.tracks[0].instrumentPool = pool;
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+  }
+  assert.equal(service.exportProjectJson(), snapshot); assert.equal(service.canRedo(), true);
+});
+
+test('combined instrument and parameter rerolls reject effective conflicts without consuming history or counters', () => {
+  const { service } = fixture();
+  service.updateInstrumentPolicy('chords', { randomize: true });
+  service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { velocityMax: 127 });
+  service.updatePartSettings({ kind: 'section-role', role: 'chords', sectionId: service.project().arrangement[0].id }, { velocityMin: 120 });
+  service.updateSettings({ name: 'redo' }); service.undo();
+  const before = service.exportProjectJson();
+  assert.equal(service.rerollRoleTracks('chords'), 'invalid');
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
+});
+
+test('chord pool identity drives creation branches and manual instrument edits release it', () => {
+  const { service, load } = fixture();
+  const instruments = load('core/music/instrument-generation.ts'), policies = load('core/music/track-generation.ts');
+  const source = service.project().tracks.find(track => track.role === 'chords');
+  const long = instruments.rerollInstruments(23n, 'chords', { ...instruments.DEFAULT_INSTRUMENT_POLICIES.chords, pool: 'LONG_PAD' }, [source], true)[0];
+  assert.equal(long.instrumentPool, 'LONG_PAD');
+  const settings = policies.rerollRoleSettings(23n, 'chords', policies.DEFAULT_TRACK_POLICIES.chords, [long], [1])[0];
+  assert.equal(settings.rhythm, 'single'); assert.equal(settings.chordSpanFill, 'ALL');
+  const pluck = { ...source, mix: { ...source.mix, program: 32 }, instrumentPool: 'PLUCK' };
+  const chosen = policies.rerollRoleSettings(1n, 'chords', policies.DEFAULT_TRACK_POLICIES.chords, [pluck], [1])[0];
+  assert.ok(chosen.noteLengthPercent >= 50 && chosen.noteLengthPercent <= 75);
+  service.updateInstrumentPolicy('chords', { pool: 'LONG_PAD', randomize: true });
+  assert.equal(service.rerollRoleTracks('chords'), 'changed');
+  assert.equal(service.project().tracks.find(track => track.id === source.id).instrumentPool, 'LONG_PAD');
+  service.updateTrack(source.id, { mix: { program: 127 } });
+  assert.equal(service.project().tracks.find(track => track.id === source.id).instrumentPool, undefined);
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  service.updateInstrumentPolicy('bass', { randomize: true });
+  service.setTrackInstrumentLock('track-bass-1', true);
+  const bass = service.project().tracks.find(track => track.role === 'bass');
+  service.rerollRoleTracks('bass');
+  const next = service.project().tracks.find(track => track.role === 'bass');
+  assert.equal(next.mix.program, bass.mix.program); assert.notDeepEqual(next.generatorSettings, bass.generatorSettings);
+});
+
 test('role rerolls match production melody patterns, drum blueprint data and audited seeded BassGUI branches', () => {
   const { service, load } = fixture();
   const core = load('core/music/track-generation.ts');

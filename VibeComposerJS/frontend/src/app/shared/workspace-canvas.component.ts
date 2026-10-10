@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
-  TrackGenerationPolicyPatch,
+  TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
 } from '../core/project/project.model';
 import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { DRUM_INSTRUMENTS, drumInstrumentName } from '../core/music/drum-instruments';
+import { GM_INSTRUMENTS } from '../core/music/gm-instruments';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
 import { generateDiatonicProgression } from '../core/music/progression-generator';
 import { getDiatonicChords, KEYS } from '../core/music/harmony';
@@ -23,6 +24,7 @@ import { CompactKnobComponent } from './compact-knob.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { TrackGenerationPolicyComponent } from './track-generation-policy.component';
 import { DEFAULT_TRACK_POLICIES } from '../core/music/track-generation';
+import { DEFAULT_INSTRUMENT_POLICIES } from '../core/music/instrument-generation';
 import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
@@ -43,16 +45,6 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
 };
 
-const INSTRUMENTS: ReadonlyArray<{ program: number; name: string }> = [
-  { program: 0, name: 'Acoustic Piano' }, { program: 4, name: 'Electric Piano' },
-  { program: 10, name: 'Music Box' }, { program: 11, name: 'Vibraphone' },
-  { program: 24, name: 'Nylon Guitar' }, { program: 25, name: 'Steel Guitar' },
-  { program: 32, name: 'Acoustic Bass' }, { program: 33, name: 'Electric Bass' },
-  { program: 38, name: 'Synth Bass' }, { program: 40, name: 'Violin' },
-  { program: 48, name: 'Strings' }, { program: 56, name: 'Trumpet' },
-  { program: 65, name: 'Alto Sax' }, { program: 73, name: 'Flute' },
-  { program: 80, name: 'Square Lead' }, { program: 88, name: 'Warm Pad' },
-];
 
 @Component({
   selector: 'vc-workspace-canvas',
@@ -66,7 +58,7 @@ export class WorkspaceCanvasComponent {
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
-  readonly instruments = INSTRUMENTS;
+  readonly instruments = GM_INSTRUMENTS;
   readonly drumInstruments = DRUM_INSTRUMENTS;
   readonly keys = KEYS;
   readonly sectionTypes = SECTION_TYPES;
@@ -84,6 +76,21 @@ export class WorkspaceCanvasComponent {
   readonly rerollMessage = computed(() => this.rerollFeedback()?.project === this.project() ? this.rerollFeedback()?.message : null);
 
   policyFor(role: ArrangedPart) { return this.project().trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]; }
+  instrumentPolicyFor(role: ArrangedPart) { return this.project().instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role]; }
+  canRerollInstruments(role: ArrangedPart): boolean {
+    return this.project().tracks.some(track => track.role === role && !track.rerollLocked && !track.instrumentLocked);
+  }
+  updateInstrumentPolicy(role: ArrangedPart, patch: Partial<InstrumentGenerationPolicy>): void {
+    if (this.editing()) return;
+    const result = this.projects.updateInstrumentPolicy(role, patch);
+    this.rerollFeedback.set(result === 'invalid' ? { project: this.project(), role, message: 'Invalid instrument rule.' } : null);
+  }
+  rerollInstruments(role: ArrangedPart, trackId?: string): void {
+    if (this.editing()) return;
+    const result = this.projects.rerollRoleInstruments(role, trackId);
+    this.rerollFeedback.set(result === 'changed' ? null : { project: this.project(), role, message: result === 'invalid'
+      ? 'Instrument reroll conflicts with local settings.' : 'No instruments changed.' });
+  }
   canRerollRole(role: ArrangedPart): boolean { return this.project().tracks.some(track => track.role === role && !track.rerollLocked); }
   rerollMessageFor(role: ArrangedPart): string | null | undefined { return this.rerollFeedback()?.role === role ? this.rerollMessage() : null; }
 

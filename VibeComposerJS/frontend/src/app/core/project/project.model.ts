@@ -160,6 +160,16 @@ interface TrackBase {
   readonly mix: MixChannelSettings;
   readonly editedPhrase?: readonly PhraseNote[];
   readonly rerollLocked?: boolean;
+  readonly instrumentLocked?: boolean;
+  readonly instrumentPool?: Exclude<InstrumentPool, 'AUTO'>;
+}
+
+export type InstrumentPool = 'AUTO' | 'ALL' | 'MELODY' | 'BASS' | 'CHORD' | 'PLUCK' | 'LONG_PAD' | 'DRUM';
+export interface InstrumentGenerationPolicy {
+  readonly randomize: boolean;
+  readonly pool: InstrumentPool;
+  readonly sameInstrument?: boolean;
+  readonly sustainChance?: number;
 }
 
 /** Rules for choosing stored part values, separate from phrase generation inputs. */
@@ -254,6 +264,7 @@ export interface CompositionProject {
   /** Independent instrument tracks. Legacy role fields above remain for the existing workspace tools. */
   readonly tracks: readonly CompositionTrack[];
   readonly trackGenerationPolicies?: Readonly<Partial<TrackGenerationPolicies>>;
+  readonly instrumentGenerationPolicies?: Readonly<Partial<Record<ArrangedPart, InstrumentGenerationPolicy>>>;
   readonly trackRerollCounts?: Readonly<Partial<Record<ArrangedPart, number>>>;
 }
 

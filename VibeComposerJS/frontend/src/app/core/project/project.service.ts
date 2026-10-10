@@ -4,7 +4,7 @@ import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement
 import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
   MixChannelSettings, PhraseNote, SectionType, PartSettingsPatch, PartSettingsScope, MelodySettings,
-  LocalPartSettingsScope, PartWorkflowResult,
+  LocalPartSettingsScope, PartWorkflowResult, InstrumentGenerationPolicy,
   ArpeggioGenerationPolicy, TrackGenerationPolicyPatch, TrackGenerationPolicies,
 } from './project.model';
 import type { CompositionProject } from './project.model';
@@ -18,6 +18,7 @@ import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 import { isDrumPitch } from '../music/drum-instruments';
 import { JavaRandom } from '../music/java-random';
 import { DEFAULT_TRACK_POLICIES, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
+import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -67,6 +68,41 @@ export class ProjectService {
     this.commit({ ...current, tracks: current.tracks.map(item => item.id === trackId ? { ...item, rerollLocked: locked } : item) });
   }
 
+  setTrackInstrumentLock(trackId: string, locked: boolean): void {
+    if (typeof locked !== 'boolean') return;
+    const current = this.state(), track = current.tracks.find(item => item.id === trackId);
+    if (!track || (track.instrumentLocked ?? false) === locked) return;
+    this.commit({ ...current, tracks: current.tracks.map(item => item.id === trackId ? { ...item, instrumentLocked: locked } : item) });
+  }
+
+  updateInstrumentPolicy(role: ArrangedPart, patch: Partial<InstrumentGenerationPolicy>): PartWorkflowResult {
+    if (!ARRANGED_PARTS.includes(role)) return 'invalid';
+    const current = this.state(), previous = current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role];
+    const policy = decodeInstrumentPolicy(role, { ...previous, ...patch });
+    if (!policy) return 'invalid';
+    if (Object.entries(policy).every(([key, value]) => value === previous[key as keyof InstrumentGenerationPolicy])) return 'unchanged';
+    return this.commitPartWorkflow({ ...current, instrumentGenerationPolicies: { ...current.instrumentGenerationPolicies, [role]: policy } });
+  }
+
+  /** Explicit instrument-only action ignores permission, but respects both locks. */
+  rerollRoleInstruments(role: ArrangedPart, trackId?: string): PartWorkflowResult {
+    if (!ARRANGED_PARTS.includes(role)) return 'invalid';
+    const current = this.state(), count = current.trackRerollCounts?.[role] ?? 0;
+    const sources = current.tracks.filter(track => track.role === role && !track.rerollLocked && !track.instrumentLocked
+      && (trackId === undefined || track.id === trackId));
+    if (!sources.length) return 'unchanged';
+    if (count >= 2147483647) return 'invalid';
+    const targets = rerollInstruments(this.trackRerollSeed(current, role, count), role,
+      current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, true);
+    if (targets.every((track, index) => track === sources[index])) return 'unchanged';
+    const replacements = new Map(targets.map(track => [track.id, track]));
+    const primary = replacements.get(`track-${role}-1`);
+    return this.commitPartWorkflow({ ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
+      [role]: primary?.generatorSettings ?? current[role],
+      mix: primary && role !== 'drums' ? { ...current.mix, [role]: primary.mix } : current.mix,
+      trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } });
+  }
+
   /** Reroll existing global track bases. Local overrides, identity and saved manual notes remain owned. */
   rerollArpeggioTracks(trackId?: string): PartWorkflowResult { return this.rerollRoleTracks('arpeggio', trackId); }
 
@@ -109,19 +145,21 @@ export class ProjectService {
       const track = { ...source, id, name: `${role[0].toUpperCase()}${number}`,
         midiChannel: role === 'drums' ? 10 : this.nextAvailableChannel(tracks),
         generatorSettings: copyPartSettings(source.generatorSettings),
-        mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, editedPhrase: undefined } as CompositionTrack;
+        mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined } as CompositionTrack;
       created.push(track); tracks.push(track);
     }
     const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
     const seed = this.trackRerollSeed(current, role, count);
     const members = tracks.filter(track => track.role === role);
-    const settings = rerollRoleSettings(seed, role, policy, created, created.map(track => members.indexOf(track) + 1));
-    const generated = created.map((track, index) => ({ ...track, generatorSettings: settings[index] } as CompositionTrack));
+    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], created);
+    const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, created.map(track => members.indexOf(track) + 1));
+    const generated = instrumentTracks.map((track, index) => ({ ...track, generatorSettings: settings[index] } as CompositionTrack));
     const replacements = new Map(generated.map(track => [track.id, track]));
     const primary = replacements.get(`track-${role}-1`);
     const presenceRandom = new JavaRandom(BigInt.asIntN(64, seed ^ 0x50524553454e4345n));
     return this.commitPartWorkflow({ ...current, tracks: tracks.map(track => replacements.get(track.id) ?? track),
       [role]: primary?.generatorSettings ?? current[role],
+      mix: primary && role !== 'drums' ? { ...current.mix, [role]: primary.mix } : current.mix,
       arrangement: current.arrangement.map(section => ({ ...section, trackPresence: { ...section.trackPresence,
         ...generateTrackPresence(generated, this.sectionTypeSettings.chances()[section.type], () => presenceRandom.nextDouble()) } })),
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } });
@@ -142,12 +180,14 @@ export class ProjectService {
     const count = current.trackRerollCounts?.[role] ?? 0;
     if (count >= 2147483647) return 'invalid';
     const seed = this.trackRerollSeed(current, role, count);
-    const settings = rerollRoleSettings(seed, role, policy, sources, sources.map(track => roleTracks.indexOf(track) + 1));
-    if (sources.every((track, index) => partPatchesEqual(track.generatorSettings, settings[index]))) return 'unchanged';
-    const replacements = new Map(sources.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] } as CompositionTrack]));
+    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources);
+    const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1));
+    if (sources.every((track, index) => track === instrumentTracks[index] && partPatchesEqual(track.generatorSettings, settings[index]))) return 'unchanged';
+    const replacements = new Map(instrumentTracks.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] } as CompositionTrack]));
     const primary = replacements.get('track-' + role + '-1');
     const next = { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
       [role]: primary?.generatorSettings ?? current[role],
+      mix: primary && role !== 'drums' ? { ...current.mix, [role]: primary.mix } : current.mix,
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
     return this.commitPartWorkflow(next);
   }
@@ -424,6 +464,7 @@ export class ProjectService {
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(role === 'drums' ? DEFAULT_DRUM_SETTINGS : source.generatorSettings),
       rerollLocked: false,
+      instrumentLocked: false,
       editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
     const arrangement = current.arrangement.map((section) => ({
       ...section,
@@ -472,6 +513,9 @@ export class ProjectService {
       || patch.mix?.program !== undefined)) return;
     tracks[index] = { ...track, ...patch, name: patch.name?.trim() ?? track.name,
       mix: patch.mix ? { ...track.mix, ...patch.mix } : track.mix };
+    if (patch.mix?.program !== undefined && patch.mix.program !== track.mix.program) {
+      delete (tracks[index] as { instrumentPool?: string }).instrumentPool;
+    }
     const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
     const mix = patch.mix && isPrimary ? { ...current.mix, [track.role]: tracks[index].mix } : current.mix;
     this.commit({ ...current, tracks, mix });
@@ -764,7 +808,9 @@ export class ProjectService {
     return tracks.map((track) => {
       if (updated || track.role !== role) return track;
       updated = true;
-      return { ...track, ...patch } as CompositionTrack;
+      const next = { ...track, ...patch } as CompositionTrack;
+      if (patch.mix && patch.mix.program !== track.mix.program) delete (next as { instrumentPool?: string }).instrumentPool;
+      return next;
     });
   }
 
@@ -816,7 +862,8 @@ export class ProjectService {
       && Array.isArray(project.progression)
       && project.progression.length > 0 && project.progression.length <= 32
       && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7);
-    if (!validBase || !validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)) {
+    if (!validBase || !validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
+      || !validInstrumentPolicies(project.instrumentGenerationPolicies)) {
       return undefined;
     }
 
@@ -856,6 +903,9 @@ export class ProjectService {
         Object.entries(project.trackGenerationPolicies).map(([role, policy]) => [role, decodeTrackGenerationPolicy(role as ArrangedPart, policy)!])
       ) as Partial<TrackGenerationPolicies> } : {}),
       ...(project.trackRerollCounts !== undefined ? { trackRerollCounts: { ...project.trackRerollCounts } } : {}),
+      ...(project.instrumentGenerationPolicies !== undefined ? { instrumentGenerationPolicies: Object.fromEntries(
+        Object.entries(project.instrumentGenerationPolicies).map(([role, policy]) => [role, decodeInstrumentPolicy(role as ArrangedPart, policy)!])
+      ) } : {}),
     };
   }
 
@@ -899,7 +949,11 @@ export class ProjectService {
       const mix = this.decodeTrackMix(track.mix);
       const editedPhrase = track.editedPhrase === undefined ? undefined
         : this.isPhrase(track.editedPhrase) ? track.editedPhrase.map((note) => ({ ...note })) : null;
-      if (!mix || editedPhrase === null || (track.rerollLocked !== undefined && typeof track.rerollLocked !== 'boolean')) return undefined;
+      if (!mix || editedPhrase === null || (track.rerollLocked !== undefined && typeof track.rerollLocked !== 'boolean')
+        || (track.instrumentLocked !== undefined && typeof track.instrumentLocked !== 'boolean')) return undefined;
+      if (track.instrumentPool !== undefined && (typeof track.instrumentPool !== 'string' || track.role === 'drums' || track.instrumentPool === 'DRUM'
+        || !Object.hasOwn(INSTRUMENT_POOLS, track.instrumentPool)
+        || !INSTRUMENT_POOLS[track.instrumentPool]?.includes(mix.program))) return undefined;
       let decoded: CompositionTrack | undefined;
       switch (track.role) {
         case 'melody': {
@@ -930,6 +984,8 @@ export class ProjectService {
       }
       if (!decoded) return undefined;
       if (track.rerollLocked !== undefined) decoded = { ...decoded, rerollLocked: track.rerollLocked };
+      if (track.instrumentLocked !== undefined) decoded = { ...decoded, instrumentLocked: track.instrumentLocked };
+      if (track.instrumentPool !== undefined) decoded = { ...decoded, instrumentPool: track.instrumentPool };
       ids.add(decoded.id);
       tracks.push(decoded);
     }
@@ -1217,7 +1273,8 @@ export class ProjectService {
       && this.decodeArrangement(project.arrangement, tracks, BigInt(project.seed!)) !== undefined
       && this.decodeEditedPhrases(project.editedPhrases) !== undefined
       && this.decodeMix(project.mix) !== undefined
-      && validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts);
+      && validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
+      && validInstrumentPolicies(project.instrumentGenerationPolicies);
   }
 
   private persist(project: CompositionProject): void {

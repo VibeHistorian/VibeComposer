@@ -296,7 +296,7 @@ test('production Angular controls initialize selects from settings and support r
           const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
           const track = read().tracks.find(track => track.role === role);
           const before = JSON.stringify(track.generatorSettings);
-          const checkbox = group.querySelector('.track-policy-header input[type="checkbox"]');
+          const checkbox = group.querySelector('.policy-controls:not(.instrument-policy) input[type="checkbox"]');
           let unchanged = true, synced = true;
           if (checkbox) {
             const label = checkbox.getAttribute('aria-label'); checkbox.click();
@@ -348,6 +348,34 @@ test('production Angular controls initialize selects from settings and support r
         countInput.value = '0'; countInput.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => countInput.value === '1' && generateGroup.querySelectorAll('.track-select').length === 1, 'locked count floor');
         result.lockedCountTrack = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').id;
+        const arpGroup = document.querySelector('.track-group.arpeggio');
+        const readProject = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+        const beforeInstrumentRules = JSON.stringify(readProject().tracks);
+        arpGroup.querySelector('input[aria-label="Randomize instruments"]').click();
+        arpGroup.querySelector('input[aria-label="One instrument"]').click();
+        const poolSelect = arpGroup.querySelector('select[aria-label="Instrument pool"]');
+        poolSelect.value = 'MELODY'; poolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => readProject().instrumentGenerationPolicies?.arpeggio?.pool === 'MELODY', 'instrument policy');
+        result.instrumentRulesPreserveTracks = JSON.stringify(readProject().tracks) === beforeInstrumentRules;
+        result.instrumentPolicy = readProject().instrumentGenerationPolicies.arpeggio;
+        const arpTotal = arpGroup.querySelector('input[aria-label="Arpeggio track count"]');
+        arpTotal.value = '3'; arpTotal.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => arpGroup.querySelectorAll('.track-select').length === 3, 'new instrument tracks');
+        const arpRows = [...arpGroup.querySelectorAll('.track-row-card')];
+        const lockedInstrument = arpRows[2].querySelector('.track-instrument');
+        lockedInstrument.value = '127'; lockedInstrument.dispatchEvent(new Event('change', { bubbles: true }));
+        const lastArp = readProject().tracks.filter(track => track.role === 'arpeggio')[2];
+        arpRows[2].querySelector('button[aria-label="Lock instrument for ' + lastArp.name + '"]').click();
+        await waitFor(() => arpRows[2].querySelector('button[aria-label="Reroll instrument for ' + lastArp.name + '"]').disabled, 'instrument lock');
+        const beforeInstrumentRoll = readProject();
+        arpGroup.querySelector('button[aria-label="Reroll Arpeggio instruments"]').click();
+        await waitFor(() => readProject().trackRerollCounts.arpeggio > beforeInstrumentRoll.trackRerollCounts.arpeggio, 'instrument-only roll');
+        const rolledArps = readProject().tracks.filter(track => track.role === 'arpeggio');
+        result.sharedArpInstrument = rolledArps[0].mix.program === rolledArps[1].mix.program;
+        result.lockedArpInstrument = rolledArps[2].mix.program;
+        result.instrumentOnlyPreservesSettings = JSON.stringify(rolledArps.map(track => track.generatorSettings))
+          === JSON.stringify(beforeInstrumentRoll.tracks.filter(track => track.role === 'arpeggio').map(track => track.generatorSettings));
+        result.instrumentLockAllowsSettings = !arpRows[2].querySelector('button[aria-label="Reroll ' + lastArp.name + '"]').disabled;
         document.querySelector('.track-group.drums .track-select').click();
         await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 10'), 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
@@ -401,7 +429,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.initialSelection, ['33', '1']);
     assert.equal(actual.inlineActions.length, 5);
     for (const actions of actual.inlineActions) {
-      assert.deepEqual(actions, { symbols: ['⍟', '↻'], actionsBeforeInstrument: true, oneLine: true, fits: true });
+      assert.deepEqual(actions, { symbols: ['⍟', '↻', '♫', '⚄'], actionsBeforeInstrument: true, oneLine: true, fits: true });
     }
     assert.deepEqual(actual.inlineIdentity, { program: 0, channel: 5, bassProgram: 33, bassChannel: 1,
       selectionPreserved: true, noInspectorIdentity: true, noG: true, hiddenArrow: true });
@@ -427,6 +455,12 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.collapsedGenerate, '3');
     assert.equal(actual.separateGenerateRemoved, true);
     assert.equal(actual.lockedCountTrack, 'track-chords-3');
+    assert.equal(actual.instrumentRulesPreserveTracks, true);
+    assert.deepEqual(actual.instrumentPolicy, { randomize: true, pool: 'MELODY', sameInstrument: true });
+    assert.equal(actual.sharedArpInstrument, true);
+    assert.equal(actual.lockedArpInstrument, 127);
+    assert.equal(actual.instrumentOnlyPreservesSettings, true);
+    assert.equal(actual.instrumentLockAllowsSettings, true);
     assert.equal(actual.countAfterExpand, '3');
     assert.equal(actual.inspectorPolicyRemoved, true);
     assert.equal(actual.bassBlue, 'rgb(34, 167, 242)');

@@ -49,7 +49,7 @@ References: [InstPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibec
 | Delays, FB Dur., FB Vol. | `feedbackCount`, `feedbackDuration`, `feedbackVol` | Q + I | P4g all roles: count 0–5, duration −2000…2000 thousandths of a beat, velocity 10–150% compounded per echo. Produces MIDI notes; shared timing follows arrangement cropping |
 | Seed/Clear seed | `patternSeed` → `patternSeed`, `getPatternSeedWithPartOffset()` | Q + I; Clear seed action | P4g all roles: Java int, zero follows project/track seed; nonzero overrides derived seed before role offsets. P6 retains reroll policy/actions as distinct work |
 | Instrument, MIDI channel | `instrument`, `midiChannel` | Track row compact selectors + mixer | P1/P5; base identity stays track-owned; section instrument switching needs a deliberate playback/export design |
-| Lock / `?` reroll | `lockInst`, `randomizeButton` | Track row + inspector policy | P6; distinguish whole-track and instrument-only locks |
+| Lock / `?` reroll | `lockInst`, `randomizeButton` | Tracks row | P6c implements separate whole-track/instrument locks and parameter/instrument rerolls; policies stay in expanded Tracks headers |
 | Exclude generation | `muteInst` → `InstPart.muted` | Q + I Generate notes | P4g all roles, all four scopes. The row G action is removed; Generate notes remains in the musical editors. Manual replacements remain explicit. Mixer mute and section presence stay independent |
 | Volume, pan, solo/mute | `volSlider`, `panSlider`, `soloMuter` | Mixer + row M/S | Existing behavior; musical velocity remains separate |
 | Copy, delete, order | `copyButton`, `removeButton`, `panelOrder`, `orderOffset` | Track row/inspector actions | Preserve IDs and seed-order correspondence; no settings knob |
@@ -93,7 +93,7 @@ Source: [ArpGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer
 | Max Split%, length bounds | `randomArpMaxExceptionChance`, `randomArpMinLength`, `randomArpMaxLength` | H | Chooses `exceptionChance`/`noteLengthMultiplier`, including fast-arp adjustments |
 | Shift%, Max Repeat | `randomArpShiftChance`, `randomArpMaxRepeat` | HI | Chooses actual shift/repeat values |
 | Min Vel, Max Vel | `randomArpMinVel`, `randomArpMaxVel` | HI | Writes track velocity bounds on reroll; selected-track velocity range is Q |
-| One Inst., Arp#1 Copy Melody Inst. | `randomArpAllSameInst`, `arpCopyMelodyInst` | HI | Shared instrument/copy rule; respects instrument randomization permission |
+| One Inst., Arp#1 Copy Melody Inst. | `randomArpAllSameInst`, `arpCopyMelodyInst` | HI | P6c One instrument shares a program across eligible targets. Skip the special Melody-copy rule by user request; defer universal dynamic source-track selection in every instrument picker (see P6c in the contextual plan) |
 | on Compose | `randomArpsGenerateOnCompose` | H | Automatic track-settings generation trigger |
 | Clear Seeds | local `clearArpPatternSeeds` action | Header menu / I action | Changes actual part seeds, not policy |
 
@@ -224,3 +224,9 @@ P6 inline identity follow-up: each expanded Tracks group contains compact instru
 ## P6 count interaction revision (2026-10-10)
 
 Click the boxed total beside the role name to edit it, including while collapsed. This supersedes historical Generate N placement above. The effective total is max(locked track count, requested total). Less removes unlocked tracks starting with the highest number; more appends newly generated tracks; same does nothing. Use one undo entry, clean up removed tracks' section references, preserve surviving tracks and locks, allow zero, and respect the 64-track project capacity. New generated tracks have numbers above surviving members.
+
+## Implemented P6c instruments (2026-10-10)
+
+Expanded Tracks headers contain Randomize instruments, role Instrument pool, Chords Sustain chance % for Chord / Pluck, Arpeggio One instrument and an explicit Reroll instruments action. Track rows distinguish whole-track lock/reroll (⍟/↻) from instrument lock/reroll (♫/⚄). Permission defaults off and applies to settings rerolls/count increases; explicit instrument-only actions bypass permission while respecting both locks. Melody/Bass/Chord/Pluck/Long Pad/All pools retain production catalogue ordering; Drums uses its percussion-note catalogue on channel 10. Chosen pitched pool identity persists for Chords creation branches; manual program changes clear it. Complete GM pickers in Tracks and Mixer display every generated program. See `core/music/instrument-generation.ts`, `ProjectService.updateInstrumentPolicy()` and `rerollRoleInstruments()`.
+
+This supersedes earlier notes saying instrument permission/pools are deferred. Automatic Compose/Regenerate triggers and P8 banned-program/use-all preferences remain deferred. Arp#1 Copy Melody Inst. is skipped by user request: later add a universal instrument-picker choice referencing another track by ID, dynamically following its current instrument whenever it changes. The full future-system requirement is recorded in contextual checkpoint P6c.

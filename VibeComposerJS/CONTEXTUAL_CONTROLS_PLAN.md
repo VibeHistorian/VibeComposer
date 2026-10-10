@@ -1,6 +1,6 @@
 # Contextual controls and melody buildout
 
-Status: implementation in progress, 2026-10-09; P1b's supported block path, P4f single-pitch drums, P4g shared musical controls, P5a bass pattern articulation and P6a–P6b supported all-role reroll policies and Generate N are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
+Status: implementation in progress, 2026-10-10; P1b's supported block path, P4f single-pitch drums, P4g shared musical controls, P5a bass pattern articulation, P6a–P6b supported all-role rerolls, editable role totals and P6c instruments are implemented. This phase extends [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The attached legacy and translated screenshots inform placement; Java source determines behavior. See [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for old control names and lookup paths.
 
 ### Pre-P5 alignment — required prerequisites (2026-10-09)
 
@@ -284,6 +284,20 @@ Validation: production build, all 96 part-setting tests, and the production brow
 ### P6 inline track identity follow-up (2026-10-09)
 
 Moved instrument/percussion and MIDI-channel selection from the Inspector into compact, arrowless native comboboxes on each track row. The selectors use existing input surfaces, borders and focus styles within the same line width. Updates use the row track ID independently of the active selection, and percussion channel stays fixed at 10. Removed the G quick toggle; Generate notes remains in the musical editors.
+
+### P6c — Instrument rerolls and pools (2026-10-10)
+
+Expanded Tracks groups now expose **Randomize instruments**, a role instrument pool, and an explicit **Reroll instruments** action. Each track has a separate instrument lock and instrument-only reroll button. Whole-track locks protect both parameters and instruments; instrument locks protect automatic instrument changes while permitting parameter rerolls and manual picker edits. Permission applies to explicit settings rerolls and newly generated tracks when increasing the boxed total. Permission defaults to off, preserving existing behavior; instrument-only actions explicitly choose instruments regardless of permission. Add keeps its existing behavior. Automatic Compose/Regenerate triggers remain deferred.
+
+The role pools preserve production `InstUtils` ordering: Melody, Bass, Chord, Pluck, Long Pad and All (programs 0–119). Pitched roles can select any pitched pool. Chords defaults to Chord / Pluck, with Sustain chance % choosing CHORD versus PLUCK; chosen pool identity is retained on pitched tracks so Chords creation uses the actual pool even for overlapping programs or Long Pad instruments outside GM 89–95. Manual program changes clear that identity and restore the documented program-based fallback. Drums chooses one pitch from the production percussion catalogue, stays on channel 10, then uses that pitch's blueprint on a settings reroll. Both Tracks and Mixer now offer the complete 128-program GM picker so every rerolled or imported program is visible. Instrument pools constrain random choices, not manual picker choices.
+
+Arpeggio's **One instrument** chooses one program for eligible targets in the current action; instrument-locked, whole-track-locked and non-target tracks retain their instruments and do not anchor the shared choice. This is a deliberate deterministic translation of Java's unseeded picker behavior rather than complete GUI draw parity. Instruments use the existing exact role/counter seed XOR `0x494e535452554d45` in a separate JavaRandom stream. Instrument permission never shifts parameter draws; Chords/Drums parameter branches can change because they consume the newly chosen identity. Successful combined actions commit once; unchanged, locked, stale or invalid actions preserve history/redo/counters. Sparse section patches, manual-note replacements, mix levels and channels retain ownership. Instrument rules/locks/pool identity survive JSON/session and undo/redo without schema gating. Global banned-program/use-all/rebuild-pool preferences remain P8.
+
+**Deferred by user request: universal instrument links.** Skip the special Arp#1 Copy Melody Inst. policy. Later, extend the instrument picker for every track so it can select another track instead of a fixed instrument. The selection must persist a source track ID and dynamically use that source track's current instrument whenever it changes, including rerolls and manual changes; it must not be a one-time instrument copy or an Arpeggio/Melody-only rule. Design chain/cycle handling, deleted sources, percussion compatibility, duplication, persistence and history as part of that later system.
+
+Validation: production pool membership/order is checked directly against Java source; functional tests cover all-role instrument-only MIDI identity, locks/manual ownership, exact-long replay, JSON/session, shared eligibility, permission stream independence, generation and Chords pool branches. Browser checks cover policy-only preservation, shared Arp instruments, manual edits under instrument locks and row layout. Remaining P6 is automatic triggers and advanced policies gated by P5, plus the deferred universal instrument links above.
+
+Final checks: 108 part-setting tests plus 43 selection/overview/playback tests pass; the production control browser suite and arrangement zoom/device-scale/resize suite pass. Production build passes with the existing Pixi CommonJS warning and an initial bundle of 506.70 kB, 6.70 kB above the warning budget.
 
 ## Product contract
 

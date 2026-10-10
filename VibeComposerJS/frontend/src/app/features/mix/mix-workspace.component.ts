@@ -3,6 +3,7 @@ import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
 import { phraseForTrack } from '../../core/music/phrase';
 import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
+import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
 import type { CompositionTrack } from '../../core/project/project.model';
 import { tracksInRoleOrder } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
@@ -25,24 +26,7 @@ export class MixWorkspaceComponent {
   readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
   readonly channels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly drumInstruments = DRUM_INSTRUMENTS;
-  readonly instruments: ReadonlyArray<{ program: number; name: string }> = [
-    { program: 0, name: 'Acoustic Grand Piano' },
-    { program: 4, name: 'Electric Piano' },
-    { program: 10, name: 'Music Box' },
-    { program: 11, name: 'Vibraphone' },
-    { program: 24, name: 'Nylon Guitar' },
-    { program: 25, name: 'Steel Guitar' },
-    { program: 32, name: 'Acoustic Bass' },
-    { program: 33, name: 'Electric Bass' },
-    { program: 38, name: 'Synth Bass' },
-    { program: 40, name: 'Violin' },
-    { program: 48, name: 'Strings' },
-    { program: 56, name: 'Trumpet' },
-    { program: 65, name: 'Alto Sax' },
-    { program: 73, name: 'Flute' },
-    { program: 80, name: 'Square Lead' },
-    { program: 88, name: 'Warm Pad' },
-  ];
+  readonly instruments = GM_INSTRUMENTS;
   readonly hasSolo = computed(() => this.project().tracks.some((track) => track.mix.solo));
   readonly audibleCount = computed(() => this.project().tracks.filter((track) => this.isAudible(track.id)).length);
   readonly totalPhraseNotes = computed(() => this.project().tracks.reduce(

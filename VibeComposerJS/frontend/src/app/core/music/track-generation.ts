@@ -193,11 +193,13 @@ function rerollBass(random: JavaRandom, seed: bigint, source: BassSettings, orde
   return { ...next, rhythm, hitsPerPattern: hits * 2, useCustomVelocities: false };
 }
 
-function rerollChords(random: JavaRandom, policy: TrackGenerationPolicies['chords'], source: ChordSettings, program: number): ChordSettings {
-  // The translated model stores programs, not Java's instrument pool. Use its pluck catalogue,
-  // preferring CHORD for the overlapping acoustic bass; other GM pads use LONG_PAD behavior.
-  const pluck = [1,3,5,8,10,11,12,13,15,25,27,33,34,35,36,45,46,88].includes(program);
-  const pad = program >= 89 && program <= 95;
+function rerollChords(random: JavaRandom, policy: TrackGenerationPolicies['chords'], source: ChordSettings, program: number,
+  pool?: CompositionTrack['instrumentPool']): ChordSettings {
+  // Rerolled identities retain their pool, including overlapping acoustic bass and LONG_PAD.
+  // Manually chosen/imported programs without a pool retain the P6b program-based fallback.
+  const identified = pool !== undefined && pool !== 'ALL';
+  const pluck = identified ? pool === 'PLUCK' : [1,3,5,8,10,11,12,13,15,25,27,33,34,35,36,45,46,88].includes(program);
+  const pad = identified ? pool === 'LONG_PAD' : program >= 89 && program <= 95;
   const next = { ...source, velocityMin: policy.velocityMin, velocityMax: policy.velocityMax };
   if (policy.transpose) Object.assign(next, { transpose: (random.nextInt(3) - 1) * 12 });
   if (policy.delay) Object.assign(next, { offset: [0, 62, 125, 250, 333][random.nextInt(5)] });
@@ -292,7 +294,7 @@ export function rerollRoleSettings(seed: bigint, role: ArrangedPart, policy: Tra
   return sources.map((track, index) => {
     const source = track.generatorSettings;
     const next = role === 'bass' ? rerollBass(random, seed, source as BassSettings, orders[index])
-      : role === 'chords' ? rerollChords(random, policy as TrackGenerationPolicies['chords'], source as ChordSettings, track.mix.program)
+      : role === 'chords' ? rerollChords(random, policy as TrackGenerationPolicies['chords'], source as ChordSettings, track.mix.program, track.instrumentPool)
       : role === 'drums' ? rerollDrums(random, drumPolicy, source as DrumSettings, swing, offset)
       : rerollMelody(random, seed, melodyPolicy, source as MelodySettings, orders[index], sharedSeed);
     return partPatchesEqual(source, next) ? source : next;

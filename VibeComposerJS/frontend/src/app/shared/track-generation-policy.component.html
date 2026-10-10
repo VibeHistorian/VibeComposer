@@ -1,3 +1,30 @@
+@if (expanded()) {
+  <div class="policy-controls instrument-policy" role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
+    <label class="check-control" title="Choose instruments on settings rerolls and when increasing the track total.">
+      <span>Randomize instruments</span>
+      <input type="checkbox" aria-label="Randomize instruments" [checked]="instrumentPolicy().randomize" [disabled]="disabled()"
+        (change)="changeInstrument('randomize', $event)" />
+    </label>
+    @if (role() !== 'drums') {
+      <label><span>Instrument pool</span>
+        <select aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">
+          @for (pool of instrumentPools(); track pool) {
+            <option [value]="pool" [selected]="instrumentPolicy().pool === pool">{{ poolLabels[pool] }}</option>
+          }
+        </select>
+      </label>
+    }
+    @if (role() === 'chords' && instrumentPolicy().pool === 'AUTO') {
+      <label><span>Sustain chance %</span><input type="number" aria-label="Instrument sustain chance %" min="0" max="100" step="1"
+        [value]="instrumentPolicy().sustainChance" [disabled]="disabled()" (change)="changeInstrument('sustainChance', $event)" /></label>
+    }
+    @if (role() === 'arpeggio') {
+      <label class="check-control" title="Choose one instrument for all eligible targets in this reroll."><span>One instrument</span>
+        <input type="checkbox" aria-label="One instrument" [checked]="instrumentPolicy().sameInstrument" [disabled]="disabled()"
+          (change)="changeInstrument('sameInstrument', $event)" /></label>
+    }
+  </div>
+}
 @if (expanded() && controls().length) {
   <div class="policy-controls" role="group" [attr.aria-label]="role() + ' track reroll rules'">
     @for (control of controls(); track control.key) {

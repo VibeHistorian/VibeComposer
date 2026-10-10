@@ -45,7 +45,12 @@
               (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '▵' }}</button>
           </header>
           <div class="track-policy-header">
-            <vc-track-generation-policy [role]="group.role" [policy]="policyFor(group.role)" [expanded]="!isGroupCollapsed(group.role)" [disabled]="editing()" (policyChanged)="updateRolePolicy(group.role, $event)" />
+            @if (!isGroupCollapsed(group.role)) {
+              <button type="button" class="instrument-reroll-button" [disabled]="editing() || !canRerollInstruments(group.role)"
+                [attr.aria-label]="'Reroll ' + group.name + ' instruments'" (click)="rerollInstruments(group.role)">Reroll instruments</button>
+            }
+            <vc-track-generation-policy [role]="group.role" [policy]="policyFor(group.role)" [expanded]="!isGroupCollapsed(group.role)" [disabled]="editing()" (policyChanged)="updateRolePolicy(group.role, $event)"
+              [instrumentPolicy]="instrumentPolicyFor(group.role)" (instrumentPolicyChanged)="updateInstrumentPolicy(group.role, $event)" />
             @if (rerollMessageFor(group.role)) { <span role="status">{{ rerollMessageFor(group.role) }}</span> }
           </div>
           @if (!isGroupCollapsed(group.role)) {
@@ -66,6 +71,13 @@
                       (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">⍟</button>
                     <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
                       (click)="rerollRole(track.role, track.id)">↻</button>
+                    <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.instrumentLocked ?? false"
+                      [attr.title]="(track.instrumentLocked ? 'Unlock instrument for ' : 'Lock instrument for ') + track.name"
+                      [attr.aria-label]="(track.instrumentLocked ? 'Unlock instrument for ' : 'Lock instrument for ') + track.name"
+                      (click)="projects.setTrackInstrumentLock(track.id, !track.instrumentLocked)">♫</button>
+                    <button type="button" [disabled]="editing() || track.rerollLocked || track.instrumentLocked"
+                      [attr.aria-label]="'Reroll instrument for ' + track.name" title="Reroll only this track’s instrument"
+                      (click)="rerollInstruments(track.role, track.id)">⚄</button>
                   </div>
                   @if (track.role === 'drums') {
                     <select class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
