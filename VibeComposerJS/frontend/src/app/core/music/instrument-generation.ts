@@ -14,10 +14,10 @@ export const INSTRUMENT_POOLS: Readonly<Record<Exclude<InstrumentPool, 'AUTO'>, 
   DRUM: DRUM_INSTRUMENTS.map(instrument => instrument.midi),
 };
 export const DEFAULT_INSTRUMENT_POLICIES: Readonly<Record<ArrangedPart, InstrumentGenerationPolicy>> = {
-  melody: { randomize: false, pool: 'MELODY' }, bass: { randomize: false, pool: 'BASS' },
-  chords: { randomize: false, pool: 'AUTO', sustainChance: 50 },
-  arpeggio: { randomize: false, pool: 'PLUCK', sameInstrument: false },
-  drums: { randomize: false, pool: 'DRUM' },
+  melody: { randomize: true, pool: 'MELODY' }, bass: { randomize: true, pool: 'BASS' },
+  chords: { randomize: true, pool: 'AUTO', sustainChance: 50 },
+  arpeggio: { randomize: true, pool: 'PLUCK', sameInstrument: false },
+  drums: { randomize: true, pool: 'DRUM' },
 };
 export function instrumentPoolOptions(role: ArrangedPart): readonly InstrumentPool[] {
   return role === 'drums' ? ['DRUM'] : [...(role === 'chords' ? ['AUTO' as const] : []),

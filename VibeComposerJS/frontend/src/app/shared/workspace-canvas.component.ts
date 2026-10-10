@@ -77,19 +77,10 @@ export class WorkspaceCanvasComponent {
 
   policyFor(role: ArrangedPart) { return this.project().trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]; }
   instrumentPolicyFor(role: ArrangedPart) { return this.project().instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role]; }
-  canRerollInstruments(role: ArrangedPart): boolean {
-    return this.project().tracks.some(track => track.role === role && !track.rerollLocked && !track.instrumentLocked);
-  }
   updateInstrumentPolicy(role: ArrangedPart, patch: Partial<InstrumentGenerationPolicy>): void {
     if (this.editing()) return;
     const result = this.projects.updateInstrumentPolicy(role, patch);
     this.rerollFeedback.set(result === 'invalid' ? { project: this.project(), role, message: 'Invalid instrument rule.' } : null);
-  }
-  rerollInstruments(role: ArrangedPart, trackId?: string): void {
-    if (this.editing()) return;
-    const result = this.projects.rerollRoleInstruments(role, trackId);
-    this.rerollFeedback.set(result === 'changed' ? null : { project: this.project(), role, message: result === 'invalid'
-      ? 'Instrument reroll conflicts with local settings.' : 'No instruments changed.' });
   }
   canRerollRole(role: ArrangedPart): boolean { return this.project().tracks.some(track => track.role === role && !track.rerollLocked); }
   rerollMessageFor(role: ArrangedPart): string | null | undefined { return this.rerollFeedback()?.role === role ? this.rerollMessage() : null; }

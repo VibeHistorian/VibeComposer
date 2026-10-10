@@ -49,6 +49,9 @@ test('production Angular controls initialize selects from settings and support r
             fits: bounds.every(box => box.left >= row.left && box.right <= row.right + 1) };
         });
         const readTrack = role => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === role);
+        const instrumentDefaultChecks = [...document.querySelectorAll('input[aria-label="Randomize instruments"]')].map(input => input.checked);
+        // Preserve the earlier parameter-only scenarios with explicit instrument opt-outs.
+        document.querySelectorAll('input[aria-label="Randomize instruments"]').forEach(input => input.click());
         const melodyRow = document.querySelector('.track-group.melody');
         const melodyInstrument = melodyRow.querySelector('.track-instrument');
         const melodyChannel = melodyRow.querySelector('.track-channel');
@@ -96,7 +99,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid button:first-child')]
           .every(button => button.getAttribute('aria-pressed') === 'false'));
         const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        const result = { inlineActions, inlineIdentity, initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
+        const result = { instrumentDefaultChecks, inlineActions, inlineIdentity, initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
           rhythm: project.chords.rhythm, grid: project.chords.customPattern };
         const wheel = (element, deltaY, shiftKey = false) => element.dispatchEvent(
           new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
@@ -365,17 +368,17 @@ test('production Angular controls initialize selects from settings and support r
         const lockedInstrument = arpRows[2].querySelector('.track-instrument');
         lockedInstrument.value = '127'; lockedInstrument.dispatchEvent(new Event('change', { bubbles: true }));
         const lastArp = readProject().tracks.filter(track => track.role === 'arpeggio')[2];
-        arpRows[2].querySelector('button[aria-label="Lock instrument for ' + lastArp.name + '"]').click();
-        await waitFor(() => arpRows[2].querySelector('button[aria-label="Reroll instrument for ' + lastArp.name + '"]').disabled, 'instrument lock');
+        arpRows[2].querySelector('button[aria-label="Lock reroll for ' + lastArp.name + '"]').click();
+        await waitFor(() => arpRows[2].querySelector('button[aria-label="Reroll ' + lastArp.name + '"]').disabled, 'whole-track lock');
         const beforeInstrumentRoll = readProject();
-        arpGroup.querySelector('button[aria-label="Reroll Arpeggio instruments"]').click();
-        await waitFor(() => readProject().trackRerollCounts.arpeggio > beforeInstrumentRoll.trackRerollCounts.arpeggio, 'instrument-only roll');
+        arpGroup.querySelector('button[aria-label="Reroll Arpeggio tracks"]').click();
+        await waitFor(() => readProject().trackRerollCounts.arpeggio > beforeInstrumentRoll.trackRerollCounts.arpeggio, 'combined roll');
         const rolledArps = readProject().tracks.filter(track => track.role === 'arpeggio');
         result.sharedArpInstrument = rolledArps[0].mix.program === rolledArps[1].mix.program;
         result.lockedArpInstrument = rolledArps[2].mix.program;
-        result.instrumentOnlyPreservesSettings = JSON.stringify(rolledArps.map(track => track.generatorSettings))
-          === JSON.stringify(beforeInstrumentRoll.tracks.filter(track => track.role === 'arpeggio').map(track => track.generatorSettings));
-        result.instrumentLockAllowsSettings = !arpRows[2].querySelector('button[aria-label="Reroll ' + lastArp.name + '"]').disabled;
+        result.lockedTrackPreserved = JSON.stringify(rolledArps[2])
+          === JSON.stringify(beforeInstrumentRoll.tracks.find(track => track.id === lastArp.id));
+        result.instrumentButtonsRemoved = !document.querySelector('.instrument-reroll-button, button[aria-label^="Lock instrument for"], button[aria-label^="Unlock instrument for"], button[aria-label^="Reroll instrument for"]');
         document.querySelector('.track-group.drums .track-select').click();
         await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 10'), 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
@@ -428,8 +431,9 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.deepEqual(actual.initialSelection, ['33', '1']);
     assert.equal(actual.inlineActions.length, 5);
+    assert.deepEqual(actual.instrumentDefaultChecks, [true, true, true, true, true]);
     for (const actions of actual.inlineActions) {
-      assert.deepEqual(actions, { symbols: ['⍟', '↻', '♫', '⚄'], actionsBeforeInstrument: true, oneLine: true, fits: true });
+      assert.deepEqual(actions, { symbols: ['⍟', '↻'], actionsBeforeInstrument: true, oneLine: true, fits: true });
     }
     assert.deepEqual(actual.inlineIdentity, { program: 0, channel: 5, bassProgram: 33, bassChannel: 1,
       selectionPreserved: true, noInspectorIdentity: true, noG: true, hiddenArrow: true });
@@ -459,8 +463,8 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.instrumentPolicy, { randomize: true, pool: 'MELODY', sameInstrument: true });
     assert.equal(actual.sharedArpInstrument, true);
     assert.equal(actual.lockedArpInstrument, 127);
-    assert.equal(actual.instrumentOnlyPreservesSettings, true);
-    assert.equal(actual.instrumentLockAllowsSettings, true);
+    assert.equal(actual.lockedTrackPreserved, true);
+    assert.equal(actual.instrumentButtonsRemoved, true);
     assert.equal(actual.countAfterExpand, '3');
     assert.equal(actual.inspectorPolicyRemoved, true);
     assert.equal(actual.bassBlue, 'rgb(34, 167, 242)');

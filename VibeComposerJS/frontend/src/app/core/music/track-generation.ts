@@ -128,6 +128,7 @@ export function rerollArpeggioSettings(seed: bigint, policy: ArpeggioGenerationP
   sources: readonly ArpeggioSettings[]): ArpeggioSettings[] {
   if (!decodeArpeggioPolicy(policy)) throw new RangeError('Invalid Arpeggio reroll policy.');
   const random = new JavaRandom(seed);
+  const directions = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4152504449524543n));
   const sharedHits = policy.sameHits ? chooseArpeggioHits(random, policy) : undefined;
   return sources.map(source => {
     const hits = sharedHits ?? chooseArpeggioHits(random, policy);
@@ -146,7 +147,8 @@ export function rerollArpeggioSettings(seed: bigint, policy: ArpeggioGenerationP
     const fill = policy.fills ? weightedChordFill(random.nextInt(100)) : source.chordSpanFill;
     const maxShift = Math.min(rhythm === 'full' ? 0 : rhythm === 'half' ? 1 : rhythm === 'sparse' ? 3 : 7, hits - 1);
     const shift = policy.patterns ? (random.nextInt(100) < policy.shiftChance && maxShift > 0 ? random.nextInt(maxShift) + 1 : 0) : source.patternShift;
-    const next: ArpeggioSettings = { ...source, hitsPerPattern: hits, chordSpan: span, patternRepeat: repeat,
+    const pattern = (['up', 'down', 'up-down', 'random'] as const)[directions.nextInt(4)];
+    const next: ArpeggioSettings = { ...source, pattern, hitsPerPattern: hits, chordSpan: span, patternRepeat: repeat,
       exceptionChance: split, noteLengthMultiplier: length, velocityMin: policy.velocityMin, velocityMax: policy.velocityMax,
       stretchEnabled: useVoices,
       ...(transpose !== undefined ? { transpose } : {}),
@@ -286,6 +288,7 @@ export function rerollRoleSettings(seed: bigint, role: ArrangedPart, policy: Tra
     throw new RangeError('Invalid role reroll inputs.');
   if (role === 'arpeggio') return rerollArpeggioSettings(seed, policy as ArpeggioGenerationPolicy, sources.map(track => track.generatorSettings as ArpeggioSettings));
   const random = new JavaRandom(role === 'bass' || role === 'melody' ? BigInt.asIntN(32, seed) : seed);
+  const variance = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4241535356415249n));
   const drumPolicy = policy as TrackGenerationPolicies['drums'];
   const offset = role === 'drums' && drumPolicy.randomOffset ? random.nextInt(100) - 50 : 0;
   const swing = role === 'drums' ? 50 + random.nextInt(drumPolicy.maxSwing * 2 + 1) - drumPolicy.maxSwing : 50;
@@ -293,7 +296,7 @@ export function rerollRoleSettings(seed: bigint, role: ArrangedPart, policy: Tra
   const sharedSeed = role === 'melody' && melodyPolicy.rerollSeeds && melodyPolicy.sameSeed ? random.nextInt() : undefined;
   return sources.map((track, index) => {
     const source = track.generatorSettings;
-    const next = role === 'bass' ? rerollBass(random, seed, source as BassSettings, orders[index])
+    const next = role === 'bass' ? { ...rerollBass(random, seed, source as BassSettings, orders[index]), noteVariation: variance.nextInt(51) }
       : role === 'chords' ? rerollChords(random, policy as TrackGenerationPolicies['chords'], source as ChordSettings, track.mix.program, track.instrumentPool)
       : role === 'drums' ? rerollDrums(random, drumPolicy, source as DrumSettings, swing, offset)
       : rerollMelody(random, seed, melodyPolicy, source as MelodySettings, orders[index], sharedSeed);

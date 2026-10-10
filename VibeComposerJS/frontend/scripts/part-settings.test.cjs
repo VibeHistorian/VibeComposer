@@ -5,6 +5,66 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('main rerolls randomize instruments by default for every role and preserve explicit opt-outs', () => {
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const { service, workspace, load } = fixture();
+    const id = `track-${role}-1`;
+    const track = () => service.project().tracks.find(item => item.id === id);
+    assert.equal(workspace.instrumentPolicyFor(role).randomize, true);
+    if (role === 'drums') service.updateTrackGeneratorSettings(id, { pitch: 82 });
+    else service.updateTrack(id, { mix: { program: 127 } });
+    const before = service.exportProjectJson();
+    workspace.rerollRole(role, id);
+    const value = role === 'drums' ? track().generatorSettings.pitch : track().mix.program;
+    assert.notEqual(value, role === 'drums' ? 82 : 127);
+    const after = service.exportProjectJson();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    workspace.rerollRole(role, id); assert.equal(service.exportProjectJson(), after);
+    service.updateInstrumentPolicy(role, { randomize: false });
+    const program = track().mix.program, pitch = track().generatorSettings.pitch;
+    workspace.rerollRole(role);
+    assert.equal(track().mix.program, program);
+    if (role === 'drums') assert.equal(track().generatorSettings.pitch, pitch);
+    assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+    const restored = new (load('core/project/project.service.ts').ProjectService)();
+    assert.equal(restored.project().instrumentGenerationPolicies[role].randomize, false);
+  }
+});
+
+test('Arp direction covers every selection and Bass randomized variance stays within 0–50 without limiting manual edits', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  const arp = service.project().tracks.find(track => track.role === 'arpeggio');
+  const bass = service.project().tracks.find(track => track.role === 'bass');
+  const directions = new Set(), variances = new Set();
+  for (let sample = 0n; sample < 300n; sample++) {
+    // Use the production counter stride; adjacent Java seeds correlate on their first draw.
+    const seed = BigInt.asIntN(64, sample * 0x9e3779b97f4a7c15n);
+    directions.add(core.rerollRoleSettings(seed, 'arpeggio', core.DEFAULT_TRACK_POLICIES.arpeggio, [arp], [1])[0].pattern);
+    for (const order of [1, 2]) {
+      const result = core.rerollRoleSettings(seed, 'bass', {}, [bass], [order])[0];
+      assert.ok(Number.isInteger(result.noteVariation) && result.noteVariation >= 0 && result.noteVariation <= 50);
+      variances.add(result.noteVariation);
+    }
+  }
+  assert.deepEqual([...directions].sort(), ['down', 'random', 'up', 'up-down']);
+  assert.ok(variances.has(0) && variances.has(50));
+  service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { noteVariation: 100 });
+  assert.equal(service.project().bass.noteVariation, 100);
+  const second = service.addTrack('bass'), sectionId = service.project().arrangement[0].id;
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: second }, { noteVariation: 90 });
+  service.setTrackRerollLock(second, true);
+  const previous = service.exportProjectJson();
+  service.rerollRoleTracks('bass');
+  assert.ok(service.project().bass.noteVariation <= 50);
+  assert.equal(service.project().tracks.find(track => track.id === second).generatorSettings.noteVariation, 100);
+  assert.equal(service.project().arrangement[0].trackPartOverrides[second].noteVariation, 90);
+  const after = service.exportProjectJson(); service.undo(); assert.equal(service.exportProjectJson(), previous);
+  service.rerollRoleTracks('bass'); assert.equal(service.exportProjectJson(), after);
+  service.generateRoleTracks('bass', 3);
+  assert.ok(service.project().tracks.slice(-3).every(track => track.generatorSettings.noteVariation <= 50));
+});
+
 test('instrument pool catalogues retain production Java membership and order', () => {
   const { load } = fixture();
   const { INSTRUMENT_POOLS } = load('core/music/instrument-generation.ts');
@@ -94,7 +154,7 @@ test('instrument rules and locks strictly validate and persist without schema ga
   const { service, load } = fixture();
   const before = service.project();
   assert.equal(before.instrumentGenerationPolicies, undefined);
-  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) service.updateInstrumentPolicy(role, { randomize: true });
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) service.updateInstrumentPolicy(role, { randomize: false });
   service.setTrackInstrumentLock('track-bass-1', true);
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
@@ -225,6 +285,7 @@ test('other role rules leave musical values untouched and strictly validate pers
 for (const role of ['bass', 'chords', 'drums', 'melody']) {
   test(`${role} rerolls preserve identity, manual notes, locks, local patches and exact replay`, () => {
     const { service, phrase, settings, midi, workspace, ui, load } = fixture();
+    service.updateInstrumentPolicy(role, { randomize: false });
     const primaryId = `track-${role}-1`, manualId = service.addTrack(role), lockedId = service.addTrack(role);
     const track = id => service.project().tracks.find(track => track.id === id);
     service.updateSettings({ seed: '9007199254740993' });
@@ -385,6 +446,7 @@ test('generated tracks append atomically with one history entry for every role',
 
 test('generation handles empty roles, project capacity and no-op rerolls without consuming history', () => {
   const { service, load } = fixture();
+  service.updateInstrumentPolicy('chords', { randomize: false });
   service.removeTrack('track-melody-1');
   assert.equal(service.generateRoleTracks('melody', 2), 'changed');
   assert.ok(service.project().tracks.some(track => track.id === 'track-melody-1'));
@@ -448,6 +510,7 @@ test('Arpeggio reroll policy edits leave part settings and notes untouched, with
 
 test('Arpeggio group rerolls preserve ownership, locks, local overrides and manual replacements in one undo action', () => {
   const { service, settings, phrase, midi, ui, workspace, load } = fixture();
+  service.updateInstrumentPolicy('arpeggio', { randomize: false });
   const id = 'track-arpeggio-1', secondId = service.addTrack('arpeggio'), lockedId = service.addTrack('arpeggio');
   const track = target => service.project().tracks.find(track => track.id === target);
   const first = service.project().arrangement[0];
@@ -566,7 +629,12 @@ test('Arpeggio policy preserves opted-out fields, shared counts and no-op histor
   assert.ok(new Set(separate.map(settings => settings.hitsPerPattern)).size > 1);
   service.updateArpeggioPolicy({ randomHits: false, fixedHits: 4, randomSpan: false, maxRepeat: 1,
     maxSplit: 0, lengthMin: 100, lengthMax: 100, patterns: false, fills: false, transpose: false, voicesMode: 'NONE' });
-  service.rerollArpeggioTracks(); service.updateSettings({ name: 'redo' }); service.undo();
+  service.updateInstrumentPolicy('arpeggio', { randomize: false });
+  service.rerollArpeggioTracks();
+  const nextSeed = service.trackRerollSeed(service.project(), 'arpeggio', service.project().trackRerollCounts.arpeggio);
+  const nextPattern = core.rerollArpeggioSettings(nextSeed, service.project().trackGenerationPolicies.arpeggio, [service.project().arpeggio])[0].pattern;
+  service.updatePartSettings({ kind: 'global-role', role: 'arpeggio' }, { pattern: nextPattern });
+  service.updateSettings({ name: 'redo' }); service.undo();
   const before = service.exportProjectJson();
   assert.equal(service.rerollArpeggioTracks(), 'unchanged'); assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
 });
