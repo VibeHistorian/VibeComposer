@@ -13,6 +13,18 @@
               [value]="tracksFor(group.role).length" [disabled]="editing()" (focus)="$any($event.target).select()"
               (keydown.enter)="$any($event.target).blur()" (change)="changeRoleCount(group.role, $event)" />
             <vc-mix-buttons class="group-mix-controls" [trackIds]="roleTrackIds(group.role)" [label]="group.name + ' tracks'" />
+            <div class="group-policy-toggles">
+              @if (group.role !== 'bass') {
+                <button type="button" class="group-policy-toggle" aria-label="On Compose"
+                  title="On Compose: reroll this role's track settings when composing"
+                  [class.active]="policyFor(group.role).onCompose === true" [attr.aria-pressed]="policyFor(group.role).onCompose === true"
+                  [disabled]="editing()" (click)="updateRolePolicy(group.role, { onCompose: !policyFor(group.role).onCompose })">✦</button>
+              }
+              <button type="button" class="group-policy-toggle" aria-label="Randomize instruments"
+                title="Randomize instruments: choose instruments on settings rerolls and when increasing the track total"
+                [class.active]="instrumentPolicyFor(group.role).randomize" [attr.aria-pressed]="instrumentPolicyFor(group.role).randomize"
+                [disabled]="editing()" (click)="updateInstrumentPolicy(group.role, { randomize: !instrumentPolicyFor(group.role).randomize })">♪</button>
+            </div>
             <button type="button" class="add-track-button" [disabled]="editing()" (click)="addTrack(group.role)"
               [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
               <button type="button" class="add-track-button" [attr.aria-label]="'Reroll ' + group.name + ' tracks'" [title]="'Reroll unlocked ' + group.name + ' track settings'"

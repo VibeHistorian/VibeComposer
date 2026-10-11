@@ -1,7 +1,5 @@
 @if (expanded()) {
   <div class="policy-controls instrument-policy" role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
-    <vc-compact-toggle label="Randomize instruments" description="Choose instruments on settings rerolls and when increasing the track total."
-      [active]="instrumentPolicy().randomize" [disabled]="disabled()" (toggled)="toggleInstrument('randomize')" />
     @if (role() !== 'drums') {
       <label><span>Instrument pool</span>
         <select [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">

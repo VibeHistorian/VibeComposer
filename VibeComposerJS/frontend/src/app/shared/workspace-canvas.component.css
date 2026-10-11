@@ -15,7 +15,7 @@
 .track-group.melody .group-heading { background: var(--role-melody-header); }
 .generation-status { margin: 5px 6px; color: var(--text-muted); font-size: 9px; line-height: 1.4; }
 .track-group.bass { border-left-color: var(--role-bass); }.track-group.chords { border-left-color: var(--role-chords); }.track-group.arpeggio { border-left-color: var(--role-arpeggio); }.track-group.drums { border-left-color: var(--role-drums); }
-.group-heading { min-height: 29px; padding: 2px 5px; display: flex; align-items: center; gap: 6px; border-radius: var(--radius-tight); }
+.group-heading { min-height: 29px; padding: 2px 5px; display: flex; align-items: center; gap: 4px; border-radius: var(--radius-tight); }
 .track-group.bass .group-heading { background: var(--role-bass-header); }.track-group.chords .group-heading { background: var(--role-chords-header); }.track-group.arpeggio .group-heading { background: var(--role-arpeggio-header); }.track-group.drums .group-heading { background: var(--role-drums-header); }
 .group-select { min-width: 0; padding: 2px 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
 .group-select strong { min-width: 0; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -24,11 +24,18 @@
 .group-count::-webkit-inner-spin-button, .group-count::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .group-count:focus { outline: 1px solid var(--accent-primary); }
 .group-count { margin-right: 0; }
-.group-mix-controls { margin-right: auto; }
+.group-mix-controls { flex: 0 0 auto; }
 .track-policy-header:has(vc-track-generation-policy:empty):not(:has([role="status"])) { display: none; }
 .add-track-button, .collapse-group-button { width: 22px; height: 22px; padding: 0; flex: 0 0 auto; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
 .add-track-button:hover, .collapse-group-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .collapse-group-button { font-size: 14px; line-height: 1; }
+/* Header policy toggles */
+.group-policy-toggles { flex: 1 0 auto; display: flex; justify-content: center; align-items: center; gap: 3px; }
+.group-policy-toggle { width: 22px; height: 22px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 14px var(--font-ui); cursor: pointer; }
+.group-policy-toggle:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.group-policy-toggle.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.group-policy-toggle:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.group-policy-toggle:disabled { opacity: .5; cursor: default; }
 /* Track reroll controls */
 .track-policy-header { display: grid; gap: 5px; padding: 6px 3px; border-bottom: 1px solid var(--border-subtle); }
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }

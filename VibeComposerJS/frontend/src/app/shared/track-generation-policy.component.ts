@@ -28,7 +28,7 @@ export class TrackGenerationPolicyComponent {
   readonly instrumentPools = computed(() => instrumentPoolOptions(this.role()));
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
     PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Percussion' };
-  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()]);
+  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control => control.key !== 'onCompose'));
 
   readonly defaultInstrumentPolicies = DEFAULT_INSTRUMENT_POLICIES;
   defaultValue(control: PolicyControl): string | number { return (DEFAULT_TRACK_POLICIES[this.role()] as unknown as Record<string, string | number>)[control.key]; }
