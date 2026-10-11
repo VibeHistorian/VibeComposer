@@ -55,7 +55,6 @@ export interface SectionMusicalContext {
 }
 
 export interface CommonPartSettings {
-  readonly generationEnabled?: boolean;
   readonly patternSeed?: number;
   /** Thousandths of a beat, matching Java's noteMultiplier units at normal stretch. */
   readonly offset?: number;

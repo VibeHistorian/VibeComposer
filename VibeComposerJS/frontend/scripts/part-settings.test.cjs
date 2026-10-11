@@ -360,11 +360,9 @@ test('P5e inference keeps base source ownership and explicit section harmony ahe
   assert.ok(section.chordDegrees);
   for (const role of ['melody','bass','chords','arpeggio','drums']) assert.deepEqual(sectionGenerationHarmony(service.project(),section,role),baseGenerationHarmony(service.project(),section));
   service.clearSectionChordOverrides(0); service.clearTrackPhrase(id);
-  service.updatePartSettings({ kind:'global-track',trackId:id },{ generationEnabled:false });
-  assert.equal(projectMelodyHarmony(service.project()).available,false);
-  assert.equal(sectionGenerationHarmony(service.project(),service.project().arrangement[0],'chords').inferred,false);
+  assert.equal(projectMelodyHarmony(service.project()).available,true);
   const secondId = service.addTrack('melody');
-  assert.equal(projectMelodyHarmony(service.project()).sourceTrackId,id, 'disabled first source never silently redirects');
+  assert.equal(projectMelodyHarmony(service.project()).sourceTrackId,id, 'first source never silently redirects');
   service.removeTrack(id);
   assert.equal(projectMelodyHarmony(service.project()).sourceTrackId,secondId);
   service.removeTrack(secondId); assert.equal(projectMelodyHarmony(service.project()).available,false);
@@ -520,7 +518,7 @@ test('P5e Melody flip and key emphasis preserve ownership, update consumers and 
   service.updateTrackPhrase(id, []);
   assert.deepEqual(phrase.sectionMelodyContext(service.project()).pitches.flat(), Array(service.project().progression.length * 16).fill(0));
   service.clearTrackPhrase(id);
-  service.updatePartSettings({ kind: 'global-track', trackId: id }, { generationEnabled: false });
+  service.removeTrack(id);
   assert.equal(phrase.sectionMelodyContext(service.project()).available, false);
 });
 
@@ -798,7 +796,7 @@ test('P5 dependencies use section melody settings, manual ownership and absent s
   const drumMidi = exported.tracks.find(track => track.name === drums().name);
   assert.equal(drumMidi.channel, 9); assert.equal(drumMidi.notes.length, arranged.length);
   arranged.forEach(note => assert.ok(drumMidi.notes.some(item => item.midi === note.midi && Math.abs(item.ticks / exported.header.ppq - note.startBeat) < 0.003)));
-  service.updatePartSettings(local, { generationEnabled: false });
+  service.setSectionTrackPresence(0, drums().id, false);
   assert.equal(phrase.layOutTrackPhrase(service.project(), drums()).some(note => note.startBeat < 16), false);
   assert.ok(phrase.layOutTrackPhrase(service.project(), drums()).some(note => note.startBeat >= 16));
   service.undo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), drums()), arranged);
@@ -2535,7 +2533,8 @@ test('every applicable shared control has a role consumer and genuine Java excep
   const { service, settings, phrase, load } = fixture();
   const keys = role => settings.PART_CONTROLS[role].map(control => control.key);
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
-    for (const key of ['generationEnabled', 'patternSeed', 'offset', 'feedbackCount', 'feedbackDuration', 'feedbackVol']) assert.ok(keys(role).includes(key));
+    for (const key of ['patternSeed', 'offset', 'feedbackCount', 'feedbackDuration', 'feedbackVol']) assert.ok(keys(role).includes(key));
+    assert.equal(keys(role).includes('generationEnabled'), false);
     assert.equal(keys(role).includes('accents'), role === 'melody');
     assert.equal(keys(role).includes('patternRepeat'), role === 'arpeggio');
     assert.equal(keys(role).includes('exceptionChance'), ['arpeggio', 'drums'].includes(role));
@@ -2544,7 +2543,7 @@ test('every applicable shared control has a role consumer and genuine Java excep
     assert.equal(keys(role).includes('stretchEnabled'), ['chords', 'arpeggio'].includes(role));
     const track = service.project().tracks.find(track => track.role === role);
     const generate = patch => phrase.generateTrackPhrase(service.project(), { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
-    assert.deepEqual(generate({ generationEnabled: false }), []);
+    assert.ok(generate({}).length > 0);
     assert.deepEqual(generate({ patternSeed: 123 }), phrase.generateTrackPhrase({ ...service.project(), seed: '123' }, track));
     assert.notDeepEqual(generate({ patternSeed: 123 }), generate({}));
     const delayed = generate({ offset: 250, feedbackCount: 2, feedbackDuration: 750, feedbackVol: 65 });
@@ -2580,7 +2579,7 @@ test('every applicable shared control has a role consumer and genuine Java excep
   assert.equal(editor.controls().some(control => control.key === 'velocityMin'), true);
 });
 
-test('all-role scoped timing, seeds and generation enable survive history, snapshots, JSON and manual replacements', () => {
+test('all-role scoped timing, seeds and arrangement presence survive history, snapshots, JSON and manual replacements', () => {
   const { service, settings, phrase, midi, ui, workspace } = fixture();
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     const id = `track-${role}-1`, track = () => service.project().tracks.find(track => track.id === id);
@@ -2604,8 +2603,13 @@ test('all-role scoped timing, seeds and generation enable survive history, snaps
     for (const note of after) assert.ok(notes.some(exportedNote => exportedNote.midi === note.midi
       && Math.abs(exportedNote.ticks / exported.header.ppq - note.startBeat) < 0.003
       && Math.abs(exportedNote.velocity * 127 - note.velocity) < 0.001));
-    service.updatePartSettings(part, { generationEnabled: false });
-    assert.ok(service.project().arrangement[0].trackPresence[id]);
+    service.updateTrack(id, { mix: { muted: true } });
+    assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after, 'mute leaves score notes intact');
+    service.updateTrack(id, { mix: { solo: true } });
+    assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after, 'solo leaves score notes intact');
+    service.undo(); service.undo();
+    service.setSectionTrackPresence(0, id, false);
+    assert.equal(service.project().arrangement[0].trackPresence[id], false);
     assert.equal(phrase.layOutTrackPhrase(service.project(), track()).some(note => note.startBeat < end), false);
     service.undo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after);
     service.redo(); service.undo();
@@ -2620,7 +2624,7 @@ test('all-role scoped timing, seeds and generation enable survive history, snaps
     assert.equal(service.importProjectJson(service.exportProjectJson()), true);
     const manual = [{ id: 'manual', midi: role === 'drums' ? 38 : 60, startBeat: 0, durationBeats: 1, velocity: 90 }];
     service.updateTrackPhrase(id, manual);
-    service.updatePartSettings(part, { generationEnabled: false, feedbackCount: 5 });
+    service.updatePartSettings(part, { feedbackCount: 5 });
     assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
     assert.ok(phrase.layOutTrackPhrase(service.project(), track()).some(note => note.startBeat === 0));
     assert.equal(service.resetCellPartSettings(cell), 'changed');
@@ -2636,7 +2640,8 @@ test('shared fields reject malformed and wrong-role values atomically at all sco
     const id = `track-${role}-1`;
     const scopes = [{ kind: 'global-role', role }, { kind: 'global-track', trackId: id },
       { kind: 'section-role', sectionId: first.id, role }, { kind: 'section-track', sectionId: first.id, trackId: id }];
-    const invalid = [{ generationEnabled: 0 }, { patternSeed: 2147483648 }, { patternSeed: '42' }, { offset: -1001 },
+    const invalid = [{ generationEnabled: false }, { generationEnabled: true }, { generationEnabled: 0 },
+      { patternSeed: 2147483648 }, { patternSeed: '42' }, { offset: -1001 },
       { feedbackCount: 6 }, { feedbackDuration: 2001 }, { feedbackVol: 9 }, { feedbackVol: 151 },
       ...(role === 'melody' ? [{ chordSpan: 2 }] : [{ chordSpan: 0 }, { chordSpan: 5 }]),
       ...(role === 'bass' ? [{ pauseChance: 20 }, { swingPercent: 66 }] : [{ pauseChance: 101 }]),

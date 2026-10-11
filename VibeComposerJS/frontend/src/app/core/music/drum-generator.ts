@@ -31,7 +31,6 @@ export function generateDrumPart(seed: bigint | number, barCount: number, settin
   }
   const follows = settings.rhythm === 'melody';
   const rhythmSettings = { ...settings, hitsPerPattern: settings.hitsPerPattern ?? 4 };
-  if (settings.generationEnabled === false) return [];
   const seedValue = effectivePartSeed(seed, settings);
   const patternRandom = new JavaRandom(BigInt.asIntN(32, seedValue + 40_000n));
   const pattern = (follows ? melodyRhythm(melody, barCount) : partRhythmMask({ ...rhythmSettings, patternFlip: false })).map(slot => {

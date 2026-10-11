@@ -32,6 +32,6 @@
       <p>Inferred from {{ source()?.name }} · generated base Melody{{ inference().manualSource ? ' (manual notes remain active)' : '' }}</p>
       <p>{{ alternateNames() }}</p>
       @if (inference().harmony.degrees.length <= 2) { <p>Short progressions retain their original chords.</p> }
-    } @else { <p>Inferred harmony unavailable. Add a Melody track and enable Generate notes on its global part settings.</p> }
+    } @else { <p>Inferred harmony unavailable. Add a Melody track.</p> }
   </div>
 </section>

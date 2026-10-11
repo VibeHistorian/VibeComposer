@@ -20,7 +20,7 @@ import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
 export class PartSettingsEditorComponent {
   code(control: PartControl): string {
     const codes: Readonly<Record<string, string>> = {
-      generationEnabled: 'GEN', fillFlip: 'FILL↔', patternFlip: 'PAT↔', useCustomVelocities: 'VGRID',
+      fillFlip: 'FILL↔', patternFlip: 'PAT↔', useCustomVelocities: 'VGRID',
       stretchEnabled: 'VOICE', fillPauses: 'HOLD', patternFlexible: 'FLEX', octaveInterval: 'OCT±',
       transpose: 'TRANS', velocityMin: 'VEL↓', velocityMax: 'VEL↑', noteLengthMultiplier: 'LEN', noteLengthPercent: 'LEN',
       feedbackDuration: 'D.TIM', feedbackVol: 'D.VEL', feedbackCount: 'DELAY',

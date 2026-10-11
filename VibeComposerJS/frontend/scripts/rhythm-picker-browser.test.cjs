@@ -301,10 +301,7 @@ test('production Angular controls initialize selects from settings and support r
           const delays = document.querySelector('input[aria-label="Delays"]');
           delays.value = '2'; delays.dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => [...document.querySelectorAll('input[aria-label="Delays"]')].every(input => input.value === '2'), role + ' feedback sync');
-          document.querySelector('#part-inspector button[aria-label="Generate notes"]').click();
-          await waitFor(() => [...document.querySelectorAll('button[aria-label="Generate notes"]')].every(button => button.getAttribute('aria-pressed') === 'false'), role + ' generation toggle');
-          document.querySelector('#part-inspector button[aria-label="Generate notes"]').click();
-          await waitFor(() => [...document.querySelectorAll('button[aria-label="Generate notes"]')].every(button => button.getAttribute('aria-pressed') === 'true'), role + ' generation restored');
+          if (document.querySelector('button[aria-label="Generate notes"]')) throw new Error(role + ' still has a generation toggle');
           [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Clear seed').click();
           await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
           const state = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))[role];

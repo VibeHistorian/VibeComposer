@@ -43,7 +43,6 @@ export function generateChordPart(
     throw new RangeError('Chord generation settings are outside the supported range.');
   }
 
-  if (settings.generationEnabled === false) return [];
   const diatonicChords = getDiatonicChords(key, scale);
   const voiced = harmony?.soundingVoicings ?? (harmony ? soundingHarmony(harmony.voicings, key, scale) : undefined);
   const chordDefinitions = progression.map((degree, index) => {

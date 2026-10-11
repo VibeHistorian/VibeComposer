@@ -70,7 +70,7 @@ export function projectMelodyHarmony(project: CompositionProject): MelodyHarmony
   const base = baseGenerationHarmony(project), source = project.tracks.find(track => track.role === 'melody');
   let result: MelodyHarmonyInference = { available: false, sourceTrackId: source?.id,
     manualSource: source?.editedPhrase !== undefined, harmony: base };
-  if (source?.role === 'melody' && source.generatorSettings.generationEnabled !== false) {
+  if (source?.role === 'melody') {
     let skeleton: MelodySkeleton | undefined;
     generateMelody(BigInt(withTrackSeed(project, source).seed), project.key, project.scale, base.degrees,
       source.generatorSettings, 0, undefined, project.melodyGlobal, base.customChords, base,

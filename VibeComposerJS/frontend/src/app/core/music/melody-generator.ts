@@ -86,7 +86,6 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     || !Number.isInteger(jump) || jump < 0 || jump > 4 || !targets.length || targets.length > 32 || !offsets.length || offsets.length > 32
     || targets.some((target) => !Number.isInteger(target) || target < -24 || target > 24)
     || offsets.some((offset) => !Number.isInteger(offset) || offset < -16 || offset > 16)) throw new RangeError('Unsupported block melody inputs.');
-  if (settings.generationEnabled === false) return [];
   const baseSeed = settings.patternSeed ? int(settings.patternSeed) : Number(BigInt.asIntN(32, BigInt(seed)));
   const blockSeed = int(baseSeed + notesSeedOffset);
   const durationRandom = new JavaRandom(int(blockSeed + 5));

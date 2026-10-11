@@ -211,7 +211,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   if (!source) return { ...melodyContext([], progression.length), available: false };
   if (source.editedPhrase !== undefined) return melodyContext(source.editedPhrase, progression.length, project.melodyGlobal?.patternFlip);
   const effective = resolvePartTrack(source, section);
-  if (effective.role !== 'melody' || effective.generatorSettings.generationEnabled === false) {
+  if (effective.role !== 'melody') {
     return { ...melodyContext([], progression.length), available: false };
   }
   let result = melodyContext([], progression.length);

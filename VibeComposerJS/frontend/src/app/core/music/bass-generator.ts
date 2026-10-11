@@ -41,7 +41,6 @@ export function generateBassline(
     throw new RangeError('Bass generation settings are outside the supported range.');
   }
 
-  if (settings.generationEnabled === false) return [];
   const chords = getDiatonicChords(key, scale);
   const harmonicRoots = harmony?.soundingRoots ? harmony.soundingRoots.map(chord => chord.map(pitch => pitch - 24))
     : harmony ? soundingHarmony(harmony.roots, key, scale, -24) : undefined;

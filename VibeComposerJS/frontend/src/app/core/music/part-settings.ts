@@ -66,8 +66,6 @@ const swing = number('swingPercent', 'Swing', 0, 100, 50);
 const voices: readonly PartControl[] = [number('chordNotesStretch', 'Voices', 2, 6, 3, ''),
   { key: 'stretchEnabled', label: 'Use voices', kind: 'boolean', defaultValue: false }];
 const common: readonly PartControl[] = [
-  { key: 'generationEnabled', label: 'Generate notes', kind: 'boolean', defaultValue: true,
-    description: 'Enable generated notes for this part. Saved manual phrases remain explicit replacements; mixer mute and section presence are independent.' },
   { key: 'patternSeed', label: 'Seed', kind: 'integer', minimum: -2147483648, maximum: 2147483647, defaultValue: 0, advanced: true,
     description: 'Java int part seed. Zero follows the project/track seed; this changes notes without rerolling settings.' },
   number('offset', 'Offset', -1000, 1000, 0, ' /1000 beat'),
