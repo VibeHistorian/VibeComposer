@@ -346,7 +346,8 @@ test('track buttons select parts and middle-click toggles presence without selec
   assert.equal(component.cellSelected.values.length, 0, 'track hit wins over cell hit');
   component.hits.find((candidate) => candidate.key === 'heading:verse').activate();
   assert.deepEqual(component.sectionSelected.values.at(-1), { sectionId: 'verse', trackId: 'bass-1' });
-  component.hits.find((candidate) => candidate.key === 'group:chords').activate();
+  const group = component.hits.find((candidate) => candidate.key === 'group:chords');
+  component.onCanvasClick({ button: 0, clientX: 1, clientY: group.y + 1 });
   assert.equal(component.groupSelected.values.at(-1), 'chords');
 });
 

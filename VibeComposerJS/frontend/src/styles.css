@@ -129,6 +129,13 @@
   --role-drum-surface: #3a2b12;
   --role-drum-border: #806221;
 
+  /* Quiet arrangement cell backgrounds */
+  --role-melody-cell-surface: color-mix(in srgb, var(--role-melody-surface) 75%, black);
+  --role-bass-cell-surface: color-mix(in srgb, var(--role-bass-surface) 75%, black);
+  --role-chords-cell-surface: color-mix(in srgb, var(--role-chords-surface) 75%, black);
+  --role-arpeggio-cell-surface: color-mix(in srgb, var(--role-arpeggio-surface) 75%, black);
+  --role-drum-cell-surface: color-mix(in srgb, var(--role-drum-surface) 75%, black);
+
   /* Parameter impact palette, independent of instrument roles */
   --parameter-core: #94a3b8;
   --parameter-rhythm: #56b6bc;

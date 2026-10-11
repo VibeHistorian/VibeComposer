@@ -402,7 +402,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const x = this.beatX(item.startBeat);
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         if (x + width <= this.labelWidth || x >= this.width) continue;
-        fill(x, y, width, this.rowHeight, `--role-${role}-surface`);
+        fill(x, y, width, this.rowHeight, `--role-${role}-cell-surface`);
         fill(x, y, 1, this.rowHeight, '--surface-base');
         fill(x, y + this.rowHeight - 1, width, 1, '--border-subtle');
         const target = this.settingsTarget();
@@ -510,7 +510,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       fill(0, y + this.rowHeight - 1, this.labelWidth, 1, '--border-subtle');
       context.fillStyle = color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}`);
       context.beginPath(); context.arc(this.labelWidth / 2, y + this.rowHeight / 2, 5, 0, Math.PI * 2); context.fill();
-      hit({ key: `group:${group.role}`, x: this.labelWidth / 2 - 8, y: y + this.rowHeight / 2 - 8, width: 16, height: 16,
+      hit({ key: `group:${group.role}`, x: 0, y, width: this.labelWidth, height: this.rowHeight,
         label: `Select ${group.name} group`, activate: () => this.groupSelected.emit(group.role) }, 0, RULER_HEIGHT);
     }
     context.restore();
