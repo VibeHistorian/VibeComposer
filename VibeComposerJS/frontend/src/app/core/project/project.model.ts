@@ -23,6 +23,9 @@ export interface PhraseNote {
 }
 
 export interface ArrangementSection {
+  /** Realized harmony selections; explicit section chords take precedence. */
+  readonly useMelodyHarmony?: boolean;
+  readonly swapMelody?: boolean;
   readonly id: string;
   readonly type: SectionType;
   readonly measures: number;
@@ -312,6 +315,7 @@ export type CompositionTrack =
   | (TrackBase & { readonly role: 'drums'; readonly generatorSettings: DrumSettings });
 
 export interface CompositionProject {
+  readonly harmonySettings?: import('../music/harmony-voicing').HarmonySettings;
   readonly melodyGlobal?: MelodyGlobalSettings;
   readonly schemaVersion: 12;
   readonly name: string;

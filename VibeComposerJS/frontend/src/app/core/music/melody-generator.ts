@@ -12,6 +12,8 @@ import { selectMelodyBlock } from './melody-catalogue';
 import { applyMelodyTonalTargets } from './melody-tonal-targets';
 import { adjustMelodyMinorChords, applyMelodyChordTargets, melodyRepairChords, melodyRootChords, replaceMelodyAvoidNotes } from './melody-chord-targets';
 import { startingMelodyTarget } from './melody-targets';
+import type { GenerationHarmony } from './harmony-voicing';
+import type { MelodySkeleton } from './melody-chord-inference';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
@@ -66,7 +68,8 @@ function rhythmicImportance(notes: Note[]): Note[] {
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
   progression: readonly number[], settings: MelodySettings, notesSeedOffset = 0,
   publishPattern?: (notes: readonly Pick<PhraseNote, 'midi' | 'startBeat'>[]) => void,
-  globalSettings: MelodyGlobalSettings = {}, customChords?: readonly (ProgressionChord | null)[]): PhraseNote[] {
+  globalSettings: MelodyGlobalSettings = {}, customChords?: readonly (ProgressionChord | null)[],
+  harmony?: GenerationHarmony, publishSkeleton?: (notes: MelodySkeleton) => void): PhraseNote[] {
   if (!decodeMelodyGlobal(globalSettings)) throw new RangeError('Invalid global Melody inputs.');
   const globals = { ...DEFAULT_MELODY_GLOBAL, ...globalSettings };
   if (!validProgressionChords(customChords, progression.length)) throw new RangeError('Invalid Melody harmony.');
@@ -94,7 +97,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const byChord: Note[][] = [];
   const outerQuick = (speed - 50) * 4;
   const outerWeights = cumulativeWeights([200 + outerQuick, Math.max(1, 200 + outerQuick / 2), 200 + outerQuick, 200 - outerQuick]);
-  const roots = melodyRootChords(key, scale, progression, customChords);
+  const roots = harmony?.roots ?? melodyRootChords(key, scale, progression, customChords);
   const starting = (index: number) => startingMelodyTarget(roots, choices, index, globals.blockTargetMode);
   for (let chord = 0; chord < progression.length; chord++) {
     const originalOffset = structure[chord], offset = Math.max(0, Math.abs(originalOffset) - 1);
@@ -184,12 +187,15 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     if (!existing) cache.set(offset, { changes, blocks });
     byChord.push(notes);
   }
+  // Java skeleton pitches precede part transpose; the TS phrase path applies it during assembly.
+  // Copy canonical values before expansion mutates objects, without consuming random values.
+  publishSkeleton?.(byChord.map(notes => notes.map(note => ({ midi: note.midi - (settings.transpose ?? 0), rhythm: note.rhythm }))));
   const expanded = expandMelody(byChord, settings, baseSeed, notesSeedOffset, minimum, maximum);
   byChord.splice(0, byChord.length, ...expanded);
   const all = byChord.flat(), firstPitches = byChord.map((notes) => notes[0].midi);
   applyMelodyTonalTargets(byChord, scale, globals.tonicNoteTarget, globals.modeNoteTarget, notesSeedOffset);
   const repairChords = globals.chordNoteTarget > 0 || globals.replaceAvoidNotes > 0
-    ? melodyRepairChords(key, scale, progression, customChords) : [];
+    ? harmony?.voicings ?? melodyRepairChords(key, scale, progression, customChords) : [];
   applyMelodyChordTargets(byChord, repairChords, globals.chordNoteTarget);
   repairIntervals(all);
   replaceMelodyAvoidNotes(byChord, repairChords, baseSeed, globals.replaceAvoidNotes);

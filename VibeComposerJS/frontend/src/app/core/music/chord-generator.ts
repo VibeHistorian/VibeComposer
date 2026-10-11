@@ -7,6 +7,7 @@ import { partFillMask } from './chord-span-fill';
 import { effectivePartSeed, spannedPattern, spannedVelocities, expandedVoices } from './part-processing';
 import { swingNotes } from './phrase-swing';
 import { strumChord } from './chord-strum';
+import { soundingHarmony, type GenerationHarmony } from './harmony-voicing';
 
 
 export interface ChordHitEvent {
@@ -30,6 +31,7 @@ export function generateChordPart(
   progression: readonly number[],
   settings: ChordSettings,
   customChords?: readonly (ProgressionChord | null)[],
+  harmony?: GenerationHarmony,
 ): ChordHitEvent[] {
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) {
     throw new RangeError('Numeric seeds must be safe integers; use bigint for 64-bit seeds.');
@@ -43,6 +45,7 @@ export function generateChordPart(
 
   if (settings.generationEnabled === false) return [];
   const diatonicChords = getDiatonicChords(key, scale);
+  const voiced = harmony?.soundingVoicings ?? (harmony ? soundingHarmony(harmony.voicings, key, scale) : undefined);
   const chordDefinitions = progression.map((degree, index) => {
     const chord = diatonicChords.find((candidate) => candidate.degree === degree);
     if (!chord) {
@@ -59,8 +62,12 @@ export function generateChordPart(
     const pitches = settings.voicing === 'open'
       ? [root, root + fifth, root + 12 + third]
       : [root, root + third, root + fifth];
-    return { symbol: chord.symbol, pitches: expandedVoices(customChords?.[index]
-      ? chordPitches(customChords[index]!, 60, settings.voicing === 'open') : pitches, settings) };
+    const effectiveVoicing = voiced?.[index] ? [...voiced[index]] : undefined;
+    if (effectiveVoicing && settings.voicing === 'open' && effectiveVoicing.length === 3) {
+      effectiveVoicing[1] += 12; effectiveVoicing.sort((a,b) => a-b);
+    }
+    return { symbol: chord.symbol, pitches: expandedVoices(effectiveVoicing ?? (customChords?.[index]
+      ? chordPitches(customChords[index]!, 60, settings.voicing === 'open') : pitches), settings) };
   });
 
   const signedSeed = effectivePartSeed(seed, settings);

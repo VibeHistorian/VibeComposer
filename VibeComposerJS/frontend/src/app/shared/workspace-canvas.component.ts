@@ -22,6 +22,7 @@ import { EditWorkspaceComponent } from '../features/edit/edit-workspace.componen
 import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
 import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
+import { HarmonySettingsComponent } from './harmony-settings.component';
 import { PartScopeActionsComponent } from './part-scope-actions.component';
 import { CompactKnobComponent } from './compact-knob.component';
 import { CompactToggleComponent } from './compact-toggle.component';
@@ -53,7 +54,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',

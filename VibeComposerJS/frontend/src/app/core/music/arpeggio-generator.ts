@@ -8,6 +8,7 @@ import { partRhythmMask } from './rhythm-pattern';
 import { swingNotes } from './phrase-swing';
 import { ARPEGGIO_PATTERNS, arpeggioPattern, chordNote, closestMajorPitch, javaShuffle } from './arpeggio-pattern';
 import { melodyRhythm, type MelodyContext } from './melody-context';
+import { soundingHarmony, type GenerationHarmony } from './harmony-voicing';
 
 export interface ArpeggioNoteEvent {
   readonly midi: number;
@@ -20,7 +21,7 @@ export interface ArpeggioNoteEvent {
 /** Supported ArpPhraseGenerator path with explicit section melody context. */
 export function generateArpeggio(seed: bigint | number, key: string, scale: ScaleMode,
   progression: readonly number[], settings: ArpeggioSettings,
-  customChords?: readonly (ProgressionChord | null)[], melody?: MelodyContext): ArpeggioNoteEvent[] {
+  customChords?: readonly (ProgressionChord | null)[], melody?: MelodyContext, harmony?: GenerationHarmony): ArpeggioNoteEvent[] {
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) throw new RangeError('Use bigint for 64-bit seeds.');
   if (progression.length < 1 || progression.length > 32 || !ARPEGGIO_PATTERNS.includes(settings.pattern)
     || !['eighth', 'sixteenth'].includes(settings.rate) || ![1, 2].includes(settings.octaves)
@@ -51,11 +52,14 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
   const [minimum, maximum] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings), diatonic = getDiatonicChords(key, scale);
   const timeline: Array<{ midi: number; rhythm: number; duration: number; velocity: number; chordIndex: number }> = [];
+  const voiced = harmony?.soundingVoicings ? harmony.soundingVoicings.map(chord => chord.map(pitch => pitch - 12))
+    : harmony ? soundingHarmony(harmony.voicings, key, scale, -12) : undefined;
   progression.forEach((degree, chordIndex) => {
     const chord = diatonic.find(candidate => candidate.degree === degree);
     if (!chord) throw new RangeError(`Invalid chord degree ${degree}.`);
     const root = getPitchClass(chord.root)!;
-    const pitches = expandedVoices(Array.from({ length: settings.octaves }, (_, octave) => customChords?.[chordIndex]
+    const pitches = expandedVoices(Array.from({ length: settings.octaves }, (_, octave) => voiced?.[chordIndex]
+      ? voiced[chordIndex].map(pitch => pitch + octave * 12) : customChords?.[chordIndex]
       ? chordPitches(customChords[chordIndex]!, 48 + octave * 12)
       : [48 + root + octave * 12, 48 + root + (chord.quality === 'major' ? 4 : 3) + octave * 12,
         48 + root + (chord.quality === 'diminished' ? 6 : 7) + octave * 12]).flat(), settings);

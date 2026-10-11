@@ -59,7 +59,14 @@ const KEY_PITCHES: Readonly<Record<string, number>> = {
 };
 
 export function getPitchClass(noteName: string): number | undefined {
-  return KEY_PITCHES[noteName];
+  const known = KEY_PITCHES[noteName];
+  if (known !== undefined) return known;
+  // Diatonic spelling can produce E♯, C♭ or double accidentals in supported keys.
+  const match = /^([A-G])(♯*|♭*)$/.exec(noteName);
+  if (!match) return undefined;
+  const natural = NATURAL_PITCHES[NOTE_LETTERS.indexOf(match[1])];
+  const offset = match[2].startsWith('♯') ? match[2].length : -match[2].length;
+  return (natural + offset % 12 + 12) % 12;
 }
 
 const MAJOR = [

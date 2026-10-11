@@ -20,7 +20,6 @@ Preserve old parameter semantics, not old widget positions. The model/control re
 
 | Phase | Java lookup / exact symbols | Destination / remaining work |
 | --- | --- | --- |
-| P5e | `MelodyChordInference`, `SectionGenerationPlanner`, `ChordGenSettings.flattenVoicingChance` / `randomChordVoicingChance` | [Audit complete](__work_history/p5e-harmony-inference-audit.md); implementation open. Project harmony inspector: flatten voicing/large chords/progressive voicing with shared consumers. Section inspector: separate inferred harmony and Melody selection; preserve explicit section harmony. Infer from base skeleton rhythm values, independently of later onset maps/manual phrases. |
 | P5f | `Section.customChordsEnabled`, `customDurationsEnabled`, `customChords`, `customDurations`; `SectionConfig` | Section inspector: custom harmony/durations, swing, BPM, key/scale/key-change and beat duration, shared context and tempo-map/export support. |
 | P6g | [DrumGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/DrumGUI.java): `randomDrumVelocityPatternChance`, Dynamic/Ghosts, Overrandomize and melody-following creation | H/HI policies; Ghosts/MELODY1 musical consumers and drum blueprint pause baking/growth are already delivered. |
 | P6h | [BassGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/BassGUI.java), [ArpGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/ArpGUI.java): `createRandomBassPanels()`, `createRandomArpPanels()` | H/HI: Bass/Arpeggio GUI pause baking/growth, later-track Arp weighting/advanced directions. Audit remaining MELODY1 consumer dependencies, including Bass/Chords, before enabling creation choices. |
@@ -45,12 +44,14 @@ Do not port [LegacyMelodySkeletonGenerator](../midimasterpiece/src/main/java/org
 
 All three block target modes, tonal/chord targeting and avoid-note correction are delivered. New blocks defaults to **25%**; knobs/comboboxes reset to defaults on right-click. Keep these completed behaviors intact rather than reopening their historical checkpoint backlog.
 
+P5e block-skeleton inference, explicit section Use Melody harmony/Swap Melody and progression-wide voicing flattening are delivered at current fixed timing. Flatten voicing %, Flatten large chords and Progressive voicing live in the detailed global harmony inspector and affect shared musical consumers, independently of part voicing and track policies. Preserve explicit section harmony and manual-note ownership. See the [implementation record](__work_history/p5e-harmony-integration-record.md) for seeded evidence, source/short-progression/inversion rules and P5f/P11 boundaries.
+
 ## Harmony, arrangement, transport, and app-level controls
 
 | Old source/control family | Destination and references | Timing |
 | --- | --- | --- |
 | Primary chords, Custom Chords, Custom Durations | Transport Chordlets; `ChordGUI.userChords`, `userChordsEnabled`, `userDurationsEnabled`, `userChordsDurations` | Roots/spices/inversions and drag/remove/wheel menus implemented; custom durations and N/S/Dd shortcuts remain deferred |
-| Chord count/repeats/spice/first/last/formula | Harmony quick subset: `chordProgressionLength`, `allowChordRepeats`, `spiceChance`, `firstChordSelection`, `lastChordSelection`; I: `spiceAllowDimAug`, `spiceAllow9th13th`, `spiceFlattenBigChords`, `spiceParallelChance`, `spiceForceScale`, `chordSlashChance`, `useChordFormula`, `longProgressionSimilarity`, `squishChordsProgressively` | Detailed harmony buildout; policies choose harmony, not instrument track parameters |
+| Chord count/repeats/spice/first/last/formula | Harmony quick subset: `chordProgressionLength`, `allowChordRepeats`, `spiceChance`, `firstChordSelection`, `lastChordSelection`; I: `spiceAllowDimAug`, `spiceAllow9th13th`, `spiceParallelChance`, `spiceForceScale`, `chordSlashChance`, `useChordFormula`, `longProgressionSimilarity` | Remaining detailed harmony buildout; policies choose harmony, not instrument track parameters. Voicing flattening/large chords/progressive behavior is delivered. |
 | Copy generated chords | `ChordGUI.copyChordsAfterGenerate` | Deferred UI/export preference |
 | Global swing override, beat duration multiplier | `GenerationGUI.globalSwingOverride`, `globalSwingOverrideValue`, `globalSwingOverrideApplyButton`, `beatDurationMultiplier` | I global musical settings; optional quick project context later |
 | Randomize instruments/BPM/key on Compose | `GenerationGUI.randomizeInstOnComposeOrGen`, `randomizeBpmOnCompose`, `randomizeTransposeOnCompose`, `switchOnComposeRandom` | Project policy inspector; compact master action, not every role header |

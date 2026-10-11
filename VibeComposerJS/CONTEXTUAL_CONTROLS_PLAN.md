@@ -4,16 +4,15 @@ Active backlog as of 2026-10-11. Completed checkpoints, Java comparison evidence
 
 ## Remaining order
 
-1. **P5e:** Implement audited block-Melody inference / alternate progression integration and shared voicing flattening. The consumer audit, target modes, tonal/chord targeting and avoid-notes are complete.
-2. **P5f:** Section harmony (with chordlets) and timing, with matching generation, playback and MIDI context.
-3. **P6g / P6h:** Remaining creation branches and policies after their musical consumers exist.
-4. **P7c:** Final workspace acceptance after those changes.
-5. **P8:** Remaining global/app/playback/device/export preferences.
-6. **P9 / P10 / P11:** Custom Melody durations, drum-driven rhythm accents, and imported melody respectively.
+1. **P5f:** Section harmony (with chordlets) and timing, with matching generation, playback and MIDI context.
+2. **P6g / P6h:** Remaining creation branches and policies after their musical consumers exist.
+3. **P7c:** Final workspace acceptance after those changes.
+4. **P8:** Remaining global/app/playback/device/export preferences.
+5. **P9 / P10 / P11:** Custom Melody durations, drum-driven rhythm accents, and imported melody respectively.
 
 ## Completed entry gates
 
-P1b (current block Melody), P4f (single-pitch drum tracks) and P4g (applicable shared musical consumers) are delivered. P5a–P5d, P5e target modes, P6a–P6f and P7a/P7b are also delivered in their supported scope. Their advanced exclusions are represented below and in the [remaining placement inventory](CONTROL_PLACEMENT_MAP.md); historical checkpoint text is not an additional backlog.
+P1b (current block Melody), P4f (single-pitch drum tracks) and P4g (applicable shared musical consumers) are delivered. P5a–P5e, P6a–P6f and P7a/P7b are also delivered in their supported scope. P5e includes explicit section inferred-harmony/Melody selection and shared voicing flattening at current fixed timing; its [implementation evidence](__work_history/p5e-harmony-integration-record.md) documents parity boundaries and deliberate recoveries. Advanced exclusions are represented below and in the [remaining placement inventory](CONTROL_PLACEMENT_MAP.md); historical checkpoint text is not an additional backlog.
 
 The legacy melody skeleton and its exclusive controls remain excluded. Current implementation rules live in [TRANSLATION_RULES.md](TRANSLATION_RULES.md); workspace layout contracts live in [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md).
 
@@ -98,15 +97,9 @@ Knobs and native comboboxes reset to their default value on right-click through 
 
 ### P5 — Remaining musical integration
 
-#### P5e — Audited Melody harmony integration
-
-The [production consumer audit](__work_history/p5e-harmony-inference-audit.md) is complete. Remaining implementation: publish a separate pre-expansion block skeleton map, infer interior alternate chords from the first base Melody, add shared progression voicing flattening and distinct section harmony/Melody selection. Detailed harmony controls belong at project scope; selection belongs in the section inspector. Keep explicit section harmony ahead of inferred choices and keep manual replacements separate from imported-source inference. Share root/voicing context with P5f without coupling the initial equal-duration implementation to variable timing.
-
-Preserve manual-note ownership and independent sparse overrides; validate production inference/flattening fixtures and complete alternate-section phrases, history, JSON/session restoration and common playback/MIDI output before exposing controls. Existing seeded-phrase and ownership tests establish the baseline, not inference parity. Imported-source inference belongs with P11. Exact source/tie ordering, short-progression recovery, voicing draw order and remaining acceptance cases are recorded in the audit.
-
 #### P5f — Remaining section harmony and timing
 
-Remaining: section custom chords/durations and SectionConfig swing, BPM, key/scale/key-change and beat-duration behavior. Existing section degree progressions and global root/spice/inversion Chordlets cover only part of this scope. Add typed shared section generation context, variable chord durations and matching scheduling/export behavior. Expose section tempo changes only when playback and MIDI tempo events agree. Validate section boundaries, scoped inheritance, history, persistence and all affected role consumers.
+Remaining: section custom chords/durations and SectionConfig swing, BPM, key/scale/key-change and beat-duration behavior. Existing section degree progressions and global root/spice/inversion Chordlets cover only part of this scope. Extend P5e's typed shared root/voicing context and explicit harmony precedence with variable chord durations and matching scheduling/export behavior. Keep the base inference skeleton distinct from section Melody onset dependencies. Expose section tempo changes only when playback and MIDI tempo events agree. Validate section boundaries, scoped inheritance, history, persistence and all affected role consumers.
 
 ### P6 — Remaining track-generation policies
 

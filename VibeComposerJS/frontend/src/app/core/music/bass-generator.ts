@@ -6,6 +6,7 @@ import { decodePartPatch, velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
 import { effectivePartSeed, spannedPattern, spannedVelocities } from './part-processing';
 import { BASS_RHYTHMS } from './rhythm-patterns';
+import { soundingHarmony, type GenerationHarmony } from './harmony-voicing';
 
 export interface BassNoteEvent {
   readonly midi: number;
@@ -32,6 +33,7 @@ export function generateBassline(
   noteVariation: number,
   settings: Partial<BassSettings> = {},
   customChords?: readonly (ProgressionChord | null)[],
+  harmony?: GenerationHarmony,
 ): BassNoteEvent[] {
   if (progression.length < 1 || progression.length > 32
       || !Number.isInteger(noteVariation) || noteVariation < 0 || noteVariation > 100
@@ -41,6 +43,8 @@ export function generateBassline(
 
   if (settings.generationEnabled === false) return [];
   const chords = getDiatonicChords(key, scale);
+  const harmonicRoots = harmony?.soundingRoots ? harmony.soundingRoots.map(chord => chord.map(pitch => pitch - 24))
+    : harmony ? soundingHarmony(harmony.roots, key, scale, -24) : undefined;
   const triads = progression.map((degree, index) => {
     const chord = chords.find((candidate) => candidate.degree === degree);
     if (!chord) {
@@ -53,7 +57,7 @@ export function generateBassline(
     const third = chord.quality === 'major' ? 4 : 3;
     const fifth = chord.quality === 'diminished' ? 6 : 7;
     const midiRoot = 36 + root;
-    return customChords?.[index] ? chordPitches({ ...customChords[index]!, inversion: 0 }, 36)
+    return harmonicRoots?.[index] ? [...harmonicRoots[index]] : customChords?.[index] ? chordPitches({ ...customChords[index]!, inversion: 0 }, 36)
       : [midiRoot, midiRoot + third, midiRoot + fifth];
   });
 

@@ -442,7 +442,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     if (!port) throw new Error('Chromium debugging port unavailable: ' + errors);
     let target;
     for (let i = 0; !target && i < 100; i++) {
-      target = (await (await fetch('http://127.0.0.1:' + port + '/json/list')).json()).find(item => item.type === 'page');
+      target = (await (await fetch('http://127.0.0.1:' + port + '/json/list', { signal: AbortSignal.timeout(5000) })).json()).find(item => item.type === 'page');
       if (!target) await new Promise(done => setTimeout(done, 50));
     }
     socket = new WebSocket(target.webSocketDebuggerUrl);
@@ -502,6 +502,55 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     await command('Runtime.evaluate', { expression: `document.querySelector('#part-inspector').scrollIntoView({ block: 'start' })` });
     const arpScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-arp-' + width + '.png'), Buffer.from(arpScreenshot.data, 'base64'));
+    const harmonyResult = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
+      const wait = async (read, label) => { for (let i = 0; i < 200; i++) { const value = read(); if (value) return value; await new Promise(r => setTimeout(r,20)); } throw new Error(label); };
+      const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+      const change = (element,value) => { element.value=value; element.dispatchEvent(new Event('change',{bubbles:true})); };
+      const harmony = document.querySelector('vc-harmony-settings');
+      harmony.querySelector('details').open=true;
+      change(harmony.querySelector('[aria-label="Flatten voicing"]'),'37');
+      await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten commit');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().harmonySettings?.flattenVoicingChance !== 37,'flatten undo');
+      (await wait(() => { const button=document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'flatten redo enabled')).click();
+      await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten redo');
+      await wait(() => harmony.querySelector('[aria-label="Flatten voicing"]').value === '37','flatten redo rendered');
+      harmony.querySelector('[aria-label="Flatten voicing"]').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
+      await wait(() => read().harmonySettings?.flattenVoicingChance === 100,'flatten reset');
+      harmony.querySelector('[aria-label="Flatten large chords"]').click();
+      harmony.querySelector('[aria-label="Progressive voicing"]').click();
+      await wait(() => read().harmonySettings?.flattenLargeChords && read().harmonySettings?.progressiveVoicing,'global voicing toggles');
+      const canvas = document.querySelector('.arrangement-panel canvas[tabindex]');
+      canvas.focus();
+      // Walk real focus targets until a section header is reached.
+      for (let i=0;i<300;i++) {
+        canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+        await new Promise(r => requestAnimationFrame(r));
+        const label = canvas.getAttribute('aria-label');
+        if (!label.startsWith('Select ') && label.includes(', bars ')) break;
+      }
+      canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+      const use = await wait(() => document.querySelector('[aria-label="Use Melody harmony"]'),'section harmony control');
+      use.click(); await wait(() => read().arrangement.some(section => section.useMelodyHarmony),'section harmony commit');
+      document.querySelector('[aria-label="Swap Melody"]').click();
+      await wait(() => read().arrangement.some(section => section.swapMelody),'swap melody commit');
+      const first = read().arrangement.find(section => section.useMelodyHarmony);
+      const unchanged = JSON.stringify(read().arrangement.filter(section => section.id !== first.id));
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => !read().arrangement.find(section => section.id === first.id).swapMelody,'swap undo');
+      (await wait(() => { const button=document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'swap redo enabled')).click();
+      await wait(() => read().arrangement.find(section => section.id === first.id).swapMelody,'swap redo');
+      const editor = document.querySelector('vc-harmony-settings'); editor.querySelector('details').open=true;
+      editor.scrollIntoView({block:'center'});
+      const section = read().arrangement.find(section => section.id === first.id);
+      return { section: section.useMelodyHarmony && section.swapMelody, global: read().harmonySettings.flattenVoicingChance===100,
+        source: editor.textContent.includes('generated base Melody'), independent: unchanged===JSON.stringify(read().arrangement.filter(section => section.id !== first.id)),
+        fits: editor.getBoundingClientRect().right <= innerWidth && editor.getBoundingClientRect().left >= 0 };
+    })()` });
+    assert.equal(harmonyResult.exceptionDetails, undefined, JSON.stringify(harmonyResult));
+    for (const [key,value] of Object.entries(harmonyResult.result.value)) assert.equal(value,true,'harmony '+key);
+    const harmonyScreenshot = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-harmony-' + width + '.png'), Buffer.from(harmonyScreenshot.data, 'base64'));
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
@@ -511,7 +560,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();
-    await new Promise(done => child.exitCode !== null ? done() : child.once('exit', done));
+    await new Promise(done => child.exitCode !== null || child.signalCode !== null ? done() : child.once('exit', done));
     await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
   }
 });

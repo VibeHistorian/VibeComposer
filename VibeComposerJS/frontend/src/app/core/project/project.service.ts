@@ -22,6 +22,7 @@ import { ARPEGGIO_PATTERNS } from '../music/arpeggio-pattern';
 import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multiplier';
 import { chooseMelodyTargets, forceMelodyOutline } from '../music/melody-targets';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
+import { decodeHarmonySettings, DEFAULT_HARMONY_SETTINGS, type HarmonySettings } from '../music/harmony-voicing';
 import type { MelodyGlobalSettings } from './project.model';
 import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
@@ -63,6 +64,26 @@ export class ProjectService {
     if (Object.entries(decoded).every(([key, value]) =>
       partValuesEqual(current.melodyGlobal?.[key as keyof MelodyGlobalSettings], value))) return 'unchanged';
     this.commit({ ...current, melodyGlobal });
+    return 'changed';
+  }
+
+  updateHarmonySettings(patch: HarmonySettings): PartWorkflowResult {
+    const decoded = decodeHarmonySettings(patch);
+    if (!decoded) return 'invalid';
+    const current = this.state();
+    const previous = { ...DEFAULT_HARMONY_SETTINGS, ...current.harmonySettings };
+    if (Object.entries(decoded).every(([key,value]) => previous[key as keyof HarmonySettings] === value)) return 'unchanged';
+    this.commit({ ...current, harmonySettings: { ...current.harmonySettings, ...decoded } }, this.controlHistoryKey(['harmony'], decoded));
+    return 'changed';
+  }
+
+  updateSectionHarmony(sectionId: string, patch: Pick<ArrangementSection, 'useMelodyHarmony' | 'swapMelody'>): PartWorkflowResult {
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)
+      || Object.entries(patch).some(([key,value]) => !['useMelodyHarmony','swapMelody'].includes(key) || typeof value !== 'boolean')) return 'invalid';
+    const current = this.state(), section = current.arrangement.find(section => section.id === sectionId);
+    if (!section) return 'invalid';
+    if (Object.entries(patch).every(([key,value]) => (section[key as 'useMelodyHarmony' | 'swapMelody'] ?? false) === value)) return 'unchanged';
+    this.commit({ ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? { ...item, ...patch } : item) });
     return 'changed';
   }
 
@@ -1075,7 +1096,8 @@ export class ProjectService {
       && validProgressionChords(project.progressionChords, project.progression.length);
     if (!validBase || !validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
       || !validInstrumentPolicies(project.instrumentGenerationPolicies)
-      || (project.melodyGlobal !== undefined && !decodeMelodyGlobal(project.melodyGlobal))) {
+      || (project.melodyGlobal !== undefined && !decodeMelodyGlobal(project.melodyGlobal))
+      || (project.harmonySettings !== undefined && !decodeHarmonySettings(project.harmonySettings))) {
       return undefined;
     }
 
@@ -1104,6 +1126,7 @@ export class ProjectService {
       progression: [...project.progression!],
       ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
       melody,
+      ...(project.harmonySettings !== undefined ? { harmonySettings: decodeHarmonySettings(project.harmonySettings)! } : {}),
       ...(project.melodyGlobal !== undefined ? { melodyGlobal: decodeMelodyGlobal(project.melodyGlobal)! } : {}),
       bass,
       chords,
@@ -1287,6 +1310,8 @@ export class ProjectService {
       const trackPartChances = section.trackPartChances;
       const trackPresence = section.trackPresence as Record<string, unknown> | undefined;
       const chordDegrees = section.chordDegrees;
+      if ((section.useMelodyHarmony !== undefined && typeof section.useMelodyHarmony !== 'boolean')
+        || (section.swapMelody !== undefined && typeof section.swapMelody !== 'boolean')) return undefined;
       if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
           || !SECTION_TYPES.includes(sectionType)
           || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
@@ -1351,6 +1376,8 @@ export class ProjectService {
         type: sectionType,
         measures: section.measures!,
         chordDegrees: chordDegrees === undefined ? undefined : [...chordDegrees],
+        ...(section.useMelodyHarmony !== undefined ? { useMelodyHarmony: section.useMelodyHarmony } : {}),
+        ...(section.swapMelody !== undefined ? { swapMelody: section.swapMelody } : {}),
         trackPresence: presence,
         rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,
         trackPartOverrides,
@@ -1489,7 +1516,9 @@ export class ProjectService {
       && this.decodeEditedPhrases(project.editedPhrases) !== undefined
       && this.decodeMix(project.mix) !== undefined
       && validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
-      && validInstrumentPolicies(project.instrumentGenerationPolicies);
+      && validInstrumentPolicies(project.instrumentGenerationPolicies)
+      && (project.harmonySettings === undefined || decodeHarmonySettings(project.harmonySettings) !== undefined)
+      && (project.melodyGlobal === undefined || decodeMelodyGlobal(project.melodyGlobal) !== undefined);
   }
 
   private persist(project: CompositionProject): void {

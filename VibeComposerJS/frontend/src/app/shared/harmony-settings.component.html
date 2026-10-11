@@ -1,0 +1,37 @@
+<section aria-label="Harmony settings">
+  @if (section(); as current) {
+    <fieldset data-control-category="pitch">
+      <legend>Section harmony</legend>
+      <vc-compact-toggle label="Use Melody harmony" [active]="current.useMelodyHarmony ?? false"
+        [disabled]="!!current.chordDegrees || !inference().available && !current.useMelodyHarmony"
+        description="Use the first Melody track's inferred progression for generated pitched parts in this section. Explicit section chords take precedence."
+        (toggled)="projects.updateSectionHarmony(current.id, { useMelodyHarmony: !current.useMelodyHarmony })" />
+      <vc-compact-toggle label="Swap Melody" [active]="current.swapMelody ?? false"
+        [disabled]="!!current.chordDegrees || !inference().available && !current.swapMelody"
+        description="Generate Melody with the inferred progression and a seed offset of 100. Other parts retain their harmony unless Use Melody harmony is enabled."
+        (toggled)="projects.updateSectionHarmony(current.id, { swapMelody: !current.swapMelody })" />
+      @if (current.chordDegrees) { <p>Explicit section chords take precedence over inferred harmony.</p> }
+    </fieldset>
+  }
+  <details>
+    <summary>Global harmony · all tracks and sections</summary>
+    <div class="harmony-controls" data-control-category="pitch">
+      <vc-compact-knob label="Flatten voicing" [value]="values().flattenVoicingChance" [defaultValue]="100" [minimum]="0" [maximum]="100" unit="%"
+        description="Chance to move outer chord tones toward the progression's average pitch. Uses the project seed; explicit nonzero inversions are preserved. Bass roots stay independent."
+        (valueCommit)="projects.updateHarmonySettings({ flattenVoicingChance: $event })" />
+      <vc-compact-toggle label="Flatten large chords" [active]="values().flattenLargeChords"
+        description="Also flatten chords with more than three tones."
+        (toggled)="projects.updateHarmonySettings({ flattenLargeChords: !values().flattenLargeChords })" />
+      <vc-compact-toggle label="Progressive voicing" [active]="values().progressiveVoicing"
+        description="Voice global and explicit section progressions toward the processed prefix. Inferred progressions use the ordinary whole-progression average."
+        (toggled)="projects.updateHarmonySettings({ progressiveVoicing: !values().progressiveVoicing })" />
+    </div>
+  </details>
+  <div class="inference-status" role="status">
+    @if (inference().available) {
+      <p>Inferred from {{ source()?.name }} · generated base Melody{{ inference().manualSource ? ' (manual notes remain active)' : '' }}</p>
+      <p>{{ alternateNames() }}</p>
+      @if (inference().harmony.degrees.length <= 2) { <p>Short progressions retain their original chords.</p> }
+    } @else { <p>Inferred harmony unavailable. Add a Melody track and enable Generate notes on its global part settings.</p> }
+  </div>
+</section>

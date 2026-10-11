@@ -1,6 +1,6 @@
 # P5e: block Melody harmony inference audit
 
-Audit completed 2026-10-11 against current production Java and TypeScript sources. **Alternate progression generation, selection and shared voicing flattening are not implemented in TypeScript.** This record completes the requested consumer/integration audit, not acceptance of those missing musical behaviors. No new controls or runtime changes were introduced.
+Audit completed 2026-10-11 against current production Java and TypeScript sources. At this checkpoint alternate progression generation, selection and shared voicing flattening were not implemented in TypeScript. The following proposal and baseline are historical audit evidence; the subsequent [P5e implementation record](p5e-harmony-integration-record.md) documents their delivered behavior and validation.
 
 ## Production source and execution order
 
