@@ -1,4 +1,4 @@
-import { validVolumePercent } from '../audio/mix-values';
+import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { inject, Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
@@ -642,6 +642,7 @@ export class ProjectService {
       || patch.mix?.program !== undefined)) return;
     tracks[index] = { ...track, ...patch, name: patch.name?.trim() ?? track.name,
       mix: patch.mix ? { ...track.mix, ...patch.mix,
+        ...(patch.mix.volumePercent !== undefined ? { volumePercent: normalizeVolumePercent(patch.mix.volumePercent) } : {}),
         ...(patch.mix.solo === true ? { muted: false } : patch.mix.muted === true ? { solo: false } : {}) } : track.mix };
     if (patch.mix?.program !== undefined && patch.mix.program !== track.mix.program) {
       delete (tracks[index] as { instrumentPool?: string }).instrumentPool;
@@ -1088,7 +1089,7 @@ export class ProjectService {
         return undefined;
       }
       decoded[part] = {
-        program: settings.program!, volumePercent: settings.volumePercent!, panPercent: settings.panPercent!,
+        program: settings.program!, volumePercent: normalizeVolumePercent(settings.volumePercent!), panPercent: settings.panPercent!,
         muted: settings.muted, solo: settings.solo,
       };
     }
@@ -1158,7 +1159,7 @@ export class ProjectService {
         || !validVolumePercent(settings.volumePercent)
         || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
         || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') return undefined;
-    return { program: settings.program!, volumePercent: settings.volumePercent!, panPercent: settings.panPercent!, muted: settings.muted, solo: settings.solo };
+    return { program: settings.program!, volumePercent: normalizeVolumePercent(settings.volumePercent!), panPercent: settings.panPercent!, muted: settings.muted, solo: settings.solo };
   }
 
   private decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart, PhraseNote[]>> | undefined {

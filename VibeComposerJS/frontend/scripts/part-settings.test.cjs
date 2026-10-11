@@ -3168,6 +3168,43 @@ test('track gain supports +6 dB, fractional attenuation, history and project rou
   }
 });
 
+test('volume rounds displayed zero to unity and scrolls by exact 1% or 10% steps', () => {
+  const { load, service } = fixture();
+  const { MAX_VOLUME_PERCENT, normalizeVolumePercent, volumeDecibels } = load('core/audio/mix-values.ts');
+  const { CompactKnobComponent } = load('shared/compact-knob.component.ts');
+  const knob = new CompactKnobComponent();
+  knob.mini.set(true); knob.minimum.set(0); knob.maximum.set(MAX_VOLUME_PERCENT);
+  knob.step.set(0.1); knob.valueFormat.set('decibels');
+  const commits = [], previews = [];
+  knob.valueCommit.emit = value => commits.push(value);
+  knob.valuePreview.emit = value => previews.push(value);
+  for (const value of [99.5, 100, 100.5]) {
+    assert.equal(normalizeVolumePercent(value), 100);
+    assert.equal(volumeDecibels(value), '-0.0');
+    knob.value.set(value);
+    assert.equal(knob.shownValue(), 100);
+    assert.match(knob.mixAccent(), / 0%,/);
+    knob.previewValue({ target: { value: String(value) } });
+    assert.equal(previews.at(-1), 100);
+    knob.commitValue({ target: { value: String(value) } });
+    assert.equal(commits.at(-1), 100);
+    service.updateTrack('track-bass-1', { mix: { volumePercent: value } });
+    assert.equal(service.project().mix.bass.volumePercent, 100);
+  }
+  assert.equal(volumeDecibels(99.4), '-0.1');
+  assert.equal(volumeDecibels(100.6), '+0.1');
+  const wheel = (deltaY, shiftKey = false) => ({ deltaY, shiftKey, preventDefault() {}, stopPropagation() {} });
+  for (const start of [50, 100, 150]) {
+    knob.value.set(start);
+    for (const shift of [false, true]) for (const direction of [-1, 1]) {
+      knob.onWheel(wheel(-direction, shift));
+      assert.equal(commits.at(-1), start + direction * (shift ? 1 : 10));
+    }
+  }
+  knob.value.set(195); knob.onWheel(wheel(-1)); assert.equal(commits.at(-1), MAX_VOLUME_PERCENT);
+  knob.value.set(5); knob.onWheel(wheel(1)); assert.equal(commits.at(-1), 0);
+});
+
 test('mixer accents mute at defaults, jump for tiny edits, reach both endpoints and invert only boosts', () => {
   const { load } = fixture();
   const { MAX_VOLUME_PERCENT } = load('core/audio/mix-values.ts');

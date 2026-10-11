@@ -152,13 +152,24 @@ test('production Angular controls initialize selects from settings and support r
           input.value = String(value); input.dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => input.closest('.compact-knob').querySelector('output').textContent.trim()
             === (input === pan ? value === 0 ? 'C' : '100% ' + (value < 0 ? 'L' : 'R')
-              : value === 100 ? '-0.0' : value === 98.9 ? '-0.1' : value === 0 ? '-Inf' : '+6.0'));
+              : [99.5, 100, 100.5].includes(value) ? '-0.0' : value === 98.9 ? '-0.1' : value === 0 ? '-Inf' : '+6.0'));
           // Border colors animate for 120ms after Angular applies the new value.
           await new Promise(resolve => setTimeout(resolve, 180));
         };
         const muted = rgb(getComputedStyle(track).getPropertyValue('--text-muted'));
         const accent = rgb(getComputedStyle(track).getPropertyValue('--accent-primary'));
         result.mixDefaultsMuted = [pan, volume].every(input => JSON.stringify(color(input)) === JSON.stringify(muted));
+        result.roundedUnityMuted = true;
+        for (const value of [99.5, 100.5]) {
+          await setMix(volume, value);
+          result.roundedUnityMuted &&= JSON.stringify(color(volume)) === JSON.stringify(muted)
+            && JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).mix.chords.volumePercent === 100;
+        }
+        wheel(volume, -100, true); await waitFor(() => volume.value === '101');
+        wheel(volume, 100, true); await waitFor(() => volume.value === '100');
+        wheel(volume, -100); await waitFor(() => volume.value === '110');
+        wheel(volume, 100); await waitFor(() => volume.value === '100');
+        result.volumeScrollSteps = true;
         await setMix(volume, 98.9);
         result.tinyGainVisible = color(volume).some((channel, index) => Math.abs(channel - muted[index]) > 10);
         await setMix(volume, 0);
@@ -648,6 +659,8 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.wheelRhythm, ['full', 'full']);
     assert.equal(actual.volumeBeforeRelease, 100);
     assert.equal(actual.mixDefaultsMuted, true);
+    assert.equal(actual.roundedUnityMuted, true);
+    assert.equal(actual.volumeScrollSteps, true);
     assert.equal(actual.tinyGainVisible, true);
     assert.equal(actual.panEndpointsAccent, true);
     assert.deepEqual(actual.attenuationAccent, actual.configuredAccent);

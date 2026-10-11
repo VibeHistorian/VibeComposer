@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
-import { panLabel, volumeDecibels } from '../core/audio/mix-values';
+import { normalizeVolumePercent, panLabel, volumeDecibels } from '../core/audio/mix-values';
 
 @Component({
   selector: 'vc-compact-knob',
@@ -32,7 +32,7 @@ export class CompactKnobComponent {
   readonly valueCommit = output<number>();
   readonly valuePreview = output<number>();
   readonly preview = signal<number | null>(null);
-  readonly shownValue = computed(() => this.preview() ?? this.value());
+  readonly shownValue = computed(() => this.normalize(this.preview() ?? this.value()));
   readonly formattedValue = computed(() => this.valueFormat() === 'pan' ? panLabel(this.shownValue())
     : this.valueFormat() === 'decibels' ? volumeDecibels(this.shownValue()) : this.shownValue() + this.unit());
   readonly accessibleValue = computed(() => this.formattedValue() + (this.valueFormat() === 'decibels' ? ' dB' : ''));
@@ -86,25 +86,32 @@ export class CompactKnobComponent {
     this.valuePreview.emit(value);
   }
 
+  private normalize(value: number): number {
+    return this.valueFormat() === 'decibels' ? normalizeVolumePercent(value) : value;
+  }
+
   private snap(value: number): number {
     if (this.allowedValues().length) return this.allowedValues().reduce((closest, candidate) =>
       Math.abs(candidate - value) < Math.abs(closest - value) ? candidate : closest);
-    return Math.max(this.minimum(), Math.min(this.maximum(),
-      this.minimum() + Math.round((value - this.minimum()) / this.step()) * this.step()));
+    return this.normalize(Math.max(this.minimum(), Math.min(this.maximum(),
+      this.minimum() + Math.round((value - this.minimum()) / this.step()) * this.step())));
   }
 
   private fromSlider(value: number): number {
-    return this.allowedValues().length ? this.allowedValues()[value] ?? this.value() : value;
+    return this.allowedValues().length ? this.allowedValues()[value] ?? this.value() : this.normalize(value);
   }
 
   onWheel(event: WheelEvent): void {
     if (this.disabled() || event.ctrlKey || event.metaKey || event.deltaY === 0 || this.drag) return;
     event.preventDefault(); event.stopPropagation();
-    const increment = event.shiftKey ? this.step() : Math.max(this.step(), Math.floor((this.maximum() - this.minimum()) / 20 / this.step()) * this.step());
+    const increment = this.valueFormat() === 'decibels' ? event.shiftKey ? 1 : 10
+      : event.shiftKey ? this.step() : Math.max(this.step(), Math.floor((this.maximum() - this.minimum()) / 20 / this.step()) * this.step());
     const direction = event.deltaY < 0 ? 1 : -1;
     const allowed = this.allowedValues();
     const value = allowed.length ? allowed[Math.max(0, Math.min(allowed.length - 1,
-      allowed.indexOf(this.snap(this.value())) + direction))] : this.snap(this.value() + direction * increment);
+      allowed.indexOf(this.snap(this.value())) + direction))] : this.valueFormat() === 'decibels'
+      ? this.normalize(Math.max(this.minimum(), Math.min(this.maximum(), this.shownValue() + direction * increment)))
+      : this.snap(this.value() + direction * increment);
     if (value !== this.value()) this.valueCommit.emit(value);
   }
 
