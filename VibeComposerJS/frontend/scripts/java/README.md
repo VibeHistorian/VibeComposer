@@ -194,3 +194,14 @@ The root-only tonic-relative mode-2 context remains bounded; chord percentages, 
 ./scripts/java/generate-melody-extended-fixtures.ps1 -Tonal
 node --test --test-name-pattern='tonal' scripts/part-settings.test.cjs
 ```
+
+P5e's chord/avoid checkpoint adds `MelodyExtendedFixture harmony` / `../fixtures/melody-harmony.java.json`: **2,304 complete production phrases**, twelve chord-target/avoid-level combinations × four exact long seeds × 48 part cases. Chord percentages 0/25/70/100 cross avoid levels 0/1/2, with combined tonic/mode targets in the last three combinations. The matrix includes diatonic progressions, chromatic Chordlets, all spice families/inversions −5–5, both modes, offset zero/100, explicit seeds, negative-first identities, all pattern effects, emphasis, New blocks 25/100, pauses/per-chord filling, transpose, swing and length. Current `MelodyExpansion` and `MelodyNoteUtils` are compiled ahead of target classes. Split long/Lead chords remain disabled because of the documented Java empty candidate failure; earlier fixtures stay tested.
+
+The app stores sounding-root Chordlets. The fixture supplies matching pre-key/scale-conversion chord voicings to the production phrase builder: default progressions use C-major diatonic voicings; custom voicings use production `getNormalMappedChord` and inverse Aeolian→Ionian conversion with chromatic outliers retained. Exact pitch/velocity and timing within 1e-10 match. This verifies the correction consumers with the translated harmony boundary, not full Java song preparation, section variations, inference or other target modes. Target mode remains tonic-relative 2 and custom durations are disabled.
+
+Production quirks remain literal: chord targeting computes sorted copies but visits original notes; nearest pitch uses ordinary within-octave distance and first voicing entry for ties; first-note restoration can undo a correction. Avoid notes exclude tonic/fifth/chord tones in repair coordinates, include all durations, use an independent base-pattern-seed stream without notes offset, and perform a single scale step (including chromatic index −1 behavior). Final scale conversion and pauses remain afterward. Both percentages and avoidance are best effort. Functional tests cover Chordlet edits, local degree ownership and dependency contexts, enharmonic roots, manual masking, history/session/JSON, strict validation and MIDI. Browser checks cover independent controls, levels 1/2 and right-click defaults at all three widths.
+
+```powershell
+./scripts/java/generate-melody-extended-fixtures.ps1 -Harmony
+node --test --test-name-pattern='P5e chord|complete production Java harmony' scripts/part-settings.test.cjs
+```

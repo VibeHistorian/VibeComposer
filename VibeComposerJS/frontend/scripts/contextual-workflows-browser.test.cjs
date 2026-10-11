@@ -302,6 +302,26 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => read().melodyGlobal?.emphasizeKey === undefined, 'key emphasis undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'emphasis redo enabled')).click();
       await wait(() => read().melodyGlobal?.emphasizeKey === true, 'key emphasis redo');
+      const chordTargetTracks = JSON.stringify(read().tracks);
+      const chordTargetControl = globals.querySelector('[aria-label="Chord note target"]');
+      const avoidControl = globals.querySelector('[aria-label="Replace avoid notes"]');
+      await wait(() => chordTargetControl.value === '0' && avoidControl.value === '0', 'chord repair defaults');
+      change(chordTargetControl, '70');
+      await wait(() => read().melodyGlobal?.chordNoteTarget === 70, 'chord target commit');
+      for (const level of [1, 2]) {
+        change(avoidControl, String(level));
+        await wait(() => read().melodyGlobal?.replaceAvoidNotes === level, 'avoid level commit');
+        await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      }
+      reset(chordTargetControl);
+      await wait(() => read().melodyGlobal?.chordNoteTarget === 0 && read().melodyGlobal?.replaceAvoidNotes === 2, 'chord reset isolation');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.chordNoteTarget === 70, 'chord target undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'chord redo enabled')).click();
+      await wait(() => read().melodyGlobal?.chordNoteTarget === 0, 'chord target redo');
+      reset(avoidControl);
+      await wait(() => read().melodyGlobal?.replaceAvoidNotes === 0, 'avoid default reset');
+      result.chordRepairs = JSON.stringify(read().tracks) === chordTargetTracks;
       const tonalTracks = JSON.stringify(read().tracks);
       const tonicControl = globals.querySelector('[aria-label="Tonic note target"]');
       const modeControl = globals.querySelector('[aria-label="Mode note target"]');
@@ -468,7 +488,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','tonalTargets','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

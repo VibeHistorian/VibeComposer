@@ -13,7 +13,7 @@ import { melodyContext, type MelodyContext } from './melody-context';
 export function generatePhrase(project: CompositionProject, part: ArrangedPart, context?: MelodyContext): PhraseNote[] {
   const seed = BigInt(project.seed);
   switch (part) {
-    case 'melody': return generateMelody(seed, project.key, project.scale, project.progression, project.melody, 0, undefined, project.melodyGlobal);
+    case 'melody': return generateMelody(seed, project.key, project.scale, project.progression, project.melody, 0, undefined, project.melodyGlobal, project.progressionChords);
     case 'bass':
       return generateBassline(seed, project.key, project.scale, project.progression,
         project.bass.rhythm, project.bass.noteVariation, project.bass, project.progressionChords)
@@ -190,7 +190,8 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   let result = melodyContext([], progression.length);
   const seeded = withTrackSeed(project, source);
   generateMelody(BigInt(seeded.seed), project.key, project.scale, progression, effective.generatorSettings, 0,
-    notes => { result = melodyContext(notes, progression.length, project.melodyGlobal?.patternFlip); }, project.melodyGlobal);
+    notes => { result = melodyContext(notes, progression.length, project.melodyGlobal?.patternFlip); }, project.melodyGlobal,
+    section?.chordDegrees ? undefined : project.progressionChords);
   return result;
 }
 

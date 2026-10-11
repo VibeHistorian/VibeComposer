@@ -20,9 +20,11 @@ export function validProgressionChords(value: unknown, count: number): value is 
 export function progressionChords(key: string, scale: ScaleMode, degrees: readonly number[],
   custom?: readonly (ProgressionChord | null)[]): ProgressionChord[] {
   const diatonic = getDiatonicChords(key, scale);
+  const offsets = scale === 'major' ? MAJOR : NATURAL_MINOR;
   return degrees.map((degree, index) => custom?.[index] ?? (() => {
     const chord = diatonic.find(chord => chord.degree === degree)!;
-    return { root: getPitchClass(chord.root)!, spice: chord.quality === 'minor' ? 'm' : chord.quality === 'diminished' ? 'dim' : '', inversion: 0 };
+    return { root: (getPitchClass(key)! + offsets[degree - 1].offset) % 12,
+      spice: chord.quality === 'minor' ? 'm' : chord.quality === 'diminished' ? 'dim' : '', inversion: 0 };
   })());
 }
 

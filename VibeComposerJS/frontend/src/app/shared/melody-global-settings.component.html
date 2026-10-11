@@ -24,6 +24,12 @@
     </fieldset>
     <fieldset class="parameter-area" data-control-category="pitch">
       <legend>Pitch</legend>
+      <vc-compact-knob label="Chord note target" [defaultValue]="0" [value]="values().chordNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
+        description="Requested chord-tone share before pauses. Correct notes in phrase order with a limited budget per chord, using the effective progression and Chordlets. Best effort; chord starts are restored later."
+        (valueCommit)="settingsChanged.emit({ chordNoteTarget: $event })" />
+      <vc-compact-knob label="Replace avoid notes" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
+        description="0: Off. 1: Correct notes a semitone above chord tones. 2: Also correct notes a semitone below or two semitones above. Tonic, fifth and chord tones stay safe. Move one seeded scale step after interval repair, before pauses."
+        (valueCommit)="settingsChanged.emit({ replaceAvoidNotes: $event })" />
       <vc-compact-knob label="Tonic note target" [defaultValue]="0" [value]="values().tonicNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
         description="Requested tonic share before pauses. Adjust at most one nearby noninitial note per chord, working backward through alternating chords. Applies to the main seed pass; the target is best effort."
         (valueCommit)="settingsChanged.emit({ tonicNoteTarget: $event })" />

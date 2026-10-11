@@ -93,6 +93,9 @@ export interface MelodyGlobalSettings {
   /** Requested tonic/mode note percentages before pauses; these are best-effort pitch repairs. */
   readonly tonicNoteTarget?: number;
   readonly modeNoteTarget?: number;
+  readonly chordNoteTarget?: number;
+  /** 0 off, 1 semitone above chord tones, 2 also below and two semitones above. */
+  readonly replaceAvoidNotes?: number;
   /** Assign longer block durations to tonic/mode-important pitches before pitch exceptions. */
   readonly emphasizeKey?: boolean;
   /** Invert the first Melody's published onset grid for dependent parts; Melody notes stay unchanged. */

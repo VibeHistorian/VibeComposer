@@ -156,6 +156,97 @@ test('P5e tonal repairs protect chord starts, retain original counts and make be
   assert.deepEqual(run([[], [60, -1]], 'major', 100, 100), [[], [60, -1]]);
 });
 
+test('P5e chord targeting and avoid notes preserve scoped harmony, history, manual ownership and MIDI', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
+  const track = () => service.project().tracks.find(item => item.id === id);
+  service.setSectionTrackPresence(0, id, true);
+  const original = phrase.layOutTrackPhrase(service.project(), track());
+  assert.equal(service.updateMelodyGlobal({ chordNoteTarget: 100 }), 'changed');
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track()), original);
+  service.undo();
+  assert.equal(service.updateMelodyGlobal({ replaceAvoidNotes: 2 }), 'changed');
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track()), original);
+  service.updateMelodyGlobal({ chordNoteTarget: 100 });
+  const diatonic = phrase.phraseForTrack(service.project(), track());
+  service.setProgressionChord(0, { root: 1, spice: 'maj7', inversion: -2 });
+  assert.notDeepEqual(phrase.phraseForTrack(service.project(), track()), diatonic);
+  service.updateMelodyGlobal({ tonicNoteTarget: 40, modeNoteTarget: 60 });
+  const globalContext = phrase.sectionMelodyContext(service.project());
+  service.setSectionChordDegree(0, 0, 2);
+  const localSection = service.project().arrangement[0];
+  const localContext = phrase.sectionMelodyContext(service.project(), localSection);
+  assert.notDeepEqual(localContext, globalContext);
+  const { generateMelody } = load('core/music/melody-generator.ts');
+  let expectedContext;
+  generateMelody(BigInt(service.project().seed), service.project().key, service.project().scale,
+    localSection.chordDegrees, track().generatorSettings, 0,
+    notes => { expectedContext = load('core/music/melody-context.ts').melodyContext(notes, localSection.chordDegrees.length); },
+    service.project().melodyGlobal);
+  assert.deepEqual(localContext, expectedContext, 'section degree progression replaces global Chordlets for dependency generation');
+  service.setProgressionChord(0, { root: 6, spice: 'dim', inversion: 3 });
+  assert.deepEqual(phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]), localContext);
+  const patches = service.project().arrangement;
+  service.updateMelodyGlobal({ chordNoteTarget: 70 });
+  assert.deepEqual(service.project().arrangement, patches);
+  let saved = service.exportProjectJson();
+  const notes = phrase.layOutTrackPhrase(service.project(), track());
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const output = exported.tracks.find(item => item.name === track().name).notes;
+  assert.equal(output.length, notes.length);
+  output.forEach((note, index) => {
+    assert.equal(note.midi, notes[index].midi);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / exported.header.ppq - notes[index].durationBeats) < 0.003);
+  });
+  service.undo(); service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.deepEqual(projectData(new (load('core/project/project.service.ts').ProjectService)().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true); saved = service.exportProjectJson();
+  service.updateSettings({ name: 'redo' }); service.undo();
+  for (const [key, invalid] of [['chordNoteTarget', [-1, 101, 1.5, '50', null]], ['replaceAvoidNotes', [-1, 3, 0.5, '1', null]]]) {
+    assert.equal(service.updateMelodyGlobal({ [key]: service.project().melodyGlobal[key] }), 'unchanged');
+    for (const value of invalid) {
+      assert.equal(service.updateMelodyGlobal({ [key]: value }), 'invalid');
+      const project = JSON.parse(saved); project.melodyGlobal[key] = value;
+      assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+      assert.equal(service.exportProjectJson(), saved);
+    }
+    for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
+      { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
+      service.updatePartSettings(scope, { [key]: 1 }); assert.equal(service.exportProjectJson(), saved);
+    }
+    assert.equal(service.canRedo(), true);
+  }
+  const manual = [{ id: 'chord-manual', midi: 61, startBeat: 1, durationBeats: 2, velocity: 90 }];
+  service.updateTrackPhrase(id, manual);
+  service.updateMelodyGlobal({ chordNoteTarget: 0, replaceAvoidNotes: 0 });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+  assert.deepEqual(phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]).pitches,
+    load('core/music/melody-context.ts').melodyContext(manual, localSection.chordDegrees.length).pitches);
+});
+
+test('P5e chord repairs retain original order, voicing ties, safe notes and the independent avoid stream', () => {
+  const { load } = fixture();
+  const { applyMelodyChordTargets, replaceMelodyAvoidNotes, melodyRepairChords } = load('core/music/melody-chord-targets.ts');
+  const notes = pitches => pitches.map(chord => chord.map(midi => ({ midi })));
+  const pitches = chords => chords.map(chord => chord.map(note => note.midi));
+  const original = notes([[61, 62, 71], [65, 69, 71, 62, 65, -1]]);
+  applyMelodyChordTargets(original, [[67, 60, 64]], 100);
+  assert.deepEqual(pitches(original), [[60, 60, 67], [64, 67, 67, 60, 65, -1]], 'per-chord budget can leave the final deficit unmet');
+  const ties = notes([[62, 62]]);
+  applyMelodyChordTargets(ties, [[64, 60]], 100);
+  assert.deepEqual(pitches(ties), [[64, 64]], 'nearest pitch is not circular; first voicing entry wins a tie');
+  const safe = notes([[60, 61, 64, 67, -1, 65, 68]]);
+  replaceMelodyAvoidNotes(safe, [[60, 64, 67]], 42, 1);
+  assert.deepEqual(pitches(safe), [[60, 60, 64, 67, -1, 64, 60]]);
+  const again = notes([[60, 61, 64, 67, -1, 65, 68]]);
+  replaceMelodyAvoidNotes(again, [[60, 64, 67]], 42, 1);
+  assert.deepEqual(pitches(again), pitches(safe));
+  for (const key of ['A♭', 'F♯', 'C♯', 'E♭']) assert.deepEqual(
+    melodyRepairChords(key, 'natural-minor', [1,2,3,4,5,6,7]).map(chord => chord.map(pitch => pitch % 12)),
+    melodyRepairChords('C', 'major', [1,2,3,4,5,6,7]).map(chord => chord.map(pitch => pitch % 12)));
+});
+
 test('right-click knob resets use explicit defaults, cancel previews and respect disabled/no-op controls', () => {
   const { load, service } = fixture(), { CompactKnobComponent } = load('shared/compact-knob.component.ts');
   const knob = new CompactKnobComponent(); knob.minimum.set(0); knob.maximum.set(100); knob.defaultValue.set(25);
@@ -2169,7 +2260,7 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
 });
 
-for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536], ['emphasis', 1152], ['tonal', 1920]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
+for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536], ['emphasis', 1152], ['tonal', 1920], ['harmony', 2304]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, `fixtures/melody-${name}.java.json`), 'utf8').replace(/^\uFEFF/, ''));
@@ -2179,8 +2270,8 @@ for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], [
       const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
       assert.deepEqual(chooseMelodyTargets(sample.targetSeed, sample.targetProgression, sample.globalSettings), sample.settings.chordNoteChoices, `case ${caseIndex} prepared targets`);
     }
-    const progression = Array(sample.chordCount).fill(1);
-    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset, undefined, { newBlocksChance: 100, ...sample.globalSettings });
+    const progression = name === 'harmony' ? sample.targetProgression : Array(sample.chordCount).fill(1);
+    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset, undefined, { newBlocksChance: 100, ...sample.globalSettings }, sample.customChords);
     assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
     actual.forEach((note, index) => {
       const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;

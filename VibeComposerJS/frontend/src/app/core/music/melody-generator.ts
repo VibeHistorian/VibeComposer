@@ -1,6 +1,6 @@
 import type { MelodySettings, MelodyGlobalSettings, PhraseNote } from '../project/project.model';
 import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
-import { getPitchClass, type ScaleMode } from './harmony';
+import { getPitchClass, validProgressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { swingNotes } from './phrase-swing';
 import { partFillMask } from './chord-span-fill';
@@ -10,6 +10,7 @@ import { blockChangeSequence, blockRhythm, blockVariance, cumulativeWeights, dir
   melodyInt as int, MELODY_EPSILON as EPS, noteRhythm } from './melody-blocks';
 import { selectMelodyBlock } from './melody-catalogue';
 import { applyMelodyTonalTargets } from './melody-tonal-targets';
+import { applyMelodyChordTargets, melodyRepairChords, replaceMelodyAvoidNotes } from './melody-chord-targets';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
@@ -18,7 +19,7 @@ interface Block { readonly notes: readonly number[]; readonly durations: readonl
 interface Pattern { readonly changes: readonly number[]; readonly blocks: readonly Block[] }
 
 /** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
-export const MELODY_CORE_INPUTS = Object.freeze({ blockTargetMode: 2, chordNoteTarget: 0 });
+export const MELODY_CORE_INPUTS = Object.freeze({ blockTargetMode: 2 });
 
 function repeated(values: readonly number[], count: number): number[] {
   const result = [...values];
@@ -67,9 +68,10 @@ function rhythmicImportance(notes: Note[]): Note[] {
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
   progression: readonly number[], settings: MelodySettings, notesSeedOffset = 0,
   publishPattern?: (notes: readonly Pick<PhraseNote, 'midi' | 'startBeat'>[]) => void,
-  globalSettings: MelodyGlobalSettings = {}): PhraseNote[] {
+  globalSettings: MelodyGlobalSettings = {}, customChords?: readonly (ProgressionChord | null)[]): PhraseNote[] {
   if (!decodeMelodyGlobal(globalSettings)) throw new RangeError('Invalid global Melody inputs.');
   const globals = { ...DEFAULT_MELODY_GLOBAL, ...globalSettings };
+  if (!validProgressionChords(customChords, progression.length)) throw new RangeError('Invalid Melody harmony.');
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) throw new RangeError('Use bigint for 64-bit melody seeds.');
   const { algorithm, ...fields } = settings;
   if (algorithm !== 'block' || !decodePartPatch('melody', fields) || !Number.isInteger(notesSeedOffset)
@@ -187,7 +189,11 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   byChord.splice(0, byChord.length, ...expanded);
   const all = byChord.flat(), firstPitches = byChord.map((notes) => notes[0].midi);
   applyMelodyTonalTargets(byChord, scale, globals.tonicNoteTarget, globals.modeNoteTarget, notesSeedOffset);
+  const repairChords = globals.chordNoteTarget > 0 || globals.replaceAvoidNotes > 0
+    ? melodyRepairChords(key, scale, progression, customChords) : [];
+  applyMelodyChordTargets(byChord, repairChords, globals.chordNoteTarget);
   repairIntervals(all);
+  replaceMelodyAvoidNotes(byChord, repairChords, baseSeed, globals.replaceAvoidNotes);
   const fill = partFillMask(progression.length, settings), removed = new Set<Note>();
   byChord.forEach((notes, chord) => {
     const ordered = rhythmicImportance(notes), paused = Math.round(notes.length * (settings.pauseChance ?? 0) / 100);

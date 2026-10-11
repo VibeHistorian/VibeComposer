@@ -17,6 +17,7 @@ public class MelodyExtendedFixture {
         boolean catalogue = args.length > 0 && args[0].equals("catalogue");
         boolean emphasis = args.length > 0 && args[0].equals("emphasis");
         boolean tonal = args.length > 0 && args[0].equals("tonal");
+        boolean harmony = args.length > 0 && args[0].equals("harmony");
         boolean preparedTargets = args.length > 0 && args[0].equals("targets");
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
@@ -27,12 +28,12 @@ public class MelodyExtendedFixture {
         int[] speeds = { -100, 0, 50, 100 };
         boolean first = true;
         for (int seedIndex = 0; seedIndex < seeds.length; seedIndex++) {
-          for (int effectCase = 0; effectCase < (tonal ? 10 : catalogue ? 8 : effects || emphasis ? 6 : 1); effectCase++) {
+          for (int effectCase = 0; effectCase < (harmony ? 12 : tonal ? 10 : catalogue ? 8 : effects || emphasis ? 6 : 1); effectCase++) {
             for (int sample = 0; sample < 48; sample++) {
                 int chordCount = new int[] { 1, 3, 4, 7, 8 }[sample % 5];
                 int[] structure = sample % 3 == 0 ? new int[] { 1, 2, 1, 3 }
                         : sample % 3 == 1 ? new int[] { 1, -1, 2, -2 } : new int[] { 0, 0, 3 };
-                if ((emphasis || tonal) && sample % 4 == 3) structure = new int[] {-1, 1, -2, 2};
+                if ((emphasis || tonal || harmony) && sample % 4 == 3) structure = new int[] {-1, 1, -2, 2};
                 int[] targets = sample % 2 == 0 ? new int[] { 0, 2, 2, 4 } : new int[] { -3, 1, 5 };
                 int notesSeedOffset = sample % 4 == 0 ? 100 : 0;
                 int explicitSeed = sample == 19 ? 123456789 : 0;
@@ -69,13 +70,13 @@ public class MelodyExtendedFixture {
                         {100,100,100,100,100,100,100}, {100,100,100,100,100,100,100}
                     }[effectCase]));
                 }
-                if (emphasis || tonal) {
+                if (emphasis || tonal || harmony) {
                     part.setSplitChance(0); part.setLeadChordsChance(0);
                     config.setMelodyNewBlocksChance(effectCase >= 3 ? 25 : 100);
                     config.setMelodyBlockTypePreference(list(new int[] {100,100,100,100,100,100,100}));
                 }
-                config.setMelodyBlockTargetMode(2); config.setMelodyPatternEffect((effects || catalogue || emphasis || tonal) ? effectCase % 3 : 2);
-                config.setMelodyMaxDirChanges(globals ? 1 + sample % 6 : 2); config.setMelodyEmphasizeKey(emphasis || tonal && sample % 2 == 0);
+                config.setMelodyBlockTargetMode(2); config.setMelodyPatternEffect((effects || catalogue || emphasis || tonal || harmony) ? effectCase % 3 : 2);
+                config.setMelodyMaxDirChanges(globals ? 1 + sample % 6 : 2); config.setMelodyEmphasizeKey(emphasis || (tonal || harmony) && sample % 2 == 0);
                 config.setMelodySingleNoteExceptions(globals && sample % 2 == 0); config.setMelodyArpySurprises(effects && effectCase >= 3); config.setMelodyUseCustomDurations(false);
                 config.setMelodyTonicNoteTarget(0); config.setMelodyChordNoteTarget(0); config.setMelodyModeNoteTarget(0);
                 if (tonal) {
@@ -83,6 +84,13 @@ public class MelodyExtendedFixture {
                     config.setMelodyModeNoteTarget(new int[] {0,0,0,0,0,10,50,100,60,100}[effectCase]);
                 }
                 config.setMelodyReplaceAvoidNotes(0); config.setMelodyFillPausesPerChord(globals && sample % 4 < 2);
+                if (harmony) {
+                    config.setMelodyChordNoteTarget(new int[] {0,25,70,100}[effectCase / 3]);
+                    config.setMelodyReplaceAvoidNotes(effectCase % 3);
+                    config.setMelodyTonicNoteTarget(effectCase >= 9 ? 40 : 0);
+                    config.setMelodyModeNoteTarget(effectCase >= 9 ? 60 : 0);
+                    config.setMelodyFillPausesPerChord(sample % 4 < 2);
+                }
                 config.setMelodyBasicChordsOnly(false); config.setScaleMidiVelocityInArrangement(false);
                 config.setMelodyTargetNoteVariation(preparedTargets ? 1 + sample % 6 : 3);
                 config.setNoteTargetDirectionChoice(preparedTargets ? MelodyUtils.NoteTargetDirection.values()[(sample / 6) % 3] : MelodyUtils.NoteTargetDirection.ASC);
@@ -113,10 +121,30 @@ public class MelodyExtendedFixture {
                 // Root-only progression is the supported P1b context; chord-driven targeting is deferred.
                 List<int[]> roots = new ArrayList<>();
                 for (int chord = 0; chord < chordCount; chord++) roots.add(new int[] { 60 });
+                List<int[]> repairChords = roots;
+                StringJoiner customJson = new StringJoiner(",", "[", "]");
+                if (harmony) {
+                    repairChords = new ArrayList<>();
+                    for (int chord = 0; chord < chordCount; chord++) {
+                        if (sample % 3 == 0) {
+                            repairChords.add(MidiUtils.getNormalMappedChord(symbols[targetProgression[chord] - 1], false));
+                            customJson.add("null");
+                        } else {
+                            int root = (sample + chord * 5) % 12, inversion = (sample + chord) % 11 - 5;
+                            String spice = MidiUtils.SPICE_NAMES_LIST.get((sample + chord * 3) % MidiUtils.SPICE_NAMES_LIST.size());
+                            int[] voicing = MidiUtils.getNormalMappedChord(MidiUtils.SEMITONE_LETTERS.get(root) + spice + "." + inversion, false);
+                            if (sample % 2 != 0) voicing = MidiUtils.transposeChord(voicing,
+                                    MidiUtils.ScaleMode.AEOLIAN.noteAdjustScale, MidiUtils.ScaleMode.IONIAN.noteAdjustScale, true);
+                            repairChords.add(voicing);
+                            customJson.add("{\"root\":" + ((root + transpositions[seedIndex]) % 12)
+                                    + ",\"spice\":\"" + spice + "\",\"inversion\":" + inversion + "}");
+                        }
+                    }
+                }
                 MelodyPhraseBuilder builder = new MelodyPhraseBuilder(config, melody, midi.getTiming(),
                         request -> false, request -> {},
                         (phrase, swing) -> midi.swingPhrase(phrase, swing, 1), request -> {}, result -> {});
-                Phrase phrase = builder.build(part, roots, roots, Collections.nCopies(chordCount, 4.0), notesSeedOffset,
+                Phrase phrase = builder.build(part, repairChords, roots, Collections.nCopies(chordCount, 4.0), notesSeedOffset,
                         section, Collections.emptyList(), false, preference, 0, 0,
                         transpositions[seedIndex], null);
                 if (!first) json.append(",\n"); first = false;
@@ -132,12 +160,15 @@ public class MelodyExtendedFixture {
                         .append(",\"emphasizeKey\":").append(config.isMelodyEmphasizeKey())
                         .append(",\"tonicNoteTarget\":").append(config.getMelodyTonicNoteTarget())
                         .append(",\"modeNoteTarget\":").append(config.getMelodyModeNoteTarget())
+                        .append(",\"chordNoteTarget\":").append(config.getMelodyChordNoteTarget())
+                        .append(",\"replaceAvoidNotes\":").append(config.getMelodyReplaceAvoidNotes())
                         .append(",\"blockTypeWeights\":").append(config.getMelodyBlockTypePreference())
                         .append(",\"blockChangePreference\":").append(preference)
                         .append("},\"seed\":\"").append(seeds[seedIndex]).append("\",\"key\":\"").append(keys[seedIndex])
                         .append("\",\"scale\":\"").append(sample % 2 == 0 ? "major" : "natural-minor")
                         .append("\",\"chordCount\":").append(chordCount).append(",\"notesSeedOffset\":").append(notesSeedOffset)
                         .append(",\"targetSeed\":").append(targetSeed).append(",\"targetProgression\":").append(Arrays.toString(targetProgression))
+                        .append(harmony ? ",\"customChords\":" + customJson.toString() : "")
                         .append(",\"settings\":{\"algorithm\":\"block\",\"speed\":").append(part.getSpeed())
                         .append(",\"doubledRhythmChance\":").append(part.getDoubledRhythmChance()).append(",\"maxNoteExceptions\":").append(part.getMaxNoteExceptions()).append(",\"noteExceptionChance\":").append(part.getNoteExceptionChance()).append(",\"splitChance\":").append(part.getSplitChance()).append(",\"leadChordsChance\":").append(part.getLeadChordsChance()).append(",\"startNoteChance\":").append(part.getStartNoteChance()).append(",\"chordNoteChoices\":").append(Arrays.toString(targets))
                         .append(",\"melodyPatternOffsets\":").append(Arrays.toString(structure))

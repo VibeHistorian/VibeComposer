@@ -4,7 +4,7 @@ import { DEFAULT_BLOCK_TYPE_WEIGHTS } from './melody-catalogue';
 export const DEFAULT_MELODY_GLOBAL = Object.freeze({
   singleNoteExceptions: false, maxDirectionChanges: 2, fillPausesPerChord: false,
   patternEffect: 2, arpySurprises: false, patternFlip: false, emphasizeKey: false,
-  tonicNoteTarget: 0, modeNoteTarget: 0,
+  tonicNoteTarget: 0, modeNoteTarget: 0, chordNoteTarget: 0, replaceAvoidNotes: 0,
   targetNoteVariation: 3, targetDirection: 'ASC' as const,
   useDirectionsFromProgression: false, forceFirstOutline: false,
   newBlocksChance: 25, blockTypeWeights: DEFAULT_BLOCK_TYPE_WEIGHTS, blockChangePreference: Object.freeze([] as number[]),
@@ -22,8 +22,10 @@ export function decodeMelodyGlobal(value: unknown): MelodyGlobalSettings | undef
       if (!Number.isInteger(field) || field < 1 || field > 6) return undefined;
     } else if (key === 'targetDirection') {
       if (!['ANY', 'ASC', 'DESC'].includes(field as string)) return undefined;
-    } else if (['newBlocksChance', 'tonicNoteTarget', 'modeNoteTarget'].includes(key)) {
+    } else if (['newBlocksChance', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget'].includes(key)) {
       if (!Number.isInteger(field) || field < 0 || field > 100) return undefined;
+    } else if (key === 'replaceAvoidNotes') {
+      if (!Number.isInteger(field) || field < 0 || field > 2) return undefined;
     } else if (key === 'blockTypeWeights') {
       if (!Array.isArray(field) || field.length !== 7 || Array.from(field).some(weight => !Number.isInteger(weight) || weight < 0 || weight > 100)) return undefined;
       decoded[key] = [...field]; continue;
