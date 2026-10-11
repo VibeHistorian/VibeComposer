@@ -11,7 +11,8 @@ Use the [active plan](../CONTEXTUAL_CONTROLS_PLAN.md), [remaining control invent
 | [Workspace redesign](daw-workspace-record.md) | Initial workspace design, delivered sequence and original acceptance criteria. |
 | [Migration README](migration-readme-record.md) | Earlier shell/audio/UI descriptions, completed control narratives and superseded Melody limitations. |
 | [Java fixtures](java-fixtures-record.md) | Detailed fixture coverage, Java comparison assumptions, intentional translation differences and complete regeneration commands. |
+| [P5e harmony inference audit](p5e-harmony-inference-audit.md) | Production block inference source/order, alternate-section consumers, shared flattening, translation gaps, ownership/placement proposal and required implementation evidence. Audit complete; musical integration remains open. |
 
-Current target modes are complete. P5e's remaining inference audit, P5f, P6g/P6h, P7c, P8 and user-assigned P9–P11 remain in the active plan. Universal instrument links and per-control randomization locks remain separate deferred systems. Existing Java refactor histories in `midimasterpiece/refactors_history/` stay in their original archive.
+Current target modes and the P5e inference audit are complete. P5e's audited musical integration, P5f, P6g/P6h, P7c, P8 and user-assigned P9–P11 remain in the active plan. Universal instrument links and per-control randomization locks remain separate deferred systems. Existing Java refactor histories in `midimasterpiece/refactors_history/` stay in their original archive.
 
 When another slice finishes, move its detailed implementation/validation record here and remove it from the active backlog. Keep enduring rules, current ownership contracts and operational commands in live documents; archive test counts, dated warnings and superseded planning statements.

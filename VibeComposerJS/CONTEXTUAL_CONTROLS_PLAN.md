@@ -4,7 +4,7 @@ Active backlog as of 2026-10-11. Completed checkpoints, Java comparison evidence
 
 ## Remaining order
 
-1. **P5e:** Melody-to-chord inference / alternate progression integration audit. Target modes, tonal/chord targeting and avoid-notes are complete.
+1. **P5e:** Implement audited block-Melody inference / alternate progression integration and shared voicing flattening. The consumer audit, target modes, tonal/chord targeting and avoid-notes are complete.
 2. **P5f:** Section harmony (with chordlets) and timing, with matching generation, playback and MIDI context.
 3. **P6g / P6h:** Remaining creation branches and policies after their musical consumers exist.
 4. **P7c:** Final workspace acceptance after those changes.
@@ -98,9 +98,11 @@ Knobs and native comboboxes reset to their default value on right-click through 
 
 ### P5 — Remaining musical integration
 
-#### P5e — Melody harmony inference audit
+#### P5e — Audited Melody harmony integration
 
-Audit production Melody-to-chord inference and alternate progression integration against the current block generator and shared harmony pipeline. Identify actual consumers, scope, dependencies and required harmony controls before exposing them. Preserve manual-note ownership and independent sparse overrides; validate supported seeded phrases, history, JSON/session restoration and common playback/MIDI output. This audit is separate from completed target-mode work. Imported-source inference belongs with P11.
+The [production consumer audit](__work_history/p5e-harmony-inference-audit.md) is complete. Remaining implementation: publish a separate pre-expansion block skeleton map, infer interior alternate chords from the first base Melody, add shared progression voicing flattening and distinct section harmony/Melody selection. Detailed harmony controls belong at project scope; selection belongs in the section inspector. Keep explicit section harmony ahead of inferred choices and keep manual replacements separate from imported-source inference. Share root/voicing context with P5f without coupling the initial equal-duration implementation to variable timing.
+
+Preserve manual-note ownership and independent sparse overrides; validate production inference/flattening fixtures and complete alternate-section phrases, history, JSON/session restoration and common playback/MIDI output before exposing controls. Existing seeded-phrase and ownership tests establish the baseline, not inference parity. Imported-source inference belongs with P11. Exact source/tie ordering, short-progression recovery, voicing draw order and remaining acceptance cases are recorded in the audit.
 
 #### P5f — Remaining section harmony and timing
 
