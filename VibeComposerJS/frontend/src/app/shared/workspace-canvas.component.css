@@ -69,7 +69,7 @@
 .track-mix-controls vc-mix-buttons { margin-top: 3px; }
 
 /* Arrangement and score canvas */
-.song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: minmax(250px, .85fr) auto minmax(270px, 1.2fr); gap: 12px; }
+.song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: auto auto minmax(270px, 1fr); gap: 12px; }
 .song-canvas.editing vc-edit-workspace { display: none; }
 .score-panel { padding: 13px 14px; overflow: hidden; }
 .score-panel { display: flex; flex-direction: column; }
@@ -173,7 +173,7 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 }
 @media (max-width: 1050px) {
   .workspace-canvas { min-height: 0; grid-template-columns: minmax(290px, 340px) minmax(0, 1fr); }
-  .song-canvas { height: auto; grid-template-rows: minmax(370px, auto) auto minmax(300px, 1fr); }
+  .song-canvas { height: auto; grid-template-rows: auto auto minmax(300px, 1fr); }
   .context-inspector { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(180px, .7fr) 1fr; gap: 12px; }
   .context-inspector { max-height: none; }
   .inspector-selection { margin-top: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
@@ -184,7 +184,7 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
   .workspace-canvas { grid-template-columns: 1fr; }
   .track-browser { max-height: none; }
   .track-groups { max-height: 330px; grid-template-columns: minmax(0, 1fr); }
-  .song-canvas { grid-template-rows: auto auto minmax(350px, auto); }
+  .song-canvas { grid-template-rows: auto auto minmax(350px, 1fr); }
   .score-panel { min-height: 350px; }
   .context-inspector { grid-template-columns: 1fr; }
   .inspector-editors { grid-column: auto; grid-template-columns: 1fr; }

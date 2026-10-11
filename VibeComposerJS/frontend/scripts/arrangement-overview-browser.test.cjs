@@ -41,7 +41,7 @@ async function render(html, displayScale) {
   child.stderr.on('data', (chunk) => { errors = (errors + chunk).slice(-4000); });
   child.on('error', reject);
   child.on('exit', (code) => reject(new Error(`Chromium exited (${code}): ${errors}`)));
-  const timeout = setTimeout(() => reject(new Error(`Chromium test timed out: ${errors}`)), 30000);
+  const timeout = setTimeout(() => reject(new Error(`Chromium test timed out: ${errors}`)), 45000);
   try { return await result; } finally {
     clearTimeout(timeout); child.kill(); server.close();
   }
@@ -59,14 +59,18 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
     const theme = fs.readFileSync(path.join(__dirname, '../src/styles.css'), 'utf8');
-    const html = `<!doctype html><html><head><style>${theme}\n${css}
+    const workspaceCss = fs.readFileSync(path.join(__dirname, '../src/app/shared/workspace-canvas.component.css'), 'utf8');
+    const html = `<!doctype html><html><head><style>${theme}\n${workspaceCss}\n${css}
       .fixture { width: 1218px; height: 384px; }
-    </style></head><body><div class="fixture"><section class="arrangement-panel">
+      .fixture > vc-arrangement-overview { display: block; min-width: 0; min-height: 0; }
+      .fixture > .part-settings-panel { height: 40px; }
+    </style></head><body><div class="fixture song-canvas"><vc-arrangement-overview><section class="arrangement-panel">
       <header class="canvas-heading">Arrangement</header>
       <div class="overview-scroll"><div class="overview-content"><div class="overview-viewport">
         <canvas id="score"></canvas><canvas id="playhead"></canvas>
       </div></div></div>
-    </section></div><pre id="result">pending</pre><script>
+    </section></vc-arrangement-overview><section class="part-settings-panel"></section>
+      <section class="score-panel"></section></div><pre id="result">pending</pre><script>
     const refs = new Map([
       ['scrollHost', document.querySelector('.overview-scroll')],
       ['scrollContent', document.querySelector('.overview-content')],
@@ -112,6 +116,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
         [1217.5, 500.5, 1], [1217.5, 500.5, 2],
         [1217.5, 383.5, 1, 64], [686.5, 383.5, 1, 32],
         [686.5, 363.5, 1, 32], [1217.5, 500.5, 1, 2],
+        [1218, 800, 1], [1218, 1000, 1], [1218, 1000, 2], [1218, 1000, 1],
       ]) {
         fixture.style.width = width + 'px'; fixture.style.height = height + 'px';
         component.horizontalScale = scale;
@@ -133,6 +138,10 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
         const buttonRows = currentProject.arrangement.map(section =>
           Math.ceil(trackCount / Math.max(1, Math.floor((section.measures * 4 * component.pixelsPerBeat - 10 + 1e-7) / 19))));
         cases.push({ width, height, scale, pageZoom, samples, buttonRows,
+          gridHeight: host.clientHeight, scrollbarHeight: host.offsetHeight - host.clientHeight,
+          arrangementHeight: document.querySelector('vc-arrangement-overview').offsetHeight,
+          settingsHeight: document.querySelector('.part-settings-panel').offsetHeight,
+          scoreHeight: document.querySelector('.score-panel').offsetHeight,
           effectiveScale: component.effectiveHorizontalScale });
       }
       }
@@ -157,6 +166,12 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
         assert.equal(last[7], Math.round(parseFloat(last[5]) * displayScale));
         assert.equal(last[8], last[6]); assert.equal(last[9], last[7]);
         assert.ok(item.buttonRows.every(rows => rows <= 2), 'Track buttons must fit within two rows');
+        assert.ok(Math.abs(item.gridHeight - 284) <= 1, 'Arrangement fits the ruler and five rows, including when zoomed');
+        assert.equal(last[11], last[1], 'The last row fits without vertical scrolling or empty background');
+        if (item.height >= 800) {
+          assert.ok(Math.abs(item.scoreHeight - (item.height - item.arrangementHeight - item.settingsHeight - 24)) <= 2,
+            'The score receives all space remaining after the arrangement, settings, and two gaps: ' + JSON.stringify(item));
+        }
         if (item.effectiveScale === 1) assert.equal(last[10], last[0], 'Fitted content must not overflow horizontally');
         else assert.ok(last[10] > last[0], 'Zoomed content must remain scrollable');
       }

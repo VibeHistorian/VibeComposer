@@ -303,12 +303,20 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     // Decide each axis explicitly, rather than allowing our own size writes to
     // toggle automatic scrollbars and invalidate the next observer measurement.
     host.style.overflowX = needsHorizontalScroll() ? 'scroll' : 'hidden';
+    const fitGridHeight = (): void => {
+      const scrollbarHeight = Math.max(0, (host.offsetHeight ?? host.clientHeight) - host.clientHeight);
+      host.style.height = `${minimumHeight + scrollbarHeight}px`;
+    };
+    // The arrangement owns its intrinsic height; only the score grows with the
+    // workspace. Measure native scrollbars so zoom never clips the last row.
+    fitGridHeight();
     // Resolve horizontal scrolling first: its scrollbar reduces available height.
     host.style.overflowY = minimumHeight > host.clientHeight ? 'scroll' : 'hidden';
     // A newly needed vertical scrollbar can reduce the timeline below its
     // button-fit minimum. Resolve that extra dependency in the same draw.
     if (host.style.overflowX === 'hidden' && needsHorizontalScroll()) {
       host.style.overflowX = 'scroll';
+      fitGridHeight();
       host.style.overflowY = minimumHeight > host.clientHeight ? 'scroll' : 'hidden';
     }
     // A model/scroll redraw can precede the next observer callback when the host
