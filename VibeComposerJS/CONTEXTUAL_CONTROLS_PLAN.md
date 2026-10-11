@@ -94,15 +94,7 @@ Knobs and native comboboxes reset to their default value on right-click through 
 
 ## Delivery stages still open
 
-### P6 — Remaining track-generation policies
-
-#### P6g — Remaining drum policies
-
-Remaining: Dynamic/Ghosts selection, Overrandomize and melody-following creation branches. Implement after the corresponding P5d musical consumers. Keep policy edits independent of current notes and preserve locks, instrument permission, manual replacements and section overrides on reroll/Compose. Drum blueprint pause baking/growth, kit pitch selection and the on-reroll hits multiplier are already implemented.
-
-#### P6h — Remaining extended creation branches
-
-Remaining: Bass/Arpeggio GUI pause baking and pattern growth; Arpeggio later-track weighting and advanced pitch-direction branches; extended Melody creation/target parameters. Follow the actual Java creation and musical consumers, including draw order and documented intentional translation differences. Depend on P5c/P5e and the P5d section-melody dependency where applicable. Basic Arpeggio direction rerolls and supported Melody automatic targets/block patterns are already implemented. Validate deterministic replay, rule-only edits, automatic events, count increases, locks, atomic history, persistence and MIDI.
+P6g/P6h are complete in the audited supported scope. Drums has Dynamic/Ghosts, Overrandomize and Follow Melody policies; Arpeggio has GUI pause baking/growth, later-track pattern/fill weighting and weighted directions/rotation; Melody creation writes its extended exception/lead values. The Bass source audit found no GUI baking/growth calls and no production Pause consumer, so no ineffective Bass control was added. See [the P6 completion record](__work_history/p6-creation-record.md) for deterministic streams, Java evidence and intentional differences. Existing automatic target preparation remains intact.
 
 ### P7 — Remaining workspace acceptance
 

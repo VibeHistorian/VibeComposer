@@ -41,7 +41,7 @@ public class RolePolicyFixture {
                 int max, min, length, transpose;
                 if (order > 1) {
                     ChordSpanFill fill = fills[random.nextInt(fills.length)];
-                    random.nextInt(40); // Pause is baked by the legacy GUI, not a supported TS Bass field.
+                    random.nextInt(40); // BassGUI stores Pause, but never bakes it; BassPhraseGenerator does not consume it.
                     max = 50 + random.nextInt(20); min = 30 + random.nextInt(20);
                     transpose = order % 2 == 0 ? 0 : 12; length = 60 + random.nextInt(40);
                     RhythmPattern pattern = RhythmPattern.SINGLE;

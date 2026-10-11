@@ -41,6 +41,7 @@ export class TrackGenerationPolicyComponent {
       maxRepeat: 'REPT', shiftChance: 'SHIFT', voices: 'VOICE', voicesChance: 'V.CH',
       velocityMin: 'VEL↓', velocityMax: 'VEL↑', struminess: 'STRUM',
       maxStrumPause: 'S.PAU', expandChance: 'EXP', maxSwing: 'SWING',
+      dynamicChance: 'GHOST', overrandomizeChance: 'OVER', melodyChance: 'MEL%',
     };
     return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
   }
@@ -66,7 +67,7 @@ export class TrackGenerationPolicyComponent {
       || (['struminess', 'maxStrumPause'].includes(control.key) && this.values()['strum'] === false)
       || (control.key === 'sameSeed' && this.values()['rerollSeeds'] === false)
       || (control.key === 'powerOfTwo' && this.values()['randomHits'] === false)
-      || (control.key === 'shiftChance' && this.values()['patterns'] === false)
+      || (['shiftChance', 'dynamicChance', 'overrandomizeChance', 'melodyChance'].includes(control.key) && this.values()['patterns'] === false)
       || (['voices', 'voicesChance'].includes(control.key) && this.values()['voicesMode'] === 'NONE');
   }
 

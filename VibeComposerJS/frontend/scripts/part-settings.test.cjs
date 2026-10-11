@@ -5,6 +5,114 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('P6 extended Arpeggio directions match 1536 extracted production Java branches and following draws', () => {
+  const { load } = fixture(), core = load('core/music/track-generation.ts');
+  const { JavaRandom } = load('core/music/java-random.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/extended-creation.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  const names = { RANDOM:'random',UP:'up',DOWN:'down',UPDOWN:'up-down',DOWNUP:'down-up',FROG_U:'frog-up',FROG_D:'frog-down' };
+  let random;
+  assert.equal(cases.length,1536);
+  for (const sample of cases) {
+    if (sample.index === 0) random = new JavaRandom(BigInt(sample.seed));
+    const result = core.chooseArpeggioDirection(random,sample.voices,2);
+    assert.deepEqual(result,{pattern:names[sample.direction],arpPatternRotate:sample.rotation});
+    assert.equal(random.nextLong().toString(),sample.next);
+  }
+});
+
+test('P6 drum policies choose Ghosts, melody dependencies and overrandomized phrase-time pauses safely', () => {
+  const { service, load } = fixture(), core = load('core/music/track-generation.ts');
+  const source = service.project().tracks.find(track=>track.role==='drums');
+  const track = pitch => ({...source,generatorSettings:{...source.generatorSettings,pitch}});
+  const reroll = (seed,pitch,patch,totalTracks=1) => core.rerollRoleSettings(seed,'drums',
+    {...core.DEFAULT_TRACK_POLICIES.drums,...patch},[track(pitch)],[1],{totalTracks})[0];
+  for (const pitch of [42,60]) {
+    const dynamic = reroll(42n,pitch,{dynamicChance:100,melodyChance:0});
+    assert.equal(dynamic.ghosts,true);
+    assert.equal(dynamic.pauseChance,0);
+    const following = reroll(42n,pitch,{dynamicChance:100,melodyChance:100});
+    assert.equal(following.rhythm,'melody'); assert.equal(following.ghosts,false);
+    assert.ok(following.pauseChance>=20&&following.pauseChance<=40);
+  }
+  for (const pitch of [35,36,38,40,53]) assert.equal(reroll(42n,pitch,{dynamicChance:100,melodyChance:100}).ghosts,false);
+  let denseGhosts=0, normalGhosts=0;
+  for(let seed=0n;seed<100n;seed++) {
+    normalGhosts += Number(reroll(seed,42,{dynamicChance:100,melodyChance:0}).ghosts);
+    denseGhosts += Number(reroll(seed,42,{dynamicChance:100,melodyChance:0},12).ghosts);
+    for(const multiplier of ['1/2','3/4','1','3/2','2']) for(const pitch of [36,42,60]) {
+      const next=reroll(seed,pitch,{overrandomizeChance:100,melodyChance:100,dynamicChance:100,hitsMultiplier:multiplier});
+      assert.ok(next.hitsPerPattern>=1&&next.hitsPerPattern<=32);
+      assert.ok(next.velocityMin>=1&&next.velocityMax>=next.velocityMin);
+      assert.ok(next.feedbackCount>=0&&next.feedbackCount<=2);
+      assert.equal(next.ghosts,true);
+      if(pitch!==36) assert.equal(next.rhythm,'melody');
+      assert.ok(next.pauseChance>=0&&next.pauseChance<80);
+    }
+  }
+  assert.equal(normalGhosts,100); assert.ok(denseGhosts>0&&denseGhosts<normalGhosts);
+  const original={...track(42).generatorSettings,rhythm:'custom',pauseChance:71,ghosts:true,customPattern:Array(32).fill(1)};
+  const [retained]=core.rerollRoleSettings(42n,'drums',{...core.DEFAULT_TRACK_POLICIES.drums,patterns:false,
+    overrandomizeChance:100,dynamicChance:0,melodyChance:100},[{...source,generatorSettings:original}],[1]);
+  for(const key of ['rhythm','pauseChance','ghosts','customPattern']) assert.deepEqual(retained[key],original[key]);
+});
+
+test('P6 drum rule-only edits, rerolls, Compose and additions preserve ownership, atomic history and MIDI replay', () => {
+  const {service,load,phrase,midi}=fixture();
+  const id='track-drums-1', sectionId=service.project().arrangement[0].id;
+  service.updateSettings({seed:'9007199254740993'});
+  service.updateTrackGeneratorSettings(id,{pitch:42}); service.setTrackInstrumentLock(id,true);
+  service.updatePartSettings({kind:'section-track',sectionId,trackId:id},{pauseChance:12});
+  assert.equal(service.project().arrangement[0].trackPartOverrides[id].pauseChance,12);
+  service.updateTrackPhrase(id,[{id:'manual',midi:42,startBeat:0,durationBeats:.25,velocity:90}]);
+  assert.equal(service.importProjectJson(service.exportProjectJson()),true);
+  const track=service.project().tracks.find(track=>track.id===id), notes=phrase.layOutTrackPhrase(service.project(),track);
+  const patch=JSON.stringify(service.project().arrangement);
+  assert.equal(service.updateTrackGenerationPolicy('drums',{overrandomizeChance:100,melodyChance:100,dynamicChance:100,onCompose:true}),'changed');
+  assert.strictEqual(service.project().tracks.find(track=>track.id===id),track);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(),track),notes);
+  const before=service.exportProjectJson();
+  assert.equal(service.rerollRoleTracks('drums'),'changed');
+  const after=service.exportProjectJson(), bytes=midi.generateCompositionMidi(service.project());
+  assert.equal(JSON.stringify(service.project().arrangement),patch);
+  const next=service.project().tracks.find(track=>track.id===id);
+  assert.equal(next.generatorSettings.pitch,42); assert.deepEqual(next.editedPhrase,track.editedPhrase);
+  service.undo(); assert.equal(service.exportProjectJson(),before); service.redo(); assert.equal(service.exportProjectJson(),after);
+  service.importProjectJson(before); service.rerollRoleTracks('drums'); assert.deepEqual(JSON.parse(service.exportProjectJson()),JSON.parse(after));
+  assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
+  assert.deepEqual(new (load('core/project/project.service.ts').ProjectService)().project(),service.project());
+  service.setTrackRerollLock(id,true); const locked=service.project().tracks.find(track=>track.id===id);
+  service.generateComposition('compose'); assert.deepEqual(service.project().tracks.find(track=>track.id===id),locked);
+  const prior=service.exportProjectJson(); service.setRoleTrackCount('drums',4);
+  assert.equal(service.project().tracks.filter(track=>track.role==='drums').length,4);
+  assert.deepEqual(service.project().tracks.find(track=>track.id===id),locked);
+  service.undo(); assert.equal(service.exportProjectJson(),prior);
+  for(const invalid of [{dynamicChance:-1},{melodyChance:101},{overrandomizeChance:1.5},{dynamicChance:'50'}])
+    assert.equal(service.updateTrackGenerationPolicy('drums',invalid),'invalid');
+});
+
+test('P6 Arpeggio later weighting handles 64 tracks, retains shared counts and produces baked grids and melody rhythms', () => {
+  const {service,load}=fixture(), core=load('core/music/track-generation.ts');
+  const source=service.project().arpeggio; let custom=0,melody=0;
+  for(let seed=0n;seed<64n;seed++) {
+    const settings=core.rerollArpeggioSettings(seed,core.DEFAULT_ARPEGGIO_POLICY,Array(64).fill(source));
+    assert.equal(new Set(settings.map(next=>next.hitsPerPattern)).size,1);
+    assert.equal(settings.at(-1).chordSpanFill,'HALF2'); // Saturated weight 99.
+    for(const next of settings) {
+      assert.ok(next.arpPatternRotate>=0&&next.arpPatternRotate<=3);
+      if(next.rhythm==='custom') { custom++;assert.equal(next.customPattern.length,32); }
+      if(next.rhythm==='melody') melody++;
+      assert.equal(next.pauseChance,0);
+    }
+  }
+  assert.ok(custom>0&&melody>0);
+  const melodic=service.project().tracks.find(track=>track.role==='melody');
+  const [next]=core.rerollRoleSettings(42n,'melody',core.DEFAULT_TRACK_POLICIES.melody,[melodic],[1]);
+  const {JavaRandom}=load('core/music/java-random.ts'), random=new JavaRandom(42);
+  random.nextInt(25);random.nextInt(5);
+  assert.equal(next.noteExceptionChance,10+random.nextInt(15));
+  assert.equal(next.maxNoteExceptions,random.nextInt(2));assert.equal(next.leadChordsChance,random.nextInt(50));
+});
+
 test('P5f durations share chord boundaries across all roles, score ranges, tempo events and persisted history', () => {
   const { service, load, phrase, midi, ui, workspace, stored } = fixture();
   const timing = load('core/music/section-context.ts');
@@ -1629,7 +1737,7 @@ test('drum blueprint baking keeps one hit, stores growth as CUSTOM and applies f
     const seed = BigInt.asIntN(64, sample * 0x9e3779b97f4a7c15n);
     for (const [pitch, min, max, swingable] of families) {
       const track = { ...source, generatorSettings: { ...source.generatorSettings, pitch, feedbackCount: 3, noteLengthMultiplier: 170 } };
-      const policy = { ...core.DEFAULT_TRACK_POLICIES.drums, maxSwing: 0, randomOffset: true };
+      const policy = { ...core.DEFAULT_TRACK_POLICIES.drums, maxSwing: 0, randomOffset: true, melodyChance: 0 };
       const [chosen] = core.rerollRoleSettings(seed, 'drums', policy, [track], [1], { totalTracks: 12 });
       assert.equal(chosen.velocityMin, min); assert.equal(chosen.velocityMax, max);
       assert.equal(chosen.feedbackCount, 0); assert.equal(chosen.noteLengthMultiplier, 100);
@@ -1685,7 +1793,7 @@ test('Arp direction covers every selection and Bass randomized variance stays wi
       variances.add(result.noteVariation);
     }
   }
-  assert.deepEqual([...directions].sort(), ['down', 'random', 'up', 'up-down']);
+  assert.deepEqual([...directions].sort(), ['down', 'down-up', 'frog-down', 'frog-up', 'random', 'up', 'up-down']);
   assert.ok(variances.has(0) && variances.has(50));
   service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { noteVariation: 100 });
   assert.equal(service.project().bass.noteVariation, 100);
@@ -1875,7 +1983,7 @@ test('role rerolls match production melody patterns, drum blueprint data and aud
     const seen = new Set();
     for (let seed = 0; seed < 100; seed++) {
       const source = { ...service.project().tracks.find(track => track.role === 'drums'), generatorSettings: { ...service.project().drums, pitch } };
-      const [actual] = core.rerollRoleSettings(BigInt(seed), 'drums', { ...core.DEFAULT_TRACK_POLICIES.drums, shiftChance: 0 }, [source], [1]);
+      const [actual] = core.rerollRoleSettings(BigInt(seed), 'drums', { ...core.DEFAULT_TRACK_POLICIES.drums, shiftChance: 0, melodyChance: 0 }, [source], [1]);
       const tuple = [actual.rhythm, actual.hitsPerPattern, actual.chordSpan, actual.patternShift];
       const blueprints = expected.drums[family].map(([rhythm, ...values]) => [names[rhythm], ...values]);
       const candidates = blueprints.filter(candidate => candidate.slice(1).every((value, index) => value === tuple[index + 1])
@@ -2276,6 +2384,8 @@ test('Arpeggio policy preserves opted-out fields, shared counts and no-op histor
   const nextSeed = service.trackRerollSeed(service.project(), 'arpeggio', service.project().trackRerollCounts.arpeggio);
   const nextPattern = core.rerollArpeggioSettings(nextSeed, service.project().trackGenerationPolicies.arpeggio, [service.project().arpeggio])[0].pattern;
   service.updatePartSettings({ kind: 'global-role', role: 'arpeggio' }, { pattern: nextPattern });
+  const nextRotation = core.rerollArpeggioSettings(nextSeed, service.project().trackGenerationPolicies.arpeggio, [service.project().arpeggio])[0].arpPatternRotate;
+  service.updatePartSettings({ kind: 'global-role', role: 'arpeggio' }, { arpPatternRotate: nextRotation });
   service.updateSettings({ name: 'redo' }); service.undo();
   const before = service.exportProjectJson();
   assert.equal(service.rerollArpeggioTracks(), 'unchanged'); assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);

@@ -503,6 +503,16 @@ test('production Angular controls initialize selects from settings and support r
         const drumGroup = document.querySelector('.track-group.drums');
         drumGroup.querySelector('.group-select').click();
         await waitFor(() => drumGroup.querySelector('.policy-controls'), 'drums expanded by selection');
+        const previousDrums = JSON.stringify(readProject().tracks);
+        for (const [label,key] of [['Dynamic / Ghosts %','dynamicChance'],['Overrandomize %','overrandomizeChance'],['Follow Melody %','melodyChance']]) {
+          const input = drumGroup.querySelector('input[aria-label="Reroll ' + label + '"]');
+          if (!input) throw new Error('Missing drum policy: ' + label);
+          input.value = '100'; input.dispatchEvent(new Event('change',{bubbles:true}));
+          await waitFor(() => readProject().trackGenerationPolicies?.drums?.[key] === 100, label + ' policy commit');
+          if (document.querySelector('#part-inspector input[aria-label="Reroll ' + label + '"]')
+            || document.querySelector('.part-settings-panel input[aria-label="Reroll ' + label + '"]')) throw new Error('Policy outside Tracks header');
+        }
+        if (JSON.stringify(readProject().tracks) !== previousDrums) throw new Error('Drum policy edited existing parts');
         drumGroup.querySelector('button[aria-label="Randomize instruments"]').click();
         const drumCount = drumGroup.querySelector('input[aria-label="Drums track count"]');
         drumCount.value = '5'; drumCount.dispatchEvent(new Event('change', { bubbles: true }));
@@ -511,6 +521,9 @@ test('production Angular controls initialize selects from settings and support r
         drumGroup.querySelector('button[aria-label="Reroll Drums tracks"]').click();
         await waitFor(() => readProject().trackRerollCounts.drums > beforeKitRoll, 'drum kit reroll');
         const kit = readProject().tracks.filter(track => track.role === 'drums');
+        if (!kit.every(track => track.generatorSettings.ghosts === true)
+          || !kit.filter(track => ![35,36,38,40].includes(track.generatorSettings.pitch)).every(track => track.generatorSettings.rhythm === 'melody'))
+          throw new Error('Overrandomized drum policy not applied');
         await waitFor(() => [...drumGroup.querySelectorAll('.track-instrument')].every((picker, index) => Number(picker.value) === kit[index].generatorSettings.pitch), 'drum kit picker rendering');
         result.coreDrumKit = { kicks: kit.filter(track => [35,36].includes(track.generatorSettings.pitch)).length,
           snares: kit.filter(track => [38,40].includes(track.generatorSettings.pitch)).length,

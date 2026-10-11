@@ -47,8 +47,14 @@ export function chooseDrumPitches(random: JavaRandom, count: number, remaining: 
 
 /** InstPanel.applyPauseChance/growPattern, stored as an unshifted CUSTOM grid after editing. */
 export function bakeDrumPattern(random: JavaRandom, settings: DrumSettings): DrumSettings {
+  return growRerollPattern(random, bakeRerollPauses(random, settings));
+}
+
+/** MELODY1 keeps its phrase-time Pause and never bakes or grows a static grid. */
+export function bakeRerollPauses<T extends DrumSettings | import('../project/project.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
+  if (settings.rhythm === 'melody') return settings;
   const hits = settings.hitsPerPattern ?? 8, shift = settings.patternShift ?? 0;
-  const grid = partRhythmMask({ ...settings, hitsPerPattern: 32, patternShift: 0, patternFlip: false });
+  const grid = partRhythmMask({ ...settings, rhythm: settings.rhythm ?? 'full', hitsPerPattern: 32, patternShift: 0, patternFlip: false });
   let rhythm = settings.rhythm;
   const edit = (slot: number, value: number) => {
     grid[slot] = value;
@@ -60,10 +66,18 @@ export function bakeDrumPattern(random: JavaRandom, settings: DrumSettings): Dru
   if (pause > 0) for (let slot = 0; slot < hits && available >= 2; slot++) {
     if (random.nextInt(100) < pause && grid[slot] > 0) { edit(slot, 0); available--; }
   }
-  if (rhythm !== 'full') {
-    const empty = grid.slice(0, hits).flatMap((value, slot) => value < 1 ? [slot] : []);
-    if (empty.length && random.nextInt(100) < 5) edit(empty[random.nextInt(empty.length)], 1);
-  }
   return { ...settings, pauseChance: 0, rhythm,
     ...(rhythm === 'custom' ? { customPattern: grid } : {}) };
+}
+
+export function growRerollPattern<T extends DrumSettings | import('../project/project.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
+  if (settings.rhythm === 'melody' || settings.rhythm === 'full') return settings;
+  const hits = settings.hitsPerPattern ?? 8, shift = settings.patternShift ?? 0;
+  const grid = partRhythmMask({ ...settings, rhythm: settings.rhythm ?? 'full', hitsPerPattern: 32, patternShift: 0, patternFlip: false });
+  const empty = grid.slice(0, hits).flatMap((value, slot) => value < 1 ? [slot] : []);
+  if (!empty.length || random.nextInt(100) >= 5) return settings;
+  const slot = empty[random.nextInt(empty.length)];
+  grid[slot] = 1;
+  for (let repeated = slot + hits; repeated < 32 && shift + repeated < 32; repeated += hits) grid[repeated] = 1;
+  return { ...settings, rhythm: 'custom', customPattern: grid };
 }

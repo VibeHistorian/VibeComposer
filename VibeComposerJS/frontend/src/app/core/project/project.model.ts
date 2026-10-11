@@ -292,6 +292,9 @@ export interface ChordGenerationPolicy {
 }
 
 export interface DrumGenerationPolicy {
+  readonly dynamicChance?: number;
+  readonly overrandomizeChance?: number;
+  readonly melodyChance?: number;
   readonly onCompose?: boolean;
   readonly patterns: boolean;
   readonly fills: boolean;

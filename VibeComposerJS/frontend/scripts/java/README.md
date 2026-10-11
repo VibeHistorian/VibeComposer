@@ -19,6 +19,7 @@ Run from the repository root with the existing `midimasterpiece/target/classes` 
 | [generate-harmony-inference-fixtures.ps1](generate-harmony-inference-fixtures.ps1) | Production block inference (256 maps), ordinary/progressive voicing (192 progressions), 96 skeletons/alternate progressions and 192 complete inferred Melody phrases. Fixed four-beat C-major phrase context; see [P5e evidence](../../../__work_history/p5e-harmony-integration-record.md). |
 | [generate-p5-fixtures.ps1](generate-p5-fixtures.ps1) | Arpeggio/drum complete phrases and same-section Melody onset maps. |
 | [generate-drum-reroll-fixtures.ps1](generate-drum-reroll-fixtures.ps1) | Production drum-kit pitch selection. |
+| [generate-extended-creation-fixtures.ps1](generate-extended-creation-fixtures.ps1) | 1,536 extracted production ArpGUI direction/rotation branches, including subsequent random draws. |
 
 Other helper/core/policy fixtures use the Java fixture classes in this directory; their exact `javac`/`java` commands remain in the archived record. Run TypeScript regression checks after regeneration and review changed fixtures rather than treating regeneration alone as validation.
 

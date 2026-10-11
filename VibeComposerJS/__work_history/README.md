@@ -14,7 +14,8 @@ Use the [active plan](../CONTEXTUAL_CONTROLS_PLAN.md), [remaining control invent
 | [P5e harmony inference audit](p5e-harmony-inference-audit.md) | Production block inference source/order, alternate-section consumers, shared flattening and the original implementation proposal. |
 | [P5e harmony integration](p5e-harmony-integration-record.md) | Delivered skeleton inference, shared voicing, explicit section choices, ownership/replay contracts, Java matrices and responsive browser evidence. |
 | [P5f section context](p5f-section-context-record.md) | Section Chordlets/durations, sparse timing/key context, shared boundaries/tempo maps, translation differences and browser evidence. |
+| [P6 creation completion](p6-creation-record.md) | Drum policies, Arpeggio advanced creation, Melody extended values, Bass consumer audit and validation. |
 
-P5e/P5f are complete in their documented supported scope. P6g/P6h, P7c, P8 and user-assigned P9–P11 remain in the active plan. Universal instrument links and per-control randomization locks remain separate deferred systems. Existing Java refactor histories in `midimasterpiece/refactors_history/` stay in their original archive.
+P5e/P5f and P6g/P6h are complete in their documented supported scope. P7c, P8 and user-assigned P9–P11 remain in the active plan. Universal instrument links and per-control randomization locks remain separate deferred systems. Existing Java refactor histories in `midimasterpiece/refactors_history/` stay in their original archive.
 
 When another slice finishes, move its detailed implementation/validation record here and remove it from the active backlog. Keep enduring rules, current ownership contracts and operational commands in live documents; archive test counts, dated warnings and superseded planning statements.

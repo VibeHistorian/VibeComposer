@@ -1,0 +1,35 @@
+import java.util.*;
+import org.vibehistorian.vibecomposer.Enums.ArpPattern;
+
+/** Production ArpGUI direction block, extracted by the regeneration script. */
+public class ExtendedCreationFixture {
+    static class Panel {
+        ArpPattern direction = ArpPattern.UP;
+        int rotation = 2, voices;
+        Panel(int voices) { this.voices = voices; }
+        void setArpPattern(ArpPattern value) { direction = value; }
+        void setArpPatternRotate(int value) { rotation = value; }
+        int getChordNotesStretch() { return voices; }
+    }
+    static void choose(Random panelGenerator, Panel ip) {
+        /* DIRECTION_BRANCH */
+    }
+    public static void main(String[] args) {
+        StringBuilder json = new StringBuilder("[");
+        boolean first = true;
+        for (String seed : new String[]{"42","-2147483648","9007199254740993","9223372036854775807"})
+            for (int voices : new int[]{3,4,6}) {
+                Random random = new Random(Long.parseLong(seed));
+                for (int i = 0; i < 128; i++) {
+                    Panel panel = new Panel(voices);
+                    choose(random, panel);
+                    long next = random.nextLong();
+                    if (!first) json.append(','); first = false;
+                    json.append("{\"seed\":\"").append(seed).append("\",\"voices\":").append(voices)
+                        .append(",\"index\":").append(i).append(",\"direction\":\"").append(panel.direction)
+                        .append("\",\"rotation\":").append(panel.rotation).append(",\"next\":\"").append(next).append("\"}");
+                }
+            }
+        System.out.println(json.append(']'));
+    }
+}

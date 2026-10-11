@@ -5,11 +5,12 @@ import { JavaRandom } from './java-random';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { partPatchesEqual } from './part-settings';
 import { STATIC_RHYTHM_DEFINITIONS, type StaticRhythm, type RhythmPattern } from './rhythm-patterns';
-import { bakeDrumPattern, type DrumRerollContext } from './drum-reroll';
+import { bakeDrumPattern, bakeRerollPauses, growRerollPattern, type DrumRerollContext } from './drum-reroll';
 import type { StrumType } from './chord-strum';
 
 export const DEFAULT_CHORD_POLICY_EXTENSION = Object.freeze({ strum: true, struminess: 50, split: false,
   maxSplit: 25, maxStrumPause: 35, expandChance: 70 });
+export const DEFAULT_DRUM_POLICY_EXTENSION = Object.freeze({ dynamicChance: 50, overrandomizeChance: 0, melodyChance: 30 });
 
 export const DEFAULT_ARPEGGIO_POLICY: ArpeggioGenerationPolicy = Object.freeze({
   fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
@@ -52,7 +53,7 @@ export const DEFAULT_TRACK_POLICIES: TrackGenerationPolicies = Object.freeze({
   chords: Object.freeze({ fills: true, patterns: true, transpose: true, varyLength: true, delay: false,
     ...DEFAULT_CHORD_POLICY_EXTENSION,
     shiftChance: 60, voicesMode: 'AT_MOST', voices: 5, voicesChance: 50, velocityMin: 65, velocityMax: 89 }),
-  drums: Object.freeze({ patterns: true, fills: true, maxSwing: 20, randomOffset: false, hitsMultiplier: '1', shiftChance: 50 }),
+  drums: Object.freeze({ patterns: true, fills: true, maxSwing: 20, randomOffset: false, hitsMultiplier: '1', shiftChance: 50, ...DEFAULT_DRUM_POLICY_EXTENSION }),
   melody: Object.freeze({ rerollSeeds: true, sameSeed: false, patterns: true }),
 });
 
@@ -79,6 +80,9 @@ export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly Polic
     { key: 'maxSwing', label: 'Max swing ±', minimum: 0, maximum: 50 },
     { key: 'randomOffset', label: 'Random offset' },
     { key: 'hitsMultiplier', label: 'On reroll hits ×', options: ['1', '1/2', '3/4', '3/2', '2'] },
+    { key: 'dynamicChance', label: 'Dynamic / Ghosts %', minimum: 0, maximum: 100, advanced: true },
+    { key: 'overrandomizeChance', label: 'Overrandomize %', minimum: 0, maximum: 100, advanced: true },
+    { key: 'melodyChance', label: 'Follow Melody %', minimum: 0, maximum: 100, advanced: true },
     { key: 'shiftChance', label: 'Shift chance %', minimum: 0, maximum: 100, advanced: true },
   ],
   melody: [{ key: 'onCompose', label: 'On Compose' }, { key: 'onRegenerate', label: 'On Regenerate' },
@@ -99,7 +103,8 @@ export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, val
   for (const control of controls) {
     const field = fields[control.key];
     if (field === undefined && (AUTOMATIC_POLICY_KEYS.includes(control.key)
-      || role === 'chords' && control.key in DEFAULT_CHORD_POLICY_EXTENSION)) continue;
+      || role === 'chords' && control.key in DEFAULT_CHORD_POLICY_EXTENSION
+      || role === 'drums' && control.key in DEFAULT_DRUM_POLICY_EXTENSION)) continue;
     if (control.options ? !control.options.includes(field as string)
       : control.minimum !== undefined ? !Number.isInteger(field) || (field as number) < control.minimum || (field as number) > control.maximum!
         : typeof field !== 'boolean') return undefined;
@@ -153,38 +158,59 @@ export function weightedChordFill(weight: number) {
 
 /** Deterministic translation of the supported reroll branches; legacy GUI uses unseeded Randoms. */
 export function rerollArpeggioSettings(seed: bigint, policy: ArpeggioGenerationPolicy,
-  sources: readonly ArpeggioSettings[]): ArpeggioSettings[] {
+  sources: readonly ArpeggioSettings[], orders: readonly number[] = sources.map((_, index) => index + 1), totalTracks = sources.length): ArpeggioSettings[] {
   if (!decodeArpeggioPolicy(policy)) throw new RangeError('Invalid Arpeggio reroll policy.');
   const random = new JavaRandom(seed);
-  const directions = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4152504449524543n));
   const sharedHits = policy.sameHits ? chooseArpeggioHits(random, policy) : undefined;
-  return sources.map(source => {
-    const hits = sharedHits ?? chooseArpeggioHits(random, policy);
+  return sources.map((source, index) => {
+    let hits = sharedHits ?? chooseArpeggioHits(random, policy);
     const span = policy.randomSpan ? random.nextInt(2) + 1 : source.chordSpan ?? 1;
+    const transpose = policy.transpose ? (random.nextInt(3) - 1) * 12 : source.transpose;
     const repeat = span === 1 ? random.nextInt(policy.maxRepeat) + 1 : 1;
+    if (span === 2 && random.nextBoolean() && orders[index] > 2 && !policy.sameHits)
+      hits = Math.min(32, hits * span);
     const fast = repeat * hits / span >= 16;
     const split = random.nextInt(1 + (fast ? Math.floor(policy.maxSplit / 3) : policy.maxSplit));
-    const length = random.nextInt(1 + policy.lengthMax - policy.lengthMin) + policy.lengthMin;
-    const transpose = policy.transpose ? (random.nextInt(3) - 1) * 12 : source.transpose;
     const useVoices = policy.voicesMode !== 'NONE' && random.nextInt(100) < policy.voicesChance;
     const voiceCount = useVoices ? policy.voicesMode === 'FIXED' ? policy.voices
       : random.nextInt(policy.voices - 2) + 3 : source.chordNotesStretch;
-    // Only currently supported static rhythms; MELODY1 awaits the section melody dependency.
-    const rhythms = ['full', 'half', 'sparse', 'tresillo', 'single', 'one-six'] as const;
-    const rhythm = policy.patterns ? (random.nextInt(100) < 30 ? rhythms[random.nextInt(rhythms.length)] : 'full') : source.rhythm;
-    const fill = policy.fills ? weightedChordFill(random.nextInt(100)) : source.chordSpanFill;
-    const maxShift = Math.min(rhythm === 'full' ? 0 : rhythm === 'half' ? 1 : rhythm === 'sparse' ? 3 : 7, hits - 1);
+    const later = orders[index] >= 4 && totalTracks >= 3;
+    const rhythms = ['full', 'half', 'sparse', 'tresillo', 'single', 'one-six', 'melody'] as const;
+    const rhythm = policy.patterns ? (random.nextInt(100) < 30 + (later ? totalTracks * 5 : 0)
+      ? rhythms[random.nextInt(rhythms.length)] : 'full') : source.rhythm;
+    // Java nextInt fails at >=23 tracks; saturate the weighting instead of throwing.
+    const fillIncrease = later ? Math.min(99, (totalTracks - 3) * 5) : 0;
+    const fill = policy.fills ? weightedChordFill(random.nextInt(100 - fillIncrease) + fillIncrease) : source.chordSpanFill;
+    const staticMask = STATIC_RHYTHM_DEFINITIONS[(rhythm ?? 'full') as StaticRhythm]?.mask;
+    const frequency = staticMask ? staticMask.reduce((sum: number, value) => sum + value, 0) / 8 : 0;
+    let baked: ArpeggioSettings = { ...source, rhythm, hitsPerPattern: hits, patternFlip: false, patternShift: 0,
+      pauseChance: random.nextInt(Math.floor(50 * frequency) + 1) };
+    if (policy.patterns) baked = bakeRerollPauses(random, baked);
+    const maxShift = Math.min(baked.rhythm === 'full' || baked.rhythm === 'melody' ? 0
+      : baked.rhythm === 'half' ? 1 : baked.rhythm === 'sparse' ? 3 : 7, hits - 1);
     const shift = policy.patterns ? (random.nextInt(100) < policy.shiftChance && maxShift > 0 ? random.nextInt(maxShift) + 1 : 0) : source.patternShift;
-    const pattern = (['up', 'down', 'up-down', 'random'] as const)[directions.nextInt(4)];
-    const next: ArpeggioSettings = { ...source, pattern, hitsPerPattern: hits, chordSpan: span, patternRepeat: repeat,
+    if (policy.patterns) baked = growRerollPattern(random, { ...baked, patternShift: shift });
+    const length = random.nextInt(1 + policy.lengthMax - policy.lengthMin) + policy.lengthMin;
+    const pattern = chooseArpeggioDirection(random, voiceCount ?? 3, source.arpPatternRotate ?? 0);
+    const next: ArpeggioSettings = { ...source, ...pattern, hitsPerPattern: hits, chordSpan: span, patternRepeat: repeat,
       exceptionChance: split, noteLengthMultiplier: length, velocityMin: policy.velocityMin, velocityMax: policy.velocityMax,
       stretchEnabled: useVoices,
       ...(transpose !== undefined ? { transpose } : {}),
       ...(voiceCount !== undefined ? { chordNotesStretch: voiceCount } : {}),
-      ...(policy.patterns ? { rhythm, patternShift: shift, patternFlip: false, useCustomVelocities: false } : {}),
+      ...(policy.patterns ? { rhythm: baked.rhythm, ...(baked.customPattern ? { customPattern: baked.customPattern } : {}), pauseChance: baked.pauseChance,
+        patternShift: shift, patternFlip: false, useCustomVelocities: false } : {}),
       ...(policy.fills ? { chordSpanFill: fill, fillFlip: false } : {}) };
     return partPatchesEqual(source, next) ? source : next;
   });
+}
+
+/** ArpGUI enum-order weights, with the separate 50% RANDOM branch. CUSTOM is never selected. */
+export function chooseArpeggioDirection(random: JavaRandom, voices: number, rotation: number) {
+  if (!random.nextBoolean()) return { pattern: 'random' as const, arpPatternRotate: rotation };
+  const weight = random.nextInt(100);
+  const index = [60,68,75,83,91,97,100].findIndex(limit => weight < limit);
+  const pattern = (['random','up','down','up-down','down-up','frog-up','frog-down'] as const)[index];
+  return { pattern, arpPatternRotate: index > 0 && random.nextBoolean() ? random.nextInt(Math.min(4, voices)) : rotation };
 }
 
 const VIABLE_RHYTHMS = ['full', 'half', 'sparse', 'tresillo', 'single', 'one-six', 'full'] as const;
@@ -205,7 +231,7 @@ export function chooseMelodyPattern(seed: number): number[] {
 
 function rerollBass(random: JavaRandom, seed: bigint, source: BassSettings, order: number): BassSettings {
   if (order === 1) {
-    random.nextInt(10); // Bass pause is GUI pattern baking, outside the current phrase consumer.
+    random.nextInt(10); // Java stores Pause but BassPhraseGenerator never reads it; no baking/growth call.
     const maximum = 59 + random.nextInt(30), minimum = 40 + random.nextInt(25);
     return { ...source, fillFlip: false, transpose: 0,
     useCustomVelocities: false,
@@ -294,6 +320,8 @@ const COOL_DRUM_PATTERNS = [
 
 function rerollDrums(random: JavaRandom, policy: TrackGenerationPolicies['drums'], source: DrumSettings, swing: number, offset: number,
   totalTracks: number): DrumSettings {
+  if (policy.patterns && random.nextInt(100) < (policy.overrandomizeChance ?? 0))
+    return overrandomizeDrums(random, policy, source, swing, offset);
   const family = source.pitch <= 37 ? 0 : source.pitch <= 41 ? 1 : source.pitch <= 45 ? 2 : source.pitch <= 53 ? 3 : 4;
   const flexible = family === 2 || family === 4;
   const next = { ...source, feedbackCount: 0, swingPercent: flexible ? swing : 50,
@@ -307,24 +335,62 @@ function rerollDrums(random: JavaRandom, policy: TrackGenerationPolicies['drums'
       noteLengthMultiplier: 100, patternSeed: 0, feedbackDuration: 750, feedbackVol: 65,
       velocityMin: source.pitch === 37 ? 50 : flexible ? 40 : family === 3 ? 50 : 65,
       velocityMax: source.pitch === 37 ? 74 : flexible ? 74 : family === 3 ? 84 : 99,
-      pauseChance: rhythm === 'full' ? random.nextInt(flexible ? 21 : 1) : 0,
-      exceptionChance: random.nextInt(family === 0 ? 3 : flexible ? 11 : 1) });
+      pauseChance: rhythm === 'full' ? random.nextInt(flexible ? 21 : 1) : 0 });
     if (rhythm === 'custom') {
       const pattern = COOL_DRUM_PATTERNS[random.nextInt(4)];
       Object.assign(next, { customPattern: [...pattern, ...pattern] });
     }
+    if (policy.fills) Object.assign(next, { chordSpanFill: flexible ? weightedChordFill(random.nextInt(100)) : 'ALL', fillFlip: false });
+    if (flexible && random.nextInt(100) < (policy.melodyChance ?? 30)) {
+      Object.assign(next, { rhythm: 'melody', pauseChance: 20 + random.nextInt(21) });
+    }
+    // Java mutates the shared blueprint maxExc when following Melody. Keep that reduction local.
+    Object.assign(next, { exceptionChance: random.nextInt(family === 0 ? 3 : flexible ? next.rhythm === 'melody' ? 6 : 11 : 1) });
+    Object.assign(next, { ghosts: flexible && next.rhythm !== 'melody'
+      && random.nextInt(100) < (policy.dynamicChance ?? 50) * (totalTracks > 10 ? .8 : 1) });
     if (totalTracks > 10 && next.rhythm === 'full' && random.nextInt(100) < 30) next.rhythm = 'half';
     if (family >= 2 && random.nextInt(100) < policy.shiftChance) Object.assign(next, { patternShift: random.nextInt(shift + 1) });
   }
-  if (policy.fills) Object.assign(next, { chordSpanFill: flexible ? weightedChordFill(random.nextInt(100)) : 'ALL', fillFlip: false });
+  if (policy.fills && !policy.patterns) Object.assign(next, { chordSpanFill: flexible ? weightedChordFill(random.nextInt(100)) : 'ALL', fillFlip: false });
   return policy.patterns ? bakeDrumPattern(random, next) : next;
+}
+
+/** DrumGUI's separate branch retains phrase-time pauses and feedback, without GUI baking. */
+function overrandomizeDrums(random: JavaRandom, policy: TrackGenerationPolicies['drums'], source: DrumSettings,
+  swing: number, offset: number): DrumSettings {
+  const span = random.nextInt(2) + 1;
+  const weight = random.nextInt(100);
+  const rhythms = ['full', 'half', 'sparse', 'tresillo', 'single', 'one-six'] as const;
+  const initialRhythm = rhythms[[35,60,80,90,90,100].findIndex(limit => weight < limit)];
+  let rhythm: RhythmPattern = initialRhythm;
+  let hits = 4;
+  while (random.nextBoolean() && hits < 16) hits *= 2;
+  if (hits / span >= 8) hits /= 2;
+  const multiplier = { '1': 1, '1/2': .5, '3/4': .75, '3/2': 1.5, '2': 2 }[policy.hitsMultiplier];
+  hits = Math.max(1, Math.min(32, Math.floor(hits * multiplier) * 2));
+  const feedbackCount = random.nextBoolean() ? random.nextInt(3) : 0;
+  const minimum = Math.max(1, random.nextInt(30) + 50 - Math.trunc(hits / span));
+  const maximum = minimum + random.nextInt(25); // Java's maximum is exclusive.
+  const pauseChance = rhythm === 'full' ? random.nextInt(40) + 40 : random.nextInt(5);
+  const punchy = [35,36,38,40].includes(source.pitch);
+  const exceptionChance = random.nextInt(punchy ? 3 : 10);
+  if (!punchy && random.nextInt(100) < (policy.melodyChance ?? 30)) rhythm = 'melody';
+  const fill = policy.fills ? weightedChordFill(random.nextInt(100)) : source.chordSpanFill;
+  const ghosts = random.nextInt(100) < (policy.dynamicChance ?? 50);
+  // Java tests the initial static choice before drawing a shift, even after switching to MELODY1.
+  const shift = random.nextInt(100) < policy.shiftChance && initialRhythm !== 'full'
+    ? random.nextInt(7) + 1 : source.patternShift;
+  return { ...source, rhythm, chordSpan: span, hitsPerPattern: hits, feedbackCount, velocityMin: minimum,
+    velocityMax: maximum, pauseChance, exceptionChance, ghosts, ...(shift !== undefined ? { patternShift: shift } : {}), patternFlip: false,
+    useCustomVelocities: false, ...(policy.fills ? { chordSpanFill: fill, fillFlip: false } : {}),
+    ...(!punchy ? { swingPercent: swing, ...(policy.randomOffset ? { offset } : {}) } : {}) };
 }
 
 function rerollMelody(random: JavaRandom, seed: bigint, policy: TrackGenerationPolicies['melody'], source: MelodySettings, order: number, sharedSeed?: number): MelodySettings {
   const speed = random.nextInt(25), maxBlockChange = 3 + random.nextInt(5);
-  // Consume creation draws for the three extended parameters whose musical consumers remain fixed in P1b.
-  random.nextInt(15); random.nextInt(2); random.nextInt(50);
-  const next = { ...source, speed, maxBlockChange, chordSpanFill: SECONDARY_FILLS[random.nextInt(6)], fillFlip: false };
+  const noteExceptionChance = 10 + random.nextInt(15), maxNoteExceptions = random.nextInt(2), leadChordsChance = random.nextInt(50);
+  const next = { ...source, speed, maxBlockChange, noteExceptionChance, maxNoteExceptions, leadChordsChance,
+    chordSpanFill: SECONDARY_FILLS[random.nextInt(6)], fillFlip: false };
   if (order > 1) Object.assign(next, { fillPauses: true, pauseChance: 50 + random.nextInt(40),
     velocityMax: 64 + random.nextInt(20), velocityMin: 40 + random.nextInt(20), transpose: order % 2 === 0 ? 0 : -12,
     noteLengthMultiplier: 70 + random.nextInt(40) });
@@ -343,7 +409,8 @@ export function rerollRoleSettings(seed: bigint, role: ArrangedPart, policy: Tra
   sources: readonly CompositionTrack[], orders: readonly number[], drumContext: DrumRerollContext = {}): CompositionTrack['generatorSettings'][] {
   if (!decodeTrackGenerationPolicy(role, policy) || sources.some(track => track.role !== role) || sources.length !== orders.length)
     throw new RangeError('Invalid role reroll inputs.');
-  if (role === 'arpeggio') return rerollArpeggioSettings(seed, policy as ArpeggioGenerationPolicy, sources.map(track => track.generatorSettings as ArpeggioSettings));
+  if (role === 'arpeggio') return rerollArpeggioSettings(seed, policy as ArpeggioGenerationPolicy,
+    sources.map(track => track.generatorSettings as ArpeggioSettings), orders, drumContext.totalTracks ?? sources.length);
   const random = new JavaRandom(role === 'bass' || role === 'melody' ? BigInt.asIntN(32, seed) : seed);
   const variance = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4241535356415249n));
   const drumPolicy = policy as TrackGenerationPolicies['drums'];

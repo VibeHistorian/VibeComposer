@@ -20,9 +20,6 @@ Preserve old parameter semantics, not old widget positions. The model/control re
 
 | Phase | Java lookup / exact symbols | Destination / remaining work |
 | --- | --- | --- |
-| P6g | [DrumGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/DrumGUI.java): `randomDrumVelocityPatternChance`, Dynamic/Ghosts, Overrandomize and melody-following creation | H/HI policies; Ghosts/MELODY1 musical consumers and drum blueprint pause baking/growth are already delivered. |
-| P6h | [BassGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/BassGUI.java), [ArpGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/ArpGUI.java): `createRandomBassPanels()`, `createRandomArpPanels()` | H/HI: Bass/Arpeggio GUI pause baking/growth, later-track Arp weighting/advanced directions. Audit remaining MELODY1 consumer dependencies, including Bass/Chords, before enabling creation choices. |
-| P6h | [MelodyGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/MelodyGUI.java): `createRandomMelodyPanels()`, `applyGeneratedTargetNotes()` | H/HI: remaining extended creation parameters; supported automatic target/block preparation and all target modes are complete. |
 | P9 | [MelodyPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/MelodyPanel.java): `customDurationValues`, `customDurationChances` → `customDurationNotes`, `customDurationChances` | I/editor: custom duration templates and behavior, distinct from manual-note replacements. |
 | P9 | `melodyUseCustomDurations`, `melodyCustomDurationsRandomWeighting`, `melodyCustomDurationsStrictMode` | I musical controls alongside custom duration editor. |
 | P10 | `melodyRhythmAccents`, `melodyRhythmAccentsMode`, `melodyRhythmAccentsPocket` | I: drum-driven Melody rhythm accents, explicit same-section source/execution order. |
@@ -32,10 +29,12 @@ Preserve old parameter semantics, not old widget positions. The model/control re
 
 ## Remaining general actions and integration audits
 
+P6 creation families are delivered; see [the P6 record](__work_history/p6-creation-record.md). Drum Dynamic/Ghosts, Overrandomize and Follow Melody percentages live in expanded Tracks headers. Arpeggio weighted directions/later-track weighting and static pause baking/growth use the existing policies. Bass creation never invokes baking/growth, and its stored Pause has no production phrase consumer; Bass converts automatic MELODY1 picks to FULL, while Chords does not select MELODY1. These are audited source behaviors, not missing creation dependencies. Melody now rerolls Note exception chance, Max note exceptions and Lead chords chance through their delivered part consumers.
+
 - [PartManagerPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/PartManagerPanel.java) presets/overwrite actions: inspector/header menu; retain independent track identity.
 - `ArpGUI.arpAffectsBpm`: global musical behavior in I, with an explicit tempo policy and matching playback/export.
 - Section instrument changes and section-owned manual phrases require deliberate ownership/playback/export design; current instruments and manual replacements are track-owned. Do not silently reinterpret them during a scoped edit.
-- P7c is final acceptance after the remaining P5/P6 changes, including keyboard/device alternatives and the arrangement zoom/device-scale matrix.
+- P7c is final acceptance after the delivered P5/P6 changes, including keyboard/device alternatives and the arrangement zoom/device-scale matrix.
 
 ## Exclusions and completed behavior guardrails
 
