@@ -102,7 +102,7 @@ function shuffle(values: number[], random: JavaRandom): void {
 }
 
 /** MelodyBlockUtils.blockChangeSequence / smartShuffleMaxDirChange. */
-export function blockChangeSequence(first: number, next: number, seed: number, count: number, maximum: number): number[] {
+export function blockChangeSequence(first: number, next: number, seed: number, count: number, maximum: number, maxDirections = 2): number[] {
   let random = new JavaRandom(seed), change = first - next;
   const result = Array.from({ length: count }, () => {
     const value = random.nextInt(maximum * 2 + 1) - maximum; change += value; return value;
@@ -130,8 +130,14 @@ export function blockChangeSequence(first: number, next: number, seed: number, c
   const zeroCount = firstPositive - maxNegative - 1;
   const negative = result.slice(0, maxNegative + 1), positive = result.slice(firstPositive);
   shuffle(negative, random); shuffle(positive, random);
-  // P1b fixes melodyMaxDirChanges to 2, matching the supported Java configuration.
-  if (random.nextBoolean()) negative.unshift(positive.splice(random.nextInt(positive.length), 1)[0]);
+  if (random.nextBoolean() && maxDirections > 1) {
+    const positiveIndex = random.nextInt(positive.length);
+    if (maxDirections === 2) negative.unshift(positive.splice(positiveIndex, 1)[0]);
+    else {
+      const negativeIndex = random.nextInt(negative.length), temporary = positive[positiveIndex];
+      positive[positiveIndex] = negative[negativeIndex]; negative[negativeIndex] = temporary;
+    }
+  }
   const combined = random.nextBoolean() ? [...negative, ...positive] : [...positive, ...negative];
   for (let index = 0; index < zeroCount; index++) combined.splice(random.nextInt(combined.length), 0, 0);
   return combined;

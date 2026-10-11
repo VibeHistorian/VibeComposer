@@ -218,6 +218,19 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => read().melody.startNoteChance === undefined, 'Start note undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'Start note redo enabled')).click();
       await wait(() => read().melody.startNoteChance === 0, 'Start note redo');
+      const globals = document.querySelector('vc-melody-global-settings');
+      globals.querySelector('[aria-label="Single note exceptions"]').click();
+      await wait(() => read().melodyGlobal?.singleNoteExceptions === true, 'single exceptions commit');
+      globals.querySelector('[aria-label="Fill pauses per chord"]').click();
+      await wait(() => read().melodyGlobal?.fillPausesPerChord === true, 'per chord fill commit');
+      change(globals.querySelector('[aria-label="Max direction changes"]'), '6');
+      await wait(() => read().melodyGlobal?.maxDirectionChanges === 6, 'direction budget commit');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.maxDirectionChanges === undefined, 'global direction undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'global redo enabled')).click();
+      await wait(() => read().melodyGlobal?.maxDirectionChanges === 6, 'global direction redo');
+      result.melodyGlobal = read().tracks.filter(track => track.role === 'melody').every(track =>
+        !Object.hasOwn(track.generatorSettings, 'singleNoteExceptions') && !Object.hasOwn(track.generatorSettings, 'maxDirectionChanges'));
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
@@ -301,6 +314,9 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(moved.result.value.progressionChords[1], beforeDrag.project.progressionChords[0]);
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));
+    await command('Runtime.evaluate', { expression: `document.querySelector('vc-melody-global-settings').scrollIntoView({ block: 'center' })` });
+    const globalScreenshot = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-global-' + width + '.png'), Buffer.from(globalScreenshot.data, 'base64'));
     await command('Runtime.evaluate', { expression: `document.querySelector('.track-group.arpeggio .group-select').click()` });
     await new Promise(done => setTimeout(done, 100));
     await command('Runtime.evaluate', { expression: `document.querySelector('#part-inspector').scrollIntoView({ block: 'start' })` });
@@ -311,7 +327,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

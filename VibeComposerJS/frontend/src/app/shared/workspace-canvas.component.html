@@ -309,6 +309,10 @@
         </section>
 
       }
+      @if (partRole() === 'melody' && !localPartTarget() && partScope()) {
+        <vc-melody-global-settings [values]="project().melodyGlobal ?? {}"
+          (settingsChanged)="projects.updateMelodyGlobal($event)" />
+      }
       @if (settingsTarget().kind === 'section') {
         <section class="inspector-arrangement-add" aria-label="Add arrangement section">
           <p class="eyebrow">ARRANGEMENT</p>

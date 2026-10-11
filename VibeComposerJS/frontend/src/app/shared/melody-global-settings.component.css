@@ -1,0 +1,6 @@
+/* Global melody musical areas */
+:host { display: block; min-width: 0; margin-top: 12px; }
+.eyebrow { color: var(--text-secondary); font: 600 10px var(--font-ui); }
+.global-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.parameter-area { flex: 1 1 130px; min-width: 0; margin: 0; padding: 9px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-section); background: var(--parameter-surface); }
+legend { color: var(--accent-primary); font: 600 10px var(--font-ui); }

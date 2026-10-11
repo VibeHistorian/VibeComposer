@@ -1862,14 +1862,14 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
 });
 
-for (const [name, count] of [['core', 80], ['extended', 192]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
+for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, `fixtures/melody-${name}.java.json`), 'utf8').replace(/^\uFEFF/, ''));
   assert.equal(cases.length, count);
   for (const [caseIndex, sample] of cases.entries()) {
     const progression = Array(sample.chordCount).fill(1);
-    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset);
+    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset, undefined, sample.globalSettings);
     assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
     actual.forEach((note, index) => {
       const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;
@@ -1879,6 +1879,63 @@ for (const [name, count] of [['core', 80], ['extended', 192]]) test(`current blo
       assert.equal(note.velocity, expected[3], `${label} dynamics`);
     });
   }
+});
+
+test('P5e global Melody settings preserve scope ownership, replay, manual notes and exported output', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-melody-1', duplicate = service.duplicateTrack(id);
+  const sectionId = service.project().arrangement[0].id;
+  service.setSectionTrackPresence(0, id, true);
+  service.setSectionTrackPresence(0, duplicate, true);
+  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, {
+    maxNoteExceptions: 4, noteExceptionChance: 100, fillPauses: true, pauseChance: 100,
+  });
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 100 });
+  const before = service.exportProjectJson(), patches = service.project().arrangement;
+  const track = () => service.project().tracks.find(track => track.id === id);
+  const original = phrase.layOutTrackPhrase(service.project(), track());
+  const global = { singleNoteExceptions: true, maxDirectionChanges: 6, fillPausesPerChord: true };
+  assert.equal(service.updateMelodyGlobal(global), 'changed');
+  assert.deepEqual(service.project().arrangement, patches);
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track()), original);
+  let saved = service.exportProjectJson();
+  const notes = phrase.layOutTrackPhrase(service.project(), track());
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const melody = exported.tracks.find(item => item.name === track().name);
+  assert.equal(melody.notes.length, notes.length);
+  melody.notes.forEach((note, index) => {
+    assert.equal(note.midi, notes[index].midi);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / exported.header.ppq - notes[index].durationBeats) < 0.003);
+  });
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.updateMelodyGlobal({ maxDirectionChanges: 7 }), 'invalid');
+  assert.equal(service.canRedo(), true);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.updateMelodyGlobal(global), 'unchanged');
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true);
+  saved = service.exportProjectJson();
+  for (const malformed of [null, [], true, { unknown: true }, { singleNoteExceptions: 1 },
+    { fillPausesPerChord: 'true' }, { maxDirectionChanges: 0 }, { maxDirectionChanges: 2.5 }, { maxDirectionChanges: 7 }]) {
+    const project = JSON.parse(saved); project.melodyGlobal = malformed;
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+    assert.equal(service.exportProjectJson(), saved);
+  }
+  for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
+    { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
+    service.updatePartSettings(scope, { singleNoteExceptions: true });
+    assert.equal(service.exportProjectJson(), saved, 'globals cannot leak into part patches');
+  }
+  const manual = [{ id: 'manual-global', midi: 72, startBeat: 1, durationBeats: 1, velocity: 95 }];
+  service.updateTrackPhrase(id, manual);
+  service.updateMelodyGlobal({ singleNoteExceptions: false, fillPausesPerChord: false });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+  service.clearTrackPhrase(id);
+  const source = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
+  service.updateMelodyGlobal({ fillPausesPerChord: true });
+  assert.notDeepEqual(phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]), source);
 });
 
 test('melody scope resolution reaches parsed MIDI, isolates sections and survives history and restore', () => {

@@ -21,6 +21,8 @@ import { JavaRandom } from '../music/java-random';
 import { ARPEGGIO_PATTERNS } from '../music/arpeggio-pattern';
 import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multiplier';
 import { chooseMelodyTargets } from '../music/melody-targets';
+import { decodeMelodyGlobal } from '../music/melody-global-settings';
+import type { MelodyGlobalSettings } from './project.model';
 import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
 
@@ -52,6 +54,16 @@ export class ProjectService {
   toggleCompactHistory(): void {
     this.compactHistoryEnabled.set(!this.compactHistoryEnabled());
     this.lastControlEdit = null;
+  }
+
+  updateMelodyGlobal(patch: Partial<MelodyGlobalSettings>): PartWorkflowResult {
+    const decoded = decodeMelodyGlobal(patch);
+    if (!decoded) return 'invalid';
+    const current = this.state(), melodyGlobal = { ...current.melodyGlobal, ...decoded };
+    if (Object.entries(decoded).every(([key, value]) =>
+      current.melodyGlobal?.[key as keyof MelodyGlobalSettings] === value)) return 'unchanged';
+    this.commit({ ...current, melodyGlobal });
+    return 'changed';
   }
 
   /** Only single-control edits can join a burst; scope and field identify the control. */
@@ -1052,7 +1064,8 @@ export class ProjectService {
       && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7)
       && validProgressionChords(project.progressionChords, project.progression.length);
     if (!validBase || !validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
-      || !validInstrumentPolicies(project.instrumentGenerationPolicies)) {
+      || !validInstrumentPolicies(project.instrumentGenerationPolicies)
+      || (project.melodyGlobal !== undefined && !decodeMelodyGlobal(project.melodyGlobal))) {
       return undefined;
     }
 
@@ -1081,6 +1094,7 @@ export class ProjectService {
       progression: [...project.progression!],
       ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
       melody,
+      ...(project.melodyGlobal !== undefined ? { melodyGlobal: decodeMelodyGlobal(project.melodyGlobal)! } : {}),
       bass,
       chords,
       arpeggio,

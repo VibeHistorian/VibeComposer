@@ -12,6 +12,7 @@ import java.util.*;
 /** Complete supported phrases through production block skeleton, expansion and phrase builder. */
 public class MelodyExtendedFixture {
     public static void main(String[] args) {
+        boolean globals = args.length > 0 && args[0].equals("globals");
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
         StringBuilder json = new StringBuilder("[\n");
@@ -49,10 +50,10 @@ public class MelodyExtendedFixture {
                 config.setMelodyParts(Collections.singletonList(part));
                 config.setMelodyLegacyMode(false); config.setMelodyNewBlocksChance(100);
                 config.setMelodyBlockTargetMode(2); config.setMelodyPatternEffect(2);
-                config.setMelodyMaxDirChanges(2); config.setMelodyEmphasizeKey(false);
-                config.setMelodySingleNoteExceptions(false); config.setMelodyArpySurprises(false); config.setMelodyUseCustomDurations(false);
+                config.setMelodyMaxDirChanges(globals ? 1 + sample % 6 : 2); config.setMelodyEmphasizeKey(false);
+                config.setMelodySingleNoteExceptions(globals && sample % 2 == 0); config.setMelodyArpySurprises(false); config.setMelodyUseCustomDurations(false);
                 config.setMelodyTonicNoteTarget(0); config.setMelodyChordNoteTarget(0); config.setMelodyModeNoteTarget(0);
-                config.setMelodyReplaceAvoidNotes(0); config.setMelodyFillPausesPerChord(false);
+                config.setMelodyReplaceAvoidNotes(0); config.setMelodyFillPausesPerChord(globals && sample % 4 < 2);
                 config.setMelodyBasicChordsOnly(false); config.setScaleMidiVelocityInArrangement(false);
                 config.setScaleMode(sample % 2 == 0 ? MidiUtils.ScaleMode.IONIAN : MidiUtils.ScaleMode.AEOLIAN);
                 Section section = new Section("VERSE1", 1, 100, 100, 100, 100, 100);
@@ -69,7 +70,10 @@ public class MelodyExtendedFixture {
                         section, Collections.emptyList(), false, Collections.emptyList(), 0, 0,
                         transpositions[seedIndex], null);
                 if (!first) json.append(",\n"); first = false;
-                json.append("{\"seed\":\"").append(seeds[seedIndex]).append("\",\"key\":\"").append(keys[seedIndex])
+                json.append("{\"globalSettings\":{\"maxDirectionChanges\":").append(config.getMelodyMaxDirChanges())
+                        .append(",\"singleNoteExceptions\":").append(config.isMelodySingleNoteExceptions())
+                        .append(",\"fillPausesPerChord\":").append(config.isMelodyFillPausesPerChord())
+                        .append("},\"seed\":\"").append(seeds[seedIndex]).append("\",\"key\":\"").append(keys[seedIndex])
                         .append("\",\"scale\":\"").append(sample % 2 == 0 ? "major" : "natural-minor")
                         .append("\",\"chordCount\":").append(chordCount).append(",\"notesSeedOffset\":").append(notesSeedOffset)
                         .append(",\"settings\":{\"algorithm\":\"block\",\"speed\":").append(part.getSpeed())

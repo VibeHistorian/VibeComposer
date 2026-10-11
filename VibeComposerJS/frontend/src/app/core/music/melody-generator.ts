@@ -1,4 +1,5 @@
-import type { MelodySettings, PhraseNote } from '../project/project.model';
+import type { MelodySettings, MelodyGlobalSettings, PhraseNote } from '../project/project.model';
+import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
 import { getPitchClass, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { swingNotes } from './phrase-swing';
@@ -16,8 +17,8 @@ interface Pattern { readonly changes: readonly number[]; readonly blocks: readon
 
 /** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
 export const MELODY_CORE_INPUTS = Object.freeze({ newBlocksChance: 100, blockTargetMode: 2,
-  patternEffect: 2, maxDirectionChanges: 2, emphasizeKey: false, singleNoteExceptions: false,
-  chordNoteTarget: 0, tonicNoteTarget: 0, modeNoteTarget: 0, fillPausesPerChord: false });
+  patternEffect: 2, emphasizeKey: false,
+  chordNoteTarget: 0, tonicNoteTarget: 0, modeNoteTarget: 0 });
 
 function repeated(values: readonly number[], count: number): number[] {
   const result = [...values];
@@ -65,7 +66,10 @@ function rhythmicImportance(notes: Note[]): Note[] {
  */
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
   progression: readonly number[], settings: MelodySettings, notesSeedOffset = 0,
-  publishPattern?: (notes: readonly Pick<PhraseNote, 'midi' | 'startBeat'>[]) => void): PhraseNote[] {
+  publishPattern?: (notes: readonly Pick<PhraseNote, 'midi' | 'startBeat'>[]) => void,
+  globalSettings: MelodyGlobalSettings = {}): PhraseNote[] {
+  if (!decodeMelodyGlobal(globalSettings)) throw new RangeError('Invalid global Melody inputs.');
+  const globals = { ...DEFAULT_MELODY_GLOBAL, ...globalSettings };
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) throw new RangeError('Use bigint for 64-bit melody seeds.');
   const { algorithm, ...fields } = settings;
   if (algorithm !== 'block' || !decodePartPatch('melody', fields) || !Number.isInteger(notesSeedOffset)
@@ -101,10 +105,10 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       rhythms.set(offset, durations);
     }
     const first = starting(chord), next = starting(chord + 1), existing = cache.get(offset);
-    let changes = existing?.changes ?? blockChangeSequence(first, next, blockSeed, durations.length, maxChange);
+    let changes = existing?.changes ?? blockChangeSequence(first, next, blockSeed, durations.length, maxChange, globals.maxDirectionChanges);
     // Java stores the sequence's direction count alongside its unadjusted changes.
     // Flex changes the last target without recomputing this remaining budget.
-    const remainingDirections = 2 - directionChanges(changes);
+    const remainingDirections = globals.maxDirectionChanges - directionChanges(changes);
     const flexible = (settings.patternFlexible ?? true) && changes.length > 1;
     if (flexible && existing) {
       const adjusted = [...changes];
@@ -132,8 +136,10 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       if (index > 0) adjustment += changes[index - 1] * (originalOffset < 0 ? -1 : 1);
       block.notes.forEach((note, noteIndex) => {
         let pitch = degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment);
-        if (noteIndex > 0 && exceptions > 0 && exceptionRandom.nextInt(100) < (settings.noteExceptionChance ?? 0)) {
-          pitch += (exceptionRandom.nextBoolean() ? 1 : -1) * MAJOR[exceptionRandom.nextInt(4)];
+        const exceptionIndexValid = globals.singleNoteExceptions
+          ? noteIndex === block.notes.length - 1 && index === blocks.length - 1 : noteIndex > 0;
+        if (exceptionIndexValid && exceptions > 0 && exceptionRandom.nextInt(100) < (settings.noteExceptionChance ?? 0)) {
+          pitch += (exceptionRandom.nextBoolean() ? 1 : -1) * MAJOR[exceptionRandom.nextInt(globals.singleNoteExceptions ? 7 : 4)];
           const semitone = pitch % 12;
           const closest = MAJOR.reduce((best, value) => Math.abs(semitone - value) < Math.abs(semitone - best) ? value : best, MAJOR[0]);
           pitch += closest - semitone;
@@ -157,16 +163,16 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       if (index < paused) {
         // jMusic overloads equals(Note): pitch + duration, ignoring velocity/rhythm.
         // Identical split notes can therefore share the protected first-note status.
-        if (!(settings.fillPauses && chord === 0 && note.midi === notes[0].midi
+        if (!(settings.fillPauses && (globals.fillPausesPerChord || chord === 0) && note.midi === notes[0].midi
           && note.duration === notes[0].duration)) note.midi = -1;
       } else if (!fill[chord]) note.midi = -1;
     });
   });
   if (settings.fillPauses) {
     let previous = all[0];
-    byChord.forEach((notes, chord) => notes.forEach((note) => {
+    byChord.forEach((notes, chord) => notes.forEach((note, index) => {
       if (note === all[0]) return;
-      if (note.midi < 0) {
+      if (note.midi < 0 && !(index === 0 && globals.fillPausesPerChord)) {
         previous.rhythm += note.rhythm;
         if (fill[chord]) previous.duration += note.rhythm;
         removed.add(note);
@@ -176,7 +182,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   byChord.forEach((notes, chord) => {
     const remaining = notes.filter((note) => !removed.has(note)), first = remaining[0];
     if (!first) return;
-    if (fill[chord] && first.midi >= 0) first.midi = firstPitches[chord];
+    if (fill[chord] && (first.midi >= 0 || globals.fillPausesPerChord)) first.midi = firstPitches[chord];
     if (remaining.length >= 3 && first.midi >= 0 && first.duration < 1.1
       && remaining[1].midi !== first.midi && remaining[2].midi !== first.midi) first.duration *= 1 + accent / 200;
   });

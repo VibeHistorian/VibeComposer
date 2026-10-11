@@ -88,6 +88,13 @@ export interface MelodySettings extends CommonPartSettings {
   readonly patternSeed?: number;
 }
 
+/** GUIConfig musical inputs shared by every Melody track and section. */
+export interface MelodyGlobalSettings {
+  readonly singleNoteExceptions?: boolean;
+  readonly maxDirectionChanges?: number;
+  readonly fillPausesPerChord?: boolean;
+}
+
 export interface BassSettings extends CommonPartSettings {
   readonly rhythm: BassRhythm;
   /** Omission preserves the translated subdivision path; Java's part default is EXPAND. */
@@ -280,6 +287,7 @@ export type CompositionTrack =
   | (TrackBase & { readonly role: 'drums'; readonly generatorSettings: DrumSettings });
 
 export interface CompositionProject {
+  readonly melodyGlobal?: MelodyGlobalSettings;
   readonly schemaVersion: 12;
   readonly name: string;
   readonly key: string;

@@ -1,0 +1,23 @@
+<section aria-label="Global Melody musical settings">
+  <p class="eyebrow">GLOBAL MELODY · ALL TRACKS AND SECTIONS</p>
+  <div class="global-controls">
+    <fieldset class="parameter-area" data-control-category="pitch">
+      <legend>Pitch</legend>
+      <vc-compact-toggle label="Single note exceptions" [active]="values().singleNoteExceptions ?? false"
+        description="Apply pitch exceptions only to the last note of the last block in each chord, using the full major-scale interval range. Requires Max exceptions and Note exceptions."
+        (toggled)="settingsChanged.emit({ singleNoteExceptions: !(values().singleNoteExceptions ?? false) })" />
+    </fieldset>
+    <fieldset class="parameter-area" data-control-category="shape">
+      <legend>Shape</legend>
+      <vc-compact-knob label="Max direction changes" [value]="values().maxDirectionChanges ?? 2" [minimum]="1" [maximum]="6" unit=""
+        description="Direction-change budget for block targets and generated shapes. Reused patterns retain Java's cached budget before Flex changes their target."
+        (valueCommit)="settingsChanged.emit({ maxDirectionChanges: $event })" />
+    </fieldset>
+    <fieldset class="parameter-area" data-control-category="rhythm">
+      <legend>Rhythm</legend>
+      <vc-compact-toggle label="Fill pauses per chord" [active]="values().fillPausesPerChord ?? false"
+        description="With Fill pauses enabled, protect each chord's first note and keep rest filling within its chord. Repair included chord starts even if paused."
+        (toggled)="settingsChanged.emit({ fillPausesPerChord: !(values().fillPausesPerChord ?? false) })" />
+    </fieldset>
+  </div>
+</section>
