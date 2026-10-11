@@ -38,6 +38,7 @@ export class PartSettingsEditorComponent {
   readonly overriddenKeys = input<readonly string[]>([]);
   readonly local = input(false);
   readonly advanced = input(true);
+  readonly showGroupTitles = input(true);
   readonly melodyHits = input(16);
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
   readonly inheritRequested = output<string>();
