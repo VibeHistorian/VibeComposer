@@ -1,7 +1,7 @@
 <div class="chordlet-row" aria-label="Primary chords">
   <div class="chordlet-list">
     @for (chord of chords(); track $index; let index = $index) {
-      <div class="chordlet" [attr.data-chord-index]="index" [style.--chord-hue]="chord.root * 30"
+      <div class="chordlet" [attr.data-chord-index]="index" [style.--chord-hue]="chordHue(chord)"
         [class.dragging]="dragging() === index" [class.drop-target]="dropIndex() === index">
         <button type="button" class="chordlet-label" [attr.aria-label]="'Chord ' + (index + 1) + ': ' + symbol(chord)" [title]="help"
           (pointerdown)="start(index, $event)" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()"
@@ -23,11 +23,15 @@
     <div>
       @if (popup.kind === 'root') {
         @for (root of roots; track root; let pitch = $index) {
-          <button type="button" role="menuitemradio" [attr.aria-checked]="menuSelected(pitch)" (click)="choose(pitch)">{{ root }}</button>
+          <button type="button" class="root-choice" role="menuitemradio" [style.--chord-hue]="rootHue(pitch)"
+            [attr.aria-checked]="menuSelected(pitch)" (click)="choose(pitch)">{{ root }}</button>
         }
       } @else {
-        @for (spice of spices; track spice) {
-          <button type="button" role="menuitemradio" [attr.aria-checked]="menuSelected(spice)" (click)="choose(spice)">{{ spice || 'Major' }}</button>
+        @for (choice of spiceChoices(); track choice.spice) {
+          <button type="button" class="spice-choice" role="menuitemradio" [style.--chord-hue]="choice.hue"
+            [style.--spice-highlight]="choice.highlight" [style.--spice-border]="choice.border"
+            [attr.data-key-overlap]="choice.overlap.ratio" [title]="choice.title"
+            [attr.aria-checked]="menuSelected(choice.spice)" (click)="choose(choice.spice)">{{ choice.spice || 'Major' }}</button>
         }
       }
     </div>

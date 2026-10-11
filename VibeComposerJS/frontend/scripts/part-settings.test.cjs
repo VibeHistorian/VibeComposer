@@ -879,6 +879,24 @@ test('Chordlet roots, spice and inversions match all 2244 production Java voicin
   assert.equal(harmony.effectiveKey('B', -24), 'B');
 });
 
+test('Chordlet colors follow relative roots and spice overlap uses the actual notes in the active scale', () => {
+  const { load } = fixture(), harmony = load('core/music/harmony.ts');
+  const chord = (root, spice, inversion = 0) => ({ root, spice, inversion });
+  assert.equal(harmony.chordRootHue(7, 'C'), 210);
+  assert.equal(harmony.chordRootHue(9, 'D'), 210);
+  assert.equal(harmony.chordRootHue(1, 'F♯'), 210);
+  assert.deepEqual(harmony.chordKeyOverlap(chord(0, 'maj7'), 'C', 'major'), { matching: 4, total: 4, ratio: 1 });
+  assert.deepEqual(harmony.chordKeyOverlap(chord(0, '7'), 'C', 'major'), { matching: 3, total: 4, ratio: .75 });
+  assert.deepEqual(harmony.chordKeyOverlap(chord(0, 'm'), 'C', 'major'), { matching: 2, total: 3, ratio: 2/3 });
+  assert.deepEqual(harmony.chordKeyOverlap(chord(6, ''), 'C', 'major'), { matching: 0, total: 3, ratio: 0 });
+  assert.deepEqual(harmony.chordKeyOverlap(chord(4, 'm', -5), 'A', 'natural-minor'), { matching: 3, total: 3, ratio: 1 });
+  assert.deepEqual(harmony.chordKeyOverlap(chord(4, 'maj7'), 'A', 'natural-minor'), { matching: 2, total: 4, ratio: .5 });
+  for (const spice of harmony.CHORD_SPICES) {
+    const original = harmony.chordKeyOverlap(chord(4, spice), 'A', 'natural-minor');
+    assert.deepEqual(harmony.chordKeyOverlap(chord(11, spice, 5), 'E', 'natural-minor'), original, spice);
+  }
+});
+
 test('Chordlet edits follow reorder/add/remove through history, persistence and pitched MIDI', () => {
   const { service, phrase, midi, load } = fixture();
   service.project().tracks.forEach(track => service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, track.id, true)));

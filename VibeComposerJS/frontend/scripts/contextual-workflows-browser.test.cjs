@@ -66,10 +66,17 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       const rootMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord root"]'), 'root menu');
       result.rootMenuFits = rootMenu.getBoundingClientRect().left >= 0 && rootMenu.getBoundingClientRect().right <= innerWidth
         && rootMenu.getBoundingClientRect().top >= 0 && rootMenu.getBoundingClientRect().bottom <= innerHeight;
+      const rootButtons=[...rootMenu.querySelectorAll('button')];
+      result.rootColors=new Set(rootButtons.map(button=>getComputedStyle(button).backgroundColor)).size===12
+        && rootButtons[0].style.getPropertyValue('--chord-hue')===chordlet().parentElement.style.getPropertyValue('--chord-hue');
       [...rootMenu.querySelectorAll('button')].find(button => button.textContent === 'F♯').click();
       await wait(() => read().progressionChords?.[0]?.root === 6, 'root selection');
       chordlet().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 1 }));
       const spiceMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord spice"]'), 'spice menu');
+      const spiceButton=name=>[...spiceMenu.querySelectorAll('button')].find(button=>button.textContent===name);
+      result.spiceColors=Number(spiceButton('Major').dataset.keyOverlap)===0
+        && Number(spiceButton('dim').dataset.keyOverlap)===2/3
+        && getComputedStyle(spiceButton('Major')).backgroundColor!==getComputedStyle(spiceButton('dim')).backgroundColor;
       await wait(() => spiceMenu.contains(document.activeElement), 'spice menu keyboard focus');
       const beforeArrow = document.activeElement;
       beforeArrow.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'ArrowRight' }));
@@ -580,10 +587,37 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       const menu=await wait(()=>editor.querySelector('[aria-label="Chord root"]'),'section chord menu');
       [...menu.querySelectorAll('button')].find(button=>button.textContent==='D').click();
       await wait(()=>section().customChords?.[0]?.root===2,'section chord edit');
+      await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('D'),'section chord render');
       editor.querySelector('.chordlet-label').dispatchEvent(new WheelEvent('wheel',{deltaY:-1,bubbles:true,cancelable:true}));
       await wait(()=>section().customChords?.[0]?.inversion===1,'section inversion');
+      change(editor.querySelector('select'),'G');
+      change(editor.querySelectorAll('select')[1],'natural-minor');
+      change(editor.querySelector('input[min="-24"]'),'2');
+      await wait(()=>section().context?.key==='G'&&section().context?.scale==='natural-minor'&&section().context?.keyChange===2,'section key context');
+      await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('E'),'section key render');
+      editor.querySelector('.chordlet-label').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
+      const sectionRoots=await wait(()=>editor.querySelector('[aria-label="Chord root"]'),'section root colors');
+      const tonic=[...sectionRoots.querySelectorAll('button')].find(button=>button.textContent==='A');
+      const sectionRootColors=tonic.style.getPropertyValue('--chord-hue')==='0'
+        && editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='210';
+      editor.querySelector('.chordlet-label').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1}));
+      const sectionSpices=await wait(()=>editor.querySelector('[aria-label="Chord spice"]'),'section spice colors');
+      const spiceChoice=name=>[...sectionSpices.querySelectorAll('button')].find(button=>button.textContent===name);
+      const sectionSpiceColors=Number(spiceChoice('m').dataset.keyOverlap)===1
+        && Number(spiceChoice('maj7').dataset.keyOverlap)===.5 && spiceChoice('m').title.includes('A minor');
+      sectionSpices.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+      change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'7');
+      await wait(()=>read().transposeSemitones===7,'global transpose with section key');
+      await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('B'),'section transpose render');
+      editor.querySelector('.chordlet-label').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1}));
+      const transposed=await wait(()=>editor.querySelector('[aria-label="Chord spice"] button[title*="E minor"]'),'transposed section palette');
+      const transposeColors=editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='210'
+        && Number([...editor.querySelectorAll('.spice-choice')].find(button=>button.textContent==='m').dataset.keyOverlap)===1;
+      transposed.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+      change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'0');
+      await wait(()=>read().transposeSemitones===0,'restore global transpose');
       editor.scrollIntoView({block:'center'});
-      return {tempo:section().context.tempoBpm===87, durations:section().customDurations[0]===2,
+      return {sectionRootColors,sectionSpiceColors,transposeColors,tempo:section().context.tempoBpm===87, durations:section().customDurations[0]===2,
         primary:primary===JSON.stringify([read().progression,read().progressionChords]), tracks:tracks===JSON.stringify(read().tracks),
         others:other===JSON.stringify(read().arrangement.filter(section=>section.id!==id)),
         fits:editor.getBoundingClientRect().left>=0&&editor.getBoundingClientRect().right<=innerWidth&&document.documentElement.scrollWidth<=innerWidth+1
@@ -593,6 +627,17 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     for(const [key,value] of Object.entries(sectionResult.result.value)) assert.equal(value,true,'P5f '+key);
     const sectionScreenshot=await command('Page.captureScreenshot',{format:'png'});
     fs.writeFileSync(path.resolve(__dirname,'../.angular/contextual-section-'+width+'.png'),Buffer.from(sectionScreenshot.data,'base64'));
+    for (const kind of ['root','spice']) {
+      await command('Runtime.evaluate',{awaitPromise:true,expression: `(async()=>{
+        const chord=document.querySelector('vc-section-context-editor .chordlet-label');
+        chord.scrollIntoView({block:'center'});
+        chord.dispatchEvent(${kind === 'root' ? "new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2})" : "new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1})"});
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      })()`});
+      const menuScreenshot=await command('Page.captureScreenshot',{format:'png'});
+      fs.writeFileSync(path.resolve(__dirname,'../.angular/contextual-chord-'+kind+'-'+width+'.png'),Buffer.from(menuScreenshot.data,'base64'));
+      await command('Runtime.evaluate',{expression:"document.querySelector('vc-section-context-editor .chordlet-menu').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))"});
+    }
     const placementResult = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
       const wait=async(read,label)=>{for(let i=0;i<200;i++){const value=read();if(value)return value;await new Promise(r=>setTimeout(r,20));}throw new Error(label);};
       const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
@@ -634,7 +679,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
-      'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
+      'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','rootColors','spiceColors','menuKeyboard','chordletGestures',
       'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();

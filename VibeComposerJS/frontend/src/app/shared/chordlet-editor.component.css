@@ -15,4 +15,8 @@ button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2
 .chordlet-menu > span { display: flex; justify-content: space-between; margin-bottom: 7px; color: var(--text-muted); font: 10px var(--font-mono); }
 .chordlet-menu > div { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .chordlet-menu button { min-height: 28px; padding: 3px; border: 1px solid var(--border-subtle); border-radius: 4px; background: var(--surface-input); color: var(--text-primary); font: 10px var(--font-mono); cursor: pointer; }
-.chordlet-menu button[aria-checked="true"], .chordlet-menu button:hover { border-color: var(--accent-primary); background: var(--surface-accent); }
+.chordlet-menu .root-choice { border-color: hsl(var(--chord-hue) 45% 38%); background: hsl(var(--chord-hue) 30% 18%); color: hsl(var(--chord-hue) 70% 84%); }
+.chordlet-menu .spice-choice { border-color: color-mix(in srgb, hsl(var(--chord-hue) 65% 60%) var(--spice-border), var(--border-subtle)); background: color-mix(in srgb, hsl(var(--chord-hue) 60% 42%) var(--spice-highlight), var(--surface-input)); }
+.chordlet-menu button[aria-checked="true"] { outline: 1px solid var(--text-primary); outline-offset: 1px; }
+.chordlet-menu button:hover { border-color: var(--text-primary); filter: brightness(1.2); }
+.chordlet-menu button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { ProjectService } from '../core/project/project.service';
-import { CHORD_SPICES, KEYS, progressionChords, type ProgressionChord } from '../core/music/harmony';
+import { CHORD_SPICES, KEYS, chordKeyOverlap, chordRootHue, effectiveKey, progressionChords, type ProgressionChord } from '../core/music/harmony';
 import { generateDiatonicProgression } from '../core/music/progression-generator';
 import type { ArrangementSection } from '../core/project/project.model';
 import { baseGenerationHarmony } from '../core/music/project-harmony';
@@ -23,12 +23,33 @@ export class ChordletEditorComponent {
   readonly roots = KEYS;
   readonly spices = CHORD_SPICES;
   readonly menu = signal<{ index: number; kind: 'root' | 'spice'; x: number; y: number; project: unknown; sectionId?: string } | null>(null);
+  readonly colorContext = computed(() => {
+    const project = sectionProject(this.project(), this.section());
+    return { key: effectiveKey(project.key, this.displayTranspose()), scale: project.scale };
+  });
+  readonly spiceChoices = computed(() => {
+    const menu = this.menu(), chord = menu && this.chords()[menu.index];
+    if (!chord) return [];
+    const context = this.colorContext();
+    return this.spices.map(spice => {
+      const candidate = { ...chord, root: this.displayedPitch(chord.root), spice };
+      const overlap = chordKeyOverlap(candidate, context.key, context.scale);
+      return { spice, hue: chordRootHue(candidate.root, context.key), overlap,
+        highlight: `${Math.round(6 + 56 * overlap.ratio ** 3)}%`,
+        border: `${Math.round(20 + 60 * overlap.ratio ** 2)}%`,
+        title: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${context.scale === 'major' ? 'major' : 'minor'}` };
+    });
+  });
   readonly dragging = signal<number | null>(null);
   readonly dropIndex = signal<number | null>(null);
   private drag: { pointerId: number; x: number; y: number; index: number; project: unknown; sectionId?: string } | null = null;
   readonly help = 'Drag to move · Right-click: root · Middle-click: spice · Scroll: inversion · Shift+scroll: root · Ctrl+scroll: spice · Double-click: base chord. Keyboard: Enter root, Shift+Enter spice, arrows adjust, Alt+arrows move, Delete remove.';
 
-  displayedRoot(root: number): string { return KEYS[((root + (this.project().transposeSemitones ?? 0) + (this.section()?.context?.keyChange ?? 0)) % 12 + 12) % 12]; }
+  private displayTranspose(): number { return (this.project().transposeSemitones ?? 0) + (this.section()?.context?.keyChange ?? 0); }
+  private displayedPitch(root: number): number { return ((root + this.displayTranspose()) % 12 + 12) % 12; }
+  displayedRoot(root: number): string { return KEYS[this.displayedPitch(root)]; }
+  rootHue(pitch: number): number { return chordRootHue(pitch, this.colorContext().key); }
+  chordHue(chord: ProgressionChord): number { return this.rootHue(this.displayedPitch(chord.root)); }
   symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root) + chord.spice + (chord.inversion ? '.' + chord.inversion : ''); }
   add(): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
   remove(index: number): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }

@@ -43,6 +43,19 @@ export function effectiveKey(key: string, transpose: number): string {
   return KEYS[((getPitchClass(key) ?? 0) + transpose % 12 + 12) % 12];
 }
 
+/** Keep root colors tied to their position in the current key across transposition. */
+export function chordRootHue(root: number, key: string): number {
+  return ((root - (getPitchClass(key) ?? 0)) % 12 + 12) % 12 * 30;
+}
+
+/** Use the actual voicing intervals, counting each pitch class once. */
+export function chordKeyOverlap(chord: ProgressionChord, key: string, scale: ScaleMode): { matching: number; total: number; ratio: number } {
+  const scaleNotes = new Set(getDiatonicChords(key, scale).map(chord => getPitchClass(chord.root)));
+  const notes = new Set(chordPitches(chord, 0).map(note => (note % 12 + 12) % 12));
+  const matching = [...notes].filter(note => scaleNotes.has(note)).length;
+  return { matching, total: notes.size, ratio: matching / notes.size };
+}
+
 export interface DiatonicChord {
   degree: number;
   romanNumeral: string;
