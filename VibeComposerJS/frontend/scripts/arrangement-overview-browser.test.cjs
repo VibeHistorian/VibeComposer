@@ -77,7 +77,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const signal = value => Object.assign(() => value, { set: next => { value = next; } });
     const input = value => signal(value); input.required = () => signal(undefined);
     const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-      computed: read => read, effect: () => {}, input, output: () => ({ emit() {} }),
+      computed: read => read, effect: () => {}, input, signal, output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
       '../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),

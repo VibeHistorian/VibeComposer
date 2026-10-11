@@ -1,7 +1,7 @@
 import { sectionDurationBeats, sectionChordDurations } from '../core/music/section-context';
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, input, output, viewChild } from '@angular/core';
-import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack } from '../core/project/project.model';
-import { ARRANGED_PARTS } from '../core/project/project.model';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, input, output, signal, viewChild } from '@angular/core';
+import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack, SectionType } from '../core/project/project.model';
+import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { layOutTrackPhrase } from '../core/music/phrase';
 import type { SettingsTarget } from './workspace-ui.service';
@@ -54,6 +54,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './arrangement-overview.component.html',
   styleUrl: './arrangement-overview.component.css',
+  host: { '(document:click)': 'closePickerOutside($event)', '(document:keydown.escape)': 'closeSectionPicker()' },
 })
 export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly project = input.required<CompositionProject>();
@@ -64,6 +65,38 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly playheadPercent = input(0);
   readonly loopRange = input<PlaybackRange | null>(null);
   readonly mixerRequested = output<void>();
+  readonly sectionAddRequested = output<SectionType>();
+  readonly sectionTypes = SECTION_TYPES;
+  readonly sectionPicker = signal<{ x: number; y: number } | null>(null);
+  readonly canAddSection = computed(() => this.project().arrangement.length < 32
+    && this.project().arrangement.reduce((sum, section) => sum + section.measures, 0) + 4 <= 128);
+
+  toggleSectionPicker(event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.sectionPicker()) { this.closeSectionPicker(); return; }
+    const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.sectionPicker.set({ x: Math.max(8, Math.min(innerWidth - 278, bounds.right - 270)),
+      y: Math.max(8, Math.min(innerHeight - 220, bounds.bottom + 6)) });
+    setTimeout(() => document.querySelector<HTMLElement>('.section-picker button')?.focus(), 0);
+  }
+  closeSectionPicker(): void { this.sectionPicker.set(null); }
+  closePickerOutside(event: Event): void {
+    if (!(event.target as HTMLElement).closest('.section-picker, .add-section-button')) this.closeSectionPicker();
+  }
+  chooseSection(type: SectionType): void {
+    if (!this.canAddSection()) return;
+    this.closeSectionPicker(); this.sectionAddRequested.emit(type);
+    document.querySelector<HTMLElement>('.add-section-button')?.focus();
+  }
+  sectionPickerKey(event: KeyboardEvent): void {
+    const buttons = [...(event.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>('button')];
+    const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); this.closeSectionPicker(); document.querySelector<HTMLElement>('.add-section-button')?.focus(); return; }
+    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowDown' ? 3 : event.key === 'ArrowUp' ? -3 : 0;
+    if (!step && !['Home','End'].includes(event.key)) return;
+    event.preventDefault();
+    buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + step + buttons.length) % buttons.length]?.focus();
+  }
   readonly randomizeRequested = output<void>();
   readonly sectionSelected = output<{ readonly sectionId: string; readonly trackId: string;
     readonly ctrlKey?: boolean; readonly metaKey?: boolean; readonly shiftKey?: boolean }>();

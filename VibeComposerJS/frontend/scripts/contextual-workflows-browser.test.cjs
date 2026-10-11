@@ -589,6 +589,43 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     for(const [key,value] of Object.entries(sectionResult.result.value)) assert.equal(value,true,'P5f '+key);
     const sectionScreenshot=await command('Page.captureScreenshot',{format:'png'});
     fs.writeFileSync(path.resolve(__dirname,'../.angular/contextual-section-'+width+'.png'),Buffer.from(sectionScreenshot.data,'base64'));
+    const placementResult = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
+      const wait=async(read,label)=>{for(let i=0;i<200;i++){const value=read();if(value)return value;await new Promise(r=>setTimeout(r,20));}throw new Error(label);};
+      const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+      const columns=[...document.querySelectorAll('.section-presence-role')];
+      const roles=['melody','bass','chords','arpeggio','drums'];
+      const grouped=columns.length===5 && columns.every((column,i)=>column.dataset.controlRole===roles[i]
+        && column.querySelectorAll('vc-compact-toggle').length===read().tracks.filter(track=>track.role===roles[i]).length);
+      const compact=columns.every(column=>Math.abs(column.getBoundingClientRect().top-columns[0].getBoundingClientRect().top)<1)
+        && document.querySelector('.section-presence-columns').getBoundingClientRect().height<230;
+      const removed=!document.querySelector('.inspector-arrangement-add');
+      const add=document.querySelector('[aria-label="Add arrangement section"]');
+      add.scrollIntoView({block:'center'}); add.click();
+      const menu=await wait(()=>document.querySelector('[aria-label="Section choices"]'),'section picker');
+      await wait(()=>menu.contains(document.activeElement),'picker focus');
+      const bounds=menu.getBoundingClientRect();
+      const fits=bounds.left>=0 && bounds.right<=innerWidth && bounds.top>=0 && bounds.bottom<=innerHeight;
+      const choices=menu.querySelectorAll('button').length===14;
+      menu.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
+      const keyboard=document.activeElement===menu.querySelectorAll('button')[1];
+      menu.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      await wait(()=>!document.querySelector('.section-picker'),'picker escape');
+      const focusReturned=document.activeElement===add;
+      const before=read().arrangement.length;
+      add.click();
+      const reopened=await wait(()=>document.querySelector('.section-picker'),'picker reopened');
+      [...reopened.querySelectorAll('button')].find(button=>button.textContent.trim()==='OUTRO').click();
+      await wait(()=>read().arrangement.length===before+1,'section added');
+      const added=read().arrangement.some(section=>section.type==='OUTRO');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(()=>read().arrangement.length===before,'add undo');
+      const canvas=document.querySelector('vc-arrangement-overview canvas[tabindex]');
+      canvas.focus(); canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      return {grouped,compact,removed,fits,choices,keyboard,focusReturned,added,
+        noCanvasBorder:getComputedStyle(canvas).outlineStyle==='none'};
+    })()` });
+    assert.equal(placementResult.exceptionDetails,undefined,JSON.stringify(placementResult));
+    for(const [key,value] of Object.entries(placementResult.result.value)) assert.equal(value,true,'placement '+key);
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);

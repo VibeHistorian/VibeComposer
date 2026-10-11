@@ -201,7 +201,6 @@ export class WorkspaceCanvasComponent {
   readonly partEditError = computed(() => this.editFailure()?.scope === JSON.stringify(this.partScope()) ? this.editFailure()?.message : null);
   readonly editing = signal(false);
   readonly mixerOpen = signal(false);
-  readonly newSectionType = signal<SectionType>('VERSE1');
   readonly hiddenTracks = signal(new Set<string>());
   readonly collapsedGroups = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
   private readonly groupExpansionEffect = effect(() => {
@@ -433,15 +432,10 @@ export class WorkspaceCanvasComponent {
   openMixer(): void { this.mixerOpen.set(true); }
   closeMixer(): void { this.mixerOpen.set(false); }
 
-  updateNewSectionType(event: Event): void {
-    const value = this.inputValue(event) as SectionType;
-    if (SECTION_TYPES.includes(value)) this.newSectionType.set(value);
-  }
-
-  addSection(): void {
-    if (this.project().arrangement.length >= 32 || this.totalMeasures() + 4 > 128) return;
+  addSection(type: SectionType): void {
+    if (!SECTION_TYPES.includes(type) || this.project().arrangement.length >= 32 || this.totalMeasures() + 4 > 128) return;
     const index = this.selectedSectionIndex() < 0 ? this.project().arrangement.length - 1 : this.selectedSectionIndex();
-    this.projects.addSection(this.newSectionType(), index);
+    this.projects.addSection(type, index);
     const added = this.project().arrangement[index + 1];
     if (added) {
       this.workspaceUi.setSectionSelection(added.id);

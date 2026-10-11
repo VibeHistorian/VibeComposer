@@ -100,6 +100,7 @@
         [settingsTarget]="settingsTarget()"
         [selectedSectionIds]="selectedSectionIds()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
         (mixerRequested)="openMixer()" (groupSelected)="selectRole($event)"
+        (sectionAddRequested)="addSection($event)"
         (randomizeRequested)="randomizeArrangementPresence()"
         (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId, $event)"
         (selectionCleared)="workspaceUi.clearSelection()"
@@ -258,12 +259,17 @@
             <div class="inspector-section-heading"><p class="eyebrow">TRACKS IN SECTION</p>
               <button type="button" (click)="randomizeSectionPresence(section)">Reroll</button>
             </div>
-            @for (track of arrangedTracks(); track track.id) {
-              <div class="section-track-control" [attr.data-control-role]="track.role">
-                <vc-compact-toggle [label]="track.name" [description]="'Include ' + track.name + ' in this section.'"
-                  [active]="trackPresent(section, track)" (toggled)="toggleArrangementTrack(section.id, track.id, !trackPresent(section, track))" />
-              </div>
-            }
+            <div class="section-presence-columns">
+              @for (group of roles; track group.role) {
+                <div class="section-presence-role" [attr.data-control-role]="group.role" [attr.aria-label]="group.name + ' presence'">
+                  <span class="presence-role-heading" [title]="group.name">{{ group.name }}</span>
+                  @for (track of tracksFor(group.role); track track.id) {
+                    <vc-compact-toggle [label]="track.name" [description]="'Include ' + track.name + ' in this section.'"
+                      [active]="trackPresent(section, track)" (toggled)="toggleArrangementTrack(section.id, track.id, !trackPresent(section, track))" />
+                  }
+                </div>
+              }
+            </div>
           </div>
         </div>
       } @else {
@@ -304,15 +310,6 @@
       }
       @if (settingsTarget().kind === 'section') {
         <vc-harmony-settings [section]="selectedSection() ?? undefined" />
-        <section class="inspector-arrangement-add" aria-label="Add arrangement section">
-          <p class="eyebrow">ARRANGEMENT</p>
-          <select selectDefault="VERSE1" [value]="newSectionType()" (change)="updateNewSectionType($event)">
-            @for (type of sectionTypes; track type) {
-              <option [value]="type" [selected]="type === newSectionType()">{{ sectionLabel(type) }}</option>
-            }
-          </select>
-          <button type="button" class="add-chord-button" [disabled]="project().arrangement.length >= 32 || totalMeasures() + 4 > 128" (click)="addSection()">＋ Add section</button>
-        </section>
       } @else {
         <vc-harmony-settings />
       }

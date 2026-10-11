@@ -14,8 +14,17 @@
 .overview-content { position: relative; }
 .overview-viewport { position: sticky; top: 0; left: 0; overflow: hidden; }
 .overview-viewport canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.overview-viewport canvas:focus-visible { outline: 1px solid var(--accent-primary); outline-offset: -1px; }
+.overview-viewport canvas:focus { outline: none; }
 .playhead-canvas { pointer-events: none; }
+/* Compact section choices */
+.add-section-button:disabled { opacity: .4; cursor: default; }
+.section-picker { position: fixed; z-index: 100; width: 270px; max-height: calc(100dvh - 16px); overflow-y: auto; padding: 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-mark); background: var(--surface-base); box-shadow: 0 8px 30px var(--shadow-ink); }
+.section-picker > span { display: block; margin-bottom: 7px; color: var(--text-muted); font: 10px var(--font-mono); }
+.section-picker > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.section-picker button { min-height: 28px; padding: 3px; border: 1px solid var(--border-subtle); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-primary); font: 10px var(--font-mono); cursor: pointer; }
+.section-picker button:hover, .section-picker button:focus-visible { border-color: var(--accent-primary); background: var(--surface-accent); outline: none; }
 @media (max-width: 680px) {
   .arrangement-panel { min-height: 345px; padding: 11px; }
+  .canvas-heading { flex-wrap: wrap; }
+  .canvas-actions { flex-wrap: wrap; gap: 6px; }
 }

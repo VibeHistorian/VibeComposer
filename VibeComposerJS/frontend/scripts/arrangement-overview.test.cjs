@@ -12,7 +12,7 @@ function fixture() {
   input.required = () => signal(undefined);
   const angular = {
     Component: () => (component) => component, ChangeDetectionStrategy: { OnPush: 0 },
-    computed: (read) => read, effect: () => {}, input,
+    computed: (read) => read, effect: () => {}, input, signal,
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     viewChild: { required: (name) => () => ({ nativeElement: refs.get(name) }) },
   };

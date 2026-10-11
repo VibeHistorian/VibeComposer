@@ -3,6 +3,9 @@
     <div><p class="eyebrow">SONG OVERVIEW</p><h2 id="arrangement-title">Arrangement</h2></div>
     <div class="canvas-actions">
       <span class="measure-total">{{ totalMeasures() }} BARS</span>
+      <button type="button" class="mixer-open-button add-section-button" [disabled]="!canAddSection()"
+        [attr.aria-expanded]="!!sectionPicker()" aria-haspopup="menu" aria-label="Add arrangement section" title="Add section"
+        (click)="toggleSectionPicker($event)">＋</button>
       @if (selectedSectionIds().length) {
         <button type="button" class="reroll-button" (click)="selectionCleared.emit()" title="Clear section selection (Escape)">CLEAR</button>
       }
@@ -26,3 +29,12 @@
     </div>
   </div>
 </section>
+@if (sectionPicker(); as popup) {
+  <div class="section-picker" role="menu" aria-label="Section choices" [style.left.px]="popup.x" [style.top.px]="popup.y"
+    (keydown)="sectionPickerKey($event)">
+    <span>Add section</span>
+    <div>@for (type of sectionTypes; track type) {
+      <button type="button" role="menuitem" (click)="chooseSection(type)">{{ sectionLabel(type) }}</button>
+    }</div>
+  </div>
+}
