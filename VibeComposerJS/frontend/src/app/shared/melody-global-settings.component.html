@@ -9,12 +9,23 @@
     </fieldset>
     <fieldset class="parameter-area" data-control-category="shape">
       <legend>Shape</legend>
+      <label class="pattern-effect" title="Choose what repeated block identities preserve. Flex can regenerate their final block to approach the next target.">
+        Pattern effect
+        <select aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (change)="changePatternEffect($event)">
+          <option value="0">Rhythm</option>
+          <option value="1">Notes</option>
+          <option value="2">Rhythm + Notes</option>
+        </select>
+      </label>
       <vc-compact-knob label="Max direction changes" [value]="values().maxDirectionChanges ?? 2" [minimum]="1" [maximum]="6" unit=""
         description="Direction-change budget for block targets and generated shapes. Reused patterns retain Java's cached budget before Flex changes their target."
         (valueCommit)="settingsChanged.emit({ maxDirectionChanges: $event })" />
     </fieldset>
     <fieldset class="parameter-area" data-control-category="rhythm">
       <legend>Rhythm</legend>
+      <vc-compact-toggle label="Arpy surprises" [active]="values().arpySurprises ?? false"
+        description="At Speed below 20 or above 80, replace certain four-note block rhythms with evenly spaced notes."
+        (toggled)="settingsChanged.emit({ arpySurprises: !(values().arpySurprises ?? false) })" />
       <vc-compact-toggle label="Fill pauses per chord" [active]="values().fillPausesPerChord ?? false"
         description="With Fill pauses enabled, protect each chord's first note and keep rest filling within its chord. Repair included chord starts even if paused."
         (toggled)="settingsChanged.emit({ fillPausesPerChord: !(values().fillPausesPerChord ?? false) })" />

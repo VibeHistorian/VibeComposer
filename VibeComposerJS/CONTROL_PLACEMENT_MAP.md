@@ -148,6 +148,8 @@ These are currently owned by [MelodyGUI](../midimasterpiece/src/main/java/org/vi
 
 P5e's second checkpoint implements `melodySingleNoteExceptions`, `melodyMaxDirChanges` and `melodyFillPausesPerChord` in the global Melody inspector, visible from global role/track selections. Their shared project inputs are `melodyGlobal.singleNoteExceptions`, `maxDirectionChanges` and `fillPausesPerChord`; default false/2/false preserves the preceding supported path. They affect every generated Melody scope and its section dependencies. The remaining global inventory below stays open.
 
+P5e's third checkpoint implements `melodyPatternEffect` and `melodyArpySurprises` in that same global inspector as `melodyGlobal.patternEffect` (0 Rhythm / 1 Notes / 2 Rhythm + Notes, default 2) and `arpySurprises` (default false). Pattern effect belongs to Shape; Arpy surprises belongs to Rhythm. Both apply to all generated Melody tracks/sections and the resulting Arpeggio/Drums dependencies, independently of part patches and reroll policies. Force patterns remains with the later automatic-target extension; Pattern flip remains with the later rhythm-accent/dependency-map slice.
+
 | Family | Exact controls | Placement/stage |
 | --- | --- | --- |
 | Tonal targeting | `melodyChordNoteTarget`, `melodyTonicNoteTarget`, `melodyModeNoteTarget`, `melodyEmphasizeKey`, `melodyBasicChordsOnly`, `melodyReplaceAvoidNotes` | I, P5 |

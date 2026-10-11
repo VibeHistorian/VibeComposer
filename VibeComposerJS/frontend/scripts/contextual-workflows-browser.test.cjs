@@ -229,8 +229,22 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => read().melodyGlobal?.maxDirectionChanges === undefined, 'global direction undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'global redo enabled')).click();
       await wait(() => read().melodyGlobal?.maxDirectionChanges === 6, 'global direction redo');
+      const effect = globals.querySelector('[aria-label="Pattern effect"]');
+      await wait(() => effect.value === '2', 'pattern effect default');
+      for (const value of [0, 1, 2]) {
+        change(effect, String(value));
+        await wait(() => read().melodyGlobal?.patternEffect === value, 'pattern effect commit');
+      }
+      globals.querySelector('[aria-label="Arpy surprises"]').click();
+      await wait(() => read().melodyGlobal?.arpySurprises === true, 'arpy surprises commit');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.arpySurprises === undefined
+        && globals.querySelector('[aria-label="Arpy surprises"]').getAttribute('aria-pressed') === 'false', 'arpy surprises undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'arpy redo enabled')).click();
+      await wait(() => read().melodyGlobal?.arpySurprises === true, 'arpy surprises redo');
       result.melodyGlobal = read().tracks.filter(track => track.role === 'melody').every(track =>
-        !Object.hasOwn(track.generatorSettings, 'singleNoteExceptions') && !Object.hasOwn(track.generatorSettings, 'maxDirectionChanges'));
+        !Object.hasOwn(track.generatorSettings, 'singleNoteExceptions') && !Object.hasOwn(track.generatorSettings, 'maxDirectionChanges')
+        && !Object.hasOwn(track.generatorSettings, 'patternEffect') && !Object.hasOwn(track.generatorSettings, 'arpySurprises'));
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);

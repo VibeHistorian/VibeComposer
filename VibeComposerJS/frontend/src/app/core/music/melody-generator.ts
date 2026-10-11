@@ -17,7 +17,7 @@ interface Pattern { readonly changes: readonly number[]; readonly blocks: readon
 
 /** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
 export const MELODY_CORE_INPUTS = Object.freeze({ newBlocksChance: 100, blockTargetMode: 2,
-  patternEffect: 2, emphasizeKey: false,
+  emphasizeKey: false,
   chordNoteTarget: 0, tonicNoteTarget: 0, modeNoteTarget: 0 });
 
 function repeated(values: readonly number[], count: number): number[] {
@@ -98,14 +98,15 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   for (let chord = 0; chord < progression.length; chord++) {
     const originalOffset = structure[chord], offset = Math.max(0, Math.abs(originalOffset) - 1);
     const doubled = new JavaRandom(int(baseSeed + 3 + offset)).nextInt(100) < (settings.doubledRhythmChance ?? 0);
-    let durations = rhythms.get(offset);
+    let durations = globals.patternEffect !== 1 ? rhythms.get(offset) : undefined;
     if (!durations) {
       durations = blockRhythm(int(blockSeed + offset), doubled ? 2 : 4, outerWeights);
       if (doubled) durations = [...durations, ...durations];
       rhythms.set(offset, durations);
     }
     const first = starting(chord), next = starting(chord + 1), existing = cache.get(offset);
-    let changes = existing?.changes ?? blockChangeSequence(first, next, blockSeed, durations.length, maxChange, globals.maxDirectionChanges);
+    let changes = existing && globals.patternEffect > 0 ? existing.changes
+      : blockChangeSequence(first, next, blockSeed, durations.length, maxChange, globals.maxDirectionChanges);
     // Java stores the sequence's direction count alongside its unadjusted changes.
     // Flex changes the last target without recomputing this remaining budget.
     const remainingDirections = globals.maxDirectionChanges - directionChanges(changes);
@@ -115,17 +116,24 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       adjusted[adjusted.length - 1] += next - first - changes.reduce((sum, value) => sum + value, 0);
       changes = adjusted;
     }
-    let blocks = existing && !flexible ? existing.blocks : undefined;
+    let blocks = existing && globals.patternEffect > 0 && !flexible ? existing.blocks : undefined;
     if (!blocks) {
       let variance = 4, directions = remainingDirections;
       blocks = durations.map((duration, index) => {
         const shapeSeed = int(blockSeed + offset + index);
-        const notes = generateBlock(changes[index], jump, new JavaRandom(shapeSeed), existing?.blocks[index]?.notes.length, variance, directions);
+        const notes = generateBlock(changes[index], jump, new JavaRandom(shapeSeed),
+          globals.patternEffect !== 1 ? existing?.blocks[index]?.notes.length : undefined, variance, directions);
         variance = Math.max(0, variance - blockVariance(notes));
         directions = Math.max(0, directions - directionChanges(notes));
-        return { notes, durations: noteRhythm(shapeSeed, duration, notes.length, speed) };
+        let noteDurations = noteRhythm(shapeSeed, duration, notes.length, speed);
+        if (globals.arpySurprises && notes.length === 4 && (speed < 20 || speed > 80)) {
+          const low = speed < 20 ? 0.25 * 0.99 : 1.5 * 0.99;
+          const high = speed < 20 ? 0.25 * 1.01 : 4 * 1.01;
+          if (noteDurations.some(value => value > low && value < high)) noteDurations = notes.map(() => duration / notes.length);
+        }
+        return { notes, durations: noteDurations };
       });
-      if (flexible && existing) blocks = [...existing.blocks.slice(0, -1), blocks[blocks.length - 1]];
+      if (flexible && existing && globals.patternEffect > 0) blocks = [...existing.blocks.slice(0, -1), blocks[blocks.length - 1]];
     }
     if (!existing) cache.set(offset, { changes, blocks });
     const notes: Note[] = [];
@@ -135,6 +143,8 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     blocks.forEach((block, index) => {
       if (index > 0) adjustment += changes[index - 1] * (originalOffset < 0 ? -1 : 1);
       block.notes.forEach((note, noteIndex) => {
+        const rhythm = existing && globals.patternEffect === 0
+          ? existing.blocks[index].durations[noteIndex] : block.durations[noteIndex];
         let pitch = degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment);
         const exceptionIndexValid = globals.singleNoteExceptions
           ? noteIndex === block.notes.length - 1 && index === blocks.length - 1 : noteIndex > 0;
@@ -146,7 +156,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
           exceptions--;
         }
         notes.push({ midi: pitch + (settings.transpose ?? 0),
-          rhythm: block.durations[noteIndex], duration: block.durations[noteIndex] * (0.75 + durationRandom.nextDouble() / 4) * DURATION_MULTIPLIER,
+          rhythm, duration: rhythm * (0.75 + durationRandom.nextDouble() / 4) * DURATION_MULTIPLIER,
           velocity: 0, offset: 0 });
       });
     });

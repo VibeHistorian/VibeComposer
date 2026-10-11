@@ -13,6 +13,7 @@ import java.util.*;
 public class MelodyExtendedFixture {
     public static void main(String[] args) {
         boolean globals = args.length > 0 && args[0].equals("globals");
+        boolean effects = args.length > 0 && args[0].equals("effects");
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
         StringBuilder json = new StringBuilder("[\n");
@@ -22,6 +23,7 @@ public class MelodyExtendedFixture {
         int[] speeds = { -100, 0, 50, 100 };
         boolean first = true;
         for (int seedIndex = 0; seedIndex < seeds.length; seedIndex++) {
+          for (int effectCase = 0; effectCase < (effects ? 6 : 1); effectCase++) {
             for (int sample = 0; sample < 48; sample++) {
                 int chordCount = new int[] { 1, 3, 4, 7, 8 }[sample % 5];
                 int[] structure = sample % 3 == 0 ? new int[] { 1, 2, 1, 3 }
@@ -49,9 +51,9 @@ public class MelodyExtendedFixture {
                 GUIConfig config = new GUIConfig();
                 config.setMelodyParts(Collections.singletonList(part));
                 config.setMelodyLegacyMode(false); config.setMelodyNewBlocksChance(100);
-                config.setMelodyBlockTargetMode(2); config.setMelodyPatternEffect(2);
+                config.setMelodyBlockTargetMode(2); config.setMelodyPatternEffect(effects ? effectCase % 3 : 2);
                 config.setMelodyMaxDirChanges(globals ? 1 + sample % 6 : 2); config.setMelodyEmphasizeKey(false);
-                config.setMelodySingleNoteExceptions(globals && sample % 2 == 0); config.setMelodyArpySurprises(false); config.setMelodyUseCustomDurations(false);
+                config.setMelodySingleNoteExceptions(globals && sample % 2 == 0); config.setMelodyArpySurprises(effects && effectCase >= 3); config.setMelodyUseCustomDurations(false);
                 config.setMelodyTonicNoteTarget(0); config.setMelodyChordNoteTarget(0); config.setMelodyModeNoteTarget(0);
                 config.setMelodyReplaceAvoidNotes(0); config.setMelodyFillPausesPerChord(globals && sample % 4 < 2);
                 config.setMelodyBasicChordsOnly(false); config.setScaleMidiVelocityInArrangement(false);
@@ -73,6 +75,8 @@ public class MelodyExtendedFixture {
                 json.append("{\"globalSettings\":{\"maxDirectionChanges\":").append(config.getMelodyMaxDirChanges())
                         .append(",\"singleNoteExceptions\":").append(config.isMelodySingleNoteExceptions())
                         .append(",\"fillPausesPerChord\":").append(config.isMelodyFillPausesPerChord())
+                        .append(",\"patternEffect\":").append(config.getMelodyPatternEffect())
+                        .append(",\"arpySurprises\":").append(config.isMelodyArpySurprises())
                         .append("},\"seed\":\"").append(seeds[seedIndex]).append("\",\"key\":\"").append(keys[seedIndex])
                         .append("\",\"scale\":\"").append(sample % 2 == 0 ? "major" : "natural-minor")
                         .append("\",\"chordCount\":").append(chordCount).append(",\"notesSeedOffset\":").append(notesSeedOffset)
@@ -101,6 +105,7 @@ public class MelodyExtendedFixture {
                 }
                 json.append("]}");
             }
+          }
         }
         System.out.println(json.append("\n]"));
     }

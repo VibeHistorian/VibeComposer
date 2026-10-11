@@ -13,4 +13,9 @@ import { CompactToggleComponent } from './compact-toggle.component';
 export class MelodyGlobalSettingsComponent {
   readonly values = input<MelodyGlobalSettings>({});
   readonly settingsChanged = output<Partial<MelodyGlobalSettings>>();
+
+  changePatternEffect(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (value === 0 || value === 1 || value === 2) this.settingsChanged.emit({ patternEffect: value });
+  }
 }
