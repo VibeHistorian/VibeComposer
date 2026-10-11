@@ -58,7 +58,8 @@ export class AppComponent implements OnInit {
     try {
       const valid = this.projects.importProjectJson(await file.text());
       this.projectMessage.set(valid ? `Loaded ${this.project().name}.` : 'That project file is invalid or unsupported.');
-    } catch {
+    } catch (error) {
+      console.warn(`Could not read project file "${file.name}".`, error);
       this.projectMessage.set('Could not read that project file.');
     }
   }

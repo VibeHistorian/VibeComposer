@@ -3270,6 +3270,53 @@ function projectData(json) {
   return project;
 }
 
+test('failed project loads warn with property paths and preserve the current project', () => {
+  const { service, stored, load } = fixture();
+  const before = service.exportProjectJson();
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (...args) => warnings.push(args);
+  try {
+    const invalid = JSON.parse(before);
+    delete invalid.name;
+    invalid.tempoBpm = 300;
+    invalid.drums.obsoleteGroove = 'rock';
+    invalid.tracks[0].generatorSettings.unknownControl = 1;
+    invalid.mix.bass.panPercent = 200;
+    assert.equal(service.importProjectJson(JSON.stringify(invalid)), false);
+    assert.equal(service.exportProjectJson(), before);
+    assert.equal(warnings.length, 1);
+    const details = warnings[0][1].join('\n');
+    assert.match(details, /project\.name: missing required property/);
+    assert.match(details, /project\.tempoBpm: expected an integer from 40 to 240/);
+    assert.match(details, /project\.drums\.obsoleteGroove: unknown property/);
+    assert.match(details, /project\.tracks\[0\]\.generatorSettings\.unknownControl: unknown property/);
+    assert.match(details, /project\.mix\.bass\.panPercent/);
+
+    warnings.length = 0;
+    assert.equal(service.importProjectJson('{'), false);
+    assert.equal(warnings.length, 1);
+    assert.ok(warnings[0][1] instanceof SyntaxError);
+
+    warnings.length = 0;
+    stored.set('vibecomposer.project.v12', JSON.stringify(invalid));
+    const { ProjectService } = load('core/project/project.service.ts');
+    const restored = new ProjectService();
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0][0], /session storage \(vibecomposer\.project\.v12\)/);
+    assert.match(warnings[0][1].join('\n'), /project\.name: missing required property/);
+    assert.ok(restored.project().name);
+
+    warnings.length = 0;
+    const valid = JSON.parse(before);
+    valid.schemaVersion = 999;
+    assert.equal(service.importProjectJson(JSON.stringify(valid)), true);
+    assert.equal(warnings.length, 0);
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
 function fixture() {
   const cache = new Map();
   const signal = (value) => {
