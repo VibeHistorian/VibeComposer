@@ -120,6 +120,7 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .section-actions button:disabled { opacity: .35; cursor: default; }
 .section-actions .remove-track { margin-left: auto; color: var(--color-danger); }
 .section-chord-editor, .section-track-controls, .inspector-arrangement-add { padding-top: 10px; display: grid; gap: 7px; border-top: 1px solid var(--border-subtle); }
+vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .inspector-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
 .inspector-section-heading button { border: 0; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 10px; }
 .section-track-control { display: grid; gap: 4px; }
@@ -179,5 +180,5 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
   .context-inspector { grid-template-columns: 1fr; }
   .inspector-editors { grid-column: auto; grid-template-columns: 1fr; }
   .inspector-selection { margin-top: 6px; }
-  .section-chord-editor, .section-track-controls, .inspector-arrangement-add { grid-column: auto; }
+  .section-chord-editor, .section-track-controls, .inspector-arrangement-add { grid-column: 1 / -1; }
 }

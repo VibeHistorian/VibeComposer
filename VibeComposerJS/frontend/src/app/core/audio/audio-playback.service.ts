@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import type { ArrangedPart, CompositionProject, PhraseNote } from '../project/project.model';
 import { layOutTrackPhrase } from '../music/phrase';
 import { TinySynthEngine } from './tiny-synth-engine';
+import { beatToSeconds, secondsToBeat, projectTempoMap, sectionDurationBeats, type TempoPoint } from '../music/section-context';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
@@ -33,7 +34,7 @@ export class AudioPlaybackService {
   private synth?: TinySynthEngine;
   private scheduler?: ReturnType<typeof setInterval>;
   private originTime = 0;
-  private secondsPerBeat = 0.5;
+  private tempoMap: readonly TempoPoint[] = [{ beat: 0, seconds: 0, bpm: 120 }];
   private selectedLoopRange: PlaybackRange | null = null;
   private mixProject?: CompositionProject;
   private notes: ScheduledNote[] = [];
@@ -63,13 +64,13 @@ export class AudioPlaybackService {
       this.stopSources();
       this.prepareMix(project, context);
 
-      this.secondsPerBeat = 60 / project.tempoBpm;
-      this.duration.set(project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0));
+      this.tempoMap = projectTempoMap(project);
+      this.duration.set(project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
       this.notes = this.createSchedule(project);
       this.scheduleSignature = this.signature(project, this.notes);
       const safeStart = this.safeStartBeat(startBeat);
       this.position.set(safeStart);
-      this.originTime = context.currentTime - safeStart * this.secondsPerBeat;
+      this.originTime = context.currentTime - this.absoluteSeconds(safeStart);
       this.resetQueue(safeStart);
       this.playbackState.set('playing');
       this.resumeSustainedNotes(safeStart);
@@ -110,7 +111,7 @@ export class AudioPlaybackService {
   seek(project: CompositionProject, targetBeat: number): void {
     if (!Number.isFinite(targetBeat)) return;
     const playing = this.state() === 'playing';
-    if (!playing) this.duration.set(project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0));
+    if (!playing) this.duration.set(project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
     const beat = Math.min(this.duration(), Math.max(0, targetBeat));
     const { startBeat, endBeat } = this.loopBounds();
     if (this.loopEnabled() && (beat < startBeat || beat >= endBeat)) this.loopState.set(false);
@@ -141,14 +142,14 @@ export class AudioPlaybackService {
     if (signature === this.scheduleSignature) return;
 
     const beat = this.currentSongBeat();
-    const duration = project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0);
+    const duration = project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0);
     if (duration <= 0 || (!this.loopEnabled() && beat >= duration)) {
       this.stop();
       this.duration.set(duration);
       this.position.set(duration);
       return;
     }
-    this.secondsPerBeat = 60 / project.tempoBpm;
+    this.tempoMap = projectTempoMap(project);
     this.duration.set(duration);
     this.notes = notes;
     this.scheduleSignature = signature;
@@ -232,7 +233,8 @@ export class AudioPlaybackService {
     // Compare audible events, ignoring labels and note IDs; mix controls already update their buses.
     return JSON.stringify([
       project.tempoBpm,
-      project.arrangement.reduce((sum, section) => sum + section.measures * 4, 0),
+      projectTempoMap(project),
+      project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0),
       project.tracks.map((track) => [track.id, track.role, track.mix.program]),
       notes.map((note) => [note.trackId, note.role, note.startBeat, note.durationBeats, note.midi, note.velocity]),
     ]);
@@ -269,7 +271,7 @@ export class AudioPlaybackService {
   private scheduleAhead(): void {
     if (!this.context || !this.master || this.duration() <= 0) return;
     const currentBeat = this.currentAbsoluteBeat();
-    const horizonBeat = currentBeat + SCHEDULE_AHEAD_SECONDS / this.secondsPerBeat;
+    const horizonSeconds = this.absoluteSeconds(currentBeat) + SCHEDULE_AHEAD_SECONDS;
     const { startBeat, endBeat } = this.loopBounds();
     const cycleBeats = endBeat - startBeat;
     let scheduled = 0;
@@ -281,7 +283,7 @@ export class AudioPlaybackService {
       }
       const note = this.queuedNotes[this.nextNote];
       const absoluteStartBeat = note.startBeat + this.cycle * cycleBeats;
-      if (absoluteStartBeat > horizonBeat) return;
+      if (this.absoluteSeconds(absoluteStartBeat) > horizonSeconds) return;
       this.nextNote++;
       scheduled++;
       if (absoluteStartBeat < currentBeat - 0.04) continue;
@@ -295,8 +297,8 @@ export class AudioPlaybackService {
     const context = this.context;
     const bus = this.buses.get(note.trackId);
     if (!bus) return;
-    const startTime = Math.max(context.currentTime + 0.003, this.originTime + absoluteBeat * this.secondsPerBeat);
-    const duration = Math.max(0.035, note.durationBeats * this.secondsPerBeat);
+    const startTime = Math.max(context.currentTime + 0.003, this.originTime + this.absoluteSeconds(absoluteBeat));
+    const duration = Math.max(0.035, this.absoluteSeconds(absoluteBeat + note.durationBeats) - this.absoluteSeconds(absoluteBeat));
     if (!this.synth) return;
     const voices = this.synth.schedule(bus.gain, this.programs.get(note.trackId) ?? 0,
       note.role === 'drums', note.midi, note.velocity, startTime, duration);
@@ -313,7 +315,23 @@ export class AudioPlaybackService {
   }
 
   private currentAbsoluteBeat(): number {
-    return this.context ? Math.max(0, (this.context.currentTime - this.originTime) / this.secondsPerBeat) : 0;
+    if (!this.context) return 0;
+    const seconds = Math.max(0, this.context.currentTime - this.originTime);
+    const { startBeat, endBeat } = this.loopBounds();
+    const endSeconds = beatToSeconds(this.tempoMap, endBeat);
+    if (!this.loopEnabled() || seconds < endSeconds) return secondsToBeat(this.tempoMap, seconds);
+    const startSeconds = beatToSeconds(this.tempoMap, startBeat), length = endSeconds - startSeconds;
+    const cycles = Math.floor((seconds - endSeconds) / length) + 1;
+    return cycles * (endBeat - startBeat) + secondsToBeat(this.tempoMap, startSeconds + (seconds - endSeconds) % length);
+  }
+
+  private absoluteSeconds(beat: number): number {
+    const { startBeat, endBeat } = this.loopBounds();
+    if (!this.loopEnabled() || beat < endBeat) return beatToSeconds(this.tempoMap, beat);
+    const length = endBeat - startBeat, cycles = Math.floor((beat - startBeat) / length);
+    const startSeconds = beatToSeconds(this.tempoMap, startBeat);
+    const cycleSeconds = beatToSeconds(this.tempoMap, endBeat) - startSeconds;
+    return cycles * cycleSeconds + beatToSeconds(this.tempoMap, startBeat + (beat - startBeat) % length);
   }
 
   private loopBounds(): PlaybackRange {
@@ -353,7 +371,7 @@ export class AudioPlaybackService {
     const now = this.context.currentTime;
     this.stopSources(now + RELOAD_FADE_SECONDS);
     this.prepareMix(this.mixProject, this.context, true);
-    this.originTime = now - beat * this.secondsPerBeat;
+    this.originTime = now - this.absoluteSeconds(beat);
     this.position.set(beat);
     this.resetQueue(beat);
     this.resumeSustainedNotes(beat);

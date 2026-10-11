@@ -20,7 +20,6 @@ Preserve old parameter semantics, not old widget positions. The model/control re
 
 | Phase | Java lookup / exact symbols | Destination / remaining work |
 | --- | --- | --- |
-| P5f | `Section.customChordsEnabled`, `customDurationsEnabled`, `customChords`, `customDurations`; `SectionConfig` | Section inspector: custom harmony/durations, swing, BPM, key/scale/key-change and beat duration, shared context and tempo-map/export support. |
 | P6g | [DrumGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/DrumGUI.java): `randomDrumVelocityPatternChance`, Dynamic/Ghosts, Overrandomize and melody-following creation | H/HI policies; Ghosts/MELODY1 musical consumers and drum blueprint pause baking/growth are already delivered. |
 | P6h | [BassGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/BassGUI.java), [ArpGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/ArpGUI.java): `createRandomBassPanels()`, `createRandomArpPanels()` | H/HI: Bass/Arpeggio GUI pause baking/growth, later-track Arp weighting/advanced directions. Audit remaining MELODY1 consumer dependencies, including Bass/Chords, before enabling creation choices. |
 | P6h | [MelodyGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/MelodyGUI.java): `createRandomMelodyPanels()`, `applyGeneratedTargetNotes()` | H/HI: remaining extended creation parameters; supported automatic target/block preparation and all target modes are complete. |
@@ -44,7 +43,9 @@ Do not port [LegacyMelodySkeletonGenerator](../midimasterpiece/src/main/java/org
 
 All three block target modes, tonal/chord targeting and avoid-note correction are delivered. New blocks defaults to **25%**; knobs/comboboxes reset to defaults on right-click. Keep these completed behaviors intact rather than reopening their historical checkpoint backlog.
 
-P5e block-skeleton inference, explicit section Use Melody harmony/Swap Melody and progression-wide voicing flattening are delivered at current fixed timing. Flatten voicing %, Flatten large chords and Progressive voicing live in the detailed global harmony inspector and affect shared musical consumers, independently of part voicing and track policies. Preserve explicit section harmony and manual-note ownership. See the [implementation record](__work_history/p5e-harmony-integration-record.md) for seeded evidence, source/short-progression/inversion rules and P5f/P11 boundaries.
+P5e block-skeleton inference, explicit section Use Melody harmony/Swap Melody and progression-wide voicing flattening are delivered with shared P5f section timing. Flatten voicing %, Flatten large chords and Progressive voicing live in the detailed global harmony inspector and affect shared musical consumers, independently of part voicing and track policies. Preserve explicit section harmony and manual-note ownership. See the [implementation record](__work_history/p5e-harmony-integration-record.md) for seeded evidence, source/short-progression/inversion rules and P5f/P11 boundaries.
+
+Section Chordlets/durations and sparse swing/BPM/key/scale/key-change/beat-duration context are delivered in the section inspector. See the [P5f record](__work_history/p5f-section-context-record.md) for normalized timing, explicit section-local modulation, ownership and playback/MIDI contracts.
 
 ## Harmony, arrangement, transport, and app-level controls
 
@@ -59,8 +60,6 @@ P5e block-skeleton inference, explicit section Use Melody harmony/Swap Melody an
 | Regenerate on Change, loop behavior | `GenerationGUI.regenerateWhenValuesChange`, `loopBeatCount` and playback owner | Transport/preferences; distinguish regeneration from settings reroll |
 | ARRANGE/randomize/on Compose, variation chances | [ArrangementGUI](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/gui/ArrangementGUI.java): `useArrangement`, `randomizeArrangementOnCompose`, `arrangementVariationChance`, `arrangementPartVariationChance` | Arrangement toolbar + inspector; presence/variation policies separate from part settings |
 | Parts/Vars/Patterns | Arrangement inclusion/variation/pattern popup actions; [ArrangementPartInclusionPopup](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Popups/ArrangementPartInclusionPopup.java), `Section.partMap`/variation data | Arrangement inspector/context menus; resolve realized choices independently from their chances |
-| Section harmony/length | `Section.customChordsEnabled`, `customDurationsEnabled`, `customChords`, `customDurations`, measures | Header-selected section inspector, P5f; harmony quick access follows section scope |
-| Section swing/BPM/key/scale/timing | [SectionConfig](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/SectionConfig.java): `sectionSwingOverride`, `sectionBpm`, `customKeyChange`, `customScale`, `customKeyChangeType`, `beatDurationMultiplierIndex` | Section inspector, P5f; add tempo maps/export behavior first |
 | Recompose/replace/reset custom on compose | `ArrangementGUI.recomposeSection()`, `replaceSection()`, `prepareForCompose()`, `arrangementResetCustomPanelsOnCompose` | Section actions and explicit project policy; preserve local changes by default, P6/P7 |
 | Scale MIDI velocity | `ArrangementGUI.arrangementScaleMidiVelocity` | I global/arrangement musical behavior later; never confuse with score shading |
 

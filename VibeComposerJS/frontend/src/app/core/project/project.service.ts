@@ -1,6 +1,6 @@
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { inject, Injectable, signal } from '@angular/core';
-import { KEYS, getDiatonicChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
+import { KEYS, getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
 import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
@@ -26,6 +26,9 @@ import { decodeHarmonySettings, DEFAULT_HARMONY_SETTINGS, type HarmonySettings }
 import type { MelodyGlobalSettings } from './project.model';
 import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
+import { sectionDegrees, sectionProject, sectionValuesEqual, validSectionHarmony } from '../music/section-context';
+import { baseGenerationHarmony } from '../music/project-harmony';
+import type { SectionMusicalContext } from './project.model';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -85,6 +88,65 @@ export class ProjectService {
     if (Object.entries(patch).every(([key,value]) => (section[key as 'useMelodyHarmony' | 'swapMelody'] ?? false) === value)) return 'unchanged';
     this.commit({ ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? { ...item, ...patch } : item) });
     return 'changed';
+  }
+
+  updateSectionContext(sectionId: string, patch: Partial<{ [K in keyof SectionMusicalContext]: SectionMusicalContext[K] | null }>): PartWorkflowResult {
+    const current = this.state(), section = current.arrangement.find(item => item.id === sectionId);
+    if (!section || !patch || typeof patch !== 'object' || Array.isArray(patch)) return 'invalid';
+    const context = { ...section.context } as Record<string, unknown>;
+    const keys = ['tempoBpm','swingPercent','key','scale','keyChange','keyChangeType','beatDurationMultiplier'];
+    for (const [key, value] of Object.entries(patch)) {
+      if (!keys.includes(key)) return 'invalid';
+      if (value === null) delete context[key]; else context[key] = value;
+    }
+    return this.setSectionMusicalState(sectionId, { context: Object.keys(context).length ? context as SectionMusicalContext : undefined });
+  }
+
+  setSectionMusicalState(sectionId: string, patch: Pick<ArrangementSection, 'context' | 'customChords' | 'customDurations' | 'chordDegrees'>): PartWorkflowResult {
+    const current = this.state(), section = current.arrangement.find(item => item.id === sectionId);
+    if (!section || !patch || typeof patch !== 'object' || Array.isArray(patch)
+      || Object.keys(patch).some(key => !['context','customChords','customDurations','chordDegrees'].includes(key))) return 'invalid';
+    const next = { ...section, ...patch };
+    if (!validSectionHarmony(next) || next.chordDegrees !== undefined && (!Array.isArray(next.chordDegrees)
+      || !next.chordDegrees.length || next.chordDegrees.length > 32
+      || next.chordDegrees.some(degree => !Number.isInteger(degree) || degree < 1 || degree > 7))) return 'invalid';
+    if (Object.entries(patch).every(([key,value]) => sectionValuesEqual(section[key as keyof typeof patch], value))) return 'unchanged';
+    const copied = { ...next, context: next.context ? { ...next.context } : undefined,
+      chordDegrees: next.chordDegrees ? [...next.chordDegrees] : undefined,
+      customChords: next.customChords?.map(chord => chord ? { ...chord } : null), customDurations: next.customDurations ? [...next.customDurations] : undefined };
+    this.commit({ ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? copied : item) });
+    return 'changed';
+  }
+
+  setSectionChord(sectionId: string, index: number, chord: ProgressionChord): void {
+    const project = this.state(), section = project.arrangement.find(item => item.id === sectionId);
+    if (!section) return;
+    const degrees = sectionDegrees(project, section);
+    const count = section.customDurations?.length ?? degrees.length;
+    if (!Number.isInteger(index) || index < 0 || index >= count) return;
+    const contextual = sectionProject(project, section), harmony = baseGenerationHarmony(project, section);
+    const displayed = progressionChords(contextual.key, contextual.scale, harmony.degrees, harmony.customChords);
+    const custom = Array.from({ length: count }, (_, i) => i === index ? chord : displayed[i]);
+    this.setSectionMusicalState(sectionId, { chordDegrees: Array.from({ length: count }, (_, i) => degrees[i % degrees.length]), customChords: custom });
+  }
+
+  editSectionChordList(sectionId: string, action: 'add' | 'remove' | 'move', from = 0, to = 0): void {
+    const project = this.state(), section = project.arrangement.find(item => item.id === sectionId);
+    if (!section) return;
+    const base = sectionDegrees(project, section), count = section.customDurations?.length ?? base.length;
+    const degrees = Array.from({ length: count }, (_, i) => base[i % base.length]);
+    const contextual = sectionProject(project, section), harmony = baseGenerationHarmony(project, section);
+    const chords: (ProgressionChord | null)[] = progressionChords(contextual.key, contextual.scale, harmony.degrees, harmony.customChords);
+    const durations = section.customDurations ? [...section.customDurations] : undefined;
+    if (action === 'add') { if (count >= 32) return; degrees.push(1); chords.push(null); durations?.push(4); }
+    else {
+      if (!Number.isInteger(from) || from < 0 || from >= count) return;
+      if (action === 'remove') { if (count <= 1) return; degrees.splice(from,1); chords.splice(from,1); durations?.splice(from,1); }
+      else { if (!Number.isInteger(to) || to < 0 || to >= count || from === to) return;
+        degrees.splice(to,0,degrees.splice(from,1)[0]); chords.splice(to,0,chords.splice(from,1)[0]);
+        if (durations) durations.splice(to,0,durations.splice(from,1)[0]); }
+    }
+    this.setSectionMusicalState(sectionId, { chordDegrees: degrees, customChords: chords, customDurations: durations });
   }
 
   /** Only single-control edits can join a burst; scope and field identify the control. */
@@ -832,6 +894,9 @@ export class ProjectService {
     const next = [...sections];
     next.splice(index + 1, 0, {
       ...sections[index], id: `section-${nextId}`,
+      context: sections[index].context ? { ...sections[index].context } : undefined,
+      customChords: sections[index].customChords?.map(chord => chord ? { ...chord } : null),
+      customDurations: sections[index].customDurations ? [...sections[index].customDurations] : undefined,
       chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
       trackPresence: { ...sections[index].trackPresence },
       rolePartOverrides: Object.fromEntries(Object.entries(sections[index].rolePartOverrides ?? {}).map(([role, patch]) => [role, copyPartSettings(patch)])),
@@ -867,7 +932,7 @@ export class ProjectService {
     const next = [...sections];
     const current = sections[index];
     const updated = { ...current, ...patch };
-    if (patch.measures !== undefined) {
+    if (patch.measures !== undefined && !current.customChords && !current.customDurations) {
       const progression = this.state().progression;
       const chordDegrees = Array.from({ length: patch.measures }, (_, measure) =>
         current.chordDegrees?.[measure] ?? progression[measure % progression.length]);
@@ -895,9 +960,9 @@ export class ProjectService {
   clearSectionChordOverrides(sectionIndex: number): void {
     const project = this.state();
     const section = project.arrangement[sectionIndex];
-    if (!section?.chordDegrees) return;
+    if (!section || !section.chordDegrees && !section.customChords) return;
     const next = [...project.arrangement];
-    next[sectionIndex] = { ...section, chordDegrees: undefined };
+    next[sectionIndex] = { ...section, chordDegrees: undefined, customChords: undefined };
     this.commit({ ...project, arrangement: next });
   }
 
@@ -1315,7 +1380,8 @@ export class ProjectService {
       if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
           || !SECTION_TYPES.includes(sectionType)
           || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
-          || (chordDegrees !== undefined && (!Array.isArray(chordDegrees) || chordDegrees.length !== section.measures
+          || !validSectionHarmony(section as ArrangementSection)
+          || (chordDegrees !== undefined && (!Array.isArray(chordDegrees) || chordDegrees.length < 1 || chordDegrees.length > 32
             || chordDegrees.some((degree) => !Number.isInteger(degree) || degree < 1 || degree > 7)))
           || (parts !== undefined && (!parts || typeof parts !== 'object' || Array.isArray(parts)
             || ARRANGED_PARTS.some((part) => part === 'melody' && parts[part] === undefined ? false : typeof parts[part] !== 'boolean')))
@@ -1375,6 +1441,9 @@ export class ProjectService {
         id: section.id,
         type: sectionType,
         measures: section.measures!,
+        ...(section.context ? { context: { ...section.context } } : {}),
+        ...(section.customChords ? { customChords: section.customChords.map(chord => chord ? { ...chord } : null) } : {}),
+        ...(section.customDurations ? { customDurations: [...section.customDurations] } : {}),
         chordDegrees: chordDegrees === undefined ? undefined : [...chordDegrees],
         ...(section.useMelodyHarmony !== undefined ? { useMelodyHarmony: section.useMelodyHarmony } : {}),
         ...(section.swapMelody !== undefined ? { swapMelody: section.swapMelody } : {}),

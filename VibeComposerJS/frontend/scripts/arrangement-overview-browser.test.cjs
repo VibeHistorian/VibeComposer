@@ -55,6 +55,9 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
     } }).outputText;
     const css = fs.readFileSync(path.join(__dirname, '../src/app/shared/arrangement-overview.component.css'), 'utf8');
+    const contextCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/section-context.ts'), 'utf8'), {
+      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+    }).outputText;
     const theme = fs.readFileSync(path.join(__dirname, '../src/styles.css'), 'utf8');
     const html = `<!doctype html><html><head><style>${theme}\n${css}
       .fixture { width: 1218px; height: 384px; }
@@ -77,6 +80,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       computed: read => read, effect: () => {}, input, output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
+      '../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),
       '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
       '../core/music/arrangement-generator': { shouldGenerateTrackInSection: () => true },
       '../core/music/phrase': { layOutTrackPhrase: () => [] } };
@@ -84,7 +88,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const require = name => dependencies[name];
     ${compiled}
     const component = new module.exports.ArrangementOverviewComponent();
-    const project = { tracks: [{ id: 'bass-1', role: 'bass' }],
+    const project = { progression:[1,5,6,4], tracks: [{ id: 'bass-1', role: 'bass' }],
       arrangement: [{ id: 'verse', type: 'VERSE1', measures: 11 }] };
     component.project.set(project);
     const host = refs.get('scrollHost');

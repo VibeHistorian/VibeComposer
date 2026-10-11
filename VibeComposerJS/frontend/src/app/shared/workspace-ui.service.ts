@@ -1,3 +1,4 @@
+import { sectionDurationBeats } from '../core/music/section-context';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import type { ArrangedPart } from '../core/project/project.model';
 import { ProjectService } from '../core/project/project.service';
@@ -50,7 +51,7 @@ export class WorkspaceUiService {
     let endBeat = 0;
     for (const section of this.projects.project().arrangement) {
       if (section.id === selected[0]) startBeat = beat;
-      beat += section.measures * 4;
+      beat += sectionDurationBeats(this.projects.project(), section);
       if (section.id === selected.at(-1)) endBeat = beat;
     }
     return { startBeat, endBeat };

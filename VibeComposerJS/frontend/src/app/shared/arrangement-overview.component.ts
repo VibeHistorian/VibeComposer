@@ -1,3 +1,4 @@
+import { sectionDurationBeats, sectionChordDurations } from '../core/music/section-context';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, input, output, viewChild } from '@angular/core';
 import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack } from '../core/project/project.model';
 import { ARRANGED_PARTS } from '../core/project/project.model';
@@ -82,7 +83,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         startBeat,
         startMeasure,
       };
-      startBeat += section.measures * 4;
+      startBeat += sectionDurationBeats(project, section);
       startMeasure += section.measures;
       return item;
     });
@@ -103,7 +104,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const trackNotes = this.trackNotes();
     const previews = new Map<string, readonly PreviewNote[]>();
     for (const section of this.sections()) {
-      const sectionEndBeat = section.startBeat + section.section.measures * 4;
+      const sectionEndBeat = section.startBeat + sectionDurationBeats(this.project(), section.section);
       for (const group of this.groups()) {
         const notes = group.tracks.flatMap((track) => (trackNotes.get(track.id) ?? [])
           .filter((note) => note.startBeat >= section.startBeat && note.startBeat < sectionEndBeat));
@@ -114,7 +115,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const minPitch = Math.min(...notes.map((note) => note.midi));
         const maxPitch = Math.max(...notes.map((note) => note.midi));
         const pitchSpan = Math.max(12, maxPitch - minPitch);
-        const sectionBeats = section.section.measures * 4;
+        const sectionBeats = sectionDurationBeats(this.project(), section.section);
         previews.set(this.cellKey(section.section.id, group.role), notes.map((note) => ({
           leftPercent: (note.startBeat - section.startBeat) / sectionBeats * 100,
           widthPercent: Math.max(0.45, note.durationBeats / sectionBeats * 100),
@@ -254,12 +255,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     if (!size) return;
     const sections = this.sections();
     const groups = this.groups();
-    const totalBeats = sections.reduce((sum, item) => sum + item.section.measures * 4, 0);
+    const totalBeats = sections.reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0);
     const minimumHeight = RULER_HEIGHT + groups.length * 65;
     const trackCount = Math.max(0, ...groups.map((group) => group.tracks.length));
     const minimumCellWidth = trackCount > 0
       ? CELL_HORIZONTAL_PADDING + TRACK_BUTTON_PITCH * Math.ceil(trackCount / MAX_TRACK_BUTTON_ROWS) : 0;
-    const shortestSectionBeats = Math.min(...sections.map((item) => item.section.measures * 4));
+    const shortestSectionBeats = Math.min(...sections.map((item) => sectionDurationBeats(this.project(), item.section)));
     const minimumPixelsPerBeat = sections.length ? minimumCellWidth / shortestSectionBeats : 0;
     // Use the host's outer width for the label breakpoint so adding a vertical
     // scrollbar cannot switch label widths and make horizontal scrolling oscillate.
@@ -360,7 +361,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const noteColor = color(group.role === 'drums' ? '--role-drums' : `--role-${role}-strong`);
       for (const item of sections) {
         const x = this.beatX(item.startBeat);
-        const width = item.section.measures * 4 * this.pixelsPerBeat;
+        const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         if (x + width <= this.labelWidth || x >= this.width) continue;
         fill(x, y, width, this.rowHeight, `--role-${role}-surface`);
         fill(x, y, 1, this.rowHeight, '--surface-base');
@@ -381,7 +382,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const previewHeight = Math.max(12, this.rowHeight - 10 - Math.max(1, toggleRows) * TRACK_BUTTON_PITCH);
         context.save();
         context.beginPath(); context.rect(x, y + 5, width, previewHeight); context.clip();
-        for (let bar = 1; bar < item.section.measures; bar++) fill(x + bar * 4 * this.pixelsPerBeat, y + 5, 1, previewHeight, '--border-subtle');
+        const durations = sectionChordDurations(this.project(), item.section);
+        let slotBeat = 0;
+        for (let bar = 1; bar < item.section.measures; bar++) {
+          slotBeat += durations[(bar - 1) % durations.length];
+          fill(x + slotBeat * this.pixelsPerBeat, y + 5, 1, previewHeight, '--border-subtle');
+        }
         context.fillStyle = noteColor;
         for (const note of this.previewNotes(item.section.id, group.role)) {
           const noteX = x + note.leftPercent / 100 * width;
@@ -426,7 +432,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     context.beginPath(); context.rect(this.labelWidth, 0, Math.max(0, this.width - this.labelWidth), RULER_HEIGHT); context.clip();
     for (const item of sections) {
       const x = this.beatX(item.startBeat);
-      const width = item.section.measures * 4 * this.pixelsPerBeat;
+      const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
       if (x + width <= this.labelWidth || x >= this.width) continue;
       fill(x, 0, width, RULER_HEIGHT, this.selectedSectionIds().includes(item.section.id) ? '--surface-accent' : '--surface-base');
       fill(x, 0, 1, RULER_HEIGHT, '--border-subtle');
@@ -480,7 +486,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, this.width, this.height);
-    const totalBeats = this.sections().reduce((sum, item) => sum + item.section.measures * 4, 0);
+    const totalBeats = this.sections().reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0);
     const x = this.beatX(Math.min(100, Math.max(0, percent)) / 100 * totalBeats);
     if (x < this.labelWidth || x > this.width) return;
     context.fillStyle = this.accent;

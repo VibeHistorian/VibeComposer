@@ -4,15 +4,14 @@ Active backlog as of 2026-10-11. Completed checkpoints, Java comparison evidence
 
 ## Remaining order
 
-1. **P5f:** Section harmony (with chordlets) and timing, with matching generation, playback and MIDI context.
-2. **P6g / P6h:** Remaining creation branches and policies after their musical consumers exist.
-3. **P7c:** Final workspace acceptance after those changes.
-4. **P8:** Remaining global/app/playback/device/export preferences.
-5. **P9 / P10 / P11:** Custom Melody durations, drum-driven rhythm accents, and imported melody respectively.
+1. **P6g / P6h:** Remaining creation branches and policies after their musical consumers exist.
+2. **P7c:** Final workspace acceptance after those changes.
+3. **P8:** Remaining global/app/playback/device/export preferences.
+4. **P9 / P10 / P11:** Custom Melody durations, drum-driven rhythm accents, and imported melody respectively.
 
 ## Completed entry gates
 
-P1b (current block Melody), P4f (single-pitch drum tracks) and P4g (applicable shared musical consumers) are delivered. P5a–P5e, P6a–P6f and P7a/P7b are also delivered in their supported scope. P5e includes explicit section inferred-harmony/Melody selection and shared voicing flattening at current fixed timing; its [implementation evidence](__work_history/p5e-harmony-integration-record.md) documents parity boundaries and deliberate recoveries. Advanced exclusions are represented below and in the [remaining placement inventory](CONTROL_PLACEMENT_MAP.md); historical checkpoint text is not an additional backlog.
+P1b (current block Melody), P4f (single-pitch drum tracks) and P4g (applicable shared musical consumers) are delivered. P5a–P5f, P6a–P6f and P7a/P7b are also delivered in their supported scope. P5e includes explicit section inferred-harmony/Melody selection and shared voicing flattening at its original fixed timing; its [implementation evidence](__work_history/p5e-harmony-integration-record.md) documents parity boundaries and deliberate recoveries. P5f adds section Chordlets/durations and sparse timing/key context with shared playback/MIDI tempo maps; its [implementation record](__work_history/p5f-section-context-record.md) documents normalized timing and section-local modulation differences from Java. Advanced exclusions are represented below and in the [remaining placement inventory](CONTROL_PLACEMENT_MAP.md); historical checkpoint text is not an additional backlog.
 
 The legacy melody skeleton and its exclusive controls remain excluded. Current implementation rules live in [TRANSLATION_RULES.md](TRANSLATION_RULES.md); workspace layout contracts live in [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md).
 
@@ -95,12 +94,6 @@ Knobs and native comboboxes reset to their default value on right-click through 
 
 ## Delivery stages still open
 
-### P5 — Remaining musical integration
-
-#### P5f — Remaining section harmony and timing
-
-Remaining: section custom chords/durations and SectionConfig swing, BPM, key/scale/key-change and beat-duration behavior. Existing section degree progressions and global root/spice/inversion Chordlets cover only part of this scope. Extend P5e's typed shared root/voicing context and explicit harmony precedence with variable chord durations and matching scheduling/export behavior. Keep the base inference skeleton distinct from section Melody onset dependencies. Expose section tempo changes only when playback and MIDI tempo events agree. Validate section boundaries, scoped inheritance, history, persistence and all affected role consumers.
-
 ### P6 — Remaining track-generation policies
 
 #### P6g — Remaining drum policies
@@ -123,7 +116,7 @@ Port remaining app/playback/device/export preferences separately. Musical settin
 
 ### P9 — Custom duration editors and behavior
 
-Deferred from P5e by user request (2026-10-11). Implement Melody custom duration editing and the `melodyUseCustomDurations`, `melodyCustomDurationsRandomWeighting` and `melodyCustomDurationsStrictMode` consumers. Follow production block assembly, custom rests, overlap/gap/boundary cleanup, repeated-block weighting and strict pitch behavior. Keep duration templates distinct from manual-note replacements and generic rhythm masks. Shared section chord-duration/timing foundations remain P5f; use their effective scheduling/export context where required.
+Deferred from P5e by user request (2026-10-11). Implement Melody custom duration editing and the `melodyUseCustomDurations`, `melodyCustomDurationsRandomWeighting` and `melodyCustomDurationsStrictMode` consumers. Follow production block assembly, custom rests, overlap/gap/boundary cleanup, repeated-block weighting and strict pitch behavior. Keep duration templates distinct from manual-note replacements and generic rhythm masks. Shared section chord-duration/timing foundations are delivered by P5f; use their effective scheduling/export context where required.
 
 Exit: deterministic Java comparisons, independent template arrays, applicable scope ownership, atomic gestures/history, persistence, manual masking, shared dependency/playback/MIDI behavior and responsive editor/browser validation.
 

@@ -23,6 +23,10 @@ export interface PhraseNote {
 }
 
 export interface ArrangementSection {
+  /** Sparse section context; omission inherits project/part values. */
+  readonly context?: SectionMusicalContext;
+  readonly customChords?: readonly (import('../music/harmony').ProgressionChord | null)[];
+  readonly customDurations?: readonly number[];
   /** Realized harmony selections; explicit section chords take precedence. */
   readonly useMelodyHarmony?: boolean;
   readonly swapMelody?: boolean;
@@ -35,6 +39,17 @@ export interface ArrangementSection {
   readonly trackPresence: Readonly<Record<string, boolean>>;
   readonly rolePartOverrides?: Readonly<Partial<{ [R in ArrangedPart]: Partial<PartSettingsByRole[R]> }>>;
   readonly trackPartOverrides?: Readonly<Record<string, PartSettingsPatch>>;
+}
+
+export interface SectionMusicalContext {
+  readonly tempoBpm?: number;
+  readonly swingPercent?: number;
+  readonly key?: string;
+  readonly scale?: ScaleMode;
+  readonly keyChange?: number;
+  /** Direct transposition or an ending ii–V cadence in the selected section key. */
+  readonly keyChangeType?: 'direct' | 'two-five-one';
+  readonly beatDurationMultiplier?: 0.5 | 1 | 2;
 }
 
 export interface CommonPartSettings {

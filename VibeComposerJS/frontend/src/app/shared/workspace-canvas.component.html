@@ -253,18 +253,7 @@
             <button type="button" (click)="duplicateSection()" [disabled]="project().arrangement.length >= 32 || totalMeasures() + section.measures > 128">Duplicate</button>
             <button type="button" class="remove-track" (click)="removeSection()" [disabled]="project().arrangement.length <= 1">Remove</button>
           </div>
-          <div class="section-chord-editor">
-            <div class="inspector-section-heading"><p class="eyebrow">CHORDS BY BAR</p>
-              @if (section.chordDegrees) { <button type="button" (click)="clearSectionProgression()">Use primary chords</button> }
-            </div>
-            @for (degree of sectionChordDegrees(); track $index; let bar = $index) {
-              <label class="quick-field">Bar {{ bar + 1 }}
-                <select [selectDefault]="1" [value]="degree" (change)="updateSectionChord(bar, $event)">
-                  @for (chord of chords(); track chord.degree) { <option [value]="chord.degree" [selected]="chord.degree === degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option> }
-                </select>
-              </label>
-            }
-          </div>
+          <vc-section-context-editor [section]="section" />
           <div class="section-track-controls">
             <div class="inspector-section-heading"><p class="eyebrow">TRACKS IN SECTION</p>
               <button type="button" (click)="randomizeSectionPresence(section)">Reroll</button>

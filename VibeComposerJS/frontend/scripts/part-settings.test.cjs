@@ -5,6 +5,113 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('P5f durations share chord boundaries across all roles, score ranges, tempo events and persisted history', () => {
+  const { service, load, phrase, midi, ui, workspace, stored } = fixture();
+  const timing = load('core/music/section-context.ts');
+  const project = JSON.parse(service.exportProjectJson());
+  project.tracks = project.tracks.map(track => track.role === 'arpeggio' || track.role === 'drums'
+    ? { ...track,generatorSettings:{...track.generatorSettings,rhythm:'melody'} } : track);
+  project.arrangement = project.arrangement.slice(0,2).map(section => ({ ...section, measures: 4,
+    trackPresence: Object.fromEntries(project.tracks.map(track => [track.id, true])) }));
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  const id = service.project().arrangement[0].id;
+  const before = service.exportProjectJson();
+  const baseline = Object.fromEntries(service.project().tracks.map(track => [track.id, phrase.layOutTrackPhrase(service.project(), track)]));
+  assert.equal(service.setSectionMusicalState(id, { customDurations: [2,6,1,3], context: { tempoBpm: 90, beatDurationMultiplier: 2 } }), 'changed');
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before); service.redo(); assert.equal(service.exportProjectJson(), after);
+  const current = service.project(), section = current.arrangement[0];
+  assert.equal(timing.sectionDurationBeats(current, section), 24);
+  assert.equal(workspace.totalBeats(), 40);
+  ui.selectSection(id); assert.deepEqual(ui.sectionRange(), { startBeat: 0, endBeat: 24 });
+  assert.equal(workspace.timelineSections()[1].startBeat, 24);
+  for (const track of current.tracks) {
+    const notes = phrase.layOutTrackPhrase(current, track);
+    assert.deepEqual(notes.filter(note => note.startBeat < 24), timing.mapChordNotes(baseline[track.id].filter(note => note.startBeat < 16), [4,12,2,6]), track.role);
+    assert.deepEqual(notes.filter(note => note.startBeat >= 24), baseline[track.id].filter(note => note.startBeat >= 16).map(note => ({ ...note, startBeat: note.startBeat + 8 })), track.role + ' following section');
+  }
+  const exported = new Midi(midi.generateCompositionMidi(current));
+  assert.deepEqual(exported.header.tempos.map(event => [event.ticks / exported.header.ppq,Math.round(event.bpm)]), [[0,90],[24,current.tempoBpm]]);
+  const map = timing.projectTempoMap(current);
+  for (const track of current.tracks) {
+    const notes = phrase.layOutTrackPhrase(current, track), output = exported.tracks.find(candidate => candidate.name === track.name).notes;
+    for (const note of notes) {
+      const matching = output.find(event => event.midi === note.midi && Math.abs(event.ticks / exported.header.ppq - note.startBeat) < 1 / exported.header.ppq);
+      assert.ok(matching, track.role + ' MIDI onset');
+      assert.ok(Math.abs(matching.time - timing.beatToSeconds(map,note.startBeat)) < 0.004);
+    }
+  }
+  assert.equal(service.importProjectJson(after), true); assert.deepEqual(JSON.parse(service.exportProjectJson()), JSON.parse(after));
+  const { ProjectService } = load('core/project/project.service.ts');
+  const restored = new ProjectService(); assert.deepEqual(restored.project(),service.project());
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).arrangement[0].context.tempoBpm, 90);
+});
+
+test('P5f section Chordlets, timing and key edits preserve scopes, manual ownership and exact transposition', () => {
+  const { service, load, phrase } = fixture();
+  const project = JSON.parse(service.exportProjectJson());
+  project.arrangement = project.arrangement.slice(0,2).map(section => ({ ...section, measures: 4,
+    trackPresence: Object.fromEntries(project.tracks.map(track => [track.id,true])) }));
+  assert.equal(service.importProjectJson(JSON.stringify(project)),true);
+  const id = service.project().arrangement[0].id;
+  const notes = role => phrase.layOutTrackPhrase(service.project(),service.project().tracks.find(track => track.role === role)).filter(note => note.startBeat < 16);
+  const baseline = Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role => [role,notes(role)]));
+  assert.equal(service.updateSectionContext(id, { keyChange: -12 }), 'changed');
+  for (const role of ['melody','bass','chords','arpeggio']) assert.deepEqual(notes(role),baseline[role].map(note => ({ ...note, midi: note.midi - 12 })),role);
+  assert.deepEqual(notes('drums'),baseline.drums);
+  const bases = JSON.stringify(service.project().tracks);
+  service.updateSectionContext(id, { keyChange: null, swingPercent: 70, key: 'D', scale: 'natural-minor' });
+  for (const role of ['melody','bass','chords','arpeggio']) assert.notDeepEqual(notes(role),baseline[role],role);
+  assert.equal(JSON.stringify(service.project().tracks),bases);
+  service.setSectionChord(id, 0, { root: 6, spice: 'maj7', inversion: 1 });
+  const { sectionGenerationHarmony } = load('core/music/project-harmony.ts');
+  const harmony = sectionGenerationHarmony(service.project(),service.project().arrangement[0],'chords');
+  assert.equal(harmony.customChords[0].root,6);
+  service.setSectionMusicalState(id,{ customDurations: [1,2,3,4] });
+  service.editSectionChordList(id,'move',0,2);
+  assert.deepEqual(service.project().arrangement[0].customDurations,[2,3,1,4]);
+  assert.equal(service.project().arrangement[0].customChords[2].root,6);
+  const state=service.exportProjectJson(); service.undo(); service.redo(); assert.equal(service.exportProjectJson(),state);
+  const trackId='track-melody-1'; service.updateTrackPhrase(trackId,[{ id:'manual',midi:65,startBeat:0,durationBeats:1,velocity:90 }]);
+  const manual=JSON.stringify(service.project().tracks.find(track=>track.id===trackId).editedPhrase);
+  service.updateSectionContext(id,{ keyChange: 7 });
+  assert.equal(JSON.stringify(service.project().tracks.find(track=>track.id===trackId).editedPhrase),manual);
+  assert.equal(notes('melody')[0].midi,65);
+});
+
+test('P5f validates context and harmony atomically, restores inheritance, and isolates duplicated arrays', () => {
+  const { service, load } = fixture(); const id=service.project().arrangement[0].id;
+  for(const patch of [{ tempoBpm:0 },{ swingPercent:101 },{ keyChange:25 },{ scale:'unknown' },{ key:'H' },{ beatDurationMultiplier:3 },{ unknown:null }])
+    assert.equal(service.updateSectionContext(id,patch),'invalid');
+  service.setSectionMusicalState(id,{ customDurations:[2,6],context:{ tempoBpm:80,swingPercent:0,keyChange:0 } });
+  const saved=service.exportProjectJson(); service.undo(); const before=service.exportProjectJson();
+  assert.equal(service.updateSectionContext(id,{tempoBpm:null}), 'unchanged');
+  assert.equal(service.canRedo(),true);
+  assert.equal(service.setSectionMusicalState(id,{ customDurations:[NaN] }),'invalid'); assert.equal(service.exportProjectJson(),before);
+  assert.equal(service.canRedo(),true); service.redo(); assert.equal(service.exportProjectJson(),saved);
+  assert.equal(service.updateSectionContext(id,{tempoBpm:80}), 'unchanged');
+  assert.equal(service.setSectionMusicalState(id,{customDurations:[2,6],context:{swingPercent:0,keyChange:0,tempoBpm:80}}),'unchanged');
+  for(const field of [{ customDurations:[0] },{ customDurations:[1,2],customChords:[{root:0,spice:'',inversion:0}] },{ context:{tempoBpm:Infinity} },{context:{unknown:1}}]) {
+    const project=JSON.parse(saved); Object.assign(project.arrangement[0],field);
+    assert.equal(service.importProjectJson(JSON.stringify(project)),false); assert.equal(service.exportProjectJson(),saved);
+  }
+  service.duplicateSection(0); const [first,copy]=service.project().arrangement;
+  assert.notEqual(first.customDurations,copy.customDurations); assert.notEqual(first.context,copy.context);
+  service.updateSection(0,{measures:8}); assert.deepEqual(service.project().arrangement[0].customDurations,[2,6]);
+  service.updateSectionContext(id,{tempoBpm:null,swingPercent:null,keyChange:null}); assert.equal(service.project().arrangement[0].context,undefined);
+  const { baseGenerationHarmony } = load('core/music/project-harmony.ts');
+  service.updateSectionContext(id,{keyChangeType:'two-five-one'});
+  // Two slots cannot support an ending cadence; deterministic recovery retains harmony.
+  assert.deepEqual(baseGenerationHarmony(service.project(),service.project().arrangement[0]).degrees,[1,5]);
+  service.setSectionMusicalState(id,{customDurations:undefined});
+  const cadence=baseGenerationHarmony(service.project(),service.project().arrangement[0]);
+  assert.deepEqual(cadence.customChords.slice(-2),[{root:2,spice:'m',inversion:0},{root:7,spice:'7',inversion:0}]);
+  service.setSectionChord(id,0,{root:6,spice:'maj7',inversion:0});
+  const explicit=baseGenerationHarmony(service.project(),service.project().arrangement[0]);
+  assert.equal(explicit.customChords[0].root,6);
+  assert.deepEqual(explicit.customChords.slice(-2),cadence.customChords.slice(-2),'editing a chord freezes the displayed cadence');
+});
+
 test('P5e inference weighting and voicing flattening match production Java consumers', () => {
   const { load } = fixture();
   const { inferMelodyChordDegrees, INFERENCE_CHORD_NAMES } = load('core/music/melody-chord-inference.ts');

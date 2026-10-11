@@ -50,6 +50,7 @@ function fixture() {
     return module.exports;
   };
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts', {
+    '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     './tiny-synth-engine': { TinySynthEngine: class {} },
     '../music/phrase': { layOutTrackPhrase: (project, track) =>
@@ -66,13 +67,31 @@ function fixture() {
     source.start(start);
     return [{ source, envelope: node(), stopTime: start + duration + 0.02, disconnect() {} }];
   } };
-  const project = { name: 'Song', tempoBpm: 120, arrangement: [{ measures: 4, trackPresence: {} }],
+  const project = { name: 'Song', progression: [1,5,6,4], tempoBpm: 120, arrangement: [{ measures: 4, trackPresence: {} }],
     tracks: [{ id: 'bass', role: 'bass', notes: [
       { id: 'sustain', midi: 48, startBeat: 0, durationBeats: 8, velocity: 100 },
       { id: 'next', midi: 50, startBeat: 4, durationBeats: 1, velocity: 100 },
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
   return { playback, context, sources, project, angular, load };
 }
+
+test('P5f tempo boundaries integrate sustained notes, transport, partial loops and LIVE tempo reload', async () => {
+  const { playback,project,context,sources }=fixture();
+  project.arrangement=[{ measures:1,trackPresence:{},context:{tempoBpm:120} },{measures:1,trackPresence:{},context:{tempoBpm:60}}];
+  project.tracks[0].notes=[{id:'crossing',midi:48,startBeat:2,durationBeats:4,velocity:100}];
+  await playback.start(project,2);
+  assert.equal(playback.state(),'playing');
+  assert.equal(playback.durationBeats(),8);
+  assert.ok(Math.abs(sources[0].stopTime-3.023)<1e-9,'note crosses both tempo segments');
+  context.currentTime=1.5; playback.tick(); assert.equal(playback.beat(),4.5);
+  project.arrangement[1].context.tempoBpm=120; playback.reload(project);
+  assert.equal(playback.beat(),4.5); context.currentTime=2; playback.tick(); assert.equal(playback.beat(),5.5);
+  playback.stop(); context.currentTime=0; project.arrangement[1].context.tempoBpm=60;
+  playback.setLoopRange({startBeat:2,endBeat:6}); playback.toggleLoop(); await playback.start(project);
+  context.currentTime=3.1; playback.tick(); assert.ok(Math.abs(playback.beat()-2.2)<1e-9);
+  context.currentTime=6.1; playback.tick(); assert.ok(Math.abs(playback.beat()-2.2)<1e-9,'later cycles reuse the selected tempo segments');
+  playback.stop();
+});
 
 test('seeking while stopped positions the song without audio and Play starts there', async () => {
   const { playback, project, sources } = fixture();
@@ -137,7 +156,7 @@ test('LIVE defaults on and disabling it leaves the playing schedule untouched on
   context.currentTime = 1;
   playback.reload({ ...project, tempoBpm: 60 });
   assert.equal(playback.liveEnabled(), false);
-  assert.equal(playback.secondsPerBeat, 0.5);
+  assert.equal(60 / playback.tempoMap[0].bpm, 0.5);
   assert.equal(sources[0].stopTime, 4.023);
   assert.equal(playback.state(), 'playing');
 });
@@ -265,7 +284,7 @@ test('paused and stopped playback stay inactive until resumed with the latest pr
   assert.equal(playback.state(), 'paused');
   assert.equal(playback.beat(), 2);
   await playback.toggle({ ...project, tempoBpm: 60 });
-  assert.equal(playback.secondsPerBeat, 1);
+  assert.equal(60 / playback.tempoMap[0].bpm, 1);
   assert.equal(playback.beat(), 2);
   playback.stop();
   playback.reload(project);
@@ -299,7 +318,7 @@ test('transport watches project changes and enabling LIVE without subscribing to
   assert.equal(reloads, 0);
   transport.toggleLive();
   assert.equal(reloads, 1);
-  assert.equal(playback.secondsPerBeat, 1);
+  assert.equal(60 / playback.tempoMap[0].bpm, 1);
   context.currentTime = 2;
   playback.tick();
   assert.equal(reloads, 1);

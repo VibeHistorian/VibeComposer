@@ -22,6 +22,7 @@ function fixture() {
   }).outputText;
   const module = { exports: {} };
   const dependencies = {
+    '../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
     '../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
@@ -56,7 +57,7 @@ function fixture() {
     { id: 'n2', startBeat: 8, durationBeats: 1, midi: 50, velocity: 100 },
     { id: 'n3', startBeat: 24, durationBeats: 1, midi: 52, velocity: 100 },
   ] };
-  component.project.set({ tracks: [track], arrangement: [
+  component.project.set({ progression: [1,5,6,4], tracks: [track], arrangement: [
     { id: 'intro', type: 'INTRO', measures: 2, presentTracks: [track.id] },
     { id: 'verse', type: 'VERSE1', measures: 4, presentTracks: [] },
     { id: 'outro', type: 'OUTRO', measures: 2, presentTracks: [track.id] },
@@ -66,6 +67,21 @@ function fixture() {
   component.drawOverview();
   return { component, refs, base, overlay };
 }
+
+test('P5f variable chord slots align section hit areas, previews and loop markers', () => {
+  const { component, base } = fixture();
+  const project = component.project();
+  component.project.set({ ...project, arrangement: project.arrangement.map((section,index) => index === 0 ? { ...section,customDurations:[2,6],context:{beatDurationMultiplier:2} } : section) });
+  component.drawOverview();
+  assert.equal(component.sections()[1].startBeat,16);
+  const first=component.hits.find(area=>area.key==='heading:intro');
+  assert.equal(first.width,16*component.pixelsPerBeat);
+  const second=component.hits.find(area=>area.key==='heading:verse');
+  assert.equal(second.x,component.beatX(16));
+  component.loopRange.set({startBeat:0,endBeat:16}); component.drawOverview();
+  const marker=base.rectangles.filter(rect=>rect.color==='--loop-line').at(-1);
+  assert.equal(marker.bounds[2],component.beatX(16)-component.beatX(0));
+});
 
 test('loop markers align with section beats and clip to the scrolled timeline', () => {
   const { component, refs, base } = fixture();

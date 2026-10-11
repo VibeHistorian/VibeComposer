@@ -7,7 +7,7 @@ const ts = require('typescript');
 function fixture() {
   const effects = [];
   const signal = (value) => Object.assign(() => value, { set: (next) => { value = next; } });
-  const project = signal({ tracks: [{ id: 'track-bass-1', role: 'bass' }], arrangement: [
+  const project = signal({ progression: [1,5,6,4], tracks: [{ id: 'track-bass-1', role: 'bass' }], arrangement: [
     { id: 'a', measures: 2 }, { id: 'b', measures: 4 }, { id: 'c', measures: 1 },
     { id: 'd', measures: 3 }, { id: 'e', measures: 2 },
   ] });
@@ -30,6 +30,7 @@ function fixture() {
     } }).outputText;
     const module = { exports: {} };
     const defaults = {
+      '../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
       '@angular/core': angular, '../core/project/project.service': { ProjectService: 'project' },
       '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
       './workspace-ui.service': { WorkspaceUiService: 'ui' },

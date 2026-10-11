@@ -551,6 +551,44 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     for (const [key,value] of Object.entries(harmonyResult.result.value)) assert.equal(value,true,'harmony '+key);
     const harmonyScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-harmony-' + width + '.png'), Buffer.from(harmonyScreenshot.data, 'base64'));
+    const sectionResult = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
+      const wait=async(read,label)=>{for(let i=0;i<200;i++){const value=read();if(value)return value;await new Promise(r=>setTimeout(r,20));}throw new Error(label);};
+      const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+      const editor=await wait(()=>document.querySelector('vc-section-context-editor'),'section context editor');
+      const id=editor.querySelector('vc-chordlet-editor').getAttribute('data-section-id');
+      const section=()=>read().arrangement.find(section=>section.id===id);
+      const primary=JSON.stringify([read().progression,read().progressionChords]);
+      const other=JSON.stringify(read().arrangement.filter(section=>section.id!==id));
+      const tracks=JSON.stringify(read().tracks);
+      const change=(input,value)=>{input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));};
+      change(editor.querySelector('input[min="30"]'),'87');
+      await wait(()=>section().context?.tempoBpm===87,'section BPM');
+      change(editor.querySelector('input[min="0"]'),'67');
+      await wait(()=>section().context?.swingPercent===67,'section swing');
+      change(editor.querySelector('[aria-label="Chord 1 duration in beats"]'),'2');
+      await wait(()=>section().customDurations?.[0]===2,'section duration');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(()=>!section().customDurations,'duration undo');
+      (await wait(()=>{const button=document.querySelector('[aria-label="Redo"]');return button&&!button.disabled?button:null;},'duration redo enabled')).click();
+      await wait(()=>section().customDurations?.[0]===2,'duration redo');
+      const chord=editor.querySelector('.chordlet-label');
+      chord.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
+      const menu=await wait(()=>editor.querySelector('[aria-label="Chord root"]'),'section chord menu');
+      [...menu.querySelectorAll('button')].find(button=>button.textContent==='D').click();
+      await wait(()=>section().customChords?.[0]?.root===2,'section chord edit');
+      editor.querySelector('.chordlet-label').dispatchEvent(new WheelEvent('wheel',{deltaY:-1,bubbles:true,cancelable:true}));
+      await wait(()=>section().customChords?.[0]?.inversion===1,'section inversion');
+      editor.scrollIntoView({block:'center'});
+      return {tempo:section().context.tempoBpm===87, durations:section().customDurations[0]===2,
+        primary:primary===JSON.stringify([read().progression,read().progressionChords]), tracks:tracks===JSON.stringify(read().tracks),
+        others:other===JSON.stringify(read().arrangement.filter(section=>section.id!==id)),
+        fits:editor.getBoundingClientRect().left>=0&&editor.getBoundingClientRect().right<=innerWidth&&document.documentElement.scrollWidth<=innerWidth+1
+          && [...editor.querySelectorAll('input,select,.context-field button')].every(control=>control.getBoundingClientRect().right<=editor.getBoundingClientRect().right+1)};
+    })()` });
+    assert.equal(sectionResult.exceptionDetails,undefined,JSON.stringify(sectionResult));
+    for(const [key,value] of Object.entries(sectionResult.result.value)) assert.equal(value,true,'P5f '+key);
+    const sectionScreenshot=await command('Page.captureScreenshot',{format:'png'});
+    fs.writeFileSync(path.resolve(__dirname,'../.angular/contextual-section-'+width+'.png'),Buffer.from(sectionScreenshot.data,'base64'));
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);

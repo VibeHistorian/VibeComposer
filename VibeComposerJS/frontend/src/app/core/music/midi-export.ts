@@ -2,13 +2,14 @@ import { Midi } from '@tonejs/midi';
 import type { CompositionProject, CompositionTrack } from '../project/project.model';
 import { tracksInRoleOrder } from '../project/project.model';
 import { layOutTrackPhrase } from './phrase';
+import { projectTempoMap } from './section-context';
 
 /** Serialize every independent instrument track with its assigned channel and mix controls. */
 export function generateCompositionMidi(project: CompositionProject): Uint8Array {
   const midi = new Midi();
   midi.name = project.name;
-  midi.header.setTempo(project.tempoBpm);
-  const secondsPerBeat = 60 / project.tempoBpm;
+  midi.header.tempos = projectTempoMap(project).map(point => ({ ticks: point.beat * midi.header.ppq, bpm: point.bpm }));
+  midi.header.update();
   const anySolo = project.tracks.some((track) => track.mix.solo);
 
   for (const compositionTrack of tracksInRoleOrder(project.tracks)) {
@@ -20,8 +21,8 @@ export function generateCompositionMidi(project: CompositionProject): Uint8Array
     for (const note of layOutTrackPhrase(project, compositionTrack)) {
       track.addNote({
         midi: note.midi,
-        time: note.startBeat * secondsPerBeat,
-        duration: note.durationBeats * secondsPerBeat,
+        ticks: Math.round(note.startBeat * midi.header.ppq),
+        durationTicks: Math.max(1, Math.round(note.durationBeats * midi.header.ppq)),
         velocity: note.velocity / 127,
       });
     }

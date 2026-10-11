@@ -1,3 +1,5 @@
+import { SectionContextEditorComponent } from './section-context-editor.component';
+import { sectionDurationBeats } from '../core/music/section-context';
 import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import type {
@@ -11,6 +13,7 @@ import { DRUM_INSTRUMENTS, drumInstrumentName } from '../core/music/drum-instrum
 import { GM_INSTRUMENTS } from '../core/music/gm-instruments';
 import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
 import { getDiatonicChords } from '../core/music/harmony';
+import { sectionGenerationHarmony } from '../core/music/project-harmony';
 
 
 import { ProjectService } from '../core/project/project.service';
@@ -54,7 +57,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -214,7 +217,7 @@ export class WorkspaceCanvasComponent {
   readonly scoreViewport = signal<ScoreViewport>({ scale: 1, offsetPercent: 0, width: 0, laneHeight: 40, verticalOffset: 0, scoreHeight: 0 });
 
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
-  readonly totalBeats = computed(() => this.totalMeasures() * 4);
+  readonly totalBeats = computed(() => this.project().arrangement.reduce((sum, section) => sum + sectionDurationBeats(this.project(), section), 0));
   readonly loopRange = computed(() => this.playback.loopEnabled()
     ? this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: this.totalBeats() } : null);
 
@@ -226,10 +229,9 @@ export class WorkspaceCanvasComponent {
   readonly timelineSections = computed<TimelineSection[]>(() => {
     let beat = 0;
     let measure = 1;
-    const measures = this.totalMeasures();
     return this.project().arrangement.map((section) => {
-      const item = { section, startBeat: beat, startMeasure: measure, widthPercent: section.measures / measures * 100 };
-      beat += section.measures * 4;
+      const item = { section, startBeat: beat, startMeasure: measure, widthPercent: sectionDurationBeats(this.project(), section) / this.totalBeats() * 100 };
+      beat += sectionDurationBeats(this.project(), section);
       measure += section.measures;
       return item;
     });
@@ -367,7 +369,7 @@ export class WorkspaceCanvasComponent {
 
   melodyRhythmHits(scope: PartSettingsScope): number {
     const section = 'sectionId' in scope ? this.project().arrangement.find(item => item.id === scope.sectionId) : undefined;
-    return (section?.chordDegrees ?? this.project().progression).length * 16;
+    return (section ? sectionGenerationHarmony(this.project(),section,'melody').degrees : this.project().progression).length * 16;
   }
 
   resetPartSettings(scope: PartSettingsScope, field?: string): void {

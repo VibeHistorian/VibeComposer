@@ -3,14 +3,14 @@
     <fieldset data-control-category="pitch">
       <legend>Section harmony</legend>
       <vc-compact-toggle label="Use Melody harmony" [active]="current.useMelodyHarmony ?? false"
-        [disabled]="!!current.chordDegrees || !inference().available && !current.useMelodyHarmony"
+        [disabled]="!!current.chordDegrees || !!current.customChords || current.context?.keyChangeType === 'two-five-one' || !inference().available && !current.useMelodyHarmony"
         description="Use the first Melody track's inferred progression for generated pitched parts in this section. Explicit section chords take precedence."
         (toggled)="projects.updateSectionHarmony(current.id, { useMelodyHarmony: !current.useMelodyHarmony })" />
       <vc-compact-toggle label="Swap Melody" [active]="current.swapMelody ?? false"
-        [disabled]="!!current.chordDegrees || !inference().available && !current.swapMelody"
+        [disabled]="!!current.chordDegrees || !!current.customChords || current.context?.keyChangeType === 'two-five-one' || !inference().available && !current.swapMelody"
         description="Generate Melody with the inferred progression and a seed offset of 100. Other parts retain their harmony unless Use Melody harmony is enabled."
         (toggled)="projects.updateSectionHarmony(current.id, { swapMelody: !current.swapMelody })" />
-      @if (current.chordDegrees) { <p>Explicit section chords take precedence over inferred harmony.</p> }
+      @if (current.chordDegrees || current.customChords || current.context?.keyChangeType === 'two-five-one') { <p>Explicit section chords and cadence take precedence over inferred harmony.</p> }
     </fieldset>
   }
   <details>

@@ -1,0 +1,45 @@
+<fieldset data-control-category="pitch">
+  <legend>Section chords</legend>
+  <vc-chordlet-editor [section]="section()" />
+  @if (section().customChords || section().chordDegrees) {
+    <button type="button" (click)="clearHarmony()">Use primary chords</button>
+  }
+</fieldset>
+<fieldset data-control-category="rhythm">
+  <legend>Chord durations · beats</legend>
+  <div class="duration-list">
+    @for (value of durations(); track $index; let index = $index) {
+      <label>{{ index + 1 }}<input type="number" min="0.25" max="32" step="0.25" [value]="value"
+        [attr.aria-label]="'Chord ' + (index + 1) + ' duration in beats'" (change)="setDuration(index, $event)" /></label>
+    }
+  </div>
+  @if (section().customDurations) { <button type="button" (click)="clearDurations()">Use default durations</button> }
+  <p>{{ duration() }} beats in section. Length counts chord slots; the progression repeats as needed.</p>
+</fieldset>
+<fieldset data-control-category="timing">
+  <legend>Section timing and key</legend>
+  @for (field of numericFields; track field.key) {
+    <div class="context-field">
+      <label>{{ field.label }}<input type="number" [min]="field.min" [max]="field.max" [step]="field.step"
+        [value]="section().context?.[field.key] ?? ''" [placeholder]="inherited(field.key)"
+        (change)="update(field.key, $event, true)" /></label>
+      <button type="button" [disabled]="section().context?.[field.key] === undefined" (click)="reset(field.key)">Inherit</button>
+    </div>
+  }
+  <label>Key<select [selectDefault]="projects.project().key" [value]="section().context?.key ?? ''" (change)="update('key', $event)">
+    <option value="">Project key</option>@for (key of keys; track key) { <option [value]="key">{{ key }}</option> }
+  </select></label>
+  <label>Scale<select [selectDefault]="projects.project().scale" [value]="section().context?.scale ?? ''" (change)="update('scale', $event)">
+    <option value="">Project scale</option><option value="major">Major</option><option value="natural-minor">Natural minor</option>
+  </select></label>
+  <label>Key change type<select selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
+    [value]="section().context?.keyChangeType ?? 'direct'" (change)="update('keyChangeType', $event)">
+    <option value="direct">Direct</option><option value="two-five-one">Ending ii–V</option>
+  </select></label>
+  @if (section().customChords || section().chordDegrees) { <p>Explicit section chords take precedence over the ending cadence.</p> }
+  <label>Beat duration<select [selectDefault]="1" [value]="section().context?.beatDurationMultiplier ?? 1" (change)="update('beatDurationMultiplier', $event, true)">
+    <option value="0.5">Half</option><option value="1">Normal</option><option value="2">Double</option>
+  </select></label>
+  <button type="button" (click)="projects.setSectionMusicalState(section().id, { context: undefined })" [disabled]="!section().context">Inherit all timing and key</button>
+  <p>Section swing overrides part swing. Blank values inherit. Tempo changes are shared by playback and MIDI export.</p>
+</fieldset>
