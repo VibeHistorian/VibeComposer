@@ -44,7 +44,7 @@
 
   <div class="transport-globals" aria-label="Global song settings">
     <div class="global-knobs">
-      <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="Transpose" unit="" [caption]="key()"
+      <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="Transpose" unit=""
         [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)" />
       <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="BPM" unit=""
         [value]="project().tempoBpm" [minimum]="40" [maximum]="240" (valueCommit)="updateTempo($event)" />

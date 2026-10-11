@@ -48,8 +48,12 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       result.noKeySelector = !document.querySelector('select[aria-label="Key"]');
       const transpose = document.querySelector('.transport-dock [aria-label="Transpose in semitones"]');
       change(transpose, '7');
-      await wait(() => read().transposeSemitones === 7 && document.querySelector('.knob-caption')?.textContent === 'G', 'transpose key label');
-      result.transposeKey = transpose.type === 'range'; change(transpose, '0');
+      await wait(() => read().transposeSemitones === 7 && document.querySelector('.transport-project').textContent.includes('G MAJOR'), 'project key label');
+      result.transposeKey = transpose.type === 'range' && !transpose.closest('vc-compact-knob').querySelector('.knob-caption'); change(transpose, '0');
+      if (innerWidth > 1050) {
+        const dock = document.querySelector('.transport-dock').getBoundingClientRect();
+        if (getComputedStyle(document.querySelector('.app-frame')).paddingBottom !== '92px' || dock.top < innerHeight - 92) throw new Error('transport dock reserve');
+      }
       const tempo = document.querySelector('.transport-dock [aria-label="Tempo in beats per minute"]');
       change(tempo, '149'); await wait(() => read().tempoBpm === 149, 'tempo knob');
       result.tempoKnob = tempo.type === 'range'; change(tempo, '128');
