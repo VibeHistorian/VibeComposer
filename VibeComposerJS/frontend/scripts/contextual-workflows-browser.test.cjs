@@ -203,6 +203,21 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => document.querySelector('#part-inspector [aria-label="Multiply Hits"]').disabled, 'melody hit action disabled');
       result.drumMelody = document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]').disabled
         && !document.querySelector('.part-settings-panel [aria-label="Hits"]');
+      document.querySelector('.track-group.melody .group-select').click();
+      await wait(() => document.querySelector('#part-inspector [data-control-role="melody"]'), 'melody inspector');
+      const extended = [ ['Doubled rhythm', 'doubledRhythmChance', 100], ['Max exceptions', 'maxNoteExceptions', 4],
+        ['Note exceptions', 'noteExceptionChance', 70], ['Split long', 'splitChance', 60],
+        ['Lead chords', 'leadChordsChance', 80], ['Start note', 'startNoteChance', 0] ];
+      for (const [label, key, value] of extended) {
+        change(await wait(() => document.querySelector('#part-inspector [aria-label="' + label + '"]'), label), String(value));
+        await wait(() => read().melody[key] === value, label + ' commit');
+      }
+      result.melodyExtended = read().tracks.filter(track => track.role === 'melody').every(track =>
+        extended.every(([, key, value]) => track.generatorSettings[key] === value));
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melody.startNoteChance === undefined, 'Start note undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'Start note redo enabled')).click();
+      await wait(() => read().melody.startNoteChance === 0, 'Start note redo');
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
@@ -296,7 +311,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

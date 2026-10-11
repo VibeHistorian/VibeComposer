@@ -1862,11 +1862,11 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
 });
 
-test('current block melody matches 80 complete production Java phrases at fixed seeds', () => {
+for (const [name, count] of [['core', 80], ['extended', 192]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
-  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/melody-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
-  assert.equal(cases.length, 80);
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, `fixtures/melody-${name}.java.json`), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, count);
   for (const [caseIndex, sample] of cases.entries()) {
     const progression = Array(sample.chordCount).fill(1);
     const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset);
@@ -1891,13 +1891,15 @@ test('melody scope resolution reaches parsed MIDI, isolates sections and survive
   const before = phrase.layOutTrackPhrase(service.project(), track());
   const savedBefore = service.exportProjectJson();
   service.updatePartSettings(scope, { speed: 100, chordNoteChoices: [0, 4, 1, 3], melodyPatternOffsets: [1, -1, 2, 1],
+    doubledRhythmChance: 100, maxNoteExceptions: 4, noteExceptionChance: 100, splitChance: 100,
+    leadChordsChance: 100, startNoteChance: 0,
     velocityMin: 100, velocityMax: 100, accents: 0, noteLengthMultiplier: 50, transpose: 12 });
   const after = phrase.layOutTrackPhrase(service.project(), track());
   const start = service.project().arrangement[0].measures * 4, end = start + service.project().arrangement[1].measures * 4;
   const outside = notes => notes.filter(note => note.startBeat < start || note.startBeat >= end);
   assert.deepEqual(outside(after), outside(before));
   assert.notDeepEqual(after, before);
-  assert.ok(after.filter(note => note.startBeat >= start && note.startBeat < end).every(note => note.velocity === 100));
+  assert.ok(after.filter(note => note.startBeat >= start && note.startBeat < end).every(note => [100, 90, 80].includes(note.velocity)));
   const section = service.project().arrangement[1];
   assert.equal(settings.resolvePartTrack(service.project().tracks.find(track => track.id === second), section).generatorSettings.speed, undefined);
   const exported = new Midi(midi.generateCompositionMidi(service.project()));
@@ -1958,7 +1960,9 @@ test('melody imports and every scope reject malformed core inputs without losing
   const before = service.exportProjectJson();
   const invalid = [{ speed: 101 }, { speed: -101 }, { chordNoteChoices: [] }, { chordNoteChoices: [15] },
     { melodyPatternOffsets: Array(33).fill(1) }, { melodyPatternOffsets: [1.5] }, { patternSeed: 2147483648 },
-    { patternFlexible: 1 }, { velocityMin: 106 }, { splitChance: 50 }, { accents: -1 }];
+    { patternFlexible: 1 }, { velocityMin: 106 }, { splitChance: 101 }, { accents: -1 },
+    { doubledRhythmChance: -1 }, { doubledRhythmChance: '50' }, { maxNoteExceptions: 5 }, { maxNoteExceptions: 0.5 },
+    { noteExceptionChance: 101 }, { leadChordsChance: null }, { startNoteChance: false }];
   for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: 'track-melody-1' },
     { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: 'track-melody-1' }]) {
     for (const patch of [...invalid, { transpose: 4 }]) {
@@ -1974,6 +1978,55 @@ test('melody imports and every scope reject malformed core inputs without losing
   }
   assert.equal(service.canRedo(), true);
   assert.throws(() => generateMelody(9007199254740992, 'C', 'major', [1], { algorithm: 'block' }), RangeError);
+});
+
+test('P5e part controls resolve every scope, mixed values, copy/freeze and inherited resets', () => {
+  const { service, settings, ui, workspace } = fixture();
+  const trackId = 'track-melody-1', second = service.duplicateTrack(trackId);
+  const sectionId = service.project().arrangement[1].id, destinationId = service.project().arrangement[2].id;
+  const role = { kind: 'global-role', role: 'melody' }, global = { kind: 'global-track', trackId };
+  const cell = { kind: 'section-role', sectionId, role: 'melody' }, local = { kind: 'section-track', sectionId, trackId };
+  const patch = { doubledRhythmChance: 80, maxNoteExceptions: 3, noteExceptionChance: 60,
+    splitChance: 70, leadChordsChance: 50, startNoteChance: 20 };
+  const resolve = (id, section = sectionId) => settings.settingsValues(settings.resolvePartTrack(
+    service.project().tracks.find(track => track.id === id), service.project().arrangement.find(item => item.id === section)).generatorSettings, 'melody');
+  for (const scope of [role, global, cell, local]) {
+    const before = service.exportProjectJson();
+    service.updatePartSettings(scope, patch);
+    for (const [key, value] of Object.entries(patch)) assert.equal(resolve(trackId)[key], value, `${scope.kind} ${key}`);
+    const after = service.exportProjectJson();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+    service.undo();
+  }
+  service.updatePartSettings(global, patch);
+  ui.selectCell(sectionId, 'melody');
+  for (const key of Object.keys(patch)) assert.equal(workspace.partValues()[key], null, `mixed ${key}`);
+  service.updatePartSettings(cell, { splitChance: 30 });
+  service.updatePartSettings(local, { splitChance: 100 });
+  assert.equal(service.freezePartSettings(cell), 'changed');
+  assert.equal(resolve(trackId).splitChance, 100); assert.equal(resolve(second).splitChance, 30);
+  assert.equal(service.applyPartSettingsToSections(cell, [destinationId], 'effective'), 'changed');
+  assert.equal(resolve(trackId, destinationId).splitChance, 100); assert.equal(resolve(second, destinationId).splitChance, 30);
+  assert.equal(service.copyPartSettingsToGlobals(cell), 'changed');
+  assert.equal(service.project().tracks.find(track => track.id === second).generatorSettings.splitChance, 30);
+  service.resetPartSettings(local, 'splitChance');
+  assert.equal(resolve(trackId).splitChance, 30);
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  for (const role of ['bass', 'chords', 'arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, patch), undefined);
+  const controls = settings.PART_CONTROLS.melody.filter(control => Object.hasOwn(patch, control.key));
+  assert.equal(controls.length, 6); assert.ok(controls.every(control => control.advanced));
+});
+
+test('P5e Start note delays feed same-section melody dependency grids before swing', () => {
+  const { service, phrase } = fixture();
+  const section = service.project().arrangement[1];
+  const before = phrase.sectionMelodyContext(service.project(), section);
+  service.updatePartSettings({ kind: 'section-track', sectionId: section.id, trackId: 'track-melody-1' },
+    { speed: -100, startNoteChance: 0, doubledRhythmChance: 100, splitChance: 100 });
+  const after = phrase.sectionMelodyContext(service.project(), service.project().arrangement[1]);
+  assert.notDeepEqual(after, before);
+  assert.equal(service.project().arrangement[1].trackPresence['track-melody-1'], section.trackPresence['track-melody-1']);
 });
 
 test('melody integer-list editors commit once and reject invalid or stale drafts', () => {

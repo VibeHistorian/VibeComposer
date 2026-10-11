@@ -65,7 +65,7 @@ export interface CommonPartSettings {
   readonly velocityMax?: number;
 }
 
-/** Minimum supported current block-generation inputs; advanced options are staged separately. */
+/** Current block-generation part inputs; Java GUIConfig options have a separate global scope. */
 export interface MelodySettings extends CommonPartSettings {
   readonly algorithm: 'block';
   readonly speed?: number;
@@ -75,6 +75,12 @@ export interface MelodySettings extends CommonPartSettings {
   readonly maxBlockChange?: number;
   readonly blockJump?: number;
   readonly patternFlexible?: boolean;
+  readonly doubledRhythmChance?: number;
+  readonly maxNoteExceptions?: number;
+  readonly noteExceptionChance?: number;
+  readonly splitChance?: number;
+  readonly leadChordsChance?: number;
+  readonly startNoteChance?: number;
   readonly pauseChance?: number;
   readonly swingPercent?: number;
   readonly accents?: number;

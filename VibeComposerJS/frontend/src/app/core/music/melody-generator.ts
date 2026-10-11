@@ -4,6 +4,7 @@ import { JavaRandom } from './java-random';
 import { swingNotes } from './phrase-swing';
 import { partFillMask } from './chord-span-fill';
 import { decodePartPatch, velocityBounds } from './part-settings';
+import { expandMelody, delayMelodyStarts, type MelodyNote as Note } from './melody-expansion';
 import { blockChangeSequence, blockRhythm, blockVariance, cumulativeWeights, directionChanges,
   generateBlock, melodyInt as int, MELODY_EPSILON as EPS, noteRhythm } from './melody-blocks';
 
@@ -12,12 +13,10 @@ const MINOR = [0, 2, 3, 5, 7, 8, 10];
 const DURATION_MULTIPLIER = 0.95; // MidiGenerator.RunOptions.defaults()
 interface Block { readonly notes: readonly number[]; readonly durations: readonly number[] }
 interface Pattern { readonly changes: readonly number[]; readonly blocks: readonly Block[] }
-interface Note { midi: number; rhythm: number; duration: number; velocity: number }
 
-/** Explicit supported inputs for the current block path. Extended choices are P5. */
+/** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
 export const MELODY_CORE_INPUTS = Object.freeze({ newBlocksChance: 100, blockTargetMode: 2,
-  patternEffect: 2, maxDirectionChanges: 2, doubledRhythmChance: 0, emphasizeKey: false,
-  noteExceptions: 0, splitChance: 0, leadChordsChance: 0, startNoteChance: 100,
+  patternEffect: 2, maxDirectionChanges: 2, emphasizeKey: false, singleNoteExceptions: false,
   chordNoteTarget: 0, tonicNoteTarget: 0, modeNoteTarget: 0, fillPausesPerChord: false });
 
 function repeated(values: readonly number[], count: number): number[] {
@@ -60,8 +59,9 @@ function rhythmicImportance(notes: Note[]): Note[] {
 /**
  * Current MelodyBlockSkeletonGenerator → MelodyExpansion → phrase preparation.
  * P1b supports generated shapes, tonic-relative targets, reusable/inverted blocks,
- * speed, Flex/Max Block Change/Block Jump, pauses/fill, accents and shared dynamics.
- * Inputs omitted from the minimum editor are fixed in MELODY_CORE_INPUTS.
+ * speed, Flex/Max Block Change/Block Jump, doubled rhythm, pitch exceptions,
+ * split/lead/start behavior, pauses/fill, accents and shared dynamics.
+ * Global inputs still omitted from the inspector are fixed in MELODY_CORE_INPUTS.
  */
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
   progression: readonly number[], settings: MelodySettings, notesSeedOffset = 0,
@@ -83,8 +83,6 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const baseSeed = settings.patternSeed ? int(settings.patternSeed) : Number(BigInt.asIntN(32, BigInt(seed)));
   const blockSeed = int(baseSeed + notesSeedOffset);
   const durationRandom = new JavaRandom(int(blockSeed + 5));
-  const velocityRandom = new JavaRandom(int(baseSeed + 2 + notesSeedOffset)); // orderOffset = 1
-  const accentRandom = new JavaRandom(int(baseSeed + 21));
   const [minimum, maximum] = velocityBounds(settings, [80, 105]);
   const accent = settings.accents ?? 100;
   const choices = repeated(targets, progression.length), structure = repeated(offsets, progression.length);
@@ -95,12 +93,18 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const starting = (index: number) => 35 + choices[index === choices.length ? index - 1 : index % choices.length];
   for (let chord = 0; chord < progression.length; chord++) {
     const originalOffset = structure[chord], offset = Math.max(0, Math.abs(originalOffset) - 1);
-    // Java consumes this stream even when Doubled Rhythm is fixed to zero.
-    new JavaRandom(int(baseSeed + 3 + offset)).nextInt(100);
+    const doubled = new JavaRandom(int(baseSeed + 3 + offset)).nextInt(100) < (settings.doubledRhythmChance ?? 0);
     let durations = rhythms.get(offset);
-    if (!durations) { durations = blockRhythm(int(blockSeed + offset), 4, outerWeights); rhythms.set(offset, durations); }
+    if (!durations) {
+      durations = blockRhythm(int(blockSeed + offset), doubled ? 2 : 4, outerWeights);
+      if (doubled) durations = [...durations, ...durations];
+      rhythms.set(offset, durations);
+    }
     const first = starting(chord), next = starting(chord + 1), existing = cache.get(offset);
     let changes = existing?.changes ?? blockChangeSequence(first, next, blockSeed, durations.length, maxChange);
+    // Java stores the sequence's direction count alongside its unadjusted changes.
+    // Flex changes the last target without recomputing this remaining budget.
+    const remainingDirections = 2 - directionChanges(changes);
     const flexible = (settings.patternFlexible ?? true) && changes.length > 1;
     if (flexible && existing) {
       const adjusted = [...changes];
@@ -109,7 +113,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     }
     let blocks = existing && !flexible ? existing.blocks : undefined;
     if (!blocks) {
-      let variance = 4, directions = 2 - directionChanges(changes);
+      let variance = 4, directions = remainingDirections;
       blocks = durations.map((duration, index) => {
         const shapeSeed = int(blockSeed + offset + index);
         const notes = generateBlock(changes[index], jump, new JavaRandom(shapeSeed), existing?.blocks[index]?.notes.length, variance, directions);
@@ -121,25 +125,29 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     }
     if (!existing) cache.set(offset, { changes, blocks });
     const notes: Note[] = [];
+    const exceptionRandom = new JavaRandom(int(baseSeed + 2 + notesSeedOffset + offset));
+    let exceptions = settings.maxNoteExceptions ?? 0;
     let adjustment = 0;
     blocks.forEach((block, index) => {
       if (index > 0) adjustment += changes[index - 1] * (originalOffset < 0 ? -1 : 1);
       block.notes.forEach((note, noteIndex) => {
-        notes.push({ midi: degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment) + (settings.transpose ?? 0),
+        let pitch = degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment);
+        if (noteIndex > 0 && exceptions > 0 && exceptionRandom.nextInt(100) < (settings.noteExceptionChance ?? 0)) {
+          pitch += (exceptionRandom.nextBoolean() ? 1 : -1) * MAJOR[exceptionRandom.nextInt(4)];
+          const semitone = pitch % 12;
+          const closest = MAJOR.reduce((best, value) => Math.abs(semitone - value) < Math.abs(semitone - best) ? value : best, MAJOR[0]);
+          pitch += closest - semitone;
+          exceptions--;
+        }
+        notes.push({ midi: pitch + (settings.transpose ?? 0),
           rhythm: block.durations[noteIndex], duration: block.durations[noteIndex] * (0.75 + durationRandom.nextDouble() / 4) * DURATION_MULTIPLIER,
-          velocity: 0 });
+          velocity: 0, offset: 0 });
       });
     });
-    let position = 0;
-    for (const note of notes) {
-      note.velocity = velocityRandom.nextInt(Math.max(1, maximum - minimum)) + minimum;
-      if (position / 4 < EPS && accentRandom.nextInt(100) < accent) {
-        note.velocity = Math.min(127, note.velocity + 15 + accentRandom.nextInt(11) - 5 + Math.trunc(accent / 20));
-      }
-      position += note.rhythm;
-    }
     byChord.push(notes);
   }
+  const expanded = expandMelody(byChord, settings, baseSeed, notesSeedOffset, minimum, maximum);
+  byChord.splice(0, byChord.length, ...expanded);
   const all = byChord.flat(), firstPitches = byChord.map((notes) => notes[0].midi);
   repairIntervals(all);
   const fill = partFillMask(progression.length, settings), removed = new Set<Note>();
@@ -147,7 +155,10 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     const ordered = rhythmicImportance(notes), paused = Math.round(notes.length * (settings.pauseChance ?? 0) / 100);
     ordered.forEach((note, index) => {
       if (index < paused) {
-        if (!(settings.fillPauses && chord === 0 && note === notes[0])) note.midi = -1;
+        // jMusic overloads equals(Note): pitch + duration, ignoring velocity/rhythm.
+        // Identical split notes can therefore share the protected first-note status.
+        if (!(settings.fillPauses && chord === 0 && note.midi === notes[0].midi
+          && note.duration === notes[0].duration)) note.midi = -1;
       } else if (!fill[chord]) note.midi = -1;
     });
   });
@@ -169,6 +180,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     if (remaining.length >= 3 && first.midi >= 0 && first.duration < 1.1
       && remaining[1].midi !== first.midi && remaining[2].midi !== first.midi) first.duration *= 1 + accent / 200;
   });
+  delayMelodyStarts(byChord.map(notes => notes.filter(note => !removed.has(note))), settings, baseSeed);
   const final = all.filter((note) => !removed.has(note));
   if (publishPattern) {
     const patternNotes: Array<Pick<PhraseNote, 'midi' | 'startBeat'>> = [];
@@ -176,7 +188,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       let time = chord * 4;
       for (const note of notes.filter(note => !removed.has(note))) {
         const degree = MAJOR.indexOf(note.midi % 12);
-        patternNotes.push({ startBeat: time, midi: note.midi < 0 ? -1 : note.midi
+        patternNotes.push({ startBeat: time + note.offset, midi: note.midi < 0 ? -1 : note.midi
           + (scale === 'natural-minor' && degree >= 0 ? MINOR[degree] - MAJOR[degree] : 0) + tonic });
         time += note.rhythm;
       }
@@ -191,11 +203,12 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     let duration = note.duration * length / 100;
     if (length > 100) {
       const collision = [index + 1, index + 2].find((next) => next < final.length && note.midi === final[next].midi);
-      if (collision !== undefined) duration = Math.min(duration, starts[collision] - starts[index]);
+      if (collision !== undefined) duration = Math.min(duration,
+        starts[collision] + final[collision].offset - starts[index] - note.offset);
     }
     if (note.midi < 0) return [];
     const degree = MAJOR.indexOf(note.midi % 12);
     const midi = note.midi + (scale === 'natural-minor' && degree >= 0 ? MINOR[degree] - MAJOR[degree] : 0) + tonic;
-    return [{ id: `melody-${index}`, midi: Math.max(0, Math.min(127, midi)), startBeat: starts[index], durationBeats: duration, velocity: note.velocity }];
+    return [{ id: `melody-${index}`, midi: Math.max(0, Math.min(127, midi)), startBeat: starts[index] + note.offset, durationBeats: duration, velocity: note.velocity }];
   });
 }
