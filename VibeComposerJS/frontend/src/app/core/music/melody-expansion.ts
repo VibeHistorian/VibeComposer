@@ -10,8 +10,12 @@ function allowedPitch(minimum: number, maximum: number, position: number, random
   const low = minimum % 12;
   let high = maximum % 12;
   if (high <= low) high += 12;
-  const pitches = [...MAJOR, ...MAJOR.map(pitch => pitch + 12)]
-    .filter(pitch => pitch >= low && pitch <= high && (position > 0.66 || (pitch !== 11 && pitch !== 23)));
+  const inRange = [...MAJOR, ...MAJOR.map(pitch => pitch + 12)]
+    .filter(pitch => pitch >= low && pitch <= high);
+  const preferred = inRange.filter(pitch => position > 0.66 || (pitch !== 11 && pitch !== 23));
+  // Java throws when its early-chord B restriction removes the only candidate.
+  // Retain that in-range B and consume the normal bounded draw instead.
+  const pitches = preferred.length ? preferred : inRange;
   let pitch = pitches[random.nextInt(pitches.length)];
   while (pitch < minimum) pitch += 12;
   return pitch;

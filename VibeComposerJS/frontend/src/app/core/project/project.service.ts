@@ -20,7 +20,7 @@ import { isDrumPitch } from '../music/drum-instruments';
 import { JavaRandom } from '../music/java-random';
 import { ARPEGGIO_PATTERNS } from '../music/arpeggio-pattern';
 import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multiplier';
-import { chooseMelodyTargets } from '../music/melody-targets';
+import { chooseMelodyTargets, forceMelodyOutline } from '../music/melody-targets';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
 import type { MelodyGlobalSettings } from './project.model';
 import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
@@ -251,24 +251,33 @@ export class ProjectService {
       const count = current.trackRerollCounts?.melody ?? 0;
       const sources = next.tracks.filter(track => track.role === 'melody' && !track.rerollLocked);
       if (sources.length && ((policy.patternsOnCompose ?? true) || (policy.targetsOnCompose ?? true)
-        || event === 'regenerate' && policy.rerollSeeds)) {
+        || event === 'regenerate' && policy.rerollSeeds || next.melodyGlobal?.forceFirstOutline)) {
         if (count >= 2147483647) return 'invalid';
         const seed = this.trackRerollSeed(next, 'melody', count);
         const random = new JavaRandom(seed);
         const sharedSeed = random.nextInt(); // randomizeMelodySeeds draws once even for independent seeds.
-        let changed = false;
-        const tracks = next.tracks.map(track => {
+        let tracks = next.tracks.map(track => {
           if (track.role !== 'melody' || track.rerollLocked) return track;
           const settings = { ...track.generatorSettings };
           if (event === 'regenerate' && policy.rerollSeeds) settings.patternSeed = policy.sameSeed ? sharedSeed : random.nextInt();
           const order = next.tracks.filter(item => item.role === 'melody').indexOf(track) + 1;
           const patternSeed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(next.seed)))) + order) | 0;
           if (policy.patternsOnCompose ?? true) settings.melodyPatternOffsets = chooseMelodyPattern(patternSeed);
-          if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression);
+          if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression, next.melodyGlobal);
           if (partPatchesEqual(track.generatorSettings, settings)) return track;
-          changed = true;
           return { ...track, generatorSettings: settings };
         });
+        if (next.melodyGlobal?.forceFirstOutline) {
+          const first = tracks.find(track => track.role === 'melody');
+          if (first?.role === 'melody') tracks = tracks.map(track => {
+            if (track.role !== 'melody' || track === first || track.rerollLocked) return track;
+            const settings = forceMelodyOutline(first.generatorSettings, track.generatorSettings);
+            if (partPatchesEqual(track.generatorSettings, settings)) return track;
+            return { ...track, generatorSettings: settings };
+          });
+        }
+        // Forced outline can erase intermediate per-track preparation changes.
+        const changed = tracks.some((track, index) => !partPatchesEqual(track.generatorSettings, next.tracks[index].generatorSettings));
         if (changed) next = { ...next, tracks, melody: tracks.find(track => track.id === 'track-melody-1')?.generatorSettings as MelodySettings ?? next.melody,
           trackRerollCounts: { ...next.trackRerollCounts, melody: count + 1 } };
       }

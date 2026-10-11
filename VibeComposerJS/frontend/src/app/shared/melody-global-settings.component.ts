@@ -18,4 +18,9 @@ export class MelodyGlobalSettingsComponent {
     const value = Number((event.target as HTMLSelectElement).value);
     if (value === 0 || value === 1 || value === 2) this.settingsChanged.emit({ patternEffect: value });
   }
+
+  changeTargetDirection(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value === 'ANY' || value === 'ASC' || value === 'DESC') this.settingsChanged.emit({ targetDirection: value });
+  }
 }

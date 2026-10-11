@@ -14,6 +14,7 @@ public class MelodyExtendedFixture {
     public static void main(String[] args) {
         boolean globals = args.length > 0 && args[0].equals("globals");
         boolean effects = args.length > 0 && args[0].equals("effects");
+        boolean preparedTargets = args.length > 0 && args[0].equals("targets");
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
         StringBuilder json = new StringBuilder("[\n");
@@ -57,6 +58,27 @@ public class MelodyExtendedFixture {
                 config.setMelodyTonicNoteTarget(0); config.setMelodyChordNoteTarget(0); config.setMelodyModeNoteTarget(0);
                 config.setMelodyReplaceAvoidNotes(0); config.setMelodyFillPausesPerChord(globals && sample % 4 < 2);
                 config.setMelodyBasicChordsOnly(false); config.setScaleMidiVelocityInArrangement(false);
+                config.setMelodyTargetNoteVariation(preparedTargets ? 1 + sample % 6 : 3);
+                config.setNoteTargetDirectionChoice(preparedTargets ? MelodyUtils.NoteTargetDirection.values()[(sample / 6) % 3] : MelodyUtils.NoteTargetDirection.ASC);
+                config.setMelodyUseDirectionsFromProgression(preparedTargets && (sample / 18) % 2 == 1);
+                int[] targetProgression = new int[chordCount];
+                int targetSeed = part.getPatternSeed() + 1;
+                String[] symbols = {"C", "Dm", "Em", "F", "G", "Am", "Bdim"};
+                List<String> targetChords = new ArrayList<>();
+                for (int chord = 0; chord < chordCount; chord++) {
+                    targetProgression[chord] = new int[] {1, 5, 6, 4, 7, 3, 2, 1}[chord];
+                    targetChords.add(symbols[targetProgression[chord] - 1]);
+                }
+                if (preparedTargets) {
+                    // Production split/lead pitch selection can throw for some descending
+                    // intervals. Target phrase evidence isolates preparation from that bug;
+                    // the original extended fixture retains its articulation comparisons.
+                    part.setSplitChance(0); part.setLeadChordsChance(0);
+                    targets = MelodyTargetUtils.generateNoteTargetOffsets(targetChords, targetSeed, 2,
+                            config.getMelodyTargetNoteVariation(), null, config.getNoteTargetDirectionChoice(), config.isMelodyUseDirectionsFromProgression())
+                            .stream().mapToInt(Integer::intValue).toArray();
+                    part.setChordNoteChoices(list(targets));
+                }
                 config.setScaleMode(sample % 2 == 0 ? MidiUtils.ScaleMode.IONIAN : MidiUtils.ScaleMode.AEOLIAN);
                 Section section = new Section("VERSE1", 1, 100, 100, 100, 100, 100);
                 MidiGenerator midi = new MidiGenerator(config);
@@ -77,9 +99,13 @@ public class MelodyExtendedFixture {
                         .append(",\"fillPausesPerChord\":").append(config.isMelodyFillPausesPerChord())
                         .append(",\"patternEffect\":").append(config.getMelodyPatternEffect())
                         .append(",\"arpySurprises\":").append(config.isMelodyArpySurprises())
+                        .append(",\"targetNoteVariation\":").append(config.getMelodyTargetNoteVariation())
+                        .append(",\"targetDirection\":\"").append(config.getNoteTargetDirectionChoice().name()).append("\"")
+                        .append(",\"useDirectionsFromProgression\":").append(config.isMelodyUseDirectionsFromProgression())
                         .append("},\"seed\":\"").append(seeds[seedIndex]).append("\",\"key\":\"").append(keys[seedIndex])
                         .append("\",\"scale\":\"").append(sample % 2 == 0 ? "major" : "natural-minor")
                         .append("\",\"chordCount\":").append(chordCount).append(",\"notesSeedOffset\":").append(notesSeedOffset)
+                        .append(",\"targetSeed\":").append(targetSeed).append(",\"targetProgression\":").append(Arrays.toString(targetProgression))
                         .append(",\"settings\":{\"algorithm\":\"block\",\"speed\":").append(part.getSpeed())
                         .append(",\"doubledRhythmChance\":").append(part.getDoubledRhythmChance()).append(",\"maxNoteExceptions\":").append(part.getMaxNoteExceptions()).append(",\"noteExceptionChance\":").append(part.getNoteExceptionChance()).append(",\"splitChance\":").append(part.getSplitChance()).append(",\"leadChordsChance\":").append(part.getLeadChordsChance()).append(",\"startNoteChance\":").append(part.getStartNoteChance()).append(",\"chordNoteChoices\":").append(Arrays.toString(targets))
                         .append(",\"melodyPatternOffsets\":").append(Arrays.toString(structure))

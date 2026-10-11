@@ -242,9 +242,39 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
         && globals.querySelector('[aria-label="Arpy surprises"]').getAttribute('aria-pressed') === 'false', 'arpy surprises undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'arpy redo enabled')).click();
       await wait(() => read().melodyGlobal?.arpySurprises === true, 'arpy surprises redo');
+      const targetsBefore = JSON.stringify(read().tracks);
+      await wait(() => globals.querySelector('[aria-label="Target direction"]').value === 'ASC', 'target direction default');
+      change(globals.querySelector('[aria-label="Target variation"]'), '6');
+      await wait(() => read().melodyGlobal?.targetNoteVariation === 6, 'target variation commit');
+      for (const direction of ['ANY', 'DESC', 'ASC']) {
+        change(globals.querySelector('[aria-label="Target direction"]'), direction);
+        await wait(() => read().melodyGlobal?.targetDirection === direction, 'target direction commit');
+      }
+      globals.querySelector('[aria-label="Directions from progression"]').click();
+      await wait(() => read().melodyGlobal?.useDirectionsFromProgression === true, 'progression directions commit');
+      globals.querySelector('[aria-label="Force first outline"]').click();
+      await wait(() => read().melodyGlobal?.forceFirstOutline === true, 'force outline commit');
+      result.targetPreparation = JSON.stringify(read().tracks) === targetsBefore;
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.forceFirstOutline === undefined, 'force outline undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'outline redo enabled')).click();
+      await wait(() => read().melodyGlobal?.forceFirstOutline === true, 'force outline redo');
+      const beforePreparation = read();
+      document.querySelector('[aria-label="Compose"]').click();
+      await wait(() => JSON.stringify(read().tracks) !== targetsBefore, 'prepared outline Compose');
+      const melodyMembers = read().tracks.filter(track => track.role === 'melody');
+      const outlineFields = ['chordNoteChoices', 'melodyPatternOffsets', 'speed', 'maxBlockChange', 'blockJump',
+        'maxNoteExceptions', 'doubledRhythmChance', 'splitChance', 'noteExceptionChance'];
+      const outlineDefaults = { chordNoteChoices: [0,2,2,4], melodyPatternOffsets: [1,2,1,3], speed: 50,
+        maxBlockChange: 7, blockJump: 1, maxNoteExceptions: 0, doubledRhythmChance: 0, splitChance: 0, noteExceptionChance: 0 };
+      result.targetPreparation &&= melodyMembers.every(track => track.rerollLocked || outlineFields.every(key =>
+        JSON.stringify(track.generatorSettings[key] ?? outlineDefaults[key]) === JSON.stringify(melodyMembers[0].generatorSettings[key] ?? outlineDefaults[key])));
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read().tracks) === JSON.stringify(beforePreparation.tracks), 'prepared outline undo');
       result.melodyGlobal = read().tracks.filter(track => track.role === 'melody').every(track =>
         !Object.hasOwn(track.generatorSettings, 'singleNoteExceptions') && !Object.hasOwn(track.generatorSettings, 'maxDirectionChanges')
-        && !Object.hasOwn(track.generatorSettings, 'patternEffect') && !Object.hasOwn(track.generatorSettings, 'arpySurprises'));
+        && !Object.hasOwn(track.generatorSettings, 'patternEffect') && !Object.hasOwn(track.generatorSettings, 'arpySurprises')
+        && !Object.hasOwn(track.generatorSettings, 'targetDirection') && !Object.hasOwn(track.generatorSettings, 'forceFirstOutline'));
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
@@ -341,7 +371,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

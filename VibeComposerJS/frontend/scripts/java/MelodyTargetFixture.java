@@ -3,6 +3,7 @@ package org.vibehistorian.vibecomposer.generation;
 import java.util.*;
 public class MelodyTargetFixture {
     public static void main(String[] args) {
+        boolean extended = args.length > 0 && args[0].equals("extended");
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
         String[] symbols = {"C", "Dm", "Em", "F", "G", "Am", "Bdim"};
@@ -11,10 +12,18 @@ public class MelodyTargetFixture {
         for (int index = 0; index < 32; index++) {
             int seed = index == 0 ? Integer.MIN_VALUE : index == 1 ? Integer.MAX_VALUE : index * 13240927;
             for (int[] progression : progressions) {
+              for (int variation = extended ? 1 : 3; variation <= (extended ? 6 : 3); variation++) {
+               for (MelodyUtils.NoteTargetDirection direction : extended ? MelodyUtils.NoteTargetDirection.values() : new MelodyUtils.NoteTargetDirection[] {MelodyUtils.NoteTargetDirection.ASC}) {
+                for (int progressionDirections = 0; progressionDirections < (extended ? 2 : 1); progressionDirections++) {
                 List<String> chords = new ArrayList<>();
                 for (int degree : progression) chords.add(symbols[degree - 1]);
-                List<Integer> targets = MelodyTargetUtils.generateNoteTargetOffsets(chords, seed, 2, 3, null, MelodyUtils.NoteTargetDirection.ASC, false);
-                json.add("{\"seed\":" + seed + ",\"progression\":" + Arrays.toString(progression) + ",\"targets\":" + targets + "}");
+                List<Integer> targets = MelodyTargetUtils.generateNoteTargetOffsets(chords, seed, 2, variation, null, direction, progressionDirections == 1);
+                json.add("{\"seed\":" + seed + ",\"progression\":" + Arrays.toString(progression)
+                    + ",\"globalSettings\":{\"targetNoteVariation\":" + variation + ",\"targetDirection\":\"" + direction.name()
+                    + "\",\"useDirectionsFromProgression\":" + (progressionDirections == 1) + "},\"targets\":" + targets + "}");
+                }
+               }
+              }
             }
         }
         System.out.println(json);

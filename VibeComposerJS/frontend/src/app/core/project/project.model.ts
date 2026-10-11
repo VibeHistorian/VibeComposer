@@ -96,6 +96,11 @@ export interface MelodyGlobalSettings {
   /** 0 repeats rhythm, 1 repeats notes, 2 repeats rhythm and notes. */
   readonly patternEffect?: 0 | 1 | 2;
   readonly arpySurprises?: boolean;
+  readonly targetNoteVariation?: number;
+  readonly targetDirection?: 'ANY' | 'ASC' | 'DESC';
+  readonly useDirectionsFromProgression?: boolean;
+  /** Copy the first stored Melody track's outline fields during preparation. */
+  readonly forceFirstOutline?: boolean;
 }
 
 export interface BassSettings extends CommonPartSettings {
