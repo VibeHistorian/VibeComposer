@@ -61,7 +61,7 @@ export class ProjectService {
     if (!decoded) return 'invalid';
     const current = this.state(), melodyGlobal = { ...current.melodyGlobal, ...decoded };
     if (Object.entries(decoded).every(([key, value]) =>
-      current.melodyGlobal?.[key as keyof MelodyGlobalSettings] === value)) return 'unchanged';
+      partValuesEqual(current.melodyGlobal?.[key as keyof MelodyGlobalSettings], value))) return 'unchanged';
     this.commit({ ...current, melodyGlobal });
     return 'changed';
   }

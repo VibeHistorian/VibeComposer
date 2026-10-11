@@ -14,6 +14,7 @@ public class MelodyExtendedFixture {
     public static void main(String[] args) {
         boolean globals = args.length > 0 && args[0].equals("globals");
         boolean effects = args.length > 0 && args[0].equals("effects");
+        boolean catalogue = args.length > 0 && args[0].equals("catalogue");
         boolean preparedTargets = args.length > 0 && args[0].equals("targets");
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
@@ -24,7 +25,7 @@ public class MelodyExtendedFixture {
         int[] speeds = { -100, 0, 50, 100 };
         boolean first = true;
         for (int seedIndex = 0; seedIndex < seeds.length; seedIndex++) {
-          for (int effectCase = 0; effectCase < (effects ? 6 : 1); effectCase++) {
+          for (int effectCase = 0; effectCase < (catalogue ? 8 : effects ? 6 : 1); effectCase++) {
             for (int sample = 0; sample < 48; sample++) {
                 int chordCount = new int[] { 1, 3, 4, 7, 8 }[sample % 5];
                 int[] structure = sample % 3 == 0 ? new int[] { 1, 2, 1, 3 }
@@ -52,7 +53,20 @@ public class MelodyExtendedFixture {
                 GUIConfig config = new GUIConfig();
                 config.setMelodyParts(Collections.singletonList(part));
                 config.setMelodyLegacyMode(false); config.setMelodyNewBlocksChance(100);
-                config.setMelodyBlockTargetMode(2); config.setMelodyPatternEffect(effects ? effectCase % 3 : 2);
+                List<Integer> preference = catalogue && effectCase % 3 != 0
+                        ? list(effectCase % 3 == 1 ? new int[] {0,7,4,3,1,2,5,6} : new int[] {7,6,5,4,3,2,1,0})
+                        : Collections.emptyList();
+                if (catalogue) {
+                    // Isolate catalogue parity from Java's empty split/lead pitch range bug.
+                    part.setSplitChance(0); part.setLeadChordsChance(0);
+                    config.setMelodyNewBlocksChance(new int[] {0,0,0,0,25,50,75,100}[effectCase]);
+                    config.setMelodyBlockTypePreference(list(new int[][] {
+                        {100,100,100,100,100,100,100}, {0,0,0,0,0,0,0}, {100,0,0,0,0,0,0},
+                        {0,0,100,60,20,100,100}, {0,0,0,0,0,100,100}, {10,30,50,70,90,100,100},
+                        {100,100,100,100,100,100,100}, {100,100,100,100,100,100,100}
+                    }[effectCase]));
+                }
+                config.setMelodyBlockTargetMode(2); config.setMelodyPatternEffect((effects || catalogue) ? effectCase % 3 : 2);
                 config.setMelodyMaxDirChanges(globals ? 1 + sample % 6 : 2); config.setMelodyEmphasizeKey(false);
                 config.setMelodySingleNoteExceptions(globals && sample % 2 == 0); config.setMelodyArpySurprises(effects && effectCase >= 3); config.setMelodyUseCustomDurations(false);
                 config.setMelodyTonicNoteTarget(0); config.setMelodyChordNoteTarget(0); config.setMelodyModeNoteTarget(0);
@@ -91,7 +105,7 @@ public class MelodyExtendedFixture {
                         request -> false, request -> {},
                         (phrase, swing) -> midi.swingPhrase(phrase, swing, 1), request -> {}, result -> {});
                 Phrase phrase = builder.build(part, roots, roots, Collections.nCopies(chordCount, 4.0), notesSeedOffset,
-                        section, Collections.emptyList(), false, Collections.emptyList(), 0, 0,
+                        section, Collections.emptyList(), false, preference, 0, 0,
                         transpositions[seedIndex], null);
                 if (!first) json.append(",\n"); first = false;
                 json.append("{\"globalSettings\":{\"maxDirectionChanges\":").append(config.getMelodyMaxDirChanges())
@@ -102,6 +116,9 @@ public class MelodyExtendedFixture {
                         .append(",\"targetNoteVariation\":").append(config.getMelodyTargetNoteVariation())
                         .append(",\"targetDirection\":\"").append(config.getNoteTargetDirectionChoice().name()).append("\"")
                         .append(",\"useDirectionsFromProgression\":").append(config.isMelodyUseDirectionsFromProgression())
+                        .append(",\"newBlocksChance\":").append(config.getMelodyNewBlocksChance())
+                        .append(",\"blockTypeWeights\":").append(config.getMelodyBlockTypePreference())
+                        .append(",\"blockChangePreference\":").append(preference)
                         .append("},\"seed\":\"").append(seeds[seedIndex]).append("\",\"key\":\"").append(keys[seedIndex])
                         .append("\",\"scale\":\"").append(sample % 2 == 0 ? "major" : "natural-minor")
                         .append("\",\"chordCount\":").append(chordCount).append(",\"notesSeedOffset\":").append(notesSeedOffset)

@@ -7,7 +7,8 @@ import { partFillMask } from './chord-span-fill';
 import { decodePartPatch, velocityBounds } from './part-settings';
 import { expandMelody, delayMelodyStarts, type MelodyNote as Note } from './melody-expansion';
 import { blockChangeSequence, blockRhythm, blockVariance, cumulativeWeights, directionChanges,
-  generateBlock, melodyInt as int, MELODY_EPSILON as EPS, noteRhythm } from './melody-blocks';
+  melodyInt as int, MELODY_EPSILON as EPS, noteRhythm } from './melody-blocks';
+import { selectMelodyBlock } from './melody-catalogue';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
@@ -16,7 +17,7 @@ interface Block { readonly notes: readonly number[]; readonly durations: readonl
 interface Pattern { readonly changes: readonly number[]; readonly blocks: readonly Block[] }
 
 /** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
-export const MELODY_CORE_INPUTS = Object.freeze({ newBlocksChance: 100, blockTargetMode: 2,
+export const MELODY_CORE_INPUTS = Object.freeze({ blockTargetMode: 2,
   emphasizeKey: false,
   chordNoteTarget: 0, tonicNoteTarget: 0, modeNoteTarget: 0 });
 
@@ -119,10 +120,16 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     let blocks = existing && globals.patternEffect > 0 && !flexible ? existing.blocks : undefined;
     if (!blocks) {
       let variance = 4, directions = remainingDirections;
+      let previousType = -2147483648, startingDegree = first % 7;
       blocks = durations.map((duration, index) => {
         const shapeSeed = int(blockSeed + offset + index);
-        const notes = generateBlock(changes[index], jump, new JavaRandom(shapeSeed),
-          globals.patternEffect !== 1 ? existing?.blocks[index]?.notes.length : undefined, variance, directions);
+        if (index > 0) startingDegree += changes[index - 1];
+        const shape = selectMelodyBlock(changes[index], jump, new JavaRandom(shapeSeed),
+          new JavaRandom(shapeSeed).nextInt(100) < globals.newBlocksChance,
+          globals.patternEffect !== 1 ? existing?.blocks[index]?.notes.length : undefined, variance, directions,
+          globals.blockChangePreference, globals.blockTypeWeights, startingDegree, previousType);
+        const notes = shape.notes;
+        previousType = shape.type;
         variance = Math.max(0, variance - blockVariance(notes));
         directions = Math.max(0, directions - directionChanges(notes));
         let noteDurations = noteRhythm(shapeSeed, duration, notes.length, speed);

@@ -242,6 +242,33 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
         && globals.querySelector('[aria-label="Arpy surprises"]').getAttribute('aria-pressed') === 'false', 'arpy surprises undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'arpy redo enabled')).click();
       await wait(() => read().melodyGlobal?.arpySurprises === true, 'arpy surprises redo');
+      const catalogueTracks = JSON.stringify(read().tracks);
+      await wait(() => globals.querySelector('[aria-label="New blocks"]').value === '100', 'new blocks default');
+      change(globals.querySelector('[aria-label="New blocks"]'), '0');
+      await wait(() => read().melodyGlobal?.newBlocksChance === 0, 'catalogue selection commit');
+      const families = ['Scaley', 'Neighbory', 'Arpy', 'Chordy', 'Wavy', 'Interval', 'Note'];
+      for (const [index, family] of families.entries()) {
+        change(globals.querySelector('[aria-label="' + family + ' weight"]'), String(20 + index * 10));
+        await wait(() => read().melodyGlobal?.blockTypeWeights?.[index] === 20 + index * 10, family + ' weight commit');
+        await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      }
+      await wait(() => JSON.stringify(read().melodyGlobal?.blockTypeWeights) === '[20,30,40,50,60,70,80]', 'independent family weights');
+      const preference = globals.querySelector('[aria-label="Block change preference"]');
+      globals.querySelector('[aria-label="Default block change order"]').click();
+      await wait(() => JSON.stringify(read().melodyGlobal?.blockChangePreference) === '[0,7,4,3,1,2,5,6]', 'default block order');
+      const validPreference = JSON.stringify(read().melodyGlobal);
+      change(preference, '0,1,2,3,4,5,6,6');
+      await wait(() => globals.querySelector('[role="alert"]'), 'invalid preference alert');
+      result.catalogue = JSON.stringify(read().melodyGlobal) === validPreference && preference.value === '0, 7, 4, 3, 1, 2, 5, 6';
+      change(preference, '7,6,5,4,3,2,1,0');
+      await wait(() => JSON.stringify(read().melodyGlobal?.blockChangePreference) === '[7,6,5,4,3,2,1,0]', 'ranked block order');
+      globals.querySelector('[aria-label="Uniform block changes"]').click();
+      await wait(() => read().melodyGlobal?.blockChangePreference?.length === 0, 'uniform block order');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read().melodyGlobal?.blockChangePreference) === '[7,6,5,4,3,2,1,0]', 'block preference undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'catalogue redo enabled')).click();
+      await wait(() => read().melodyGlobal?.blockChangePreference?.length === 0, 'block preference redo');
+      result.catalogue &&= JSON.stringify(read().tracks) === catalogueTracks && !globals.querySelector('[role="alert"]');
       const targetsBefore = JSON.stringify(read().tracks);
       await wait(() => globals.querySelector('[aria-label="Target direction"]').value === 'ASC', 'target direction default');
       change(globals.querySelector('[aria-label="Target variation"]'), '6');
@@ -361,6 +388,9 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     await command('Runtime.evaluate', { expression: `document.querySelector('vc-melody-global-settings').scrollIntoView({ block: 'center' })` });
     const globalScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-global-' + width + '.png'), Buffer.from(globalScreenshot.data, 'base64'));
+    await command('Runtime.evaluate', { expression: `document.querySelector('.catalogue-area').scrollIntoView({ block: 'center' })` });
+    const catalogueScreenshot = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-catalogue-' + width + '.png'), Buffer.from(catalogueScreenshot.data, 'base64'));
     await command('Runtime.evaluate', { expression: `document.querySelector('.track-group.arpeggio .group-select').click()` });
     await new Promise(done => setTimeout(done, 100));
     await command('Runtime.evaluate', { expression: `document.querySelector('#part-inspector').scrollIntoView({ block: 'start' })` });
@@ -371,7 +401,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

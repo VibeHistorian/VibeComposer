@@ -165,3 +165,16 @@ Regenerate from the repository root (compiler outputs stay in `.angular`):
 & 'C:/Java/jdk-24.0.2/bin/javac.exe' -cp midimasterpiece/target/VibeComposer-2.6-beta-JAR.jar -d VibeComposerJS/frontend/.angular/fill-fixtures midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Enums/RhythmPattern.java VibeComposerJS/frontend/scripts/java/EuclideanPatternFixture.java
 & 'C:/Java/jdk-24.0.2/bin/java.exe' -cp 'VibeComposerJS/frontend/.angular/fill-fixtures;midimasterpiece/target/VibeComposer-2.6-beta-JAR.jar' EuclideanPatternFixture | Set-Content -Encoding utf8 VibeComposerJS/frontend/scripts/fixtures/euclidean-pattern.java.json
 ```
+
+
+P5e's catalogue checkpoint adds `MelodyCatalogueFixture.java` / `../fixtures/melody-catalogue.java.json`: **4,500 production catalogue helper cases** comparing family, shape and the subsequent random draw. The matrix covers four exact seeds, changes −7–7, approximation 0/1/4, unrestricted and 1–4 note lengths, variance/direction constraints, five weight combinations and empty/default/reverse ranked preferences. It calls production `MelodyBlockUtils.getRandomByApproxBlockChangeAndLength`; it does not reimplement the oracle.
+
+`MelodyExtendedFixture catalogue` / `../fixtures/melody-catalogue-phrases.java.json` adds **1,536 complete phrases**: eight new/static probability and preference combinations × the 192 extended seed/part cases, including all pattern effects, cached/forced lengths, Flex and post-selection family replacement. New blocks probabilities include 0/25/50/75/100; weights include all 100, all zero, one family, mixed families and only Interval/Note. As with the prepared-target fixture, Split long and Lead chords are disabled because Java's early-chord B filter can empty a split-pitch range and throw. The preceding articulation/effects fixtures retain their comparisons. Supported context remains root-only tonic-relative mode 2, without tonal targeting, custom durations or legacy generation.
+
+Production selection quirks remain literal: duplicate direct/inverse zero-change candidates, first-five-family primary thinning, all-seven-family replacement weights, unchanged pools for zero/unmatched primary weights, fallback classification and the length-one shortcut. These weights are preferences, not strict bans. Default project New blocks 100 and empty rank preserve preceding output; the Default order action selects Java's `0,7,4,3,1,2,5,6` order. Both fixture scripts compile current catalogue/helper sources ahead of target classes/dependency JAR. Run from `VibeComposerJS/frontend`:
+
+```powershell
+./scripts/java/generate-melody-catalogue-fixtures.ps1
+./scripts/java/generate-melody-extended-fixtures.ps1 -Catalogue
+node --test --test-name-pattern='catalogue' scripts/part-settings.test.cjs
+```

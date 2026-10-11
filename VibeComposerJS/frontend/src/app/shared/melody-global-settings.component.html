@@ -42,6 +42,29 @@
         description="Direction-change budget for block targets and generated shapes. Reused patterns retain Java's cached budget before Flex changes their target."
         (valueCommit)="settingsChanged.emit({ maxDirectionChanges: $event })" />
     </fieldset>
+    <fieldset class="parameter-area catalogue-area" data-control-category="shape">
+      <legend>Block catalogue</legend>
+      <vc-compact-knob label="New blocks" [value]="values().newBlocksChance ?? 100" [minimum]="0" [maximum]="100" unit="%"
+        description="Chance of generating a new block shape rather than choosing a catalogue shape. Uses the same block identities and Flex behavior."
+        (valueCommit)="settingsChanged.emit({ newBlocksChance: $event })" />
+      <div class="block-weights" aria-label="Block family preferences">
+        @for (family of blockFamilies; track family; let index = $index) {
+          <vc-compact-knob [label]="family + ' weight'" [shortLabel]="family" [value]="(values().blockTypeWeights ?? defaultWeights)[index]" [minimum]="0" [maximum]="100" unit="%"
+            description="Relative catalogue preference within allowed block changes, lengths and direction limits. Fallback and family replacement may use another family."
+            (valueCommit)="changeBlockWeight(index, $event)" />
+        }
+      </div>
+      <label class="block-preference" title="Order absolute block changes 0–7 from most preferred to least preferred. A ranked draw favors earlier entries; empty chooses uniformly.">
+        Change preference
+        <input aria-label="Block change preference" placeholder="Uniform (empty)" [value]="(values().blockChangePreference ?? []).join(', ')"
+          (change)="changeBlockPreference($event)" />
+      </label>
+      <div class="preference-actions">
+        <button type="button" aria-label="Default block change order" (click)="useBlockPreference(true)">Default order</button>
+        <button type="button" aria-label="Uniform block changes" (click)="useBlockPreference(false)">Uniform</button>
+      </div>
+      @if (blockPreferenceError()) { <p class="preference-error" role="alert">{{ blockPreferenceError() }}</p> }
+    </fieldset>
     <fieldset class="parameter-area" data-control-category="rhythm">
       <legend>Rhythm</legend>
       <vc-compact-toggle label="Arpy surprises" [active]="values().arpySurprises ?? false"

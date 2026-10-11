@@ -636,6 +636,21 @@ test('P5e extended target directions and variation match 4608 production Java ca
   for (const [index, sample] of oracle.entries()) assert.deepEqual(chooseMelodyTargets(sample.seed, sample.progression, sample.globalSettings), sample.targets, `case ${index}`);
 });
 
+test('P5e catalogue selection matches 4500 production Java shapes and subsequent random draws', () => {
+  const { load } = fixture();
+  const { chooseCatalogueBlock } = load('core/music/melody-catalogue.ts'), { JavaRandom } = load('core/music/java-random.ts');
+  const oracle = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/melody-catalogue.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(oracle.length, 4500);
+  for (const [index, entry] of oracle.entries()) {
+    const random = new JavaRandom(BigInt(entry.seed));
+    const result = chooseCatalogueBlock(entry.change, entry.jump, random, entry.length ?? undefined,
+      entry.variance, entry.directions, entry.preference, entry.weights);
+    assert.deepEqual(result.notes, entry.notes, `case ${index} notes`);
+    assert.equal(result.type, entry.type, `case ${index} type`);
+    assert.equal(random.nextInt(), entry.nextInt, `case ${index} stream position`);
+  }
+});
+
 test('P5e target preparation preserves current notes until events, locks, local ownership and MIDI replay', () => {
   const { service, phrase, midi, load } = fixture();
   const primary = 'track-melody-1', duplicate = service.duplicateTrack(primary);
@@ -1973,7 +1988,7 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
 });
 
-for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
+for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, `fixtures/melody-${name}.java.json`), 'utf8').replace(/^\uFEFF/, ''));
@@ -1994,6 +2009,80 @@ for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], [
       assert.equal(note.velocity, expected[3], `${label} dynamics`);
     });
   }
+});
+
+test('P5e catalogue inputs preserve independent arrays, atomic history, scopes and manual ownership', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
+  service.setSectionTrackPresence(0, id, true);
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 100 });
+  const track = () => service.project().tracks.find(item => item.id === id);
+  const tracks = service.project().tracks, sections = service.project().arrangement;
+  const original = phrase.layOutTrackPhrase(service.project(), track()), before = service.exportProjectJson();
+  const weights = [100, 20, 0, 50, 30, 100, 100], preference = [0, 7, 4, 3, 1, 2, 5, 6];
+  assert.equal(service.updateMelodyGlobal({ newBlocksChance: 0, blockTypeWeights: weights, blockChangePreference: preference }), 'changed');
+  const saved = service.exportProjectJson(), notes = phrase.layOutTrackPhrase(service.project(), track());
+  assert.notDeepEqual(notes, original);
+  assert.deepEqual(service.project().tracks, tracks); assert.deepEqual(service.project().arrangement, sections);
+  weights[0] = 0; preference.reverse();
+  assert.equal(service.exportProjectJson(), saved, 'caller arrays cannot mutate the committed project');
+  const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+  const exported = parsed.tracks.find(item => item.name === track().name).notes;
+  assert.equal(exported.length, notes.length);
+  exported.forEach((note, index) => {
+    assert.equal(note.midi, notes[index].midi);
+    assert.ok(Math.abs(note.ticks / parsed.header.ppq - notes[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / parsed.header.ppq - notes[index].durationBeats) < 0.003);
+  });
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  service.updateSettings({ name: 'redo' }); service.undo();
+  assert.equal(service.updateMelodyGlobal(JSON.parse(saved).melodyGlobal), 'unchanged');
+  assert.equal(service.canRedo(), true);
+  const { generateMelody } = load('core/music/melody-generator.ts');
+  for (const patch of [{ newBlocksChance: -1 }, { newBlocksChance: 101 }, { newBlocksChance: 1.5 }, { newBlocksChance: '0' },
+    { blockTypeWeights: null }, { blockTypeWeights: [100] }, { blockTypeWeights: [100,100,100,100,100,100,101] },
+    { blockTypeWeights: [100,100,100,100,100,100,0.5] }, { blockTypeWeights: Array(7) },
+    { blockChangePreference: [0] }, { blockChangePreference: [0,1,2,3,4,5,6,6] },
+    { blockChangePreference: [0,1,2,3,4,5,6,8] }, { blockChangePreference: '0,7,4,3,1,2,5,6' }]) {
+    assert.equal(service.updateMelodyGlobal(patch), 'invalid');
+    assert.throws(() => generateMelody(42n, 'C', 'major', [1], {}, 0, undefined, patch), RangeError);
+    const imported = JSON.parse(saved); imported.melodyGlobal = { ...imported.melodyGlobal, ...patch };
+    assert.equal(service.importProjectJson(JSON.stringify(imported)), false);
+    assert.equal(service.exportProjectJson(), saved); assert.equal(service.canRedo(), true);
+  }
+  for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
+    { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
+    service.updatePartSettings(scope, { newBlocksChance: 0, blockTypeWeights: [0,0,0,0,0,0,0], blockChangePreference: [] });
+    assert.equal(service.exportProjectJson(), saved, 'global catalogue inputs cannot enter part patches');
+  }
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), notes);
+  const manual = [{ id: 'catalogue-manual', midi: 72, startBeat: 1, durationBeats: 1, velocity: 95 }];
+  service.updateTrackPhrase(id, manual); service.updateMelodyGlobal({ newBlocksChance: 50, blockChangePreference: [] });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+});
+
+test('P5e catalogue preference editor rejects partial or duplicate lists without committing', () => {
+  const { service, load } = fixture();
+  const { MelodyGlobalSettingsComponent } = load('shared/melody-global-settings.component.ts');
+  const editor = new MelodyGlobalSettingsComponent(), commits = [];
+  editor.settingsChanged.emit = patch => { commits.push(patch); service.updateMelodyGlobal(patch); editor.values.set(service.project().melodyGlobal ?? {}); };
+  editor.useBlockPreference(true);
+  assert.deepEqual(service.project().melodyGlobal.blockChangePreference, [0,7,4,3,1,2,5,6]);
+  for (const text of ['0,1', '0,1,2,3,4,5,6,6', '0,1,2,3,4,5,6,8', '0,1,2,3,4,5,6,7.0', '0,1,2,3,4,5,6,7,']) {
+    const input = { value: text }; editor.changeBlockPreference({ target: input });
+    assert.equal(commits.length, 1); assert.ok(editor.blockPreferenceError());
+    assert.equal(input.value, '0, 7, 4, 3, 1, 2, 5, 6');
+  }
+  editor.changeBlockPreference({ target: { value: '7, 6,5,4,3,2,1,0' } });
+  assert.deepEqual(service.project().melodyGlobal.blockChangePreference, [7,6,5,4,3,2,1,0]);
+  assert.equal(editor.blockPreferenceError(), '');
+  editor.useBlockPreference(false); assert.deepEqual(service.project().melodyGlobal.blockChangePreference, []);
+  editor.changeBlockWeight(2, 40); assert.deepEqual(service.project().melodyGlobal.blockTypeWeights, [100,100,40,100,100,100,100]);
+  editor.changeBlockPreference({ target: { value: '   ' } }); assert.deepEqual(commits.at(-1), { blockChangePreference: [] });
 });
 
 test('P5e pattern effects and arpy surprises update section dependencies and MIDI independently', () => {
@@ -2355,7 +2444,7 @@ function fixture() {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };

@@ -101,6 +101,11 @@ export interface MelodyGlobalSettings {
   readonly useDirectionsFromProgression?: boolean;
   /** Copy the first stored Melody track's outline fields during preparation. */
   readonly forceFirstOutline?: boolean;
+  readonly newBlocksChance?: number;
+  /** Weights in BlockType enum order: Scaley, Neighbory, Arpy, Chordy, Wavy, Interval, Note. */
+  readonly blockTypeWeights?: readonly number[];
+  /** Empty selects uniformly; otherwise a permutation of absolute changes 0–7. */
+  readonly blockChangePreference?: readonly number[];
 }
 
 export interface BassSettings extends CommonPartSettings {
