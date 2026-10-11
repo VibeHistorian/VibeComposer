@@ -4,7 +4,7 @@ import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
   TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
 } from '../core/project/project.model';
-import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder } from '../core/project/project.model';
+import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder, DEFAULT_MIX, DEFAULT_TRACKS } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { DRUM_INSTRUMENTS, drumInstrumentName } from '../core/music/drum-instruments';
@@ -59,6 +59,8 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  readonly defaultMix = DEFAULT_MIX;
+  defaultChannel(track: CompositionTrack): number { return DEFAULT_TRACKS.find(item => item.role === track.role)!.midiChannel; }
   readonly maximumVolume = MAX_VOLUME_PERCENT;
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);

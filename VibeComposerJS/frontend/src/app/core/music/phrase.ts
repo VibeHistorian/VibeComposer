@@ -182,7 +182,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   const progression = section?.chordDegrees ?? project.progression;
   const source = project.tracks.find(track => track.role === 'melody');
   if (!source) return { ...melodyContext([], progression.length), available: false };
-  if (source.editedPhrase !== undefined) return melodyContext(source.editedPhrase, progression.length);
+  if (source.editedPhrase !== undefined) return melodyContext(source.editedPhrase, progression.length, project.melodyGlobal?.patternFlip);
   const effective = resolvePartTrack(source, section);
   if (effective.role !== 'melody' || effective.generatorSettings.generationEnabled === false) {
     return { ...melodyContext([], progression.length), available: false };
@@ -190,7 +190,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   let result = melodyContext([], progression.length);
   const seeded = withTrackSeed(project, source);
   generateMelody(BigInt(seeded.seed), project.key, project.scale, progression, effective.generatorSettings, 0,
-    notes => { result = melodyContext(notes, progression.length); }, project.melodyGlobal);
+    notes => { result = melodyContext(notes, progression.length, project.melodyGlobal?.patternFlip); }, project.melodyGlobal);
   return result;
 }
 

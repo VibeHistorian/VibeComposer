@@ -1,9 +1,23 @@
-import { Directive, ElementRef, inject } from '@angular/core';
+import { Directive, ElementRef, inject, input } from '@angular/core';
 
 /** Native selects share the same wheel behavior and existing change handlers. */
-@Directive({ selector: 'select', host: { '(wheel)': 'onWheel($event)' } })
+@Directive({ selector: 'select', host: { '(wheel)': 'onWheel($event)', '(contextmenu)': 'resetDefault($event)' } })
 export class WheelSelectDirective {
   private readonly element = inject<ElementRef<HTMLSelectElement>>(ElementRef);
+  readonly defaultValue = input<string | number | undefined>(undefined, { alias: 'selectDefault' });
+
+  resetDefault(event: MouseEvent): void {
+    event.preventDefault(); event.stopPropagation();
+    const select = this.element.nativeElement;
+    if (select.disabled) return;
+    const options = Array.from(select.options);
+    const index = options.findIndex(option => !option.disabled
+      && !(option.parentElement instanceof HTMLOptGroupElement && option.parentElement.disabled)
+      && (this.defaultValue() === undefined || option.value === String(this.defaultValue())));
+    if (index < 0 || index === select.selectedIndex) return;
+    select.selectedIndex = index;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
 
   onWheel(event: WheelEvent): void {
     const select = this.element.nativeElement;

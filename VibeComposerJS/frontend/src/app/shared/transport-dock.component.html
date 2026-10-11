@@ -44,13 +44,13 @@
 
   <div class="transport-globals" aria-label="Global song settings">
     <div class="global-knobs">
-      <vc-compact-knob [dense]="true" label="Transpose in semitones" shortLabel="Transpose" unit="" [caption]="key()"
+      <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="Transpose" unit="" [caption]="key()"
         [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)" />
-      <vc-compact-knob [dense]="true" label="Tempo in beats per minute" shortLabel="BPM" unit=""
+      <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="BPM" unit=""
         [value]="project().tempoBpm" [minimum]="40" [maximum]="240" (valueCommit)="updateTempo($event)" />
     </div>
     <div class="mode-seed">
-    <label class="mode-control"><span>MODE</span><select aria-label="Mode" [value]="project().scale" (change)="updateScale($event)">
+    <label class="mode-control"><span>MODE</span><select selectDefault="major" aria-label="Mode" [value]="project().scale" (change)="updateScale($event)">
       <option value="major" [selected]="project().scale === 'major'">Major</option><option value="natural-minor" [selected]="project().scale === 'natural-minor'">Minor</option>
     </select></label>
     <label class="seed-control"><span>SEED</span><input aria-label="Generation seed" inputmode="numeric" [value]="project().seed"

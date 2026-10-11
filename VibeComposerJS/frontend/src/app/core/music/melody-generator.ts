@@ -18,7 +18,6 @@ interface Pattern { readonly changes: readonly number[]; readonly blocks: readon
 
 /** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
 export const MELODY_CORE_INPUTS = Object.freeze({ blockTargetMode: 2,
-  emphasizeKey: false,
   chordNoteTarget: 0, tonicNoteTarget: 0, modeNoteTarget: 0 });
 
 function repeated(values: readonly number[], count: number): number[] {
@@ -142,19 +141,33 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       });
       if (flexible && existing && globals.patternEffect > 0) blocks = [...existing.blocks.slice(0, -1), blocks[blocks.length - 1]];
     }
-    if (!existing) cache.set(offset, { changes, blocks });
     const notes: Note[] = [];
     const exceptionRandom = new JavaRandom(int(baseSeed + 2 + notesSeedOffset + offset));
     let exceptions = settings.maxNoteExceptions ?? 0;
     let adjustment = 0;
+    const blockCount = blocks.length;
     blocks.forEach((block, index) => {
       if (index > 0) adjustment += changes[index - 1] * (originalOffset < 0 ? -1 : 1);
+      const pitches = block.notes.map(note => degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment));
+      let blockDurations = [...block.durations];
+      if (!existing && globals.emphasizeKey) {
+        // Production inserts the mode target at index one, including tonic for Ionian.
+        const order = scale === 'natural-minor' ? [0, 9, 7, 4, 5, 2, 11] : [7, 0, 4, 5, 9, 2, 11];
+        for (let left = 0; left < pitches.length; left++) for (let right = 0; right < pitches.length; right++) {
+          if (pitches[left] === pitches[right]) continue;
+          const swap = order.indexOf(pitches[left] % 12) < order.indexOf(pitches[right] % 12)
+            ? blockDurations[left] + EPS < blockDurations[right] : blockDurations[left] - EPS > blockDurations[right];
+          if (swap) [blockDurations[left], blockDurations[right]] = [blockDurations[right], blockDurations[left]];
+        }
+        // Inverted blocks are temporary Java copies; their duration assignment does not change the cache.
+        if (globals.patternEffect !== 1 && originalOffset >= 0) blocks = blocks!.map((stored, blockIndex) => blockIndex === index
+          ? { ...stored, durations: blockDurations } : stored);
+      } else if (existing && globals.patternEffect === 0) blockDurations = [...existing.blocks[index].durations];
       block.notes.forEach((note, noteIndex) => {
-        const rhythm = existing && globals.patternEffect === 0
-          ? existing.blocks[index].durations[noteIndex] : block.durations[noteIndex];
-        let pitch = degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment);
+        const rhythm = blockDurations[noteIndex];
+        let pitch = pitches[noteIndex];
         const exceptionIndexValid = globals.singleNoteExceptions
-          ? noteIndex === block.notes.length - 1 && index === blocks.length - 1 : noteIndex > 0;
+          ? noteIndex === block.notes.length - 1 && index === blockCount - 1 : noteIndex > 0;
         if (exceptionIndexValid && exceptions > 0 && exceptionRandom.nextInt(100) < (settings.noteExceptionChance ?? 0)) {
           pitch += (exceptionRandom.nextBoolean() ? 1 : -1) * MAJOR[exceptionRandom.nextInt(globals.singleNoteExceptions ? 7 : 4)];
           const semitone = pitch % 12;
@@ -167,6 +180,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
           velocity: 0, offset: 0 });
       });
     });
+    if (!existing) cache.set(offset, { changes, blocks });
     byChord.push(notes);
   }
   const expanded = expandMelody(byChord, settings, baseSeed, notesSeedOffset, minimum, maximum);

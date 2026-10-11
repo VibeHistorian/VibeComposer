@@ -90,6 +90,10 @@ export interface MelodySettings extends CommonPartSettings {
 
 /** GUIConfig musical inputs shared by every Melody track and section. */
 export interface MelodyGlobalSettings {
+  /** Assign longer block durations to tonic/mode-important pitches before pitch exceptions. */
+  readonly emphasizeKey?: boolean;
+  /** Invert the first Melody's published onset grid for dependent parts; Melody notes stay unchanged. */
+  readonly patternFlip?: boolean;
   readonly singleNoteExceptions?: boolean;
   readonly maxDirectionChanges?: number;
   readonly fillPausesPerChord?: boolean;

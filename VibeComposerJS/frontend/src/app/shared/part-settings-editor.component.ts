@@ -99,6 +99,15 @@ export class PartSettingsEditorComponent {
     return this.local() ? this.overriddenKeys().includes(control.key) ? 'custom' : 'inherited' : 'global';
   }
 
+  numericDefault(control: PartControl): number {
+    return typeof control.defaultValue === 'number' ? control.defaultValue : control.minimum!;
+  }
+
+  choiceDefault(control: PartControl): string | number {
+    return typeof control.defaultValue === 'string' || typeof control.defaultValue === 'number'
+      ? control.defaultValue : control.options![0];
+  }
+
   numericValue(control: PartControl): number {
     return (this.values()[control.key] as number | null)
       ?? (typeof control.defaultValue === 'number' ? control.defaultValue : control.minimum!);

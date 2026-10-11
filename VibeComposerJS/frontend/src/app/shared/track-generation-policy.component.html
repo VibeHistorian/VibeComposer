@@ -4,7 +4,7 @@
       [active]="instrumentPolicy().randomize" [disabled]="disabled()" (toggled)="toggleInstrument('randomize')" />
     @if (role() !== 'drums') {
       <label><span>Instrument pool</span>
-        <select aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">
+        <select [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">
           @for (pool of instrumentPools(); track pool) {
             <option [value]="pool" [selected]="instrumentPolicy().pool === pool">{{ poolLabels[pool] }}</option>
           }
@@ -12,7 +12,7 @@
       </label>
     }
     @if (role() === 'chords' && instrumentPolicy().pool === 'AUTO') {
-      <vc-compact-knob [mini]="true" label="Instrument sustain chance %" shortLabel="SUST" unit="%"
+      <vc-compact-knob [mini]="true" label="Instrument sustain chance %" [defaultValue]="50" shortLabel="SUST" unit="%"
         description="Chance to choose a sustained chord instrument from the automatic pool."
         [minimum]="0" [maximum]="100" [value]="instrumentPolicy().sustainChance ?? 50" [disabled]="disabled()"
         (valueCommit)="changeSustain($event)" />
@@ -30,7 +30,7 @@
         <vc-compact-toggle [label]="control.label" [description]="control.description ?? ''" [active]="values()[control.key] === true"
           [disabled]="inactive(control)" (toggled)="toggle(control)" />
       } @else if (control.minimum !== undefined) {
-        <vc-compact-knob [mini]="true" [label]="'Reroll ' + control.label" [shortLabel]="code(control)"
+        <vc-compact-knob [mini]="true" [label]="'Reroll ' + control.label" [defaultValue]="+defaultValue(control)" [shortLabel]="code(control)"
           [description]="control.description ?? ''" [unit]="control.label.includes('%') ? '%' : ''"
           [minimum]="control.minimum" [maximum]="control.maximum!" [value]="numericValue(control)" [disabled]="inactive(control)"
           (valueCommit)="changeNumber(control, $event)" />
@@ -38,7 +38,7 @@
       <label [attr.title]="control.label + (control.description ? ': ' + control.description : '')">
         <span>{{ control.label }}</span>
         @if (control.options) {
-          <select [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">
+          <select [selectDefault]="defaultValue(control)" [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">
             @for (option of control.options; track option) { <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option> }
           </select>
         }

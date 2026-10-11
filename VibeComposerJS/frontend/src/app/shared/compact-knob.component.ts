@@ -13,6 +13,7 @@ export class CompactKnobComponent {
   readonly value = input.required<number>();
   readonly minimum = input.required<number>();
   readonly maximum = input.required<number>();
+  readonly defaultValue = input.required<number>();
   readonly step = input(1);
   readonly allowedValues = input<readonly number[]>([]);
   readonly label = input.required<string>();
@@ -76,9 +77,17 @@ export class CompactKnobComponent {
     input.value = String(this.sliderValue());
   }
 
+  resetDefault(event: MouseEvent): void {
+    event.preventDefault(); event.stopPropagation();
+    if (this.disabled()) return;
+    this.cancelDrag(); this.preview.set(null);
+    const value = this.snap(this.defaultValue());
+    if (this.mixed() || value !== this.value()) this.valueCommit.emit(value);
+  }
+
   tooltip(): string {
     if (this.mixed() && this.preview() === null) return `${this.label()}: mixed values. Adjust to choose a shared value.`;
-    return `${this.label()}: ${this.accessibleValue()}. ${this.description()} Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work.`;
+    return `${this.label()}: ${this.accessibleValue()}. ${this.description()} Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work. Right-click to reset to ${this.defaultValue()}${this.unit()}.`;
   }
 
   private setPreview(value: number): void {

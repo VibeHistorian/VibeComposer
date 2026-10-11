@@ -6,13 +6,13 @@
       <p class="preparation-note">Used on Compose and enabled Regenerate. Target choices remain editable.</p>
       <label class="pattern-effect" title="Direction of prepared note targets, separate from block direction changes.">
         Target direction
-        <select aria-label="Target direction" [value]="values().targetDirection ?? 'ASC'" (change)="changeTargetDirection($event)">
+        <select selectDefault="ASC" aria-label="Target direction" [value]="values().targetDirection ?? 'ASC'" (change)="changeTargetDirection($event)">
           <option value="ANY">Any</option>
           <option value="ASC">Ascending</option>
           <option value="DESC">Descending</option>
         </select>
       </label>
-      <vc-compact-knob label="Target variation" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
+      <vc-compact-knob label="Target variation" [defaultValue]="3" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
         description="Magnitude of prepared target directions before chord-note correction. Ascending and Descending double the draw range. Requires Automatic targets."
         (valueCommit)="settingsChanged.emit({ targetNoteVariation: $event })" />
       <vc-compact-toggle label="Directions from progression" [active]="values().useDirectionsFromProgression ?? false"
@@ -24,6 +24,9 @@
     </fieldset>
     <fieldset class="parameter-area" data-control-category="pitch">
       <legend>Pitch</legend>
+      <vc-compact-toggle label="Emphasize key" [active]="values().emphasizeKey ?? false"
+        description="Give tonic and mode-important pitches longer durations inside new block identities. Repeated identities follow Pattern effect's stored rhythm behavior."
+        (toggled)="settingsChanged.emit({ emphasizeKey: !(values().emphasizeKey ?? false) })" />
       <vc-compact-toggle label="Single note exceptions" [active]="values().singleNoteExceptions ?? false"
         description="Apply pitch exceptions only to the last note of the last block in each chord, using the full major-scale interval range. Requires Max exceptions and Note exceptions."
         (toggled)="settingsChanged.emit({ singleNoteExceptions: !(values().singleNoteExceptions ?? false) })" />
@@ -32,24 +35,24 @@
       <legend>Shape</legend>
       <label class="pattern-effect" title="Choose what repeated block identities preserve. Flex can regenerate their final block to approach the next target.">
         Pattern effect
-        <select aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (change)="changePatternEffect($event)">
+        <select [selectDefault]="2" aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (change)="changePatternEffect($event)">
           <option value="0">Rhythm</option>
           <option value="1">Notes</option>
           <option value="2">Rhythm + Notes</option>
         </select>
       </label>
-      <vc-compact-knob label="Max direction changes" [value]="values().maxDirectionChanges ?? 2" [minimum]="1" [maximum]="6" unit=""
+      <vc-compact-knob label="Max direction changes" [defaultValue]="2" [value]="values().maxDirectionChanges ?? 2" [minimum]="1" [maximum]="6" unit=""
         description="Direction-change budget for block targets and generated shapes. Reused patterns retain Java's cached budget before Flex changes their target."
         (valueCommit)="settingsChanged.emit({ maxDirectionChanges: $event })" />
     </fieldset>
     <fieldset class="parameter-area catalogue-area" data-control-category="shape">
       <legend>Block catalogue</legend>
-      <vc-compact-knob label="New blocks" [value]="values().newBlocksChance ?? 100" [minimum]="0" [maximum]="100" unit="%"
+      <vc-compact-knob label="New blocks" [defaultValue]="25" [value]="values().newBlocksChance ?? 25" [minimum]="0" [maximum]="100" unit="%"
         description="Chance of generating a new block shape rather than choosing a catalogue shape. Uses the same block identities and Flex behavior."
         (valueCommit)="settingsChanged.emit({ newBlocksChance: $event })" />
       <div class="block-weights" aria-label="Block family preferences">
         @for (family of blockFamilies; track family; let index = $index) {
-          <vc-compact-knob [label]="family + ' weight'" [shortLabel]="family" [value]="(values().blockTypeWeights ?? defaultWeights)[index]" [minimum]="0" [maximum]="100" unit="%"
+          <vc-compact-knob [label]="family + ' weight'" [defaultValue]="100" [shortLabel]="family" [value]="(values().blockTypeWeights ?? defaultWeights)[index]" [minimum]="0" [maximum]="100" unit="%"
             description="Relative catalogue preference within allowed block changes, lengths and direction limits. Fallback and family replacement may use another family."
             (valueCommit)="changeBlockWeight(index, $event)" />
         }
@@ -67,6 +70,9 @@
     </fieldset>
     <fieldset class="parameter-area" data-control-category="rhythm">
       <legend>Rhythm</legend>
+      <vc-compact-toggle label="Melody pattern flip" [active]="values().patternFlip ?? false"
+        description="Invert the first Melody's onset grid used by Melody-following parts. Melody notes remain unchanged; individual parts can also flip their own rhythms."
+        (toggled)="settingsChanged.emit({ patternFlip: !(values().patternFlip ?? false) })" />
       <vc-compact-toggle label="Arpy surprises" [active]="values().arpySurprises ?? false"
         description="At Speed below 20 or above 80, replace certain four-note block rhythms with evenly spaced notes."
         (toggled)="settingsChanged.emit({ arpySurprises: !(values().arpySurprises ?? false) })" />

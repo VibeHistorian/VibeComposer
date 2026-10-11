@@ -13,6 +13,115 @@ test('P5 melody dependency grids match production onset buckets with rests and b
   for (const entry of cases) assert.deepEqual(melodyContext(entry.notes, entry.chordCount).pitches, entry.pitches);
 });
 
+test('P5e Melody pattern flip matches 64 production Java onset maps and retains empty sources', () => {
+  const { load } = fixture(), { melodyContext } = load('core/music/melody-context.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/melody-flip.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 64);
+  for (const entry of cases) assert.deepEqual(melodyContext(entry.notes, entry.chordCount, true).pitches, entry.pitches);
+  assert.deepEqual(melodyContext([], 1, true).pitches, [Array(16).fill(0)]);
+  assert.deepEqual(melodyContext([{ midi: -1, startBeat: 0 }], 1, true).pitches, [Array(16).fill(1)]);
+});
+
+test('P5e Melody flip and key emphasis preserve ownership, update consumers and replay exported MIDI', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
+  const track = role => service.project().tracks.find(item => item.role === role);
+  service.setSectionTrackPresence(0, id, true);
+  for (const role of ['drums', 'arpeggio']) {
+    service.setSectionTrackPresence(0, track(role).id, true);
+    service.updatePartSettings({ kind: 'global-track', trackId: track(role).id }, { rhythm: 'melody', swingPercent: 50 });
+  }
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 50 });
+  const notes = phrase.layOutTrackPhrase(service.project(), track('melody'));
+  const context = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
+  const drums = phrase.layOutTrackPhrase(service.project(), track('drums')), arp = phrase.layOutTrackPhrase(service.project(), track('arpeggio'));
+  const before = service.exportProjectJson(), sections = service.project().arrangement;
+  assert.equal(service.updateMelodyGlobal({ patternFlip: true }), 'changed');
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track('melody')), notes);
+  assert.deepEqual(phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]).pitches,
+    context.pitches.map(grid => grid.map(pitch => pitch > 0 ? 0 : 1)));
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track('drums')), drums);
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track('arpeggio')), arp);
+  assert.deepEqual(service.project().arrangement, sections);
+  const flipped = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), flipped);
+  assert.equal(service.updateMelodyGlobal({ emphasizeKey: true }), 'changed');
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track('melody')), notes);
+  for (const role of ['melody', 'drums', 'arpeggio']) {
+    const expected = phrase.layOutTrackPhrase(service.project(), track(role));
+    const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+    const exported = parsed.tracks.find(item => item.name === track(role).name).notes;
+    assert.equal(exported.length, expected.length);
+    exported.forEach((note, index) => {
+      assert.equal(note.midi, expected[index].midi);
+      assert.ok(Math.abs(note.ticks / parsed.header.ppq - expected[index].startBeat) < 0.003);
+    });
+  }
+  const saved = service.exportProjectJson(); service.updateSettings({ name: 'redo' }); service.undo();
+  for (const key of ['patternFlip', 'emphasizeKey']) {
+    assert.equal(service.updateMelodyGlobal({ [key]: 'true' }), 'invalid');
+    const imported = JSON.parse(saved); imported.melodyGlobal[key] = 1;
+    assert.equal(service.importProjectJson(JSON.stringify(imported)), false);
+    for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
+      { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
+      service.updatePartSettings(scope, { [key]: true }); assert.equal(service.exportProjectJson(), saved);
+    }
+    assert.equal(service.canRedo(), true);
+  }
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true);
+  const manual = [{ id: 'flip-manual', midi: 62, startBeat: 1, durationBeats: 2, velocity: 90 }];
+  service.updateTrackPhrase(id, manual);
+  service.updateMelodyGlobal({ emphasizeKey: false });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track('melody')), manual);
+  assert.deepEqual(phrase.sectionMelodyContext(service.project()).pitches[0], Array.from({ length: 16 }, (_, slot) => slot === 4 ? 0 : 1));
+  service.updateTrackPhrase(id, []);
+  assert.deepEqual(phrase.sectionMelodyContext(service.project()).pitches.flat(), Array(service.project().progression.length * 16).fill(0));
+  service.clearTrackPhrase(id);
+  service.updatePartSettings({ kind: 'global-track', trackId: id }, { generationEnabled: false });
+  assert.equal(phrase.sectionMelodyContext(service.project()).available, false);
+});
+
+test('right-click knob resets use explicit defaults, cancel previews and respect disabled/no-op controls', () => {
+  const { load, service } = fixture(), { CompactKnobComponent } = load('shared/compact-knob.component.ts');
+  const knob = new CompactKnobComponent(); knob.minimum.set(0); knob.maximum.set(100); knob.defaultValue.set(25);
+  knob.value.set(80); const commits = [], previews = [];
+  knob.valueCommit.emit = value => { commits.push(value); service.updateMelodyGlobal({ newBlocksChance: value }); knob.value.set(value); };
+  knob.valuePreview.emit = value => previews.push(value);
+  let prevented = 0; const event = { preventDefault() { prevented++; }, stopPropagation() {} };
+  knob.startDrag({ button: 0, pointerId: 1, clientY: 100, preventDefault() {}, stopPropagation() {}, currentTarget: { focus() {}, setPointerCapture() {} } });
+  knob.moveDrag({ pointerId: 1, clientY: 90 }); assert.notEqual(knob.preview(), null);
+  knob.resetDefault(event); assert.equal(knob.preview(), null); assert.deepEqual(commits, [25]);
+  knob.finishDrag({ pointerId: 1 }); assert.deepEqual(commits, [25]);
+  const saved = service.exportProjectJson(); service.updateSettings({ name: 'redo' }); service.undo();
+  knob.resetDefault(event); assert.deepEqual(commits, [25]); assert.equal(service.canRedo(), true);
+  knob.disabled.set(true); knob.value.set(90); knob.resetDefault(event); assert.deepEqual(commits, [25]);
+  knob.disabled.set(false); knob.mixed.set(true); knob.value.set(25); knob.resetDefault(event); assert.deepEqual(commits, [25,25]);
+  assert.equal(service.exportProjectJson(), saved); assert.equal(prevented, 4);
+});
+
+test('right-click combobox resets find enabled defaults and dispatch one ordinary change', () => {
+  const { load } = fixture(), { WheelSelectDirective } = load('shared/wheel-select.directive.ts');
+  const directive = new WheelSelectDirective(), previous = global.HTMLOptGroupElement;
+  global.HTMLOptGroupElement = class {};
+  try {
+    const changes = [], select = { disabled: false, selectedIndex: 3, options: [
+      { value: '', disabled: true }, { value: 'ASC', disabled: false }, { value: 'DESC', disabled: false }, { value: 'ANY', disabled: false },
+    ], dispatchEvent(event) { changes.push(event.type); } };
+    directive.element = { nativeElement: select }; directive.defaultValue.set('ASC');
+    const event = { preventDefault() {}, stopPropagation() {} };
+    directive.resetDefault(event); assert.equal(select.selectedIndex, 1); assert.deepEqual(changes, ['change']);
+    directive.resetDefault(event); assert.deepEqual(changes, ['change']);
+    select.disabled = true; select.selectedIndex = 2; directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
+    select.disabled = false; select.options[1].disabled = true; directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
+    directive.defaultValue.set('missing'); directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
+    directive.defaultValue.set(undefined); select.selectedIndex = 3; directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
+    assert.deepEqual(changes, ['change', 'change']);
+  } finally { global.HTMLOptGroupElement = previous; }
+});
+
 test('P5d Ghosts, melody rhythm and humanize match complete production Java drum phrases', () => {
   const { load } = fixture();
   const { generateDrumPart } = load('core/music/drum-generator.ts');
@@ -1988,7 +2097,7 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
 });
 
-for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
+for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536], ['emphasis', 1152]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, `fixtures/melody-${name}.java.json`), 'utf8').replace(/^\uFEFF/, ''));
@@ -1999,7 +2108,7 @@ for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], [
       assert.deepEqual(chooseMelodyTargets(sample.targetSeed, sample.targetProgression, sample.globalSettings), sample.settings.chordNoteChoices, `case ${caseIndex} prepared targets`);
     }
     const progression = Array(sample.chordCount).fill(1);
-    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset, undefined, sample.globalSettings);
+    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset, undefined, { newBlocksChance: 100, ...sample.globalSettings });
     assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
     actual.forEach((note, index) => {
       const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;

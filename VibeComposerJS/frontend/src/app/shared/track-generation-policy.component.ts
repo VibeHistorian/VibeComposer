@@ -3,11 +3,12 @@ import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, T
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../core/music/instrument-generation';
 import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../core/music/track-generation';
 import { CompactToggleComponent } from './compact-toggle.component';
+import { WheelSelectDirective } from './wheel-select.directive';
 import { CompactKnobComponent } from './compact-knob.component';
 
 @Component({
   selector: 'vc-track-generation-policy',
-  imports: [CompactToggleComponent, CompactKnobComponent],
+  imports: [CompactToggleComponent, CompactKnobComponent, WheelSelectDirective],
   host: { '[attr.data-control-role]': 'role()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './track-generation-policy.component.html',
@@ -28,6 +29,9 @@ export class TrackGenerationPolicyComponent {
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
     PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Percussion' };
   readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()]);
+
+  readonly defaultInstrumentPolicies = DEFAULT_INSTRUMENT_POLICIES;
+  defaultValue(control: PolicyControl): string | number { return (DEFAULT_TRACK_POLICIES[this.role()] as unknown as Record<string, string | number>)[control.key]; }
 
   numericValue(control: PolicyControl): number { return Number(this.values()[control.key]); }
 

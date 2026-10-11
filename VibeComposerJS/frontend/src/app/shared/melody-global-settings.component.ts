@@ -3,11 +3,12 @@ import type { MelodyGlobalSettings } from '../core/project/project.model';
 import { CompactKnobComponent } from './compact-knob.component';
 import { CompactToggleComponent } from './compact-toggle.component';
 import { DEFAULT_BLOCK_CHANGE_PREFERENCE, DEFAULT_BLOCK_TYPE_WEIGHTS, MELODY_BLOCK_FAMILIES } from '../core/music/melody-catalogue';
+import { WheelSelectDirective } from './wheel-select.directive';
 import { decodeMelodyGlobal } from '../core/music/melody-global-settings';
 
 @Component({
   selector: 'vc-melody-global-settings',
-  imports: [CompactKnobComponent, CompactToggleComponent],
+  imports: [CompactKnobComponent, CompactToggleComponent, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './melody-global-settings.component.html',
   styleUrl: './melody-global-settings.component.css',

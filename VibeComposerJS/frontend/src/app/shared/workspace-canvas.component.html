@@ -48,7 +48,7 @@
                 </div>
                 @if (track.role === 'drums') {
                   <select class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
-                    [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
+                    [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
                     (click)="$event.stopPropagation()" (change)="updateDrumPitch(track, $event)">
                     @for (instrument of drumInstruments; track instrument.midi) {
                       <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(track)">{{ instrument.name }} · {{ instrument.midi }}</option>
@@ -56,7 +56,7 @@
                   </select>
                 } @else {
                   <select class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
-                    [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
+                    [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
                     (click)="$event.stopPropagation()" (change)="updateInstrument(track, $event)">
                     @for (instrument of instruments; track instrument.program) {
                       <option [value]="instrument.program" [selected]="instrument.program === track.mix.program">{{ instrument.name }}</option>
@@ -64,7 +64,7 @@
                   </select>
                 }
                 <select class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
-                  [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
+                  [selectDefault]="defaultChannel(track)" [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
                   [title]="track.role === 'drums' ? 'Percussion uses MIDI channel 10' : 'MIDI channel ' + track.midiChannel"
                   (click)="$event.stopPropagation()" (change)="updateChannel(track, $event)">
                   @for (channel of midiChannels; track channel) {
@@ -72,11 +72,11 @@
                   }
                 </select>
                 <div class="track-mix-controls" (click)="$event.stopPropagation()">
-                  <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name"
+                  <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name" [defaultValue]="0"
                     [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
                     (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"
                     (valueCommit)="updateTrackMix(track.id, 'panPercent', $event)" />
-                  <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name"
+                  <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name" [defaultValue]="100"
                     [value]="track.mix.volumePercent" [minimum]="0" [maximum]="maximumVolume" [step]="0.1" valueFormat="decibels"
                     (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
                     (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
@@ -240,7 +240,7 @@
             <span class="selection-kicker">{{ selectedSectionIds().length }} sections selected · editing {{ sectionLabel(section.type) }}</span>
           }
           <label class="quick-field">Section type
-            <select [value]="section.type" (change)="updateSectionType($event)">
+            <select selectDefault="VERSE1" [value]="section.type" (change)="updateSectionType($event)">
               @for (type of sectionTypes; track type) { <option [value]="type" [selected]="type === section.type">{{ sectionLabel(type) }}</option> }
             </select>
           </label>
@@ -259,7 +259,7 @@
             </div>
             @for (degree of sectionChordDegrees(); track $index; let bar = $index) {
               <label class="quick-field">Bar {{ bar + 1 }}
-                <select [value]="degree" (change)="updateSectionChord(bar, $event)">
+                <select [selectDefault]="1" [value]="degree" (change)="updateSectionChord(bar, $event)">
                   @for (chord of chords(); track chord.degree) { <option [value]="chord.degree" [selected]="chord.degree === degree">{{ chord.romanNumeral }} · {{ chord.symbol }}</option> }
                 </select>
               </label>
@@ -316,7 +316,7 @@
       @if (settingsTarget().kind === 'section') {
         <section class="inspector-arrangement-add" aria-label="Add arrangement section">
           <p class="eyebrow">ARRANGEMENT</p>
-          <select [value]="newSectionType()" (change)="updateNewSectionType($event)">
+          <select selectDefault="VERSE1" [value]="newSectionType()" (change)="updateNewSectionType($event)">
             @for (type of sectionTypes; track type) {
               <option [value]="type" [selected]="type === newSectionType()">{{ sectionLabel(type) }}</option>
             }

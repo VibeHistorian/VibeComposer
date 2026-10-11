@@ -6,6 +6,7 @@ import java.util.*;
 /** Production MelodyPatternUtils onset buckets, including rests and boundary offsets. */
 public class MelodyContextFixture {
     public static void main(String[] args) {
+        boolean flip = args.length > 0 && args[0].equals("flip");
         List<Object> cases = new ArrayList<>();
         for (int sample = 0; sample < 64; sample++) {
             Map<Integer, List<Note>> byChord = new LinkedHashMap<>(); List<Object> input = new ArrayList<>();
@@ -22,7 +23,7 @@ public class MelodyContextFixture {
                 }
                 byChord.put(chord, notes);
             }
-            Map<Integer, List<Integer>> patterns = MelodyPatternUtils.patternsFromNotes(byChord, Collections.nCopies(count, 4.0), 1, false, new MidiTiming(100));
+            Map<Integer, List<Integer>> patterns = MelodyPatternUtils.patternsFromNotes(byChord, Collections.nCopies(count, 4.0), 1, flip, new MidiTiming(100));
             List<Object> grids = new ArrayList<>(); for (int chord = 0; chord < count; chord++) grids.add(patterns.get(chord));
             Map<String, Object> entry = new LinkedHashMap<>(); entry.put("chordCount", count); entry.put("notes", input); entry.put("pitches", grids); cases.add(entry);
         }

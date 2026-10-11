@@ -21,6 +21,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     };
     const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     const change = (input, value) => { input.value = value; input.dispatchEvent(new Event('change', { bubbles: true })); };
+    const reset = input => input.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
     try {
       await wait(() => innerWidth === ${width}, 'exact viewport');
       const seed = await wait(() => document.querySelector('[aria-label="Generation seed"]'), 'seed');
@@ -243,7 +244,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'arpy redo enabled')).click();
       await wait(() => read().melodyGlobal?.arpySurprises === true, 'arpy surprises redo');
       const catalogueTracks = JSON.stringify(read().tracks);
-      await wait(() => globals.querySelector('[aria-label="New blocks"]').value === '100', 'new blocks default');
+      await wait(() => globals.querySelector('[aria-label="New blocks"]').value === '25', 'new blocks default');
       change(globals.querySelector('[aria-label="New blocks"]'), '0');
       await wait(() => read().melodyGlobal?.newBlocksChance === 0, 'catalogue selection commit');
       const families = ['Scaley', 'Neighbory', 'Arpy', 'Chordy', 'Wavy', 'Interval', 'Note'];
@@ -269,6 +270,38 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'catalogue redo enabled')).click();
       await wait(() => read().melodyGlobal?.blockChangePreference?.length === 0, 'block preference redo');
       result.catalogue &&= JSON.stringify(read().tracks) === catalogueTracks && !globals.querySelector('[role="alert"]');
+      reset(globals.querySelector('[aria-label="New blocks"]'));
+      await wait(() => read().melodyGlobal?.newBlocksChance === 25, 'new blocks right-click default');
+      reset(globals.querySelector('[aria-label="New blocks"]'));
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.newBlocksChance === 0, 'reset undo and default no-op');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'reset redo enabled')).click();
+      await wait(() => read().melodyGlobal?.newBlocksChance === 25, 'reset redo');
+      reset(globals.querySelector('[aria-label="Arpy weight"]'));
+      await wait(() => JSON.stringify(read().melodyGlobal?.blockTypeWeights) === '[20,30,100,50,60,70,80]', 'family default isolation');
+      change(effect, '0'); await wait(() => read().melodyGlobal?.patternEffect === 0, 'effect before reset');
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      reset(effect); await wait(() => read().melodyGlobal?.patternEffect === 2, 'effect combobox default');
+      change(tempo, '150'); await wait(() => read().tempoBpm === 150, 'tempo before reset');
+      reset(tempo); await wait(() => read().tempoBpm === 120, 'tempo knob default');
+      change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode before reset');
+      reset(mode); await wait(() => read().scale === 'major', 'mode combobox default');
+      const speed = globals.closest('#part-inspector').querySelector('[aria-label="Speed"]');
+      change(speed, '80'); await wait(() => read().melody.speed === 80, 'part knob before reset');
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      reset(speed); await wait(() => read().melody.speed === 50, 'part knob default');
+      result.defaultResets = read().melodyGlobal.newBlocksChance === 25 && read().melodyGlobal.patternEffect === 2
+        && read().tempoBpm === 120 && read().scale === 'major' && read().melody.speed === 50;
+      const flipNotes = JSON.stringify(read().tracks);
+      globals.querySelector('[aria-label="Melody pattern flip"]').click();
+      await wait(() => read().melodyGlobal?.patternFlip === true, 'Melody grid flip');
+      globals.querySelector('[aria-label="Emphasize key"]').click();
+      await wait(() => read().melodyGlobal?.emphasizeKey === true, 'key emphasis');
+      result.flipEmphasis = JSON.stringify(read().tracks) === flipNotes;
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.emphasizeKey === undefined, 'key emphasis undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'emphasis redo enabled')).click();
+      await wait(() => read().melodyGlobal?.emphasizeKey === true, 'key emphasis redo');
       const targetsBefore = JSON.stringify(read().tracks);
       await wait(() => globals.querySelector('[aria-label="Target direction"]').value === 'ASC', 'target direction default');
       change(globals.querySelector('[aria-label="Target variation"]'), '6');
@@ -320,6 +353,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     } catch(error) { await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, context: document.querySelector('.part-context-label')?.textContent,
       stack: error.stack, canvas: document.querySelector('.arrangement-panel canvas[tabindex]')?.getAttribute('aria-label') }) }); }
   })();</script>`;
+  new (require('node:vm').Script)(script.slice('<script>'.length, -'</script>'.length));
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
   result.catch(() => {}); // Startup failure can precede awaiting the browser result.
@@ -369,6 +403,21 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
+    // Exercise an actual right-button contextmenu, not just the synthetic workflow events.
+    await command('Runtime.evaluate', { expression: `(() => {
+      const control = document.querySelector('[aria-label="New blocks"]');
+      control.scrollIntoView({ block: 'center' }); control.value = '90';
+      control.dispatchEvent(new Event('change', { bubbles: true }));
+    })()` });
+    await new Promise(done => setTimeout(done, 100));
+    const resetPoint = await command('Runtime.evaluate', { expression: `(() => {
+      const box = document.querySelector('[aria-label="New blocks"]').getBoundingClientRect();
+      return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    })()`, returnByValue: true });
+    await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...resetPoint.result.value, button: 'right', clickCount: 1 });
+    await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...resetPoint.result.value, button: 'right', clickCount: 1 });
+    const resetValue = await command('Runtime.evaluate', { expression: `JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).melodyGlobal.newBlocksChance`, returnByValue: true });
+    assert.equal(resetValue.result.value, 25, 'real right-click resets New blocks');
     // Real left-button pointer capture/reorder through CDP, committing exactly once.
     const snapshot = await command('Runtime.evaluate', { expression: `(() => {
       const buttons = [...document.querySelectorAll('.chordlet-label')];
@@ -401,7 +450,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

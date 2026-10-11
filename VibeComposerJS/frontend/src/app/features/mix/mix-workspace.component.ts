@@ -6,7 +6,7 @@ import { phraseForTrack } from '../../core/music/phrase';
 import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
 import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
 import type { CompositionTrack } from '../../core/project/project.model';
-import { tracksInRoleOrder } from '../../core/project/project.model';
+import { tracksInRoleOrder, DEFAULT_MIX, DEFAULT_TRACKS } from '../../core/project/project.model';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 import { WheelSelectDirective } from '../../shared/wheel-select.directive';
@@ -20,6 +20,8 @@ import { MixButtonsComponent } from '../../shared/mix-buttons.component';
   styleUrl: './mix-workspace.component.css',
 })
 export class MixWorkspaceComponent {
+  readonly defaultMix = DEFAULT_MIX;
+  defaultChannel(track: CompositionTrack): number { return DEFAULT_TRACKS.find(item => item.role === track.role)!.midiChannel; }
   @Output() closed = new EventEmitter<void>();
   readonly maximumVolume = MAX_VOLUME_PERCENT;
   readonly projects = inject(ProjectService);

@@ -3,10 +3,10 @@ import { DEFAULT_BLOCK_TYPE_WEIGHTS } from './melody-catalogue';
 
 export const DEFAULT_MELODY_GLOBAL = Object.freeze({
   singleNoteExceptions: false, maxDirectionChanges: 2, fillPausesPerChord: false,
-  patternEffect: 2, arpySurprises: false,
+  patternEffect: 2, arpySurprises: false, patternFlip: false, emphasizeKey: false,
   targetNoteVariation: 3, targetDirection: 'ASC' as const,
   useDirectionsFromProgression: false, forceFirstOutline: false,
-  newBlocksChance: 100, blockTypeWeights: DEFAULT_BLOCK_TYPE_WEIGHTS, blockChangePreference: Object.freeze([] as number[]),
+  newBlocksChance: 25, blockTypeWeights: DEFAULT_BLOCK_TYPE_WEIGHTS, blockChangePreference: Object.freeze([] as number[]),
 });
 
 export function decodeMelodyGlobal(value: unknown): MelodyGlobalSettings | undefined {
@@ -30,7 +30,7 @@ export function decodeMelodyGlobal(value: unknown): MelodyGlobalSettings | undef
       if (!Array.isArray(field) || !(field.length === 0 || field.length === 8 && new Set(field).size === 8
         && Array.from(field).every(change => Number.isInteger(change) && change >= 0 && change <= 7))) return undefined;
       decoded[key] = [...field]; continue;
-    } else if (!['singleNoteExceptions', 'fillPausesPerChord', 'arpySurprises',
+    } else if (!['singleNoteExceptions', 'fillPausesPerChord', 'arpySurprises', 'patternFlip', 'emphasizeKey',
       'useDirectionsFromProgression', 'forceFirstOutline'].includes(key) || typeof field !== 'boolean') return undefined;
     decoded[key] = field;
   }
