@@ -9,6 +9,7 @@ import { expandMelody, delayMelodyStarts, type MelodyNote as Note } from './melo
 import { blockChangeSequence, blockRhythm, blockVariance, cumulativeWeights, directionChanges,
   melodyInt as int, MELODY_EPSILON as EPS, noteRhythm } from './melody-blocks';
 import { selectMelodyBlock } from './melody-catalogue';
+import { applyMelodyTonalTargets } from './melody-tonal-targets';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
@@ -17,8 +18,7 @@ interface Block { readonly notes: readonly number[]; readonly durations: readonl
 interface Pattern { readonly changes: readonly number[]; readonly blocks: readonly Block[] }
 
 /** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
-export const MELODY_CORE_INPUTS = Object.freeze({ blockTargetMode: 2,
-  chordNoteTarget: 0, tonicNoteTarget: 0, modeNoteTarget: 0 });
+export const MELODY_CORE_INPUTS = Object.freeze({ blockTargetMode: 2, chordNoteTarget: 0 });
 
 function repeated(values: readonly number[], count: number): number[] {
   const result = [...values];
@@ -186,6 +186,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const expanded = expandMelody(byChord, settings, baseSeed, notesSeedOffset, minimum, maximum);
   byChord.splice(0, byChord.length, ...expanded);
   const all = byChord.flat(), firstPitches = byChord.map((notes) => notes[0].midi);
+  applyMelodyTonalTargets(byChord, scale, globals.tonicNoteTarget, globals.modeNoteTarget, notesSeedOffset);
   repairIntervals(all);
   const fill = partFillMask(progression.length, settings), removed = new Set<Note>();
   byChord.forEach((notes, chord) => {

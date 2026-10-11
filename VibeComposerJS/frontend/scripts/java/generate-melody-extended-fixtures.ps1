@@ -1,4 +1,4 @@
-param([string]$Jdk = 'C:/Java/jdk-24.0.2', [switch]$Globals, [switch]$Effects, [switch]$Targets, [switch]$Catalogue, [switch]$Emphasis)
+param([string]$Jdk = 'C:/Java/jdk-24.0.2', [switch]$Globals, [switch]$Effects, [switch]$Targets, [switch]$Catalogue, [switch]$Emphasis, [switch]$Tonal)
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '../../../..'))
 $outputDirectory = Join-Path $repositoryRoot 'VibeComposerJS/frontend/.angular/melody-fixtures'
@@ -24,7 +24,8 @@ if ($Effects) { $fixtureArguments = @('effects') }
 if ($Targets) { $fixtureArguments = @('targets') }
 if ($Catalogue) { $fixtureArguments = @('catalogue') }
 if ($Emphasis) { $fixtureArguments = @('emphasis') }
+if ($Tonal) { $fixtureArguments = @('tonal') }
 $json = & (Join-Path $Jdk 'bin/java.exe') '-Djava.awt.headless=true' -cp "$outputDirectory;$classes;$dependencyJar" 'org.vibehistorian.vibecomposer.generation.MelodyExtendedFixture' @fixtureArguments
 if ($LASTEXITCODE -ne 0) { throw 'Extended Melody fixture generation failed.' }
-$fixtureName = if ($Emphasis) { 'melody-emphasis.java.json' } elseif ($Catalogue) { 'melody-catalogue-phrases.java.json' } elseif ($Targets) { 'melody-prepared-targets.java.json' } elseif ($Effects) { 'melody-effects.java.json' } elseif ($Globals) { 'melody-global.java.json' } else { 'melody-extended.java.json' }
+$fixtureName = if ($Tonal) { 'melody-tonal.java.json' } elseif ($Emphasis) { 'melody-emphasis.java.json' } elseif ($Catalogue) { 'melody-catalogue-phrases.java.json' } elseif ($Targets) { 'melody-prepared-targets.java.json' } elseif ($Effects) { 'melody-effects.java.json' } elseif ($Globals) { 'melody-global.java.json' } else { 'melody-extended.java.json' }
 $json | Set-Content -Encoding utf8 -LiteralPath (Join-Path $repositoryRoot "VibeComposerJS/frontend/scripts/fixtures/$fixtureName")

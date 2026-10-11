@@ -302,6 +302,24 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => read().melodyGlobal?.emphasizeKey === undefined, 'key emphasis undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'emphasis redo enabled')).click();
       await wait(() => read().melodyGlobal?.emphasizeKey === true, 'key emphasis redo');
+      const tonalTracks = JSON.stringify(read().tracks);
+      const tonicControl = globals.querySelector('[aria-label="Tonic note target"]');
+      const modeControl = globals.querySelector('[aria-label="Mode note target"]');
+      await wait(() => tonicControl.value === '0' && modeControl.value === '0', 'tonal target defaults');
+      change(tonicControl, '70');
+      await wait(() => read().melodyGlobal?.tonicNoteTarget === 70, 'tonic target commit');
+      change(modeControl, '60');
+      await wait(() => read().melodyGlobal?.modeNoteTarget === 60, 'mode target commit');
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      reset(tonicControl);
+      await wait(() => read().melodyGlobal?.tonicNoteTarget === 0 && read().melodyGlobal?.modeNoteTarget === 60, 'tonic default isolation');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.tonicNoteTarget === 70, 'tonic target undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'tonic redo enabled')).click();
+      await wait(() => read().melodyGlobal?.tonicNoteTarget === 0, 'tonic target redo');
+      reset(modeControl);
+      await wait(() => read().melodyGlobal?.modeNoteTarget === 0, 'mode default reset');
+      result.tonalTargets = JSON.stringify(read().tracks) === tonalTracks;
       const targetsBefore = JSON.stringify(read().tracks);
       await wait(() => globals.querySelector('[aria-label="Target direction"]').value === 'ASC', 'target direction default');
       change(globals.querySelector('[aria-label="Target variation"]'), '6');
@@ -450,7 +468,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','tonalTargets','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

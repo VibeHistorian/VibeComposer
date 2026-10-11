@@ -24,6 +24,12 @@
     </fieldset>
     <fieldset class="parameter-area" data-control-category="pitch">
       <legend>Pitch</legend>
+      <vc-compact-knob label="Tonic note target" [defaultValue]="0" [value]="values().tonicNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
+        description="Requested tonic share before pauses. Adjust at most one nearby noninitial note per chord, working backward through alternating chords. Applies to the main seed pass; the target is best effort."
+        (valueCommit)="settingsChanged.emit({ tonicNoteTarget: $event })" />
+      <vc-compact-knob label="Mode note target" [defaultValue]="0" [value]="values().modeNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
+        description="Requested mode-note share before pauses. Protect each chord's first note and repair nearest pitches first. Major targets the tonic; natural minor targets its sixth degree. Existing mode notes remain eligible, following the generator's best-effort correction."
+        (valueCommit)="settingsChanged.emit({ modeNoteTarget: $event })" />
       <vc-compact-toggle label="Emphasize key" [active]="values().emphasizeKey ?? false"
         description="Give tonic and mode-important pitches longer durations inside new block identities. Repeated identities follow Pattern effect's stored rhythm behavior."
         (toggled)="settingsChanged.emit({ emphasizeKey: !(values().emphasizeKey ?? false) })" />

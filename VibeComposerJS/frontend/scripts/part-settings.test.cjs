@@ -84,6 +84,78 @@ test('P5e Melody flip and key emphasis preserve ownership, update consumers and 
   assert.equal(phrase.sectionMelodyContext(service.project()).available, false);
 });
 
+test('P5e tonal targets preserve global ownership, history, restore and MIDI', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
+  const track = () => service.project().tracks.find(item => item.id === id);
+  service.setSectionTrackPresence(0, id, true);
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 100 });
+  const before = service.exportProjectJson(), patches = service.project().arrangement;
+  const original = phrase.layOutTrackPhrase(service.project(), track());
+  const originalContext = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
+  assert.equal(service.updateMelodyGlobal({ tonicNoteTarget: 100 }), 'changed');
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track()), original);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.updateMelodyGlobal({ modeNoteTarget: 100 }), 'changed');
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track()), original);
+  assert.notDeepEqual(phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]), originalContext);
+  assert.equal(service.updateMelodyGlobal({ tonicNoteTarget: 70, modeNoteTarget: 60 }), 'changed');
+  assert.deepEqual(service.project().arrangement, patches);
+  let saved = service.exportProjectJson();
+  const notes = phrase.layOutTrackPhrase(service.project(), track());
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const output = exported.tracks.find(item => item.name === track().name).notes;
+  assert.equal(output.length, notes.length);
+  output.forEach((note, index) => {
+    assert.equal(note.midi, notes[index].midi);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / exported.header.ppq - notes[index].durationBeats) < 0.003);
+  });
+  service.undo(); service.redo(); assert.equal(service.exportProjectJson(), saved);
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true);
+  saved = service.exportProjectJson();
+  service.updateSettings({ name: 'redo' }); service.undo();
+  for (const key of ['tonicNoteTarget', 'modeNoteTarget']) {
+    assert.equal(service.updateMelodyGlobal({ [key]: service.project().melodyGlobal[key] }), 'unchanged');
+    for (const value of [-1, 101, 1.5, '50', null]) {
+      assert.equal(service.updateMelodyGlobal({ [key]: value }), 'invalid');
+      const project = JSON.parse(saved); project.melodyGlobal[key] = value;
+      assert.equal(service.importProjectJson(JSON.stringify(project)), false);
+      assert.equal(service.exportProjectJson(), saved);
+    }
+    for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
+      { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
+      service.updatePartSettings(scope, { [key]: 100 }); assert.equal(service.exportProjectJson(), saved);
+    }
+    assert.equal(service.canRedo(), true);
+  }
+  const manual = [{ id: 'tonal-manual', midi: 62, startBeat: 1, durationBeats: 2, velocity: 90 }];
+  service.updateTrackPhrase(id, manual);
+  service.updateMelodyGlobal({ tonicNoteTarget: 0, modeNoteTarget: 0 });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
+  service.clearTrackPhrase(id);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), original);
+});
+
+test('P5e tonal repairs protect chord starts, retain original counts and make best-effort corrections', () => {
+  const { load } = fixture(), { applyMelodyTonalTargets } = load('core/music/melody-tonal-targets.ts');
+  const run = (pitches, scale, tonic, mode, offset = 0) => {
+    const notes = pitches.map(chord => chord.map(midi => ({ midi })));
+    applyMelodyTonalTargets(notes, scale, tonic, mode, offset);
+    return notes.map(chord => chord.map(note => note.midi));
+  };
+  assert.deepEqual(run([[62, 62, 71], [62, 62, 71]], 'major', 100, 0), [[62, 62, 72], [62, 62, 72]]);
+  assert.deepEqual(run([[62, 62, 71]], 'major', 100, 0, 100), [[62, 62, 71]]);
+  // Existing targets consume the deficit, so percentages are requests rather than guaranteed quotas.
+  assert.deepEqual(run([[64, 60, 62, 64]], 'major', 0, 75), [[64, 60, 60, 64]]);
+  // The original histogram still requires two repairs after tonic repair; the new tonic consumes one.
+  assert.deepEqual(run([[64, 62, 71, 64]], 'major', 100, 50), [[64, 60, 72, 64]]);
+  assert.deepEqual(run([[60, 71, 67, -1]], 'natural-minor', 0, 100), [[60, 69, 69, -1]]);
+  assert.deepEqual(run([[], [60, -1]], 'major', 100, 100), [[], [60, -1]]);
+});
+
 test('right-click knob resets use explicit defaults, cancel previews and respect disabled/no-op controls', () => {
   const { load, service } = fixture(), { CompactKnobComponent } = load('shared/compact-knob.component.ts');
   const knob = new CompactKnobComponent(); knob.minimum.set(0); knob.maximum.set(100); knob.defaultValue.set(25);
@@ -2097,7 +2169,7 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
 });
 
-for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536], ['emphasis', 1152]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
+for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536], ['emphasis', 1152], ['tonal', 1920]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, `fixtures/melody-${name}.java.json`), 'utf8').replace(/^\uFEFF/, ''));
