@@ -160,15 +160,21 @@ test('workspace score focus follows the selection range or the full arrangement 
 
 test('cell and section-track contexts preserve the header range and score focus', () => {
   const { ui, workspace } = fixture();
+  assert.equal(workspace.partPanelLabel(), 'Global part settings');
+  workspace.selectRole('bass');
+  assert.equal(workspace.partPanelLabel(), 'Global Bass settings');
   ui.selectSection('b');
+  assert.equal(workspace.partPanelLabel(), 'Quick access settings');
   ui.selectSection('d', { shiftKey: true });
   const range = workspace.scoreSectionFocus();
   workspace.selectCell('e', 'bass');
+  assert.equal(workspace.partPanelLabel(), 'Section Bass settings');
   assert.deepEqual(ui.settingsTarget(), { kind: 'section-role', sectionId: 'e', role: 'bass' });
   assert.deepEqual(ui.selectedSectionIds(), ['b', 'c', 'd']);
   assert.deepEqual(workspace.scoreSectionFocus(), range);
   assert.equal(workspace.selectedSection(), null, 'range must not override the active cell inspector');
   workspace.selectSectionTrack('a', 'track-bass-1');
+  assert.equal(workspace.partPanelLabel(), 'Section part settings');
   assert.deepEqual(ui.settingsTarget(), { kind: 'section-track', sectionId: 'a', trackId: 'track-bass-1' });
   assert.deepEqual(workspace.scoreSectionFocus(), range);
   ui.selectSection('c');

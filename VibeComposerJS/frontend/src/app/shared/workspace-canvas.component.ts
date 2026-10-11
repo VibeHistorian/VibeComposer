@@ -170,6 +170,13 @@ export class WorkspaceCanvasComponent {
     return Object.keys(target.kind === 'section-role' ? section.rolePartOverrides?.[target.role] ?? {}
       : section.trackPartOverrides?.[target.trackId] ?? {});
   });
+  readonly partPanelLabel = computed(() => {
+    const scope = this.partScope();
+    if (!scope || !this.contextTracks().length) return 'Quick access settings';
+    const location = scope.kind.startsWith('section-') ? 'Section' : 'Global';
+    const part = 'role' in scope ? this.roleName(scope.role) : 'part';
+    return `${location} ${part} settings`;
+  });
   readonly inheritanceLabel = computed(() => {
     const target = this.localPartTarget();
     if (!target) return 'Global part settings';

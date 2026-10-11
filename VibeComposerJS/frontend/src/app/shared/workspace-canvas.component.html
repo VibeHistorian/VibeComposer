@@ -113,7 +113,7 @@
           <div class="part-heading-context">
           <button type="button" class="part-panel-toggle" [attr.aria-expanded]="partPanelExpanded()"
             aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
-            {{ partPanelExpanded() ? '▵' : '›' }} Part settings
+            {{ partPanelExpanded() ? '▵' : '›' }} {{ partPanelLabel() }}
           </button>
           @if (partScope()) { <i class="role-dot" [class]="partRole()"></i> }
           <span class="part-context-label">{{ contextLabel() }}</span>
@@ -134,7 +134,6 @@
         </header>
         @if (partPanelExpanded()) {
           <div id="part-settings-content" class="part-settings-content">
-            <span class="part-inheritance">{{ inheritanceLabel() }}</span>
             @if (!partGenerationAvailable()) {
               <span class="part-inheritance">Automatic melody generation is not available yet. Add notes in the track’s piano roll.</span>
             }
