@@ -31,11 +31,14 @@ function fixture() {
   new Function('require', 'module', 'exports', compiled)((name) => dependencies[name], module, module.exports);
   const component = new module.exports.ArrangementOverviewComponent();
   const context = () => ({
-    rectangles: [], clears: 0, fillStyle: '', globalAlpha: 1,
+    rectangles: [], texts: [], arcs: [], clears: 0, fillStyle: '', globalAlpha: 1,
     setTransform() {}, clearRect() { this.clears++; },
     fillRect(...bounds) { this.rectangles.push({ bounds, color: this.fillStyle }); },
-    save() {}, restore() {}, beginPath() {}, rect() {}, clip() {}, fillText() {},
-    arc() {}, fill() {}, stroke() {}, strokeRect() {},
+    save() {}, restore() {}, beginPath() {}, rect() {}, clip() {},
+    fillText(value, x, y) { this.texts.push({ value, x, y }); },
+    measureText(value) { return { width: value.length * 6 }; },
+    arc(x, y, radius) { this.arcs.push({ x, y, radius, color: this.fillStyle }); },
+    fill() {}, stroke() {}, strokeRect() {},
   });
   const base = context();
   const overlay = context();
@@ -88,12 +91,12 @@ test('loop markers align with section beats and clip to the scrolled timeline', 
   component.loopRange.set({ startBeat: 8, endBeat: 24 });
   component.drawOverview();
   let marker = base.rectangles.filter(rect => rect.color === '--loop-line').at(-1);
-  assert.deepEqual(marker.bounds, [component.beatX(8), 36, component.beatX(24) - component.beatX(8), 2]);
+  assert.deepEqual(marker.bounds, [component.beatX(8), 22, component.beatX(24) - component.beatX(8), 2]);
   component.horizontalScale = 4;
   refs.get('scrollHost').scrollLeft = 900;
   component.drawOverview();
   marker = base.rectangles.filter(rect => rect.color === '--loop-line').at(-1);
-  assert.deepEqual(marker.bounds, [component.labelWidth, 36, component.width - component.labelWidth, 2]);
+  assert.deepEqual(marker.bounds, [component.labelWidth, 22, component.width - component.labelWidth, 2]);
   const count = base.rectangles.filter(rect => rect.color === '--loop-line').length;
   component.loopRange.set(null);
   component.drawOverview();
@@ -155,7 +158,7 @@ test('section-local redraws fit exactly without introducing scrollbar-sized over
       })) });
       component.drawOverview();
       assert.equal(content.style.width, `${width}px`);
-      assert.equal(content.style.height, `${Math.max(height, 363)}px`);
+      assert.equal(content.style.height, `${Math.max(height, 284)}px`);
       assert.equal(refs.get('viewport').style.width, `${width}px`);
       assert.equal(refs.get('viewport').style.height, `${height}px`);
     }
@@ -169,7 +172,7 @@ test('fractional observed sizes round down and stale measurements cannot exceed 
   component.viewportSize = { width: 1187.9, height: 310.9 };
   component.drawOverview();
   assert.equal(refs.get('scrollContent').style.width, '1187px');
-  assert.equal(refs.get('scrollContent').style.height, '363px');
+  assert.equal(refs.get('scrollContent').style.height, '310px');
   assert.equal(refs.get('scoreCanvas').width, 2374);
   assert.equal(refs.get('playheadCanvas').height, 620);
   host.clientWidth = 1178; host.clientHeight = 301;
@@ -189,7 +192,7 @@ test('scrollbars follow timeline zoom and row space instead of automatic content
   component.drawOverview();
   assert.equal(host.style.overflowX, 'scroll');
   assert.equal(host.style.overflowY, 'hidden');
-  host.clientHeight = 290;
+  host.clientHeight = 270;
   component.drawOverview();
   assert.equal(host.style.overflowY, 'scroll');
   component.horizontalScale = 1;
@@ -257,7 +260,7 @@ test('short cells enforce enough horizontal zoom for at most two track-button ro
     assert.ok(new Set(buttons.map((button) => button.y)).size <= 2, `${count} tracks use at most two rows`);
     for (const button of buttons) {
       assert.ok(button.x >= cell.x && button.x + button.width <= cell.x + cell.width + 1e-7);
-      assert.ok(button.y >= cell.y + 25, 'buttons leave the top of the cell for notes');
+      assert.ok(button.y >= cell.y + 13, 'buttons leave the top of the compact cell for notes');
       assert.ok(button.y + button.height <= cell.y + cell.height);
       assert.equal(component.hitAt({ clientX: button.x + 8, clientY: button.y + 8 }).key, button.key);
     }
@@ -358,6 +361,28 @@ test('cell bodies select role settings while section selection is header-only', 
   assert.equal(component.partToggled.values.length, 0, 'cell bodies cannot toggle presence');
 });
 
+test('manual section notes replace nearby freeze markers, including an empty saved phrase', () => {
+  const { component, base } = fixture();
+  const project = component.project();
+  component.project.set({ ...project, arrangement: project.arrangement.map(section => ({
+    ...section, rolePartOverrides: { bass: { transpose: 12 } },
+    ...(section.id === 'verse' ? { trackPhrases: { 'bass-1': [] } } : {}),
+  })) });
+  base.texts = []; base.arcs = [];
+  component.drawOverview();
+  assert.equal(component.rowHeight, 52, 'rows stay 20% shorter than the previous 65px height');
+  for (const sectionId of ['intro', 'verse', 'outro']) {
+    const button = component.hits.find(area => area.key === `toggle:${sectionId}:bass-1`);
+    const x = button.x + 14, y = button.y + 2;
+    const manual = sectionId === 'verse';
+    assert.equal(base.texts.some(mark => mark.value === '*' && mark.x === x && mark.y === y + 4), !manual);
+    assert.equal(base.arcs.some(mark => mark.radius === 2.5 && mark.x === x && mark.y === y
+      && mark.color === '--accent-primary'), manual);
+    assert.equal(button.label.includes('Manual notes override part settings.'), manual);
+  }
+  assert.equal(base.texts.filter(mark => mark.value === '*').length, 2, 'freeze markers belong to individual tracks');
+});
+
 test('absent parts select without including them and keyboard presence toggle is separate', () => {
   const { component } = fixture();
   const area = component.hits.find((hit) => hit.key === 'toggle:verse:bass-1');
@@ -406,7 +431,7 @@ test('melody is the first row with red-theme notes and independent selection/pre
   component.drawOverview();
   assert.equal(component.groups()[0].role, 'melody');
   const label = component.hits.find((area) => area.key === 'group:melody');
-  assert.equal(label.y, 38);
+  assert.equal(label.y + label.height / 2, 24 + component.rowHeight / 2);
   assert.ok(base.rectangles.some((rect) => rect.color === '--role-melody-strong' && rect.bounds[3] === 2));
   const track = component.hits.find((area) => area.key === 'toggle:intro:melody-1');
   track.activate();

@@ -37,7 +37,8 @@ interface OverviewHitArea {
   readonly togglePresence?: () => void;
 }
 
-const RULER_HEIGHT = 38;
+const RULER_HEIGHT = 24;
+const MIN_ROW_HEIGHT = 52;
 const TRACK_BUTTON_PITCH = 19;
 const CELL_HORIZONTAL_PADDING = 10;
 const MAX_TRACK_BUTTON_ROWS = 2;
@@ -199,8 +200,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private ready = false;
   private width = 0;
   private height = 0;
-  private labelWidth = 88;
-  private rowHeight = 65;
+  private readonly labelWidth = 24;
+  private rowHeight = MIN_ROW_HEIGHT;
   private pixelsPerBeat = 12;
   private horizontalScale = 1;
   private effectiveHorizontalScale = 1;
@@ -289,15 +290,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const sections = this.sections();
     const groups = this.groups();
     const totalBeats = sections.reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0);
-    const minimumHeight = RULER_HEIGHT + groups.length * 65;
+    const minimumHeight = RULER_HEIGHT + groups.length * MIN_ROW_HEIGHT;
     const trackCount = Math.max(0, ...groups.map((group) => group.tracks.length));
     const minimumCellWidth = trackCount > 0
       ? CELL_HORIZONTAL_PADDING + TRACK_BUTTON_PITCH * Math.ceil(trackCount / MAX_TRACK_BUTTON_ROWS) : 0;
     const shortestSectionBeats = Math.min(...sections.map((item) => sectionDurationBeats(this.project(), item.section)));
     const minimumPixelsPerBeat = sections.length ? minimumCellWidth / shortestSectionBeats : 0;
-    // Use the host's outer width for the label breakpoint so adding a vertical
-    // scrollbar cannot switch label widths and make horizontal scrolling oscillate.
-    this.labelWidth = (host.offsetWidth ?? host.clientWidth) <= 680 ? 72 : 88;
     const needsHorizontalScroll = (): boolean => totalBeats > 0 && (this.horizontalScale > 1
       || minimumPixelsPerBeat * totalBeats > Math.max(1,
         Math.floor(Math.min(host.clientWidth, size.width)) - this.labelWidth) + 1e-7);
@@ -324,7 +322,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.effectiveHorizontalScale = Math.max(this.horizontalScale,
       minimumPixelsPerBeat * totalBeats / timelineWidth);
     this.pixelsPerBeat = timelineWidth / Math.max(1, totalBeats) * this.effectiveHorizontalScale;
-    this.rowHeight = Math.max(65, (this.height - RULER_HEIGHT) / Math.max(1, groups.length));
+    this.rowHeight = MIN_ROW_HEIGHT;
     const content = this.scrollContent().nativeElement;
     // Use viewport dimensions directly when fitting. Reconstructing them from
     // fractional beat/row sizes can overflow by a rounding error and add scrollbars.
@@ -412,7 +410,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }) }, this.labelWidth, RULER_HEIGHT);
         const togglesPerRow = Math.max(1, Math.floor((width - CELL_HORIZONTAL_PADDING + 1e-7) / TRACK_BUTTON_PITCH));
         const toggleRows = Math.ceil(group.tracks.length / togglesPerRow);
-        const previewHeight = Math.max(12, this.rowHeight - 10 - Math.max(1, toggleRows) * TRACK_BUTTON_PITCH);
+        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, toggleRows) * TRACK_BUTTON_PITCH);
         context.save();
         context.beginPath(); context.rect(x, y + 5, width, previewHeight); context.clip();
         const durations = sectionChordDurations(this.project(), item.section);
@@ -431,7 +429,6 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         }
         context.globalAlpha = 1;
         context.restore();
-        if (customized) text('*', x + width - 9, y + 12, '--text-primary', 'bold 12px monospace');
         for (let index = 0; index < group.tracks.length; index++) {
           const track = group.tracks[index];
           const toggleRow = Math.floor(index / togglesPerRow);
@@ -450,10 +447,19 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             context.strokeStyle = this.accent;
             context.strokeRect(centerX - 10, centerY - 10, 20, 20);
           }
-          const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0;
-          if (trackCustomized) text('*', centerX + 8, centerY - 7, '--text-primary', 'bold 10px monospace');
+          const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0
+            || Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0;
+          const manualNotes = item.section.trackPhrases?.[track.id] !== undefined || track.editedPhrase !== undefined;
+          if (manualNotes) {
+            context.fillStyle = this.accent;
+            context.beginPath(); context.arc(centerX + 6, centerY - 6, 2.5, 0, Math.PI * 2); context.fill();
+          } else if (trackCustomized) {
+            context.textAlign = 'center';
+            text('*', centerX + 6, centerY - 2, '--text-primary', 'bold 10px monospace');
+            context.textAlign = 'start';
+          }
           hit({ key: `toggle:${item.section.id}:${track.id}`, x: centerX - 8, y: centerY - 8, width: 16, height: 16,
-            label: `Select ${track.name ?? group.name + ' track ' + (index + 1)} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
+            label: `Select ${track.name ?? group.name + ' track ' + (index + 1)} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             togglePresence: () => this.toggleTrack(item.section, track) }, this.labelWidth, RULER_HEIGHT);
         }
@@ -470,8 +476,16 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       fill(x, 0, width, RULER_HEIGHT, this.selectedSectionIds().includes(item.section.id) ? '--surface-accent' : '--surface-base');
       fill(x, 0, 1, RULER_HEIGHT, '--border-subtle');
       context.save(); context.beginPath(); context.rect(x + 6, 0, width - 12, RULER_HEIGHT); context.clip();
+      const range = this.measureLabel(item);
+      context.font = '10px monospace';
+      const rangeWidth = context.measureText(range).width;
+      context.save(); context.beginPath();
+      context.rect(x + 7, 0, Math.max(0, width - rangeWidth - 22), RULER_HEIGHT); context.clip();
       text(this.sectionLabel(item.section.type), x + 7, 15, '--text-primary', '600 10px sans-serif');
-      text(this.measureLabel(item), x + 7, 30, '--text-muted');
+      context.restore();
+      context.textAlign = 'right';
+      text(range, x + width - 7, 15, '--text-muted');
+      context.textAlign = 'start';
       context.restore();
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
         label: `${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}`,
@@ -487,14 +501,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       fill(0, y, this.labelWidth, this.rowHeight, this.isGroupSelected(group) ? '--surface-accent' : '--surface-low');
       fill(0, y + this.rowHeight - 1, this.labelWidth, 1, '--border-subtle');
       context.fillStyle = color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}`);
-      context.beginPath(); context.arc(12, y + this.rowHeight / 2, 4, 0, Math.PI * 2); context.fill();
-      text(group.name, 23, y + this.rowHeight / 2 + 3, '--text-secondary', '10px sans-serif');
-      hit({ key: `group:${group.role}`, x: 0, y, width: this.labelWidth, height: this.rowHeight,
+      context.beginPath(); context.arc(this.labelWidth / 2, y + this.rowHeight / 2, 5, 0, Math.PI * 2); context.fill();
+      hit({ key: `group:${group.role}`, x: this.labelWidth / 2 - 8, y: y + this.rowHeight / 2 - 8, width: 16, height: 16,
         label: `Select ${group.name} group`, activate: () => this.groupSelected.emit(group.role) }, 0, RULER_HEIGHT);
     }
     context.restore();
     fill(0, 0, this.labelWidth, RULER_HEIGHT, '--surface-base');
-    text('PART', 6, 30, '--text-muted');
     fill(0, RULER_HEIGHT - 1, this.width, 1, '--border-subtle');
     const loop = this.loopRange();
     if (loop) {
