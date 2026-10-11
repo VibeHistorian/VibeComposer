@@ -444,7 +444,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const centerX = x + (width - rowCount * TRACK_BUTTON_PITCH + 3) / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
           const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * TRACK_BUTTON_PITCH - 12;
           const present = this.trackPresent(item.section, track);
-          context.globalAlpha = present ? 1 : 0.48;
+          context.globalAlpha = present ? 0.6 : 0.48;
           context.beginPath(); context.arc(centerX, centerY, 8, 0, Math.PI * 2);
           context.fillStyle = color(present ? `--role-${role}-surface` : '--surface-button'); context.fill();
           context.strokeStyle = present ? noteColor : color('--border-default'); context.stroke();
