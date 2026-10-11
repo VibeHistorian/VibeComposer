@@ -1,35 +1,16 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
 import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project/project.model';
-import { generateTrackPhrase, phraseForTrack } from '../../core/music/phrase';
+import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../core/music/phrase';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
-import { WheelSelectDirective } from '../../shared/wheel-select.directive';
 
-const ROW_HEIGHT = 12;
-const BEAT_SNAP = 0.25;
-
-interface NoteDrag {
-  readonly id: string;
-  readonly trackId: string;
-  readonly pointerId: number;
-  readonly mode: 'move' | 'resize';
-  readonly originX: number;
-  readonly originY: number;
-  readonly laneWidth: number;
-  readonly initialStartBeat: number;
-  readonly initialDurationBeats: number;
-  readonly initialMidi: number;
-  readonly startBeat: number;
-  readonly durationBeats: number;
-  readonly midi: number;
-}
 
 @Component({
   selector: 'vc-edit-workspace',
-  imports: [TitleCasePipe, WheelSelectDirective],
+  imports: [TitleCasePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-workspace.component.html',
   styleUrl: './edit-workspace.component.css',
@@ -38,16 +19,13 @@ export class EditWorkspaceComponent {
   readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
+  readonly inspectorTemplate = viewChild.required<TemplateRef<unknown>>('inspector');
+  @Input() sectionId: string | null = null;
+  @Input() phraseStartBeat = 0;
+  @Input() phraseLength: number | null = null;
   @Input() initialNoteId: string | null = null;
   @Output() applied = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
-  readonly parts: ReadonlyArray<{ key: ArrangedPart; label: string; color: string }> = [
-    { key: 'melody', label: 'Melody', color: 'melody' },
-    { key: 'bass', label: 'Bass', color: 'bass' },
-    { key: 'chords', label: 'Chords', color: 'chords' },
-    { key: 'arpeggio', label: 'Arpeggio', color: 'arpeggio' },
-    { key: 'drums', label: 'Drums', color: 'drums' },
-  ];
   readonly drumVoices = computed(() => {
     const track = this.selectedTrack();
     if (track.role !== 'drums') return [];
@@ -55,43 +33,20 @@ export class EditWorkspaceComponent {
     return [...new Set([track.generatorSettings.pitch, ...this.notes().map(note => note.midi)])]
       .sort((left, right) => left - right).map(midi => ({ midi, label: drumInstrumentName(midi) }));
   });
-  readonly drumSteps = Array.from({ length: 16 }, (_, index) => index);
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);
   readonly selectedPart = computed<ArrangedPart>(() => this.selectedTrack().role);
   readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
   readonly generationAvailable = computed(() => PART_GENERATION_AVAILABLE[this.selectedPart()]);
+  readonly applyError = signal<string | null>(null);
   readonly selectedNoteId = signal<string | null>(null);
-  readonly noteDrag = signal<NoteDrag | null>(null);
-  readonly drumBar = signal(0);
-  readonly phraseBeats = computed(() => this.project().progression.length * 4);
-  readonly canvasWidth = computed(() => Math.max(690, this.project().progression.length * 96 + 48));
+  readonly phraseBeats = computed(() => this.phraseLength ?? this.project().progression.length * 4);
   readonly draftNotes = signal<PhraseNote[]>([]);
   readonly notes = computed(() => [...this.draftNotes()].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
-  readonly displayNotes = computed(() => {
-    const notes = this.notes();
-    const drag = this.noteDrag();
-    return drag ? notes.map((note) => note.id === drag.id
-      ? { ...note, startBeat: drag.startBeat, durationBeats: drag.durationBeats, midi: drag.midi }
-      : note) : notes;
-  });
+  readonly displayNotes = this.notes;
   readonly selectedNote = computed(() => this.displayNotes().find((note) => note.id === this.selectedNoteId()) ?? null);
-  readonly isEdited = computed(() => this.selectedTrack().editedPhrase !== undefined);
-  readonly drumBars = computed(() => Array.from({ length: this.project().progression.length }, (_, index) => index));
-  readonly drumNotes = computed(() => this.notes().filter((note) => Math.floor(note.startBeat / 4) === this.drumBar()));
-  readonly pitchRange = computed(() => {
-    const notes = this.notes();
-    const lowest = notes.length ? Math.min(...notes.map((note) => note.midi)) : 48;
-    const highest = notes.length ? Math.max(...notes.map((note) => note.midi)) : 72;
-    const min = Math.max(0, Math.floor((lowest - 2) / 12) * 12);
-    const max = Math.min(127, Math.ceil((highest + 2) / 12) * 12);
-    return { min, max: Math.max(min + 12, max) };
-  });
-  readonly pitches = computed(() => {
-    const { min, max } = this.pitchRange();
-    return Array.from({ length: max - min + 1 }, (_, index) => max - index);
-  });
-  readonly laneHeight = computed(() => this.pitches().length * ROW_HEIGHT);
+  readonly isEdited = computed(() => this.selectedTrack().editedPhrase !== undefined
+    || this.project().arrangement.find(section => section.id === this.sectionId)?.trackPhrases?.[this.selectedTrack().id] !== undefined);
   readonly noteCount = computed(() => this.notes().length);
   private newNoteId = 0;
   private baselineNotes: readonly PhraseNote[] = [];
@@ -107,117 +62,26 @@ export class EditWorkspaceComponent {
     const track = this.project().tracks.find((candidate) => candidate.id === trackId);
     if (track) this.loadTrackDraft(track);
     this.selectedNoteId.set(null);
-    this.noteDrag.set(null);
-    this.drumBar.set(0);
   }
 
   selectNote(id: string): void {
     this.selectedNoteId.set(id);
   }
 
-  noteLeft(note: PhraseNote): number {
-    return note.startBeat / this.phraseBeats() * 100;
-  }
-
-  noteWidth(note: PhraseNote): number {
-    return note.durationBeats / this.phraseBeats() * 100;
-  }
-
-  noteTop(note: PhraseNote): number {
-    return (this.pitchRange().max - note.midi) * ROW_HEIGHT;
-  }
-
-  beginNotePointer(event: PointerEvent, note: PhraseNote, mode: 'move' | 'resize', lane: HTMLDivElement): void {
-    if (event.button !== 0 || lane.clientWidth <= 0) return;
-    this.selectNote(note.id);
-    lane.setPointerCapture(event.pointerId);
-    this.noteDrag.set({
-      id: note.id,
-      trackId: this.selectedTrack().id,
-      pointerId: event.pointerId,
-      mode,
-      originX: event.clientX,
-      originY: event.clientY,
-      laneWidth: lane.clientWidth,
-      initialStartBeat: note.startBeat,
-      initialDurationBeats: note.durationBeats,
-      initialMidi: note.midi,
-      startBeat: note.startBeat,
-      durationBeats: note.durationBeats,
-      midi: note.midi,
-    });
-  }
-
-  moveNotePointer(event: PointerEvent): void {
-    const drag = this.noteDrag();
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const beatDelta = this.snapBeat((event.clientX - drag.originX) / drag.laneWidth * this.phraseBeats());
-    const startBeat = drag.mode === 'move'
-      ? this.clamp(drag.initialStartBeat + beatDelta, 0, this.phraseBeats() - drag.initialDurationBeats)
-      : drag.initialStartBeat;
-    const maxDuration = this.phraseBeats() - startBeat;
-    const durationBeats = drag.mode === 'resize'
-      ? this.clamp(this.snapBeat(drag.initialDurationBeats + beatDelta), Math.min(BEAT_SNAP, maxDuration), maxDuration)
-      : drag.initialDurationBeats;
-    const pitchRange = this.pitchRange();
-    const midi = drag.mode === 'move'
-      ? this.clamp(drag.initialMidi - Math.round((event.clientY - drag.originY) / ROW_HEIGHT), pitchRange.min, pitchRange.max)
-      : drag.initialMidi;
-    this.noteDrag.set({ ...drag, startBeat, durationBeats, midi });
-  }
-
-  finishNotePointer(event: PointerEvent): void {
-    const drag = this.noteDrag();
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const changed = drag.startBeat !== drag.initialStartBeat
-      || drag.durationBeats !== drag.initialDurationBeats || drag.midi !== drag.initialMidi;
-    if (changed) {
-      const notes = this.notes().map((note) => note.id === drag.id
-        ? { ...note, startBeat: drag.startBeat, durationBeats: drag.durationBeats, midi: drag.midi }
-        : note);
-      this.draftNotes.set(notes);
-      this.restoreOnApply = false;
-    }
-    this.noteDrag.set(null);
-  }
-
-  cancelNotePointer(event: PointerEvent): void {
-    if (this.noteDrag()?.pointerId === event.pointerId) this.noteDrag.set(null);
-  }
-
   noteName(midi: number): string {
+    if (this.selectedPart() === 'drums') return drumInstrumentName(midi);
     const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
     return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`;
   }
 
-  isBlackKey(midi: number): boolean {
-    return [1, 3, 6, 8, 10].includes(midi % 12);
-  }
-
-  hasDrumHit(midi: number, step: number): boolean {
-    const expectedBeat = this.drumBar() * 4 + step * 0.25;
-    return this.drumNotes().some((note) => note.midi === midi && Math.abs(note.startBeat - expectedBeat) < 0.12);
-  }
-
-  toggleDrumHit(midi: number, step: number): void {
-    const beat = this.drumBar() * 4 + step * 0.25;
-    const notes = this.notes();
-    const existing = notes.find((note) => note.midi === midi && Math.abs(note.startBeat - beat) < 0.12);
-    const next = existing ? notes.filter((note) => note.id !== existing.id) : [
-      ...notes,
-      { id: this.makeNoteId(), midi, startBeat: beat, durationBeats: 0.2, velocity: midi === 42 ? 72 : 90 },
-    ];
-    this.draftNotes.set(next);
-    this.restoreOnApply = false;
-  }
-
   addNote(): void {
-    if (this.selectedPart() === 'drums' || this.notes().length >= 2048) {
+    if (this.notes().length >= 2048) {
       return;
     }
-    const preferredPitch = this.selectedNote()?.midi ?? (this.selectedPart() === 'bass' ? 48 : 60);
+    const track = this.selectedTrack();
+    const preferredPitch = this.selectedNote()?.midi ?? (track.role === 'drums' ? track.generatorSettings.pitch : track.role === 'bass' ? 48 : 60);
     const pitch = Math.max(0, Math.min(127, preferredPitch));
-    const durationBeats = 0.5;
+    const durationBeats = Math.min(0.5, this.phraseBeats());
     const occupied = new Set(this.notes().filter((note) => note.midi === pitch)
       .map((note) => Math.round(note.startBeat * 4)));
     let slot = 0;
@@ -265,46 +129,78 @@ export class EditWorkspaceComponent {
     this.selectedNoteId.set(null);
   }
 
+  replaceNote(note: PhraseNote): void {
+    this.draftNotes.update(notes => notes.map(existing => existing.id === note.id ? { id: note.id, midi: note.midi,
+      startBeat: note.startBeat, durationBeats: note.durationBeats, velocity: note.velocity } : existing));
+    this.restoreOnApply = false;
+  }
+
+  addNoteAt(position: { midi: number; startBeat: number }): void {
+    if (this.notes().length >= 2048 || position.startBeat >= this.phraseBeats()) return;
+    const note = { id: this.makeNoteId(), midi: position.midi, startBeat: Math.max(0, position.startBeat),
+      durationBeats: Math.min(0.5, this.phraseBeats() - position.startBeat), velocity: 90 };
+    this.draftNotes.update(notes => [...notes, note]);
+    this.selectedNoteId.set(note.id);
+    this.restoreOnApply = false;
+  }
+
+  applyLocalChanges(): void {
+    if (!this.sectionId) return;
+    const transpose = this.selectedPart() === 'drums' ? 0 : this.project().transposeSemitones ?? 0;
+    const section = this.project().arrangement.find(section => section.id === this.sectionId);
+    if (!section) return;
+    const track = this.selectedTrack();
+    const source = layOutTrackPhrase({ ...this.project(), arrangement: [{ ...section, trackPresence: { ...section.trackPresence, [track.id]: true } }] }, track);
+    const end = this.phraseStartBeat + this.phraseBeats();
+    const preserved = source.filter(note => note.startBeat < this.phraseStartBeat || note.startBeat >= end);
+    const changed = this.notes().map(note => ({ ...note, startBeat: note.startBeat + this.phraseStartBeat }));
+    const ids = new Set<string>();
+    const notes = [...preserved, ...changed].map(note => {
+      const id = ids.has(note.id) ? this.makeNoteId() : note.id;
+      ids.add(id);
+      return { ...note, id, midi: Math.max(0, Math.min(127, note.midi - transpose)) };
+    });
+    if (!this.projects.updateSectionTrackPhrase(this.sectionId, track.id, notes)) {
+      this.applyError.set('Cannot save this section phrase. Check note timings and the 2048-note limit.');
+      return;
+    }
+    this.applied.emit();
+  }
+
   applyChanges(): void {
     if (this.restoreOnApply) this.projects.clearTrackPhrase(this.selectedTrack().id);
-    else if (this.draftNotesChanged()) this.projects.updateTrackPhrase(this.selectedTrack().id, this.draftNotes());
+    else {
+      const transpose = this.sectionId && this.selectedPart() !== 'drums' ? this.project().transposeSemitones ?? 0 : 0;
+      if (!this.projects.updateTrackPhrase(this.selectedTrack().id, this.draftNotes().map(note => ({ ...note, midi: Math.max(0, Math.min(127, note.midi - transpose)) })))) {
+        this.applyError.set('Cannot save this global phrase. Notes must fit within 128 beats and the 2048-note limit.');
+        return;
+      }
+    }
     this.applied.emit();
   }
 
   cancelChanges(): void { this.cancelled.emit(); }
-
-  updateDrumBar(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
-    if (Number.isInteger(value) && value >= 0 && value < this.drumBars().length) {
-      this.drumBar.set(value);
-    }
-  }
 
   private makeNoteId(): string {
     this.newNoteId++;
     return `edit-${Date.now()}-${this.newNoteId}`;
   }
 
-  private snapBeat(value: number): number {
-    return Math.round(value / BEAT_SNAP) * BEAT_SNAP;
-  }
-
-  private clamp(value: number, minimum: number, maximum: number): number {
-    return Math.max(minimum, Math.min(maximum, value));
-  }
-
   private loadTrackDraft(track: CompositionTrack): void {
-    this.baselineNotes = [...phraseForTrack(this.project(), track)].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
+    const section = this.project().arrangement.find(section => section.id === this.sectionId);
+    const source = section ? layOutTrackPhrase({ ...this.project(), arrangement: [{ ...section, trackPresence: { ...section.trackPresence, [track.id]: true } }] }, track)
+      .filter(note => note.startBeat >= this.phraseStartBeat && note.startBeat < this.phraseStartBeat + this.phraseBeats())
+      .map(note => ({ ...note, startBeat: note.startBeat - this.phraseStartBeat, durationBeats: Math.min(note.durationBeats, this.phraseBeats() - (note.startBeat - this.phraseStartBeat)) }))
+      : phraseForTrack(this.project(), track);
+    this.baselineNotes = [...source].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
+    const ids = new Set<string>();
+    this.baselineNotes = this.baselineNotes.map(note => {
+      const id = ids.has(note.id) ? this.makeNoteId() : note.id;
+      ids.add(id);
+      return { ...note, id };
+    });
     this.draftNotes.set([...this.baselineNotes]);
     this.restoreOnApply = false;
   }
 
-  private draftNotesChanged(): boolean {
-    const current = this.draftNotes();
-    return current.length !== this.baselineNotes.length || current.some((note, index) => {
-      const baseline = this.baselineNotes[index];
-      return !baseline || note.id !== baseline.id || note.midi !== baseline.midi || note.startBeat !== baseline.startBeat
-        || note.durationBeats !== baseline.durationBeats || note.velocity !== baseline.velocity;
-    });
-  }
 }

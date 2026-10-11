@@ -136,6 +136,14 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
     const partEnters = shouldGenerateTrackInSection(section, track);
+    const localPhrase = section.trackPhrases?.[track.id];
+    if (localPhrase !== undefined) {
+      const length = sectionGenerationHarmony(project, section, track.role).durations;
+      const sectionLength = Array.from({ length: section.measures }, (_, index) => length[index % length.length]).reduce((sum, value) => sum + value, 0);
+      if (partEnters) result.push(...localPhrase.filter(note => note.startBeat < sectionLength).map(note => ({ ...note, startBeat: arrangementBeat + note.startBeat })));
+      arrangementBeat += sectionLength;
+      continue;
+    }
     const resolved = resolvePartTrack(track, section);
     const effectiveTrack = section.context?.swingPercent === undefined || resolved.role === 'bass' ? resolved : {
       ...resolved, generatorSettings: { ...resolved.generatorSettings, swingPercent: section.context.swingPercent },

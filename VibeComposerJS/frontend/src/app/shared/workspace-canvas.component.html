@@ -1,4 +1,4 @@
-<section class="workspace-canvas" aria-label="Song workspace">
+<section class="workspace-canvas" aria-label="Song workspace" (auxclick)="applyOnEmptyMiddleClick($event)">
   <aside class="track-browser" aria-label="Tracks">
     <div class="track-groups">
       @for (group of roles; track group.role) {
@@ -105,8 +105,9 @@
 
   <main class="song-canvas" [class.editing]="editing()">
     @if (editing()) {
-      <vc-edit-workspace [initialNoteId]="editingNoteId()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
-    } @else {
+      <vc-edit-workspace [initialNoteId]="editingNoteId()" [sectionId]="editSectionId()" [phraseStartBeat]="editPhraseOffset()"
+        [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
+    }
       <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
         [loopRange]="loopRange()"
         [settingsTarget]="settingsTarget()"
@@ -167,7 +168,7 @@
         <div class="score-scroll">
           <div class="score-canvas">
             <div class="score-ruler">
-              <span class="score-ruler-label">PART</span>
+              <span class="score-ruler-label">PITCH</span>
               <div class="score-ruler-viewport">
                 <div class="score-ruler-sections" [style.width.px]="scoreViewport().width * scoreViewport().scale"
                   [style.transform]="'translateX(-' + scoreViewport().offsetPercent + '%)'">
@@ -182,38 +183,39 @@
               </div>
             </div>
               <div class="score-track-lanes">
-                <div class="score-track-labels" [style.height.px]="scoreViewport().scoreHeight">
-                @for (track of scoreTracks(); track track.id; let trackIndex = $index) {
-                  <button type="button" class="score-track-label" [class.selected]="isScoreTrackSelected(track)"
-                    [attr.aria-pressed]="isScoreTrackSelected(track)" [title]="'Select global ' + track.name + ' track settings'"
-                    (click)="selectScoreTrack(track)"
-                    [class.row-hidden]="!isScoreTrackVisible(track)"
-                    [style.top.px]="trackIndex * scoreViewport().laneHeight - scoreViewport().verticalOffset"
-                    [style.height.px]="scoreViewport().laneHeight">
-                    <i class="role-dot" [class]="track.role"></i>{{ track.name }}
-                  </button>
-                  @if (!isScoreTrackVisible(track)) {
-                    <span class="lane-hidden" [style.top.px]="(trackIndex + 0.5) * scoreViewport().laneHeight - scoreViewport().verticalOffset">Hidden</span>
-                  }
-                }
-                </div>
-                <vc-score-canvas [tracks]="scoreTracks()" [notes]="scoreNotes()" [sections]="timelineSections()"
+                <vc-score-canvas [tracks]="scoreTracks()" [notes]="canvasNotes()" [sections]="timelineSections()"
                   [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   (seekRequested)="seek($event)"
                   (trackSelected)="selectScoreTrack($event)"
-                  [hiddenTrackIds]="hiddenTracks()" (noteSelected)="openNoteEditor($event)" />
-                <span class="score-track-label velocity-label">VEL</span>
+                  [hiddenTrackIds]="hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreSectionFocus() : null" [velocityVisible]="editing()"
+                  (noteSelected)="canvasNoteSelected($event)" (noteChanged)="canvasNoteChanged($event)"
+                  (noteAdded)="canvasNoteAdded($event)" (applyRequested)="editor()?.applyChanges()" />
               </div>
           </div>
         </div>
-        <footer class="score-footer"><span>LOW</span><span>Ctrl + scroll: time zoom · Shift + scroll: pan · Alt + scroll: vertical zoom</span><span>HIGH</span></footer>
+        <footer class="score-display-header" aria-label="Score display and edit actions">
+          @if (editing()) {
+            <span>{{ selectedTrack().name }} · Edit phrase</span>
+            <button type="button" (click)="editor()?.addNote()">＋ Note</button>
+            <button type="button" (click)="editor()?.cancelChanges()">Cancel</button>
+            <button type="button" (click)="editor()?.applyLocalChanges()" [disabled]="!editSectionId()">Local Apply</button>
+            <button type="button" class="active" (click)="editor()?.applyChanges()">Apply</button>
+          } @else {
+            @for (group of roles; track group.role) {
+              <button type="button" [class.active]="displayedRoles().has(group.role)" [attr.aria-pressed]="displayedRoles().has(group.role)"
+                (click)="toggleScoreRole(group.role)"><i class="role-dot" [class]="group.role"></i>{{ group.name }}</button>
+            }
+            <button type="button" [class.active]="syncScoreMix()" [attr.aria-pressed]="syncScoreMix()" (click)="toggleScoreMixSync()" title="Set the mix to hear displayed roles">Sync Solo/Mute</button>
+          }
+        </footer>
       </section>
-    }
   </main>
 
-  @if (!editing()) {
     <aside id="part-inspector" class="context-inspector" [attr.data-control-role]="partScope() ? partRole() : null" tabindex="-1" aria-label="Selection inspector">
+      @if (editing()) {
+        @if (editor(); as edit) { <ng-container [ngTemplateOutlet]="edit.inspectorTemplate()" /> }
+      } @else {
       <header class="canvas-heading inspector-heading">
         <div><p class="eyebrow">INSPECTOR</p><h2>{{ localPartTarget() ? 'Section part' : selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
         <i class="role-dot" [class]="partRole()"></i>
@@ -324,8 +326,8 @@
       } @else {
         <vc-harmony-settings />
       }
+      }
     </aside>
-  }
 </section>
 
 @if (mixerOpen()) { <vc-mix-workspace (closed)="closeMixer()" /> }

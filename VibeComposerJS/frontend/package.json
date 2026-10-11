@@ -8,6 +8,7 @@
     "test:overview": "node --test scripts/arrangement-overview.test.cjs",
     "test:overview:browser": "node --test scripts/arrangement-overview-browser.test.cjs",
     "test:playback": "node --test scripts/audio-playback.test.cjs",
+    "test:score:browser": "node --test scripts/unified-score-browser.test.cjs",
     "test:score": "node --test scripts/score-canvas.test.cjs",
     "test:synth:browser": "node --test scripts/tiny-synth-browser.test.cjs",
     "test:selection": "node --test scripts/section-selection.test.cjs",

@@ -38,6 +38,8 @@ export interface ArrangementSection {
   /** Materialized arrangement state; chance settings live with section type preferences. */
   readonly trackPresence: Readonly<Record<string, boolean>>;
   readonly rolePartOverrides?: Readonly<Partial<{ [R in ArrangedPart]: Partial<PartSettingsByRole[R]> }>>;
+  /** Manual phrase for this section and independent track, in section-relative beats. */
+  readonly trackPhrases?: Readonly<Record<string, readonly PhraseNote[]>>;
   readonly trackPartOverrides?: Readonly<Record<string, PartSettingsPatch>>;
 }
 

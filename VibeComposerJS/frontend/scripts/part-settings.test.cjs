@@ -2655,10 +2655,10 @@ test('score combines drums on a shared pitch axis while preserving note ownershi
   const kick = 'track-drums-1', snare = service.addTrack('drums'), otherKick = service.addTrack('drums');
   service.updateTrackGeneratorSettings(snare, { pitch: 38 });
   for (const id of [kick, snare, otherKick]) service.setSectionTrackPresence(1, id, true);
-  const rows = workspace.scoreTracks(), drumRow = rows.find(row => row.color === 'drums');
-  assert.equal(rows.length, 5);
-  assert.equal(drumRow.name, 'Drums');
-  assert.deepEqual(drumRow.trackIds, [kick, snare, otherKick]);
+  const rows = workspace.scoreTracks(), drumRows = rows.filter(row => row.color === 'drums');
+  const drumRow = { id: 'role:drums', name: 'Drums', color: 'drums', trackIds: [kick, snare, otherKick] };
+  assert.equal(rows.length, 7);
+  assert.deepEqual(drumRows.map(row => row.id), [kick, snare, otherKick]);
   assert.equal(workspace.arrangedTracks().length, 7, 'arrangement and independent tracks stay intact');
   const notes = workspace.scoreNotes();
   const kickNote = notes.find(note => note.part === kick), snareNote = notes.find(note => note.part === snare);
@@ -2685,7 +2685,7 @@ test('score combines drums on a shared pitch axis while preserving note ownershi
     score.drawStatic();
     const drumHits = score.hitAreas.filter(area => area.note.color === 'drums');
     assert.ok(drumHits.length > 0);
-    assert.ok(drumHits.every(area => area.trackIndex === 4 && area.note.part === snare));
+    assert.ok(drumHits.every(area => area.trackIndex === 1 && area.note.part === snare));
     const area = drumHits[0];
     let selected;
     score.noteSelected.emit = note => { selected = note; workspace.openNoteEditor(note); };
@@ -2694,7 +2694,7 @@ test('score combines drums on a shared pitch axis while preserving note ownershi
     assert.equal(workspace.selectedTrackId(), snare);
     assert.equal(workspace.editingNoteId(), selected.id);
     score.model.hiddenTrackIds = new Set(); score.drawStatic();
-    assert.ok(score.hitAreas.filter(area => area.note.color === 'drums').every(area => area.trackIndex === 4));
+    assert.ok(score.hitAreas.filter(area => area.note.color === 'drums').every(area => area.trackIndex === 1));
   } finally { global.getComputedStyle = savedStyle; global.document = savedDocument; }
   for (const id of [kick, snare, otherKick]) service.removeTrack(id);
   assert.equal(workspace.scoreTracks().some(row => row.color === 'drums'), false);
@@ -3270,6 +3270,7 @@ function fixture() {
   const signal = (value) => {
     const read = () => value;
     read.set = (next) => { value = next; };
+    read.update = updater => { value = updater(value); };
     read.asReadonly = () => read;
     return read;
   };
@@ -4981,4 +4982,69 @@ test('custom grids validate shape and binary slots at all scopes and imports wit
   }
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.canRedo(), true);
+});
+
+test('section phrase edits retain independent ownership through export, playback layout, undo and reload', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-bass-1';
+  const section = service.project().arrangement[1];
+  service.setSectionTrackPresence(1, id, true);
+  service.setSectionTrackPresence(2, id, true);
+  const track = () => service.project().tracks.find(track => track.id === id);
+  const before = service.exportProjectJson();
+  const global = phrase.phraseForTrack(service.project(), track());
+  const local = [{ id: 'local-edit', midi: 51, startBeat: 1.25, durationBeats: .7, velocity: 113 }];
+  service.updateSectionTrackPhrase(section.id, id, local);
+  const after = service.exportProjectJson();
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), global);
+  assert.deepEqual(phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[1]] }, track()), local);
+  assert.ok(new Midi(midi.generateCompositionMidi(service.project())).tracks.find(track => track.name === 'B1').notes.some(note => note.midi === 51));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  assert.equal(service.importProjectJson(after), true);
+  assert.deepEqual(service.project().arrangement[1].trackPhrases[id], local);
+  const invalid = JSON.parse(after); invalid.arrangement[1].trackPhrases[id][0].midi = 128;
+  assert.equal(service.importProjectJson(JSON.stringify(invalid)), false);
+  const duplicate = service.duplicateTrack(id);
+  service.removeTrack(id);
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true, 'deleting a track removes its section phrases');
+});
+
+test('contextual Local Apply preserves other phrase cycles and leaves the global track untouched', () => {
+  const { service, ui, phrase, load } = fixture();
+  const id = 'track-drums-1';
+  const section = service.project().arrangement[1];
+  service.setSectionTrackPresence(1, id, true);
+  service.updateTrackPhrase(id, [{ id: 'kick', midi: 36, startBeat: 0, durationBeats: .2, velocity: 90 }]);
+  ui.selectedTrackId.set(id);
+  const track = service.project().tracks.find(track => track.id === id);
+  const before = phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[1]] }, track);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor();
+  editor.sectionId = section.id;
+  editor.phraseStartBeat = 0;
+  editor.phraseLength = 4;
+  editor.ngOnInit();
+  const history = service.exportProjectJson();
+  editor.selectedNoteId.set('kick'); editor.updateSelected('velocity', { target: { value: '117' } });
+  assert.equal(service.exportProjectJson(), history);
+  editor.applyLocalChanges();
+  assert.deepEqual(service.project().tracks.find(track => track.id === id).editedPhrase, track.editedPhrase);
+  const after = phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[1]] }, track);
+  assert.equal(after.find(note => note.startBeat === 0).velocity, 117);
+  assert.deepEqual(after.filter(note => note.startBeat >= 4).map(({ id, ...note }) => note), before.filter(note => note.startBeat >= 4).map(({ id, ...note }) => note));
+  service.undo(); assert.equal(service.exportProjectJson(), history, 'Local Apply is one undo entry');
+});
+
+test('display filters synchronize audible tracks atomically when enabled', () => {
+  const { service, workspace } = fixture();
+  workspace.toggleScoreRole('drums');
+  assert.ok(workspace.scoreTracks().every(track => track.role !== 'drums'));
+  assert.ok(service.project().tracks.every(track => !track.mix.muted));
+  const before = service.exportProjectJson();
+  workspace.toggleScoreMixSync();
+  assert.ok(service.project().tracks.every(track => track.mix.muted === (track.role === 'drums') && !track.mix.solo));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  workspace.toggleScoreRole('bass');
+  assert.ok(service.project().tracks.filter(track => ['drums','bass'].includes(track.role)).every(track => track.mix.muted));
 });

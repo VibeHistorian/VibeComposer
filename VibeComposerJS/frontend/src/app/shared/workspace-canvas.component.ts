@@ -1,7 +1,8 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from './section-context-editor.component';
 import { sectionDurationBeats } from '../core/music/section-context';
 import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
   TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
@@ -57,7 +58,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
@@ -206,6 +207,21 @@ export class WorkspaceCanvasComponent {
   });
   private readonly editFailure = signal<{ scope: string; message: string } | null>(null);
   readonly partEditError = computed(() => this.editFailure()?.scope === JSON.stringify(this.partScope()) ? this.editFailure()?.message : null);
+  readonly editor = viewChild(EditWorkspaceComponent);
+  readonly editSectionId = signal<string | null>(null);
+  readonly editStartBeat = signal(0);
+  readonly editPhraseOffset = signal(0);
+  readonly editPhraseLength = signal(16);
+  readonly displayedRoles = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
+  readonly syncScoreMix = signal(false);
+  toggleScoreRole(role: ArrangedPart): void {
+    this.displayedRoles.update(roles => { const next = new Set(roles); if (next.has(role)) next.delete(role); else next.add(role); return next; });
+    this.synchronizeScoreMix();
+  }
+  toggleScoreMixSync(): void { this.syncScoreMix.update(value => !value); this.synchronizeScoreMix(); }
+  private synchronizeScoreMix(): void {
+    if (this.syncScoreMix()) this.projects.syncScoreMix(this.project().tracks.filter(track => this.displayedRoles().has(track.role)).map(track => track.id));
+  }
   readonly editing = signal(false);
   readonly mixerOpen = signal(false);
   readonly hiddenTracks = signal(new Set<string>());
@@ -216,6 +232,7 @@ export class WorkspaceCanvasComponent {
     this.collapsedGroups.set(new Set(ARRANGED_PARTS.filter(role => role !== selected)));
   });
   readonly scoreSectionFocus = computed<ScoreSectionFocus>(() => {
+    if (this.editing()) return { startBeat: this.editStartBeat(), endBeat: this.editStartBeat() + this.editPhraseLength() };
     this.selectedSectionIds();
     // A changed selection must refit even when its bounds equal the full arrangement.
     return { ...(this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: this.totalBeats() }) };
@@ -248,14 +265,31 @@ export class WorkspaceCanvasComponent {
     noteCount: phraseForTrack(this.project(), track).length,
   })));
   readonly arrangedTracks = computed(() => tracksInRoleOrder(this.tracks()));
-  readonly scoreTracks = computed(() => {
-    const tracks = this.arrangedTracks();
-    const drums = tracks.filter(track => track.role === 'drums');
-    return [...tracks.filter(track => track.role !== 'drums'), ...(drums.length ? [{
-      id: 'role:drums', name: 'Drums', role: 'drums' as const, color: 'drums' as const,
-      trackIds: drums.map(track => track.id),
-    }] : [])];
+  readonly scoreTracks = computed(() => this.arrangedTracks().filter(track => this.editing()
+    ? track.id === this.selectedTrackId() : this.displayedRoles().has(track.role))
+    .map(track => ({ ...track, drumPitch: track.role === 'drums' ? track.generatorSettings.pitch : undefined })));
+  readonly canvasNotes = computed<ScoreNote[]>(() => {
+    const editor = this.editor();
+    if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.displayedRoles().has(note.color));
+    return editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat(), part: this.selectedTrackId(),
+      trackName: this.selectedTrack().name, color: this.selectedPart(), topPercent: 0, opacity: 1 }));
   });
+  applyOnEmptyMiddleClick(event: MouseEvent): void {
+    if (event.button !== 1 || !this.editing()) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('button, input, select, a, canvas, vc-compact-knob, vc-compact-toggle, vc-mix-buttons')) return;
+    event.preventDefault();
+    this.editor()?.applyChanges();
+  }
+  canvasNoteChanged(note: ScoreNote | import('../core/project/project.model').PhraseNote): void {
+    this.editor()?.replaceNote({ ...note, startBeat: note.startBeat - this.editStartBeat() });
+  }
+  canvasNoteAdded(position: { midi: number; startBeat: number }): void {
+    this.editor()?.addNoteAt({ ...position, startBeat: position.startBeat - this.editStartBeat() });
+  }
+  canvasNoteSelected(note: ScoreNote): void {
+    if (this.editing()) this.editor()?.selectNote(note.id); else this.openNoteEditor(note);
+  }
   readonly selectedTrack = computed<TrackRow>(() => this.tracks().find((track) => track.id === this.selectedTrackId()) ?? this.tracks()[0]);
   readonly selectedPart = computed(() => this.selectedTrack().role);
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id
@@ -420,14 +454,31 @@ export class WorkspaceCanvasComponent {
 
   openTrackEditor(trackId: string): void {
     if (this.editing() || !this.project().tracks.some((track) => track.id === trackId)) return;
-    this.selectTrack(trackId);
+    const target = this.settingsTarget();
+    const sectionId = 'sectionId' in target ? target.sectionId : this.selectedSectionId() ?? this.project().arrangement[0]?.id ?? null;
+    const item = this.timelineSections().find(item => item.section.id === sectionId);
+    this.editSectionId.set(sectionId);
+    this.editPhraseOffset.set(0);
+    this.editStartBeat.set(item?.startBeat ?? 0);
+    this.editPhraseLength.set(Math.min(this.project().progression.length * 4, item ? sectionDurationBeats(this.project(), item.section) : this.totalBeats()));
+    this.workspaceUi.selectedTrackId.set(trackId);
     this.editingNoteId.set(null);
     this.editing.set(true);
   }
 
   openNoteEditor(note: ScoreNote): void {
     if (this.editing() || !this.project().tracks.some((track) => track.id === note.part)) return;
+    const item = this.timelineSections().find((item, index, all) => note.startBeat >= item.startBeat
+      && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()));
     this.openTrackEditor(note.part);
+    if (item) {
+      const length = this.project().progression.length * 4;
+      const offset = Math.floor((note.startBeat - item.startBeat) / length) * length;
+      this.editSectionId.set(item.section.id);
+      this.editPhraseOffset.set(offset);
+      this.editStartBeat.set(item.startBeat + offset);
+      this.editPhraseLength.set(Math.min(length, sectionDurationBeats(this.project(), item.section) - offset));
+    }
     this.editingNoteId.set(note.id);
   }
 

@@ -237,6 +237,7 @@ export class ProjectService {
     return this.commitPartWorkflow({ ...current, tracks: current.tracks.filter(track => !removed.has(track.id)),
       arrangement: current.arrangement.map(section => ({ ...section,
         trackPresence: Object.fromEntries(Object.entries(section.trackPresence).filter(([id]) => !removed.has(id))),
+        ...(section.trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(section.trackPhrases).filter(([id]) => !removed.has(id))) } : {}),
         ...(section.trackPartOverrides !== undefined ? { trackPartOverrides: Object.fromEntries(
           Object.entries(section.trackPartOverrides).filter(([id]) => !removed.has(id))) } : {}),
       })) });
@@ -755,6 +756,7 @@ export class ProjectService {
     this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
       ...section,
       trackPresence: { ...section.trackPresence, [id]: section.trackPresence[source.id] ?? false },
+      ...(section.trackPhrases?.[source.id] !== undefined ? { trackPhrases: { ...section.trackPhrases, [id]: section.trackPhrases[source.id].map(note => ({ ...note })) } } : {}),
       trackPartOverrides: section.trackPartOverrides?.[source.id]
         ? { ...section.trackPartOverrides, [id]: copyPartSettings(section.trackPartOverrides[source.id]) } : section.trackPartOverrides,
     })) });
@@ -813,15 +815,31 @@ export class ProjectService {
     this.commit(next, this.controlHistoryKey(['part', 'global-track', trackId], patch));
   }
 
-  updateTrackPhrase(trackId: string, notes: readonly PhraseNote[]): void {
+  syncScoreMix(visibleTrackIds: readonly string[]): void {
+    const current = this.state();
+    const visible = new Set(visibleTrackIds);
+    const tracks = current.tracks.map(track => ({ ...track, mix: { ...track.mix, solo: false, muted: !visible.has(track.id) } }));
+    if (tracks.some((track, index) => track.mix.muted !== current.tracks[index].mix.muted || current.tracks[index].mix.solo)) this.commit({ ...current, tracks });
+  }
+
+  updateSectionTrackPhrase(sectionId: string, trackId: string, notes: readonly PhraseNote[]): boolean {
+    const current = this.state();
+    if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId) || !this.isPhrase(notes, 2048)) return false;
+    this.commit({ ...current, arrangement: current.arrangement.map(section => section.id === sectionId
+      ? { ...section, trackPhrases: { ...section.trackPhrases, [trackId]: notes.map(note => ({ ...note })) } } : section) });
+    return true;
+  }
+
+  updateTrackPhrase(trackId: string, notes: readonly PhraseNote[]): boolean {
     const current = this.state();
     const index = current.tracks.findIndex((track) => track.id === trackId);
-    if (index < 0 || !this.isPhrase(notes)) return;
+    if (index < 0 || !this.isPhrase(notes)) return false;
     const tracks = [...current.tracks];
     tracks[index] = { ...tracks[index], editedPhrase: notes.map((note) => ({ ...note })) } as CompositionTrack;
     const isPrimary = current.tracks.find((candidate) => candidate.role === tracks[index].role)?.id === trackId;
     const editedPhrases = isPrimary ? { ...current.editedPhrases, [tracks[index].role]: tracks[index].editedPhrase } : current.editedPhrases;
     this.commit({ ...current, tracks, editedPhrases });
+    return true;
   }
 
   clearTrackPhrase(trackId: string): void {
@@ -855,7 +873,9 @@ export class ProjectService {
       delete trackPresence[trackId];
       const trackPartOverrides = { ...section.trackPartOverrides };
       delete trackPartOverrides[trackId];
-      return { ...section, trackPresence, trackPartOverrides };
+      const trackPhrases = { ...section.trackPhrases };
+      delete trackPhrases[trackId];
+      return { ...section, trackPresence, trackPartOverrides, ...(section.trackPhrases !== undefined ? { trackPhrases } : {}) };
     });
     this.commit({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement });
   }
@@ -899,6 +919,7 @@ export class ProjectService {
       customDurations: sections[index].customDurations ? [...sections[index].customDurations] : undefined,
       chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
       trackPresence: { ...sections[index].trackPresence },
+      ...(sections[index].trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(sections[index].trackPhrases).map(([id, notes]) => [id, notes.map(note => ({ ...note }))])) } : {}),
       rolePartOverrides: Object.fromEntries(Object.entries(sections[index].rolePartOverrides ?? {}).map(([role, patch]) => [role, copyPartSettings(patch)])),
       trackPartOverrides: Object.fromEntries(Object.entries(sections[index].trackPartOverrides ?? {}).map(([id, patch]) => [id, copyPartSettings(patch)])),
     });
@@ -1326,7 +1347,7 @@ export class ProjectService {
     return decoded;
   }
 
-  private isPhrase(value: unknown): value is readonly PhraseNote[] {
+  private isPhrase(value: unknown, maximumBeat = 128): value is readonly PhraseNote[] {
     if (!Array.isArray(value) || value.length > 2048) {
       return false;
     }
@@ -1339,9 +1360,9 @@ export class ProjectService {
       if (typeof note.id !== 'string' || note.id.length < 1 || note.id.length > 120 || ids.has(note.id)
           || !Number.isInteger(note.midi) || (note.midi ?? -1) < 0 || (note.midi ?? 128) > 127
           || typeof note.startBeat !== 'number' || !Number.isFinite(note.startBeat)
-          || note.startBeat < 0 || note.startBeat >= 128
+          || note.startBeat < 0 || note.startBeat >= maximumBeat
           || typeof note.durationBeats !== 'number' || !Number.isFinite(note.durationBeats)
-          || note.durationBeats <= 0 || note.durationBeats > 128 - note.startBeat
+          || note.durationBeats <= 0 || note.durationBeats > maximumBeat - note.startBeat
           || !Number.isInteger(note.velocity) || (note.velocity ?? 0) < 1 || (note.velocity ?? 128) > 127) {
         return false;
       }
@@ -1413,6 +1434,14 @@ export class ProjectService {
           (decoded as Record<string, PartSettingsPatch>)[key] = result;
         }
       }
+      const trackPhrases: Record<string, readonly PhraseNote[]> = {};
+      if (section.trackPhrases !== undefined) {
+        if (!section.trackPhrases || typeof section.trackPhrases !== 'object' || Array.isArray(section.trackPhrases)) return undefined;
+        for (const [trackId, notes] of Object.entries(section.trackPhrases)) {
+          if (!trackIds.has(trackId) || !this.isPhrase(notes, 2048)) return undefined;
+          trackPhrases[trackId] = notes.map(note => ({ ...note }));
+        }
+      }
       const effectiveSection = { rolePartOverrides, trackPartOverrides } as ArrangementSection;
       if (tracks.some((track) => !validVelocityRange(resolvePartTrack(track, effectiveSection).generatorSettings, track.role))) return undefined;
       ids.add(section.id);
@@ -1450,6 +1479,7 @@ export class ProjectService {
         trackPresence: presence,
         rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,
         trackPartOverrides,
+        ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
       });
     }
     return sections;
