@@ -144,6 +144,8 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 /* Contextual part settings */
 .part-settings-panel { min-width: 0; container-type: inline-size; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
 .part-settings-heading { min-height: 38px; padding: 6px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.part-settings-heading.role-settings { border-radius: inherit; background: color-mix(in srgb, var(--control-role-color) 15%, var(--surface-base)); }
+.part-settings-heading.role-settings:has(+ .part-settings-content) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .part-heading-context { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .part-settings-heading > .part-inspector-link { grid-column: 3; justify-self: end; }
 .part-panel-toggle, .part-inspector-link { min-height: 26px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }

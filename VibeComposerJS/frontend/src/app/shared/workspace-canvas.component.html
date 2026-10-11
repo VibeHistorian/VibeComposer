@@ -109,7 +109,7 @@
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
 
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
-        <header class="part-settings-heading">
+        <header class="part-settings-heading" [class.role-settings]="!!editableScopes().length">
           <div class="part-heading-context">
           <button type="button" class="part-panel-toggle" [attr.aria-expanded]="partPanelExpanded()"
             aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
