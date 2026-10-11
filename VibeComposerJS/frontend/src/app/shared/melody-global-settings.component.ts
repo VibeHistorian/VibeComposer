@@ -52,4 +52,9 @@ export class MelodyGlobalSettingsComponent {
     const value = (event.target as HTMLSelectElement).value;
     if (value === 'ANY' || value === 'ASC' || value === 'DESC') this.settingsChanged.emit({ targetDirection: value });
   }
+
+  changeTargetMode(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (value === 0 || value === 1 || value === 2) this.settingsChanged.emit({ blockTargetMode: value });
+  }
 }

@@ -90,6 +90,8 @@ export interface MelodySettings extends CommonPartSettings {
 
 /** GUIConfig musical inputs shared by every Melody track and section. */
 export interface MelodyGlobalSettings {
+  /** 0 chord-note index, 1 chord root + scale-degree offset, 2 MIDI 60 + scale-degree offset. */
+  readonly blockTargetMode?: number;
   /** Requested tonic/mode note percentages before pauses; these are best-effort pitch repairs. */
   readonly tonicNoteTarget?: number;
   readonly modeNoteTarget?: number;

@@ -17,6 +17,27 @@ export function melodyRepairChords(key: string, scale: ScaleMode, degrees: reado
     }));
 }
 
+/** Java's generatedRootProgression retains full unsquished chords and ignores inversions. */
+export function melodyRootChords(key: string, scale: ScaleMode, degrees: readonly number[],
+  custom?: readonly (ProgressionChord | null)[]): number[][] {
+  return melodyRepairChords(key, scale, degrees, custom?.map(chord => chord ? { ...chord, inversion: 0 } : null));
+}
+
+/** MelodyGenerator's chord-specific minor adjustment follows first-note restoration and Start note. */
+export function adjustMelodyMinorChords(byChord: readonly (readonly MelodyNote[])[], roots: readonly (readonly number[])[]): void {
+  const minorChords = [[0,3,7], [2,5,8], [3,7,10], [0,5,8], [2,7,10], [0,3,8], [2,5,10]];
+  byChord.forEach((notes, index) => {
+    const pitches = roots[index % roots.length].map(pitch => pitch % 12).sort((a,b) => a-b);
+    if (!minorChords.some(chord => chord.length === pitches.length && chord.every((pitch, i) => pitch === pitches[i]))) return;
+    const adjusted = [...MAJOR];
+    for (const pitch of pitches) if (!MAJOR.includes(pitch)) adjusted[MINOR.indexOf(pitch)] = pitch;
+    for (const note of notes) {
+      const degree = MAJOR.indexOf(note.midi % 12);
+      if (note.midi >= 0 && degree >= 0) note.midi += adjusted[degree] - MAJOR[degree];
+    }
+  });
+}
+
 /** MelodyExpansion.applyChordNoteTargets: the production sorted copy is unused;
  * corrections visit original note order, including first notes restored later by pause/fill repair.
  */

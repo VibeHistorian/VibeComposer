@@ -340,6 +340,21 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       reset(modeControl);
       await wait(() => read().melodyGlobal?.modeNoteTarget === 0, 'mode default reset');
       result.tonalTargets = JSON.stringify(read().tracks) === tonalTracks;
+      const modeTracks = JSON.stringify(read().tracks);
+      const blockModeControl = globals.querySelector('[aria-label="Block target mode"]');
+      await wait(() => blockModeControl.value === '2', 'block target mode default');
+      for (const blockMode of [0, 1, 2, 1]) {
+        change(blockModeControl, String(blockMode));
+        await wait(() => read().melodyGlobal?.blockTargetMode === blockMode, 'block target mode commit');
+        await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      }
+      reset(blockModeControl);
+      await wait(() => read().melodyGlobal?.blockTargetMode === 2, 'block target mode right-click default');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().melodyGlobal?.blockTargetMode === 1, 'block target mode undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'block mode redo enabled')).click();
+      await wait(() => read().melodyGlobal?.blockTargetMode === 2, 'block target mode redo');
+      result.targetModes = JSON.stringify(read().tracks) === modeTracks;
       const targetsBefore = JSON.stringify(read().tracks);
       await wait(() => globals.querySelector('[aria-label="Target direction"]').value === 'ASC', 'target direction default');
       change(globals.querySelector('[aria-label="Target variation"]'), '6');
@@ -372,7 +387,8 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       result.melodyGlobal = read().tracks.filter(track => track.role === 'melody').every(track =>
         !Object.hasOwn(track.generatorSettings, 'singleNoteExceptions') && !Object.hasOwn(track.generatorSettings, 'maxDirectionChanges')
         && !Object.hasOwn(track.generatorSettings, 'patternEffect') && !Object.hasOwn(track.generatorSettings, 'arpySurprises')
-        && !Object.hasOwn(track.generatorSettings, 'targetDirection') && !Object.hasOwn(track.generatorSettings, 'forceFirstOutline'));
+        && !Object.hasOwn(track.generatorSettings, 'targetDirection') && !Object.hasOwn(track.generatorSettings, 'forceFirstOutline')
+        && !Object.hasOwn(track.generatorSettings, 'blockTargetMode'));
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
@@ -475,6 +491,9 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     await command('Runtime.evaluate', { expression: `document.querySelector('vc-melody-global-settings').scrollIntoView({ block: 'center' })` });
     const globalScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-global-' + width + '.png'), Buffer.from(globalScreenshot.data, 'base64'));
+    await command('Runtime.evaluate', { expression: `document.querySelector('[aria-label="Block target mode"]').closest('fieldset').scrollIntoView({ block: 'center' })` });
+    const targetModeScreenshot = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-target-modes-' + width + '.png'), Buffer.from(targetModeScreenshot.data, 'base64'));
     await command('Runtime.evaluate', { expression: `document.querySelector('.catalogue-area').scrollIntoView({ block: 'center' })` });
     const catalogueScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-catalogue-' + width + '.png'), Buffer.from(catalogueScreenshot.data, 'base64'));
@@ -488,7 +507,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

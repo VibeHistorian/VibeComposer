@@ -4,7 +4,7 @@ import { DEFAULT_BLOCK_TYPE_WEIGHTS } from './melody-catalogue';
 export const DEFAULT_MELODY_GLOBAL = Object.freeze({
   singleNoteExceptions: false, maxDirectionChanges: 2, fillPausesPerChord: false,
   patternEffect: 2, arpySurprises: false, patternFlip: false, emphasizeKey: false,
-  tonicNoteTarget: 0, modeNoteTarget: 0, chordNoteTarget: 0, replaceAvoidNotes: 0,
+  tonicNoteTarget: 0, modeNoteTarget: 0, chordNoteTarget: 0, replaceAvoidNotes: 0, blockTargetMode: 2,
   targetNoteVariation: 3, targetDirection: 'ASC' as const,
   useDirectionsFromProgression: false, forceFirstOutline: false,
   newBlocksChance: 25, blockTypeWeights: DEFAULT_BLOCK_TYPE_WEIGHTS, blockChangePreference: Object.freeze([] as number[]),
@@ -16,7 +16,7 @@ export function decodeMelodyGlobal(value: unknown): MelodyGlobalSettings | undef
   for (const [key, field] of Object.entries(value)) {
     if (key === 'maxDirectionChanges') {
       if (!Number.isInteger(field) || field < 1 || field > 6) return undefined;
-    } else if (key === 'patternEffect') {
+    } else if (key === 'patternEffect' || key === 'blockTargetMode') {
       if (!Number.isInteger(field) || field < 0 || field > 2) return undefined;
     } else if (key === 'targetNoteVariation') {
       if (!Number.isInteger(field) || field < 1 || field > 6) return undefined;

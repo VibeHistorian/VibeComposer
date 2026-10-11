@@ -263,7 +263,8 @@ export class ProjectService {
           const order = next.tracks.filter(item => item.role === 'melody').indexOf(track) + 1;
           const patternSeed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(next.seed)))) + order) | 0;
           if (policy.patternsOnCompose ?? true) settings.melodyPatternOffsets = chooseMelodyPattern(patternSeed);
-          if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression, next.melodyGlobal);
+          if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression, next.melodyGlobal,
+            next.key, next.scale, next.progressionChords);
           if (partPatchesEqual(track.generatorSettings, settings)) return track;
           return { ...track, generatorSettings: settings };
         });

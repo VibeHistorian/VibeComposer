@@ -10,16 +10,14 @@ import { blockChangeSequence, blockRhythm, blockVariance, cumulativeWeights, dir
   melodyInt as int, MELODY_EPSILON as EPS, noteRhythm } from './melody-blocks';
 import { selectMelodyBlock } from './melody-catalogue';
 import { applyMelodyTonalTargets } from './melody-tonal-targets';
-import { applyMelodyChordTargets, melodyRepairChords, replaceMelodyAvoidNotes } from './melody-chord-targets';
+import { adjustMelodyMinorChords, applyMelodyChordTargets, melodyRepairChords, melodyRootChords, replaceMelodyAvoidNotes } from './melody-chord-targets';
+import { startingMelodyTarget } from './melody-targets';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
 const DURATION_MULTIPLIER = 0.95; // MidiGenerator.RunOptions.defaults()
 interface Block { readonly notes: readonly number[]; readonly durations: readonly number[] }
 interface Pattern { readonly changes: readonly number[]; readonly blocks: readonly Block[] }
-
-/** Still-fixed global inputs for the current block path; remaining P5e slices replace these. */
-export const MELODY_CORE_INPUTS = Object.freeze({ blockTargetMode: 2 });
 
 function repeated(values: readonly number[], count: number): number[] {
   const result = [...values];
@@ -63,7 +61,7 @@ function rhythmicImportance(notes: Note[]): Note[] {
  * P1b supports generated shapes, tonic-relative targets, reusable/inverted blocks,
  * speed, Flex/Max Block Change/Block Jump, doubled rhythm, pitch exceptions,
  * split/lead/start behavior, pauses/fill, accents and shared dynamics.
- * Global inputs still omitted from the inspector are fixed in MELODY_CORE_INPUTS.
+ * Global inputs share the project-level Melody musical settings.
  */
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
   progression: readonly number[], settings: MelodySettings, notesSeedOffset = 0,
@@ -83,7 +81,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     || progression.length < 1 || progression.length > 32 || progression.some((degree) => !Number.isInteger(degree) || degree < 1 || degree > 7)
     || !Number.isInteger(speed) || speed < -100 || speed > 100 || !Number.isInteger(maxChange) || maxChange < 0 || maxChange > 7
     || !Number.isInteger(jump) || jump < 0 || jump > 4 || !targets.length || targets.length > 32 || !offsets.length || offsets.length > 32
-    || targets.some((target) => !Number.isInteger(target) || target < -14 || target > 14)
+    || targets.some((target) => !Number.isInteger(target) || target < -24 || target > 24)
     || offsets.some((offset) => !Number.isInteger(offset) || offset < -16 || offset > 16)) throw new RangeError('Unsupported block melody inputs.');
   if (settings.generationEnabled === false) return [];
   const baseSeed = settings.patternSeed ? int(settings.patternSeed) : Number(BigInt.asIntN(32, BigInt(seed)));
@@ -96,7 +94,8 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const byChord: Note[][] = [];
   const outerQuick = (speed - 50) * 4;
   const outerWeights = cumulativeWeights([200 + outerQuick, Math.max(1, 200 + outerQuick / 2), 200 + outerQuick, 200 - outerQuick]);
-  const starting = (index: number) => 35 + choices[index === choices.length ? index - 1 : index % choices.length];
+  const roots = melodyRootChords(key, scale, progression, customChords);
+  const starting = (index: number) => startingMelodyTarget(roots, choices, index, globals.blockTargetMode);
   for (let chord = 0; chord < progression.length; chord++) {
     const originalOffset = structure[chord], offset = Math.max(0, Math.abs(originalOffset) - 1);
     const doubled = new JavaRandom(int(baseSeed + 3 + offset)).nextInt(100) < (settings.doubledRhythmChance ?? 0);
@@ -225,6 +224,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       && remaining[1].midi !== first.midi && remaining[2].midi !== first.midi) first.duration *= 1 + accent / 200;
   });
   delayMelodyStarts(byChord.map(notes => notes.filter(note => !removed.has(note))), settings, baseSeed);
+  adjustMelodyMinorChords(byChord, roots);
   const final = all.filter((note) => !removed.has(note));
   if (publishPattern) {
     const patternNotes: Array<Pick<PhraseNote, 'midi' | 'startBeat'>> = [];

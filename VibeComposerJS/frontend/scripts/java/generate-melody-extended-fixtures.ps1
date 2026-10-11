@@ -1,4 +1,4 @@
-param([string]$Jdk = 'C:/Java/jdk-24.0.2', [switch]$Globals, [switch]$Effects, [switch]$Targets, [switch]$Catalogue, [switch]$Emphasis, [switch]$Tonal, [switch]$Harmony)
+param([string]$Jdk = 'C:/Java/jdk-24.0.2', [switch]$Globals, [switch]$Effects, [switch]$Targets, [switch]$Catalogue, [switch]$Emphasis, [switch]$Tonal, [switch]$Harmony, [switch]$Modes)
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '../../../..'))
 $outputDirectory = Join-Path $repositoryRoot 'VibeComposerJS/frontend/.angular/melody-fixtures'
@@ -27,7 +27,8 @@ if ($Catalogue) { $fixtureArguments = @('catalogue') }
 if ($Emphasis) { $fixtureArguments = @('emphasis') }
 if ($Tonal) { $fixtureArguments = @('tonal') }
 if ($Harmony) { $fixtureArguments = @('harmony') }
+if ($Modes) { $fixtureArguments = @('modes') }
 $json = & (Join-Path $Jdk 'bin/java.exe') '-Djava.awt.headless=true' -cp "$outputDirectory;$classes;$dependencyJar" 'org.vibehistorian.vibecomposer.generation.MelodyExtendedFixture' @fixtureArguments
 if ($LASTEXITCODE -ne 0) { throw 'Extended Melody fixture generation failed.' }
-$fixtureName = if ($Harmony) { 'melody-harmony.java.json' } elseif ($Tonal) { 'melody-tonal.java.json' } elseif ($Emphasis) { 'melody-emphasis.java.json' } elseif ($Catalogue) { 'melody-catalogue-phrases.java.json' } elseif ($Targets) { 'melody-prepared-targets.java.json' } elseif ($Effects) { 'melody-effects.java.json' } elseif ($Globals) { 'melody-global.java.json' } else { 'melody-extended.java.json' }
+$fixtureName = if ($Modes) { 'melody-modes.java.json' } elseif ($Harmony) { 'melody-harmony.java.json' } elseif ($Tonal) { 'melody-tonal.java.json' } elseif ($Emphasis) { 'melody-emphasis.java.json' } elseif ($Catalogue) { 'melody-catalogue-phrases.java.json' } elseif ($Targets) { 'melody-prepared-targets.java.json' } elseif ($Effects) { 'melody-effects.java.json' } elseif ($Globals) { 'melody-global.java.json' } else { 'melody-extended.java.json' }
 $json | Set-Content -Encoding utf8 -LiteralPath (Join-Path $repositoryRoot "VibeComposerJS/frontend/scripts/fixtures/$fixtureName")

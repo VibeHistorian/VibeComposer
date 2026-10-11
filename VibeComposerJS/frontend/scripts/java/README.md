@@ -205,3 +205,17 @@ Production quirks remain literal: chord targeting computes sorted copies but vis
 ./scripts/java/generate-melody-extended-fixtures.ps1 -Harmony
 node --test --test-name-pattern='P5e chord|complete production Java harmony' scripts/part-settings.test.cjs
 ```
+
+P5e's target-mode checkpoint adds `MelodyTargetFixture modes` / `../fixtures/melody-target-modes.java.json`: **20,736 production target preparation and starting-note cases** (16 exact int seeds × four progressions × three harmony contexts × three modes × six variations × three directions × two direction sources). Contexts include default chords, chromatic/wholly chromatic Chordlets, keys, both modes, extensions and inversion values ignored by root preparation. `MelodyTargetUtils.generateNoteTargetOffsets` and `MelodyBlockUtils.getStartingNote` supply the oracle. All prepared lists and successful starting notes match exactly. Null-return indices are stored as null and separately validate the translation's nearest-valid-index recovery; no null Java phrase is claimed to match.
+
+`MelodyExtendedFixture modes` / `../fixtures/melody-modes.java.json` adds **1,152 complete phrases**, six explicit/prepared mode combinations × four exact long seeds × 48 part cases. Both default and custom harmony, all spice families, inversions, both modes, offsets, explicit seeds, pattern effects, static/generated blocks, negative-first identities, exceptions, pauses/filling, transpose, swing/length and the post-expansion minor-chord adjustment are covered. Unsquished full chords (with inversions ignored) are supplied as generated root progression; ordered inverted chords supply correction harmony. Basic chords only is toggled across cases: source tracing shows its list is used only for iteration count in this block path, while starting-note selection uses the original root chords. It has no musical control in the translation.
+
+Mode 0's complete phrase cases use nonnegative explicit indices or ascending variation 1, isolating the supported starts from Java's negative-pitch constructor abort in some descending/inverted/transposed cases. The helper matrix still tests all directions, variations and negative octave/index behavior. Split long/Lead chords remain disabled due to the previously documented empty split-pitch range error; earlier fixtures remain unchanged and pass. Exact pitch/velocity and timing within 1e-10 match. This is supported consumer parity, not full-song inference/section variations. Mode 2's established omission defaults/output remain covered separately.
+
+Functional tests validate immediate mode interpretation versus permitted event preparation, Chordlet preparation, locked/manual ownership, local target lists, global/part isolation, −24–24 target range and null-index recovery, Compose replay, persistence, strict imports and MIDI. Three browser widths exercise every mode, right-click default 2 and undo/redo.
+
+```powershell
+./scripts/java/generate-melody-target-fixtures.ps1 -Modes
+./scripts/java/generate-melody-extended-fixtures.ps1 -Modes
+node --test --test-name-pattern='all target modes|target mode edits|target index boundaries|complete production Java modes' scripts/part-settings.test.cjs
+```

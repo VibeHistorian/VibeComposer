@@ -900,6 +900,114 @@ test('Melody automatic targets match production Java for the supported diatonic 
   for (const sample of oracle) assert.deepEqual(chooseMelodyTargets(sample.seed, sample.progression), sample.targets);
 });
 
+test('P5e all target modes match 20736 production Java preparation and starting-note cases', () => {
+  const { load } = fixture();
+  const { chooseMelodyTargets, startingMelodyTarget } = load('core/music/melody-targets.ts');
+  const { melodyRootChords } = load('core/music/melody-chord-targets.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/melody-target-modes.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 20736);
+  let recovered = 0;
+  for (const [index, entry] of cases.entries()) {
+    const targets = chooseMelodyTargets(entry.seed, entry.progression, entry.globalSettings, entry.key, entry.scale, entry.customChords);
+    assert.deepEqual(targets, entry.targets, `target case ${index}`);
+    const roots = melodyRootChords(entry.key, entry.scale, entry.progression, entry.customChords);
+    entry.starting.forEach((expected, chord) => {
+      const actual = startingMelodyTarget(roots, targets, chord, entry.globalSettings.blockTargetMode);
+      if (expected !== null) assert.equal(actual, expected, `start case ${index}, chord ${chord}`);
+      else { recovered++; assert.ok(Number.isInteger(actual) && actual >= 0 && actual <= 74); }
+    });
+  }
+  assert.ok(recovered > 0, 'oracle covers Java null-pitch recovery');
+});
+
+test('P5e target mode edits reinterpret scoped notes and prepare Chordlet targets only on permitted events', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-melody-1', duplicate = service.duplicateTrack(id);
+  const sectionId = service.project().arrangement[0].id;
+  const track = target => service.project().tracks.find(item => item.id === target);
+  service.setSectionTrackPresence(0, id, true);
+  service.setTrackRerollLock(duplicate, true);
+  service.setProgressionChord(0, { root: 6, spice: 'sus2', inversion: -3 });
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { chordNoteChoices: [-1, 1, 3] });
+  const initial = service.project(), original = phrase.layOutTrackPhrase(initial, track(id));
+  const context = phrase.sectionMelodyContext(initial, initial.arrangement[0]);
+  const before = service.exportProjectJson();
+  for (const mode of [0, 1]) {
+    assert.equal(service.updateMelodyGlobal({ blockTargetMode: mode }), 'changed');
+    assert.strictEqual(service.project().tracks, initial.tracks, 'mode edit retains target lists and track identities');
+    assert.strictEqual(service.project().arrangement, initial.arrangement);
+    assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track(id)), original);
+    assert.notDeepEqual(phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]), context);
+    const saved = service.exportProjectJson();
+    service.undo(); service.redo(); assert.equal(service.exportProjectJson(), saved);
+  }
+  service.updateMelodyGlobal({ blockTargetMode: 2 });
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track(id)), original);
+  service.updateMelodyGlobal({ blockTargetMode: 1, useDirectionsFromProgression: true, targetNoteVariation: 6 });
+  const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
+  service.updateTrackGenerationPolicy('melody', { targetsOnCompose: false, patternsOnCompose: false, rerollSeeds: false, onRegenerate: true });
+  const existing = [...track(id).generatorSettings.chordNoteChoices ?? [0,2,2,4]];
+  service.generateComposition('compose');
+  assert.deepEqual(track(id).generatorSettings.chordNoteChoices ?? [0,2,2,4], existing);
+  service.updateTrackGenerationPolicy('melody', { targetsOnCompose: true });
+  const project = service.project(), locked = track(duplicate);
+  const targetSeed = ((track(id).generatorSettings.patternSeed || Number(BigInt.asIntN(32, BigInt(project.seed)))) + 1) | 0;
+  const expected = chooseMelodyTargets(targetSeed, project.progression, project.melodyGlobal, project.key, project.scale, project.progressionChords);
+  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.deepEqual(track(id).generatorSettings.chordNoteChoices, expected);
+  assert.strictEqual(track(duplicate), locked);
+  assert.strictEqual(service.project().arrangement, project.arrangement);
+  const prepared = service.exportProjectJson();
+  service.undo(); service.generateComposition('compose'); assert.equal(service.exportProjectJson(), prepared);
+  let saved = service.exportProjectJson();
+  const notes = phrase.layOutTrackPhrase(service.project(), track(id));
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const output = exported.tracks.find(item => item.name === track(id).name).notes;
+  assert.equal(output.length, notes.length);
+  output.forEach((note, index) => {
+    assert.equal(note.midi, notes[index].midi);
+    assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
+    assert.ok(Math.abs(note.durationTicks / exported.header.ppq - notes[index].durationBeats) < 0.003);
+  });
+  assert.deepEqual(projectData(new (load('core/project/project.service.ts').ProjectService)().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true); saved = service.exportProjectJson();
+  service.updateSettings({ name: 'redo' }); service.undo();
+  assert.equal(service.updateMelodyGlobal({ blockTargetMode: 1 }), 'unchanged');
+  for (const value of [-1, 3, 1.5, '1', null, true]) {
+    assert.equal(service.updateMelodyGlobal({ blockTargetMode: value }), 'invalid');
+    const imported = JSON.parse(saved); imported.melodyGlobal.blockTargetMode = value;
+    assert.equal(service.importProjectJson(JSON.stringify(imported)), false);
+    assert.equal(service.exportProjectJson(), saved);
+    assert.equal(service.canRedo(), true);
+  }
+  for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
+    { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
+    service.updatePartSettings(scope, { blockTargetMode: 0 }); assert.equal(service.exportProjectJson(), saved);
+  }
+  const manual = [{ id: 'mode-manual', midi: 61, startBeat: 1, durationBeats: 2, velocity: 90 }];
+  service.updateTrackPhrase(id, manual); service.updateMelodyGlobal({ blockTargetMode: 0 });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track(id)), manual);
+  assert.notEqual(saved, before);
+});
+
+test('P5e target index boundaries retain Java octave rules and recover extreme valid lists', () => {
+  const { service, phrase, load } = fixture();
+  const { startingMelodyTarget, chooseMelodyTargets } = load('core/music/melody-targets.ts');
+  assert.equal(startingMelodyTarget([[60,64,67]], [-3], 0, 0), 21, 'negative exact multiple uses Java extra lower octave');
+  assert.equal(startingMelodyTarget([[60,64,67]], [-24], 0, 0), 2, 'invalid low index recovers to the nearest valid index toward zero');
+  assert.equal(startingMelodyTarget([[60,64,67]], [24], 0, 0), 72, 'invalid high index recovers to the nearest valid index toward zero');
+  assert.equal(startingMelodyTarget([[60,64,67], [67,71,74]], [0,2], 2, 1), 35, 'root-relative final next target wraps');
+  assert.equal(startingMelodyTarget([[60,64,67], [67,71,74]], [0,2], 2, 2), 37, 'MIDI-relative final next target retains the last choice');
+  for (const mode of [0,1,2]) {
+    service.updateMelodyGlobal({ blockTargetMode: mode });
+    service.updatePartSettings({ kind: 'global-track', trackId: 'track-melody-1' }, { chordNoteChoices: [-24,24] });
+    const notes = phrase.phraseForTrack(service.project(), service.project().tracks[0]);
+    assert.ok(notes.length > 0 && notes.every(note => Number.isInteger(note.midi) && note.midi >= 0 && note.midi <= 127));
+  }
+  assert.throws(() => chooseMelodyTargets(42, [1], {}, 'invalid'), RangeError);
+  assert.throws(() => chooseMelodyTargets(42, [1], { blockTargetMode: 3 }), RangeError);
+});
+
 test('P5e extended target directions and variation match 4608 production Java cases', () => {
   const { load } = fixture();
   const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
@@ -2260,7 +2368,7 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
   assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
 });
 
-for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536], ['emphasis', 1152], ['tonal', 1920], ['harmony', 2304]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
+for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], ['effects', 1152], ['prepared-targets', 192], ['catalogue-phrases', 1536], ['emphasis', 1152], ['tonal', 1920], ['harmony', 2304], ['modes', 1152]]) test(`current block melody matches ${count} complete production Java ${name} phrases at fixed seeds`, () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, `fixtures/melody-${name}.java.json`), 'utf8').replace(/^\uFEFF/, ''));
@@ -2270,7 +2378,9 @@ for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], [
       const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
       assert.deepEqual(chooseMelodyTargets(sample.targetSeed, sample.targetProgression, sample.globalSettings), sample.settings.chordNoteChoices, `case ${caseIndex} prepared targets`);
     }
-    const progression = name === 'harmony' ? sample.targetProgression : Array(sample.chordCount).fill(1);
+    const progression = ['harmony', 'modes'].includes(name) ? sample.targetProgression : Array(sample.chordCount).fill(1);
+    if (name === 'modes' && sample.prepared) assert.deepEqual(load('core/music/melody-targets.ts').chooseMelodyTargets(
+      sample.targetSeed, progression, sample.globalSettings, sample.key, sample.scale, sample.customChords), sample.settings.chordNoteChoices);
     const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, sample.settings, sample.notesSeedOffset, undefined, { newBlocksChance: 100, ...sample.globalSettings }, sample.customChords);
     assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
     actual.forEach((note, index) => {
@@ -2545,7 +2655,7 @@ test('melody imports and every scope reject malformed core inputs without losing
   const sectionId = service.project().arrangement[1].id;
   service.updateSettings({ name: 'later' }); service.undo();
   const before = service.exportProjectJson();
-  const invalid = [{ speed: 101 }, { speed: -101 }, { chordNoteChoices: [] }, { chordNoteChoices: [15] },
+  const invalid = [{ speed: 101 }, { speed: -101 }, { chordNoteChoices: [] }, { chordNoteChoices: [25] },
     { melodyPatternOffsets: Array(33).fill(1) }, { melodyPatternOffsets: [1.5] }, { patternSeed: 2147483648 },
     { patternFlexible: 1 }, { velocityMin: 106 }, { splitChance: 101 }, { accents: -1 },
     { doubledRhythmChance: -1 }, { doubledRhythmChance: '50' }, { maxNoteExceptions: 5 }, { maxNoteExceptions: 0.5 },

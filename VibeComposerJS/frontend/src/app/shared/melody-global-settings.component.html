@@ -3,7 +3,15 @@
   <div class="global-controls">
     <fieldset class="parameter-area" data-control-category="structure">
       <legend>Target preparation</legend>
-      <p class="preparation-note">Used on Compose and enabled Regenerate. Target choices remain editable.</p>
+      <label class="pattern-effect" title="Reinterpret existing note targets immediately. Automatic targets prepares new choices on Compose and enabled Regenerate.">
+        Target mode
+        <select selectDefault="2" aria-label="Block target mode" [value]="values().blockTargetMode ?? 2" (change)="changeTargetMode($event)">
+          <option value="0">Chord note index</option>
+          <option value="1">Chord root + offset</option>
+          <option value="2">MIDI 60 + offset</option>
+        </select>
+      </label>
+      <p class="preparation-note">Mode reinterprets existing targets immediately. Other inputs prepare targets on Compose and enabled Regenerate; choices remain editable.</p>
       <label class="pattern-effect" title="Direction of prepared note targets, separate from block direction changes.">
         Target direction
         <select selectDefault="ASC" aria-label="Target direction" [value]="values().targetDirection ?? 'ASC'" (change)="changeTargetDirection($event)">
@@ -16,7 +24,7 @@
         description="Magnitude of prepared target directions before chord-note correction. Ascending and Descending double the draw range. Requires Automatic targets."
         (valueCommit)="settingsChanged.emit({ targetNoteVariation: $event })" />
       <vc-compact-toggle label="Directions from progression" [active]="values().useDirectionsFromProgression ?? false"
-        description="Prepare target directions from successive diatonic chord roots, starting with zero, instead of a seeded direction pattern. Requires Automatic targets."
+        description="Prepare target directions from successive unsquished chord roots, including Chordlets, starting with zero, instead of a seeded direction pattern. Requires Automatic targets."
         (toggled)="settingsChanged.emit({ useDirectionsFromProgression: !(values().useDirectionsFromProgression ?? false) })" />
       <vc-compact-toggle label="Force first outline" [active]="values().forceFirstOutline ?? false"
         description="During preparation, copy the first stored Melody track's targets, structure, speed, block limits, exceptions, doubled rhythm and split chance to unlocked Melody tracks. Section overrides remain explicit."
