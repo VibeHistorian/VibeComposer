@@ -474,6 +474,26 @@ Deliver in bounded slices: bass; chords/strum/transitions; arp direction/contour
 
 Exit per role: every active mapped control has an audible/exported effect, correct scope, validation, history, persistence, and supported fixed-seed comparison. Cross-role dependencies use melody from the same section and a documented generation order, including when that melody track is excluded.
 
+#### P5c — Remaining Arpeggio musical controls
+
+Remaining: pitch-pattern rotation and custom direction, contour and chord-relative contour, octave adjustments and melody-dependent note correction. The existing Up/Down/Up-down/Random directions and their basic rerolls are implemented; extend their musical consumer rather than treating advanced direction choices as header policy alone. Supply same-section melody context for correction and validate complete supported Java phrases, scoped settings, history, persistence and MIDI.
+
+#### P5d — Remaining drum musical behavior and actions
+
+Remaining: Ghosts/velocity-pattern behavior, melody-following rhythm and drum Humanize timing. Establish the section-melody rhythm map and generation order before enabling MELODY1 consumers in any role. Keep the selected percussion pitch track-owned and document any supported pitch substitutions explicitly. Add the immediate Multiply Hits action to the scoped musical editor/inspector; it transforms hits/custom patterns in one validated history entry and is separate from the existing on-reroll hits multiplier policy.
+
+Drum blueprint GUI pause baking and 5% pattern growth are already delivered in P6d and are not remaining work. Validate the new musical consumers and actions through playback, score and parsed MIDI, with scope/ownership and fixed-seed evidence where applicable.
+
+#### P5e — Remaining extended block Melody
+
+Remaining: static block catalogue/preferences, chord-driven targeting/inference, extended target/block controls and progression-derived directions; note exceptions, splitting/leading/start behavior, doubled/alternating rhythm and pattern effects; tonal targeting, key emphasis/avoid-note handling, rhythm accents and custom duration editors/behavior. Audit the current block consumers against the placement-map inventory when replacing the supported path's fixed inputs. Imported melody behavior remains a later slice within this subsection. Exclude the legacy skeleton and its exclusive controls.
+
+The minimum block editor, editable target/block lists and supported automatic target helper are implemented. Extend their effective generation inputs with explicit global/role versus part scope; validate complete supported phrases and preserve manual-note replacements, sparse overrides, history, persistence and exported output.
+
+#### P5f — Remaining section harmony and timing
+
+Remaining: section custom chords/durations and SectionConfig swing, BPM, key/scale/key-change and beat-duration behavior. Existing section degree progressions and global root/spice/inversion Chordlets cover only part of this scope. Add typed shared section generation context, variable chord durations and matching scheduling/export behavior. Expose section tempo changes only when playback and MIDI tempo events agree. Validate section boundaries, scoped inheritance, history, persistence and all affected role consumers.
+
 ### P6 — Track-generation policies in Tracks headers
 
 Port reroll policies and distinct actions from `createRandom*Panels` with the placement map. Start with arp hits/Random#/One#/2^n, fills, max split and length bounds; then chords vary length/strum/split; drum rules; melody seed/pattern/target reroll triggers. Bass has fewer exposed rules: preserve its creation behavior without inventing legacy checkboxes. Show current generated part values in the central panel after reroll. Keep the editable role total visible when collapsed, remove separate Count/Generate N controls, and show all supported policy controls on expansion; omit reroll policy from the Inspector.
@@ -482,17 +502,31 @@ Header controls can be implemented role by role after the corresponding P3–P5 
 
 Exit: changing a policy alone leaves stored part values and current notes unchanged; reroll changes only its explicit targets, respects locks, is reproducible, preserves local overrides, and commits one undo entry. Presence reroll never performs a settings reroll. Validate bound/order edge cases and Java behavior where seeded comparison is possible.
 
+#### P6g — Remaining drum policies
+
+Remaining: Dynamic/Ghosts selection, Overrandomize and melody-following creation branches. Implement after the corresponding P5d musical consumers. Keep policy edits independent of current notes and preserve locks, instrument permission, manual replacements and section overrides on reroll/Compose. Drum blueprint pause baking/growth, kit pitch selection and the on-reroll hits multiplier are already implemented.
+
+#### P6h — Remaining extended creation branches
+
+Remaining: Bass/Arpeggio GUI pause baking and pattern growth; Arpeggio later-track weighting and advanced pitch-direction branches; extended Melody creation/target parameters. Follow the actual Java creation and musical consumers, including draw order and documented intentional translation differences. Depend on P5c/P5e and the P5d section-melody dependency where applicable. Basic Arpeggio direction rerolls and supported Melody automatic targets/block patterns are already implemented. Validate deterministic replay, rule-only edits, automatic events, count increases, locks, atomic history, persistence and MIDI.
+
 ### P7 — Apply/reset workflows and workspace polish
 
 Add cell/track Apply to selected range, copy/freeze effective settings, copy back to globals with explicit scope, reset per field/cell/track, and badges indicating local exceptions. Preserve identity during section copy/reorder/duplicate; give copied sections independent patch objects. Add clear policies for deleting tracks with overrides and duplicating tracks (recommended: explicitly copy source overrides to the new ID).
 
 Exit: keyboard/device alternatives, expanded/collapsed layouts, mixed values, inspector navigation, section range operations, and persistence all remain usable with many tracks and narrow windows. Run the existing selection/overview/playback checks plus targeted resolver/reroll/export tests and a production build.
 
+#### P7c — Final polish and acceptance validation
+
+Remaining: repeat the many-track/narrow-window usability and production browser review after P5c–P5f and P6g–P6h, and fix any resulting regressions. Keyboard navigation, mixed values, inspector navigation and the P7a/P7b copy/freeze/reset/global-copy workflows already have implementations and browser coverage; this is a completion check. Check both editors, expanded/collapsed headers, section ranges, manual-note ownership, history and persistence, including 30-track layouts at 1440/780/390px and the arrangement zoom/device-scale matrix. Run selection/overview/playback and targeted resolver/reroll/export checks plus the production build; review screenshots and record final evidence.
+
 ### P8 — Deferred global behavior and ExtraSettingsGUI
 
 Port remaining app/playback/device/export preferences separately. Musical settings from ExtraSettingsGUI remain in a later global musical-settings inspector, not automatically in a reroll header. See the deferred inventory. Java-specific soundbanks and device behavior require deliberate Web Audio/Web MIDI equivalents; Wails remains thin.
 
-Remaining order after the recorded checkpoints: **prioritize P6 role slices for testing**, after P6b supported all-role rerolls/Generate N; resume P5 role work including Chords Pattern join/strum/transitions afterward, then remaining P7 and P8. The supported P1b, P4f and P4g prerequisites are delivered in checkpoints 10–12; their documented advanced exclusions remain in the appropriate later slices.
+Remaining order after the recorded checkpoints (2026-10-11): complete **P5c–P5f**, deliver dependent **P6g–P6h** as their musical consumers become available, then finish **P7c** before P8. P5a Bass and P5b/P6f Chords articulation/policies are delivered. The supported P1b, P4f and P4g prerequisites are delivered in checkpoints 10–12; their documented advanced exclusions remain in the named subsections above. This supersedes the earlier priority note that still listed Chords join/strum/transitions as outstanding.
+
+Universal dynamic instrument links and individual global randomization locks remain deferred by user request as recorded in P6c. They are separate future systems, not prerequisites for P8. P8 retains app/global/playback/device/export behavior and ExtraSettingsGUI preferences; it does not silently absorb the remaining P5/P6 musical work above.
 
 ## P6 count interaction revision (2026-10-10)
 
