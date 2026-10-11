@@ -117,14 +117,14 @@ test('production Angular controls initialize selects from settings and support r
         group.click();
         const pickers = await waitFor(() => {
           const result = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
-          return result.length === 2 ? result : null;
+          return result.length === 1 ? result : null;
         });
         const options = pickers.map(select => [...select.options].map(option => option.value));
         pickers[0].value = 'custom';
         pickers[0].dispatchEvent(new Event('change', { bubbles: true }));
         const grids = await waitFor(() => {
           const result = [...document.querySelectorAll('.custom-pattern-grid')];
-          return result.length === 2 ? result : null;
+          return result.length === 1 ? result : null;
         });
         const counts = grids.map(grid => grid.querySelectorAll('button').length);
         grids[0].querySelector('button').click();
@@ -261,7 +261,7 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('.track-group.melody .group-select').click();
         const targets = await waitFor(() => {
           const inputs = [...document.querySelectorAll('input[aria-label="Note targets"]')];
-          return inputs.length === 2 ? inputs : null;
+          return inputs.length === 1 ? inputs : null;
         }, 'melody minimum editors');
         result.melodyInitialTargets = targets.map(input => input.value);
         targets[0].focus(); targets[0].value = '0, 4, -2';
@@ -288,10 +288,10 @@ test('production Angular controls initialize selects from settings and support r
             .every(editor => editor.getAttribute('data-control-role') === role), role + ' editor context');
           const rhythms = await waitFor(() => {
             const controls = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
-            return controls.length === 2 ? controls : null;
+            return controls.length === 1 ? controls : null;
           }, role + ' rhythm controls');
           rhythms[0].value = 'custom'; rhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
-          await waitFor(() => document.querySelectorAll('.custom-pattern-grid').length === 2, role + ' grids');
+          await waitFor(() => document.querySelectorAll('.custom-pattern-grid').length === 1, role + ' grids');
           const hits = document.querySelector('input[aria-label="Hits"]');
           hits.value = '5'; hits.dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid')].every(grid => grid.children.length === 5), role + ' Hits');
@@ -366,7 +366,7 @@ test('production Angular controls initialize selects from settings and support r
         drumRhythms[0].value = 'custom'; drumRhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
         const drumGrids = await waitFor(() => {
           const grids = [...document.querySelectorAll('.custom-pattern-grid')];
-          return grids.length === 2 ? grids : null;
+          return grids.length === 1 ? grids : null;
         }, 'drum custom rhythm');
         result.drumGridCounts = drumGrids.map(grid => grid.querySelectorAll('button').length);
         drumGrids[0].querySelector('button').click();
@@ -430,9 +430,9 @@ test('production Angular controls initialize selects from settings and support r
             value: knob.querySelector('.knob-face > span').textContent.trim(), tooltip: knob.title,
           })));
           result.parameterAreas.push({ role, pitch: pitch.map(area => area ? getComputedStyle(area).getPropertyValue('--accent-primary').trim() : null),
-            rhythm: rhythm.map(area => getComputedStyle(area).getPropertyValue('--accent-primary').trim()),
-            backgrounds: rhythm.map(area => getComputedStyle(area).backgroundColor),
-            knobs: rhythm.map(area => getComputedStyle(area.querySelector('.knob-face')).backgroundImage.includes('86, 182, 188')) });
+            rhythm: rhythm.filter(Boolean).map(area => getComputedStyle(area).getPropertyValue('--accent-primary').trim()),
+            backgrounds: rhythm.filter(Boolean).map(area => getComputedStyle(area).backgroundColor),
+            knobs: rhythm.filter(Boolean).map(area => getComputedStyle(area.querySelector('.knob-face')).backgroundImage.includes('86, 182, 188')) });
         }
         result.inspectorPolicyRemoved = !document.querySelector('#part-inspector vc-track-generation-policy');
         result.bassBlue = getComputedStyle(document.querySelector('.track-group.bass .role-dot')).backgroundColor;
@@ -608,7 +608,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.rerollSettings.exceptionChance, 0);
     assert.equal(actual.rerollSettings.noteLengthMultiplier, 100);
     assert.equal(actual.rerollId, 'track-arpeggio-1');
-    assert.deepEqual(actual.rerollDisplayedHits, ['16', '16']);
+    assert.deepEqual(actual.rerollDisplayedHits, ['16']);
     assert.equal(actual.rerollAllLocked, true);
     assert.deepEqual(actual.otherRoleRerolls, ['bass','chords','drums','melody'].map(role => ({ role, unchanged: true, synced: true, changed: true })));
     assert.equal(actual.generatedChords, 3);
@@ -636,18 +636,20 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.countNearName, true);
     assert.equal(actual.countBox, 'solid');
     for (const areas of actual.parameterAreas) {
-      assert.deepEqual(areas.pitch, areas.role === 'drums' ? [null, null] : ['#a49ac9', '#a49ac9']);
-      assert.deepEqual(areas.rhythm, ['#56b6bc', '#56b6bc']);
-      assert.equal(areas.backgrounds[0], areas.backgrounds[1]);
-      assert.deepEqual(areas.knobs, [true, true]);
+      assert.deepEqual(areas.pitch.filter(Boolean), areas.role === 'drums' ? []
+        : ['melody', 'arpeggio'].includes(areas.role) ? ['#a49ac9', '#a49ac9'] : ['#a49ac9']);
+      assert.ok(areas.rhythm.length > 0);
+      assert.ok(areas.rhythm.every(color => color === '#56b6bc'));
+      assert.equal(new Set(areas.backgrounds).size, 1);
+      assert.ok(areas.knobs.every(Boolean));
     }
     assert.equal(new Set(actual.parameterAreas.map(areas => areas.backgrounds[0])).size, 1);
     assert.deepEqual(actual.sharedRoles, [
-      { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 2, pause: 0, split: 0, repeat: 0 },
-      { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 2, pause: 2, split: 2, repeat: 2 },
+      { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 1, pause: 0, split: 0, repeat: 0 },
+      { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 1, pause: 1, split: 1, repeat: 1 },
     ]);
-    assert.deepEqual(actual.drumRhythmOptions, [[...expected, 'melody'], [...expected, 'melody']]);
-    assert.deepEqual(actual.drumGridCounts, [4, 4]);
+    assert.deepEqual(actual.drumRhythmOptions, [[...expected, 'melody']]);
+    assert.deepEqual(actual.drumGridCounts, [4]);
     assert.deepEqual(actual.drumVelocityCounts, [4]);
     assert.equal(actual.drumChannelLocked, true);
     assert.equal(actual.drumSettings.pitch, 38);
@@ -660,13 +662,13 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.selectedDrumRow, 'Drums');
     assert.deepEqual(actual.drumEditorVoices, ['Snare']);
     assert.deepEqual(actual.initialChords, ['C', 'G', 'Am', 'F']);
-    assert.deepEqual(actual.options, [expected, expected]);
-    assert.deepEqual(actual.counts, [8, 8]);
-    assert.deepEqual(actual.selected, ['custom', 'custom']);
+    assert.deepEqual(actual.options, [expected]);
+    assert.deepEqual(actual.counts, [8]);
+    assert.deepEqual(actual.selected, ['custom']);
     assert.equal(actual.rhythm, 'custom');
     assert.equal(actual.grid.length, 32);
     assert.deepEqual(actual.grid.slice(0, 8), [0, 1, 1, 1, 1, 1, 1, 1]);
-    assert.deepEqual(actual.wheelRhythm, ['full', 'full']);
+    assert.deepEqual(actual.wheelRhythm, ['full']);
     assert.equal(actual.volumeBeforeRelease, 100);
     assert.equal(actual.mixDefaultsMuted, true);
     assert.equal(actual.roundedUnityMuted, true);
@@ -697,12 +699,12 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.retainedVelocities, actual.customVelocities);
     assert.equal(actual.randomBoundsHidden, true);
     assert.equal(actual.velocitiesEnabled, true);
-    assert.deepEqual(actual.melodyInitialTargets, ['0, 2, 2, 4', '0, 2, 2, 4']);
+    assert.deepEqual(actual.melodyInitialTargets, ['0, 2, 2, 4']);
     assert.deepEqual(actual.melody.chordNoteChoices, [0, 4, -2]);
     assert.deepEqual(actual.melody.melodyPatternOffsets, [1, -1, 2]);
     assert.equal(actual.melody.transpose, 7);
-    assert.equal(actual.melodyHasSpeed, 2);
-    assert.equal(actual.melodyHasAccent, 2);
+    assert.equal(actual.melodyHasSpeed, 1);
+    assert.equal(actual.melodyHasAccent, 1);
   } finally {
     clearTimeout(timeout); child.kill(); server.close();
     // Remove only the fresh profile created by this test after Chromium exits.

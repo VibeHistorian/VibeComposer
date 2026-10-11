@@ -26,7 +26,8 @@ export interface PartControl {
 }
 
 const number = (key: string, label: string, minimum: number, maximum: number, defaultValue?: number, unit = '%'): PartControl =>
-  ({ key, label, kind: 'number', minimum, maximum, defaultValue, unit });
+  ({ key, label, kind: 'number', minimum, maximum, defaultValue, unit,
+    advanced: ['noteLengthMultiplier', 'noteLengthPercent', 'exceptionChance', 'offset'].includes(key) });
 const choice = (key: string, label: string, options: readonly (string | number)[]): PartControl => ({ key, label, kind: 'choice', options });
 const fill: readonly PartControl[] = [
   { ...choice('chordSpanFill', 'Fill', CHORD_SPAN_FILLS), defaultValue: 'ALL',

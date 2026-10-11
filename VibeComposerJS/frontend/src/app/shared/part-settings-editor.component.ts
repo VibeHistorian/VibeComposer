@@ -38,6 +38,7 @@ export class PartSettingsEditorComponent {
   readonly overriddenKeys = input<readonly string[]>([]);
   readonly local = input(false);
   readonly advanced = input(true);
+  readonly inspectorOnly = input(false);
   readonly showGroupTitles = input(true);
   readonly melodyHits = input(16);
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
@@ -46,6 +47,7 @@ export class PartSettingsEditorComponent {
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
     (!control.advanced || this.advanced()) &&
+    (!this.inspectorOnly() || control.advanced) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&
     (control.key !== 'arpPatternCustom' || this.values()['pattern'] === 'custom' || this.values()['pattern'] === null) &&
@@ -60,8 +62,9 @@ export class PartSettingsEditorComponent {
       || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating'))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
     id: group.id, label: group.label,
-    controls: this.controls().filter(control => partControlGroup(control.key) === group.id),
+    controls: this.controls().filter(control => control.key !== 'patternSeed' && partControlGroup(control.key) === group.id),
   })).filter(group => group.controls.length > 0));
+  readonly seedControl = computed(() => this.controls().find(control => control.key === 'patternSeed'));
   readonly velocityDraft = signal<readonly number[] | null>(null);
   private velocityEdit: { index: number; values: Readonly<Record<string, PartSettingValue | null>> } | null = null;
   readonly velocitySlots = computed(() => {

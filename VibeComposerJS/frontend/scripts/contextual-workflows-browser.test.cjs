@@ -151,10 +151,10 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       change(document.querySelector('#part-inspector [aria-label="Transition split"]'), '750');
       change(document.querySelector('#part-inspector [aria-label="Strum pause"]'), '20');
       await wait(() => read().chords.strum === 333 && read().chords.strumPauseChance === 20, 'chord articulation commit');
-      await wait(() => document.querySelector('#part-inspector [aria-label="Strum"]').value === '333'
-        && document.querySelector('#part-inspector [aria-label="Strum type"]').value === 'ARP_D', 'chord editors synchronized');
-      result.chordEditors = document.querySelector('#part-inspector [aria-label="Strum"]').value === '333'
-        && document.querySelector('#part-inspector [aria-label="Strum type"]').value === 'ARP_D'
+      await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]').value === '333'
+        && document.querySelector('.part-settings-panel [aria-label="Strum type"]').value === 'ARP_D', 'chord editors synchronized');
+      result.chordEditors = document.querySelector('.part-settings-panel [aria-label="Strum"]').value === '333'
+        && document.querySelector('.part-settings-panel [aria-label="Strum type"]').value === 'ARP_D'
         && read().chords.patternJoinMode === 'EXPAND' && read().chords.transitionChance === 100 && read().chords.transitionSplit === 750;
       const chords = document.querySelector('.track-group.chords');
       const tracksBeforePolicy = JSON.stringify(read().tracks);
@@ -180,19 +180,19 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       document.querySelector('#part-inspector [aria-label="Octave adjustments"]').click();
       document.querySelector('#part-inspector [aria-label="Correct by melody"]').click();
       await wait(() => read().arpeggio.arpPatternRotate === 3 && read().arpeggio.correctMelodyNotes, 'arp musical settings');
-      await wait(() => document.querySelector('#part-inspector [aria-label="Rotate"]').value === '3', 'arp editors synchronized');
+      await wait(() => document.querySelector('.part-settings-panel [aria-label="Rotate"]').value === '3', 'arp editors synchronized');
       result.arpMusical = read().tracks.filter(track => track.role === 'arpeggio').every(track =>
         track.generatorSettings.pattern === 'custom' && track.generatorSettings.arpPatternCustom.join(',') === '-1,0,3,1'
         && track.generatorSettings.arpContour.join(',') === '0,2,-1' && track.generatorSettings.useOctaveAdjustments)
-        && document.querySelector('#part-inspector [aria-label="Rotate"]').value === '3';
+        && document.querySelector('.part-settings-panel [aria-label="Rotate"]').value === '3';
       change(document.querySelector('#part-inspector [aria-label="Contour"]'), '');
       await wait(() => read().arpeggio.arpContour.length === 0, 'clear contour');
       change(document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]'), 'melody');
       await wait(() => read().arpeggio.rhythm === 'melody', 'arp melody rhythm');
       await wait(() => !document.querySelector('.part-settings-panel [aria-label="Hits"]')
-        && document.querySelector('#part-inspector [aria-label="Rhythm pattern"]').value === 'melody', 'arp melody editors synchronized');
+        && document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]').value === 'melody', 'arp melody editors synchronized');
       result.arpMelody = !document.querySelector('.part-settings-panel [aria-label="Hits"]')
-        && document.querySelector('#part-inspector [aria-label="Rhythm pattern"]').value === 'melody';
+        && document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]').value === 'melody';
       document.querySelector('.track-group.drums .group-select').click();
       const ghosts = await wait(() => document.querySelector('.part-settings-panel [aria-label="Ghosts"]'), 'drum ghosts');
       ghosts.click();
@@ -201,18 +201,18 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       const multiply = document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]');
       change(multiply, '2');
       await wait(() => read().drums.hitsPerPattern === 8, 'multiply hits');
-      await wait(() => document.querySelector('#part-inspector [aria-label="Hits"]').value === '8'
-        && document.querySelector('#part-inspector [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true', 'drum editors synchronized');
+      await wait(() => document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8'
+        && document.querySelector('.part-settings-panel [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true', 'drum editors synchronized');
       result.drumMusical = read().tracks.filter(track => track.role === 'drums').every(track =>
         track.generatorSettings.hitsPerPattern === 8 && track.generatorSettings.ghosts && track.generatorSettings.humanize === 100)
-        && document.querySelector('#part-inspector [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true'
-        && document.querySelector('#part-inspector [aria-label="Hits"]').value === '8' && multiply.value === '';
+        && document.querySelector('.part-settings-panel [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true'
+        && document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8' && multiply.value === '';
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => read().drums.hitsPerPattern === 4, 'multiply undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'multiply redo enabled')).click();
       await wait(() => read().drums.hitsPerPattern === 8, 'multiply redo');
       change(document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]'), 'melody');
-      await wait(() => document.querySelector('#part-inspector [aria-label="Multiply Hits"]').disabled, 'melody hit action disabled');
+      await wait(() => document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]').disabled, 'melody hit action disabled');
       result.drumMelody = document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]').disabled
         && !document.querySelector('.part-settings-panel [aria-label="Hits"]');
       document.querySelector('.track-group.melody .group-select').click();
@@ -297,7 +297,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       reset(tempo); await wait(() => read().tempoBpm === 120, 'tempo knob default');
       change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode before reset');
       reset(mode); await wait(() => read().scale === 'major', 'mode combobox default');
-      const speed = globals.closest('#part-inspector').querySelector('[aria-label="Speed"]');
+      const speed = document.querySelector('.part-settings-panel [aria-label="Speed"]');
       change(speed, '80'); await wait(() => read().melody.speed === 80, 'part knob before reset');
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       reset(speed); await wait(() => read().melody.speed === 50, 'part knob default');

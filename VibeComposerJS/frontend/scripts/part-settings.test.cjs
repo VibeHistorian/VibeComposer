@@ -4383,6 +4383,42 @@ test('Euclidean pulse edits retain mixed values and requested counts across scop
   assert.equal(workspace.partValues().euclideanPulses, 6);
 });
 
+test('quick access and inspector partition musical controls across roles and rhythm modes', () => {
+  const { service, load, settings } = fixture();
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { partControlGroup } = load('shared/part-control-groups.ts');
+  const quick = new PartSettingsEditorComponent(), inspector = new PartSettingsEditorComponent();
+  quick.advanced.set(false);
+  inspector.inspectorOnly.set(true);
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    for (const rhythm of ['full', 'euclid', 'custom', 'melody', 'alternating']) {
+      const values = { ...settings.settingsValues(service.project()[role], role), rhythm,
+        useCustomVelocities: true };
+      const complete = new PartSettingsEditorComponent();
+      for (const editor of [quick, inspector, complete]) {
+        editor.role.set(role);
+        editor.values.set(values);
+      }
+      const quickKeys = quick.controls().map(control => control.key);
+      const inspectorKeys = inspector.controls().map(control => control.key);
+      assert.equal(quickKeys.some(key => inspectorKeys.includes(key)), false);
+      assert.deepEqual([...quickKeys, ...inspectorKeys].sort(), complete.controls().map(control => control.key).sort());
+      for (const key of ['noteLengthMultiplier', 'noteLengthPercent', 'exceptionChance', 'offset']) {
+        assert.equal(quickKeys.includes(key), false);
+        if (settings.PART_CONTROLS[role].some(control => control.key === key)) assert.ok(inspectorKeys.includes(key));
+      }
+      assert.equal(quick.controlGroups()[0].id, 'rhythm');
+      assert.equal(quick.seedControl(), undefined);
+      assert.equal(inspector.seedControl().key, 'patternSeed');
+      assert.equal(inspector.controlGroups().some(group => group.controls.some(control => control.key === 'patternSeed')), false);
+    }
+  }
+  for (const key of ['noteLengthMultiplier', 'noteLengthPercent', 'exceptionChance', 'swingPercent', 'offset', 'feedbackCount', 'feedbackDuration']) {
+    assert.equal(partControlGroup(key), 'timing');
+  }
+  assert.equal(partControlGroup('hitsPerPattern'), 'rhythm');
+});
+
 test('the chord rhythm preview shares generation masks and shows mixed values only for active rhythm inputs', () => {
   const { service, load, settings } = fixture();
   const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');

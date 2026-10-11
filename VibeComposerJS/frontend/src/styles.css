@@ -137,7 +137,7 @@
   --role-drum-cell-surface: color-mix(in srgb, var(--role-drum-surface) 75%, black);
 
   /* Parameter impact palette, independent of instrument roles */
-  --parameter-core: #94a3b8;
+  --parameter-timing: #94a3b8;
   --parameter-rhythm: #56b6bc;
   --parameter-pitch: #a49ac9;
   --parameter-shape: #d29a79;
@@ -176,7 +176,7 @@
 }
 
 /* Parameter accents override the enclosing role inside each musical area */
-[data-control-category="core"] { --control-role-color: var(--parameter-core); }
+[data-control-category="timing"] { --control-role-color: var(--parameter-timing); }
 [data-control-category="rhythm"] { --control-role-color: var(--parameter-rhythm); }
 [data-control-category="pitch"] { --control-role-color: var(--parameter-pitch); }
 [data-control-category="shape"] { --control-role-color: var(--parameter-shape); }

@@ -1,7 +1,7 @@
 /** Musical impact categories shared by the quick panel and inspector across roles. */
 export const PART_CONTROL_GROUPS = [
-  { id: 'core', label: 'Core', keys: ['patternSeed', 'speed', 'hitsPerPattern', 'noteLengthMultiplier', 'noteLengthPercent'] },
-  { id: 'rhythm', label: 'Rhythm', keys: ['rhythm', 'euclideanPulses', 'patternShift', 'patternFlip', 'customPattern', 'pauseChance', 'exceptionChance', 'swingPercent', 'offset', 'fillPauses', 'feedbackCount', 'feedbackDuration', 'humanize'] },
+  { id: 'rhythm', label: 'Rhythm', keys: ['speed', 'hitsPerPattern', 'rhythm', 'euclideanPulses', 'patternShift', 'patternFlip', 'customPattern', 'pauseChance', 'fillPauses', 'humanize'] },
+  { id: 'timing', label: 'Timing', keys: ['noteLengthMultiplier', 'noteLengthPercent', 'exceptionChance', 'swingPercent', 'offset', 'feedbackCount', 'feedbackDuration'] },
   { id: 'pitch', label: 'Pitch', keys: ['transpose', 'chordNoteChoices', 'octaveInterval', 'octaves', 'voicing', 'chordNotesStretch', 'stretchEnabled'] },
   { id: 'shape', label: 'Shape', keys: ['noteVariation', 'maxBlockChange', 'blockJump', 'patternFlexible', 'pattern', 'transitionChance', 'transitionSplit', 'strum', 'strumType', 'strumPauseChance'] },
   { id: 'dynamics', label: 'Dynamics', keys: ['velocityMin', 'velocityMax', 'useCustomVelocities', 'customVelocities', 'accents', 'feedbackVol'] },

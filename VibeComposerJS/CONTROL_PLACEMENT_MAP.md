@@ -8,7 +8,7 @@ Classification follows the actual consumer: musical values belong in Part settin
 
 All Java paths in this document are relative to [the Java package](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/). Links identify real source files; symbols are stable search targets even as line numbers change. The old UI is now largely under `gui/`, not directly in `VibeComposerGUI.java`.
 
-- **Q:** between-canvas Part settings panel, with the same complete control in inspector. Available for global role/track and section role/track, where musically supported.
+- **Q:** between-canvas Part settings panel; these controls are not duplicated in inspector. Available for global role/track and section role/track, where musically supported.
 - **I:** detailed musical settings in inspector; no default quick-panel slot. Old global-only values stay global/role settings until a scoped generator consumer exists.
 - **H:** track-generation policy directly in expanded Tracks group header. The editable total beside the role name remains visible when collapsed; separate Count/Generate N controls are removed.
 - **HI:** advanced track-generation policy shown directly in the expanded Tracks group alongside H controls. No reroll policy or actions in the part inspector.
