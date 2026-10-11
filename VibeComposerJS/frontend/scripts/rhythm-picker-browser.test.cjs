@@ -636,7 +636,7 @@ test('production Angular controls initialize selects from settings and support r
       { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 2, pause: 0, split: 0, repeat: 0 },
       { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 2, pause: 2, split: 2, repeat: 2 },
     ]);
-    assert.deepEqual(actual.drumRhythmOptions, [expected, expected]);
+    assert.deepEqual(actual.drumRhythmOptions, [[...expected, 'melody'], [...expected, 'melody']]);
     assert.deepEqual(actual.drumGridCounts, [4, 4]);
     assert.deepEqual(actual.drumVelocityCounts, [4]);
     assert.equal(actual.drumChannelLocked, true);

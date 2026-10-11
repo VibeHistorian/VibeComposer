@@ -38,11 +38,16 @@ export class PartSettingsEditorComponent {
   readonly overriddenKeys = input<readonly string[]>([]);
   readonly local = input(false);
   readonly advanced = input(true);
+  readonly melodyHits = input(16);
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
   readonly inheritRequested = output<string>();
+  readonly multiplyHitsRequested = output<number>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
     (!control.advanced || this.advanced()) &&
+    (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
+      ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&
+    (control.key !== 'arpPatternCustom' || this.values()['pattern'] === 'custom' || this.values()['pattern'] === null) &&
     (!(this.role() === 'bass' && this.values()['rhythm'] === 'alternating')
       || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities', 'patternJoinMode'].includes(control.key))
     &&
@@ -50,6 +55,7 @@ export class PartSettingsEditorComponent {
     && (control.key !== 'customPattern' || this.values()['rhythm'] === 'custom')
     && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
     && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true
+      || (this.values()['rhythm'] === 'melody' && this.melodyHits() > 32)
       || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating'))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
     id: group.id, label: group.label,
@@ -63,13 +69,13 @@ export class PartSettingsEditorComponent {
     if (values['hitsPerPattern'] === null || values['customVelocities'] === null) return null;
     const grid = (this.velocityEdit?.values === values ? draft : null)
       ?? values['customVelocities'] as readonly number[] | undefined ?? DEFAULT_CUSTOM_VELOCITIES;
-    return grid.slice(0, values['hitsPerPattern'] as number | undefined ?? 8);
+    return grid.slice(0, values['rhythm'] === 'melody' ? this.melodyHits() : values['hitsPerPattern'] as number | undefined ?? 8);
   });
   readonly patternDraft = signal<readonly number[] | null>(null);
   private painting: { pointerId: number; values: Readonly<Record<string, PartSettingValue | null>>; sounded: number; lastIndex: number } | null = null;
   readonly rhythmPreview = computed(() => {
     const draft = this.patternDraft();
-    if (this.role() === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating')) return undefined;
+    if (this.role() === 'melody' || this.values()['rhythm'] === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating')) return undefined;
     const values = this.values();
     const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
       ...(values['rhythm'] === 'euclid' ? ['euclideanPulses'] : []),
@@ -131,11 +137,11 @@ export class PartSettingsEditorComponent {
   commitText(control: PartControl, event: Event): void {
     const element = event.target as HTMLInputElement;
     if (this.textEditValues && this.textEditValues !== this.values()) { this.cancelTextEdit(control, event); return; }
-    const pieces = control.kind === 'integers' ? element.value.split(',').map((piece) => piece.trim()) : [element.value.trim()];
-    const valid = pieces.length >= 1 && pieces.length <= 32 && pieces.every((piece) => /^-?\d+$/.test(piece)
+    const pieces = control.kind === 'integers' ? (control.allowEmpty && !element.value.trim() ? [] : element.value.split(',').map((piece) => piece.trim())) : [element.value.trim()];
+    const valid = pieces.length >= (control.allowEmpty ? 0 : 1) && pieces.length <= 32 && pieces.every((piece) => /^-?\d+$/.test(piece)
       && Number.isSafeInteger(Number(piece)) && Number(piece) >= control.minimum! && Number(piece) <= control.maximum!);
     if (!valid) {
-      element.setCustomValidity(control.kind === 'integers' ? `Enter 1–32 comma-separated integers from ${control.minimum} to ${control.maximum}.`
+      element.setCustomValidity(control.kind === 'integers' ? `Enter ${control.allowEmpty ? '0' : '1'}–32 comma-separated integers from ${control.minimum} to ${control.maximum}.`
         : `Enter an integer from ${control.minimum} to ${control.maximum}.`);
       element.reportValidity(); return;
     }

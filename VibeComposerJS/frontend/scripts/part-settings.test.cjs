@@ -5,6 +5,189 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('P5 melody dependency grids match production onset buckets with rests and boundary offsets', () => {
+  const { load } = fixture();
+  const { melodyContext } = load('core/music/melody-context.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/melody-context.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 64);
+  for (const entry of cases) assert.deepEqual(melodyContext(entry.notes, entry.chordCount).pitches, entry.pitches);
+});
+
+test('P5d Ghosts, melody rhythm and humanize match complete production Java drum phrases', () => {
+  const { load } = fixture();
+  const { generateDrumPart } = load('core/music/drum-generator.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/drum-advanced.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 192);
+  for (const [index, entry] of cases.entries()) {
+    const actual = generateDrumPart(BigInt(entry.seed), entry.barCount, entry.settings, entry.melody);
+    assert.equal(actual.length, entry.notes.length, `case ${index} ${JSON.stringify(entry.settings)}`);
+    actual.forEach((note, position) => {
+      const expected = entry.notes[position];
+      assert.equal(note.midi, expected[0], `case ${index} note ${position} pitch`);
+      assert.equal(note.velocity, expected[3], `case ${index} note ${position} velocity`);
+      assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-9, `case ${index} note ${position} onset ${note.startBeat} vs ${expected[1]}`);
+      assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-9, `case ${index} note ${position} duration ${note.durationBeats} vs ${expected[2]}`);
+    });
+  }
+});
+
+test('P5c Arpeggio direction, rotation, contour, octave and melody consumers match complete Java phrases', () => {
+  const { load } = fixture();
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/arpeggio-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
+  assert.equal(cases.length, 256);
+  for (const [index, entry] of cases.entries()) {
+    const actual = generateArpeggio(BigInt(entry.seed), entry.key, entry.scale, entry.progression, entry.settings, undefined, entry.melody);
+    assert.equal(actual.length, entry.notes.length, `case ${index} ${JSON.stringify(entry.settings)}`);
+    actual.forEach((note, position) => {
+      const expected = entry.notes[position];
+      assert.equal(note.midi, expected[0], `case ${index} note ${position} pitch`);
+      assert.equal(note.velocity, expected[3], `case ${index} note ${position} velocity`);
+      assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-9, `case ${index} note ${position} onset ${note.startBeat} vs ${expected[1]}`);
+      assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-9, `case ${index} note ${position} duration ${note.durationBeats} vs ${expected[2]}`);
+    });
+  }
+});
+
+test('P5 dependencies use section melody settings, manual ownership and absent source presence through MIDI', () => {
+  const { service, phrase, midi } = fixture();
+  const project = JSON.parse(service.exportProjectJson());
+  project.arrangement = project.arrangement.slice(0, 2).map(section => ({ ...section, measures: 4,
+    trackPresence: { ...section.trackPresence, 'track-melody-1': false, 'track-drums-1': true, 'track-arpeggio-1': true } }));
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  const first = service.project().arrangement[0], second = service.project().arrangement[1];
+  service.updateTrackPhrase('track-melody-1', [
+    { id: 'source-a', midi: 61, startBeat: 0, durationBeats: 1, velocity: 90 },
+    { id: 'source-b', midi: 74, startBeat: 2, durationBeats: 1, velocity: 90 },
+  ]);
+  service.updatePartSettings({ kind: 'global-track', trackId: 'track-drums-1' }, { rhythm: 'melody', velocityMin: 80, velocityMax: 80, swingPercent: 50 });
+  const drums = () => service.project().tracks.find(track => track.id === 'track-drums-1');
+  const arp = () => service.project().tracks.find(track => track.id === 'track-arpeggio-1');
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), drums()).map(note => note.startBeat), [0, 2, 16, 18]);
+  service.updatePartSettings({ kind: 'global-track', trackId: arp().id }, { pattern: 'up', rhythm: 'full', hitsPerPattern: 4,
+    chordSpan: 1, patternRepeat: 1, exceptionChance: 0, useOctaveAdjustments: false, correctMelodyNotes: true });
+  assert.equal(phrase.generateTrackPhrase(service.project(), arp())[0].midi, 49);
+  service.updateTrackPhrase('track-melody-1', [{ id: 'replacement', midi: 62, startBeat: 1, durationBeats: 1, velocity: 90 }]);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), drums()).map(note => note.startBeat), [1, 17]);
+  service.clearTrackPhrase('track-melody-1');
+  const before = phrase.sectionMelodyContext(service.project(), first);
+  const local = { kind: 'section-track', sectionId: first.id, trackId: 'track-melody-1' };
+  service.updatePartSettings(local, { speed: 100, melodyPatternOffsets: [1, 2, 3, 4], pauseChance: 0 });
+  const changed = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
+  assert.notDeepEqual(changed, before);
+  const unmodified = phrase.sectionMelodyContext(service.project(), service.project().arrangement[1]);
+  assert.deepEqual(unmodified, phrase.sectionMelodyContext(service.project()));
+  const gridStarts = changed.pitches.flat().flatMap((pitch, index) => pitch > 0 ? [index / 4] : []);
+  const arranged = phrase.layOutTrackPhrase(service.project(), drums());
+  assert.deepEqual(arranged.filter(note => note.startBeat < 16).map(note => note.startBeat), gridStarts);
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  const drumMidi = exported.tracks.find(track => track.name === drums().name);
+  assert.equal(drumMidi.channel, 9); assert.equal(drumMidi.notes.length, arranged.length);
+  arranged.forEach(note => assert.ok(drumMidi.notes.some(item => item.midi === note.midi && Math.abs(item.ticks / exported.header.ppq - note.startBeat) < 0.003)));
+  service.updatePartSettings(local, { generationEnabled: false });
+  assert.equal(phrase.layOutTrackPhrase(service.project(), drums()).some(note => note.startBeat < 16), false);
+  assert.ok(phrase.layOutTrackPhrase(service.project(), drums()).some(note => note.startBeat >= 16));
+  service.undo(); assert.deepEqual(phrase.layOutTrackPhrase(service.project(), drums()), arranged);
+  service.updateTrackPhrase(drums().id, [{ id: 'manual-drum', midi: 38, startBeat: 0, durationBeats: 1, velocity: 100 }]);
+  assert.equal(phrase.phraseForTrack(service.project(), drums())[0].id, 'manual-drum');
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  service.removeTrack('track-melody-1');
+  const noSource = phrase.generateTrackPhrase(service.project(), arp());
+  service.updatePartSettings({ kind: 'global-track', trackId: arp().id }, { correctMelodyNotes: false });
+  assert.deepEqual(phrase.generateTrackPhrase(service.project(), arp()), noSource, 'missing melody does not correct pitches toward an invented tonic');
+});
+
+test('P5c/P5d controls resolve mixed scopes, snapshots, independent arrays, resets and strict imports', () => {
+  const { service, settings, load, stored } = fixture();
+  const first = service.project().arrangement[0], second = service.project().arrangement[1];
+  for (const [role, patch] of [
+    ['arpeggio', { pattern: 'custom', arpPatternRotate: 3, arpPatternCustom: [-1, 0, 4], arpContour: [0, 2, -1],
+      arpContourChordMode: true, useOctaveAdjustments: true, correctMelodyNotes: true }],
+    ['drums', { ghosts: true, humanize: 100, rhythm: 'melody' }],
+  ]) {
+    const primary = `track-${role}-1`, duplicate = service.duplicateTrack(primary);
+    const cell = { kind: 'section-role', sectionId: first.id, role };
+    const local = { kind: 'section-track', sectionId: first.id, trackId: duplicate };
+    service.updatePartSettings(cell, patch);
+    const effective = () => settings.resolvePartTrack(service.project().tracks.find(track => track.id === duplicate), service.project().arrangement[0]).generatorSettings;
+    for (const [key, value] of Object.entries(patch)) assert.deepEqual(effective()[key], value);
+    const field = role === 'arpeggio' ? 'arpContour' : 'ghosts', exception = role === 'arpeggio' ? [] : false;
+    service.updatePartSettings(local, { [field]: exception }); assert.deepEqual(effective()[field], exception);
+    service.freezePartSettings(cell);
+    service.applyPartSettingsToSections(cell, [second.id], 'effective');
+    const source = service.project().arrangement[0].trackPartOverrides[duplicate];
+    const copied = service.project().arrangement[1].trackPartOverrides[duplicate];
+    assert.deepEqual(source, copied);
+    if (role === 'arpeggio') assert.notEqual(source.arpPatternCustom, copied.arpPatternCustom);
+    service.copyPartSettingsToGlobals(local);
+    assert.deepEqual(service.project().tracks.find(track => track.id === duplicate).generatorSettings[field], exception);
+    service.resetPartSettings(local, field); assert.deepEqual(effective()[field], patch[field]);
+    const before = service.exportProjectJson(); service.undo(); service.redo(); assert.equal(service.exportProjectJson(), before);
+  }
+  const before = service.exportProjectJson();
+  for (const [role, bad] of [['arpeggio', { arpContour: [1.5] }], ['arpeggio', { arpPatternCustom: [] }],
+    ['arpeggio', { arpPatternRotate: 9 }], ['arpeggio', { correctMelodyNotes: 1 }], ['drums', { humanize: 101 }],
+    ['drums', { ghosts: 1 }], ['bass', { rhythm: 'melody' }], ['chords', { rhythm: 'melody' }]]) {
+    service.updatePartSettings({ kind: 'global-role', role }, bad);
+    const project = JSON.parse(before); Object.assign(project.tracks.find(track => track.role === role).generatorSettings, bad);
+    assert.equal(service.importProjectJson(JSON.stringify(project)), false, JSON.stringify(bad));
+  }
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.importProjectJson(before), true);
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.equal(new ProjectService().exportProjectJson(), service.exportProjectJson());
+  assert.ok(stored.get('vibecomposer.project.v12'));
+});
+
+test('P5d Multiply Hits transforms mixed drums atomically at global/local scopes and preserves ownership', () => {
+  const { service, phrase } = fixture();
+  const first = service.project().arrangement[0];
+  const id = service.duplicateTrack('track-drums-1');
+  service.updatePartSettings({ kind: 'global-track', trackId: id }, { hitsPerPattern: 8, rhythm: 'custom', patternShift: 1,
+    customPattern: Array.from({ length: 32 }, (_, index) => index % 4 === 0 || index % 4 === 3 ? 1 : 0) });
+  service.updateTrackPhrase(id, [{ id: 'manual', midi: 38, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  const before = service.exportProjectJson();
+  assert.equal(service.multiplyDrumHits({ kind: 'global-role', role: 'drums' }, 1.5), 'changed');
+  const settings = service.project().tracks.filter(track => track.role === 'drums').map(track => track.generatorSettings);
+  assert.deepEqual(settings.map(part => part.hitsPerPattern), [6, 12]);
+  assert.equal(settings[1].patternShift, 0);
+  assert.deepEqual(settings[1].customPattern.slice(0, 8), [1, 1, 0, 0, 1, 1, 0, 0]);
+  assert.equal(phrase.phraseForTrack(service.project(), service.project().tracks.find(track => track.id === id))[0].id, 'manual');
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo();
+  const local = { kind: 'section-role', role: 'drums', sectionId: first.id };
+  service.updatePartSettings(local, { ghosts: true });
+  const otherBefore = JSON.stringify(service.project().arrangement[1]);
+  const globalsBefore = JSON.stringify(service.project().tracks);
+  assert.equal(service.multiplyDrumHits(local, 0.5), 'changed');
+  assert.equal(JSON.stringify(service.project().tracks), globalsBefore);
+  assert.equal(JSON.stringify(service.project().arrangement[1]), otherBefore);
+  assert.deepEqual(service.project().arrangement[0].rolePartOverrides.drums, { ghosts: true });
+  assert.deepEqual(service.project().arrangement[0].trackPartOverrides['track-drums-1'], { hitsPerPattern: 3 });
+  assert.deepEqual(service.project().arrangement[0].trackPartOverrides[id], { hitsPerPattern: 6 });
+  service.updatePartSettings({ kind: 'section-track', trackId: id, sectionId: first.id }, { rhythm: 'melody' });
+  const blocked = service.exportProjectJson();
+  assert.equal(service.multiplyDrumHits(local, 2), 'invalid');
+  assert.equal(service.multiplyDrumHits({ kind: 'section-role', role: 'drums', sectionId: 'deleted' }, 2), 'invalid');
+  assert.equal(service.multiplyDrumHits({ kind: 'global-role', role: 'bass' }, 2), 'invalid');
+  assert.equal(service.exportProjectJson(), blocked);
+  assert.equal(service.importProjectJson(blocked), true);
+});
+
+test('P5 editor supports empty contour and separates pitch direction from melody rhythm and hit actions', () => {
+  const { load } = fixture();
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const editor = new PartSettingsEditorComponent(); editor.role.set('arpeggio');
+  editor.values.set({ pattern: 'custom', rhythm: 'melody', arpContour: [1] });
+  assert.ok(editor.controls().some(control => control.key === 'arpPatternCustom'));
+  assert.equal(editor.controls().some(control => control.key === 'hitsPerPattern'), false);
+  assert.equal(editor.rhythmPreview(), undefined);
+  let change; editor.settingsChanged.emit = value => change = value;
+  const input = { value: '', setCustomValidity(value) { assert.equal(value, ''); } };
+  editor.commitText(editor.controls().find(control => control.key === 'arpContour'), { target: input });
+  assert.deepEqual(change, { key: 'arpContour', value: [] });
+});
+
 test('compact history groups same-control bursts while keeping live state, persistence and final redo', (t) => {
   let now = 0;
   t.mock.method(performance, 'now', () => now);

@@ -89,13 +89,15 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       result.chordletGestures = true;
       const beforeRules = JSON.stringify(read().tracks);
       const melody = document.querySelector('.track-group.melody');
-      melody.querySelector('[aria-label="Reroll On Regenerate"]').click();
+      melody.querySelector('.group-select').click();
+      (await wait(() => melody.querySelector('[aria-label="On Regenerate"]'), 'melody policies')).click();
       await wait(() => read().trackGenerationPolicies?.melody?.onRegenerate, 'regenerate rule');
       result.rulesPreserveTracks = beforeRules === JSON.stringify(read().tracks);
       document.querySelector('[aria-label="Regenerate"]').click();
       await wait(() => read().tracks[0].generatorSettings.patternSeed, 'regenerate seed');
       result.regenerated = read().tracks.filter(track => track.role === 'melody').every(track => Number.isInteger(track.generatorSettings.patternSeed));
-      document.querySelector('.track-group.arpeggio [aria-label="Reroll On Compose"]').click();
+      document.querySelector('.track-group.arpeggio .group-select').click();
+      (await wait(() => document.querySelector('.track-group.arpeggio [aria-label="On Compose"]'), 'arp policies')).click();
       const beforeCompose = JSON.stringify(read());
       document.querySelector('[aria-label="Compose"]').click();
       await wait(() => JSON.stringify(read()) !== beforeCompose, 'compose');
@@ -149,12 +151,59 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       change(chords.querySelector('[aria-label="Reroll Max strum pause %"]'), '0');
       change(chords.querySelector('[aria-label="Reroll Expand chance %"]'), '100');
       result.chordPolicyOnly = JSON.stringify(read().tracks) === tracksBeforePolicy;
-      chords.querySelector('[aria-label="Reroll On Compose"]').click();
+      chords.querySelector('[aria-label="On Compose"]').click();
       document.querySelector('[aria-label="Compose"]').click();
       await wait(() => read().trackRerollCounts?.chords === 1, 'chord automatic reroll');
       result.chordPolicies = read().tracks.filter(track => track.role === 'chords').every(track =>
         track.generatorSettings.strumType.startsWith('ARP') && track.generatorSettings.transitionChance === 0
         && track.generatorSettings.strumPauseChance === 0 && track.generatorSettings.patternJoinMode === 'EXPAND');
+      document.querySelector('.track-group.arpeggio .group-select').click();
+      const direction = await wait(() => document.querySelector('.part-settings-panel [aria-label="Pitch direction"]'), 'arp direction');
+      change(direction, 'custom');
+      const customDirection = await wait(() => document.querySelector('#part-inspector [aria-label="Custom direction"]'), 'custom direction editor');
+      change(customDirection, '-1, 0, 3, 1');
+      change(document.querySelector('.part-settings-panel [aria-label="Rotate"]'), '3');
+      change(document.querySelector('#part-inspector [aria-label="Contour"]'), '0, 2, -1');
+      document.querySelector('#part-inspector [aria-label="Chord-relative contour"]').click();
+      document.querySelector('#part-inspector [aria-label="Octave adjustments"]').click();
+      document.querySelector('#part-inspector [aria-label="Correct by melody"]').click();
+      await wait(() => read().arpeggio.arpPatternRotate === 3 && read().arpeggio.correctMelodyNotes, 'arp musical settings');
+      await wait(() => document.querySelector('#part-inspector [aria-label="Rotate"]').value === '3', 'arp editors synchronized');
+      result.arpMusical = read().tracks.filter(track => track.role === 'arpeggio').every(track =>
+        track.generatorSettings.pattern === 'custom' && track.generatorSettings.arpPatternCustom.join(',') === '-1,0,3,1'
+        && track.generatorSettings.arpContour.join(',') === '0,2,-1' && track.generatorSettings.useOctaveAdjustments)
+        && document.querySelector('#part-inspector [aria-label="Rotate"]').value === '3';
+      change(document.querySelector('#part-inspector [aria-label="Contour"]'), '');
+      await wait(() => read().arpeggio.arpContour.length === 0, 'clear contour');
+      change(document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]'), 'melody');
+      await wait(() => read().arpeggio.rhythm === 'melody', 'arp melody rhythm');
+      await wait(() => !document.querySelector('.part-settings-panel [aria-label="Hits"]')
+        && document.querySelector('#part-inspector [aria-label="Rhythm pattern"]').value === 'melody', 'arp melody editors synchronized');
+      result.arpMelody = !document.querySelector('.part-settings-panel [aria-label="Hits"]')
+        && document.querySelector('#part-inspector [aria-label="Rhythm pattern"]').value === 'melody';
+      document.querySelector('.track-group.drums .group-select').click();
+      const ghosts = await wait(() => document.querySelector('.part-settings-panel [aria-label="Ghosts"]'), 'drum ghosts');
+      ghosts.click();
+      change(document.querySelector('#part-inspector [aria-label="Humanize"]'), '100');
+      await wait(() => read().drums.ghosts && read().drums.humanize === 100, 'drum musical settings');
+      const multiply = document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]');
+      change(multiply, '2');
+      await wait(() => read().drums.hitsPerPattern === 8, 'multiply hits');
+      await wait(() => document.querySelector('#part-inspector [aria-label="Hits"]').value === '8'
+        && document.querySelector('#part-inspector [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true', 'drum editors synchronized');
+      result.drumMusical = read().tracks.filter(track => track.role === 'drums').every(track =>
+        track.generatorSettings.hitsPerPattern === 8 && track.generatorSettings.ghosts && track.generatorSettings.humanize === 100)
+        && document.querySelector('#part-inspector [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true'
+        && document.querySelector('#part-inspector [aria-label="Hits"]').value === '8' && multiply.value === '';
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => read().drums.hitsPerPattern === 4, 'multiply undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'multiply redo enabled')).click();
+      await wait(() => read().drums.hitsPerPattern === 8, 'multiply redo');
+      change(document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]'), 'melody');
+      await wait(() => document.querySelector('#part-inspector [aria-label="Multiply Hits"]').disabled, 'melody hit action disabled');
+      result.drumMelody = document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]').disabled
+        && !document.querySelector('.part-settings-panel [aria-label="Hits"]');
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
       result.trackRowsFit = [...document.querySelectorAll('.track-line')].every(row => {
@@ -163,6 +212,10 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       });
       result.groupNamesVisible = [...document.querySelectorAll('.group-select strong')].every(label => label.clientWidth > 0 && label.scrollWidth <= label.clientWidth + 1);
       result.pageFits = document.documentElement.scrollWidth <= innerWidth + 1;
+      if (!result.pageFits) result.overflow = { width: document.documentElement.scrollWidth,
+        elements: [...document.querySelectorAll('body *')].map(element => ({ tag: element.tagName, class: element.className,
+          right: element.getBoundingClientRect().right, width: element.getBoundingClientRect().width }))
+          .filter(element => element.right > innerWidth + 1).slice(-12) };
       result.trackScroll = document.querySelector('.track-groups').scrollHeight > document.querySelector('.track-groups').clientHeight || document.documentElement.scrollHeight > innerHeight;
       await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
     } catch(error) { await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, context: document.querySelector('.part-context-label')?.textContent,
@@ -233,12 +286,17 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.deepEqual(moved.result.value.progressionChords[1], beforeDrag.project.progressionChords[0]);
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));
+    await command('Runtime.evaluate', { expression: `document.querySelector('.track-group.arpeggio .group-select').click()` });
+    await new Promise(done => setTimeout(done, 100));
+    await command('Runtime.evaluate', { expression: `document.querySelector('#part-inspector').scrollIntoView({ block: 'start' })` });
+    const arpScreenshot = await command('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-arp-' + width + '.png'), Buffer.from(arpScreenshot.data, 'base64'));
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     socket?.close();
     clearTimeout(timer); child.kill(); server.close();

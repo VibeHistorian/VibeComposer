@@ -62,6 +62,7 @@ export function partRhythmMask(settings: Pick<RhythmSettings,
   const shift = settings.patternShift ?? 0;
   const flipped = settings.patternFlip ?? false;
   const pulses = settings.euclideanPulses ?? 4;
+  if (settings.rhythm === 'melody') throw new RangeError('Melody rhythm requires the resolved section melody context.');
   if (!Number.isInteger(pulses) || pulses < 0 || pulses > 32) {
     throw new RangeError('Euclidean pulses are outside the supported range.');
   }

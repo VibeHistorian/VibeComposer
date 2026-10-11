@@ -18,6 +18,8 @@ import { copyPartSettings, decodeCommonPartSettings, decodePartPatch, resolvePar
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 import { isDrumPitch } from '../music/drum-instruments';
 import { JavaRandom } from '../music/java-random';
+import { ARPEGGIO_PATTERNS } from '../music/arpeggio-pattern';
+import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multiplier';
 import { chooseMelodyTargets } from '../music/melody-targets';
 import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
@@ -29,7 +31,6 @@ const COMPACT_HISTORY_WINDOW_MS = 1000;
 const MAX_ARRANGEMENT_SECTIONS = 32;
 const MAX_ARRANGEMENT_MEASURES = 128;
 const CHORD_VOICINGS = ['close', 'open'] as const;
-const ARPEGGIO_PATTERNS = ['up', 'down', 'up-down', 'random'] as const;
 const ARPEGGIO_RATES = ['eighth', 'sixteenth'] as const;
 
 @Injectable({ providedIn: 'root' })
@@ -316,6 +317,35 @@ export class ProjectService {
         : { ...section, trackPartOverrides: map };
     });
     this.commit({ ...current, arrangement });
+  }
+
+  /** Transform each member independently, including mixed cells, in one atomic action. */
+  multiplyDrumHits(scope: PartSettingsScope, multiplier: number): PartWorkflowResult {
+    if (!(DRUM_HIT_MULTIPLIERS as readonly number[]).includes(multiplier)) return 'invalid';
+    const current = this.state();
+    const members = current.tracks.filter(track => 'trackId' in scope ? track.id === scope.trackId : track.role === scope.role);
+    const section = 'sectionId' in scope ? current.arrangement.find(item => item.id === scope.sectionId) : undefined;
+    if (!members.length || members.some(track => track.role !== 'drums') || ('sectionId' in scope && !section)) return 'invalid';
+    const patches = new Map<string, PartSettingsPatch>();
+    for (const track of members) {
+      const effective = resolvePartTrack(track, section);
+      if (effective.role !== 'drums' || effective.generatorSettings.rhythm === 'melody') return 'invalid';
+      const patch = multiplyDrumHits(effective.generatorSettings, multiplier);
+      if (Object.entries(patch).some(([key, value]) => !partValuesEqual(settingsValues(effective.generatorSettings, 'drums')[key], value))) {
+        patches.set(track.id, patch);
+      }
+    }
+    if (!patches.size) return 'unchanged';
+    if (section) {
+      const trackPartOverrides = { ...section.trackPartOverrides };
+      for (const [id, patch] of patches) trackPartOverrides[id] = copyPartSettings({ ...trackPartOverrides[id], ...patch });
+      return this.commitPartWorkflow({ ...current, arrangement: current.arrangement.map(item => item.id === section.id
+        ? { ...item, trackPartOverrides } : item) });
+    }
+    const tracks = current.tracks.map(track => patches.has(track.id)
+      ? { ...track, generatorSettings: copyPartSettings({ ...track.generatorSettings, ...patches.get(track.id) }) } as CompositionTrack : track);
+    const primary = tracks.find(track => track.id === 'track-drums-1');
+    return this.commitPartWorkflow({ ...current, tracks, drums: primary?.generatorSettings as DrumSettings ?? current.drums });
   }
 
   /** Snapshot each current member independently; mixed cells never pick a representative track. */

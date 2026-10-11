@@ -223,7 +223,7 @@ button, a, input, select { font: inherit; }
 .session-status { margin-left: 2px; padding-left: 12px; border-left: 1px solid var(--border-subtle); color: var(--text-faint); font-size: 9px; }
 
 /* Project file actions */
-.project-tools { display: flex; align-items: center; gap: 6px; }
+.project-tools { display: flex; flex-wrap: wrap; min-width: 0; max-width: 100%; align-items: center; gap: 6px; }
 .project-tools button { min-height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; white-space: nowrap; }
 .project-tools button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .project-tools .compact-history[aria-pressed="true"] { border-color: var(--accent-primary); color: var(--accent-primary); background: var(--surface-button-hover); }

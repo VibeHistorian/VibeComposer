@@ -1,8 +1,9 @@
 import type { ArrangedPart, ArrangementSection, CommonPartSettings, CompositionTrack, PartSettingsPatch } from '../project/project.model';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
-import { BASS_RHYTHMS, RHYTHM_PATTERNS } from './rhythm-patterns';
+import { BASS_RHYTHMS, RHYTHM_PATTERNS, MELODY_RHYTHMS } from './rhythm-patterns';
 import { DEFAULT_CUSTOM_VELOCITIES, isVelocityPattern } from './velocity-pattern';
 import { STRUM_TYPES } from './chord-strum';
+import { ARPEGGIO_PATTERNS } from './arpeggio-pattern';
 
 export type PartSettingValue = string | number | boolean | readonly number[];
 
@@ -21,6 +22,7 @@ export interface PartControl {
   /** Opt in when a numeric value is too long for the knob's center. */
   readonly showValueBelow?: boolean;
   readonly advanced?: boolean;
+  readonly allowEmpty?: boolean;
 }
 
 const number = (key: string, label: string, minimum: number, maximum: number, defaultValue?: number, unit = '%'): PartControl =>
@@ -111,13 +113,29 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     { ...number('transitionSplit', 'Transition split', 0, 1000, 625, ' /1000 chord'), advanced: true, showValueBelow: true,
       description: 'Position within the current chord at which an activated transition can switch pitch. 625 means 62.5%; 0 starts immediately and 1000 leaves the chord unchanged.' },
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 200), ...pitched, ...common],
-  arpeggio: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, defaultValue: 'full' } : control), span,
-    number('patternRepeat', 'Repeat', 1, 4, 1, ''), pause, split, swing, ...voices, choice('pattern', 'Pitch direction', ['up', 'down', 'up-down', 'random']),
+  arpeggio: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: MELODY_RHYTHMS, defaultValue: 'full' } : control), span,
+    number('patternRepeat', 'Repeat', 1, 4, 1, ''), pause, split, swing, ...voices, choice('pattern', 'Pitch direction', ARPEGGIO_PATTERNS),
+    number('arpPatternRotate', 'Rotate', 0, 8, 0, ''),
+    { key: 'arpPatternCustom', label: 'Custom direction', kind: 'integers', minimum: -12, maximum: 12, defaultValue: [0, 1, 2], advanced: true,
+      description: 'Chord-tone indices; negative values descend below the chord and larger values extend above it. Rotation applies before Hits and Repeat.' },
+    { key: 'arpContour', label: 'Contour', kind: 'integers', minimum: -14, maximum: 14, defaultValue: [], allowEmpty: true, advanced: true,
+      description: 'Diatonic contour indices replace pitches at intervals across each Span group. Clear the list to disable contour.' },
+    { key: 'arpContourChordMode', label: 'Chord-relative contour', kind: 'boolean', defaultValue: false, advanced: true },
+    { key: 'useOctaveAdjustments', label: 'Octave adjustments', kind: 'boolean', defaultValue: false, advanced: true,
+      description: 'Apply Java’s seeded octave pattern and chord-index octave adjustments.' },
+    { key: 'correctMelodyNotes', label: 'Correct by melody', kind: 'boolean', defaultValue: false, advanced: true,
+      description: 'Resolve semitone clashes using the first melody track’s onset grid in this section, even when its arrangement presence is off.' },
     choice('octaves', 'Octaves', [1, 2]),
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
-  drums: [...fill, ...rhythmControls.map(control => control.key === 'hitsPerPattern' ? { ...control, defaultValue: 4 } : control),
+  drums: [...fill, ...rhythmControls.map(control => control.key === 'hitsPerPattern' ? { ...control, defaultValue: 4 }
+    : control.key === 'rhythm' ? { ...control, options: MELODY_RHYTHMS } : control),
     number('velocityMin', 'Min velocity', 1, 127, 69, ''), number('velocityMax', 'Max velocity', 1, 127, 89, ''),
-    span, pause, split, swing, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
+    span, pause, split, swing,
+    { key: 'ghosts', label: 'Ghosts', kind: 'boolean', defaultValue: false,
+      description: 'Play rhythm rests at half velocity on this track’s percussion pitch. Fill and zero velocity still silence notes.' },
+    { ...number('humanize', 'Humanize', 0, 100, 0, ' /10000 beat'), advanced: true,
+      description: 'Seeded bounded onset and duration variation; the first event stays anchored.' },
+    number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
 };
 
 export function settingsValues(settings: PartSettingsPatch, role: ArrangedPart): Readonly<Record<string, PartSettingValue>> {
@@ -167,7 +185,7 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
     if (control.kind === 'pattern' && (!Array.isArray(field) || field.length !== 32
       || Array.from(field).some((slot) => slot !== 0 && slot !== 1))) return undefined;
     if (control.kind === 'velocities' && !isVelocityPattern(field)) return undefined;
-    if (control.kind === 'integers' && (!Array.isArray(field) || field.length < 1 || field.length > 32
+    if (control.kind === 'integers' && (!Array.isArray(field) || field.length < (control.allowEmpty ? 0 : 1) || field.length > 32
       || Array.from(field).some((slot) => !Number.isInteger(slot) || slot < control.minimum! || slot > control.maximum!))) return undefined;
     result[key] = Array.isArray(field) ? [...field] : field as PartSettingValue;
   }

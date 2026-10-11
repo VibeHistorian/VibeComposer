@@ -6,7 +6,8 @@ export type { BassRhythm } from '../music/rhythm-patterns';
 
 export type ChordRhythm = RhythmPattern;
 export type ChordVoicing = 'close' | 'open';
-export type ArpeggioPattern = 'up' | 'down' | 'up-down' | 'random';
+export type { ArpeggioPattern } from '../music/arpeggio-pattern';
+import type { ArpeggioPattern } from '../music/arpeggio-pattern';
 export type ArpeggioRate = 'eighth' | 'sixteenth';
 export type SectionType =
   | 'INTRO' | 'VERSE1' | 'VERSE2' | 'VERSE3' | 'CHORUS1' | 'CHORUS2' | 'HALF_CHORUS'
@@ -125,12 +126,21 @@ export interface ArpeggioSettings extends CommonPartSettings {
   readonly pattern: ArpeggioPattern;
   readonly rate: ArpeggioRate;
   readonly octaves: 1 | 2;
+  readonly arpPatternRotate?: number;
+  readonly arpPatternCustom?: readonly number[];
+  readonly arpContour?: readonly number[];
+  readonly arpContourChordMode?: boolean;
+  readonly useOctaveAdjustments?: boolean;
+  readonly correctMelodyNotes?: boolean;
 }
 
 export interface DrumSettings extends CommonPartSettings, RhythmSettings {
   /** Track identity, edited globally; section musical patches cannot change the instrument. */
   readonly pitch: number;
   readonly swingPercent: number;
+  readonly ghosts?: boolean;
+  /** Seeded timing variation in ten-thousandths of a beat. */
+  readonly humanize?: number;
 }
 
 export interface PartSettingsByRole {

@@ -3,6 +3,17 @@
     <section class="part-control-area" [attr.data-control-category]="group.id" [attr.aria-label]="group.label + ' parameters'">
       <h3>{{ group.label }}</h3>
       <div class="part-area-controls">
+        @if (role() === 'drums' && group.id === 'rhythm') {
+          <div class="part-control">
+            <span class="rhythm-preview-label">Multiply Hits</span>
+            <select aria-label="Multiply Hits" [disabled]="values()['rhythm'] === 'melody'"
+              (change)="multiplyHitsRequested.emit(+$any($event.target).value); $any($event.target).value = ''">
+              <option value="">Choose…</option>
+              <option value="0.5">× ½</option><option value="0.75">× ¾</option>
+              <option value="1.5">× 1½</option><option value="2">× 2</option>
+            </select>
+          </div>
+        }
         @for (control of group.controls; track control.key) {
           <div class="part-control" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind === 'number') {

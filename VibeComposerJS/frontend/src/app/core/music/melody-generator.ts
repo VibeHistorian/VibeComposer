@@ -64,7 +64,8 @@ function rhythmicImportance(notes: Note[]): Note[] {
  * Inputs omitted from the minimum editor are fixed in MELODY_CORE_INPUTS.
  */
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
-  progression: readonly number[], settings: MelodySettings, notesSeedOffset = 0): PhraseNote[] {
+  progression: readonly number[], settings: MelodySettings, notesSeedOffset = 0,
+  publishPattern?: (notes: readonly Pick<PhraseNote, 'midi' | 'startBeat'>[]) => void): PhraseNote[] {
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) throw new RangeError('Use bigint for 64-bit melody seeds.');
   const { algorithm, ...fields } = settings;
   if (algorithm !== 'block' || !decodePartPatch('melody', fields) || !Number.isInteger(notesSeedOffset)
@@ -169,6 +170,19 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       && remaining[1].midi !== first.midi && remaining[2].midi !== first.midi) first.duration *= 1 + accent / 200;
   });
   const final = all.filter((note) => !removed.has(note));
+  if (publishPattern) {
+    const patternNotes: Array<Pick<PhraseNote, 'midi' | 'startBeat'>> = [];
+    byChord.forEach((notes, chord) => {
+      let time = chord * 4;
+      for (const note of notes.filter(note => !removed.has(note))) {
+        const degree = MAJOR.indexOf(note.midi % 12);
+        patternNotes.push({ startBeat: time, midi: note.midi < 0 ? -1 : note.midi
+          + (scale === 'natural-minor' && degree >= 0 ? MINOR[degree] - MAJOR[degree] : 0) + tonic });
+        time += note.rhythm;
+      }
+    });
+    publishPattern(patternNotes);
+  }
   swingNotes(final, settings.swingPercent ?? 50);
   const length = settings.noteLengthMultiplier ?? 100;
   let time = 0;

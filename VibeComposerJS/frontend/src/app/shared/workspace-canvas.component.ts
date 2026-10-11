@@ -355,6 +355,17 @@ export class WorkspaceCanvasComponent {
       ? { scope: JSON.stringify(scope), message: 'This value conflicts with another track or cell setting. Keep each velocity minimum at or below its maximum.' } : null);
   }
 
+  multiplyDrumHits(scope: PartSettingsScope, multiplier: number): void {
+    const result = this.projects.multiplyDrumHits(scope, multiplier);
+    this.editFailure.set(result === 'invalid' ? { scope: JSON.stringify(scope),
+      message: 'Multiply Hits requires current drum tracks with grid rhythms. Melody-following tracks derive their hits from melody.' } : null);
+  }
+
+  melodyRhythmHits(scope: PartSettingsScope): number {
+    const section = 'sectionId' in scope ? this.project().arrangement.find(item => item.id === scope.sectionId) : undefined;
+    return (section?.chordDegrees ?? this.project().progression).length * 16;
+  }
+
   resetPartSettings(scope: PartSettingsScope, field?: string): void {
     const before = this.project();
     const hadOverride = field ? this.overriddenKeys().includes(field) : this.overriddenKeys().length > 0;

@@ -1,4 +1,4 @@
-import type { ArrangedPart, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
+import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
 import { shouldGenerateTrackInSection } from './arrangement-generator';
 import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';
@@ -7,9 +7,10 @@ import { generateDrumPart } from './drum-generator';
 import { generateMelody } from './melody-generator';
 import { resolvePartTrack } from './part-settings';
 import { applyPartTiming } from './part-processing';
+import { melodyContext, type MelodyContext } from './melody-context';
 
 /** Convert the seeded generators to note-level events shared by the editor and MIDI exporter. */
-export function generatePhrase(project: CompositionProject, part: ArrangedPart): PhraseNote[] {
+export function generatePhrase(project: CompositionProject, part: ArrangedPart, context?: MelodyContext): PhraseNote[] {
   const seed = BigInt(project.seed);
   switch (part) {
     case 'melody': return generateMelody(seed, project.key, project.scale, project.progression, project.melody);
@@ -25,11 +26,13 @@ export function generatePhrase(project: CompositionProject, part: ArrangedPart):
           durationBeats: hit.pitchDurations?.[pitchIndex] ?? hit.durationBeats, velocity: hit.velocity,
         })));
     case 'arpeggio':
-      return generateArpeggio(seed, project.key, project.scale, project.progression, project.arpeggio, project.progressionChords)
+      return generateArpeggio(seed, project.key, project.scale, project.progression, project.arpeggio, project.progressionChords,
+        context ?? (project.arpeggio.rhythm === 'melody' || project.arpeggio.correctMelodyNotes ? sectionMelodyContext(project) : undefined))
         .map((note, index) => ({ id: `arpeggio-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
     case 'drums':
-      return generateDrumPart(seed, project.progression.length, project.drums)
+      return generateDrumPart(seed, project.progression.length, project.drums,
+        context ?? (project.drums.rhythm === 'melody' ? sectionMelodyContext(project) : undefined))
         .map((hit, index) => ({ id: `drums-${index}`, midi: hit.midi, startBeat: hit.startBeat,
           durationBeats: hit.durationBeats, velocity: hit.velocity }));
   }
@@ -41,7 +44,7 @@ export function phraseForProject(project: CompositionProject, part: ArrangedPart
 }
 
 /** Generate a phrase from one independent track while keeping the generator library role-based. */
-export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack, includeTiming = true): PhraseNote[] {
+export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack, includeTiming = true, context?: MelodyContext): PhraseNote[] {
   const trackProject = withTrackSeed(project, track);
   const editedPhrases = { ...trackProject.editedPhrases, [track.role]: undefined };
   let notes: PhraseNote[];
@@ -53,9 +56,11 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
     case 'chords':
       notes = generatePhrase({ ...trackProject, chords: track.generatorSettings, editedPhrases }, 'chords'); break;
     case 'arpeggio':
-      notes = generatePhrase({ ...trackProject, arpeggio: track.generatorSettings, editedPhrases }, 'arpeggio'); break;
+      notes = generatePhrase({ ...trackProject, arpeggio: track.generatorSettings, editedPhrases }, 'arpeggio',
+        context ?? (track.generatorSettings.rhythm === 'melody' || track.generatorSettings.correctMelodyNotes ? sectionMelodyContext(project) : undefined)); break;
     case 'drums':
-      notes = generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums'); break;
+      notes = generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums',
+        context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined)); break;
   }
   // Melody applies transpose before interval repair and length before mode conversion, as Java does.
   if (track.role === 'melody') return includeTiming ? applyPartTiming(notes, track.generatorSettings) : notes;
@@ -127,7 +132,9 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
     const progression = section.chordDegrees && track.editedPhrase === undefined
       ? section.chordDegrees : project.progression;
     const generated = track.editedPhrase === undefined
-      ? generateTrackPhrase({ ...project, progression, progressionChords: section.chordDegrees ? undefined : project.progressionChords }, effectiveTrack, false) : phrase;
+      ? generateTrackPhrase({ ...project, progression, progressionChords: section.chordDegrees ? undefined : project.progressionChords }, effectiveTrack, false,
+        (effectiveTrack.role === 'arpeggio' && (effectiveTrack.generatorSettings.rhythm === 'melody' || effectiveTrack.generatorSettings.correctMelodyNotes))
+          || (effectiveTrack.role === 'drums' && effectiveTrack.generatorSettings.rhythm === 'melody') ? sectionMelodyContext(project, section) : undefined) : phrase;
     const sectionPhrase = effectiveTrack.role === 'bass' && track.editedPhrase === undefined
       ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;
     const sectionNotes: PhraseNote[] = [];
@@ -153,6 +160,38 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
     ...note,
     midi: Math.max(0, Math.min(127, note.midi + transpose)),
   }));
+}
+
+const melodyContexts = new WeakMap<CompositionProject, Map<ArrangementSection | undefined, MelodyContext>>();
+
+/** First melody by track order owns dependencies, including an absent arrangement cell.
+ * No melody or generation disabled yields an empty grid. Manual melody owns its onset grid.
+ * Generated melody publishes its pre-swing/pre-feedback onset map, as Java does.
+ */
+export function sectionMelodyContext(project: CompositionProject, section?: ArrangementSection): MelodyContext {
+  let cache = melodyContexts.get(project);
+  if (!cache) { cache = new Map(); melodyContexts.set(project, cache); }
+  const cached = cache.get(section);
+  if (cached) return cached;
+  const result = buildSectionMelodyContext(project, section);
+  cache.set(section, result);
+  return result;
+}
+
+function buildSectionMelodyContext(project: CompositionProject, section?: ArrangementSection): MelodyContext {
+  const progression = section?.chordDegrees ?? project.progression;
+  const source = project.tracks.find(track => track.role === 'melody');
+  if (!source) return { ...melodyContext([], progression.length), available: false };
+  if (source.editedPhrase !== undefined) return melodyContext(source.editedPhrase, progression.length);
+  const effective = resolvePartTrack(source, section);
+  if (effective.role !== 'melody' || effective.generatorSettings.generationEnabled === false) {
+    return { ...melodyContext([], progression.length), available: false };
+  }
+  let result = melodyContext([], progression.length);
+  const seeded = withTrackSeed(project, source);
+  generateMelody(BigInt(seeded.seed), project.key, project.scale, progression, effective.generatorSettings, 0,
+    notes => { result = melodyContext(notes, progression.length); });
+  return result;
 }
 
 function withTrackSeed(project: CompositionProject, track: CompositionTrack): CompositionProject {
