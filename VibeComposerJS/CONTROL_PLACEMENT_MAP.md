@@ -30,6 +30,8 @@ Quick priority is a proposed product decision. Preserve old parameter semantics,
 
 ## Shared part settings and track actions
 
+Track-row P/dB mini knobs use muted accents at center/unity, an immediate 25% accent floor for any deviation, and a square-root ramp to full accent at either limit. Volume supports silence through +6 dB, retains unity (`-0.0`) as its default, and inverts the configured accent above unity. The mixer and project validation share the same gain limit; fractional linear gain values persist through history and imports.
+
 References: [InstPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/InstPanel.java), [InstPart](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Parts/InstPart.java), [VisualPatternPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/VisualPatternPanel.java).
 
 | Old label/function | UI/model lookup | Destination | Stage/notes |

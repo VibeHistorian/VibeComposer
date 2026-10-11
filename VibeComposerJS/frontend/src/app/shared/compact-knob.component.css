@@ -2,7 +2,7 @@
 
 /* Knob layout */
 .compact-knob { position: relative; display: grid; align-content: start; gap: 4px; color: var(--text-secondary); }
-.knob-face { justify-self: center; width: 42px; height: 42px; padding: 3px; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: 50%; background: conic-gradient(from -135deg, var(--accent-primary) 0deg var(--knob-progress), var(--border-subtle) var(--knob-progress) 270deg, transparent 270deg 360deg); box-shadow: inset 0 0 0 2px var(--surface-base); transition: border-color .12s ease, box-shadow .12s ease; }
+.knob-face { justify-self: center; width: 42px; height: 42px; padding: 3px; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: 50%; background: conic-gradient(from -135deg, var(--knob-accent, var(--accent-primary)) 0deg var(--knob-progress), var(--border-subtle) var(--knob-progress) 270deg, transparent 270deg 360deg); box-shadow: inset 0 0 0 2px var(--surface-base); transition: border-color .12s ease, box-shadow .12s ease; }
 .knob-face > span { width: 30px; height: 30px; padding: 0 2px; overflow: hidden; align-content: center; border: 1px solid var(--border-subtle); border-radius: 50%; background: var(--surface-low); color: var(--text-primary); font: 10px var(--font-mono); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .knob-value { justify-self: center; color: var(--text-primary); font: 10px var(--font-mono); }
 
@@ -22,6 +22,8 @@
 .mini:has(input:focus-visible) .knob-face { box-shadow: 0 0 0 2px var(--accent-outline); }
 .mini .knob-face > span { width: 18px; height: 18px; padding: 0; font-size: 9px; }
 .mini input { top: 0; width: 24px; height: 24px; }
+.mini .mix-face { border-color: var(--knob-accent); }
+.mini .mix-face > span { color: var(--knob-accent); }
 .mini .knob-value { font: 10px var(--font-ui); white-space: nowrap; }
 
 /* Named generation mini knobs */

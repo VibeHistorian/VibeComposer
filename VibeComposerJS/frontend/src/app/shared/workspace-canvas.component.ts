@@ -1,3 +1,4 @@
+import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
@@ -57,6 +58,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  readonly maximumVolume = MAX_VOLUME_PERCENT;
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);
@@ -625,7 +627,7 @@ export class WorkspaceCanvasComponent {
   }
   updateVolume(event: Event): void {
     const volumePercent = Number(this.inputValue(event));
-    if (Number.isInteger(volumePercent) && volumePercent >= 0 && volumePercent <= 100) {
+    if (validVolumePercent(volumePercent)) {
       this.projects.updateTrack(this.selectedTrackId(), { mix: { volumePercent } });
       this.playback.updateMix(this.project());
     }

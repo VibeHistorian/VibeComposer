@@ -77,7 +77,7 @@
                     (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"
                     (valueCommit)="updateTrackMix(track.id, 'panPercent', $event)" />
                   <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name"
-                    [value]="track.mix.volumePercent" [minimum]="0" [maximum]="100" valueFormat="decibels"
+                    [value]="track.mix.volumePercent" [minimum]="0" [maximum]="maximumVolume" [step]="0.1" valueFormat="decibels"
                     (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
                     (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
                   <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />

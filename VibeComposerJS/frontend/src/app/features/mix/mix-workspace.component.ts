@@ -1,3 +1,4 @@
+import { MAX_VOLUME_PERCENT, validVolumePercent } from '../../core/audio/mix-values';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inject } from '@angular/core';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
@@ -20,6 +21,7 @@ import { MixButtonsComponent } from '../../shared/mix-buttons.component';
 })
 export class MixWorkspaceComponent {
   @Output() closed = new EventEmitter<void>();
+  readonly maximumVolume = MAX_VOLUME_PERCENT;
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);
@@ -74,7 +76,7 @@ export class MixWorkspaceComponent {
 
   updateVolume(trackId: string, event: Event): void {
     const volumePercent = Number((event.target as HTMLInputElement).value);
-    if (Number.isInteger(volumePercent) && volumePercent >= 0 && volumePercent <= 100) {
+    if (validVolumePercent(volumePercent)) {
       this.projects.updateTrack(trackId, { mix: { volumePercent } });
       this.playback.updateMix(this.project());
     }

@@ -36,6 +36,19 @@ export class CompactKnobComponent {
   readonly formattedValue = computed(() => this.valueFormat() === 'pan' ? panLabel(this.shownValue())
     : this.valueFormat() === 'decibels' ? volumeDecibels(this.shownValue()) : this.shownValue() + this.unit());
   readonly accessibleValue = computed(() => this.formattedValue() + (this.valueFormat() === 'decibels' ? ' dB' : ''));
+  readonly mixAccent = computed(() => {
+    if (!this.mini() || !['pan', 'decibels'].includes(this.valueFormat())) return null;
+    const neutral = this.valueFormat() === 'pan' ? 0 : 100;
+    const value = this.shownValue();
+    const extent = value < neutral ? neutral - this.minimum() : this.maximum() - neutral;
+    const deviation = extent > 0 ? Math.min(1, Math.abs(value - neutral) / extent) : 0;
+    // A visible initial jump makes even tiny mix edits readable; each endpoint reaches full accent.
+    const strength = deviation === 0 ? 0 : 25 + 75 * Math.sqrt(deviation);
+    const accent = this.valueFormat() === 'decibels' && value > neutral
+      ? 'rgb(from var(--accent-primary) calc(255 - r) calc(255 - g) calc(255 - b))'
+      : 'var(--accent-primary)';
+    return `color-mix(in srgb, ${accent} ${strength}%, var(--text-muted))`;
+  });
   private drag: { pointerId: number; y: number; value: number; minimum: number; maximum: number; step: number;
     allowedValues: readonly number[] } | null = null;
   readonly sliderMinimum = computed(() => this.allowedValues().length ? 0 : this.minimum());

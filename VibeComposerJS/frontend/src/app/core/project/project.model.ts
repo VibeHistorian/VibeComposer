@@ -153,6 +153,7 @@ export type PartWorkflowResult = 'changed' | 'unchanged' | 'invalid';
 export interface MixChannelSettings {
   /** General MIDI program number, ignored by the percussion channel. */
   readonly program: number;
+  /** Linear gain percentage: 100 is unity; maximum is +6 dB (about 199.526%). */
   readonly volumePercent: number;
   /** Stereo position from -100 (left) to 100 (right). */
   readonly panPercent: number;

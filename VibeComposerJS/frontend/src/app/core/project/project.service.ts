@@ -1,3 +1,4 @@
+import { validVolumePercent } from '../audio/mix-values';
 import { inject, Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
@@ -631,7 +632,7 @@ export class ProjectService {
     if (index < 0 || (patch.name !== undefined && (!patch.name.trim() || patch.name.length > 48))
         || (patch.midiChannel !== undefined && (!Number.isInteger(patch.midiChannel) || patch.midiChannel < 1 || patch.midiChannel > 16))
         || (patch.mix?.program !== undefined && (!Number.isInteger(patch.mix.program) || patch.mix.program < 0 || patch.mix.program > 127))
-        || (patch.mix?.volumePercent !== undefined && (!Number.isInteger(patch.mix.volumePercent) || patch.mix.volumePercent < 0 || patch.mix.volumePercent > 100))
+        || (patch.mix?.volumePercent !== undefined && !validVolumePercent(patch.mix.volumePercent))
         || (patch.mix?.panPercent !== undefined && (!Number.isInteger(patch.mix.panPercent) || patch.mix.panPercent < -100 || patch.mix.panPercent > 100))
         || (patch.mix?.muted !== undefined && typeof patch.mix.muted !== 'boolean')
         || (patch.mix?.solo !== undefined && typeof patch.mix.solo !== 'boolean')) return;
@@ -1081,7 +1082,7 @@ export class ProjectService {
     for (const part of ARRANGED_PARTS) {
       const settings = (part === 'melody' && mix[part] === undefined ? DEFAULT_MIX.melody : mix[part]) as Partial<MixChannelSettings>;
       if (!Number.isInteger(settings.program) || (settings.program ?? -1) < 0 || (settings.program ?? 128) > 127
-          || !Number.isInteger(settings.volumePercent) || (settings.volumePercent ?? -1) < 0 || (settings.volumePercent ?? 101) > 100
+          || !validVolumePercent(settings.volumePercent)
           || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
           || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') {
         return undefined;
@@ -1154,7 +1155,7 @@ export class ProjectService {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
     const settings = value as Partial<MixChannelSettings>;
     if (!Number.isInteger(settings.program) || (settings.program ?? -1) < 0 || (settings.program ?? 128) > 127
-        || !Number.isInteger(settings.volumePercent) || (settings.volumePercent ?? -1) < 0 || (settings.volumePercent ?? 101) > 100
+        || !validVolumePercent(settings.volumePercent)
         || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
         || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') return undefined;
     return { program: settings.program!, volumePercent: settings.volumePercent!, panPercent: settings.panPercent!, muted: settings.muted, solo: settings.solo };

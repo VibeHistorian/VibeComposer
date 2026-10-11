@@ -141,6 +141,37 @@ test('production Angular controls initialize selects from settings and support r
         const track = document.querySelector('.track-group.chords .track-row-card');
         const pan = track.querySelector('input[aria-label="Pan C1"]');
         const volume = track.querySelector('input[aria-label="Volume C1"]');
+        const face = input => input.closest('.compact-knob').querySelector('.knob-face');
+        const rgb = color => {
+          const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+          const context = canvas.getContext('2d'); context.fillStyle = color; context.fillRect(0, 0, 1, 1);
+          return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+        };
+        const color = input => rgb(getComputedStyle(face(input)).borderColor);
+        const setMix = async (input, value) => {
+          input.value = String(value); input.dispatchEvent(new Event('change', { bubbles: true }));
+          await waitFor(() => input.closest('.compact-knob').querySelector('output').textContent.trim()
+            === (input === pan ? value === 0 ? 'C' : '100% ' + (value < 0 ? 'L' : 'R')
+              : value === 100 ? '-0.0' : value === 98.9 ? '-0.1' : value === 0 ? '-Inf' : '+6.0'));
+          // Border colors animate for 120ms after Angular applies the new value.
+          await new Promise(resolve => setTimeout(resolve, 180));
+        };
+        const muted = rgb(getComputedStyle(track).getPropertyValue('--text-muted'));
+        const accent = rgb(getComputedStyle(track).getPropertyValue('--accent-primary'));
+        result.mixDefaultsMuted = [pan, volume].every(input => JSON.stringify(color(input)) === JSON.stringify(muted));
+        await setMix(volume, 98.9);
+        result.tinyGainVisible = color(volume).some((channel, index) => Math.abs(channel - muted[index]) > 10);
+        await setMix(volume, 0);
+        result.attenuationAccent = color(volume);
+        await setMix(volume, Number(volume.max));
+        result.boostAccent = color(volume); result.configuredAccent = accent;
+        await setMix(volume, 100);
+        result.panEndpointsAccent = true;
+        for (const value of [-100, 100]) {
+          await setMix(pan, value);
+          result.panEndpointsAccent &&= JSON.stringify(color(pan)) === JSON.stringify(accent);
+        }
+        await setMix(pan, 0);
         wheel(pan, -100, true);
         await waitFor(() => pan.value === '1');
         // Synthetic pointer events exercise Angular's actual handlers and signals;
@@ -148,10 +179,11 @@ test('production Angular controls initialize selects from settings and support r
         volume.setPointerCapture = () => {};
         const pointer = (type, y) => volume.dispatchEvent(new PointerEvent(type,
           { pointerId: 17, button: 0, clientY: y, bubbles: true, cancelable: true }));
-        pointer('pointerdown', 100); pointer('pointermove', 175);
+        const volumeDragEnd = 100 + 7500 / Number(volume.max);
+        pointer('pointerdown', 100); pointer('pointermove', volumeDragEnd);
         await waitFor(() => volume.closest('.compact-knob').querySelector('output').textContent.trim() === '-6.0');
         result.volumeBeforeRelease = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).mix.chords.volumePercent;
-        pointer('pointerup', 175);
+        pointer('pointerup', volumeDragEnd);
         await waitFor(() => volume.value === '50');
         track.querySelector('.mute-toggle').click();
         await waitFor(() => track.querySelector('.mute-toggle').classList.contains('active'));
@@ -615,6 +647,11 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.grid.slice(0, 8), [0, 1, 1, 1, 1, 1, 1, 1]);
     assert.deepEqual(actual.wheelRhythm, ['full', 'full']);
     assert.equal(actual.volumeBeforeRelease, 100);
+    assert.equal(actual.mixDefaultsMuted, true);
+    assert.equal(actual.tinyGainVisible, true);
+    assert.equal(actual.panEndpointsAccent, true);
+    assert.deepEqual(actual.attenuationAccent, actual.configuredAccent);
+    assert.deepEqual(actual.boostAccent, actual.configuredAccent.map(channel => 255 - channel));
     assert.equal(actual.quickMix.volumePercent, 50);
     assert.equal(actual.quickMix.panPercent, 1);
     assert.equal(actual.quickMix.muted, false);

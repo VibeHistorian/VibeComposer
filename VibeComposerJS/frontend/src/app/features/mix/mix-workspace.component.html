@@ -56,8 +56,8 @@
 
           <div class="fader-control">
             <div class="control-heading"><label [for]="track.id + '-volume'">Level</label><output>{{ track.mix.volumePercent }}%</output></div>
-            <input [id]="track.id + '-volume'" type="range" min="0" max="100" step="1" [value]="track.mix.volumePercent"
-              [style.--level]="track.mix.volumePercent + '%'" (change)="updateVolume(track.id, $event)" />
+            <input [id]="track.id + '-volume'" type="range" min="0" [max]="maximumVolume" step="0.1" [value]="track.mix.volumePercent"
+              [style.--level]="(track.mix.volumePercent / maximumVolume * 100) + '%'" (change)="updateVolume(track.id, $event)" />
           </div>
 
           <div class="pan-control">

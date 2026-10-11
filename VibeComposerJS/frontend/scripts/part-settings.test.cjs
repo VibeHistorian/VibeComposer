@@ -3147,6 +3147,49 @@ test('quick mixer knobs format linear gain and pan, audition without history, an
   assert.equal(heard.at(-1).tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, 50);
 });
 
+test('track gain supports +6 dB, fractional attenuation, history and project round trips', () => {
+  const { load, service, workspace } = fixture();
+  workspace.playback.updateMix = () => {};
+  const { MAX_VOLUME_PERCENT, volumeDecibels } = load('core/audio/mix-values.ts');
+  assert.equal(volumeDecibels(MAX_VOLUME_PERCENT), '+6.0');
+  assert.equal(volumeDecibels(100 * 10 ** (-0.1 / 20)), '-0.1');
+  workspace.updateTrackMix('track-bass-1', 'volumePercent', MAX_VOLUME_PERCENT);
+  const saved = service.exportProjectJson();
+  assert.equal(service.project().tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, MAX_VOLUME_PERCENT);
+  service.undo();
+  assert.equal(service.project().mix.bass.volumePercent, 100);
+  service.redo();
+  assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.importProjectJson(saved), true);
+  const imported = service.exportProjectJson();
+  for (const value of [MAX_VOLUME_PERCENT + 0.01, -0.1, NaN, Infinity]) {
+    workspace.updateTrackMix('track-bass-1', 'volumePercent', value);
+    assert.equal(service.exportProjectJson(), imported);
+  }
+});
+
+test('mixer accents mute at defaults, jump for tiny edits, reach both endpoints and invert only boosts', () => {
+  const { load } = fixture();
+  const { MAX_VOLUME_PERCENT } = load('core/audio/mix-values.ts');
+  const { CompactKnobComponent } = load('shared/compact-knob.component.ts');
+  const knob = new CompactKnobComponent();
+  knob.mini.set(true); knob.minimum.set(-100); knob.maximum.set(100); knob.valueFormat.set('pan');
+  knob.value.set(0);
+  assert.match(knob.mixAccent(), / 0%,/);
+  for (const value of [-100, 100]) { knob.value.set(value); assert.match(knob.mixAccent(), / 100%,/); }
+  knob.value.set(1); assert.match(knob.mixAccent(), / 32.5%,/);
+  knob.minimum.set(0); knob.maximum.set(MAX_VOLUME_PERCENT); knob.valueFormat.set('decibels');
+  knob.value.set(100); assert.match(knob.mixAccent(), / 0%,/);
+  knob.value.set(100 * 10 ** (-0.1 / 20));
+  assert.ok(parseFloat(knob.mixAccent().match(/ ([\d.]+)%,/)[1]) > 25);
+  assert.ok(!knob.mixAccent().includes('255 -'));
+  knob.value.set(0); assert.match(knob.mixAccent(), / 100%,/);
+  knob.value.set(MAX_VOLUME_PERCENT);
+  assert.match(knob.mixAccent(), /255 - r/); assert.match(knob.mixAccent(), / 100%,/);
+  knob.preview.set(100); assert.match(knob.mixAccent(), / 0%,/);
+  knob.mini.set(false); assert.equal(knob.mixAccent(), null);
+});
+
 test('velocity patterns match Java stored subdivision selection and retain zero, independent of shift/flip', () => {
   const { load } = fixture();
   const { chordVelocityPattern } = load('core/music/velocity-pattern.ts');
