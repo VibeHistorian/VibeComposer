@@ -5,6 +5,59 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('Java zero-origin modes retain exact degrees, target notes and modal chord pitches', () => {
+  const { load } = fixture(), scales = load('core/music/scales.ts'), harmony = load('core/music/harmony.ts');
+  const java = fs.readFileSync(path.join(__dirname, '../../../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/MidiUtils.java'), 'utf8');
+  const definitions = Object.fromEntries([...java.matchAll(/(\w+)_SCALE\s*=\s*\{([^}]+)\}/g)]
+    .map(match => [match[1], match[2].split(',').map(Number)]));
+  const names = { major:'MAJOR',dorian:'DORIAN',phrygian:'PHRYGIAN',lydian:'LYDIAN',mixolydian:'MIXOLYDIAN',
+    'natural-minor':'AEOLIAN',locrian:'LOCRIAN',blues:'BLUES','harmonic-minor':'HARMONIC_MINOR',turkish:'TURKISH',
+    indian:'INDIAN','harmonic-major':'HARMONIC_MAJOR',whiskey:'WHISKEY','double-harmonic':'DOUBLE_HARM_MINOR',
+    'pentatonic-major':'PENTA_MAJOR','pentatonic-minor':'PENTA_MINOR','hungarian-minor':'HUNGARIAN_MINOR' };
+  assert.equal(scales.SCALE_MODES.length,17);
+  for (const [mode, name] of Object.entries(names)) {
+    assert.deepEqual(scales.scaleNotes(mode), definitions[name], mode);
+    const target = Number(java.match(new RegExp('\\w+\\(Scales\\.'+name+'_SCALE, (-?\\d+)\\)'))[1]);
+    assert.equal(scales.modeTargetPitch(mode),target < 0 ? -1 : definitions.MAJOR[target],mode);
+    for (let degree=0;degree<7;degree++) {
+      const expected=[0,2,4].map(step=>60+definitions[name][(degree+step)%7]+12*Math.floor((degree+step)/7));
+      const chord=harmony.progressionChords('C',mode,[degree+1])[0];
+      assert.deepEqual(harmony.chordPitches(chord,60),expected.map(n=>n-12*Math.floor((expected[0]-60)/12)),mode+' chord '+degree);
+    }
+  }
+  assert.deepEqual(harmony.getDiatonicChords('C','mixolydian').map(chord=>chord.symbol),['C','Dm','E°','F','Gm','Am','B♭']);
+  for(const excluded of ['bborian','ebolian','abrygian','dbocrian','gbfs','MIXOLYDIAN','unknown','__proto__']) assert.equal(scales.isScaleMode(excluded),false);
+});
+
+test('All supported modes generate every role, export MIDI and round-trip section overrides and exact unusual chords', () => {
+  const {service,load}=fixture(), scales=load('core/music/scales.ts'), phrase=load('core/music/phrase.ts');
+  const harmony=load('core/music/harmony.ts'), midi=load('core/music/midi-export.ts');
+  for(const scale of scales.SCALE_MODES) {
+    service.updateSettings({scale});
+    const id=service.project().arrangement[0].id;
+    assert.notEqual(service.updateSectionContext(id,{scale}),'invalid');
+    const project=service.project();
+    for(const track of project.tracks) {
+      const notes=phrase.generateTrackPhrase(project,track);
+      assert.ok(notes.length,scale+' '+track.role);
+      assert.ok(notes.every(note=>Number.isInteger(note.midi)&&note.midi>=0&&note.midi<=127&&Number.isFinite(note.startBeat)),scale);
+    }
+    const bytes=midi.generateCompositionMidi(project);
+    assert.ok(bytes.length>0);
+    const json=service.exportProjectJson();
+    assert.equal(service.importProjectJson(json),true,scale);
+    assert.equal(service.project().scale,scale);
+    assert.equal(service.project().arrangement[0].context.scale,scale);
+    assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes,scale);
+  }
+  const unusual=harmony.progressionChords('C','indian',[1])[0];
+  assert.deepEqual(unusual.intervals,[0,1,5]);
+  const saved=JSON.parse(service.exportProjectJson()); saved.progressionChords=saved.progression.map(()=>unusual);
+  assert.equal(service.importProjectJson(JSON.stringify(saved)),true);
+  assert.deepEqual(service.project().progressionChords[0],unusual);
+  saved.scale='bborian'; assert.equal(service.importProjectJson(JSON.stringify(saved)),false);
+});
+
 test('P6 extended Arpeggio directions match 1536 extracted production Java branches and following draws', () => {
   const { load } = fixture(), core = load('core/music/track-generation.ts');
   const { JavaRandom } = load('core/music/java-random.ts');

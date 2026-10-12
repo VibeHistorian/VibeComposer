@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import type { ArrangementSection, SectionMusicalContext } from '../core/project/project.model';
 import { ProjectService } from '../core/project/project.service';
 import { KEYS } from '../core/music/harmony';
+import { SCALE_MODES, SCALE_DEFINITIONS } from '../core/music/scales';
 import { sectionChordDurations, sectionDurationBeats } from '../core/music/section-context';
 import { ChordletEditorComponent } from './chordlet-editor.component';
 import { WheelSelectDirective } from './wheel-select.directive';
@@ -12,6 +13,8 @@ import { WheelSelectDirective } from './wheel-select.directive';
   templateUrl: './section-context-editor.component.html', styleUrl: './section-context-editor.component.css',
 })
 export class SectionContextEditorComponent {
+  readonly scales = SCALE_MODES;
+  readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly projects = inject(ProjectService);
   readonly section = input.required<ArrangementSection>();
   readonly keys = KEYS;

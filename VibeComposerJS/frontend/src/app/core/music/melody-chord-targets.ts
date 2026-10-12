@@ -1,6 +1,7 @@
 import { chordPitches, getPitchClass, progressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import type { MelodyNote } from './melody-expansion';
+import { convertScalePitch, scaleNotes } from './scales';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11], MINOR = [0, 2, 3, 5, 7, 8, 10];
 
@@ -10,10 +11,10 @@ const MAJOR = [0, 2, 4, 5, 7, 9, 11], MINOR = [0, 2, 3, 5, 7, 8, 10];
 export function melodyRepairChords(key: string, scale: ScaleMode, degrees: readonly number[],
   custom?: readonly (ProgressionChord | null)[]): number[][] {
   const tonic = getPitchClass(key)!;
-  return progressionChords(key, scale, degrees, custom).map(chord =>
+  return progressionChords(key, scale, degrees, custom).map((chord, chordIndex) =>
+    !custom?.[chordIndex] ? chordPitches(progressionChords('C', 'major', [degrees[chordIndex]])[0], 60) :
     chordPitches({ ...chord, root: (chord.root - tonic + 12) % 12 }, 60).map(pitch => {
-      const index = MINOR.indexOf(pitch % 12);
-      return pitch + (scale === 'natural-minor' && index >= 0 ? MAJOR[index] - MINOR[index] : 0);
+      return convertScalePitch(pitch, scaleNotes(scale), MAJOR);
     }));
 }
 

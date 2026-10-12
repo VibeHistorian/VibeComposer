@@ -60,8 +60,7 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     const pitches = expandedVoices(Array.from({ length: settings.octaves }, (_, octave) => voiced?.[chordIndex]
       ? voiced[chordIndex].map(pitch => pitch + octave * 12) : customChords?.[chordIndex]
       ? chordPitches(customChords[chordIndex]!, 48 + octave * 12)
-      : [48 + root + octave * 12, 48 + root + (chord.quality === 'major' ? 4 : 3) + octave * 12,
-        48 + root + (chord.quality === 'diminished' ? 6 : 7) + octave * 12]).flat(), settings);
+      : chord.pitches.map(pitch => pitch - 12 + octave * 12)).flat(), settings);
     const pitchMap = settings.pattern === 'random' ? randomMap
       : expand(arpeggioPattern(settings.pattern, hits, pitches.length, 1,
         settings.arpPatternRotate ?? 0, settings.arpPatternCustom));

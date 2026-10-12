@@ -1,3 +1,4 @@
+import { isScaleMode } from './scales';
 import type { ArrangementSection, CompositionProject, PhraseNote, SectionMusicalContext } from '../project/project.model';
 import { KEYS, validProgressionChords } from './harmony';
 
@@ -8,7 +9,7 @@ export function validSectionContext(value: unknown): value is SectionMusicalCont
       case 'tempoBpm': return Number.isInteger(field) && field >= 30 && field <= 300;
       case 'swingPercent': return Number.isInteger(field) && field >= 0 && field <= 100;
       case 'key': return KEYS.includes(field);
-      case 'scale': return field === 'major' || field === 'natural-minor';
+      case 'scale': return isScaleMode(field);
       case 'keyChange': return Number.isInteger(field) && field >= -24 && field <= 24;
       case 'keyChangeType': return field === 'direct' || field === 'two-five-one';
       case 'beatDurationMultiplier': return [0.5, 1, 2].includes(field);

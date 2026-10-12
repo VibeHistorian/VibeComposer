@@ -1,3 +1,4 @@
+import { isScaleMode } from '../music/scales';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { inject, Injectable, signal } from '@angular/core';
 import { KEYS, getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
@@ -1252,7 +1253,7 @@ export class ProjectService {
     if (project) {
       check('project.name', typeof project['name'] === 'string', 'expected a string');
       check('project.key', KEYS.includes(project['key'] as string), `expected one of ${KEYS.join(', ')}`);
-      check('project.scale', project['scale'] === 'major' || project['scale'] === 'natural-minor', 'expected "major" or "natural-minor"');
+      check('project.scale', isScaleMode(project['scale']), 'expected a supported scale/mode');
       check('project.tempoBpm', Number.isInteger(project['tempoBpm']) && (project['tempoBpm'] as number) >= 40 && (project['tempoBpm'] as number) <= 240, 'expected an integer from 40 to 240');
       const seed = project['seed'];
       check('project.seed', typeof seed === 'string' && /^-?\d+$/.test(seed) && BigInt(seed) >= -(1n << 63n) && BigInt(seed) <= (1n << 63n) - 1n, 'expected a decimal string within the signed 64-bit seed range');
@@ -1341,7 +1342,7 @@ export class ProjectService {
     const project = value as Partial<CompositionProject> & { bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown; tracks?: unknown };
     const validBase = typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
-      && (project.scale === 'major' || project.scale === 'natural-minor')
+      && (isScaleMode(project.scale))
       && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
@@ -1765,7 +1766,7 @@ export class ProjectService {
     const tracks = this.decodeTracks(project.tracks);
     return typeof project.name === 'string'
       && typeof project.key === 'string' && KEYS.includes(project.key)
-      && (project.scale === 'major' || project.scale === 'natural-minor')
+      && (isScaleMode(project.scale))
       && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)

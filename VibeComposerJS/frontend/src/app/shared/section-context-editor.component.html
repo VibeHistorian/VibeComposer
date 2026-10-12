@@ -30,7 +30,8 @@
     <option value="">Project key</option>@for (key of keys; track key) { <option [value]="key">{{ key }}</option> }
   </select></label>
   <label>Scale<select [selectDefault]="projects.project().scale" [value]="section().context?.scale ?? ''" (change)="update('scale', $event)">
-    <option value="">Project scale</option><option value="major">Major</option><option value="natural-minor">Natural minor</option>
+    <option value="">Project scale</option>
+    @for (scale of scales; track scale) { <option [value]="scale">{{ scaleDefinitions[scale].label }}</option> }
   </select></label>
   <label>Key change type<select selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
     [value]="section().context?.keyChangeType ?? 'direct'" (change)="update('keyChangeType', $event)">

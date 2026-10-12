@@ -5,6 +5,7 @@ import { generateDiatonicProgression } from '../core/music/progression-generator
 import type { ArrangementSection } from '../core/project/project.model';
 import { baseGenerationHarmony } from '../core/music/project-harmony';
 import { sectionProject } from '../core/music/section-context';
+import { SCALE_DEFINITIONS } from '../core/music/scales';
 
 @Component({
   selector: 'vc-chordlet-editor', changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,12 +33,12 @@ export class ChordletEditorComponent {
     if (!chord) return [];
     const context = this.colorContext();
     return this.spices.map(spice => {
-      const candidate = { ...chord, root: this.displayedPitch(chord.root), spice };
+      const candidate = { ...chord, root: this.displayedPitch(chord.root), spice, intervals: undefined };
       const overlap = chordKeyOverlap(candidate, context.key, context.scale);
       return { spice, hue: chordRootHue(candidate.root, context.key), overlap,
         highlight: `${Math.round(6 + 56 * overlap.ratio ** 3)}%`,
         border: `${Math.round(20 + 60 * overlap.ratio ** 2)}%`,
-        title: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${context.scale === 'major' ? 'major' : 'minor'}` };
+        title: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${SCALE_DEFINITIONS[context.scale].label}` };
     });
   });
   readonly dragging = signal<number | null>(null);
@@ -50,7 +51,8 @@ export class ChordletEditorComponent {
   displayedRoot(root: number): string { return KEYS[this.displayedPitch(root)]; }
   rootHue(pitch: number): number { return chordRootHue(pitch, this.colorContext().key); }
   chordHue(chord: ProgressionChord): number { return this.rootHue(this.displayedPitch(chord.root)); }
-  symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root) + chord.spice + (chord.inversion ? '.' + chord.inversion : ''); }
+  symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root)
+    + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + (chord.inversion ? '.' + chord.inversion : ''); }
   add(): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
   remove(index: number): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
   generate(): void {
@@ -79,7 +81,7 @@ export class ChordletEditorComponent {
     if (!menu || menu.project !== this.project() || menu.sectionId !== this.section()?.id) { this.closeMenu(); return; }
     const chord = this.chords()[menu.index];
     const next = menu.kind === 'root' ? { ...chord, root: (((value as number) - (this.project().transposeSemitones ?? 0) - (this.section()?.context?.keyChange ?? 0)) % 12 + 12) % 12 }
-      : { ...chord, spice: value as ProgressionChord['spice'] };
+      : { ...chord, spice: value as ProgressionChord['spice'], intervals: undefined };
     this.setChord(menu.index, next); this.closeMenu(); this.focusChord(menu.index);
   }
   menuSelected(value: number | string): boolean {
@@ -106,7 +108,7 @@ export class ChordletEditorComponent {
   }
   private adjust(index: number, movement: number, root: boolean, spice: boolean): void {
     const chord = this.chords()[index];
-    const next = spice ? { ...chord, spice: CHORD_SPICES[(CHORD_SPICES.indexOf(chord.spice) + movement + CHORD_SPICES.length) % CHORD_SPICES.length] }
+    const next = spice ? { ...chord, intervals: undefined, spice: CHORD_SPICES[(CHORD_SPICES.indexOf(chord.spice) + movement + CHORD_SPICES.length) % CHORD_SPICES.length] }
       : root ? { ...chord, root: (chord.root + movement + 12) % 12 }
         : { ...chord, inversion: Math.abs(chord.inversion + movement) > 5 ? 0 : chord.inversion + movement };
     this.closeMenu(); this.setChord(index, next);

@@ -1,0 +1,1403 @@
+{
+  "schemaVersion": 12,
+  "name": "Untitled composition",
+  "key": "C",
+  "scale": "natural-minor",
+  "transposeSemitones": 5,
+  "tempoBpm": 70,
+  "seed": "0",
+  "progression": [
+    1,
+    5,
+    6,
+    4
+  ],
+  "melody": {
+    "algorithm": "block",
+    "melodyPatternOffsets": [
+      1,
+      2,
+      1,
+      3,
+      1,
+      2,
+      1,
+      4
+    ],
+    "chordNoteChoices": [
+      0,
+      4,
+      5,
+      5
+    ],
+    "speed": 2,
+    "maxBlockChange": 7,
+    "chordSpanFill": "ALL",
+    "fillFlip": false,
+    "fillPauses": false,
+    "pauseChance": 3,
+    "transpose": 12,
+    "velocityMax": 79,
+    "velocityMin": 62,
+    "noteLengthMultiplier": 100,
+    "patternSeed": 1319644193
+  },
+  "melodyGlobal": {
+    "newBlocksChance": 63
+  },
+  "bass": {
+    "rhythm": "alternating",
+    "noteVariation": 31,
+    "octaveInterval": false,
+    "fillFlip": false,
+    "transpose": -12,
+    "useCustomVelocities": false,
+    "velocityMax": 85,
+    "velocityMin": 45,
+    "noteLengthMultiplier": 87
+  },
+  "chords": {
+    "rhythm": "tresillo",
+    "voicing": "open",
+    "noteLengthPercent": 52,
+    "chordSpanFill": "ALL",
+    "fillFlip": false,
+    "hitsPerPattern": 8,
+    "euclideanPulses": 4,
+    "patternShift": 0,
+    "patternFlip": false,
+    "customPattern": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "useCustomVelocities": false,
+    "customVelocities": [
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79,
+      79
+    ],
+    "chordSpan": 1,
+    "pauseChance": 4,
+    "swingPercent": 50,
+    "chordNotesStretch": 4,
+    "stretchEnabled": true,
+    "transpose": -12,
+    "velocityMin": 65,
+    "velocityMax": 89,
+    "patternSeed": 0,
+    "offset": 0,
+    "feedbackCount": 1,
+    "feedbackDuration": 763,
+    "feedbackVol": 65,
+    "strum": 250,
+    "strumType": "ARP_U",
+    "transitionChance": 51,
+    "transitionSplit": 471,
+    "strumPauseChance": 21,
+    "patternJoinMode": "EXPAND"
+  },
+  "arpeggio": {
+    "pattern": "up",
+    "rate": "eighth",
+    "octaves": 1
+  },
+  "drums": {
+    "pitch": 35,
+    "rhythm": "tresillo",
+    "hitsPerPattern": 8,
+    "swingPercent": 50,
+    "feedbackCount": 0,
+    "offset": 0,
+    "chordSpan": 1,
+    "patternShift": 0,
+    "patternFlip": false,
+    "useCustomVelocities": false,
+    "noteLengthMultiplier": 100,
+    "patternSeed": 0,
+    "feedbackDuration": 750,
+    "feedbackVol": 65,
+    "velocityMin": 65,
+    "velocityMax": 99,
+    "pauseChance": 0,
+    "exceptionChance": 2,
+    "chordSpanFill": "ALL",
+    "fillFlip": false
+  },
+  "editedPhrases": {
+    "bass": [
+      {
+        "id": "bass-0",
+        "midi": 36,
+        "startBeat": 0,
+        "durationBeats": 0.435,
+        "velocity": 66
+      },
+      {
+        "id": "bass-1",
+        "midi": 36,
+        "startBeat": 0.5,
+        "durationBeats": 1.7400000000000002,
+        "velocity": 54
+      },
+      {
+        "id": "bass-2",
+        "midi": 36,
+        "startBeat": 2.5,
+        "durationBeats": 0.43500000000000005,
+        "velocity": 56
+      },
+      {
+        "id": "bass-3",
+        "midi": 36,
+        "startBeat": 3,
+        "durationBeats": 0.8700000000000001,
+        "velocity": 45
+      },
+      {
+        "id": "bass-4",
+        "midi": 31,
+        "startBeat": 4,
+        "durationBeats": 0.8700000000000001,
+        "velocity": 60
+      },
+      {
+        "id": "bass-5",
+        "midi": 31,
+        "startBeat": 5,
+        "durationBeats": 0.4349999999999996,
+        "velocity": 68
+      },
+      {
+        "id": "bass-6",
+        "midi": 31,
+        "startBeat": 5.5,
+        "durationBeats": 0.8700000000000001,
+        "velocity": 54
+      },
+      {
+        "id": "edit-1791829050893-1",
+        "midi": 36,
+        "startBeat": 5.75,
+        "durationBeats": 0.5,
+        "velocity": 90
+      },
+      {
+        "id": "bass-7",
+        "midi": 31,
+        "startBeat": 6.5,
+        "durationBeats": 0.8700000000000001,
+        "velocity": 59
+      },
+      {
+        "id": "edit-1791829051165-2",
+        "midi": 39,
+        "startBeat": 7,
+        "durationBeats": 0.5,
+        "velocity": 90
+      },
+      {
+        "id": "bass-8",
+        "midi": 34,
+        "startBeat": 7.5,
+        "durationBeats": 0.4349999999999996,
+        "velocity": 57
+      },
+      {
+        "id": "bass-9",
+        "midi": 32,
+        "startBeat": 8,
+        "durationBeats": 0.4350000000000005,
+        "velocity": 80
+      },
+      {
+        "id": "bass-10",
+        "midi": 32,
+        "startBeat": 8.5,
+        "durationBeats": 1.7400000000000002,
+        "velocity": 84
+      },
+      {
+        "id": "edit-1791829051455-3",
+        "midi": 41,
+        "startBeat": 10,
+        "durationBeats": 0.5,
+        "velocity": 90
+      },
+      {
+        "id": "bass-11",
+        "midi": 39,
+        "startBeat": 10.5,
+        "durationBeats": 0.4350000000000005,
+        "velocity": 85
+      },
+      {
+        "id": "bass-12",
+        "midi": 32,
+        "startBeat": 11,
+        "durationBeats": 0.8699999999999992,
+        "velocity": 82
+      },
+      {
+        "id": "bass-13",
+        "midi": 29,
+        "startBeat": 12,
+        "durationBeats": 0.8699999999999992,
+        "velocity": 83
+      },
+      {
+        "id": "bass-14",
+        "midi": 29,
+        "startBeat": 13,
+        "durationBeats": 0.4350000000000005,
+        "velocity": 80
+      },
+      {
+        "id": "bass-15",
+        "midi": 36,
+        "startBeat": 13.5,
+        "durationBeats": 0.8699999999999992,
+        "velocity": 67
+      },
+      {
+        "id": "bass-16",
+        "midi": 36,
+        "startBeat": 14.5,
+        "durationBeats": 0.8699999999999992,
+        "velocity": 75
+      },
+      {
+        "id": "bass-17",
+        "midi": 36,
+        "startBeat": 15.5,
+        "durationBeats": 0.4350000000000005,
+        "velocity": 66
+      }
+    ]
+  },
+  "mix": {
+    "melody": {
+      "program": 35,
+      "volumePercent": 70,
+      "panPercent": 20,
+      "muted": false,
+      "solo": false
+    },
+    "bass": {
+      "program": 74,
+      "volumePercent": 100,
+      "panPercent": 0,
+      "muted": false,
+      "solo": false
+    },
+    "chords": {
+      "program": 4,
+      "volumePercent": 100,
+      "panPercent": -10,
+      "muted": false,
+      "solo": false
+    },
+    "arpeggio": {
+      "program": 11,
+      "volumePercent": 100,
+      "panPercent": -40,
+      "muted": false,
+      "solo": false
+    },
+    "drums": {
+      "program": 0,
+      "volumePercent": 100,
+      "panPercent": 10,
+      "muted": false,
+      "solo": false
+    }
+  },
+  "tracks": [
+    {
+      "id": "track-melody-1",
+      "role": "melody",
+      "name": "M1",
+      "midiChannel": 4,
+      "mix": {
+        "program": 35,
+        "volumePercent": 70,
+        "panPercent": 20,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "algorithm": "block",
+        "melodyPatternOffsets": [
+          1,
+          2,
+          1,
+          3,
+          1,
+          2,
+          1,
+          4
+        ],
+        "chordNoteChoices": [
+          0,
+          4,
+          5,
+          5
+        ],
+        "speed": 2,
+        "maxBlockChange": 7,
+        "chordSpanFill": "ALL",
+        "fillFlip": false,
+        "fillPauses": false,
+        "pauseChance": 3,
+        "transpose": 12,
+        "velocityMax": 79,
+        "velocityMin": 62,
+        "noteLengthMultiplier": 100,
+        "patternSeed": 1319644193
+      }
+    },
+    {
+      "id": "track-bass-1",
+      "role": "bass",
+      "name": "B1",
+      "midiChannel": 1,
+      "mix": {
+        "program": 74,
+        "volumePercent": 100,
+        "panPercent": 0,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "rhythm": "alternating",
+        "noteVariation": 31,
+        "octaveInterval": false,
+        "fillFlip": false,
+        "transpose": -12,
+        "useCustomVelocities": false,
+        "velocityMax": 85,
+        "velocityMin": 45,
+        "noteLengthMultiplier": 87
+      },
+      "editedPhrase": [
+        {
+          "id": "bass-0",
+          "midi": 36,
+          "startBeat": 0,
+          "durationBeats": 0.435,
+          "velocity": 66
+        },
+        {
+          "id": "bass-1",
+          "midi": 36,
+          "startBeat": 0.5,
+          "durationBeats": 1.7400000000000002,
+          "velocity": 54
+        },
+        {
+          "id": "bass-2",
+          "midi": 36,
+          "startBeat": 2.5,
+          "durationBeats": 0.43500000000000005,
+          "velocity": 56
+        },
+        {
+          "id": "bass-3",
+          "midi": 36,
+          "startBeat": 3,
+          "durationBeats": 0.8700000000000001,
+          "velocity": 45
+        },
+        {
+          "id": "bass-4",
+          "midi": 31,
+          "startBeat": 4,
+          "durationBeats": 0.8700000000000001,
+          "velocity": 60
+        },
+        {
+          "id": "bass-5",
+          "midi": 31,
+          "startBeat": 5,
+          "durationBeats": 0.4349999999999996,
+          "velocity": 68
+        },
+        {
+          "id": "bass-6",
+          "midi": 31,
+          "startBeat": 5.5,
+          "durationBeats": 0.8700000000000001,
+          "velocity": 54
+        },
+        {
+          "id": "edit-1791829050893-1",
+          "midi": 36,
+          "startBeat": 5.75,
+          "durationBeats": 0.5,
+          "velocity": 90
+        },
+        {
+          "id": "bass-7",
+          "midi": 31,
+          "startBeat": 6.5,
+          "durationBeats": 0.8700000000000001,
+          "velocity": 59
+        },
+        {
+          "id": "edit-1791829051165-2",
+          "midi": 39,
+          "startBeat": 7,
+          "durationBeats": 0.5,
+          "velocity": 90
+        },
+        {
+          "id": "bass-8",
+          "midi": 34,
+          "startBeat": 7.5,
+          "durationBeats": 0.4349999999999996,
+          "velocity": 57
+        },
+        {
+          "id": "bass-9",
+          "midi": 32,
+          "startBeat": 8,
+          "durationBeats": 0.4350000000000005,
+          "velocity": 80
+        },
+        {
+          "id": "bass-10",
+          "midi": 32,
+          "startBeat": 8.5,
+          "durationBeats": 1.7400000000000002,
+          "velocity": 84
+        },
+        {
+          "id": "edit-1791829051455-3",
+          "midi": 41,
+          "startBeat": 10,
+          "durationBeats": 0.5,
+          "velocity": 90
+        },
+        {
+          "id": "bass-11",
+          "midi": 39,
+          "startBeat": 10.5,
+          "durationBeats": 0.4350000000000005,
+          "velocity": 85
+        },
+        {
+          "id": "bass-12",
+          "midi": 32,
+          "startBeat": 11,
+          "durationBeats": 0.8699999999999992,
+          "velocity": 82
+        },
+        {
+          "id": "bass-13",
+          "midi": 29,
+          "startBeat": 12,
+          "durationBeats": 0.8699999999999992,
+          "velocity": 83
+        },
+        {
+          "id": "bass-14",
+          "midi": 29,
+          "startBeat": 13,
+          "durationBeats": 0.4350000000000005,
+          "velocity": 80
+        },
+        {
+          "id": "bass-15",
+          "midi": 36,
+          "startBeat": 13.5,
+          "durationBeats": 0.8699999999999992,
+          "velocity": 67
+        },
+        {
+          "id": "bass-16",
+          "midi": 36,
+          "startBeat": 14.5,
+          "durationBeats": 0.8699999999999992,
+          "velocity": 75
+        },
+        {
+          "id": "bass-17",
+          "midi": 36,
+          "startBeat": 15.5,
+          "durationBeats": 0.4350000000000005,
+          "velocity": 66
+        }
+      ]
+    },
+    {
+      "id": "track-chords-1",
+      "role": "chords",
+      "name": "C1",
+      "midiChannel": 2,
+      "mix": {
+        "program": 4,
+        "volumePercent": 100,
+        "panPercent": -10,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "rhythm": "tresillo",
+        "voicing": "open",
+        "noteLengthPercent": 52,
+        "chordSpanFill": "ALL",
+        "fillFlip": false,
+        "hitsPerPattern": 8,
+        "euclideanPulses": 4,
+        "patternShift": 0,
+        "patternFlip": false,
+        "customPattern": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "useCustomVelocities": false,
+        "customVelocities": [
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79,
+          79
+        ],
+        "chordSpan": 1,
+        "pauseChance": 4,
+        "swingPercent": 50,
+        "chordNotesStretch": 4,
+        "stretchEnabled": true,
+        "transpose": -12,
+        "velocityMin": 65,
+        "velocityMax": 89,
+        "patternSeed": 0,
+        "offset": 0,
+        "feedbackCount": 1,
+        "feedbackDuration": 763,
+        "feedbackVol": 65,
+        "strum": 250,
+        "strumType": "ARP_U",
+        "transitionChance": 51,
+        "transitionSplit": 471,
+        "strumPauseChance": 21,
+        "patternJoinMode": "EXPAND"
+      }
+    },
+    {
+      "id": "track-arpeggio-1",
+      "role": "arpeggio",
+      "name": "A1",
+      "midiChannel": 3,
+      "mix": {
+        "program": 11,
+        "volumePercent": 100,
+        "panPercent": -40,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pattern": "up",
+        "rate": "eighth",
+        "octaves": 1
+      }
+    },
+    {
+      "id": "track-drums-1",
+      "role": "drums",
+      "name": "D1",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 100,
+        "panPercent": 10,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 35,
+        "rhythm": "tresillo",
+        "hitsPerPattern": 8,
+        "swingPercent": 50,
+        "feedbackCount": 0,
+        "offset": 0,
+        "chordSpan": 1,
+        "patternShift": 0,
+        "patternFlip": false,
+        "useCustomVelocities": false,
+        "noteLengthMultiplier": 100,
+        "patternSeed": 0,
+        "feedbackDuration": 750,
+        "feedbackVol": 65,
+        "velocityMin": 65,
+        "velocityMax": 99,
+        "pauseChance": 0,
+        "exceptionChance": 2,
+        "chordSpanFill": "ALL",
+        "fillFlip": false
+      }
+    },
+    {
+      "id": "track-drums-2",
+      "role": "drums",
+      "name": "D2",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 100,
+        "panPercent": -10,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 36,
+        "rhythm": "tresillo",
+        "hitsPerPattern": 8,
+        "swingPercent": 50,
+        "feedbackCount": 0,
+        "offset": 0,
+        "chordSpan": 1,
+        "patternShift": 0,
+        "patternFlip": false,
+        "useCustomVelocities": false,
+        "noteLengthMultiplier": 100,
+        "patternSeed": 0,
+        "feedbackDuration": 750,
+        "feedbackVol": 65,
+        "velocityMin": 65,
+        "velocityMax": 99,
+        "pauseChance": 0,
+        "exceptionChance": 0,
+        "chordSpanFill": "ALL",
+        "fillFlip": false,
+        "customPattern": [
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "rerollLocked": false,
+      "instrumentLocked": false
+    },
+    {
+      "id": "track-drums-3",
+      "role": "drums",
+      "name": "D3",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 100,
+        "panPercent": 10,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 40,
+        "rhythm": "half",
+        "hitsPerPattern": 8,
+        "swingPercent": 50,
+        "feedbackCount": 0,
+        "offset": 0,
+        "chordSpan": 2,
+        "patternShift": 1,
+        "patternFlip": false,
+        "useCustomVelocities": false,
+        "noteLengthMultiplier": 100,
+        "patternSeed": 0,
+        "feedbackDuration": 750,
+        "feedbackVol": 65,
+        "velocityMin": 65,
+        "velocityMax": 99,
+        "pauseChance": 0,
+        "exceptionChance": 0,
+        "chordSpanFill": "ALL",
+        "fillFlip": false,
+        "customPattern": [
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "rerollLocked": false,
+      "instrumentLocked": false
+    },
+    {
+      "id": "track-drums-4",
+      "role": "drums",
+      "name": "D4",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 100,
+        "panPercent": -30,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 60,
+        "rhythm": "half",
+        "hitsPerPattern": 8,
+        "swingPercent": 32,
+        "feedbackCount": 0,
+        "offset": 0,
+        "chordSpan": 2,
+        "patternShift": 1,
+        "patternFlip": false,
+        "useCustomVelocities": false,
+        "noteLengthMultiplier": 100,
+        "patternSeed": 0,
+        "feedbackDuration": 750,
+        "feedbackVol": 65,
+        "velocityMin": 40,
+        "velocityMax": 74,
+        "pauseChance": 0,
+        "exceptionChance": 6,
+        "chordSpanFill": "ALL",
+        "fillFlip": false,
+        "customPattern": [
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0
+        ]
+      },
+      "rerollLocked": false,
+      "instrumentLocked": false
+    },
+    {
+      "id": "track-drums-5",
+      "role": "drums",
+      "name": "D5",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 100,
+        "panPercent": 50,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 82,
+        "rhythm": "half",
+        "hitsPerPattern": 8,
+        "swingPercent": 32,
+        "feedbackCount": 0,
+        "offset": 0,
+        "chordSpan": 2,
+        "patternShift": 1,
+        "patternFlip": false,
+        "useCustomVelocities": false,
+        "noteLengthMultiplier": 100,
+        "patternSeed": 0,
+        "feedbackDuration": 750,
+        "feedbackVol": 65,
+        "velocityMin": 40,
+        "velocityMax": 74,
+        "pauseChance": 0,
+        "exceptionChance": 3,
+        "chordSpanFill": "F34",
+        "fillFlip": false,
+        "customPattern": [
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ]
+      },
+      "rerollLocked": false,
+      "instrumentLocked": false
+    },
+    {
+      "id": "track-drums-6",
+      "role": "drums",
+      "name": "D6",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 100,
+        "panPercent": -30,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 82,
+        "rhythm": "sparse",
+        "hitsPerPattern": 16,
+        "swingPercent": 32,
+        "feedbackCount": 0,
+        "offset": 0,
+        "chordSpan": 1,
+        "patternShift": 3,
+        "patternFlip": false,
+        "useCustomVelocities": false,
+        "noteLengthMultiplier": 100,
+        "patternSeed": 0,
+        "feedbackDuration": 750,
+        "feedbackVol": 65,
+        "velocityMin": 40,
+        "velocityMax": 74,
+        "pauseChance": 0,
+        "exceptionChance": 10,
+        "chordSpanFill": "ALL",
+        "fillFlip": false,
+        "customPattern": [
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0
+        ]
+      },
+      "rerollLocked": false,
+      "instrumentLocked": false
+    }
+  ],
+  "arrangement": [
+    {
+      "id": "section-1",
+      "type": "INTRO",
+      "measures": 4,
+      "trackPresence": {
+        "track-melody-1": true,
+        "track-bass-1": true,
+        "track-chords-1": true,
+        "track-arpeggio-1": true,
+        "track-drums-1": true,
+        "track-drums-2": true,
+        "track-drums-3": true,
+        "track-drums-4": true,
+        "track-drums-5": true,
+        "track-drums-6": true
+      },
+      "rolePartOverrides": {},
+      "trackPartOverrides": {
+        "track-chords-1": {
+          "feedbackCount": 1,
+          "voicing": "open"
+        }
+      }
+    },
+    {
+      "id": "section-2",
+      "type": "VERSE1",
+      "measures": 4,
+      "trackPresence": {
+        "track-melody-1": false,
+        "track-bass-1": true,
+        "track-chords-1": false,
+        "track-arpeggio-1": false,
+        "track-drums-1": false,
+        "track-drums-2": true,
+        "track-drums-3": false,
+        "track-drums-4": true,
+        "track-drums-5": false,
+        "track-drums-6": false
+      },
+      "rolePartOverrides": {},
+      "trackPartOverrides": {}
+    },
+    {
+      "id": "section-3",
+      "type": "CHORUS1",
+      "measures": 4,
+      "trackPresence": {
+        "track-melody-1": false,
+        "track-bass-1": true,
+        "track-chords-1": false,
+        "track-arpeggio-1": false,
+        "track-drums-1": false,
+        "track-drums-2": true,
+        "track-drums-3": true,
+        "track-drums-4": false,
+        "track-drums-5": true,
+        "track-drums-6": false
+      },
+      "rolePartOverrides": {},
+      "trackPartOverrides": {},
+      "trackPhrases": {
+        "track-bass-1": [
+          {
+            "id": "bass-0",
+            "midi": 36,
+            "startBeat": 0,
+            "durationBeats": 0.435,
+            "velocity": 66
+          },
+          {
+            "id": "bass-1",
+            "midi": 36,
+            "startBeat": 0.5,
+            "durationBeats": 1.7400000000000002,
+            "velocity": 54
+          },
+          {
+            "id": "bass-2",
+            "midi": 36,
+            "startBeat": 2.5,
+            "durationBeats": 0.43500000000000005,
+            "velocity": 56
+          },
+          {
+            "id": "bass-3",
+            "midi": 36,
+            "startBeat": 3,
+            "durationBeats": 0.8700000000000001,
+            "velocity": 45
+          },
+          {
+            "id": "bass-4",
+            "midi": 31,
+            "startBeat": 4,
+            "durationBeats": 0.8700000000000001,
+            "velocity": 60
+          },
+          {
+            "id": "bass-5",
+            "midi": 31,
+            "startBeat": 5,
+            "durationBeats": 0.4349999999999996,
+            "velocity": 68
+          },
+          {
+            "id": "bass-6",
+            "midi": 31,
+            "startBeat": 5.5,
+            "durationBeats": 0.8700000000000001,
+            "velocity": 54
+          },
+          {
+            "id": "edit-1791829033373-1",
+            "midi": 36,
+            "startBeat": 6.25,
+            "durationBeats": 0.5,
+            "velocity": 90
+          },
+          {
+            "id": "bass-7",
+            "midi": 31,
+            "startBeat": 6.5,
+            "durationBeats": 0.8700000000000001,
+            "velocity": 59
+          },
+          {
+            "id": "bass-8",
+            "midi": 34,
+            "startBeat": 7.5,
+            "durationBeats": 0.4349999999999996,
+            "velocity": 57
+          },
+          {
+            "id": "edit-1791829033642-2",
+            "midi": 36,
+            "startBeat": 7.75,
+            "durationBeats": 0.5,
+            "velocity": 90
+          },
+          {
+            "id": "bass-9",
+            "midi": 32,
+            "startBeat": 8,
+            "durationBeats": 0.4350000000000005,
+            "velocity": 80
+          },
+          {
+            "id": "bass-10",
+            "midi": 32,
+            "startBeat": 8.5,
+            "durationBeats": 1.7400000000000002,
+            "velocity": 84
+          },
+          {
+            "id": "edit-1791829033944-3",
+            "midi": 38,
+            "startBeat": 9.5,
+            "durationBeats": 0.5,
+            "velocity": 90
+          },
+          {
+            "id": "bass-11",
+            "midi": 39,
+            "startBeat": 10.5,
+            "durationBeats": 0.4350000000000005,
+            "velocity": 85
+          },
+          {
+            "id": "bass-12",
+            "midi": 32,
+            "startBeat": 11,
+            "durationBeats": 0.8699999999999992,
+            "velocity": 82
+          },
+          {
+            "id": "edit-1791829034281-4",
+            "midi": 38,
+            "startBeat": 11.5,
+            "durationBeats": 0.5,
+            "velocity": 90
+          },
+          {
+            "id": "bass-13",
+            "midi": 29,
+            "startBeat": 12,
+            "durationBeats": 0.8699999999999992,
+            "velocity": 83
+          },
+          {
+            "id": "bass-14",
+            "midi": 29,
+            "startBeat": 13,
+            "durationBeats": 0.4350000000000005,
+            "velocity": 80
+          },
+          {
+            "id": "edit-1791829034601-5",
+            "midi": 39,
+            "startBeat": 13.25,
+            "durationBeats": 0.5,
+            "velocity": 90
+          },
+          {
+            "id": "bass-15",
+            "midi": 36,
+            "startBeat": 13.5,
+            "durationBeats": 0.8699999999999992,
+            "velocity": 67
+          },
+          {
+            "id": "bass-16",
+            "midi": 36,
+            "startBeat": 14.5,
+            "durationBeats": 0.8699999999999992,
+            "velocity": 75
+          },
+          {
+            "id": "bass-17",
+            "midi": 36,
+            "startBeat": 15.5,
+            "durationBeats": 0.4350000000000005,
+            "velocity": 66
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-4",
+      "type": "VERSE2",
+      "measures": 4,
+      "trackPresence": {
+        "track-melody-1": false,
+        "track-bass-1": true,
+        "track-chords-1": true,
+        "track-arpeggio-1": false,
+        "track-drums-1": false,
+        "track-drums-2": false,
+        "track-drums-3": false,
+        "track-drums-4": false,
+        "track-drums-5": true,
+        "track-drums-6": false
+      },
+      "rolePartOverrides": {},
+      "trackPartOverrides": {}
+    },
+    {
+      "id": "section-5",
+      "type": "CHORUS2",
+      "measures": 4,
+      "trackPresence": {
+        "track-melody-1": true,
+        "track-bass-1": true,
+        "track-chords-1": true,
+        "track-arpeggio-1": true,
+        "track-drums-1": true,
+        "track-drums-2": false,
+        "track-drums-3": true,
+        "track-drums-4": true,
+        "track-drums-5": false,
+        "track-drums-6": false
+      },
+      "rolePartOverrides": {},
+      "trackPartOverrides": {}
+    },
+    {
+      "id": "section-6",
+      "type": "OUTRO",
+      "measures": 2,
+      "trackPresence": {
+        "track-melody-1": false,
+        "track-bass-1": false,
+        "track-chords-1": true,
+        "track-arpeggio-1": true,
+        "track-drums-1": false,
+        "track-drums-2": false,
+        "track-drums-3": false,
+        "track-drums-4": true,
+        "track-drums-5": true,
+        "track-drums-6": false
+      },
+      "rolePartOverrides": {},
+      "trackPartOverrides": {}
+    }
+  ],
+  "trackRerollCounts": {
+    "melody": 10,
+    "drums": 6,
+    "bass": 4,
+    "chords": 18
+  }
+}

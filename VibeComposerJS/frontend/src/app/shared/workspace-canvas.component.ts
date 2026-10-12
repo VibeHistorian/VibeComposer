@@ -1,3 +1,4 @@
+import { isScaleMode } from '../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from './section-context-editor.component';
 import { sectionDurationBeats } from '../core/music/section-context';
@@ -601,7 +602,7 @@ export class WorkspaceCanvasComponent {
 
   updateScale(event: Event): void {
     const scale = this.inputValue(event);
-    if (scale === 'major' || scale === 'natural-minor') this.projects.updateSettings({ scale });
+    if (isScaleMode(scale)) this.projects.updateSettings({ scale });
   }
 
   updateTempo(event: Event): void {

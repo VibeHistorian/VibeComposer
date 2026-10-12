@@ -1,3 +1,5 @@
+import { isScaleMode } from './scales';
+import { convertScalePitch, modeTargetPitch, scaleNotes } from './scales';
 import type { MelodySettings, MelodyGlobalSettings, PhraseNote } from '../project/project.model';
 import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
 import { getPitchClass, validProgressionChords, type ProgressionChord, type ScaleMode } from './harmony';
@@ -16,7 +18,6 @@ import type { GenerationHarmony } from './harmony-voicing';
 import type { MelodySkeleton } from './melody-chord-inference';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
-const MINOR = [0, 2, 3, 5, 7, 8, 10];
 const DURATION_MULTIPLIER = 0.95; // MidiGenerator.RunOptions.defaults()
 interface Block { readonly notes: readonly number[]; readonly durations: readonly number[] }
 interface Pattern { readonly changes: readonly number[]; readonly blocks: readonly Block[] }
@@ -80,7 +81,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const tonic = getPitchClass(key);
   const speed = settings.speed ?? 50, maxChange = settings.maxBlockChange ?? 7, jump = settings.blockJump ?? 1;
   const targets = settings.chordNoteChoices ?? [0, 2, 2, 4], offsets = settings.melodyPatternOffsets ?? [1, 2, 1, 3];
-  if (settings.algorithm !== 'block' || tonic === undefined || !['major', 'natural-minor'].includes(scale)
+  if (settings.algorithm !== 'block' || tonic === undefined || !isScaleMode(scale)
     || progression.length < 1 || progression.length > 32 || progression.some((degree) => !Number.isInteger(degree) || degree < 1 || degree > 7)
     || !Number.isInteger(speed) || speed < -100 || speed > 100 || !Number.isInteger(maxChange) || maxChange < 0 || maxChange > 7
     || !Number.isInteger(jump) || jump < 0 || jump > 4 || !targets.length || targets.length > 32 || !offsets.length || offsets.length > 32
@@ -155,7 +156,9 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       let blockDurations = [...block.durations];
       if (!existing && globals.emphasizeKey) {
         // Production inserts the mode target at index one, including tonic for Ionian.
-        const order = scale === 'natural-minor' ? [0, 9, 7, 4, 5, 2, 11] : [7, 0, 4, 5, 9, 2, 11];
+        const target = modeTargetPitch(scale);
+        const order = [0, 7, 4, 5, 9, 2, 11].filter(pitch => pitch !== target);
+        if (target >= 0) order.splice(1, 0, target);
         for (let left = 0; left < pitches.length; left++) for (let right = 0; right < pitches.length; right++) {
           if (pitches[left] === pitches[right]) continue;
           const swap = order.indexOf(pitches[left] % 12) < order.indexOf(pitches[right] % 12)
@@ -236,9 +239,8 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     byChord.forEach((notes, chord) => {
       let time = chord * 4;
       for (const note of notes.filter(note => !removed.has(note))) {
-        const degree = MAJOR.indexOf(note.midi % 12);
-        patternNotes.push({ startBeat: time + note.offset, midi: note.midi < 0 ? -1 : note.midi
-          + (scale === 'natural-minor' && degree >= 0 ? MINOR[degree] - MAJOR[degree] : 0) + tonic });
+        patternNotes.push({ startBeat: time + note.offset, midi: note.midi < 0 ? -1
+          : convertScalePitch(note.midi, MAJOR, scaleNotes(scale)) + tonic });
         time += note.rhythm;
       }
     });
@@ -256,8 +258,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
         starts[collision] + final[collision].offset - starts[index] - note.offset);
     }
     if (note.midi < 0) return [];
-    const degree = MAJOR.indexOf(note.midi % 12);
-    const midi = note.midi + (scale === 'natural-minor' && degree >= 0 ? MINOR[degree] - MAJOR[degree] : 0) + tonic;
+    const midi = convertScalePitch(note.midi, MAJOR, scaleNotes(scale)) + tonic;
     return [{ id: `melody-${index}`, midi: Math.max(0, Math.min(127, midi)), startBeat: starts[index] + note.offset, durationBeats: duration, velocity: note.velocity }];
   });
 }

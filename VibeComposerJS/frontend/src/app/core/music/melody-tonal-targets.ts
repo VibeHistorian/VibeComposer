@@ -1,5 +1,6 @@
 import type { MelodyNote } from './melody-expansion';
 import type { ScaleMode } from './harmony';
+import { modeTargetPitch } from './scales';
 
 /** MelodyExpansion's tonic and mode targets run before interval repair, pauses and mode conversion.
  * Mutates only the freshly expanded generation notes; all historical/project values remain immutable.
@@ -25,7 +26,8 @@ export function applyMelodyTonalTargets(byChord: readonly (readonly MelodyNote[]
     }
   }
   if (modeTarget <= 0) return;
-  const modePitch = scale === 'natural-minor' ? 9 : 0;
+  const modePitch = modeTargetPitch(scale);
+  if (modePitch < 0) return;
   // Production retains the original histogram after tonic repair; existing mode notes are candidates too.
   let missing = Math.ceil(sounded * modeTarget / 100) - counts[modePitch];
   if (missing <= 0) return;

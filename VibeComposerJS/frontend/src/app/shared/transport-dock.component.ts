@@ -1,3 +1,5 @@
+import { isScaleMode } from '../core/music/scales';
+import { SCALE_MODES, SCALE_DEFINITIONS } from '../core/music/scales';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked, signal } from '@angular/core';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
@@ -16,6 +18,8 @@ import { ChordletEditorComponent } from './chordlet-editor.component';
   styleUrl: './transport-dock.component.css',
 })
 export class TransportDockComponent {
+  readonly scales = SCALE_MODES;
+  readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly playback = inject(AudioPlaybackService);
   private readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
@@ -94,7 +98,7 @@ export class TransportDockComponent {
 
   updateScale(event: Event): void {
     const scale = (event.target as HTMLSelectElement).value;
-    if (scale === 'major' || scale === 'natural-minor') this.projects.updateSettings({ scale });
+    if (isScaleMode(scale)) this.projects.updateSettings({ scale });
   }
 
   updateTempo(tempo: number): void {

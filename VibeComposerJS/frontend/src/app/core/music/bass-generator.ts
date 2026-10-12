@@ -53,11 +53,8 @@ export function generateBassline(
     if (root === undefined) {
       throw new RangeError(`Unknown chord root: ${chord.root}.`);
     }
-    const third = chord.quality === 'major' ? 4 : 3;
-    const fifth = chord.quality === 'diminished' ? 6 : 7;
-    const midiRoot = 36 + root;
     return harmonicRoots?.[index] ? [...harmonicRoots[index]] : customChords?.[index] ? chordPitches({ ...customChords[index]!, inversion: 0 }, 36)
-      : [midiRoot, midiRoot + third, midiRoot + fifth];
+      : chord.pitches.map(pitch => pitch - 24);
   });
 
   const roots = triads.map(([root]) => root);

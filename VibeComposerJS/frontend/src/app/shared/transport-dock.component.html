@@ -3,7 +3,7 @@
     <span class="playback-indicator" [class.playing]="playback.state() === 'playing'" aria-hidden="true"></span>
     <div>
       <strong>{{ project().name }}</strong>
-      <span>{{ key() }} {{ project().scale === 'major' ? 'MAJOR' : 'MINOR' }}</span>
+      <span>{{ key() }} {{ scaleDefinitions[project().scale].label.toUpperCase() }}</span>
     </div>
   </div>
 
@@ -51,7 +51,9 @@
     </div>
     <div class="mode-seed">
     <label class="mode-control"><span>MODE</span><select selectDefault="major" aria-label="Mode" [value]="project().scale" (change)="updateScale($event)">
-      <option value="major" [selected]="project().scale === 'major'">Major</option><option value="natural-minor" [selected]="project().scale === 'natural-minor'">Minor</option>
+      @for (scale of scales; track scale) {
+        <option [value]="scale" [selected]="project().scale === scale">{{ scaleDefinitions[scale].label }}</option>
+      }
     </select></label>
     <label class="seed-control"><span>SEED</span><input aria-label="Generation seed" inputmode="numeric" [value]="project().seed"
       [title]="'Generation seed: ' + project().seed" (change)="updateSeed($event)" (keydown.enter)="$any($event.target).blur()" /></label>

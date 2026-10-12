@@ -1,3 +1,4 @@
+import { isScaleMode } from './scales';
 import { JavaRandom } from './java-random';
 import type { MelodyGlobalSettings, MelodySettings } from '../project/project.model';
 import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
@@ -59,7 +60,7 @@ export function chooseMelodyTargets(seed: number, progression: readonly number[]
   if (!Number.isInteger(seed) || seed < -2147483648 || seed > 2147483647
     || !progression.length || progression.length > 32
     || progression.some(degree => !Number.isInteger(degree) || degree < 1 || degree > 7)
-    || getPitchClass(key) === undefined || !['major', 'natural-minor'].includes(scale)
+    || getPitchClass(key) === undefined || !isScaleMode(scale)
     || !decodeMelodyGlobal(globalSettings) || !validProgressionChords(customChords, progression.length)) throw new RangeError('Invalid Melody target inputs.');
   const globals = { ...DEFAULT_MELODY_GLOBAL, ...globalSettings };
   const mode = globals.blockTargetMode, roots = melodyRootChords(key, scale, progression, customChords);

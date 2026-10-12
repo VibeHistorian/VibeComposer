@@ -1,5 +1,6 @@
 import { JavaRandom } from './java-random';
 import { getPitchClass, type ScaleMode } from './harmony';
+import { convertScalePitch, scaleNotes } from './scales';
 
 export interface HarmonySettings {
   readonly flattenVoicingChance?: number;
@@ -84,9 +85,8 @@ export function flattenProgression(chords: readonly (readonly number[])[], roots
 
 /** Convert canonical pitches after voicing; part transpose remains a separate operation. */
 export function soundingHarmony(chords: readonly (readonly number[])[], key: string, scale: ScaleMode, octaveOffset = 0): number[][] {
-  const major = [0,2,4,5,7,9,11], minor = [0,2,3,5,7,8,10], tonic = getPitchClass(key)!;
+  const major = scaleNotes('major'), tonic = getPitchClass(key)!;
   return chords.map(chord => chord.map(pitch => {
-    const degree = major.indexOf((pitch % 12 + 12) % 12);
-    return pitch + tonic + octaveOffset + (scale === 'natural-minor' && degree >= 0 ? minor[degree] - major[degree] : 0);
+    return convertScalePitch(pitch, major, scaleNotes(scale)) + tonic + octaveOffset;
   }));
 }

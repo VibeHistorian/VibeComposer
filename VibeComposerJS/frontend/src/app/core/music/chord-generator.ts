@@ -55,12 +55,8 @@ export function generateChordPart(
       throw new RangeError(`Unknown chord root: ${chord.root}.`);
     }
 
-    const root = 60 + rootPitchClass;
-    const third = chord.quality === 'major' ? 4 : 3;
-    const fifth = chord.quality === 'diminished' ? 6 : 7;
-    const pitches = settings.voicing === 'open'
-      ? [root, root + fifth, root + 12 + third]
-      : [root, root + third, root + fifth];
+    const pitches = [...chord.pitches];
+    if (settings.voicing === 'open') { pitches[1] += 12; pitches.sort((a,b) => a-b); }
     const effectiveVoicing = voiced?.[index] ? [...voiced[index]] : undefined;
     if (effectiveVoicing && settings.voicing === 'open' && effectiveVoicing.length === 3) {
       effectiveVoicing[1] += 12; effectiveVoicing.sort((a,b) => a-b);
