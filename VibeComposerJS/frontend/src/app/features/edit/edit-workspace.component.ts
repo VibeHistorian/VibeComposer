@@ -4,7 +4,8 @@ import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/proj
 import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project/project.model';
 import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../core/music/phrase';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
-import { PhraseEditHistory, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
+import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
+import { getDiatonicChords, getPitchClass } from '../../core/music/harmony';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 
@@ -43,6 +44,19 @@ export class EditWorkspaceComponent {
   readonly selectedNoteIds = signal<readonly string[]>([]);
   readonly selectedNoteId = computed(() => this.selectedNoteIds()[0] ?? null);
   readonly snapBeats = signal(0.25);
+  readonly snapToScale = signal(true);
+  readonly scalePitchClasses = computed(() => {
+    const transpose = this.sectionId ? this.project().transposeSemitones ?? 0 : 0;
+    return getDiatonicChords(this.project().key, this.project().scale)
+      .map(chord => ((getPitchClass(chord.root)! + transpose) % 12 + 12) % 12);
+  });
+  readonly hasChanges = computed(() => {
+    this.historyRevision();
+    return this.restoreOnApply() || !phraseNotesEqual(this.notes(), this.baselineNotes);
+  });
+  private snapPitch(midi: number): number {
+    return this.snapToScale() && this.selectedPart() !== 'drums' ? snapMidiToScale(midi, this.scalePitchClasses()) : midi;
+  }
   readonly gridChoices = [0.125, 1 / 6, 0.25, 1 / 3, 0.5, 2 / 3, 1, 4 / 3, 2, 4];
   readonly transposeOpen = signal(false);
   readonly transposeAmount = signal(0);
@@ -61,7 +75,7 @@ export class EditWorkspaceComponent {
   readonly noteCount = computed(() => this.notes().length);
   private newNoteId = 0;
   private baselineNotes: readonly PhraseNote[] = [];
-  private restoreOnApply = false;
+  private readonly restoreOnApply = signal(false);
 
   ngOnInit(): void {
     this.loadTrackDraft(this.selectedTrack());
@@ -88,12 +102,12 @@ export class EditWorkspaceComponent {
     if (!snapshot) return;
     this.draftNotes.set([...snapshot.notes]);
     this.selectNotes(snapshot.selection);
-    this.restoreOnApply = snapshot.restore;
+    this.restoreOnApply.set(snapshot.restore);
     this.historyRevision.update(value => value + 1);
     this.applyError.set(null);
   }
   private record(): void {
-    this.history.record({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: this.restoreOnApply });
+    this.history.record({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: this.restoreOnApply() });
     this.historyRevision.update(value => value + 1);
     this.applyError.set(null);
   }
@@ -105,7 +119,7 @@ export class EditWorkspaceComponent {
     if (command && key === 'z') event.shiftKey ? this.redo() : this.undo();
     else if (command && key === 'y') this.redo();
     else if (command && key === 'a') this.selectAll();
-    else if (command && key === 't') this.transposeOpen.set(true);
+    else if (event.shiftKey && !command && !event.altKey && key === 't') this.transposeOpen.set(true);
     else if (event.key === 'Delete' || event.key === 'Backspace') this.deleteSelected();
     else return;
     event.preventDefault();
@@ -130,7 +144,7 @@ export class EditWorkspaceComponent {
     });
     if (next.length > 2048) return;
     this.draftNotes.set(next);
-    this.restoreOnApply = false;
+    this.restoreOnApply.set(false);
     this.record();
   }
   replaceNotes(notes: readonly PhraseNote[], duplicate = false): void {
@@ -149,7 +163,7 @@ export class EditWorkspaceComponent {
       }));
     }
     if (notes.length === 1) this.lastDuration = notes[0].durationBeats;
-    this.restoreOnApply = false;
+    this.restoreOnApply.set(false);
     this.record();
   }
 
@@ -165,7 +179,7 @@ export class EditWorkspaceComponent {
     }
     const track = this.selectedTrack();
     const preferredPitch = this.selectedNote()?.midi ?? (track.role === 'drums' ? track.generatorSettings.pitch : track.role === 'bass' ? 48 : 60);
-    const pitch = Math.max(0, Math.min(127, preferredPitch));
+    const pitch = this.snapPitch(Math.max(0, Math.min(127, preferredPitch)));
     const durationBeats = Math.min(0.5, this.phraseBeats());
     const occupied = new Set(this.notes().filter((note) => note.midi === pitch)
       .map((note) => Math.round(note.startBeat * 4)));
@@ -176,7 +190,7 @@ export class EditWorkspaceComponent {
       id: this.makeNoteId(), midi: pitch, startBeat, durationBeats, velocity: 90,
     };
     this.draftNotes.set([...this.notes(), note]);
-    this.restoreOnApply = false;
+    this.restoreOnApply.set(false);
     this.selectNote(note.id);
     this.record();
   }
@@ -184,7 +198,7 @@ export class EditWorkspaceComponent {
   updateSelected(field: 'midi' | 'startBeat' | 'durationBeats' | 'velocity', event: Event): void {
     const selected = this.selectedNote();
     const inputValue = Number((event.target as HTMLInputElement).value);
-    const value = field === 'startBeat' ? inputValue - 1 : inputValue;
+    const value = field === 'startBeat' ? inputValue - 1 : field === 'midi' && Number.isInteger(inputValue) && inputValue >= 0 && inputValue <= 127 ? this.snapPitch(inputValue) : inputValue;
     if (!selected || !Number.isFinite(value)) return;
 
     const valid = field === 'midi' ? Number.isInteger(value) && value >= 0 && value <= 127
@@ -195,9 +209,10 @@ export class EditWorkspaceComponent {
       (event.target as HTMLInputElement).value = String(field === 'startBeat' ? selected.startBeat + 1 : selected[field]);
       return;
     }
+    if (field === 'midi') (event.target as HTMLInputElement).value = String(value);
     const next = this.notes().map((note) => note.id === selected.id ? { ...note, [field]: value } : note);
     this.draftNotes.set(next);
-    this.restoreOnApply = false;
+    this.restoreOnApply.set(false);
     this.record();
   }
 
@@ -205,7 +220,7 @@ export class EditWorkspaceComponent {
     const ids = this.selectedNoteIds();
     if (!ids.length) return;
     this.draftNotes.set(this.notes().filter(note => !ids.includes(note.id)));
-    this.restoreOnApply = false;
+    this.restoreOnApply.set(false);
     this.selectedNoteIds.set([]);
     this.record();
   }
@@ -213,7 +228,7 @@ export class EditWorkspaceComponent {
   restoreGenerated(): void {
     if (!this.generationAvailable()) return;
     this.draftNotes.set(generateTrackPhrase(this.project(), this.selectedTrack()));
-    this.restoreOnApply = true;
+    this.restoreOnApply.set(true);
     this.selectedNoteIds.set([]);
     this.record();
   }
@@ -224,16 +239,16 @@ export class EditWorkspaceComponent {
 
   addNoteAt(position: { midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
     if (this.notes().length >= 2048 || position.startBeat >= this.phraseBeats()) return;
-    const note = { id: this.makeNoteId(), midi: position.midi, startBeat: Math.max(0, position.startBeat),
+    const note = { id: this.makeNoteId(), midi: this.snapPitch(position.midi), startBeat: Math.max(0, position.startBeat),
       durationBeats: Math.min(position.durationBeats ?? this.lastDuration, this.phraseBeats() - position.startBeat), velocity: position.velocity ?? 90 };
     this.draftNotes.update(notes => [...notes, note]);
     this.selectNote(note.id);
-    this.restoreOnApply = false;
+    this.restoreOnApply.set(false);
     this.record();
   }
 
   applyLocalChanges(): void {
-    if (!this.sectionId) return;
+    if (!this.sectionId || !this.hasChanges()) return;
     const transpose = this.selectedPart() === 'drums' ? 0 : this.project().transposeSemitones ?? 0;
     const section = this.project().arrangement.find(section => section.id === this.sectionId);
     if (!section) return;
@@ -256,7 +271,8 @@ export class EditWorkspaceComponent {
   }
 
   applyChanges(): void {
-    if (this.restoreOnApply) this.projects.clearTrackPhrase(this.selectedTrack().id);
+    if (!this.hasChanges()) return;
+    if (this.restoreOnApply()) this.projects.clearTrackPhrase(this.selectedTrack().id);
     else {
       const transpose = this.sectionId && this.selectedPart() !== 'drums' ? this.project().transposeSemitones ?? 0 : 0;
       if (!this.projects.updateTrackPhrase(this.selectedTrack().id, this.draftNotes().map(note => ({ ...note, midi: Math.max(0, Math.min(127, note.midi - transpose)) })))) {
@@ -288,7 +304,7 @@ export class EditWorkspaceComponent {
       return { ...note, id };
     });
     this.draftNotes.set([...this.baselineNotes]);
-    this.restoreOnApply = false;
+    this.restoreOnApply.set(false);
     this.selectedNoteIds.set([]);
     this.history.reset({ notes: this.draftNotes(), selection: [], restore: false });
     this.historyRevision.update(value => value + 1);

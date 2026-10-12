@@ -94,15 +94,28 @@ test('edit drags stay within the phrase and publish a draft change only on relea
   assert.equal(component.noteChanged.values[0].midi, 48);
 });
 
-test('middle click applies only in edit mode and outside notes', () => {
+test('middle click applies only when press and release are both empty', () => {
   const { component } = fixture();
-  const event = { button: 1, clientX: 300, clientY: 20, preventDefault() {} };
+  const event = { button: 1, clientX: 300, clientY: 20, pointerId: 1, preventDefault() {}, stopPropagation() {} };
   component.onAuxClick(event); assert.deepEqual(component.applyRequested.values, []);
   component.editable = () => true;
-  component.onAuxClick(event); assert.equal(component.applyRequested.values.length, 1);
-  const hit = { note: {}, x: 390, y: 15, width: 25, height: 10 };
+  component.onAuxClick(event); assert.deepEqual(component.applyRequested.values, [], 'release without a press is ignored');
+  component.onPointerDown(event); component.onPointerUp(event); component.onAuxClick(event);
+  assert.equal(component.applyRequested.values.length, 1);
+  const note = { id: 'a', color: 'bass', startBeat: 20, durationBeats: 1, midi: 48, velocity: 90 };
+  const hit = { note, x: 390, y: 15, width: 25, height: 10 };
+  component.model.notes = [note];
   component.hitAreas = [hit]; component.hitColumnCount = 9; component.hitAreaBuckets.set(4, [hit]);
-  component.onAuxClick(event); assert.equal(component.applyRequested.values.length, 1);
+  component.onPointerDown(event);
+  const empty = { ...event, clientX: 330, clientY: 20 };
+  component.onPointerMove(empty); component.onPointerUp(empty); component.onAuxClick(empty);
+  assert.equal(component.applyRequested.values.length, 1, 'note-to-empty drag cannot apply');
+  component.onPointerDown(empty); component.onPointerUp(event); component.onAuxClick(event);
+  assert.equal(component.applyRequested.values.length, 1, 'empty-to-note cannot apply');
+  component.onPointerDown(empty); component.onPointerCancel(); component.onAuxClick(empty);
+  assert.equal(component.applyRequested.values.length, 1, 'cancelled gestures cannot apply');
+  component.onPointerDown(empty); component.onPointerUp({ ...empty, clientX: 1000 }); component.onAuxClick(empty);
+  assert.equal(component.applyRequested.values.length, 1, 'release outside canvas cannot apply');
 });
 
 test('playhead glow follows the actual note duration independently of the enlarged hit target', () => {
@@ -227,4 +240,35 @@ test('group pitch and duration changes respect MIDI limits and shortest selected
   const shortened = dragPhraseNotes(notes, 'duration', -10, 0, 0, 0, 4);
   assert.ok(Math.abs(shortened[0].durationBeats - .05) < 1e-10);
   assert.ok(Math.abs(shortened[1].durationBeats - .55) < 1e-10);
+});
+
+test('scale snapping stays within MIDI bounds and respects shifted scale pitch classes', () => {
+  const { snapMidiToScale } = phraseEditLibrary();
+  const cMajor = [0, 2, 4, 5, 7, 9, 11];
+  assert.equal(snapMidiToScale(61, cMajor), 60);
+  assert.equal(snapMidiToScale(61, [1, 3, 5, 6, 8, 10, 0]), 61);
+  assert.equal(snapMidiToScale(61, []), 61);
+  assert.equal(snapMidiToScale(0, [11]), 11);
+  assert.equal(snapMidiToScale(127, [8]), 116);
+});
+
+test('phrase change detection ignores ordering and IDs while detecting musical edits', () => {
+  const { phraseNotesEqual } = phraseEditLibrary();
+  const notes = [{ id: 'a', midi: 60, velocity: 90, startBeat: 0, durationBeats: 1 },
+    { id: 'b', midi: 64, velocity: 90, startBeat: 1, durationBeats: 1 }];
+  assert.equal(phraseNotesEqual(notes, [...notes].reverse().map(n => ({ ...n, id: 'different-' + n.id }))), true);
+  assert.equal(phraseNotesEqual(notes, notes.map(n => ({ ...n, velocity: 100 }))), false);
+  assert.equal(phraseNotesEqual(notes, notes.slice(1)), false);
+});
+
+test('scale snapping constrains pitch drags and can be disabled for chromatic edits', () => {
+  const { component: c, notes } = editFixture();
+  c.scalePitchClasses = () => [0, 2, 4, 5, 7, 9, 11];
+  c.model.notes = [notes[0]]; c.selectedNoteIds = () => ['a'];
+  c.onPointerDown(pointer(300, 20));
+  c.onPointerMove(pointer(300, 20 - c.laneHeight / 2));
+  assert.equal(c.drag.current.midi, 48, 'C sharp snaps to C');
+  c.snapToScale = () => false;
+  c.onPointerMove(pointer(300, 20 - c.laneHeight / 2));
+  assert.equal(c.drag.current.midi, 49);
 });

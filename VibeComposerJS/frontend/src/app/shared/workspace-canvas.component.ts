@@ -64,6 +64,22 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  readonly toggleBoolean = (value: boolean) => !value;
+  private emptyMiddlePress: { pointerId: number; eligible: boolean; released: boolean } | null = null;
+  private isEmptyMiddleTarget(event: MouseEvent): boolean {
+    const target = event.target;
+    return target instanceof Element && !target.closest('button, input, select, textarea, a, canvas, vc-score-canvas, vc-compact-knob, vc-compact-toggle, vc-mix-buttons');
+  }
+  beginEmptyMiddleClick(event: PointerEvent): void {
+    if (event.button !== 1) return;
+    this.emptyMiddlePress = { pointerId: event.pointerId, eligible: this.editing() && this.isEmptyMiddleTarget(event), released: false };
+  }
+  endEmptyMiddleClick(event: PointerEvent): void {
+    if (this.emptyMiddlePress?.pointerId !== event.pointerId) return;
+    this.emptyMiddlePress.eligible &&= this.isEmptyMiddleTarget(event);
+    this.emptyMiddlePress.released = true;
+  }
+  cancelEmptyMiddleClick(): void { this.emptyMiddlePress = null; }
   readonly defaultMix = DEFAULT_MIX;
   defaultChannel(track: CompositionTrack): number { return DEFAULT_TRACKS.find(item => item.role === track.role)!.midiChannel; }
   readonly maximumVolume = MAX_VOLUME_PERCENT;
@@ -276,8 +292,9 @@ export class WorkspaceCanvasComponent {
   });
   applyOnEmptyMiddleClick(event: MouseEvent): void {
     if (event.button !== 1 || !this.editing()) return;
-    const target = event.target as HTMLElement;
-    if (target.closest('button, input, select, a, canvas, vc-compact-knob, vc-compact-toggle, vc-mix-buttons')) return;
+    const press = this.emptyMiddlePress;
+    this.emptyMiddlePress = null;
+    if (!press?.eligible || !press.released || !this.isEmptyMiddleTarget(event)) return;
     event.preventDefault();
     this.editor()?.applyChanges();
   }

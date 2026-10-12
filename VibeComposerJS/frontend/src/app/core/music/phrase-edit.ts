@@ -3,6 +3,24 @@ import type { PhraseNote } from '../project/project.model';
 export type PhraseDragMode = 'move' | 'start' | 'duration' | 'pitch' | 'velocity';
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
+export function snapMidiToScale(midi: number, pitchClasses: readonly number[]): number {
+  const pitch = clamp(Math.round(midi), 0, 127);
+  if (!pitchClasses.length) return pitch;
+  for (let distance = 0; distance < 12; distance++) {
+    for (const candidate of [pitch - distance, pitch + distance]) {
+      if (candidate >= 0 && candidate <= 127 && pitchClasses.includes(candidate % 12)) return candidate;
+    }
+  }
+  return pitch;
+}
+
+/** Compare musical content independently of note IDs and array order. */
+export function phraseNotesEqual(left: readonly PhraseNote[], right: readonly PhraseNote[]): boolean {
+  const musicalValues = (notes: readonly PhraseNote[]) => notes.map(n => [n.startBeat, n.midi, n.durationBeats, n.velocity])
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || a[3] - b[3]);
+  return JSON.stringify(musicalValues(left)) === JSON.stringify(musicalValues(right));
+}
+
 /** Apply one shared delta, preserving the spacing of a selection at phrase/MIDI boundaries. */
 export function dragPhraseNotes(notes: readonly PhraseNote[], mode: PhraseDragMode, beats: number,
   pitch: number, velocity: number, start: number, end: number): PhraseNote[] {
