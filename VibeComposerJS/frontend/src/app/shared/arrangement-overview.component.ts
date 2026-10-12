@@ -459,7 +459,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             || Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0;
           const manualNotes = item.section.trackPhrases?.[track.id] !== undefined || track.editedPhrase !== undefined;
           if (manualNotes) {
-            context.fillStyle = this.accent;
+            context.fillStyle = item.section.trackPhrases?.[track.id] !== undefined ? this.accent : noteColor;
             context.beginPath(); context.arc(centerX + 6, centerY - 6, 2.5, 0, Math.PI * 2); context.fill();
           } else if (trackCustomized) {
             context.textAlign = 'center';

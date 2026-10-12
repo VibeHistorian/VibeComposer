@@ -241,6 +241,7 @@ export class WorkspaceCanvasComponent {
   readonly editing = signal(false);
   readonly mixerOpen = signal(false);
   readonly hiddenTracks = signal(new Set<string>());
+  readonly editingHiddenTracks = new Set<string>();
   readonly collapsedGroups = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
   private readonly groupExpansionEffect = effect(() => {
     this.settingsTarget();
@@ -282,13 +283,13 @@ export class WorkspaceCanvasComponent {
   })));
   readonly arrangedTracks = computed(() => tracksInRoleOrder(this.tracks()));
   readonly scoreTracks = computed(() => this.arrangedTracks().filter(track => this.editing()
-    ? track.id === this.selectedTrackId() : this.displayedRoles().has(track.role))
+    ? this.selectedPart() === 'drums' ? track.role === 'drums' : track.id === this.selectedTrackId() : this.displayedRoles().has(track.role))
     .map(track => ({ ...track, drumPitch: track.role === 'drums' ? track.generatorSettings.pitch : undefined })));
   readonly canvasNotes = computed<ScoreNote[]>(() => {
     const editor = this.editor();
     if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.displayedRoles().has(note.color));
-    return editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat(), part: this.selectedTrackId(),
-      trackName: this.selectedTrack().name, color: this.selectedPart(), topPercent: 0, opacity: 1 }));
+    return editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat(), part: note.trackId,
+      trackName: this.project().tracks.find(track => track.id === note.trackId)?.name, color: this.selectedPart(), topPercent: 0, opacity: 1 }));
   });
   applyOnEmptyMiddleClick(event: MouseEvent): void {
     if (event.button !== 1 || !this.editing()) return;
@@ -296,18 +297,26 @@ export class WorkspaceCanvasComponent {
     this.emptyMiddlePress = null;
     if (!press?.eligible || !press.released || !this.isEmptyMiddleTarget(event)) return;
     event.preventDefault();
-    this.editor()?.applyChanges();
+    this.editor()?.smartExit();
   }
   canvasNoteChanged(note: ScoreNote | import('../core/project/project.model').PhraseNote): void {
     this.editor()?.replaceNote({ ...note, startBeat: note.startBeat - this.editStartBeat() });
   }
-  canvasNoteAdded(position: { midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
+  canvasNoteAdded(position: { trackId?: string; midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
     this.editor()?.addNoteAt({ ...position, startBeat: position.startBeat - this.editStartBeat() });
     const note = this.editor()?.selectedNote();
     if (note) void this.playback.audition(this.selectedTrack(), [note]);
   }
   canvasNotesChanged(change: { notes: readonly import('../core/project/project.model').PhraseNote[]; duplicate: boolean }): void {
     this.editor()?.replaceNotes(change.notes.map(note => ({ ...note, startBeat: note.startBeat - this.editStartBeat() })), change.duplicate);
+  }
+  auditionCanvasNotes(notes: readonly import('../core/project/project.model').PhraseNote[]): void {
+    const editor = this.editor();
+    if (!editor) return;
+    for (const track of editor.editedTracks()) {
+      const owned = notes.filter(note => editor.notes().some(draft => draft.id === note.id && draft.trackId === track.id));
+      if (owned.length) void this.playback.audition(track, owned);
+    }
   }
   canvasSplit(position: { id: string; beat: number }): void {
     this.editor()?.splitNotes({ ...position, beat: position.beat - this.editStartBeat() });

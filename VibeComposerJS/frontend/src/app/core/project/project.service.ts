@@ -834,6 +834,40 @@ export class ProjectService {
     return true;
   }
 
+  /** Apply a multi-track phrase draft atomically, including mixed global and section destinations. */
+  applyPhraseEdits(edits: readonly { trackId: string; sectionId?: string; notes: readonly PhraseNote[] | null }[]): boolean {
+    const current = this.state();
+    if (!edits.length || edits.some(edit => !current.tracks.some(track => track.id === edit.trackId)
+      || edit.sectionId !== undefined && !current.arrangement.some(section => section.id === edit.sectionId)
+      || edit.notes !== null && !this.isPhrase(edit.notes, edit.sectionId ? 2048 : undefined))) return false;
+    let tracks = [...current.tracks];
+    let arrangement = [...current.arrangement];
+    const editedPhrases = { ...current.editedPhrases };
+    for (const edit of edits) {
+      if (edit.sectionId) {
+        arrangement = arrangement.map(section => {
+          if (section.id !== edit.sectionId) return section;
+          const trackPhrases = { ...section.trackPhrases };
+          if (edit.notes === null) delete trackPhrases[edit.trackId];
+          else trackPhrases[edit.trackId] = edit.notes.map(note => ({ ...note }));
+          return { ...section, trackPhrases };
+        });
+      } else {
+        tracks = tracks.map(track => track.id === edit.trackId
+          ? { ...track, editedPhrase: edit.notes?.map(note => ({ ...note })) } as CompositionTrack : track);
+        const track = tracks.find(track => track.id === edit.trackId)!;
+        if (tracks.find(candidate => candidate.role === track.role)?.id === track.id) {
+          if (edit.notes === null) delete editedPhrases[track.role];
+          else editedPhrases[track.role] = track.editedPhrase;
+        }
+      }
+    }
+    const next = { ...current, tracks, arrangement, editedPhrases };
+    if (!this.isProject(next)) return false;
+    this.commit(next);
+    return true;
+  }
+
   updateTrackPhrase(trackId: string, notes: readonly PhraseNote[]): boolean {
     const current = this.state();
     const index = current.tracks.findIndex((track) => track.id === trackId);

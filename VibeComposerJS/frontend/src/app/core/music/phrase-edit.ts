@@ -42,29 +42,32 @@ export function dragPhraseNotes(notes: readonly PhraseNote[], mode: PhraseDragMo
   }));
 }
 
-export interface PhraseEditSnapshot {
-  readonly notes: readonly PhraseNote[];
+export interface PhraseEditSnapshot<T extends PhraseNote = PhraseNote> {
+  readonly notes: readonly T[];
   readonly selection: readonly string[];
   readonly restore: boolean;
+  readonly restoredTrackIds?: readonly string[];
 }
 
 /** Draft history is independent of project history; a completed gesture records once. */
-export class PhraseEditHistory {
-  private entries: PhraseEditSnapshot[] = [];
+export class PhraseEditHistory<T extends PhraseNote = PhraseNote> {
+  private entries: PhraseEditSnapshot<T>[] = [];
   private index = 0;
   get canUndo(): boolean { return this.index > 0; }
   get canRedo(): boolean { return this.index < this.entries.length - 1; }
-  reset(snapshot: PhraseEditSnapshot): void { this.entries = [this.copy(snapshot)]; this.index = 0; }
-  record(snapshot: PhraseEditSnapshot): void {
+  reset(snapshot: PhraseEditSnapshot<T>): void { this.entries = [this.copy(snapshot)]; this.index = 0; }
+  record(snapshot: PhraseEditSnapshot<T>): void {
     const current = this.entries[this.index];
-    if (current && current.restore === snapshot.restore && JSON.stringify(current.notes) === JSON.stringify(snapshot.notes)) return;
+    if (current && current.restore === snapshot.restore && JSON.stringify(current.restoredTrackIds) === JSON.stringify(snapshot.restoredTrackIds)
+      && JSON.stringify(current.notes) === JSON.stringify(snapshot.notes)) return;
     this.entries = this.entries.slice(0, this.index + 1);
     this.entries.push(this.copy(snapshot));
     this.index++;
   }
-  undo(): PhraseEditSnapshot | undefined { return this.canUndo ? this.copy(this.entries[--this.index]) : undefined; }
-  redo(): PhraseEditSnapshot | undefined { return this.canRedo ? this.copy(this.entries[++this.index]) : undefined; }
-  private copy(snapshot: PhraseEditSnapshot): PhraseEditSnapshot {
-    return { notes: snapshot.notes.map(n => ({ ...n })), selection: [...snapshot.selection], restore: snapshot.restore };
+  undo(): PhraseEditSnapshot<T> | undefined { return this.canUndo ? this.copy(this.entries[--this.index]) : undefined; }
+  redo(): PhraseEditSnapshot<T> | undefined { return this.canRedo ? this.copy(this.entries[++this.index]) : undefined; }
+  private copy(snapshot: PhraseEditSnapshot<T>): PhraseEditSnapshot<T> {
+    return { notes: snapshot.notes.map(n => ({ ...n })), selection: [...snapshot.selection], restore: snapshot.restore,
+      ...(snapshot.restoredTrackIds ? { restoredTrackIds: [...snapshot.restoredTrackIds] } : {}) };
   }
 }

@@ -441,3 +441,16 @@ test('melody is the first row with red-theme notes and independent selection/pre
   assert.deepEqual(component.partToggled.values.at(-1), { sectionId: 'intro', trackId: 'melody-1', present: false });
   assert.equal(component.sectionSelected.values.length, 0);
 });
+
+test('global manual phrase dots use role accents and section manual dots use the app accent', () => {
+  const { component, base } = fixture();
+  const project = component.project();
+  component.project.set({ ...project, tracks: project.tracks.map(track => ({ ...track, editedPhrase: [] })),
+    arrangement: project.arrangement.map(section => section.id === 'verse' ? { ...section, trackPhrases: { 'bass-1': [] } } : section) });
+  base.arcs = []; component.drawOverview();
+  for (const section of project.arrangement) {
+    const button = component.hits.find(area => area.key === 'toggle:' + section.id + ':bass-1');
+    const dot = base.arcs.find(mark => mark.radius === 2.5 && mark.x === button.x + 14 && mark.y === button.y + 2);
+    assert.equal(dot.color, section.id === 'verse' ? '--accent-primary' : '--role-bass-strong');
+  }
+});

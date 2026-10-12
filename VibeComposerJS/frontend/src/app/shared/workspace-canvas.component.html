@@ -188,20 +188,20 @@
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   (seekRequested)="seek($event)"
                   (trackSelected)="selectScoreTrack($event)"
-                  [hiddenTrackIds]="hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreSectionFocus() : null" [velocityVisible]="editing()"
+                  [hiddenTrackIds]="editing() ? editingHiddenTracks : hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreSectionFocus() : null" [velocityVisible]="editing()"
                   (noteSelected)="canvasNoteSelected($event)" (noteChanged)="canvasNoteChanged($event)"
                   [selectedNoteIds]="editor()?.selectedNoteIds() ?? []" [snapBeats]="editor()?.snapBeats() ?? 0.25"
                   [snapToScale]="editor()?.snapToScale() ?? true" [scalePitchClasses]="editor()?.scalePitchClasses() ?? []"
                   (selectionChanged)="editor()?.selectNotes($event)" (notesChanged)="canvasNotesChanged($event)"
                   (splitRequested)="canvasSplit($event)" (deleteRequested)="canvasDelete($event)"
-                  (auditionRequested)="playback.audition(selectedTrack(), $event)"
-                  (noteAdded)="canvasNoteAdded($event)" (applyRequested)="editor()?.applyChanges()" />
+                  (auditionRequested)="auditionCanvasNotes($event)"
+                  (noteAdded)="canvasNoteAdded($event)" (applyRequested)="editor()?.smartExit()" />
               </div>
           </div>
         </div>
         <footer class="score-display-header" aria-label="Score display and edit actions">
           @if (editing()) {
-            <span>{{ selectedTrack().name }} · Edit phrase</span>
+            <span>{{ selectedPart() === 'drums' ? 'All drums · Edit phrases' : selectedTrack().name + ' · Edit phrase' }}</span>
             <button type="button" (click)="editor()?.addNote()">＋ Note</button>
             <button type="button" title="Ctrl+Z" [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
             <button type="button" title="Ctrl+Y" [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>

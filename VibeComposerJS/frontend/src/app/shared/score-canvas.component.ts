@@ -100,7 +100,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private lastAudition = 0;
   readonly noteChanged = output<PhraseNote>();
   readonly applyRequested = output<void>();
-  readonly noteAdded = output<{ midi: number; startBeat: number }>();
+  readonly noteAdded = output<{ trackId?: string; midi: number; startBeat: number }>();
   readonly gutterRows = signal<readonly { midi: number; label: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[]>([]);
   private pitchMin = 48;
   private pitchMax = 72;
@@ -581,7 +581,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const startBeat = grid ? Math.round(rawBeat / grid) * grid : rawBeat;
     const range = this.editBounds();
     if (range && (startBeat < range.startBeat || startBeat >= range.endBeat)) return;
-    this.noteAdded.emit({ midi: y >= this.harmonicHeight && this.drumPitches.length ? midi : this.snapPitch(midi), startBeat });
+    const drum = y >= this.harmonicHeight && this.drumPitches.length > 0;
+    const ownsPitch = (track: ScoreCanvasTrack) => track.color === 'drums'
+      && (track.drumPitch === midi || this.model?.notes.some(note => note.part === track.id && note.midi === midi));
+    const track = drum ? this.model.tracks.find(track => track.id === this.selectedTrackId() && ownsPitch(track))
+      ?? this.model.tracks.find(ownsPitch) : undefined;
+    this.noteAdded.emit({ ...(track ? { trackId: track.id } : {}), midi: drum ? midi : this.snapPitch(midi), startBeat });
   };
 
   private resizeRenderer(): void {
@@ -714,8 +719,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const top = note.color === 'drums' ? this.harmonicHeight : 0;
       const bottom = note.color === 'drums' ? scoreHeight : this.harmonicHeight;
       if (centerY < top || centerY >= bottom) continue;
-      const y = Math.max(top, centerY - Math.min(3, this.laneHeight / 2));
-      const noteHeight = Math.min(bottom, centerY + Math.min(3, this.laneHeight / 2)) - y;
+      const rowHeight = note.color === 'drums' ? drumRowHeight : this.laneHeight;
+      const y = Math.max(top, centerY - Math.min(3, rowHeight / 2));
+      const noteHeight = Math.min(bottom, centerY + Math.min(3, rowHeight / 2)) - y;
       const opacity = note.opacity * (selectedTrackId === note.part ? 1 : 0.72);
       const noteColors = COLORS[note.color];
       if (noteHeight > 0 && selectedTrackId === note.part) fill(x - 2, y - 2, noteWidth + 4, 10, noteColors.glow);

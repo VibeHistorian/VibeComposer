@@ -2750,7 +2750,7 @@ test('drum identities are independent, named, fixed to channel 10 and preserved 
   assert.equal(workspace.hasChannelCollision(), false);
   const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
   const editor = new EditWorkspaceComponent(); editor.ngOnInit();
-  assert.deepEqual(editor.drumVoices(), [{ midi: 39, label: 'Clap' }, { midi: 42, label: 'Closed hi-hat' }]);
+  assert.deepEqual(editor.drumVoices(), [{ midi: 36, label: 'Kick' }, { midi: 39, label: 'Clap' }, { midi: 42, label: 'Closed hi-hat' }]);
   const saved = service.exportProjectJson();
   service.updateTrack(first, { midiChannel: 1 }); service.updateTrack(first, { mix: { program: 5 } });
   service.updateRoleGeneratorSettings('drums', { pitch: 38 });
@@ -3256,7 +3256,7 @@ test('restoring generated melody in the note editor is a draft until Apply and i
   editor.applyChanges();
   const track = service.project().tracks.find(track => track.id === trackId);
   assert.equal(track.editedPhrase, undefined);
-  assert.deepEqual(phrase.phraseForTrack(service.project(), track), editor.draftNotes());
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track), editor.draftNotes().map(({ trackId, ...note }) => note));
   service.undo(); assert.equal(service.exportProjectJson(), before);
 });
 
@@ -3330,12 +3330,12 @@ function fixture() {
   input.required = () => signal(undefined);
   let service, ui;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
-    Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
+    HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
     signal, computed: (read) => read, effect: () => {}, input,
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
-    inject: (type) => type.name === 'ProjectService' ? service : type.name === 'WorkspaceUiService' ? ui
-      : type.name === 'AudioPlaybackService' ? {} : preferences,
+    inject: (type) => type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
+      : type?.name === 'AudioPlaybackService' ? {} : preferences,
   };
   const root = path.join(__dirname, '../src/app');
   function load(file) {
@@ -3619,7 +3619,7 @@ test('manual melody notes work through the editor, scoped presence, history, per
   editor.addNote();
   assert.ok(editor.noteCount() > 0);
   assert.equal(service.exportProjectJson(), before, 'draft edits do not write project history');
-  const draft = [...editor.draftNotes()];
+  const draft = editor.notes().map(({ trackId, ...note }) => note);
   editor.applyChanges();
   workspace.closeEditor();
   const track = () => service.project().tracks.find((candidate) => candidate.id === id);
@@ -5114,7 +5114,7 @@ test('contextual Local Apply preserves other phrase cycles and leaves the global
   editor.phraseLength = 4;
   editor.ngOnInit();
   const history = service.exportProjectJson();
-  editor.selectedNoteId.set('kick'); editor.updateSelected('velocity', { target: { value: '117' } });
+  editor.selectNote('kick'); editor.updateSelected('velocity', { target: { value: '117' } });
   assert.equal(service.exportProjectJson(), history);
   editor.applyLocalChanges();
   assert.deepEqual(service.project().tracks.find(track => track.id === id).editedPhrase, track.editedPhrase);
@@ -5135,4 +5135,41 @@ test('display filters synchronize audible tracks atomically when enabled', () =>
   service.undo(); assert.equal(service.exportProjectJson(), before);
   workspace.toggleScoreRole('bass');
   assert.ok(service.project().tracks.filter(track => ['drums','bass'].includes(track.role)).every(track => track.mix.muted));
+});
+
+
+test('multi-drum drafts keep ownership, smart-exit destinations and one atomic undo', () => {
+  const { service, ui, load } = fixture();
+  service.setRoleTrackCount('drums', 3);
+  const tracks = service.project().tracks.filter(track => track.role === 'drums');
+  const sectionId = service.project().arrangement[0].id;
+  tracks.forEach((track, index) => service.updateTrackGeneratorSettings(track.id, { pitch: [36, 38, 42][index] }));
+  const phrase = (midi, velocity) => [{ id: 'shared', midi, startBeat: 0, durationBeats: 1, velocity }];
+  assert.equal(service.applyPhraseEdits([
+    ...tracks.map((track, index) => ({ trackId: track.id, notes: phrase([36,38,42][index], 90) })),
+    { trackId: tracks[1].id, sectionId, notes: phrase(38, 100) },
+  ]), true);
+  const before = service.exportProjectJson();
+  const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
+  ui.selectedTrackId.set(tracks[0].id);
+  const editor = new EditWorkspaceComponent(); editor.sectionId = sectionId; editor.phraseLength = 16; editor.ngOnInit();
+  assert.equal(editor.editedTracks().length, 3);
+  assert.equal(new Set(editor.notes().map(note => note.id)).size, editor.notes().length, 'editor IDs are unique across tracks');
+  assert.equal(editor.hasChanges(), false);
+  editor.smartExit(); assert.equal(editor.cancelled.values.length, 1);
+  assert.equal(service.exportProjectJson(), before, 'unchanged smart exit does not save');
+  editor.selectAll();
+  editor.replaceNotes(editor.notes().map(note => ({ ...note, velocity: note.velocity + 5 })));
+  editor.undo(); assert.equal(editor.hasChanges(), false);
+  editor.redo(); assert.equal(editor.hasChanges(), true);
+  editor.smartExit(); assert.equal(editor.applied.values.length, 1);
+  assert.equal(service.project().tracks.find(track => track.id === tracks[0].id).editedPhrase[0].velocity, 95);
+  assert.equal(service.project().tracks.find(track => track.id === tracks[1].id).editedPhrase[0].velocity, 90);
+  assert.equal(service.project().tracks.find(track => track.id === tracks[2].id).editedPhrase[0].velocity, 95);
+  assert.equal(service.project().arrangement[0].trackPhrases[tracks[1].id][0].velocity, 105);
+  service.undo(); assert.equal(service.exportProjectJson(), before, 'one project undo restores all drum phrases');
+  const invalidBefore = service.exportProjectJson();
+  assert.equal(service.applyPhraseEdits([{ trackId: tracks[0].id, notes: phrase(36, 110) },
+    { trackId: tracks[2].id, notes: phrase(42, 200) }]), false);
+  assert.equal(service.exportProjectJson(), invalidBefore, 'an invalid phrase aborts the whole batch');
 });

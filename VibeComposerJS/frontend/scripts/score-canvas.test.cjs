@@ -20,7 +20,8 @@ function fixture() {
   const helperSource = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-edit.ts'), 'utf8'),
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   new Function('module', 'exports', helperSource)(helperModule, helperModule.exports);
-  new Function('require', 'module', 'exports', compiled)(name => name.includes('phrase-edit') ? helperModule.exports : angular, module, module.exports);
+  new Function('require', 'module', 'exports', compiled)(name => name.includes('phrase-edit') ? helperModule.exports
+    : name.includes('drum-instruments') ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports);
   const component = new module.exports.ScoreCanvasComponent();
   component.width = 800;
   component.height = 300;
@@ -271,4 +272,26 @@ test('scale snapping constrains pitch drags and can be disabled for chromatic ed
   c.snapToScale = () => false;
   c.onPointerMove(pointer(300, 20 - c.laneHeight / 2));
   assert.equal(c.drag.current.midi, 49);
+});
+
+test('drum-only editing renders every unselected drum note at visible row-based thickness', () => {
+  const { component: c } = fixture();
+  c.editable = () => true; c.velocityVisible = () => true;
+  c.horizontalOffset = 0; c.horizontalScale = 1;
+  const tracks = [82, 60, 40, 36, 35].map((drumPitch, index) => ({ id: 'drum-' + index, color: 'drums', drumPitch }));
+  const notes = tracks.flatMap((track, index) => [0, 2, 4].map(beat => ({ id: track.id + '-' + beat, part: track.id,
+    color: 'drums', midi: track.drumPitch, velocity: 90, startBeat: beat + index * .125, durationBeats: .125, opacity: 1 })));
+  c.model = { tracks, notes, sections: [], totalBeats: 8, selectedTrackId: tracks[3].id, hiddenTrackIds: new Set() };
+  const shapes = [];
+  c.staticGraphics = { clear() { shapes.length = 0; }, rect() { return this; }, moveTo() { return this; },
+    lineTo() { return this; }, fill() { return this; }, stroke() { return this; },
+    roundRect(x, y, width, height) { shapes.push({ x, y, width, height }); return this; } };
+  c.drawStatic();
+  assert.equal(c.harmonicHeight, 0, 'the editor has no piano rows');
+  assert.equal(c.gutterRows().length, 5);
+  assert.equal(shapes.length, notes.length, 'all drum tracks draw before any selection or click');
+  assert.ok(shapes.every(shape => shape.height === 6), 'notes use drum row height rather than subpixel piano height');
+  assert.equal(c.hitAreas.length, notes.length, 'all rendered drum notes remain editable');
+  c.model.selectedTrackId = tracks[0].id; c.drawStatic();
+  assert.ok(shapes.every(shape => shape.height === 6), 'changing active tracks does not reveal hidden notes');
 });
