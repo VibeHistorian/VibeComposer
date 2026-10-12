@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
 import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project/project.model';
 import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../core/music/phrase';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
+import { PhraseEditHistory, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 
@@ -39,7 +40,17 @@ export class EditWorkspaceComponent {
   readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
   readonly generationAvailable = computed(() => PART_GENERATION_AVAILABLE[this.selectedPart()]);
   readonly applyError = signal<string | null>(null);
-  readonly selectedNoteId = signal<string | null>(null);
+  readonly selectedNoteIds = signal<readonly string[]>([]);
+  readonly selectedNoteId = computed(() => this.selectedNoteIds()[0] ?? null);
+  readonly snapBeats = signal(0.25);
+  readonly gridChoices = [0.125, 1 / 6, 0.25, 1 / 3, 0.5, 2 / 3, 1, 4 / 3, 2, 4];
+  readonly transposeOpen = signal(false);
+  readonly transposeAmount = signal(0);
+  readonly historyRevision = signal(0);
+  private readonly history = new PhraseEditHistory();
+  readonly canUndo = computed(() => { this.historyRevision(); return this.history.canUndo; });
+  readonly canRedo = computed(() => { this.historyRevision(); return this.history.canRedo; });
+  private lastDuration = 0.5;
   readonly phraseBeats = computed(() => this.phraseLength ?? this.project().progression.length * 4);
   readonly draftNotes = signal<PhraseNote[]>([]);
   readonly notes = computed(() => [...this.draftNotes()].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
@@ -54,18 +65,92 @@ export class EditWorkspaceComponent {
 
   ngOnInit(): void {
     this.loadTrackDraft(this.selectedTrack());
-    if (this.initialNoteId) this.selectedNoteId.set(this.initialNoteId);
+    if (this.initialNoteId) this.selectNote(this.initialNoteId);
+    this.history.reset({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: false });
   }
 
   selectTrack(trackId: string): void {
     this.workspaceUi.selectTrack(trackId);
     const track = this.project().tracks.find((candidate) => candidate.id === trackId);
     if (track) this.loadTrackDraft(track);
-    this.selectedNoteId.set(null);
+    this.selectedNoteIds.set([]);
   }
 
   selectNote(id: string): void {
-    this.selectedNoteId.set(id);
+    this.selectedNoteIds.set([id]);
+  }
+
+  selectNotes(ids: readonly string[]): void { this.selectedNoteIds.set(ids); }
+  selectAll(): void { this.selectNotes(this.notes().map(note => note.id)); }
+  undo(): void { this.loadHistory(this.history.undo()); }
+  redo(): void { this.loadHistory(this.history.redo()); }
+  private loadHistory(snapshot?: PhraseEditSnapshot): void {
+    if (!snapshot) return;
+    this.draftNotes.set([...snapshot.notes]);
+    this.selectNotes(snapshot.selection);
+    this.restoreOnApply = snapshot.restore;
+    this.historyRevision.update(value => value + 1);
+    this.applyError.set(null);
+  }
+  private record(): void {
+    this.history.record({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: this.restoreOnApply });
+    this.historyRevision.update(value => value + 1);
+    this.applyError.set(null);
+  }
+  @HostListener('document:keydown', ['$event'])
+  keydown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]'))) return;
+    const command = event.ctrlKey || event.metaKey;
+    const key = event.key.toLowerCase();
+    if (command && key === 'z') event.shiftKey ? this.redo() : this.undo();
+    else if (command && key === 'y') this.redo();
+    else if (command && key === 'a') this.selectAll();
+    else if (command && key === 't') this.transposeOpen.set(true);
+    else if (event.key === 'Delete' || event.key === 'Backspace') this.deleteSelected();
+    else return;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  transposeSelected(): void {
+    const amount = this.transposeAmount();
+    if (!Number.isInteger(amount)) return;
+    this.replaceNotes(this.notes().filter(n => this.selectedNoteIds().includes(n.id))
+      .map(n => ({ ...n, midi: Math.max(0, Math.min(127, n.midi + amount)) })));
+    this.transposeOpen.set(false);
+  }
+  setTranspose(event: Event): void { this.transposeAmount.set(Number((event.target as HTMLInputElement).value)); }
+  setGrid(event: Event): void { this.snapBeats.set(Number((event.target as HTMLSelectElement).value)); }
+  splitNotes(position: { id: string; beat: number }): void {
+    const ids = this.selectedNoteIds().includes(position.id) ? this.selectedNoteIds() : [position.id];
+    const next = this.notes().flatMap(note => {
+      const end = note.startBeat + note.durationBeats;
+      if (!ids.includes(note.id) || position.beat <= note.startBeat || position.beat >= end) return [note];
+      return [{ ...note, durationBeats: position.beat - note.startBeat },
+        { ...note, id: this.makeNoteId(), startBeat: position.beat, durationBeats: end - position.beat }];
+    });
+    if (next.length > 2048) return;
+    this.draftNotes.set(next);
+    this.restoreOnApply = false;
+    this.record();
+  }
+  replaceNotes(notes: readonly PhraseNote[], duplicate = false): void {
+    if (!notes.length) return;
+    if (duplicate && this.notes().length + notes.length > 2048) return;
+    if (duplicate) {
+      const copies = notes.map(note => ({ ...note, id: this.makeNoteId() }));
+      this.draftNotes.update(existing => [...existing, ...copies]);
+      this.selectNotes(copies.map(note => note.id));
+    } else {
+      const updates = new Map(notes.map(note => [note.id, note]));
+      this.draftNotes.update(existing => existing.map(note => {
+        const updated = updates.get(note.id);
+        return updated ? { id: updated.id, midi: updated.midi, startBeat: updated.startBeat,
+          durationBeats: updated.durationBeats, velocity: updated.velocity } : note;
+      }));
+    }
+    if (notes.length === 1) this.lastDuration = notes[0].durationBeats;
+    this.restoreOnApply = false;
+    this.record();
   }
 
   noteName(midi: number): string {
@@ -92,7 +177,8 @@ export class EditWorkspaceComponent {
     };
     this.draftNotes.set([...this.notes(), note]);
     this.restoreOnApply = false;
-    this.selectedNoteId.set(note.id);
+    this.selectNote(note.id);
+    this.record();
   }
 
   updateSelected(field: 'midi' | 'startBeat' | 'durationBeats' | 'velocity', event: Event): void {
@@ -112,36 +198,38 @@ export class EditWorkspaceComponent {
     const next = this.notes().map((note) => note.id === selected.id ? { ...note, [field]: value } : note);
     this.draftNotes.set(next);
     this.restoreOnApply = false;
+    this.record();
   }
 
   deleteSelected(): void {
-    const selected = this.selectedNote();
-    if (!selected) return;
-    this.draftNotes.set(this.notes().filter((note) => note.id !== selected.id));
+    const ids = this.selectedNoteIds();
+    if (!ids.length) return;
+    this.draftNotes.set(this.notes().filter(note => !ids.includes(note.id)));
     this.restoreOnApply = false;
-    this.selectedNoteId.set(null);
+    this.selectedNoteIds.set([]);
+    this.record();
   }
 
   restoreGenerated(): void {
     if (!this.generationAvailable()) return;
     this.draftNotes.set(generateTrackPhrase(this.project(), this.selectedTrack()));
     this.restoreOnApply = true;
-    this.selectedNoteId.set(null);
+    this.selectedNoteIds.set([]);
+    this.record();
   }
 
   replaceNote(note: PhraseNote): void {
-    this.draftNotes.update(notes => notes.map(existing => existing.id === note.id ? { id: note.id, midi: note.midi,
-      startBeat: note.startBeat, durationBeats: note.durationBeats, velocity: note.velocity } : existing));
-    this.restoreOnApply = false;
+    this.replaceNotes([note]);
   }
 
-  addNoteAt(position: { midi: number; startBeat: number }): void {
+  addNoteAt(position: { midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
     if (this.notes().length >= 2048 || position.startBeat >= this.phraseBeats()) return;
     const note = { id: this.makeNoteId(), midi: position.midi, startBeat: Math.max(0, position.startBeat),
-      durationBeats: Math.min(0.5, this.phraseBeats() - position.startBeat), velocity: 90 };
+      durationBeats: Math.min(position.durationBeats ?? this.lastDuration, this.phraseBeats() - position.startBeat), velocity: position.velocity ?? 90 };
     this.draftNotes.update(notes => [...notes, note]);
-    this.selectedNoteId.set(note.id);
+    this.selectNote(note.id);
     this.restoreOnApply = false;
+    this.record();
   }
 
   applyLocalChanges(): void {
@@ -201,6 +289,9 @@ export class EditWorkspaceComponent {
     });
     this.draftNotes.set([...this.baselineNotes]);
     this.restoreOnApply = false;
+    this.selectedNoteIds.set([]);
+    this.history.reset({ notes: this.draftNotes(), selection: [], restore: false });
+    this.historyRevision.update(value => value + 1);
   }
 
 }

@@ -9,6 +9,7 @@
       </div>
 
       @if (selectedNote(); as note) {
+        <p class="inspector-copy">{{ selectedNoteIds().length }} {{ selectedNoteIds().length === 1 ? 'note' : 'notes' }} selected</p>
         <p class="selected-note-name">{{ noteName(note.midi) }} <span>NOTE SELECTED</span></p>
         <label class="field-label" for="note-pitch">Pitch</label>
         <div class="field-with-value">
@@ -24,7 +25,7 @@
           <input id="note-velocity" type="range" min="1" max="127" step="1" [value]="note.velocity" (change)="updateSelected('velocity', $event)" />
           <output>{{ note.velocity }}</output>
         </div>
-        <button type="button" class="remove-note" (click)="deleteSelected()">Remove note</button>
+        <button type="button" class="remove-note" (click)="deleteSelected()">Remove selected notes</button>
       } @else {
         <p class="inspector-copy">Select a note in the piano roll to edit its properties. Applying saves this phrase as one undo step.</p>
       }
@@ -38,5 +39,26 @@
         <div class="source-panel"><span class="status-dot"></span> {{ generationAvailable() ? 'Following current seed and generation settings' : 'Add melody notes here. Automatic generation is not available yet.' }}</div>
       }
 
-  <p class="inspector-copy">Drag notes to move them; drag the right edge to resize. Double-click empty space to add a note. Middle-click empty space to apply globally.</p>
+  <div class="phrase-tools">
+    <label class="field-label" for="phrase-grid">Time grid (beats)</label>
+    <select id="phrase-grid" [value]="snapBeats()" (change)="setGrid($event)">
+      @for (grid of gridChoices; track grid) { <option [value]="grid" [selected]="grid === snapBeats()">{{ grid === 1 / 6 ? '1/6' : grid === 1 / 3 ? '1/3' : grid === 2 / 3 ? '2/3' : grid === 4 / 3 ? '4/3' : grid }}</option> }
+    </select>
+    <div class="phrase-actions">
+      <button type="button" title="Ctrl+A" (click)="selectAll()">Select all</button>
+      <button type="button" title="Ctrl+T" (click)="transposeOpen.set(true)" [disabled]="!selectedNoteIds().length">Transpose…</button>
+    </div>
+    @if (transposeOpen()) {
+      <label class="field-label" for="phrase-transpose">Transpose selected notes (semitones)</label>
+      <input id="phrase-transpose" type="number" step="1" [value]="transposeAmount()" (input)="setTranspose($event)" (keydown.enter)="transposeSelected()" (keydown.escape)="transposeOpen.set(false)" />
+      <button type="button" (click)="transposeSelected()" [disabled]="!selectedNoteIds().length">Transpose</button>
+    }
+  </div>
+  <details class="phrase-help">
+    <summary>Editing gestures and shortcuts</summary>
+    <p>Click empty space to add a note. Drag notes to move; drag either edge to trim. Alt+left drag trims the start. Shift bypasses the time grid and keeps move drags at the same pitch.</p>
+    <p>Right drag selects a box. Ctrl+right drag extends selection. Right-click deletes; Alt+right-click splits at the pointer. Ctrl+left drag on selected notes duplicates; elsewhere it shapes pitch.</p>
+    <p>Middle drag edits velocity; Alt+middle drag changes length; Shift+middle drag changes pitch. Ctrl+middle drag shapes velocities. Middle-click empty space applies globally.</p>
+    <p>Ctrl/Cmd+A selects all, Delete removes selection, Ctrl/Cmd+T opens transpose, Ctrl/Cmd+Z undoes, Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z redoes. Arrow keys focus notes; Enter selects.</p>
+  </details>
 </ng-template>

@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import type { ArrangedPart, CompositionProject, PhraseNote } from '../project/project.model';
+import type { ArrangedPart, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
 import { layOutTrackPhrase } from '../music/phrase';
 import { TinySynthEngine } from './tiny-synth-engine';
 import { beatToSeconds, secondsToBeat, projectTempoMap, sectionDurationBeats, type TempoPoint } from '../music/section-context';
@@ -45,6 +45,41 @@ export class AudioPlaybackService {
   private readonly buses = new Map<string, PartBus>();
   private readonly programs = new Map<string, number>();
   private readonly activeSources = new Set<AudioScheduledSourceNode>();
+
+  async audition(track: CompositionTrack, notes: readonly PhraseNote[]): Promise<void> {
+    if (!notes.length) return;
+    try {
+      const context = this.getContext();
+      if (context.state === 'suspended') await context.resume();
+      const gain = context.createGain();
+      const pan = context.createStereoPanner();
+      gain.gain.value = 0.8 * track.mix.volumePercent / 100;
+      pan.pan.value = track.mix.panPercent / 100;
+      gain.connect(pan);
+      pan.connect(context.destination);
+      const pitches = new Set<number>();
+      const voices = notes.filter(note => {
+        if (pitches.has(note.midi)) return false;
+        pitches.add(note.midi);
+        return true;
+      }).flatMap(note => this.synth!.schedule(gain, track.mix.program, track.role === 'drums',
+        note.midi, note.velocity, context.currentTime + 0.003, 0.3));
+      let remaining = voices.length;
+      const disconnect = () => { gain.disconnect(); pan.disconnect(); };
+      if (!remaining) disconnect();
+      for (const voice of voices) {
+        voice.source.onended = () => {
+          voice.disconnect();
+          voice.source.disconnect();
+          voice.envelope.disconnect();
+          if (--remaining === 0) disconnect();
+        };
+        voice.source.stop(voice.stopTime);
+      }
+    } catch (error: unknown) {
+      this.playbackError.set(error instanceof Error ? error.message : 'Note preview could not start.');
+    }
+  }
 
   async toggle(project: CompositionProject): Promise<void> {
     if (this.state() === 'playing') {

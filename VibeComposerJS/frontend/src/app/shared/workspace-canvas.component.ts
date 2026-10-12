@@ -284,8 +284,22 @@ export class WorkspaceCanvasComponent {
   canvasNoteChanged(note: ScoreNote | import('../core/project/project.model').PhraseNote): void {
     this.editor()?.replaceNote({ ...note, startBeat: note.startBeat - this.editStartBeat() });
   }
-  canvasNoteAdded(position: { midi: number; startBeat: number }): void {
+  canvasNoteAdded(position: { midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
     this.editor()?.addNoteAt({ ...position, startBeat: position.startBeat - this.editStartBeat() });
+    const note = this.editor()?.selectedNote();
+    if (note) void this.playback.audition(this.selectedTrack(), [note]);
+  }
+  canvasNotesChanged(change: { notes: readonly import('../core/project/project.model').PhraseNote[]; duplicate: boolean }): void {
+    this.editor()?.replaceNotes(change.notes.map(note => ({ ...note, startBeat: note.startBeat - this.editStartBeat() })), change.duplicate);
+  }
+  canvasSplit(position: { id: string; beat: number }): void {
+    this.editor()?.splitNotes({ ...position, beat: position.beat - this.editStartBeat() });
+  }
+  canvasDelete(id: string): void {
+    const editor = this.editor();
+    if (!editor) return;
+    if (!editor.selectedNoteIds().includes(id)) editor.selectNote(id);
+    editor.deleteSelected();
   }
   canvasNoteSelected(note: ScoreNote): void {
     if (this.editing()) this.editor()?.selectNote(note.id); else this.openNoteEditor(note);

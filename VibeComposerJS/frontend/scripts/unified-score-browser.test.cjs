@@ -29,6 +29,26 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   const edit=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));return {arrangement:!!document.querySelector('vc-arrangement-overview canvas'),settings:!!document.querySelector('.part-settings-panel'),local:[...document.querySelectorAll('.score-display-header button')].some(b=>b.textContent==='Local Apply'),noStepGrid:!document.querySelector('.drum-grid')};})()`);for(const v of Object.values(edit))assert.equal(v,true);
   await capture('unified-score-edit');
+  const shortcuts = await evaluate(`(async()=>{${waitCode}
+    if (document.querySelector('#phrase-grid').value !== '0.25') throw Error('Initial grid does not match snapping');
+    const key=(key,extra={})=>document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...extra}));
+    key('a',{ctrlKey:true});
+    key('t',{ctrlKey:true});
+    const input=await wait(()=>document.querySelector('#phrase-transpose'));
+    input.value='12';input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+    await wait(()=>Number(document.querySelector('#note-pitch')?.value)===60);
+    key('z',{ctrlKey:true});await wait(()=>Number(document.querySelector('#note-pitch')?.value)===48);
+    key('y',{ctrlKey:true});await wait(()=>Number(document.querySelector('#note-pitch')?.value)===60);
+    key('z',{ctrlKey:true});await wait(()=>Number(document.querySelector('#note-pitch')?.value)===48);
+    key('Delete');await wait(()=>!document.querySelector('#note-pitch'));
+    key('z',{ctrlKey:true});await wait(()=>Number(document.querySelector('#note-pitch')?.value)===48);
+    const pitch=document.querySelector('#note-pitch');
+    const typing=new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true,cancelable:true});pitch.dispatchEvent(typing);
+    const persisted=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    return {typingUnaffected:!typing.defaultPrevented,globalUntouched:persisted.tracks.find(t=>t.role==='bass').editedPhrase[0].midi===48,localUntouched:!persisted.arrangement[0].trackPhrases};
+  })()`);
+  assert.deepEqual(shortcuts,{typingUnaffected:true,globalUntouched:true,localUntouched:true});
   const local=await evaluate(`(async()=>{${waitCode}const input=document.querySelector('#note-velocity');input.value='115';input.dispatchEvent(new Event('change',{bubbles:true}));[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Local Apply').click();const p=await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.arrangement[0].trackPhrases?p:null;});return {global:p.tracks.find(t=>t.role==='bass').editedPhrase[0].velocity,local:p.arrangement[0].trackPhrases['track-bass-1'][0].velocity};})()`);assert.deepEqual(local,{global:90,local:115});
   const restored=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width;})()`);
   assert.equal(restored,overviewViewport,'closing the editor restores the overview time zoom');

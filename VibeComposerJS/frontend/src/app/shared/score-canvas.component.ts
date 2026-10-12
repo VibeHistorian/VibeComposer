@@ -3,6 +3,7 @@ import {
 } from '@angular/core';
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
 import { drumInstrumentName } from '../core/music/drum-instruments';
+import { dragPhraseNotes, type PhraseDragMode } from '../core/music/phrase-edit';
 import type { ArrangedPart, PhraseNote } from '../core/project/project.model';
 
 export interface ScoreCanvasTrack {
@@ -86,6 +87,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly editBounds = input<ScoreSectionFocus | null>(null);
   readonly editable = input(false);
   readonly velocityVisible = input(false);
+  readonly selectedNoteIds = input<readonly string[]>([]);
+  readonly snapBeats = input(0.25);
+  readonly selectionChanged = output<readonly string[]>();
+  readonly notesChanged = output<{ notes: readonly PhraseNote[]; duplicate: boolean }>();
+  readonly splitRequested = output<{ id: string; beat: number }>();
+  readonly deleteRequested = output<string>();
+  readonly auditionRequested = output<readonly PhraseNote[]>();
+  private lastAudition = 0;
   readonly noteChanged = output<PhraseNote>();
   readonly applyRequested = output<void>();
   readonly noteAdded = output<{ midi: number; startBeat: number }>();
@@ -95,7 +104,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private drumPitches: number[] = [];
   private harmonicHeight = 0;
   private drumHeight = 0;
-  private drag: { note: ScoreCanvasNote; x: number; y: number; pointerId: number; resize: boolean; current: PhraseNote } | null = null;
+  private drag: { note: ScoreCanvasNote; x: number; y: number; pointerId: number; mode: PhraseDragMode; current: PhraseNote;
+    originals: readonly ScoreCanvasNote[]; preview: readonly PhraseNote[]; duplicate: boolean; lockPitch: boolean } | null = null;
+  private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[] } | null = null;
+  private shape: { mode: 'pitch' | 'velocity'; pointerId: number; notes: Map<string, PhraseNote> } | null = null;
+  private readonly onContextMenu = (event: MouseEvent): void => { if (this.editable()) event.preventDefault(); };
   private suppressClick = false;
   readonly sectionFocus = input<ScoreSectionFocus | null>(null);
   readonly noteSelected = output<ScoreCanvasNote>();
@@ -130,6 +143,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     this.wasEditable = editable;
     this.velocityVisible();
+    this.selectedNoteIds();
+    this.snapBeats();
     this.model = {
       tracks: this.tracks(),
       notes: this.notes(),
@@ -179,6 +194,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver?.disconnect();
     const canvas = this.app?.canvas;
     canvas?.removeEventListener('click', this.onCanvasClick);
+    canvas?.removeEventListener('contextmenu', this.onContextMenu);
     canvas?.removeEventListener('pointerdown', this.onPointerDown);
     canvas?.removeEventListener('pointerup', this.onPointerUp);
     canvas?.removeEventListener('pointercancel', this.onPointerCancel);
@@ -226,9 +242,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       canvas.style.outline = 'none';
       canvas.setAttribute('role', 'application');
       canvas.setAttribute('tabindex', '0');
-      canvas.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown Enter');
+      canvas.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown Enter Control+A Control+Z Control+Y Control+T Delete');
       host.appendChild(canvas);
       canvas.addEventListener('click', this.onCanvasClick);
+      canvas.addEventListener('contextmenu', this.onContextMenu);
       canvas.addEventListener('pointerdown', this.onPointerDown);
       canvas.addEventListener('pointerup', this.onPointerUp);
       canvas.addEventListener('pointercancel', this.onPointerCancel);
@@ -319,6 +336,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
 
   private readonly onCanvasClick = (event: MouseEvent): void => {
     if (this.suppressClick) { this.suppressClick = false; return; }
+    if (this.editable()) return;
     if (event.button && event.button !== 0) return;
     const area = this.hitAreaAt(event);
     this.focusedNoteIndex = area ? this.hitAreas.indexOf(area) : -1;
@@ -347,14 +365,34 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const drag = this.drag;
       const dx = (event.clientX - drag.x) * this.width / Math.max(1, bounds.width);
       const dy = (event.clientY - drag.y) * this.height / Math.max(1, bounds.height);
-      const beatDelta = Math.round(dx / (this.width * this.horizontalScale) * (this.model?.totalBeats ?? 1) * 4) / 4;
-      const minBeat = this.editBounds()?.startBeat ?? 0;
-      const total = this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1;
-      const startBeat = drag.resize ? drag.note.startBeat : Math.max(minBeat, Math.min(total - drag.note.durationBeats, drag.note.startBeat + beatDelta));
-      const durationBeats = drag.resize ? Math.max(0.05, Math.min(total - startBeat, drag.note.durationBeats + beatDelta)) : drag.note.durationBeats;
-      const midi = drag.note.color === 'drums' ? drag.note.midi : Math.max(this.pitchMin, Math.min(this.pitchMax, drag.note.midi - Math.round(dy / this.laneHeight)));
-      drag.current = { ...drag.note, startBeat, durationBeats, midi };
+      const rawDelta = dx / (this.width * this.horizontalScale) * (this.model?.totalBeats ?? 1);
+      const grid = event.shiftKey ? 0 : this.snapBeats();
+      const anchor = drag.mode === 'duration' ? drag.note.durationBeats : drag.note.startBeat;
+      const beatDelta = grid ? Math.round((anchor + rawDelta) / grid) * grid - anchor : rawDelta;
+      const pitchDelta = drag.lockPitch || (event.shiftKey && drag.mode === 'move') ? 0 : -Math.round(dy / this.laneHeight);
+      drag.preview = dragPhraseNotes(drag.originals, drag.mode, beatDelta, pitchDelta, -Math.round(dy),
+        this.editBounds()?.startBeat ?? 0, this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1);
+      drag.current = drag.preview.find(note => note.id === drag.note.id) ?? drag.note;
+      if ((drag.mode === 'velocity' || drag.current.midi !== drag.note.midi) && performance.now() - this.lastAudition > 300) {
+        this.auditionRequested.emit(drag.preview);
+        this.lastAudition = performance.now();
+      }
       this.suppressClick ||= Math.abs(dx) + Math.abs(dy) > 3;
+    }
+    if (this.box) {
+      this.box.endX = this.hoverX;
+      this.box.endY = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+    }
+    if (this.shape) {
+      const beat = this.beatAt(event);
+      const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+      for (const note of this.model?.notes ?? []) {
+        if (note.startBeat <= beat && beat < note.startBeat + note.durationBeats) {
+          const midi = note.color === 'drums' ? note.midi : Math.max(0, Math.min(127, this.pitchMax - Math.floor((y + this.verticalOffset) / this.laneHeight)));
+          const velocity = Math.max(1, Math.min(127, Math.round(127 * (1 - y / this.scoreHeight))));
+          this.shape.notes.set(note.id, { ...note, ...(this.shape.mode === 'pitch' ? { midi } : { velocity }) });
+        }
+      }
     }
     this.drawDynamic();
     const area = this.hitAreaAt(event);
@@ -385,7 +423,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       event.preventDefault();
       this.focusedNoteIndex = this.focusedNoteIndex <= 0 ? this.hitAreas.length - 1 : this.focusedNoteIndex - 1;
-    } else if (event.key === 'Enter' && this.focusedNoteIndex >= 0) {
+    } else if (event.key === 'Enter' && this.focusedNoteIndex >= 0 && this.focusedNoteIndex < this.hitAreas.length) {
       event.preventDefault();
       this.noteSelected.emit(this.hitAreas[this.focusedNoteIndex].note);
       return;
@@ -412,7 +450,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const x = (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width);
     const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
     const trackCount = this.model?.tracks.length ?? 0;
-    if (trackCount === 0 || y < 0 || y >= this.scoreHeight || x < 0 || x >= this.width) return undefined;
+    if (trackCount === 0 || y < 0 || x < 0 || x >= this.width) return undefined;
+    if (y >= this.scoreHeight) {
+      if (this.editable() && this.velocityVisible() && y < this.height) return this.hitAreas.find(area => Math.abs(x - area.x) <= 5);
+      return undefined;
+    }
     const trackIndex = y >= this.harmonicHeight && this.drumHeight > 0 ? 1 : 0;
     const column = Math.min(this.hitColumnCount - 1, Math.floor(x / HIT_BUCKET_WIDTH));
     const candidates = this.hitAreaBuckets.get(trackIndex * this.hitColumnCount + column) ?? [];
@@ -423,36 +465,83 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     return undefined;
   }
 
+  private beatAt(event: MouseEvent): number {
+    const bounds = this.app!.canvas.getBoundingClientRect();
+    return (this.horizontalOffset + (event.clientX - bounds.left) / Math.max(1, bounds.width) / this.horizontalScale) * (this.model?.totalBeats ?? 1);
+  }
   private readonly onPointerDown = (event: PointerEvent): void => {
     if (event.button === 0) this.suppressClick = false;
     if (event.button === 1) event.preventDefault();
-    if (!this.editable() || event.button !== 0 || !this.app) return;
+    if (!this.editable() || !this.app) return;
+    event.preventDefault();
+    this.app.canvas.focus?.();
     const area = this.hitAreaAt(event);
-    if (!area) return;
-    this.noteSelected.emit(area.note);
     const bounds = this.app.canvas.getBoundingClientRect();
     const x = (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width);
-    this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
-      resize: x >= area.x + area.width - Math.min(7, area.width / 3), current: area.note };
+    const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+    if (event.button === 2) {
+      this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: event.ctrlKey || event.metaKey ? this.selectedNoteIds() : [] };
+    } else if ((event.ctrlKey || event.metaKey) && (!area || !this.selectedNoteIds().includes(area.note.id) || event.button === 1)) {
+      this.shape = { mode: event.button === 1 ? 'velocity' : 'pitch', pointerId: event.pointerId, notes: new Map() };
+      this.onPointerMove(event);
+    } else if (area && (event.button === 0 || event.button === 1)) {
+      const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
+      this.selectionChanged.emit(ids);
+      const resize = x >= area.x + area.width - Math.min(7, area.width / 3);
+      const mode: PhraseDragMode = y >= this.scoreHeight ? 'velocity' : event.button === 1 ? (event.altKey ? 'duration' : event.shiftKey ? 'pitch' : 'velocity')
+        : event.altKey || x <= area.x + Math.min(5, area.width / 3) ? 'start' : resize ? 'duration' : 'move';
+      const originals = (this.model?.notes ?? []).filter(note => ids.includes(note.id));
+      this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
+        current: area.note, mode, originals, preview: originals, duplicate: event.button === 0 && !!(event.ctrlKey || event.metaKey), lockPitch: area.note.color === 'drums' };
+      this.auditionRequested.emit(originals);
+      this.lastAudition = performance.now();
+    } else if (event.button === 0) {
+      this.selectionChanged.emit([]);
+      this.onDoubleClick(event);
+    }
     this.app.canvas.setPointerCapture(event.pointerId);
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
-    if (!this.drag || this.drag.pointerId !== event.pointerId) return;
-    const { note, current } = this.drag;
-    this.drag = null;
-    if (current.startBeat !== note.startBeat || current.durationBeats !== note.durationBeats || current.midi !== note.midi) this.noteChanged.emit(current);
+    if (this.box?.pointerId === event.pointerId) {
+      const box = this.box;
+      this.box = null;
+      const area = this.hitAreaAt(event);
+      if (Math.abs(box.endX - box.x) + Math.abs(box.endY - box.y) < 3 && area) {
+        if (event.altKey) {
+          const grid = event.shiftKey ? 0 : this.snapBeats();
+          const beat = this.beatAt(event);
+          this.splitRequested.emit({ id: area.note.id, beat: grid ? Math.round(beat / grid) * grid : beat });
+        } else this.deleteRequested.emit(area.note.id);
+      } else {
+        const ids = this.hitAreas.filter(area => area.x + area.width >= Math.min(box.x, box.endX) && area.x <= Math.max(box.x, box.endX)
+          && area.y + area.height >= Math.min(box.y, box.endY) && area.y <= Math.max(box.y, box.endY)).map(area => area.note.id);
+        this.selectionChanged.emit([...new Set([...box.previous, ...ids])]);
+      }
+    }
+    if (this.shape?.pointerId === event.pointerId) {
+      this.notesChanged.emit({ notes: [...this.shape.notes.values()], duplicate: false });
+      this.shape = null;
+    }
+    if (this.drag?.pointerId === event.pointerId) {
+      const { note, current, preview, duplicate } = this.drag;
+      this.drag = null;
+      if (duplicate || current.startBeat !== note.startBeat || current.durationBeats !== note.durationBeats || current.midi !== note.midi || current.velocity !== note.velocity) {
+        if (preview.length === 1 && !duplicate) this.noteChanged.emit(current);
+        else this.notesChanged.emit({ notes: preview, duplicate });
+      }
+    }
     if (this.app?.canvas.hasPointerCapture(event.pointerId)) this.app.canvas.releasePointerCapture(event.pointerId);
     this.drawDynamic();
   };
-
-  private readonly onPointerCancel = (): void => { this.drag = null; this.drawDynamic(); };
+  private readonly onPointerCancel = (): void => { this.drag = null; this.box = null; this.shape = null; this.drawDynamic(); };
   private readonly onAuxClick = (event: MouseEvent): void => {
     if (event.button !== 1 || !this.editable()) return;
     event.preventDefault();
     if (!this.hitAreaAt(event)) this.applyRequested.emit();
   };
   private readonly onDoubleClick = (event: MouseEvent): void => {
+    if (event.detail > 1) return;
     if (!this.editable() || this.hitAreaAt(event) || !this.app || !this.model) return;
     const bounds = this.app.canvas.getBoundingClientRect();
     const x = (event.clientX - bounds.left) * this.width / bounds.width;
@@ -461,7 +550,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const midi = y >= this.harmonicHeight && this.drumPitches.length
       ? this.drumPitches[Math.min(this.drumPitches.length - 1, Math.floor((y - this.harmonicHeight) / this.drumHeight * this.drumPitches.length))]
       : this.pitchMax - Math.floor((y + this.verticalOffset) / this.laneHeight);
-    const startBeat = Math.round((this.horizontalOffset + x / this.width / this.horizontalScale) * this.model.totalBeats * 4) / 4;
+    const grid = event.shiftKey ? 0 : this.snapBeats();
+    const rawBeat = (this.horizontalOffset + x / this.width / this.horizontalScale) * this.model.totalBeats;
+    const startBeat = grid ? Math.round(rawBeat / grid) * grid : rawBeat;
     const range = this.editBounds();
     if (range && (startBeat < range.startBeat || startBeat >= range.endBeat)) return;
     this.noteAdded.emit({ midi: Math.max(0, Math.min(127, midi)), startBeat });
@@ -556,7 +647,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const beatWidth = this.width * this.horizontalScale / totalBeats;
     // Reveal successively finer divisions only when they have room in CSS
     // pixels. At overview scale, continue thinning beyond individual bars.
-    let gridStep = 1;
+    let gridStep = this.editable() ? this.snapBeats() * 4 : 1;
     while (beatWidth * gridStep / 4 < MIN_TIME_GRID_SPACING) gridStep *= 2;
     // Fade smoothly with zoom rather than jumping in brightness at each
     // subdivision threshold. Keep a faint floor for orientation at song scale.
@@ -663,14 +754,28 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       graphics.roundRect(area.x, area.y + area.height / 4, area.width, area.height / 2, 2)
         .fill({ color: glow.toNumber(), alpha: 0.8 });
     }
-    if (this.drag) {
-      const note = this.drag.current;
-      const area = this.hitAreas.find(area => area.note === this.drag?.note);
+    const preview = this.drag?.preview ?? (this.shape ? [...this.shape.notes.values()] : []);
+    for (const note of preview) {
+      const area = this.hitAreas.find(area => area.note.id === note.id);
       if (area) {
-        const y = this.drag.note.color === 'drums' ? area.y : (this.pitchMax - note.midi + 0.5) * this.laneHeight - this.verticalOffset - 3;
+        const y = area.note.color === 'drums' ? area.y : (this.pitchMax - note.midi + 0.5) * this.laneHeight - this.verticalOffset - 3;
         graphics.roundRect(this.scoreX(note.startBeat), y, Math.max(3, note.durationBeats / (this.model?.totalBeats ?? 1) * this.width * this.horizontalScale), 6, 2)
           .fill({ color: accent.toNumber(), alpha: 0.9 });
+        if (this.velocityVisible()) {
+          const velocityHeight = note.velocity / 127 * (VELOCITY_HEIGHT - 6);
+          graphics.rect(this.scoreX(note.startBeat), this.height - velocityHeight, 3, velocityHeight)
+            .fill({ color: accent.toNumber(), alpha: 0.9 });
+        }
       }
+    }
+    for (const area of this.hitAreas) {
+      if (this.selectedNoteIds().includes(area.note.id)) graphics.roundRect(area.x - 1, area.y - 1, area.width + 2, area.height + 2, 3)
+        .stroke({ color: accent.toNumber(), alpha: 1, width: 2 });
+    }
+    if (this.box) {
+      const b = this.box;
+      graphics.rect(Math.min(b.x, b.endX), Math.min(b.y, b.endY), Math.abs(b.endX - b.x), Math.abs(b.endY - b.y))
+        .fill({ color: accent.toNumber(), alpha: 0.12 }).stroke({ color: accent.toNumber(), alpha: 0.8, width: 1 });
     }
     const focused = this.hitAreas[this.focusedNoteIndex];
     if (focused) {
