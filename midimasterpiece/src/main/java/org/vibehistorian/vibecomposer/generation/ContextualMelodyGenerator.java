@@ -23,6 +23,7 @@ final class ContextualMelodyGenerator {
     ContextualMelodyPlanner.Result lastResult;
     HarmonyTimeline lastHarmony;
     private final Map<String,ContextualMelodyPlanner.Result> cache;
+    private MelodyGenerationSettings settings;
 
     ContextualMelodyGenerator(GUIConfig config, MidiTiming timing, double articulation) {
         this(config,timing,articulation,new java.util.HashMap<>());
@@ -30,6 +31,11 @@ final class ContextualMelodyGenerator {
     ContextualMelodyGenerator(GUIConfig config,MidiTiming timing,double articulation,Map<String,ContextualMelodyPlanner.Result> cache) {
         this.config = config; this.timing = timing; this.articulation = articulation;
         this.cache = cache;
+    }
+
+    ContextualMelodyGenerator(GUIConfig config,MidiTiming timing,double articulation,MelodyGenerationSettings settings) {
+        this(config,timing,articulation,settings.contextualCache);
+        this.settings = settings;
     }
 
     Map<Integer, List<Note>> generate(MelodyPart part, List<int[]> chords, List<int[]> roots,
@@ -66,6 +72,16 @@ final class ContextualMelodyGenerator {
             harmony = finalized.repeat(section.getMeasures());
         }
         long seed = (long) part.getPatternSeedWithPartOffset() + offset;
+        if (settings != null && settings.canRandomizeTargets(part.getOrder())
+                && part.getContextualRerollWindow().trim().isEmpty()) {
+            Map<Integer,List<Integer>> targets = settings.getOrCreateTargetNotes();
+            if (!targets.containsKey(part.getOrder())) {
+                targets.put(part.getOrder(),ContextualMelodyRandomizer.targets(harmony,mode,
+                        config.getMelodyRangeMin(),config.getMelodyRangeMax(),config.getNoteTargetDirectionChoice().direction,
+                        config.getMelodyEnding(),seed));
+            }
+            part.setChordNoteChoices(new ArrayList<>(targets.get(part.getOrder())));
+        }
         List<Integer> motifs = part.getMelodyPatternOffsets() == null || part.getMelodyPatternOffsets().isEmpty()
                 ? Arrays.asList(1, 2, 1, 3) : part.getMelodyPatternOffsets();
         ContextualMelodyPlanner.Ending ending = config.getMelodyEnding();

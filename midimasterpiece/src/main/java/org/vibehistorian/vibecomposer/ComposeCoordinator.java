@@ -251,6 +251,10 @@ public final class ComposeCoordinator {
                     ? config.getMelodyNotes().makePhrase() : null);
             settings.setRandomizeTargetNotes(!regenerate
                     && melodyGUI.melodyTargetNotesRandomizeOnCompose.isSelected());
+            settings.setProtectedTargetOrders(melodyGUI.getPanels().stream()
+                    .filter(panel -> panel.getLockInst() || !panel.getNoteTargetsButton().isEnabled()
+                            || !panel.getContextualRerollWindow().trim().isEmpty())
+                    .map(MelodyPanel::getPanelOrder).collect(Collectors.toSet()));
             settings.setTargetNotes((melodyGUI.melody1ForcePatterns.isSelected()
                     && !melodyGUI.getPanels().isEmpty()
                     && !melodyGUI.getPanels().get(0).getNoteTargetsButton().isEnabled())
@@ -346,6 +350,7 @@ public final class ComposeCoordinator {
             LG.i("MidiEditPopup is open - saving!");
             midiEditorSession.saveNotesBeforeCompose();
         }
+        melodyGUI.randomizeContextualRangeOnCompose(regenerate,generationGUI.lastRandomSeed);
     }
 
     private void cleanUpUIAfterCompose(boolean regenerate) {

@@ -348,6 +348,9 @@ public final class PresetViewController {
 		components.add(ExtraSettingsGUI.moveStartToCustomizedSection);
 		components.add(ExtraSettingsGUI.allowValuesOutOfRange);
 
+		// Append new controls to preserve positional compatibility with older presets.
+		components.add(melodyGUI.melodyRangeRandomizeOnCompose);
+
 		return components;
 	}
 }

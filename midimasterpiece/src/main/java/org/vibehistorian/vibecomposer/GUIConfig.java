@@ -57,6 +57,7 @@ public class GUIConfig {
 			org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.LOOP;
 	private int melodyRangeMin = 60;
 	private int melodyRangeMax = 84;
+	private boolean melodyRangeRandomizeOnCompose;
 	private int melodyTension = 35;
 	private org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form melodyForm = org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form.STATEMENT_VARIATION;
 	private org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Style melodyStyle = org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Style.TONAL;
@@ -115,6 +116,8 @@ public class GUIConfig {
 	public void setMelodyRangeMin(int value) { melodyRangeMin = value; }
 	public int getMelodyRangeMax() { return melodyRangeMax; }
 	public void setMelodyRangeMax(int value) { melodyRangeMax = value; }
+	public boolean isMelodyRangeRandomizeOnCompose() { return melodyRangeRandomizeOnCompose; }
+	public void setMelodyRangeRandomizeOnCompose(boolean value) { melodyRangeRandomizeOnCompose = value; }
 	public int getMelodyTension() { return melodyTension; }
 	public void setMelodyTension(int value) { melodyTension = value; }
 	@XmlTransient

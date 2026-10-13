@@ -288,6 +288,9 @@ public class MelodyPanel extends InstPanel {
 		return part;
 	}
 
+    public String getContextualPitchLocks() { return contextualPitchLocks; }
+    public String getContextualRerollWindow() { return contextualRerollWindow; }
+
 	public void setFromInstPart(InstPart p) {
 		MelodyPart part = (MelodyPart) p;
 		setDefaultsFromInstPart(part);

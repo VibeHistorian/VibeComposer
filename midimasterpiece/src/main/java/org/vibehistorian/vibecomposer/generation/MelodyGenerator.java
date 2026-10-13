@@ -65,7 +65,7 @@ public class MelodyGenerator {
                     }
                 });
         this.expansion = new MelodyExpansion(gc, mg.getTiming(), mg.getGlobalDurationMultiplier());
-        this.contextualGenerator = new ContextualMelodyGenerator(gc,mg.getTiming(),mg.getGlobalDurationMultiplier(),settings.contextualCache);
+        this.contextualGenerator = new ContextualMelodyGenerator(gc,mg.getTiming(),mg.getGlobalDurationMultiplier(),settings);
         this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg.getTiming(),
                 mg.getGlobalDurationMultiplier(), state, inference,
 				 expansion, settings);

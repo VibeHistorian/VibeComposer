@@ -96,6 +96,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public ScrollComboBox<org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending> melodyEnding;
 	public KnobPanel melodyRangeMin;
 	public KnobPanel melodyRangeMax;
+	public JCheckBox melodyRangeRandomizeOnCompose;
 	public KnobPanel melodyTension;
 	public ScrollComboBox<org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form> melodyForm;
 	public ScrollComboBox<org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Style> melodyStyle;
@@ -191,6 +192,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		gc.setMelodyEnding(melodyEnding.getSelectedItem());
 		gc.setMelodyRangeMin(melodyRangeMin.getInt());
 		gc.setMelodyRangeMax(melodyRangeMax.getInt());
+		gc.setMelodyRangeRandomizeOnCompose(melodyRangeRandomizeOnCompose.isSelected());
 		gc.setMelodyTension(melodyTension.getInt());
 		gc.setMelodyForm(melodyForm.getSelectedItem()); gc.setMelodyStyle(melodyStyle.getSelectedItem());
 		gc.setMelodyChromaticApproaches(melodyChromaticApproaches.isSelected());
@@ -236,6 +238,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodyEnding.setVal(gc.getMelodyEnding());
 		melodyRangeMin.setInt(gc.getMelodyRangeMin());
 		melodyRangeMax.setInt(gc.getMelodyRangeMax());
+		melodyRangeRandomizeOnCompose.setSelected(gc.isMelodyRangeRandomizeOnCompose());
 		melodyTension.setInt(gc.getMelodyTension());
 		melodyForm.setVal(gc.getMelodyForm()); melodyStyle.setVal(gc.getMelodyStyle());
 		melodyChromaticApproaches.setSelected(gc.isMelodyChromaticApproaches());
@@ -356,7 +359,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
             control.setVisible(!melodyLegacyMode.isSelected());
         }
         for (java.awt.Component control : new java.awt.Component[] {melodyEnding,melodyRangeMin,melodyRangeMax,
-                melodyTension,melodyForm,melodyStyle,melodyChromaticApproaches,melodyPhraseBars,melodyBeatsPerBar}) {
+                melodyRangeRandomizeOnCompose,melodyTension,melodyForm,melodyStyle,melodyChromaticApproaches,melodyPhraseBars,melodyBeatsPerBar}) {
             control.setVisible(contextual);
         }
         panels.forEach(panel -> panel.setContextualControls(contextual));
@@ -508,6 +511,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodyBlockTargetMode.setSelectedIndex(2);
 		melodyTargetNotesRandomizeOnCompose = SwingUtils.makeCheckBox(
 				"<html>Randomize Targets<br> on Compose</html>", true, true);
+		melodyTargetNotesRandomizeOnCompose.setToolTipText("Contextual: choose scale-degree targets compatible with generated harmony, range, and contour. Regenerate keeps them. Locked panels and disabled target buttons retain their targets.");
 		melodyPatternEffect = new ScrollComboBox<>();
 		ScrollComboBox.addAll(new String[] { "Rhythm", "Notes", "Rhythm+Notes" }, melodyPatternEffect);
 		melodyPatternEffect.setSelectedIndex(2);
@@ -562,6 +566,9 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
         contextualMelody = new CustomCheckBox("Contextual Melody", true);
         contextualMelody.setToolTipText("Plan melody against finalized harmony. Older configs without this setting load with it off. Legacy mode takes precedence.");
         melodyGenerationSettingsPanel.add(contextualMelody);
+        melodyRangeRandomizeOnCompose = SwingUtils.makeCheckBox("Randomize Range on Compose",false,true);
+        melodyRangeRandomizeOnCompose.setToolTipText("Choose register and a 12–24 semitone span, including hard anchors. Skips fixed MIDI, locked panels, and local rerolls; Regenerate keeps the selected range.");
+        melodyGenerationSettingsPanel.add(melodyRangeRandomizeOnCompose);
         JPanel blockChoicePanel = new JPanel(new GridLayout(0, 2));
         melodyBlockChoicePanel = blockChoicePanel;
 		melodyBlockChoicePreference = new RandomIntegerListButton("0", null);
@@ -667,6 +674,27 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		}
 	}
 
+    public void randomizeContextualRangeOnCompose(boolean regenerate,int seed) {
+        if (regenerate || !isContextualMelodyActive() || !melodyRangeRandomizeOnCompose.isSelected()
+                || useUserMelody.isSelected() && userMelody != null || panels.isEmpty()) { return; }
+        List<MelodyPanel> affected = new ArrayList<>(panels);
+        if (panelController != null) {
+            panelController.getAffectedPanels(INST.MELODY).forEach(panel -> {
+                if (!affected.contains(panel)) { affected.add((MelodyPanel) panel); }
+            });
+        }
+        if (affected.stream().anyMatch(panel -> panel.getLockInst()
+                || !panel.getContextualRerollWindow().trim().isEmpty())) { return; }
+        List<Integer> anchors = new ArrayList<>();
+        for (MelodyPanel panel : affected) {
+            anchors.addAll(org.vibehistorian.vibecomposer.generation.MelodyConstraints.parse(
+                    panel.getContextualPitchLocks()).values());
+        }
+        int[] range = org.vibehistorian.vibecomposer.generation.ContextualMelodyRandomizer.range(seed,
+                noteTargetDirectionChoice.getSelectedItem().direction,anchors);
+        melodyRangeMin.setInt(range[0]); melodyRangeMax.setInt(range[1]);
+    }
+
 	public void prepareMelodyPatterns(boolean regenerate, boolean manual, int seed) {
 		if (regenerate && manual && randomMelodyOnRegenerate.isSelected()) {
 			randomizeMelodySeeds();
@@ -684,7 +712,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 											: panel.getPatternSeed())));
 				});
 			}
-			if (melodyTargetNotesRandomizeOnCompose.isSelected()) {
+			if (melodyTargetNotesRandomizeOnCompose.isSelected() && !isContextualMelodyActive()) {
 				panels.forEach(panel -> {
 					if (panel.getLockInst()) {
 						return;
@@ -720,7 +748,11 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		if (melody1ForcePatterns.isSelected() && !panels.isEmpty()) {
 			MelodyPanel firstPanel = panels.get(0);
 			for (int i = 1; i < panels.size(); i++) {
-				panels.get(i).overridePatterns(firstPanel);
+                MelodyPanel panel = panels.get(i);
+                List<Integer> targets = new ArrayList<>(panel.getChordNoteChoices());
+                panel.overridePatterns(firstPanel);
+                // Contextual targets are retained on regeneration or selected per part after harmony exists.
+                if (isContextualMelodyActive()) { panel.setChordNoteChoices(targets); }
 			}
 		}
 	}

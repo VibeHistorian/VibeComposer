@@ -10,6 +10,7 @@ import java.util.Map;
 public final class MelodyGenerationSettings {
     private Map<Integer, List<Integer>> targetNotes;
     private boolean randomizeTargetNotes;
+    private java.util.Set<Integer> protectedTargetOrders = java.util.Collections.emptySet();
     private Phrase userMelody;
     final Map<String,ContextualMelodyPlanner.Result> contextualCache = new java.util.HashMap<>();
 
@@ -43,6 +44,12 @@ public final class MelodyGenerationSettings {
     public void setRandomizeTargetNotes(boolean randomizeTargetNotes) {
         this.randomizeTargetNotes = randomizeTargetNotes;
     }
+
+    public void setProtectedTargetOrders(java.util.Set<Integer> orders) {
+        protectedTargetOrders = new java.util.HashSet<>(orders);
+    }
+
+    boolean canRandomizeTargets(int order) { return randomizeTargetNotes && !protectedTargetOrders.contains(order); }
 
     public Phrase getUserMelody() {
         return userMelody;

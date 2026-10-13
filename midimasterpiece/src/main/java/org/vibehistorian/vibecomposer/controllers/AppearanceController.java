@@ -151,6 +151,7 @@ public final class AppearanceController {
 		arrangementGUI.getArrangementResetCustomPanelsOnCompose().setForeground(foreground);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setForeground(foreground);
 		melodyGUI.melodyTargetNotesRandomizeOnCompose.setForeground(foreground);
+		melodyGUI.melodyRangeRandomizeOnCompose.setForeground(foreground);
 		melodyGUI.melodyPatternRandomizeOnCompose.setForeground(foreground);
 		generationGUI.switchOnComposeRandom.setForeground(foreground);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setForeground(foreground);

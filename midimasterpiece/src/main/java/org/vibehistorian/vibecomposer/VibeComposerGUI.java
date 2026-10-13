@@ -1715,6 +1715,7 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		arrangementGUI.getArrangementResetCustomPanelsOnCompose().setSelected(state);
 		mainWindowControls.getRandomizeScaleModeOnCompose().setSelected(state);
 		melodyGUI.melodyTargetNotesRandomizeOnCompose.setSelected(state);
+		melodyGUI.melodyRangeRandomizeOnCompose.setSelected(state);
 		melodyGUI.melodyPatternRandomizeOnCompose.setSelected(state);
 		ExtraSettingsGUI.randomizeTimingsOnCompose.setSelected(state);
 		ExtraSettingsGUI.sidechainPatternsOnCompose.setSelected(state);

@@ -11,6 +11,7 @@ import java.awt.Component;
 import java.io.StringReader;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
+import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import static org.junit.Assert.*;
 
 public class ContextualMelodyUiTest {
@@ -31,16 +32,33 @@ public class ContextualMelodyUiTest {
     @Test public void freshLaunchAndLoadedConfigsHaveDifferentDefaultsAndVisibilitySurvivesModeChanges() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             boolean previousFullMode = UITheme.isFullMode;
+            JCheckBox previousAllowValues = ExtraSettingsGUI.allowValuesOutOfRange;
             try {
+                ExtraSettingsGUI.allowValuesOutOfRange = new JCheckBox();
                 UITheme.isFullMode = true;
                 MelodyGUI gui = new MelodyGUI(context(MelodyGUI.Context.class),null);
                 JPanel extraMelody = new JPanel(); gui.initExtraSettingsMelody(extraMelody); gui.initMelodyGenSettings();
                 assertTrue(gui.contextualMelody.isSelected()); assertSame(extraMelody,gui.contextualMelody.getParent());
+                assertSame(extraMelody,gui.melodyRangeRandomizeOnCompose.getParent());
+                assertFalse(gui.melodyRangeRandomizeOnCompose.isSelected()); assertTrue(gui.melodyRangeRandomizeOnCompose.isVisible());
                 assertFalse(gui.melodyChordNoteTarget.isVisible()); assertFalse(gui.melodyLegacyMode.isVisible());
                 assertFalse(control(gui,"melodyBlockChoicePanel").isVisible()); assertFalse(control(gui,"melodyRhythmAccentsPanel").isVisible());
                 assertFalse(gui.melodyCustomDurationsStrictMode.isVisible()); assertTrue(gui.melodyCustomDurationsRandomWeighting.isVisible());
                 assertTrue(gui.melodyBlockTypePreferences.isVisible()); assertTrue(gui.melodyRangeMin.isVisible());
                 MelodyPanel panel = gui.createPanel(context(SoloMuter.Context.class)); gui.getPanels().add(panel);
+                gui.melodyRangeRandomizeOnCompose.setSelected(true);
+                gui.randomizeContextualRangeOnCompose(true,17);
+                assertEquals(60,gui.melodyRangeMin.getInt()); assertEquals(84,gui.melodyRangeMax.getInt());
+                gui.randomizeContextualRangeOnCompose(false,17);
+                int selectedLow = gui.melodyRangeMin.getInt(), selectedHigh = gui.melodyRangeMax.getInt();
+                panel.setLockInst(true); gui.randomizeContextualRangeOnCompose(false,18);
+                assertEquals(selectedLow,gui.melodyRangeMin.getInt()); assertEquals(selectedHigh,gui.melodyRangeMax.getInt()); panel.setLockInst(false);
+                MelodyPart anchored = new MelodyPart(); anchored.setContextualPitchLocks("0=48,4=96"); panel.setFromInstPart(anchored);
+                gui.randomizeContextualRangeOnCompose(false,17);
+                assertTrue(gui.melodyRangeMin.getInt() <= 48); assertTrue(gui.melodyRangeMax.getInt() >= 96);
+                anchored.setContextualRerollWindow("0,4"); panel.setFromInstPart(anchored);
+                gui.melodyRangeMin.setInt(60); gui.melodyRangeMax.setInt(84); gui.randomizeContextualRangeOnCompose(false,18);
+                assertEquals(60,gui.melodyRangeMin.getInt()); assertEquals(84,gui.melodyRangeMax.getInt());
                 for (String field : new String[] {"maxNoteExceptions","noteExceptionChance","doubledRhythmChance","patternFlexible","fillPauses","alternatingRhythmChance"}) {
                     assertFalse(field,control(panel,field).isVisible());
                 }
@@ -49,17 +67,24 @@ public class ContextualMelodyUiTest {
                 UITheme.isFullMode = true; panel.refreshControlVisibility(); assertFalse(control(panel,"noteExceptionChance").isVisible());
                 GUIConfig old = (GUIConfig) JAXBContext.newInstance(GUIConfig.class).createUnmarshaller().unmarshal(new StringReader("<GUIConfig/>"));
                 assertFalse(old.isContextualMelody()); gui.loadFromConfig(old);
+                assertFalse(old.isMelodyRangeRandomizeOnCompose()); assertFalse(gui.melodyRangeRandomizeOnCompose.isVisible());
                 assertFalse(gui.contextualMelody.isSelected()); assertTrue(gui.melodyChordNoteTarget.isVisible());
                 assertTrue(control(panel,"noteExceptionChance").isVisible()); assertFalse(control(panel,"anchorLocks").isVisible());
-                old.setContextualMelody(true); gui.loadFromConfig(old);
+                old.setContextualMelody(true); old.setMelodyRangeRandomizeOnCompose(true); gui.loadFromConfig(old);
+                assertTrue(gui.melodyRangeRandomizeOnCompose.isSelected());
                 assertTrue(gui.contextualMelody.isSelected()); assertFalse(control(panel,"noteExceptionChance").isVisible());
                 MelodyPanel copied = gui.createPanel(context(SoloMuter.Context.class)); copied.refreshControlVisibility();
                 assertFalse(control(copied,"doubledRhythmChance").isVisible());
                 gui.contextualMelody.setSelected(false); copied.refreshControlVisibility(); assertTrue(control(copied,"doubledRhythmChance").isVisible());
+                gui.contextualMelody.setSelected(true); gui.getPanels().add(copied);
+                gui.melody1ForcePatterns.setSelected(true);
+                panel.setChordNoteChoices(java.util.Arrays.asList(0,2,2,4)); copied.setChordNoteChoices(java.util.Arrays.asList(4,3,2,0));
+                gui.prepareMelodyPatterns(true,false,17);
+                assertEquals(java.util.Arrays.asList(4,3,2,0),copied.getChordNoteChoices());
                 gui.melodyLegacyMode.setSelected(true); assertFalse(gui.melodyBlockTypePreferences.isVisible());
                 gui.melodyLegacyMode.setSelected(false); assertTrue(gui.melodyBlockTypePreferences.isVisible());
             } catch (Exception failure) { throw new AssertionError(failure); }
-            finally { UITheme.isFullMode = previousFullMode; }
+            finally { UITheme.isFullMode = previousFullMode; ExtraSettingsGUI.allowValuesOutOfRange = previousAllowValues; }
         });
     }
 }
