@@ -617,26 +617,21 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
             melodyPanel.setContextualControls(contextualMelody.isSelected() && !melodyLegacyMode.isSelected());
 			melodyPanel.setInstrument(73);
 			melodyPanel.setOrderAndOffset(i + 1, i + 1);
+			applyMelodyDefaults(melodyPanel);
 			if (i > 0) {
 				melodyPanel.setAccents(50);
 				melodyPanel.setFillPauses(true);
-				melodyPanel.setSpeed(0);
-				melodyPanel.setPauseChance(70);
 				if (i > 1) {
 					melodyPanel.setMuteInst(true);
 				}
 				melodyPanel.setVelocityMax(70);
 				melodyPanel.setVelocityMin(40);
 				melodyPanel.setMidiChannel(i + 6);
-				melodyPanel.setTranspose(i % 2 == 1 ? 0 : -12);
 				melodyPanel.setPanByOrder(3);
 				melodyPanel.getVolSlider().setValue(45);
 			} else {
 				melodyPanel.setAccents(75);
 				melodyPanel.setFillPauses(false);
-				melodyPanel.setSpeed(15);
-				melodyPanel.setPauseChance(15);
-				melodyPanel.setTranspose(12);
 				melodyPanel.setVelocityMax(100);
 				melodyPanel.setVelocityMin(50);
 				melodyPanel.getVolSlider().setValue(60);
@@ -673,6 +668,15 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 					seed != 0 ? seed : new Random().nextInt(), null);
 		}
 	}
+
+    private static void applyMelodyDefaults(MelodyPanel panel) {
+        int order = panel.getPanelOrder();
+        boolean primary = order == 1;
+        panel.setSpeed(primary ? 35 : 0);
+        panel.setPauseChance(primary ? 5 : 50);
+        panel.setStartNoteChance(primary ? 100 : 80);
+        panel.setTranspose(primary ? 0 : order % 2 == 0 ? -12 : -24);
+    }
 
     public void randomizeContextualRangeOnCompose(boolean regenerate,int seed) {
         if (regenerate || !isContextualMelodyActive() || !melodyRangeRandomizeOnCompose.isSelected()
@@ -750,9 +754,13 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 			for (int i = 1; i < panels.size(); i++) {
                 MelodyPanel panel = panels.get(i);
                 List<Integer> targets = new ArrayList<>(panel.getChordNoteChoices());
+                int speed = panel.getSpeed();
                 panel.overridePatterns(firstPanel);
                 // Contextual targets are retained on regeneration or selected per part after harmony exists.
-                if (isContextualMelodyActive()) { panel.setChordNoteChoices(targets); }
+                if (isContextualMelodyActive()) {
+                    panel.setChordNoteChoices(targets);
+                    panel.setSpeed(speed);
+                }
 			}
 		}
 	}
@@ -812,7 +820,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 				panel.setInstrument(panel.getInstrumentBox().getRandomInstrument());
 			}
 
-			panel.setSpeed(panelGenerator.nextInt(25));
+			applyMelodyDefaults(panel);
 			panel.setMaxBlockChange(3 + panelGenerator.nextInt(5));
 			panel.setNoteExceptionChance(10 + panelGenerator.nextInt(15));
 			panel.setMaxNoteExceptions(panelGenerator.nextInt(2));
@@ -823,16 +831,12 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 			int panelOrder = panel.getPanelOrder();
 			if (panelOrder > 1) {
 				panel.setFillPauses(true);
-				panel.setPauseChance(50 + panelGenerator.nextInt(40));
 				panel.setVelocityMax(65 + panelGenerator.nextInt(20));
 				panel.setVelocityMin(40 + panelGenerator.nextInt(20));
-				panel.setTranspose(panelOrder % 2 == 0 ? 0 : -12);
 				panel.setPanByOrder(3);
 				panel.setNoteLengthMultiplier(70 + panelGenerator.nextInt(40));
 			} else {
 				panel.setFillPauses(panelGenerator.nextBoolean());
-				panel.setPauseChance(panelGenerator.nextInt(35));
-				panel.setTranspose(12);
 				panel.setVelocityMax(80 + panelGenerator.nextInt(30));
 				panel.setVelocityMin(50 + panelGenerator.nextInt(25));
 				panel.setNoteLengthMultiplier(100 + panelGenerator.nextInt(25));
