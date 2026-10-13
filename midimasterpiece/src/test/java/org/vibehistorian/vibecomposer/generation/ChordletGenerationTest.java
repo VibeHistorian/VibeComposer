@@ -29,6 +29,21 @@ public class ChordletGenerationTest {
             panel.undoGenerationEdit();
             assertEquals(original,panel.getChordList());
             assertEquals(Collections.singletonList(0),panel.getLockedIndices());
+            panel.redoGenerationEdit(); assertNotEquals(original,panel.getChordList());
+            panel.undoGenerationEdit(); assertEquals(original,panel.getChordList());
+            assertFalse(panel.setupChords(Arrays.asList("C","not-a-chord")));
+            assertEquals(original,panel.getChordList());
+        });
+    }
+
+    @Test public void persistentEventIdsSurviveEditsUndoAndReordering() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            ChordletPanel panel = new ChordletPanel(600,"C","Am","G7"); List<String> ids = panel.getEventIds();
+            panel.rememberGenerationEdit(); panel.setupChords(Arrays.asList("C","E7","G7"));
+            assertEquals(ids,panel.getEventIds()); panel.undoGenerationEdit(); assertEquals(ids,panel.getEventIds());
+            panel.rememberGenerationEdit(); Collections.swap(panel.getChordletsRaw(),0,1);
+            assertEquals(ids.get(0),panel.getEventIds().get(1)); panel.undoGenerationEdit(); assertEquals(ids,panel.getEventIds());
+            GUIConfig config = new GUIConfig(); config.setChordEventIds(ids); ids.clear(); assertEquals(3,config.getChordEventIds().size());
         });
     }
 

@@ -34,8 +34,36 @@ public class ChordletPanel extends JPanel {
 	private java.util.function.Supplier<org.vibehistorian.vibecomposer.GUIConfig> generationConfig;
 	private Runnable refreshGenerationConfig;
 	private long rerollSequence;
-	private List<String> undoChords;
-	private List<Integer> undoLocks;
+	private static final class Snapshot {
+		final List<String> chords;
+        final List<org.vibehistorian.vibecomposer.generation.ChordLock> locks;
+        final List<String> ids;
+        Snapshot(List<String> chords,List<org.vibehistorian.vibecomposer.generation.ChordLock> locks,List<String> ids) { this.chords = chords; this.locks = locks; this.ids = ids; }
+	}
+	private final java.util.Deque<Snapshot> undo = new java.util.ArrayDeque<>();
+	private final java.util.Deque<Snapshot> redo = new java.util.ArrayDeque<>();
+	private boolean harmonyStale;
+	public boolean isHarmonyStale() { return harmonyStale; }
+    public void markHarmonyCurrent() { harmonyStale = false; setToolTipText("Harmony matches the generated score."); }
+    public List<String> getEventIds() { return chordlets.stream().map(Chordlet::getEventId).collect(Collectors.toList()); }
+    public void setEventIds(List<String> ids) {
+        if (ids.size() != chordlets.size() || ids.stream().anyMatch(id -> id == null || id.trim().isEmpty())
+                || new java.util.HashSet<>(ids).size() != ids.size()) { throw new IllegalArgumentException("Chord event identities must be unique and match the progression"); }
+        for (int i = 0; i < ids.size(); i++) { chordlets.get(i).setEventId(ids.get(i)); }
+    }
+	public List<org.vibehistorian.vibecomposer.generation.ChordLock> getPropertyLocks() {
+		List<org.vibehistorian.vibecomposer.generation.ChordLock> result = new ArrayList<>();
+		for (int i = 0; i < chordlets.size(); i++) {
+			if (chordlets.get(i).getGenerationLocks() != 0) { result.add(new org.vibehistorian.vibecomposer.generation.ChordLock(i,chordlets.get(i).getGenerationLocks())); }
+		}
+		return result;
+	}
+	public void setPropertyLocks(List<org.vibehistorian.vibecomposer.generation.ChordLock> locks) {
+		for (Chordlet chord : chordlets) { chord.setGenerationLocks(0); }
+		for (org.vibehistorian.vibecomposer.generation.ChordLock lock : locks) {
+			if (lock.getIndex() < chordlets.size()) { chordlets.get(lock.getIndex()).setGenerationLocks(lock.getMask()); }
+		}
+	}
 
 	public void setGenerationContext(java.util.function.Supplier<org.vibehistorian.vibecomposer.GUIConfig> config, Runnable refresh) {
 		generationConfig = config;
@@ -53,17 +81,22 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public void rememberGenerationEdit() {
-		undoChords = getChordList();
-		undoLocks = getLockedIndices();
+        undo.push(new Snapshot(getChordList(),getPropertyLocks(),getEventIds()));
+		if (undo.size() > 100) { undo.removeLast(); }
+        redo.clear(); harmonyStale = true;
+        setToolTipText("Harmony was edited; regenerate to update melody and accompaniment.");
 	}
 
 	public void undoGenerationEdit() {
-		if (undoChords != null) {
-			List<String> previous = undoChords;
-			List<Integer> locks = undoLocks;
-			undoChords = null;
-			setupChords(previous);
-			setLockedIndices(locks);
+		if (!undo.isEmpty()) {
+            redo.push(new Snapshot(getChordList(),getPropertyLocks(),getEventIds())); Snapshot previous = undo.pop();
+            setupChords(previous.chords); setPropertyLocks(previous.locks); setEventIds(previous.ids); harmonyStale = true;
+		}
+	}
+	public void redoGenerationEdit() {
+		if (!redo.isEmpty()) {
+            undo.push(new Snapshot(getChordList(),getPropertyLocks(),getEventIds())); Snapshot next = redo.pop();
+            setupChords(next.chords); setPropertyLocks(next.locks); setEventIds(next.ids); harmonyStale = true;
 		}
 	}
 
@@ -235,7 +268,11 @@ public class ChordletPanel extends JPanel {
 	}
 
 	public boolean setupChords(List<String> chords) {
-		chordletsPanel.setVisible(false);
+		try {
+			for (String symbol : chords) { if (MidiUtils.mappedChord(symbol) == null) { return false; } }
+		} catch (RuntimeException invalid) { return false; }
+        List<String> previousIds = getEventIds();
+        chordletsPanel.setVisible(false);
 		try {
 			chordlets.clear();
 			Component[] comps = chordletsPanel.getComponents();
@@ -254,8 +291,9 @@ public class ChordletPanel extends JPanel {
 		} catch (Exception e) {
 			LG.e(e);
 		}
-		update();
-		chordletsPanel.setVisible(true);
+        if (previousIds.size() == chordlets.size()) { setEventIds(previousIds); }
+        update();
+        chordletsPanel.setVisible(true);
 		return chordlets.size() == chords.size();
 	}
 
@@ -272,7 +310,8 @@ public class ChordletPanel extends JPanel {
 		addChord(chord, singleAdd, null);
 	}
 
-	public Chordlet addChord(String chord, boolean singleAdd, Integer index) {
+    public Chordlet addChord(String chord, boolean singleAdd, Integer index) {
+        if (singleAdd) { rememberGenerationEdit(); }
 		Chordlet chordlet = new Chordlet(chord.trim(), this);
 		if (index != null) {
 			chordlets.add(index, chordlet);
@@ -288,7 +327,8 @@ public class ChordletPanel extends JPanel {
 		return chordlet;
 	}
 
-	public void removeChordlet(Chordlet chordlet, boolean singleRemove) {
+    public void removeChordlet(Chordlet chordlet, boolean singleRemove) {
+        if (singleRemove) { rememberGenerationEdit(); }
 		chordlets.remove(chordlet);
 		chordletsPanel.remove(chordlet);
 		if (singleRemove) {
@@ -360,7 +400,8 @@ public class ChordletPanel extends JPanel {
 		if (overlapIndex < 0) {
 			return;
 		}
-		boolean copy = evt.isControlDown();
+        boolean copy = evt.isControlDown();
+        rememberGenerationEdit();
 		int insertionIndex = overlapIndex;
 		LG.i("Overlap: " + overlapIndex + ", CTRL: " + evt.isControlDown());
 		if (copy) {

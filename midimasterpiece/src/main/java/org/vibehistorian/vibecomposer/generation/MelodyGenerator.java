@@ -65,7 +65,7 @@ public class MelodyGenerator {
                     }
                 });
         this.expansion = new MelodyExpansion(gc, mg.getTiming(), mg.getGlobalDurationMultiplier());
-        this.contextualGenerator = new ContextualMelodyGenerator(gc, mg.getTiming(), mg.getGlobalDurationMultiplier());
+        this.contextualGenerator = new ContextualMelodyGenerator(gc,mg.getTiming(),mg.getGlobalDurationMultiplier(),settings.contextualCache);
         this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg.getTiming(),
                 mg.getGlobalDurationMultiplier(), state, inference,
 				 expansion, settings);
@@ -83,6 +83,7 @@ public class MelodyGenerator {
     boolean usesContextualMelody() {
         return gc.isContextualMelody() && !gc.isMelodyLegacyMode() && settings.getUserMelody() == null;
     }
+    boolean usesFixedContextualMelody() { return gc.isContextualMelody() && !gc.isMelodyLegacyMode() && settings.getUserMelody() != null; }
 
     public ContextualMelodyPlanner.Result getContextualResult() { return contextualGenerator.lastResult; }
     public HarmonyTimeline getContextualHarmony() { return contextualGenerator.lastHarmony; }
@@ -91,9 +92,20 @@ public class MelodyGenerator {
                                      List<int[]> generatedRootProgression, List<Double> activeDurations,
                                      int notesSeedOffset, Section sec, List<Integer> variations,
                                      List<Integer> melodyBlockJumpPreference) {
+        if (usesFixedContextualMelody()) {
+            contextualGenerator.lastResult = null; contextualGenerator.lastHarmony = null;
+            List<int[]> chords = new ArrayList<>(), roots = new ArrayList<>(); List<Double> beats = new ArrayList<>();
+            for (int repeat = 0; repeat < sec.getMeasures(); repeat++) {
+                for (int i = 0; i < actualProgression.size(); i++) {
+                    chords.add(actualProgression.get(i)); roots.add(generatedRootProgression.get(i)); beats.add(activeDurations.get(i) / mg.getTiming().quarterNote);
+                }
+            }
+            return FixedMelodyAdapter.group(settings.getUserMelody(),HarmonyTimeline.of(chords,roots,beats),mg.getTiming().quarterNote,
+                    mg.modScale == null ? gc.getScaleMode() : mg.modScale,ip.getTranspose());
+        }
         if (usesContextualMelody()) {
             Map<Integer, List<Note>> result = contextualGenerator.generate(ip, actualProgression, generatedRootProgression,
-                    activeDurations, sec, notesSeedOffset, mg.modScale == null ? gc.getScaleMode() : mg.modScale);
+                    activeDurations,sec,notesSeedOffset,mg.modScale == null ? gc.getScaleMode() : mg.modScale,mg.hasRealizedHarmony(),mg.getRenderingHarmony());
             // No inferred replacement progression is advertised until contextual harmonization exists.
             // Existing section-swap consumers still receive a valid fixed-harmony alternative.
             if (melodyBasedChordProgression.isEmpty()) {

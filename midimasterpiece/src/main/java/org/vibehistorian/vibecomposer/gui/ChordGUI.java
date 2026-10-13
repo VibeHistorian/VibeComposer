@@ -102,6 +102,9 @@ public class ChordGUI extends InstGUI<ChordPanel> {
     public ScrollComboBox<String> firstChordSelection;
     public ScrollComboBox<String> lastChordSelection;
     public JCheckBox useChordFormula;
+    public JCheckBox smoothHarmonyVoicing;
+    public JCheckBox coDesignHarmony;
+    public KnobPanel harmonyVoicingLow, harmonyVoicingHigh;
     public ScrollComboBox<org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy> progressionStrategy;
     public KnobPanel longProgressionSimilarity;
     public CheckButton userChordsEnabled;
@@ -144,6 +147,11 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         gc.setCustomChordDurations(userChordsDurations.getText());
         gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
         gc.setLockedChordIndices(userChords.getLockedIndices());
+        gc.setChordLocks(userChords.getPropertyLocks());
+        gc.setChordEventIds(userChords.getEventIds());
+        gc.setSmoothHarmonyVoicing(smoothHarmonyVoicing.isSelected());
+        gc.setCoDesignHarmony(coDesignHarmony.isSelected());
+        gc.setHarmonyVoicingLow(harmonyVoicingLow.getInt()); gc.setHarmonyVoicingHigh(harmonyVoicingHigh.getInt());
         gc.setSpiceChance(spiceChance.getInt());
         gc.setSpiceParallelChance(spiceParallelChance.getInt());
         gc.setDimAug6thEnabled(spiceAllowDimAug.isSelected());
@@ -173,7 +181,12 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         lastChordSelection.setVal(gc.getLastChord());
         userChordsEnabled.setSelected(gc.isCustomChordsEnabled());
         userChords.setupChords(gc.getCustomChords());
+        if (gc.getChordEventIds().size() == userChords.chordCount()) { userChords.setEventIds(gc.getChordEventIds()); }
         userChords.setLockedIndices(gc.getLockedChordIndices());
+        if (!gc.getChordLocks().isEmpty()) { userChords.setPropertyLocks(gc.getChordLocks()); }
+        smoothHarmonyVoicing.setSelected(gc.isSmoothHarmonyVoicing());
+        coDesignHarmony.setSelected(gc.isCoDesignHarmony());
+        harmonyVoicingLow.setInt(gc.getHarmonyVoicingLow()); harmonyVoicingHigh.setInt(gc.getHarmonyVoicingHigh());
         userChordsDurations.setText(gc.getCustomChordDurations());
         userDurationsEnabled.setSelected(gc.isCustomDurationsEnabled());
         setChordSettingsInUI(gc.getChordGenSettings());
@@ -250,6 +263,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         void copyGUItoConfig();
         void adjustScoreTranspose(int amount);
 		void alignChordsWithMelody(ChordletPanel chordlets);
+		default boolean canAuditionHarmony() { return false; }
+		default void auditionHarmony(int[] pitches) { }
     }
 
 	public void initExtraSettingsChords(JPanel chordChoicePanel) {
@@ -259,6 +274,11 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		progressionStrategy = new ScrollComboBox<>(false);
 		ScrollComboBox.addAll(org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy.values(), progressionStrategy);
 		progressionStrategy.setToolTipText("CURRENT preserves historical generation. Other strategies plan a phrase or loop; Spice adds color while preserving chord identity and endpoint locks.");
+		smoothHarmonyVoicing = new CustomCheckBox("Smooth voices",true);
+		coDesignHarmony = new CustomCheckBox("Co-design",false);
+		coDesignHarmony.setToolTipText("Refine planned harmony with a generated contextual melody in at most two passes. User melodies stay fixed.");
+		harmonyVoicingLow = new KnobPanel("Voice Low<br>MIDI",48,0,127);
+		harmonyVoicingHigh = new KnobPanel("Voice High<br>MIDI",84,0,127);
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
 		squishChordsProgressively = new CustomCheckBox("<html>Flatten<br>Progressively</html>",
 				false);
@@ -266,6 +286,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 
 		chordChoicePanel.add(useChordFormula);
 		chordChoicePanel.add(progressionStrategy);
+		chordChoicePanel.add(smoothHarmonyVoicing); chordChoicePanel.add(harmonyVoicingLow); chordChoicePanel.add(harmonyVoicingHigh);
+		chordChoicePanel.add(coDesignHarmony);
 		chordChoicePanel.add(longProgressionSimilarity);
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
@@ -606,11 +628,15 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 				context.copyGUItoConfig();
 				List<String> normalizedChords = MidiUtils
 						.respiceChords(userChords.getChordListString(), context.getGUIConfig());
-				List<Integer> locks = userChords.getLockedIndices();
-				for (int index : locks) { normalizedChords.set(index, userChords.getChordList().get(index)); }
+				List<org.vibehistorian.vibecomposer.generation.ChordLock> locks = userChords.getPropertyLocks();
+				for (org.vibehistorian.vibecomposer.generation.ChordLock lock : locks) {
+					if ((lock.getMask() & org.vibehistorian.vibecomposer.generation.ChordLock.QUALITY) != 0) {
+						normalizedChords.set(lock.getIndex(),userChords.getChordList().get(lock.getIndex()));
+					}
+				}
 				userChords.rememberGenerationEdit();
                 userChords.setupChords(normalizedChords);
-                userChords.setLockedIndices(locks);
+                userChords.setPropertyLocks(locks);
             }
 		});
 		customChordsPanel.add(respiceChordsButton);
@@ -619,6 +645,16 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		undoGenerationButton.addActionListener(e -> userChords.undoGenerationEdit());
 		undoGenerationButton.setToolTipText("Undo the last progression, color, or local reroll operation.");
 		customChordsPanel.add(undoGenerationButton);
+		JButton redoGenerationButton = new JButton("Redo");
+		redoGenerationButton.addActionListener(e -> userChords.redoGenerationEdit()); customChordsPanel.add(redoGenerationButton);
+		JButton propertyLocks = new JButton("Locks");
+		propertyLocks.setToolTipText("Set root, quality/color, bass, or duration locks independently.");
+		propertyLocks.addActionListener(e -> editPropertyLocks()); customChordsPanel.add(propertyLocks);
+		JButton alternatives = new JButton("Alternatives");
+		alternatives.addActionListener(e -> chooseHarmonicAlternative()); customChordsPanel.add(alternatives);
+		JButton harmonize = new JButton("Harmonize");
+		harmonize.setToolTipText("Generate harmony for the attached user melody without changing its notes.");
+		harmonize.addActionListener(e -> harmonizeUserMelody()); customChordsPanel.add(harmonize);
 
 		JButton twoExChordsButton = new JButton("2x");
 		twoExChordsButton.setPreferredSize(new Dimension(25, 25));
@@ -777,8 +813,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		GUIConfig config = context.getGUIConfig();
 		if (config.getProgressionStrategy() != org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy.CURRENT) {
 			java.util.Map<Integer,String> locked = new java.util.HashMap<>();
-			List<Integer> locks = userChords.getLockedIndices();
-			for (int index : locks) { locked.put(index,userChords.getChordList().get(index)); }
+			List<org.vibehistorian.vibecomposer.generation.ChordLock> locks = userChords.getPropertyLocks();
+			for (int index : userChords.getLockedIndices()) { locked.put(index,userChords.getChordList().get(index)); }
 			String first = config.getFirstChord().equals("?") ? null : config.getFirstChord();
 			String last = config.getLastChord().equals("?") ? null : config.getLastChord();
 			try {
@@ -786,7 +822,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 						config.getRandomSeed(), userChords.chordCount(), first, last, locked);
 				userChords.rememberGenerationEdit();
 				userChords.setupChords(next);
-				userChords.setLockedIndices(locks);
+				userChords.setPropertyLocks(locks);
 				GeneratedChordState.setChordNames(next);
 			} catch (IllegalArgumentException invalid) {
 				JOptionPane.showMessageDialog(userChords, invalid.getMessage(), "Progression generation", JOptionPane.INFORMATION_MESSAGE);
@@ -800,6 +836,11 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 				4 * mg.getTiming().wholeNote);
 		userChords.setupChords(GeneratedChordState.getChordNames());
 	}
+
+	private HarmonyEditorActions harmonicActions() { return new HarmonyEditorActions(userChords,context,() -> userChordsDurations.getText()); }
+	private void editPropertyLocks() { harmonicActions().locks(); }
+	private void chooseHarmonicAlternative() { harmonicActions().alternatives(); }
+	private void harmonizeUserMelody() { harmonicActions().harmonize(); }
 
 	public static String chordSelect(String chord) {
 		return MidiUtils.MAJOR_CHORDS.contains(chord) ? chord : null;

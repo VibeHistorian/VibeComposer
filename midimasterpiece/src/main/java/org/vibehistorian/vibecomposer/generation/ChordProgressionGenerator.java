@@ -275,6 +275,14 @@ public final class ChordProgressionGenerator {
             for (int i = 0; i < names.size(); i++) {
                 chords.add(ChordSymbol.parse(names.get(i)).pitches(false));
                 durations.add(existingDurations.size() == names.size() ? existingDurations.get(i) : wholeNoteDuration);
+                final int index = i;
+                if (gc.getChordLocks().stream().anyMatch(lock -> lock.getIndex() == index && (lock.getMask() & ChordLock.DURATION) != 0)) {
+                    String[] fixed = gc.getCustomChordDurations().split(",");
+                    if (i >= fixed.length) { throw new IllegalArgumentException("Locked chord duration has no source"); }
+                    double value = Double.parseDouble(fixed[i]) * wholeNoteDuration / 4.0;
+                    if (!Double.isFinite(value) || value <= 0) { throw new IllegalArgumentException("Invalid locked duration"); }
+                    durations.set(i,value);
+                }
             }
             return new MappedProgression(chords, new ArrayList<>(names), durations);
         }

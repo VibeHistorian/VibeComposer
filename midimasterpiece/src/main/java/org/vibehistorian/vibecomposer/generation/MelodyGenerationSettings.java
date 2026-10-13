@@ -11,6 +11,7 @@ public final class MelodyGenerationSettings {
     private Map<Integer, List<Integer>> targetNotes;
     private boolean randomizeTargetNotes;
     private Phrase userMelody;
+    final Map<String,ContextualMelodyPlanner.Result> contextualCache = new java.util.HashMap<>();
 
     public static MelodyGenerationSettings fromConfig(GUIConfig config) {
         MelodyGenerationSettings settings = new MelodyGenerationSettings();

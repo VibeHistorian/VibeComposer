@@ -57,6 +57,12 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
                     Map<Integer, List<Integer>> melodyNotePatternMap, Section sec,
                     int sectionOrder, List<Integer> variations, int measures, MidiTiming timing,
                     double globalDurationMultiplier) {
+        return generate(ip,actualProgression,progressionDurations,melodyNotePatternMap,sec,sectionOrder,variations,
+                measures,timing,globalDurationMultiplier,null);
+    }
+    ChordResult generate(ChordPart ip,List<int[]> actualProgression,List<Double> progressionDurations,
+            Map<Integer,List<Integer>> melodyNotePatternMap,Section sec,int sectionOrder,List<Integer> variations,
+            int measures,MidiTiming timing,double globalDurationMultiplier,HarmonyTimeline harmony) {
 		boolean genVars = variations == null;
 
 
@@ -242,6 +248,12 @@ final class ChordPhraseGenerator extends InstPhraseGenerator<ChordPart> {
 				}
 				if (!copiedTrans) {
 					transChordNotes = Arrays.copyOf(transChordNotes, transChordNotes.length);
+				}
+				if (harmony != null) {
+					mainChordNotes = HarmonyVoicingPlanner.retainGuideTones(mainChordNotes,actualProgression.get(chordIndex),harmony.events().get(chordIndex).root);
+					transChordNotes = HarmonyVoicingPlanner.retainGuideTones(transChordNotes,actualProgression.get(transChord),harmony.events().get(transChord).root);
+					// Future harmony is an explicit harmonic edit, not an unchecked accompaniment surprise.
+					transition = false;
 				}
 
 				c.setTranspose(extraTranspose);

@@ -77,7 +77,7 @@ final class MelodyPhraseBuilder {
 
         boolean custom = !melodyEmptyPass && customMidiOverwriter.test(
                 new CustomMidiRequest(section, phrase, part, progressionDurations));
-        boolean contextual = melodyGenerator.usesContextualMelody() && !custom;
+        boolean contextual = (melodyGenerator.usesContextualMelody() || melodyGenerator.usesFixedContextualMelody()) && !custom;
         if (!custom) {
             Vector<Note> noteList = new Vector<>();
             fullMelodyMap.values().forEach(noteList::addAll);
@@ -149,13 +149,13 @@ final class MelodyPhraseBuilder {
             patternPublisher.accept(patternResult);
         }
 
-        phraseSwinger.accept(phrase, part.getSwingPercent());
-        MelodyNoteUtils.applyNoteLengthMultiplier(phrase.getNoteList(),
-                part.getNoteLengthMultiplier());
-        if (contextual) { constrainHarmonySpill(phrase, part); }
-        PhraseEffectUtils.processSectionTransition(section, phrase.getNoteList(),
-                progressionDurations.stream().mapToDouble(value -> value).sum() * measures,
-                0.25, 0.25, 0.9);
+        boolean fixed = melodyGenerator.usesFixedContextualMelody();
+        if (!fixed) {
+            phraseSwinger.accept(phrase, part.getSwingPercent());
+            MelodyNoteUtils.applyNoteLengthMultiplier(phrase.getNoteList(),part.getNoteLengthMultiplier());
+            PhraseEffectUtils.processSectionTransition(section, phrase.getNoteList(),
+                    progressionDurations.stream().mapToDouble(value -> value).sum() * measures,0.25,0.25,0.9);
+        }
 
         List<Integer> melodyVars = section.getVariation(0,
                 part.getAbsoluteOrder(config.getInstParts(part.getPartNum())));
@@ -171,31 +171,52 @@ final class MelodyPhraseBuilder {
         }
         phrase.setStartTime(startTimeDelay);
         phraseOffsetter.accept(new PhrasePart(phrase, part));
+        if (contextual && !fixed) { constrainHarmonySpill(phrase, part.getTranspose() + transpose + extraTranspose); }
         return phrase;
     }
 
     /** Articulation may lengthen a note, but may not introduce an unplanned dissonance at a change. */
-    private void constrainHarmonySpill(Phrase phrase, MelodyPart part) {
+    private void constrainHarmonySpill(Phrase phrase, int transpose) {
         HarmonyTimeline harmony = melodyGenerator.getContextualHarmony();
+        ContextualMelodyPlanner.Result plan = melodyGenerator.getContextualResult();
         double cursor = 0;
+        int index = 0;
         for (Object value : phrase.getNoteList()) {
             Note note = (Note) value;
             if (note.getPitch() >= 0 && note.getDuration() > 0) {
-                long start = Math.round(cursor / timing.quarterNote * HarmonyTimeline.TICKS_PER_BEAT);
-                long end = Math.min(harmony.length(), Math.round((cursor + note.getDuration())
+                double onset = cursor + note.getOffset();
+                long start = Math.max(0,Math.round(onset / timing.quarterNote * HarmonyTimeline.TICKS_PER_BEAT));
+                long end = Math.min(harmony.length(), Math.round((onset + note.getDuration())
                         / timing.quarterNote * HarmonyTimeline.TICKS_PER_BEAT));
                 if (start < harmony.length() && end > start) {
+                    int pitch = note.getPitch() - transpose;
+                    ContextualMelodyPlanner.Role role = index < plan.notes.size() ? plan.notes.get(index).role : ContextualMelodyPlanner.Role.CHORD;
+                    boolean ornamental = role == ContextualMelodyPlanner.Role.PASSING || role == ContextualMelodyPlanner.Role.NEIGHBOR
+                            || role == ContextualMelodyPlanner.Role.APPOGGIATURA || role == ContextualMelodyPlanner.Role.CHROMATIC_APPROACH
+                            || role == ContextualMelodyPlanner.Role.ANTICIPATION;
+                    boolean extensionAtAttack = role == ContextualMelodyPlanner.Role.EXTENSION && ContextualMelodyPlanner.supportsExtension(harmony.at(start),pitch);
+                    if (!harmony.at(start).contains(pitch) && !extensionAtAttack && !ornamental) {
+                        throw new IllegalArgumentException("Melody timing effects moved a stable attack outside its harmony at tick " + start + "; reduce offset or feedback");
+                    }
                     for (HarmonyTimeline.Event overlap : harmony.overlapping(start, end)) {
-                        if (overlap.start > start && !overlap.contains(note.getPitch() - part.getTranspose())) {
+                        boolean plannedSuspension = index < plan.notes.size() && plan.notes.get(index).role == ContextualMelodyPlanner.Role.SUSPENSION
+                                && start < overlap.start
+                                && index + 1 < plan.notes.size() && plan.notes.get(index + 1).pitch < plan.notes.get(index).pitch;
+                        boolean supportedExtension = role == ContextualMelodyPlanner.Role.EXTENSION && ContextualMelodyPlanner.supportsExtension(overlap,pitch);
+                        if (overlap.start > start && !overlap.contains(pitch) && !supportedExtension && !plannedSuspension) {
                             end = overlap.start;
                             break;
                         }
                     }
+                    if (index < plan.notes.size() && plan.notes.get(index).role == ContextualMelodyPlanner.Role.SUSPENSION) {
+                        note.setDuration(Math.min(note.getDuration(),note.getRhythmValue()));
+                    }
                     note.setDuration(Math.min(note.getDuration(), end / (double) HarmonyTimeline.TICKS_PER_BEAT
-                            * timing.quarterNote - cursor));
+                            * timing.quarterNote - onset));
                 }
             }
             cursor += note.getRhythmValue();
+            index++;
         }
     }
 

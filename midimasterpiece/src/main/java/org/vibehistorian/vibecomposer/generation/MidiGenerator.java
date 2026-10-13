@@ -147,22 +147,85 @@ public class MidiGenerator implements JMC {
 	}
 
 	private HarmonyTimeline finalizedSectionHarmony;
-	public HarmonyTimeline getFinalizedSectionHarmony() { return finalizedSectionHarmony; }
+    public HarmonyTimeline getFinalizedSectionHarmony() { return finalizedSectionHarmony; }
+    HarmonyTimeline getRenderingHarmony() { return canonicalSectionRendering ? finalizedSectionHarmony : null; }
+    public ContextualMelodyPlanner.Result getContextualMelodyResult() { return mgen.getContextualResult(); }
 
 	private boolean usesPlannedHarmony() {
 		return gc.isContextualMelody() || gc.getProgressionStrategy() != HarmonicProgressionPlanner.Strategy.CURRENT;
 	}
+    private boolean canonicalSectionRendering;
+    private boolean baseHarmonyRealized;
+	private final Map<Integer,HarmonyTimeline> sectionHarmonySnapshots = new java.util.LinkedHashMap<>();
+	public Map<Integer,HarmonyTimeline> getSectionHarmonySnapshots() { return java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(sectionHarmonySnapshots)); }
+	private final Set<Integer> explicitlyRealizedEvents = new java.util.HashSet<>();
+	public boolean hasRealizedHarmony() {
+        return canonicalSectionRendering || baseHarmonyRealized || gc.getProgressionStrategy() != HarmonicProgressionPlanner.Strategy.CURRENT;
+	}
 
 	private void finalizeSectionHarmony(SectionPlan plan) {
+		ScaleMode targetMode = modScale == null ? gc.getScaleMode() : modScale;
+        ScaleMode sourceMode = !baseHarmonyRealized && gc.getProgressionStrategy() == HarmonicProgressionPlanner.Strategy.CURRENT
+				? ScaleMode.IONIAN : gc.getScaleMode();
+		List<int[]> realized = new ArrayList<>(), realizedRoots = new ArrayList<>();
+		for (int i = 0; i < plan.chordProgression.size(); i++) {
+			int[] chord = plan.chordProgression.get(i), root = plan.rootProgression.get(i);
+			if (!explicitlyRealizedEvents.contains(i) && sourceMode != targetMode) {
+				chord = MidiUtils.transposeChord(chord,sourceMode.noteAdjustScale,targetMode.noteAdjustScale,true);
+				root = MidiUtils.transposeChord(root,sourceMode.noteAdjustScale,targetMode.noteAdjustScale,true);
+				if (gc.getProgressionStrategy() == HarmonicProgressionPlanner.Strategy.FUNCTIONAL && root[0] % 12 == 7
+						&& targetMode.noteAdjustScale[2] == 3) { chord = ChordSymbol.parse("G7").pitches(false); root = chord; }
+			}
+			realized.add(chord); realizedRoots.add(root);
+		}
 		List<Double> beats = plan.durations.stream().map(duration -> duration / timing.quarterNote)
 				.collect(Collectors.toList());
-		HarmonyTimeline timeline = HarmonyTimeline.of(plan.chordProgression, plan.rootProgression, beats);
+		List<String> ids = new ArrayList<>();
+        List<String> persistedIds = gc.getChordEventIds();
+        for (int i = 0; i < beats.size(); i++) { ids.add("section:" + plan.order + "/event:"
+                + (persistedIds.size() == beats.size() && !plan.section.isCustomChordsEnabled() ? persistedIds.get(i) : i)); }
+		HarmonyTimeline timeline = HarmonyTimeline.of(realized,realizedRoots,beats).withIdentities(ids)
+				.withContext(new HarmonyTimeline.Context("C",0,targetMode,gc.getProgressionStrategy() != HarmonicProgressionPlanner.Strategy.MODAL));
+		Map<String,Integer> bassLocks = new java.util.HashMap<>();
+        String[] declarations = (plan.section.isCustomChordsEnabled() ? plan.section.getCustomChords()
+                : gc.isCustomChordsEnabled() ? gc.getCustomChords() : StringUtils.join(generatedChordNames,",")).split(",");
+        List<String> spelled = new ArrayList<>();
+        for (HarmonyTimeline.Event event : timeline.events()) {
+            String text = event.symbol;
+            try {
+                ChordSymbol identified = ChordSymbol.parse(text);
+                text = PitchSpelling.inScale(event.root,targetMode) + identified.quality
+                        + (identified.inversion == null ? "" : "." + identified.inversion);
+                if (event.index < declarations.length) {
+                    ChordSymbol declared = ChordSymbol.parse(declarations[event.index]); Set<Integer> classes = new TreeSet<>();
+                    for (int pitch : declared.pitches(false)) { classes.add(pitch % 12); }
+                    if (declared.root == event.root && classes.equals(event.pitchClasses())) { text = declarations[event.index]; }
+                }
+            } catch (IllegalArgumentException custom) { text = event.symbol; }
+            spelled.add(text);
+        }
+        timeline = timeline.withSymbols(spelled);
+        for (HarmonyTimeline.Event event : timeline.events()) {
+			if (event.index < declarations.length && !explicitlyRealizedEvents.contains(event.index)) {
+				try {
+					ChordSymbol symbol = ChordSymbol.parse(declarations[event.index]);
+					boolean bassProperty = gc.getChordLocks().stream().anyMatch(lock -> lock.getIndex() == event.index && (lock.getMask() & ChordLock.BASS) != 0);
+					if (bassProperty || symbol.inversion != null && symbol.inversion != 0) {
+						int bass = symbol.pitches(true)[0];
+						if (sourceMode != targetMode) { bass = MidiUtils.transposeChord(new int[] {bass},sourceMode.noteAdjustScale,targetMode.noteAdjustScale,true)[0]; }
+						bassLocks.put(event.id,bass % 12);
+					}
+				} catch (IllegalArgumentException custom) { /* Custom voiced note declarations retain their existing bass below. */ }
+			}
+		}
+		List<int[]> voiced = gc.isSmoothHarmonyVoicing() ? HarmonyVoicingPlanner.voice(timeline,gc.getHarmonyVoicingLow(),
+				gc.getHarmonyVoicingHigh(),bassLocks,java.util.Collections.emptyMap()) : realized;
 		List<int[]> chords = new ArrayList<>();
 		List<int[]> roots = new ArrayList<>();
 		for (HarmonyTimeline.Event event : timeline.events()) {
-			chords.add(event.pitches());
+			chords.add(voiced.get(event.index));
 			// Preserve full unvoiced chord data needed by historical melody target consumers.
-			roots.add(Arrays.copyOf(plan.rootProgression.get(event.index), plan.rootProgression.get(event.index).length));
+			roots.add(realizedRoots.get(event.index));
 		}
 		plan.chordProgression = java.util.Collections.unmodifiableList(chords);
 		plan.rootProgression = java.util.Collections.unmodifiableList(roots);
@@ -172,6 +235,8 @@ public class MidiGenerator implements JMC {
 			plan.section.setDisplayAlternateChords(true);
 		}
 		finalizedSectionHarmony = timeline;
+		sectionHarmonySnapshots.put(plan.order,timeline);
+		canonicalSectionRendering = true;
 	}
 
 	public void setProgressionDurations(List<Double> durations) {
@@ -756,6 +821,10 @@ public class MidiGenerator implements JMC {
 	}
 
 	public void generateMasterpiece(int mainGeneratorSeed, String fileName) {
+        canonicalSectionRendering = false;
+        baseHarmonyRealized = false;
+		sectionHarmonySnapshots.clear();
+		explicitlyRealizedEvents.clear();
 		LG.i("========================== MIDI GENERATION IN PROGRESS, " + new Date().toString()
 				+ " ===========================");
 		long systemTime = System.currentTimeMillis();
@@ -868,11 +937,40 @@ public class MidiGenerator implements JMC {
 
 		Phrase userMelody = mgen.getUserMelody();
 		if (userMelody != null) {
-			mgen.processUserMelody(userMelody);
+            if (mgen.usesFixedContextualMelody()) { harmonizeFixedMelody(userMelody,actualProgression,generatedRootProgression,actualDurations); }
+            else { mgen.processUserMelody(userMelody); }
 			actualProgression = chordProgression;
 			generatedRootProgression = rootProgression;
 			actualDurations = progressionDurations;
 		} else if (!gc.getMelodyParts().isEmpty()) {
+			if (gc.isCoDesignHarmony()) {
+                if (!gc.isContextualMelody() || gc.isMelodyLegacyMode() || gc.getProgressionStrategy() == HarmonicProgressionPlanner.Strategy.CURRENT) {
+					throw new IllegalArgumentException("Co-design requires contextual melody and a planned progression strategy");
+				}
+				List<Double> beats = actualDurations.stream().map(duration -> duration / timing.quarterNote).collect(Collectors.toList());
+				HarmonyTimeline source = HarmonyTimeline.of(actualProgression,generatedRootProgression,beats)
+						.withContext(new HarmonyTimeline.Context("C",0,gc.getScaleMode(),gc.getProgressionStrategy() != HarmonicProgressionPlanner.Strategy.MODAL));
+				MelodyPart primary = gc.getMelodyParts().get(0);
+				MelodyPhrasePlan phrases = MelodyPhrasePlan.create(source,gc.getMelodyForm(),gc.getMelodyBeatsPerBar(),gc.getMelodyPhraseBars(),
+						primary.getMelodyPatternOffsets() == null ? Arrays.asList(1,2,1,3) : primary.getMelodyPatternOffsets(),gc.getMelodyEnding());
+				ContextualMelodyPlanner.Options options = new ContextualMelodyPlanner.Options(gc.getMelodyRangeMin(),gc.getMelodyRangeMax(),
+						Math.min(24,2 + primary.getMaxBlockChange() + primary.getBlockJump()),32,gc.getMelodyTension(),gc.getMelodyEnding());
+				options.phrases = phrases; options.style = gc.getMelodyStyle(); options.chromaticApproaches = gc.isMelodyChromaticApproaches();
+				Map<Integer,String> locks = new java.util.HashMap<>();
+				for (int index : gc.getLockedChordIndices()) { locks.put(index,generatedChordNames.get(index)); }
+				for (ChordLock lock : gc.getChordLocks()) { locks.put(lock.getIndex(),generatedChordNames.get(lock.getIndex())); }
+                if (gc.getFirstChord() != null && !"?".equals(gc.getFirstChord())) { locks.put(0,gc.getFirstChord()); }
+                if (gc.getLastChord() != null && !"?".equals(gc.getLastChord())) { locks.put(source.events().size() - 1,gc.getLastChord()); }
+				if (gc.isCustomChordsEnabled()) { for (int i = 0; i < source.events().size(); i++) { locks.put(i,source.events().get(i).symbol); } }
+				List<ContextualMelodyPlanner.Slot> rhythm = MelodyConstraints.apply(phrases.rhythm(primary.getSpeed(),primary.getPauseChance(),
+						primary.getPatternSeed(),0),primary.getContextualPitchLocks(),false);
+				MelodyHarmonyCoDesigner.Result designed = MelodyHarmonyCoDesigner.generate(gc,source,rhythm,options,locks,primary.getPatternSeed());
+				actualProgression = new ArrayList<>(); generatedRootProgression = new ArrayList<>(); List<String> names = new ArrayList<>();
+				for (HarmonyTimeline.Event event : designed.harmony.events()) {
+					actualProgression.add(event.pitches()); generatedRootProgression.add(ChordSymbol.parse(event.symbol).pitches(false)); names.add(event.symbol);
+				}
+				replaceGeneratedChordNames(names); chordProgression = actualProgression; rootProgression = generatedRootProgression;
+			}
 			fillMelodyFromPart(gc.getMelodyParts().get(0), actualProgression,
 					generatedRootProgression, 0, new Section(), new ArrayList<>(),
 					true, gc.getMelodyBlockChoicePreference());
@@ -881,7 +979,36 @@ public class MidiGenerator implements JMC {
 				actualDurations);
 	}
 
-	private ArrangementSetup selectArrangement(int mainGeneratorSeed) {
+    private void harmonizeFixedMelody(Phrase melody,List<int[]> chords,List<int[]> roots,List<Double> durations) {
+        // Explicit harmony remains authored; harmonization is available separately in the editor.
+        if (gc.isCustomChordsEnabled()) { return; }
+        List<Double> beats = durations.stream().map(value -> value / timing.quarterNote).collect(Collectors.toList());
+        HarmonyTimeline source = HarmonyTimeline.of(chords,roots,beats);
+        Map<Integer,List<Note>> grouped = FixedMelodyAdapter.group(melody,source,timing.quarterNote,ScaleMode.IONIAN,0);
+        List<HarmonyHarmonizer.MelodyNote> fixed = new ArrayList<>(); double cursor = 0;
+        for (List<Note> notes : grouped.values()) {
+            for (Note note : notes) {
+                long start = HarmonyTimeline.ticks(Math.max(0,cursor + note.getOffset()) / timing.quarterNote);
+                long end = Math.min(source.length(),HarmonyTimeline.ticks((cursor + note.getOffset() + note.getDuration()) / timing.quarterNote));
+                if (note.getPitch() >= 0 && end > start) { fixed.add(new HarmonyHarmonizer.MelodyNote(start,end - start,note.getPitch(),start % 960 == 0 ? 1 : 0)); }
+                cursor += note.getRhythmValue();
+            }
+        }
+        if (fixed.isEmpty()) { return; }
+        Map<Integer,String> locks = new HashMap<>();
+        for (int index : gc.getLockedChordIndices()) { locks.put(index,generatedChordNames.get(index)); }
+        for (ChordLock lock : gc.getChordLocks()) { if (lock.getMask() != 0) { locks.put(lock.getIndex(),generatedChordNames.get(lock.getIndex())); } }
+        if (gc.getFirstChord() != null && !"?".equals(gc.getFirstChord())) { locks.put(0,gc.getFirstChord()); }
+        if (gc.getLastChord() != null && !"?".equals(gc.getLastChord())) { locks.put(chords.size() - 1,gc.getLastChord()); }
+        HarmonyTimeline harmonized = HarmonyHarmonizer.harmonize(gc,fixed,beats,locks);
+        List<String> names = new ArrayList<>(); chordProgression = new ArrayList<>(); rootProgression = new ArrayList<>();
+        for (HarmonyTimeline.Event event : harmonized.events()) {
+            names.add(event.symbol); chordProgression.add(event.pitches()); rootProgression.add(ChordSymbol.parse(event.symbol).pitches(false));
+        }
+        progressionDurations = new ArrayList<>(durations); replaceGeneratedChordNames(names); baseHarmonyRealized = true;
+    }
+
+    private ArrangementSetup selectArrangement(int mainGeneratorSeed) {
 		int originalPartVariationChance = gc.getArrangementPartVariationChance();
 		int originalVariationChance = gc.getArrangementVariationChance();
 		Arrangement arrangement;
@@ -1103,6 +1230,7 @@ public class MidiGenerator implements JMC {
 
 	private SectionRenderResult renderSection(SectionPlan plan, boolean twoFiveOneChanged,
 			double measureLength, long systemTime, boolean logPerformance) {
+		explicitlyRealizedEvents.clear();
 		boolean plannedHarmony = usesPlannedHarmony();
 		if (!plannedHarmony) { fillMelodyPartsForSection(plan); }
 
@@ -1169,7 +1297,9 @@ public class MidiGenerator implements JMC {
 	}
 
 
-	private void postprocessMelodyRhythmAccents(Section sec, double measureLength) {
+    private void postprocessMelodyRhythmAccents(Section sec, double measureLength) {
+        // This historical pass introduces unplanned pitches/rests after role validation.
+        if (gc.isContextualMelody() && !gc.isMelodyLegacyMode()) { return; }
 		// find times when drums are present -> depends on combobox selection
 		if (gc.getMelodyRhythmAccents() == 0 || sec.getDrums().isEmpty()
 				|| sec.getMelodies().isEmpty()) {
@@ -1647,7 +1777,7 @@ public class MidiGenerator implements JMC {
 		if (usesPlannedHarmony() ? rootProgression.get(0)[0] % 12 == 0 : generatedChordNames.get(0).startsWith("C")) {
 			return;
 		}
-		if (usesPlannedHarmony() && gc.getLockedChordIndices().contains(0)) {
+        if (usesPlannedHarmony() && harmonyEventHasPitchLock(0)) {
 			throw new IllegalArgumentException("ii-V arrival conflicts with the locked first chord");
 		}
 
@@ -1655,6 +1785,10 @@ public class MidiGenerator implements JMC {
         List<int[]> altRootProgression = new ArrayList<>(rootProgression);
 
 		int[] c = MidiUtils.mappedChord("CGCE");
+		if (usesPlannedHarmony()) {
+			c = ChordSymbol.parse(modScale != null && modScale.noteAdjustScale[2] == 3 ? "Cm" : "C").pitches(false);
+			explicitlyRealizedEvents.add(0);
+		}
 		altChordProgression.set(0, c);
 		altRootProgression.set(0, Arrays.copyOfRange(c, 0, 1));
 
@@ -1669,15 +1803,19 @@ public class MidiGenerator implements JMC {
 		if (size < 3) {
 			return false;
 		}
-		if (usesPlannedHarmony() && (gc.getLockedChordIndices().contains(size - 2)
-				|| gc.getLockedChordIndices().contains(size - 1))) {
+        if (usesPlannedHarmony() && (harmonyEventHasPitchLock(size - 2)
+                || harmonyEventHasPitchLock(size - 1))) {
 			throw new IllegalArgumentException("ii-V preparation conflicts with locked ending chords");
 		}
         List<int[]> altChordProgression = new ArrayList<>(chordProgression);
         List<int[]> altRootProgression = new ArrayList<>(rootProgression);
 		int[] dm = MidiUtils.transposeChord(MidiUtils.mappedChord("Dm"), transToSet);
 		int[] g7 = MidiUtils.transposeChord(MidiUtils.mappedChord("G7"), transToSet);
-		if (scaleToSet != null) {
+		if (usesPlannedHarmony()) {
+			dm = MidiUtils.transposeChord(ChordSymbol.parse(scaleToSet != null && scaleToSet.noteAdjustScale[2] == 3
+					? "Dm7b5" : "Dm7").pitches(false),transToSet);
+			explicitlyRealizedEvents.add(size - 2); explicitlyRealizedEvents.add(size - 1);
+		} else if (scaleToSet != null) {
 			dm = MidiUtils.transposeChord(dm, modScale.noteAdjustScale, scaleToSet.noteAdjustScale);
 			g7 = MidiUtils.transposeChord(g7, modScale.noteAdjustScale, scaleToSet.noteAdjustScale);
 		}
@@ -1697,7 +1835,12 @@ public class MidiGenerator implements JMC {
 
 	}
 
-	private void skipN1Chord() {
+    private boolean harmonyEventHasPitchLock(int index) {
+        return gc.getLockedChordIndices().contains(index) || gc.getChordLocks().stream().anyMatch(lock ->
+                lock.getIndex() == index && (lock.getMask() & (ChordLock.ROOT | ChordLock.QUALITY | ChordLock.BASS)) != 0);
+    }
+
+    private void skipN1Chord() {
 
         // TODO: other variations on how to generate alternates?
 		// 1: chord trick, max two measures
@@ -1773,7 +1916,7 @@ public class MidiGenerator implements JMC {
 			addPhraseNotesToSection(sec, ip, phr.getNoteList());
 		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
-		if (scale != ScaleMode.IONIAN) {
+		if (scale != ScaleMode.IONIAN && !canonicalSectionRendering) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
 					gc.isTransposedNotesForceScale());
 		}
@@ -1803,7 +1946,7 @@ public class MidiGenerator implements JMC {
 		int measures = sec.getMeasures();
 		ChordPhraseGenerator.ChordResult result = chordPhraseGenerator.generate(ip, actualProgression,
 				activeDurations, melodyNotePatternMap, sec, sectionOrder, variations, measures, timing,
-				globalDurationMultiplier);
+				globalDurationMultiplier,canonicalSectionRendering ? finalizedSectionHarmony : null);
 		Phrase phr = result.getPhrase();
 		Mod.transpose(phr, DEFAULT_INSTRUMENT_TRANSPOSE[2]);
 
@@ -1825,7 +1968,7 @@ public class MidiGenerator implements JMC {
 			extraTranspose += 12;
 		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
-		if (scale != ScaleMode.IONIAN) {
+		if (scale != ScaleMode.IONIAN && !canonicalSectionRendering) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
 					gc.isTransposedNotesForceScale());
 		}
@@ -1896,7 +2039,7 @@ public class MidiGenerator implements JMC {
 			extraTranspose += 12;
 		}
 		ScaleMode scale = (modScale != null) ? modScale : gc.getScaleMode();
-		if (scale != ScaleMode.IONIAN) {
+		if (scale != ScaleMode.IONIAN && !canonicalSectionRendering) {
 			MidiUtils.transposePhrase(phr, ScaleMode.IONIAN.noteAdjustScale, scale.noteAdjustScale,
 					gc.isTransposedNotesForceScale());
 		}

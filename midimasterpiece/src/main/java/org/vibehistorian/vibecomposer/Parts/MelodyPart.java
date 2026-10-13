@@ -11,6 +11,15 @@ import java.util.List;
 public class MelodyPart extends InstPart {
 
 	private boolean fillPauses = false;
+	private String contextualPitchLocks = "";
+	private String contextualRerollWindow = "";
+	private long contextualRerollSeed;
+	public String getContextualPitchLocks() { return contextualPitchLocks; }
+	public void setContextualPitchLocks(String value) { contextualPitchLocks = value == null ? "" : value; }
+	public String getContextualRerollWindow() { return contextualRerollWindow; }
+	public void setContextualRerollWindow(String value) { contextualRerollWindow = value == null ? "" : value; }
+	public long getContextualRerollSeed() { return contextualRerollSeed; }
+	public void setContextualRerollSeed(long value) { contextualRerollSeed = value; }
 	private List<Integer> chordNoteChoices = null;
 	private List<Integer> melodyPatternOffsets = null;
 	private int maxBlockChange = 7;

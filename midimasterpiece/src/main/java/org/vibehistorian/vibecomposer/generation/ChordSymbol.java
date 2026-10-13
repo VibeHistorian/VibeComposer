@@ -9,6 +9,21 @@ import java.util.regex.Pattern;
 
 /** Parsed chord identity; root spelling and bass inversion survive color operations. */
 public final class ChordSymbol {
+    private static final java.util.Map<String,int[]> EXTRA = new java.util.LinkedHashMap<>();
+    static {
+        EXTRA.put("m7b5",new int[] {0,3,6,10}); EXTRA.put("dim7",new int[] {0,3,6,9});
+        EXTRA.put("9",new int[] {0,4,7,10,14}); EXTRA.put("13",new int[] {0,4,7,10,14,21});
+        EXTRA.put("7b9",new int[] {0,4,7,10,13}); EXTRA.put("7#9",new int[] {0,4,7,10,15});
+        EXTRA.put("7#11",new int[] {0,4,7,10,18});
+    }
+    public static List<String> supportedQualities() {
+        List<String> result = new java.util.ArrayList<>(MidiUtils.SPICE_NAMES_LIST); result.addAll(EXTRA.keySet()); return result;
+    }
+    public static int[] extraPitches(String rootAndQuality) {
+        Matcher match = SYNTAX.matcher(rootAndQuality);
+        if (!match.matches() || !EXTRA.containsKey(match.group(3))) { return null; }
+        ChordSymbol symbol = parse(rootAndQuality); return symbol.pitches(false);
+    }
     private static final Pattern SYNTAX = Pattern.compile("^([A-Ga-g])([#b♯♭]?)([^.]*)(?:\\.(-?\\d+))?$");
     public final String rootName;
     public final int root;
@@ -21,7 +36,7 @@ public final class ChordSymbol {
 
     public static ChordSymbol parse(String text) {
         Matcher match = SYNTAX.matcher(text.trim());
-        if (!match.matches() || !MidiUtils.SPICE_NAMES_LIST.contains(match.group(3))) {
+        if (!match.matches() || !supportedQualities().contains(match.group(3))) {
             throw new IllegalArgumentException("Unsupported chord symbol: " + text);
         }
         String letter = match.group(1).toUpperCase();
@@ -37,12 +52,14 @@ public final class ChordSymbol {
     }
 
     public ChordSymbol withQuality(String value) {
-        if (!MidiUtils.SPICE_NAMES_LIST.contains(value)) { throw new IllegalArgumentException("Unknown chord quality: " + value); }
+        if (!supportedQualities().contains(value)) { throw new IllegalArgumentException("Unknown chord quality: " + value); }
         return new ChordSymbol(rootName, root, value, inversion);
     }
+    public ChordSymbol withInversion(Integer value) { return new ChordSymbol(rootName,root,quality,value); }
 
     public int[] pitches(boolean voiced) {
-        int[] result = MidiUtils.getNormalMappedChord(MidiUtils.SEMITONE_LETTERS.get(root) + quality, true);
+        int[] result = EXTRA.containsKey(quality) ? Arrays.stream(EXTRA.get(quality)).map(interval -> 60 + root + interval).toArray()
+                : MidiUtils.getNormalMappedChord(MidiUtils.SEMITONE_LETTERS.get(root) + quality, true);
         return voiced ? MidiUtils.chordInversion(result, inversion) : result;
     }
 
@@ -53,6 +70,7 @@ public final class ChordSymbol {
         if (quality.equals("m7")) { return Arrays.asList("m9", "m13"); }
         if (quality.equals("maj9")) { return Arrays.asList("maj13"); }
         if (quality.equals("m9")) { return Arrays.asList("m13"); }
+        if (quality.equals("7")) { return Arrays.asList("9","13","7b9","7#9","7#11"); }
         return java.util.Collections.emptyList();
     }
 
@@ -61,7 +79,7 @@ public final class ChordSymbol {
         java.util.Set<Integer> actual = new java.util.TreeSet<>();
         for (int pitch : pitches) { actual.add(Math.floorMod(pitch,12)); }
         String root = MidiUtils.SEMITONE_LETTERS.get(Math.floorMod(rootPitch,12));
-        for (String quality : MidiUtils.SPICE_NAMES_LIST) {
+        for (String quality : supportedQualities()) {
             ChordSymbol candidate = parse(root + quality);
             java.util.Set<Integer> expected = new java.util.TreeSet<>();
             for (int pitch : candidate.pitches(false)) { expected.add(pitch % 12); }

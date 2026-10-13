@@ -23,9 +23,20 @@ public class Chordlet extends JComponent {
 
 	private static final long serialVersionUID = 6300044827795197600L;
 	private String firstLetter = "C";
-	private boolean generationLocked;
-	public boolean isGenerationLocked() { return generationLocked; }
-	public void setGenerationLocked(boolean value) { generationLocked = value; repaint(); }
+    private int generationLocks;
+    private String eventId = java.util.UUID.randomUUID().toString();
+    public String getEventId() { return eventId; }
+    public void setEventId(String value) {
+        if (value == null || value.trim().isEmpty()) { throw new IllegalArgumentException("Empty chord event identity"); }
+        eventId = value;
+    }
+	public int getGenerationLocks() { return generationLocks; }
+	public void setGenerationLocks(int value) {
+		if (value < 0 || value > 15) { throw new IllegalArgumentException("Invalid chord lock mask"); }
+		generationLocks = value; repaint();
+	}
+	public boolean isGenerationLocked() { return generationLocks == 15; }
+	public void setGenerationLocked(boolean value) { generationLocks = value ? 15 : 0; repaint(); }
 	public void setChordText(String value) { setupChord(value); update(); }
 	private String spice = "";
 	private boolean sharp = false;
@@ -62,6 +73,7 @@ public class Chordlet extends JComponent {
 		boolean initialized = (semitonePopupPair != null);
 		if (!initialized) {
 			semitonePopupPair = SwingUtils.addPopupMenu(this, (evt, e) -> {
+				if (cPanel != null) { cPanel.rememberGenerationEdit(); }
 				firstLetter = e.substring(0, 1);
 				sharp = e.length() > 1;
 				flat = false;
@@ -76,12 +88,13 @@ public class Chordlet extends JComponent {
 		}
 
 		// MMB - spice change - must be set up on each update to change the starting letter/sharp
-		List<String> chordSpiceList = MidiUtils.SPICE_NAMES_LIST.stream().map(e -> firstLetter + sharpString() + e).collect(Collectors.toList());
+		List<String> chordSpiceList = org.vibehistorian.vibecomposer.generation.ChordSymbol.supportedQualities().stream().map(e -> firstLetter + sharpString() + e).collect(Collectors.toList());
 		if (initialized) {
 			this.removeMouseListener(spicePopupPair.getValue());
 			popupMenus.remove(spicePopupPair.getKey());
 		}
 		spicePopupPair = SwingUtils.addPopupMenu(this, (evt, e) -> {
+			if (cPanel != null) { cPanel.rememberGenerationEdit(); }
 			setupChord(e + ((inversion != null) ? ("." + inversion) : ""));
 			update();
 		}, e -> {
@@ -99,7 +112,7 @@ public class Chordlet extends JComponent {
 				public void mousePressed(MouseEvent e) {
 					if (SwingUtilities.isLeftMouseButton(e)) {
 						if (e.isControlDown()) {
-							setGenerationLocked(!generationLocked);
+							cPanel.rememberGenerationEdit(); setGenerationLocked(!isGenerationLocked());
 							return;
 						}
 						if (e.isAltDown()) {
@@ -153,24 +166,26 @@ public class Chordlet extends JComponent {
 			addMouseWheelListener(new MouseWheelListener() {
 
 				@Override
-				public void mouseWheelMoved(MouseWheelEvent e) {
+                public void mouseWheelMoved(MouseWheelEvent e) {
+                    cPanel.rememberGenerationEdit();
 					// based on diff in Y pos - get index "", "m", "m7".., get index+1 % spice size
 					int movement = e.getWheelRotation() > 0 ? -1 : 1;
 
-					if (e.isControlDown()) {
-						int dragSpiceIndex = MidiUtils.SPICE_NAMES_LIST.indexOf(spice);
-						int newSpiceIndex = (dragSpiceIndex + movement
-								+ MidiUtils.SPICE_NAMES_LIST.size() * 50)
-								% MidiUtils.SPICE_NAMES_LIST.size();
-						spice = MidiUtils.SPICE_NAMES_LIST.get(newSpiceIndex);
+                    if (e.isControlDown()) {
+                        List<String> qualities = org.vibehistorian.vibecomposer.generation.ChordSymbol.supportedQualities();
+                        int dragSpiceIndex = qualities.indexOf(spice);
+                        int newSpiceIndex = (dragSpiceIndex + movement
+                                + qualities.size() * 50)
+                                % qualities.size();
+                        spice = qualities.get(newSpiceIndex);
 					} else if (e.isShiftDown()) {
-						int firstLetterIndex = MidiUtils.SEMITONE_LETTERS
-								.indexOf(firstLetter + sharpString());
+                        int firstLetterIndex = org.vibehistorian.vibecomposer.generation.ChordSymbol.parse(firstLetter + sharpString()).root;
 						String newFirst = MidiUtils.SEMITONE_LETTERS.get(
 								(firstLetterIndex + movement + MidiUtils.SEMITONE_LETTERS.size() * 50)
 										% MidiUtils.SEMITONE_LETTERS.size());
-						firstLetter = newFirst.substring(0, 1);
-						sharp = newFirst.length() > 1;
+                        firstLetter = newFirst.substring(0, 1);
+                        sharp = newFirst.length() > 1;
+                        flat = false;
 					} else {
 
 						if (inversion == null) {
@@ -197,6 +212,7 @@ public class Chordlet extends JComponent {
 	}
 
 	public void resetToBaseChord() {
+		if (cPanel != null) { cPanel.rememberGenerationEdit(); }
 		spice = spice.equals("dim") || spice.equals("aug") ? spice
 				: spice.startsWith("m") && !spice.startsWith("maj") ? "m" : "";
 
@@ -307,8 +323,8 @@ public class Chordlet extends JComponent {
 		g.setColor(Color.black);
 		g.drawString(CLOSE_BTTN_ICON, 9 + width - CLOSE_BTTN_WIDTH - ROUNDED_ADJUSTMENT_WIDTH,
 				height - 2);
-		g.setColor(generationLocked ? Color.white : dragP != null ? Color.white : Color.black);
-		g.setStroke(new BasicStroke(generationLocked ? 2 : 1));
+		g.setColor(generationLocks != 0 ? Color.white : dragP != null ? Color.white : Color.black);
+		g.setStroke(new BasicStroke(generationLocks != 0 ? 2 : 1));
 		g.drawRoundRect(minX, heightMargin, maxX - 1, height, 10, 10);
 
 		//g.dispose();

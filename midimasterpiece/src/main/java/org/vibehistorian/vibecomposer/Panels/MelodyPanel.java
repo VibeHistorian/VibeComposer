@@ -54,9 +54,22 @@ public class MelodyPanel extends InstPanel {
 	private final Supplier<List<Double>> userChordDurationProvider;
 
 	private PhraseNotes customDurationValues = new PhraseNotes();
+	private String contextualPitchLocks = "";
+	private String contextualRerollWindow = "";
+	private long contextualRerollSeed;
 	private List<Integer> customDurationChances = new ArrayList<>(IntStream.iterate(50, e -> e).limit(CUSTOM_DURATIONS_LIMIT).boxed().collect(Collectors.toList()));
 
-	public void initComponents(SoloMuter.Context soloMuterContext) {
+    public void setContextualControls(boolean contextual) {
+        maxNoteExceptions.setVisible(!contextual); noteExceptionChance.setVisible(!contextual);
+        doubledRhythmChance.setVisible(!contextual); patternFlexible.setVisible(!contextual);
+        fillPauses.setVisible(!contextual); alternatingRhythmChance.setVisible(!contextual);
+        maxBlockChange.setToolTipText(contextual ? "Contributes to the maximum realized melodic leap in semitones." : null);
+        blockJump.setToolTipText(contextual ? "Additional realized leap allowance in semitones." : null);
+        noteTargets.setToolTipText(contextual ? "Preferred scale degrees at phrase arrivals (0 = tonic); these are soft preferences." : null);
+        revalidate(); repaint();
+    }
+
+    public void initComponents(SoloMuter.Context soloMuterContext) {
 
 		ScrollComboBox.addAll(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15 },
 				midiChannel);
@@ -105,6 +118,23 @@ public class MelodyPanel extends InstPanel {
 		this.add(chordSpanFillPanel);
 
 		this.add(speed);
+		JButton anchorLocks = new JButton("Anchors");
+		anchorLocks.setToolTipText("Contextual melody: lock pitches at beats, before transposition (0=72,4=76).");
+		anchorLocks.addActionListener(e -> {
+			String value = JOptionPane.showInputDialog(this,"Pitch locks: beat=MIDI, separated by commas",contextualPitchLocks);
+			if (value != null) {
+				try { org.vibehistorian.vibecomposer.generation.MelodyConstraints.parse(value); contextualPitchLocks = value; }
+				catch (IllegalArgumentException invalid) { JOptionPane.showMessageDialog(this,invalid.getMessage()); }
+			}
+		});
+		this.add(anchorLocks);
+		JButton localReroll = new JButton("Reroll span");
+		localReroll.setToolTipText("Set startBeat,endBeat on existing note boundaries; regenerate to reroll that span. Clear for a full regeneration.");
+		localReroll.addActionListener(e -> {
+			String value = JOptionPane.showInputDialog(this,"Reroll on next regeneration: startBeat,endBeat (blank clears)",contextualRerollWindow);
+			if (value != null) { contextualRerollWindow = value; contextualRerollSeed++; }
+		});
+		this.add(localReroll);
 
 		/*this.add(SwingUtils.makeButton("Manual MIDI",
 				e -> new VisualArrayPopup(-10, 10, new ArrayList<>())));*/
@@ -232,6 +262,9 @@ public class MelodyPanel extends InstPanel {
 		part.setSpeed(getSpeed());
 		part.setSplitChance(getSplitChance());
 		part.setPatternFlexible(getPatternFlexible());
+		part.setContextualPitchLocks(contextualPitchLocks);
+		part.setContextualRerollWindow(contextualRerollWindow);
+		part.setContextualRerollSeed(contextualRerollSeed);
 
 		part.setCustomDurationNotes(getCustomDurationNotes());
 		part.setCustomDurationChances(getCustomDurationChances());
@@ -257,6 +290,9 @@ public class MelodyPanel extends InstPanel {
 		setSpeed(part.getSpeed());
 		setSplitChance(part.getSplitChance());
 		setPatternFlexible(part.isPatternFlexible());
+		contextualPitchLocks = part.getContextualPitchLocks();
+		contextualRerollWindow = part.getContextualRerollWindow();
+		contextualRerollSeed = part.getContextualRerollSeed();
 
 		setCustomDurationNotes(part.getCustomDurationNotes());
 		setCustomDurationChances(part.getCustomDurationChances());

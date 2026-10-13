@@ -1,6 +1,6 @@
 # Chord and chordlet generation overhaul plan
 
-Status: implementation started in the Java app on 2026-10-13. Initial progression strategies, safe color changes, and chordlet locks/rerolls are implemented; the complete roadmap is not finished. See [implementation status and usage](OVERHAUL_IMPLEMENTATION.md) for delivered behavior, validation, and remaining work.
+Status: Java implementation extended on 2026-10-13 through canonical revisions, minor-key harmony, contextual alternatives, guide-tone voicing, independent chordlet locks/IDs/undo, fixed-melody harmonization, bounded co-design, and a comparison corpus. Listening/tuning and default-selection gates remain open. TypeScript is deferred. See [implementation status and usage](OVERHAUL_IMPLEMENTATION.md).
 
 Companion: [Melody generation overhaul](MELODY_GENERATION_OVERHAUL_PLAN.md).
 

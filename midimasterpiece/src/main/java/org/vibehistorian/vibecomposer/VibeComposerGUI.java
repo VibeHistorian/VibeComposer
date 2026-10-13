@@ -713,6 +713,19 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 
 	private void initChordGUI() {
 		chordGUI = new ChordGUI(new ChordGUI.Context() {
+			@Override public boolean canAuditionHarmony() {
+				return sequencer != null && sequencer.isOpen() && chordGUI != null && !chordGUI.getPanels().isEmpty();
+			}
+			@Override public void auditionHarmony(int[] pitches) {
+				if (!canAuditionHarmony()) { return; }
+				int channel = chordGUI.getPanels().get(0).getMidiChannel() - 1;
+				for (int pitch : pitches) {
+					int sounding = pitch + scoreGUI.getTranspose();
+					if (sounding < 0 || sounding > 127) { continue; }
+					try { midiDeviceController.playNote(channel,sounding,80,900); }
+					catch (javax.sound.midi.InvalidMidiDataException invalid) { LG.e(invalid); }
+				}
+			}
 			@Override public PartManagerPanel.Context getPartManagerContext() {
 				return createPartManagerContext();
 			}

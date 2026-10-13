@@ -237,6 +237,64 @@ public class ContextualGenerationTest {
         }
     }
 
+    @Test public void minorAndCoDesignRenderThroughTheCompletePipeline() throws Exception {
+        for (boolean coDesign : new boolean[] {false,true}) {
+            GUIConfig config = (GUIConfig) JAXBContext.newInstance(GUIConfig.class).createUnmarshaller()
+                    .unmarshal(new File("GENERATOR_REFACTOR_TEST_GUICONFIG.xml"));
+            config.setContextualMelody(true); config.setMelodyLegacyMode(false);
+            config.setProgressionStrategy(HarmonicProgressionPlanner.Strategy.FUNCTIONAL); config.setScaleMode(MidiUtils.ScaleMode.AEOLIAN);
+            config.setCoDesignHarmony(coDesign); config.setCustomChordsEnabled(false); config.setMelodyUseCustomDurations(false);
+            config.setFirstChord("Cm"); config.setLastChord("Cm"); config.setSpiceChance(0);
+            config.getArrangement().setOverridden(false); config.getArrangement().setPreviewChorus(true);
+            Path output = Files.createTempFile("vibe-minor-", ".mid");
+            Path temporary = new File(org.vibehistorian.vibecomposer.Constants.TEMPORARY_SEQUENCE_MIDI_NAME).toPath();
+            byte[] previous = Files.exists(temporary) ? Files.readAllBytes(temporary) : null;
+            PrintStream stdout = System.out, stderr = System.err;
+            try {
+                MidiGenerator generator = new MidiGenerator(config); generator.generateMasterpiece((int) config.getRandomSeed(),output.toString());
+                assertTrue(Files.size(output) > 100); assertFalse(generator.getSectionHarmonySnapshots().isEmpty());
+                boolean dominant = false;
+                for (HarmonyTimeline.Event event : generator.getFinalizedSectionHarmony().events()) {
+                    if (event.root == 7 && event.dominantSeventh()) { assertTrue(event.contains(71)); dominant = true; }
+                }
+                if (!coDesign) { assertTrue("Functional minor must retain its leading tone",dominant); }
+            } finally {
+                System.setOut(stdout); System.setErr(stderr); Files.deleteIfExists(output);
+                if (previous == null) { Files.deleteIfExists(temporary); } else { Files.write(temporary,previous); }
+            }
+        }
+    }
+
+    @Test public void attachedMelodyKeepsItsLeadingToneThroughMinorRendering() throws Exception {
+        GUIConfig config = (GUIConfig) JAXBContext.newInstance(GUIConfig.class).createUnmarshaller()
+                .unmarshal(new File("GENERATOR_REFACTOR_TEST_GUICONFIG.xml"));
+        config.setContextualMelody(true); config.setMelodyLegacyMode(false); config.setScaleMode(MidiUtils.ScaleMode.AEOLIAN);
+        config.setCustomChordsEnabled(false); config.setTranspose(0);
+        config.getArrangement().setOverridden(false); config.getArrangement().setPreviewChorus(true);
+        jm.music.data.Phrase authored = new jm.music.data.Phrase(); jm.music.data.Note note = new jm.music.data.Note(71,4,87);
+        note.setDuration(2); authored.addNote(note);
+        config.setMelodyNotes(new org.vibehistorian.vibecomposer.Helpers.PhraseNotes(authored));
+        config.getMelodyParts().forEach(part -> { part.setTranspose(0); part.setOffset(0); part.setFeedbackCount(0); part.setNoteLengthMultiplier(150); });
+        Path output = Files.createTempFile("vibe-fixed-", ".mid");
+        Path temporary = new File(org.vibehistorian.vibecomposer.Constants.TEMPORARY_SEQUENCE_MIDI_NAME).toPath();
+        byte[] previous = Files.exists(temporary) ? Files.readAllBytes(temporary) : null;
+        PrintStream stdout = System.out, stderr = System.err;
+        try {
+            MidiGenerator generator = new MidiGenerator(config); generator.generateMasterpiece((int) config.getRandomSeed(),output.toString());
+            assertTrue(Files.size(output) > 100);
+            jm.music.data.Phrase rendered = config.getActualArrangement().getSections().get(0).getMelodies().get(0);
+            assertTrue(rendered.size() > 0);
+            for (Object value : rendered.getNoteList()) {
+                jm.music.data.Note actual = (jm.music.data.Note) value;
+                if (actual.getPitch() >= 0) { assertEquals(71,actual.getPitch()); assertEquals(2,actual.getDuration(),0); assertEquals(4,actual.getRhythmValue(),0); }
+            }
+            assertEquals(71,config.getMelodyNotes().get(0).getPitch()); assertEquals(2,config.getMelodyNotes().get(0).getDuration(),0);
+        } finally {
+            System.setOut(stdout); System.setErr(stderr); Files.deleteIfExists(output);
+            if (previous == null) { Files.deleteIfExists(temporary); } else { Files.write(temporary,previous); }
+        }
+    }
+
     @Test public void customRhythmKeepsItsDurationsAndRestUsingActiveSectionLength() {
         GUIConfig config = new GUIConfig(); config.setContextualMelody(true); config.setMelodyUseCustomDurations(true);
         org.vibehistorian.vibecomposer.Parts.MelodyPart part = new org.vibehistorian.vibecomposer.Parts.MelodyPart();

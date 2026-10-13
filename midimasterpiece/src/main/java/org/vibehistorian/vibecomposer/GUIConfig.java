@@ -58,8 +58,48 @@ public class GUIConfig {
 	private int melodyRangeMin = 60;
 	private int melodyRangeMax = 84;
 	private int melodyTension = 35;
+	private org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form melodyForm = org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form.STATEMENT_VARIATION;
+	private org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Style melodyStyle = org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Style.TONAL;
+	private boolean melodyChromaticApproaches = false;
+	private int melodyPhraseBars = 2;
+	private int melodyBeatsPerBar = 4;
+	private boolean smoothHarmonyVoicing = true;
+	private boolean coDesignHarmony = false;
+	public boolean isCoDesignHarmony() { return coDesignHarmony; }
+	public void setCoDesignHarmony(boolean value) { coDesignHarmony = value; }
+	private int harmonyVoicingLow = 48;
+	private int harmonyVoicingHigh = 84;
+
+	public org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form getMelodyForm() { return melodyForm; }
+	public void setMelodyForm(org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form value) { melodyForm = value; }
+	public org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Style getMelodyStyle() { return melodyStyle; }
+	public void setMelodyStyle(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Style value) { melodyStyle = value; }
+	public boolean isMelodyChromaticApproaches() { return melodyChromaticApproaches; }
+	public void setMelodyChromaticApproaches(boolean value) { melodyChromaticApproaches = value; }
+	public int getMelodyPhraseBars() { return melodyPhraseBars; }
+	public void setMelodyPhraseBars(int value) { melodyPhraseBars = value; }
+	public int getMelodyBeatsPerBar() { return melodyBeatsPerBar; }
+	public void setMelodyBeatsPerBar(int value) { melodyBeatsPerBar = value; }
+	public boolean isSmoothHarmonyVoicing() { return smoothHarmonyVoicing; }
+	public void setSmoothHarmonyVoicing(boolean value) { smoothHarmonyVoicing = value; }
+	public int getHarmonyVoicingLow() { return harmonyVoicingLow; }
+	public void setHarmonyVoicingLow(int value) { harmonyVoicingLow = value; }
+	public int getHarmonyVoicingHigh() { return harmonyVoicingHigh; }
+	public void setHarmonyVoicingHigh(int value) { harmonyVoicingHigh = value; }
 	@XmlElement(name = "lockedChordIndices")
 	private List<Integer> lockedChordIndices = new ArrayList<>();
+	@XmlElement(name = "chordLock")
+	private List<org.vibehistorian.vibecomposer.generation.ChordLock> chordLocks = new ArrayList<>();
+	@XmlTransient
+	public List<org.vibehistorian.vibecomposer.generation.ChordLock> getChordLocks() {
+		List<org.vibehistorian.vibecomposer.generation.ChordLock> result = new ArrayList<>();
+		for (org.vibehistorian.vibecomposer.generation.ChordLock lock : chordLocks) { result.add(new org.vibehistorian.vibecomposer.generation.ChordLock(lock.getIndex(),lock.getMask())); }
+		return result;
+	}
+	public void setChordLocks(List<org.vibehistorian.vibecomposer.generation.ChordLock> value) {
+		chordLocks = new ArrayList<>();
+		if (value != null) { for (org.vibehistorian.vibecomposer.generation.ChordLock lock : value) { chordLocks.add(new org.vibehistorian.vibecomposer.generation.ChordLock(lock.getIndex(),lock.getMask())); } }
+	}
 
 	public boolean isContextualMelody() { return contextualMelody; }
 	public void setContextualMelody(boolean value) { contextualMelody = value; }
@@ -173,7 +213,16 @@ public class GUIConfig {
 	private int longProgressionSimilarity = 0;
 	private boolean customChordsEnabled = false;
 	private boolean customDurationsEnabled = false;
-	private String customChords = "C";
+    private String customChords = "C";
+    @XmlElement(name="chordEventId")
+    private List<String> chordEventIds = new ArrayList<>();
+    @XmlTransient
+    public List<String> getChordEventIds() { return new ArrayList<>(chordEventIds); }
+    public void setChordEventIds(List<String> ids) {
+        if (ids == null || ids.stream().anyMatch(id -> id == null || id.trim().isEmpty())
+                || new java.util.HashSet<>(ids).size() != ids.size()) { throw new IllegalArgumentException("Invalid chord event identities"); }
+        chordEventIds = new ArrayList<>(ids);
+    }
 	private String customChordDurations = "4,4,4,4";
 
 	// arp gen

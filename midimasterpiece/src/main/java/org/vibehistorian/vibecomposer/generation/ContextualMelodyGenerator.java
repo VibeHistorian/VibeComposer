@@ -22,48 +22,113 @@ final class ContextualMelodyGenerator {
     private final double articulation;
     ContextualMelodyPlanner.Result lastResult;
     HarmonyTimeline lastHarmony;
+    private final Map<String,ContextualMelodyPlanner.Result> cache;
 
     ContextualMelodyGenerator(GUIConfig config, MidiTiming timing, double articulation) {
+        this(config,timing,articulation,new java.util.HashMap<>());
+    }
+    ContextualMelodyGenerator(GUIConfig config,MidiTiming timing,double articulation,Map<String,ContextualMelodyPlanner.Result> cache) {
         this.config = config; this.timing = timing; this.articulation = articulation;
+        this.cache = cache;
     }
 
     Map<Integer, List<Note>> generate(MelodyPart part, List<int[]> chords, List<int[]> roots,
             List<Double> durations, Section section, int offset, MidiUtils.ScaleMode mode) {
+        return generate(part,chords,roots,durations,section,offset,mode,false);
+    }
+    Map<Integer,List<Note>> generate(MelodyPart part,List<int[]> chords,List<int[]> roots,List<Double> durations,
+            Section section,int offset,MidiUtils.ScaleMode mode,boolean alreadyRealized) {
+        return generate(part,chords,roots,durations,section,offset,mode,alreadyRealized,null);
+    }
+    Map<Integer,List<Note>> generate(MelodyPart part,List<int[]> chords,List<int[]> roots,List<Double> durations,
+            Section section,int offset,MidiUtils.ScaleMode mode,boolean alreadyRealized,HarmonyTimeline finalized) {
         List<int[]> realizedChords = new ArrayList<>(), realizedRoots = new ArrayList<>();
         List<Double> beats = new ArrayList<>();
         for (int repeat = 0; repeat < section.getMeasures(); repeat++) {
             for (int i = 0; i < chords.size(); i++) {
                 // This is the same scale realization later used by chord/bass rendering.
-                realizedChords.add(MidiUtils.transposeChord(chords.get(i), MidiUtils.ScaleMode.IONIAN.noteAdjustScale,
+                realizedChords.add(alreadyRealized ? chords.get(i) : MidiUtils.transposeChord(chords.get(i), MidiUtils.ScaleMode.IONIAN.noteAdjustScale,
                         mode.noteAdjustScale, !config.isTransposedNotesForceScale()));
-                realizedRoots.add(MidiUtils.transposeChord(Arrays.copyOf(roots.get(i), 1),
+                realizedRoots.add(alreadyRealized ? Arrays.copyOf(roots.get(i),1) : MidiUtils.transposeChord(Arrays.copyOf(roots.get(i), 1),
                         MidiUtils.ScaleMode.IONIAN.noteAdjustScale, mode.noteAdjustScale, true));
                 beats.add(durations.get(i) / timing.quarterNote);
             }
         }
-        HarmonyTimeline harmony = HarmonyTimeline.of(realizedChords, realizedRoots, beats);
+        String owner = part.getOrderOffset() + "/section/" + config.getActualArrangement().getSections().indexOf(section) + "/" + offset;
+        List<String> ids = new ArrayList<>();
+        List<String> persistedIds = config.getChordEventIds();
+        for (int i = 0; i < beats.size(); i++) { ids.add(owner + "/repeat/" + (i / chords.size()) + "/event/"
+                + (persistedIds.size() == chords.size() && !section.isCustomChordsEnabled() ? persistedIds.get(i % chords.size()) : i % chords.size())); }
+        HarmonyTimeline harmony = HarmonyTimeline.of(realizedChords, realizedRoots, beats).withIdentities(ids)
+                .withContext(new HarmonyTimeline.Context("C",0,mode,config.getMelodyStyle() != ContextualMelodyPlanner.Style.MODAL));
+        if (finalized != null) {
+            if (finalized.events().size() != chords.size()) { throw new IllegalArgumentException("Canonical harmony differs from section events"); }
+            harmony = finalized.repeat(section.getMeasures());
+        }
         long seed = (long) part.getPatternSeedWithPartOffset() + offset;
         List<Integer> motifs = part.getMelodyPatternOffsets() == null || part.getMelodyPatternOffsets().isEmpty()
                 ? Arrays.asList(1, 2, 1, 3) : part.getMelodyPatternOffsets();
         ContextualMelodyPlanner.Ending ending = config.getMelodyEnding();
+        MelodyPhrasePlan phrases = MelodyPhrasePlan.create(harmony,config.getMelodyForm(),config.getMelodyBeatsPerBar(),
+                config.getMelodyPhraseBars(),motifs,ending);
+        ContextualMelodyPlanner.Options options = new ContextualMelodyPlanner.Options(config.getMelodyRangeMin(),
+                config.getMelodyRangeMax(),Math.min(24,2 + part.getMaxBlockChange() + part.getBlockJump()),32,config.getMelodyTension(),ending);
+        options.phrases = phrases; options.style = config.getMelodyStyle(); options.chromaticApproaches = config.isMelodyChromaticApproaches();
+        options.blockWeights = new ArrayList<>(config.getMelodyBlockTypePreference());
+        options.catalogueInfluence = 1 - config.getMelodyNewBlocksChance() / 100.0;
+        options.maxDirectionChanges = config.getMelodyMaxDirChanges();
+        options.anticipationChance = part.getLeadChordsChance();
+        options.direction = config.getNoteTargetDirectionChoice().direction;
+        Map<Long,Integer> preferences = new java.util.HashMap<>();
+        if (part.getChordNoteChoices() != null && !part.getChordNoteChoices().isEmpty()) {
+            for (long tick : phrases.arrivals) {
+                int choice = part.getChordNoteChoices().get(harmony.at(tick).index % part.getChordNoteChoices().size());
+                preferences.put(tick,60 + 12 * Math.floorDiv(choice,mode.noteAdjustScale.length)
+                        + mode.noteAdjustScale[Math.floorMod(choice,mode.noteAdjustScale.length)]);
+            }
+        }
+        options.anchorPreferences = preferences;
+        boolean custom = config.isMelodyUseCustomDurations() && part.getCustomDurationNotes() != null;
         List<ContextualMelodyPlanner.Slot> slots;
-        if (config.isMelodyUseCustomDurations() && part.getCustomDurationNotes() != null) {
+        if (custom) {
             slots = customRhythm(part, durations, section, harmony, seed);
         } else {
-            slots = ContextualMelodyPlanner.rhythm(harmony, part.getSpeed(), part.getPauseChance(), motifs,
-                    seed ^ 0x72687974686dL, ending);
+            slots = phrases.rhythm(part.getSpeed(),part.getPauseChance(),seed ^ 0x72687974686dL,0);
         }
         List<Integer> fill = part.getChordSpanFill().getPatternByLength(harmony.events().size(), part.isFillFlip());
-        List<ContextualMelodyPlanner.Slot> filled = new ArrayList<>();
-        for (ContextualMelodyPlanner.Slot slot : slots) {
-            boolean rest = slot.rest || fill.get(harmony.at(slot.start).index) == 0;
-            filled.add(new ContextualMelodyPlanner.Slot(slot.start, slot.duration, rest, slot.lockedPitch, slot.motif));
+        ContextualMelodyPlanner.Result result = null; IllegalArgumentException failure = null;
+        for (int attempt = 0; attempt < (custom ? 1 : 3); attempt++) {
+            List<ContextualMelodyPlanner.Slot> candidate = attempt == 0 ? slots : attempt == 1
+                    ? phrases.rhythm(part.getSpeed(),part.getPauseChance(),seed ^ 0x72687974686dL,1)
+                    : MelodyPhrasePlan.splitAtChanges(slots,harmony);
+            if (!custom && part.getSplitChance() > 0) {
+                List<ContextualMelodyPlanner.Slot> split = new ArrayList<>();
+                for (ContextualMelodyPlanner.Slot slot : candidate) {
+                    Random splitRandom = new Random(seed ^ slot.start ^ 0x73706c6974L);
+                    if (!slot.rest && slot.duration >= 960 && splitRandom.nextInt(100) < part.getSplitChance()) {
+                        long half = slot.duration / 2;
+                        split.add(new ContextualMelodyPlanner.Slot(slot.start,half,false,slot.lockedPitch,slot.motif,slot.intent));
+                        split.add(new ContextualMelodyPlanner.Slot(slot.start + half,slot.duration - half,false,null,slot.motif,slot.intent));
+                    } else { split.add(slot); }
+                }
+                candidate = split;
+            }
+            List<ContextualMelodyPlanner.Slot> filled = new ArrayList<>();
+            for (ContextualMelodyPlanner.Slot slot : candidate) {
+                boolean rest = slot.rest || fill.get(harmony.at(slot.start).index) == 0;
+                if (!custom && phrases.arrivals.contains(slot.start) && slot.duration + slot.start < harmony.length()
+                        && new Random(seed ^ slot.start ^ 0x7374617274L).nextInt(100) >= part.getStartNoteChance()) { rest = true; }
+                filled.add(new ContextualMelodyPlanner.Slot(slot.start,slot.duration,rest,slot.lockedPitch,slot.motif,slot.intent));
+            }
+            try {
+                filled = MelodyConstraints.apply(filled,part.getContextualPitchLocks(),custom);
+                filled = MelodyConstraints.rerollLocks(filled,cache.get(owner),harmony,part.getContextualRerollWindow());
+                result = ContextualMelodyPlanner.generate(harmony,Arrays.stream(mode.noteAdjustScale).mapToInt(Integer::intValue).toArray(),
+                        filled,options,seed + part.getContextualRerollSeed());
+                break;
+            } catch (IllegalArgumentException invalid) { failure = invalid; }
         }
-        ContextualMelodyPlanner.Options options = new ContextualMelodyPlanner.Options(config.getMelodyRangeMin(),
-                config.getMelodyRangeMax(), Math.min(12, 2 + part.getMaxBlockChange()), 32,
-                config.getMelodyTension(), ending);
-        ContextualMelodyPlanner.Result result = ContextualMelodyPlanner.generate(harmony,
-                Arrays.stream(mode.noteAdjustScale).mapToInt(Integer::intValue).toArray(), filled, options, seed);
+        if (result == null) { throw failure; }
         Map<Integer, List<Note>> map = new LinkedHashMap<>();
         for (HarmonyTimeline.Event event : harmony.events()) { map.put(event.index, new ArrayList<>()); }
         int volume = config.isScaleMidiVelocityInArrangement() ? section.getVol(0) : 100;
@@ -73,11 +138,15 @@ final class ContextualMelodyGenerator {
             Random performance = new Random(seed ^ (planned.slot.start * 0xd1b54a32d192ed03L));
             double rhythm = planned.slot.duration / (double) HarmonyTimeline.TICKS_PER_BEAT * timing.quarterNote;
             int velocity = low + performance.nextInt(high - low + 1);
+            if (phrases.arrivals.contains(planned.slot.start) && performance.nextInt(100) < part.getAccents()) {
+                velocity = Math.min(high,velocity + Math.max(1,(high - low) / 4));
+            }
             Note note = new Note(planned.pitch < 0 ? Pitches.REST : planned.pitch + part.getTranspose(), rhythm, velocity);
             note.setDuration(rhythm * Math.min(1, articulation * (0.9 + performance.nextDouble() * 0.1)));
             map.get(harmony.at(planned.slot.start).index).add(note);
         }
         lastResult = result;
+        cache.put(owner,result);
         lastHarmony = harmony;
         return map;
     }

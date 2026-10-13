@@ -1,6 +1,6 @@
 # Melody generation overhaul plan
 
-Status: implementation started in the Java app on 2026-10-13. The initial contextual engine and integration are implemented; the complete roadmap is not finished. See [implementation status and usage](OVERHAUL_IMPLEMENTATION.md) for delivered behavior, validation, and remaining work.
+Status: Java implementation extended on 2026-10-13 through phrase/anchor planning, contextual catalogue realization, ornament roles, style profiles, local locks/rerolls, fixed-melody preservation, and a MIDI/audio comparison corpus. Listening/tuning and default-selection gates remain open. TypeScript is deferred. See [implementation status and usage](OVERHAUL_IMPLEMENTATION.md).
 
 Companion: [Chord and chordlet generation overhaul](CHORD_GENERATION_OVERHAUL_PLAN.md).
 

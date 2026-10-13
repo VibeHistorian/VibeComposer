@@ -655,7 +655,8 @@ public class MidiUtils {
 		}
 		int[] mappedChord = chordsMap.get(chordString);
 		if (mappedChord == null) {
-			return null;
+			mappedChord = org.vibehistorian.vibecomposer.generation.ChordSymbol.extraPitches(chordString);
+			if (mappedChord == null) { return null; }
 		}
 		if (inversion != null) {
 			return chordInversion(mappedChord, inversion);

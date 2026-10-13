@@ -154,6 +154,9 @@ final class MidiScoreBuilder {
             boolean isDrum = noteColorIndex == 4;
             boolean shouldRandomize = (isDrum && gc.getHumanizeDrums() > 0)
                     || (!isDrum && gc.getHumanizeNotes() > 0);
+            // Contextual melody performance has already been validated; this late jitter can
+            // erase suspension preparation or rewrite authored timing after preservation.
+            if (noteColorIndex == 0 && gc.isContextualMelody() && !gc.isMelodyLegacyMode()) { shouldRandomize = false; }
             if (shouldRandomize) {
                 int partOrder = ShowAreaBig.getPartOrderForPartName(part.getTitle());
                 double divisor = noteColorIndex == 2 ? 30000.0 : 10000.0;
