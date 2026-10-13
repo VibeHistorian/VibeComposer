@@ -17,6 +17,12 @@ public final class HarmonicProgressionPlanner {
     private static final int BEAM_WIDTH = 32;
     private static final int[] FIFTHS = { 0, 3, 6, 2, 5, 1, 4 };
     private static final int[][] POP = { { 0, 4, 5, 3 }, { 0, 5, 3, 4 }, { 5, 3, 0, 4 }, { 0, 3, 5, 4 } };
+    // Phrase alternatives choose musical structure before the beam ranks realizations.
+    private static final int[][] FUNCTIONAL_CLOSED = {
+            {0,1,4,0}, {0,3,4,0}, {5,1,4,0}, {5,3,4,0}, {2,5,4,0}, {0,5,4,0},
+            {0,3,6,0}, {5,3,6,0}, {0,5,3,0}, {0,1,3,0}
+    };
+    private static final int[][] FUNCTIONAL_OPEN = { {0,5,1,4}, {0,3,1,4}, {5,0,1,4}, {0,3,4,5}, {0,1,4,5} };
 
     private static final class Candidate {
         final List<String> chords;
@@ -47,9 +53,18 @@ public final class HarmonicProgressionPlanner {
         if (length == 1 && first != null && last != null && !first.equals(last)) {
             throw new IllegalArgumentException("One chord cannot satisfy different first and last locks");
         }
-        Random structure = new Random(seed);
+        Random structure = new Random(mixSeed(seed ^ 0x7374727563747572L));
         List<String> vocabulary = vocabulary(config);
         int[] pop = POP[structure.nextInt(POP.length)];
+        int[] functional = chooseFunctionalPlan(config,length,first,last,locked,new Random(mixSeed(seed ^ 0x66756e6374696f6eL)));
+        int cycleStart = new Random(mixSeed(seed ^ 0x666966746873L)).nextInt(FIFTHS.length);
+        String starting = first != null ? first : locked.get(0);
+        if (starting == null && partial.containsKey(0) && (partial.get(0).getMask() & ChordLock.ROOT) != 0) { starting = declared[0]; }
+        String ending = last != null ? last : locked.get(length - 1);
+        int startDegree = starting == null ? -1 : Arrays.asList(config.getScaleMode().noteAdjustScale).indexOf(ChordSymbol.parse(starting).root);
+        int endDegree = ending == null ? -1 : Arrays.asList(config.getScaleMode().noteAdjustScale).indexOf(ChordSymbol.parse(ending).root);
+        if (startDegree >= 0) { cycleStart = indexInCycle(startDegree); }
+        else if (starting == null && endDegree >= 0) { cycleStart = Math.floorMod(indexInCycle(endDegree) - length + 1,FIFTHS.length); }
         List<Candidate> beam = Collections.singletonList(new Candidate(Collections.emptyList(), 0, 0));
         long serial = 1;
         for (int index = 0; index < length; index++) {
@@ -87,13 +102,13 @@ public final class HarmonicProgressionPlanner {
                     ChordSymbol previous = index == 0 ? null : ChordSymbol.parse(state.chords.get(index - 1));
                     if (previous != null) { score += transition(previous, chord, config.isAllowChordRepeats()); }
                     if (strategy == Strategy.FUNCTIONAL) {
-                        if (index == 0) { score += degree == 0 ? 8 : degree == 5 ? 3 : 0; }
-                        if (index == length - 1) { score += degree == 0 ? 12 : degree == 4 ? 3 : -3; }
-                        if (index == length - 2) { score += degree == 4 ? 9 : degree == 6 ? 4 : -1; }
-                        if (index == length - 3) { score += degree == 1 || degree == 3 ? 5 : 0; }
+                        int expected = index == length - 1 ? functional[3] : index == length - 2 ? functional[2]
+                                : index == length - 3 ? functional[1] : index == 0 ? functional[0] : functional[index % 4];
+                        score += degree == expected ? (index >= length - 3 ? 10 : index == 0 ? 8 : 2) : 0;
                     } else if (strategy == Strategy.FIFTHS) {
-                        int start = first == null ? 0 : Math.max(0,indexInCycle(Arrays.asList(config.getScaleMode().noteAdjustScale).indexOf(ChordSymbol.parse(first).root)));
-                        score += degree == FIFTHS[(start + index) % FIFTHS.length] ? 16 : -5;
+                        int previousDegree = previous == null ? -1 : Arrays.asList(config.getScaleMode().noteAdjustScale).indexOf(previous.root);
+                        int expected = previousDegree >= 0 ? (previousDegree + 3) % 7 : FIFTHS[(cycleStart + index) % FIFTHS.length];
+                        score += degree == expected ? 16 : -5;
                     } else if (strategy == Strategy.POP_LOOP) {
                         score += degree == pop[index % pop.length] ? 10 : -2;
                     } else {
@@ -177,6 +192,34 @@ public final class HarmonicProgressionPlanner {
         List<String> result = new ArrayList<>(source);
         result.set(index,(property.getMask() & ChordLock.QUALITY) != 0 ? selected : color(selected,config,seed ^ 0xd1b54a32d192ed03L));
         return Collections.unmodifiableList(result);
+    }
+
+    private static long mixSeed(long value) {
+        value = (value ^ (value >>> 30)) * 0xbf58476d1ce4e5b9L;
+        value = (value ^ (value >>> 27)) * 0x94d049bb133111ebL;
+        return value ^ (value >>> 31);
+    }
+
+    private static int[] chooseFunctionalPlan(GUIConfig config,int length,String first,String last,Map<Integer,String> locks,Random random) {
+        List<int[]> plans = new ArrayList<>();
+        for (int[] plan : FUNCTIONAL_CLOSED) {
+            // A natural-minor subtonic is not a leading-tone diminished dominant.
+            if (plan[2] != 6 || config.getScaleMode().noteAdjustScale[6] == 11) { plans.add(plan); }
+        }
+        String ending = last != null ? last : locks.get(length - 1);
+        int end = ending == null ? -1 : Arrays.asList(config.getScaleMode().noteAdjustScale).indexOf(ChordSymbol.parse(ending).root);
+        if (end == 4 || end == 5 || config.isContextualMelody() && config.getMelodyEnding() != ContextualMelodyPlanner.Ending.CLOSED) {
+            plans.addAll(Arrays.asList(FUNCTIONAL_OPEN));
+        }
+        List<int[]> matchingEnd = new ArrayList<>();
+        for (int[] plan : plans) { if (plan[3] == end) { matchingEnd.add(plan); } }
+        if (!matchingEnd.isEmpty()) { plans = matchingEnd; }
+        String starting = first != null ? first : locks.get(0);
+        int start = starting == null ? -1 : Arrays.asList(config.getScaleMode().noteAdjustScale).indexOf(ChordSymbol.parse(starting).root);
+        List<int[]> matchingStart = new ArrayList<>();
+        for (int[] plan : plans) { if (plan[0] == start) { matchingStart.add(plan); } }
+        if (!matchingStart.isEmpty()) { plans = matchingStart; }
+        return plans.get(random.nextInt(plans.size()));
     }
 
     private static void validateEndpoint(String endpoint, String lock) {

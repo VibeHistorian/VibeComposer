@@ -121,10 +121,15 @@ public class RoadmapGenerationTest {
     @Test public void minorFunctionalCadenceRetainsRaisedLeadingTone() {
         GUIConfig config = new GUIConfig(); config.setScaleMode(MidiUtils.ScaleMode.AEOLIAN);
         config.setProgressionStrategy(HarmonicProgressionPlanner.Strategy.FUNCTIONAL); config.setSpiceChance(0);
-        List<String> names = HarmonicProgressionPlanner.generate(config,1,4,null,null,Collections.emptyMap());
-        assertEquals("G7",names.get(2));
-        assertTrue(ChordSymbol.parse(names.get(3)).quality.startsWith("m"));
-        assertTrue(Arrays.stream(ChordSymbol.parse(names.get(2)).pitches(false)).anyMatch(pitch -> pitch % 12 == 11));
+        boolean dominant = false;
+        for (long seed = 0; seed < 20; seed++) {
+            List<String> names = HarmonicProgressionPlanner.generate(config,seed,4,null,null,Collections.emptyMap());
+            assertTrue(ChordSymbol.parse(names.get(3)).quality.startsWith("m"));
+            if (names.get(2).equals("G7")) {
+                dominant = true; assertTrue(Arrays.stream(ChordSymbol.parse(names.get(2)).pitches(false)).anyMatch(pitch -> pitch % 12 == 11));
+            }
+        }
+        assertTrue("Minor functional phrases must offer a raised-leading-tone dominant",dominant);
         assertArrayEquals(new int[] {62,65,68,72},MidiUtils.mappedChord("Dm7b5"));
     }
 

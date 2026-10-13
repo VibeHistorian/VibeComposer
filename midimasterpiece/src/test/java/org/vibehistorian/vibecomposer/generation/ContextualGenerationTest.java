@@ -143,18 +143,56 @@ public class ContextualGenerationTest {
         GUIConfig config = new GUIConfig(); config.setSpiceChance(0);
         config.setProgressionStrategy(HarmonicProgressionPlanner.Strategy.FIFTHS);
         assertEquals(Arrays.asList("C","F","Bdim","Em","Am","Dm","G","C"),
-                HarmonicProgressionPlanner.generate(config, 12, 8, null, null, Collections.emptyMap()));
+                HarmonicProgressionPlanner.generate(config, 12, 8, "C", null, Collections.emptyMap()));
     }
 
-    @Test public void functionalStrategyPlansPredominantDominantTonic() {
+    @Test public void functionalStrategyVariesPhraseStructureAndRetainsClosure() {
         GUIConfig config = new GUIConfig(); config.setSpiceChance(0);
         config.setProgressionStrategy(HarmonicProgressionPlanner.Strategy.FUNCTIONAL);
-        for (long seed = 0; seed < 20; seed++) {
+        java.util.Set<List<String>> distinct = new java.util.HashSet<>();
+        for (long seed = 0; seed < 128; seed++) {
             List<String> names = HarmonicProgressionPlanner.generate(config, seed, 4, null, null, Collections.emptyMap());
-            assertEquals("C", names.get(0));
-            assertTrue(names.get(1).equals("Dm") || names.get(1).equals("F"));
-            assertEquals("G", names.get(2)); assertEquals("C", names.get(3));
+            assertTrue(names.toString(),Arrays.asList("C","Am","Em").contains(names.get(0)));
+            assertTrue(names.toString(),Arrays.asList("G","Bdim","F").contains(names.get(2)));
+            assertEquals("C", names.get(3)); distinct.add(names);
+            assertEquals(names,HarmonicProgressionPlanner.generate(config,seed,4,null,null,Collections.emptyMap()));
         }
+        assertTrue("Functional structure should vary across seeds: " + distinct,distinct.size() >= 6);
+        assertTrue("Plagal arrivals should be available",distinct.stream().anyMatch(names -> names.get(2).equals("F")));
+        assertTrue("Leading-tone arrivals should be available",distinct.stream().anyMatch(names -> names.get(2).equals("Bdim")));
+    }
+
+    @Test public void functionalAlternativesRespectEndingIntentAndFixedEndpoints() {
+        GUIConfig config = new GUIConfig(); config.setContextualMelody(true); config.setSpiceChance(0);
+        config.setProgressionStrategy(HarmonicProgressionPlanner.Strategy.FUNCTIONAL);
+        config.setMelodyEnding(ContextualMelodyPlanner.Ending.LOOP);
+        java.util.Set<String> endings = new java.util.HashSet<>(); java.util.Set<List<String>> fixed = new java.util.HashSet<>();
+        for (long seed = 0; seed < 64; seed++) {
+            endings.add(HarmonicProgressionPlanner.generate(config,seed,4,null,null,Collections.emptyMap()).get(3));
+            List<String> names = HarmonicProgressionPlanner.generate(config,seed,4,"C","C",Collections.emptyMap());
+            assertEquals("C",names.get(0)); assertEquals("C",names.get(3)); fixed.add(names);
+        }
+        assertEquals(new java.util.HashSet<>(Arrays.asList("C","G","Am")),endings);
+        assertTrue("Fixed tonic endpoints should still allow interior variety",fixed.size() >= 4);
+        config.setMelodyEnding(ContextualMelodyPlanner.Ending.CLOSED);
+        for (long seed = 0; seed < 32; seed++) { assertEquals("C",HarmonicProgressionPlanner.generate(config,seed,4,null,null,Collections.emptyMap()).get(3)); }
+    }
+
+    @Test public void fifthStrategyRotatesAndFollowsLockedChordsInsteadOfFixedPositions() {
+        GUIConfig config = new GUIConfig(); config.setSpiceChance(0); config.setProgressionStrategy(HarmonicProgressionPlanner.Strategy.FIFTHS);
+        java.util.Set<List<String>> distinct = new java.util.HashSet<>();
+        for (long seed = 0; seed < 128; seed++) {
+            List<String> names = HarmonicProgressionPlanner.generate(config,seed,4,null,null,Collections.emptyMap()); distinct.add(names);
+            for (int i = 1; i < names.size(); i++) {
+                int previous = MidiUtils.MAJ_SCALE.indexOf(ChordSymbol.parse(names.get(i - 1)).root);
+                assertEquals((previous + 3) % 7,MidiUtils.MAJ_SCALE.indexOf(ChordSymbol.parse(names.get(i)).root));
+            }
+            assertEquals(names,HarmonicProgressionPlanner.generate(config,seed,4,null,null,Collections.emptyMap()));
+        }
+        assertEquals(7,distinct.size());
+        assertEquals(Arrays.asList("Bdim","Em","Am","Dm"),HarmonicProgressionPlanner.generate(config,17,4,null,null,Collections.singletonMap(0,"Bdim")));
+        assertEquals(Arrays.asList("C","Dm","G","C"),HarmonicProgressionPlanner.generate(config,17,4,"C",null,Collections.singletonMap(1,"Dm")));
+        assertEquals(Arrays.asList("Em","Am","Dm","G"),HarmonicProgressionPlanner.generate(config,17,4,null,"G",Collections.emptyMap()));
     }
 
     @Test public void colorPreservesAccidentalQualityAndInversionAndDominantIdentity() {
@@ -245,6 +283,8 @@ public class ContextualGenerationTest {
             config.setProgressionStrategy(HarmonicProgressionPlanner.Strategy.FUNCTIONAL); config.setScaleMode(MidiUtils.ScaleMode.AEOLIAN);
             config.setCoDesignHarmony(coDesign); config.setCustomChordsEnabled(false); config.setMelodyUseCustomDurations(false);
             config.setFirstChord("Cm"); config.setLastChord("Cm"); config.setSpiceChance(0);
+            // Test V7 realization independently of the planner's selected cadence family.
+            config.setCustomChords("Cm,Dm7b5,G7,Cm"); config.setLockedChordIndices(Collections.singletonList(2));
             config.getArrangement().setOverridden(false); config.getArrangement().setPreviewChorus(true);
             Path output = Files.createTempFile("vibe-minor-", ".mid");
             Path temporary = new File(org.vibehistorian.vibecomposer.Constants.TEMPORARY_SEQUENCE_MIDI_NAME).toPath();
