@@ -75,7 +75,8 @@ final class ContextualMelodyGenerator {
                 config.getMelodyRangeMax(),Math.min(24,2 + part.getMaxBlockChange() + part.getBlockJump()),32,config.getMelodyTension(),ending);
         options.phrases = phrases; options.style = config.getMelodyStyle(); options.chromaticApproaches = config.isMelodyChromaticApproaches();
         options.blockWeights = new ArrayList<>(config.getMelodyBlockTypePreference());
-        options.catalogueInfluence = 1 - config.getMelodyNewBlocksChance() / 100.0;
+        options.newBlocksChance = config.getMelodyNewBlocksChance();
+        options.anchorOctaveFlexible = true;
         options.maxDirectionChanges = config.getMelodyMaxDirChanges();
         options.anticipationChance = part.getLeadChordsChance();
         options.direction = config.getNoteTargetDirectionChoice().direction;

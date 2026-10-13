@@ -48,6 +48,8 @@ public final class ContextualMelodyPlanner {
         public int anticipationChance = 100;
         public int direction;
         public double catalogueInfluence = 1;
+        public int newBlocksChance;
+        public boolean anchorOctaveFlexible;
         public List<Integer> blockWeights = Collections.emptyList();
         public java.util.Map<Long,Integer> anchorPreferences = Collections.emptyMap();
 
@@ -86,7 +88,7 @@ public final class ContextualMelodyPlanner {
         public final double score;
         public final int candidatesExamined;
         public final long harmonyRevision;
-        public final String algorithm = "contextual-phrase-v2";
+        public final String algorithm = "contextual-phrase-v3";
         public final MelodyPhrasePlan phrases;
         private Result(List<PlannedNote> notes, double score, int candidatesExamined,HarmonyTimeline harmony,Options options) {
             this.notes = Collections.unmodifiableList(notes);
@@ -100,11 +102,19 @@ public final class ContextualMelodyPlanner {
         final State parent;
         final PlannedNote note;
         final int last, previous, first;
+        final long phraseStart;
+        final int phraseFirst, phraseSounds, runLength;
         final double score;
         final long serial;
-        State(State parent, PlannedNote note, int last, int previous, int first, double score, long serial) {
+        State(State parent, PlannedNote note, int last, int previous, int first, double score, long serial,long phraseStart) {
             this.parent = parent; this.note = note; this.last = last; this.previous = previous;
             this.first = first; this.score = score; this.serial = serial;
+            this.phraseStart = phraseStart;
+            boolean samePhrase = parent != null && parent.phraseStart == phraseStart;
+            boolean sound = note != null && note.pitch >= 0;
+            this.phraseFirst = samePhrase && parent.phraseFirst >= 0 ? parent.phraseFirst : sound ? note.pitch : -1;
+            this.phraseSounds = (samePhrase ? parent.phraseSounds : 0) + (sound ? 1 : 0);
+            this.runLength = sound ? samePhrase && parent.note != null && parent.note.pitch == note.pitch ? parent.runLength + 1 : 1 : 0;
         }
     }
 
@@ -138,14 +148,35 @@ public final class ContextualMelodyPlanner {
     public static Result generate(HarmonyTimeline harmony, int[] scale, List<Slot> slots,
             Options options, long seed) {
         validate(harmony, slots, options);
-        ContextualBlockCatalogue.Evaluator catalogue = new ContextualBlockCatalogue.Evaluator();
+        ContextualBlockCatalogue.Evaluator catalogue = new ContextualBlockCatalogue.Evaluator(seed,options.newBlocksChance);
         Set<Integer> scaleClasses = new TreeSet<>();
         for (int pitch : scale) { scaleClasses.add(Math.floorMod(pitch, 12)); }
-        List<State> beam = Collections.singletonList(new State(null, null, -1, -1, -1, 0, 0));
+        List<State> beam = Collections.singletonList(new State(null, null, -1, -1, -1, 0, 0,-1));
         long serial = 0;
         int examined = 0;
+        int[] soundsRemaining = new int[slots.size()];
+        int remaining = 0;
+        Slot finalSound = null;
+        for (int i = slots.size() - 1; i >= 0; i--) {
+            soundsRemaining[i] = remaining;
+            if (!slots.get(i).rest) { remaining++; if (finalSound == null) { finalSound = slots.get(i); } }
+        }
+        List<Integer> loopArrivals = new ArrayList<>();
+        if (options.ending == Ending.LOOP && finalSound != null) {
+            List<HarmonyTimeline.Event> finalOverlaps = harmony.overlapping(finalSound.start,finalSound.start + finalSound.duration);
+            for (int pitch = options.minimum; pitch <= options.maximum; pitch++) {
+                if (finalSound.lockedPitch != null && pitch != finalSound.lockedPitch) { continue; }
+                boolean stable = true;
+                for (HarmonyTimeline.Event event : finalOverlaps) {
+                    stable &= event.contains(pitch) || options.style == Style.JAZZ && options.tension > 0
+                            && scaleClasses.contains(pitch % 12) && supportsExtension(event,pitch);
+                }
+                if (stable) { loopArrivals.add(pitch); }
+            }
+        }
         for (int index = 0; index < slots.size(); index++) {
             Slot slot = slots.get(index);
+            long phraseStart = options.phrases == null ? 0 : options.phrases.at(slot.start).start;
             HarmonyTimeline.Event chord = harmony.at(slot.start);
             List<HarmonyTimeline.Event> overlaps = harmony.overlapping(slot.start,slot.start + slot.duration);
             boolean strong = metricWeight(slot.start,options) >= 2
@@ -160,7 +191,7 @@ public final class ContextualMelodyPlanner {
                     // A rest cannot erase an unfinished ornament obligation.
                     if (state.note == null || state.note.role == Role.CHORD || state.note.role == Role.EXTENSION || state.note.role == Role.REST) {
                         next.add(new State(state, new PlannedNote(slot, -1, Role.REST), state.last,
-                                state.previous, state.first, state.score, serial++));
+                                state.previous, state.first, state.score, serial++,phraseStart));
                     }
                     continue;
                 }
@@ -197,6 +228,15 @@ public final class ContextualMelodyPlanner {
                         } else { continue; }
                     }
                     if (state.last >= 0 && Math.abs(pitch - state.last) > options.leap) { continue; }
+                    if (options.ending == Ending.LOOP && finalSound != null) {
+                        int first = state.first < 0 ? pitch : state.first;
+                        int distance = Integer.MAX_VALUE;
+                        for (int target : loopArrivals) {
+                            if (Math.abs(target - first) <= options.leap) { distance = Math.min(distance,Math.abs(target - pitch)); }
+                        }
+                        // Keep an attainable loop arrival in the beam before the final slot.
+                        if (distance > soundsRemaining[index] * options.leap) { continue; }
+                    }
                     if (state.note != null && state.note.role != Role.CHORD && state.note.role != Role.EXTENSION && state.note.role != Role.REST) {
                         Role pending = state.note.role;
                         if (!stable) { continue; }
@@ -205,16 +245,24 @@ public final class ContextualMelodyPlanner {
                                 : Math.abs(pitch - state.last) > (pending == Role.CHROMATIC_APPROACH ? 1 : 2) || pitch == state.last) { continue; }
                     }
                     if (lastSound && options.ending == Ending.CLOSED && chord.contains(0) && pitch % 12 != 0) { continue; }
-                    double score = state.score + localScore(state, pitch, slot, chord, harmony, options, stable);
+                    double score = state.score + localScore(state, pitch, slot, chord, harmony, options, stable,seed);
                     score += preference[pitch];
                     if (options.phrases != null) {
                         Integer anchor = options.anchorPreferences.get(slot.start);
-                        if (anchor != null && options.phrases.arrival(slot)) { score -= Math.abs(pitch - anchor) * 0.6; }
-                        if (state.note != null && state.note.pitch >= 0 && state.parent != null && state.parent.note != null
-                                && state.parent.note.pitch >= 0 && state.note.slot.motif == slot.motif) {
-                            int[] gesture = {state.parent.note.pitch,state.note.pitch,pitch};
+                        if (anchor != null && options.phrases.arrival(slot)) {
+                            int distance = Math.abs(pitch - anchor);
+                            if (options.anchorOctaveFlexible) { distance = Math.min(Math.floorMod(pitch - anchor,12),Math.floorMod(anchor - pitch,12)); }
+                            score -= distance * 0.6;
+                        }
+                        if (options.catalogueInfluence > 0 && state.note != null && state.note.pitch >= 0
+                                && state.phraseStart == phraseStart && state.note.slot.motif == slot.motif) {
+                            boolean triple = state.parent != null && state.parent.note != null && state.parent.note.pitch >= 0
+                                    && state.parent.phraseStart == phraseStart;
+                            int[] gesture = triple ? new int[] {state.parent.note.pitch,state.note.pitch,pitch} : new int[] {state.note.pitch,pitch};
+                            Slot beginning = triple ? state.parent.note.slot : state.note.slot;
                             score += options.catalogueInfluence * catalogue.affinity(gesture,
-                                    harmony.at(state.parent.note.slot.start),scale,options.blockWeights,slot.motif);
+                                    harmony.at(beginning.start),scale,options.blockWeights,slot.motif,
+                                    Math.max(0,state.phraseSounds - gesture.length + 1),wantedDirection(slot,harmony,options,seed));
                         }
                     }
                     if (lastSound && options.ending == Ending.LOOP && state.first >= 0) {
@@ -223,7 +271,7 @@ public final class ContextualMelodyPlanner {
                         score -= seam * 0.75;
                     }
                     next.add(new State(state, new PlannedNote(slot, pitch, role), pitch, state.last,
-                            state.first < 0 ? pitch : state.first, score, serial++));
+                            state.first < 0 ? pitch : state.first, score, serial++,phraseStart));
                 }
             }
             next.sort(Comparator.<State>comparingDouble(state -> state.score).reversed().thenComparingLong(state -> state.serial));
@@ -274,8 +322,22 @@ public final class ContextualMelodyPlanner {
         return beat == 0 ? 3 : meter % 2 == 0 && beat == meter / 2 ? 2 : 1;
     }
 
+    private static int contourKind(Options options,long seed,int motif) {
+        if (options.direction != 0) { return options.direction > 0 ? 0 : 1; }
+        long value = seed ^ Math.abs((long) motif) * 0x9e3779b97f4a7c15L ^ 0x636f6e746f7572L;
+        value = (value ^ (value >>> 30)) * 0xbf58476d1ce4e5b9L;
+        value = (value ^ (value >>> 27)) * 0x94d049bb133111ebL;
+        int kind = (int) (value ^ (value >>> 31)) & 3;
+        return motif < 0 ? kind ^ 1 : kind;
+    }
+    private static int wantedDirection(Slot slot,HarmonyTimeline harmony,Options options,long seed) {
+        MelodyPhrasePlan.Phrase phrase = options.phrases == null ? null : options.phrases.at(slot.start);
+        double position = phrase == null ? slot.start / (double) harmony.length() : (slot.start - phrase.start) / (double) (phrase.end - phrase.start);
+        int kind = contourKind(options,seed,slot.motif);
+        return kind == 0 ? 1 : kind == 1 ? -1 : (position < 0.5 ? 1 : -1) * (kind == 2 ? 1 : -1);
+    }
     private static double localScore(State state, int pitch, Slot slot, HarmonyTimeline.Event chord,
-            HarmonyTimeline harmony, Options options, boolean stable) {
+            HarmonyTimeline harmony, Options options, boolean stable,long seed) {
         double exposure = slot.duration / (double) HarmonyTimeline.TICKS_PER_BEAT;
         boolean accented = metricWeight(slot.start,options) >= 2
                 || slot.duration >= HarmonyTimeline.TICKS_PER_BEAT;
@@ -286,12 +348,18 @@ public final class ContextualMelodyPlanner {
                 : (slot.start - phrase.start) / (double) (phrase.end - phrase.start);
         double center = (options.minimum + options.maximum) / 2.0;
         double width = Math.min(5,(options.maximum - options.minimum) / 4.0);
-        double arc = options.direction == 0 ? Math.sin(position * Math.PI) * width : (2 * position - 1) * width * options.direction;
-        score -= Math.abs(pitch - center - arc) * 0.18;
+        int kind = contourKind(options,seed,slot.motif);
+        double opening = center + (kind == 0 ? -width : kind == 1 ? width : kind == 2 ? -width / 2 : width / 2);
+        long phraseStart = phrase == null ? 0 : phrase.start;
+        double origin = state.phraseStart == phraseStart && state.phraseFirst >= 0 ? state.phraseFirst : opening;
+        double arc = kind <= 1 ? position * 2 * width * (kind == 0 ? 1 : -1) : Math.sin(position * Math.PI) * width * (kind == 2 ? 1 : -1);
+        score -= Math.abs(pitch - origin - arc) * 0.18;
         if (state.last >= 0) {
             int movement = pitch - state.last;
             score -= Math.abs(movement) * 0.30;
-            if (movement == 0) { score -= 0.9; }
+            score += wantedDirection(slot,harmony,options,seed) * Math.signum(movement) * Math.min(3,Math.abs(movement))
+                    * (options.direction == 0 ? 0.35 : 0.6);
+            if (movement == 0) { score -= 0.9 + Math.min(4,Math.max(0,state.runLength - 1)) * 0.3; }
             else if (Math.abs(movement) <= 2) { score += 0.5; }
             if (state.previous >= 0 && Math.abs(state.last - state.previous) > 4) {
                 score += Integer.signum(movement) == -Integer.signum(state.last - state.previous)

@@ -80,7 +80,7 @@ public class GenerationCorpus {
             wave(directory.resolve(name + ".wav"),sounds,harmony.length() / 960.0);
             Files.write(directory.resolve(name + ".csv"),roles,StandardCharsets.UTF_8);
             manifest.add(String.format(java.util.Locale.ROOT,"%s,%s,%d,%s,%.3f,%d,%d",name,styles[style],seed,
-                    job[2] == 1 ? "contextual-v2" : "compatibility",elapsed,count,leap));
+                    trace == null ? "compatibility" : trace.algorithm,elapsed,count,leap));
         }
         Files.write(directory.resolve("manifest.csv"),manifest,StandardCharsets.UTF_8);
         Files.write(directory.resolve("README.md"),Arrays.asList("# Listening corpus","",
