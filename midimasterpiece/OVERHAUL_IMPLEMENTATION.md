@@ -4,6 +4,8 @@ Updated: 2026-10-13. This records the implemented Java work from the [melody roa
 
 ## Using the new engines
 
+See the [parameter guide](CONTEXTUAL_GENERATION_PARAMETERS.md) for combo choices, low/middle/high effects, and the current meanings of older controls.
+
 **Contextual Melody** is in **Extra Settings → Melody** and starts ON for a fresh application launch. Loaded configs without the setting default to OFF; configs that explicitly save the setting retain their choice. Compatibility-only controls are hidden while the contextual engine is active, including on new/copied/section panels and across Full/Simple mode changes. Choose phrase form, phrase bars, beats per bar, TONAL/MODAL/JAZZ profile, range, tension, and OPEN/CLOSED/LOOP ending. Phrase dimensions describe generation; they do not rewrite the MIDI time signature. Range and pitch locks apply before explicit track/key transposition.
 
 Select FUNCTIONAL, FIFTHS, POP_LOOP, or MODAL in chord settings. CURRENT preserves the compatibility generator. **Smooth voices** and Voice Low/High control the new rendering path. **Co-design** requires contextual melody and a planned progression strategy and permits at most two melody/harmony passes. Section variants are generated against the resulting finalized harmony; they need not reproduce the preliminary co-design melody.
