@@ -89,7 +89,10 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public JCheckBox melodyFillPausesPerChord;
 	public KnobPanel melodyNewBlocksChance;
 	public JCheckBox melodyLegacyMode;
-	public JCheckBox contextualMelody;
+    public JCheckBox contextualMelody;
+    private JPanel melodyBlockChoicePanel;
+    private JPanel melodyRhythmAccentsPanel;
+    private JLabel melodyPatternEffectLabel;
 	public ScrollComboBox<org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending> melodyEnding;
 	public KnobPanel melodyRangeMin;
 	public KnobPanel melodyRangeMax;
@@ -139,11 +142,13 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 
 	@Override
 	public MelodyPanel createPanel(SoloMuter.Context soloMuterContext) {
-		return new MelodyPanel(soloMuterContext, seed -> MelodyTargetUtils.generateNoteTargetOffsets(
+        MelodyPanel panel = new MelodyPanel(soloMuterContext, seed -> MelodyTargetUtils.generateNoteTargetOffsets(
 				GeneratedChordState.getChordNames(), seed, melodyBlockTargetMode.getSelectedIndex(),
 				melodyTargetNoteVariation.getInt(), null, noteTargetDirectionChoice.getSelectedItem(),
 				melodyUseDirectionsFromProgression.isSelected()),
-				context::getUserChordDurations);
+                context::getUserChordDurations);
+        panel.setContextualModeProvider(this::isContextualMelodyActive);
+        return panel;
 	}
 
 	private void setUserMelodyScaleModes(List<String> modes) {
@@ -298,8 +303,8 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		JPanel melodySettingsExtraPanelOrg = initMelodySettings();
 		JPanel melodySettingsExtraPanelShape = initMelodySettingsPlus();
         JPanel melodySettingsExtraPanelBlocksPatternsCompose = initMelodySettingsPlusPlus();
-        contextualMelody.addChangeListener(event -> refreshEngineControls());
-        melodyLegacyMode.addChangeListener(event -> refreshEngineControls());
+        contextualMelody.addItemListener(event -> refreshEngineControls());
+        melodyLegacyMode.addItemListener(event -> refreshEngineControls());
         refreshEngineControls();
 
 		parentPanel = new JPanel() {
@@ -327,20 +332,39 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		UITheme.toggleableComponents.add(melodySettingsExtraPanelBlocksPatternsCompose);
 	}
 
-    private void refreshEngineControls() {
-        boolean contextual = contextualMelody.isSelected() && !melodyLegacyMode.isSelected();
+    public boolean isContextualMelodyActive() {
+        return contextualMelody != null && contextualMelody.isSelected()
+                && (melodyLegacyMode == null || !melodyLegacyMode.isSelected());
+    }
+
+    public void refreshEngineControls() {
+        boolean contextual = isContextualMelodyActive();
         boolean blocks = !contextual && !melodyLegacyMode.isSelected();
         for (java.awt.Component control : new java.awt.Component[] {melodyChordNoteTarget,melodyTonicNoteTarget,
                 melodyModeNoteTarget,melodyEmphasizeKey,melodyBasicChordsOnly,melodyReplaceAvoidNotes,
                 melodyTargetNoteVariation,melodyUseDirectionsFromProgression,melodyArpySurprises,
                 melodySingleNoteExceptions,melodyFillPausesPerChord,melodyBlockTargetMode,melodyPatternEffect,
-                melodyTargetNotesRandomizeOnCompose,melodyRhythmAccents,melodyRhythmAccentsMode,
-                melodyRhythmAccentsPocket}) { control.setVisible(blocks); }
+                melodyUseOldAlgoChance}) { control.setVisible(blocks); }
+        melodyLegacyMode.setVisible(!contextual);
+        melodyAvoidChordJumpsLegacy.setVisible(!contextual);
+        melodyPatternEffectLabel.setVisible(blocks);
+        melodyRhythmAccentsPanel.setVisible(!contextual);
+        melodyBlockChoicePanel.setVisible(!contextual);
+        melodyCustomDurationsStrictMode.setVisible(!contextual);
+        for (java.awt.Component control : new java.awt.Component[] {melodyBlockTypePreferences,melodyNewBlocksChance,
+                melodyTargetNotesRandomizeOnCompose,melodyPatternRandomizeOnCompose,noteTargetDirectionChoice}) {
+            control.setVisible(!melodyLegacyMode.isSelected());
+        }
         for (java.awt.Component control : new java.awt.Component[] {melodyEnding,melodyRangeMin,melodyRangeMax,
                 melodyTension,melodyForm,melodyStyle,melodyChromaticApproaches,melodyPhraseBars,melodyBeatsPerBar}) {
             control.setVisible(contextual);
         }
-        panelController.getAffectedPanels(INST.MELODY).forEach(panel -> ((MelodyPanel) panel).setContextualControls(contextual));
+        panels.forEach(panel -> panel.setContextualControls(contextual));
+        if (panelController != null) {
+            panelController.getAffectedPanels(INST.MELODY).forEach(panel -> ((MelodyPanel) panel).setContextualControls(contextual));
+        }
+        if (parentPanel != null) { parentPanel.revalidate(); parentPanel.repaint(); }
+        contextualMelody.getParent().revalidate();
     }
 
     JPanel initMelodySettings() {
@@ -425,8 +449,6 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodySingleNoteExceptions = new CustomCheckBox("<html>Single Note<br>Exceptions</html>", true);
 		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>", true);
 		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
-		contextualMelody = new CustomCheckBox("<html>Contextual<br>Melody</html>", false);
-		contextualMelody.setToolTipText("Plan phrases against finalized harmony. Uses speed, pattern recurrence, pauses, custom rhythm and dynamics; bypasses note quotas and avoid-note repair. Legacy mode takes precedence.");
 		melodyEnding = new ScrollComboBox<>(false);
 		ScrollComboBox.addAll(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.values(), melodyEnding);
 		melodyEnding.setVal(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.LOOP);
@@ -443,27 +465,12 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodyChromaticApproaches = new CustomCheckBox("Chromatic approaches",false);
 		melodyPhraseBars = new KnobPanel("Phrase<br>Bars",2,1,16);
 		melodyBeatsPerBar = new KnobPanel("Beats per<br>Bar",4,1,12);
-		melodyLegacyMode.addChangeListener(evt -> {
-			boolean nonLegacyVisible = !melodyLegacyMode.isSelected();
-			melodyChordNoteTarget.setVisible(nonLegacyVisible);
-			melodyTonicNoteTarget.setVisible(nonLegacyVisible);
-			melodyModeNoteTarget.setVisible(nonLegacyVisible);
-			melodyEmphasizeKey.setVisible(nonLegacyVisible);
-			melodyBlockTypePreferences.setVisible(nonLegacyVisible);
-			melodyNewBlocksChance.setVisible(nonLegacyVisible);
-			melodyBlockTargetMode.setVisible(nonLegacyVisible);
-			melodyTargetNotesRandomizeOnCompose.setVisible(nonLegacyVisible);
-			melodyPatternEffect.setVisible(nonLegacyVisible);
-			melodyPatternRandomizeOnCompose.setVisible(nonLegacyVisible);
-			noteTargetDirectionChoice.setVisible(nonLegacyVisible);
-		});
 		melodyAvoidChordJumpsLegacy = new CustomCheckBox("<html>Avoid<br>Chord Jumps</html>", true);
 		melodyReplaceAvoidNotes = new KnobPanel("Replace Near<br>Chord Notes", 1, 0, 2);
 		melodyMaxDirChanges = new KnobPanel("Max. Dir.<br>Changes", 2, 1, 6);
 		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
 
 		settings.add(melodyChordNoteTarget);
-		settings.add(contextualMelody);
 		settings.add(melodyEnding);
 		settings.add(melodyRangeMin);
 		settings.add(melodyRangeMax);
@@ -534,7 +541,8 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		settings.add(noteTargetDirectionChoice);
 		settings.add(melodyBlockTargetMode);
 		settings.add(melodyTargetNotesRandomizeOnCompose);
-		settings.add(new JLabel("Pattern Effect"));
+        melodyPatternEffectLabel = new JLabel("Pattern Effect");
+        settings.add(melodyPatternEffectLabel);
 		settings.add(melodyPatternEffect);
 		settings.add(melodyPatternRandomizeOnCompose);
 		JPanel postProcessPanel = new JPanel();
@@ -543,13 +551,19 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		postProcessPanel.add(melodyRhythmAccents);
 		postProcessPanel.add(new JLabel("Mode"));
 		postProcessPanel.add(melodyRhythmAccentsMode);
-		postProcessPanel.add(melodyRhythmAccentsPocket);
+        postProcessPanel.add(melodyRhythmAccentsPocket);
+        melodyRhythmAccentsPanel = postProcessPanel;
 		settings.add(postProcessPanel);
 		return settings;
 	}
 
-	public void initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
-		JPanel blockChoicePanel = new JPanel(new GridLayout(0, 2));
+    public void initExtraSettingsMelody(JPanel melodyGenerationSettingsPanel) {
+        // UI launch default differs from the XML model's absent-field default (false).
+        contextualMelody = new CustomCheckBox("Contextual Melody", true);
+        contextualMelody.setToolTipText("Plan melody against finalized harmony. Older configs without this setting load with it off. Legacy mode takes precedence.");
+        melodyGenerationSettingsPanel.add(contextualMelody);
+        JPanel blockChoicePanel = new JPanel(new GridLayout(0, 2));
+        melodyBlockChoicePanel = blockChoicePanel;
 		melodyBlockChoicePreference = new RandomIntegerListButton("0", null);
 		melodyBlockChoicePreference.setValues(MelodyUtils.BLOCK_CHANGE_JUMP_PREFERENCE);
 		melodyBlockChoicePreference.min = 0;

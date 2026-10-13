@@ -752,9 +752,12 @@ public abstract class InstPanel extends JPanel {
 		this.patternFlip.setSelected(val);
 	}
 
-	public Set<Component> getToggleableComponents() {
-		return toggleableComponents;
-	}
+    public Set<Component> getToggleableComponents() {
+        return toggleableComponents;
+    }
+    public void refreshControlVisibility() {
+        toggleableComponents.forEach(component -> component.setVisible(org.vibehistorian.vibecomposer.UITheme.isFullMode));
+    }
 
 	public void setToggleableComponents(Set<Component> toggleableComponents) {
 		this.toggleableComponents = toggleableComponents;

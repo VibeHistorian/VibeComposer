@@ -88,7 +88,8 @@ final class ContextualMelodyGenerator {
             }
         }
         options.anchorPreferences = preferences;
-        boolean custom = config.isMelodyUseCustomDurations() && part.getCustomDurationNotes() != null;
+        boolean custom = config.isMelodyUseCustomDurations() && part.getCustomDurationNotes() != null
+                && !part.getCustomDurationNotes().isEmpty();
         List<ContextualMelodyPlanner.Slot> slots;
         if (custom) {
             slots = customRhythm(part, durations, section, harmony, seed);

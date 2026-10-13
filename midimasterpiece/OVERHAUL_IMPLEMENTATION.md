@@ -4,7 +4,7 @@ Updated: 2026-10-13. This records the implemented Java work from the [melody roa
 
 ## Using the new engines
 
-Enable **Contextual Melody**, with Legacy Mode disabled. Choose phrase form, phrase bars, beats per bar, TONAL/MODAL/JAZZ profile, range, tension, and OPEN/CLOSED/LOOP ending. Phrase dimensions describe generation; they do not rewrite the MIDI time signature. Range and pitch locks apply before explicit track/key transposition.
+**Contextual Melody** is in **Extra Settings → Melody** and starts ON for a fresh application launch. Loaded configs without the setting default to OFF; configs that explicitly save the setting retain their choice. Compatibility-only controls are hidden while the contextual engine is active, including on new/copied/section panels and across Full/Simple mode changes. Choose phrase form, phrase bars, beats per bar, TONAL/MODAL/JAZZ profile, range, tension, and OPEN/CLOSED/LOOP ending. Phrase dimensions describe generation; they do not rewrite the MIDI time signature. Range and pitch locks apply before explicit track/key transposition.
 
 Select FUNCTIONAL, FIFTHS, POP_LOOP, or MODAL in chord settings. CURRENT preserves the compatibility generator. **Smooth voices** and Voice Low/High control the new rendering path. **Co-design** requires contextual melody and a planned progression strategy and permits at most two melody/harmony passes. Section variants are generated against the resulting finalized harmony; they need not reproduce the preliminary co-design melody.
 
@@ -12,7 +12,7 @@ Melody-panel **Anchors** accepts beat=MIDI pairs, such as 0=72,4=76. **Reroll sp
 
 Chordlet **Ctrl+click** toggles the complete generation lock; **Alt+click** rerolls one event while scoring both neighboring joins. **Locks** exposes root, quality, bass, and duration locks independently. Manual editing remains allowed. **S** adds identity-preserving color. **Alternatives** ranks contextual edits, explains their destination, and permits audition before commitment when a MIDI device is available. **Harmonize** proposes harmony for an attached fixed melody. **Undo/Redo** retain chord definitions, property locks, and event identities.
 
-Existing presets default to compatibility engines. New settings, note constraints, property locks, and chordlet IDs persist in XML. The legacy MIDI regression fixture remains unchanged.
+Older presets without the new setting default to compatibility engines. New settings, note constraints, property locks, and chordlet IDs persist in XML. The legacy MIDI regression fixture remains unchanged.
 
 ## Shared harmony and ordering — M1/H1
 
@@ -58,13 +58,13 @@ Run **mvn -Dtest=GenerationCorpus test** to generate target/overhaul-corpus/. It
 
 The same command writes profile.csv for 12 additional stress cases: four contexts, 4/16/32 chords, uneven harmonic durations, three beats per bar, and narrow/wide registers. The 32-chord cases cover 88 beats and 288 planned events, with roughly 449,000 candidates examined, and took approximately 64–68 ms in the recorded run. Candidate bounds and register compliance are asserted; runtime is recorded rather than enforced as a fragile machine-dependent threshold.
 
-Latest verification: **48 tests passed**, comprising the 46 normal tests and two opt-in corpus/profile tests. Full minor/co-design and attached-melody render paths passed, the legacy MIDI fixture remained byte-identical, and git diff --check passed.
+Latest verification: **47 normal tests passed**, including the new Swing startup/config/visibility check, full minor/co-design and attached-melody render paths, and the byte-identical legacy MIDI fixture. The two opt-in corpus/profile tests passed in the preceding overhaul verification. git diff --check passed.
 
 The corpus records planning runtime, note count, and largest leap. Short-example contextual timings have ranged from approximately 3–29 ms across runs on this desktop, including startup/JIT effects; this is not a guaranteed latency budget or full composition/export measurement. Listen before reading engine labels. Judge phrase identity, arrivals, tension/resolution, contour, rhythm, and accompaniment fit. No musical preference is inferred from metrics.
 
 ## Acceptance work still open
 
-- Conduct blinded listening, tune weights/profiles, and decide whether to change defaults. No listening preference or completed visual UI audit is claimed.
+- Conduct blinded listening and tune weights/profiles. Fresh-launch contextual melody is enabled at the user's request; this default change does not constitute listening validation. No listening preference or completed visual UI audit is claimed.
 - Set production latency budgets after profiling full multi-track arrangements, extreme effects, and more seeds. The delivered long/uneven/odd-meter profile is a reproducible starting point.
 - Refine effects diagnostics and the compact editor with listening/UI feedback. Partial locks are deliberately conservative in harmonization and modulation. Local melody rerolls require a compatible in-memory plan.
 - Learned style scoring, full counterpoint/polyphonic reharmonization, distant-key modulation search, and exhaustive jazz substitutions remain the plans' deferred upgrades.

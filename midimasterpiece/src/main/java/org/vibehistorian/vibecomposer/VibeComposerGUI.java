@@ -1797,12 +1797,13 @@ public static final String CURRENT_VERSION = Constants.APP_VERSION;
 		setFullMode(isFullMode);
 	}
 
-	private void setFullMode(boolean mode) {
+    private void setFullMode(boolean mode) {
+        isFullMode = mode;
 		toggleableComponents.forEach(e -> e.setVisible(mode));
 		for (INST instrument : INST.values()) {
-			getInstList(instrument)
-					.forEach(e -> e.getToggleableComponents().forEach(f -> f.setVisible(mode)));
-		}
+            getInstList(instrument).forEach(InstPanel::refreshControlVisibility);
+        }
+        melodyGUI.refreshEngineControls();
 	}
 
 	private void toggleButtonEnabledForPanels() {

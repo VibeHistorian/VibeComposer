@@ -56,13 +56,31 @@ public class MelodyPanel extends InstPanel {
 	private PhraseNotes customDurationValues = new PhraseNotes();
 	private String contextualPitchLocks = "";
 	private String contextualRerollWindow = "";
-	private long contextualRerollSeed;
+    private long contextualRerollSeed;
+    private boolean contextualControls;
+    private java.util.function.BooleanSupplier contextualModeProvider;
+    private final JButton anchorLocks = new JButton("Anchors");
+    private final JButton localReroll = new JButton("Reroll span");
 	private List<Integer> customDurationChances = new ArrayList<>(IntStream.iterate(50, e -> e).limit(CUSTOM_DURATIONS_LIMIT).boxed().collect(Collectors.toList()));
 
     public void setContextualControls(boolean contextual) {
+        contextualControls = contextual;
+        refreshControlVisibility();
+    }
+    public void setContextualModeProvider(java.util.function.BooleanSupplier provider) {
+        contextualModeProvider = provider;
+        refreshControlVisibility();
+    }
+    @Override public void refreshControlVisibility() {
+        super.refreshControlVisibility();
+        boolean contextual = contextualModeProvider == null ? contextualControls : contextualModeProvider.getAsBoolean();
         maxNoteExceptions.setVisible(!contextual); noteExceptionChance.setVisible(!contextual);
         doubledRhythmChance.setVisible(!contextual); patternFlexible.setVisible(!contextual);
         fillPauses.setVisible(!contextual); alternatingRhythmChance.setVisible(!contextual);
+        for (Component control : new Component[] {noteExceptionChance,doubledRhythmChance,alternatingRhythmChance}) {
+            control.setVisible(!contextual && org.vibehistorian.vibecomposer.UITheme.isFullMode);
+        }
+        anchorLocks.setVisible(contextual); localReroll.setVisible(contextual);
         maxBlockChange.setToolTipText(contextual ? "Contributes to the maximum realized melodic leap in semitones." : null);
         blockJump.setToolTipText(contextual ? "Additional realized leap allowance in semitones." : null);
         noteTargets.setToolTipText(contextual ? "Preferred scale degrees at phrase arrivals (0 = tonic); these are soft preferences." : null);
@@ -118,7 +136,6 @@ public class MelodyPanel extends InstPanel {
 		this.add(chordSpanFillPanel);
 
 		this.add(speed);
-		JButton anchorLocks = new JButton("Anchors");
 		anchorLocks.setToolTipText("Contextual melody: lock pitches at beats, before transposition (0=72,4=76).");
 		anchorLocks.addActionListener(e -> {
 			String value = JOptionPane.showInputDialog(this,"Pitch locks: beat=MIDI, separated by commas",contextualPitchLocks);
@@ -128,7 +145,6 @@ public class MelodyPanel extends InstPanel {
 			}
 		});
 		this.add(anchorLocks);
-		JButton localReroll = new JButton("Reroll span");
 		localReroll.setToolTipText("Set startBeat,endBeat on existing note boundaries; regenerate to reroll that span. Clear for a full regeneration.");
 		localReroll.addActionListener(e -> {
 			String value = JOptionPane.showInputDialog(this,"Reroll on next regeneration: startBeat,endBeat (blank clears)",contextualRerollWindow);

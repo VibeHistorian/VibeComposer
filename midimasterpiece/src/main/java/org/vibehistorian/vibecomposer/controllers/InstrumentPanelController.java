@@ -130,8 +130,7 @@ public final class InstrumentPanelController {
 		List<InstPanel> affectedPanels = getAffectedPanels(instrument);
 		int panelOrder = getLowestAvailablePanelNumber(affectedPanels);
 
-		panel.getToggleableComponents().forEach(component ->
-				component.setVisible(UITheme.isFullMode));
+        panel.refreshControlVisibility();
 		if (arrangementGUI.get() != null && arrangementGUI.get().isCustomSection()) {
 			panel.toggleGlobalElements(false);
 			panel.toggleEnabledCopyRemove(false);

@@ -592,8 +592,7 @@ public class ArrangementGUI {
 					if (panel.getPartClass() == DrumPart.class) {
 						panel.getInstrumentBox().setEnabled(true);
 					}
-					panel.getToggleableComponents()
-							.forEach(component -> component.setVisible(UITheme.isFullMode));
+                    panel.refreshControlVisibility();
 					panel.setVisible(false);
 					panelView.add(panel);
 				}

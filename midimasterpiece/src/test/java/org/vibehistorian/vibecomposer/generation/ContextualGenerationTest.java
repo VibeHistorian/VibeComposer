@@ -295,6 +295,33 @@ public class ContextualGenerationTest {
         }
     }
 
+    @Test public void absentCustomRhythmFallsBackToTheSameGeneratedMelodyAsUnchecked() {
+        GUIConfig config = new GUIConfig(); config.setContextualMelody(true); config.setMelodyUseCustomDurations(false);
+        org.vibehistorian.vibecomposer.Parts.MelodyPart part = new org.vibehistorian.vibecomposer.Parts.MelodyPart();
+        part.setOrderOffset(1); part.setPatternSeed(101); part.setSplitChance(100); part.setStartNoteChance(100);
+        org.vibehistorian.vibecomposer.Section section = new org.vibehistorian.vibecomposer.Section(); section.setMeasures(1);
+        List<int[]> chords = Arrays.asList(MidiUtils.mappedChord("C"),MidiUtils.mappedChord("G7"),MidiUtils.mappedChord("C"));
+        List<Double> durations = Arrays.asList(2.0,2.0,2.0);
+        java.util.Map<Integer,List<jm.music.data.Note>> expected = new ContextualMelodyGenerator(config,new MidiTiming(100),0.95)
+                .generate(part,chords,chords,durations,section,0,MidiUtils.ScaleMode.IONIAN);
+        config.setMelodyUseCustomDurations(true);
+        for (org.vibehistorian.vibecomposer.Helpers.PhraseNotes absent : Arrays.asList(null,new org.vibehistorian.vibecomposer.Helpers.PhraseNotes())) {
+            part.setCustomDurationNotes(absent);
+            java.util.Map<Integer,List<jm.music.data.Note>> actual = new ContextualMelodyGenerator(config,new MidiTiming(100),0.95)
+                    .generate(part,chords,chords,durations,section,0,MidiUtils.ScaleMode.IONIAN);
+            assertEquals(expected.keySet(),actual.keySet());
+            for (int event : expected.keySet()) {
+                assertEquals(expected.get(event).size(),actual.get(event).size());
+                for (int i = 0; i < expected.get(event).size(); i++) {
+                    jm.music.data.Note left = expected.get(event).get(i), right = actual.get(event).get(i);
+                    assertEquals(left.getPitch(),right.getPitch()); assertEquals(left.getRhythmValue(),right.getRhythmValue(),0);
+                    assertEquals(left.getDuration(),right.getDuration(),0); assertEquals(left.getDynamic(),right.getDynamic());
+                }
+            }
+        }
+        assertTrue(config.isMelodyUseCustomDurations());
+    }
+
     @Test public void customRhythmKeepsItsDurationsAndRestUsingActiveSectionLength() {
         GUIConfig config = new GUIConfig(); config.setContextualMelody(true); config.setMelodyUseCustomDurations(true);
         org.vibehistorian.vibecomposer.Parts.MelodyPart part = new org.vibehistorian.vibecomposer.Parts.MelodyPart();
