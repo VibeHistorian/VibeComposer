@@ -31,6 +31,56 @@ public class ChordletPanel extends JPanel {
 
 	private JTextField rawChords = null;
 	private boolean chordletsDisplayed = true;
+	private java.util.function.Supplier<org.vibehistorian.vibecomposer.GUIConfig> generationConfig;
+	private Runnable refreshGenerationConfig;
+	private long rerollSequence;
+	private List<String> undoChords;
+	private List<Integer> undoLocks;
+
+	public void setGenerationContext(java.util.function.Supplier<org.vibehistorian.vibecomposer.GUIConfig> config, Runnable refresh) {
+		generationConfig = config;
+		refreshGenerationConfig = refresh;
+	}
+
+	public List<Integer> getLockedIndices() {
+		List<Integer> result = new ArrayList<>();
+		for (int i = 0; i < chordlets.size(); i++) { if (chordlets.get(i).isGenerationLocked()) { result.add(i); } }
+		return result;
+	}
+
+	public void setLockedIndices(List<Integer> indices) {
+		for (int i = 0; i < chordlets.size(); i++) { chordlets.get(i).setGenerationLocked(indices.contains(i)); }
+	}
+
+	public void rememberGenerationEdit() {
+		undoChords = getChordList();
+		undoLocks = getLockedIndices();
+	}
+
+	public void undoGenerationEdit() {
+		if (undoChords != null) {
+			List<String> previous = undoChords;
+			List<Integer> locks = undoLocks;
+			undoChords = null;
+			setupChords(previous);
+			setLockedIndices(locks);
+		}
+	}
+
+	public void rerollChord(Chordlet chord) {
+		if (generationConfig == null || chord.isGenerationLocked()) { return; }
+		refreshGenerationConfig.run();
+		org.vibehistorian.vibecomposer.GUIConfig config = generationConfig.get();
+		int index = chordlets.indexOf(chord);
+		try {
+			List<String> next = org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.reroll(
+					getChordList(), index, config, config.getRandomSeed() + ++rerollSequence);
+			rememberGenerationEdit();
+			chord.setChordText(next.get(index));
+		} catch (IllegalArgumentException invalid) {
+			JOptionPane.showMessageDialog(this, invalid.getMessage(), "Chord reroll", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
 
 	private static final int extrasSize = 70;
 	private int fullSize = 600;

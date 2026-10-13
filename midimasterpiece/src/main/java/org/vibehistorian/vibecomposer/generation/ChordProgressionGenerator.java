@@ -155,6 +155,11 @@ public final class ChordProgressionGenerator {
     static List<String> generateChordProgressionList(GUIConfig gc, long mainGeneratorSeed,
                                                        int fixedLength, String configuredFirstChord,
                                                        String configuredLastChord) {
+        if (gc.getProgressionStrategy() != HarmonicProgressionPlanner.Strategy.CURRENT) {
+            return HarmonicProgressionPlanner.generate(gc, mainGeneratorSeed,
+                    chooseProgressionLength(fixedLength, new Random(mainGeneratorSeed)),
+                    configuredFirstChord, configuredLastChord, configuredLocks(gc));
+        }
         List<String> chordProgList = new ArrayList<>();
 
         RandomStreams randomStreams = createRandomStreams(mainGeneratorSeed);
@@ -245,6 +250,16 @@ public final class ChordProgressionGenerator {
         return chordProgList;
     }
 
+    private static Map<Integer, String> configuredLocks(GUIConfig config) {
+        Map<Integer, String> locks = new java.util.HashMap<>();
+        String[] source = config.getCustomChords().replace(" ", "").split(",");
+        for (int index : config.getLockedChordIndices()) {
+            if (index < 0 || index >= source.length) { throw new IllegalArgumentException("Chord lock has no source event: " + index); }
+            locks.put(index, source[index]);
+        }
+        return locks;
+    }
+
     static MappedProgression generateMappedProgression(GUIConfig gc, int mainGeneratorSeed,
                                                         int fixedLength, String configuredFirstChord,
                                                         String configuredLastChord,
@@ -252,6 +267,17 @@ public final class ChordProgressionGenerator {
                                                         double wholeNoteDuration,
                                                         double quarterNoteDuration,
                                                         double durationError) {
+        if (gc.getProgressionStrategy() != HarmonicProgressionPlanner.Strategy.CURRENT) {
+            List<String> names = generateChordProgressionList(gc, mainGeneratorSeed, fixedLength,
+                    configuredFirstChord, configuredLastChord);
+            List<int[]> chords = new ArrayList<>();
+            List<Double> durations = new ArrayList<>();
+            for (int i = 0; i < names.size(); i++) {
+                chords.add(ChordSymbol.parse(names.get(i)).pitches(false));
+                durations.add(existingDurations.size() == names.size() ? existingDurations.get(i) : wholeNoteDuration);
+            }
+            return new MappedProgression(chords, new ArrayList<>(names), durations);
+        }
         RandomStreams randomStreams = createRandomStreams(mainGeneratorSeed);
         Random generator = randomStreams.progression;
         Random lengthGenerator = randomStreams.length;

@@ -102,6 +102,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
     public ScrollComboBox<String> firstChordSelection;
     public ScrollComboBox<String> lastChordSelection;
     public JCheckBox useChordFormula;
+    public ScrollComboBox<org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy> progressionStrategy;
     public KnobPanel longProgressionSimilarity;
     public CheckButton userChordsEnabled;
     public CheckButton userDurationsEnabled;
@@ -132,6 +133,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         gc.setFixedDuration(chordProgressionLength.getSelectedIndex() < 2
                 ? Integer.parseInt(chordProgressionLength.getVal()) : 0);
         gc.setUseChordFormula(useChordFormula.isSelected());
+        gc.setProgressionStrategy(progressionStrategy.getSelectedItem());
         gc.setLongProgressionSimilarity(longProgressionSimilarity.getInt());
         gc.setFirstChord(firstChordSelection.getVal());
         gc.setLastChord(lastChordSelection.getVal());
@@ -141,6 +143,7 @@ public class ChordGUI extends InstGUI<ChordPanel> {
                 : userChords.getChordListString());
         gc.setCustomChordDurations(userChordsDurations.getText());
         gc.setCustomDurationsEnabled(userDurationsEnabled.isSelected());
+        gc.setLockedChordIndices(userChords.getLockedIndices());
         gc.setSpiceChance(spiceChance.getInt());
         gc.setSpiceParallelChance(spiceParallelChance.getInt());
         gc.setDimAug6thEnabled(spiceAllowDimAug.isSelected());
@@ -164,11 +167,13 @@ public class ChordGUI extends InstGUI<ChordPanel> {
         chordSlashChance.setInt(gc.getChordSlashChance());
         spiceForceScale.setSelected(gc.isSpiceForceScale());
         useChordFormula.setSelected(gc.isUseChordFormula());
+        progressionStrategy.setVal(gc.getProgressionStrategy());
         longProgressionSimilarity.setInt(gc.getLongProgressionSimilarity());
         firstChordSelection.setVal(gc.getFirstChord());
         lastChordSelection.setVal(gc.getLastChord());
         userChordsEnabled.setSelected(gc.isCustomChordsEnabled());
         userChords.setupChords(gc.getCustomChords());
+        userChords.setLockedIndices(gc.getLockedChordIndices());
         userChordsDurations.setText(gc.getCustomChordDurations());
         userDurationsEnabled.setSelected(gc.isCustomDurationsEnabled());
         setChordSettingsInUI(gc.getChordGenSettings());
@@ -251,12 +256,16 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		// CHORDS
 		spiceFlattenBigChords = new CustomCheckBox("Spicy Voicing", false);
 		useChordFormula = new CustomCheckBox("Chord Formula", true);
+		progressionStrategy = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy.values(), progressionStrategy);
+		progressionStrategy.setToolTipText("CURRENT preserves historical generation. Other strategies plan a phrase or loop; Spice adds color while preserving chord identity and endpoint locks.");
 		randomChordVoicingChance = new KnobPanel("Flatten<br>Voicing%", 100);
 		squishChordsProgressively = new CustomCheckBox("<html>Flatten<br>Progressively</html>",
 				false);
 		longProgressionSimilarity = new DetachedKnobPanel("8 Chords <br>Similarity%", 50, 0, 100);
 
 		chordChoicePanel.add(useChordFormula);
+		chordChoicePanel.add(progressionStrategy);
 		chordChoicePanel.add(longProgressionSimilarity);
 		chordChoicePanel.add(randomChordVoicingChance);
 		chordChoicePanel.add(spiceFlattenBigChords);
@@ -550,6 +559,8 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		customChordsPanel.add(userChordsEnabled);
 
 		userChords = new ChordletPanel(600, "Csus4", "Am", "Em", "Gsus4");
+		userChords.setGenerationContext(context::getGUIConfig, context::copyGUItoConfig);
+		userChords.setToolTipText("Ctrl+click locks a chord during generation. Alt+click rerolls one unlocked chord using both neighbors.");
 		customChordsPanel.add(userChords);
 
 		JButton normalizeChordsButton = new JButton("N") {
@@ -595,10 +606,19 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 				context.copyGUItoConfig();
 				List<String> normalizedChords = MidiUtils
 						.respiceChords(userChords.getChordListString(), context.getGUIConfig());
+				List<Integer> locks = userChords.getLockedIndices();
+				for (int index : locks) { normalizedChords.set(index, userChords.getChordList().get(index)); }
+				userChords.rememberGenerationEdit();
                 userChords.setupChords(normalizedChords);
+                userChords.setLockedIndices(locks);
             }
 		});
 		customChordsPanel.add(respiceChordsButton);
+		respiceChordsButton.setToolTipText("Add chord color while preserving roots, quality, inversions, and locked chords.");
+		JButton undoGenerationButton = new JButton("Undo");
+		undoGenerationButton.addActionListener(e -> userChords.undoGenerationEdit());
+		undoGenerationButton.setToolTipText("Undo the last progression, color, or local reroll operation.");
+		customChordsPanel.add(undoGenerationButton);
 
 		JButton twoExChordsButton = new JButton("2x");
 		twoExChordsButton.setPreferredSize(new Dimension(25, 25));
@@ -755,6 +775,24 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 	private void randomizeUserChords() {
 		context.copyGUItoConfig();
 		GUIConfig config = context.getGUIConfig();
+		if (config.getProgressionStrategy() != org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy.CURRENT) {
+			java.util.Map<Integer,String> locked = new java.util.HashMap<>();
+			List<Integer> locks = userChords.getLockedIndices();
+			for (int index : locks) { locked.put(index,userChords.getChordList().get(index)); }
+			String first = config.getFirstChord().equals("?") ? null : config.getFirstChord();
+			String last = config.getLastChord().equals("?") ? null : config.getLastChord();
+			try {
+				List<String> next = org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.generate(config,
+						config.getRandomSeed(), userChords.chordCount(), first, last, locked);
+				userChords.rememberGenerationEdit();
+				userChords.setupChords(next);
+				userChords.setLockedIndices(locks);
+				GeneratedChordState.setChordNames(next);
+			} catch (IllegalArgumentException invalid) {
+				JOptionPane.showMessageDialog(userChords, invalid.getMessage(), "Progression generation", JOptionPane.INFORMATION_MESSAGE);
+			}
+			return;
+		}
 		MidiGenerator mg = new MidiGenerator(config);
 		mg.generatePrettyUserChords(new Random().nextInt(),
 				userChords.chordCount() > 0 ? userChords.chordCount()

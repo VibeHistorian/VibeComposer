@@ -1,6 +1,6 @@
 # Melody generation overhaul plan
 
-Status: proposed roadmap. Code reviewed on 2026-10-13; no generator changes are implemented by this document.
+Status: implementation started in the Java app on 2026-10-13. The initial contextual engine and integration are implemented; the complete roadmap is not finished. See [implementation status and usage](OVERHAUL_IMPLEMENTATION.md) for delivered behavior, validation, and remaining work.
 
 Companion: [Chord and chordlet generation overhaul](CHORD_GENERATION_OVERHAUL_PLAN.md).
 

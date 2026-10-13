@@ -49,6 +49,40 @@ public class GUIConfig {
 	public GUIConfig() {
 	}
 
+	// Historical presets retain their generator unless the contextual engine is selected.
+	private boolean contextualMelody = false;
+	private org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy progressionStrategy =
+			org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy.CURRENT;
+	private org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending melodyEnding =
+			org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.LOOP;
+	private int melodyRangeMin = 60;
+	private int melodyRangeMax = 84;
+	private int melodyTension = 35;
+	@XmlElement(name = "lockedChordIndices")
+	private List<Integer> lockedChordIndices = new ArrayList<>();
+
+	public boolean isContextualMelody() { return contextualMelody; }
+	public void setContextualMelody(boolean value) { contextualMelody = value; }
+	public org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy getProgressionStrategy() {
+		return progressionStrategy;
+	}
+	public void setProgressionStrategy(org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy value) {
+		progressionStrategy = value;
+	}
+	public org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending getMelodyEnding() { return melodyEnding; }
+	public void setMelodyEnding(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending value) { melodyEnding = value; }
+	public int getMelodyRangeMin() { return melodyRangeMin; }
+	public void setMelodyRangeMin(int value) { melodyRangeMin = value; }
+	public int getMelodyRangeMax() { return melodyRangeMax; }
+	public void setMelodyRangeMax(int value) { melodyRangeMax = value; }
+	public int getMelodyTension() { return melodyTension; }
+	public void setMelodyTension(int value) { melodyTension = value; }
+	@XmlTransient
+	public List<Integer> getLockedChordIndices() { return new ArrayList<>(lockedChordIndices); }
+	public void setLockedChordIndices(List<Integer> value) {
+		lockedChordIndices = value == null ? new ArrayList<>() : new ArrayList<>(value);
+	}
+
 	private String version = Constants.APP_VERSION;
 
 	private PhraseNotes melodyNotes = null;

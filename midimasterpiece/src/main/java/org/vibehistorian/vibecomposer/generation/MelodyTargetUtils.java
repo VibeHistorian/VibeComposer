@@ -215,7 +215,7 @@ public final class MelodyTargetUtils {
 			for (int i = 0; i < offsetIterationOrder.size(); i++) {
 					int order = offsetIterationOrder.get(i);
 					if (MidiUtils.containsRootNote(chords.get(order % chords.size())) && Math.abs(offsets.get(order)) <= 2) {
-						offsets.set(i, 0);
+						offsets.set(order, 0);
 						LG.i("Root note inserted into note targets! At index: " + i);
 						break;
 					}

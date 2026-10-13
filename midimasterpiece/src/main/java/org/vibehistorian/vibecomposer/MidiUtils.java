@@ -99,7 +99,7 @@ public class MidiUtils {
 	public static final int[] cMin7th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.BF4 };
 	public static final int[] cMaj9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
 			Pitches.D5 };
-	public static final int[] cMin9th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
+	public static final int[] cMin9th4 = { Pitches.C4, Pitches.EF4, Pitches.G4, Pitches.BF4,
 			Pitches.D5 };
 	public static final int[] cMaj13th4 = { Pitches.C4, Pitches.E4, Pitches.G4, Pitches.B4,
 			Pitches.D5, Pitches.A5 };
@@ -310,7 +310,7 @@ public class MidiUtils {
 				}
 
 				String expectedNextChordString = progressionCircle
-						.get((circleIndex) + 1 % progressionCircle.size());
+						.get((circleIndex + 1) % progressionCircle.size());
 				if (orderedBestMatches.containsKey(expectedNextChordString)) {
 					LG.d("Circle: " + expectedNextChordString);
 					return expectedNextChordString;
@@ -646,6 +646,13 @@ public class MidiUtils {
 			inversion = null;
 		}
 
+		if (chordString.length() > 1 && (chordString.charAt(1) == 'b' || chordString.charAt(1) == '♭'
+				|| chordString.charAt(1) == '♯')) {
+			int letter = CHORD_FIRST_LETTERS.indexOf(chordString.substring(0, 1));
+			if (letter < 0) { return null; }
+			int root = MAJ_SCALE.get(letter) + (chordString.charAt(1) == '♯' ? 1 : -1);
+			chordString = SEMITONE_LETTERS.get(Math.floorMod(root, 12)) + chordString.substring(2);
+		}
 		int[] mappedChord = chordsMap.get(chordString);
 		if (mappedChord == null) {
 			return null;
@@ -1270,6 +1277,22 @@ public class MidiUtils {
 	}
 
 	public static List<String> respiceChords(String chordsString, GUIConfig gc) {
+		return respiceChords(chordsString, gc, gc.getRandomSeed());
+	}
+
+	/** Reproducible extension-only color; arbitrary spelled/custom chords pass through unchanged. */
+	public static List<String> respiceChords(String chordsString, GUIConfig gc, long seed) {
+		List<String> result = new ArrayList<>();
+		String[] chords = chordsString.replace(" ", "").split(",");
+		for (int i = 0; i < chords.length; i++) {
+			result.add(org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.color(chords[i], gc,
+					seed ^ (0xd1b54a32d192ed03L * (i + 1))));
+		}
+		return result;
+	}
+
+	/** Historical respice behavior retained solely for reproducibility comparisons. */
+	public static List<String> respiceChordsHistorical(String chordsString, GUIConfig gc) {
 		List<String> allowedSpiceChordsMiddle = new ArrayList<>();
 		for (int i = 2; i < SPICE_NAMES_LIST.size(); i++) {
 			String chordString = SPICE_NAMES_LIST.get(i);

@@ -72,18 +72,20 @@ final class MelodyPhraseBuilder {
         int measures = section.getMeasures();
 
         Map<Integer, List<Note>> fullMelodyMap = melodyGenerator.makeFullMelodyMap(part,
-                actualProgression, generatedRootProgression, notesSeedOffset, section,
+                actualProgression, generatedRootProgression, progressionDurations, notesSeedOffset, section,
                 variations, melodyBlockJumpPreference);
 
-        if (melodyEmptyPass || !customMidiOverwriter.test(
-                new CustomMidiRequest(section, phrase, part, progressionDurations))) {
+        boolean custom = !melodyEmptyPass && customMidiOverwriter.test(
+                new CustomMidiRequest(section, phrase, part, progressionDurations));
+        boolean contextual = melodyGenerator.usesContextualMelody() && !custom;
+        if (!custom) {
             Vector<Note> noteList = new Vector<>();
             fullMelodyMap.values().forEach(noteList::addAll);
 
             phrase.addNoteList(noteList, true);
             Phrase savedPhrase = phrase.copy();
             Mod.transpose(savedPhrase, part.getTranspose() * -1);
-            if (config.isTransposedNotesForceScale()) {
+            if (config.isTransposedNotesForceScale() && !contextual) {
                 MidiUtils.transposePhrase(savedPhrase, ScaleMode.IONIAN.noteAdjustScale,
                         ScaleMode.IONIAN.noteAdjustScale);
             }
@@ -150,6 +152,7 @@ final class MelodyPhraseBuilder {
         phraseSwinger.accept(phrase, part.getSwingPercent());
         MelodyNoteUtils.applyNoteLengthMultiplier(phrase.getNoteList(),
                 part.getNoteLengthMultiplier());
+        if (contextual) { constrainHarmonySpill(phrase, part); }
         PhraseEffectUtils.processSectionTransition(section, phrase.getNoteList(),
                 progressionDurations.stream().mapToDouble(value -> value).sum() * measures,
                 0.25, 0.25, 0.9);
@@ -159,7 +162,7 @@ final class MelodyPhraseBuilder {
         int extraTranspose = melodyVars != null && melodyVars.contains(0) ? 12 : 0;
 
         ScaleMode scale = modifiedScale != null ? modifiedScale : config.getScaleMode();
-        if (scale != ScaleMode.IONIAN) {
+        if (scale != ScaleMode.IONIAN && !contextual) {
             MidiUtils.transposePhrase(phrase, ScaleMode.IONIAN.noteAdjustScale,
                     scale.noteAdjustScale, config.isTransposedNotesForceScale());
         }
@@ -169,6 +172,31 @@ final class MelodyPhraseBuilder {
         phrase.setStartTime(startTimeDelay);
         phraseOffsetter.accept(new PhrasePart(phrase, part));
         return phrase;
+    }
+
+    /** Articulation may lengthen a note, but may not introduce an unplanned dissonance at a change. */
+    private void constrainHarmonySpill(Phrase phrase, MelodyPart part) {
+        HarmonyTimeline harmony = melodyGenerator.getContextualHarmony();
+        double cursor = 0;
+        for (Object value : phrase.getNoteList()) {
+            Note note = (Note) value;
+            if (note.getPitch() >= 0 && note.getDuration() > 0) {
+                long start = Math.round(cursor / timing.quarterNote * HarmonyTimeline.TICKS_PER_BEAT);
+                long end = Math.min(harmony.length(), Math.round((cursor + note.getDuration())
+                        / timing.quarterNote * HarmonyTimeline.TICKS_PER_BEAT));
+                if (start < harmony.length() && end > start) {
+                    for (HarmonyTimeline.Event overlap : harmony.overlapping(start, end)) {
+                        if (overlap.start > start && !overlap.contains(note.getPitch() - part.getTranspose())) {
+                            end = overlap.start;
+                            break;
+                        }
+                    }
+                    note.setDuration(Math.min(note.getDuration(), end / (double) HarmonyTimeline.TICKS_PER_BEAT
+                            * timing.quarterNote - cursor));
+                }
+            }
+            cursor += note.getRhythmValue();
+        }
     }
 
     static final class CustomMidiRequest {

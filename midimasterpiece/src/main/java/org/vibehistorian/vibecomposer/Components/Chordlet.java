@@ -23,8 +23,13 @@ public class Chordlet extends JComponent {
 
 	private static final long serialVersionUID = 6300044827795197600L;
 	private String firstLetter = "C";
+	private boolean generationLocked;
+	public boolean isGenerationLocked() { return generationLocked; }
+	public void setGenerationLocked(boolean value) { generationLocked = value; repaint(); }
+	public void setChordText(String value) { setupChord(value); update(); }
 	private String spice = "";
 	private boolean sharp = false;
+	private boolean flat = false;
 	private Integer inversion = null;
 	private int width = 30;
 	private int heightMargin = 2;
@@ -46,6 +51,7 @@ public class Chordlet extends JComponent {
 	private Pair<JPopupMenu, MouseListener> spicePopupPair = null;
 
 	public Chordlet(String chord, ChordletPanel chordletPanel) {
+		setToolTipText("Ctrl+click: lock for generation. Alt+click: reroll this unlocked chord. Scroll: inversion; Ctrl+scroll: color.");
 		setupChord(chord);
 		setParentPanel(chordletPanel);
 		setupListeners();
@@ -58,6 +64,7 @@ public class Chordlet extends JComponent {
 			semitonePopupPair = SwingUtils.addPopupMenu(this, (evt, e) -> {
 				firstLetter = e.substring(0, 1);
 				sharp = e.length() > 1;
+				flat = false;
 				update();
 			}, e -> {
 				if (SwingUtilities.isRightMouseButton(e)) {
@@ -91,6 +98,14 @@ public class Chordlet extends JComponent {
 				@Override
 				public void mousePressed(MouseEvent e) {
 					if (SwingUtilities.isLeftMouseButton(e)) {
+						if (e.isControlDown()) {
+							setGenerationLocked(!generationLocked);
+							return;
+						}
+						if (e.isAltDown()) {
+							cPanel.rerollChord(Chordlet.this);
+							return;
+						}
 						if (!mouseOverCloseButton(e)) {
 							long currentTimeMs = System.currentTimeMillis();
 							if (currentTimeMs - lastClickMs < 500) {
@@ -182,12 +197,8 @@ public class Chordlet extends JComponent {
 	}
 
 	public void resetToBaseChord() {
-		int firstLetterIndex = MidiUtils.CHORD_FIRST_LETTERS.indexOf(firstLetter);
-		if (firstLetterIndex >= 0) {
-			setupChord(MidiUtils.MAJOR_CHORDS.get(firstLetterIndex));
-		} else {
-			spice = "";
-		}
+		spice = spice.equals("dim") || spice.equals("aug") ? spice
+				: spice.startsWith("m") && !spice.startsWith("maj") ? "m" : "";
 
 		update();
 	}
@@ -200,10 +211,11 @@ public class Chordlet extends JComponent {
 		calculateWidth(chord);
 		firstLetter = chord.substring(0, 1).toUpperCase();
 		sharp = isSharp(chord);
+		flat = chord.length() > 1 && (chord.charAt(1) == 'b' || chord.charAt(1) == '♭');
 		inversion = chord.contains(".") ? Integer.valueOf(chord.substring(chord.indexOf(".") + 1))
 				: null;
 
-		int spiceStartIndex = sharp ? 2 : 1;
+		int spiceStartIndex = sharp || flat ? 2 : 1;
 		int spiceEndIndex = inversion != null ? chord.indexOf(".") : chord.length();
 		if (spiceStartIndex < spiceEndIndex) {
 			spice = chord.substring(spiceStartIndex, spiceEndIndex);
@@ -216,7 +228,7 @@ public class Chordlet extends JComponent {
 	}
 
 	private String sharpString() {
-		return sharp ? "#" : "";
+		return flat ? "b" : sharp ? "#" : "";
 	}
 
 	private void processMouseDrag(MouseEvent evt) {
@@ -295,7 +307,8 @@ public class Chordlet extends JComponent {
 		g.setColor(Color.black);
 		g.drawString(CLOSE_BTTN_ICON, 9 + width - CLOSE_BTTN_WIDTH - ROUNDED_ADJUSTMENT_WIDTH,
 				height - 2);
-		g.setColor(dragP != null ? Color.white : Color.black);
+		g.setColor(generationLocked ? Color.white : dragP != null ? Color.white : Color.black);
+		g.setStroke(new BasicStroke(generationLocked ? 2 : 1));
 		g.drawRoundRect(minX, heightMargin, maxX - 1, height, 10, 10);
 
 		//g.dispose();
@@ -330,7 +343,7 @@ public class Chordlet extends JComponent {
 	}
 
 	public static boolean isSharp(String chord) {
-		return chord.length() > 1 && chord.substring(1, 2).equals("#");
+		return chord.length() > 1 && (chord.charAt(1) == '#' || chord.charAt(1) == '♯');
 	}
 
 	public String getChordText() {

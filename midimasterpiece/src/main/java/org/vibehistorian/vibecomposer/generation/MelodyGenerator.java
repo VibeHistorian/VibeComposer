@@ -37,6 +37,7 @@ public class MelodyGenerator {
     private final LegacyMelodySkeletonGenerator legacySkeletonGenerator;
     private final MelodyExpansion expansion;
     private final MelodyGenerationSettings settings;
+    private final ContextualMelodyGenerator contextualGenerator;
 
     public MelodyGenerator(GUIConfig gc, MidiGenerator mg) {
 		this(gc, mg, MelodyGenerationSettings.fromConfig(gc));
@@ -64,6 +65,7 @@ public class MelodyGenerator {
                     }
                 });
         this.expansion = new MelodyExpansion(gc, mg.getTiming(), mg.getGlobalDurationMultiplier());
+        this.contextualGenerator = new ContextualMelodyGenerator(gc, mg.getTiming(), mg.getGlobalDurationMultiplier());
         this.blockSkeletonGenerator = new MelodyBlockSkeletonGenerator(gc, mg.getTiming(),
                 mg.getGlobalDurationMultiplier(), state, inference,
 				 expansion, settings);
@@ -74,6 +76,34 @@ public class MelodyGenerator {
     public Map<Integer, List<Note>> makeFullMelodyMap(MelodyPart ip, List<int[]> actualProgression,
                                      List<int[]> generatedRootProgression, int notesSeedOffset, Section sec,
                                      List<Integer> variations, List<Integer> melodyBlockJumpPreference) {
+        return makeFullMelodyMap(ip, actualProgression, generatedRootProgression, mg.progressionDurations,
+                notesSeedOffset, sec, variations, melodyBlockJumpPreference);
+    }
+
+    boolean usesContextualMelody() {
+        return gc.isContextualMelody() && !gc.isMelodyLegacyMode() && settings.getUserMelody() == null;
+    }
+
+    public ContextualMelodyPlanner.Result getContextualResult() { return contextualGenerator.lastResult; }
+    public HarmonyTimeline getContextualHarmony() { return contextualGenerator.lastHarmony; }
+
+    public Map<Integer, List<Note>> makeFullMelodyMap(MelodyPart ip, List<int[]> actualProgression,
+                                     List<int[]> generatedRootProgression, List<Double> activeDurations,
+                                     int notesSeedOffset, Section sec, List<Integer> variations,
+                                     List<Integer> melodyBlockJumpPreference) {
+        if (usesContextualMelody()) {
+            Map<Integer, List<Note>> result = contextualGenerator.generate(ip, actualProgression, generatedRootProgression,
+                    activeDurations, sec, notesSeedOffset, mg.modScale == null ? gc.getScaleMode() : mg.modScale);
+            // No inferred replacement progression is advertised until contextual harmonization exists.
+            // Existing section-swap consumers still receive a valid fixed-harmony alternative.
+            if (melodyBasedChordProgression.isEmpty()) {
+                melodyBasedChordProgression = new ArrayList<>(actualProgression);
+                melodyBasedRootProgression = new ArrayList<>(generatedRootProgression);
+                alternateChords = String.join(",", mg.getGeneratedChordNames());
+            }
+            if (variations == null) { sec.setVariation(0, ip.getAbsoluteOrder(gc.getMelodyParts()), new ArrayList<>()); }
+            return result;
+        }
         LG.d("Processing: " + ip.partInfo());
         int measures = sec.getMeasures();
 

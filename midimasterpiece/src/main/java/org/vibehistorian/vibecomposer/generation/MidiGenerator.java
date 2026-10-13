@@ -146,6 +146,34 @@ public class MidiGenerator implements JMC {
 		return copyProgression(rootProgression);
 	}
 
+	private HarmonyTimeline finalizedSectionHarmony;
+	public HarmonyTimeline getFinalizedSectionHarmony() { return finalizedSectionHarmony; }
+
+	private boolean usesPlannedHarmony() {
+		return gc.isContextualMelody() || gc.getProgressionStrategy() != HarmonicProgressionPlanner.Strategy.CURRENT;
+	}
+
+	private void finalizeSectionHarmony(SectionPlan plan) {
+		List<Double> beats = plan.durations.stream().map(duration -> duration / timing.quarterNote)
+				.collect(Collectors.toList());
+		HarmonyTimeline timeline = HarmonyTimeline.of(plan.chordProgression, plan.rootProgression, beats);
+		List<int[]> chords = new ArrayList<>();
+		List<int[]> roots = new ArrayList<>();
+		for (HarmonyTimeline.Event event : timeline.events()) {
+			chords.add(event.pitches());
+			// Preserve full unvoiced chord data needed by historical melody target consumers.
+			roots.add(Arrays.copyOf(plan.rootProgression.get(event.index), plan.rootProgression.get(event.index).length));
+		}
+		plan.chordProgression = java.util.Collections.unmodifiableList(chords);
+		plan.rootProgression = java.util.Collections.unmodifiableList(roots);
+		plan.durations = java.util.Collections.unmodifiableList(new ArrayList<>(plan.durations));
+		if (!plan.section.isCustomChordsEnabled()) {
+			plan.section.setCustomChords(timeline.events().stream().map(event -> event.symbol).collect(Collectors.joining(",")));
+			plan.section.setDisplayAlternateChords(true);
+		}
+		finalizedSectionHarmony = timeline;
+	}
+
 	public void setProgressionDurations(List<Double> durations) {
 		progressionDurations = new ArrayList<>(durations);
 	}
@@ -1075,12 +1103,13 @@ public class MidiGenerator implements JMC {
 
 	private SectionRenderResult renderSection(SectionPlan plan, boolean twoFiveOneChanged,
 			double measureLength, long systemTime, boolean logPerformance) {
-		fillMelodyPartsForSection(plan);
+		boolean plannedHarmony = usesPlannedHarmony();
+		if (!plannedHarmony) { fillMelodyPartsForSection(plan); }
 
 		if (logPerformance) {
 			LG.i("After fill melody, at: " + (System.currentTimeMillis() - systemTime));
 		}
-		// possible chord changes handled after melody parts are filled
+		// Contextual generation finalizes substitutions before any dependent melody is rendered.
 		if (twoFiveOneChanged) {
 			twoFiveOneChanged = false;
 			replaceFirstChordForTwoFiveOne();
@@ -1094,6 +1123,10 @@ public class MidiGenerator implements JMC {
 			plan.chordProgression = chordProgression;
 			plan.rootProgression = rootProgression;
 			plan.durations = progressionDurations;
+		}
+		if (plannedHarmony) {
+			finalizeSectionHarmony(plan);
+			fillMelodyPartsForSection(plan);
 		}
 
 		fillOtherPartsForSection(plan);
@@ -1375,7 +1408,7 @@ public class MidiGenerator implements JMC {
 					List<int[]> usedRoots = plan.rootProgression;
 
 					// if n-1, do not also swap melody
-					if (sectionVariations.get(2) > 0 && sectionVariations.get(0) == 0
+					if (!usesPlannedHarmony() && sectionVariations.get(2) > 0 && sectionVariations.get(0) == 0
 							&& !sectionChordsReplaced) {
 						usedMelodyProg = mgen.melodyBasedChordProgression;
 						usedRoots = mgen.melodyBasedRootProgression;
@@ -1611,8 +1644,11 @@ public class MidiGenerator implements JMC {
 	}
 
 	private void replaceFirstChordForTwoFiveOne() {
-		if (generatedChordNames.get(0).startsWith("C")) {
+		if (usesPlannedHarmony() ? rootProgression.get(0)[0] % 12 == 0 : generatedChordNames.get(0).startsWith("C")) {
 			return;
+		}
+		if (usesPlannedHarmony() && gc.getLockedChordIndices().contains(0)) {
+			throw new IllegalArgumentException("ii-V arrival conflicts with the locked first chord");
 		}
 
         List<int[]> altChordProgression = new ArrayList<>(chordProgression);
@@ -1632,6 +1668,10 @@ public class MidiGenerator implements JMC {
 		int size = chordProgression.size();
 		if (size < 3) {
 			return false;
+		}
+		if (usesPlannedHarmony() && (gc.getLockedChordIndices().contains(size - 2)
+				|| gc.getLockedChordIndices().contains(size - 1))) {
+			throw new IllegalArgumentException("ii-V preparation conflicts with locked ending chords");
 		}
         List<int[]> altChordProgression = new ArrayList<>(chordProgression);
         List<int[]> altRootProgression = new ArrayList<>(rootProgression);

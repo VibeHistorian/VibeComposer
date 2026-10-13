@@ -1,6 +1,6 @@
 # Chord and chordlet generation overhaul plan
 
-Status: proposed roadmap. Code reviewed on 2026-10-13; no generator changes are implemented by this document.
+Status: implementation started in the Java app on 2026-10-13. Initial progression strategies, safe color changes, and chordlet locks/rerolls are implemented; the complete roadmap is not finished. See [implementation status and usage](OVERHAUL_IMPLEMENTATION.md) for delivered behavior, validation, and remaining work.
 
 Companion: [Melody generation overhaul](MELODY_GENERATION_OVERHAUL_PLAN.md).
 

@@ -89,6 +89,11 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 	public JCheckBox melodyFillPausesPerChord;
 	public KnobPanel melodyNewBlocksChance;
 	public JCheckBox melodyLegacyMode;
+	public JCheckBox contextualMelody;
+	public ScrollComboBox<org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending> melodyEnding;
+	public KnobPanel melodyRangeMin;
+	public KnobPanel melodyRangeMax;
+	public KnobPanel melodyTension;
 	public JCheckBox melodyAvoidChordJumpsLegacy;
 	public JCheckBox melodyUseDirectionsFromProgression;
 	public JCheckBox melodyPatternFlip;
@@ -172,6 +177,11 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		gc.setMelodySingleNoteExceptions(melodySingleNoteExceptions.isSelected());
 		gc.setMelodyFillPausesPerChord(melodyFillPausesPerChord.isSelected());
 		gc.setMelodyLegacyMode(melodyLegacyMode.isSelected());
+		gc.setContextualMelody(contextualMelody.isSelected());
+		gc.setMelodyEnding(melodyEnding.getSelectedItem());
+		gc.setMelodyRangeMin(melodyRangeMin.getInt());
+		gc.setMelodyRangeMax(melodyRangeMax.getInt());
+		gc.setMelodyTension(melodyTension.getInt());
 		gc.setMelodyNewBlocksChance(melodyNewBlocksChance.getInt());
 		gc.setMelodyUseDirectionsFromProgression(melodyUseDirectionsFromProgression.isSelected());
 		gc.setMelodyAvoidChordJumps(melodyAvoidChordJumpsLegacy.isSelected());
@@ -209,6 +219,11 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodySingleNoteExceptions.setSelected(gc.isMelodySingleNoteExceptions());
 		melodyFillPausesPerChord.setSelected(gc.isMelodyFillPausesPerChord());
 		melodyLegacyMode.setSelected(gc.isMelodyLegacyMode());
+		contextualMelody.setSelected(gc.isContextualMelody());
+		melodyEnding.setVal(gc.getMelodyEnding());
+		melodyRangeMin.setInt(gc.getMelodyRangeMin());
+		melodyRangeMax.setInt(gc.getMelodyRangeMax());
+		melodyTension.setInt(gc.getMelodyTension());
 		melodyNewBlocksChance.setInt(gc.getMelodyNewBlocksChance());
 		melodyAvoidChordJumpsLegacy.setSelected(gc.isMelodyAvoidChordJumps());
 		melodyUseDirectionsFromProgression.setSelected(gc.isMelodyUseDirectionsFromProgression());
@@ -379,6 +394,17 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodySingleNoteExceptions = new CustomCheckBox("<html>Single Note<br>Exceptions</html>", true);
 		melodyFillPausesPerChord = new CustomCheckBox("<html>Fill Pauses<br>Per Chord</html>", true);
 		melodyLegacyMode = new CustomCheckBox("<html>LEGACY<br>MODE</html>", false);
+		contextualMelody = new CustomCheckBox("<html>Contextual<br>Melody</html>", false);
+		contextualMelody.setToolTipText("Plan phrases against finalized harmony. Uses speed, pattern recurrence, pauses, custom rhythm and dynamics; bypasses note quotas and avoid-note repair. Legacy mode takes precedence.");
+		melodyEnding = new ScrollComboBox<>(false);
+		ScrollComboBox.addAll(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.values(), melodyEnding);
+		melodyEnding.setVal(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.LOOP);
+		melodyEnding.setToolTipText("Contextual phrase ending: open, close on tonic when harmony supports it, or connect the loop.");
+		melodyRangeMin = new KnobPanel("Melody Low<br>MIDI", 60, 0, 127);
+		melodyRangeMax = new KnobPanel("Melody High<br>MIDI", 84, 0, 127);
+		melodyRangeMin.setToolTipText("Contextual generator range before track and key transposition.");
+		melodyRangeMax.setToolTipText("Contextual generator range before track and key transposition.");
+		melodyTension = new KnobPanel("Melody<br>Tension", 35, 0, 100);
 		melodyLegacyMode.addChangeListener(evt -> {
 			boolean nonLegacyVisible = !melodyLegacyMode.isSelected();
 			melodyChordNoteTarget.setVisible(nonLegacyVisible);
@@ -399,6 +425,11 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		melodyTargetNoteVariation = new KnobPanel("Target Note<br>Variation", 3, 1, 6);
 
 		settings.add(melodyChordNoteTarget);
+		settings.add(contextualMelody);
+		settings.add(melodyEnding);
+		settings.add(melodyRangeMin);
+		settings.add(melodyRangeMax);
+		settings.add(melodyTension);
 		settings.add(melodyTonicNoteTarget);
 		settings.add(melodyModeNoteTarget);
 		settings.add(melodyEmphasizeKey);
