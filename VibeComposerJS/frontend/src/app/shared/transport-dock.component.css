@@ -33,7 +33,7 @@
 .mode-seed { width: 112px; flex: 0 0 auto; display: grid; gap: 5px; }
 .transport-globals label { min-width: 0; display: flex; align-items: center; gap: 5px; }
 .transport-globals label > span { color: var(--text-subtle); font: 9px var(--font-mono); }
-.transport-globals select, .transport-globals input { min-width: 0; height: 24px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font: 10px var(--font-mono); }
+.transport-globals select { min-width: 0; height: 24px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font: 10px var(--font-mono); }
 .mode-control select { appearance: none; field-sizing: content; width: auto; cursor: pointer; }
 .seed-control input { width: 80px; }
 .transport-globals vc-chordlet-editor { flex: 1; min-width: 0; }.playback-error { position: absolute; right: 12px; bottom: calc(100% + 6px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); font-size: 10px; }
@@ -53,7 +53,7 @@
   .play-button { width: 34px; height: 34px; }
   .live-button { width: 39px; }
   .transport-globals { grid-column: 1 / -1; grid-row: 2; }
-  .transport-globals select, .transport-globals input { height: 24px; font-size: 10px; }
+  .transport-globals select { height: 24px; font-size: 10px; }
   .position-line { font-size: 10px; }
 }
 

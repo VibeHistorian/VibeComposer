@@ -17,8 +17,8 @@ select:focus-visible { outline: 2px solid var(--accent-primary); outline-offset:
 .catalogue-area { flex-basis: 100%; }
 .block-weights { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 4px; margin: 8px 0; }
 .block-preference { display: grid; gap: 6px; color: var(--text-secondary); font: 600 10px var(--font-ui); }
-.block-preference input { box-sizing: border-box; width: 100%; min-width: 0; padding: 6px; border: 1px solid var(--border-default); border-radius: var(--radius-control); color: var(--text-primary); background: var(--surface-input); font: 11px var(--font-ui); }
+.block-preference input { width: 100%; }
 .preference-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .preference-actions button { padding: 5px 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 10px var(--font-ui); cursor: pointer; }
 .preference-error { color: var(--text-secondary); font: 10px var(--font-ui); line-height: 1.4; }
-.block-preference input:focus-visible, .preference-actions button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.preference-actions button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
