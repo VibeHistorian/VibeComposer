@@ -1,3 +1,4 @@
+import { UiPreferencesService } from '../ui/ui-preferences.service';
 import { isScaleMode } from '../music/scales';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { computed, inject, Injectable, signal } from '@angular/core';
@@ -49,14 +50,14 @@ export class ProjectService {
   private readonly future: CompositionProject[] = [];
   private readonly undoAvailable = signal(false);
   private readonly redoAvailable = signal(false);
-  private readonly compactHistoryEnabled = signal(true);
+  private readonly uiPreferences = inject(UiPreferencesService);
   private lastControlEdit: { key: string; time: number } | null = null;
   private readonly historyRevision = signal(0);
 
   readonly project = this.state.asReadonly();
   readonly canUndo = this.undoAvailable.asReadonly();
   readonly canRedo = this.redoAvailable.asReadonly();
-  readonly compactHistory = this.compactHistoryEnabled.asReadonly();
+  readonly compactHistory = this.uiPreferences.compactHistory;
   readonly historyPosition = computed(() => { this.historyRevision(); return this.past.length; });
   readonly historyEntries = computed(() => {
     this.historyRevision();
@@ -80,7 +81,7 @@ export class ProjectService {
   }
 
   toggleCompactHistory(): void {
-    this.compactHistoryEnabled.set(!this.compactHistoryEnabled());
+    this.uiPreferences.toggleCompactHistory();
     this.lastControlEdit = null;
   }
 
@@ -1228,14 +1229,14 @@ export class ProjectService {
     }
 
     const time = performance.now();
-    const compact = this.compactHistoryEnabled() && controlKey !== undefined
+    const compact = this.compactHistory() && controlKey !== undefined
       && this.lastControlEdit?.key === controlKey && this.past.length > 0 && this.future.length === 0
       && time - this.lastControlEdit.time < COMPACT_HISTORY_WINDOW_MS;
     if (!compact) {
       this.past.push(current);
       if (this.past.length > MAX_HISTORY) this.past.shift();
     }
-    this.lastControlEdit = this.compactHistoryEnabled() && controlKey !== undefined ? { key: controlKey, time } : null;
+    this.lastControlEdit = this.compactHistory() && controlKey !== undefined ? { key: controlKey, time } : null;
     this.future.length = 0;
     this.state.set(next);
     this.persist(next);

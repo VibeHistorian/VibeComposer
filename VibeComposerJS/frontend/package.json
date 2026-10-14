@@ -13,6 +13,7 @@
     "test:synth:browser": "node --test scripts/tiny-synth-browser.test.cjs",
     "test:selection": "node --test scripts/section-selection.test.cjs",
     "test:parts": "node --test scripts/part-settings.test.cjs",
+    "test:preferences:browser": "node --test scripts/ui-preferences-browser.test.cjs",
     "test:patterns:browser": "node --test scripts/pattern-sequencer-browser.test.cjs",
     "test:rhythm:browser": "node --test scripts/rhythm-picker-browser.test.cjs",
     "test:contextual:browser": "node --test scripts/contextual-workflows-browser.test.cjs",

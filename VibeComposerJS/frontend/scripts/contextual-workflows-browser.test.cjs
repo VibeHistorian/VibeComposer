@@ -77,8 +77,8 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       const history = await wait(() => document.querySelector('vc-history-dialog'), 'history popup');
       await wait(() => history.contains(document.activeElement), 'history keyboard focus');
       const entries = history.querySelectorAll('.history-entry');
-      if (!entries[entries.length - 1].textContent.includes('149 → 128')) throw new Error('missing abbreviated history diff');
-      entries[entries.length - 2].click();
+      if (!history.querySelector('.history-entry.current').textContent.includes('149 → 128')) throw new Error('missing abbreviated history diff');
+      entries[1].click();
       await wait(() => read().tempoBpm === 149 && history.querySelector('.future'), 'history undo jump');
       history.querySelector('.future').click();
       await wait(() => read().tempoBpm === 128, 'history redo jump');
@@ -167,8 +167,11 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       const redo = await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'redo enabled');
       redo.click();
       await wait(() => read().tracks.find(track => track.id === 'track-bass-1').generatorSettings.noteVariation === 35, 'copy redo');
-      document.querySelector('.part-inspector-link').click();
-      result.inspectorFocused = document.activeElement.id === 'part-inspector';
+      document.querySelector('.quick-settings-actions .part-inspector-link').click();
+      await wait(() => document.querySelector('.placement-target'), 'quick customization');
+      result.quickCustomization = document.querySelector('.workspace-canvas').classList.contains('quick-layout-editing');
+      [...document.querySelectorAll('.quick-settings-actions button')].find(button => button.textContent.trim() === 'Save quick settings').click();
+      await wait(() => !document.querySelector('.placement-target'), 'quick customization saved');
       document.querySelector('.track-group.chords .group-select').click();
       await wait(() => document.querySelector('#part-inspector [data-control-role="chords"]'), 'chord inspector');
       const join = await wait(() => document.querySelector('#part-inspector [aria-label="Pattern join"]'), 'chord join');
@@ -714,7 +717,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
-    for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','inspectorFocused',
+    for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','quickCustomization',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','rootColors','spiceColors','menuKeyboard','chordletGestures',
       'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {

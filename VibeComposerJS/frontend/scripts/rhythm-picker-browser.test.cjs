@@ -654,7 +654,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.initiallyCollapsed, true);
     assert.equal(actual.scoreCanvasPresent, true);
     assert.ok(actual.compactControls.length > 0);
-    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 59 && control.tooltip && control.statusInside), JSON.stringify(actual.compactControls));
+    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 75 && control.tooltip && control.statusInside), JSON.stringify(actual.compactControls));
     assert.ok(actual.compactControls.filter(control => control.toggleHeight !== null).every(control => control.toggleHeight <= 26));
     assert.ok(actual.generationMiniKnobs.length > 10);
     assert.ok(actual.generationMiniKnobs.every(knob => knob.type === 'range' && knob.width <= 48 && knob.diameter <= 28

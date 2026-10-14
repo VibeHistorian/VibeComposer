@@ -1,4 +1,4 @@
-<section class="workspace-canvas" aria-label="Song workspace" (pointerdown)="beginEmptyMiddleClick($event)" (pointerup)="endEmptyMiddleClick($event)" (pointercancel)="cancelEmptyMiddleClick()" (auxclick)="applyOnEmptyMiddleClick($event)">
+<section class="workspace-canvas" [class.quick-layout-editing]="preferences.editingQuickSettings()" aria-label="Song workspace" (pointerdown)="beginEmptyMiddleClick($event)" (pointerup)="endEmptyMiddleClick($event)" (pointercancel)="cancelEmptyMiddleClick()" (auxclick)="applyOnEmptyMiddleClick($event)">
   <aside class="track-browser" aria-label="Tracks">
     <div class="track-groups">
       @for (group of roles; track group.role) {
@@ -127,7 +127,7 @@
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
         <header class="part-settings-heading" [class.role-settings]="!!editableScopes().length">
           <div class="part-heading-context">
-          <button type="button" class="part-panel-toggle" [attr.aria-expanded]="partPanelExpanded()"
+          <button type="button" class="part-panel-toggle" [disabled]="preferences.editingQuickSettings()" [attr.aria-expanded]="partPanelExpanded()"
             aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
             {{ partPanelExpanded() ? '▵' : '›' }} {{ partPanelLabel() }}
           </button>
@@ -146,10 +146,20 @@
                 (resetCellRequested)="runPartWorkflow('reset-cell')" (applyRequested)="runPartWorkflow($event)" />
             }
           }
-          <button type="button" class="part-inspector-link" (click)="openInspector()">Open inspector</button>
+          @if (editableScopes().length || preferences.editingQuickSettings()) {
+            <div class="quick-settings-actions">
+              @if (preferences.editingQuickSettings()) {
+                <button type="button" class="part-inspector-link" [disabled]="!editableScopes().length" (click)="preferences.resetQuickSettings(partRole())">Reset to default</button>
+              }
+              <button type="button" class="part-inspector-link" [attr.aria-pressed]="preferences.editingQuickSettings()" (click)="toggleQuickSettingsEdit()">{{ preferences.editingQuickSettings() ? 'Save quick settings' : 'Edit quick settings' }}</button>
+            </div>
+          }
         </header>
         @if (partPanelExpanded()) {
           <div id="part-settings-content" class="part-settings-content">
+            @if (preferences.editingQuickSettings()) {
+              <span class="placement-help" role="status">Click a control to move it between quick settings and inspector. Categories and control order stay fixed. Reset restores defaults for {{ roleName(partRole()) }}.</span>
+            }
             @if (!partGenerationAvailable()) {
               <span class="part-inheritance">Automatic melody generation is not available yet. Add notes in the track’s piano roll.</span>
             }

@@ -28,4 +28,10 @@
       }
     </div>
   </div>
+  <footer class="preferences-transfer">
+    <span role="status">{{ transferMessage() || 'UI preferences only · projects and music are saved separately.' }}</span>
+    <input #preferencesFile type="file" accept=".json,application/json" hidden (change)="importPreferences($event)" />
+    <button type="button" (click)="preferencesFile.click()">Import UI preferences</button>
+    <button type="button" (click)="exportPreferences()">Export UI preferences</button>
+  </footer>
 </section>

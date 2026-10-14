@@ -1,3 +1,4 @@
+import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import { isScaleMode } from '../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from './section-context-editor.component';
@@ -84,6 +85,7 @@ export class WorkspaceCanvasComponent {
   readonly defaultMix = DEFAULT_MIX;
   defaultChannel(track: CompositionTrack): number { return DEFAULT_TRACKS.find(item => item.role === track.role)!.midiChannel; }
   readonly maximumVolume = MAX_VOLUME_PERCENT;
+  readonly preferences = inject(UiPreferencesService);
   readonly projects = inject(ProjectService);
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);
@@ -419,10 +421,12 @@ export class WorkspaceCanvasComponent {
     if (!this.editing()) this.workspaceUi.selectSectionTrack(sectionId, trackId);
   }
 
-  openInspector(): void {
-    const inspector = document.getElementById('part-inspector');
-    inspector?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    inspector?.focus({ preventScroll: true });
+  toggleQuickSettingsEdit(): void {
+    if (this.preferences.editingQuickSettings()) this.preferences.saveQuickSettings();
+    else {
+      this.partPanelExpanded.set(true);
+      this.preferences.beginQuickSettings();
+    }
   }
 
   toggleContextTrackPresence(track: CompositionTrack): void {

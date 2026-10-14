@@ -29,3 +29,8 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
   .settings-sidebar button { padding: 10px 6px; font-size: 11px; }
   .settings-content { padding: 14px; }
 }
+/* UI preference transfer */
+.preferences-transfer { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border-subtle); }
+.preferences-transfer span { flex: 1 1 200px; color: var(--text-muted); font-size: 11px; }
+.preferences-transfer button { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); cursor: pointer; }
+.preferences-transfer button:hover { background: var(--surface-button-hover); }

@@ -3430,14 +3430,14 @@ function fixture({ compactHistory = false } = {}) {
   };
   const input = (value) => signal(value);
   input.required = () => signal(undefined);
-  let service, ui;
+  let service, ui, uiPreferences;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
     signal, computed: (read) => read, effect: () => {}, input,
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
-      : type?.name === 'AudioPlaybackService' ? {} : preferences,
+      : type?.name === 'AudioPlaybackService' ? {} : type?.name === 'UiPreferencesService' ? uiPreferences : preferences,
   };
   const root = path.join(__dirname, '../src/app');
   function load(file) {
@@ -3461,6 +3461,9 @@ function fixture({ compactHistory = false } = {}) {
   global.sessionStorage = { getItem: (key) => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value) };
   const sectionTypes = load('core/project/section-type-settings.service.ts');
   const preferences = { chances: () => sectionTypes.DEFAULT_SECTION_TYPE_CHANCES };
+  const uiStored = new Map();
+  global.localStorage = { getItem: key => uiStored.get(key) ?? null, setItem: (key, value) => uiStored.set(key, value) };
+  uiPreferences = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
   const { ProjectService } = load('core/project/project.service.ts');
   service = new ProjectService();
   // Most workflows assert one undo entry per edit; compact-history tests use the app default.
@@ -3472,7 +3475,7 @@ function fixture({ compactHistory = false } = {}) {
   const phrase = load('core/music/phrase.ts');
   const settings = load('core/music/part-settings.ts');
   const midi = load('core/music/midi-export.ts');
-  return { service, ui, workspace, phrase, settings, midi, stored, load };
+  return { service, ui, workspace, phrase, settings, midi, stored, load, uiPreferences, uiStored };
 }
 
 test('cell patches, individual exceptions, zero/false, and resets preserve inheritance', () => {
@@ -5364,4 +5367,59 @@ test('overview section reset clears every role and manual phrase; rerolls preser
   assert.deepEqual(service.project().arrangement[1].generatedTrackIds, section.generatedTrackIds);
   service.removeTrack('track-bass-1');
   assert.ok(service.project().arrangement.every(item => !item.generatedTrackIds?.includes('track-bass-1')));
+});
+
+
+test('UI preferences customize per-role placement without changing project, history, or fixed order', () => {
+  const { service, uiPreferences: preferences, uiStored, load, settings } = fixture();
+  const before = service.exportProjectJson(), position = service.historyPosition();
+  const defaults = preferences.exportJson();
+  preferences.beginQuickSettings();
+  preferences.moveControl('bass', 'velocityMin');
+  preferences.moveControl('bass', 'velocityMin');
+  preferences.moveControl('bass', 'feedbackCount');
+  assert.ok(preferences.quickSettings().bass.includes('feedbackCount'));
+  assert.equal(preferences.quickSettings().chords.includes('feedbackCount'), false);
+  assert.deepEqual(preferences.quickSettings().bass.filter(key => ['velocityMin','velocityMax'].includes(key)), ['velocityMin','velocityMax']);
+  assert.equal(preferences.exportJson(), defaults, 'draft is not exported until saved');
+  preferences.saveQuickSettings();
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), position);
+  assert.equal(uiStored.size, 1);
+  const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  assert.deepEqual(restored.preferences(), preferences.preferences());
+  assert.equal(service.importProjectJson(before), true);
+  assert.ok(preferences.quickSettings().bass.includes('feedbackCount'), 'project loading retains UI choices');
+  const importedProject = service.exportProjectJson();
+  assert.equal(preferences.importJson(defaults), true);
+  assert.equal(service.exportProjectJson(), importedProject, 'UI import retains musical data');
+  for (const invalid of [before, '{}', '{', JSON.stringify({ ...JSON.parse(defaults), compactHistory: 'true' }),
+      JSON.stringify({ ...JSON.parse(defaults), quickSettings: { bass: ['unknown'] } })]) {
+    assert.equal(preferences.importJson(invalid), false);
+    assert.equal(preferences.exportJson(), defaults, 'invalid import is atomic');
+  }
+  preferences.beginQuickSettings();
+  preferences.moveControl('bass', 'velocityMin');
+  preferences.moveControl('chords', 'velocityMax');
+  preferences.resetQuickSettings('bass');
+  assert.deepEqual(preferences.quickSettings().bass, settings.PART_CONTROLS.bass.filter(control => !control.advanced).map(control => control.key));
+  assert.equal(preferences.quickSettings().chords.includes('velocityMax'), false);
+});
+
+test('placement editing exposes dormant controls and partitions customized quick/inspector sets', () => {
+  const { load, uiPreferences: preferences, settings } = fixture();
+  const Editor = load('shared/part-settings-editor.component.ts').PartSettingsEditorComponent;
+  const quick = new Editor(), inspector = new Editor();
+  for (const editor of [quick, inspector]) { editor.role.set('bass'); editor.values.set({ rhythm: 'alternating' }); }
+  quick.advanced.set(false); inspector.inspectorOnly.set(true);
+  assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
+  preferences.beginQuickSettings();
+  assert.ok(quick.controls().some(control => control.key === 'hitsPerPattern'));
+  preferences.moveControl('bass', 'feedbackCount'); preferences.moveControl('bass', 'transpose');
+  const quickKeys = quick.controls().map(control => control.key), inspectorKeys = inspector.controls().map(control => control.key);
+  assert.ok(quickKeys.includes('feedbackCount')); assert.ok(inspectorKeys.includes('transpose'));
+  assert.equal(quickKeys.some(key => inspectorKeys.includes(key)), false);
+  assert.deepEqual([...quickKeys, ...inspectorKeys].sort(), settings.PART_CONTROLS.bass.map(control => control.key).sort());
+  preferences.saveQuickSettings();
+  assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
 });

@@ -151,7 +151,7 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .part-settings-heading.role-settings { border-radius: inherit; background: color-mix(in srgb, var(--control-role-color) 15%, var(--surface-base)); }
 .part-settings-heading.role-settings:has(+ .part-settings-content) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .part-heading-context { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.part-settings-heading > .part-inspector-link { grid-column: 3; justify-self: end; }
+.quick-settings-actions { grid-column: 3; justify-self: end; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .part-panel-toggle, .part-inspector-link { min-height: 26px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
 .part-panel-toggle:hover, .part-inspector-link:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .part-inspector-link { flex-shrink: 0; }
@@ -168,7 +168,7 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 @container (max-width: 850px) {
   .part-settings-heading { display: flex; flex-wrap: wrap; }
   .part-heading-context { flex: 1 1 160px; }
-  .part-settings-heading > .part-inspector-link { margin-left: auto; }
+  .quick-settings-actions { margin-left: auto; }
   .part-settings-heading > vc-part-scope-actions { order: 1; flex: 1 1 100%; }
 }
 @media (max-width: 1050px) {
@@ -200,3 +200,9 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .score-display-header button:disabled { background: var(--surface-input); color: var(--text-disabled); border-color: var(--border-subtle); cursor: default; }
 .score-display-header button.active { background: var(--surface-accent); color: var(--text-primary); border-color: var(--accent-primary); }
 .score-display-header button:focus-visible { outline: 2px solid var(--border-focus); }
+/* Quick settings customization focus */
+.quick-layout-editing .part-settings-panel, .quick-layout-editing .context-inspector { border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--surface-accent), 0 0 22px var(--surface-accent); }
+.quick-layout-editing .track-browser, .quick-layout-editing vc-arrangement-overview, .quick-layout-editing .score-panel { opacity: .45; }
+.quick-layout-editing .song-canvas { grid-template-rows: min-content auto minmax(120px, 1fr); }
+.quick-layout-editing .part-settings-content { max-height: 340px; }
+.placement-help { flex: 1 1 100%; color: var(--accent-primary); font-size: 11px; line-height: 1.5; }

@@ -1,3 +1,4 @@
+import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
@@ -15,7 +16,7 @@ import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
   selector: 'vc-part-settings-editor',
   imports: [DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[attr.data-control-role]': 'role()' },
+  host: { '[attr.data-control-role]': 'role()', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',
   styleUrl: './part-settings-editor.component.css',
 })
@@ -34,6 +35,7 @@ export class PartSettingsEditorComponent {
     };
     return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
   }
+  readonly preferences = inject(UiPreferencesService);
   private readonly dialogs = inject(Dialog);
   readonly scope = input.required<PartSettingsScope>();
   openSequencer(velocities = false): void {
@@ -54,8 +56,9 @@ export class PartSettingsEditorComponent {
   readonly multiplyHitsRequested = output<number>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
-    (!control.advanced || this.advanced()) &&
-    (!this.inspectorOnly() || control.advanced) &&
+    (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)
+      : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
+    (this.preferences.editingQuickSettings() || (
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&
     (control.key !== 'arpPatternCustom' || this.values()['pattern'] === 'custom' || this.values()['pattern'] === null) &&
@@ -63,11 +66,11 @@ export class PartSettingsEditorComponent {
       || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities', 'patternJoinMode'].includes(control.key))
     &&
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
-    && control.key !== 'customPattern'
+    && (control.key !== 'customPattern' || this.values()['rhythm'] !== 'melody' || this.role() === 'drums')
     && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
     && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true
       || (this.values()['rhythm'] === 'melody' && this.melodyHits() > 32)
-      || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating'))));
+      || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating'))))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
     id: group.id, label: group.label,
     controls: this.controls().filter(control => control.key !== 'patternSeed' && partControlGroup(control.key) === group.id),

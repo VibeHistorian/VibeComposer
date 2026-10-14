@@ -1,6 +1,11 @@
 <div class="part-controls">
   @if (seedControl(); as control) {
-    <div class="part-control seed-control" [title]="control.description ?? ''">
+    <div class="part-control seed-control" data-control-key="patternSeed" data-control-category="other" [title]="control.description ?? ''">
+      @if (preferences.editingQuickSettings()) {
+        <button type="button" class="placement-target" (click)="preferences.moveControl(role(), control.key)"
+          [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>
+      }
+      <div class="control-content" [inert]="preferences.editingQuickSettings()">
       <vc-control-heading #seedHeading [label]="control.label" [inheritance]="inheritanceFor(control)"
         (inheritRequested)="inheritRequested.emit(control.key)" />
       <input [id]="seedHeading.controlId" class="part-list" type="text" [value]="textValue(control)"
@@ -9,13 +14,14 @@
         (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
       <button type="button" class="common-grid-button" [disabled]="values()[control.key] === 0"
         (click)="settingsChanged.emit({ key: control.key, value: 0 })">Clear seed</button>
+      </div>
     </div>
   }
   @for (group of controlGroups(); track group.id) {
     <section class="part-control-area" [attr.data-control-category]="group.id" [attr.aria-label]="group.label + ' parameters'">
       @if (showGroupTitles()) { <h3>{{ group.label }}</h3> }
       <div class="part-area-controls">
-        @if (!inspectorOnly() && role() === 'drums' && group.id === 'rhythm') {
+        @if (!preferences.editingQuickSettings() && !inspectorOnly() && role() === 'drums' && group.id === 'rhythm') {
           <div class="part-control">
             <span class="rhythm-preview-label">Multiply Hits</span>
             <select aria-label="Multiply Hits" [disabled]="values()['rhythm'] === 'melody'"
@@ -27,7 +33,13 @@
           </div>
         }
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+          <div class="part-control" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+            @if (preferences.editingQuickSettings()) {
+              <button type="button" class="placement-target" (click)="preferences.moveControl(role(), control.key)"
+                [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"
+                [title]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>
+            }
+            <div class="control-content" [inert]="preferences.editingQuickSettings()">
             @if (control.kind === 'number') {
               <vc-compact-knob [defaultValue]="numericDefault(control)" [value]="numericValue(control)" [mixed]="values()[control.key] === null"
                 [minimum]="minimum(control)" [maximum]="maximum(control)"
@@ -38,7 +50,7 @@
                 (inheritRequested)="inheritRequested.emit(control.key)"
                 (valueCommit)="settingsChanged.emit({ key: control.key, value: $event })" />
             } @else if (control.kind === 'boolean') {
-              <vc-compact-toggle [attr.data-control-role]="role()" [label]="control.label" [shortLabel]="code(control)"
+              <vc-compact-toggle [label]="control.label" [shortLabel]="code(control)"
                 [description]="control.description ?? ''" [active]="values()[control.key] === true" [mixed]="values()[control.key] === null"
                 [showStatus]="true" [inheritance]="inheritanceFor(control)"
                 (inheritRequested)="inheritRequested.emit(control.key)"
@@ -58,6 +70,12 @@
                     <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option>
                   }
                 </select>
+              } @else if (control.kind === 'pattern') {
+                <button type="button" class="mini-preview rhythm-preview-grid" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [title]="rhythmPreviewLabel()" (click)="openSequencer()">
+                  @if (rhythmPreview(); as pattern) {
+                    @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [class.active]="slot > 0" aria-hidden="true"></span> }
+                  } @else { <span class="mixed">Mixed</span> }
+                </button>
               } @else if (control.kind === 'velocities') {
                 <button type="button" class="mini-preview velocity-preview" aria-label="Edit pattern velocities" aria-haspopup="dialog" (click)="openSequencer(true)">
                   @if (velocitySlots(); as slots) {
@@ -66,18 +84,10 @@
                 </button>
               }
             }
+            </div>
           </div>
         }
-        @if (group.id === 'rhythm' && !inspectorOnly() && (rhythmPreview() !== undefined || role() === 'drums')) {
-          <div class="rhythm-preview" [title]="rhythmPreviewLabel()">
-            <span class="rhythm-preview-label">Pattern</span>
-            <button type="button" class="mini-preview rhythm-preview-grid" aria-label="Edit rhythm pattern" aria-haspopup="dialog" (click)="openSequencer()">
-              @if (rhythmPreview(); as pattern) {
-                @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [class.active]="slot > 0" aria-hidden="true"></span> }
-              } @else { <span class="mixed">Mixed</span> }
-            </button>
-          </div>
-        }
+
       </div>
     </section>
   }
