@@ -10,7 +10,7 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect() {}, input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
+    effect() {}, inject: () => ({ appearance: () => 'dark' }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/shared/score-canvas.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
     target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
@@ -294,6 +294,37 @@ test('drum-only editing renders every unselected drum note at visible row-based 
   assert.equal(c.hitAreas.length, notes.length, 'all rendered drum notes remain editable');
   c.model.selectedTrackId = tracks[0].id; c.drawStatic();
   assert.ok(shapes.every(shape => shape.height === 6), 'changing active tracks does not reveal hidden notes');
+});
+
+test('opening and resizing a phrase editor keeps its full pitch range visible', () => {
+  const { component: c } = fixture();
+  c.editable = () => true; c.velocityVisible = () => true;
+  c.pendingEditPitchFocus = true;
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }],
+    notes: [36, 48, 60].map((midi, index) => ({ id: String(index), part: 'bass', color: 'bass',
+      midi, velocity: 90, startBeat: 20 + index, durationBeats: 1, opacity: 1 })),
+    sections: [], totalBeats: 64, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
+    fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
+  let hostHeight = 300;
+  c.rendererHost = () => ({ nativeElement: { clientWidth: 800, get clientHeight() { return hostHeight; } } });
+  c.app.renderer = { resize() {} };
+  const phrase = c.model.notes;
+  c.notesReady = () => false;
+  c.model.notes = [];
+  c.drawStatic();
+  assert.equal(c.pendingEditPitchFocus, true, 'an unloaded draft must not consume the initial pitch fit');
+  c.model.notes = phrase;
+  c.notesReady = () => true;
+  c.drawStatic();
+  assert.equal(c.pendingEditPitchFocus, false, 'the loaded draft consumes the initial pitch fit once');
+  for (const height of [190, 440, 300]) {
+    hostHeight = height;
+    c.resizeRenderer();
+    const pitches = c.gutterRows().map(row => row.midi);
+    assert.ok(pitches.includes(62) && pitches.includes(34), 'the padded phrase range stays visible at height ' + height);
+    assert.equal(c.hitAreas.length, 3, 'all phrase notes remain visible');
+  }
 });
 
 test('Alt-wheel reveals pitches outside the fitted phrase and allows adding notes there', () => {

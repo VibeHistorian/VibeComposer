@@ -197,6 +197,7 @@
             </div>
               <div class="score-track-lanes">
                 <vc-score-canvas [tracks]="scoreTracks()" [notes]="canvasNotes()" [sections]="timelineSections()"
+                  [notesReady]="!editing() || (editor()?.draftReady() ?? false)"
                   [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   (seekRequested)="seek($event)"

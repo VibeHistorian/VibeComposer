@@ -80,6 +80,7 @@ const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; gl
 export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly tracks = input.required<readonly ScoreCanvasTrack[]>();
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
+  readonly notesReady = input(true);
   readonly sections = input.required<readonly ScoreCanvasSection[]>();
   readonly totalBeats = input.required<number>();
   readonly playheadPercent = input.required<number>();
@@ -155,6 +156,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.snapBeats();
     this.snapToScale();
     this.scalePitchClasses();
+    this.notesReady();
     this.model = {
       tracks: this.tracks(),
       notes: this.notes(),
@@ -604,10 +606,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.width = width;
     this.height = height;
     this.app?.renderer.resize(width, height);
-    this.drawStatic();
+    this.drawStatic(true);
   }
 
-  private drawStatic(): void {
+  private drawStatic(preservePitchPosition = false): void {
     const model = this.model;
     if (!model || !this.app || this.width <= 0 || this.height <= 0) return;
     const graphics = this.staticGraphics;
@@ -626,8 +628,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.horizontalScale = Math.max(1, totalBeats / length);
       this.horizontalOffset = (focus.startBeat + length / 2) / totalBeats - 0.5 / this.horizontalScale;
     }
-    this.updateViewport();
     const scoreHeight = this.scoreHeight;
+    const previousLaneHeight = this.laneHeight;
     this.hitColumnCount = Math.max(1, Math.ceil(this.width / HIT_BUCKET_WIDTH));
     const rootStyle = getComputedStyle(document.documentElement);
     const colorCache = new Map<string, { value: number; alpha: number }>();
@@ -664,11 +666,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const onlyDrums = tracks.length > 0 && tracks.every(track => track.color === 'drums');
     this.drumHeight = hasDrums ? (onlyDrums ? scoreHeight : Math.min(scoreHeight * 0.27, Math.max(36, this.drumPitches.length * 14))) : 0;
     this.harmonicHeight = scoreHeight - this.drumHeight;
-    if (this.pendingEditPitchFocus) {
+    if (this.pendingEditPitchFocus && this.notesReady()) {
       this.pendingEditPitchFocus = false;
       // Fit the phrase initially, but keep every MIDI pitch reachable by zooming and scrolling.
       this.verticalScale = this.harmonicHeight > 0 ? 128 / (phrasePitchMax - phrasePitchMin + 1) : 1;
       this.verticalOffset = (127 - phrasePitchMax) * this.laneHeight;
+    } else if (preservePitchPosition) {
+      // Layout changes resize pitch rows; retain the same top pitch rather than a pixel offset.
+      this.verticalOffset *= this.laneHeight / previousLaneHeight;
     }
     this.updateViewport();
     const rows: { midi: number; label: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[] = [];

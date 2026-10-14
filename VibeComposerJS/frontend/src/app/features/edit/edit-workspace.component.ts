@@ -86,6 +86,7 @@ export class EditWorkspaceComponent {
   private lastDuration = 0.5;
   readonly phraseBeats = computed(() => this.phraseLength ?? this.project().progression.length * 4);
   readonly draftNotes = signal<PhraseDraftNote[]>([]);
+  readonly draftReady = signal(false);
   readonly notes = computed(() => [...this.draftNotes()].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
   readonly displayNotes = this.notes;
   readonly selectedNote = computed(() => this.displayNotes().find((note) => note.id === this.selectedNoteId()) ?? null);
@@ -100,6 +101,7 @@ export class EditWorkspaceComponent {
     this.loadTrackDraft(this.selectedTrack());
     if (this.initialNoteId) this.selectNote(this.initialNoteId);
     this.history.reset({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: false });
+    this.draftReady.set(true);
   }
 
   selectTrack(trackId: string): void {
