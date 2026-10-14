@@ -13,6 +13,37 @@
     </nav>
     <div class="settings-content">
       @switch (selectedCategory()) {
+        @case ('appearance') {
+          <section aria-labelledby="appearance-title">
+            <h2 id="appearance-title">Appearance</h2>
+            <p>Changes apply immediately and are saved in your UI preferences.</p>
+            <fieldset class="appearance-fields">
+              <legend>Fonts</legend>
+              @for (area of fontAreas; track area.key) {
+                <label class="appearance-setting">
+                  <span>{{ area.label }}</span>
+                  <select [attr.aria-label]="area.label + ' font'"
+                    (change)="changeFont(area.key, $event)">
+                    @for (font of fontChoices; track font.value) {
+                      <option [value]="font.value" [selected]="preferences.appearance().fonts[area.key] === font.value">{{ font.label }}</option>
+                    }
+                  </select>
+                </label>
+              }
+            </fieldset>
+            <fieldset class="appearance-fields">
+              <legend>Track role colors</legend>
+              @for (role of roles; track role) {
+                <label class="appearance-setting">
+                  <span>{{ roleNames[role] }}</span>
+                  <input type="color" [attr.aria-label]="roleNames[role] + ' color'"
+                    [value]="preferences.appearance().roleColors[role]" (input)="changeRoleColor(role, $event)" />
+                </label>
+              }
+            </fieldset>
+            <button type="button" class="appearance-reset" (click)="preferences.resetAppearance()">Reset appearance to defaults</button>
+          </section>
+        }
         @case ('section-types') { <vc-section-type-settings /> }
         @case ('project-history') {
           <section aria-labelledby="project-history-title">

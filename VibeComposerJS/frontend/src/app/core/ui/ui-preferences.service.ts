@@ -1,5 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import type { ArrangedPart } from '../project/project.model';
+import { ARRANGED_PARTS } from '../project/project.model';
+import { defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
 import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
@@ -11,8 +13,32 @@ export class UiPreferencesService {
   private readonly draft = signal<QuickSettings | null>(null);
   readonly preferences = this.state.asReadonly();
   readonly compactHistory = computed(() => this.state().compactHistory);
+  readonly appearance = computed(() => this.state().appearance);
   readonly editingQuickSettings = computed(() => this.draft() !== null);
   readonly quickSettings = computed(() => this.draft() ?? this.state().quickSettings);
+
+  constructor() { this.applyAppearance(this.state()); }
+
+  setFont(area: FontArea, font: string): void {
+    if (!FONT_CHOICES.some(choice => choice.value === font)) return;
+    const appearance = this.appearance();
+    this.commit({ ...this.state(), appearance: { ...appearance, fonts: { ...appearance.fonts, [area]: font } } });
+  }
+  setRoleColor(role: ArrangedPart, color: string): void {
+    if (!isRoleColor(color)) return;
+    const appearance = this.appearance();
+    this.commit({ ...this.state(), appearance: { ...appearance, roleColors: { ...appearance.roleColors, [role]: color.toLowerCase() } } });
+  }
+  resetAppearance(): void { this.commit({ ...this.state(), appearance: defaultAppearance() }); }
+
+  private applyAppearance(preferences: UiPreferences): void {
+    const style = globalThis.document?.documentElement?.style;
+    if (!style) return;
+    for (const [area, font] of Object.entries(preferences.appearance.fonts)) style.setProperty(`--font-${area}`, font);
+    for (const role of ARRANGED_PARTS) {
+      for (const [name, color] of Object.entries(roleColorTokens(role, preferences.appearance.roleColors[role]))) style.setProperty(name, color);
+    }
+  }
 
   beginQuickSettings(): void { this.draft.set({ ...this.state().quickSettings }); }
   saveQuickSettings(): void {
@@ -53,6 +79,7 @@ export class UiPreferencesService {
     return defaultUiPreferences();
   }
   private commit(preferences: UiPreferences): void {
+    this.applyAppearance(preferences);
     this.state.set(preferences);
     try { globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(preferences)); }
     catch { /* Keep preferences usable in memory when storage is unavailable. */ }

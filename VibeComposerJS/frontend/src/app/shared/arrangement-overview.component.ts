@@ -1,5 +1,6 @@
+import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import { sectionDurationBeats, sectionChordDurations } from '../core/music/section-context';
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack, SectionType } from '../core/project/project.model';
 import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
@@ -220,7 +221,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private focusedKey: string | null = null;
   private accent = '#32d7f4';
 
+  private readonly preferences = inject(UiPreferencesService);
   private readonly modelEffect = effect(() => {
+    this.preferences.appearance();
     this.sections();
     this.groups();
     this.cellNotes();
@@ -371,6 +374,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, this.width, this.height);
     const style = getComputedStyle(document.documentElement);
+    const monoFont = style.getPropertyValue('--font-mono').trim();
+    const headingFont = style.getPropertyValue('--font-heading').trim();
     const colors = new Map<string, string>();
     const color = (name: string): string => {
       let value = colors.get(name);
@@ -382,7 +387,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       context.fillStyle = color(name);
       context.fillRect(x, y, width, height);
     };
-    const text = (value: string, x: number, y: number, name: string, font = '10px monospace'): void => {
+    const text = (value: string, x: number, y: number, name: string, font = `10px ${monoFont}`): void => {
       context.font = font;
       context.fillStyle = color(name);
       context.fillText(value, x, y);
@@ -459,7 +464,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.fillStyle = color(present ? `--role-${role}-surface` : '--surface-button'); context.fill();
           context.strokeStyle = present ? noteColor : color('--border-default'); context.stroke();
           context.textAlign = 'center';
-          text(String(index + 1), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', '9px monospace');
+          text(String(index + 1), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', `9px ${monoFont}`);
           context.textAlign = 'start'; context.globalAlpha = 1;
           if (target?.kind === 'section-track' && target.sectionId === item.section.id && target.trackId === track.id) {
             context.strokeStyle = this.accent;
@@ -474,7 +479,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             context.beginPath(); context.arc(centerX + 6, centerY - 6, 2.5, 0, Math.PI * 2); context.fill();
           } else if (trackCustomized) {
             context.textAlign = 'center';
-            text('*', centerX + 6, centerY - 2, '--text-primary', 'bold 10px monospace');
+            text('*', centerX + 6, centerY - 2, '--text-primary', `bold 10px ${monoFont}`);
             context.textAlign = 'start';
           }
           hit({ key: `toggle:${item.section.id}:${track.id}`, x: centerX - 8, y: centerY - 8, width: 16, height: 16,
@@ -498,11 +503,11 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       fill(x, 0, 1, RULER_HEIGHT, '--border-subtle');
       context.save(); context.beginPath(); context.rect(x + 6, 0, width - 12, RULER_HEIGHT); context.clip();
       const range = this.measureLabel(item);
-      context.font = '10px monospace';
+      context.font = `10px ${monoFont}`;
       const rangeWidth = context.measureText(range).width;
       context.save(); context.beginPath();
       context.rect(x + 7, 0, Math.max(0, width - rangeWidth - 22), RULER_HEIGHT); context.clip();
-      text(this.sectionLabel(item.section.type), x + 7, 15, '--text-primary', '600 10px sans-serif');
+      text(this.sectionLabel(item.section.type), x + 7, 15, '--text-primary', `600 10px ${headingFont}`);
       context.restore();
       context.textAlign = 'right';
       text(range, x + width - 7, 15, '--text-muted');

@@ -25,8 +25,30 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
       await wait(()=>innerWidth===${width},'viewport');
       await wait(()=>button('Edit quick settings'),'workspace');
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
+        ensure(getComputedStyle(document.documentElement).getPropertyValue('--role-bass').trim()==='#8855cc', 'role color restored after reload');
+        ensure(getComputedStyle(document.documentElement).getPropertyValue('--font-ui').trim()==='Verdana, sans-serif', 'font restored after reload');
         ensure(control(quick(),'feedbackCount'), 'persisted placement after reload');
         ensure(!control(quick(),'transpose'), 'removed quick control after reload');
+        button('Settings').click();
+        (await wait(()=>button('Appearance'),'appearance after reload')).click();
+        await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'font selectors after reload');
+        const checkFonts=()=>{
+          ensure(document.querySelector('[aria-label="Interface text and controls font"]').value==='Verdana, sans-serif','saved interface font selected');
+          ensure(document.querySelector('[aria-label="Headings and track groups font"]').value==='Georgia, serif','saved heading font selected');
+          ensure(document.querySelector('[aria-label="Numbers and music labels font"]').value==="'Courier New', monospace",'saved numeric font selected');
+        };
+        checkFonts();
+        button('Project History').click();
+        await wait(()=>!document.querySelector('[aria-label="Interface text and controls font"]'),'leave appearance');
+        button('Appearance').click();
+        await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'return to appearance');
+        checkFonts();
+        document.querySelector('[aria-label="Close settings"]').click();
+        button('Settings').click();
+        (await wait(()=>button('Appearance'),'reopened appearance')).click();
+        await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'reopened font selectors');
+        checkFonts();
+        document.querySelector('[aria-label="Close settings"]').click();
       } else {
         const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'),'seed');
         seed.value='123'; seed.dispatchEvent(new Event('change',{bubbles:true}));
@@ -55,6 +77,31 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         ensure(velocities.join(',')==='velocityMin,velocityMax','fixed velocity order');
         button('Settings').click();
         const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
+        (await wait(()=>button('Appearance'),'appearance category')).click();
+        const colorInput=await wait(()=>dialog.querySelector('[aria-label="Bass color"]'),'appearance colors');
+        ensure(dialog.querySelectorAll('input[type="color"]').length===5,'five role colors');
+        const style=()=>getComputedStyle(document.documentElement);
+        const previousBassSurface=style().getPropertyValue('--role-bass-surface');
+        const previousDrumSurface=style().getPropertyValue('--role-drum-surface');
+        colorInput.value='#8855cc'; colorInput.dispatchEvent(new Event('input',{bubbles:true}));
+        await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8855cc','live role color');
+        ensure(style().getPropertyValue('--role-bass-surface')!==previousBassSurface,'derived bass surface');
+        ensure(style().getPropertyValue('--role-drum-surface')===previousDrumSurface,'other role retained');
+        const drums=dialog.querySelector('[aria-label="Drums color"]');
+        drums.value='#44bb99'; drums.dispatchEvent(new Event('input',{bubbles:true}));
+        await wait(()=>style().getPropertyValue('--role-drums').trim()==='#44bb99','live drums');
+        ensure(style().getPropertyValue('--role-drum-surface')!==previousDrumSurface,'derived drum surface');
+        ensure(style().getPropertyValue('--role-kick').trim()==='#44bb99','derived percussion colors');
+        const font=dialog.querySelector('[aria-label="Interface text and controls font"]');
+        font.value='Verdana, sans-serif'; font.dispatchEvent(new Event('change',{bubbles:true}));
+        await wait(()=>getComputedStyle(dialog).fontFamily.includes('Verdana'),'live interface font');
+        const headings=dialog.querySelector('[aria-label="Headings and track groups font"]');
+        headings.value='Georgia, serif'; headings.dispatchEvent(new Event('change',{bubbles:true}));
+        await wait(()=>getComputedStyle(dialog.querySelector('h2')).fontFamily.includes('Georgia'),'live heading font');
+        const numbers=dialog.querySelector('[aria-label="Numbers and music labels font"]');
+        numbers.value="'Courier New', monospace"; numbers.dispatchEvent(new Event('change',{bubbles:true}));
+        await wait(()=>style().getPropertyValue('--font-mono').includes('Courier New'),'live numeric font');
+        ensure(sessionStorage.getItem('vibecomposer.project.v12')===before,'appearance changed musical project');
         const footer=dialog.querySelector('.preferences-transfer');
         ensure(footer.querySelectorAll('button').length===2,'transfer buttons');
         let exported;
@@ -62,6 +109,7 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         URL.createObjectURL=blob=>{exported=blob;return create(blob);};
         button('Export UI preferences').click();
         const json=await exported.text();
+        ensure(JSON.parse(json).appearance.roleColors.bass==='#8855cc','exported appearance');
         ensure(JSON.parse(json).kind==='vibecomposer-ui-preferences','UI export kind');
         ensure(!JSON.parse(json).tracks,'project excluded from UI export');
         const fileInput=footer.querySelector('input');
@@ -74,6 +122,14 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         ensure(localStorage.getItem(key)===JSON.stringify(JSON.parse(json)),'invalid import changed preferences');
         await upload(json);
         await wait(()=>footer.textContent.includes('UI preferences imported.'),'valid UI import');
+        const imported=localStorage.getItem(key);
+        await upload(JSON.stringify({...JSON.parse(json),appearance:{...JSON.parse(json).appearance,roleColors:{...JSON.parse(json).appearance.roleColors,bass:'invalid'}}}));
+        await wait(()=>footer.textContent.includes('Invalid UI preferences'),'invalid appearance rejected');
+        ensure(localStorage.getItem(key)===imported,'invalid appearance import atomic');
+        button('Reset appearance to defaults').click();
+        await wait(()=>style().getPropertyValue('--role-bass').trim()==='#22a7f2','reset appearance');
+        await upload(json);
+        await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8855cc','import reapplies appearance');
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===before,'UI import changed musical project');
         dialog.querySelector('[aria-label="Close settings"]').click();
         button('Edit quick settings').click();
@@ -172,6 +228,6 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
   } finally {
     socket?.close(); clearTimeout(timeout); child.kill(); server.close();
     await new Promise(done => child.exitCode !== null ? done() : child.once('exit', done));
-    fs.rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   }
 });

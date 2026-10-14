@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
+import { FONT_AREAS, FONT_CHOICES, type FontArea } from '../../core/ui/appearance';
+import { ARRANGED_PARTS, type ArrangedPart } from '../../core/project/project.model';
 
 @Component({
   selector: 'vc-settings-dialog',
@@ -16,6 +18,12 @@ export class SettingsDialogComponent {
   readonly transferMessage = signal('');
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
+  readonly fontAreas = FONT_AREAS;
+  readonly fontChoices = FONT_CHOICES;
+  readonly roles = ARRANGED_PARTS;
+  readonly roleNames: Record<ArrangedPart, string> = { melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums' };
+  changeFont(area: FontArea, event: Event): void { this.preferences.setFont(area, (event.target as HTMLSelectElement).value); }
+  changeRoleColor(role: ArrangedPart, event: Event): void { this.preferences.setRoleColor(role, (event.target as HTMLInputElement).value); }
   exportPreferences(): void {
     const url = URL.createObjectURL(new Blob([this.preferences.exportJson()], { type: 'application/json' }));
     const link = document.createElement('a');
@@ -36,6 +44,7 @@ export class SettingsDialogComponent {
     input.value = '';
   }
   readonly categories = [
+    { id: 'appearance', label: 'Appearance' },
     { id: 'section-types', label: 'Section Types' },
     { id: 'project-history', label: 'Project History' },
   ] as const;

@@ -12,6 +12,7 @@
 
   /* Typography and shape */
   --font-ui: 'DM Sans', sans-serif;
+  --font-heading: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
   --radius-small: 5px;
   --radius-control: 6px;
@@ -94,47 +95,52 @@
   --accent-glow: #32d7f480;
   --accent-outline: #32d7f42e;
   --role-melody: #f26772;
-  --role-melody-glow: #f2677250;
-  --role-melody-strong: #ff8891;
-  --role-melody-dark: #9c3341;
-  --role-melody-surface: #481e2a;
-  --role-melody-border: #a94352;
-  --role-melody-text: #ffe0e3;
-  --role-melody-header: #562332;
+  --role-melody-glow: color-mix(in srgb, var(--role-melody), transparent 69%);
+  --role-melody-strong: color-mix(in srgb, var(--role-melody), white 22%);
+  --role-melody-dark: color-mix(in srgb, var(--role-melody), black 40%);
+  --role-melody-surface: color-mix(in srgb, var(--role-melody), black 72%);
+  --role-melody-border: color-mix(in srgb, var(--role-melody), black 32%);
+  --role-melody-text: color-mix(in srgb, var(--role-melody), white 78%);
+  --role-melody-header: color-mix(in srgb, var(--role-melody), black 65%);
   --role-bass: #22a7f2;
-  --role-bass-glow: #22a7f266;
-  --role-bass-strong: #62bcff;
-  --role-bass-dark: #176ab0;
-  --role-bass-surface: #0a2f50;
-  --role-bass-border: #176ab0;
-  --role-bass-text: #d1ebff;
+  --role-bass-glow: color-mix(in srgb, var(--role-bass), transparent 69%);
+  --role-bass-strong: color-mix(in srgb, var(--role-bass), white 22%);
+  --role-bass-dark: color-mix(in srgb, var(--role-bass), black 40%);
+  --role-bass-surface: color-mix(in srgb, var(--role-bass), black 72%);
+  --role-bass-border: color-mix(in srgb, var(--role-bass), black 32%);
+  --role-bass-text: color-mix(in srgb, var(--role-bass), white 78%);
   --role-chords: #45df89;
-  --role-chords-glow: #45df8966;
-  --role-chords-strong: #68f5a4;
-  --role-chords-dark: #16834e;
-  --role-chords-surface: #0b3d32;
-  --role-chords-border: #18855b;
-  --role-chords-text: #ccffe1;
+  --role-chords-glow: color-mix(in srgb, var(--role-chords), transparent 69%);
+  --role-chords-strong: color-mix(in srgb, var(--role-chords), white 22%);
+  --role-chords-dark: color-mix(in srgb, var(--role-chords), black 40%);
+  --role-chords-surface: color-mix(in srgb, var(--role-chords), black 72%);
+  --role-chords-border: color-mix(in srgb, var(--role-chords), black 32%);
+  --role-chords-text: color-mix(in srgb, var(--role-chords), white 78%);
   --role-arpeggio: #ed55bf;
-  --role-arpeggio-glow: #ed55bf50;
-  --role-arpeggio-strong: #fc70d0;
-  --role-arpeggio-dark: #982777;
-  --role-arpeggio-surface: #40143d;
-  --role-arpeggio-border: #ae348d;
-  --role-arpeggio-text: #ffe0f5;
-  --role-bass-header: #103b60;
-  --role-chords-header: #124a37;
-  --role-arpeggio-header: #4a2048;
-  --role-drums-header: #4a3918;
+  --role-arpeggio-glow: color-mix(in srgb, var(--role-arpeggio), transparent 69%);
+  --role-arpeggio-strong: color-mix(in srgb, var(--role-arpeggio), white 22%);
+  --role-arpeggio-dark: color-mix(in srgb, var(--role-arpeggio), black 40%);
+  --role-arpeggio-surface: color-mix(in srgb, var(--role-arpeggio), black 72%);
+  --role-arpeggio-border: color-mix(in srgb, var(--role-arpeggio), black 32%);
+  --role-arpeggio-text: color-mix(in srgb, var(--role-arpeggio), white 78%);
+  --role-bass-header: color-mix(in srgb, var(--role-bass), black 65%);
+  --role-chords-header: color-mix(in srgb, var(--role-chords), black 65%);
+  --role-arpeggio-header: color-mix(in srgb, var(--role-arpeggio), black 65%);
+  --role-drums-header: color-mix(in srgb, var(--role-drums), black 65%);
   --role-drums: #f2bb38;
-  --role-kick: #ffad42;
-  --role-kick-glow: #ffad4250;
-  --role-kick-dark: #98601f;
-  --role-snare: #ffe16a;
-  --role-snare-glow: #ffe16a50;
-  --role-hat: #b4c8da;
-  --role-drum-surface: #3a2b12;
-  --role-drum-border: #806221;
+  --role-drums-glow: color-mix(in srgb, var(--role-drums), transparent 69%);
+  --role-drums-strong: color-mix(in srgb, var(--role-drums), white 22%);
+  --role-drums-dark: color-mix(in srgb, var(--role-drums), black 40%);
+  --role-drums-surface: color-mix(in srgb, var(--role-drums), black 72%);
+  --role-drums-border: color-mix(in srgb, var(--role-drums), black 32%);
+  --role-kick: var(--role-drums);
+  --role-kick-glow: var(--role-drums-glow);
+  --role-kick-dark: var(--role-drums-dark);
+  --role-snare: var(--role-drums-strong);
+  --role-snare-glow: var(--role-drums-glow);
+  --role-hat: color-mix(in srgb, var(--role-drums), white 65%);
+  --role-drum-surface: var(--role-drums-surface);
+  --role-drum-border: var(--role-drums-border);
 
   /* Quiet arrangement cell backgrounds */
   --role-melody-cell-surface: color-mix(in srgb, var(--role-melody-surface) 75%, black);
@@ -219,6 +225,9 @@ body {
 }
 
 :where(button, a, input, select) { font: inherit; }
+
+/* Heading typography */
+:where(h1, h2, h3, h4, h5, h6), .group-heading { font-family: var(--font-heading); }
 
 /* Compact text fields */
 :where(input[type="text"], input:not([type])) {

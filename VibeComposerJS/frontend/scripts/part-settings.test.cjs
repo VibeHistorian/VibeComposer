@@ -5370,6 +5370,45 @@ test('overview section reset clears every role and manual phrase; rerolls preser
 });
 
 
+test('appearance preferences persist, transfer atomically and derive every role variant', () => {
+  const { service, uiPreferences: preferences, load } = fixture();
+  const before = service.exportProjectJson(), position = service.historyPosition();
+  const { roleColorTokens, defaultAppearance } = load('core/ui/appearance.ts');
+  preferences.setFont('ui', 'Verdana, sans-serif');
+  preferences.setFont('heading', 'Georgia, serif');
+  preferences.setRoleColor('bass', '#8855CC');
+  preferences.setRoleColor('drums', '#44bb99');
+  const saved = preferences.exportJson();
+  assert.equal(preferences.appearance().roleColors.bass, '#8855cc');
+  const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  assert.deepEqual(restored.appearance(), preferences.appearance());
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), position);
+  for (const role of ['melody','bass','chords','arpeggio','drums']) {
+    const original = roleColorTokens(role, defaultAppearance().roleColors[role]);
+    const changed = roleColorTokens(role, '#8855cc');
+    for (const key of Object.keys(original)) assert.notEqual(changed[key], original[key], key);
+  }
+  const drumTokens = roleColorTokens('drums', '#44bb99');
+  assert.equal(drumTokens['--role-kick'], '#44bb99');
+  assert.equal(drumTokens['--role-drum-surface'], drumTokens['--role-drums-surface']);
+  assert.notEqual(drumTokens['--role-snare'], drumTokens['--role-kick']);
+  for (const appearance of [null, {}, { ...JSON.parse(saved).appearance, fonts: { ui: 'unknown' } },
+      { ...JSON.parse(saved).appearance, roleColors: { ...JSON.parse(saved).appearance.roleColors, bass: 'red' } }]) {
+    assert.equal(preferences.importJson(JSON.stringify({ ...JSON.parse(saved), appearance })), false);
+    assert.equal(preferences.exportJson(), saved);
+  }
+  preferences.setRoleColor('bass', 'invalid'); preferences.setFont('ui', 'unknown');
+  assert.equal(preferences.exportJson(), saved);
+  preferences.resetAppearance();
+  assert.deepEqual(preferences.appearance(), defaultAppearance());
+  assert.equal(preferences.importJson(saved), true);
+  assert.equal(preferences.exportJson(), saved);
+  const withoutAppearance = JSON.parse(saved); delete withoutAppearance.appearance;
+  assert.equal(preferences.importJson(JSON.stringify(withoutAppearance)), true);
+  assert.deepEqual(preferences.appearance(), defaultAppearance());
+});
+
 test('UI preferences customize per-role placement without changing project, history, or fixed order', () => {
   const { service, uiPreferences: preferences, uiStored, load, settings } = fixture();
   const before = service.exportProjectJson(), position = service.historyPosition();

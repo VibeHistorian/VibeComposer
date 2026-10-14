@@ -1,5 +1,6 @@
+import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import {
-  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild,
+  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, viewChild,
 } from '@angular/core';
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
 import { drumInstrumentName } from '../core/music/drum-instruments';
@@ -127,7 +128,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private staticGraphics?: PixiGraphics;
   private dynamicGraphics?: PixiGraphics;
   private colorClass?: typeof PixiColor;
+  private readonly preferences = inject(UiPreferencesService);
   private readonly modelEffect = effect(() => {
+    this.preferences.appearance();
     const editable = this.editable();
     if (editable && !this.wasEditable) {
       this.overviewViewport = { horizontalScale: this.horizontalScale, horizontalOffset: this.horizontalOffset,

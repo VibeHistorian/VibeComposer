@@ -13,7 +13,16 @@ h1 { margin: 0; font-size: 20px; font-weight: 550; }
 .settings-sidebar button { display: block; width: 100%; margin-bottom: 6px; padding: 10px 12px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--text-secondary); text-align: left; font: 12px var(--font-ui); cursor: pointer; }
 .settings-sidebar button:hover { background: var(--surface-hover); }
 .settings-sidebar button.selected { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
-button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+/* Appearance preferences */
+.appearance-fields { max-width: 560px; margin: 20px 0; padding: 12px; border: 1px solid var(--border-default); border-radius: var(--radius-card); }
+.appearance-fields legend { padding: 0 6px; color: var(--text-strong); font: 13px var(--font-heading); }
+.appearance-setting { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 6px 0; font-size: 12px; }
+.appearance-setting select { max-width: 100%; padding: 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
+.appearance-setting input[type="color"] { width: 52px; height: 30px; padding: 2px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); cursor: pointer; }
+.appearance-reset { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
+.appearance-reset:hover { background: var(--surface-button-hover); }
 
 /* Project history preferences */
 h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
