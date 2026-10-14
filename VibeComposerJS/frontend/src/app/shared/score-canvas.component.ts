@@ -134,10 +134,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         verticalScale: this.verticalScale, verticalOffset: this.verticalOffset };
       this.verticalScale = 1;
       this.verticalOffset = 0;
+      this.pendingEditPitchFocus = true;
     } else if (!editable && this.wasEditable && this.overviewViewport) {
       Object.assign(this, this.overviewViewport);
       this.overviewViewport = null;
       this.pendingSectionFocus = null;
+      this.pendingEditPitchFocus = false;
     }
     const focus = this.sectionFocus();
     if (focus !== this.lastSectionFocus) {
@@ -186,6 +188,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private wasEditable = false;
   private overviewViewport: { horizontalScale: number; horizontalOffset: number; verticalScale: number; verticalOffset: number } | null = null;
   private pendingSectionFocus: ScoreSectionFocus | null = null;
+  private pendingEditPitchFocus = false;
 
   ngAfterViewInit(): void {
     const host = this.rendererHost().nativeElement;
@@ -283,11 +286,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.horizontalScale = Math.min(128, Math.max(1, this.horizontalScale * Math.exp(-delta * 0.002)));
       this.horizontalOffset = anchor - cursor / this.horizontalScale;
     } else if (event.altKey) {
+      if (this.harmonicHeight <= 0) return;
       const bounds = this.app.canvas.getBoundingClientRect();
-      const cursorY = Math.min(this.scoreHeight, Math.max(0, (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height)));
-      const anchor = (this.verticalOffset + cursorY) / this.contentHeight;
-      this.verticalScale = Math.min(8, Math.max(1, this.verticalScale * Math.exp(-delta * 0.002)));
-      this.verticalOffset = anchor * this.contentHeight - cursorY;
+      const cursorY = Math.min(this.harmonicHeight, Math.max(0, (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height)));
+      const anchor = (this.verticalOffset + cursorY) / (this.harmonicHeight * this.verticalScale);
+      this.verticalScale = Math.min(this.editable() ? 128 : 8, Math.max(1, this.verticalScale * Math.exp(-delta * 0.002)));
+      this.verticalOffset = anchor * this.harmonicHeight * this.verticalScale - cursorY;
     } else if (event.shiftKey) {
       this.horizontalOffset += delta / (this.width * this.horizontalScale);
     } else {
@@ -648,13 +652,21 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     graphics.rect(0, 0, this.width, this.height).fill({ color: color('--surface-score').value });
     const visibleNotes = notes.filter(note => !hiddenTrackIds.has(note.part));
     const harmonic = visibleNotes.filter(note => note.color !== 'drums');
-    this.pitchMin = Math.max(0, (harmonic.length ? harmonic.reduce((min, note) => Math.min(min, note.midi), 127) : 48) - 2);
-    this.pitchMax = Math.min(127, (harmonic.length ? harmonic.reduce((max, note) => Math.max(max, note.midi), 0) : 72) + 2);
+    const phrasePitchMin = Math.max(0, (harmonic.length ? harmonic.reduce((min, note) => Math.min(min, note.midi), 127) : 48) - 2);
+    const phrasePitchMax = Math.min(127, (harmonic.length ? harmonic.reduce((max, note) => Math.max(max, note.midi), 0) : 72) + 2);
+    this.pitchMin = this.editable() ? 0 : phrasePitchMin;
+    this.pitchMax = this.editable() ? 127 : phrasePitchMax;
     this.drumPitches = [...new Set([...visibleNotes.filter(note => note.color === 'drums').map(note => note.midi), ...tracks.filter(track => track.color === 'drums' && !hiddenTrackIds.has(track.id)).map(track => track.drumPitch ?? 36)])].sort((a, b) => b - a);
     const hasDrums = tracks.some(track => track.color === 'drums' && !(track.trackIds ?? [track.id]).every(id => hiddenTrackIds.has(id)));
     const onlyDrums = tracks.length > 0 && tracks.every(track => track.color === 'drums');
     this.drumHeight = hasDrums ? (onlyDrums ? scoreHeight : Math.min(scoreHeight * 0.27, Math.max(36, this.drumPitches.length * 14))) : 0;
     this.harmonicHeight = scoreHeight - this.drumHeight;
+    if (this.pendingEditPitchFocus) {
+      this.pendingEditPitchFocus = false;
+      // Fit the phrase initially, but keep every MIDI pitch reachable by zooming and scrolling.
+      this.verticalScale = this.harmonicHeight > 0 ? 128 / (phrasePitchMax - phrasePitchMin + 1) : 1;
+      this.verticalOffset = (127 - phrasePitchMax) * this.laneHeight;
+    }
     this.updateViewport();
     const rows: { midi: number; label: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[] = [];
     for (let midi = this.pitchMax; midi >= this.pitchMin && this.harmonicHeight > 0; midi--) {
@@ -788,9 +800,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
       const glow = new Color(style.getPropertyValue(COLORS[area.note.color].note).trim() || '#32d7f4');
       graphics.roundRect(area.x - 3, area.y - 2, area.width + 6, area.height + 4, 3)
-        .stroke({ color: glow.toNumber(), alpha: 0.65, width: 3 });
+        .stroke({ color: glow.toNumber(), alpha: 0.325, width: 3 });
       graphics.roundRect(area.x, area.y + area.height / 4, area.width, area.height / 2, 2)
-        .fill({ color: glow.toNumber(), alpha: 0.8 });
+        .fill({ color: glow.toNumber(), alpha: 0.4 });
     }
     const preview = this.drag?.preview ?? (this.shape ? [...this.shape.notes.values()] : []);
     for (const note of preview) {

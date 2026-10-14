@@ -295,3 +295,38 @@ test('drum-only editing renders every unselected drum note at visible row-based 
   c.model.selectedTrackId = tracks[0].id; c.drawStatic();
   assert.ok(shapes.every(shape => shape.height === 6), 'changing active tracks does not reveal hidden notes');
 });
+
+test('Alt-wheel reveals pitches outside the fitted phrase and allows adding notes there', () => {
+  const { component: c } = fixture();
+  c.editable = () => true; c.snapToScale = () => false;
+  c.pendingEditPitchFocus = true;
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }, { id: 'drum', color: 'drums', drumPitch: 36 }],
+    notes: [{ id: 'a', part: 'bass', color: 'bass', midi: 48, velocity: 90, startBeat: 20, durationBeats: 1, opacity: 1 }],
+    sections: [], totalBeats: 64, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
+    fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
+  c.drawStatic();
+  assert.deepEqual(c.gutterRows().filter(row => !row.drum).map(row => row.midi), [50, 49, 48, 47, 46]);
+  const cursorY = c.harmonicHeight / 2;
+  const anchor = c.pitchMax - (c.verticalOffset + cursorY) / c.laneHeight;
+  const wheel = { preventDefault() {}, stopPropagation() {}, altKey: true, deltaMode: 0,
+    deltaX: 0, deltaY: Math.log(2) / .002, clientX: 200, clientY: 10 + cursorY / 2 };
+  c.onCanvasWheel(wheel);
+  assert.ok(Math.abs(c.verticalScale - 128 / 10) < 1e-10);
+  assert.ok(Math.abs(c.pitchMax - (c.verticalOffset + cursorY) / c.laneHeight - anchor) < 1e-10,
+    'the pitch under the cursor stays anchored even with pinned drum rows');
+  const higher = c.gutterRows().find(row => !row.drum && row.midi > 50);
+  const lower = c.gutterRows().find(row => !row.drum && row.midi < 46);
+  assert.ok(higher && lower, 'zooming out exposes pitches on both sides of the phrase');
+  c.onDoubleClick(pointer(300, 10 + (higher.y + higher.height / 2) / 2));
+  assert.deepEqual(c.noteAdded.values, [{ midi: higher.midi, startBeat: 24 }]);
+  c.drawStatic();
+  assert.ok(c.gutterRows().some(row => row.midi === higher.midi), 'redrawing keeps the expanded pitch viewport');
+  c.onCanvasWheel({ ...wheel, deltaY: 10000 });
+  assert.equal(c.verticalScale, 1);
+  assert.equal(c.verticalOffset, 0);
+  assert.deepEqual(c.gutterRows().filter(row => !row.drum).map(row => row.midi),
+    Array.from({ length: 128 }, (_, i) => 127 - i));
+  c.onCanvasWheel({ ...wheel, deltaY: -10000 });
+  assert.equal(c.verticalScale, 128);
+});
