@@ -10,7 +10,7 @@
     <p role="status">Finish editing the phrase to navigate project history.</p>
   }
   <ol aria-label="Project history">
-    @for (entry of projects.historyEntries(); track entry.index) {
+    @for (entry of entries(); track entry.index) {
       <li>
         <button type="button" class="history-entry"
           [class.current]="entry.index === projects.historyPosition()"

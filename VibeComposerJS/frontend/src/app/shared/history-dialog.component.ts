@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
@@ -12,5 +12,6 @@ import { WorkspaceUiService } from './workspace-ui.service';
 export class HistoryDialogComponent {
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
+  readonly entries = computed(() => [...this.projects.historyEntries()].reverse());
   readonly workspaceUi = inject(WorkspaceUiService);
 }
