@@ -492,7 +492,7 @@ export class ProjectService {
       ['part', scope.kind, scope.sectionId, scope.kind === 'section-role' ? scope.role : scope.trackId], decoded));
   }
 
-  resetPartSettings(scope: PartSettingsScope, field?: string): void {
+  resetPartSettings(scope: PartSettingsScope, field?: string | readonly string[]): void {
     if (scope.kind !== 'section-role' && scope.kind !== 'section-track') return;
     const current = this.state();
     const arrangement = current.arrangement.map((section) => {
@@ -500,7 +500,7 @@ export class ProjectService {
       const key = scope.kind === 'section-role' ? scope.role : scope.trackId;
       const map: Record<string, PartSettingsPatch> = { ...(scope.kind === 'section-role' ? section.rolePartOverrides : section.trackPartOverrides) };
       const values: Record<string, unknown> = { ...map[key] };
-      if (field) delete values[field];
+      if (field) for (const name of typeof field === 'string' ? [field] : field) delete values[name];
       else for (const name of Object.keys(values)) delete values[name];
       if (Object.keys(values).length) (map as Record<string, PartSettingsPatch>)[key] = values as PartSettingsPatch;
       else delete (map as Record<string, PartSettingsPatch>)[key];

@@ -455,9 +455,9 @@ export class WorkspaceCanvasComponent {
     return (section ? sectionGenerationHarmony(this.project(),section,'melody').degrees : this.project().progression).length * 16;
   }
 
-  resetPartSettings(scope: PartSettingsScope, field?: string): void {
+  resetPartSettings(scope: PartSettingsScope, field?: string | readonly string[]): void {
     const before = this.project();
-    const hadOverride = field ? this.overriddenKeys().includes(field) : this.overriddenKeys().length > 0;
+    const hadOverride = field ? (typeof field === 'string' ? [field] : field).some(key => this.overriddenKeys().includes(key)) : this.overriddenKeys().length > 0;
     this.projects.resetPartSettings(scope, field);
     this.editFailure.set(this.project() === before && hadOverride ? { scope: JSON.stringify(scope),
       message: 'Reset would conflict with another velocity setting. Reset both bounds together or adjust the other bound first.' } : null);

@@ -1,4 +1,5 @@
 import { UiPreferencesService } from '../core/ui/ui-preferences.service';
+import { combinedControlKeys } from '../core/ui/ui-preferences';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
@@ -52,9 +53,10 @@ export class PartSettingsEditorComponent {
   readonly showGroupTitles = input(true);
   readonly melodyHits = input(16);
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
-  readonly inheritRequested = output<string>();
+  readonly inheritRequested = output<string | readonly string[]>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
+    !['patternFlip', 'fillFlip'].includes(control.key) &&
     (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)
       : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
     (this.preferences.editingQuickSettings() || (
@@ -101,7 +103,18 @@ export class PartSettingsEditorComponent {
   });
 
   inheritanceFor(control: PartControl): ControlInheritance {
-    return this.local() ? this.overriddenKeys().includes(control.key) ? 'custom' : 'inherited' : 'global';
+    return this.local() ? combinedControlKeys(control.key).some(key => this.overriddenKeys().includes(key)) ? 'custom' : 'inherited' : 'global';
+  }
+
+  resetControl(control: PartControl): void {
+    this.inheritRequested.emit(combinedControlKeys(control.key));
+  }
+
+  flipControl(control: PartControl): PartControl | undefined {
+    if (control.key === 'rhythm' && this.role() === 'bass' && this.values()['rhythm'] === 'alternating'
+        && !this.preferences.editingQuickSettings()) return undefined;
+    const key = combinedControlKeys(control.key)[1];
+    return key ? PART_CONTROLS[this.role()].find(control => control.key === key) : undefined;
   }
 
   numericDefault(control: PartControl): number {

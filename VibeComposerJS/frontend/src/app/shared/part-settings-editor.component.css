@@ -14,8 +14,17 @@
 .control-content { display: grid; gap: 4px; min-width: 0; }
 .part-control.compact-control { min-width: 58px; width: 58px; }
 .seed-control { flex: 1 1 100%; max-width: 100%; justify-items: start; }
-.part-control select { min-width: 95px; max-width: 140px; height: 29px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
+.part-control select { appearance: none; min-width: 75px; max-width: 140px; height: 29px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; cursor: pointer; }
 .part-control select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+
+/* Combined selector and flip */
+.choice-controls { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.choice-controls select { flex: 1; min-width: 0; width: 95px; }
+.flip-button { flex: 0 0 25px; height: 29px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 14px var(--font-ui); cursor: pointer; }
+.flip-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.flip-button.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.flip-button.mixed { border-style: dashed; }
+.flip-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
 /* Compact pattern launchers */
 .part-control.pattern-control { width: 96px; min-width: 75px; }

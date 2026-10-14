@@ -46,19 +46,28 @@
                 (toggled)="settingsChanged.emit({ key: control.key, value: values()[control.key] !== true })" />
             } @else {
               <vc-control-heading #heading [label]="control.label" [inheritance]="inheritanceFor(control)"
-                (inheritRequested)="inheritRequested.emit(control.key)" />
+                (inheritRequested)="resetControl(control)" />
               @if (control.kind === 'integers' || control.kind === 'integer') {
                 <input [id]="heading.controlId" class="part-list" type="text" [value]="textValue(control)"
                   [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
                   (focus)="startTextEdit()" (change)="commitText(control, $event)"
                   (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
               } @else if (control.kind === 'choice') {
+                <div class="choice-controls">
                 <select [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (change)="choose(control, $event)">
                   @if (values()[control.key] === null) { <option value="" disabled [selected]="true">Mixed</option> }
                   @for (option of control.options; track option) {
                     <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option>
                   }
                 </select>
+                @if (flipControl(control); as flip) {
+                  <button type="button" class="flip-button" [attr.data-control-key]="flip.key"
+                    [class.active]="values()[flip.key] === true" [class.mixed]="values()[flip.key] === null"
+                    [attr.aria-label]="flip.label" [attr.aria-pressed]="values()[flip.key] === null ? 'mixed' : values()[flip.key] === true"
+                    [title]="flip.label + ': ' + flip.description"
+                    (click)="settingsChanged.emit({ key: flip.key, value: values()[flip.key] !== true })"><span aria-hidden="true">↔</span></button>
+                }
+                </div>
               } @else if (control.kind === 'pattern') {
                 <button type="button" class="mini-preview rhythm-preview-grid" [style.--preview-steps]="rhythmPreview()?.length ?? 8" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [title]="rhythmPreviewLabel()" (click)="openSequencer()">
                   @if (rhythmPreview(); as pattern) {

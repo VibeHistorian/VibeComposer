@@ -319,6 +319,19 @@ test('production Angular controls initialize selects from settings and support r
           }, role + ' rhythm controls');
           rhythms[0].value = 'custom'; rhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => document.querySelectorAll('.rhythm-preview-grid').length === 1, role + ' grids');
+          for (const [selectorLabel, flipLabel] of [['Rhythm pattern', 'Pattern flip'], ['Fill', 'Fill flip']]) {
+            const select = document.querySelector('select[aria-label="' + selectorLabel + '"]');
+            const control = select.closest('.part-control');
+            const flip = control.querySelector('button[aria-label="' + flipLabel + '"]');
+            if (!flip || control.querySelectorAll('.inherit-snowflake').length !== 1) throw new Error(selectorLabel + ' must share one inheritance icon');
+            if (flip.textContent.trim() !== '↔' || flip.getBoundingClientRect().left < select.getBoundingClientRect().right) throw new Error(flipLabel + ' must be an icon to the right');
+            if (getComputedStyle(select).appearance !== 'none') throw new Error(selectorLabel + ' must be arrowless');
+            const before = flip.getAttribute('aria-pressed');
+            flip.click();
+            await waitFor(() => flip.getAttribute('aria-pressed') !== before, flipLabel + ' enabled');
+            flip.click();
+            await waitFor(() => flip.getAttribute('aria-pressed') === before, flipLabel + ' restored');
+          }
           const hits = document.querySelector('input[aria-label="Hits"]');
           hits.value = '5'; hits.dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => [...document.querySelectorAll('.rhythm-preview-grid')].every(grid => grid.children.length === 5), role + ' Hits');

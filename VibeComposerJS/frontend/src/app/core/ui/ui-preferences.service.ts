@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import type { ArrangedPart } from '../project/project.model';
 import { PART_CONTROLS } from '../music/part-settings';
-import { decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
+import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
 const STORAGE_KEY = 'vibecomposer.ui-preferences.v1';
 
@@ -27,7 +27,11 @@ export class UiPreferencesService {
     const draft = this.draft();
     if (!draft || !PART_CONTROLS[role].some(control => control.key === key)) return;
     const keys = new Set(draft[role]);
-    if (keys.has(key)) keys.delete(key); else keys.add(key);
+    const pairedKeys = combinedControlKeys(key);
+    const remove = pairedKeys.some(key => keys.has(key));
+    for (const pairedKey of pairedKeys) {
+      if (remove) keys.delete(pairedKey); else keys.add(pairedKey);
+    }
     this.draft.set({ ...draft, [role]: PART_CONTROLS[role].filter(control => keys.has(control.key)).map(control => control.key) });
   }
   toggleCompactHistory(): void { this.commit({ ...this.state(), compactHistory: !this.compactHistory() }); }
