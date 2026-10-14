@@ -454,3 +454,37 @@ test('global manual phrase dots use role accents and section manual dots use the
     assert.equal(dot.color, section.id === 'verse' ? '--accent-primary' : '--role-bass-strong');
   }
 });
+
+test('overview mouse shortcuts target tracks, cells and headers without toggling presence on Shift', () => {
+  const { component } = fixture();
+  const mouse = (area, button, shiftKey = false) => ({ button, shiftKey,
+    clientX: area.x + area.width / 2, clientY: area.y + area.height / 2,
+    preventDefault() { this.prevented = true; } });
+  for (const [key, target] of [
+    ['toggle:intro:bass-1', { sectionId: 'intro', trackId: 'bass-1' }],
+    ['cell:intro:bass', { sectionId: 'intro', role: 'bass' }],
+    ['heading:intro', { sectionId: 'intro' }],
+  ]) {
+    const area = component.hits.find(hit => hit.key === key);
+    // The preview portion of the cell is clear of track buttons.
+    const point = key.startsWith('cell:') ? { ...area, height: 10 } : area;
+    for (const [button, action] of [[1, 'reroll'], [2, 'reset']]) {
+      const event = mouse(point, button, true);
+      component.onCanvasAuxclick(event);
+      assert.equal(event.prevented, true);
+      assert.deepEqual(component.tracksChangeRequested.values.at(-1), { ...target, action });
+    }
+    const right = mouse(point, 2, true);
+    component.onCanvasContextmenu(right);
+    assert.equal(right.prevented, true);
+  }
+  assert.equal(component.partToggled.values.length, 0);
+  const header = component.hits.find(hit => hit.key === 'heading:verse');
+  component.onCanvasAuxclick(mouse(header, 1));
+  component.onCanvasAuxclick(mouse(header, 2));
+  assert.deepEqual(component.sectionDuplicateRequested.values, ['verse']);
+  assert.deepEqual(component.sectionRemoveRequested.values, ['verse']);
+  const track = component.hits.find(hit => hit.key === 'toggle:intro:bass-1');
+  component.onCanvasAuxclick(mouse(track, 1));
+  assert.equal(component.partToggled.values.length, 1);
+});

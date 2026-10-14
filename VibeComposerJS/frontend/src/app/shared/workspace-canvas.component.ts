@@ -207,7 +207,11 @@ export class WorkspaceCanvasComponent {
     return target?.kind === 'section-role' ? this.contextTracks().filter((track) =>
       Object.keys(this.contextSection()?.trackPartOverrides?.[track.id] ?? {}).length).length : 0;
   });
-  readonly manualTrackNames = computed(() => this.contextTracks().filter((track) => track.editedPhrase !== undefined).map((track) => track.name).join(', '));
+  readonly manualTrackNames = computed(() => {
+    const section = this.contextSection();
+    return this.contextTracks().filter(track => section?.trackPhrases?.[track.id] !== undefined
+      || track.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(track.id)).map(track => track.name).join(', ');
+  });
   readonly partDestinations = computed(() => this.project().arrangement.filter((section) =>
     this.selectedSectionIds().includes(section.id) && section.id !== this.localPartTarget()?.sectionId));
   readonly partCopyAvailability = computed(() => {
@@ -541,17 +545,26 @@ export class WorkspaceCanvasComponent {
     }
   }
 
-  duplicateSection(): void {
-    const index = this.selectedSectionIndex();
+  changeOverviewTracks(event: { sectionId: string; role?: ArrangedPart; trackId?: string; action: 'reroll' | 'reset' }): void {
+    if (this.editing()) return;
+    this.projects.changeOverviewTracks(event.trackId ? { kind: 'section-track', sectionId: event.sectionId, trackId: event.trackId }
+      : event.role ? { kind: 'section-role', sectionId: event.sectionId, role: event.role }
+      : { kind: 'section', sectionId: event.sectionId }, event.action);
+  }
+
+  duplicateSection(sectionId?: string): void {
+    if (this.editing()) return;
+    const index = sectionId === undefined ? this.selectedSectionIndex() : this.project().arrangement.findIndex(section => section.id === sectionId);
     if (index < 0 || this.project().arrangement.length >= 32
         || this.totalMeasures() + this.project().arrangement[index].measures > 128) return;
     this.projects.duplicateSection(index);
     this.workspaceUi.setSectionSelection(this.project().arrangement[index + 1]?.id ?? null);
   }
 
-  removeSection(): void {
-    const index = this.selectedSectionIndex();
-    if (index < 0) return;
+  removeSection(sectionId?: string): void {
+    if (this.editing()) return;
+    const index = sectionId === undefined ? this.selectedSectionIndex() : this.project().arrangement.findIndex(section => section.id === sectionId);
+    if (index < 0 || this.project().arrangement.length <= 1) return;
     this.projects.removeSection(index);
     this.workspaceUi.setSectionSelection(this.project().arrangement[Math.min(index, this.project().arrangement.length - 1)]?.id ?? null);
   }

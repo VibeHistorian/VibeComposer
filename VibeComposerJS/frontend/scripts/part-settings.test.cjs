@@ -5261,3 +5261,107 @@ test('drum pattern popup resolves every row in the selected section and edits on
   popup.inherit(tracks[1].id, 'customVelocities');
   assert.equal(service.project().arrangement[1].trackPartOverrides[tracks[1].id].customVelocities, undefined);
 });
+
+test('overview reset restores globals and generated notes locally, preserves siblings, and is one undo entry', () => {
+  const { service, settings, phrase, load } = fixture();
+  const trackId = 'track-bass-1', siblingId = service.duplicateTrack(trackId);
+  const sectionId = service.project().arrangement[0].id;
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
+  const manual = [{ id: 'manual', midi: 1, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  service.updateTrackPhrase(trackId, manual);
+  service.updateSectionTrackPhrase(sectionId, trackId, manual);
+  service.updatePartSettings({ kind: 'section-role', sectionId, role: 'bass' }, { transpose: 12 });
+  const before = service.exportProjectJson();
+  const position = service.historyPosition();
+  const scope = { kind: 'section-track', sectionId, trackId };
+  assert.equal(service.changeOverviewTracks(scope, 'reset'), 'changed');
+  assert.equal(service.historyPosition(), position + 1);
+  const project = service.project(), section = project.arrangement[0];
+  const track = project.tracks.find(t => t.id === trackId);
+  assert.deepEqual(track.editedPhrase, manual);
+  assert.equal(section.trackPhrases[trackId], undefined);
+  assert.deepEqual(section.generatedTrackIds, [trackId]);
+  assert.deepEqual(settings.resolvePartTrack(track, section).generatorSettings, track.generatorSettings);
+  assert.equal(settings.resolvePartTrack(project.tracks.find(t => t.id === siblingId), section).generatorSettings.transpose, 12);
+  const notes = phrase.layOutTrackPhrase(project, track);
+  assert.ok(notes.some(n => n.startBeat < section.measures * 4 && n.midi !== 1));
+  assert.ok(notes.some(n => n.startBeat >= section.measures * 4 && n.midi === 1));
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  assert.equal(service.changeOverviewTracks(scope, 'reset'), 'unchanged');
+  assert.equal(service.exportProjectJson(), after);
+  const { ProjectService } = load('core/project/project.service.ts');
+  const restored = new ProjectService();
+  assert.equal(restored.importProjectJson(after), true);
+  assert.deepEqual(restored.project().arrangement[0].generatedTrackIds, [trackId]);
+});
+
+test('overview cell and section rerolls and resets stay local and undo atomically', () => {
+  for (const kind of ['section-track', 'section-role', 'section']) {
+    const { service } = fixture();
+    const sectionId = service.project().arrangement[0].id;
+    const scope = { kind, sectionId, ...(kind === 'section-track' ? { trackId: 'track-bass-1' } : kind === 'section-role' ? { role: 'bass' } : {}) };
+    const before = service.exportProjectJson(), globals = JSON.stringify(service.project().tracks);
+    const other = JSON.stringify(service.project().arrangement.slice(1));
+    assert.equal(service.changeOverviewTracks(scope, 'reroll'), 'changed');
+    const after = service.exportProjectJson();
+    assert.equal(JSON.stringify(service.project().tracks), globals);
+    assert.equal(JSON.stringify(service.project().arrangement.slice(1)), other);
+    assert.ok(Object.keys(service.project().arrangement[0].trackPartOverrides).length);
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+    assert.equal(service.changeOverviewTracks(scope, 'reset'), 'changed');
+    service.undo(); assert.equal(service.exportProjectJson(), after);
+  }
+});
+
+test('overview header shortcuts edit the clicked section and undo duplication/removal individually', () => {
+  const { service, workspace } = fixture();
+  const clicked = service.project().arrangement[1].id;
+  const before = service.exportProjectJson();
+  workspace.duplicateSection(clicked);
+  const duplicated = service.exportProjectJson();
+  assert.equal(service.project().arrangement[2].type, service.project().arrangement[1].type);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), duplicated);
+  workspace.removeSection(clicked);
+  assert.ok(!service.project().arrangement.some(section => section.id === clicked));
+  const removed = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), duplicated);
+  service.redo(); assert.equal(service.exportProjectJson(), removed);
+});
+
+test('overview section reset clears every role and manual phrase; rerolls preserve locks and manual notes', () => {
+  const { service, workspace, ui } = fixture();
+  const sectionId = service.project().arrangement[0].id;
+  const manual = [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  for (const track of service.project().tracks) {
+    service.updateTrackPhrase(track.id, manual);
+    service.updateSectionTrackPhrase(sectionId, track.id, manual);
+    service.updatePartSettings({ kind: 'section-role', sectionId, role: track.role }, { transpose: 12 });
+    service.updatePartSettings({ kind: 'section-track', sectionId, trackId: track.id }, { transpose: -12 });
+  }
+  const scope = { kind: 'section', sectionId };
+  service.setTrackRerollLock('track-bass-1', true);
+  const locked = JSON.stringify(service.project().arrangement[0].trackPartOverrides['track-bass-1']);
+  assert.equal(service.changeOverviewTracks(scope, 'reroll'), 'changed');
+  assert.equal(JSON.stringify(service.project().arrangement[0].trackPartOverrides['track-bass-1']), locked);
+  assert.deepEqual(service.project().arrangement[0].trackPhrases['track-bass-1'], manual);
+  const before = service.exportProjectJson();
+  assert.equal(service.changeOverviewTracks(scope, 'reset'), 'changed');
+  const section = service.project().arrangement[0];
+  assert.deepEqual(section.rolePartOverrides, {});
+  assert.deepEqual(section.trackPartOverrides, {});
+  assert.deepEqual(section.trackPhrases, {});
+  assert.deepEqual(new Set(section.generatedTrackIds), new Set(service.project().tracks.map(track => track.id)));
+  ui.selectSectionTrack(sectionId, 'track-bass-1');
+  assert.equal(workspace.manualTrackNames(), '');
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.duplicateSection(0);
+  assert.deepEqual(service.project().arrangement[1].generatedTrackIds, section.generatedTrackIds);
+  service.removeTrack('track-bass-1');
+  assert.ok(service.project().arrangement.every(item => !item.generatedTrackIds?.includes('track-bass-1')));
+});

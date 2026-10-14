@@ -40,6 +40,8 @@ export interface ArrangementSection {
   readonly rolePartOverrides?: Readonly<Partial<{ [R in ArrangedPart]: Partial<PartSettingsByRole[R]> }>>;
   /** Manual phrase for this section and independent track, in section-relative beats. */
   readonly trackPhrases?: Readonly<Record<string, readonly PhraseNote[]>>;
+  /** Use generated notes here even when the global track has a manual phrase. */
+  readonly generatedTrackIds?: readonly string[];
   readonly trackPartOverrides?: Readonly<Record<string, PartSettingsPatch>>;
 }
 

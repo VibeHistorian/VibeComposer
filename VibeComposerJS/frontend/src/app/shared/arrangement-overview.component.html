@@ -19,10 +19,11 @@
     <div class="overview-content" #scrollContent>
       <div class="overview-viewport" #viewport>
         <canvas #scoreCanvas tabindex="0" role="application"
-          aria-label="Arrangement overview. Click section headers to select sections; Ctrl-click extends or trims and Shift-click selects a range. Click cells or track buttons to select part settings. Middle-click a track button or press I to toggle presence. Escape clears selection. Use arrow keys and Enter to activate."
+          aria-label="Arrangement overview. Click section headers to select sections; Ctrl-click extends or trims and Shift-click selects a range. Click cells or track buttons to select part settings. Middle-click a track button or press I to toggle presence. Shift+middle-click a track, cell or header to reroll its track settings; Shift+right-click to reset settings and restore generated notes. Middle-click a header to duplicate its section; right-click to remove it. Escape clears selection. Use arrow keys and Enter to activate."
           aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space Escape I"
           (click)="onCanvasClick($event)" (pointermove)="onPointerMove($event)"
           (pointerdown)="onCanvasPointerdown($event)" (auxclick)="onCanvasAuxclick($event)"
+          (contextmenu)="onCanvasContextmenu($event)"
           (keydown)="onCanvasKeydown($event)"></canvas>
         <canvas #playheadCanvas class="playhead-canvas" aria-hidden="true"></canvas>
       </div>

@@ -35,6 +35,10 @@ interface OverviewHitArea {
   readonly label: string;
   readonly activate: (event?: MouseEvent | KeyboardEvent) => void;
   readonly togglePresence?: () => void;
+  readonly reroll?: () => void;
+  readonly reset?: () => void;
+  readonly duplicate?: () => void;
+  readonly remove?: () => void;
 }
 
 const RULER_HEIGHT = 24;
@@ -106,6 +110,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly cellSelected = output<{ readonly sectionId: string; readonly role: ArrangedPart }>();
   readonly trackSelected = output<{ readonly sectionId: string; readonly trackId: string }>();
   readonly partToggled = output<{ readonly sectionId: string; readonly trackId: string; readonly present: boolean }>();
+  readonly tracksChangeRequested = output<{ readonly sectionId: string; readonly role?: ArrangedPart;
+  readonly trackId?: string; readonly action: 'reroll' | 'reset' }>();
+  readonly sectionDuplicateRequested = output<string>();
+  readonly sectionRemoveRequested = output<string>();
 
   readonly sections = computed<OverviewSection[]>(() => {
     const project = this.project();
@@ -415,7 +423,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         }
         hit({ key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
           label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}.`,
-          activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }) }, this.labelWidth, RULER_HEIGHT);
+          activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }),
+          reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
+          reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reset' }) }, this.labelWidth, RULER_HEIGHT);
         const togglesPerRow = Math.max(1, Math.floor((width - CELL_HORIZONTAL_PADDING + 1e-7) / TRACK_BUTTON_PITCH));
         const toggleRows = Math.ceil(group.tracks.length / togglesPerRow);
         const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, toggleRows) * TRACK_BUTTON_PITCH);
@@ -457,7 +467,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           }
           const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0
             || Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0;
-          const manualNotes = item.section.trackPhrases?.[track.id] !== undefined || track.editedPhrase !== undefined;
+          const manualNotes = item.section.trackPhrases?.[track.id] !== undefined
+            || track.editedPhrase !== undefined && !item.section.generatedTrackIds?.includes(track.id);
           if (manualNotes) {
             context.fillStyle = item.section.trackPhrases?.[track.id] !== undefined ? this.accent : noteColor;
             context.beginPath(); context.arc(centerX + 6, centerY - 6, 2.5, 0, Math.PI * 2); context.fill();
@@ -469,6 +480,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           hit({ key: `toggle:${item.section.id}:${track.id}`, x: centerX - 8, y: centerY - 8, width: 16, height: 16,
             label: `Select ${track.name ?? group.name + ' track ' + (index + 1)} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
+            reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
+            reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reset' }),
             togglePresence: () => this.toggleTrack(item.section, track) }, this.labelWidth, RULER_HEIGHT);
         }
       }
@@ -497,7 +510,11 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       context.restore();
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
         label: `${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}`,
-        activate: (event) => this.selectSection(item.section.id, event) }, this.labelWidth, 0);
+        activate: (event) => this.selectSection(item.section.id, event),
+        reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reroll' }),
+        reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reset' }),
+        duplicate: () => this.sectionDuplicateRequested.emit(item.section.id),
+        remove: () => this.sectionRemoveRequested.emit(item.section.id) }, this.labelWidth, 0);
     }
     context.restore();
 
@@ -574,16 +591,29 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasAuxclick(event: MouseEvent): void {
-    if (event.button !== 1) return;
+    if (event.button !== 1 && event.button !== 2) return;
     event.preventDefault();
-    this.hitAt(event)?.togglePresence?.();
+    const area = this.hitAt(event);
+    if (event.shiftKey) {
+      if (event.button === 1) area?.reroll?.();
+      else area?.reset?.();
+    } else if (event.button === 1) {
+      if (area?.duplicate) area.duplicate();
+      else area?.togglePresence?.();
+    } else area?.remove?.();
+  }
+
+  onCanvasContextmenu(event: MouseEvent): void {
+    const area = this.hitAt(event);
+    if (area && (event.shiftKey ? area.reset : area.remove)) event.preventDefault();
   }
 
   onPointerMove(event: PointerEvent): void {
     const area = this.hitAt(event);
     const canvas = this.scoreCanvas().nativeElement;
     canvas.style.cursor = area ? 'pointer' : 'default';
-    canvas.title = area?.label ?? '';
+    canvas.title = area ? area.label + (area.reroll ? ' Shift+middle-click rerolls settings; Shift+right-click resets settings and manual notes.' : '')
+      + (area.duplicate ? ' Middle-click duplicates; right-click removes this section.' : '') : '';
   }
 
   onCanvasKeydown(event: KeyboardEvent): void {

@@ -144,31 +144,32 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       arrangementBeat += sectionLength;
       continue;
     }
-    const resolved = resolvePartTrack(track, section);
+    const manual = track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id);
+    const resolved = resolvePartTrack(manual ? track : { ...track, editedPhrase: undefined } as CompositionTrack, section);
     const effectiveTrack = section.context?.swingPercent === undefined || resolved.role === 'bass' ? resolved : {
       ...resolved, generatorSettings: { ...resolved.generatorSettings, swingPercent: section.context.swingPercent },
     } as CompositionTrack;
     const harmony = sectionGenerationHarmony(project, section, track.role);
-    const progression = track.editedPhrase === undefined ? harmony.degrees : project.progression;
-    const generated = track.editedPhrase === undefined
+    const progression = !manual ? harmony.degrees : project.progression;
+    const generated = !manual
       ? generateTrackPhrase({ ...sectionProject(project, section), progression, progressionChords: harmony.customChords }, effectiveTrack, false,
         (effectiveTrack.role === 'arpeggio' && (effectiveTrack.generatorSettings.rhythm === 'melody' || effectiveTrack.generatorSettings.correctMelodyNotes))
           || (effectiveTrack.role === 'drums' && effectiveTrack.generatorSettings.rhythm === 'melody') ? sectionMelodyContext(project, section) : undefined, harmony) : phrase;
-    const expandedPhrase = effectiveTrack.role === 'bass' && track.editedPhrase === undefined
+    const expandedPhrase = effectiveTrack.role === 'bass' && !manual
       ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;
-    const keyChange = track.editedPhrase === undefined && track.role !== 'drums' ? section.context?.keyChange ?? 0 : 0;
+    const keyChange = !manual && track.role !== 'drums' ? section.context?.keyChange ?? 0 : 0;
     const normalizedPhrase = keyChange === 0 ? expandedPhrase : expandedPhrase.map(note => ({ ...note,
       midi: Math.max(0, Math.min(127, note.midi + keyChange)) }));
     const durations = harmony.durations;
     // Manual replacements keep their track-owned pitches and rhythms. Only arrangement slot
     // boundaries relocate their repeated bars; section settings never rewrite their notes.
-    const sectionPhrase = track.editedPhrase === undefined ? mapChordNotes(normalizedPhrase, durations) : normalizedPhrase;
+    const sectionPhrase = !manual ? mapChordNotes(normalizedPhrase, durations) : normalizedPhrase;
     const sectionNotes: PhraseNote[] = [];
     for (let measure = 0; measure < section.measures; measure++) {
       if (partEnters) {
         const sourceMeasure = measure % progression.length;
-        const sourceStartBeat = track.editedPhrase === undefined ? durations.slice(0, sourceMeasure).reduce((sum, value) => sum + value, 0) : sourceMeasure * 4;
-        const sourceEndBeat = sourceStartBeat + (track.editedPhrase === undefined ? durations[sourceMeasure] : 4);
+        const sourceStartBeat = !manual ? durations.slice(0, sourceMeasure).reduce((sum, value) => sum + value, 0) : sourceMeasure * 4;
+        const sourceEndBeat = sourceStartBeat + (!manual ? durations[sourceMeasure] : 4);
         for (const note of sectionPhrase) {
           if (note.startBeat >= sourceStartBeat && note.startBeat < sourceEndBeat) {
             sectionNotes.push({ ...note, startBeat: arrangementBeat + note.startBeat - sourceStartBeat });
@@ -177,7 +178,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       }
       arrangementBeat += durations[measure % durations.length];
     }
-    result.push(...(track.editedPhrase === undefined ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes));
+    result.push(...(!manual ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes));
   }
   const notes = result;
   if (track.role === 'drums') return notes;
@@ -209,7 +210,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   const progression = harmony.degrees;
   const source = project.tracks.find(track => track.role === 'melody');
   if (!source) return { ...melodyContext([], progression.length), available: false };
-  if (source.editedPhrase !== undefined) return melodyContext(source.editedPhrase, progression.length, project.melodyGlobal?.patternFlip);
+  if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) return melodyContext(source.editedPhrase, progression.length, project.melodyGlobal?.patternFlip);
   const effective = resolvePartTrack(source, section);
   if (effective.role !== 'melody') {
     return { ...melodyContext([], progression.length), available: false };

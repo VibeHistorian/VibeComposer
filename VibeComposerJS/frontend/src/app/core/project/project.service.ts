@@ -261,6 +261,7 @@ export class ProjectService {
     return this.commitPartWorkflow({ ...current, tracks: current.tracks.filter(track => !removed.has(track.id)),
       arrangement: current.arrangement.map(section => ({ ...section,
         trackPresence: Object.fromEntries(Object.entries(section.trackPresence).filter(([id]) => !removed.has(id))),
+        ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => !removed.has(id)) } : {}),
         ...(section.trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(section.trackPhrases).filter(([id]) => !removed.has(id))) } : {}),
         ...(section.trackPartOverrides !== undefined ? { trackPartOverrides: Object.fromEntries(
           Object.entries(section.trackPartOverrides).filter(([id]) => !removed.has(id))) } : {}),
@@ -317,6 +318,65 @@ export class ProjectService {
     if (!ARRANGED_PARTS.includes(role)) return 'invalid';
     const candidate = this.buildRoleReroll(this.state(), role, trackId);
     return candidate ? candidate === this.state() ? 'unchanged' : this.commitPartWorkflow(candidate) : 'invalid';
+  }
+
+  /** Overview shortcuts are section-local and commit the entire gesture once. */
+  changeOverviewTracks(scope: LocalPartSettingsScope | { kind: 'section'; sectionId: string },
+    action: 'reroll' | 'reset'): PartWorkflowResult {
+    const current = this.state(), section = current.arrangement.find(item => item.id === scope.sectionId);
+    if (!section || !['reroll', 'reset'].includes(action)) return 'invalid';
+    const members = current.tracks.filter(track => scope.kind === 'section' ||
+      (scope.kind === 'section-role' ? track.role === scope.role : track.id === scope.trackId));
+    if (!members.length) return 'unchanged';
+    const rolePartOverrides = { ...section.rolePartOverrides };
+    const trackPartOverrides = { ...section.trackPartOverrides };
+    const trackPhrases = { ...section.trackPhrases };
+    const generatedTrackIds = new Set(section.generatedTrackIds);
+    const counts = { ...current.trackRerollCounts };
+    for (const role of ARRANGED_PARTS) {
+      const selected = members.filter(track => track.role === role);
+      if (!selected.length) continue;
+      if (action === 'reset') {
+        // Move a shared cell override to untouched siblings before removing it.
+        const shared = rolePartOverrides[role];
+        if (shared) for (const sibling of current.tracks.filter(track => track.role === role && !selected.includes(track))) {
+          trackPartOverrides[sibling.id] = copyPartSettings({ ...shared, ...trackPartOverrides[sibling.id] });
+        }
+        delete rolePartOverrides[role];
+        for (const track of selected) {
+          delete trackPartOverrides[track.id];
+          delete trackPhrases[track.id];
+          if (track.editedPhrase !== undefined) generatedTrackIds.add(track.id);
+          else generatedTrackIds.delete(track.id);
+        }
+      } else {
+        const sources = selected.filter(track => !track.rerollLocked).map(track => resolvePartTrack(track, section));
+        if (!sources.length) continue;
+        const count = counts[role] ?? 0;
+        if (count >= 2147483647) return 'invalid';
+        const roleTracks = current.tracks.filter(track => track.role === role);
+        const drumContext = { totalTracks: roleTracks.length,
+          remaining: roleTracks.filter(track => !sources.some(source => source.id === track.id))
+            .map(track => resolvePartTrack(track, section).generatorSettings as DrumSettings) };
+        const settings = rerollRoleSettings(this.trackRerollSeed(current, role, count), role,
+          current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role], sources,
+          sources.map(track => roleTracks.findIndex(item => item.id === track.id) + 1), drumContext);
+        sources.forEach((track, index) => {
+          trackPartOverrides[track.id] = copyPartSettings(settingsValues(settings[index], role)) as PartSettingsPatch;
+        });
+        counts[role] = count + 1;
+      }
+    }
+    if (JSON.stringify(rolePartOverrides) === JSON.stringify({ ...section.rolePartOverrides })
+      && JSON.stringify(trackPartOverrides) === JSON.stringify({ ...section.trackPartOverrides })
+      && JSON.stringify(trackPhrases) === JSON.stringify({ ...section.trackPhrases })
+      && JSON.stringify([...generatedTrackIds]) === JSON.stringify(section.generatedTrackIds ?? [])
+      && JSON.stringify(counts) === JSON.stringify({ ...current.trackRerollCounts })) return 'unchanged';
+    const nextSection = { ...section, rolePartOverrides, trackPartOverrides,
+      ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
+      ...(generatedTrackIds.size || section.generatedTrackIds !== undefined ? { generatedTrackIds: [...generatedTrackIds] } : {}) };
+    return this.commitPartWorkflow({ ...current, trackRerollCounts: counts,
+      arrangement: current.arrangement.map(item => item === section ? nextSection : item) });
   }
 
   private buildRoleReroll(current: CompositionProject, role: ArrangedPart, trackId?: string): CompositionProject | undefined {
@@ -784,6 +844,7 @@ export class ProjectService {
     this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
       ...section,
       trackPresence: { ...section.trackPresence, [id]: section.trackPresence[source.id] ?? false },
+      ...(section.generatedTrackIds?.includes(source.id) ? { generatedTrackIds: [...section.generatedTrackIds, id] } : {}),
       ...(section.trackPhrases?.[source.id] !== undefined ? { trackPhrases: { ...section.trackPhrases, [id]: section.trackPhrases[source.id].map(note => ({ ...note })) } } : {}),
       trackPartOverrides: section.trackPartOverrides?.[source.id]
         ? { ...section.trackPartOverrides, [id]: copyPartSettings(section.trackPartOverrides[source.id]) } : section.trackPartOverrides,
@@ -937,7 +998,8 @@ export class ProjectService {
       delete trackPartOverrides[trackId];
       const trackPhrases = { ...section.trackPhrases };
       delete trackPhrases[trackId];
-      return { ...section, trackPresence, trackPartOverrides, ...(section.trackPhrases !== undefined ? { trackPhrases } : {}) };
+      return { ...section, trackPresence, trackPartOverrides, ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
+        ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => id !== trackId) } : {}) };
     });
     this.commit({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement });
   }
@@ -981,6 +1043,7 @@ export class ProjectService {
       customDurations: sections[index].customDurations ? [...sections[index].customDurations] : undefined,
       chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
       trackPresence: { ...sections[index].trackPresence },
+      ...(sections[index].generatedTrackIds ? { generatedTrackIds: [...sections[index].generatedTrackIds] } : {}),
       ...(sections[index].trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(sections[index].trackPhrases).map(([id, notes]) => [id, notes.map(note => ({ ...note }))])) } : {}),
       rolePartOverrides: Object.fromEntries(Object.entries(sections[index].rolePartOverrides ?? {}).map(([role, patch]) => [role, copyPartSettings(patch)])),
       trackPartOverrides: Object.fromEntries(Object.entries(sections[index].trackPartOverrides ?? {}).map(([id, patch]) => [id, copyPartSettings(patch)])),
@@ -1345,7 +1408,7 @@ export class ProjectService {
       if (Array.isArray(arrangement)) arrangement.forEach((raw, index) => {
         const path = `project.arrangement[${index}]`;
         const section = object(raw, path, ['id', 'type', 'measures'], ['id', 'type', 'measures', 'context', 'customChords', 'customDurations', 'chordDegrees',
-          'useMelodyHarmony', 'swapMelody', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
+          'useMelodyHarmony', 'swapMelody', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
         if (!section) return;
         check(`${path}.type`, SECTION_TYPES.includes(section['type'] as SectionType), `expected one of ${SECTION_TYPES.join(', ')}`);
         check(`${path}.measures`, Number.isInteger(section['measures']) && (section['measures'] as number) >= 1 && (section['measures'] as number) <= 32, 'expected an integer from 1 to 32');
@@ -1637,6 +1700,9 @@ export class ProjectService {
         }
       }
       const trackPhrases: Record<string, readonly PhraseNote[]> = {};
+      if (section.generatedTrackIds !== undefined && (!Array.isArray(section.generatedTrackIds)
+        || section.generatedTrackIds.some(id => typeof id !== 'string' || !trackIds.has(id))
+        || new Set(section.generatedTrackIds).size !== section.generatedTrackIds.length)) return undefined;
       if (section.trackPhrases !== undefined) {
         if (!section.trackPhrases || typeof section.trackPhrases !== 'object' || Array.isArray(section.trackPhrases)) return undefined;
         for (const [trackId, notes] of Object.entries(section.trackPhrases)) {
@@ -1682,6 +1748,7 @@ export class ProjectService {
         rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,
         trackPartOverrides,
         ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
+        ...(section.generatedTrackIds !== undefined ? { generatedTrackIds: [...section.generatedTrackIds] } : {}),
       });
     }
     return sections;
