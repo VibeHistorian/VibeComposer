@@ -1645,6 +1645,61 @@ test('P5e empty preferred split-pitch ranges retain the in-range B without throw
   assert.equal(retained, true);
 });
 
+test('history navigation preserves audition switches, redo branches and abbreviated diffs', () => {
+  const { service } = fixture();
+  const start = service.project().tempoBpm;
+  const track = service.project().tracks[0];
+  service.updateTrack(track.id, { mix: { muted: true } });
+  assert.equal(service.canUndo(), false);
+  service.updateSettings({ tempoBpm: 130 });
+  service.updateSettings({ tempoBpm: 140 });
+  assert.equal(service.historyEntries().length, 3);
+  assert.ok(service.historyEntries()[2].changes.some(diff => diff.includes('Tempo Bpm: 130 → 140')));
+  service.undo();
+  service.toggleTrackMix([track.id], 'solo', true);
+  assert.equal(service.canRedo(), true, 'audition does not discard redo');
+  service.redo();
+  assert.equal(service.project().tempoBpm, 140);
+  assert.equal(service.project().tracks[0].mix.solo, true);
+  assert.equal(service.project().tracks[0].mix.muted, false);
+  service.goToHistory(0);
+  assert.equal(service.project().tempoBpm, start);
+  assert.equal(service.project().tracks[0].mix.solo, true);
+  assert.equal(service.project().mix[track.role].solo, true);
+  assert.equal(service.historyPosition(), 0);
+  service.goToHistory(2);
+  assert.equal(service.project().tempoBpm, 140);
+  service.goToHistory(1);
+  service.updateSettings({ tempoBpm: 150 });
+  assert.equal(service.canRedo(), false);
+  assert.equal(service.historyEntries().length, 3);
+  service.goToHistory(-1); service.goToHistory(100); service.goToHistory(0.5);
+  assert.equal(service.project().tempoBpm, 150);
+  assert.ok(service.historyEntries().every(entry => entry.changes.every(diff => !/muted|solo/i.test(diff))));
+  assert.equal(JSON.parse(service.exportProjectJson()).tracks[0].mix.solo, true);
+});
+
+test('mixed audition and volume patches undo only volume; compact history shows the final value', (t) => {
+  t.mock.method(performance, 'now', () => 0);
+  const { service } = fixture();
+  const track = service.project().tracks[0];
+  const volume = track.mix.volumePercent;
+  service.updateTrack(track.id, { mix: { muted: true, volumePercent: 42 } });
+  service.undo();
+  assert.equal(service.project().tracks[0].mix.volumePercent, volume);
+  assert.equal(service.project().tracks[0].mix.muted, true);
+  service.redo();
+  assert.equal(service.project().tracks[0].mix.volumePercent, 42);
+  service.toggleCompactHistory();
+  service.updateSettings({ tempoBpm: 130 });
+  service.toggleTrackMix([track.id], 'solo');
+  service.updateSettings({ tempoBpm: 140 });
+  assert.equal(service.historyEntries().length, 3);
+  assert.ok(service.historyEntries()[2].changes.some(diff => diff.endsWith('→ 140')));
+  service.goToHistory(0);
+  assert.equal(service.project().tracks[0].mix.solo, true);
+});
+
 test('mute/solo controls clear the opposite state across track and legacy mix updates', () => {
   const { service } = fixture();
   const track = service.project().tracks[0];
@@ -1656,19 +1711,17 @@ test('mute/solo controls clear the opposite state across track and legacy mix up
   assert.deepEqual(service.project().mix[track.role], service.project().tracks[0].mix);
 });
 
-test('role/global mute and solo clear partial states and commit a whole gesture in one undo step', () => {
+test('role/global mute and solo clear partial states without entering undo history', () => {
   const { service } = fixture();
   service.addTrack('bass');
   const ids = service.project().tracks.filter(track => track.role === 'bass').map(track => track.id);
   service.updateTrack(ids[0], { mix: { muted: true } });
   service.toggleTrackMix(ids, 'muted');
   assert.ok(service.project().tracks.filter(track => ids.includes(track.id)).every(track => !track.mix.muted));
-  const before = service.exportProjectJson();
+  const position = service.historyPosition();
   service.toggleTrackMix(ids, 'solo');
-  const after = service.exportProjectJson();
   assert.ok(service.project().tracks.filter(track => ids.includes(track.id)).every(track => track.mix.solo && !track.mix.muted));
-  service.undo(); assert.equal(service.exportProjectJson(), before);
-  service.redo(); assert.equal(service.exportProjectJson(), after);
+  assert.equal(service.historyPosition(), position);
   const all = service.project().tracks.map(track => track.id);
   service.toggleTrackMix(all, 'solo');
   assert.ok(service.project().tracks.every(track => !track.mix.solo));
@@ -2660,7 +2713,7 @@ test('all-role scoped timing, seeds and arrangement presence survive history, sn
     assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after, 'mute leaves score notes intact');
     service.updateTrack(id, { mix: { solo: true } });
     assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), after, 'solo leaves score notes intact');
-    service.undo(); service.undo();
+    service.updateTrack(id, { mix: { solo: false } });
     service.setSectionTrackPresence(0, id, false);
     assert.equal(service.project().arrangement[0].trackPresence[id], false);
     assert.equal(phrase.layOutTrackPhrase(service.project(), track()).some(note => note.startBeat < end), false);
@@ -5143,10 +5196,9 @@ test('display filters synchronize audible tracks atomically when enabled', () =>
   workspace.toggleScoreRole('drums');
   assert.ok(workspace.scoreTracks().every(track => track.role !== 'drums'));
   assert.ok(service.project().tracks.every(track => !track.mix.muted));
-  const before = service.exportProjectJson();
   workspace.toggleScoreMixSync();
   assert.ok(service.project().tracks.every(track => track.mix.muted === (track.role === 'drums') && !track.mix.solo));
-  service.undo(); assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canUndo(), false, 'audition sync is excluded from history');
   workspace.toggleScoreRole('bass');
   assert.ok(service.project().tracks.filter(track => ['drums','bass'].includes(track.role)).every(track => track.mix.muted));
 });

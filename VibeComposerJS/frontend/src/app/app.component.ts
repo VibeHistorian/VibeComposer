@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { Dialog, DialogModule } from '@angular/cdk/dialog';
+import { HistoryDialogComponent } from './shared/history-dialog.component';
 import { getAppInfo } from './core/wails/wails-api';
 import type { AppInfo } from './core/wails/wails-api';
 import { ProjectService } from './core/project/project.service';
@@ -9,7 +11,7 @@ import { WorkspaceUiService } from './shared/workspace-ui.service';
 
 @Component({
   selector: 'vc-root',
-  imports: [TransportDockComponent, WorkspaceCanvasComponent, SectionTypeSettingsComponent],
+  imports: [DialogModule, TransportDockComponent, WorkspaceCanvasComponent, SectionTypeSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })
@@ -20,6 +22,11 @@ export class AppComponent implements OnInit {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly sectionTypeSettingsOpen = signal(false);
+  private readonly dialogs = inject(Dialog);
+
+  openHistory(): void {
+    this.dialogs.open(HistoryDialogComponent, { ariaLabelledBy: 'history-title' });
+  }
 
   async ngOnInit(): Promise<void> {
     try {

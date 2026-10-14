@@ -1,0 +1,37 @@
+<section class="history-dialog" aria-labelledby="history-title">
+  <header>
+    <div>
+      <h1 id="history-title">History</h1>
+      <p>Select a state to undo or redo to it. Solo and Mute stay as they are.</p>
+    </div>
+    <button type="button" class="close" (click)="dialog.close()" aria-label="Close history">×</button>
+  </header>
+  @if (workspaceUi.editingNoteId() !== null) {
+    <p role="status">Finish editing the phrase to navigate project history.</p>
+  }
+  <ol aria-label="Project history">
+    @for (entry of projects.historyEntries(); track entry.index) {
+      <li>
+        <button type="button" class="history-entry"
+          [class.current]="entry.index === projects.historyPosition()"
+          [class.future]="entry.index > projects.historyPosition()"
+          [attr.aria-current]="entry.index === projects.historyPosition() ? 'step' : null"
+          [disabled]="workspaceUi.editingNoteId() !== null"
+          [title]="entry.changes.join('\n')"
+          (click)="projects.goToHistory(entry.index)">
+          <span class="entry-heading">
+            <strong>{{ entry.index === 0 ? 'Starting point' : 'Change ' + entry.index }}</strong>
+            <span>{{ entry.index === projects.historyPosition() ? 'Current' : entry.index > projects.historyPosition() ? 'Redo to here' : 'Undo to here' }}</span>
+          </span>
+          @for (change of entry.changes.slice(0, 3); track $index) {
+            <span class="diff">{{ change }}</span>
+          }
+          @if (entry.changes.length > 3) {
+            <span class="more">+ {{ entry.changes.length - 3 }} more changes</span>
+          }
+        </button>
+      </li>
+    }
+  </ol>
+  <footer>Up to 100 undo steps are kept for this session.</footer>
+</section>

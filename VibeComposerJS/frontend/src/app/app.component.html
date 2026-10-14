@@ -18,6 +18,7 @@
           <button type="button" (click)="sectionTypeSettingsOpen.set(true)">Section types</button>
           <button type="button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>
           <button type="button" (click)="projects.redo()" [disabled]="!projects.canRedo() || workspaceUi.editingNoteId() !== null" aria-label="Redo" title="Redo">↷</button>
+          <button type="button" (click)="openHistory()" aria-haspopup="dialog">History</button>
           <button type="button" class="compact-history" (click)="projects.toggleCompactHistory()"
             [attr.aria-pressed]="projects.compactHistory()"
             title="Group repeated changes to the same control less than one second apart into one undo step">Compact history</button>

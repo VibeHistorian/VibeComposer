@@ -1,6 +1,7 @@
 import { isScaleMode } from '../music/scales';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { historyContent, preserveAudition, projectDiff } from './project-history';
 import { KEYS, getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
 import type {
@@ -50,11 +51,33 @@ export class ProjectService {
   private readonly redoAvailable = signal(false);
   private readonly compactHistoryEnabled = signal(false);
   private lastControlEdit: { key: string; time: number } | null = null;
+  private readonly historyRevision = signal(0);
 
   readonly project = this.state.asReadonly();
   readonly canUndo = this.undoAvailable.asReadonly();
   readonly canRedo = this.redoAvailable.asReadonly();
   readonly compactHistory = this.compactHistoryEnabled.asReadonly();
+  readonly historyPosition = computed(() => { this.historyRevision(); return this.past.length; });
+  readonly historyEntries = computed(() => {
+    this.historyRevision();
+    const states = [...this.past, this.state(), ...[...this.future].reverse()];
+    return states.map((state, index) => ({ index,
+      changes: index === 0 ? ['Starting point of retained history'] : projectDiff(states[index - 1], state),
+    }));
+  });
+
+  goToHistory(index: number): void {
+    if (!Number.isInteger(index) || index < 0 || index > this.past.length + this.future.length) return;
+    const current = this.state();
+    const states = [...this.past, current, ...[...this.future].reverse()];
+    const next = preserveAudition(states[index], current);
+    this.past.splice(0, this.past.length, ...states.slice(0, index));
+    this.future.splice(0, this.future.length, ...states.slice(index + 1).reverse());
+    this.lastControlEdit = null;
+    this.state.set(next);
+    this.persist(next);
+    this.refreshHistoryAvailability();
+  }
 
   toggleCompactHistory(): void {
     this.compactHistoryEnabled.set(!this.compactHistoryEnabled());
@@ -671,7 +694,7 @@ export class ProjectService {
       this.controlHistoryKey(['primary-mix', part], patch));
   }
 
-  /** Group/global mix gestures commit once, including exclusive solo. */
+  /** Group/global audition gestures persist without entering editing history. */
   toggleTrackMix(trackIds: readonly string[], setting: 'muted' | 'solo', exclusive = false): void {
     const current = this.state();
     const ids = new Set(trackIds);
@@ -1111,8 +1134,9 @@ export class ProjectService {
       return;
     }
     this.future.push(this.state());
-    this.state.set(previous);
-    this.persist(previous);
+    const restored = preserveAudition(previous, this.state());
+    this.state.set(restored);
+    this.persist(restored);
     this.refreshHistoryAvailability();
   }
 
@@ -1123,14 +1147,20 @@ export class ProjectService {
       return;
     }
     this.past.push(this.state());
-    this.state.set(next);
-    this.persist(next);
+    const restored = preserveAudition(next, this.state());
+    this.state.set(restored);
+    this.persist(restored);
     this.refreshHistoryAvailability();
   }
 
   private commit(next: CompositionProject, controlKey?: string): void {
     const current = this.state();
     if (!this.isProject(next) || JSON.stringify(current) === JSON.stringify(next)) {
+      return;
+    }
+    if (historyContent(current) === historyContent(next)) {
+      this.state.set(next);
+      this.persist(next);
       return;
     }
 
@@ -1150,6 +1180,7 @@ export class ProjectService {
   }
 
   private refreshHistoryAvailability(): void {
+    this.historyRevision.update(revision => revision + 1);
     this.undoAvailable.set(this.past.length > 0);
     this.redoAvailable.set(this.future.length > 0);
   }

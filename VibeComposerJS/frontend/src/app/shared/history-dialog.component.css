@@ -1,0 +1,22 @@
+/* Dialog layout */
+:host { display: block; width: min(640px, 94vw); }
+.history-dialog { padding: 20px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); color: var(--text-primary); box-shadow: 0 24px 80px var(--shadow-ink); }
+header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+h1 { margin: 0 0 8px; font-size: 20px; }
+p, footer { margin: 0 0 12px; color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+footer { margin: 12px 0 0; }
+.close { width: 32px; height: 32px; flex-shrink: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font-size: 20px; cursor: pointer; }
+
+/* History states */
+ol { max-height: 60vh; overflow: auto; padding: 0; margin: 0; list-style: none; }
+li + li { margin-top: 6px; }
+.history-entry { display: block; width: 100%; padding: 10px 12px; text-align: left; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-low); color: var(--text-secondary); cursor: pointer; }
+.entry-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 5px; font-size: 12px; }
+.entry-heading > span, .more { color: var(--text-muted); font-size: 11px; }
+.diff { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 11px/1.6 var(--font-mono); }
+.future { background: var(--surface-base); }
+.current { border-color: var(--accent-primary); background: var(--surface-accent); }
+.current .entry-heading { color: var(--accent-primary); }
+.history-entry:hover, .close:hover { background: var(--surface-button-hover); }
+.history-entry:focus-visible, .close:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.history-entry:disabled { cursor: default; opacity: .6; }
