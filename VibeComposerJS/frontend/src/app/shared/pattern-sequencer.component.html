@@ -14,9 +14,9 @@
             @if ('sectionId' in data.scope) { <button type="button" class="inherit" [attr.aria-label]="'Inherit ' + row.name + ' pattern'" (click)="inherit(row.id, 'customPattern')">Inherit grid</button> }
           </div>
           @if (row.supported) {
-            <div class="cells custom-pattern-grid" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()" (lostpointercapture)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()">
+            <div class="cells custom-pattern-grid" [style.--row-steps]="row.pattern.length" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()" (lostpointercapture)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()">
               @for (slot of row.pattern; track $index) {
-                <button type="button" class="step custom-pattern-slot" [class.active]="slot > 0" [class.beat]="$index % 4 === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index" [attr.aria-pressed]="slot > 0" [attr.aria-label]="row.name + ' subdivision ' + ($index + 1)"
+                <button type="button" class="step custom-pattern-slot" [style.--step-index]="$index" [class.active]="slot > 0" [class.beat]="$index * 4 % row.hits === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index" [attr.aria-pressed]="slot > 0" [attr.aria-label]="row.name + ' subdivision ' + ($index + 1)"
                   (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index)"></button>
               }
             </div>
@@ -25,9 +25,9 @@
         @if (showVelocities() && row.velocitySupported) {
           <div class="velocity-row">
             <label class="identity"><input type="checkbox" [checked]="row.values['useCustomVelocities'] === true" (change)="patch(row.id, { useCustomVelocities: $any($event.target).checked })" /> Custom velocity</label>
-            <div class="cells velocity-pattern-grid">
+            <div class="cells velocity-pattern-grid" [style.--row-steps]="row.velocities.length">
               @for (velocity of row.velocities; track $index) {
-                <label class="velocity-slot" [class.rest]="row.pattern[$index] === 0">
+                <label class="velocity-slot" [style.--step-index]="$index" [class.rest]="row.pattern[$index] === 0">
                   <input type="range" min="0" max="127" step="1" [value]="velocity" [attr.aria-label]="row.name + ' velocity subdivision ' + ($index + 1)" [attr.aria-valuetext]="velocity === 0 ? '0, silent' : velocity" (input)="previewVelocity(row.id, $index, $event)" (change)="commitVelocity(row.id, $index, $event)" (wheel)="wheelVelocity(row.id, $index, $event)" (pointercancel)="cancel()" (blur)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()" />
                   <output>{{ velocity }}</output>
                 </label>

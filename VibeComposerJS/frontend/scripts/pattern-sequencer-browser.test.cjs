@@ -39,6 +39,29 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       const popup=document.querySelector('vc-pattern-sequencer');
       check(!popup.querySelector('.velocity-pattern-grid'),'velocities hidden');
       const row=id=>popup.querySelector('[data-track-id="'+id+'"]');
+      const setSteps = async (id, count) => {
+        const input = row(id).querySelector('input[type="number"]');
+        input.value=String(count); input.dispatchEvent(new Event('change',{bubbles:true}));
+        await wait(()=>row(id).querySelectorAll('.step').length===count, 'set steps ' + count);
+      };
+      await setSteps(ids[0], 32);
+      await setSteps(ids[2], 4);
+      const checkPositions = (selector, positions) => {
+        const reference = [...row(ids[0]).querySelectorAll(selector)].map(cell=>cell.getBoundingClientRect());
+        const sparse = [...row(ids[2]).querySelectorAll(selector)].map(cell=>cell.getBoundingClientRect());
+        check(sparse.length===positions.length, 'sparse lane cell count');
+        sparse.forEach((cell, index)=>{
+          check(Math.abs(cell.left-reference[positions[index]].left)<1, selector + ' time position ' + index);
+          check(Math.abs(cell.width-reference[positions[index]].width)<1, selector + ' shared cell width');
+        });
+      };
+      checkPositions('.step', [0,8,16,24]);
+      await setSteps(ids[2], 5);
+      const referenceLane = row(ids[0]).querySelector('.custom-pattern-grid').getBoundingClientRect();
+      [...row(ids[2]).querySelectorAll('.step')].forEach((cell,index)=>{
+        check(Math.abs(cell.getBoundingClientRect().left-referenceLane.left-index*(referenceLane.width+3)/5)<1, 'fractional subdivision position');
+      });
+      await setSteps(ids[2], 4);
       const before=JSON.stringify(read().tracks.find(t=>t.id===ids[0]));
       row(ids[1]).querySelector('input[type="number"]').value='8';
       row(ids[1]).querySelector('input[type="number"]').dispatchEvent(new Event('change',{bubbles:true}));
@@ -51,6 +74,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       check(settings.rhythm==='custom' && settings.customPattern.length===32,'bake rhythm');
       popup.querySelector('header button').click();
       await wait(()=>popup.querySelectorAll('.velocity-pattern-grid').length===3,'velocity toggle');
+      checkPositions('.velocity-slot', [0,8,16,24]);
       const velocity=row(ids[1]).querySelector('input[type="range"]');
       velocity.value='22'; velocity.dispatchEvent(new Event('input',{bubbles:true}));
       await wait(()=>row(ids[1]).querySelector('output').textContent==='22','velocity draft');

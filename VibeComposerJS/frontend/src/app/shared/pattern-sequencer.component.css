@@ -30,8 +30,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focu
 .step.active { background: var(--parameter-rhythm); border-color: var(--parameter-rhythm); }
 .unavailable { color: var(--text-muted); font-size: 11px; }
 
+/* Shared timeline positions, independent of each track's subdivision count */
+.custom-pattern-grid, .velocity-pattern-grid { display: block; position: relative; height: 24px; }
+.custom-pattern-grid > .step, .velocity-pattern-grid > .velocity-slot { position: absolute; left: calc(var(--step-index) * (100% + 3px) / var(--row-steps)); width: calc((100% + 3px) / var(--steps) - 3px); box-sizing: border-box; }
+
 /* Optional velocity lanes */
 .velocity-row { margin-top: 7px; }
+.velocity-pattern-grid { height: 60px; }
 .velocity-row .identity { color: var(--parameter-dynamics); }
 .velocity-row .identity input { accent-color: var(--parameter-dynamics); vertical-align: middle; }
 .velocity-slot { display: grid; justify-items: center; gap: 2px; color: var(--text-secondary); font: 9px var(--font-mono); }
