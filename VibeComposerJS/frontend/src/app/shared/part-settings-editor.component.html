@@ -58,62 +58,24 @@
                     <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option>
                   }
                 </select>
-              } @else if (control.kind === 'pattern') {
-                @if (rhythmPreview(); as pattern) {
-                  <div class="custom-pattern-grid" role="group" [attr.aria-label]="control.label"
-                    (pointermove)="movePainting($event)" (pointerup)="finishPainting($event)"
-                    (pointercancel)="cancelPainting()" (lostpointercapture)="cancelPainting()"
-                    (keydown.escape)="cancelPainting()">
-                    @for (slot of pattern; track $index) {
-                      <button type="button" class="custom-pattern-slot" [class.active]="slot > 0"
-                        [attr.data-rhythm-slot]="$index" [attr.aria-label]="'Subdivision ' + ($index + 1)"
-                        [attr.aria-pressed]="slot > 0" (pointerdown)="startPainting($event, $index)"
-                        (click)="slotClick($event, $index)">{{ $index + 1 }}</button>
-                    }
-                  </div>
-                } @else {
-                  <span class="rhythm-preview-mixed">Mixed grid or rhythm settings</span>
-                  @if (values()['customPattern'] === null) {
-                    <button type="button" class="common-grid-button" (click)="useFullGrid()">Use full grid</button>
-                  }
-                }
               } @else if (control.kind === 'velocities') {
-                @if (velocitySlots(); as slots) {
-                  <div class="velocity-pattern-grid" role="group" [attr.aria-label]="control.label">
-                    @for (velocity of slots; track $index) {
-                      <label class="velocity-slot" [class.rest]="rhythmPreview()?.[$index] === 0">
-                        <span aria-hidden="true">{{ $index + 1 }}</span>
-                        <input type="range" min="0" max="127" step="1" [value]="velocity"
-                          [attr.aria-label]="'Velocity subdivision ' + ($index + 1)" [attr.aria-valuetext]="velocity === 0 ? '0, silent' : velocity"
-                          (input)="previewVelocity($index, $event)" (change)="commitVelocity($index, $event)"
-                          (wheel)="wheelVelocity($index, $event)" (pointercancel)="cancelVelocity()"
-                          (keydown.escape)="cancelVelocity()" (blur)="cancelVelocity()" />
-                        <output>{{ velocity }}</output>
-                      </label>
-                    }
-                  </div>
-                } @else {
-                  <span class="rhythm-preview-mixed">Mixed velocities or Hits</span>
-                  @if (values()['customVelocities'] === null) {
-                    <button type="button" class="common-grid-button" (click)="useDefaultVelocities()">Use default velocities</button>
-                  }
-                }
+                <button type="button" class="mini-preview velocity-preview" aria-label="Edit pattern velocities" aria-haspopup="dialog" (click)="openSequencer(true)">
+                  @if (velocitySlots(); as slots) {
+                    @for (velocity of slots; track $index) { <span [style.height.%]="8 + velocity / 127 * 92" aria-hidden="true"></span> }
+                  } @else { <span class="mixed">Mixed</span> }
+                </button>
               }
             }
           </div>
         }
-        @if (advanced() && group.id === 'rhythm' && rhythmPreview() !== undefined) {
+        @if (group.id === 'rhythm' && !inspectorOnly() && (rhythmPreview() !== undefined || role() === 'drums')) {
           <div class="rhythm-preview" [title]="rhythmPreviewLabel()">
-            <span class="rhythm-preview-label">Rhythm preview</span>
-            @if (rhythmPreview(); as pattern) {
-              <div class="rhythm-preview-grid" role="img" [attr.aria-label]="rhythmPreviewLabel()">
-                @for (slot of pattern; track $index) {
-                  <span class="rhythm-preview-slot" [class.active]="slot > 0" aria-hidden="true"></span>
-                }
-              </div>
-            } @else {
-              <span class="rhythm-preview-mixed">Mixed</span>
-            }
+            <span class="rhythm-preview-label">Pattern</span>
+            <button type="button" class="mini-preview rhythm-preview-grid" aria-label="Edit rhythm pattern" aria-haspopup="dialog" (click)="openSequencer()">
+              @if (rhythmPreview(); as pattern) {
+                @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [class.active]="slot > 0" aria-hidden="true"></span> }
+              } @else { <span class="mixed">Mixed</span> }
+            </button>
           </div>
         }
       </div>

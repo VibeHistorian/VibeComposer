@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import type { ArrangedPart, ChordRhythm } from '../core/project/project.model';
-import { PART_CONTROLS, type PartControl, type PartSettingValue, partValuesEqual } from '../core/music/part-settings';
+import { Dialog, DialogModule } from '@angular/cdk/dialog';
+import { PatternSequencerComponent } from './pattern-sequencer.component';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import type { ArrangedPart, ChordRhythm, PartSettingsScope } from '../core/project/project.model';
+import { PART_CONTROLS, type PartControl, type PartSettingValue } from '../core/music/part-settings';
 import { chordRhythmMask } from '../core/music/rhythm-pattern';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../core/music/velocity-pattern';
 import { CompactKnobComponent } from './compact-knob.component';
@@ -11,7 +13,7 @@ import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, WheelSelectDirective],
+  imports: [DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()' },
   templateUrl: './part-settings-editor.component.html',
@@ -31,6 +33,12 @@ export class PartSettingsEditorComponent {
       offset: 'OFFS', accents: 'ACCNT',
     };
     return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
+  }
+  private readonly dialogs = inject(Dialog);
+  readonly scope = input.required<PartSettingsScope>();
+  openSequencer(velocities = false): void {
+    this.dialogs.open(PatternSequencerComponent, { ariaLabel: this.role() === 'drums' ? 'Drum pattern sequencer' : 'Pattern sequencer',
+      data: { scope: this.scope(), role: this.role(), velocities, melodyHits: this.melodyHits() } });
   }
   readonly emptyAllowedValues: readonly number[] = [];
   readonly role = input.required<ArrangedPart>();
@@ -55,7 +63,7 @@ export class PartSettingsEditorComponent {
       || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities', 'patternJoinMode'].includes(control.key))
     &&
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
-    && (control.key !== 'customPattern' || this.values()['rhythm'] === 'custom')
+    && control.key !== 'customPattern'
     && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
     && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true
       || (this.values()['rhythm'] === 'melody' && this.melodyHits() > 32)
@@ -65,20 +73,12 @@ export class PartSettingsEditorComponent {
     controls: this.controls().filter(control => control.key !== 'patternSeed' && partControlGroup(control.key) === group.id),
   })).filter(group => group.controls.length > 0));
   readonly seedControl = computed(() => this.controls().find(control => control.key === 'patternSeed'));
-  readonly velocityDraft = signal<readonly number[] | null>(null);
-  private velocityEdit: { index: number; values: Readonly<Record<string, PartSettingValue | null>> } | null = null;
   readonly velocitySlots = computed(() => {
-    const draft = this.velocityDraft();
     const values = this.values();
     if (values['hitsPerPattern'] === null || values['customVelocities'] === null) return null;
-    const grid = (this.velocityEdit?.values === values ? draft : null)
-      ?? values['customVelocities'] as readonly number[] | undefined ?? DEFAULT_CUSTOM_VELOCITIES;
-    return grid.slice(0, values['rhythm'] === 'melody' ? this.melodyHits() : values['hitsPerPattern'] as number | undefined ?? 8);
+    return (values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES).slice(0, values['rhythm'] === 'melody' ? this.melodyHits() : values['hitsPerPattern'] as number ?? 8);
   });
-  readonly patternDraft = signal<readonly number[] | null>(null);
-  private painting: { pointerId: number; values: Readonly<Record<string, PartSettingValue | null>>; sounded: number; lastIndex: number } | null = null;
   readonly rhythmPreview = computed(() => {
-    const draft = this.patternDraft();
     if (this.role() === 'melody' || this.values()['rhythm'] === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating')) return undefined;
     const values = this.values();
     const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
@@ -90,8 +90,7 @@ export class PartSettingsEditorComponent {
       patternShift: values['patternShift'] as number | undefined,
       patternFlip: values['patternFlip'] as boolean | undefined,
       euclideanPulses: values['euclideanPulses'] as number | undefined,
-      customPattern: (this.painting?.values === values ? draft : null)
-        ?? values['customPattern'] as readonly number[] | undefined });
+      customPattern: values['customPattern'] as readonly number[] | undefined });
   });
   readonly rhythmPreviewLabel = computed(() => {
     const pattern = this.rhythmPreview();
@@ -163,110 +162,4 @@ export class PartSettingsEditorComponent {
     this.settingsChanged.emit({ key: control.key, value: control.kind === 'integers' ? pieces.map(Number) : Number(pieces[0]) });
   }
 
-  useFullGrid(): void {
-    this.settingsChanged.emit({ key: 'customPattern', value: Array(32).fill(1) });
-  }
-
-  toggleSlot(index: number): void {
-    const pattern = this.rhythmPreview();
-    if (!pattern || this.values()['rhythm'] !== 'custom') return;
-    this.settingsChanged.emit({ key: 'customPattern', value: this.paintSlot(index, 1 - pattern[index]) });
-  }
-
-  /** Paint in audible coordinates, undoing flip and the full-list rotation when storing. */
-  private paintSlot(index: number, sounded: number): number[] {
-    const draft = this.painting?.values === this.values() ? this.patternDraft() : null;
-    const pattern = [...(draft ?? this.values()['customPattern'] as readonly number[] ?? Array(32).fill(1))];
-    const shift = this.values()['patternShift'] as number ?? 0;
-    pattern[(index - shift + 32) % 32] = this.values()['patternFlip'] ? 1 - sounded : sounded;
-    return pattern;
-  }
-
-  startPainting(event: PointerEvent, index: number): void {
-    if (event.button !== 0 || this.painting) return;
-    const pattern = this.rhythmPreview();
-    if (!pattern) return;
-    event.preventDefault();
-    (event.target as HTMLElement).focus();
-    this.painting = { pointerId: event.pointerId, values: this.values(), sounded: 1 - pattern[index], lastIndex: index };
-    this.patternDraft.set(this.paintSlot(index, this.painting.sounded));
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-  }
-
-  movePainting(event: PointerEvent): void {
-    if (event.pointerId !== this.painting?.pointerId) return;
-    if (this.painting.values !== this.values()) { this.cancelPainting(); return; }
-    const grid = event.currentTarget as HTMLElement;
-    const slot = grid.ownerDocument.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-rhythm-slot]');
-    if (slot && grid.contains(slot)) {
-      const index = Number(slot.dataset['rhythmSlot']);
-      for (let current = Math.min(this.painting.lastIndex, index); current <= Math.max(this.painting.lastIndex, index); current++) {
-        this.patternDraft.set(this.paintSlot(current, this.painting.sounded));
-      }
-      this.painting.lastIndex = index;
-    }
-  }
-
-  finishPainting(event: PointerEvent): void {
-    if (event.pointerId !== this.painting?.pointerId) return;
-    const draft = this.patternDraft();
-    const unchangedContext = this.painting.values === this.values();
-    this.cancelPainting();
-    if (draft && unchangedContext && !partValuesEqual(draft, this.values()['customPattern'])) {
-      this.settingsChanged.emit({ key: 'customPattern', value: draft });
-    }
-  }
-
-  cancelPainting(): void {
-    this.painting = null;
-    this.patternDraft.set(null);
-  }
-
-  slotClick(event: MouseEvent, index: number): void {
-    // Pointer gestures commit on release; native keyboard and assistive clicks commit here.
-    if (event.detail === 0) this.toggleSlot(index);
-  }
-
-  useDefaultVelocities(): void {
-    this.settingsChanged.emit({ key: 'customVelocities', value: [...DEFAULT_CUSTOM_VELOCITIES] });
-  }
-
-  previewVelocity(index: number, event: Event): void {
-    if (!this.velocitySlots()) return;
-    const value = Number((event.target as HTMLInputElement).value);
-    if (!Number.isInteger(value) || value < 0 || value > 127) return;
-    if (this.velocityEdit && (this.velocityEdit.values !== this.values() || this.velocityEdit.index !== index)) {
-      this.cancelVelocity(); return;
-    }
-    this.velocityEdit ??= { index, values: this.values() };
-    const grid = [...(this.velocityDraft() ?? this.values()['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
-    grid[index] = value;
-    this.velocityDraft.set(grid);
-  }
-
-  commitVelocity(index: number, event: Event): void {
-    const unchangedContext = !this.velocityEdit || this.velocityEdit.values === this.values();
-    if (unchangedContext) this.previewVelocity(index, event);
-    const draft = this.velocityDraft();
-    this.cancelVelocity();
-    if (unchangedContext && draft && !partValuesEqual(draft, this.values()['customVelocities'])) {
-      this.settingsChanged.emit({ key: 'customVelocities', value: draft });
-    }
-  }
-
-  cancelVelocity(): void {
-    this.velocityEdit = null;
-    this.velocityDraft.set(null);
-  }
-
-  wheelVelocity(index: number, event: WheelEvent): void {
-    const slots = this.velocitySlots();
-    if (!slots || this.velocityEdit || event.ctrlKey || event.metaKey || event.deltaY === 0) return;
-    event.preventDefault(); event.stopPropagation();
-    const grid = [...(this.values()['customVelocities'] as readonly number[] | undefined ?? DEFAULT_CUSTOM_VELOCITIES)];
-    const value = Math.max(0, Math.min(127, slots[index] + (event.deltaY < 0 ? 1 : -1) * (event.shiftKey ? 1 : 6)));
-    if (value === slots[index]) return;
-    grid[index] = value;
-    this.settingsChanged.emit({ key: 'customVelocities', value: grid });
-  }
 }

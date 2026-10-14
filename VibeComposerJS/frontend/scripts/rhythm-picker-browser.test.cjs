@@ -122,6 +122,7 @@ test('production Angular controls initialize selects from settings and support r
         const options = pickers.map(select => [...select.options].map(option => option.value));
         pickers[0].value = 'custom';
         pickers[0].dispatchEvent(new Event('change', { bubbles: true }));
+        (await waitFor(() => document.querySelector('button[aria-label="Edit rhythm pattern"]'))).click();
         const grids = await waitFor(() => {
           const result = [...document.querySelectorAll('.custom-pattern-grid')];
           return result.length === 1 ? result : null;
@@ -135,6 +136,8 @@ test('production Angular controls initialize selects from settings and support r
           rhythm: project.chords.rhythm, grid: project.chords.customPattern };
         const wheel = (element, deltaY, shiftKey = false) => element.dispatchEvent(
           new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
+        document.querySelector('button[aria-label="Close pattern sequencer"]').click();
+        await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         wheel(pickers[0], 100);
         await waitFor(() => pickers.every(select => select.value === 'full'));
         result.wheelRhythm = pickers.map(select => select.value);
@@ -234,6 +237,7 @@ test('production Angular controls initialize selects from settings and support r
         result.groupStillSelected = group.getAttribute('aria-pressed');
         const velocitySwitches = [...document.querySelectorAll('button[aria-label="Custom velocities"]')];
         velocitySwitches[0].click();
+        (await waitFor(() => document.querySelector('button[aria-label="Edit pattern velocities"]'))).click();
         const velocityGrids = await waitFor(() => {
           const result = [...document.querySelectorAll('.velocity-pattern-grid')];
           return result.length === 1 ? result : null;
@@ -252,12 +256,17 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => secondVelocity.value === '80', 'velocity wheel update');
         result.customVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities;
         result.randomBoundsHidden = !document.querySelector('input[aria-label="Min velocity"]');
+        document.querySelector('button[aria-label="Close pattern sequencer"]').click();
+        await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         velocitySwitches[0].click();
-        await waitFor(() => !document.querySelector('.velocity-pattern-grid'), 'velocity grids disabled');
+        await waitFor(() => document.querySelector('#part-inspector button[aria-label="Custom velocities"]')?.getAttribute('aria-pressed') === 'false', 'velocity grids disabled');
         result.retainedVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.customVelocities;
         document.querySelector('#part-inspector button[aria-label="Custom velocities"]').click();
+        (await waitFor(() => document.querySelector('button[aria-label="Edit pattern velocities"]'))).click();
         await waitFor(() => document.querySelector('.velocity-pattern-grid input')?.value === '22', 'velocity grids restored');
         result.velocitiesEnabled = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.useCustomVelocities;
+        document.querySelector('button[aria-label="Close pattern sequencer"]').click();
+        await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         document.querySelector('.track-group.melody .group-select').click();
         const targets = await waitFor(() => {
           const inputs = [...document.querySelectorAll('input[aria-label="Note targets"]')];
@@ -291,10 +300,10 @@ test('production Angular controls initialize selects from settings and support r
             return controls.length === 1 ? controls : null;
           }, role + ' rhythm controls');
           rhythms[0].value = 'custom'; rhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
-          await waitFor(() => document.querySelectorAll('.custom-pattern-grid').length === 1, role + ' grids');
+          await waitFor(() => document.querySelectorAll('.rhythm-preview-grid').length === 1, role + ' grids');
           const hits = document.querySelector('input[aria-label="Hits"]');
           hits.value = '5'; hits.dispatchEvent(new Event('change', { bubbles: true }));
-          await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid')].every(grid => grid.children.length === 5), role + ' Hits');
+          await waitFor(() => [...document.querySelectorAll('.rhythm-preview-grid')].every(grid => grid.children.length === 5), role + ' Hits');
           const seeds = [...document.querySelectorAll('input[aria-label="Seed"]')];
           seeds[0].focus(); seeds[0].value = '-123'; seeds[0].dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => seeds.every(seed => seed.value === '-123'), role + ' seed sync');
@@ -306,7 +315,7 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
           const state = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))[role];
           result.sharedRoles.push({ role, hits: state.hitsPerPattern, seed: state.patternSeed, delays: state.feedbackCount,
-            grids: document.querySelectorAll('.custom-pattern-grid').length,
+            grids: document.querySelectorAll('.rhythm-preview-grid').length,
             pause: document.querySelectorAll('input[aria-label="Pause"]').length,
             split: document.querySelectorAll('input[aria-label="Split"]').length,
             repeat: document.querySelectorAll('input[aria-label="Repeat"]').length });
@@ -364,6 +373,7 @@ test('production Angular controls initialize selects from settings and support r
         const drumRhythms = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
         result.drumRhythmOptions = drumRhythms.map(select => [...select.options].map(option => option.value));
         drumRhythms[0].value = 'custom'; drumRhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
+        document.querySelector('button[aria-label="Edit rhythm pattern"]').click();
         const drumGrids = await waitFor(() => {
           const grids = [...document.querySelectorAll('.custom-pattern-grid')];
           return grids.length === 1 ? grids : null;
@@ -371,10 +381,15 @@ test('production Angular controls initialize selects from settings and support r
         result.drumGridCounts = drumGrids.map(grid => grid.querySelectorAll('button').length);
         drumGrids[0].querySelector('button').click();
         await waitFor(() => drumGrids.every(grid => grid.querySelector('button').getAttribute('aria-pressed') === 'false'), 'shared drum custom grid edit');
+        document.querySelector('button[aria-label="Close pattern sequencer"]').click();
+        await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         const drumVelocities = [...document.querySelectorAll('button[aria-label="Custom velocities"]')];
         drumVelocities[0].click();
+        (await waitFor(() => document.querySelector('button[aria-label="Edit pattern velocities"]'))).click();
         await waitFor(() => document.querySelectorAll('.velocity-pattern-grid').length === 1, 'drum inspector velocity grid');
         result.drumVelocityCounts = [...document.querySelectorAll('.velocity-pattern-grid')].map(grid => grid.querySelectorAll('input').length);
+        document.querySelector('button[aria-label="Close pattern sequencer"]').click();
+        await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         result.drumChannelLocked = document.querySelector('.track-group.drums .track-channel').disabled;
         result.drumSettings = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'drums').generatorSettings;
         document.querySelector('button[aria-label="Open mixer"]').click();
@@ -386,8 +401,6 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => document.querySelectorAll('.track-group.drums .track-select').length === 2, 'second drum track');
         document.querySelector('button[aria-label="Add Drums track"]').click();
         await waitFor(() => document.querySelectorAll('.track-group.drums .track-select').length === 3, 'third drum track');
-        result.scoreRowLabels = [...document.querySelectorAll('.score-track-labels .score-track-label')].map(label => label.textContent.trim());
-        result.selectedDrumRow = document.querySelector('.score-track-labels .score-track-label.selected')?.textContent.trim();
         result.otherRoleRerolls = [];
         for (const role of ['bass', 'chords', 'drums', 'melody']) {
           const group = document.querySelector('.track-group.' + role);
@@ -493,10 +506,10 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('.track-group.drums .track-select').click();
         await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 10'), 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
-        await waitFor(() => document.querySelector('.voice-label'), 'single-pitch drum editor');
-        result.drumEditorVoices = [...document.querySelectorAll('.voice-label')].map(label => label.textContent);
-        document.querySelector('button[aria-label="Discard note changes"]').click();
-        await waitFor(() => !document.querySelector('.voice-label'), 'close drum editor');
+        await waitFor(() => [...document.querySelectorAll('.score-display-header button')].some(button => button.textContent.trim() === 'Cancel'), 'all-drum phrase editor');
+        result.allDrumsEditor = document.querySelector('.score-display-header').textContent.includes('All drums');
+        [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent.trim() === 'Cancel').click();
+        await waitFor(() => !document.querySelector('.score-display-header')?.textContent.includes('All drums'), 'close drum editor');
         const drumGroup = document.querySelector('.track-group.drums');
         drumGroup.querySelector('.group-select').click();
         await waitFor(() => drumGroup.querySelector('.policy-controls'), 'drums expanded by selection');
@@ -536,13 +549,10 @@ test('production Angular controls initialize selects from settings and support r
             toggleHeight: control.querySelector('.toggle-button')?.getBoundingClientRect().height ?? null,
             tooltip: control.title, statusInside: !!box && snow.left >= box.left && snow.right <= box.right + 1 && snow.bottom <= box.bottom + 1 };
         });
-        const bassLabel = [...document.querySelectorAll('button.score-track-label')].find(button => button.textContent.trim() === 'B1');
-        bassLabel.click();
-        await waitFor(() => document.querySelector('.track-group.bass .track-select').getAttribute('aria-pressed') === 'true', 'score label selects global track');
-        result.scoreSelectsTrack = document.querySelector('#part-inspector .selection-kicker').textContent.includes('CHANNEL');
+        result.scoreCanvasPresent = !!document.querySelector('vc-score-canvas canvas');
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
-        await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, diagnostic: { hits: [...document.querySelectorAll('input[aria-label="Hits"]')].map(input => input.value), role: document.querySelector('#part-inspector vc-part-settings-editor')?.getAttribute('data-control-role'), policy: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.trackGenerationPolicies?.arpeggio, track: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.arpeggio } }) });
+        await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, stack: error.stack, diagnostic: { hits: [...document.querySelectorAll('input[aria-label="Hits"]')].map(input => input.value), role: document.querySelector('#part-inspector vc-part-settings-editor')?.getAttribute('data-control-role'), policy: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.trackGenerationPolicies?.arpeggio, track: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.arpeggio } }) });
       }
     })();
   </script>`;
@@ -624,7 +634,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.coreDrumKit, { kicks: 2, snares: 1, channels: true, pickersSynced: true });
     assert.equal(actual.countAfterExpand, '3');
     assert.equal(actual.initiallyCollapsed, true);
-    assert.equal(actual.scoreSelectsTrack, true);
+    assert.equal(actual.scoreCanvasPresent, true);
     assert.ok(actual.compactControls.length > 0);
     assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 59 && control.tooltip && control.statusInside), JSON.stringify(actual.compactControls));
     assert.ok(actual.compactControls.filter(control => control.toggleHeight !== null).every(control => control.toggleHeight <= 26));
@@ -658,9 +668,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.drumSettings.useCustomVelocities, true);
     assert.equal(actual.mixerDrumPitch, '38');
     assert.equal(actual.mixerDrumName, 'Snare · 38');
-    assert.deepEqual(actual.scoreRowLabels, ['M1', 'B1', 'C1', 'A1', 'Drums']);
-    assert.equal(actual.selectedDrumRow, 'Drums');
-    assert.deepEqual(actual.drumEditorVoices, ['Snare']);
+    assert.equal(actual.allDrumsEditor, true);
     assert.deepEqual(actual.initialChords, ['C', 'G', 'Am', 'F']);
     assert.deepEqual(actual.options, [expected]);
     assert.deepEqual(actual.counts, [8]);

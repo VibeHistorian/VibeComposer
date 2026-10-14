@@ -3387,14 +3387,14 @@ function fixture() {
     signal, computed: (read) => read, effect: () => {}, input,
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
-    inject: (type) => type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
+    inject: (type) => type === 'sequencer-data' ? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
       : type?.name === 'AudioPlaybackService' ? {} : preferences,
   };
   const root = path.join(__dirname, '../src/app');
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };
@@ -3403,6 +3403,7 @@ function fixture() {
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
     } }).outputText;
     new Function('require', 'module', 'exports', compiled)((name) => name === '@angular/core' ? angular
+      : name === '@angular/cdk/dialog' ? { Dialog: class Dialog {}, DialogModule: class {}, DialogRef: class {}, DIALOG_DATA: 'sequencer-data' }
       : name === '@angular/common' ? { TitleCasePipe: class {} }
       : name.startsWith('.') ? load(path.resolve(path.dirname(absolute), name + '.ts')) : require(name), module, module.exports);
     return module.exports;
@@ -4848,44 +4849,28 @@ test('velocity enable and arrays preserve mixed scopes, inherited resets, snapsh
   assert.deepEqual(service.project().arrangement[1].trackPartOverrides[copy].customVelocities, Array(32).fill(60));
 });
 
-test('velocity grids preview during slider gestures, commit once, support wheel, and reject stale/mixed edits', () => {
-  const { service, load, settings } = fixture();
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
-  const editor = new PartSettingsEditorComponent();
-  editor.role.set('chords');
-  const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId: 'track-chords-1' };
-  editor.values.set({ ...settings.settingsValues(service.project().chords, 'chords'), useCustomVelocities: true });
-  const commits = [];
-  editor.settingsChanged.emit = change => { commits.push(change); service.updatePartSettings(scope, { [change.key]: change.value }); };
-  assert.equal(editor.controls().some(control => control.key === 'customVelocities'), true);
-  assert.equal(editor.controls().some(control => control.key === 'velocityMin'), false);
+test('popup velocity previews commit once, preserve hidden cells and cancel stale gestures', () => {
+  const { service, load } = fixture();
+  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  const editor = new PatternSequencerComponent();
   const before = service.exportProjectJson();
-  const input = { value: '25' }; const event = { target: input };
-  editor.previewVelocity(1, event);
-  input.value = '110'; editor.previewVelocity(1, event);
-  assert.equal(editor.velocitySlots()[1], 110);
+  const input = { value: '110' }, event = { target: input };
+  editor.previewVelocity('track-chords-1', 1, event);
+  assert.equal(editor.rows()[0].velocities[1], 110);
   assert.equal(service.exportProjectJson(), before);
-  editor.commitVelocity(1, event);
-  assert.equal(commits.length, 1);
-  assert.equal(commits[0].value[1], 110);
-  assert.equal(commits[0].value.length, 32);
+  editor.commitVelocity('track-chords-1', 1, event);
+  assert.equal(service.project().chords.customVelocities[1], 110);
+  assert.equal(service.project().chords.customVelocities.length, 32);
   service.undo(); assert.equal(service.exportProjectJson(), before);
-  input.value = '0'; editor.previewVelocity(2, event); editor.cancelVelocity();
-  assert.equal(editor.velocitySlots()[2], 79);
-  assert.equal(commits.length, 1);
-  editor.previewVelocity(2, event);
-  editor.values.set({ ...editor.values(), hitsPerPattern: 5 });
-  editor.commitVelocity(2, event);
-  assert.equal(commits.length, 1);
-  editor.wheelVelocity(3, { deltaY: -1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
-  assert.equal(commits[1].value[3], 80);
-  editor.values.set({ ...editor.values(), customVelocities: null });
-  assert.equal(editor.velocitySlots(), null);
-  editor.previewVelocity(1, event); assert.equal(editor.velocityDraft(), null);
-  editor.useDefaultVelocities(); assert.deepEqual(commits[2].value, Array(32).fill(79));
-  editor.values.set({ ...editor.values(), useCustomVelocities: false });
-  assert.equal(editor.controls().some(control => control.key === 'customVelocities'), false);
-  assert.equal(editor.controls().some(control => control.key === 'velocityMin'), true);
+  editor.previewVelocity('track-chords-1', 2, event); editor.cancel();
+  assert.equal(editor.rows()[0].velocities[2], 79);
+  editor.previewVelocity('track-chords-1', 2, event);
+  service.updateSettings({ tempoBpm: 111 });
+  const changed = service.exportProjectJson();
+  editor.commitVelocity('track-chords-1', 2, event);
+  assert.equal(service.exportProjectJson(), changed);
+  editor.wheelVelocity('track-chords-1', 3, { deltaY: -1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
+  assert.equal(service.project().chords.customVelocities[3], 80);
 });
 
 test('custom velocities survive section MIDI, history, session and JSON while manual notes keep masking them', () => {
@@ -5049,53 +5034,29 @@ test('custom chord grids retain seeded dynamics, hidden cells, section isolation
   assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
 });
 
-test('custom painting previews until release, commits once, supports keyboard and cancels stale gestures', () => {
-  const { service, settings, load } = fixture();
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
-  const editor = new PartSettingsEditorComponent();
-  const trackId = 'track-chords-1';
-  const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId };
-  service.updatePartSettings(scope, { rhythm: 'custom', patternShift: 3, patternFlip: true });
-  const base = settings.settingsValues(service.project().tracks.find((track) => track.id === trackId).generatorSettings, 'chords');
-  editor.role.set('chords');
-  editor.values.set({ ...base, rhythm: 'custom', patternShift: 3, patternFlip: true });
-  const commits = [];
-  editor.settingsChanged.emit = (change) => { commits.push(change); service.updatePartSettings(scope, { [change.key]: change.value }); };
-  const button = { focus() {}, setPointerCapture() {} };
+test('popup painting commits one gesture in audible coordinates and rejects stale project state', () => {
+  const { service, load } = fixture();
+  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  service.updatePartSettings({ kind: 'global-track', trackId: 'track-chords-1' }, { rhythm: 'custom', patternShift: 3, patternFlip: true });
+  const editor = new PatternSequencerComponent();
   const before = service.exportProjectJson();
-  editor.startPainting({ button: 0, pointerId: 9, target: button, currentTarget: button, preventDefault() {} }, 0);
-  assert.equal(commits.length, 0);
-  assert.equal(editor.rhythmPreview()[0], 1);
-  const slot = { dataset: { rhythmSlot: '2' } };
+  const button = { focus() {}, setPointerCapture() {} };
+  editor.start({ button: 0, pointerId: 9, target: button, currentTarget: button, preventDefault() {} }, 'track-chords-1', 0);
+  assert.equal(editor.rows()[0].pattern[0], 1);
+  const slot = { dataset: { step: '2' } };
   const grid = { ownerDocument: { elementFromPoint: () => ({ closest: () => slot }) }, contains: () => true };
-  editor.movePainting({ pointerId: 9, currentTarget: grid, clientX: 1, clientY: 1 });
-  assert.equal(editor.rhythmPreview()[2], 1);
+  editor.move({ pointerId: 9, currentTarget: grid, clientX: 1, clientY: 1 });
   assert.equal(service.exportProjectJson(), before);
-  editor.finishPainting({ pointerId: 9 });
-  assert.equal(commits.length, 1);
-  assert.equal(commits[0].value[29], 0, 'unshift and unflip visible subdivision 1');
-  assert.equal(commits[0].value[30], 0, 'paint intervening slots when pointer events skip a subdivision');
-  assert.equal(commits[0].value[31], 0);
-  service.undo();
-  assert.equal(service.exportProjectJson(), before, 'whole paint gesture is one history entry');
-  service.redo();
-  editor.values.set({ ...editor.values(), customPattern: commits[0].value });
-  editor.slotClick({ detail: 1 }, 1);
-  assert.equal(commits.length, 1, 'synthetic pointer click after release cannot double-toggle');
-  editor.slotClick({ detail: 0 }, 1);
-  assert.equal(commits.length, 2, 'keyboard/assistive activation toggles the slot');
-  editor.startPainting({ button: 0, pointerId: 10, target: button, currentTarget: button, preventDefault() {} }, 0);
-  editor.cancelPainting();
-  editor.finishPainting({ pointerId: 10 });
-  assert.equal(commits.length, 2);
-  editor.startPainting({ button: 0, pointerId: 11, target: button, currentTarget: button, preventDefault() {} }, 0);
-  editor.values.set({ ...editor.values(), hitsPerPattern: 3 });
-  editor.finishPainting({ pointerId: 11 });
-  assert.equal(commits.length, 2, 'context/project change rejects pending painting');
-  editor.values.set({ ...editor.values(), customPattern: null });
-  assert.equal(editor.rhythmPreview(), null, 'mixed grid never picks a representative track');
-  editor.useFullGrid();
-  assert.deepEqual(commits[2].value, Array(32).fill(1));
+  editor.finish({ pointerId: 9 });
+  assert.deepEqual(service.project().chords.customPattern.slice(29), [0, 0, 0]);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  editor.start({ button: 0, pointerId: 10, target: button, currentTarget: button, preventDefault() {} }, 'track-chords-1', 0);
+  editor.cancel(); editor.finish({ pointerId: 10 });
+  assert.equal(service.exportProjectJson(), before);
+  editor.start({ button: 0, pointerId: 11, target: button, currentTarget: button, preventDefault() {} }, 'track-chords-1', 0);
+  service.updateSettings({ tempoBpm: 111 });
+  const changed = service.exportProjectJson();
+  editor.finish({ pointerId: 11 }); assert.equal(service.exportProjectJson(), changed);
 });
 
 test('custom grids validate shape and binary slots at all scopes and imports without losing redo', () => {
@@ -5225,4 +5186,28 @@ test('multi-drum drafts keep ownership, smart-exit destinations and one atomic u
   assert.equal(service.applyPhraseEdits([{ trackId: tracks[0].id, notes: phrase(36, 110) },
     { trackId: tracks[2].id, notes: phrase(42, 200) }]), false);
   assert.equal(service.exportProjectJson(), invalidBefore, 'an invalid phrase aborts the whole batch');
+});
+
+
+test('drum pattern popup resolves every row in the selected section and edits only its track layer', () => {
+  const { service, load } = fixture();
+  service.setRoleTrackCount('drums', 3);
+  const tracks = service.project().tracks.filter(track => track.role === 'drums');
+  const sectionId = service.project().arrangement[1].id;
+  service.updatePartSettings({ kind: 'section-role', sectionId, role: 'drums' }, { hitsPerPattern: 12 });
+  const before = service.project().tracks;
+  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  const popup = new PatternSequencerComponent();
+  popup.data.role = 'drums';
+  popup.data.scope = { kind: 'section-track', sectionId, trackId: tracks[0].id };
+  assert.equal(popup.rows().length, 3);
+  assert.ok(popup.rows().every(row => row.hits === 12));
+  popup.patch(tracks[1].id, { customVelocities: Array(32).fill(40), useCustomVelocities: true });
+  assert.deepEqual(service.project().tracks, before);
+  const section = service.project().arrangement[1];
+  assert.equal(section.trackPartOverrides[tracks[0].id], undefined);
+  assert.equal(section.trackPartOverrides[tracks[2].id], undefined);
+  assert.deepEqual(section.trackPartOverrides[tracks[1].id].customVelocities, Array(32).fill(40));
+  popup.inherit(tracks[1].id, 'customVelocities');
+  assert.equal(service.project().arrangement[1].trackPartOverrides[tracks[1].id].customVelocities, undefined);
 });

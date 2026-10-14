@@ -1,0 +1,42 @@
+<header>
+  <div><h2>{{ data.role === 'drums' ? 'Drum sequencer' : 'Pattern sequencer' }}</h2><span>{{ scopeLabel() }}</span></div>
+  <button type="button" [attr.aria-pressed]="showVelocities()" (click)="cancel(); showVelocities.set(!showVelocities())">Velocities</button>
+  <button type="button" aria-label="Close pattern sequencer" (click)="dialog.close()">×</button>
+</header>
+<div class="sequencer-scroll">
+  <div class="sequencer" [style.--steps]="steps().length">
+    <div class="ruler"><span class="identity">Track / steps</span><div class="cells">@for (step of steps(); track step) { <span>{{ step + 1 }}</span> }</div></div>
+    @for (row of rows(); track row.id) {
+      <section class="track" [class.selected]="row.active" [attr.data-track-id]="row.id">
+        <div class="pattern-row">
+          <div class="identity"><strong>{{ row.name }}</strong><span>{{ row.instrument }}</span>
+            @if (row.supported) { <input type="number" min="1" max="32" [value]="row.hits" [attr.aria-label]="row.name + ' steps'" (change)="patch(row.id, { hitsPerPattern: +$any($event.target).value })" /> }
+            @if ('sectionId' in data.scope) { <button type="button" class="inherit" [attr.aria-label]="'Inherit ' + row.name + ' pattern'" (click)="inherit(row.id, 'customPattern')">Inherit grid</button> }
+          </div>
+          @if (row.supported) {
+            <div class="cells custom-pattern-grid" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()" (lostpointercapture)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()">
+              @for (slot of row.pattern; track $index) {
+                <button type="button" class="step custom-pattern-slot" [class.active]="slot > 0" [class.beat]="$index % 4 === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index" [attr.aria-pressed]="slot > 0" [attr.aria-label]="row.name + ' subdivision ' + ($index + 1)"
+                  (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index)"></button>
+              }
+            </div>
+          } @else { <span class="unavailable">{{ row.values['rhythm'] === 'alternating' ? 'Alternating rhythm' : 'Follows melody blocks' }}</span> }
+        </div>
+        @if (showVelocities() && row.velocitySupported) {
+          <div class="velocity-row">
+            <label class="identity"><input type="checkbox" [checked]="row.values['useCustomVelocities'] === true" (change)="patch(row.id, { useCustomVelocities: $any($event.target).checked })" /> Custom velocity</label>
+            <div class="cells velocity-pattern-grid">
+              @for (velocity of row.velocities; track $index) {
+                <label class="velocity-slot" [class.rest]="row.pattern[$index] === 0">
+                  <input type="range" min="0" max="127" step="1" [value]="velocity" [attr.aria-label]="row.name + ' velocity subdivision ' + ($index + 1)" [attr.aria-valuetext]="velocity === 0 ? '0, silent' : velocity" (input)="previewVelocity(row.id, $index, $event)" (change)="commitVelocity(row.id, $index, $event)" (wheel)="wheelVelocity(row.id, $index, $event)" (pointercancel)="cancel()" (blur)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()" />
+                  <output>{{ velocity }}</output>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    } @empty { <p>No tracks in this group.</p> }
+  </div>
+</div>
+<footer>Click or drag steps · Edits save immediately · Escape to close</footer>

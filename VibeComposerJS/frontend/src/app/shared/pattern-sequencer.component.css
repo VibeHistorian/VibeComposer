@@ -1,0 +1,39 @@
+/* Popup shell */
+:host { display: block; width: min(880px, calc(100vw - 32px)); color: var(--text-primary); background: var(--surface-base); border: 1px solid var(--border-strong); border-radius: var(--radius-panel); box-shadow: 0 12px 40px var(--shadow-ink); overflow: hidden; }
+header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border-default); }
+header > div { flex: 1; }
+h2 { margin: 0 0 3px; font-size: 14px; }
+header span, footer { color: var(--text-muted); font-size: 10px; }
+button { border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-secondary); padding: 5px 8px; cursor: pointer; }
+header button[aria-pressed="true"] { color: var(--parameter-dynamics); border-color: var(--parameter-dynamics); }
+footer { padding: 9px 14px; border-top: 1px solid var(--border-default); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+
+/* Track grid */
+.sequencer-scroll { overflow: auto; max-height: min(65vh, 520px); padding: 8px 12px; }
+.sequencer { min-width: calc(150px + var(--steps) * 20px); }
+.ruler, .pattern-row, .velocity-row { display: flex; align-items: center; gap: 10px; }
+.ruler { position: sticky; top: -8px; z-index: 1; background: var(--surface-base); padding: 4px 0; color: var(--text-muted); font: 9px var(--font-mono); }
+.identity { flex: 0 0 130px; min-width: 0; font-size: 10px; }
+.pattern-row .identity { display: grid; grid-template-columns: 1fr 36px; gap: 2px 6px; }
+.identity strong, .identity span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.identity span { color: var(--text-muted); }
+.identity .inherit { grid-column: 1 / -1; justify-self: start; font-size: 9px; padding: 1px 3px; }
+.identity input[type="number"] { grid-column: 2; grid-row: 1 / 3; width: 34px; padding: 2px; box-sizing: border-box; font: 10px var(--font-mono); background: var(--surface-input); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-micro); }
+.cells { flex: 1; display: grid; grid-template-columns: repeat(var(--steps), minmax(0, 1fr)); gap: 3px; }
+.ruler .cells span { text-align: center; }
+.track { padding: 6px 0; border-bottom: 1px solid var(--border-subtle); }
+.track.selected .identity strong { color: var(--parameter-rhythm); }
+.custom-pattern-grid { touch-action: none; }
+.step { height: 24px; min-width: 0; padding: 0; background: var(--surface-input); user-select: none; }
+.step.beat { border-left-color: var(--border-contrast); }
+.step.active { background: var(--parameter-rhythm); border-color: var(--parameter-rhythm); }
+.unavailable { color: var(--text-muted); font-size: 11px; }
+
+/* Optional velocity lanes */
+.velocity-row { margin-top: 7px; }
+.velocity-row .identity { color: var(--parameter-dynamics); }
+.velocity-row .identity input { accent-color: var(--parameter-dynamics); vertical-align: middle; }
+.velocity-slot { display: grid; justify-items: center; gap: 2px; color: var(--text-secondary); font: 9px var(--font-mono); }
+.velocity-slot input { writing-mode: vertical-lr; direction: rtl; width: 16px; height: 44px; margin: 0; accent-color: var(--parameter-dynamics); }
+.velocity-slot.rest { opacity: .5; }
