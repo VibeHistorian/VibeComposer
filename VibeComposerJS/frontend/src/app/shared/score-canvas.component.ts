@@ -492,6 +492,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private inScale(midi: number): boolean {
     return this.editable() && this.snapToScale() && this.scalePitchClasses().includes(midi % 12);
   }
+  scaleColoringActive(): boolean {
+    return this.editable() && this.snapToScale() && this.scalePitchClasses().length > 0;
+  }
   private emptyCanvasPoint(event: MouseEvent): boolean {
     const bounds = this.app?.canvas.getBoundingClientRect();
     return !!bounds && event.clientX >= bounds.left && event.clientX < bounds.left + bounds.width
@@ -683,7 +686,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const black = [1, 3, 6, 8, 10].includes(midi % 12);
       const h = Math.min(this.harmonicHeight, y + this.laneHeight) - Math.max(0, y);
       fill(0, y, this.width, h, black ? '--score-pitch-band' : '--score-row-even');
-      if (this.inScale(midi)) fill(0, y, this.width, h, '--score-scale-row');
+      if (this.scaleColoringActive() && !this.inScale(midi)) fill(0, y, this.width, h, '--score-out-of-scale');
       line(0, Math.max(0, y), this.width, Math.max(0, y), midi % 12 === 0 ? '--grid-beat' : '--grid-subdivision');
       rows.push({ midi, label: midi % 12 === 0 ? `C${Math.floor(midi / 12) - 1}` : '', y: Math.max(0, y), height: h, drum: false, black, inScale: this.inScale(midi) });
     }

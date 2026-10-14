@@ -85,7 +85,7 @@
   --score-pitch-a: #071a2b;
   --score-pitch-b: #091e30;
   --score-pitch-band: rgb(96 160 210 / 5%);
-  --score-scale-row: rgb(90 185 140 / 7%);
+  --score-out-of-scale: #020407;
   --score-scale-note: rgb(140 235 194 / 22%);
 
   /* Accent and arrangement roles */

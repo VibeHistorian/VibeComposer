@@ -1,6 +1,7 @@
 <div class="score-gutter" aria-label="Pitch and percussion labels">
   @for (row of gutterRows(); track row.midi + ':' + row.drum) {
-    <span class="pitch-key" [class.black-key]="row.black" [class.drum-label]="row.drum" [class.in-scale]="row.inScale" [class.octave-key]="!row.drum && !!row.label"
+    <span class="pitch-key" [class.black-key]="row.black" [class.drum-label]="row.drum" [class.in-scale]="row.inScale"
+      [class.out-of-scale]="!row.drum && scaleColoringActive() && !row.inScale" [class.octave-key]="!row.drum && !!row.label"
       [style.top.px]="row.y" [style.height.px]="row.height" [title]="row.drum ? row.label : 'MIDI ' + row.midi"><i>{{ row.label }}</i></span>
   }
 </div>
