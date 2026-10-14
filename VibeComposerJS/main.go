@@ -21,7 +21,7 @@ func main() {
 	}
 	err = wails.Run(&options.App{
 		Title:     "VibeComposer",
-		Width:     1440,
+		Width:     1920,
 		Height:    960,
 		MinWidth:  960,
 		MinHeight: 640,
