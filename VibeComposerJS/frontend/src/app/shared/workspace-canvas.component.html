@@ -235,7 +235,7 @@
       </section>
   </main>
 
-    <aside id="part-inspector" class="context-inspector" [attr.data-control-role]="partScope() ? partRole() : null" tabindex="-1" aria-label="Selection inspector">
+    <aside id="part-inspector" class="context-inspector" [attr.data-control-role]="editing() ? selectedPart() : partScope() ? partRole() : null" tabindex="-1" aria-label="Selection inspector">
       @if (editing()) {
         @if (editor(); as edit) { <ng-container [ngTemplateOutlet]="edit.inspectorTemplate()" /> }
       } @else {

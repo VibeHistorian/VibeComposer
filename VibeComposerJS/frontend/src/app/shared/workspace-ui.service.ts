@@ -10,6 +10,11 @@ export type SettingsTarget =
   | { readonly kind: 'section-role'; readonly sectionId: string; readonly role: ArrangedPart }
   | { readonly kind: 'section-track'; readonly sectionId: string; readonly trackId: string };
 
+export interface SettingsSelection {
+  readonly target: SettingsTarget;
+  readonly trackId: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class WorkspaceUiService {
   private readonly projects = inject(ProjectService);
@@ -70,6 +75,18 @@ export class WorkspaceUiService {
     if (!this.projects.project().tracks.some((track) => track.id === trackId)) return;
     this.selectedTrackId.set(trackId);
     this.target.set({ kind: 'global-track', trackId });
+  }
+
+  captureSettingsSelection(): SettingsSelection {
+    return { target: this.settingsTarget(), trackId: this.selectedTrackId() };
+  }
+
+  restoreSettingsSelection(selection: SettingsSelection): void {
+    this.target.set(selection.target);
+    const target = this.settingsTarget();
+    const trackId = 'trackId' in target ? target.trackId : selection.trackId;
+    const tracks = this.projects.project().tracks;
+    this.selectedTrackId.set(tracks.some(track => track.id === trackId) ? trackId : tracks[0]?.id ?? '');
   }
 
   selectRole(role: ArrangedPart): void {

@@ -21,6 +21,7 @@ import { sectionGenerationHarmony } from '../core/music/project-harmony';
 
 import { ProjectService } from '../core/project/project.service';
 import { WorkspaceUiService } from './workspace-ui.service';
+import type { SettingsSelection } from './workspace-ui.service';
 import { ArrangementOverviewComponent } from './arrangement-overview.component';
 import { ScoreCanvasComponent } from './score-canvas.component';
 import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
@@ -246,6 +247,7 @@ export class WorkspaceCanvasComponent {
     if (this.syncScoreMix()) this.projects.syncScoreMix(this.project().tracks.filter(track => this.displayedRoles().has(track.role)).map(track => track.id));
   }
   readonly editing = signal(false);
+  private selectionBeforeEditing: SettingsSelection | null = null;
   readonly mixerOpen = signal(false);
   readonly hiddenTracks = signal(new Set<string>());
   readonly editingHiddenTracks = new Set<string>();
@@ -497,6 +499,7 @@ export class WorkspaceCanvasComponent {
 
   openTrackEditor(trackId: string): void {
     if (this.editing() || !this.project().tracks.some((track) => track.id === trackId)) return;
+    this.selectionBeforeEditing = this.workspaceUi.captureSettingsSelection();
     const target = this.settingsTarget();
     const sectionId = 'sectionId' in target ? target.sectionId : this.selectedSectionId() ?? this.project().arrangement[0]?.id ?? null;
     const item = this.timelineSections().find(item => item.section.id === sectionId);
@@ -526,6 +529,10 @@ export class WorkspaceCanvasComponent {
   }
 
   closeEditor(): void {
+    if (this.selectionBeforeEditing) {
+      this.workspaceUi.restoreSettingsSelection(this.selectionBeforeEditing);
+      this.selectionBeforeEditing = null;
+    }
     this.editing.set(false);
     this.editingNoteId.set(null);
   }

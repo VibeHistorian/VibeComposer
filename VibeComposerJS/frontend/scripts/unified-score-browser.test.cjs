@@ -23,12 +23,20 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.ok(initial.labels>=17);assert.equal(initial.drums,3);assert.equal(initial.arrangement,true);assert.equal(initial.velocity,false);
   const capture=async name=>{const png=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.resolve(__dirname,'../.angular/'+name+'.png'),Buffer.from(png.data,'base64'));};
   await capture('unified-score');
+  await evaluate(`(async()=>{${waitCode}document.querySelector('.track-group.arpeggio .track-select').click();await wait(()=>document.querySelector('#part-inspector').dataset.controlRole==='arpeggio');})()`);
   const filters=await evaluate(`(async()=>{${waitCode}const b=[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.trim()==='Drums');const before=document.querySelector('vc-score-canvas canvas');b.click();await wait(()=>!document.querySelector('.drum-label'));const mix=[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.includes('Sync'));mix.click();await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='drums').mix.muted);return document.querySelector('vc-score-canvas canvas')===before;})()`);assert.equal(filters,true);
   const overviewViewport=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:-346.57,ctrlKey:true,clientX:c.left,clientY:c.top+10,bubbles:true,cancelable:true}));const content=document.querySelector('vc-score-canvas .horizontal-scroll > div');return content.style.width;})()`);
   const point=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   const edit=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));return {arrangement:!!document.querySelector('vc-arrangement-overview canvas'),settings:!!document.querySelector('.part-settings-panel'),local:[...document.querySelectorAll('.score-display-header button')].some(b=>b.textContent==='Local Apply'),noStepGrid:!document.querySelector('.drum-grid')};})()`);for(const v of Object.values(edit))assert.equal(v,true);
   await capture('unified-score-edit');
+  assert.equal(await evaluate(`(() => {
+    const inspector = document.querySelector('#part-inspector');
+    const style = getComputedStyle(inspector);
+    return inspector.dataset.controlRole === 'bass'
+      && style.getPropertyValue('--accent-primary').trim() === style.getPropertyValue('--role-bass').trim()
+      && getComputedStyle(document.querySelector('#note-velocity')).accentColor === getComputedStyle(inspector.querySelector('.edit-mark')).color;
+  })()`), true, 'phrase inspector colors follow the edited bass track rather than the remembered arpeggio');
   const shortcuts = await evaluate(`(async()=>{${waitCode}
     if (document.querySelector('#phrase-grid').value !== '0.25') throw Error('Initial grid does not match snapping');
     const key=(key,extra={})=>document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...extra}));

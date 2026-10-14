@@ -82,6 +82,51 @@ test('score lane selection chooses global tracks and preserves the active member
   assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'track-bass-1' });
 });
 
+for (const kind of ['global-track', 'global-role', 'section-track', 'section-role', 'section']) {
+  test(`closing a score phrase restores the previous ${kind} inspector selection`, () => {
+    const { workspace, ui, project } = fixture();
+    project.set({ ...project(), tracks: [...project().tracks,
+      { id: 'melody', role: 'melody' }, { id: 'kick', role: 'drums' }] });
+    ui.selectSection('b');
+    ui.selectSection('d', { shiftKey: true });
+    if (kind === 'global-track') ui.selectTrack('track-bass-1');
+    if (kind === 'global-role') ui.selectRole('bass');
+    if (kind === 'section-track') ui.selectSectionTrack('b', 'track-bass-1');
+    if (kind === 'section-role') ui.selectCell('b', 'bass');
+    const before = ui.captureSettingsSelection();
+    const range = workspace.scoreSectionFocus();
+    workspace.openNoteEditor({ id: 'melody-note', part: 'melody', startBeat: 10 });
+    assert.equal(ui.selectedTrackId(), 'melody');
+    assert.equal(workspace.editing(), true);
+    assert.equal(workspace.editingNoteId(), 'melody-note');
+    workspace.closeEditor();
+    assert.deepEqual(ui.captureSettingsSelection(), before);
+    assert.equal(workspace.partRole(), 'bass');
+    assert.deepEqual(workspace.scoreSectionFocus(), range);
+    assert.equal(workspace.editing(), false);
+    assert.equal(workspace.editingNoteId(), null);
+    // Track changes inside an editor must also restore the original settings target.
+    workspace.openTrackEditor('kick');
+    ui.selectTrack('melody');
+    workspace.closeEditor();
+    assert.deepEqual(ui.captureSettingsSelection(), before);
+    ui.selectTrack('melody');
+    workspace.closeEditor();
+    assert.equal(ui.selectedTrackId(), 'melody', 'closing twice cannot restore a stale selection');
+  });
+}
+
+test('closing an editor falls back coherently if the previous track was removed', () => {
+  const { workspace, ui, project } = fixture();
+  project.set({ ...project(), tracks: [...project().tracks, { id: 'melody', role: 'melody' }] });
+  workspace.openTrackEditor('melody');
+  project.set({ ...project(), tracks: project().tracks.filter(track => track.id === 'melody') });
+  workspace.closeEditor();
+  assert.equal(ui.selectedTrackId(), 'melody');
+  assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'melody' });
+  assert.equal(workspace.partRole(), 'melody');
+});
+
 test('Ctrl-click fills intervening sections in either direction', () => {
   const { ui } = fixture();
   ui.selectSection('b');
