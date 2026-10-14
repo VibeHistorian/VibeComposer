@@ -30,7 +30,10 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       await wait(()=>document.querySelectorAll('.track-group.drums .track-select').length===3,'three drums');
       const ids = read().tracks.filter(t=>t.role==='drums').map(t=>t.id);
       document.querySelector('.track-group.drums .track-select').click();
+      await wait(()=>document.querySelector('.track-group.drums .track-select').getAttribute('aria-pressed')==='true','selected drum track');
       await wait(()=>document.querySelector('button[aria-label="Edit rhythm pattern"]'),'preview');
+      check(!document.querySelector('.part-settings-panel [aria-label="Multiply Hits"], #part-inspector [aria-label="Multiply Hits"]'), 'multiplier belongs only in popup');
+      check(document.querySelector('[aria-label="Toggle loop"]').getAttribute('aria-pressed') === 'true', 'loop enabled by default');
       const launcher=document.querySelector('button[aria-label="Edit rhythm pattern"]');
       check(launcher.getBoundingClientRect().width<=100 && launcher.getBoundingClientRect().height<=28, 'tiny preview');
       check(!document.querySelector('.custom-pattern-grid, .velocity-pattern-grid'),'no inline editors');
@@ -38,13 +41,37 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       await wait(()=>document.querySelectorAll('vc-pattern-sequencer .track').length===3,'all drum rows');
       const popup=document.querySelector('vc-pattern-sequencer');
       check(!popup.querySelector('.velocity-pattern-grid'),'velocities hidden');
+      const storedDrums=read().tracks.filter(t=>t.role==='drums');
+      const percussion=popup.querySelectorAll('.pattern-row .identity > span');
+      check([...percussion].every(span=>!span.textContent.includes('NaN')), 'valid percussion names');
+      check([...percussion].every(span=>span.textContent.trim().length>0), 'percussion names present');
+      const multiply=popup.querySelector('[aria-label="Multiply Hits"]');
+      check(multiply && !multiply.disabled, 'popup multiplier enabled for active track');
+      const oldHits=storedDrums[0].generatorSettings.hitsPerPattern ?? 4;
+      multiply.value='0.5'; multiply.dispatchEvent(new Event('change',{bubbles:true}));
+      await wait(()=>read().tracks.find(t=>t.id===ids[0]).generatorSettings.hitsPerPattern===Math.max(1,Math.trunc(oldHits*0.5)),'multiply selected drum');
+      check(multiply.value==='', 'multiplier resets after action');
+      check(JSON.stringify(read().tracks.filter(t=>t.role==='drums').slice(1))===JSON.stringify(storedDrums.slice(1)), 'multiplier retains other drum tracks');
       const row=id=>popup.querySelector('[data-track-id="'+id+'"]');
       const setSteps = async (id, count) => {
         const input = row(id).querySelector('input[type="number"]');
         input.value=String(count); input.dispatchEvent(new Event('change',{bubbles:true}));
         await wait(()=>row(id).querySelectorAll('.step').length===count, 'set steps ' + count);
       };
-      await setSteps(ids[0], 32);
+      const checkPreview = async count => {
+        await setSteps(ids[0], count);
+        await wait(()=>launcher.querySelectorAll('.rhythm-preview-slot').length===count,'compact preview step count');
+        const bounds=launcher.getBoundingClientRect();
+        const parent=launcher.closest('.part-control').getBoundingClientRect();
+        check(bounds.left>=parent.left && bounds.right<=parent.right, 'preview fits its control');
+        const cells=[...launcher.querySelectorAll('.rhythm-preview-slot')].map(c=>c.getBoundingClientRect());
+        cells.forEach((cell,i)=>{
+          check(cell.left>=bounds.left && cell.right<=bounds.right && cell.top>=bounds.top && cell.bottom<=bounds.bottom, 'preview step contained');
+          if (i) check(Math.abs(cell.left-cells[0].left-i*(launcher.clientWidth-6)/count)<1, 'preview onset time '+count+'/'+i);
+        });
+        if(count===4) check(Math.abs((cells[1].left-cells[0].left)/(cells[0].width+1)-2)<.1,'four hits alternate with spaces');
+      };
+      for(const count of [4,5,8,12,16,31,32]) await checkPreview(count);
       await setSteps(ids[2], 4);
       const checkPositions = (selector, positions) => {
         const reference = [...row(ids[0]).querySelectorAll(selector)].map(cell=>cell.getBoundingClientRect());

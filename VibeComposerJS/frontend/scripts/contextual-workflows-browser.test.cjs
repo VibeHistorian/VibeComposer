@@ -231,7 +231,8 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       ghosts.click();
       change(document.querySelector('#part-inspector [aria-label="Humanize"]'), '100');
       await wait(() => read().drums.ghosts && read().drums.humanize === 100, 'drum musical settings');
-      const multiply = document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]');
+      document.querySelector('.part-settings-panel [aria-label="Edit rhythm pattern"]').click();
+      const multiply = await wait(() => document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]'), 'popup hit multiplier');
       change(multiply, '2');
       await wait(() => read().drums.hitsPerPattern === 8, 'multiply hits');
       await wait(() => document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8'
@@ -240,14 +241,17 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
         track.generatorSettings.hitsPerPattern === 8 && track.generatorSettings.ghosts && track.generatorSettings.humanize === 100)
         && document.querySelector('.part-settings-panel [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true'
         && document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8' && multiply.value === '';
+      document.querySelector('[aria-label="Close pattern sequencer"]').click();
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => read().drums.hitsPerPattern === 4, 'multiply undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'multiply redo enabled')).click();
       await wait(() => read().drums.hitsPerPattern === 8, 'multiply redo');
       change(document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]'), 'melody');
-      await wait(() => document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]').disabled, 'melody hit action disabled');
-      result.drumMelody = document.querySelector('.part-settings-panel [aria-label="Multiply Hits"]').disabled
+      document.querySelector('.part-settings-panel [aria-label="Edit rhythm pattern"]').click();
+      await wait(() => document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]')?.disabled, 'melody hit action disabled');
+      result.drumMelody = document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]').disabled
         && !document.querySelector('.part-settings-panel [aria-label="Hits"]');
+      document.querySelector('[aria-label="Close pattern sequencer"]').click();
       document.querySelector('.track-group.melody .group-select').click();
       await wait(() => document.querySelector('#part-inspector [data-control-role="melody"]'), 'melody inspector');
       const extended = [ ['Doubled rhythm', 'doubledRhythmChance', 100], ['Max exceptions', 'maxNoteExceptions', 4],

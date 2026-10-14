@@ -21,17 +21,6 @@
     <section class="part-control-area" [attr.data-control-category]="group.id" [attr.aria-label]="group.label + ' parameters'">
       @if (showGroupTitles()) { <h3>{{ group.label }}</h3> }
       <div class="part-area-controls">
-        @if (!preferences.editingQuickSettings() && !inspectorOnly() && role() === 'drums' && group.id === 'rhythm') {
-          <div class="part-control">
-            <span class="rhythm-preview-label">Multiply Hits</span>
-            <select aria-label="Multiply Hits" [disabled]="values()['rhythm'] === 'melody'"
-              (change)="multiplyHitsRequested.emit(+$any($event.target).value); $any($event.target).value = ''">
-              <option value="">Choose…</option>
-              <option value="0.5">× ½</option><option value="0.75">× ¾</option>
-              <option value="1.5">× 1½</option><option value="2">× 2</option>
-            </select>
-          </div>
-        }
         @for (control of group.controls; track control.key) {
           <div class="part-control" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (preferences.editingQuickSettings()) {
@@ -71,9 +60,9 @@
                   }
                 </select>
               } @else if (control.kind === 'pattern') {
-                <button type="button" class="mini-preview rhythm-preview-grid" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [title]="rhythmPreviewLabel()" (click)="openSequencer()">
+                <button type="button" class="mini-preview rhythm-preview-grid" [style.--preview-steps]="rhythmPreview()?.length ?? 8" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [title]="rhythmPreviewLabel()" (click)="openSequencer()">
                   @if (rhythmPreview(); as pattern) {
-                    @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [class.active]="slot > 0" aria-hidden="true"></span> }
+                    @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [style.--step-index]="$index" [class.active]="slot > 0" aria-hidden="true"></span> }
                   } @else { <span class="mixed">Mixed</span> }
                 </button>
               } @else if (control.kind === 'velocities') {

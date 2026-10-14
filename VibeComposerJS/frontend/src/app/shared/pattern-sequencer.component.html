@@ -1,5 +1,12 @@
 <header>
   <div><h2>{{ data.role === 'drums' ? 'Drum sequencer' : 'Pattern sequencer' }}</h2><span>{{ scopeLabel() }}</span></div>
+  @if (data.role === 'drums') {
+    <select aria-label="Multiply Hits" title="Multiply hits for the selected drum track or group" [disabled]="!canMultiplyHits()" (change)="multiplyHits($event)">
+      <option value="">× Hits…</option>
+      <option value="0.5">× ½</option><option value="0.75">× ¾</option>
+      <option value="1.5">× 1½</option><option value="2">× 2</option>
+    </select>
+  }
   <button type="button" [attr.aria-pressed]="showVelocities()" (click)="cancel(); showVelocities.set(!showVelocities())">Velocities</button>
   <button type="button" aria-label="Close pattern sequencer" (click)="dialog.close()">×</button>
 </header>

@@ -4,7 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
 
-function fixture() {
+function fixture({ loop = false } = {}) {
   let runningEffect;
   const effect = (callback) => {
     const run = () => { runningEffect = run; try { callback(); } finally { runningEffect = undefined; } };
@@ -57,6 +57,8 @@ function fixture() {
       project.arrangement[0].trackPresence[track.id] === false ? [] : track.notes },
   });
   const playback = new AudioPlaybackService();
+  // Existing scenarios explicitly start without looping; the default is tested separately.
+  if (!loop) playback.toggleLoop();
   playback.context = context;
   playback.synth = { schedule(destination, program, percussion, midi, velocity, start, duration) {
     const source = context.createOscillator();
@@ -301,6 +303,7 @@ test('transport watches project changes and enabling LIVE without subscribing to
   const { TransportDockComponent } = load('shared/transport-dock.component.ts', {
     '@angular/core': angular, '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
     '../core/project/project.service': { ProjectService: 'projects' }, '../core/music/harmony': { KEYS: [] },
+    '../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
     './workspace-ui.service': { WorkspaceUiService: 'ui' },
     './wheel-select.directive': { WheelSelectDirective: class {} },
     './mix-buttons.component': { MixButtonsComponent: class {} },
@@ -467,4 +470,16 @@ test('transport cancellation and source completion clean up every synth operator
   assert.equal(playback.activeSources.size, 0);
   sources.slice(2).forEach(source => source.onended());
   assert.equal(disconnected, 4);
+});
+
+
+test('looping starts enabled and wraps the whole arrangement by default', async () => {
+  const { playback, project, context } = fixture({ loop: true });
+  assert.equal(playback.loopEnabled(), true);
+  await playback.start(project);
+  context.currentTime = 8.5;
+  playback.tick();
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.beat(), 1);
+  playback.stop();
 });

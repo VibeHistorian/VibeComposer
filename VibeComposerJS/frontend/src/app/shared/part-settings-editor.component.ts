@@ -53,7 +53,6 @@ export class PartSettingsEditorComponent {
   readonly melodyHits = input(16);
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
   readonly inheritRequested = output<string>();
-  readonly multiplyHitsRequested = output<number>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
     (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)

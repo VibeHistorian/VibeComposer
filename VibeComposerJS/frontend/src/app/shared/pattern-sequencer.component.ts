@@ -30,7 +30,8 @@ export class PatternSequencerComponent {
     const draft = this.draft();
     return project.tracks.filter(track => this.data.role === 'drums' ? track.role === 'drums'
       : 'trackId' in scope ? track.id === scope.trackId : track.role === this.data.role).map(track => {
-      const values = settingsValues(section ? resolvePartTrack(track, section).generatorSettings : track.generatorSettings, track.role);
+      const effective = resolvePartTrack(track, section);
+      const values = settingsValues(effective.generatorSettings, effective.role);
       const supported = track.role !== 'melody' && values['rhythm'] !== 'melody' && !(track.role === 'bass' && values['rhythm'] === 'alternating');
       const hits = values['rhythm'] === 'melody' || track.role === 'melody' ? this.data.melodyHits : Number(values['hitsPerPattern'] ?? 8);
       const pattern = draft?.id === track.id && draft.pattern ? draft.pattern : supported ? chordRhythmMask({
@@ -39,11 +40,24 @@ export class PatternSequencerComponent {
         customPattern: values['customPattern'] as readonly number[] | undefined }) : [];
       const velocities = draft?.id === track.id && draft.velocities ? draft.velocities
         : [...(values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
-      return { id: track.id, name: track.name, instrument: track.role === 'drums' ? drumInstrumentName(Number(values['pitch'])) : track.role,
+      return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? drumInstrumentName(effective.generatorSettings.pitch) : effective.role,
         values, supported, hits, pattern, velocities: velocities.slice(0, Math.min(32, hits)), velocitySupported: hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'alternating'),
         active: 'trackId' in scope && track.id === scope.trackId };
     });
   });
+  readonly canMultiplyHits = computed(() => {
+    const scope = this.data.scope;
+    const rows = this.rows().filter(row => !('trackId' in scope) || row.id === scope.trackId);
+    return this.data.role === 'drums' && rows.length > 0 && rows.every(row => row.supported);
+  });
+  multiplyHits(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    if (select.value && this.canMultiplyHits()) {
+      this.cancel();
+      this.projects.multiplyDrumHits(this.data.scope, Number(select.value));
+    }
+    select.value = '';
+  }
   readonly steps = computed(() => Array.from({ length: Math.max(0, ...this.rows().map(row => Math.min(32, row.hits))) }, (_, i) => i));
   readonly scopeLabel = computed(() => {
     const scope = this.data.scope;

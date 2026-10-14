@@ -18,7 +18,7 @@ export class AudioPlaybackService {
   private readonly playbackState = signal<PlaybackState>('stopped');
   private readonly position = signal(0);
   private readonly duration = signal(0);
-  private readonly loopState = signal(false);
+  private readonly loopState = signal(true);
   private readonly liveState = signal(true);
   private readonly playbackError = signal('');
 

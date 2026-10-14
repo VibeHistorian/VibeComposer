@@ -5423,3 +5423,33 @@ test('placement editing exposes dormant controls and partitions customized quick
   preferences.saveQuickSettings();
   assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
 });
+
+
+test('drum sequencer resolves percussion names and multiplies only its selected scope', () => {
+  const { service, load } = fixture();
+  const first = 'track-drums-1', second = service.duplicateTrack(first);
+  const sectionId = service.project().arrangement[0].id;
+  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  const { drumInstrumentName } = load('core/music/drum-instruments.ts');
+  const popup = new PatternSequencerComponent();
+  popup.data.role = 'drums';
+  popup.data.scope = { kind: 'section-track', sectionId, trackId: first };
+  for (const row of popup.rows()) {
+    const track = service.project().tracks.find(track => track.id === row.id);
+    assert.equal(row.instrument, drumInstrumentName(track.generatorSettings.pitch));
+  }
+  const before = service.project().tracks;
+  const position = service.historyPosition();
+  const select = { value: '2' };
+  assert.equal(popup.canMultiplyHits(), true);
+  popup.multiplyHits({ target: select });
+  assert.equal(select.value, '');
+  assert.equal(popup.rows().find(row => row.id === first).hits, 8);
+  assert.equal(popup.rows().find(row => row.id === second).hits, 4);
+  assert.deepEqual(service.project().tracks, before, 'section action preserves global drums');
+  assert.equal(service.historyPosition(), position + 1, 'one undo entry');
+  service.undo();
+  assert.equal(popup.rows().find(row => row.id === first).hits, 4);
+  popup.patch(first, { rhythm: 'melody' });
+  assert.equal(popup.canMultiplyHits(), false);
+});

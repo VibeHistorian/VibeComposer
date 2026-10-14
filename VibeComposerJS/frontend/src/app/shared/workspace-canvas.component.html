@@ -171,7 +171,7 @@
             }
             @for (item of editableScopes(); track item.key) {
               <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [advanced]="false" [showGroupTitles]="false" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
-                (settingsChanged)="editPartSettings(item.scope, $event)" (multiplyHitsRequested)="multiplyDrumHits(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
+                (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
             }
           </div>
         }
@@ -254,7 +254,7 @@
           @if (manualTrackNames() && partGenerationAvailable()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
           @for (item of editableScopes(); track item.key) {
             <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="true" [local]="true" [overriddenKeys]="overriddenKeys()"
-              (settingsChanged)="editPartSettings(item.scope, $event)" (multiplyHitsRequested)="multiplyDrumHits(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
+              (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
           }
           @for (track of contextTracks(); track track.id) {
             <section class="quick-settings-group">
@@ -335,7 +335,7 @@
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
           @for (item of editableScopes(); track item.key) {
             <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="true"
-              (settingsChanged)="editPartSettings(item.scope, $event)" (multiplyHitsRequested)="multiplyDrumHits(item.scope, $event)" />
+              (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
 
