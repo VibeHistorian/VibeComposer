@@ -274,6 +274,39 @@ test('scale snapping constrains pitch drags and can be disabled for chromatic ed
   assert.equal(c.drag.current.midi, 49);
 });
 
+test('drag audition follows each snapped cyan preview immediately, including returning to the original pitch', () => {
+  const { component: c, notes } = editFixture();
+  c.harmonicHeight = 264;
+  c.scalePitchClasses = () => [0, 2, 4, 5, 7, 9, 11];
+  c.model.notes = [notes[0]];
+  c.selectedNoteIds = () => ['a'];
+  c.playhead = 0;
+  const shapes = [];
+  c.dynamicGraphics.roundRect = function(x, y, width, height) { shapes.push({ x, y, width, height }); return this; };
+  // Grab below the note center; the canvas is displayed at half its rendering size.
+  c.onPointerDown(pointer(300, 22));
+  const move = (semitones, expectedPitch, shouldAudition) => {
+    const before = c.auditionRequested.values.length;
+    c.lastAudition = performance.now(); // Every move happens inside the former throttle window.
+    shapes.length = 0;
+    c.onPointerMove(pointer(300, 22 - semitones * c.laneHeight / 2));
+    assert.equal(c.drag.current.midi, expectedPitch);
+    const cyan = shapes.find(shape => shape.height === 6);
+    assert.ok(cyan);
+    const drawnPitch = c.pitchMax + .5 - (cyan.y + 3 + c.verticalOffset) / c.laneHeight;
+    assert.equal(drawnPitch, expectedPitch, 'cyan preview uses the snapped pitch');
+    assert.equal(c.auditionRequested.values.length, before + Number(shouldAudition));
+    assert.equal(c.auditionRequested.values.at(-1)[0].midi, expectedPitch, 'audio uses the cyan preview pitch');
+  };
+  move(1.6, 50, true);
+  move(2.2, 50, false);
+  move(3.6, 52, true);
+  move(0, 48, true);
+  move(-1.6, 45, true);
+  c.onPointerUp(pointer(300, 30));
+  assert.equal(c.noteChanged.values[0].midi, 45, 'the committed pitch also matches');
+});
+
 test('drum-only editing renders every unselected drum note at visible row-based thickness', () => {
   const { component: c } = fixture();
   c.editable = () => true; c.velocityVisible = () => true;

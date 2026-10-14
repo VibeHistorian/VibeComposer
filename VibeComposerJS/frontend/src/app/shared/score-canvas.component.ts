@@ -384,13 +384,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const anchor = drag.mode === 'duration' ? drag.note.durationBeats : drag.note.startBeat;
       const beatDelta = grid ? Math.round((anchor + rawDelta) / grid) * grid - anchor : rawDelta;
       const pitchDelta = drag.lockPitch || (event.shiftKey && drag.mode === 'move') ? 0 : -Math.round(dy / this.laneHeight);
+      const previousPreview = drag.preview;
       drag.preview = dragPhraseNotes(drag.originals, drag.mode, beatDelta, pitchDelta, -Math.round(dy),
         this.editBounds()?.startBeat ?? 0, this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1);
       if ((drag.mode === 'pitch' || drag.mode === 'move') && pitchDelta !== 0 && !drag.lockPitch) {
         drag.preview = drag.preview.map(note => ({ ...note, midi: this.snapPitch(note.midi) }));
       }
       drag.current = drag.preview.find(note => note.id === drag.note.id) ?? drag.note;
-      if ((drag.mode === 'velocity' || drag.current.midi !== drag.note.midi) && performance.now() - this.lastAudition > 300) {
+      const pitchChanged = drag.preview.some((note, index) => note.midi !== previousPreview[index]?.midi);
+      if (pitchChanged || (drag.mode === 'velocity' && performance.now() - this.lastAudition > 300)) {
         this.auditionRequested.emit(drag.preview);
         this.lastAudition = performance.now();
       }
