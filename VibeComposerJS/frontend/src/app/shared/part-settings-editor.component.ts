@@ -63,7 +63,7 @@ export class PartSettingsEditorComponent {
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&
     (control.key !== 'arpPatternCustom' || this.values()['pattern'] === 'custom' || this.values()['pattern'] === null) &&
-    (!(this.role() === 'bass' && this.values()['rhythm'] === 'alternating')
+    (!(this.role() === 'bass' && this.values()['rhythm'] === 'bass1')
       || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities', 'patternJoinMode'].includes(control.key))
     &&
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
@@ -71,7 +71,7 @@ export class PartSettingsEditorComponent {
     && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
     && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true
       || (this.values()['rhythm'] === 'melody' && this.melodyHits() > 32)
-      || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating'))))));
+      || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1'))))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
     id: group.id, label: group.label,
     controls: this.controls().filter(control => control.key !== 'patternSeed' && partControlGroup(control.key) === group.id),
@@ -83,7 +83,7 @@ export class PartSettingsEditorComponent {
     return (values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES).slice(0, values['rhythm'] === 'melody' ? this.melodyHits() : values['hitsPerPattern'] as number ?? 8);
   });
   readonly rhythmPreview = computed(() => {
-    if (this.role() === 'melody' || this.values()['rhythm'] === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'alternating')) return undefined;
+    if (this.role() === 'melody' || this.values()['rhythm'] === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1')) return undefined;
     const values = this.values();
     const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
       ...(values['rhythm'] === 'euclid' ? ['euclideanPulses'] : []),
@@ -111,7 +111,7 @@ export class PartSettingsEditorComponent {
   }
 
   flipControl(control: PartControl): PartControl | undefined {
-    if (control.key === 'rhythm' && this.role() === 'bass' && this.values()['rhythm'] === 'alternating'
+    if (control.key === 'rhythm' && this.role() === 'bass' && this.values()['rhythm'] === 'bass1'
         && !this.preferences.editingQuickSettings()) return undefined;
     const key = combinedControlKeys(control.key)[1];
     return key ? PART_CONTROLS[this.role()].find(control => control.key === key) : undefined;

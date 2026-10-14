@@ -27,7 +27,7 @@
                   (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index)"></button>
               }
             </div>
-          } @else { <span class="unavailable">{{ row.values['rhythm'] === 'alternating' ? 'Alternating rhythm' : 'Follows melody blocks' }}</span> }
+          } @else { <span class="unavailable">{{ row.values['rhythm'] === 'bass1' ? 'bass1 rhythm' : 'Follows melody blocks' }}</span> }
         </div>
         @if (showVelocities() && row.velocitySupported) {
           <div class="velocity-row">

@@ -86,14 +86,14 @@ export function generateBassline(
   for (let chordIndex = 0; chordIndex < triads.length; chordIndex++) {
     // Java bass skips the entire chord before consuming its shared dynamics/variation streams.
     if (!fill[chordIndex]) { skipNotes = 0; chordStart += BEATS_PER_CHORD; continue; }
-    const gridSettings = { ...settings, rhythm: rhythm === 'alternating' ? 'full' as const : rhythm };
-    const grid = rhythm === 'alternating' ? undefined : spannedPattern(gridSettings, chordIndex);
-    const velocities = rhythm === 'alternating' ? undefined : spannedVelocities(gridSettings, chordIndex);
+    const gridSettings = { ...settings, rhythm: rhythm === 'bass1' ? 'full' as const : rhythm };
+    const grid = rhythm === 'bass1' ? undefined : spannedPattern(gridSettings, chordIndex);
+    const velocities = rhythm === 'bass1' ? undefined : spannedVelocities(gridSettings, chordIndex);
     // Java's lookahead deliberately uses the next slice before Pattern flip, independently of Fill.
     const span = settings.chordSpan ?? 1;
     const nextGrid = grid && joinMode !== 'NOJOIN' && chordIndex % span < span - 1
       ? spannedPattern({ ...gridSettings, patternFlip: false }, chordIndex + 1) : undefined;
-    const durations = rhythm === 'alternating'
+    const durations = rhythm === 'bass1'
       ? makeAlternatingDurations(
         BigInt.asIntN(32, partSeed + BigInt(chordIndex % 2)),
         BEATS_PER_CHORD,
@@ -105,7 +105,7 @@ export function generateBassline(
     for (let noteIndex = 0; noteIndex < durations.length; noteIndex++) {
       const duration = durations[noteIndex];
       const velocity = velocities ? velocities[noteIndex % velocities.length] : dynamics.nextInt(velocityMax - velocityMin + 1) + velocityMin;
-      const isActive = rhythm === 'alternating' || (grid![noteIndex] > 0
+      const isActive = rhythm === 'bass1' || (grid![noteIndex] > 0
         && !(noteIndex <= nextP && stretchedByNote === 1) && skipNotes === 0);
       if (grid && skipNotes > 0) skipNotes--;
       let durationMultiplier = 1;

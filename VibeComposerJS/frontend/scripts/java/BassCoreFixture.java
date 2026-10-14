@@ -14,7 +14,7 @@ public class BassCoreFixture {
         org.apache.logging.log4j.core.config.Configurator.setRootLevel(org.apache.logging.log4j.Level.OFF);
         org.apache.logging.log4j.core.config.Configurator.setLevel("org.vibehistorian.vibecomposer.LG", org.apache.logging.log4j.Level.OFF);
         String[] seeds = { "42", "-2147483648", "9223372036854775807", "9007199254740993" };
-        String[] rhythms = { "full", "half", "tresillo", "sparse", "single", "one-six", "euclid", "custom", "alternating" };
+        String[] rhythms = { "full", "half", "tresillo", "sparse", "single", "one-six", "euclid", "custom", "bass1" };
         RhythmPattern[] patterns = { RhythmPattern.FULL, RhythmPattern.ALT, RhythmPattern.TRESILLO,
                 RhythmPattern.ONEPER4, RhythmPattern.SINGLE, RhythmPattern.ONESIX, RhythmPattern.EUCLID, RhythmPattern.CUSTOM, RhythmPattern.FULL };
         StringBuilder json = new StringBuilder("[\n"); boolean first = true;

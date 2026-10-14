@@ -32,7 +32,7 @@ export class PatternSequencerComponent {
       : 'trackId' in scope ? track.id === scope.trackId : track.role === this.data.role).map(track => {
       const effective = resolvePartTrack(track, section);
       const values = settingsValues(effective.generatorSettings, effective.role);
-      const supported = track.role !== 'melody' && values['rhythm'] !== 'melody' && !(track.role === 'bass' && values['rhythm'] === 'alternating');
+      const supported = track.role !== 'melody' && values['rhythm'] !== 'melody' && !(track.role === 'bass' && values['rhythm'] === 'bass1');
       const hits = values['rhythm'] === 'melody' || track.role === 'melody' ? this.data.melodyHits : Number(values['hitsPerPattern'] ?? 8);
       const pattern = draft?.id === track.id && draft.pattern ? draft.pattern : supported ? chordRhythmMask({
         rhythm: values['rhythm'] as ChordRhythm, hitsPerPattern: hits, patternShift: Number(values['patternShift'] ?? 0),
@@ -41,7 +41,7 @@ export class PatternSequencerComponent {
       const velocities = draft?.id === track.id && draft.velocities ? draft.velocities
         : [...(values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
       return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? drumInstrumentName(effective.generatorSettings.pitch) : effective.role,
-        values, supported, hits, pattern, velocities: velocities.slice(0, Math.min(32, hits)), velocitySupported: hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'alternating'),
+        values, supported, hits, pattern, velocities: velocities.slice(0, Math.min(32, hits)), velocitySupported: hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'bass1'),
         active: 'trackId' in scope && track.id === scope.trackId };
     });
   });

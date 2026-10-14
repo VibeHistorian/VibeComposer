@@ -391,8 +391,8 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).bass.patternJoinMode === 'JOIN', 'persisted bass join');
         result.bassJoinSaved = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'bass').generatorSettings.patternJoinMode;
         const bassRhythm = document.querySelector('select[aria-label="Rhythm pattern"]');
-        bassRhythm.value = 'alternating'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
-        await waitFor(() => !document.querySelector('select[aria-label="Pattern join"]'), 'alternating hides join');
+        bassRhythm.value = 'bass1'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
+        await waitFor(() => !document.querySelector('select[aria-label="Pattern join"]'), 'bass1 hides join');
         bassRhythm.value = 'custom'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
         result.bassJoinRetained = (await waitFor(() => document.querySelector('select[aria-label="Pattern join"]'), 'grid restores join')).value;
         document.querySelector('.track-group.drums .track-select').click();

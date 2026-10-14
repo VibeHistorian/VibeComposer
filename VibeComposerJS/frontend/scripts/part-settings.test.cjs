@@ -2562,7 +2562,7 @@ test('bass join articulation resolves at all scopes, persists snapshots and expo
   const editor = new PartSettingsEditorComponent(); editor.role.set('bass'); editor.values.set({ rhythm: 'full' });
   assert.ok(editor.controls().some(control => control.key === 'patternJoinMode'));
   editor.advanced.set(false); assert.equal(editor.controls().some(control => control.key === 'patternJoinMode'), false);
-  editor.advanced.set(true); editor.values.set({ rhythm: 'alternating' });
+  editor.advanced.set(true); editor.values.set({ rhythm: 'bass1' });
   assert.equal(editor.controls().some(control => control.key === 'patternJoinMode'), false);
 });
 
@@ -4499,7 +4499,7 @@ test('quick access and inspector partition musical controls across roles and rhy
   quick.advanced.set(false);
   inspector.inspectorOnly.set(true);
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
-    for (const rhythm of ['full', 'euclid', 'custom', 'melody', 'alternating']) {
+    for (const rhythm of ['full', 'euclid', 'custom', 'melody', 'bass1']) {
       const values = { ...settings.settingsValues(service.project()[role], role), rhythm,
         useCustomVelocities: true };
       const complete = new PartSettingsEditorComponent();
@@ -4548,7 +4548,7 @@ test('the chord rhythm preview shares generation masks and shows mixed values on
   editor.values.set({ ...editor.values(), rhythm: null });
   assert.equal(editor.rhythmPreview(), null);
   editor.role.set('bass');
-  editor.values.set({ ...editor.values(), rhythm: 'alternating' });
+  editor.values.set({ ...editor.values(), rhythm: 'bass1' });
   assert.equal(editor.rhythmPreview(), undefined);
 });
 
@@ -5440,7 +5440,7 @@ test('placement editing exposes dormant controls and partitions customized quick
   const { load, uiPreferences: preferences, settings } = fixture();
   const Editor = load('shared/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const quick = new Editor(), inspector = new Editor();
-  for (const editor of [quick, inspector]) { editor.role.set('bass'); editor.values.set({ rhythm: 'alternating' }); }
+  for (const editor of [quick, inspector]) { editor.role.set('bass'); editor.values.set({ rhythm: 'bass1' }); }
   quick.advanced.set(false); inspector.inspectorOnly.set(true);
   assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
   preferences.beginQuickSettings();

@@ -151,7 +151,7 @@ export interface BassSettings extends CommonPartSettings {
   readonly octaveInterval: boolean;
 }
 
-/** Shared grid shape; Bass also permits alternating, and old Arpeggio projects may omit rhythm. */
+/** Shared grid shape; Bass also permits bass1, and old Arpeggio projects may omit rhythm. */
 export interface RhythmSettings {
   readonly rhythm: RhythmPattern;
   /** Grid subdivisions per four-beat chord; only enabled cells produce notes. */
@@ -404,7 +404,7 @@ export const DEFAULT_ARRANGEMENT: readonly ArrangementSection[] = [
 export const DEFAULT_MELODY_SETTINGS: MelodySettings = { algorithm: 'block' };
 
 export const DEFAULT_BASS_SETTINGS: BassSettings = {
-  rhythm: 'alternating',
+  rhythm: 'bass1',
   noteVariation: 20,
   octaveInterval: false,
 };
