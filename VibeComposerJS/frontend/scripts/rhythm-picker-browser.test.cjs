@@ -49,16 +49,31 @@ test('production Angular controls initialize selects from settings and support r
             fits: bounds.every(box => box.left >= row.left && box.right <= row.right + 1) };
         });
         const readTrack = role => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === role);
-        const compactButton = document.querySelector('.project-tools .compact-history');
+        const settingsButton = [...document.querySelectorAll('.project-tools button')].find(button => button.textContent.trim() === 'Settings');
+        if (document.querySelector('.project-tools .compact-history')) throw new Error('Compact History remains on main screen');
+        const openHistorySettings = async () => {
+          settingsButton.focus(); settingsButton.click();
+          const settings = await waitFor(() => document.querySelector('vc-settings-dialog'), 'settings popup');
+          await waitFor(() => settings.contains(document.activeElement), 'settings focus');
+          const bounds = settings.getBoundingClientRect();
+          if (bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight) throw new Error('settings outside viewport');
+          if (!settings.querySelector('vc-section-type-settings input[type="range"]')) throw new Error('section types missing');
+          const sidebar = settings.querySelector('.settings-sidebar');
+          [...sidebar.querySelectorAll('button')].find(button => button.textContent.trim() === 'Project History').click();
+          const checkbox = await waitFor(() => settings.querySelector('input[type="checkbox"]'), 'Compact History setting');
+          if (sidebar.getBoundingClientRect().right > settings.querySelector('.settings-content').getBoundingClientRect().left + 1) throw new Error('sidebar not on left');
+          return checkbox;
+        };
+        const compactButton = await openHistorySettings();
+        if (!compactButton.checked) throw new Error('Compact History must default on');
+        compactButton.click(); await waitFor(() => !compactButton.checked, 'compact off');
+        compactButton.click(); await waitFor(() => compactButton.checked, 'compact on');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await waitFor(() => !document.querySelector('vc-settings-dialog') && document.activeElement === settingsButton, 'settings focus restored');
         const undo = document.querySelector('.project-tools button[aria-label="Undo"]');
         const redo = document.querySelector('.project-tools button[aria-label="Redo"]');
         const tempo = document.querySelector('input[aria-label="Tempo in beats per minute"]');
         const originalTempo = Number(tempo.value);
-        if (compactButton.getAttribute('aria-pressed') !== 'false' || compactButton.previousElementSibling !== redo) {
-          throw new Error('Compact history must start off beside Undo/Redo');
-        }
-        compactButton.click();
-        await waitFor(() => compactButton.getAttribute('aria-pressed') === 'true', 'compact history on');
         for (let i = 1; i <= 3; i++) {
           tempo.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, shiftKey: true, bubbles: true, cancelable: true }));
           await waitFor(() => Number(tempo.value) === originalTempo + i, 'live compact tempo edit');
@@ -69,8 +84,11 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => Number(tempo.value) === originalTempo + 3, 'one redo restores final compact value');
         undo.click();
         await waitFor(() => Number(tempo.value) === originalTempo, 'restore tempo');
-        compactButton.click();
-        await waitFor(() => compactButton.getAttribute('aria-pressed') === 'false', 'compact history off');
+        const reopenedCompact = await openHistorySettings();
+        if (!reopenedCompact.checked) throw new Error('Compact History lost when reopening settings');
+        reopenedCompact.click(); await waitFor(() => !reopenedCompact.checked, 'compact history off');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await waitFor(() => !document.querySelector('vc-settings-dialog'), 'settings closed');
         const initiallyCollapsed = [...document.querySelectorAll('.collapse-group-button')].every(button => button.getAttribute('aria-expanded') === 'false');
         const instrumentDefaultChecks = [];
         // Preserve parameter-only scenarios with explicit instrument opt-outs; selection opens each role's rules.

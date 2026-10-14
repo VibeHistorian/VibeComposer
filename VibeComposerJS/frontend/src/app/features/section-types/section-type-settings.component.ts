@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import type { ArrangedPart, SectionType } from '../../core/project/project.model';
 import { ARRANGED_PARTS, SECTION_TYPES } from '../../core/project/project.model';
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
@@ -14,7 +14,6 @@ const PART_NAMES: Readonly<Record<ArrangedPart, string>> = {
   styleUrl: './section-type-settings.component.css',
 })
 export class SectionTypeSettingsComponent {
-  readonly closed = output<void>();
   readonly settings = inject(SectionTypeSettingsService);
   readonly sectionTypes = SECTION_TYPES;
   readonly parts = ARRANGED_PARTS;

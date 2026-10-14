@@ -4,14 +4,14 @@ import { HistoryDialogComponent } from './shared/history-dialog.component';
 import { getAppInfo } from './core/wails/wails-api';
 import type { AppInfo } from './core/wails/wails-api';
 import { ProjectService } from './core/project/project.service';
-import { SectionTypeSettingsComponent } from './features/section-types/section-type-settings.component';
+import { SettingsDialogComponent } from './features/settings/settings-dialog.component';
 import { TransportDockComponent } from './shared/transport-dock.component';
 import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
 import { WorkspaceUiService } from './shared/workspace-ui.service';
 
 @Component({
   selector: 'vc-root',
-  imports: [DialogModule, TransportDockComponent, WorkspaceCanvasComponent, SectionTypeSettingsComponent],
+  imports: [DialogModule, TransportDockComponent, WorkspaceCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })
@@ -21,8 +21,11 @@ export class AppComponent implements OnInit {
   readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
-  readonly sectionTypeSettingsOpen = signal(false);
   private readonly dialogs = inject(Dialog);
+
+  openSettings(): void {
+    this.dialogs.open(SettingsDialogComponent, { ariaLabelledBy: 'settings-title' });
+  }
 
   openHistory(): void {
     this.dialogs.open(HistoryDialogComponent, { ariaLabelledBy: 'history-title' });

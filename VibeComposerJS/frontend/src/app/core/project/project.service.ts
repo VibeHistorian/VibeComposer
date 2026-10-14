@@ -49,7 +49,7 @@ export class ProjectService {
   private readonly future: CompositionProject[] = [];
   private readonly undoAvailable = signal(false);
   private readonly redoAvailable = signal(false);
-  private readonly compactHistoryEnabled = signal(false);
+  private readonly compactHistoryEnabled = signal(true);
   private lastControlEdit: { key: string; time: number } | null = null;
   private readonly historyRevision = signal(0);
 

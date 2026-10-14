@@ -1,0 +1,31 @@
+<section class="settings-dialog">
+  <header class="settings-heading">
+    <h1 id="settings-title">Settings</h1>
+    <button type="button" class="close-button" (click)="dialog.close()" aria-label="Close settings">×</button>
+  </header>
+  <div class="settings-body">
+    <nav class="settings-sidebar" aria-label="Settings categories">
+      @for (category of categories; track category.id) {
+        <button type="button" [class.selected]="selectedCategory() === category.id"
+          [attr.aria-current]="selectedCategory() === category.id ? 'true' : null"
+          (click)="selectedCategory.set(category.id)">{{ category.label }}</button>
+      }
+    </nav>
+    <div class="settings-content">
+      @switch (selectedCategory()) {
+        @case ('section-types') { <vc-section-type-settings /> }
+        @case ('project-history') {
+          <section aria-labelledby="project-history-title">
+            <h2 id="project-history-title">Project History</h2>
+            <label class="history-setting">
+              <input type="checkbox" [checked]="projects.compactHistory()"
+                (change)="projects.toggleCompactHistory()" aria-describedby="compact-history-description" />
+              <span>Compact History</span>
+            </label>
+            <p id="compact-history-description">Group repeated changes to the same control less than one second apart into one undo step.</p>
+          </section>
+        }
+      }
+    </div>
+  </div>
+</section>

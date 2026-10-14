@@ -956,10 +956,9 @@ test('P5 editor supports empty contour and separates pitch direction from melody
 test('compact history groups same-control bursts while keeping live state, persistence and final redo', (t) => {
   let now = 0;
   t.mock.method(performance, 'now', () => now);
-  const { service, stored } = fixture();
+  const { service, stored } = fixture({ compactHistory: true });
   const before = service.exportProjectJson();
-  assert.equal(service.compactHistory(), false);
-  service.toggleCompactHistory();
+  assert.equal(service.compactHistory(), true);
   assert.equal(service.canUndo(), false, 'preference does not create project history');
   for (const tempoBpm of [130, 131, 132]) {
     now += 200;
@@ -980,8 +979,7 @@ test('compact history groups same-control bursts while keeping live state, persi
 test('compact history separates fields, scopes, delayed edits, actions and multi-control patches', (t) => {
   let now = 0;
   t.mock.method(performance, 'now', () => now);
-  const { service } = fixture();
-  service.toggleCompactHistory();
+  const { service } = fixture({ compactHistory: true });
   const track = { kind: 'global-track', trackId: 'track-chords-1' };
   const snapshots = [service.exportProjectJson()];
   const step = (edit) => { edit(); snapshots.push(service.exportProjectJson()); };
@@ -1009,8 +1007,7 @@ test('compact history separates fields, scopes, delayed edits, actions and multi
 
 test('compact history covers mixer and policies and switching it off preserves individual edits', (t) => {
   t.mock.method(performance, 'now', () => 0);
-  const { service } = fixture();
-  service.toggleCompactHistory();
+  const { service } = fixture({ compactHistory: true });
   const before = service.exportProjectJson();
   service.updateTrack('track-bass-1', { mix: { volumePercent: 90 } });
   service.updateTrack('track-bass-1', { mix: { volumePercent: 80 } });
@@ -1681,7 +1678,7 @@ test('history navigation preserves audition switches, redo branches and abbrevia
 
 test('mixed audition and volume patches undo only volume; compact history shows the final value', (t) => {
   t.mock.method(performance, 'now', () => 0);
-  const { service } = fixture();
+  const { service } = fixture({ compactHistory: true });
   const track = service.project().tracks[0];
   const volume = track.mix.volumePercent;
   service.updateTrack(track.id, { mix: { muted: true, volumePercent: 42 } });
@@ -1690,7 +1687,6 @@ test('mixed audition and volume patches undo only volume; compact history shows 
   assert.equal(service.project().tracks[0].mix.muted, true);
   service.redo();
   assert.equal(service.project().tracks[0].mix.volumePercent, 42);
-  service.toggleCompactHistory();
   service.updateSettings({ tempoBpm: 130 });
   service.toggleTrackMix([track.id], 'solo');
   service.updateSettings({ tempoBpm: 140 });
@@ -3423,7 +3419,7 @@ test('failed project loads warn with property paths and preserve the current pro
   }
 });
 
-function fixture() {
+function fixture({ compactHistory = false } = {}) {
   const cache = new Map();
   const signal = (value) => {
     const read = () => value;
@@ -3467,6 +3463,8 @@ function fixture() {
   const preferences = { chances: () => sectionTypes.DEFAULT_SECTION_TYPE_CHANCES };
   const { ProjectService } = load('core/project/project.service.ts');
   service = new ProjectService();
+  // Most workflows assert one undo entry per edit; compact-history tests use the app default.
+  if (!compactHistory) service.toggleCompactHistory();
   const { WorkspaceUiService } = load('shared/workspace-ui.service.ts');
   ui = new WorkspaceUiService();
   const { WorkspaceCanvasComponent } = load('shared/workspace-canvas.component.ts');

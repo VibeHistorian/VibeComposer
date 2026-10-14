@@ -1,0 +1,31 @@
+/* Dialog layout */
+:host { display: block; width: min(1280px, 96vw); }
+.settings-dialog { display: flex; flex-direction: column; height: min(720px, 88vh); overflow: hidden; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); color: var(--text-primary); box-shadow: 0 24px 80px var(--shadow-ink); }
+.settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 22px; border-bottom: 1px solid var(--border-subtle); }
+h1 { margin: 0; font-size: 20px; font-weight: 550; }
+.close-button { width: 32px; height: 32px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font-size: 20px; cursor: pointer; }
+.close-button:hover { background: var(--surface-button-hover); }
+.settings-body { display: flex; flex: 1; min-height: 0; }
+.settings-content { flex: 1; min-width: 0; padding: 22px; overflow: auto; }
+
+/* Category sidebar */
+.settings-sidebar { flex: 0 0 180px; padding: 12px; overflow: auto; border-right: 1px solid var(--border-subtle); background: var(--surface-low); }
+.settings-sidebar button { display: block; width: 100%; margin-bottom: 6px; padding: 10px 12px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--text-secondary); text-align: left; font: 12px var(--font-ui); cursor: pointer; }
+.settings-sidebar button:hover { background: var(--surface-hover); }
+.settings-sidebar button.selected { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+/* Project history preferences */
+h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
+.history-setting { display: flex; align-items: center; gap: 10px; width: fit-content; font-size: 13px; cursor: pointer; }
+.history-setting input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-primary); cursor: pointer; }
+.settings-content p { max-width: 560px; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+
+/* Narrow screens */
+@media (max-width: 680px) {
+  .settings-dialog { height: 92vh; }
+  .settings-heading { padding: 12px; }
+  .settings-sidebar { flex-basis: 112px; padding: 8px; }
+  .settings-sidebar button { padding: 10px 6px; font-size: 11px; }
+  .settings-content { padding: 14px; }
+}

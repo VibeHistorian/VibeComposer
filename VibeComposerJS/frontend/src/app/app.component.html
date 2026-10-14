@@ -15,13 +15,10 @@
         </div>
 
         <div class="project-tools">
-          <button type="button" (click)="sectionTypeSettingsOpen.set(true)">Section types</button>
+          <button type="button" (click)="openSettings()" aria-haspopup="dialog">Settings</button>
           <button type="button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>
           <button type="button" (click)="projects.redo()" [disabled]="!projects.canRedo() || workspaceUi.editingNoteId() !== null" aria-label="Redo" title="Redo">↷</button>
           <button type="button" (click)="openHistory()" aria-haspopup="dialog">History</button>
-          <button type="button" class="compact-history" (click)="projects.toggleCompactHistory()"
-            [attr.aria-pressed]="projects.compactHistory()"
-            title="Group repeated changes to the same control less than one second apart into one undo step">Compact history</button>
           <button type="button" (click)="exportProject()">Export project</button>
           <button type="button" (click)="projectFile.click()">Open project</button>
           <input #projectFile type="file" accept="application/json,.json" hidden (change)="importProject($event)" />
@@ -35,8 +32,5 @@
       <vc-workspace-canvas />
 
       <vc-transport-dock />
-      @if (sectionTypeSettingsOpen()) {
-        <vc-section-type-settings (closed)="sectionTypeSettingsOpen.set(false)" />
-      }
     </div>
   

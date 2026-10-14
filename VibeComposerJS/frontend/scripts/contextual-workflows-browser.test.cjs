@@ -25,6 +25,19 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
     try {
       await wait(() => innerWidth === ${width}, 'exact viewport');
       const seed = await wait(() => document.querySelector('[aria-label="Generation seed"]'), 'seed');
+      // This workflow checks individual history entries, so opt out of compaction.
+      (await wait(() => [...document.querySelectorAll('.project-tools button')].find(button => button.textContent.trim() === 'Settings'), 'settings button')).click();
+      const settings = await wait(() => document.querySelector('vc-settings-dialog'), 'settings');
+      const category = await wait(() => [...settings.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Project History'), 'history category');
+      await wait(() => settings.contains(document.activeElement), 'settings focus');
+      const bounds = settings.getBoundingClientRect();
+      if (bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight) throw new Error('settings outside viewport');
+      if (!settings.querySelector('vc-section-type-settings input[type="range"]')) throw new Error('section type editor missing');
+      category.click();
+      const compact = await wait(() => settings.querySelector('input[type="checkbox"]'), 'compact preference');
+      if (compact.checked) compact.click();
+      settings.querySelector('[aria-label="Close settings"]').click();
+      await wait(() => !document.querySelector('vc-settings-dialog'), 'settings closed');
       if (!sessionStorage.getItem('contextual-fixture')) {
         change(seed, '9007199254740993');
         const project = await wait(read, 'saved project');
