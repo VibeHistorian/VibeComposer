@@ -625,7 +625,7 @@ export class WorkspaceCanvasComponent {
 
   updateTempo(event: Event): void {
     const tempo = Number(this.inputValue(event));
-    if (Number.isInteger(tempo) && tempo >= 40 && tempo <= 240) this.projects.updateSettings({ tempoBpm: tempo });
+    if (Number.isInteger(tempo) && tempo >= 30 && tempo <= 240) this.projects.updateSettings({ tempoBpm: tempo });
   }
 
   updateTranspose(event: Event): void {

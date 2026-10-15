@@ -102,7 +102,7 @@ export class TransportDockComponent {
   }
 
   updateTempo(tempo: number): void {
-    if (Number.isInteger(tempo) && tempo >= 40 && tempo <= 240) this.projects.updateSettings({ tempoBpm: tempo });
+    if (Number.isInteger(tempo) && tempo >= 30 && tempo <= 240) this.projects.updateSettings({ tempoBpm: tempo });
   }
 
   updateTranspose(transpose: number): void {

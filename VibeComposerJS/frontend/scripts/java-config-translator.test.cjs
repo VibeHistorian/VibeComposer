@@ -15,7 +15,7 @@ const note = (pitch, rv, duration, offset = 0, dynamic = 80) => `<phraseNote><pi
 
 test('real Java XML translates actual sections, supported settings, presence and independent local phrases', () => {
   const result = translate(source, 'Java parity fixture'), { project } = result;
-  assert.equal(project.tempoBpm, 40); assert.equal(project.scale, 'mixolydian');
+  assert.equal(project.tempoBpm, 33); assert.equal(project.scale, 'mixolydian');
   assert.equal(project.seed, '-2129510774'); assert.equal(project.transposeSemitones, 2);
   assert.equal(project.tracks.length, 18); assert.equal(project.arrangement.length, 5);
   assert.deepEqual(project.arrangement.map(section => section.type), ['INTRO','CLIMAX','INTRO','CLIMAX','CLIMAX']);
@@ -39,6 +39,14 @@ test('real Java XML translates actual sections, supported settings, presence and
   assert.ok(result.diagnostics.some(item=>item.code==='unsupported-value' && item.path.endsWith('arpPatternCustom')));
   assert.ok(!result.diagnostics.some(item=>/^GUIConfig\.arrangement\[/.test(item.path)));
   assert.ok(loadMusic('midi-export.ts').generateCompositionMidi(project).length>100);
+});
+
+test('Java BPM translation preserves 30 and 33 and clamps values below the minimum', () => {
+  for (const [bpm, expected] of [[30, 30], [33, 33], [29, 30]]) {
+    const result = translate(config(section(), part() + node('bpm', bpm)));
+    assert.equal(result.project.tempoBpm, expected);
+    assert.equal(result.diagnostics.some(item => item.path === 'GUIConfig.bpm' && item.code === 'adjusted'), bpm < 30);
+  }
 });
 
 test('rhythm values advance across rests and zero-rhythm notes; offsets, scale, articulation and feedback are baked once', () => {

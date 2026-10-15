@@ -18,6 +18,22 @@ test('Java XML translation passes the real project decoder, round-trips and prod
   assert.equal(service.exportProjectJson(),exported);
 });
 
+test('project BPM validation accepts 30 and 33, persists them and rejects values below 30', () => {
+  const {service} = fixture();
+  for (const tempoBpm of [30, 33]) {
+    const project = JSON.parse(service.exportProjectJson());
+    project.tempoBpm = tempoBpm;
+    assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+    assert.equal(service.project().tempoBpm, tempoBpm);
+    assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+    assert.equal(service.project().tempoBpm, tempoBpm);
+  }
+  const invalid = JSON.parse(service.exportProjectJson());
+  invalid.tempoBpm = 29;
+  assert.equal(service.importProjectJson(JSON.stringify(invalid)), false);
+  assert.equal(service.project().tempoBpm, 33);
+});
+
 test('Java zero-origin modes retain exact degrees, target notes and modal chord pitches', () => {
   const { load } = fixture(), scales = load('core/music/scales.ts'), harmony = load('core/music/harmony.ts');
   const java = fs.readFileSync(path.join(__dirname, '../../../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/MidiUtils.java'), 'utf8');
@@ -3403,7 +3419,7 @@ test('failed project loads warn with property paths and preserve the current pro
     assert.equal(warnings.length, 1);
     const details = warnings[0][1].join('\n');
     assert.match(details, /project\.name: missing required property/);
-    assert.match(details, /project\.tempoBpm: expected an integer from 40 to 240/);
+    assert.match(details, /project\.tempoBpm: expected an integer from 30 to 240/);
     assert.match(details, /project\.drums\.obsoleteGroove: unknown property/);
     assert.match(details, /project\.tracks\[0\]\.generatorSettings\.unknownControl: unknown property/);
     assert.match(details, /project\.mix\.bass\.panPercent/);

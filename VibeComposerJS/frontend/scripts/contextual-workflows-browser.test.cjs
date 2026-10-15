@@ -735,7 +735,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
         failedImportPreservesState:before===JSON.stringify(read())};
     })()` });
     assert.equal(xmlImport.exceptionDetails,undefined,JSON.stringify(xmlImport));
-    assert.deepEqual(xmlImport.result.value,{tracks:18,sections:5,bpm:40,scale:'mixolydian',localNotes:16,failedImportPreservesState:true});
+    assert.deepEqual(xmlImport.result.value,{tracks:18,sections:5,bpm:33,scale:'mixolydian',localNotes:16,failedImportPreservesState:true});
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);

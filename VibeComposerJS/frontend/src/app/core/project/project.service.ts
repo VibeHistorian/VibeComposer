@@ -1349,7 +1349,7 @@ export class ProjectService {
       check('project.name', typeof project['name'] === 'string', 'expected a string');
       check('project.key', KEYS.includes(project['key'] as string), `expected one of ${KEYS.join(', ')}`);
       check('project.scale', isScaleMode(project['scale']), 'expected a supported scale/mode');
-      check('project.tempoBpm', Number.isInteger(project['tempoBpm']) && (project['tempoBpm'] as number) >= 40 && (project['tempoBpm'] as number) <= 240, 'expected an integer from 40 to 240');
+      check('project.tempoBpm', Number.isInteger(project['tempoBpm']) && (project['tempoBpm'] as number) >= 30 && (project['tempoBpm'] as number) <= 240, 'expected an integer from 30 to 240');
       const seed = project['seed'];
       check('project.seed', typeof seed === 'string' && /^-?\d+$/.test(seed) && BigInt(seed) >= -(1n << 63n) && BigInt(seed) <= (1n << 63n) - 1n, 'expected a decimal string within the signed 64-bit seed range');
       const progression = project['progression'];
@@ -1439,7 +1439,7 @@ export class ProjectService {
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (isScaleMode(project.scale))
       && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
-      && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
+      && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
       && Array.isArray(project.progression)
@@ -1867,7 +1867,7 @@ export class ProjectService {
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (isScaleMode(project.scale))
       && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
-      && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 40 && (project.tempoBpm ?? 0) <= 240
+      && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
       && Array.isArray(project.progression)

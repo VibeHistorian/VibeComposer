@@ -100,7 +100,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   const seedText = root.getAttribute('randomSeed') || '0';
   if (!/^-?\d+$/.test(seedText) || BigInt(seedText) < -(1n << 63n) || BigInt(seedText) >= 1n << 63n) throw new Error('randomSeed must be a Java long.');
   const bpm = numeric(root, 'bpm', 120)!;
-  if (bpm < 40 || bpm > 240 || !Number.isInteger(bpm)) warn('GUIConfig.bpm', 'adjusted', `BPM ${bpm} becomes ${Math.max(40, Math.min(240, Math.round(bpm)))}.`);
+  if (bpm < 30 || bpm > 240 || !Number.isInteger(bpm)) warn('GUIConfig.bpm', 'adjusted', `BPM ${bpm} becomes ${Math.max(30, Math.min(240, Math.round(bpm)))}.`);
   const chordGen = one(root, 'chordGenSettings');
   const chordTranspose = chordGen ? bool(chordGen, 'useTranspose', true) : true;
   const octaveAdjustments = bool(root, 'useOctaveAdjustments');
@@ -451,7 +451,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   const roleSettings = Object.fromEntries(ARRANGED_PARTS.map(role => [role, tracks.find(track => track.role === role)?.generatorSettings ?? DEFAULT_PROJECT[role]]));
   const mix = Object.fromEntries(ARRANGED_PARTS.map(role => [role, tracks.find(track => track.role === role)?.mix ?? DEFAULT_PROJECT.mix[role]])) as CompositionProject['mix'];
   const project = { ...DEFAULT_PROJECT, ...roleSettings, name: options.name?.trim() || 'Imported Java composition', key: 'C', scale,
-    tempoBpm: Math.max(40, Math.min(240, Math.round(bpm))), transposeSemitones: numeric(root, 'transpose', 0)!, seed: BigInt(seedText).toString(),
+    tempoBpm: Math.max(30, Math.min(240, Math.round(bpm))), transposeSemitones: numeric(root, 'transpose', 0)!, seed: BigInt(seedText).toString(),
     progression, ...(globalChords ? { progressionChords: globalChords } : {}), melodyGlobal, harmonySettings,
     tracks, mix, arrangement, editedPhrases: {}, trackGenerationPolicies, instrumentGenerationPolicies,
   } as CompositionProject;
