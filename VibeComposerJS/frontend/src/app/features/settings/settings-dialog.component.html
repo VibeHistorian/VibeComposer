@@ -18,6 +18,17 @@
             <h2 id="appearance-title">Appearance</h2>
             <p>Changes apply immediately and are saved in your UI preferences.</p>
             <fieldset class="appearance-fields">
+              <legend>Main theme colors</legend>
+              <p>These five colors set the background, panels, text, borders and highlights throughout the app.</p>
+              @for (color of themeColors; track color.key) {
+                <label class="appearance-setting">
+                  <span>{{ color.label }}</span>
+                  <input type="color" [attr.aria-label]="color.label + ' theme color'"
+                    [value]="preferences.appearance().themeColors[color.key]" (input)="changeThemeColor(color.key, $event)" />
+                </label>
+              }
+            </fieldset>
+            <fieldset class="appearance-fields">
               <legend>Fonts</legend>
               @for (area of fontAreas; track area.key) {
                 <label class="appearance-setting">

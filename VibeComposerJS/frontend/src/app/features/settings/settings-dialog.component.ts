@@ -5,6 +5,7 @@ import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
 import { FONT_AREAS, FONT_CHOICES, type FontArea } from '../../core/ui/appearance';
 import { ARRANGED_PARTS, type ArrangedPart } from '../../core/project/project.model';
+import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
 
 @Component({
   selector: 'vc-settings-dialog',
@@ -21,6 +22,8 @@ export class SettingsDialogComponent {
   readonly fontAreas = FONT_AREAS;
   readonly fontChoices = FONT_CHOICES;
   readonly roles = ARRANGED_PARTS;
+  readonly themeColors = THEME_COLORS;
+  changeThemeColor(key: ThemeColor, event: Event): void { this.preferences.setThemeColor(key, (event.target as HTMLInputElement).value); }
   readonly roleNames: Record<ArrangedPart, string> = { melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums' };
   changeFont(area: FontArea, event: Event): void { this.preferences.setFont(area, (event.target as HTMLSelectElement).value); }
   changeRoleColor(role: ArrangedPart, event: Event): void { this.preferences.setRoleColor(role, (event.target as HTMLInputElement).value); }
@@ -48,5 +51,5 @@ export class SettingsDialogComponent {
     { id: 'section-types', label: 'Section Types' },
     { id: 'project-history', label: 'Project History' },
   ] as const;
-  readonly selectedCategory = signal<typeof this.categories[number]['id']>('section-types');
+  readonly selectedCategory = signal<typeof this.categories[number]['id']>('appearance');
 }

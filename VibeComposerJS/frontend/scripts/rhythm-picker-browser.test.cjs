@@ -57,6 +57,8 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => settings.contains(document.activeElement), 'settings focus');
           const bounds = settings.getBoundingClientRect();
           if (bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight) throw new Error('settings outside viewport');
+          [...settings.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Section Types').click();
+          await waitFor(() => settings.querySelector('vc-section-type-settings'), 'section types');
           if (!settings.querySelector('vc-section-type-settings input[type="range"]')) throw new Error('section types missing');
           const sidebar = settings.querySelector('.settings-sidebar');
           [...sidebar.querySelectorAll('button')].find(button => button.textContent.trim() === 'Project History').click();

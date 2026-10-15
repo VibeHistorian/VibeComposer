@@ -32,6 +32,8 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => settings.contains(document.activeElement), 'settings focus');
       const bounds = settings.getBoundingClientRect();
       if (bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight) throw new Error('settings outside viewport');
+      [...settings.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Section Types').click();
+      await wait(() => settings.querySelector('vc-section-type-settings'), 'section types');
       if (!settings.querySelector('vc-section-type-settings input[type="range"]')) throw new Error('section type editor missing');
       category.click();
       const compact = await wait(() => settings.querySelector('input[type="checkbox"]'), 'compact preference');

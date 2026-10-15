@@ -3,6 +3,7 @@ import type { ArrangedPart } from '../project/project.model';
 import { ARRANGED_PARTS } from '../project/project.model';
 import { defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
+import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
 import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
 const STORAGE_KEY = 'vibecomposer.ui-preferences.v1';
@@ -31,9 +32,16 @@ export class UiPreferencesService {
   }
   resetAppearance(): void { this.commit({ ...this.state(), appearance: defaultAppearance() }); }
 
+  setThemeColor(key: ThemeColor, color: string): void {
+    if (!THEME_COLORS.some(choice => choice.key === key) || !isRoleColor(color)) return;
+    const appearance = this.appearance();
+    this.commit({ ...this.state(), appearance: { ...appearance, themeColors: { ...appearance.themeColors, [key]: color.toLowerCase() } } });
+  }
+
   private applyAppearance(preferences: UiPreferences): void {
     const style = globalThis.document?.documentElement?.style;
     if (!style) return;
+    for (const [name, color] of Object.entries(themeColorTokens(preferences.appearance.themeColors))) style.setProperty(name, color);
     for (const [area, font] of Object.entries(preferences.appearance.fonts)) style.setProperty(`--font-${area}`, font);
     for (const role of ARRANGED_PARTS) {
       for (const [name, color] of Object.entries(roleColorTokens(role, preferences.appearance.roleColors[role]))) style.setProperty(name, color);

@@ -28,23 +28,23 @@
   --text-field-padding-inline: 5px;
   --text-field-font-size: 10px;
 
-  /* Core surfaces */
+  /* Main theme defaults derived by core/ui/theme.ts; preferences apply the same palette. */
   --surface-canvas: #020812;
-  --surface-input: #071727;
+  --surface-input: #081626;
   --surface-base: #0b1e30;
-  --surface-low: #10283d;
-  --surface-card: #17364f;
-  --surface-button: #1b4561;
-  --surface-button-hover: #235d79;
-  --surface-hover: #1b4059;
-  --surface-accent: #12354d;
-  --surface-accent-hover: #194861;
-  --surface-score: #061523;
-  --surface-blue: #0d2d46;
-  --surface-violet: #291b42;
-  --surface-warm: #382b17;
-  --surface-danger: #38202b;
-  --surface-glass: rgb(7 25 42 / 96%);
+  --surface-low: #142a3e;
+  --surface-card: #1c354b;
+  --surface-button: #14495d;
+  --surface-button-hover: #195f75;
+  --surface-hover: #134357;
+  --surface-accent: #113a4d;
+  --surface-accent-hover: #154c61;
+  --surface-score: #071524;
+  --surface-blue: #103448;
+  --surface-violet: #27344c;
+  --surface-warm: #323939;
+  --surface-danger: #323345;
+  --surface-glass: #0b1e30f5;
 
   /* Mixer status, distinct from role colors */
   --mix-mute-active: #ffff32;
@@ -58,39 +58,39 @@
 
   /* Text and borders */
   --text-primary: #f2f7ff;
-  --text-strong: #dce9f7;
-  --text-secondary: #b2c6dc;
-  --text-muted: #8ea7c0;
-  --text-subtle: #7d96b0;
-  --text-faint: #6a829b;
-  --text-disabled: #526b83;
-  --border-subtle: #19334b;
-  --border-default: #2a4b67;
+  --text-strong: #dbe1ea;
+  --text-secondary: #b1bac5;
+  --text-muted: #8c98a4;
+  --text-subtle: #7a8693;
+  --text-faint: #677583;
+  --text-disabled: #505f6e;
+  --border-subtle: #193247;
+  --border-default: #2a4962;
   --border-strong: #3b607d;
-  --border-contrast: #537995;
-  --border-focus: #31d8f5;
-  --border-accent: #1683a4;
-  --border-danger: #81445a;
-  --border-blue: #285777;
-  --border-violet: #624487;
-  --border-warm: #765b2b;
-  --border-grid: #29445e;
-  --grid-subdivision: #142b40;
-  --grid-step: #10243a;
-  --grid-eighth: #1b354c;
-  --grid-beat: #315673;
-  --grid-measure: #557f9e;
+  --border-contrast: #5c7b94;
+  --border-focus: #32d7f4;
+  --border-accent: #1f7b92;
+  --border-danger: #897993;
+  --border-blue: #397895;
+  --border-violet: #65779b;
+  --border-warm: #898976;
+  --border-grid: #28465e;
+  --grid-subdivision: #12283c;
+  --grid-step: #0f2336;
+  --grid-eighth: #193247;
+  --grid-beat: #31536e;
+  --grid-measure: #607e97;
   --score-row-odd: #091a2a;
   --score-row-even: #0b1e30;
-  --score-pitch-a: #071a2b;
-  --score-pitch-b: #091e30;
-  --score-pitch-band: rgb(96 160 210 / 5%);
-  --score-out-of-scale: #020407;
+  --score-pitch-a: #091929;
+  --score-pitch-b: #0a1c2d;
+  --score-pitch-band: #3b607d0d;
+  --score-out-of-scale: #010307;
   --score-scale-note: rgb(140 235 194 / 22%);
 
   /* Accent and arrangement roles */
   --accent-primary: #32d7f4;
-  --accent-hover: #83edff;
+  --accent-hover: #7fe4f8;
   --accent-shadow: #32d7f426;
   --accent-glow: #32d7f480;
   --accent-outline: #32d7f42e;
@@ -164,7 +164,7 @@
   --color-warning: #ffc66b;
   --shadow-ink: #0009;
   --shadow-highlight: #ffffff08;
-  --ambient-glow: rgb(10 49 84 / 10%);
+  --ambient-glow: #32d7f40a;
 
   /* Backwards-compatible theme aliases */
   --muted: var(--text-muted);
@@ -197,10 +197,11 @@
 [data-control-category="structure"] { --control-role-color: var(--parameter-structure); }
 [data-control-category="other"] { --control-role-color: var(--parameter-other); }
 [data-control-category] {
-  --parameter-surface: color-mix(in srgb, var(--control-role-color) 9%, var(--surface-canvas));
-  --border-default: color-mix(in srgb, var(--control-role-color) 30%, var(--surface-canvas));
-  --surface-input: color-mix(in srgb, var(--control-role-color) 6%, var(--surface-canvas));
-  --surface-low: color-mix(in srgb, var(--control-role-color) 14%, var(--surface-canvas));
+  --parameter-surface: color-mix(in srgb, var(--control-role-color) 9%, var(--surface-base));
+  --border-subtle: color-mix(in srgb, var(--control-role-color) 15%, var(--surface-base));
+  --border-default: color-mix(in srgb, var(--control-role-color) 30%, var(--surface-base));
+  --surface-input: color-mix(in srgb, var(--control-role-color) 6%, var(--surface-base));
+  --surface-low: color-mix(in srgb, var(--control-role-color) 14%, var(--surface-base));
 }
 
 /* Base element styles */

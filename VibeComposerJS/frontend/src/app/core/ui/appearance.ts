@@ -1,4 +1,5 @@
 import { ARRANGED_PARTS, type ArrangedPart } from '../project/project.model';
+import { DEFAULT_THEME_COLORS, THEME_COLORS, type ThemeColors } from './theme';
 
 export const FONT_CHOICES = [
   { value: "'DM Sans', sans-serif", label: 'DM Sans' },
@@ -18,12 +19,14 @@ export const FONT_AREAS = [
 ] as const;
 export type FontArea = typeof FONT_AREAS[number]['key'];
 export interface AppearancePreferences {
+  readonly themeColors: ThemeColors;
   readonly fonts: Readonly<Record<FontArea, string>>;
   readonly roleColors: Readonly<Record<ArrangedPart, string>>;
 }
 
 export function defaultAppearance(): AppearancePreferences {
   return {
+    themeColors: { ...DEFAULT_THEME_COLORS },
     fonts: { ui: FONT_CHOICES[0].value, heading: FONT_CHOICES[0].value, mono: FONT_CHOICES[1].value },
     roleColors: { melody: '#f26772', bass: '#22a7f2', chords: '#45df89', arpeggio: '#ed55bf', drums: '#f2bb38' },
   };
@@ -39,7 +42,11 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!data.fonts || !data.roleColors
       || !FONT_AREAS.every(area => FONT_CHOICES.some(font => font.value === data.fonts[area.key]))
       || !ARRANGED_PARTS.every(role => isRoleColor(data.roleColors[role]))) return null;
+  const themeColors = data.themeColors === undefined ? DEFAULT_THEME_COLORS : data.themeColors;
+  if (!themeColors || typeof themeColors !== 'object' || Array.isArray(themeColors)
+      || !THEME_COLORS.every(color => isRoleColor(themeColors[color.key]))) return null;
   return {
+    themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, themeColors[color.key].toLowerCase()])) as ThemeColors,
     fonts: Object.fromEntries(FONT_AREAS.map(area => [area.key, data.fonts[area.key]])) as AppearancePreferences['fonts'],
     roleColors: Object.fromEntries(ARRANGED_PARTS.map(role => [role, data.roleColors[role].toLowerCase()])) as AppearancePreferences['roleColors'],
   };

@@ -16,7 +16,7 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
       throw new Error('Timed out: '+label);
     };
     const ensure = (value, label) => { if(!value) throw new Error(label); };
-    const button = label => [...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label);
+    const button = label => [...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label || b.getAttribute('aria-label')===label);
     const key = 'vibecomposer.ui-preferences.v1';
     const quick = () => document.querySelector('.part-settings-content vc-part-settings-editor');
     const inspector = () => document.querySelector('#part-inspector vc-part-settings-editor');
@@ -25,6 +25,7 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
       await wait(()=>innerWidth===${width},'viewport');
       await wait(()=>button('Edit quick settings'),'workspace');
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
+        ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--role-bass').trim()==='#8855cc', 'role color restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--font-ui').trim()==='Verdana, sans-serif', 'font restored after reload');
         ensure(control(quick(),'feedbackCount'), 'persisted placement after reload');
@@ -45,7 +46,7 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         checkFonts();
         document.querySelector('[aria-label="Close settings"]').click();
         button('Settings').click();
-        (await wait(()=>button('Appearance'),'reopened appearance')).click();
+        await wait(()=>document.querySelector('#appearance-title'),'Appearance reopens by default');
         await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'reopened font selectors');
         checkFonts();
         document.querySelector('[aria-label="Close settings"]').click();
@@ -77,10 +78,20 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         ensure(velocities.join(',')==='velocityMin,velocityMax','fixed velocity order');
         button('Settings').click();
         const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
-        (await wait(()=>button('Appearance'),'appearance category')).click();
+        await wait(()=>dialog.querySelector('#appearance-title'),'Appearance opens by default');
+        ensure(dialog.querySelector('#appearance-title'),'Appearance opens by default');
         const colorInput=await wait(()=>dialog.querySelector('[aria-label="Bass color"]'),'appearance colors');
-        ensure(dialog.querySelectorAll('input[type="color"]').length===5,'five role colors');
+        ensure(dialog.querySelectorAll('input[type="color"]').length===10,'five theme and five role colors');
         const style=()=>getComputedStyle(document.documentElement);
+        const originalSurface=style().getPropertyValue('--surface-base');
+        for (const [label,value] of [['Background','#100818'],['Surface','#281838'],['Text','#e8dfef'],['Border','#78618a'],['Accent','#dd88ee']]) {
+          const input=dialog.querySelector('[aria-label="'+label+' theme color"]');
+          input.value=value; input.dispatchEvent(new Event('input',{bubbles:true}));
+        }
+        await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#dd88ee','live main accent');
+        ensure(style().getPropertyValue('--surface-base')!==originalSurface,'live main surface');
+        ensure(style().getPropertyValue('--surface-canvas').trim()==='#100818','live background');
+        ensure(/^#[0-9a-f]{6}$/i.test(style().getPropertyValue('--grid-measure').trim()),'concrete canvas palette');
         const previousBassSurface=style().getPropertyValue('--role-bass-surface');
         const previousDrumSurface=style().getPropertyValue('--role-drum-surface');
         colorInput.value='#8855cc'; colorInput.dispatchEvent(new Event('input',{bubbles:true}));
@@ -109,6 +120,7 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         URL.createObjectURL=blob=>{exported=blob;return create(blob);};
         button('Export UI preferences').click();
         const json=await exported.text();
+        ensure(JSON.parse(json).appearance.themeColors.accent==='#dd88ee','exported main theme');
         ensure(JSON.parse(json).appearance.roleColors.bass==='#8855cc','exported appearance');
         ensure(JSON.parse(json).kind==='vibecomposer-ui-preferences','UI export kind');
         ensure(!JSON.parse(json).tracks,'project excluded from UI export');
@@ -126,8 +138,12 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         await upload(JSON.stringify({...JSON.parse(json),appearance:{...JSON.parse(json).appearance,roleColors:{...JSON.parse(json).appearance.roleColors,bass:'invalid'}}}));
         await wait(()=>footer.textContent.includes('Invalid UI preferences'),'invalid appearance rejected');
         ensure(localStorage.getItem(key)===imported,'invalid appearance import atomic');
+        await upload(JSON.stringify({...JSON.parse(json),appearance:{...JSON.parse(json).appearance,themeColors:{...JSON.parse(json).appearance.themeColors,accent:'invalid'}}}));
+        await wait(()=>footer.textContent.includes('Invalid UI preferences'),'invalid main theme rejected');
+        ensure(localStorage.getItem(key)===imported,'invalid main theme import atomic');
         button('Reset appearance to defaults').click();
         await wait(()=>style().getPropertyValue('--role-bass').trim()==='#22a7f2','reset appearance');
+        ensure(style().getPropertyValue('--accent-primary').trim()==='#32d7f4','main theme reset');
         await upload(json);
         await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8855cc','import reapplies appearance');
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===before,'UI import changed musical project');

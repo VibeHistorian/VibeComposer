@@ -5457,6 +5457,38 @@ test('overview section reset clears every role and manual phrase; rerolls preser
 });
 
 
+test('main theme preferences derive concrete canvas colors and preserve project state', () => {
+  const { service, uiPreferences: preferences, load } = fixture();
+  const { themeColorTokens, DEFAULT_THEME_COLORS } = load('core/ui/theme.ts');
+  const before = service.exportProjectJson(), position = service.historyPosition();
+  preferences.setThemeColor('accent', '#DD88EE');
+  preferences.setThemeColor('surface', '#281838');
+  preferences.setThemeColor('border', '#78618a');
+  assert.equal(preferences.appearance().themeColors.accent, '#dd88ee');
+  const saved = preferences.exportJson();
+  const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  assert.deepEqual(restored.appearance(), preferences.appearance());
+  const original = themeColorTokens(DEFAULT_THEME_COLORS);
+  const changed = themeColorTokens(preferences.appearance().themeColors);
+  for (const value of Object.values(changed)) assert.match(value, /^#[0-9a-f]{6}([0-9a-f]{2})?$/);
+  for (const key of ['--surface-base', '--surface-button', '--border-default', '--grid-measure', '--accent-glow']) {
+    assert.notEqual(changed[key], original[key], key);
+  }
+  for (const themeColors of [null, [], {}, { ...DEFAULT_THEME_COLORS, accent: 'red' }]) {
+    assert.equal(preferences.importJson(JSON.stringify({ ...JSON.parse(saved), appearance: { ...preferences.appearance(), themeColors } })), false);
+    assert.equal(preferences.exportJson(), saved);
+  }
+  preferences.setThemeColor('accent', 'invalid');
+  assert.equal(preferences.exportJson(), saved);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), position);
+  preferences.resetAppearance();
+  assert.deepEqual(preferences.appearance().themeColors, DEFAULT_THEME_COLORS);
+  const withoutTheme = JSON.parse(saved); delete withoutTheme.appearance.themeColors;
+  assert.equal(preferences.importJson(JSON.stringify(withoutTheme)), true);
+  assert.deepEqual(preferences.appearance().themeColors, DEFAULT_THEME_COLORS);
+});
+
 test('appearance preferences persist, transfer atomically and derive every role variant', () => {
   const { service, uiPreferences: preferences, load } = fixture();
   const before = service.exportProjectJson(), position = service.historyPosition();
