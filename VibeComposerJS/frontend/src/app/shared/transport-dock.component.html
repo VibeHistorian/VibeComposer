@@ -1,13 +1,4 @@
 <section class="transport-dock" aria-label="Playback controls">
-  <div class="transport-project">
-    <span class="playback-indicator" [class.playing]="playback.state() === 'playing'" aria-hidden="true"></span>
-    <div>
-      <input class="project-name" [value]="project().name" maxlength="80" aria-label="Project name"
-        [title]="project().name" (change)="updateProjectName($event)" (keydown.enter)="$any($event.target).blur()" />
-      <span>{{ key() }} {{ scaleDefinitions[project().scale].label.toUpperCase() }}</span>
-    </div>
-  </div>
-
   <div class="transport-actions">
     <button type="button" class="transport-button generation-button" [disabled]="workspaceUi.editingNoteId() !== null"
       (click)="generate('compose')" aria-label="Compose" title="Compose using the current seed and enabled role rules">✦</button>
@@ -62,7 +53,16 @@
     <vc-chordlet-editor />
   </div>
 
-  <div class="transport-tools"><ng-content /></div>
+  <div class="transport-tools project-tools" role="group" aria-label="Project actions">
+    <ng-content select="[transportHistory]" />
+    <div class="transport-project">
+      <input class="project-name" [value]="project().name" maxlength="80" aria-label="Project name"
+        [title]="project().name" (change)="updateProjectName($event)" (keydown.enter)="$any($event.target).blur()" />
+      <span>{{ key() }} {{ scaleDefinitions[project().scale].label.toUpperCase() }} | {{ project().tempoBpm }} BPM</span>
+    </div>
+    <ng-content select="[transportFiles]" />
+  </div>
+  <ng-content select="[transportNotice]" />
 
   @if (generationMessage()) { <p class="generation-message" role="status">{{ generationMessage() }}</p> }
   @if (playback.error()) {

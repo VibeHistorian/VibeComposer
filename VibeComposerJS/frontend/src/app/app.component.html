@@ -2,21 +2,24 @@
   <vc-workspace-canvas />
 
   <vc-transport-dock>
-    <div class="project-tools" role="group" aria-label="Project actions">
+    <div transportHistory class="project-history-tools">
       <button type="button" class="icon-button" (click)="openSettings()" aria-label="Settings" title="Settings" aria-haspopup="dialog">⚙</button>
       <div class="project-tool-group" role="group" aria-label="Project history">
         <button type="button" class="icon-button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>
         <button type="button" class="icon-button" (click)="projects.redo()" [disabled]="!projects.canRedo() || workspaceUi.editingNoteId() !== null" aria-label="Redo" title="Redo">↷</button>
         <button type="button" class="icon-button" (click)="openHistory()" aria-label="History" title="History" aria-haspopup="dialog">🕘</button>
       </div>
-      <div class="project-tool-group" role="group" aria-label="Project files">
-        <button type="button" (click)="exportProject()" title="Export project">Export...</button>
-        <button type="button" (click)="projectFile.click()" title="Open project">Open...</button>
-        <input #projectFile type="file" accept="application/json,application/xml,text/xml,.json,.xml,.xml-config" hidden (change)="importProject($event)" />
-      </div>
+    </div>
+    <div transportFiles class="project-tool-group" role="group" aria-label="Project files">
+      <button type="button" (click)="exportProject()" title="Export project">Export...</button>
+      <button type="button" (click)="projectFile.click()" title="Open project">Open...</button>
+      <input #projectFile type="file" accept="application/json,application/xml,text/xml,.json,.xml,.xml-config" hidden (change)="importProject($event)" />
     </div>
     @if (projectMessage()) {
-      <p class="project-message" role="status">{{ projectMessage() }}</p>
+      <div transportNotice class="project-message" role="status">
+        <span>{{ projectMessage() }}</span>
+        <button type="button" (click)="projectMessage.set('')" aria-label="Dismiss project notification" title="Dismiss">×</button>
+      </div>
     }
   </vc-transport-dock>
 </div>
