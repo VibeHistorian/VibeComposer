@@ -149,7 +149,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     for (const section of this.sections()) {
       const sectionEndBeat = section.startBeat + sectionDurationBeats(this.project(), section.section);
       for (const group of this.groups()) {
-        const notes = group.tracks.flatMap((track) => (trackNotes.get(track.id) ?? [])
+        const notes = this.overviewTracks(section.section, group).flatMap((track) => (trackNotes.get(track.id) ?? [])
           .filter((note) => note.startBeat >= section.startBeat && note.startBeat < sectionEndBeat));
         if (notes.length === 0) {
           previews.set(this.cellKey(section.section.id, group.role), []);
@@ -179,6 +179,11 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
   trackPresent(section: ArrangementSection, track: CompositionTrack): boolean {
     return shouldGenerateTrackInSection(section, track);
+  }
+  private overviewTracks(section: ArrangementSection, group: InstrumentGroup): readonly CompositionTrack[] {
+    if (sectionDurationBeats(this.project(), section) >= 4) return group.tracks;
+    const first = group.tracks.find(track => this.trackPresent(section, track));
+    return first ? [first] : [];
   }
   isGroupSelected(group: InstrumentGroup): boolean {
     const target = this.settingsTarget();
@@ -305,8 +310,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const trackCount = Math.max(0, ...groups.map((group) => group.tracks.length));
     const minimumCellWidth = trackCount > 0
       ? CELL_HORIZONTAL_PADDING + TRACK_BUTTON_PITCH * Math.ceil(trackCount / MAX_TRACK_BUTTON_ROWS) : 0;
-    const shortestSectionBeats = Math.min(...sections.map((item) => sectionDurationBeats(this.project(), item.section)));
-    const minimumPixelsPerBeat = sections.length ? minimumCellWidth / shortestSectionBeats : 0;
+    const fullSectionBeats = sections.map(item => sectionDurationBeats(this.project(), item.section)).filter(beats => beats >= 4);
+    const minimumPixelsPerBeat = fullSectionBeats.length ? minimumCellWidth / Math.min(...fullSectionBeats) : 0;
     const needsHorizontalScroll = (): boolean => totalBeats > 0 && (this.horizontalScale > 1
       || minimumPixelsPerBeat * totalBeats > Math.max(1,
         Math.floor(Math.min(host.clientWidth, size.width)) - this.labelWidth) + 1e-7);
@@ -335,8 +340,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.width = Math.floor(Math.min(host.clientWidth, size.width));
     this.height = Math.floor(Math.min(host.clientHeight, size.height));
     if (this.width <= 0 || this.height <= 0) return;
-    // User scale 1 fits the arrangement unless the shortest cell needs more
-    // width for at most two button rows. Keep that floor separate from user zoom.
+    // Full sections retain the two-row button-fit floor. Sub-four-beat sections
+    // show a single included track per role and never raise the arrangement zoom.
     const timelineWidth = Math.max(1, this.width - this.labelWidth);
     this.effectiveHorizontalScale = Math.max(this.horizontalScale,
       minimumPixelsPerBeat * totalBeats / timelineWidth);
@@ -431,8 +436,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }),
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
           reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reset' }) }, this.labelWidth, RULER_HEIGHT);
+        const visibleTracks = this.overviewTracks(item.section, group);
         const togglesPerRow = Math.max(1, Math.floor((width - CELL_HORIZONTAL_PADDING + 1e-7) / TRACK_BUTTON_PITCH));
-        const toggleRows = Math.ceil(group.tracks.length / togglesPerRow);
+        const toggleRows = Math.ceil(visibleTracks.length / togglesPerRow);
         const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, toggleRows) * TRACK_BUTTON_PITCH);
         context.save();
         context.beginPath(); context.rect(x, y + 5, width, previewHeight); context.clip();
@@ -452,10 +458,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         }
         context.globalAlpha = 1;
         context.restore();
-        for (let index = 0; index < group.tracks.length; index++) {
-          const track = group.tracks[index];
+        context.save(); context.beginPath(); context.rect(x, y, width, this.rowHeight); context.clip();
+        for (let index = 0; index < visibleTracks.length; index++) {
+          const track = visibleTracks[index];
+          const trackNumber = group.tracks.indexOf(track) + 1;
           const toggleRow = Math.floor(index / togglesPerRow);
-          const rowCount = Math.min(togglesPerRow, group.tracks.length - toggleRow * togglesPerRow);
+          const rowCount = Math.min(togglesPerRow, visibleTracks.length - toggleRow * togglesPerRow);
           const centerX = x + (width - rowCount * TRACK_BUTTON_PITCH + 3) / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
           const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * TRACK_BUTTON_PITCH - 12;
           const present = this.trackPresent(item.section, track);
@@ -464,7 +472,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.fillStyle = color(present ? `--role-${role}-surface` : '--surface-button'); context.fill();
           context.strokeStyle = present ? noteColor : color('--border-default'); context.stroke();
           context.textAlign = 'center';
-          text(String(index + 1), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', `9px ${monoFont}`);
+          text(String(trackNumber), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', `9px ${monoFont}`);
           context.textAlign = 'start'; context.globalAlpha = 1;
           if (target?.kind === 'section-track' && target.sectionId === item.section.id && target.trackId === track.id) {
             context.strokeStyle = this.accent;
@@ -482,13 +490,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             text('*', centerX + 6, centerY - 2, '--text-primary', `bold 10px ${monoFont}`);
             context.textAlign = 'start';
           }
-          hit({ key: `toggle:${item.section.id}:${track.id}`, x: centerX - 8, y: centerY - 8, width: 16, height: 16,
-            label: `Select ${track.name ?? group.name + ' track ' + (index + 1)} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
+          const buttonLeft = Math.max(x, centerX - 8), buttonRight = Math.min(x + width, centerX + 8);
+          hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: centerY - 8, width: buttonRight - buttonLeft, height: 16,
+            label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
             reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reset' }),
             togglePresence: () => this.toggleTrack(item.section, track) }, this.labelWidth, RULER_HEIGHT);
         }
+        context.restore();
       }
     }
     context.restore();
@@ -501,7 +511,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       if (x + width <= this.labelWidth || x >= this.width) continue;
       fill(x, 0, width, RULER_HEIGHT, this.selectedSectionIds().includes(item.section.id) ? '--surface-accent' : '--surface-base');
       fill(x, 0, 1, RULER_HEIGHT, '--border-subtle');
-      context.save(); context.beginPath(); context.rect(x + 6, 0, width - 12, RULER_HEIGHT); context.clip();
+      context.save(); context.beginPath(); context.rect(x + 6, 0, Math.max(0, width - 12), RULER_HEIGHT); context.clip();
       const range = this.measureLabel(item);
       context.font = `10px ${monoFont}`;
       const rangeWidth = context.measureText(range).width;

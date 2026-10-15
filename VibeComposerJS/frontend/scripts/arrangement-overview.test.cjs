@@ -12,7 +12,7 @@ function fixture() {
   input.required = () => signal(undefined);
   const angular = {
     Component: () => (component) => component, ChangeDetectionStrategy: { OnPush: 0 },
-    computed: (read) => read, effect: () => {}, input, signal,
+    computed: (read) => read, effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }),
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     viewChild: { required: (name) => () => ({ nativeElement: refs.get(name) }) },
   };
@@ -22,6 +22,7 @@ function fixture() {
   }).outputText;
   const module = { exports: {} };
   const dependencies = {
+    '../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
     '../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
@@ -244,7 +245,7 @@ test('Alt, Shift, and unmodified wheel events keep their existing browser behavi
   }
 });
 
-test('short cells enforce enough horizontal zoom for at most two track-button rows', () => {
+test('sections of at least four beats enforce enough zoom for at most two track-button rows', () => {
   const { component, refs } = fixture();
   const original = component.project();
   for (const count of [1, 2, 7, 15, 16, 31, 32, 63, 64]) {
@@ -269,6 +270,62 @@ test('short cells enforce enough horizontal zoom for at most two track-button ro
     assert.equal(refs.get('scoreCanvas').width, 1600, 'zoom keeps the canvas viewport-sized');
   }
   assert.equal(refs.get('scrollHost').style.overflowX, 'scroll');
+});
+
+test('sub-four-beat sections show only the first included track per role with its original number', () => {
+  const {component,base}=fixture(), original=component.project();
+  const tracks=Array.from({length:4},(_,index)=>({...original.tracks[0],id:`bass-${index+1}`,notes:[{id:`n${index}`,startBeat:0,durationBeats:.1,midi:40+index,velocity:80}]}));
+  component.project.set({...original,tracks,arrangement:[{...original.arrangement[0],measures:1,customDurations:[.5],presentTracks:['bass-2','bass-4']}]});
+  const before=JSON.stringify(component.project());
+  component.drawOverview();
+  const buttons=component.hits.filter(hit=>hit.key.startsWith('toggle:intro:'));
+  assert.deepEqual(buttons.map(hit=>hit.key),['toggle:intro:bass-2']);
+  assert.ok(buttons[0].label.includes('track 2'));
+  assert.equal(component.previewNotes('intro','bass').length,1);
+  assert.equal(component.effectiveHorizontalScale,1);
+  assert.equal(JSON.stringify(component.project()),before,'display filtering never alters presence or settings');
+  const cell=component.hits.find(hit=>hit.key==='cell:intro:bass');
+  assert.ok(cell,'empty role cells still select inspector settings');
+  assert.ok(base.texts.some(text=>text.value==='2'),'displayed number stays the original role index');
+  component.project.set({...component.project(),arrangement:[{...component.project().arrangement[0],presentTracks:[]}]});
+  component.drawOverview();
+  assert.equal(component.hits.filter(hit=>hit.key.startsWith('toggle:intro:')).length,0);
+  assert.equal(component.previewNotes('intro','bass').length,0);
+  assert.ok(component.hits.some(hit=>hit.key==='cell:intro:bass'));
+});
+
+test('gap sections do not raise the fit floor and clipped buttons cannot intercept neighboring sections', () => {
+  const {component,refs}=fixture(), original=component.project();
+  const tracks=Array.from({length:18},(_,index)=>({...original.tracks[0],id:`bass-${index+1}`}));
+  const normal={...original.arrangement[0],measures:4,presentTracks:tracks.map(track=>track.id)};
+  component.project.set({...original,tracks,arrangement:[normal]});
+  component.drawOverview();
+  const normalFloor=component.pixelsPerBeat;
+  const gap={...normal,id:'gap',measures:1,customDurations:[.25],presentTracks:['bass-4','bass-5']};
+  component.project.set({...original,tracks,arrangement:[normal,gap,{...normal,id:'outro'}]});
+  component.drawOverview();
+  assert.ok(component.pixelsPerBeat<=normalFloor,'tiny gap cannot magnify the entire arrangement');
+  assert.equal(component.effectiveHorizontalScale,1);
+  assert.equal(refs.get('scrollHost').style.overflowX,'hidden');
+  const cell=component.hits.find(hit=>hit.key==='cell:gap:bass');
+  const button=component.hits.find(hit=>hit.key==='toggle:gap:bass-4');
+  assert.ok(cell.width<16);
+  assert.ok(button.x>=cell.x&&button.x+button.width<=cell.x+cell.width);
+  assert.equal(component.hitAt({clientX:button.x+button.width/2,clientY:button.y+8}).key,button.key);
+  assert.notEqual(component.hitAt({clientX:cell.x+cell.width+1,clientY:button.y+8})?.key,button.key);
+  component.project.set({...original,tracks,arrangement:[gap]});
+  component.drawOverview();
+  assert.equal(component.effectiveHorizontalScale,1,'an arrangement containing only gaps still fits normally');
+});
+
+test('short-section rules use total effective beats and stop at exactly four beats', () => {
+  const {component}=fixture(), original=component.project();
+  const tracks=Array.from({length:3},(_,index)=>({...original.tracks[0],id:`bass-${index+1}`}));
+  for(const [measures,duration,multiplier,visible] of [[1,2,1,1],[2,2,1,3],[1,2,2,3],[2,.5,1,1]]) {
+    component.project.set({...original,tracks,arrangement:[{...original.arrangement[0],measures,customDurations:[duration],context:{beatDurationMultiplier:multiplier},presentTracks:tracks.map(track=>track.id)}]});
+    component.drawOverview();
+    assert.equal(component.hits.filter(hit=>hit.key.startsWith('toggle:intro:')).length,visible);
+  }
 });
 
 test('zoom-out stops at the button-fit floor and zoom-in starts immediately from that floor', () => {
