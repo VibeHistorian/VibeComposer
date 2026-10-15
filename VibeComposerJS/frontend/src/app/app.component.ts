@@ -1,8 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { HistoryDialogComponent } from './shared/history-dialog.component';
-import { getAppInfo } from './core/wails/wails-api';
-import type { AppInfo } from './core/wails/wails-api';
 import { ProjectService } from './core/project/project.service';
 import { SettingsDialogComponent } from './features/settings/settings-dialog.component';
 import { TransportDockComponent } from './shared/transport-dock.component';
@@ -16,8 +14,7 @@ import { translateJavaConfig } from './core/project/java-config-translator';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
 })
-export class AppComponent implements OnInit {
-  readonly appInfo = signal<AppInfo | null>(null);
+export class AppComponent {
   readonly projectMessage = signal('');
   readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
@@ -30,14 +27,6 @@ export class AppComponent implements OnInit {
 
   openHistory(): void {
     this.dialogs.open(HistoryDialogComponent, { ariaLabelledBy: 'history-title' });
-  }
-
-  async ngOnInit(): Promise<void> {
-    try {
-      this.appInfo.set(await getAppInfo());
-    } catch (error: unknown) {
-      console.error('Could not connect to the Wails application bridge.', error);
-    }
   }
 
   exportProject(): void {
@@ -53,11 +42,6 @@ export class AppComponent implements OnInit {
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     this.projectMessage.set('Project settings exported.');
-  }
-
-  updateProjectName(event: Event): void {
-    const name = (event.target as HTMLInputElement).value.trim();
-    this.projects.updateSettings({ name: name || 'Untitled composition' });
   }
 
   async importProject(event: Event): Promise<void> {

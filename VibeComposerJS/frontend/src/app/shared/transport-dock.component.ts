@@ -96,6 +96,12 @@ export class TransportDockComponent {
     this.playback.toggleLive();
   }
 
+  updateProjectName(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.projects.updateSettings({ name: input.value.trim() || 'Untitled composition' });
+    input.value = this.project().name;
+  }
+
   updateScale(event: Event): void {
     const scale = (event.target as HTMLSelectElement).value;
     if (isScaleMode(scale)) this.projects.updateSettings({ scale });

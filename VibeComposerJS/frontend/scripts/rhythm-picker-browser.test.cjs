@@ -49,7 +49,7 @@ test('production Angular controls initialize selects from settings and support r
             fits: bounds.every(box => box.left >= row.left && box.right <= row.right + 1) };
         });
         const readTrack = role => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === role);
-        const settingsButton = [...document.querySelectorAll('.project-tools button')].find(button => button.textContent.trim() === 'Settings');
+        const settingsButton = [...document.querySelectorAll('.project-tools button')].find(button => button.getAttribute('aria-label') === 'Settings');
         if (document.querySelector('.project-tools .compact-history')) throw new Error('Compact History remains on main screen');
         const openHistorySettings = async () => {
           settingsButton.focus(); settingsButton.click();

@@ -26,7 +26,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       await wait(() => innerWidth === ${width}, 'exact viewport');
       const seed = await wait(() => document.querySelector('[aria-label="Generation seed"]'), 'seed');
       // This workflow checks individual history entries, so opt out of compaction.
-      (await wait(() => [...document.querySelectorAll('.project-tools button')].find(button => button.textContent.trim() === 'Settings'), 'settings button')).click();
+      (await wait(() => [...document.querySelectorAll('.project-tools button')].find(button => button.getAttribute('aria-label') === 'Settings'), 'settings button')).click();
       const settings = await wait(() => document.querySelector('vc-settings-dialog'), 'settings');
       const category = await wait(() => [...settings.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Project History'), 'history category');
       await wait(() => settings.contains(document.activeElement), 'settings focus');
@@ -71,7 +71,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       change(tempo, '149'); await wait(() => read().tempoBpm === 149, 'tempo knob');
       result.tempoKnob = tempo.type === 'range'; change(tempo, '128');
       await wait(() => read().tempoBpm === 128, 'tempo reset');
-      const historyButton = [...document.querySelectorAll('.project-tools button')].find(button => button.textContent.trim() === 'History');
+      const historyButton = [...document.querySelectorAll('.project-tools button')].find(button => button.getAttribute('aria-label') === 'History');
       historyButton.focus();
       historyButton.click();
       const history = await wait(() => document.querySelector('vc-history-dialog'), 'history popup');

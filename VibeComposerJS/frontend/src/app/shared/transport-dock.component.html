@@ -2,7 +2,8 @@
   <div class="transport-project">
     <span class="playback-indicator" [class.playing]="playback.state() === 'playing'" aria-hidden="true"></span>
     <div>
-      <strong>{{ project().name }}</strong>
+      <input class="project-name" [value]="project().name" maxlength="80" aria-label="Project name"
+        [title]="project().name" (change)="updateProjectName($event)" (keydown.enter)="$any($event.target).blur()" />
       <span>{{ key() }} {{ scaleDefinitions[project().scale].label.toUpperCase() }}</span>
     </div>
   </div>
@@ -60,6 +61,8 @@
     </div>
     <vc-chordlet-editor />
   </div>
+
+  <div class="transport-tools"><ng-content /></div>
 
   @if (generationMessage()) { <p class="generation-message" role="status">{{ generationMessage() }}</p> }
   @if (playback.error()) {

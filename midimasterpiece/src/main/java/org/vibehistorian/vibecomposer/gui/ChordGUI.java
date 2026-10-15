@@ -21,12 +21,12 @@ package org.vibehistorian.vibecomposer.gui;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Components.CheckButton;
 import org.vibehistorian.vibecomposer.Components.Chordlet;
 import org.vibehistorian.vibecomposer.Components.CustomCheckBox;
 import org.vibehistorian.vibecomposer.Components.DynamicGridLayout;
 import org.vibehistorian.vibecomposer.Components.ScrollComboBox;
-import org.vibehistorian.vibecomposer.*;
 import org.vibehistorian.vibecomposer.Enums.ChordSpanFill;
 import org.vibehistorian.vibecomposer.Enums.PatternJoinMode;
 import org.vibehistorian.vibecomposer.Enums.RhythmPattern;
@@ -641,20 +641,24 @@ public class ChordGUI extends InstGUI<ChordPanel> {
 		});
 		customChordsPanel.add(respiceChordsButton);
 		respiceChordsButton.setToolTipText("Add chord color while preserving roots, quality, inversions, and locked chords.");
-		JButton undoGenerationButton = new JButton("Undo");
+		/*JButton undoGenerationButton = new JButton("<-");
 		undoGenerationButton.addActionListener(e -> userChords.undoGenerationEdit());
 		undoGenerationButton.setToolTipText("Undo the last progression, color, or local reroll operation.");
 		customChordsPanel.add(undoGenerationButton);
-		JButton redoGenerationButton = new JButton("Redo");
-		redoGenerationButton.addActionListener(e -> userChords.redoGenerationEdit()); customChordsPanel.add(redoGenerationButton);
-		JButton propertyLocks = new JButton("Locks");
+		JButton redoGenerationButton = new JButton("->");
+		redoGenerationButton.addActionListener(e -> userChords.redoGenerationEdit());
+		customChordsPanel.add(redoGenerationButton);
+		JButton propertyLocks = new JButton("LCK");
 		propertyLocks.setToolTipText("Set root, quality/color, bass, or duration locks independently.");
-		propertyLocks.addActionListener(e -> editPropertyLocks()); customChordsPanel.add(propertyLocks);
-		JButton alternatives = new JButton("Alternatives");
-		alternatives.addActionListener(e -> chooseHarmonicAlternative()); customChordsPanel.add(alternatives);
-		JButton harmonize = new JButton("Harmonize");
+		propertyLocks.addActionListener(e -> editPropertyLocks());
+		customChordsPanel.add(propertyLocks);
+		JButton alternatives = new JButton("ALT");
+		alternatives.addActionListener(e -> chooseHarmonicAlternative());
+		customChordsPanel.add(alternatives);
+		JButton harmonize = new JButton("HRM");
 		harmonize.setToolTipText("Generate harmony for the attached user melody without changing its notes.");
-		harmonize.addActionListener(e -> harmonizeUserMelody()); customChordsPanel.add(harmonize);
+		harmonize.addActionListener(e -> harmonizeUserMelody());
+		customChordsPanel.add(harmonize);*/
 
 		JButton twoExChordsButton = new JButton("2x");
 		twoExChordsButton.setPreferredSize(new Dimension(25, 25));

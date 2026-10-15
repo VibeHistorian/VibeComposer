@@ -1,6 +1,9 @@
 <section class="arrangement-panel" aria-labelledby="arrangement-title">
   <header class="canvas-heading">
-    <div><p class="eyebrow">SONG OVERVIEW</p><h2 id="arrangement-title">Arrangement</h2></div>
+    <h1 id="arrangement-title" class="brand" aria-label="VibeComposer">
+      <span class="brand-mark" aria-hidden="true">V</span>
+      <span>vibe<span class="brand-light">composer</span></span>
+    </h1>
     <div class="canvas-actions">
       <span class="measure-total">{{ totalMeasures() }} BARS</span>
       <button type="button" class="mixer-open-button add-section-button" [disabled]="!canAddSection()"
