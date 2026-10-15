@@ -5,6 +5,19 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+test('Java XML translation passes the real project decoder, round-trips and produces identical MIDI after reload', () => {
+  const {service,load}=fixture(), {parseXml}=require('./translate-java-config.cjs');
+  const source=fs.readFileSync(path.join(__dirname,'../GENERATOR_REFACTOR_TEST_GUICONFIG.xml-config'),'utf8');
+  const result=load('core/project/java-config-translator.ts').translateJavaConfig(source,{parseXml,name:'Java XML parity'});
+  assert.equal(service.importProjectJson(JSON.stringify(result.project)),true);
+  const exported=service.exportProjectJson(), before=load('core/music/midi-export.ts').generateCompositionMidi(service.project());
+  assert.equal(service.project().tracks.length,18);
+  assert.equal(service.project().arrangement.length,5);
+  assert.equal(service.importProjectJson(exported),true);
+  assert.deepEqual(load('core/music/midi-export.ts').generateCompositionMidi(service.project()),before);
+  assert.equal(service.exportProjectJson(),exported);
+});
+
 test('Java zero-origin modes retain exact degrees, target notes and modal chord pitches', () => {
   const { load } = fixture(), scales = load('core/music/scales.ts'), harmony = load('core/music/harmony.ts');
   const java = fs.readFileSync(path.join(__dirname, '../../../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/MidiUtils.java'), 'utf8');

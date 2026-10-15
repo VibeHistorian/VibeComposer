@@ -1,0 +1,30 @@
+# Java XML project translation
+
+Import `.xml-config` or `.xml` through the app's existing project import picker, then export normal `.vibecomposer.json`. The CLI uses the same TypeScript translator:
+
+```powershell
+cd VibeComposerJS/frontend
+npm run translate:java -- GENERATOR_REFACTOR_TEST_GUICONFIG.xml-config
+# Optional explicit output; --force replaces an existing output/report.
+npm run translate:java -- input.xml-config output.vibecomposer.json --force
+npm run test:java-import
+```
+
+The CLI writes an importable project plus a separate `.translation-report.json`. The source XML is never changed. In the app, translation notes appear in the console; failed parsing or project validation leaves the current project intact. The library entry point is `frontend/src/app/core/project/java-config-translator.ts`; it returns `{ project, diagnostics, savedPhraseCount }` without changing application state. Browsers use their native XML parser; Node callers inject a parser (see the CLI). DTDs/entities are rejected, and the CLI also rejects malformed XML.
+
+## Translation contract
+
+- Only `actualArrangement` supplies sections. `arrangement` is an unused generation outline. `PREVIEW` becomes `CLIMAX`. Generation chances never replace saved track presence.
+- Independent tracks are identified by role and Java order. Global programs, channels, volume, pan and mute transfer. Section musical settings become per-track overrides, retaining complete snapshot boundaries even when their values equal the globals; per-section programs, percussion instruments, channels and mix identity are deliberately ignored.
+- Supported part controls are validated against the current shared control catalogue. Java rhythm/arp enum names and aliases are converted, including alternating bass (`bass1`), `doubleOct`, custom velocities and chord note-length units. Values exceeding current control/list limits are omitted with diagnostics, not silently truncated.
+- Supported melody globals, mode definitions, voicing controls and available reroll-policy fields transfer. Unsupported Java controls, unattached patterns and missing note payloads are reported. A saved seed is retained as exact decimal text; translation does not promise identical regeneration across the two applications.
+- Explicit XML chord symbols use Java's canonical C/Ionian pitches; conversion produces the sounding Chordlets expected by TypeScript, preserving inversions and exact mode-derived intervals. The key remains C, with the original global semitone transpose retained separately. Without explicit saved harmony, the translator uses the workspace default progression and reports that fallback.
+- Enabled section custom chords/durations take precedence. Otherwise the translator uses explicit global chord names and saved generated section durations, falling back to global durations when necessary. Java can save stale generated-duration caches when section custom values are enabled; these discrepancies are reported. If saved duration and chord-name lengths disagree, duration slots determine the structure and names repeat/trim with a diagnostic. The file does not contain enough data to recover unnamed historical harmony.
+- Java `measures` repeats a complete progression. TypeScript `measures` counts chord slots, so the translator multiplies by the effective progression length. Beat-duration multipliers are materialized in durations. Skip N−1 removes the penultimate chord and merges its duration into the final chord. Saved key changes activate for subsequent sections as in Java; supported swap-harmony/melody flags become section settings. Missing randomly generated key changes and unsupported transitions are reported.
+- Pattern references resolve by source role/order/name, including copied patterns and Java's `MAIN`/`VERSE`/`INST` fallback. `NONE` forces generation. Only applied saved patterns become local manual phrases. Every section receives its own independent note array; there is no named-pattern library in the output. References lacking payloads remain generated even when their names begin with `**GEN**`.
+- For saved phrases, onset is cumulative **rhythm value** (`rv`) plus note offset; **duration** is sounding length, not the cursor advance. Rests advance the cursor and zero-rhythm notes can overlap. Java's whole-phrase scaling to section length is applied before swing, role-specific articulation, mode/part/key transposition, offset and feedback. The global project transpose stays live, so it is not baked twice. Note velocity and sounding durations already stored in a phrase are retained; generated section velocity multipliers are mapped through supported part velocity settings.
+- Soundbanks, humanization, global role-enable switches, legacy UI/version state and the outline arrangement are deliberately excluded. Global BPM is rounded/clamped to the current 40–240 range. Unsupported experimental nonzero-origin modes fail explicitly.
+
+The supplied fixture translates to 18 tracks, five sections and nine saved section phrases. It contains many generated-pattern references without note payloads; those sections/tracks regenerate using their translated settings. Exact original audio is therefore not recoverable from this XML alone.
+
+Validation covers the real XML, Java rests/offsets/zero-rhythm notes, repeated progressions, feedback, named-pattern fallbacks and cross-part references, scope inheritance, stale duration caches, precise long seeds, malformed XML, the real project decoder and MIDI round trips. The production browser workflow suite also imports the supplied XML through the file input and verifies that a malformed import preserves the loaded state.

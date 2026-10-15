@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "translate:java": "node scripts/translate-java-config.cjs",
+    "test:java-import": "node --test scripts/java-config-translator.test.cjs",
     "start": "ng serve",
     "build": "ng build",
     "test:overview": "node --test scripts/arrangement-overview.test.cjs",
@@ -36,6 +38,7 @@
     "@angular/build": "22.2.1",
     "@angular/cli": "22.2.1",
     "@angular/compiler-cli": "22.2.1",
+    "@xmldom/xmldom": "0.8.15",
     "typescript": "6.0.3"
   }
 }

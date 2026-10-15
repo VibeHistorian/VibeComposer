@@ -8,6 +8,7 @@ import { SettingsDialogComponent } from './features/settings/settings-dialog.com
 import { TransportDockComponent } from './shared/transport-dock.component';
 import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
 import { WorkspaceUiService } from './shared/workspace-ui.service';
+import { translateJavaConfig } from './core/project/java-config-translator';
 
 @Component({
   selector: 'vc-root',
@@ -66,11 +67,16 @@ export class AppComponent implements OnInit {
     if (!file) return;
 
     try {
-      const valid = this.projects.importProjectJson(await file.text());
-      this.projectMessage.set(valid ? `Loaded ${this.project().name}.` : 'That project file is invalid or unsupported.');
+      const contents = await file.text();
+      const translation = contents.trimStart().startsWith('<')
+        ? translateJavaConfig(contents, { name: file.name.replace(/\.(xml-config|xml)$/i, '') }) : undefined;
+      const valid = this.projects.importProjectJson(translation ? JSON.stringify(translation.project) : contents);
+      if (translation?.diagnostics.length) console.info('Java XML translation notes:', translation.diagnostics);
+      this.projectMessage.set(valid ? `Loaded ${this.project().name}.${translation?.diagnostics.length
+        ? ` ${translation.diagnostics.length} translation notes (see console).` : ''}` : 'That project file is invalid or unsupported.');
     } catch (error) {
       console.warn(`Could not read project file "${file.name}".`, error);
-      this.projectMessage.set('Could not read that project file.');
+      this.projectMessage.set(error instanceof Error ? `Could not import: ${error.message}` : 'Could not read that project file.');
     }
   }
 }

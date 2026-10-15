@@ -51,6 +51,9 @@ importers:
       '@angular/compiler-cli':
         specifier: 22.2.1
         version: 22.2.1(@angular/compiler@22.2.1)(typescript@6.0.3)
+      '@xmldom/xmldom':
+        specifier: 0.8.15
+        version: 0.8.15
       typescript:
         specifier: 6.0.3
         version: 6.0.3

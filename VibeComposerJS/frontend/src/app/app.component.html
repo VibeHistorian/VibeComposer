@@ -21,7 +21,7 @@
           <button type="button" (click)="openHistory()" aria-haspopup="dialog">History</button>
           <button type="button" (click)="exportProject()">Export project</button>
           <button type="button" (click)="projectFile.click()">Open project</button>
-          <input #projectFile type="file" accept="application/json,.json" hidden (change)="importProject($event)" />
+          <input #projectFile type="file" accept="application/json,application/xml,text/xml,.json,.xml,.xml-config" hidden (change)="importProject($event)" />
         </div>
       </header>
 
