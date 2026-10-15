@@ -20,8 +20,8 @@ test('real Java XML translates actual sections, supported settings, presence and
   assert.equal(project.tracks.length, 18); assert.equal(project.arrangement.length, 5);
   assert.deepEqual(project.arrangement.map(section => section.type), ['INTRO','CLIMAX','INTRO','CLIMAX','CLIMAX']);
   // Enabled custom values win over stale generated caches; Skip N−1 merges the last two slots.
-  assert.deepEqual(project.arrangement.map(section => section.customDurations), [[2,2,4],[2,2,4],[.5],[4,4,4,4],[4,4,4,4]]);
-  assert.deepEqual(project.arrangement.map(section => section.measures), [3,3,1,4,4]);
+  assert.deepEqual(project.arrangement.map(section => section.customDurations), [[2,2,4],[4,4,4,2,2],[.5],[4,4,4,4],[4,4,4,4]]);
+  assert.deepEqual(project.arrangement.map(section => section.measures), [3,5,1,4,4]);
   assert.equal(project.arrangement[0].trackPresence['track-melody-2'], true);
   assert.equal(project.arrangement[0].trackPresence['track-melody-1'], false);
   assert.equal(project.arrangement[1].trackPresence['track-drums-1'], true, 'global drumsEnable is deliberately ignored');
@@ -54,6 +54,35 @@ test('rhythm values advance across rests and zero-rhythm notes; offsets, scale, 
   assert.equal(laid.length,4,'local phrases never loop through global phrase slots or receive feedback twice');
 });
 
+test('stale generated duration caches never halve imported phrase timing or change quarter-note BPM', () => {
+  const {project}=translate(source.replace('<bpm>33.0</bpm>','<bpm>40.0</bpm>'));
+  const context=loadMusic('section-context.ts');
+  const second=project.arrangement[1];
+  assert.equal(context.sectionDurationBeats(project,second),16,'active global durations total 16 beats, not the cached 8');
+  const notes=second.trackPhrases['track-melody-1'];
+  assert.equal(notes[0].startBeat,.5);
+  assert.equal(notes[1].startBeat,1.5,'one beat between notes, matching the Java MIDI rather than the former half beat');
+  const midi=new (require('@tonejs/midi').Midi)(loadMusic('midi-export.ts').generateCompositionMidi(project));
+  assert.equal(midi.header.tempos[0].bpm,40);
+  const melody=midi.tracks.find(track=>track.name==='M1');
+  assert.ok(Math.abs(melody.notes[1].time-melody.notes[0].time-1.5)<1e-8,'one beat at 40 BPM is 1.5 seconds in exported MIDI');
+  const map=context.projectTempoMap(project);
+  assert.equal(context.beatToSeconds(map,1),1.5,'playback uses the same beat duration');
+  assert.equal(project.arrangement.reduce((sum,section)=>sum+context.sectionDurationBeats(project,section),0),56.5);
+});
+
+test('global duration multipliers apply once; section durations and fallback generated caches are already beats', () => {
+  const global=config(section(),part())+' ';
+  const doubled=translate(global.replace('</GUIConfig>','<beatDurationMultiplierIndex>2</beatDurationMultiplierIndex></GUIConfig>')).project;
+  assert.deepEqual(doubled.arrangement[0].customDurations,[8,8]);
+  const literal=translate(config(section('<customDurationsEnabled>true</customDurationsEnabled><customDurations>1,3</customDurations>'),
+    part()+'<beatDurationMultiplierIndex>2</beatDurationMultiplierIndex>')).project;
+  assert.deepEqual(literal.arrangement[0].customDurations,[1,3]);
+  const fallback=translate(config(section('<generatedSectionBeatDurations>4</generatedSectionBeatDurations><generatedSectionBeatDurations>8</generatedSectionBeatDurations>'),
+    part()+'<beatDurationMultiplierIndex>2</beatDurationMultiplierIndex>').replace('<customChordsEnabled>true</customChordsEnabled>','<customChordsEnabled>false</customChordsEnabled>')).project;
+  assert.deepEqual(fallback.arrangement[0].customDurations,[4,8]);
+});
+
 test('named references use their own role/order, fall back to Java base patterns, and NONE forces generation', () => {
   const notes=note(60,2,.5)+note(-2147483648,2,2);
   const xml=config(section(ref('absent'),'PREVIEW')+section(ref('NONE'),'PREVIEW')+section(ref('unapplied'),'VERSE1'),
@@ -76,7 +105,7 @@ test('section settings, tempo, duration multiplier and key-change activation ret
   assert.equal(project.arrangement[0].trackPartOverrides['track-melody-1'].speed,77);
   const equal=translate(config(section(part('<speed>15</speed>')),part('<speed>15</speed>'))).project;
   assert.equal(equal.arrangement[0].trackPartOverrides['track-melody-1'].speed,15,'explicit equal-value snapshots stay independent');
-  assert.deepEqual(project.arrangement[0].customDurations,[2,6]);
+  assert.deepEqual(project.arrangement[0].customDurations,[1,3], 'Java explicit section durations are literal beats, not multiplied again');
   assert.deepEqual(project.arrangement[0].context,{tempoBpm:90,swingPercent:60});
   assert.deepEqual(project.arrangement[1].context,{scale:'dorian',keyChange:3});
 });

@@ -259,10 +259,28 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
     const sectionChordText = (customChords || alternateChords) && storedChordText && storedChordText !== '?' ? storedChordText : undefined;
     let chords = sectionChordText ? chordList(sectionChordText, mode)
       : globalChordsEnabled && globalChordText && globalChordText !== '?' ? chordList(globalChordText, mode) : undefined;
-    let durations = customDurations ? numbers(section, 'customDurations') : [];
+    const customDurationValues = numbers(section, 'customDurations');
     const generatedDurations = numbers(section, 'generatedSectionBeatDurations');
-    if (!durations.length) durations = generatedDurations.length ? generatedDurations : [...globalDurations];
-    else if (generatedDurations.length && !partValuesEqual(durations, generatedDurations)) warn(path, 'stale-duration-cache', 'Enabled custom durations take precedence over the saved generated-duration cache.');
+    const knownGlobalTiming = !!globalChords || globalDurationsEnabled && globalDurationText.length > 0;
+    const effectiveGlobalDurations = globalDurations.map(duration => duration * multiplier(globalMultiplierIndex));
+    // SectionGenerationPlanner.prepareCustomProgression uses literal custom
+    // section durations, otherwise the CURRENT global progression. The saved
+    // generatedSectionBeatDurations cache can describe an older generation.
+    // Both generated caches and explicit section durations are already beats:
+    // applying the beat-duration multiplier to either would scale them twice.
+    let durations: number[];
+    if (customDurations) {
+      if (!customDurationValues.length) throw new Error(`${path}: enabled custom durations are empty.`);
+      durations = customDurationValues;
+    } else if (knownGlobalTiming) {
+      durations = sectionChordText ? Array.from({ length: chords!.length }, (_, slot) =>
+        effectiveGlobalDurations[slot] ?? 4 * mult) : [...effectiveGlobalDurations];
+    } else {
+      durations = generatedDurations.length ? [...generatedDurations] : [...effectiveGlobalDurations];
+    }
+    if (generatedDurations.length && (customDurations || knownGlobalTiming) && !partValuesEqual(durations, generatedDurations)) {
+      warn(path, 'stale-duration-cache', 'Active custom/global durations take precedence over the saved generated-duration cache.');
+    }
     const chordCount = chords?.length ?? progression.length;
     if (durations.length !== chordCount) {
       warn(path, 'harmony-length', `Saved durations have ${durations.length} slots, while chord names have ${chordCount}; chord names repeat/trim to the saved duration slots.`);
@@ -276,7 +294,6 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
       if (chords) chords.splice(n - 2, 1);
       else warn(path, 'missing-harmony', 'Skip N−1 was realized in durations, but the source has no explicit chords.');
     }
-    durations = durations.map(value => value * mult);
     if (durations.some(value => !Number.isFinite(value) || value < 0.25 || value > 32) || durations.length > 32) throw new Error(`${path}: chord durations exceed the current supported range.`);
     const repeats = numeric(section, 'measures', 1)!;
     const measures = repeats * durations.length;
