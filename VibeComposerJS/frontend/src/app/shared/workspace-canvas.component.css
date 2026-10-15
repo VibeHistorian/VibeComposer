@@ -80,7 +80,7 @@
 button.score-track-label { width: 100%; border: 0; border-radius: 0; background: transparent; cursor: pointer; text-align: left; }
 button.score-track-label:hover { background: var(--surface-hover); }
 button.score-track-label:focus-visible { outline: 1px solid var(--border-focus); outline-offset: -1px; }
-.score-ruler-viewport { min-width: 0; overflow: hidden; margin-left: 1px; margin-right: 19px; }
+.score-ruler-viewport { min-width: 0; overflow: hidden; margin-left: 1px; }
 .score-ruler-sections { position: relative; min-width: 0; display: flex; }
 .score-loop-line { position: absolute; bottom: 0; height: 2px; background: var(--loop-line); pointer-events: none; }
 .score-ruler-sections span { min-width: 0; flex-shrink: 0; box-sizing: border-box; padding: 3px 5px; overflow: hidden; border-left: 1px solid var(--border-subtle); text-overflow: ellipsis; white-space: nowrap; }
@@ -213,3 +213,17 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .quick-layout-editing .song-canvas { grid-template-rows: min-content auto minmax(120px, 1fr); }
 .quick-layout-editing .part-settings-content { max-height: 340px; }
 .placement-help { flex: 1 1 100%; color: var(--accent-primary); font-size: 11px; line-height: 1.5; }
+
+/* Part settings move into the inspector when vertical space is limited */
+.song-canvas.settings-in-inspector { grid-template-rows: auto minmax(270px, 1fr); }
+@media (max-width: 1050px) {
+  .song-canvas.settings-in-inspector { grid-template-rows: auto minmax(300px, 1fr); }
+}
+@media (max-width: 680px) {
+  .song-canvas.settings-in-inspector { grid-template-rows: auto minmax(350px, 1fr); }
+}
+
+/* Prioritize the score over role visibility controls in shorter windows */
+@media (max-height: 765px), (max-width: 1400px) and (max-height: 905px) {
+  .score-display-header.role-display-controls { display: none; }
+}

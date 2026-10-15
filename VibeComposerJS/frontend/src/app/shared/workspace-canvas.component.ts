@@ -63,10 +63,20 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   selector: 'vc-workspace-canvas',
   imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  readonly partSettingsInInspector = signal(this.isPartSettingsHeightLimited());
+  updatePartSettingsLayout(): void {
+    this.partSettingsInInspector.set(this.isPartSettingsHeightLimited());
+  }
+  private isPartSettingsHeightLimited(): boolean {
+    return typeof window !== 'undefined' && window.matchMedia(
+      '(max-height: 865px), (max-width: 1400px) and (max-height: 1005px)',
+    ).matches;
+  }
   readonly toggleBoolean = (value: boolean) => !value;
   private emptyMiddlePress: { pointerId: number; eligible: boolean; released: boolean } | null = null;
   private isEmptyMiddleTarget(event: MouseEvent): boolean {

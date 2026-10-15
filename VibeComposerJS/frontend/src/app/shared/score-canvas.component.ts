@@ -228,14 +228,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const pixi = await import('pixi.js');
       if (this.destroyed) return;
       this.colorClass = pixi.Color;
-      this.staticGraphics = new pixi.Graphics({ roundPixels: true });
-      this.dynamicGraphics = new pixi.Graphics({ roundPixels: true });
+      this.staticGraphics = new pixi.Graphics({ roundPixels: false });
+      this.dynamicGraphics = new pixi.Graphics({ roundPixels: false });
       app = new pixi.Application();
       await app.init({
         width: Math.max(1, host.clientWidth),
         height: Math.max(1, host.clientHeight),
         backgroundAlpha: 0,
-        antialias: false,
+        antialias: true,
         autoDensity: true,
         autoStart: false,
         clearBeforeRender: true,
@@ -745,11 +745,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const bottom = note.color === 'drums' ? scoreHeight : this.harmonicHeight;
       if (centerY < top || centerY >= bottom) continue;
       const rowHeight = note.color === 'drums' ? drumRowHeight : this.laneHeight;
-      const y = Math.max(top, centerY - Math.min(3, rowHeight / 2));
-      const noteHeight = Math.min(bottom, centerY + Math.min(3, rowHeight / 2)) - y;
+      const y = Math.max(top, centerY - rowHeight / 4);
+      const noteHeight = Math.min(bottom, centerY + rowHeight / 4) - y;
       const opacity = note.opacity * (selectedTrackId === note.part ? 1 : 0.72);
       const noteColors = COLORS[note.color];
-      if (noteHeight > 0 && selectedTrackId === note.part) fill(x - 2, y - 2, noteWidth + 4, 10, noteColors.glow);
+      if (noteHeight > 0 && selectedTrackId === note.part) fill(x - 2, y - 2, noteWidth + 4, noteHeight + 4, noteColors.glow);
       const parsed = color(noteColors.note);
       if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2)).fill({ color: parsed.value, alpha: opacity * parsed.alpha });
       if (noteHeight > 0 && note.color !== 'drums' && this.inScale(note.midi)) {
@@ -764,14 +764,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
           .fill({ color: velocityColor.value, alpha: (selectedTrackId === note.part ? 0.9 : 0.32) * velocityColor.alpha });
       }
       if (noteHeight <= 0) continue;
-      const hitY = Math.max(top, centerY - Math.max(3, Math.min(6, (note.color === 'drums' ? drumRowHeight : this.laneHeight) / 2)));
+      const hitHalfHeight = Math.max(3, rowHeight / 4);
+      const hitY = Math.max(top, centerY - hitHalfHeight);
       const hitArea: NoteHitArea = {
         note,
         trackIndex,
         x: Math.max(0, x - 1),
         y: hitY,
         width: Math.min(this.width, x + Math.max(5, noteWidth + 2)) - Math.max(0, x - 1),
-        height: Math.min(bottom, centerY + Math.max(3, Math.min(6, (note.color === 'drums' ? drumRowHeight : this.laneHeight) / 2))) - hitY,
+        height: Math.min(bottom, centerY + hitHalfHeight) - hitY,
       };
       this.hitAreas.push(hitArea);
       const firstColumn = Math.floor(hitArea.x / HIT_BUCKET_WIDTH);
@@ -821,8 +822,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     for (const note of preview) {
       const area = this.hitAreas.find(area => area.note.id === note.id);
       if (area) {
-        const y = area.note.color === 'drums' ? area.y : (this.pitchMax - note.midi + 0.5) * this.laneHeight - this.verticalOffset - 3;
-        graphics.roundRect(this.scoreX(note.startBeat), y, Math.max(3, note.durationBeats / (this.model?.totalBeats ?? 1) * this.width * this.horizontalScale), 6, 2)
+        const rowHeight = area.note.color === 'drums' ? this.drumHeight / Math.max(1, this.drumPitches.length) : this.laneHeight;
+        const centerY = area.note.color === 'drums'
+          ? this.harmonicHeight + (this.drumPitches.indexOf(note.midi) + 0.5) * rowHeight
+          : (this.pitchMax - note.midi + 0.5) * rowHeight - this.verticalOffset;
+        const noteHeight = rowHeight / 2;
+        graphics.roundRect(this.scoreX(note.startBeat), centerY - noteHeight / 2, Math.max(3, note.durationBeats / (this.model?.totalBeats ?? 1) * this.width * this.horizontalScale), noteHeight, Math.min(3, noteHeight / 2))
           .fill({ color: accent.toNumber(), alpha: 0.9 });
         if (this.velocityVisible()) {
           const velocityHeight = note.velocity / 127 * (VELOCITY_HEIGHT - 6);

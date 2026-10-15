@@ -248,7 +248,7 @@ body {
 :where(input[type="text"], input:not([type])):disabled { color: var(--text-disabled); cursor: default; }
 
 /* Application frame and branding */
-.app-frame { width: min(100% - 48px, 1920px); height: calc(100vh - 5px); min-height: 0; margin: 5px auto 0; padding-bottom: 92px; display: flex; flex-direction: column; }
+.app-frame { width: min(100% - 48px, 1920px); height: calc(100vh - 5px); min-height: 0; margin: 5px auto 0; padding-bottom: 87px; display: flex; flex-direction: column; }
 .brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 700; letter-spacing: -.04em; }
 .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-card); background: var(--accent-primary); color: var(--surface-canvas); font-size: 16px; }
 .brand-light { color: var(--text-secondary); font-weight: 500; }
@@ -300,5 +300,5 @@ body {
 
 /* Room for the two-row transport on smaller desktops */
 @media (min-width: 1051px) and (max-width: 1400px) {
-  .app-frame { padding-bottom: 145px; }
+  .app-frame { padding-bottom: 135px; }
 }

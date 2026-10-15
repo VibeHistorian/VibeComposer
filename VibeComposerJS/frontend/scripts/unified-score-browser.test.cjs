@@ -23,10 +23,44 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.ok(initial.labels>=17);assert.equal(initial.drums,3);assert.equal(initial.arrangement,true);assert.equal(initial.velocity,false);
   const capture=async name=>{const png=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.resolve(__dirname,'../.angular/'+name+'.png'),Buffer.from(png.data,'base64'));};
   await capture('unified-score');
+  const scrollbars=await evaluate(`(async()=>{
+    const canvas=document.querySelector('vc-score-canvas canvas'),h=document.querySelector('.horizontal-scroll'),v=document.querySelector('.vertical-scroll');
+    const wheel=extra=>canvas.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-350,clientX:canvas.getBoundingClientRect().left,clientY:canvas.getBoundingClientRect().top,...extra}));
+    const settle=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    await settle();
+    const fit=h.scrollWidth<=h.clientWidth+1&&v.scrollHeight<=v.clientHeight+1;
+    wheel({ctrlKey:true});wheel({altKey:true});await settle();
+    const ranges=h.scrollWidth>h.clientWidth&&v.scrollHeight>v.clientHeight;
+    const visible=v.offsetWidth-v.clientWidth>=6;
+    wheel({shiftKey:true,deltaY:120});wheel({deltaY:80});await settle();
+    const moved=h.scrollLeft>0&&v.scrollTop>0;
+    h.scrollLeft=0;await settle();v.scrollTop=0;await settle();
+    const reset=h.scrollLeft===0&&v.scrollTop===0;
+    wheel({ctrlKey:true,deltaY:10000});wheel({altKey:true,deltaY:10000});await settle();
+    const restored=h.scrollWidth<=h.clientWidth+1&&v.scrollHeight<=v.clientHeight+1;
+    return {fit,ranges,visible,moved,reset,restored};
+  })()`);
+  assert.deepEqual(scrollbars,{fit:true,ranges:true,visible:true,moved:true,reset:true,restored:true},'native scrollbars are visible and track zoom and pan in both directions');
+  await command('Page.reload');
+  await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));})()`);
+  for (const [width,height,visible,padding] of [[1600,766,true,87],[1600,765,false,87],[1400,906,true,135],[1400,905,false,135],[1401,905,true,87],[1280,800,false,135]]) {
+    await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
+    const layout=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      const box=selector=>document.querySelector(selector).getBoundingClientRect();
+      const canvas=box('vc-score-canvas canvas'), horizontal=box('.horizontal-scroll'), vertical=box('.vertical-scroll'), ruler=box('.score-ruler-viewport');
+      const h=document.querySelector('.horizontal-scroll'),v=document.querySelector('.vertical-scroll');
+      return {visible:getComputedStyle(document.querySelector('.role-display-controls')).display!=='none',padding:parseFloat(getComputedStyle(document.querySelector('.app-frame')).paddingBottom),
+        horizontalGap:horizontal.bottom-canvas.bottom-(h.offsetHeight-h.clientHeight),verticalGap:vertical.right-canvas.right-(v.offsetWidth-v.clientWidth),rulerGap:ruler.right-canvas.right};
+    })()`);
+    assert.equal(layout.visible,visible,`role controls at ${width}x${height}`);
+    assert.equal(layout.padding,padding);
+    for(const key of ['horizontalGap','verticalGap','rulerGap'])assert.ok(Math.abs(layout[key])<=1,`${key} at ${width}x${height}: ${JSON.stringify(layout)}`);
+  }
+  await command('Emulation.setDeviceMetricsOverride',{width:1600,height:1100,deviceScaleFactor:1,mobile:false});
   await evaluate(`(async()=>{${waitCode}document.querySelector('.track-group.arpeggio .track-select').click();await wait(()=>document.querySelector('#part-inspector').dataset.controlRole==='arpeggio');})()`);
   const filters=await evaluate(`(async()=>{${waitCode}const b=[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.trim()==='Drums');const before=document.querySelector('vc-score-canvas canvas');b.click();await wait(()=>!document.querySelector('.drum-label'));const mix=[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.includes('Sync'));mix.click();await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='drums').mix.muted);return document.querySelector('vc-score-canvas canvas')===before;})()`);assert.equal(filters,true);
   const overviewViewport=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:-346.57,ctrlKey:true,clientX:c.left,clientY:c.top+10,bubbles:true,cancelable:true}));const content=document.querySelector('vc-score-canvas .horizontal-scroll > div');return content.style.width;})()`);
-  const point=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
+  const point=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
   const edit=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));return {arrangement:!!document.querySelector('vc-arrangement-overview canvas'),settings:!!document.querySelector('.part-settings-panel'),local:[...document.querySelectorAll('.score-display-header button')].some(b=>b.textContent==='Local Apply'),noStepGrid:!document.querySelector('.drum-grid')};})()`);for(const v of Object.values(edit))assert.equal(v,true);
   await capture('unified-score-edit');

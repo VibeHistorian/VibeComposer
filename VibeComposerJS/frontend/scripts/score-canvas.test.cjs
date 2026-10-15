@@ -291,9 +291,9 @@ test('drag audition follows each snapped cyan preview immediately, including ret
     shapes.length = 0;
     c.onPointerMove(pointer(300, 22 - semitones * c.laneHeight / 2));
     assert.equal(c.drag.current.midi, expectedPitch);
-    const cyan = shapes.find(shape => shape.height === 6);
+    const cyan = shapes.find(shape => shape.height === c.laneHeight / 2);
     assert.ok(cyan);
-    const drawnPitch = c.pitchMax + .5 - (cyan.y + 3 + c.verticalOffset) / c.laneHeight;
+    const drawnPitch = c.pitchMax + .5 - (cyan.y + cyan.height / 2 + c.verticalOffset) / c.laneHeight;
     assert.equal(drawnPitch, expectedPitch, 'cyan preview uses the snapped pitch');
     assert.equal(c.auditionRequested.values.length, before + Number(shouldAudition));
     assert.equal(c.auditionRequested.values.at(-1)[0].midi, expectedPitch, 'audio uses the cyan preview pitch');
@@ -323,10 +323,34 @@ test('drum-only editing renders every unselected drum note at visible row-based 
   assert.equal(c.harmonicHeight, 0, 'the editor has no piano rows');
   assert.equal(c.gutterRows().length, 5);
   assert.equal(shapes.length, notes.length, 'all drum tracks draw before any selection or click');
-  assert.ok(shapes.every(shape => shape.height === 6), 'notes use drum row height rather than subpixel piano height');
+  assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length / 2) < 1e-9), 'notes fill half of their drum row');
   assert.equal(c.hitAreas.length, notes.length, 'all rendered drum notes remain editable');
   c.model.selectedTrackId = tracks[0].id; c.drawStatic();
-  assert.ok(shapes.every(shape => shape.height === 6), 'changing active tracks does not reveal hidden notes');
+  assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length / 2) < 1e-9), 'changing active tracks preserves row-based note height');
+});
+
+test('selected track glow stays centered on notes in short and tall score canvases', () => {
+  const { component: c } = fixture();
+  c.horizontalOffset = 0; c.horizontalScale = 1;
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }],
+    notes: [12, 48, 96].map((midi, index) => ({ id: String(index), part: 'bass', color: 'bass',
+      midi, velocity: 90, startBeat: 4 + index * 4, durationBeats: 1, opacity: 1 })),
+    sections: [], totalBeats: 16, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  const rectangles = [], notes = [];
+  c.staticGraphics = { clear() { rectangles.length = 0; notes.length = 0; },
+    rect(x, y, width, height) { rectangles.push({ x, y, width, height }); return this; },
+    roundRect(x, y, width, height) { notes.push({ x, y, width, height }); return this; },
+    moveTo() { return this; }, lineTo() { return this; }, fill() { return this; }, stroke() { return this; } };
+  for (const height of [50, 100, 600]) {
+    c.height = height; c.drawStatic();
+    const note = notes.find(shape => shape.x === c.scoreX(8));
+    const glow = rectangles.find(shape => shape.x === note.x - 2 && shape.width === note.width + 4);
+    assert.ok(Math.abs(note.height - c.laneHeight / 2) < 1e-9, 'notes fill half of their pitch row');
+    assert.ok(glow, 'selected track has a glow');
+    assert.ok(Math.abs(glow.y + glow.height / 2 - note.y - note.height / 2) < 1e-9,
+      'glow stays centered at canvas height ' + height);
+    assert.ok(Math.abs(glow.height - note.height - 4) < 1e-9, 'glow keeps equal padding around the note');
+  }
 });
 
 test('opening and resizing a phrase editor keeps its full pitch range visible', () => {

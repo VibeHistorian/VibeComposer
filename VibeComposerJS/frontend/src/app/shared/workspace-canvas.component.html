@@ -103,7 +103,7 @@
     </div>
   </aside>
 
-  <main class="song-canvas" [class.editing]="editing()">
+  <main class="song-canvas" [class.editing]="editing()" [class.settings-in-inspector]="partSettingsInInspector()">
     @if (editing()) {
       <vc-edit-workspace [initialNoteId]="editingNoteId()" [sectionId]="editSectionId()" [phraseStartBeat]="editPhraseOffset()"
         [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
@@ -124,6 +124,7 @@
         (trackSelected)="selectSectionTrack($event.sectionId, $event.trackId)"
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
 
+      @if (!partSettingsInInspector()) {
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
         <header class="part-settings-heading" [class.role-settings]="!!editableScopes().length">
           <div class="part-heading-context">
@@ -177,12 +178,14 @@
         }
       </section>
 
+      }
+
       <section class="score-panel" aria-label="Song score">
         <div class="score-scroll">
           <div class="score-canvas">
             <div class="score-ruler">
               <span class="score-ruler-label">PITCH</span>
-              <div class="score-ruler-viewport">
+              <div class="score-ruler-viewport" [style.width.px]="scoreViewport().width">
                 <div class="score-ruler-sections" [style.width.px]="scoreViewport().width * scoreViewport().scale"
                   [style.transform]="'translateX(-' + scoreViewport().offsetPercent + '%)'">
                   @for (item of timelineSections(); track item.section.id) {
@@ -213,7 +216,7 @@
               </div>
           </div>
         </div>
-        <footer class="score-display-header" aria-label="Score display and edit actions">
+        <footer class="score-display-header" [class.role-display-controls]="!editing()" aria-label="Score display and edit actions">
           @if (editing()) {
             <span>{{ selectedPart() === 'drums' ? 'All drums · Edit phrases' : selectedTrack().name + ' · Edit phrase' }}</span>
             <button type="button" (click)="editor()?.addNote()">＋ Note</button>
@@ -245,6 +248,10 @@
         <i class="role-dot" [class]="partRole()"></i>
       </header>
 
+      @if (partSettingsInInspector() && preferences.editingQuickSettings()) {
+        <button type="button" class="part-inspector-link" (click)="toggleQuickSettingsEdit()">Save quick settings</button>
+      }
+
       @if (localPartTarget()) {
         <div class="inspector-selection">
           <span class="selection-kicker">{{ contextLabel() }}</span>
@@ -254,7 +261,7 @@
           @if (trackExceptionCount()) { <span>{{ trackExceptionCount() }} track exception(s) remain active.</span> }
           @if (manualTrackNames() && partGenerationAvailable()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="true" [local]="true" [overriddenKeys]="overriddenKeys()"
+            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!partSettingsInInspector()" [local]="true" [overriddenKeys]="overriddenKeys()"
               (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
           }
           @for (track of contextTracks(); track track.id) {
@@ -335,7 +342,7 @@
           @if (!partGenerationAvailable()) { <span class="part-inheritance">Automatic melody generation is not available yet. Add notes with Edit notes.</span> }
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="true"
+            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!partSettingsInInspector()"
               (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
