@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { HistoryDialogComponent } from './shared/history-dialog.component';
 import { ProjectService } from './core/project/project.service';
@@ -7,12 +7,14 @@ import { TransportDockComponent } from './shared/transport-dock.component';
 import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
 import { WorkspaceUiService } from './shared/workspace-ui.service';
 import { translateJavaConfig } from './core/project/java-config-translator';
+import { isEditingText } from './shared/keyboard-shortcuts';
 
 @Component({
   selector: 'vc-root',
   imports: [DialogModule, TransportDockComponent, WorkspaceCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
+  host: { '(document:keydown)': 'historyKeydown($event)' },
 })
 export class AppComponent {
   readonly projectMessage = signal('');
@@ -20,6 +22,22 @@ export class AppComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   private readonly dialogs = inject(Dialog);
+  private readonly workspace = viewChild(WorkspaceCanvasComponent);
+
+  historyKeydown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing || event.altKey || !(event.ctrlKey || event.metaKey)
+      || isEditingText(event)) return;
+    const key = event.key.toLowerCase();
+    if (key !== 'z' && key !== 'y') return;
+
+    // Phrase history owns the shortcut for the entire editing session, even when empty.
+    const workspace = this.workspace();
+    const history = workspace?.editing() ? workspace.editor() : this.projects;
+    if (key === 'y' || event.shiftKey) history?.redo();
+    else history?.undo();
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   openSettings(): void {
     this.dialogs.open(SettingsDialogComponent, { ariaLabelledBy: 'settings-title' });

@@ -8,6 +8,7 @@ import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSn
 import { getDiatonicChords, getPitchClass } from '../../core/music/harmony';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
+import { isEditingText } from '../../shared/keyboard-shortcuts';
 
 
 export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; }
@@ -139,12 +140,10 @@ export class EditWorkspaceComponent {
   }
   @HostListener('document:keydown', ['$event'])
   keydown(event: KeyboardEvent): void {
-    if (event.defaultPrevented || (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable="true"]'))) return;
+    if (event.defaultPrevented || event.isComposing || isEditingText(event)) return;
     const command = event.ctrlKey || event.metaKey;
     const key = event.key.toLowerCase();
-    if (command && key === 'z') event.shiftKey ? this.redo() : this.undo();
-    else if (command && key === 'y') this.redo();
-    else if (command && key === 'a') this.selectAll();
+    if (command && key === 'a') this.selectAll();
     else if (event.shiftKey && !command && !event.altKey && key === 't') this.openTranspose();
     else if (event.key === 'Delete' || event.key === 'Backspace') this.deleteSelected();
     else return;
