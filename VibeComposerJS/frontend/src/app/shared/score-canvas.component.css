@@ -1,6 +1,6 @@
 /* Score viewport */
 :host { display: grid; grid-column: 1; min-width: 0; min-height: 0; overflow: hidden; grid-template-columns: 72px minmax(0, 1fr) auto; grid-template-rows: minmax(0, 1fr) auto; }
-.score-canvas-host { grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.score-canvas-host { position: relative; grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow: hidden; }
 
 /* Native scroll controls */
 .horizontal-scroll { grid-column: 2; grid-row: 2; min-width: 0; overflow-x: auto; overflow-y: hidden; }

@@ -114,6 +114,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     originals: readonly ScoreCanvasNote[]; preview: readonly PhraseNote[]; duplicate: boolean; lockPitch: boolean } | null = null;
   private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[] } | null = null;
   private shape: { mode: 'pitch' | 'velocity'; pointerId: number; notes: Map<string, PhraseNote> } | null = null;
+  private readonly touches = new Map<number, { x: number; y: number }>();
+  private pinch: { distance: number; x: number; y: number } | null = null;
+  private touchGesture = false;
+  private touchTap: { x: number; y: number } | null = null;
   private readonly onContextMenu = (event: MouseEvent): void => { if (this.editable()) event.preventDefault(); };
   private suppressClick = false;
   readonly sectionFocus = input<ScoreSectionFocus | null>(null);
@@ -250,6 +254,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.app = app;
       app.stage.addChild(this.staticGraphics, this.dynamicGraphics);
       const canvas = app.canvas;
+      // Pixi creates this element outside Angular's scoped template styles.
+      // Absolute positioning prevents its backing size from growing the grid.
+      canvas.style.position = 'absolute';
+      canvas.style.inset = '0';
+      canvas.style.touchAction = 'none';
       canvas.style.display = 'block';
       canvas.style.width = '100%';
       canvas.style.height = '100%';
@@ -378,6 +387,31 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   };
 
   private readonly onPointerMove = (event: PointerEvent): void => {
+    if (this.touches.has(event.pointerId)) {
+      this.touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (this.touchTap && Math.hypot(event.clientX - this.touchTap.x, event.clientY - this.touchTap.y) > 8) this.touchTap = null;
+      const next = this.pinchPosition();
+      if (next && this.pinch && this.app) {
+        const bounds = this.app.canvas.getBoundingClientRect();
+        const previousX = (this.pinch.x - bounds.left) / Math.max(1, bounds.width);
+        const nextX = (next.x - bounds.left) / Math.max(1, bounds.width);
+        const anchor = this.horizontalOffset + previousX / this.horizontalScale;
+        const ratio = next.distance / Math.max(1, this.pinch.distance);
+        const previousY = (this.pinch.y - bounds.top) * this.height / Math.max(1, bounds.height);
+        const nextY = (next.y - bounds.top) * this.height / Math.max(1, bounds.height);
+        const pitchAnchor = (this.verticalOffset + previousY) / this.laneHeight;
+        this.horizontalScale = Math.min(128, Math.max(1, this.horizontalScale * ratio));
+        this.horizontalOffset = anchor - nextX / this.horizontalScale;
+        if (this.harmonicHeight > 0) {
+          this.verticalScale = Math.min(this.maxVerticalScale, Math.max(1, this.verticalScale * ratio));
+          this.verticalOffset = pitchAnchor * this.laneHeight - nextY;
+        }
+        this.pinch = next;
+        this.updateViewport();
+        this.drawStatic();
+      }
+      if (this.touchGesture) return;
+    }
     const canvas = this.app?.canvas;
     if (!canvas) return;
     const bounds = canvas.getBoundingClientRect();
@@ -510,6 +544,28 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       && event.clientY >= bounds.top && event.clientY < bounds.top + bounds.height && !this.hitAreaAt(event);
   }
   private readonly onPointerDown = (event: PointerEvent): void => {
+    if (event.pointerType === 'touch' && this.app) {
+      event.preventDefault();
+      this.touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      this.app.canvas.setPointerCapture(event.pointerId);
+      if (this.touches.size > 1) {
+        this.touchGesture = true;
+        this.suppressClick = true;
+        this.touchTap = null;
+        this.drag = null;
+        this.box = null;
+        this.shape = null;
+        this.pinch = this.pinchPosition();
+        this.drawDynamic();
+        return;
+      }
+      if (this.touchGesture) return;
+      // Defer empty-space note creation until release so a pinch cannot add a note.
+      if (this.editable() && !this.hitAreaAt(event)) {
+        this.touchTap = { x: event.clientX, y: event.clientY };
+        return;
+      }
+    }
     if (event.button === 0) this.suppressClick = false;
     if (event.button === 1) event.preventDefault();
     if (!this.editable() || !this.app) return;
@@ -544,6 +600,18 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
+    if (this.touches.delete(event.pointerId)) {
+      this.pinch = null;
+      if (this.app?.canvas.hasPointerCapture(event.pointerId)) this.app.canvas.releasePointerCapture(event.pointerId);
+      if (this.touchGesture) {
+        if (!this.touches.size) this.touchGesture = false;
+        return;
+      }
+      if (this.touchTap) {
+        this.touchTap = null;
+        this.onDoubleClick(event);
+      }
+    }
     if (this.middlePress?.pointerId === event.pointerId) {
       this.middlePress.canApply = this.middlePress.startedEmpty && this.emptyCanvasPoint(event) && !this.drag && !this.shape;
     }
@@ -578,7 +646,20 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (this.app?.canvas.hasPointerCapture(event.pointerId)) this.app.canvas.releasePointerCapture(event.pointerId);
     this.drawDynamic();
   };
-  private readonly onPointerCancel = (): void => { this.drag = null; this.box = null; this.shape = null; this.middlePress = null; this.drawDynamic(); };
+  private pinchPosition(): { distance: number; x: number; y: number } | null {
+    const [first, second] = [...this.touches.values()];
+    return first && second ? { distance: Math.hypot(second.x - first.x, second.y - first.y),
+      x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 } : null;
+  }
+  private readonly onPointerCancel = (event?: PointerEvent): void => {
+    if (event) this.touches.delete(event.pointerId);
+    else this.touches.clear();
+    this.pinch = null;
+    this.touchTap = null;
+    this.touchGesture = this.touches.size > 0;
+    this.drag = null; this.box = null; this.shape = null; this.middlePress = null;
+    this.drawDynamic();
+  };
   private readonly onAuxClick = (event: MouseEvent): void => {
     if (event.button !== 1 || !this.editable()) return;
     event.preventDefault();

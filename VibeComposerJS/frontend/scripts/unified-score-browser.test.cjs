@@ -156,5 +156,21 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     assert.ok(layout.width>0 && layout.height>0);assert.equal(layout.fits,true,'workspace fits at '+width+'px');
     await capture('unified-score-'+width);
   }
+  // Real touch input must zoom the editor without creating or committing notes.
+  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
+  await command('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:2});
+  await evaluate(`(async()=>{${waitCode}[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')).click();await wait(()=>document.querySelector('#phrase-grid'));})()`);
+  const mobile=await evaluate(`(async()=>{await new Promise(r=>setTimeout(r,400));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(r));const c=canvas.getBoundingClientRect();return {x:c.left+c.width/2,y:c.top+c.height/2,height:c.height,width:c.width,range:parseFloat(document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width),project:sessionStorage.getItem('vibecomposer.project.v12'),notes:document.querySelector('.inspector-copy').textContent};})()`);
+  assert.ok(mobile.height>100 && mobile.height<=640,'mobile canvas height is bounded');
+  const touch=async(type,distance)=>command('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'?[]:[{id:1,x:mobile.x-distance/2,y:mobile.y},{id:2,x:mobile.x+distance/2,y:mobile.y}]});
+  await touch('touchStart',40);await touch('touchMove',80);await touch('touchMove',120);await touch('touchEnd',0);
+  const zoomed=await evaluate(`({range:parseFloat(document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width),height:document.querySelector('vc-score-canvas canvas').getBoundingClientRect().height})`);
+  assert.ok(zoomed.range>mobile.range*1.5,'pinch apart zooms into the phrase');
+  await touch('touchStart',120);await touch('touchMove',80);await touch('touchMove',40);await touch('touchEnd',0);
+  const zoomOut=await evaluate(`({range:parseFloat(document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width),height:document.querySelector('vc-score-canvas canvas').getBoundingClientRect().height,project:sessionStorage.getItem('vibecomposer.project.v12'),notes:document.querySelector('.inspector-copy').textContent})`);
+  assert.ok(zoomOut.range<zoomed.range*.75,'pinch together zooms out');
+  assert.ok(Math.abs(zoomOut.height-mobile.height)<=1,'canvas does not grow during rendering');
+  assert.equal(zoomOut.project,mobile.project,'pinching does not commit note edits');
+  assert.equal(zoomOut.notes,mobile.notes,'pinching does not add notes');
  } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
 });

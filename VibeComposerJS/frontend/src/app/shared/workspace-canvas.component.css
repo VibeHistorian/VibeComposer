@@ -198,8 +198,8 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
   .workspace-canvas { grid-template-columns: 1fr; }
   .track-browser { max-height: none; }
   .track-groups { max-height: 330px; grid-template-columns: minmax(0, 1fr); }
-  .song-canvas { grid-template-rows: auto auto minmax(350px, 1fr); }
-  .score-panel { min-height: 350px; }
+  .song-canvas { grid-template-rows: auto auto auto; }
+  .score-panel { box-sizing: border-box; min-height: 0; height: clamp(280px, 65svh, 640px); }
   .context-inspector { grid-template-columns: 1fr; }
   .inspector-editors { grid-column: auto; grid-template-columns: 1fr; }
   .inspector-selection { margin-top: 6px; }
@@ -227,5 +227,5 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
   .song-canvas.settings-in-inspector { grid-template-rows: auto minmax(300px, 1fr); }
 }
 @media (max-width: 680px) {
-  .song-canvas.settings-in-inspector { grid-template-rows: auto minmax(350px, 1fr); }
+  .song-canvas.settings-in-inspector { grid-template-rows: auto auto; }
 }
