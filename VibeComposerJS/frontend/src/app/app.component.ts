@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
+import { CdkMenuModule } from '@angular/cdk/menu';
+import { AudioExportService } from './core/audio/audio-export.service';
+import { generateCompositionMidi } from './core/music/midi-export';
+import { downloadProjectFile } from './core/project/download-file';
 import { HistoryDialogComponent } from './shared/history-dialog.component';
 import { ProjectService } from './core/project/project.service';
 import { SettingsDialogComponent } from './features/settings/settings-dialog.component';
@@ -11,13 +15,19 @@ import { isEditingText } from './shared/keyboard-shortcuts';
 
 @Component({
   selector: 'vc-root',
-  imports: [DialogModule, TransportDockComponent, WorkspaceCanvasComponent],
+  imports: [DialogModule, CdkMenuModule, TransportDockComponent, WorkspaceCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
+  styleUrl: './app.component.css',
   host: { '(document:keydown)': 'historyKeydown($event)' },
 })
 export class AppComponent {
   readonly projectMessage = signal('');
+  readonly audioExport = inject(AudioExportService);
+  readonly exportMenuPositions = [
+    { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -6 },
+    { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 6 },
+  ] as const;
   readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
@@ -50,16 +60,32 @@ export class AppComponent {
   exportProject(): void {
     const project = this.project();
     const blob = new Blob([this.projects.exportProjectJson()], { type: 'application/json' });
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const fileName = project.name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-').trim().slice(0, 80) || 'VibeComposer';
-    link.href = objectUrl;
-    link.download = `${fileName}.vibecomposer.json`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    downloadProjectFile(blob, project.name, 'vibecomposer.json');
     this.projectMessage.set('Project settings exported.');
+  }
+
+  exportMidi(): void {
+    try {
+      const project = this.project();
+      const bytes = new Uint8Array(generateCompositionMidi(project));
+      downloadProjectFile(new Blob([bytes], { type: 'audio/midi' }), project.name, 'mid');
+      this.projectMessage.set('MIDI exported.');
+    } catch (error) {
+      this.projectMessage.set(error instanceof Error ? `Could not export MIDI: ${error.message}` : 'Could not export MIDI.');
+    }
+  }
+
+  async exportAudio(): Promise<void> {
+    if (this.audioExport.busy()) return;
+    const project = this.project();
+    this.projectMessage.set('');
+    try {
+      const blob = await this.audioExport.export(project);
+      downloadProjectFile(blob, project.name, 'opus');
+      this.projectMessage.set('Audio exported.');
+    } catch (error) {
+      this.projectMessage.set(error instanceof Error ? `Could not export audio: ${error.message}` : 'Could not export audio.');
+    }
   }
 
   async importProject(event: Event): Promise<void> {

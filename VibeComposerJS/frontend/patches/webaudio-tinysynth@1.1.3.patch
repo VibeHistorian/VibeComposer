@@ -1,0 +1,30 @@
+diff --git a/webaudio-tinysynth.js b/webaudio-tinysynth.js
+--- a/webaudio-tinysynth.js
++++ b/webaudio-tinysynth.js
+@@ -669,7 +669,7 @@
+       this.rhythm[9]=1;
+       this.preroll=0.2;
+       this.relcnt=0;
+-      setInterval(
++      this.timerId=setInterval(
+         function(){
+           if(++this.relcnt>=3){
+             this.relcnt=0;
+@@ -1211,7 +1211,7 @@
+       const cmd=msg[0]&~0xf;
+       if(cmd<0x80||cmd>=0x100)
+         return;
+-      if(this.audioContext.state=="suspended"){
++      if(this.audioContext.state=="suspended" && !("startRendering" in this.audioContext)){
+         this.audioContext.resume();
+       }
+       switch(cmd){
+@@ -1468,6 +1468,8 @@
+     }
+     this.setQuality(1);
+     if(opt){
++      if(opt.internalcontext!=undefined)
++        this.internalcontext=opt.internalcontext;
+       if(opt.useReverb!=undefined)
+         this.useReverb=opt.useReverb;
+       if(opt.quality!=undefined)

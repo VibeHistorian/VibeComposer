@@ -29,9 +29,9 @@ test('TinySynth renders GM presets and drums with independent voices and track r
       try {
         const rate = 22050;
         window.AudioContext = class {
-          constructor() { return new OfflineAudioContext(2, rate * 12, rate); }
+          constructor() { throw Error('An offline synth must not create a realtime context'); }
         };
-        const engine = new module.exports.TinySynthEngine();
+        const engine = new module.exports.TinySynthEngine(new OfflineAudioContext(2, rate * 12, rate));
         const context = engine.context;
         const track = context.createGain(); track.connect(context.destination);
         const silent = context.createGain(); silent.gain.value = 0; silent.connect(context.destination);
@@ -46,11 +46,16 @@ test('TinySynth renders GM presets and drums with independent voices and track r
         };
         // Every published GM program and percussion pitch must create usable voices.
         const programs = [], drums = [];
+        let maxTail = 0;
         for (let program = 0; program < 128; program++) {
-          programs.push(finish(engine.schedule(silent, program, false, 48, 90, .01, .1)).length);
+          const voices = finish(engine.schedule(silent, program, false, 48, 90, .01, .1));
+          programs.push(voices.length);
+          maxTail = Math.max(maxTail, ...voices.map(voice => voice.stopTime - .11));
         }
         for (let pitch = 35; pitch <= 81; pitch++) {
-          drums.push(finish(engine.schedule(silent, 0, true, pitch, 90, .01, .1)).length);
+          const voices = finish(engine.schedule(silent, 0, true, pitch, 90, .01, .1));
+          drums.push(voices.length);
+          maxTail = Math.max(maxTail, ...voices.map(voice => voice.stopTime - .01));
         }
         const chosen = [0, 32, 33, 34, 36, 38, 40, 73];
         chosen.forEach((program, index) => finish(engine.schedule(track, program, false,
@@ -77,8 +82,9 @@ test('TinySynth renders GM presets and drums with independent voices and track r
         const bassDifferences = slices.slice(1, 6).flatMap((values, index, bass) =>
           bass.slice(index + 1).map(other => rms(values.map((v, i) => v - other[i]))));
         const silence = rms(Array.from(data.slice(9 * rate)));
+        engine.dispose();
         await fetch('/result', { method: 'POST', body: JSON.stringify({
-          programs, drums, levels, differences, bassDifferences, independent, silence,
+          programs, drums, levels, differences, bassDifferences, independent, silence, maxTail,
           detached: engine.synth.notetab.length === 0,
         }) });
       } catch (error) {
@@ -114,6 +120,7 @@ test('TinySynth renders GM presets and drums with independent voices and track r
     assert.equal(output.programs.length, 128);
     assert.ok(output.programs.every(count => count > 0));
     assert.equal(output.drums.length, 47);
+    assert.ok(output.maxTail > 30 && output.maxTail <= 40, 'offline export reserves the longest GM and drum tails');
     assert.ok(output.drums.every(count => count > 0));
     assert.ok(output.levels.every(level => level > .001), 'selected presets render audible output');
     assert.ok(output.differences.every(level => level > .001), 'selected presets differ from piano');

@@ -2,6 +2,7 @@ import { MAX_VOLUME_PERCENT, validVolumePercent } from '../../core/audio/mix-val
 import { ChangeDetectionStrategy, Component, EventEmitter, Output, computed, inject } from '@angular/core';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { generateCompositionMidi } from '../../core/music/midi-export';
+import { downloadProjectFile } from '../../core/project/download-file';
 import { phraseForTrack } from '../../core/music/phrase';
 import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
 import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
@@ -122,14 +123,6 @@ export class MixWorkspaceComponent {
     const bytes = generateCompositionMidi(project);
     const fileData = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
     const file = new Blob([fileData], { type: 'audio/midi' });
-    const objectUrl = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    const fileName = project.name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-').trim().slice(0, 80) || 'VibeComposer';
-    link.href = objectUrl;
-    link.download = `${fileName}.mid`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    downloadProjectFile(file, project.name, 'mid');
   }
 }

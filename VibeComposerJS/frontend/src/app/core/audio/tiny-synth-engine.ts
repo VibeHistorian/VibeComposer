@@ -15,6 +15,9 @@ interface TinySynthInternals extends WebAudioTinySynth {
   readonly notetab: TinyVoice[];
   readonly out: GainNode;
   readonly releaseRatio: number;
+  readonly timerId: ReturnType<typeof setInterval>;
+  readonly lfo: OscillatorNode;
+  readonly comp: DynamicsCompressorNode;
   _note(start: number, channel: number, midi: number, velocity: number, timbre: TimbreOperator[]): void;
   _releaseNote(voice: TinyVoice, time: number): void;
 }
@@ -33,13 +36,24 @@ export interface SynthVoice {
  */
 export class TinySynthEngine {
   private readonly synth: TinySynthInternals;
-  readonly context: AudioContext;
+  readonly context: BaseAudioContext;
 
-  constructor() {
-    this.synth = new WebAudioTinySynth({ quality: 1, useReverb: 0 }) as TinySynthInternals;
-    this.context = this.synth.getAudioContext();
+  constructor(context?: BaseAudioContext) {
+    this.synth = new WebAudioTinySynth({ quality: 1, useReverb: 0,
+      internalcontext: context ? 0 : 1 }) as TinySynthInternals;
+    if (context) this.synth.setAudioContext(context);
+    this.context = context ?? this.synth.getAudioContext();
     // All rendered operators go straight to our track buses, bypassing its mixer.
     this.synth.out.disconnect();
+  }
+
+  /** The pinned dependency patch exposes its timer so offline exports can release it. */
+  dispose(): void {
+    clearInterval(this.synth.timerId);
+    this.synth.lfo.stop();
+    this.synth.lfo.disconnect();
+    this.synth.out.disconnect();
+    this.synth.comp.disconnect();
   }
 
   schedule(destination: AudioNode, program: number, percussion: boolean,

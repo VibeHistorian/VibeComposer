@@ -11,14 +11,24 @@
       </div>
     </div>
     <div transportFiles class="project-tool-group" role="group" aria-label="Project files">
-      <button type="button" (click)="exportProject()" title="Export project">Export...</button>
+      <button type="button" [cdkMenuTriggerFor]="exportMenu" [cdkMenuPosition]="exportMenuPositions" title="Export">Export... ▾</button>
+      <ng-template #exportMenu>
+        <div cdkMenu class="export-menu" aria-label="Export">
+          <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportMidi()">Export MIDI</button>
+          <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportProject()">Export Project</button>
+          <button type="button" cdkMenuItem [cdkMenuItemDisabled]="audioExport.busy()" [disabled]="audioExport.busy()"
+            (cdkMenuItemTriggered)="exportAudio()" title="Export full song as stereo Opus audio">{{ audioExport.busy() ? 'Exporting Audio…' : 'Export Audio' }}</button>
+        </div>
+      </ng-template>
       <button type="button" (click)="projectFile.click()" title="Open project">Open...</button>
       <input #projectFile type="file" accept="application/json,application/xml,text/xml,.json,.xml,.xml-config" hidden (change)="importProject($event)" />
     </div>
-    @if (projectMessage()) {
+    @if (audioExport.status() || projectMessage()) {
       <div transportNotice class="project-message" role="status">
-        <span>{{ projectMessage() }}</span>
-        <button type="button" (click)="projectMessage.set('')" aria-label="Dismiss project notification" title="Dismiss">×</button>
+        <span>{{ audioExport.status() || projectMessage() }}</span>
+        @if (!audioExport.busy()) {
+          <button type="button" (click)="projectMessage.set('')" aria-label="Dismiss project notification" title="Dismiss">×</button>
+        }
       </div>
     }
   </vc-transport-dock>

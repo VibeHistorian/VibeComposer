@@ -1,0 +1,5 @@
+/* Export dropdown */
+.export-menu { display: grid; min-width: 160px; padding: 5px; border: 1px solid var(--border-strong); border-radius: var(--radius-card); background: var(--surface-base); box-shadow: 0 6px 20px var(--shadow-ink); }
+.export-menu button { padding: 9px 12px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--text-primary); font: 12px var(--font-ui); text-align: left; cursor: pointer; }
+.export-menu button:hover:not(:disabled), .export-menu button:focus-visible { outline: none; background: var(--surface-button-hover); }
+.export-menu button:disabled { color: var(--text-disabled); cursor: default; }

@@ -212,8 +212,8 @@ export class AudioPlaybackService {
     if (!globalThis.AudioContext) {
       throw new Error('This browser does not support Web Audio playback.');
     }
-    this.synth = new TinySynthEngine();
-    this.context = this.synth.context;
+    this.context = new AudioContext();
+    this.synth = new TinySynthEngine(this.context);
     return this.context;
   }
 
