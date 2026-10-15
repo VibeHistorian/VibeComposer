@@ -19,7 +19,6 @@
 .track-group.bass .group-heading { background: var(--role-bass-header); }.track-group.chords .group-heading { background: var(--role-chords-header); }.track-group.arpeggio .group-heading { background: var(--role-arpeggio-header); }.track-group.drums .group-heading { background: var(--role-drums-header); }
 .group-select { min-width: 0; padding: 2px 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
 .group-select strong { min-width: 0; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.group-selected { background: var(--surface-accent); }
 .group-count { box-sizing: border-box; width: 34px; min-width: 22px; height: 22px; margin-right: auto; padding: 0 3px; flex: 0 0 auto; text-align: center; appearance: textfield; border: 1px solid var(--border-strong); border-radius: var(--radius-tight); background: var(--shadow-highlight); color: var(--text-secondary); font: 10px var(--font-mono); }
 .group-count::-webkit-inner-spin-button, .group-count::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .group-count:focus { outline: 1px solid var(--accent-primary); }
@@ -38,6 +37,7 @@
 .group-policy-toggle:disabled { opacity: .5; cursor: default; }
 /* Track reroll controls */
 .track-policy-header { display: grid; gap: 5px; padding: 6px 3px; border-bottom: 1px solid var(--border-subtle); }
+.group-selected > .track-policy-header { background: var(--surface-accent); }
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }
 .track-reroll-actions button { width: 18px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-muted); font: 13px var(--font-ui); cursor: pointer; }
 .track-reroll-actions { display: flex; align-items: center; gap: 2px; }
