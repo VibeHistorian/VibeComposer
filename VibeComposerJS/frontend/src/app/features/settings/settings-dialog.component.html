@@ -55,6 +55,17 @@
             <button type="button" class="appearance-reset" (click)="preferences.resetAppearance()">Reset appearance to defaults</button>
           </section>
         }
+        @case ('behavior') {
+          <section aria-labelledby="behavior-title">
+            <h2 id="behavior-title">Behavior</h2>
+            <label class="behavior-setting">
+              <input type="checkbox" [checked]="preferences.syncScoreMix()"
+                (change)="preferences.toggleScoreMixSync()" aria-describedby="sync-score-mix-description" />
+              <span>Sync Solo/Mute</span>
+            </label>
+            <p id="sync-score-mix-description">Set the mix to hear the roles displayed in the score. Changes apply immediately and are saved in your UI preferences.</p>
+          </section>
+        }
         @case ('section-types') { <vc-section-type-settings /> }
         @case ('project-history') {
           <section aria-labelledby="project-history-title">

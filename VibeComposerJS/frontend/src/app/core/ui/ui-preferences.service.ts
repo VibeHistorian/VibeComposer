@@ -14,6 +14,7 @@ export class UiPreferencesService {
   private readonly draft = signal<QuickSettings | null>(null);
   readonly preferences = this.state.asReadonly();
   readonly compactHistory = computed(() => this.state().compactHistory);
+  readonly syncScoreMix = computed(() => this.state().syncScoreMix);
   readonly appearance = computed(() => this.state().appearance);
   readonly editingQuickSettings = computed(() => this.draft() !== null);
   readonly quickSettings = computed(() => this.draft() ?? this.state().quickSettings);
@@ -69,6 +70,7 @@ export class UiPreferencesService {
     this.draft.set({ ...draft, [role]: PART_CONTROLS[role].filter(control => keys.has(control.key)).map(control => control.key) });
   }
   toggleCompactHistory(): void { this.commit({ ...this.state(), compactHistory: !this.compactHistory() }); }
+  toggleScoreMixSync(): void { this.commit({ ...this.state(), syncScoreMix: !this.syncScoreMix() }); }
   exportJson(): string { return JSON.stringify(this.state(), null, 2); }
   importJson(json: string): boolean {
     try {

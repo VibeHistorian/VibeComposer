@@ -4,7 +4,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from './section-context-editor.component';
 import { sectionDurationBeats } from '../core/music/section-context';
 import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
   TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
@@ -247,14 +247,15 @@ export class WorkspaceCanvasComponent {
   readonly editPhraseOffset = signal(0);
   readonly editPhraseLength = signal(16);
   readonly displayedRoles = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
-  readonly syncScoreMix = signal(false);
+  private readonly scoreMixSyncEffect = effect(() => {
+    if (this.preferences.syncScoreMix()) untracked(() => this.synchronizeScoreMix());
+  });
   toggleScoreRole(role: ArrangedPart): void {
     this.displayedRoles.update(roles => { const next = new Set(roles); if (next.has(role)) next.delete(role); else next.add(role); return next; });
     this.synchronizeScoreMix();
   }
-  toggleScoreMixSync(): void { this.syncScoreMix.update(value => !value); this.synchronizeScoreMix(); }
   private synchronizeScoreMix(): void {
-    if (this.syncScoreMix()) this.projects.syncScoreMix(this.project().tracks.filter(track => this.displayedRoles().has(track.role)).map(track => track.id));
+    if (this.preferences.syncScoreMix()) this.projects.syncScoreMix(this.project().tracks.filter(track => this.displayedRoles().has(track.role)).map(track => track.id));
   }
   readonly editing = signal(false);
   private selectionBeforeEditing: SettingsSelection | null = null;

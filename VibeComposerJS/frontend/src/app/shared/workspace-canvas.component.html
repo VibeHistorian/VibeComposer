@@ -184,7 +184,13 @@
         <div class="score-scroll">
           <div class="score-canvas">
             <div class="score-ruler">
-              <span class="score-ruler-label">PITCH</span>
+              <div class="score-role-controls" aria-label="Score role visibility">
+                @for (group of roles; track group.role) {
+                  <button type="button" [class.active]="displayedRoles().has(group.role)"
+                    [attr.aria-pressed]="displayedRoles().has(group.role)" [attr.aria-label]="group.name"
+                    [title]="group.name" (click)="toggleScoreRole(group.role)"><i class="role-dot" [class]="group.role" aria-hidden="true"></i></button>
+                }
+              </div>
               <div class="score-ruler-viewport" [style.width.px]="scoreViewport().width">
                 <div class="score-ruler-sections" [style.width.px]="scoreViewport().width * scoreViewport().scale"
                   [style.transform]="'translateX(-' + scoreViewport().offsetPercent + '%)'">
@@ -216,8 +222,8 @@
               </div>
           </div>
         </div>
-        <footer class="score-display-header" [class.role-display-controls]="!editing()" aria-label="Score display and edit actions">
-          @if (editing()) {
+        @if (editing()) {
+        <footer class="score-display-header" aria-label="Score edit actions">
             <span>{{ selectedPart() === 'drums' ? 'All drums · Edit phrases' : selectedTrack().name + ' · Edit phrase' }}</span>
             <button type="button" (click)="editor()?.addNote()">＋ Note</button>
             <button type="button" title="Ctrl+Z" [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
@@ -228,14 +234,8 @@
             }
             <button type="button" (click)="editor()?.applyLocalChanges()" [disabled]="!editSectionId() || !editor()?.hasChanges()">Local Apply</button>
             <button type="button" [class.active]="editor()?.hasChanges()" [disabled]="!editor()?.hasChanges()" (click)="editor()?.applyChanges()">Apply</button>
-          } @else {
-            @for (group of roles; track group.role) {
-              <button type="button" [class.active]="displayedRoles().has(group.role)" [attr.aria-pressed]="displayedRoles().has(group.role)"
-                (click)="toggleScoreRole(group.role)"><i class="role-dot" [class]="group.role"></i>{{ group.name }}</button>
-            }
-            <button type="button" [class.active]="syncScoreMix()" [attr.aria-pressed]="syncScoreMix()" (click)="toggleScoreMixSync()" title="Set the mix to hear displayed roles">Sync Solo/Mute</button>
-          }
         </footer>
+        }
       </section>
   </main>
 

@@ -320,13 +320,27 @@ test('drum-only editing renders every unselected drum note at visible row-based 
     lineTo() { return this; }, fill() { return this; }, stroke() { return this; },
     roundRect(x, y, width, height) { shapes.push({ x, y, width, height }); return this; } };
   c.drawStatic();
-  assert.equal(c.harmonicHeight, 0, 'the editor has no piano rows');
-  assert.equal(c.gutterRows().length, 5);
+  assert.ok(c.harmonicHeight > 0, 'space above the drums remains available');
+  assert.equal(c.gutterRows().filter(row => row.drum).length, 5);
   assert.equal(shapes.length, notes.length, 'all drum tracks draw before any selection or click');
   assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length / 2) < 1e-9), 'notes fill half of their drum row');
   assert.equal(c.hitAreas.length, notes.length, 'all rendered drum notes remain editable');
   c.model.selectedTrackId = tracks[0].id; c.drawStatic();
   assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length / 2) < 1e-9), 'changing active tracks preserves row-based note height');
+  for (const editable of [false, true]) {
+    c.editable = () => editable;
+    for (const height of [180, 600, 1000]) {
+      c.height = height;
+      c.model.tracks = tracks;
+      c.drawStatic();
+      const drumRows = c.gutterRows().filter(row => row.drum);
+      assert.ok(drumRows.every(row => row.height <= 14), 'drums remain compact');
+      assert.equal(drumRows.at(-1).y + drumRows.at(-1).height, c.scoreHeight, 'drums sit above velocity at the bottom');
+      c.model.tracks = [...tracks, { id: 'bass', color: 'bass' }];
+      c.drawStatic();
+      assert.deepEqual(c.gutterRows().filter(row => row.drum), drumRows, 'drum layout matches a score with other roles');
+    }
+  }
 });
 
 test('selected track glow stays centered on notes in short and tall score canvases', () => {
@@ -386,6 +400,7 @@ test('opening and resizing a phrase editor keeps its full pitch range visible', 
 
 test('Alt-wheel reveals pitches outside the fitted phrase and allows adding notes there', () => {
   const { component: c } = fixture();
+  c.velocityVisible = () => true;
   c.editable = () => true; c.snapToScale = () => false;
   c.pendingEditPitchFocus = true;
   c.model = { tracks: [{ id: 'bass', color: 'bass' }, { id: 'drum', color: 'drums', drumPitch: 36 }],
@@ -416,5 +431,33 @@ test('Alt-wheel reveals pitches outside the fitted phrase and allows adding note
   assert.deepEqual(c.gutterRows().filter(row => !row.drum).map(row => row.midi),
     Array.from({ length: 128 }, (_, i) => 127 - i));
   c.onCanvasWheel({ ...wheel, deltaY: -10000 });
-  assert.equal(c.verticalScale, 128);
+  assert.equal(c.laneHeight, 50);
+});
+
+test('pitch rows cap at 50px during fitting, repeated zooming and resizing in overview and edit mode', () => {
+  const { component: c } = fixture();
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }],
+    notes: [{ id: 'a', part: 'bass', color: 'bass', midi: 60, velocity: 90, startBeat: 20, durationBeats: 1, opacity: 1 }],
+    sections: [], totalBeats: 64, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
+    fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
+  const wheel = { preventDefault() {}, stopPropagation() {}, altKey: true, deltaMode: 0,
+    deltaX: 0, deltaY: -10000, clientX: 200, clientY: 60 };
+  for (const editable of [false, true]) {
+    c.editable = () => editable;
+    c.height = 600; c.verticalScale = 1; c.pendingEditPitchFocus = editable;
+    c.drawStatic();
+    assert.equal(c.laneHeight, 50, 'initial phrase fit respects the cap');
+    c.onCanvasWheel(wheel);
+    const offset = c.verticalOffset;
+    c.onCanvasWheel(wheel);
+    assert.equal(c.laneHeight, 50);
+    assert.equal(c.verticalOffset, offset, 'zooming at the cap does not move the viewport');
+    c.height = 1000; c.drawStatic(true);
+    assert.equal(c.laneHeight, 50, 'growing the canvas cannot exceed the cap');
+    assert.ok(c.gutterRows().every(row => row.height <= 50));
+    assert.equal(c.contentHeight, c.laneHeight * (c.pitchMax - c.pitchMin + 1), 'scroll range follows capped rows');
+    c.onCanvasWheel({ ...wheel, deltaY: 10000 });
+    assert.equal(c.verticalScale, 1, 'zooming out still reaches the full pitch range');
+  }
 });

@@ -24,10 +24,10 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .appearance-reset { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
 .appearance-reset:hover { background: var(--surface-button-hover); }
 
-/* Project history preferences */
+/* Behavior and project history preferences */
 h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
-.history-setting { display: flex; align-items: center; gap: 10px; width: fit-content; font-size: 13px; cursor: pointer; }
-.history-setting input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-primary); cursor: pointer; }
+.history-setting, .behavior-setting { display: flex; align-items: center; gap: 10px; width: fit-content; font-size: 13px; cursor: pointer; }
+.history-setting input, .behavior-setting input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-primary); cursor: pointer; }
 .settings-content p { max-width: 560px; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 
 /* Narrow screens */

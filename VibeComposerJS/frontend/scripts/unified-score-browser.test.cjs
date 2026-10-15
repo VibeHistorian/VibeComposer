@@ -43,13 +43,15 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.deepEqual(scrollbars,{fit:true,ranges:true,visible:true,moved:true,reset:true,restored:true},'native scrollbars are visible and track zoom and pan in both directions');
   await command('Page.reload');
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));})()`);
-  for (const [width,height,visible,padding] of [[1600,766,true,87],[1600,765,false,87],[1400,906,true,135],[1400,905,false,135],[1401,905,true,87],[1280,800,false,135]]) {
+  for (const [width,height,visible,padding] of [[1600,766,true,87],[1600,765,true,87],[1400,906,true,135],[1400,905,true,135],[1401,905,true,87],[1280,800,true,135]]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
     const layout=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
       const box=selector=>document.querySelector(selector).getBoundingClientRect();
       const canvas=box('vc-score-canvas canvas'), horizontal=box('.horizontal-scroll'), vertical=box('.vertical-scroll'), ruler=box('.score-ruler-viewport');
       const h=document.querySelector('.horizontal-scroll'),v=document.querySelector('.vertical-scroll');
-      return {visible:getComputedStyle(document.querySelector('.role-display-controls')).display!=='none',padding:parseFloat(getComputedStyle(document.querySelector('.app-frame')).paddingBottom),
+      if(document.querySelectorAll('.score-role-controls button').length!==5 || [...document.querySelectorAll('.score-role-controls button')].some(b=>b.textContent.trim()))throw Error('Expected five dot-only role buttons');
+      if(parseFloat(getComputedStyle(document.querySelector('.score-panel')).paddingTop)!==3)throw Error('Expected compact score padding');
+      return {visible:getComputedStyle(document.querySelector('.score-role-controls')).display!=='none',padding:parseFloat(getComputedStyle(document.querySelector('.app-frame')).paddingBottom),
         horizontalGap:horizontal.bottom-canvas.bottom-(h.offsetHeight-h.clientHeight),verticalGap:vertical.right-canvas.right-(v.offsetWidth-v.clientWidth),rulerGap:ruler.right-canvas.right};
     })()`);
     assert.equal(layout.visible,visible,`role controls at ${width}x${height}`);
@@ -58,7 +60,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   }
   await command('Emulation.setDeviceMetricsOverride',{width:1600,height:1100,deviceScaleFactor:1,mobile:false});
   await evaluate(`(async()=>{${waitCode}document.querySelector('.track-group.arpeggio .track-select').click();await wait(()=>document.querySelector('#part-inspector').dataset.controlRole==='arpeggio');})()`);
-  const filters=await evaluate(`(async()=>{${waitCode}const b=[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.trim()==='Drums');const before=document.querySelector('vc-score-canvas canvas');b.click();await wait(()=>!document.querySelector('.drum-label'));const mix=[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.includes('Sync'));mix.click();await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='drums').mix.muted);return document.querySelector('vc-score-canvas canvas')===before;})()`);assert.equal(filters,true);
+  const filters=await evaluate(`(async()=>{${waitCode}const b=document.querySelector('.score-role-controls [aria-label="Drums"]');const before=document.querySelector('vc-score-canvas canvas');b.click();await wait(()=>!document.querySelector('.drum-label'));document.querySelector('[aria-label="Settings"]').click();await wait(()=>document.querySelector('vc-settings-dialog'));(await wait(()=>[...document.querySelectorAll('.settings-sidebar button')].find(b=>b.textContent.trim()==='Behavior'))).click();const mix=await wait(()=>document.querySelector('.behavior-setting input'));mix.click();document.querySelector('[aria-label="Close settings"]').click();await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='drums').mix.muted);return document.querySelector('vc-score-canvas canvas')===before;})()`);assert.equal(filters,true);
   const overviewViewport=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:-346.57,ctrlKey:true,clientX:c.left,clientY:c.top+10,bubbles:true,cancelable:true}));const content=document.querySelector('vc-score-canvas .horizontal-scroll > div');return content.style.width;})()`);
   const point=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
@@ -136,7 +138,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return {local,unchanged:JSON.stringify(read())===before};
   })()`);assert.deepEqual(smart,{local:true,unchanged:true});
   await command('Page.reload');
-  await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.score-display-header'));[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.trim()==='Drums').click();await wait(()=>!document.querySelector('.drum-label'));[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent.trim()==='Drums').click();await wait(()=>document.querySelector('.drum-label'));})()`);
+  await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.score-role-controls'));document.querySelector('.score-role-controls [aria-label="Drums"]').click();await wait(()=>!document.querySelector('.drum-label'));document.querySelector('.score-role-controls [aria-label="Drums"]').click();await wait(()=>document.querySelector('.drum-label'));})()`);
   const drumPoint=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim()==='Kick').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...drumPoint,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...drumPoint,button:'left',clickCount:1});
   await capture('unified-drums-unselected');

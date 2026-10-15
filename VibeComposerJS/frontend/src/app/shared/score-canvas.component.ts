@@ -63,6 +63,7 @@ interface ScoreCanvasModel {
 const VELOCITY_HEIGHT = 34;
 const HIT_BUCKET_WIDTH = 96;
 const MIN_TIME_GRID_SPACING = 8;
+const MAX_PITCH_ROW_HEIGHT = 50;
 const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; glow: string }>> = {
   melody: { note: '--role-melody-strong', velocity: '--role-melody-strong', glow: '--role-melody-glow' },
   bass: { note: '--role-bass-strong', velocity: '--role-bass-strong', glow: '--role-bass-glow' },
@@ -294,9 +295,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       if (this.harmonicHeight <= 0) return;
       const bounds = this.app.canvas.getBoundingClientRect();
       const cursorY = Math.min(this.harmonicHeight, Math.max(0, (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height)));
-      const anchor = (this.verticalOffset + cursorY) / (this.harmonicHeight * this.verticalScale);
-      this.verticalScale = Math.min(this.editable() ? 128 : 8, Math.max(1, this.verticalScale * Math.exp(-delta * 0.002)));
-      this.verticalOffset = anchor * this.harmonicHeight * this.verticalScale - cursorY;
+      const anchor = (this.verticalOffset + cursorY) / this.laneHeight;
+      this.verticalScale = Math.min(this.maxVerticalScale, Math.max(1, this.verticalScale * Math.exp(-delta * 0.002)));
+      this.verticalOffset = anchor * this.laneHeight - cursorY;
     } else if (event.shiftKey) {
       this.horizontalOffset += delta / (this.width * this.horizontalScale);
     } else {
@@ -327,8 +328,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private get scoreHeight(): number { return Math.max(1, this.height - (this.velocityVisible() ? VELOCITY_HEIGHT : 0)); }
-  private get contentHeight(): number { return Math.max(1, this.harmonicHeight) * this.verticalScale + this.drumHeight; }
-  private get laneHeight(): number { return Math.max(1, this.harmonicHeight) * this.verticalScale / (this.pitchMax - this.pitchMin + 1); }
+  private get maxVerticalScale(): number {
+    return Math.min(this.editable() ? 128 : 8,
+      Math.max(1, MAX_PITCH_ROW_HEIGHT * (this.pitchMax - this.pitchMin + 1) / Math.max(1, this.harmonicHeight)));
+  }
+  private get contentHeight(): number { return this.laneHeight * (this.pitchMax - this.pitchMin + 1) + this.drumHeight; }
+  private get laneHeight(): number {
+    return Math.min(MAX_PITCH_ROW_HEIGHT, Math.max(1, this.harmonicHeight) * this.verticalScale / (this.pitchMax - this.pitchMin + 1));
+  }
 
   onHorizontalScroll(): void {
     const offset = (this.horizontalScroll()?.nativeElement.scrollLeft ?? 0) / Math.max(1, this.width * this.horizontalScale);
@@ -668,17 +675,20 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.pitchMax = this.editable() ? 127 : phrasePitchMax;
     this.drumPitches = [...new Set([...visibleNotes.filter(note => note.color === 'drums').map(note => note.midi), ...tracks.filter(track => track.color === 'drums' && !hiddenTrackIds.has(track.id)).map(track => track.drumPitch ?? 36)])].sort((a, b) => b - a);
     const hasDrums = tracks.some(track => track.color === 'drums' && !(track.trackIds ?? [track.id]).every(id => hiddenTrackIds.has(id)));
-    const onlyDrums = tracks.length > 0 && tracks.every(track => track.color === 'drums');
-    this.drumHeight = hasDrums ? (onlyDrums ? scoreHeight : Math.min(scoreHeight * 0.27, Math.max(36, this.drumPitches.length * 14))) : 0;
+    this.drumHeight = hasDrums ? Math.min(scoreHeight * 0.27, Math.max(36, this.drumPitches.length * 14)) : 0;
     this.harmonicHeight = scoreHeight - this.drumHeight;
     if (this.pendingEditPitchFocus && this.notesReady()) {
       this.pendingEditPitchFocus = false;
       // Fit the phrase initially, but keep every MIDI pitch reachable by zooming and scrolling.
-      this.verticalScale = this.harmonicHeight > 0 ? 128 / (phrasePitchMax - phrasePitchMin + 1) : 1;
+      this.verticalScale = Math.min(this.maxVerticalScale,
+        this.harmonicHeight > 0 ? 128 / (phrasePitchMax - phrasePitchMin + 1) : 1);
       this.verticalOffset = (127 - phrasePitchMax) * this.laneHeight;
-    } else if (preservePitchPosition) {
-      // Layout changes resize pitch rows; retain the same top pitch rather than a pixel offset.
-      this.verticalOffset *= this.laneHeight / previousLaneHeight;
+    } else {
+      this.verticalScale = Math.min(this.maxVerticalScale, this.verticalScale);
+      if (preservePitchPosition) {
+        // Layout changes resize pitch rows; retain the same top pitch rather than a pixel offset.
+        this.verticalOffset *= this.laneHeight / previousLaneHeight;
+      }
     }
     this.updateViewport();
     const rows: { midi: number; label: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[] = [];

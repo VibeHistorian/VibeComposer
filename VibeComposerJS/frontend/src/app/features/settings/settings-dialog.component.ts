@@ -48,6 +48,7 @@ export class SettingsDialogComponent {
   }
   readonly categories = [
     { id: 'appearance', label: 'Appearance' },
+    { id: 'behavior', label: 'Behavior' },
     { id: 'section-types', label: 'Section Types' },
     { id: 'project-history', label: 'Project History' },
   ] as const;

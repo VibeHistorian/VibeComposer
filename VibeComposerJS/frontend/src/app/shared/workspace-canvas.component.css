@@ -71,12 +71,19 @@
 /* Arrangement and score canvas */
 .song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: auto auto minmax(270px, 1fr); gap: 12px; }
 .song-canvas.editing vc-edit-workspace { display: none; }
-.score-panel { padding: 13px 14px; overflow: hidden; }
+.score-panel { padding: 3px; overflow: hidden; }
 .score-panel { display: flex; flex-direction: column; }
 .score-scroll { min-width: 0; min-height: 0; flex: 1; display: flex; overflow: hidden; }
 .score-canvas { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; }
 .score-ruler { min-height: 20px; display: grid; grid-template-columns: 72px minmax(0, 1fr); color: var(--text-muted); font: 10px var(--font-mono); }
 .score-ruler-label { padding: 3px 5px; }
+/* Score role visibility */
+.score-role-controls { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.score-role-controls button { display: flex; align-items: center; justify-content: center; width: 14px; height: 20px; padding: 0; border: 0; border-radius: var(--radius-tight); background: transparent; cursor: pointer; }
+.score-role-controls button:not(.active) .role-dot { opacity: .25; }
+.score-role-controls button:hover { background: var(--surface-hover); }
+.score-role-controls button:focus-visible { outline: 1px solid var(--border-focus); outline-offset: -1px; }
+/* Score section ruler */
 button.score-track-label { width: 100%; border: 0; border-radius: 0; background: transparent; cursor: pointer; text-align: left; }
 button.score-track-label:hover { background: var(--surface-hover); }
 button.score-track-label:focus-visible { outline: 1px solid var(--border-focus); outline-offset: -1px; }
@@ -221,9 +228,4 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 }
 @media (max-width: 680px) {
   .song-canvas.settings-in-inspector { grid-template-rows: auto minmax(350px, 1fr); }
-}
-
-/* Prioritize the score over role visibility controls in shorter windows */
-@media (max-height: 765px), (max-width: 1400px) and (max-height: 905px) {
-  .score-display-header.role-display-controls { display: none; }
 }

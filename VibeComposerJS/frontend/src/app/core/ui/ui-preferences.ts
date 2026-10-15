@@ -14,6 +14,7 @@ export interface UiPreferences {
   readonly kind: 'vibecomposer-ui-preferences';
   readonly schemaVersion: number;
   readonly compactHistory: boolean;
+  readonly syncScoreMix: boolean;
   readonly quickSettings: QuickSettings;
   readonly appearance: AppearancePreferences;
 }
@@ -25,7 +26,7 @@ export function defaultQuickSettings(): QuickSettings {
 }
 
 export function defaultUiPreferences(): UiPreferences {
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, quickSettings: defaultQuickSettings(), appearance: defaultAppearance() };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, syncScoreMix: false, quickSettings: defaultQuickSettings(), appearance: defaultAppearance() };
 }
 
 /** Decode atomically, accepting only UI data and retaining the code's control order. */
@@ -35,6 +36,7 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
   if (data['kind'] !== 'vibecomposer-ui-preferences' || typeof data['compactHistory'] !== 'boolean'
       || !data['quickSettings'] || typeof data['quickSettings'] !== 'object' || Array.isArray(data['quickSettings'])) return null;
   const settings = data['quickSettings'] as Record<string, unknown>;
+  if (data['syncScoreMix'] !== undefined && typeof data['syncScoreMix'] !== 'boolean') return null;
   const appearance = data['appearance'] === undefined ? defaultAppearance() : decodeAppearance(data['appearance']);
   if (!appearance) return null;
   const quickSettings = { ...defaultQuickSettings() };
@@ -43,5 +45,5 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
     quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key).some(key => keys.includes(key))).map(control => control.key);
   }
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], quickSettings, appearance };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, quickSettings, appearance };
 }
