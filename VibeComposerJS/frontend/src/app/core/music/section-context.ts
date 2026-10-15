@@ -1,6 +1,6 @@
 import { isScaleMode } from './scales';
 import type { ArrangementSection, CompositionProject, PhraseNote, SectionMusicalContext } from '../project/project.model';
-import { KEYS, validProgressionChords } from './harmony';
+import { chordPitches, KEYS, progressionChords, validProgressionChords } from './harmony';
 
 export function validSectionContext(value: unknown): value is SectionMusicalContext {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -32,6 +32,23 @@ export function sectionValuesEqual(left: unknown, right: unknown): boolean {
 export function sectionDegrees(project: CompositionProject, section: ArrangementSection): readonly number[] {
   return section.chordDegrees ?? (section.customChords
     ? section.customChords.map((_, index) => project.progression[index % project.progression.length]) : project.progression);
+}
+
+/** Compare musical chords, rather than the presence of stored section overrides.
+ * Resolve primary harmony in the same section key/scale; timing stays independent.
+ * Keep matching explicit values stored so later primary edits preserve ownership. */
+export function sectionHasChordOverride(project: CompositionProject, section: ArrangementSection): boolean {
+  if (!section.chordDegrees && !section.customChords) return false;
+  const contextual = sectionProject(project, section);
+  const resolve = (degrees: readonly number[], custom: CompositionProject['progressionChords']) => {
+    const expanded = section.customDurations ? section.customDurations.map((_, index) => degrees[index % degrees.length]) : degrees;
+    const chords = custom && custom.length !== expanded.length ? expanded.map((_, index) => custom[index % custom.length]) : custom;
+    return progressionChords(contextual.key, contextual.scale, expanded, chords);
+  };
+  const primary = resolve(project.progression, project.progressionChords);
+  const local = resolve(sectionDegrees(project, section), section.customChords ?? (section.chordDegrees ? undefined : project.progressionChords));
+  return local.length !== primary.length || local.some((chord, index) => chord.root !== primary[index].root
+    || chord.inversion !== primary[index].inversion || !sectionValuesEqual(chordPitches(chord, 60), chordPitches(primary[index], 60)));
 }
 
 export function validSectionHarmony(section: ArrangementSection): boolean {

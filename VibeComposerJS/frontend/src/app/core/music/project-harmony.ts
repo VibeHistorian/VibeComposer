@@ -1,7 +1,7 @@
 import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack } from '../project/project.model';
 import { flattenProgression, soundingHarmony, voicedSoundingChords, type GenerationHarmony } from './harmony-voicing';
 import { chordPitches, getPitchClass, progressionChords } from './harmony';
-import { sectionChordDurations, sectionDegrees, sectionProject } from './section-context';
+import { sectionChordDurations, sectionDegrees, sectionHasChordOverride, sectionProject } from './section-context';
 import { melodyRepairChords, melodyRootChords } from './melody-chord-targets';
 import { generateMelody } from './melody-generator';
 import { inferMelodyChordDegrees, type MelodySkeleton } from './melody-chord-inference';
@@ -99,7 +99,7 @@ export function projectMelodyHarmony(project: CompositionProject): MelodyHarmony
 
 export function sectionGenerationHarmony(project: CompositionProject, section: ArrangementSection, role: ArrangedPart): ResolvedHarmony {
   const base = baseGenerationHarmony(project, section);
-  if (section.chordDegrees || section.customChords || section.context?.keyChangeType === 'two-five-one'
+  if (sectionHasChordOverride(project, section) || section.context?.keyChangeType === 'two-five-one'
     || !(section.useMelodyHarmony || role === 'melody' && section.swapMelody)) return base;
   const inference = projectMelodyHarmony(project);
   if (!inference.available) return base;

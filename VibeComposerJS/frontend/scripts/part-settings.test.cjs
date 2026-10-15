@@ -455,6 +455,64 @@ test('P5e inference keeps base source ownership and explicit section harmony ahe
   }
 });
 
+test('matching explicit section chords share primary harmony checks in both editors and generation', () => {
+  const { service, load } = fixture();
+  const { sectionHasChordOverride } = load('core/music/section-context.ts');
+  const { progressionChords } = load('core/music/harmony.ts');
+  const { sectionGenerationHarmony } = load('core/music/project-harmony.ts');
+  const harmonyEditor = new (load('shared/harmony-settings.component.ts').HarmonySettingsComponent)();
+  const contextEditor = new (load('shared/section-context-editor.component.ts').SectionContextEditorComponent)();
+  service.setProgression([1,5,6,4]);
+  const id = service.project().arrangement[0].id;
+  const section = () => service.project().arrangement[0];
+  const check = expected => {
+    harmonyEditor.section.set(section()); contextEditor.section.set(section());
+    assert.equal(sectionHasChordOverride(service.project(), section()), expected);
+    assert.equal(harmonyEditor.hasChordOverride(), expected);
+    assert.equal(contextEditor.hasChordOverride(), expected);
+  };
+  check(false);
+  service.setSectionMusicalState(id, { chordDegrees: [1,5,6,4] }); check(false);
+  const project = service.project(), chords = progressionChords(project.key, project.scale, project.progression);
+  service.setSectionMusicalState(id, { customChords: chords }); check(false);
+  service.updateSectionHarmony(id, { useMelodyHarmony: true, swapMelody: true });
+  assert.equal(sectionGenerationHarmony(service.project(), section(), 'melody').inferred, true);
+  assert.equal(sectionGenerationHarmony(service.project(), section(), 'melody').melodySeedOffset, 100);
+  assert.equal(sectionGenerationHarmony(service.project(), section(), 'bass').inferred, true);
+  const saved = service.exportProjectJson();
+  for (const changed of [{ ...chords[0], inversion: 1 }, { ...chords[0], spice: '7' }, { ...chords[0], root: (chords[0].root + 1) % 12 }]) {
+    service.setSectionChord(id, 0, changed); check(true);
+    assert.equal(sectionGenerationHarmony(service.project(), section(), 'melody').inferred, false);
+    service.setSectionChord(id, 0, chords[0]); check(false);
+  }
+  assert.equal(service.importProjectJson(saved), true); check(false);
+  assert.deepEqual(section().customChords, chords, 'matching explicit choices remain stored');
+  service.setProgression([1,2,6,4]); check(true);
+  service.undo(); check(false);
+  service.setSectionMusicalState(id, { context: { keyChangeType: 'two-five-one' } });
+  assert.equal(sectionGenerationHarmony(service.project(), section(), 'melody').inferred, false);
+});
+
+test('section chord comparison resolves custom primary chords, modes and duration-only repetition', () => {
+  const { service, load } = fixture();
+  const { sectionHasChordOverride } = load('core/music/section-context.ts');
+  const { progressionChords } = load('core/music/harmony.ts');
+  const project = { ...service.project(), key: 'D', scale: 'dorian', progression: [1,4,5] };
+  const section = { ...project.arrangement[0], chordDegrees: [1,4,5], customChords: undefined };
+  assert.equal(sectionHasChordOverride(project, section), false);
+  const contextual = { ...section, context: { key: 'F', scale: 'natural-minor' } };
+  assert.equal(sectionHasChordOverride(project, contextual), false);
+  const customChords = progressionChords('F', 'natural-minor', project.progression);
+  assert.equal(sectionHasChordOverride(project, { ...contextual, customChords }), false);
+  assert.equal(sectionHasChordOverride(project, { ...contextual, customChords, customDurations: [2,4,8] }), false);
+  assert.equal(sectionHasChordOverride(project, { ...section, customDurations: [2,4,8,2,4,8] }), false);
+  assert.equal(sectionHasChordOverride(project, { ...section, chordDegrees: [1,4] }), true);
+  const primary = { ...project, progressionChords: [{ root: 2, spice: '7', inversion: 1 }, null, null] };
+  assert.equal(sectionHasChordOverride(primary, section), true, 'explicit degrees replace custom primary chords');
+  assert.equal(sectionHasChordOverride(primary, { ...section, customChords: primary.progressionChords }), false);
+  assert.equal(sectionHasChordOverride(primary, { ...section, chordDegrees: undefined, customChords: primary.progressionChords }), false);
+});
+
 test('P5e harmony commands validate atomically without losing redo and flattening preserves root/manual ownership', () => {
   const { service, load, phrase } = fixture();
   const { baseGenerationHarmony } = load('core/music/project-harmony.ts');
@@ -3472,7 +3530,7 @@ function fixture({ compactHistory = false } = {}) {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts', 'harmony-settings.component.ts', 'section-context-editor.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };

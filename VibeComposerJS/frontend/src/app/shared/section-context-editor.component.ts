@@ -3,7 +3,7 @@ import type { ArrangementSection, SectionMusicalContext } from '../core/project/
 import { ProjectService } from '../core/project/project.service';
 import { KEYS } from '../core/music/harmony';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../core/music/scales';
-import { sectionChordDurations, sectionDurationBeats } from '../core/music/section-context';
+import { sectionChordDurations, sectionDurationBeats, sectionHasChordOverride } from '../core/music/section-context';
 import { ChordletEditorComponent } from './chordlet-editor.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 
@@ -18,6 +18,7 @@ export class SectionContextEditorComponent {
   readonly projects = inject(ProjectService);
   readonly section = input.required<ArrangementSection>();
   readonly keys = KEYS;
+  readonly hasChordOverride = computed(() => sectionHasChordOverride(this.projects.project(), this.section()));
   readonly duration = computed(() => sectionDurationBeats(this.projects.project(), this.section()));
   readonly durations = computed(() => this.section().customDurations
     ?? sectionChordDurations(this.projects.project(), this.section()).map(value => value / (this.section().context?.beatDurationMultiplier ?? 1)));

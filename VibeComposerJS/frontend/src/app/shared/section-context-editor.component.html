@@ -1,7 +1,7 @@
 <fieldset data-control-category="pitch">
   <legend>Section chords</legend>
   <vc-chordlet-editor [section]="section()" />
-  @if (section().customChords || section().chordDegrees) {
+  @if (hasChordOverride()) {
     <button type="button" (click)="clearHarmony()">Use primary chords</button>
   }
 </fieldset>
