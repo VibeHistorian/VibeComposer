@@ -32,7 +32,8 @@ async function render(html, displayScale) {
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   // Run in real time: virtual-time dump-dom can finish before animation frames
   // and ResizeObserver callbacks run, giving false confidence about resize loops.
-  const child = spawn(browser, ['--headless', '--disable-gpu', '--no-first-run',
+  // Keep the CSS viewport above 700px throughout the display-scale matrix.
+  const child = spawn(browser, ['--headless', '--window-size=1920,1200', '--disable-gpu', '--no-first-run',
     '--disable-background-networking', '--disable-component-update', '--disable-sync',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
     '--force-device-scale-factor=' + displayScale, '--no-default-browser-check',

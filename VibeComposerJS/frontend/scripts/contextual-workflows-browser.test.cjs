@@ -67,8 +67,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       result.transposeKey = transpose.type === 'range' && !transpose.closest('vc-compact-knob').querySelector('.knob-caption'); change(transpose, '0');
       if (innerWidth > 1050) {
         const dock = document.querySelector('.transport-dock').getBoundingClientRect();
-        const reserve = parseFloat(getComputedStyle(document.querySelector('.app-frame')).paddingBottom);
-        if (reserve <= 0 || dock.top < innerHeight - reserve || dock.bottom > innerHeight) throw new Error('transport dock reserve');
+        const score = document.querySelector('.score-panel').getBoundingClientRect();
+        if (score.bottom > dock.top || dock.bottom > innerHeight) throw new Error('transport dock overlaps the score or extends outside the viewport');
       }
       const tempo = document.querySelector('.transport-dock [aria-label="Tempo in beats per minute"]');
       change(tempo, '149'); await wait(() => read().tempoBpm === 149, 'tempo knob');
