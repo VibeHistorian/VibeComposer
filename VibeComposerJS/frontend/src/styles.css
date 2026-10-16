@@ -49,6 +49,10 @@
   --surface-danger: #323345;
   --surface-glass: #0b1e30f5;
 
+  /* Theme background gradients */
+  --background-page: linear-gradient(to bottom, var(--surface-canvas), color-mix(in srgb, var(--surface-canvas), white 5%));
+  --background-role-group: linear-gradient(to bottom, var(--surface-role-group), color-mix(in srgb, var(--surface-role-group), black 35%));
+
   /* Mixer status, distinct from role colors */
   --mix-mute-active: #ffff32;
   --mix-solo-active: #91ff28;
@@ -175,6 +179,11 @@
   --line: var(--border-subtle);
 }
 
+/* Inspector gradient resolves the selected role in its local scope. */
+:root, [data-control-role] {
+  --background-inspector: linear-gradient(to bottom, color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 12%), var(--surface-inspector));
+}
+
 /* Contextual role accents */
 [data-control-role="melody"] { --control-role-color: var(--role-melody); }
 [data-control-role="bass"] { --control-role-color: var(--role-bass); }
@@ -223,9 +232,7 @@ body {
   min-width: 360px;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(ellipse at 50% 5%, var(--ambient-glow), transparent 43%),
-    var(--surface-canvas);
+  background: var(--surface-canvas) var(--background-page);
 }
 
 :where(button, a, input, select) { font: inherit; }
