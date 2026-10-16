@@ -7,7 +7,8 @@ const test = require('node:test');
 const browser = process.env.OVERVIEW_TEST_BROWSER || ['C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium'].find(file => fs.existsSync(file));
 
-for (const width of [1440, 390]) test(`quick-settings placement and UI preference transfer at ${width}px`, { skip: !browser }, async () => {
+// Stay tall enough to exercise the quick-settings panel rather than its inspector layout.
+for (const width of [1440, 780]) test(`quick-settings placement and UI preference transfer at ${width}px`, { skip: !browser }, async () => {
   const root = path.resolve(__dirname, '../dist/browser');
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const script = `<script>(async () => {
@@ -201,7 +202,7 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
   });
   await new Promise(done => server.listen(0, '127.0.0.1', done));
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/ui-preferences-browser-'));
-  const child = spawn(browser, ['--headless', '--remote-debugging-port=0', '--window-size='+width+',1000', '--disable-gpu', '--no-first-run', '--disable-background-networking',
+  const child = spawn(browser, ['--headless', '--remote-debugging-port=0', '--window-size='+width+',1100', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
     '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
   let errors = '';
@@ -233,7 +234,7 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         socket.removeEventListener('message', listener); message.error ? fail(new Error(JSON.stringify(message.error))) : done(message.result); };
       socket.addEventListener('message', listener); socket.send(JSON.stringify({ id, method, params }));
     });
-    await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await command('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.ok, true);

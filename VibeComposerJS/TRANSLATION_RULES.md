@@ -4,6 +4,8 @@ These rules guide the translation of VibeComposer's generation functionality int
 
 0. **The Angular translation project is in a buildout stage** - it's OK for there to be breaking changes, and it's OK to remove or replace existing TS/html/css if it doesn't align with the overall goals.
 
+   Target desktop and landscape layouts at viewport widths of at least 700 CSS pixels. Portrait mobile compatibility is out of scope; do not add requirements or browser viewport tests below 700px. Keep responsive behavior and input coverage within the supported range.
+
 1. **Do not port the older legacy melody algorithm (LegacyMelodySkeletonGenerator) or its controls (only the newer block-based melody generation should be ported).** Treat the legacy melody algorithm and its associated settings as out of scope for the rewrite.
 
 2. **Match Java's seeded random behavior.** → Use the project's `java-random.ts`.

@@ -4,6 +4,8 @@ Completed implementation narratives and detailed provenance moved here on 2026-1
 
 Use the [active plan](../CONTEXTUAL_CONTROLS_PLAN.md), [remaining control inventory](../CONTROL_PLACEMENT_MAP.md), [workspace contracts](../DAW_REDESIGN_PLAN.md) and [translation rules](../TRANSLATION_RULES.md) for current work. Read individual records only when their detailed implementation evidence is needed.
 
+Historical references to mobile layouts and 390px browser checks record past work, not current requirements. Current UI scope is desktop and landscape layouts at viewport widths of at least 700 CSS pixels; portrait mobile compatibility is out of scope.
+
 | Record | Contents |
 | --- | --- |
 | [Contextual controls](contextual-controls-record.md) | Delivered UI/generator checkpoints: P1–P4 foundations, P5a–P5d, P5e target/tonal/avoid-note work, P6a–P6f, P7a/P7b, validation evidence and original scope revisions. |

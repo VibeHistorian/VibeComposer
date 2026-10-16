@@ -18,6 +18,6 @@ Place reusable presentation components and UI helpers here when multiple feature
 - Clicking a score note zooms its phrase in the same score renderer while arrangement and part settings remain mounted. The header provides Apply, Local Apply and Cancel, and the existing inspector shows note properties. Harmonic and drum notes share move/resize interactions. Apply or middle-clicking empty space saves the global track phrase; Local Apply saves a section-relative track phrase and preserves material outside the edited phrase. Both commit once and return to the previous score viewport; Cancel discards the draft.
 - Keep common controls directly available and group detailed settings under clear labels. Preserve the density of piano rolls and drum grids.
 - Use stable role colors for tracks and arrangement blocks, with neutral surfaces for other controls. Reuse the shared theme tokens.
-- At narrower widths, let the track browser or inspector scroll and collapse while keeping a clear path to the song canvas and transport.
+- Support desktop and landscape layouts at viewport widths of at least 700 CSS pixels. At smaller supported widths, let the track browser or inspector scroll and collapse while keeping a clear path to the song canvas and transport. Portrait mobile compatibility and browser viewport tests below 700px are out of scope.
 
 Shared components define consistent appearance and interaction. They should not absorb music-domain rules that belong to a feature.

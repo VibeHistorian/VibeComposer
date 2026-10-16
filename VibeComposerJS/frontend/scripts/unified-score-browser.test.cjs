@@ -150,27 +150,27 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   const empty=await evaluate(`(()=>{const c=document.querySelector('vc-score-canvas canvas').getBoundingClientRect();return {x:c.left+c.width*.7,y:c.top+20};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...empty,button:'middle',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...empty,button:'middle',clickCount:1});
   const globalDrum=await evaluate(`(async()=>{${waitCode}return await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.tracks.filter(t=>t.role==='drums').every(t=>t.editedPhrase[0].velocity===101);});})()`);assert.equal(globalDrum,true);
-  for (const width of [780,390]) {
+  for (const width of [1024,780]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
     const layout=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const score=document.querySelector('vc-score-canvas canvas');score.scrollIntoView({block:'center'});const box=score.getBoundingClientRect();return {width:box.width,height:box.height,fits:document.documentElement.scrollWidth<=innerWidth+1};})()`);
     assert.ok(layout.width>0 && layout.height>0);assert.equal(layout.fits,true,'workspace fits at '+width+'px');
     await capture('unified-score-'+width);
   }
-  // Real touch input must zoom the editor without creating or committing notes.
-  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
+  // Preserve touch zoom coverage on a supported landscape viewport.
+  await command('Emulation.setDeviceMetricsOverride',{width:1024,height:768,deviceScaleFactor:2,mobile:false});
   await command('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:2});
   await evaluate(`(async()=>{${waitCode}[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')).click();await wait(()=>document.querySelector('#phrase-grid'));})()`);
-  const mobile=await evaluate(`(async()=>{await new Promise(r=>setTimeout(r,400));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(r));const c=canvas.getBoundingClientRect();return {x:c.left+c.width/2,y:c.top+c.height/2,height:c.height,width:c.width,range:parseFloat(document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width),project:sessionStorage.getItem('vibecomposer.project.v12'),notes:document.querySelector('.inspector-copy').textContent};})()`);
-  assert.ok(mobile.height>100 && mobile.height<=640,'mobile canvas height is bounded');
-  const touch=async(type,distance)=>command('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'?[]:[{id:1,x:mobile.x-distance/2,y:mobile.y},{id:2,x:mobile.x+distance/2,y:mobile.y}]});
+  const touchCanvas=await evaluate(`(async()=>{await new Promise(r=>setTimeout(r,400));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(r));const c=canvas.getBoundingClientRect();return {x:c.left+c.width/2,y:c.top+c.height/2,height:c.height,width:c.width,range:parseFloat(document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width),project:sessionStorage.getItem('vibecomposer.project.v12'),notes:document.querySelector('.inspector-copy').textContent};})()`);
+  assert.ok(touchCanvas.height>100 && touchCanvas.height<=640,'landscape canvas height is bounded');
+  const touch=async(type,distance)=>command('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'?[]:[{id:1,x:touchCanvas.x-distance/2,y:touchCanvas.y},{id:2,x:touchCanvas.x+distance/2,y:touchCanvas.y}]});
   await touch('touchStart',40);await touch('touchMove',80);await touch('touchMove',120);await touch('touchEnd',0);
   const zoomed=await evaluate(`({range:parseFloat(document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width),height:document.querySelector('vc-score-canvas canvas').getBoundingClientRect().height})`);
-  assert.ok(zoomed.range>mobile.range*1.5,'pinch apart zooms into the phrase');
+  assert.ok(zoomed.range>touchCanvas.range*1.5,'pinch apart zooms into the phrase');
   await touch('touchStart',120);await touch('touchMove',80);await touch('touchMove',40);await touch('touchEnd',0);
   const zoomOut=await evaluate(`({range:parseFloat(document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width),height:document.querySelector('vc-score-canvas canvas').getBoundingClientRect().height,project:sessionStorage.getItem('vibecomposer.project.v12'),notes:document.querySelector('.inspector-copy').textContent})`);
   assert.ok(zoomOut.range<zoomed.range*.75,'pinch together zooms out');
-  assert.ok(Math.abs(zoomOut.height-mobile.height)<=1,'canvas does not grow during rendering');
-  assert.equal(zoomOut.project,mobile.project,'pinching does not commit note edits');
-  assert.equal(zoomOut.notes,mobile.notes,'pinching does not add notes');
+  assert.ok(Math.abs(zoomOut.height-touchCanvas.height)<=1,'canvas does not grow during rendering');
+  assert.equal(zoomOut.project,touchCanvas.project,'pinching does not commit note edits');
+  assert.equal(zoomOut.notes,touchCanvas.notes,'pinching does not add notes');
  } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
 });

@@ -9,7 +9,7 @@ const browser = process.env.OVERVIEW_TEST_BROWSER || [
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium',
 ].find(file => fs.existsSync(file));
 
-for (const width of [1440, 780, 390]) test(`production contextual workflows with 30 tracks at ${width}px`, {
+for (const width of [1440, 780]) test(`production contextual workflows with 30 tracks at ${width}px`, {
   skip: browser ? false : 'Chromium unavailable',
 }, async () => {
   const root = path.resolve(__dirname, '../dist/browser');
@@ -67,7 +67,8 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
       result.transposeKey = transpose.type === 'range' && !transpose.closest('vc-compact-knob').querySelector('.knob-caption'); change(transpose, '0');
       if (innerWidth > 1050) {
         const dock = document.querySelector('.transport-dock').getBoundingClientRect();
-        if (getComputedStyle(document.querySelector('.app-frame')).paddingBottom !== '92px' || dock.top < innerHeight - 92) throw new Error('transport dock reserve');
+        const reserve = parseFloat(getComputedStyle(document.querySelector('.app-frame')).paddingBottom);
+        if (reserve <= 0 || dock.top < innerHeight - reserve || dock.bottom > innerHeight) throw new Error('transport dock reserve');
       }
       const tempo = document.querySelector('.transport-dock [aria-label="Tempo in beats per minute"]');
       change(tempo, '149'); await wait(() => read().tempoBpm === 149, 'tempo knob');
@@ -476,7 +477,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/contextual-browser-'));
   const child = spawn(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
-    '--remote-debugging-port=0', '--window-size=' + width + ',1000', '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
+    '--remote-debugging-port=0', '--window-size=' + width + ',1100', '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
   let errors = ''; child.stderr.on('data', chunk => errors = (errors + chunk).slice(-1000));
   child.on('error', reject); child.on('exit', code => reject(new Error('Chromium exited ' + code + ': ' + errors)));
   const timer = setTimeout(() => reject(new Error('Browser timed out: ' + errors)), 45000);
@@ -504,7 +505,7 @@ for (const width of [1440, 780, 390]) test(`production contextual workflows with
         socket.removeEventListener('message', listener); message.error ? fail(new Error(JSON.stringify(message.error))) : done(message.result); };
       socket.addEventListener('message', listener); socket.send(JSON.stringify({ id, method, params }));
     });
-    await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await command('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     // Exercise an actual right-button contextmenu, not just the synthetic workflow events.

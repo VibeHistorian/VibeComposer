@@ -10,7 +10,7 @@ const browser = process.env.OVERVIEW_TEST_BROWSER || [
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium',
 ].find(file => fs.existsSync(file));
 
-for (const width of [1440, 390]) test(`production export menu and offline Opus download at ${width}px`, { skip: !browser }, async () => {
+for (const width of [1440, 780]) test(`production export menu and offline Opus download at ${width}px`, { skip: !browser }, async () => {
   const root = path.resolve(__dirname, '../dist/browser');
   const trackId = 'track-bass-1';
   const presence = Object.fromEntries(DEFAULT_PROJECT.tracks.map(track => [track.id, true]));

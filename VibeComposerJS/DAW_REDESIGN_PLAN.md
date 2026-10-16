@@ -9,7 +9,7 @@ The initial workspace redesign is delivered. Its original sequence and completio
 - Section headers select section ranges; cell and track selection set an independent settings target. Left-click selects, middle-click on arrangement track buttons toggles presence. Preserve keyboard/device alternatives, mixed values and scope breadcrumbs.
 - Keep harmony Chordlets in transport alongside global key, transpose, tempo, mode, exact seed and playback. Keep the current theme, role colors and the canvas as the visual anchor.
 - Selecting notes or Edit notes opens the relevant in-canvas piano roll/drum grid, including empty tracks. Apply commits one coherent edit and returns to arrangement; Cancel discards the draft. Mixer controls open from an icon as a popup over the workspace.
-- Side panels may collapse on narrow windows but must remain recoverable; preserve the central canvas, useful note density, ruler, section boundaries and playhead.
+- Target desktop and landscape layouts at widths of at least 700 CSS pixels; portrait mobile compatibility and viewport tests below 700px are out of scope. Side panels may collapse on smaller supported windows but must remain recoverable; preserve the central canvas, useful note density, ruler, section boundaries and playhead.
 
 ## State and implementation
 
