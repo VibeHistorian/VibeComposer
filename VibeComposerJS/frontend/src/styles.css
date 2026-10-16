@@ -34,7 +34,7 @@
   --surface-input: #0a1827;
   --surface-base: #0b1e30;
   --surface-low: #142a3e;
-  --surface-inspector: #061f32;
+  --surface-inspector: #0b1e30;
   --surface-role-group: #112d45;
   --surface-role-group-selected: #0c1f30;
   --surface-card: #1c354b;
@@ -182,7 +182,11 @@
 
 /* Inspector gradient resolves the selected role in its local scope. */
 :root, [data-control-role] {
-  --background-inspector: linear-gradient(to bottom, color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 12%), var(--surface-inspector));
+  --background-inspector: linear-gradient(120deg,
+    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 40%) 0%,
+    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 10%) 10%,
+    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 5%) 20%,
+    var(--surface-inspector) 30%);
 }
 
 /* Contextual role accents */
