@@ -34,6 +34,8 @@ export class CompactKnobComponent {
   readonly valuePreview = output<number>();
   readonly preview = signal<number | null>(null);
   readonly shownValue = computed(() => this.normalize(this.preview() ?? this.value()));
+  readonly atDefault = computed(() => (!this.mixed() || this.preview() !== null)
+    && this.shownValue() === this.normalize(this.defaultValue()));
   readonly formattedValue = computed(() => this.valueFormat() === 'pan' ? panLabel(this.shownValue())
     : this.valueFormat() === 'decibels' ? volumeDecibels(this.shownValue()) : this.shownValue() + this.unit());
   readonly accessibleValue = computed(() => this.formattedValue() + (this.valueFormat() === 'decibels' ? ' dB' : ''));

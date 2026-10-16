@@ -25,6 +25,7 @@
 .mini .mix-face { border-color: var(--knob-accent); }
 .mini .mix-face > span { color: var(--knob-accent); }
 .mini .knob-value { font: 10px var(--font-ui); white-space: nowrap; }
+.mini.at-default .knob-face, .mini.at-default .knob-value { filter: brightness(var(--knob-default-brightness)); }
 
 /* Named generation mini knobs */
 .named-mini { width: 48px; }

@@ -27,6 +27,7 @@
   --text-field-height: 24px;
   --text-field-padding-inline: 5px;
   --text-field-font-size: 10px;
+  --knob-default-brightness: .75;
 
   /* Main theme defaults derived by core/ui/theme.ts; preferences apply the same palette. */
   --surface-canvas: #020812;
