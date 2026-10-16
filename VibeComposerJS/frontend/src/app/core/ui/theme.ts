@@ -11,8 +11,9 @@ export type ThemeColor = typeof THEME_COLORS[number]['key'];
 export type ThemeColors = Readonly<Record<ThemeColor, string>>;
 
 export const DEFAULT_THEME_COLORS: ThemeColors = {
-  background: '#020812', surface: '#0b1e30', text: '#f2f7ff', border: '#3b607d', accent: '#32d7f4',
+  background: '#020812', surface: '#0b1e30',
   inspector: '#0b1e30', roleGroups: '#142a3e',
+  text: '#f2f7ff', border: '#3b607d', accent: '#32d7f4',
 };
 
 /** Derive concrete colors so CSS, Canvas and Pixi share the same palette. */

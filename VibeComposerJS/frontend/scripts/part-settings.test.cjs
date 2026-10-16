@@ -3511,6 +3511,9 @@ test('failed project loads warn with property paths and preserve the current pro
 
 function fixture({ compactHistory = false } = {}) {
   const cache = new Map();
+  const effects = [];
+  // Tests that exercise effect-driven behavior flush callbacks after changing state.
+  const flushEffects = () => { for (const callback of effects) callback(); };
   const signal = (value) => {
     const read = () => value;
     read.set = (next) => { value = next; };
@@ -3523,7 +3526,7 @@ function fixture({ compactHistory = false } = {}) {
   let service, ui, uiPreferences;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
-    signal, computed: (read) => read, effect: () => {}, input,
+    signal, computed: (read) => read, effect: callback => { effects.push(callback); }, untracked: read => read(), input,
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
@@ -3569,7 +3572,7 @@ function fixture({ compactHistory = false } = {}) {
   const phrase = load('core/music/phrase.ts');
   const settings = load('core/music/part-settings.ts');
   const midi = load('core/music/midi-export.ts');
-  return { service, ui, workspace, phrase, settings, midi, stored, load, uiPreferences, uiStored };
+  return { service, ui, workspace, phrase, settings, midi, stored, load, uiPreferences, uiStored, flushEffects };
 }
 
 test('cell patches, individual exceptions, zero/false, and resets preserve inheritance', () => {
@@ -5287,15 +5290,26 @@ test('contextual Local Apply preserves other phrase cycles and leaves the global
 });
 
 test('display filters synchronize audible tracks atomically when enabled', () => {
-  const { service, workspace } = fixture();
+  const { service, workspace, uiPreferences, flushEffects } = fixture();
   workspace.toggleScoreRole('drums');
   assert.ok(workspace.scoreTracks().every(track => track.role !== 'drums'));
   assert.ok(service.project().tracks.every(track => !track.mix.muted));
-  workspace.toggleScoreMixSync();
+  uiPreferences.toggleScoreMixSync();
+  flushEffects();
   assert.ok(service.project().tracks.every(track => track.mix.muted === (track.role === 'drums') && !track.mix.solo));
   assert.equal(service.canUndo(), false, 'audition sync is excluded from history');
   workspace.toggleScoreRole('bass');
   assert.ok(service.project().tracks.filter(track => ['drums','bass'].includes(track.role)).every(track => track.mix.muted));
+  uiPreferences.toggleScoreMixSync();
+  flushEffects();
+  const before = service.exportProjectJson();
+  workspace.toggleScoreRole('drums');
+  flushEffects();
+  assert.equal(service.exportProjectJson(), before, 'display changes preserve the mix when sync is disabled');
+  uiPreferences.toggleScoreMixSync();
+  flushEffects();
+  assert.ok(service.project().tracks.every(track => track.mix.muted === (track.role === 'bass') && !track.mix.solo));
+  assert.equal(service.canUndo(), false, 're-enabling sync is excluded from history');
 });
 
 
