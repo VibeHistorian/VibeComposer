@@ -20,9 +20,33 @@ export interface UiPreferences {
 }
 
 export function defaultQuickSettings(): QuickSettings {
-  return Object.fromEntries(ARRANGED_PARTS.map(role => [role,
-    PART_CONTROLS[role].filter(control => !control.advanced).map(control => control.key),
-  ])) as unknown as QuickSettings;
+  return {
+    melody: [
+      'chordSpanFill', 'fillFlip', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
+      'patternFlexible', 'pauseChance', 'swingPercent', 'transpose', 'velocityMin', 'velocityMax',
+      'feedbackCount', 'feedbackDuration',
+    ],
+    bass: [
+      'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'euclideanPulses', 'patternShift',
+      'patternFlip', 'customPattern', 'chordSpan', 'noteVariation', 'octaveInterval', 'transpose',
+      'velocityMin', 'velocityMax', 'noteLengthMultiplier',
+    ],
+    chords: [
+      'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
+      'customPattern', 'chordSpan', 'chordNotesStretch', 'stretchEnabled', 'strum', 'strumType',
+      'strumPauseChance', 'voicing', 'noteLengthPercent', 'transpose',
+    ],
+    arpeggio: [
+      'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'patternFlip', 'customPattern',
+      'chordSpan', 'patternRepeat', 'pauseChance', 'chordNotesStretch', 'stretchEnabled', 'pattern',
+      'arpPatternRotate', 'transpose',
+    ],
+    drums: [
+      'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'euclideanPulses', 'patternShift',
+      'patternFlip', 'customPattern', 'velocityMin', 'velocityMax', 'chordSpan', 'pauseChance',
+      'swingPercent', 'ghosts',
+    ],
+  };
 }
 
 export function defaultUiPreferences(): UiPreferences {

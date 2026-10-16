@@ -5579,7 +5579,7 @@ test('appearance preferences persist, transfer atomically and derive every role 
 });
 
 test('UI preferences customize per-role placement without changing project, history, or fixed order', () => {
-  const { service, uiPreferences: preferences, uiStored, load, settings } = fixture();
+  const { service, uiPreferences: preferences, uiStored, load } = fixture();
   const before = service.exportProjectJson(), position = service.historyPosition();
   const defaults = preferences.exportJson();
   preferences.beginQuickSettings();
@@ -5610,8 +5610,8 @@ test('UI preferences customize per-role placement without changing project, hist
   preferences.moveControl('bass', 'velocityMin');
   preferences.moveControl('chords', 'velocityMax');
   preferences.resetQuickSettings('bass');
-  assert.deepEqual(preferences.quickSettings().bass, settings.PART_CONTROLS.bass.filter(control => !control.advanced).map(control => control.key));
-  assert.equal(preferences.quickSettings().chords.includes('velocityMax'), false);
+  assert.deepEqual(preferences.quickSettings().bass, JSON.parse(defaults).quickSettings.bass);
+  assert.equal(preferences.quickSettings().chords.includes('velocityMax'), true);
 });
 
 test('combined selectors move together and reset both local values in one undo step', () => {

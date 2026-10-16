@@ -28,7 +28,7 @@ export function defaultAppearance(): AppearancePreferences {
   return {
     themeColors: { ...DEFAULT_THEME_COLORS },
     fonts: { ui: FONT_CHOICES[0].value, heading: FONT_CHOICES[0].value, mono: FONT_CHOICES[1].value },
-    roleColors: { melody: '#f26772', bass: '#22a7f2', chords: '#45df89', arpeggio: '#ed55bf', drums: '#f2bb38' },
+    roleColors: { melody: '#d44040', bass: '#8ca9ba', chords: '#28b82b', arpeggio: '#ed55bf', drums: '#e4b74e' },
   };
 }
 

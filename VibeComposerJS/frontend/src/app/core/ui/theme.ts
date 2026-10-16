@@ -11,8 +11,8 @@ export type ThemeColor = typeof THEME_COLORS[number]['key'];
 export type ThemeColors = Readonly<Record<ThemeColor, string>>;
 
 export const DEFAULT_THEME_COLORS: ThemeColors = {
-  background: '#020812', surface: '#0b1e30',
-  inspector: '#0b1e30', roleGroups: '#142a3e',
+  background: '#080e16', surface: '#0b1e30',
+  inspector: '#061f32', roleGroups: '#112d45',
   text: '#f2f7ff', border: '#3b607d', accent: '#32d7f4',
 };
 
