@@ -1,14 +1,12 @@
-@if (expanded()) {
+@if (expanded() && role() !== 'drums') {
   <div class="policy-controls instrument-policy" role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
-    @if (role() !== 'drums') {
-      <label><span>Instrument pool</span>
-        <select [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">
-          @for (pool of instrumentPools(); track pool) {
-            <option [value]="pool" [selected]="instrumentPolicy().pool === pool">{{ poolLabels[pool] }}</option>
-          }
-        </select>
-      </label>
-    }
+    <label><span>Instrument pool</span>
+      <select [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">
+        @for (pool of instrumentPools(); track pool) {
+          <option [value]="pool" [selected]="instrumentPolicy().pool === pool">{{ poolLabels[pool] }}</option>
+        }
+      </select>
+    </label>
     @if (role() === 'chords' && instrumentPolicy().pool === 'AUTO') {
       <vc-compact-knob [mini]="true" label="Instrument sustain chance %" [defaultValue]="50" shortLabel="SUST" unit="%"
         description="Chance to choose a sustained chord instrument from the automatic pool."
