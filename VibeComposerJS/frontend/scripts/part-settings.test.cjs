@@ -5,6 +5,9 @@ const test = require('node:test');
 const ts = require('typescript');
 const { Midi } = require('@tonejs/midi');
 
+// Share immutable compiled text; each fixture still evaluates fresh modules and services.
+const compiledModules = new Map();
+
 test('Java XML translation passes the real project decoder, round-trips and produces identical MIDI after reload', () => {
   const {service,load}=fixture(), {parseXml}=require('./translate-java-config.cjs');
   const source=fs.readFileSync(path.join(__dirname,'../GENERATOR_REFACTOR_TEST_GUICONFIG.xml-config'),'utf8');
@@ -3535,9 +3538,13 @@ function fixture({ compactHistory = false } = {}) {
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };
     cache.set(absolute, module);
-    const compiled = ts.transpileModule(fs.readFileSync(absolute, 'utf8'), { compilerOptions: {
-      target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
-    } }).outputText;
+    let compiled = compiledModules.get(absolute);
+    if (compiled === undefined) {
+      compiled = ts.transpileModule(fs.readFileSync(absolute, 'utf8'), { compilerOptions: {
+        target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
+      } }).outputText;
+      compiledModules.set(absolute, compiled);
+    }
     new Function('require', 'module', 'exports', compiled)((name) => name === '@angular/core' ? angular
       : name === '@angular/cdk/dialog' ? { Dialog: class Dialog {}, DialogModule: class {}, DialogRef: class {}, DIALOG_DATA: 'sequencer-data' }
       : name === '@angular/common' ? { TitleCasePipe: class {} }

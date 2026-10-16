@@ -13,6 +13,33 @@ const browser = process.env.OVERVIEW_TEST_BROWSER || [
   '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome',
 ].find((file) => fs.existsSync(file));
 
+const fullMatrix = process.env.OVERVIEW_TEST_FULL_MATRIX === '1';
+// Every layout runs at normal zoom/DPI. Cross the scale matrix only for cases
+// that exercise rounding, overflow, dense buttons, spare score space or gaps.
+const layouts = [
+  { name: 'integer fit', width: 1218, height: 384, scale: 1 },
+  { name: 'half-pixel fit', width: 1217.5, height: 383.5, scale: 1, scaled: true },
+  { name: 'fractional fit', width: 1217.6, height: 383.6, scale: 1, scaled: true },
+  { name: 'half-pixel overflow', width: 1217.5, height: 383.5, scale: 2, scaled: true },
+  { name: 'shorter fit', width: 1217.6, height: 365.6, scale: 1 },
+  { name: 'narrow overflow', width: 830.5, height: 350.5, scale: 2 },
+  { name: 'narrow fit', width: 830.5, height: 350.5, scale: 1 },
+  { name: 'restore integer fit', width: 1218, height: 384, scale: 1 },
+  { name: 'fractional overflow', width: 1217.6, height: 365.6, scale: 2.137, scaled: true },
+  { name: 'medium fit', width: 1217.5, height: 500.5, scale: 1 },
+  { name: 'medium overflow', width: 1217.5, height: 500.5, scale: 2 },
+  { name: '64 tracks', width: 1217.5, height: 383.5, scale: 1, trackCount: 64 },
+  { name: 'narrow dense buttons', width: 700.5, height: 383.5, scale: 1, trackCount: 32, scaled: true },
+  { name: 'short narrow dense buttons', width: 700.5, height: 363.5, scale: 1, trackCount: 32 },
+  { name: 'two tracks', width: 1217.5, height: 500.5, scale: 1, trackCount: 2 },
+  { name: 'spare score space', width: 1218, height: 800, scale: 1, scaled: true },
+  { name: 'tall fit', width: 1218, height: 1000, scale: 1 },
+  { name: 'tall overflow', width: 1218, height: 1000, scale: 2 },
+  { name: 'restore tall fit', width: 1218, height: 1000, scale: 1 },
+  { name: 'gap before section', width: 1217.5, height: 383.5, scale: 1, trackCount: 32, gaps: true, scaled: true },
+  { name: 'only gap', width: 700.5, height: 383.5, scale: 1, trackCount: 64, gaps: 'all', scaled: true },
+];
+
 async function render(html, displayScale) {
   let finish;
   let reject;
@@ -50,7 +77,7 @@ async function render(html, displayScale) {
 
 test('arrangement scrollbar layout settles after local edits, zoom, and resizing', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
-}, async () => {
+}, async (context) => {
     const source = fs.readFileSync(path.join(__dirname, '../src/app/shared/arrangement-overview.component.ts'), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
@@ -61,7 +88,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     }).outputText;
     const theme = fs.readFileSync(path.join(__dirname, '../src/styles.css'), 'utf8');
     const workspaceCss = fs.readFileSync(path.join(__dirname, '../src/app/shared/workspace-canvas.component.css'), 'utf8');
-    const html = `<!doctype html><html><head><style>${theme}\n${workspaceCss}\n${css}
+    const html = displayScale => `<!doctype html><html><head><style>${theme}\n${workspaceCss}\n${css}
       .fixture { width: 1218px; height: 384px; }
       .fixture > vc-arrangement-overview { display: block; min-width: 0; min-height: 0; }
       .fixture > .part-settings-panel { height: 40px; }
@@ -111,16 +138,8 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     (async () => { try {
       for (const pageZoom of [0.8, 1, 1.25, 1.5]) {
       document.documentElement.style.zoom = pageZoom;
-      for (const [width, height, scale, trackCount = 1, gaps = false] of [
-        [1218, 384, 1], [1217.5, 383.5, 1], [1217.6, 383.6, 1],
-        [1217.5, 383.5, 2], [1217.6, 365.6, 1], [830.5, 350.5, 2],
-        [830.5, 350.5, 1], [1218, 384, 1], [1217.6, 365.6, 2.137],
-        [1217.5, 500.5, 1], [1217.5, 500.5, 2],
-        [1217.5, 383.5, 1, 64], [700.5, 383.5, 1, 32],
-        [700.5, 363.5, 1, 32], [1217.5, 500.5, 1, 2],
-        [1218, 800, 1], [1218, 1000, 1], [1218, 1000, 2], [1218, 1000, 1],
-        [1217.5, 383.5, 1, 32, true], [700.5, 383.5, 1, 64, 'all'],
-      ]) {
+      for (const { name, width, height, scale, trackCount = 1, gaps = false, scaled = false } of ${JSON.stringify(layouts)}) {
+        if (!${fullMatrix} && !(pageZoom === 1 && ${displayScale} === 1) && !scaled) continue;
         fixture.style.width = width + 'px'; fixture.style.height = height + 'px';
         component.horizontalScale = scale;
         const currentProject = { ...project,
@@ -147,7 +166,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
           const gapButtons=component.hits.filter(hit=>hit.key.startsWith('toggle:gap:'));
           if(component.effectiveHorizontalScale!==1||gapButtons.length!==1||gapButtons[0].key!=='toggle:gap:bass-2') throw new Error('gap sections must fit and show only their first included track');
         }
-        cases.push({ width, height, scale, pageZoom, samples, buttonRows,
+        cases.push({ name, width, height, scale, pageZoom, samples, buttonRows,
           gridHeight: host.clientHeight, scrollbarHeight: host.offsetHeight - host.clientHeight,
           arrangementHeight: document.querySelector('vc-arrangement-overview').offsetHeight,
           settingsHeight: document.querySelector('.part-settings-panel').offsetHeight,
@@ -164,11 +183,13 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     } })();
     </script></body></html>`;
     for (const displayScale of [1, 1.25, 1.5]) {
-      const result = await render(html, displayScale);
+      const started = performance.now();
+      const result = await render(html(displayScale), displayScale);
       assert.equal(result.error, undefined, result.error);
+      context.diagnostic(`${fullMatrix ? 'Full' : 'Focused'} matrix, display scale ${displayScale}: ${result.cases.length} cases in ${Math.round(performance.now() - started)}ms`);
       for (const item of result.cases) {
         const last = item.samples.at(-1);
-        const message = `Layout at ${item.width}×${item.height}, timeline zoom ${item.scale}, page zoom ${item.pageZoom}, display scale ${displayScale}: ${JSON.stringify(item.samples)}`;
+        const message = `${item.name} at ${item.width}×${item.height}, timeline zoom ${item.scale}, page zoom ${item.pageZoom}, display scale ${displayScale}: ${JSON.stringify(item.samples)}`;
         assert.ok(parseFloat(last[2]) > 0 && parseFloat(last[3]) > 0, 'The canvas must actually render');
         for (const sample of item.samples.slice(-4)) assert.deepEqual(sample, last, message);
         assert.ok(parseFloat(last[4]) <= last[0] && parseFloat(last[5]) <= last[1], message);

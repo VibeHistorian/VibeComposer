@@ -55,3 +55,5 @@ The app uses one persistent workspace with grouped Tracks, arrangement/score, co
 Follow [TRANSLATION_RULES.md](TRANSLATION_RULES.md) and the [workspace contracts](DAW_REDESIGN_PLAN.md). The [active backlog](CONTEXTUAL_CONTROLS_PLAN.md) and [remaining control inventory](CONTROL_PLACEMENT_MAP.md) describe unfinished translation work. Completed checkpoint narratives, Java parity evidence and superseded limitations live in [__work_history](__work_history/README.md).
 
 Angular ownership rules live in the [feature README](frontend/src/app/features/README.md) and [shared UI README](frontend/src/app/shared/README.md). Java fixture regeneration is documented in [the fixture guide](frontend/scripts/java/README.md).
+
+Test commands, the focused and exhaustive browser matrices, and fixture performance notes are documented in the [frontend test guide](frontend/scripts/README.md).
