@@ -1,7 +1,7 @@
 /* Workspace frame */
 .workspace-canvas { min-height: 0; margin: 0 0 12px; flex: 1 1 auto; display: grid; grid-template-columns: clamp(320px, calc(16vw + 80px), 380px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: 16px; }
 .score-panel, .context-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
-.context-inspector { padding: 15px 13px; }
+.context-inspector { padding: 15px 13px; background: var(--surface-inspector); }
 .track-browser { min-width: 0; height: calc(100% - 10px); margin-top: 10px; max-height: none; display: flex; flex-direction: column; overflow: hidden; align-self: stretch; }
 .context-inspector { height: calc(100% - 10px); margin-top: 10px; max-height: none; overflow-y: auto; align-self: stretch; }
 .canvas-heading { min-height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -10,7 +10,7 @@
 
 /* Track list */
 .track-groups { min-height: 0; flex: 1; display: grid; align-content: start; gap: 9px; overflow-y: auto; }
-.track-group { min-width: 0; padding: 0 4px 4px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-low); }
+.track-group { min-width: 0; padding: 0 4px 4px; border: 1px solid var(--border-subtle); border-radius: var(--radius-control); background: var(--surface-role-group); }
 .track-group.melody .group-heading { background: var(--role-melody-header); }
 .generation-status { margin: 5px 6px; color: var(--text-muted); font-size: 9px; line-height: 1.4; }
 .group-heading { min-height: 29px; margin: 0 -4px; padding: 2px 5px; display: flex; align-items: center; gap: 4px; border-radius: calc(var(--radius-control) - 1px) calc(var(--radius-control) - 1px) 0 0; }
@@ -35,7 +35,7 @@
 .group-policy-toggle:disabled { opacity: .5; cursor: default; }
 /* Track reroll controls */
 .track-policy-header { display: grid; gap: 5px; padding: 6px 3px; border-bottom: 1px solid var(--border-subtle); }
-.group-selected > .track-policy-header { background: var(--surface-base); }
+.group-selected > .track-policy-header { background: var(--surface-role-group-selected); }
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }
 .track-reroll-actions button { width: 18px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-muted); font: 13px var(--font-ui); cursor: pointer; }
 .track-reroll-actions { display: flex; align-items: center; gap: 2px; }
@@ -46,7 +46,7 @@
 
 /* Track rows */
 .track-row-card { min-width: 0; margin-top: 3px; padding: 3px 3px 4px; border: 1px solid transparent; border-radius: var(--radius-tight); }
-.track-row-card.selected { border-color: var(--border-default); background: var(--surface-base); }
+.track-row-card.selected { border-color: var(--border-default); background: var(--surface-role-group-selected); }
 .track-line { min-width: 0; display: grid; grid-template-columns: minmax(30px, .4fr) auto minmax(0, 1fr) auto auto; align-items: center; column-gap: 3px; }
 .track-select { min-width: 0; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 10px; }
 .track-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -33,6 +33,9 @@
   --surface-input: #081626;
   --surface-base: #0b1e30;
   --surface-low: #142a3e;
+  --surface-inspector: #0b1e30;
+  --surface-role-group: #142a3e;
+  --surface-role-group-selected: #0e1d2b;
   --surface-card: #1c354b;
   --surface-button: #14495d;
   --surface-button-hover: #195f75;

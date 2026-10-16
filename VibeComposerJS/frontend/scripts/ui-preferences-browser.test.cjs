@@ -26,6 +26,8 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
       await wait(()=>button('Edit quick settings'),'workspace');
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
+        ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','inspector background restored after reload');
+        ensure(getComputedStyle(document.querySelector('.track-group')).backgroundColor==='rgb(80, 64, 96)','role group background restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--role-bass').trim()==='#8855cc', 'role color restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--font-ui').trim()==='Verdana, sans-serif', 'font restored after reload');
         ensure(control(quick(),'feedbackCount'), 'persisted placement after reload');
@@ -76,21 +78,26 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         ensure([...inspector().querySelectorAll('.part-control-area')].every(area=>getComputedStyle(area).display!=='contents'),'inspector category areas');
         const velocities=[...quick().querySelectorAll('[data-control-key]')].map(c=>c.dataset.controlKey).filter(k=>k.startsWith('velocity'));
         ensure(velocities.join(',')==='velocityMin,velocityMax','fixed velocity order');
+        document.querySelector('.track-group.bass .group-select').click();
+        await wait(()=>document.querySelector('.track-group.bass.group-selected'),'selected bass role');
         button('Settings').click();
         const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
         await wait(()=>dialog.querySelector('#appearance-title'),'Appearance opens by default');
         ensure(dialog.querySelector('#appearance-title'),'Appearance opens by default');
         const colorInput=await wait(()=>dialog.querySelector('[aria-label="Bass color"]'),'appearance colors');
-        ensure(dialog.querySelectorAll('input[type="color"]').length===10,'five theme and five role colors');
+        ensure(dialog.querySelectorAll('input[type="color"]').length===12,'seven theme and five role colors');
         const style=()=>getComputedStyle(document.documentElement);
         const originalSurface=style().getPropertyValue('--surface-base');
-        for (const [label,value] of [['Background','#100818'],['Surface','#281838'],['Text','#e8dfef'],['Border','#78618a'],['Accent','#dd88ee']]) {
+        for (const [label,value] of [['Background','#100818'],['Surface','#281838'],['Inspector background','#211831'],['Role groups background','#504060'],['Text','#e8dfef'],['Border','#78618a'],['Accent','#dd88ee']]) {
           const input=dialog.querySelector('[aria-label="'+label+' theme color"]');
           input.value=value; input.dispatchEvent(new Event('input',{bubbles:true}));
         }
         await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#dd88ee','live main accent');
         ensure(style().getPropertyValue('--surface-base')!==originalSurface,'live main surface');
         ensure(style().getPropertyValue('--surface-canvas').trim()==='#100818','live background');
+        ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','live inspector background');
+        ensure(getComputedStyle(document.querySelector('.track-group')).backgroundColor==='rgb(80, 64, 96)','live role group background');
+        ensure(getComputedStyle(document.querySelector('.group-selected > .track-policy-header')).backgroundColor==='rgb(56, 45, 67)','selected role settings darken the group background');
         ensure(/^#[0-9a-f]{6}$/i.test(style().getPropertyValue('--grid-measure').trim()),'concrete canvas palette');
         const previousBassSurface=style().getPropertyValue('--role-bass-surface');
         const previousDrumSurface=style().getPropertyValue('--role-drum-surface');
@@ -121,6 +128,8 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
         button('Export UI preferences').click();
         const json=await exported.text();
         ensure(JSON.parse(json).appearance.themeColors.accent==='#dd88ee','exported main theme');
+        ensure(JSON.parse(json).appearance.themeColors.inspector==='#211831','exported inspector background');
+        ensure(JSON.parse(json).appearance.themeColors.roleGroups==='#504060','exported role group background');
         ensure(JSON.parse(json).appearance.roleColors.bass==='#8855cc','exported appearance');
         ensure(JSON.parse(json).kind==='vibecomposer-ui-preferences','UI export kind');
         ensure(!JSON.parse(json).tracks,'project excluded from UI export');
@@ -226,6 +235,8 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
     });
     await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
     const actual = await result;
+    assert.equal(actual.error, undefined, JSON.stringify(actual));
+    assert.equal(actual.ok, true);
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/quick-settings-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));
     await command('Runtime.evaluate', { expression: "[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Edit quick settings').click()" });
@@ -239,8 +250,6 @@ for (const width of [1440, 390]) test(`quick-settings placement and UI preferenc
     const editingScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/quick-settings-edit-' + width + '.png'), Buffer.from(editingScreenshot.data, 'base64'));
 
-    assert.equal(actual.error, undefined, JSON.stringify(actual));
-    assert.equal(actual.ok, true);
   } finally {
     socket?.close(); clearTimeout(timeout); child.kill(); server.close();
     await new Promise(done => child.exitCode !== null ? done() : child.once('exit', done));

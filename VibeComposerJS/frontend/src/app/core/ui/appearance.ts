@@ -43,10 +43,15 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
       || !FONT_AREAS.every(area => FONT_CHOICES.some(font => font.value === data.fonts[area.key]))
       || !ARRANGED_PARTS.every(role => isRoleColor(data.roleColors[role]))) return null;
   const themeColors = data.themeColors === undefined ? DEFAULT_THEME_COLORS : data.themeColors;
-  if (!themeColors || typeof themeColors !== 'object' || Array.isArray(themeColors)
-      || !THEME_COLORS.every(color => isRoleColor(themeColors[color.key]))) return null;
+  if (!themeColors || typeof themeColors !== 'object' || Array.isArray(themeColors)) return null;
+  const resolvedColors = {
+    ...themeColors,
+    inspector: themeColors.inspector === undefined ? DEFAULT_THEME_COLORS.inspector : themeColors.inspector,
+    roleGroups: themeColors.roleGroups === undefined ? DEFAULT_THEME_COLORS.roleGroups : themeColors.roleGroups,
+  };
+  if (!THEME_COLORS.every(color => isRoleColor(resolvedColors[color.key]))) return null;
   return {
-    themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, themeColors[color.key].toLowerCase()])) as ThemeColors,
+    themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, resolvedColors[color.key].toLowerCase()])) as ThemeColors,
     fonts: Object.fromEntries(FONT_AREAS.map(area => [area.key, data.fonts[area.key]])) as AppearancePreferences['fonts'],
     roleColors: Object.fromEntries(ARRANGED_PARTS.map(role => [role, data.roleColors[role].toLowerCase()])) as AppearancePreferences['roleColors'],
   };

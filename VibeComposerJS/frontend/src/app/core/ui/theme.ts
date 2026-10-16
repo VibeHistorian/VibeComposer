@@ -1,6 +1,8 @@
 export const THEME_COLORS = [
   { key: 'background', label: 'Background' },
   { key: 'surface', label: 'Surface' },
+  { key: 'inspector', label: 'Inspector background' },
+  { key: 'roleGroups', label: 'Role groups background' },
   { key: 'text', label: 'Text' },
   { key: 'border', label: 'Border' },
   { key: 'accent', label: 'Accent' },
@@ -10,6 +12,7 @@ export type ThemeColors = Readonly<Record<ThemeColor, string>>;
 
 export const DEFAULT_THEME_COLORS: ThemeColors = {
   background: '#020812', surface: '#0b1e30', text: '#f2f7ff', border: '#3b607d', accent: '#32d7f4',
+  inspector: '#0b1e30', roleGroups: '#142a3e',
 };
 
 /** Derive concrete colors so CSS, Canvas and Pixi share the same palette. */
@@ -17,12 +20,14 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
   const mix = (from: string, to: string, amount: number): string => '#' + [1, 3, 5].map(offset =>
     Math.round(parseInt(from.slice(offset, offset + 2), 16) * (1 - amount)
       + parseInt(to.slice(offset, offset + 2), 16) * amount).toString(16).padStart(2, '0')).join('');
-  const { background, surface, text, border, accent } = colors;
+  const { background, surface, inspector, roleGroups, text, border, accent } = colors;
   const raised = (amount: number) => mix(surface, border, amount);
   const tinted = (amount: number) => mix(surface, accent, amount);
   const muted = (amount: number) => mix(text, surface, amount);
   return {
     '--surface-canvas': background,
+    '--surface-inspector': inspector, '--surface-role-group': roleGroups,
+    '--surface-role-group-selected': mix(roleGroups, '#000000', .3),
     '--surface-input': mix(background, surface, .65), '--surface-base': surface,
     '--surface-low': raised(.18), '--surface-card': raised(.35),
     '--surface-button': tinted(.23), '--surface-button-hover': tinted(.35),

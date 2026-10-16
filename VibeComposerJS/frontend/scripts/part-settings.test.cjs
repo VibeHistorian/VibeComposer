@@ -5489,6 +5489,35 @@ test('main theme preferences derive concrete canvas colors and preserve project 
   assert.deepEqual(preferences.appearance().themeColors, DEFAULT_THEME_COLORS);
 });
 
+test('panel background preferences persist and derive a darker selection independently of other surfaces', () => {
+  const { uiPreferences: preferences, load } = fixture();
+  const { themeColorTokens, DEFAULT_THEME_COLORS } = load('core/ui/theme.ts');
+  preferences.setThemeColor('inspector', '#211831');
+  preferences.setThemeColor('roleGroups', '#504060');
+  const tokens = themeColorTokens(preferences.appearance().themeColors);
+  assert.equal(tokens['--surface-inspector'], '#211831');
+  assert.equal(tokens['--surface-role-group'], '#504060');
+  assert.equal(tokens['--surface-role-group-selected'], '#382d43');
+  assert.equal(tokens['--surface-base'], DEFAULT_THEME_COLORS.surface);
+  const saved = preferences.exportJson();
+  const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  assert.deepEqual(restored.appearance(), preferences.appearance());
+  for (const key of ['inspector', 'roleGroups']) {
+    const invalid = JSON.parse(saved);
+    invalid.appearance.themeColors[key] = 'invalid';
+    assert.equal(preferences.importJson(JSON.stringify(invalid)), false);
+    assert.equal(preferences.exportJson(), saved);
+  }
+  const omitted = JSON.parse(saved);
+  delete omitted.appearance.themeColors.inspector;
+  delete omitted.appearance.themeColors.roleGroups;
+  assert.equal(preferences.importJson(JSON.stringify(omitted)), true);
+  assert.equal(preferences.appearance().themeColors.inspector, DEFAULT_THEME_COLORS.inspector);
+  assert.equal(preferences.appearance().themeColors.roleGroups, DEFAULT_THEME_COLORS.roleGroups);
+  preferences.resetAppearance();
+  assert.deepEqual(preferences.appearance().themeColors, DEFAULT_THEME_COLORS);
+});
+
 test('appearance preferences persist, transfer atomically and derive every role variant', () => {
   const { service, uiPreferences: preferences, load } = fixture();
   const before = service.exportProjectJson(), position = service.historyPosition();
