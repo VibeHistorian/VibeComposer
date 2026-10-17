@@ -34,7 +34,7 @@ function fixture() {
   const context = () => ({
     rectangles: [], texts: [], arcs: [], clears: 0, fillStyle: '', globalAlpha: 1,
     setTransform() {}, clearRect() { this.clears++; },
-    fillRect(...bounds) { this.rectangles.push({ bounds, color: this.fillStyle }); },
+    fillRect(...bounds) { this.rectangles.push({ bounds, color: this.fillStyle, alpha: this.globalAlpha }); },
     save() {}, restore() {}, beginPath() {}, rect() {}, clip() {},
     fillText(value, x, y) { this.texts.push({ value, x, y }); },
     measureText(value) { return { width: value.length * 6 }; },
@@ -114,6 +114,19 @@ test('unequal section lengths share the exact beat mapping with notes and playba
   assert.ok(note, 'note at beat 8 sits on the verse boundary');
   component.drawPlayhead(25); // Beat 8 of the 32-beat arrangement.
   assert.equal(overlay.rectangles.at(-1).bounds[0], verse.x);
+});
+
+test('playhead gamma-corrects adjacent columns and remains visible at the end', () => {
+  const { component, overlay } = fixture();
+  component.beatX = () => 400.25;
+  component.drawPlayhead(25);
+  assert.deepEqual(overlay.rectangles.slice(-2).map(rect => [rect.bounds[0], rect.alpha]),
+    [[400, Math.pow(.75, 1 / 2.2)], [401, Math.pow(.25, 1 / 2.2)]]);
+  assert.equal(overlay.globalAlpha, 1);
+  component.beatX = () => component.width;
+  component.drawPlayhead(100);
+  assert.equal(overlay.rectangles.at(-1).bounds[0], component.width - 1);
+  assert.equal(overlay.rectangles.at(-1).alpha, 1);
 });
 
 test('scrolling preserves cursor alignment and keeps both canvases viewport-sized', () => {

@@ -78,6 +78,22 @@ test('the mouse guide is fainter than the playhead and disappears on pointer lea
   assert.equal(strokes[0].alpha, 1);
 });
 
+test('playhead preserves approximate light intensity across adjacent columns in a zoomed viewport', () => {
+  const { component, strokes } = fixture();
+  for (const x of [400, 400.25, 400.5, 400.75, 401]) {
+    component.playhead = (component.horizontalOffset + x / (component.width * component.horizontalScale)) * 100;
+    component.drawDynamic();
+    assert.ok(Math.abs(strokes.reduce((sum, stroke) => sum + Math.pow(stroke.alpha, 2.2), 0) - 1) < 1e-9);
+    const center = strokes.reduce((sum, stroke) => sum + (stroke.x - .5) * Math.pow(stroke.alpha, 2.2), 0);
+    assert.ok(Math.abs(center - x) < 1e-9);
+    assert.ok(strokes.every(stroke => stroke.width === 1));
+  }
+  component.playhead = 50;
+  component.drawDynamic();
+  assert.equal(strokes[0].x, 799.5);
+  assert.equal(strokes[0].alpha, 1);
+});
+
 test('edit drags stay within the phrase and publish a draft change only on release', () => {
   const { component } = fixture();
   component.editable = () => true;

@@ -575,7 +575,16 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const x = this.beatX(Math.min(100, Math.max(0, percent)) / 100 * totalBeats);
     if (x < this.labelWidth || x > this.width) return;
     context.fillStyle = this.accent;
-    context.fillRect(Math.min(this.width - 1, Math.floor(x)), RULER_HEIGHT, 1, this.height - RULER_HEIGHT);
+    const position = Math.min(this.width - 1, x);
+    const left = Math.floor(position);
+    const fraction = position - left;
+    // Approximate gamma correction keeps the split line from dimming between columns.
+    for (const [column, weight] of [[left, 1 - fraction], [left + 1, fraction]]) {
+      if (weight === 0) continue;
+      context.globalAlpha = Math.pow(weight, 1 / 2.2);
+      context.fillRect(column, RULER_HEIGHT, 1, this.height - RULER_HEIGHT);
+    }
+    context.globalAlpha = 1;
   }
 
   private hitAt(event: MouseEvent): OverviewHitArea | undefined {

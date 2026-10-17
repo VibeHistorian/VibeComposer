@@ -896,8 +896,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     const x = (this.playhead / 100 - this.horizontalOffset) * this.width * this.horizontalScale;
     if (x >= 0 && x <= this.width) {
-      graphics.moveTo(Math.floor(x) + 0.5, 0).lineTo(Math.floor(x) + 0.5, this.height)
-        .stroke({ color: accent.toNumber(), alpha: accent.alpha, width: 1 });
+      const position = Math.min(this.width - 1, x);
+      const left = Math.floor(position);
+      const fraction = position - left;
+      // Approximate gamma correction keeps the split line from dimming between columns.
+      for (const [column, weight] of [[left, 1 - fraction], [left + 1, fraction]]) {
+        if (weight === 0) continue;
+        graphics.moveTo(column + 0.5, 0).lineTo(column + 0.5, this.height)
+          .stroke({ color: accent.toNumber(), alpha: accent.alpha * Math.pow(weight, 1 / 2.2), width: 1 });
+      }
     }
     const style = getComputedStyle(document.documentElement);
     for (const area of this.hitAreas) {
