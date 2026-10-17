@@ -1,5 +1,5 @@
 /* Workspace frame */
-:host { --part-section-accent: var(--accent-primary); }
+:host { --part-section-accent: var(--accent-primary); --track-name-column-width: 44px; }
 .workspace-canvas { min-height: 0; margin: 0 0 12px; flex: 1 1 auto; display: grid; grid-template-columns: clamp(320px, calc(16vw + 80px), 380px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: 16px; }
 .score-panel, .context-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
 .context-inspector { padding: 15px 13px; background: var(--surface-inspector) var(--background-inspector); }
@@ -21,8 +21,8 @@
 .generation-status { margin: 5px 6px; color: var(--text-muted); font-size: 9px; line-height: 1.4; }
 .group-heading { min-height: 29px; margin: 0 -4px; padding: 2px 5px; display: flex; align-items: center; gap: 4px; border-radius: calc(var(--radius-control) - 1px) calc(var(--radius-control) - 1px) 0 0; }
 .track-group.bass .group-heading { background: var(--role-bass-header); }.track-group.chords .group-heading { background: var(--role-chords-header); }.track-group.arpeggio .group-heading { background: var(--role-arpeggio-header); }.track-group.drums .group-heading { background: var(--role-drums-header); }
-.group-select { flex: 0 0 auto; min-width: 0; padding: 2px 0; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
-.group-select strong { flex: 0 0 40px; width: 40px; min-width: 0; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.group-select { flex: 0 0 calc(var(--track-name-column-width) + 2px); min-width: 0; padding: 2px 0; display: flex; align-items: center; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
+.group-select strong { flex: 1; min-width: 0; margin-left: 3px; overflow: hidden; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .group-count { box-sizing: border-box; width: 34px; min-width: 22px; height: 22px; margin-right: auto; padding: 0 3px; flex: 0 0 auto; text-align: center; appearance: textfield; border: 1px solid var(--border-strong); border-radius: var(--radius-tight); background: var(--shadow-highlight); color: var(--text-secondary); font: 10px var(--font-mono); }
 .group-count::-webkit-inner-spin-button, .group-count::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .group-count:focus { outline: 1px solid var(--accent-primary); }
@@ -53,7 +53,7 @@
 /* Track rows */
 .track-row-card { min-width: 0; margin-top: 3px; padding: 3px 3px 4px; border: 1px solid transparent; border-radius: var(--radius-tight); }
 .track-row-card.selected { border-color: var(--border-default); background: color-mix(in srgb, var(--track-group-color) 25%, var(--surface-role-group-selected)); }
-.track-line { min-width: 0; display: grid; grid-template-columns: minmax(30px, .4fr) auto minmax(0, 1fr) auto auto; align-items: center; column-gap: 3px; }
+.track-line { min-width: 0; display: grid; grid-template-columns: var(--track-name-column-width) auto minmax(0, 1fr) auto auto; align-items: center; column-gap: 3px; }
 .track-select { min-width: 0; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 10px; }
 .track-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .role-dot { width: 7px; height: 7px; flex: 0 0 auto; display: inline-block; border-radius: 50%; background: var(--role-bass); }
@@ -70,7 +70,6 @@
 
 /* Track mix actions */
 .track-mix-controls { display: flex; align-items: flex-start; gap: 2px; }
-.track-mix-controls vc-mix-buttons { margin-top: 3px; }
 
 /* Arrangement and score canvas */
 .song-canvas { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: auto auto minmax(270px, 1fr); gap: 12px; }

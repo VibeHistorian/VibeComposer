@@ -6,7 +6,7 @@
           <header class="group-heading">
             <button type="button" class="group-select" [disabled]="editing()" [attr.aria-pressed]="selectedRole() === group.role" (click)="selectRole(group.role)"
               title="Select role; middle-click to solo only this role" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, roleTrackIds(group.role))">
-              <i class="role-dot" [class]="group.role"></i><strong>{{ group.name }}</strong>
+              <strong>{{ group.name }}</strong>
             </button>
             <vc-mix-buttons class="group-mix-controls" [trackIds]="roleTrackIds(group.role)" [label]="group.name + ' tracks'" />
             <div class="group-policy-toggles">
@@ -49,6 +49,7 @@
                   <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                 </button>
                 <div class="track-reroll-actions" (click)="$event.stopPropagation()">
+                  <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />
                   <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
                     [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
                     [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
@@ -90,7 +91,6 @@
                     [value]="track.mix.volumePercent" [minimum]="0" [maximum]="maximumVolume" [step]="0.1" valueFormat="decibels"
                     (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
                     (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
-                  <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />
                 </div>
               </div>
 
