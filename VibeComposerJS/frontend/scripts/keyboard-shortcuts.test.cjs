@@ -5,8 +5,11 @@ const test = require('node:test');
 const ts = require('typescript');
 
 class Element {
-  constructor(tag, editable = false) { this.tag = tag; this.isContentEditable = editable; }
-  matches() { return ['input', 'textarea', 'select'].includes(this.tag); }
+  constructor(tag, editable = false, type = 'text') { this.tag = tag; this.isContentEditable = editable; this.type = type; }
+  matches(selector) {
+    return ['input', 'textarea', 'select'].includes(this.tag)
+      && !(this.tag === 'input' && this.type === 'range' && selector.includes(':not([type="range"])'));
+  }
 }
 
 function load(file, dependencies = {}) {
@@ -56,7 +59,20 @@ test('routes Ctrl Z, Ctrl Y and Ctrl Shift Z to global or phrase history exactly
   assert.equal(f.calls.length, 6, 'never falls back to project history during phrase editing');
 });
 
-test('preserves native shortcuts in form controls and inherited or shadow contenteditable regions', () => {
+test('focused knob range inputs route undo and redo to the active history', () => {
+  const f = fixture();
+  const knob = new Element('input', false, 'range');
+  for (const editing of [false, true]) {
+    if (editing) f.edit();
+    for (const [key, options] of [['z', {}], ['y', {}], ['Z', { shiftKey: true }], ['z', { ctrlKey: false, metaKey: true }]]) {
+      assert.equal(f.press(key, { ...options, composedPath: () => [knob, new Element('div')] }).defaultPrevented, true);
+    }
+  }
+  assert.deepEqual(f.calls, ['project:undo', 'project:redo', 'project:redo', 'project:undo',
+    'phrase:undo', 'phrase:redo', 'phrase:redo', 'phrase:undo']);
+});
+
+test('preserves native shortcuts in text fields, selects and inherited or shadow contenteditable regions', () => {
   const f = fixture();
   for (const editing of [false, true]) {
     if (editing) f.edit();
