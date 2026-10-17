@@ -28,6 +28,7 @@ export type ColorAdjustments = Readonly<Record<ColorAdjustment, number>>;
 const DEFAULT_COLOR_ADJUSTMENTS: ColorAdjustments = { brightness: 0, hueShift: 0, saturation: 0 };
 
 export interface AppearancePreferences {
+  readonly hueShiftRoles: boolean;
   readonly colorAdjustments: ColorAdjustments;
   readonly themeColors: ThemeColors;
   readonly fonts: Readonly<Record<FontArea, string>>;
@@ -36,6 +37,7 @@ export interface AppearancePreferences {
 
 export function defaultAppearance(): AppearancePreferences {
   return {
+    hueShiftRoles: false,
     colorAdjustments: { ...DEFAULT_COLOR_ADJUSTMENTS },
     themeColors: { ...DEFAULT_THEME_COLORS },
     fonts: { ui: FONT_CHOICES[0].value, heading: FONT_CHOICES[0].value, mono: FONT_CHOICES[1].value },
@@ -50,6 +52,7 @@ export function isRoleColor(value: unknown): value is string {
 export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const data = value as AppearancePreferences;
+  if (data.hueShiftRoles !== undefined && typeof data.hueShiftRoles !== 'boolean') return null;
   const colorAdjustments = data.colorAdjustments === undefined ? DEFAULT_COLOR_ADJUSTMENTS : data.colorAdjustments;
   if (!colorAdjustments || typeof colorAdjustments !== 'object' || Array.isArray(colorAdjustments)
       || !COLOR_ADJUSTMENTS.every(({ key }) => Number.isFinite(colorAdjustments[key])
@@ -66,6 +69,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   };
   if (!THEME_COLORS.every(color => isRoleColor(resolvedColors[color.key]))) return null;
   return {
+    hueShiftRoles: data.hueShiftRoles === true,
     colorAdjustments: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, colorAdjustments[key]])) as ColorAdjustments,
     themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, resolvedColors[color.key].toLowerCase()])) as ThemeColors,
     fonts: Object.fromEntries(FONT_AREAS.map(area => [area.key, data.fonts[area.key]])) as AppearancePreferences['fonts'],

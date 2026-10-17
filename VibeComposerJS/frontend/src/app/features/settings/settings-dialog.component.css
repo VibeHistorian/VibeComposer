@@ -16,6 +16,12 @@ h1 { margin: 0; font-size: 20px; font-weight: 550; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
 /* Appearance preferences */
+.appearance-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 586px; margin-bottom: 20px; }
+.appearance-heading h2 { margin: 0; }
+.appearance-toggle { padding: 5px 9px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 12px var(--font-ui); cursor: pointer; }
+.appearance-toggle:hover { background: var(--surface-button-hover); }
+.appearance-toggle[aria-pressed="true"] { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
+.color-adjustment { display: flex; align-items: center; gap: 8px; }
 .color-adjustments { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 16px; padding: 8px 0; }
 .appearance-fields { max-width: 560px; margin: 20px 0; padding: 12px; border: 1px solid var(--border-default); border-radius: var(--radius-card); }
 .appearance-fields legend { padding: 0 6px; color: var(--text-strong); font: 13px var(--font-heading); }

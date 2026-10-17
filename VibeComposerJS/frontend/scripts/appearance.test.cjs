@@ -28,7 +28,7 @@ test('hue wraps in either direction while saturation scales independently', () =
 });
 
 test('adjustments survive serialization and reject invalid imported values', () => {
-  const appearance = { ...defaultAppearance(), colorAdjustments: adjustments({ brightness: 20, hueShift: -50, saturation: 50 }) };
+  const appearance = { ...defaultAppearance(), hueShiftRoles: true, colorAdjustments: adjustments({ brightness: 20, hueShift: -50, saturation: 50 }) };
   assert.deepEqual(decodeAppearance(JSON.parse(JSON.stringify(appearance))), appearance);
   const { colorAdjustments, ...original } = appearance;
   assert.deepEqual(decodeAppearance(original).colorAdjustments, adjustments());
@@ -36,4 +36,8 @@ test('adjustments survive serialization and reject invalid imported values', () 
     { ...colorAdjustments, saturation: -51 }, { ...colorAdjustments, hueShift: '10' }]) {
     assert.equal(decodeAppearance({ ...appearance, colorAdjustments: value }), null);
   }
+  const { hueShiftRoles, ...withoutRoleToggle } = appearance;
+  assert.equal(decodeAppearance(withoutRoleToggle).hueShiftRoles, false);
+  assert.equal(defaultAppearance().hueShiftRoles, false);
+  assert.equal(decodeAppearance({ ...appearance, hueShiftRoles: 'true' }), null);
 });

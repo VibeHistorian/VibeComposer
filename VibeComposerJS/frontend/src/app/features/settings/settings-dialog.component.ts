@@ -1,5 +1,5 @@
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
@@ -55,4 +55,13 @@ export class SettingsDialogComponent {
     { id: 'project-history', label: 'Project History' },
   ] as const;
   readonly selectedCategory = signal<typeof this.categories[number]['id']>('appearance');
+  readonly preview = signal(false);
+
+  constructor() {
+    effect(onCleanup => {
+      const backdrop = this.dialog.overlayRef.backdropElement;
+      backdrop?.classList.toggle('appearance-preview', this.preview() && this.selectedCategory() === 'appearance');
+      onCleanup(() => backdrop?.classList.remove('appearance-preview'));
+    });
+  }
 }

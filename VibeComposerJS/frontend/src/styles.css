@@ -1,5 +1,8 @@
 @import '@angular/cdk/overlay-prebuilt.css';
 
+/* Appearance preview backdrop */
+.cdk-overlay-backdrop.appearance-preview { background: transparent; }
+
 /* Theme tokens */
 :root {
   color-scheme: dark;

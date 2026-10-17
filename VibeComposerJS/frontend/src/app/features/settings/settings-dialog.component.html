@@ -15,17 +15,27 @@
       @switch (selectedCategory()) {
         @case ('appearance') {
           <section aria-labelledby="appearance-title">
-            <h2 id="appearance-title">Appearance</h2>
+            <div class="appearance-heading">
+              <h2 id="appearance-title">Appearance</h2>
+              <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()"
+                title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
+            </div>
             <p>Changes apply immediately and are saved in your UI preferences.</p>
             <fieldset class="appearance-fields">
               <legend>Color adjustments</legend>
-              <p>Adjust all chosen theme and track role colors. Zero keeps the original colors.</p>
+              <p>Adjust chosen colors. Hue shift includes track role colors when All is enabled. Zero keeps the original colors.</p>
               <div class="color-adjustments">
                 @for (adjustment of colorAdjustments; track adjustment.key) {
+                  <div class="color-adjustment">
                   <vc-compact-knob [label]="adjustment.label" [description]="adjustment.description"
                     [value]="preferences.appearance().colorAdjustments[adjustment.key]"
                     [minimum]="-50" [maximum]="50" [defaultValue]="0" [dense]="true" [showValueBelow]="true"
                     (valueCommit)="preferences.setColorAdjustment(adjustment.key, $event)" />
+                  @if (adjustment.key === 'hueShift') {
+                    <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.appearance().hueShiftRoles"
+                      title="Include all five track role colors in hue shift" (click)="preferences.toggleHueShiftRoles()">All</button>
+                  }
+                  </div>
                 }
               </div>
             </fieldset>

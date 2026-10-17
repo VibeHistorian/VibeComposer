@@ -33,6 +33,11 @@ export class UiPreferencesService {
   }
   resetAppearance(): void { this.commit({ ...this.state(), appearance: defaultAppearance() }); }
 
+  toggleHueShiftRoles(): void {
+    const appearance = this.appearance();
+    this.commit({ ...this.state(), appearance: { ...appearance, hueShiftRoles: !appearance.hueShiftRoles } });
+  }
+
   setColorAdjustment(key: ColorAdjustment, value: number): void {
     if (!COLOR_ADJUSTMENTS.some(choice => choice.key === key) || !Number.isFinite(value)) return;
     const appearance = this.appearance();
@@ -53,8 +58,11 @@ export class UiPreferencesService {
     const colors = Object.fromEntries(THEME_COLORS.map(({ key }) => [key, adjust(preferences.appearance.themeColors[key])])) as typeof preferences.appearance.themeColors;
     for (const [name, color] of Object.entries(themeColorTokens(colors))) style.setProperty(name, color);
     for (const [area, font] of Object.entries(preferences.appearance.fonts)) style.setProperty(`--font-${area}`, font);
+    const roleAdjustments = { ...preferences.appearance.colorAdjustments,
+      hueShift: preferences.appearance.hueShiftRoles ? preferences.appearance.colorAdjustments.hueShift : 0 };
     for (const role of ARRANGED_PARTS) {
-      for (const [name, color] of Object.entries(roleColorTokens(role, adjust(preferences.appearance.roleColors[role])))) style.setProperty(name, color);
+      const color = adjustColor(preferences.appearance.roleColors[role], roleAdjustments);
+      for (const [name, value] of Object.entries(roleColorTokens(role, color))) style.setProperty(name, value);
     }
   }
 
