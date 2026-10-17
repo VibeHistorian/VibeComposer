@@ -5,7 +5,7 @@ Keep translated music behavior in focused feature components, embedded where the
 - **Create behavior** — Harmony Chordlets live in transport. Musical part settings appear in contextual editors; track-reroll policies live in expanded Tracks headers. Role-group musical edits apply to current members without replacing their identities.
 - **Arrange behavior** — The arrangement and dense all-track score share the center canvas. Selecting a section exposes its type, length, chord overrides, track inclusion and chance, and section actions in the inspector.
 - **Edit behavior** — Selecting a score note zooms an editable phrase inside the shared score canvas, keeping arrangement and part settings visible. The workspace header supplies Apply, Local Apply and Cancel; note properties occupy the existing inspector. Harmonic and percussion notes share timing/pitch/duration controls. Apply commits a global track phrase; Local Apply stores a section-track phrase override. Drafts commit once, and Cancel discards them.
-- **Mix behavior** — An icon opens the mixer popup. It edits each track's instrument, channel, level, pan, mute, and solo values used by playback and MIDI export.
+- **Mix behavior** — Tracks quick shortcuts edit each track's instrument, channel, level, pan, mute, and solo values used by playback and MIDI export. MIDI export is available in the main menu.
 
 ## Angular ownership
 

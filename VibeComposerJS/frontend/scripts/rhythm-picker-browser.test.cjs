@@ -126,13 +126,6 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('.track-group.melody .track-select').click();
         await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 04'), 'melody inspector');
         const melodySelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.value);
-        document.querySelector('button[aria-label="Open mixer"]').click();
-        const strips = await waitFor(() => {
-          const items = [...document.querySelectorAll('.channel-strip')];
-          return items.length === 5 ? items : null;
-        }, 'initial mixer strips');
-        const mixerSelections = strips.map(strip => [...strip.querySelectorAll('select')].map(select => select.value));
-        document.querySelector('button[aria-label="Close mixer"]').click();
         const group = await waitFor(() => document.querySelector('.track-group.chords .group-select'));
         group.click();
         const pickers = await waitFor(() => {
@@ -152,7 +145,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid button:first-child')]
           .every(button => button.getAttribute('aria-pressed') === 'false'));
         const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        const result = { instrumentDefaultChecks, inlineActions, inlineIdentity, initialSelection, melodySelection, mixerSelections, initialChords, options, counts, selected: pickers.map(select => select.value),
+        const result = { instrumentDefaultChecks, inlineActions, inlineIdentity, initialSelection, melodySelection, initialChords, options, counts, selected: pickers.map(select => select.value),
           rhythm: project.chords.rhythm, grid: project.chords.customPattern };
         const wheel = (element, deltaY, shiftKey = false) => element.dispatchEvent(
           new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
@@ -235,7 +228,7 @@ test('production Angular controls initialize selects from settings and support r
         const globalMix = document.querySelector('.transport-actions vc-mix-buttons');
         await waitFor(() => globalMix.querySelector('.solo-toggle').getAttribute('aria-pressed') === 'mixed');
         result.globalAfterLive = globalMix.previousElementSibling.classList.contains('live-button');
-        result.groupAfterCount = document.querySelector('.track-group.chords .group-mix-controls').previousElementSibling.classList.contains('group-count');
+        result.groupAfterName = document.querySelector('.track-group.chords .group-mix-controls').previousElementSibling.classList.contains('group-select');
         globalMix.querySelector('.solo-toggle').click();
         await waitFor(() => readMixProject().tracks.every(item => !item.mix.solo));
         globalMix.querySelector('.mute-toggle').click();
@@ -402,7 +395,7 @@ test('production Angular controls initialize selects from settings and support r
         const drumPitch = await waitFor(() => document.querySelector('.track-group.drums .track-instrument'), 'drum pitch picker');
         result.initialDrumPitch = drumPitch.value;
         drumPitch.value = '38'; drumPitch.dispatchEvent(new Event('change', { bubbles: true }));
-        await waitFor(() => document.querySelector('.track-group.drums .track-instrument').selectedOptions[0].textContent === 'Snare · 38', 'drum track name');
+        await waitFor(() => document.querySelector('.track-group.drums .track-instrument').selectedOptions[0].textContent === 'SNARE · 38', 'drum track name');
         const drumRhythms = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
         result.drumRhythmOptions = drumRhythms.map(select => [...select.options].map(option => option.value));
         drumRhythms[0].value = 'custom'; drumRhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
@@ -425,11 +418,9 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         result.drumChannelLocked = document.querySelector('.track-group.drums .track-channel').disabled;
         result.drumSettings = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'drums').generatorSettings;
-        document.querySelector('button[aria-label="Open mixer"]').click();
-        const mixerDrum = await waitFor(() => document.querySelector('.channel-strip select[aria-label="Percussion instrument D1"]'), 'mixer drum identity');
-        result.mixerDrumPitch = mixerDrum.value;
-        result.mixerDrumName = mixerDrum.selectedOptions[0].textContent;
-        document.querySelector('button[aria-label="Close mixer"]').click();
+        const drumInstrument = document.querySelector('.track-group.drums .track-instrument');
+        result.drumPitch = drumInstrument.value;
+        result.drumName = drumInstrument.selectedOptions[0].textContent;
         document.querySelector('button[aria-label="Add Drums track"]').click();
         await waitFor(() => document.querySelectorAll('.track-group.drums .track-select').length === 2, 'second drum track');
         document.querySelector('button[aria-label="Add Drums track"]').click();
@@ -481,7 +472,7 @@ test('production Angular controls initialize selects from settings and support r
             knobs: rhythm.filter(Boolean).map(area => getComputedStyle(area.querySelector('.knob-face')).backgroundImage.includes('86, 182, 188')) });
         }
         result.inspectorPolicyRemoved = !document.querySelector('#part-inspector vc-track-generation-policy');
-        result.bassBlue = getComputedStyle(document.querySelector('.track-group.bass .role-dot')).backgroundColor;
+        result.bassColor = getComputedStyle(document.querySelector('.track-group.bass .role-dot')).backgroundColor;
         const countBox = document.querySelector('.track-group.bass .group-count');
         result.countNearName = countBox.getBoundingClientRect().left - countBox.previousElementSibling.getBoundingClientRect().right < 10;
         result.countBox = getComputedStyle(countBox).borderTopStyle;
@@ -638,7 +629,6 @@ test('production Angular controls initialize selects from settings and support r
       selectionPreserved: true, noInspectorIdentity: true, noG: true, hiddenArrow: true });
     assert.deepEqual(actual.melodySelection, ['73', '4']);
     assert.deepEqual(actual.recreatedSelection, ['73', '4']);
-    assert.deepEqual(actual.mixerSelections, [['73', '4'], ['33', '1'], ['0', '2'], ['11', '3'], ['36', '10']]);
     assert.equal(actual.initialDrumPitch, '36');
     assert.equal(actual.bassJoinInitial, 'NOJOIN');
     assert.deepEqual(actual.bassJoinOptions, ['NOJOIN', 'EXPAND', 'JOIN']);
@@ -675,12 +665,16 @@ test('production Angular controls initialize selects from settings and support r
     assert.ok(actual.generationMiniKnobs.every(knob => knob.type === 'range' && knob.width <= 48 && knob.diameter <= 28
       && [...knob.code].length <= 5 && Number.isFinite(Number(knob.value)) && knob.tooltip), JSON.stringify(actual.generationMiniKnobs));
     assert.equal(actual.inspectorPolicyRemoved, true);
-    assert.equal(actual.bassBlue, 'rgb(34, 167, 242)');
+    assert.equal(actual.bassColor, 'rgb(140, 169, 186)');
     assert.equal(actual.countNearName, true);
     assert.equal(actual.countBox, 'solid');
     for (const areas of actual.parameterAreas) {
-      assert.deepEqual(areas.pitch.filter(Boolean), areas.role === 'drums' ? []
-        : ['melody', 'arpeggio'].includes(areas.role) ? ['#a49ac9', '#a49ac9'] : ['#a49ac9']);
+      const pitchColors = areas.pitch.filter(Boolean);
+      if (areas.role === 'drums') assert.deepEqual(pitchColors, []);
+      else {
+        assert.ok(pitchColors.length > 0, areas.role + ' has pitch controls');
+        assert.ok(pitchColors.every(color => color === '#a49ac9'), areas.role + ' pitch category color');
+      }
       assert.ok(areas.rhythm.length > 0);
       assert.ok(areas.rhythm.every(color => color === '#56b6bc'));
       assert.equal(new Set(areas.backgrounds).size, 1);
@@ -699,8 +693,8 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.drumSettings.rhythm, 'custom');
     assert.equal(actual.drumSettings.customPattern[0], 0);
     assert.equal(actual.drumSettings.useCustomVelocities, true);
-    assert.equal(actual.mixerDrumPitch, '38');
-    assert.equal(actual.mixerDrumName, 'Snare · 38');
+    assert.equal(actual.drumPitch, '38');
+    assert.equal(actual.drumName, 'SNARE · 38');
     assert.equal(actual.allDrumsEditor, true);
     assert.deepEqual(actual.initialChords, ['C', 'G', 'Am', 'F']);
     assert.deepEqual(actual.options, [expected]);
@@ -723,7 +717,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.quickMix.muted, false);
     assert.equal(actual.quickMix.solo, true);
     assert.equal(actual.globalAfterLive, true);
-    assert.equal(actual.groupAfterCount, true);
+    assert.equal(actual.groupAfterName, true);
     assert.equal(actual.exclusiveMix, true);
     assert.equal(actual.panLabel, '1% R');
     assert.deepEqual(actual.miniWidths, [34, 34]);

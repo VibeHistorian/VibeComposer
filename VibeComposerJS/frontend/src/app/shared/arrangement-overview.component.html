@@ -6,7 +6,7 @@
     </h1>
     <div class="canvas-actions">
       <span class="measure-total">{{ totalMeasures() }} BARS</span>
-      <button type="button" class="mixer-open-button add-section-button" [disabled]="!canAddSection()"
+      <button type="button" class="add-section-button" [disabled]="!canAddSection()"
         [attr.aria-expanded]="!!sectionPicker()" aria-haspopup="menu" aria-label="Add arrangement section" title="Add section"
         (click)="toggleSectionPicker($event)">＋</button>
       @if (selectedSectionIds().length) {
@@ -14,7 +14,6 @@
       }
       <button type="button" class="reroll-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
         title="Reroll track presence using section type chances">REROLL</button>
-      <button type="button" class="mixer-open-button" (click)="mixerRequested.emit()" aria-label="Open mixer" title="Mixer">☷</button>
     </div>
   </header>
 

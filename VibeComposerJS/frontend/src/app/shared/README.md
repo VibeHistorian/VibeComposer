@@ -7,7 +7,7 @@ Place reusable presentation components and UI helpers here when multiple feature
 - Use one persistent workspace with grouped Tracks at left, arrangement and dense score in the center, a selection-aware inspector at right, and transport along the bottom.
 - Do not add route navigation or a mode-controls drawer for Create, Arrange, Edit, or Mix.
 - The transport owns playback, position, loop, key, mode, transpose, and tempo controls. Playback scheduling stays in `core/audio`, outside Angular rendering.
-- The mixer opens as a popup from a button with an accessible icon label.
+- Mix controls live in the Tracks quick shortcuts; MIDI export is available in the main menu.
 - Track-group selection shows shared musical settings; individual track selection shows local musical settings; section selection shows arrangement controls. Instrument/channel selectors remain in track rows, and reroll policies remain in expanded group headers.
 - Arrangement headers exclusively select section ranges. Cell bodies select section-role settings; track buttons select section-track settings. Middle-click or I on a focused track button toggles presence without changing selection; the local inspector also provides an Include checkbox.
 - `WorkspaceUiService.settingsTarget` identifies the active settings scope independently from the header-selected range used for score focus and looping. Global track/group selections also preserve that range. CLEAR or Escape clears both contexts.

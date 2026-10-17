@@ -70,7 +70,6 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly totalMeasures = input(0);
   readonly playheadPercent = input(0);
   readonly loopRange = input<PlaybackRange | null>(null);
-  readonly mixerRequested = output<void>();
   readonly sectionAddRequested = output<SectionType>();
   readonly sectionTypes = SECTION_TYPES;
   readonly sectionPicker = signal<{ x: number; y: number } | null>(null);

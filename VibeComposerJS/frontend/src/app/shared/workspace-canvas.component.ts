@@ -26,7 +26,6 @@ import { ArrangementOverviewComponent } from './arrangement-overview.component';
 import { ScoreCanvasComponent } from './score-canvas.component';
 import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
-import { MixWorkspaceComponent } from '../features/mix/mix-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
 import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
 import { HarmonySettingsComponent } from './harmony-settings.component';
@@ -61,7 +60,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, MixWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',
@@ -263,7 +262,6 @@ export class WorkspaceCanvasComponent {
   }
   readonly editing = signal(false);
   private selectionBeforeEditing: SettingsSelection | null = null;
-  readonly mixerOpen = signal(false);
   readonly hiddenTracks = signal(new Set<string>());
   readonly editingHiddenTracks = new Set<string>();
   readonly collapsedGroups = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
@@ -552,8 +550,6 @@ export class WorkspaceCanvasComponent {
     this.editingNoteId.set(null);
   }
 
-  openMixer(): void { this.mixerOpen.set(true); }
-  closeMixer(): void { this.mixerOpen.set(false); }
 
   addSection(type: SectionType): void {
     if (!SECTION_TYPES.includes(type) || this.project().arrangement.length >= 32 || this.totalMeasures() + 4 > 128) return;

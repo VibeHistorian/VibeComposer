@@ -36,7 +36,7 @@ These rules guide the translation of VibeComposer's generation functionality int
 
 13. **Treat `schemaVersion` as informational during translation buildout.** Validate imported project structure and values, but do not gate loading on a schema version or add compatibility migrations. Backward compatibility can be considered during the finishing phase.
 
-14. **Keep the song canvas persistent and make editing contextual.** The app uses one workspace route: arrangement and dense score stay in the center canvas, note selection opens the selected track's piano roll or drum grid, and applying edits returns to arrangement. Mixing opens from a mixer icon as a popup. Do not add route pages or a mode-controls drawer for Create, Arrange, Edit, or Mix.
+14. **Keep the song canvas persistent and make editing contextual.** The app uses one workspace route: arrangement and dense score stay in the center canvas, note selection opens the selected track's piano roll or drum grid, and applying edits returns to arrangement. Mix controls live in the Tracks quick shortcuts; MIDI export is available in the main menu. Do not add route pages or a mode-controls drawer for Create, Arrange, Edit, or Mix.
 
 15. **Separate global, group, and track settings.** Key, transpose, tempo, and mode are editable in transport. Primary chord setup sits above the grouped Tracks list; detailed generation settings live in the inspector. Selecting a role group exposes controls for all tracks of that type, while selecting an individual track exposes its local generator and instrument settings. Preserve independent track IDs, phrases, instruments, channels, and mix state.
 

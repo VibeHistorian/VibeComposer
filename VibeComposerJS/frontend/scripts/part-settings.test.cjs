@@ -3536,7 +3536,7 @@ function fixture({ compactHistory = false } = {}) {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts', 'harmony-settings.component.ts', 'section-context-editor.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts', 'harmony-settings.component.ts', 'section-context-editor.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };
@@ -3837,10 +3837,6 @@ test('manual melody notes work through the editor, scoped presence, history, per
   assert.equal(exported.tracks[0].instrument.number, 73);
   assert.equal(exported.tracks[0].notes[0].midi, draft[0].midi);
   assert.equal(exported.tracks[0].notes.length, laidOut.length);
-  const { MixWorkspaceComponent } = load('features/mix/mix-workspace.component.ts');
-  const mixer = new MixWorkspaceComponent();
-  assert.equal(mixer.tracks()[0].role, 'melody');
-  assert.equal(mixer.noteCount(id), draft.length);
   service.undo();
   assert.equal(service.exportProjectJson(), before, 'Apply writes exactly one history entry');
   service.redo();
@@ -4609,8 +4605,12 @@ test('quick access and inspector partition musical controls across roles and rhy
       assert.equal(quickKeys.some(key => inspectorKeys.includes(key)), false);
       assert.deepEqual([...quickKeys, ...inspectorKeys].sort(), complete.controls().map(control => control.key).sort());
       for (const key of ['noteLengthMultiplier', 'noteLengthPercent', 'exceptionChance', 'offset']) {
-        assert.equal(quickKeys.includes(key), false);
-        if (settings.PART_CONTROLS[role].some(control => control.key === key)) assert.ok(inspectorKeys.includes(key));
+        const inQuick = (role === 'bass' && key === 'noteLengthMultiplier')
+          || (role === 'chords' && key === 'noteLengthPercent');
+        assert.equal(quickKeys.includes(key), inQuick, `${role} ${key} quick placement`);
+        if (settings.PART_CONTROLS[role].some(control => control.key === key)) {
+          assert.equal(inspectorKeys.includes(key), !inQuick, `${role} ${key} inspector placement`);
+        }
       }
       assert.equal(quick.controlGroups()[0].id, 'rhythm');
       assert.equal(quick.seedControl(), undefined);

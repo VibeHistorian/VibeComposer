@@ -110,7 +110,7 @@
         [loopRange]="loopRange()"
         [settingsTarget]="settingsTarget()"
         [selectedSectionIds]="selectedSectionIds()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
-        (mixerRequested)="openMixer()" (groupSelected)="selectRole($event)"
+        (groupSelected)="selectRole($event)"
         (sectionAddRequested)="addSection($event)"
         (tracksChangeRequested)="changeOverviewTracks($event)"
         (sectionDuplicateRequested)="duplicateSection($event)"
@@ -363,5 +363,3 @@
       }
     </aside>
 </section>
-
-@if (mixerOpen()) { <vc-mix-workspace (closed)="closeMixer()" /> }
