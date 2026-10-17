@@ -128,12 +128,11 @@
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
         <header class="part-settings-heading" [class.role-settings]="!!editableScopes().length">
           <div class="part-heading-context">
-          <button type="button" class="part-panel-toggle" [disabled]="preferences.editingQuickSettings()" [attr.aria-expanded]="partPanelExpanded()"
-            aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
-            {{ partPanelExpanded() ? '▵' : '›' }} {{ partPanelLabel() }}
-          </button>
-          @if (partScope()) { <i class="role-dot" [class]="partRole()"></i> }
-          <span class="part-context-label">{{ contextLabel() }}</span>
+            @if (partScope()) { <i class="role-dot" [class]="partRole()"></i> }
+            <span class="part-context-label">
+              <span class="part-location-label" [class.global-location]="!('sectionId' in settingsTarget())">{{ contextLocationLabel() }}</span>
+              @if (contextPartLabel()) { <span>· {{ contextPartLabel() }}</span> }
+            </span>
           </div>
           @if (localPartTarget(); as target) {
             @if (editableScopes().length) {
@@ -147,14 +146,20 @@
                 (resetCellRequested)="runPartWorkflow('reset-cell')" (applyRequested)="runPartWorkflow($event)" />
             }
           }
-          @if (editableScopes().length || preferences.editingQuickSettings()) {
-            <div class="quick-settings-actions">
+          <div class="quick-settings-actions">
+            @if (editableScopes().length || preferences.editingQuickSettings()) {
               @if (preferences.editingQuickSettings()) {
                 <button type="button" class="part-inspector-link" [disabled]="!editableScopes().length" (click)="preferences.resetQuickSettings(partRole())">Reset to default</button>
               }
               <button type="button" class="part-inspector-link" [attr.aria-pressed]="preferences.editingQuickSettings()" (click)="toggleQuickSettingsEdit()">{{ preferences.editingQuickSettings() ? 'Save quick settings' : 'Edit quick settings' }}</button>
-            </div>
-          }
+            }
+            <button type="button" class="part-panel-toggle" [disabled]="preferences.editingQuickSettings()" [attr.aria-expanded]="partPanelExpanded()"
+              [attr.aria-label]="(partPanelExpanded() ? 'Collapse ' : 'Expand ') + partPanelLabel()"
+              [title]="(partPanelExpanded() ? 'Collapse ' : 'Expand ') + partPanelLabel()"
+              aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
+              <span aria-hidden="true">{{ partPanelExpanded() ? '▵' : '›' }}</span>
+            </button>
+          </div>
         </header>
         @if (partPanelExpanded()) {
           <div id="part-settings-content" class="part-settings-content">

@@ -558,7 +558,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
       const change = (element,value) => { element.value=value; element.dispatchEvent(new Event('change',{bubbles:true})); };
       const harmony = document.querySelector('vc-harmony-settings');
-      await wait(()=>document.querySelector('.part-panel-toggle').textContent.includes('Global Arpeggio settings'),'global role panel title');
+      await wait(()=>document.querySelector('.part-panel-toggle').getAttribute('aria-label').includes('Global Arpeggio settings'),'global role panel title');
       harmony.querySelector('details').open=true;
       change(harmony.querySelector('[aria-label="Flatten voicing"]'),'37');
       await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten commit');
@@ -583,7 +583,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       }
       canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
       const use = await wait(() => document.querySelector('[aria-label="Use Melody harmony"]'),'section harmony control');
-      await wait(()=>document.querySelector('.part-panel-toggle').textContent.includes('Quick access settings'),'section-only panel title');
+      await wait(()=>document.querySelector('.part-panel-toggle').getAttribute('aria-label').includes('Quick access settings'),'section-only panel title');
       if ([...document.querySelectorAll('.part-settings-content > .part-inheritance')].some(label=>['Global part settings','Inherited from global tracks'].includes(label.textContent.trim()))) throw new Error('duplicate part panel title');
       use.click(); await wait(() => read().arrangement.some(section => section.useMelodyHarmony),'section harmony commit');
       document.querySelector('[aria-label="Swap Melody"]').click();

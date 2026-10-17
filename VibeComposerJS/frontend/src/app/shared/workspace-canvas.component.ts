@@ -162,14 +162,18 @@ export class WorkspaceCanvasComponent {
     if ('role' in target) return this.project().tracks.filter((track) => track.role === target.role);
     return [];
   });
-  readonly contextLabel = computed(() => {
+  readonly contextLocationLabel = computed(() => {
     const target = this.settingsTarget();
     const section = 'sectionId' in target ? this.project().arrangement.find((item) => item.id === target.sectionId) : null;
-    const sectionLabel = section ? `${this.project().arrangement.indexOf(section) + 1} · ${this.sectionLabel(section.type)}` : 'Global';
-    if ('role' in target) return `${sectionLabel} · ${this.roleName(target.role)}`;
-    if ('trackId' in target) return `${sectionLabel} · ${this.contextTracks()[0]?.name ?? 'Track'}`;
-    return sectionLabel;
+    return section ? `${this.project().arrangement.indexOf(section) + 1} · ${this.sectionLabel(section.type)}` : 'Global';
   });
+  readonly contextPartLabel = computed(() => {
+    const target = this.settingsTarget();
+    if ('role' in target) return this.roleName(target.role);
+    if ('trackId' in target) return this.contextTracks()[0]?.name ?? 'Track';
+    return '';
+  });
+  readonly contextLabel = computed(() => [this.contextLocationLabel(), this.contextPartLabel()].filter(Boolean).join(' · '));
   readonly partScope = computed<PartSettingsScope | null>(() => {
     const target = this.settingsTarget();
     return target.kind === 'section' ? null : target;
