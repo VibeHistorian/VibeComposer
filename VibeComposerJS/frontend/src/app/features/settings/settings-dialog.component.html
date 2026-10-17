@@ -18,6 +18,18 @@
             <h2 id="appearance-title">Appearance</h2>
             <p>Changes apply immediately and are saved in your UI preferences.</p>
             <fieldset class="appearance-fields">
+              <legend>Color adjustments</legend>
+              <p>Adjust all chosen theme and track role colors. Zero keeps the original colors.</p>
+              <div class="color-adjustments">
+                @for (adjustment of colorAdjustments; track adjustment.key) {
+                  <vc-compact-knob [label]="adjustment.label" [description]="adjustment.description"
+                    [value]="preferences.appearance().colorAdjustments[adjustment.key]"
+                    [minimum]="-50" [maximum]="50" [defaultValue]="0" [dense]="true" [showValueBelow]="true"
+                    (valueCommit)="preferences.setColorAdjustment(adjustment.key, $event)" />
+                }
+              </div>
+            </fieldset>
+            <fieldset class="appearance-fields">
               <legend>Main theme colors</legend>
               <p>Set the backgrounds, panels, text, borders and highlights throughout the app. Selected tracks and role settings use a darker shade of the role groups background.</p>
               @for (color of themeColors; track color.key) {

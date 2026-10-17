@@ -89,6 +89,24 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         ensure(dialog.querySelectorAll('input[type="color"]').length===12,'seven theme and five role colors');
         const style=()=>getComputedStyle(document.documentElement);
         const originalSurface=style().getPropertyValue('--surface-base');
+        const changeAdjustment=(label,value)=>{
+          const knob=dialog.querySelector('vc-compact-knob input[aria-label="'+label+'"]');
+          ensure(knob && knob.min==='-50' && knob.max==='50','adjustment knob range');
+          knob.value=String(value); knob.dispatchEvent(new Event('change',{bubbles:true}));
+        };
+        changeAdjustment('Brightness',50);
+        await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#4bffff','brightness scales and clamps');
+        ensure(style().getPropertyValue('--role-melody').trim()==='#ff6060','brightness adjusts role colors');
+        changeAdjustment('Brightness',0);
+        await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#32d7f4','brightness returns to original');
+        changeAdjustment('Hue shift',50);
+        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#40d4d4','hue shifts role colors');
+        changeAdjustment('Hue shift',0);
+        changeAdjustment('Saturation',-50);
+        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#d48a8a','saturation adjusts role colors');
+        ensure(JSON.parse(localStorage.getItem(key)).appearance.colorAdjustments.saturation===-50,'adjustment persisted');
+        ensure(JSON.parse(localStorage.getItem(key)).appearance.roleColors.melody==='#d44040','chosen color retained');
+        changeAdjustment('Saturation',0);
         for (const [label,value] of [['Background','#100818'],['Surface','#281838'],['Inspector background','#211831'],['Role groups background','#504060'],['Text','#e8dfef'],['Border','#78618a'],['Accent','#dd88ee']]) {
           const input=dialog.querySelector('[aria-label="'+label+' theme color"]');
           input.value=value; input.dispatchEvent(new Event('input',{bubbles:true}));
@@ -98,7 +116,7 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         ensure(style().getPropertyValue('--surface-canvas').trim()==='#100818','live background');
         ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','live inspector background');
         ensure(getComputedStyle(document.querySelector('.track-group')).backgroundColor==='rgb(80, 64, 96)','live role group background');
-        ensure(getComputedStyle(document.querySelector('.group-selected > .track-policy-header')).backgroundColor==='rgb(56, 45, 67)','selected role settings darken the group background');
+        ensure(style().getPropertyValue('--surface-role-group-selected').trim()==='#382d43','selected role settings darken the group background');
         ensure(/^#[0-9a-f]{6}$/i.test(style().getPropertyValue('--grid-measure').trim()),'concrete canvas palette');
         const previousBassSurface=style().getPropertyValue('--role-bass-surface');
         const previousDrumSurface=style().getPropertyValue('--role-drum-surface');
@@ -152,7 +170,7 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         await wait(()=>footer.textContent.includes('Invalid UI preferences'),'invalid main theme rejected');
         ensure(localStorage.getItem(key)===imported,'invalid main theme import atomic');
         button('Reset appearance to defaults').click();
-        await wait(()=>style().getPropertyValue('--role-bass').trim()==='#22a7f2','reset appearance');
+        await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8ca9ba','reset appearance');
         ensure(style().getPropertyValue('--accent-primary').trim()==='#32d7f4','main theme reset');
         await upload(json);
         await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8855cc','import reapplies appearance');

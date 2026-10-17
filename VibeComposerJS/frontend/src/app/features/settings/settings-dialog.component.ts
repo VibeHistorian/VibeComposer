@@ -3,13 +3,14 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
-import { FONT_AREAS, FONT_CHOICES, type FontArea } from '../../core/ui/appearance';
+import { COLOR_ADJUSTMENTS, FONT_AREAS, FONT_CHOICES, type FontArea } from '../../core/ui/appearance';
+import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ARRANGED_PARTS, type ArrangedPart } from '../../core/project/project.model';
 import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
 
 @Component({
   selector: 'vc-settings-dialog',
-  imports: [SectionTypeSettingsComponent],
+  imports: [SectionTypeSettingsComponent, CompactKnobComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.css',
@@ -23,6 +24,7 @@ export class SettingsDialogComponent {
   readonly fontChoices = FONT_CHOICES;
   readonly roles = ARRANGED_PARTS;
   readonly themeColors = THEME_COLORS;
+  readonly colorAdjustments = COLOR_ADJUSTMENTS;
   changeThemeColor(key: ThemeColor, event: Event): void { this.preferences.setThemeColor(key, (event.target as HTMLInputElement).value); }
   readonly roleNames: Record<ArrangedPart, string> = { melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums' };
   changeFont(area: FontArea, event: Event): void { this.preferences.setFont(area, (event.target as HTMLSelectElement).value); }

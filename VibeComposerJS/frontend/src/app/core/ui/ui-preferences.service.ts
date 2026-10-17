@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import type { ArrangedPart } from '../project/project.model';
 import { ARRANGED_PARTS } from '../project/project.model';
-import { defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type FontArea } from './appearance';
+import { adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type ColorAdjustment, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
 import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
@@ -33,6 +33,13 @@ export class UiPreferencesService {
   }
   resetAppearance(): void { this.commit({ ...this.state(), appearance: defaultAppearance() }); }
 
+  setColorAdjustment(key: ColorAdjustment, value: number): void {
+    if (!COLOR_ADJUSTMENTS.some(choice => choice.key === key) || !Number.isFinite(value)) return;
+    const appearance = this.appearance();
+    this.commit({ ...this.state(), appearance: { ...appearance,
+      colorAdjustments: { ...appearance.colorAdjustments, [key]: Math.max(-50, Math.min(50, value)) } } });
+  }
+
   setThemeColor(key: ThemeColor, color: string): void {
     if (!THEME_COLORS.some(choice => choice.key === key) || !isRoleColor(color)) return;
     const appearance = this.appearance();
@@ -42,10 +49,12 @@ export class UiPreferencesService {
   private applyAppearance(preferences: UiPreferences): void {
     const style = globalThis.document?.documentElement?.style;
     if (!style) return;
-    for (const [name, color] of Object.entries(themeColorTokens(preferences.appearance.themeColors))) style.setProperty(name, color);
+    const adjust = (color: string) => adjustColor(color, preferences.appearance.colorAdjustments);
+    const colors = Object.fromEntries(THEME_COLORS.map(({ key }) => [key, adjust(preferences.appearance.themeColors[key])])) as typeof preferences.appearance.themeColors;
+    for (const [name, color] of Object.entries(themeColorTokens(colors))) style.setProperty(name, color);
     for (const [area, font] of Object.entries(preferences.appearance.fonts)) style.setProperty(`--font-${area}`, font);
     for (const role of ARRANGED_PARTS) {
-      for (const [name, color] of Object.entries(roleColorTokens(role, preferences.appearance.roleColors[role]))) style.setProperty(name, color);
+      for (const [name, color] of Object.entries(roleColorTokens(role, adjust(preferences.appearance.roleColors[role])))) style.setProperty(name, color);
     }
   }
 
