@@ -23,7 +23,9 @@ public final class MelodyPhrasePlan {
     public final int beatsPerBar;
     public final List<Phrase> phrases;
     public final List<Long> arrivals;
-    private MelodyPhrasePlan(Form form, int beatsPerBar,List<Phrase> phrases, List<Long> arrivals) {
+    private final HarmonyTimeline harmony;
+    private MelodyPhrasePlan(HarmonyTimeline harmony, Form form, int beatsPerBar,List<Phrase> phrases, List<Long> arrivals) {
+        this.harmony = harmony;
         this.beatsPerBar = beatsPerBar;
         this.form = form; this.phrases = Collections.unmodifiableList(phrases);
         this.arrivals = Collections.unmodifiableList(arrivals);
@@ -44,9 +46,12 @@ public final class MelodyPhrasePlan {
             if (end == harmony.length() && ending == ContextualMelodyPlanner.Ending.CLOSED) { purpose = Purpose.CLOSING; }
             phrases.add(new Phrase(harmony.at(start).id + "/phrase/" + (start - harmony.at(start).start),start,end,purpose,motifs.get(index % motifs.size())));
             arrivals.add(start);
-            if (end - start > 2 * HarmonyTimeline.TICKS_PER_BEAT) { arrivals.add(end - HarmonyTimeline.TICKS_PER_BEAT); }
+            if (end - start > 2 * HarmonyTimeline.TICKS_PER_BEAT
+                    || purpose == Purpose.CLOSING && end - start > HarmonyTimeline.TICKS_PER_BEAT) {
+                arrivals.add(end - HarmonyTimeline.TICKS_PER_BEAT);
+            }
         }
-        return new MelodyPhrasePlan(form,beatsPerBar,phrases,arrivals);
+        return new MelodyPhrasePlan(harmony,form,beatsPerBar,phrases,arrivals);
     }
 
     public Phrase at(long tick) {
@@ -57,13 +62,19 @@ public final class MelodyPhrasePlan {
     /** Multiple bounded candidates permit pitch/rhythm co-design without moving a custom rhythm. */
     public List<ContextualMelodyPlanner.Slot> rhythm(int speed, int pauseChance, long seed, int variant) {
         List<ContextualMelodyPlanner.Slot> result = new ArrayList<>();
-        long unit = speed >= 75 ? 240 : speed >= 35 ? 480 : 960;
         for (Phrase phrase : phrases) {
             Random random = new Random(seed ^ (0x9e3779b97f4a7c15L * Math.abs(phrase.motif)) ^ variant);
             long cursor = phrase.start; int index = 0;
             while (cursor < phrase.end) {
-                long duration = Math.min(phrase.end - cursor,unit * (random.nextInt(4) == 0 ? 2 : 1));
-                if (phrase.purpose == Purpose.CLOSING && phrase.end - cursor <= 2 * unit) { duration = phrase.end - cursor; }
+                long limit = phrase.end;
+                for (long arrival : arrivals) {
+                    if (arrival > cursor) { limit = Math.min(limit,arrival); }
+                }
+                long duration = ContextualRhythmDuration.choose(harmony,speed,cursor,limit,arrivals.contains(cursor),
+                        phrase.purpose == Purpose.CONTINUATION,random);
+                if (phrase.purpose == Purpose.CLOSING && phrase.end - cursor <= HarmonyTimeline.TICKS_PER_BEAT) {
+                    duration = phrase.end - cursor;
+                }
                 boolean rest = index > 0 && cursor + duration < phrase.end && random.nextInt(100)
                         < pauseChance + (phrase.purpose == Purpose.QUESTION ? 8 : 0);
                 ContextualMelodyPlanner.Intent intent = !rest && phrase.purpose == Purpose.CONTINUATION

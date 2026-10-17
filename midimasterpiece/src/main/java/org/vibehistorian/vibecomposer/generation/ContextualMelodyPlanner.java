@@ -128,13 +128,14 @@ public final class ContextualMelodyPlanner {
         for (HarmonyTimeline.Event event : harmony.events()) {
             int motif = motifs.get(event.index % motifs.size());
             Random random = new Random(seed ^ (0x9e3779b97f4a7c15L * motif));
-            long unit = speed >= 75 ? 240 : speed >= 35 ? 480 : 960;
             long cursor = event.start;
             int note = 0;
             while (cursor < event.end) {
-                long duration = Math.min(event.end - cursor, unit * (random.nextInt(4) == 0 ? 2 : 1));
                 boolean closing = ending == Ending.CLOSED && event.index == harmony.events().size() - 1;
-                if (closing && event.end - cursor <= 2 * unit) { duration = event.end - cursor; }
+                long arrival = Math.max(event.start,event.end - HarmonyTimeline.TICKS_PER_BEAT);
+                long duration = ContextualRhythmDuration.choose(harmony,speed,cursor,
+                        closing && cursor < arrival ? arrival : event.end,cursor == event.start,false,random);
+                if (closing && cursor >= arrival) { duration = event.end - cursor; }
                 boolean rest = note > 0 && !(closing && cursor + duration == event.end)
                         && random.nextInt(100) < pauseChance;
                 result.add(new Slot(cursor, duration, rest, null, Math.abs(motif)));

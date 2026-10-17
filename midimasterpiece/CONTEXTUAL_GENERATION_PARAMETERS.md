@@ -58,11 +58,11 @@ Each row explains one choice, or closely related choices. Switches are included 
 
 ## 2. Variable parameters: low, middle, and high
 
-Values below illustrate effects, not recommended presets. Except for Speed's explicit thresholds, low/middle/high are points on the parameter's range, not three separate modes. Musical legality and other settings can limit the audible difference.
+Values below illustrate effects, not recommended presets. Low/middle/high are points on the parameter's range, not three separate modes. Musical legality and other settings can limit the audible difference.
 
 | Parameter | Low | Middle | High | Scope / interaction |
 | --- | --- | --- | --- | --- |
-| Speed, −100…100 | **Below 35:** base notes of 1 or 2 beats. | **35…74:** 0.5 or 1 beat. | **75…100:** 0.25 or 0.5 beat. | Generated rhythm only. Pauses, closure, splitting, boundaries, and retries modify these values. Does not change BPM. |
+| Speed, −100…100 | Mostly 1–2 beat notes, with occasional shorter gestures. | Increasing mixtures of 1, 0.5 and 0.25 beat notes. | Greater likelihood of 0.25–0.5 beat notes, while longer notes remain available. | Continuous duration weighting, with no gates at 35 or 75. Weak subdivisions, continuation phrases, and nearby chord changes favor shorter notes; resolving dominants add forward motion. Arrivals favor longer notes and closed endings sustain their final beat. Generated rhythm only; pauses, splitting, boundaries, and retries also affect the result. Does not change BPM. |
 | Melody Tension, 0…100 | **0:** excludes non-chord ornament roles and jazz extensions. | **About 35–50:** allows eligible dissonances with a moderate penalty. | **100:** removes that exposure penalty. | Higher values do not guarantee more ornaments or relax preparation/resolution, range, or locks. |
 | Melody Low MIDI, 0…127 | **48:** permits a lower melodic floor. | **60:** floor at middle C. | **72:** raises the floor by an octave. | A hard lower bound before track/key transposition; must not exceed Melody High. Raising it also shifts the preferred register. |
 | Melody High MIDI, 0…127 | **72:** restricts upper reach. | **84:** permits another octave above that. | **96:** permits a still higher register. | A hard upper bound. A wider range permits options; it does not require large leaps. |
@@ -92,7 +92,7 @@ Values below illustrate effects, not recommended presets. Except for Speed's exp
 
 | Older control or action | Contextual meaning / current limitation |
 | --- | --- |
-| Speed | Controls generated rhythmic units with the thresholds above, rather than merely steering the old block-expansion process. Supplied rhythm takes precedence. |
+| Speed | Continuously biases generated duration probabilities across the full range. Short notes remain possible at slow speeds, and their pitch roles still require harmonic support and resolution. Metric accents influence rhythm independently of the Accent velocity knob. Supplied rhythm takes precedence. The weighted selector changes generated results from the earlier gated algorithm; fixed seeds remain reproducible with the current algorithm. |
 | Max Block Change / Block Jump | Together define a realized semitone leap bound. They no longer mean abstract changes between block endpoints. |
 | Note Targets | Soft scale-degree pitch-class preferences at phrase arrivals, indexed by the arrival's harmony event. In the normalized key, `0` favors C, `2` favors E in major / Eb in minor; `7` also favors C. Octave follows contour and range instead of pulling toward C4/E4. Use Anchors for an exact MIDI pitch lock. |
 | Pattern list / offsets, e.g. `1,2,1,3` | Repeated IDs encourage recurring phrase rhythms and gesture guides. IDs are identities, not density amounts. Negative IDs share rhythm with their positive counterpart and invert its seeded ANY contour. Explicit ASC/DESC takes priority. |

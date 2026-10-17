@@ -15,6 +15,8 @@ P1b (current block Melody), P4f (single-pitch drum tracks) and P4g (applicable s
 
 The legacy melody skeleton and its exclusive controls remain excluded. Current implementation rules live in [TRANSLATION_RULES.md](TRANSLATION_RULES.md); workspace layout contracts live in [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md).
 
+Java contextual melody now uses continuous, context-sensitive Speed duration weights instead of the old 35/75 gates; see [the parameter guide](../midimasterpiece/CONTEXTUAL_GENERATION_PARAMETERS.md). This applies to Java's contextual phrase planner. The current TypeScript block generator retains its separate speed behavior; contextual phrase-planner parity is not implied by the completed block-melody gates above.
+
 ## Product contract
 
 Keep the single workspace, persistent transport, arrangement and score. Add Melody first in every role ordering: **0 Melody (red), 1 Bass (cyan), 2 Chords (green), 3 Arpeggio (pink), 4 Drums (gold)**. Numeric types are explicit Java correspondence, not array positions to be inferred elsewhere. Only the current block-based melody algorithm is in scope.
