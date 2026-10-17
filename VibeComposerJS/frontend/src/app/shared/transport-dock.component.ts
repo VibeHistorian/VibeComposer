@@ -3,6 +3,7 @@ import { SCALE_MODES, SCALE_DEFINITIONS } from '../core/music/scales';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked, signal } from '@angular/core';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
+import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import { WorkspaceUiService } from './workspace-ui.service';
 import { effectiveKey } from '../core/music/harmony';
 import { WheelSelectDirective } from './wheel-select.directive';
@@ -24,12 +25,21 @@ export class TransportDockComponent {
   private readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
+  readonly seedInput = this.projects.seedInput;
+  private readonly preferences = inject(UiPreferencesService);
+
+  toggleComposeRandomization(field: 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose'): void {
+    this.projects.updateSettings({ [field]: this.project()[field] === false });
+  }
   readonly key = computed(() => effectiveKey(this.project().key, this.project().transposeSemitones ?? 0));
   private readonly generationFeedback = signal<{ project: unknown; message: string } | null>(null);
   readonly generationMessage = computed(() => this.generationFeedback()?.project === this.project() ? this.generationFeedback()?.message : null);
 
   generate(event: 'compose' | 'regenerate'): void {
     const result = this.projects.generateComposition(event);
+    if (event === 'compose' && result !== 'invalid' && this.preferences.restartPlaybackOnCompose()) {
+      this.playback.restartAfterCompose(this.project());
+    }
     this.generationFeedback.set({ project: this.project(), message: result === 'invalid'
       ? 'No settings changed. Generation conflicts with local settings.'
       : result === 'unchanged' ? 'Settings already match the generation rules.' : `${event === 'compose' ? 'Compose' : 'Regenerate'} settings applied.` });
@@ -120,6 +130,6 @@ export class TransportDockComponent {
       const value = BigInt(seed);
       if (value >= -(1n << 63n) && value <= (1n << 63n) - 1n) this.projects.updateSettings({ seed: value.toString() });
     }
-    input.value = this.project().seed;
+    input.value = this.seedInput();
   }
 }

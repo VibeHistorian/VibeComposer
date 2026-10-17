@@ -117,7 +117,7 @@ export class WorkspaceCanvasComponent {
   private readonly rerollFeedback = signal<{ project: CompositionProject; role: ArrangedPart; message: string } | null>(null);
   readonly rerollMessage = computed(() => this.rerollFeedback()?.project === this.project() ? this.rerollFeedback()?.message : null);
 
-  policyFor(role: ArrangedPart) { return this.project().trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]; }
+  policyFor(role: ArrangedPart) { return { ...DEFAULT_TRACK_POLICIES[role], ...this.project().trackGenerationPolicies?.[role] }; }
   instrumentPolicyFor(role: ArrangedPart) { return this.project().instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role]; }
   updateInstrumentPolicy(role: ArrangedPart, patch: Partial<InstrumentGenerationPolicy>): void {
     if (this.editing()) return;

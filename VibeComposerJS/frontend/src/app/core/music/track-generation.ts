@@ -13,7 +13,7 @@ export const DEFAULT_CHORD_POLICY_EXTENSION = Object.freeze({ strum: true, strum
 export const DEFAULT_DRUM_POLICY_EXTENSION = Object.freeze({ dynamicChance: 50, overrandomizeChance: 0, melodyChance: 30 });
 
 export const DEFAULT_ARPEGGIO_POLICY: ArpeggioGenerationPolicy = Object.freeze({
-  fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
+  onCompose: true, fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
   fills: true, patterns: true, transpose: true, randomSpan: true,
   maxSplit: 20, lengthMin: 75, lengthMax: 100, maxRepeat: 2, shiftChance: 50,
   voicesMode: 'AT_MOST', voices: 4, voicesChance: 50, velocityMin: 65, velocityMax: 89,
@@ -49,12 +49,12 @@ export const ARPEGGIO_POLICY_CONTROLS: readonly PolicyControl[] = [
 
 export const DEFAULT_TRACK_POLICIES: TrackGenerationPolicies = Object.freeze({
   arpeggio: DEFAULT_ARPEGGIO_POLICY,
-  bass: Object.freeze({}),
-  chords: Object.freeze({ fills: true, patterns: true, transpose: true, varyLength: true, delay: false,
+  bass: Object.freeze({ onCompose: true }),
+  chords: Object.freeze({ onCompose: true, fills: true, patterns: true, transpose: true, varyLength: true, delay: false,
     ...DEFAULT_CHORD_POLICY_EXTENSION,
     shiftChance: 60, voicesMode: 'AT_MOST', voices: 5, voicesChance: 50, velocityMin: 65, velocityMax: 89 }),
-  drums: Object.freeze({ patterns: true, fills: true, maxSwing: 20, randomOffset: false, hitsMultiplier: '1', shiftChance: 50, ...DEFAULT_DRUM_POLICY_EXTENSION }),
-  melody: Object.freeze({ rerollSeeds: true, sameSeed: false, patterns: true }),
+  drums: Object.freeze({ onCompose: true, patterns: true, fills: true, maxSwing: 20, randomOffset: false, hitsMultiplier: '1', shiftChance: 50, ...DEFAULT_DRUM_POLICY_EXTENSION }),
+  melody: Object.freeze({ onCompose: true, rerollSeeds: true, sameSeed: false, patterns: true }),
 });
 
 export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly PolicyControl[]>> = {
@@ -93,7 +93,7 @@ export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly Polic
 
 const AUTOMATIC_POLICY_KEYS = ['onCompose', 'onRegenerate', 'targetsOnCompose', 'patternsOnCompose'];
 export function automaticPolicyDefault(key: string): boolean {
-  return key === 'targetsOnCompose' || key === 'patternsOnCompose';
+  return key === 'onCompose' || key === 'targetsOnCompose' || key === 'patternsOnCompose';
 }
 
 export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, value: unknown): TrackGenerationPolicies[R] | undefined {

@@ -80,6 +80,9 @@
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>
+            <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.restartPlaybackOnCompose()"
+              aria-describedby="restart-compose-description" (click)="preferences.toggleRestartPlaybackOnCompose()">Restart playback on Compose</button>
+            <p id="restart-compose-description">Return to the beginning when composing, or to the loop start when looping. Playback continues if already playing.</p>
             <label class="behavior-setting">
               <input type="checkbox" [checked]="preferences.syncScoreMix()"
                 (change)="preferences.toggleScoreMixSync()" aria-describedby="sync-score-mix-description" />

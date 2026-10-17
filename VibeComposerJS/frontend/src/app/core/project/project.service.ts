@@ -55,6 +55,8 @@ export class ProjectService {
   private readonly historyRevision = signal(0);
 
   readonly project = this.state.asReadonly();
+  private readonly automaticSeed = signal(BigInt(this.state().seed) === 0n);
+  readonly seedInput = computed(() => this.automaticSeed() ? '0' : this.project().seed);
   readonly canUndo = this.undoAvailable.asReadonly();
   readonly canRedo = this.redoAvailable.asReadonly();
   readonly compactHistory = this.uiPreferences.compactHistory;
@@ -408,8 +410,17 @@ export class ProjectService {
     const current = this.state();
     let next = current;
     if (event === 'compose') {
+      const seed = this.automaticSeed() || BigInt(current.seed) === 0n
+        ? this.randomCompositionSeed() : current.seed;
+      const random = new JavaRandom(BigInt(seed));
+      // Separate stream from track rerolls; draw both values even when a star is disabled.
+      const transpose = random.nextInt(12) - 6;
+      const tempo = random.nextInt(41) + 60;
+      next = { ...current, seed,
+        transposeSemitones: current.randomizeTransposeOnCompose === false ? current.transposeSemitones : transpose,
+        tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
       for (const role of ARRANGED_PARTS) {
-        if (!(current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose) continue;
+        if ((current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose === false) continue;
         const candidate = this.buildRoleReroll(next, role);
         if (!candidate) return 'invalid';
         next = candidate;
@@ -670,6 +681,7 @@ export class ProjectService {
         return false;
       }
       this.commit(project);
+      this.automaticSeed.set(BigInt(project.seed) === 0n);
       return true;
     } catch (error) {
       console.warn('Could not load project from imported JSON.', error);
@@ -677,9 +689,25 @@ export class ProjectService {
     }
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed'>>): void {
+  private randomCompositionSeed(): string {
+    const values = new Int32Array(1);
+    globalThis.crypto.getRandomValues(values);
+    return String(values[0] || 1);
+  }
+
+  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose'>>): void {
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;
+    if (patch.seed !== undefined) {
+      if (!/^-?\d+$/.test(patch.seed) || BigInt(patch.seed) < -(1n << 63n) || BigInt(patch.seed) > (1n << 63n) - 1n) return;
+      const automatic = BigInt(patch.seed) === 0n;
+      this.automaticSeed.set(automatic);
+      if (automatic) {
+        const { seed, ...settings } = patch;
+        if (Object.keys(settings).length) this.updateSettings(settings);
+        return;
+      }
+    }
     this.commit({ ...this.state(), ...patch }, this.controlHistoryKey(['project'], patch));
   }
 
@@ -1439,6 +1467,8 @@ export class ProjectService {
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (isScaleMode(project.scale))
       && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
+      && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
+      && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
@@ -1474,6 +1504,8 @@ export class ProjectService {
       scale: project.scale!,
       transposeSemitones: project.transposeSemitones ?? 0,
       tempoBpm: project.tempoBpm!,
+      ...(project.randomizeTempoOnCompose !== undefined ? { randomizeTempoOnCompose: project.randomizeTempoOnCompose } : {}),
+      ...(project.randomizeTransposeOnCompose !== undefined ? { randomizeTransposeOnCompose: project.randomizeTransposeOnCompose } : {}),
       seed: project.seed!,
       progression: [...project.progression!],
       ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
@@ -1867,6 +1899,8 @@ export class ProjectService {
       && typeof project.key === 'string' && KEYS.includes(project.key)
       && (isScaleMode(project.scale))
       && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
+      && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
+      && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
       && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
       && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
       && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n

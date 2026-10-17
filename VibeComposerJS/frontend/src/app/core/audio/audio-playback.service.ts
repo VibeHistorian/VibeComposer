@@ -167,6 +167,13 @@ export class AudioPlaybackService {
     this.liveState.set(!this.liveEnabled());
   }
 
+  /** Keep the transport state, but restart with the newly composed project and loop origin. */
+  restartAfterCompose(project: CompositionProject): void {
+    const startBeat = this.loopEnabled() ? this.loopBounds().startBeat : 0;
+    if (this.state() === 'playing') void this.start(project, startBeat);
+    else this.seek(project, startBeat);
+  }
+
   /** Replace queued audio at the current musical position without pausing the transport. */
   reload(project: CompositionProject): void {
     if (!this.liveEnabled() || this.state() !== 'playing' || !this.context) return;

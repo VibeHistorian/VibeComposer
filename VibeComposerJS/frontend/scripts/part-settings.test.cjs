@@ -8,6 +8,64 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('zero seed keeps automatic input, saves the generated seed and loads it as explicit input', () => {
+  const { service, load } = fixture();
+  service.updateSettings({ seed: '0' });
+  assert.equal(service.seedInput(), '0');
+  assert.equal(service.generateComposition('compose'), 'changed');
+  const first = service.project().seed;
+  assert.notEqual(first, '0');
+  assert.equal(service.seedInput(), '0');
+  service.generateComposition('regenerate');
+  assert.equal(service.project().seed, first);
+  service.generateComposition('compose');
+  const generated = service.project().seed;
+  assert.notEqual(generated, first);
+  const exported = service.exportProjectJson();
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.equal(new ProjectService().seedInput(), generated);
+  assert.equal(service.importProjectJson(exported), true);
+  assert.equal(service.seedInput(), generated);
+  service.updateSettings({ seed: '9223372036854775807' });
+  service.generateComposition('compose');
+  assert.equal(service.project().seed, '9223372036854775807');
+});
+
+test('Compose stars default on, preserve disabled global values and round-trip independently', () => {
+  const { service, load, workspace } = fixture();
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) assert.equal(workspace.policyFor(role).onCompose, true);
+  service.updateSettings({ seed: '123', tempoBpm: 200, transposeSemitones: 24 });
+  const before = service.exportProjectJson();
+  service.generateComposition('compose');
+  assert.ok(service.project().tempoBpm >= 60 && service.project().tempoBpm <= 100);
+  assert.ok(service.project().transposeSemitones >= -6 && service.project().transposeSemitones <= 5);
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.generateComposition('compose'); assert.equal(service.exportProjectJson(), after);
+  service.updateSettings({ tempoBpm: 200, transposeSemitones: 24, randomizeTempoOnCompose: false, randomizeTransposeOnCompose: false });
+  service.generateComposition('compose');
+  assert.equal(service.project().tempoBpm, 200);
+  assert.equal(service.project().transposeSemitones, 24);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  assert.equal(service.project().randomizeTempoOnCompose, false);
+  assert.equal(service.project().randomizeTransposeOnCompose, false);
+  service.updateSettings({ randomizeTempoOnCompose: true });
+  service.generateComposition('compose');
+  assert.notEqual(service.project().tempoBpm, 200);
+  assert.equal(service.project().transposeSemitones, 24);
+  for (const field of ['randomizeTempoOnCompose', 'randomizeTransposeOnCompose']) {
+    assert.equal(service.importProjectJson(JSON.stringify({ ...JSON.parse(saved), [field]: 'false' })), false);
+  }
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const preferences = new UiPreferencesService();
+  assert.equal(preferences.restartPlaybackOnCompose(), true);
+  preferences.toggleRestartPlaybackOnCompose();
+  assert.equal(new UiPreferencesService().restartPlaybackOnCompose(), false);
+  assert.equal(preferences.importJson(preferences.exportJson()), true);
+  assert.equal(preferences.restartPlaybackOnCompose(), false);
+});
+
 test('Java XML translation passes the real project decoder, round-trips and produces identical MIDI after reload', () => {
   const {service,load}=fixture(), {parseXml}=require('./translate-java-config.cjs');
   const source=fs.readFileSync(path.join(__dirname,'../GENERATOR_REFACTOR_TEST_GUICONFIG.xml-config'),'utf8');
@@ -1348,6 +1406,7 @@ test('chord policies bias strums, bound transitions/pauses, enforce Expand and r
 
 test('automatic events are atomic, replayable and preserve locks, local settings and manual notes', () => {
   const { service, load, stored, midi } = fixture();
+  service.updateSettings({ randomizeTransposeOnCompose: false });
   service.updateSettings({ seed: '9007199254740993' });
   service.addTrack('melody');
   service.addTrack('drums');
@@ -1416,7 +1475,7 @@ test('automatic batch failures and no-ops preserve state, counters and redo', ()
 test('automatic policy import accepts omission and rejects invalid or unknown fields', () => {
   const { service } = fixture();
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
-    assert.equal(service.updateTrackGenerationPolicy(role, { onCompose: true }), 'changed');
+    assert.equal(service.updateTrackGenerationPolicy(role, { onCompose: false }), 'changed');
     const data = JSON.parse(service.exportProjectJson());
     data.trackGenerationPolicies[role].onCompose = 'true';
     assert.equal(service.importProjectJson(JSON.stringify(data)), false);
@@ -1631,6 +1690,7 @@ test('P5e catalogue selection matches 4500 production Java shapes and subsequent
 
 test('P5e target preparation preserves current notes until events, locks, local ownership and MIDI replay', () => {
   const { service, phrase, midi, load } = fixture();
+  service.updateTrackGenerationPolicy('melody', { onCompose: false });
   const primary = 'track-melody-1', duplicate = service.duplicateTrack(primary);
   service.setTrackRerollLock(duplicate, true);
   service.updateSettings({ seed: '9007199254740993' });
@@ -1679,6 +1739,8 @@ test('P5e target preparation preserves current notes until events, locks, local 
 
 test('P5e forced outline follows the first stored Melody and only copies the production outline fields', () => {
   const { service, phrase } = fixture();
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) service.updateTrackGenerationPolicy(role, { onCompose: false });
+  service.updateSettings({ randomizeTransposeOnCompose: false, randomizeTempoOnCompose: false });
   const primary = 'track-melody-1', second = service.duplicateTrack(primary), third = service.duplicateTrack(second);
   const sourceFields = { chordNoteChoices: [1, -2, 4], melodyPatternOffsets: [1, -1, 2], speed: 0,
     maxBlockChange: 2, blockJump: 3, maxNoteExceptions: 4, doubledRhythmChance: 100, splitChance: 40, noteExceptionChance: 70 };
@@ -5695,6 +5757,7 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
 
 test('Bass On Compose controls implicit rerolls, persists, and preserves locked tracks', () => {
   const { service } = fixture();
+  service.updateTrackGenerationPolicy('bass', { onCompose: false });
   service.updateSettings({ seed: '123' });
   service.addTrack('bass');
   service.setTrackRerollLock('track-bass-2', true);

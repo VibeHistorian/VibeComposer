@@ -42,3 +42,8 @@
 .dense .knob-face > span { width: 24px; height: 24px; }
 .dense input { top: 20px; width: 32px; height: 32px; }
 .knob-caption { justify-self: center; color: var(--accent-hover); font: 10px var(--font-mono); }
+
+/* Compose randomization at the foot of transport knobs */
+.compose-star { position: absolute; z-index: 2; top: 43px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; padding: 0; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-muted); font-size: 12px; line-height: 1; cursor: pointer; }
+.compose-star.active { color: var(--accent-primary); border-color: var(--border-accent); }
+.compose-star:hover, .compose-star:focus-visible { border-color: var(--border-focus); color: var(--accent-hover); }

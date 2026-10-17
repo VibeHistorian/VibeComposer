@@ -17,7 +17,7 @@ import { CompactKnobComponent } from './compact-knob.component';
 export class TrackGenerationPolicyComponent {
   readonly role = input<ArrangedPart>('arpeggio');
   readonly policy = input.required<TrackGenerationPolicy>();
-  readonly values = computed(() => ({ onCompose: false, onRegenerate: false,
+  readonly values = computed(() => ({ onCompose: true, onRegenerate: false,
     targetsOnCompose: automaticPolicyDefault('targetsOnCompose'), patternsOnCompose: automaticPolicyDefault('patternsOnCompose'),
     ...DEFAULT_TRACK_POLICIES[this.role()], ...this.policy() }) as unknown as Record<string, string | number | boolean>);
   readonly expanded = input(false);

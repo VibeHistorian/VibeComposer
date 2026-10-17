@@ -303,6 +303,7 @@ test('transport watches project changes and enabling LIVE without subscribing to
   const { TransportDockComponent } = load('shared/transport-dock.component.ts', {
     '@angular/core': angular, '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
     '../core/project/project.service': { ProjectService: 'projects' }, '../core/music/harmony': { KEYS: [] },
+    '../core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
     '../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
     './workspace-ui.service': { WorkspaceUiService: 'ui' },
     './wheel-select.directive': { WheelSelectDirective: class {} },
@@ -482,4 +483,28 @@ test('looping starts enabled and wraps the whole arrangement by default', async 
   assert.equal(playback.state(), 'playing');
   assert.equal(playback.beat(), 1);
   playback.stop();
+});
+
+test('Compose restart uses zero or selected loop origin and keeps paused/stopped transport inactive', async () => {
+  const { playback, project, context } = fixture();
+  await playback.start(project);
+  context.currentTime = 1;
+  playback.restartAfterCompose({ ...project, tempoBpm: 100 });
+  await Promise.resolve();
+  assert.equal(playback.beat(), 0);
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.tempoMap[0].bpm, 100);
+  playback.setLoopRange({ startBeat: 4, endBeat: 8 });
+  playback.toggleLoop();
+  playback.restartAfterCompose(project);
+  await Promise.resolve();
+  assert.equal(playback.beat(), 4);
+  playback.pause();
+  playback.restartAfterCompose(project);
+  assert.equal(playback.state(), 'paused');
+  assert.equal(playback.beat(), 4);
+  playback.stop();
+  playback.restartAfterCompose(project);
+  assert.equal(playback.state(), 'stopped');
+  assert.equal(playback.beat(), 4);
 });

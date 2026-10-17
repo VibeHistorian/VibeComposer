@@ -37,9 +37,11 @@
   <div class="transport-globals" aria-label="Global song settings">
     <div class="global-knobs">
       <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="Transpose" unit=""
-        [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)" />
+        [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)"
+        [composeEnabled]="project().randomizeTransposeOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTransposeOnCompose')" />
       <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="BPM" unit=""
-        [value]="project().tempoBpm" [minimum]="30" [maximum]="240" (valueCommit)="updateTempo($event)" />
+        [value]="project().tempoBpm" [minimum]="30" [maximum]="240" (valueCommit)="updateTempo($event)"
+        [composeEnabled]="project().randomizeTempoOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTempoOnCompose')" />
     </div>
     <div class="mode-seed">
     <label class="mode-control"><span>MODE</span><select selectDefault="major" aria-label="Mode" [value]="project().scale" (change)="updateScale($event)">
@@ -47,8 +49,8 @@
         <option [value]="scale" [selected]="project().scale === scale">{{ scaleDefinitions[scale].label }}</option>
       }
     </select></label>
-    <label class="seed-control"><span>SEED</span><input aria-label="Generation seed" inputmode="numeric" [value]="project().seed"
-      [title]="'Generation seed: ' + project().seed" (change)="updateSeed($event)" (keydown.enter)="$any($event.target).blur()" /></label>
+    <label class="seed-control"><span>SEED</span><input aria-label="Generation seed" inputmode="numeric" [value]="seedInput()"
+      title="Generation seed (0 chooses a random seed on Compose)" (change)="updateSeed($event)" (keydown.enter)="$any($event.target).blur()" /></label>
     </div>
     <vc-chordlet-editor />
   </div>
@@ -58,7 +60,7 @@
     <div class="transport-project">
       <input class="project-name" [value]="project().name" maxlength="80" aria-label="Project name"
         [title]="project().name" (change)="updateProjectName($event)" (keydown.enter)="$any($event.target).blur()" />
-      <span>{{ key() }} {{ scaleDefinitions[project().scale].label.toUpperCase() }} | {{ project().tempoBpm }} BPM</span>
+      <span>{{ key() }} {{ scaleDefinitions[project().scale].label.toUpperCase() }} | {{ project().tempoBpm }} BPM | SEED {{ project().seed }}</span>
     </div>
     <ng-content select="[transportFiles]" />
   </div>

@@ -14,4 +14,11 @@
     <vc-control-heading class="knob-status" [label]="label()" [statusOnly]="true" [inheritance]="inheritance()"
       (inheritRequested)="inheritRequested.emit()" />
   }
+  @if (composeEnabled() !== null) {
+    <button type="button" class="compose-star" [class.active]="composeEnabled()"
+      [attr.aria-label]="'Randomize ' + shortLabel() + ' on Compose'" [attr.aria-pressed]="composeEnabled()"
+      [title]="'Randomize ' + shortLabel() + ' on Compose'"
+      (click)="$event.stopPropagation(); composeToggle.emit()" (wheel)="$event.stopPropagation()"
+      (contextmenu)="$event.stopPropagation()">✦</button>
+  }
 </div>

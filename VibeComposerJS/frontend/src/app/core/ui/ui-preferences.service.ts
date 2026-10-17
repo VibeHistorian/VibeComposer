@@ -15,6 +15,7 @@ export class UiPreferencesService {
   readonly preferences = this.state.asReadonly();
   readonly compactHistory = computed(() => this.state().compactHistory);
   readonly syncScoreMix = computed(() => this.state().syncScoreMix);
+  readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly appearance = computed(() => this.state().appearance);
   readonly editingQuickSettings = computed(() => this.draft() !== null);
   readonly quickSettings = computed(() => this.draft() ?? this.state().quickSettings);
@@ -88,6 +89,7 @@ export class UiPreferencesService {
   }
   toggleCompactHistory(): void { this.commit({ ...this.state(), compactHistory: !this.compactHistory() }); }
   toggleScoreMixSync(): void { this.commit({ ...this.state(), syncScoreMix: !this.syncScoreMix() }); }
+  toggleRestartPlaybackOnCompose(): void { this.commit({ ...this.state(), restartPlaybackOnCompose: !this.restartPlaybackOnCompose() }); }
   exportJson(): string { return JSON.stringify(this.state(), null, 2); }
   importJson(json: string): boolean {
     try {

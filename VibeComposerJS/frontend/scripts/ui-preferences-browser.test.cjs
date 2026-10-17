@@ -57,6 +57,22 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         checkFonts();
         document.querySelector('[aria-label="Close settings"]').click();
       } else {
+        ensure([...document.querySelectorAll('.group-policy-toggle')].every(b=>b.getAttribute('aria-pressed')==='true'), 'role Compose defaults on');
+        const tempoStar = button('Randomize BPM on Compose');
+        const transposeStar = button('Randomize Transpose on Compose');
+        ensure(tempoStar?.getAttribute('aria-pressed')==='true' && transposeStar?.getAttribute('aria-pressed')==='true', 'global Compose stars default on');
+        const tempo = document.querySelector('input[aria-label="Tempo in beats per minute"]').value;
+        const transpose = document.querySelector('input[aria-label="Transpose in semitones"]').value;
+        tempoStar.click(); transposeStar.click();
+        await wait(()=>tempoStar.getAttribute('aria-pressed')==='false','star disabled');
+        const seedInput = document.querySelector('input[aria-label="Generation seed"]');
+        seedInput.value='0'; seedInput.dispatchEvent(new Event('change',{bubbles:true}));
+        button('Compose').click();
+        await wait(()=>document.querySelector('.transport-project span').textContent.includes('SEED'),'generated seed summary');
+        ensure(seedInput.value==='0','automatic seed input remains zero');
+        ensure(document.querySelector('input[aria-label="Tempo in beats per minute"]').value===tempo,'disabled BPM star preserves tempo');
+        ensure(document.querySelector('input[aria-label="Transpose in semitones"]').value===transpose,'disabled transpose star preserves transpose');
+        ensure(document.querySelector('.transport-project').getBoundingClientRect().width>=260,'expanded project name width');
         const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'),'seed');
         seed.value='123'; seed.dispatchEvent(new Event('change',{bubbles:true}));
         await wait(()=>sessionStorage.getItem('vibecomposer.project.v12'),'project saved');
@@ -93,6 +109,11 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         button('Preview').click();
         await wait(()=>getComputedStyle(backdrop()).backgroundColor==='rgba(0, 0, 0, 0)','preview clears dimming');
         button('Behavior').click();
+        const restart=await wait(()=>button('Restart playback on Compose'),'restart Compose preference');
+        ensure(restart.getAttribute('aria-pressed')==='true','restart defaults on');
+        restart.click();
+        await wait(()=>restart.getAttribute('aria-pressed')==='false','restart toggles off');
+        ensure(JSON.parse(localStorage.getItem(key)).restartPlaybackOnCompose===false,'restart preference persisted');
         await wait(()=>!backdrop().classList.contains('appearance-preview'),'preview only applies in Appearance');
         ensure(getComputedStyle(backdrop()).backgroundColor!=='rgba(0, 0, 0, 0)','other categories dim workspace');
         button('Appearance').click();

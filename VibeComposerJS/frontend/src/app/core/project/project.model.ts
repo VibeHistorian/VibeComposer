@@ -344,6 +344,8 @@ export interface CompositionProject {
   readonly scale: ScaleMode;
   readonly transposeSemitones?: number;
   readonly tempoBpm: number;
+  readonly randomizeTempoOnCompose?: boolean;
+  readonly randomizeTransposeOnCompose?: boolean;
   /** Decimal text preserves Java long seeds when JSON is exported or persisted. */
   readonly seed: string;
   /** One-based diatonic chord degrees in the selected key and scale. */
