@@ -184,13 +184,13 @@
   --line: var(--border-subtle);
 }
 
-/* Inspector gradient resolves the selected role in its local scope. */
+/* Inspector gradient resolves the selected role in its local scope, then transitions to the dock/base color. */
 :root, [data-control-role] {
-  --background-inspector: linear-gradient(120deg,
-    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 40%) 0%,
-    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 10%) 10%,
-    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 5%) 20%,
-    var(--surface-inspector) 30%);
+  --background-inspector: linear-gradient(150deg,
+    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 30%) 0%,
+    color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 5%) 10%,
+    var(--surface-inspector) 40%,
+    var(--surface-base) 75%);
 }
 
 /* Contextual role accents */
