@@ -1,8 +1,8 @@
 <section class="transport-dock" aria-label="Playback controls">
   <div class="transport-actions">
-    <button type="button" class="transport-button generation-button" [disabled]="workspaceUi.editingNoteId() !== null"
+    <button type="button" class="transport-button generation-button compose-button" [disabled]="workspaceUi.editingNoteId() !== null"
       (click)="generate('compose')" aria-label="Compose" title="Compose using the current seed and enabled role rules">✦</button>
-    <button type="button" class="transport-button generation-button" [disabled]="workspaceUi.editingNoteId() !== null"
+    <button type="button" class="transport-button generation-button regenerate-button" [disabled]="workspaceUi.editingNoteId() !== null"
       (click)="generate('regenerate')" aria-label="Regenerate" title="Regenerate Melody using its enabled automatic rules">↻</button>
     <button type="button" class="transport-button stop-button" (click)="stop()" aria-label="Stop" title="Stop">■</button>
     <button type="button" class="transport-button play-button" (click)="togglePlayback()"
