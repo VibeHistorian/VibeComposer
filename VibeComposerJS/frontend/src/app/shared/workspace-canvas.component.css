@@ -42,7 +42,7 @@
 .group-policy-toggle:disabled { opacity: .5; cursor: default; }
 /* Track reroll controls */
 .track-policy-header { display: grid; gap: 5px; padding: 6px 3px; border-bottom: 1px solid var(--border-subtle); }
-.group-selected > .track-policy-header { background: color-mix(in srgb, var(--track-group-color) 10%, var(--surface-role-group-selected)); }
+.group-selected > .track-policy-header { background: color-mix(in srgb, var(--track-group-color) 5%, var(--surface-role-group-selected)); }
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }
 .track-reroll-actions button { width: 18px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-muted); font: 13px var(--font-ui); cursor: pointer; }
 .track-reroll-actions { display: flex; align-items: center; gap: 2px; }
@@ -53,7 +53,7 @@
 
 /* Track rows */
 .track-row-card { min-width: 0; margin-top: 3px; padding: 3px 3px 4px; border: 1px solid transparent; border-radius: var(--radius-tight); }
-.track-row-card.selected { border-color: var(--border-default); background: color-mix(in srgb, var(--track-group-color) 25%, var(--surface-role-group-selected)); }
+.track-row-card.selected { border-color: var(--border-default); background: color-mix(in srgb, var(--track-group-color) 15%, var(--surface-role-group-selected)); }
 .track-line { min-width: 0; display: grid; grid-template-columns: var(--track-name-column-width) auto minmax(0, 1fr) auto auto; align-items: center; column-gap: 3px; }
 .track-select { min-width: 0; padding: 4px 0; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; font-size: 10px; }
 .track-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
