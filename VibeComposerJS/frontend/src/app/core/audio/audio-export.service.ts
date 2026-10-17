@@ -6,20 +6,25 @@ import { renderProjectAudio } from './audio-export';
 export class AudioExportService {
   readonly busy = signal(false);
   readonly status = signal('');
+  readonly progress = signal(0);
 
   async export(project: CompositionProject): Promise<Blob> {
     if (this.busy()) throw new Error('An audio export is already running.');
     this.busy.set(true);
-    this.status.set('Rendering audio…');
+    this.progress.set(0);
+    this.status.set('Rendering audio: 0%...');
     try {
       // Let the busy state paint before preparing the offline graph.
       await new Promise<void>(resolve => setTimeout(resolve, 0));
-      const buffer = await renderProjectAudio(project);
-      this.status.set('Encoding audio…');
+      const buffer = await renderProjectAudio(project, percent => {
+        this.progress.set(percent);
+        this.status.set(`Rendering audio: ${percent}%...`);
+      });
       return await this.encode(buffer);
     } finally {
       this.busy.set(false);
       this.status.set('');
+      this.progress.set(0);
     }
   }
 

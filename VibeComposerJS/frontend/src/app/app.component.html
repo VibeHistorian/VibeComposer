@@ -24,7 +24,8 @@
       <input #projectFile type="file" accept="application/json,application/xml,text/xml,.json,.xml,.xml-config" hidden (change)="importProject($event)" />
     </div>
     @if (audioExport.status() || projectMessage()) {
-      <div transportNotice class="project-message" role="status">
+      <div transportNotice class="project-message" role="status"
+        [class.export-finishing]="audioExport.busy() && audioExport.progress() === 100">
         <span>{{ audioExport.status() || projectMessage() }}</span>
         @if (!audioExport.busy()) {
           <button type="button" (click)="projectMessage.set('')" aria-label="Dismiss project notification" title="Dismiss">×</button>

@@ -30,6 +30,21 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
       };
       const ensure = (value,label) => { if(!value) throw Error(label); };
       const downloads = [];
+      const renderProgress = [];
+      let completionGlow = false;
+      const noticeObserver = new MutationObserver(() => {
+        const notice = document.querySelector('.project-message');
+        const match = notice?.textContent.match(/Rendering audio: (\\d+)%/);
+        if (match) {
+          const percent = Number(match[1]);
+          if (renderProgress.at(-1) !== percent) renderProgress.push(percent);
+          if (percent === 100) {
+            completionGlow ||= notice.classList.contains('export-finishing')
+              && getComputedStyle(notice, '::after').animationName.includes('export-border-orbit');
+          }
+        }
+      });
+      noticeObserver.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class'] });
       const unhandledRejections = [];
       addEventListener('unhandledrejection', event => unhandledRejections.push(String(event.reason)));
       let offlineResumes = 0;
@@ -88,7 +103,12 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
           ensure(rms(1,1,1.5)<.00001,'pan and solo exclude other tracks');
           ensure(rms(0,5,5.5)<.00001,'voice release ends and trailing section stays silent');
         } finally { await context.close(); }
-        ensure(offlineResumes===0,'offline export must start rendering without calling resume');
+        ensure(offlineResumes===19,'render checkpoints resume after suspension');
+        ensure(renderProgress[0]===0 && renderProgress.at(-1)===100,'render progress runs from 0 to 100: '+renderProgress);
+        ensure(renderProgress.some(percent=>percent>0 && percent<100),'intermediate render progress visible');
+        ensure(renderProgress.every((percent,index)=>!index || percent>renderProgress[index-1]),'render progress increases');
+        ensure(completionGlow,'100% render progress shows animated completion border');
+        ensure(!document.querySelector('.export-finishing'),'completion clears animated border');
         ensure(unhandledRejections.length===0,'unhandled export rejections: '+unhandledRejections.join('; '));
         // Mute every track; report failure and allow retry.
         for (const label of ['M1','B1','C1','A1','D1']) {
@@ -98,13 +118,14 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         }
         trigger.click(); await wait(menu,'silent audio menu'); item('Export Audio').click();
         await wait(()=>document.querySelector('.project-message')?.textContent.includes('no audible notes'),'export failure feedback');
+        ensure(!document.querySelector('.export-finishing'),'failure clears animated border');
         ensure(downloads.length===3,'failed export does not download');
         trigger.click(); await wait(menu,'retry menu'); ensure(!item('Export Audio').disabled,'failure clears busy state');
         await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
       } catch(error) { await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack,
         notice:document.querySelector('.project-message')?.textContent,downloads:downloads.map(d=>d.name),
         project:sessionStorage.getItem('vibecomposer.project.v12')})}); }
-      finally { window.AudioContext=NativeAudioContext; }
+      finally { noticeObserver.disconnect(); window.AudioContext=NativeAudioContext; }
     })();
   </script>`;
   const index = fs.readFileSync(path.join(root,'index.html'),'utf8').replace('</body>',script+'</body>');

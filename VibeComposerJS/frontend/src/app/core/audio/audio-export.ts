@@ -9,7 +9,7 @@ const SAMPLE_RATE = 48000;
 const MAX_RELEASE_TAIL_SECONDS = 40;
 
 /** Render the full arrangement with the playback instruments, tempo map and mix. */
-export async function renderProjectAudio(project: CompositionProject): Promise<AudioBuffer> {
+export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void): Promise<AudioBuffer> {
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
   const tempo = projectTempoMap(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
@@ -55,11 +55,21 @@ export async function renderProjectAudio(project: CompositionProject): Promise<A
         if (++scheduled % 128 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
       }
     }
-    const rendered = await context.startRendering();
+    // Offline rendering has no progress event. Briefly suspend at known audio
+    // positions, report completed work, then immediately resume off the UI thread.
+    const checkpoints = onProgress ? Array.from({ length: 19 }, (_, index) => {
+      const percent = (index + 1) * 5;
+      return context.suspend(context.length / context.sampleRate * percent / 100).then(async () => {
+        onProgress(percent);
+        await context.resume();
+      });
+    }) : [];
+    const [rendered] = await Promise.all([context.startRendering(), ...checkpoints]);
     const trimmed = context.createBuffer(2, Math.min(length, Math.ceil((lastStop + 0.01) * SAMPLE_RATE)), SAMPLE_RATE);
     for (let channel = 0; channel < 2; channel++) {
       trimmed.copyToChannel(rendered.getChannelData(channel).subarray(0, trimmed.length), channel);
     }
+    onProgress?.(100);
     return trimmed;
   } finally {
     synth.dispose();

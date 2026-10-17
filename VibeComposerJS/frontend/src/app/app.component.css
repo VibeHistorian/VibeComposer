@@ -3,3 +3,31 @@
 .export-menu button { padding: 9px 12px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--text-primary); font: 12px var(--font-ui); text-align: left; cursor: pointer; }
 .export-menu button:hover:not(:disabled), .export-menu button:focus-visible { outline: none; background: var(--surface-button-hover); }
 .export-menu button:disabled { color: var(--text-disabled); cursor: default; }
+
+/* Export completion glow */
+@property --export-border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.project-message.export-finishing::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(from var(--export-border-angle), transparent 0deg 270deg, var(--accent-glow) 300deg, var(--accent-primary) 330deg, transparent 360deg);
+  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 3px var(--accent-glow));
+  animation: export-border-orbit 1.6s linear infinite;
+}
+@keyframes export-border-orbit {
+  to { --export-border-angle: 360deg; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .project-message.export-finishing::after { animation: none; }
+}
