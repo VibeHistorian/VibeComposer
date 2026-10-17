@@ -34,8 +34,8 @@
 /* Header policy toggles */
 .group-policy-toggles { flex: 1 0 auto; display: flex; justify-content: center; align-items: center; gap: 3px; }
 .group-policy-toggle { width: 22px; height: 22px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 14px var(--font-ui); cursor: pointer; }
-.group-policy-toggle:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.group-policy-toggle.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.group-policy-toggle:hover:not(:disabled):not(.active) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.group-policy-toggle.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
 .group-policy-toggle:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 .group-policy-toggle:disabled { opacity: .5; cursor: default; }
 /* Track reroll controls */

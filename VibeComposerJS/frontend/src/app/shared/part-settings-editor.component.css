@@ -21,8 +21,8 @@
 .choice-controls { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .choice-controls select { flex: 1 1 auto; max-width: 100%; }
 .flip-button { flex: 0 0 25px; height: 29px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 14px var(--font-ui); cursor: pointer; }
-.flip-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.flip-button.active { border-color: var(--accent-primary); background: var(--surface-accent-hover); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.flip-button:hover:not(.active) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.flip-button.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
 .flip-button.mixed { border-style: dashed; }
 .flip-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 

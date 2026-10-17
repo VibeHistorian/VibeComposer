@@ -46,6 +46,7 @@
   --surface-hover: #134357;
   --surface-accent: #113a4d;
   --surface-accent-hover: #154c61;
+  --surface-toggle-active: color-mix(in srgb, var(--surface-accent-hover) 50%, black);
   --surface-score: #0a1826;
   --surface-blue: #103448;
   --surface-violet: #27344c;
