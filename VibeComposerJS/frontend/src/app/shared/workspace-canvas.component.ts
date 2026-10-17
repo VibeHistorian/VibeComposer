@@ -36,7 +36,7 @@ import { MixButtonsComponent } from './mix-buttons.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { TrackGenerationPolicyComponent } from './track-generation-policy.component';
 import { DEFAULT_TRACK_POLICIES } from '../core/music/track-generation';
-import { DEFAULT_INSTRUMENT_POLICIES } from '../core/music/instrument-generation';
+import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS } from '../core/music/instrument-generation';
 import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
@@ -101,6 +101,15 @@ export class WorkspaceCanvasComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly instruments = GM_INSTRUMENTS;
+  readonly trackInstrumentOptions = computed(() => {
+    const limited = this.preferences.limitInstrumentsToPool();
+    return Object.fromEntries(this.project().tracks.filter(track => track.role !== 'drums').map(track => {
+      const pool = this.instrumentPolicyFor(track.role).pool;
+      const programs = pool === 'AUTO' ? [...INSTRUMENT_POOLS.CHORD, ...INSTRUMENT_POOLS.PLUCK] : INSTRUMENT_POOLS[pool];
+      return [track.id, limited ? this.instruments.filter(instrument =>
+        instrument.program === track.mix.program || programs.includes(instrument.program)) : this.instruments];
+    }));
+  });
   readonly drumInstruments = DRUM_INSTRUMENTS;
   readonly sectionTypes = SECTION_TYPES;
   readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));

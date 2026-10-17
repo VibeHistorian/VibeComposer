@@ -80,6 +80,9 @@
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>
+            <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.limitInstrumentsToPool()"
+              aria-describedby="instrument-pool-description" (click)="preferences.toggleLimitInstrumentsToPool()">Limit instrument options to selected pool</button>
+            <p id="instrument-pool-description">Show only instruments in each role's selected pool, plus each track's current instrument. Turn off to show all instruments. The automatic Chords pool includes both Chord and Pluck instruments. Saved in your UI preferences.</p>
             <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.restartPlaybackOnCompose()"
               aria-describedby="restart-compose-description" (click)="preferences.toggleRestartPlaybackOnCompose()">Restart playback on Compose</button>
             <p id="restart-compose-description">Return to the beginning when composing, or to the loop start when looping. Playback continues if already playing.</p>

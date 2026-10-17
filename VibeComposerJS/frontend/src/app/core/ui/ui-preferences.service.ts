@@ -16,6 +16,7 @@ export class UiPreferencesService {
   readonly compactHistory = computed(() => this.state().compactHistory);
   readonly syncScoreMix = computed(() => this.state().syncScoreMix);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
+  readonly limitInstrumentsToPool = computed(() => this.state().limitInstrumentsToPool);
   readonly appearance = computed(() => this.state().appearance);
   readonly editingQuickSettings = computed(() => this.draft() !== null);
   readonly quickSettings = computed(() => this.draft() ?? this.state().quickSettings);
@@ -90,6 +91,7 @@ export class UiPreferencesService {
   toggleCompactHistory(): void { this.commit({ ...this.state(), compactHistory: !this.compactHistory() }); }
   toggleScoreMixSync(): void { this.commit({ ...this.state(), syncScoreMix: !this.syncScoreMix() }); }
   toggleRestartPlaybackOnCompose(): void { this.commit({ ...this.state(), restartPlaybackOnCompose: !this.restartPlaybackOnCompose() }); }
+  toggleLimitInstrumentsToPool(): void { this.commit({ ...this.state(), limitInstrumentsToPool: !this.limitInstrumentsToPool() }); }
   exportJson(): string { return JSON.stringify(this.state(), null, 2); }
   importJson(json: string): boolean {
     try {

@@ -66,6 +66,41 @@ test('Compose stars default on, preserve disabled global values and round-trip i
   assert.equal(preferences.restartPlaybackOnCompose(), false);
 });
 
+test('instrument dropdown pool filtering follows policy and preserves the current instrument without editing music', () => {
+  const { service, load, workspace } = fixture();
+  const { INSTRUMENT_POOLS } = load('core/music/instrument-generation.ts');
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const preferences = workspace.preferences;
+  assert.equal(preferences.limitInstrumentsToPool(), false);
+  const track = service.project().tracks.find(track => track.role === 'bass');
+  service.updateTrack(track.id, { mix: { program: 127 } });
+  assert.equal(workspace.trackInstrumentOptions()[track.id].length, 128);
+  const before = service.exportProjectJson();
+  preferences.toggleLimitInstrumentsToPool();
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(new UiPreferencesService().limitInstrumentsToPool(), true);
+  for (const pool of ['ALL', 'MELODY', 'BASS', 'CHORD', 'PLUCK', 'LONG_PAD']) {
+    service.updateInstrumentPolicy('bass', { pool });
+    const options = workspace.trackInstrumentOptions()[track.id].map(instrument => instrument.program);
+    assert.deepEqual(options, [...new Set([...INSTRUMENT_POOLS[pool], 127])].sort((a, b) => a - b));
+    assert.equal(service.project().tracks.find(item => item.id === track.id).mix.program, 127);
+  }
+  const chords = service.project().tracks.find(track => track.role === 'chords');
+  service.updateInstrumentPolicy('chords', { pool: 'AUTO' });
+  assert.deepEqual(workspace.trackInstrumentOptions()[chords.id].map(instrument => instrument.program),
+    [...new Set([...INSTRUMENT_POOLS.CHORD, ...INSTRUMENT_POOLS.PLUCK, chords.mix.program])].sort((a, b) => a - b));
+  const json = preferences.exportJson();
+  preferences.toggleLimitInstrumentsToPool();
+  assert.equal(workspace.trackInstrumentOptions()[track.id].length, 128);
+  assert.equal(preferences.importJson(json), true);
+  assert.equal(preferences.limitInstrumentsToPool(), true);
+  assert.equal(preferences.importJson(JSON.stringify({ ...JSON.parse(json), limitInstrumentsToPool: 'true' })), false);
+  const missing = JSON.parse(json);
+  delete missing.limitInstrumentsToPool;
+  assert.equal(preferences.importJson(JSON.stringify(missing)), true);
+  assert.equal(preferences.limitInstrumentsToPool(), false);
+});
+
 test('Java XML translation passes the real project decoder, round-trips and produces identical MIDI after reload', () => {
   const {service,load}=fixture(), {parseXml}=require('./translate-java-config.cjs');
   const source=fs.readFileSync(path.join(__dirname,'../GENERATOR_REFACTOR_TEST_GUICONFIG.xml-config'),'utf8');
