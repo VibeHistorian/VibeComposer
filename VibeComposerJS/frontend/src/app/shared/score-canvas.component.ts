@@ -940,14 +940,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
     const style = getComputedStyle(document.documentElement);
+    const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1);
     for (const area of this.hitAreas) {
-      const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1);
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
+      const glowStrength = 1 - (beat - area.note.startBeat) / area.note.durationBeats;
       const glow = new Color(style.getPropertyValue(COLORS[area.note.color].note).trim() || '#32d7f4');
       graphics.roundRect(area.x - 3, area.y - 2, area.width + 6, area.height + 4, 3)
-        .stroke({ color: glow.toNumber(), alpha: 0.325, width: 3 });
+        .stroke({ color: glow.toNumber(), alpha: 0.325 * glowStrength, width: 3 });
       graphics.roundRect(area.x, area.y + area.height / 4, area.width, area.height / 2, 2)
-        .fill({ color: glow.toNumber(), alpha: 0.4 });
+        .fill({ color: glow.toNumber(), alpha: 0.4 * glowStrength });
     }
     const preview = this.drag?.preview ?? (this.shape ? [...this.shape.notes.values()] : []);
     for (const note of preview) {

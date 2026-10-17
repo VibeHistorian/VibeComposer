@@ -165,6 +165,29 @@ test('playhead glow follows the actual note duration independently of the enlarg
   component.playhead = 21 / 64 * 100; component.drawDynamic(); assert.equal(fills.length, 1, 'ending notes stop glowing at their true boundary');
 });
 
+test('playhead glow fades with the fraction played for both short and long notes', () => {
+  const { component, strokes, fills } = fixture();
+  for (const durationBeats of [.25, 4]) {
+    component.hitAreas = [{ note: { color: 'bass', startBeat: 20, durationBeats }, x: 195, y: 30, width: 60, height: 6 }];
+    for (const progress of [0, .25, .5, .75, .99]) {
+      fills.length = 0;
+      component.playhead = (20 + progress * durationBeats) / 64 * 100;
+      component.drawDynamic();
+      const glowStroke = strokes.find(stroke => stroke.width === 3);
+      assert.ok(Math.abs(glowStroke.alpha - .325 * (1 - progress)) < 1e-10);
+      assert.equal(fills.length, 1);
+      assert.ok(Math.abs(fills[0].alpha - .4 * (1 - progress)) < 1e-10);
+    }
+    for (const beat of [19, 20 + durationBeats]) {
+      fills.length = 0;
+      component.playhead = beat / 64 * 100;
+      component.drawDynamic();
+      assert.equal(fills.length, 0);
+      assert.ok(strokes.every(stroke => stroke.width !== 3));
+    }
+  }
+});
+
 function editFixture() {
   const value = fixture();
   const c = value.component;
