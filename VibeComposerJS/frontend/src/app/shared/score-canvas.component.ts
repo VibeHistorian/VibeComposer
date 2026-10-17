@@ -838,21 +838,27 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const rowHeight = note.color === 'drums' ? drumRowHeight : this.laneHeight;
       const y = Math.max(top, centerY - rowHeight / 4);
       const noteHeight = Math.min(bottom, centerY + rowHeight / 4) - y;
-      const opacity = note.opacity * (selectedTrackId === note.part ? 1 : 0.72);
+      const selectionOpacity = selectedTrackId === note.part ? 1 : 0.8;
+      const opacity = note.opacity * (selectedTrackId === note.part ? 1 : 0.72) * selectionOpacity;
       const noteColors = COLORS[note.color];
-      if (noteHeight > 0 && selectedTrackId === note.part) fill(x - 2, y - 2, noteWidth + 4, noteHeight + 4, noteColors.glow);
+      if (noteHeight > 0 && selectedTrackId === note.part) {
+        for (let radius = 6; radius >= 1; radius--) {
+          fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2,
+            noteColors.glow, (7 - radius) / 15);
+        }
+      }
       const parsed = color(noteColors.note);
       if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2)).fill({ color: parsed.value, alpha: opacity * parsed.alpha });
       if (noteHeight > 0 && note.color !== 'drums' && this.inScale(note.midi)) {
         const highlight = color('--score-scale-note');
         graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
-          .fill({ color: highlight.value, alpha: highlight.alpha });
+          .fill({ color: highlight.value, alpha: highlight.alpha * selectionOpacity });
       }
       if (this.velocityVisible()) {
         const velocityColor = color(noteColors.velocity);
         const velocityHeight = Math.max(2, note.velocity / 127 * VELOCITY_HEIGHT);
         graphics.rect(x, this.height - velocityHeight, 2, velocityHeight)
-          .fill({ color: velocityColor.value, alpha: (selectedTrackId === note.part ? 0.9 : 0.32) * velocityColor.alpha });
+          .fill({ color: velocityColor.value, alpha: (selectedTrackId === note.part ? 0.9 : 0.32) * velocityColor.alpha * selectionOpacity });
       }
       if (noteHeight <= 0) continue;
       const hitHalfHeight = Math.max(3, rowHeight / 4);

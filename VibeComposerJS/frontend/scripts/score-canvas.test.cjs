@@ -359,7 +359,7 @@ test('drum-only editing renders every unselected drum note at visible row-based 
   }
 });
 
-test('selected track glow stays centered on notes in short and tall score canvases', () => {
+test('selected track glow fades outward over 5px and stays centered in short and tall score canvases', () => {
   const { component: c } = fixture();
   c.horizontalOffset = 0; c.horizontalScale = 1;
   c.model = { tracks: [{ id: 'bass', color: 'bass' }],
@@ -370,16 +370,22 @@ test('selected track glow stays centered on notes in short and tall score canvas
   c.staticGraphics = { clear() { rectangles.length = 0; notes.length = 0; },
     rect(x, y, width, height) { rectangles.push({ x, y, width, height }); return this; },
     roundRect(x, y, width, height) { notes.push({ x, y, width, height }); return this; },
-    moveTo() { return this; }, lineTo() { return this; }, fill() { return this; }, stroke() { return this; } };
+    moveTo() { return this; }, lineTo() { return this; },
+    fill(style) { if (rectangles.length) rectangles.at(-1).alpha = style.alpha; return this; }, stroke() { return this; } };
   for (const height of [50, 100, 600]) {
     c.height = height; c.drawStatic();
     const note = notes.find(shape => shape.x === c.scoreX(8));
-    const glow = rectangles.find(shape => shape.x === note.x - 2 && shape.width === note.width + 4);
     assert.ok(Math.abs(note.height - c.laneHeight / 2) < 1e-9, 'notes fill half of their pitch row');
-    assert.ok(glow, 'selected track has a glow');
-    assert.ok(Math.abs(glow.y + glow.height / 2 - note.y - note.height / 2) < 1e-9,
-      'glow stays centered at canvas height ' + height);
-    assert.ok(Math.abs(glow.height - note.height - 4) < 1e-9, 'glow keeps equal padding around the note');
+    let previousAlpha = 0;
+    for (let radius = 5; radius >= 1; radius--) {
+      const glow = rectangles.find(shape => shape.x === note.x - radius && shape.width === note.width + radius * 2);
+      assert.ok(glow, 'selected track has a glow at radius ' + radius);
+      assert.ok(Math.abs(glow.y + glow.height / 2 - note.y - note.height / 2) < 1e-9,
+        'glow stays centered at canvas height ' + height);
+      assert.ok(Math.abs(glow.height - note.height - radius * 2) < 1e-9, 'glow keeps equal padding around the note');
+      assert.ok(glow.alpha > previousAlpha, 'glow layers become stronger toward the note');
+      previousAlpha = glow.alpha;
+    }
   }
 });
 
