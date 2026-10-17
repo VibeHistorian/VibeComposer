@@ -126,7 +126,7 @@
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
         <header class="part-settings-heading" [class.role-settings]="!!editableScopes().length">
           <div class="part-heading-context">
-            @if (partScope()) { <i class="role-dot" [class]="partRole()"></i> }
+            @if (localPartTarget()) { <i class="role-dot" [class]="partRole()"></i> }
             <span class="part-context-label">
               <span class="part-location-label" [class.global-location]="!('sectionId' in settingsTarget())">{{ contextLocationLabel() }}</span>
               @if (contextPartLabel()) { <span>· {{ contextPartLabel() }}</span> }
