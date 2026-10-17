@@ -47,6 +47,7 @@
   --surface-accent: #113a4d;
   --surface-accent-hover: #154c61;
   --surface-toggle-active: color-mix(in srgb, var(--surface-accent-hover) 50%, black);
+  --toggle-off-shade: rgb(0 0 0 / 25%);
   --surface-score: #0a1826;
   --surface-blue: #103448;
   --surface-violet: #27344c;
@@ -245,6 +246,12 @@ body {
 }
 
 :where(button, a, input, select) { font: inherit; }
+
+/* Off-state toggle backgrounds; track and role selectors select a scope rather than toggle a setting. */
+button[aria-pressed="false"]:not(.group-select, .track-select) {
+  /* Keep the shade over component background shorthands, including hover, without dimming labels. */
+  background-image: linear-gradient(var(--toggle-off-shade), var(--toggle-off-shade)) !important;
+}
 
 /* Heading typography */
 :where(h1, h2, h3, h4, h5, h6), .group-heading { font-family: var(--font-heading); }

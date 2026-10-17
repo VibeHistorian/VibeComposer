@@ -46,6 +46,7 @@
 .track-policy-header > span { color: var(--text-muted); font: 9px var(--font-ui); line-height: 1.4; }
 .track-reroll-actions button { width: 18px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-muted); font: 13px var(--font-ui); cursor: pointer; }
 .track-reroll-actions { display: flex; align-items: center; gap: 2px; }
+.track-reroll-actions vc-mix-buttons { --mix-button-text: var(--text-muted); }
 .track-reroll-actions button[aria-pressed="true"] { border-color: var(--text-primary); color: var(--text-primary); }
 .track-reroll-actions button:hover:not(:disabled) { border-color: var(--border-strong); background: var(--surface-button-hover); color: var(--text-primary); }
 .track-reroll-actions button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }

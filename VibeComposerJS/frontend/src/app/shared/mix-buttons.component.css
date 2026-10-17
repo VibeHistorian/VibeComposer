@@ -1,6 +1,6 @@
 /* Compact mix controls */
 :host { display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto; }
-button { width: 20px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-primary); font: 10px var(--font-mono); cursor: pointer; }
+button { width: 20px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--mix-button-text, var(--text-primary)); font: 10px var(--font-mono); cursor: pointer; }
 button:hover:not(:disabled) { background: var(--surface-button-hover); }
 button:disabled { opacity: .4; cursor: default; }
 .mute-toggle.active { border-color: var(--mix-mute-active); background: var(--mix-mute-active); color: var(--surface-input); }
