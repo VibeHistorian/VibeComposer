@@ -247,6 +247,9 @@ body {
 
 :where(button, a, input, select) { font: inherit; }
 
+/* Combobox popup typography */
+select option { font-size: calc(1em + 2px); }
+
 /* Off-state toggle backgrounds; track and role selectors select a scope rather than toggle a setting. */
 button[aria-pressed="false"]:not(.group-select, .track-select) {
   /* Keep the shade over component background shorthands, including hover, without dimming labels. */

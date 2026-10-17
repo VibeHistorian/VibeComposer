@@ -67,7 +67,8 @@
 .track-inline-select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 .track-inline-select:disabled { color: var(--text-muted); cursor: default; }
 .track-inline-select option { background: var(--surface-input); color: var(--text-primary); }
-.track-instrument { font: 10px var(--font-ui); }
+.track-instrument { font: 10px var(--font-ui); text-transform: uppercase; }
+.track-instrument option { text-transform: none; }
 .track-channel { width: 43px; font: 9px var(--font-mono); }
 
 /* Track mix actions */
