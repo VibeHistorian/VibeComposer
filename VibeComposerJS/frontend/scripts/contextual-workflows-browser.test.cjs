@@ -558,7 +558,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
       const change = (element,value) => { element.value=value; element.dispatchEvent(new Event('change',{bubbles:true})); };
       const harmony = document.querySelector('vc-harmony-settings');
-      await wait(()=>document.querySelector('.part-panel-toggle').getAttribute('aria-label').includes('Global Arpeggio settings'),'global role panel title');
+      await wait(()=>document.querySelector('.part-panel-toggle').getAttribute('aria-label').includes('Global Arps settings'),'global role panel title');
       harmony.querySelector('details').open=true;
       change(harmony.querySelector('[aria-label="Flatten voicing"]'),'37');
       await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten commit');

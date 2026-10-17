@@ -57,7 +57,7 @@ export class MixWorkspaceComponent {
   }
 
   roleName(track: CompositionTrack): string {
-    return track.role === 'arpeggio' ? 'Arpeggio' : track.role[0].toUpperCase() + track.role.slice(1);
+    return track.role === 'arpeggio' ? 'Arps' : track.role[0].toUpperCase() + track.role.slice(1);
   }
 
   selectTrack(trackId: string): void {

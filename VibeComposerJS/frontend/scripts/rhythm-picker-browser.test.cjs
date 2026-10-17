@@ -359,13 +359,13 @@ test('production Angular controls initialize selects from settings and support r
         const beforePolicy = JSON.stringify(readArp().generatorSettings);
         const randomHits = [...document.querySelectorAll('button[aria-label="Random hits"]')];
         randomHits[0].click();
-        await waitFor(() => !document.querySelector('input[aria-label="Reroll Arp hits"]').disabled, 'fixed hits enabled');
+        await waitFor(() => !document.querySelector('input[aria-label="Reroll Arps hits"]').disabled, 'fixed hits enabled');
         const setPolicyNumber = async (label, value) => {
           const input = document.querySelector('input[aria-label="Reroll ' + label + '"]');
           input.value = String(value); input.dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => [...document.querySelectorAll('input[aria-label="Reroll ' + label + '"]')].every(input => input.value === String(value)), label);
         };
-        await setPolicyNumber('Arp hits', 16);
+        await setPolicyNumber('Arps hits', 16);
         await setPolicyNumber('Max split %', 0);
         await setPolicyNumber('Min length %', 100);
         await setPolicyNumber('Max repeat', 1);
@@ -380,7 +380,7 @@ test('production Angular controls initialize selects from settings and support r
         result.rerollDisplayedHits = [...document.querySelectorAll('input[aria-label="Hits"]')].map(input => input.value);
         document.querySelector('button[aria-label="Lock reroll for A1"]').click();
         await waitFor(() => document.querySelector('button[aria-label="Reroll A1"]').disabled, 'reroll lock');
-        result.rerollAllLocked = document.querySelector('button[aria-label="Reroll Arpeggio tracks"]').disabled;
+        result.rerollAllLocked = document.querySelector('button[aria-label="Reroll Arps tracks"]').disabled;
         document.querySelector('button[aria-label="Unlock reroll for A1"]').click();
         await waitFor(() => !document.querySelector('button[aria-label="Reroll A1"]').disabled, 'reroll unlock');
         document.querySelector('.track-group.bass .group-select').click();
@@ -518,7 +518,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => readProject().instrumentGenerationPolicies?.arpeggio?.pool === 'MELODY', 'instrument policy');
         result.instrumentRulesPreserveTracks = JSON.stringify(readProject().tracks) === beforeInstrumentRules;
         result.instrumentPolicy = readProject().instrumentGenerationPolicies.arpeggio;
-        const arpTotal = arpGroup.querySelector('input[aria-label="Arpeggio track count"]');
+        const arpTotal = arpGroup.querySelector('input[aria-label="Arps track count"]');
         arpTotal.value = '3'; arpTotal.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => arpGroup.querySelectorAll('.track-select').length === 3, 'new instrument tracks');
         const arpRows = [...arpGroup.querySelectorAll('.track-row-card')];
@@ -528,7 +528,7 @@ test('production Angular controls initialize selects from settings and support r
         arpRows[2].querySelector('button[aria-label="Lock reroll for ' + lastArp.name + '"]').click();
         await waitFor(() => arpRows[2].querySelector('button[aria-label="Reroll ' + lastArp.name + '"]').disabled, 'whole-track lock');
         const beforeInstrumentRoll = readProject();
-        arpGroup.querySelector('button[aria-label="Reroll Arpeggio tracks"]').click();
+        arpGroup.querySelector('button[aria-label="Reroll Arps tracks"]').click();
         await waitFor(() => readProject().trackRerollCounts.arpeggio > beforeInstrumentRoll.trackRerollCounts.arpeggio, 'combined roll');
         const rolledArps = readProject().tracks.filter(track => track.role === 'arpeggio');
         result.sharedArpInstrument = rolledArps[0].mix.program === rolledArps[1].mix.program;

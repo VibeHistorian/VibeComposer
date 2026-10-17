@@ -55,7 +55,7 @@ interface TimelineSection {
 type ScoreNote = ScoreCanvasNote;
 
 const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
-  melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arpeggio', drums: 'Drums',
+  melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arps', drums: 'Drums',
 };
 
 

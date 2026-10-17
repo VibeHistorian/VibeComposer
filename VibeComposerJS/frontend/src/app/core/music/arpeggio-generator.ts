@@ -25,7 +25,7 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) throw new RangeError('Use bigint for 64-bit seeds.');
   if (progression.length < 1 || progression.length > 32 || !ARPEGGIO_PATTERNS.includes(settings.pattern)
     || !['eighth', 'sixteenth'].includes(settings.rate) || ![1, 2].includes(settings.octaves)
-    || !decodePartPatch('arpeggio', settings)) throw new RangeError('Arpeggio settings are outside the supported range.');
+    || !decodePartPatch('arpeggio', settings)) throw new RangeError('Arps settings are outside the supported range.');
   const follows = settings.rhythm === 'melody';
   const rhythmSettings = { ...settings, rhythm: settings.rhythm ?? 'full' as const,
     hitsPerPattern: follows ? progression.length * 16 : settings.hitsPerPattern ?? (settings.rate === 'eighth' ? 8 : 16),

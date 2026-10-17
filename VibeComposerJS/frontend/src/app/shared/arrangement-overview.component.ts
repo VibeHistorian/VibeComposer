@@ -52,7 +52,7 @@ const ROLE_COLORS: Readonly<Record<ArrangedPart, string>> = {
 };
 
 const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
-  melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arp', drums: 'Drums',
+  melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arps', drums: 'Drums',
 };
 
 @Component({

@@ -30,7 +30,7 @@ export interface PolicyControl {
 }
 export const ARPEGGIO_POLICY_CONTROLS: readonly PolicyControl[] = [
   { key: 'onCompose', label: 'On Compose' },
-  { key: 'fixedHits', label: 'Arp hits', minimum: 1, maximum: 32 },
+  { key: 'fixedHits', label: 'Arps hits', minimum: 1, maximum: 32 },
   { key: 'randomHits', label: 'Random hits' }, { key: 'sameHits', label: 'One hit count' },
   { key: 'powerOfTwo', label: 'Limit 2ⁿ' }, { key: 'fills', label: 'Fills' }, { key: 'patterns', label: 'Patterns' },
   { key: 'maxSplit', label: 'Max split %', minimum: 0, maximum: 100 },
@@ -159,7 +159,7 @@ export function weightedChordFill(weight: number) {
 /** Deterministic translation of the supported reroll branches; legacy GUI uses unseeded Randoms. */
 export function rerollArpeggioSettings(seed: bigint, policy: ArpeggioGenerationPolicy,
   sources: readonly ArpeggioSettings[], orders: readonly number[] = sources.map((_, index) => index + 1), totalTracks = sources.length): ArpeggioSettings[] {
-  if (!decodeArpeggioPolicy(policy)) throw new RangeError('Invalid Arpeggio reroll policy.');
+  if (!decodeArpeggioPolicy(policy)) throw new RangeError('Invalid Arps reroll policy.');
   const random = new JavaRandom(seed);
   const sharedHits = policy.sameHits ? chooseArpeggioHits(random, policy) : undefined;
   return sources.map((source, index) => {
