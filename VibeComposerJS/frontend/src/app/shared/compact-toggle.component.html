@@ -1,9 +1,9 @@
-<div class="toggle-control" [class.coded]="shortLabel() !== null" [class.with-status]="showStatus()"
+<div class="toggle-control" [class.coded]="shortLabel() !== null" [class.with-status]="showStatus() && inheritance() !== 'global'"
   [title]="label() + (description() ? ': ' + description() : '') + (mixed() ? ' (mixed values)' : '')">
   <button type="button" class="toggle-button" [class.active]="active()" [class.mixed]="mixed()"
     [attr.aria-label]="label()" [attr.aria-pressed]="mixed() ? 'mixed' : active()" [disabled]="disabled()"
     (click)="toggled.emit()">{{ shortLabel() ?? label() }}</button>
-  @if (showStatus()) {
+  @if (showStatus() && inheritance() !== 'global') {
     <vc-control-heading class="toggle-status" [label]="label()" [statusOnly]="true" [inheritance]="inheritance()"
       (inheritRequested)="inheritRequested.emit()" />
   }

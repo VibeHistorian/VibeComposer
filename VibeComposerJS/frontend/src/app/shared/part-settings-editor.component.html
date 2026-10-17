@@ -1,6 +1,6 @@
 <div class="part-controls">
   @if (seedControl(); as control) {
-    <div class="part-control seed-control" data-control-key="patternSeed" data-control-category="other" [title]="control.description ?? ''">
+    <div class="part-control seed-control" data-control-key="patternSeed" [title]="control.description ?? ''">
       @if (preferences.editingQuickSettings()) {
         <button type="button" class="placement-target" (click)="preferences.moveControl(role(), control.key)"
           [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>

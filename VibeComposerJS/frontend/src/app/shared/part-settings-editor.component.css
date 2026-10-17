@@ -39,7 +39,10 @@
 .mini-preview .mixed { grid-column: 1 / -1; font: 10px var(--font-ui); color: var(--text-muted); background: transparent; }
 
 /* Shared reset action */
-.common-grid-button { border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; padding: 5px; }
+.common-grid-button { border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font-size: 10px; padding: 5px; cursor: pointer; }
+.common-grid-button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.common-grid-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.common-grid-button:disabled { opacity: .4; cursor: default; }
 
 /* Flowing quick settings */
 :host(.quick-layout) .part-controls { align-items: stretch; gap: 6px; }

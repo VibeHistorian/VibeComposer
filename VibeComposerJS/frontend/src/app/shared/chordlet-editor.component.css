@@ -12,6 +12,8 @@
 /* Progression actions */
 .chordlet-action { width: 24px; height: 26px; display: grid; place-items: center; padding: 0; line-height: 1; flex: 0 0 auto; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
 .chordlet-action:disabled { opacity: .35; cursor: default; }
+.chordlet-action:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.chordlet-action:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 /* Chord choices */
 .chordlet-menu { position: fixed; z-index: 100; width: 220px; padding: 8px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface-base); box-shadow: 0 8px 30px var(--shadow-ink); }

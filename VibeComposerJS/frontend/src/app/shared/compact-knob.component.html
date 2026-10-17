@@ -10,7 +10,7 @@
     (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)" (pointerup)="finishDrag($event)"
     (pointercancel)="cancelDrag()" (lostpointercapture)="cancelDrag()" (keydown.escape)="cancelDrag()"
     (input)="previewValue($event)" (change)="commitValue($event)" />
-  @if (compact()) {
+  @if (compact() && inheritance() !== 'global') {
     <vc-control-heading class="knob-status" [label]="label()" [statusOnly]="true" [inheritance]="inheritance()"
       (inheritRequested)="inheritRequested.emit()" />
   }

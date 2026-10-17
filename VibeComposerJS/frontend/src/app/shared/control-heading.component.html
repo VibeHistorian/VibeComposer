@@ -1,4 +1,4 @@
 @if (!statusOnly()) { <label class="control-name" [for]="controlId" [title]="label()">{{ shortLabel() ?? label() }}</label> }
-@if (showStatus()) { <button type="button" class="inherit-snowflake" [class.custom]="inheritance() === 'custom'"
+@if (showStatus() && inheritance() !== 'global') { <button type="button" class="inherit-snowflake" [class.custom]="inheritance() === 'custom'"
   [disabled]="inheritance() !== 'custom'" [title]="statusLabel()" [attr.aria-label]="statusLabel()"
   (click)="inheritRequested.emit()"><span aria-hidden="true">❄</span></button> }
