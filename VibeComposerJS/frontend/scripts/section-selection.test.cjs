@@ -21,8 +21,9 @@ function fixture() {
     ChangeDetectionStrategy: { OnPush: 0 },
   };
   const projects = { project };
+  const preferences = { syncScoreMix: signal(false) };
   let ui;
-  angular.inject = (type) => type === 'ui' ? ui : type === 'audio' ? {} : projects;
+  angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? {} : projects;
   const load = (file, dependencies = {}) => {
     const source = fs.readFileSync(path.join(__dirname, '../src/app/shared', file), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -33,6 +34,7 @@ function fixture() {
       '../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
       '@angular/core': angular, '../core/project/project.service': { ProjectService: 'project' },
       '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
+      '../core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
       './workspace-ui.service': { WorkspaceUiService: 'ui' },
       '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'], SECTION_TYPES: [],
         PART_GENERATION_AVAILABLE: { melody: false, bass: true, chords: true, arpeggio: true, drums: true },
@@ -306,7 +308,7 @@ test('score time grid progressively reveals subdivisions with at least eight pix
   score.colorClass = class { constructor(value) { this.value = value; } alpha = 1; toNumber() { return this.value; } };
   global.document = { documentElement: {} };
   global.getComputedStyle = () => ({ getPropertyValue: (name) => name });
-  const gridLines = () => lines.filter((line) => line.color.startsWith('--grid-'));
+  const gridLines = () => lines.filter((line) => line.start[0] === line.end[0] && line.color.startsWith('--grid-'));
   let previousAlpha = 0;
   for (const [scale, finest] of [[1, '--grid-measure'], [2, '--grid-measure'], [4, '--grid-beat'],
     [8, '--grid-beat'], [16, '--grid-eighth'], [32, '--grid-step'], [64, '--grid-step']]) {

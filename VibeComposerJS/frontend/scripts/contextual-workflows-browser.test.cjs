@@ -185,7 +185,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       change(document.querySelector('.part-settings-panel [aria-label="Strum type"]'), 'ARP_D');
       change(document.querySelector('#part-inspector [aria-label="Transition chance"]'), '100');
       change(document.querySelector('#part-inspector [aria-label="Transition split"]'), '750');
-      change(document.querySelector('#part-inspector [aria-label="Strum pause"]'), '20');
+      change(document.querySelector('.part-settings-panel [aria-label="Strum pause"]'), '20');
       await wait(() => read().chords.strum === 333 && read().chords.strumPauseChance === 20, 'chord articulation commit');
       await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]').value === '333'
         && document.querySelector('.part-settings-panel [aria-label="Strum type"]').value === 'ARP_D', 'chord editors synchronized');
