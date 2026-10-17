@@ -59,7 +59,7 @@ export const DEFAULT_TRACK_POLICIES: TrackGenerationPolicies = Object.freeze({
 
 export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly PolicyControl[]>> = {
   arpeggio: ARPEGGIO_POLICY_CONTROLS,
-  bass: [],
+  bass: [{ key: 'onCompose', label: 'On Compose' }],
   chords: [
     { key: 'onCompose', label: 'On Compose' },
     { key: 'varyLength', label: 'Vary length' }, { key: 'fills', label: 'Fills' }, { key: 'patterns', label: 'Patterns' },

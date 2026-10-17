@@ -408,7 +408,7 @@ export class ProjectService {
     const current = this.state();
     let next = current;
     if (event === 'compose') {
-      for (const role of ['melody', 'chords', 'arpeggio', 'drums'] as const) {
+      for (const role of ARRANGED_PARTS) {
         if (!(current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose) continue;
         const candidate = this.buildRoleReroll(next, role);
         if (!candidate) return 'invalid';

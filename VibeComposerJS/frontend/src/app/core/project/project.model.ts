@@ -317,9 +317,9 @@ export interface MelodyGenerationPolicy {
   readonly patterns: boolean;
 }
 
-/** Bass uses its audited creation branches without adding legacy policy checkboxes. */
+/** Bass uses its audited creation branches with an optional compose reroll. */
 export interface TrackGenerationPolicies {
-  readonly bass: Readonly<Record<string, never>>;
+  readonly bass: { readonly onCompose?: boolean };
   readonly chords: ChordGenerationPolicy;
   readonly arpeggio: ArpeggioGenerationPolicy;
   readonly drums: DrumGenerationPolicy;

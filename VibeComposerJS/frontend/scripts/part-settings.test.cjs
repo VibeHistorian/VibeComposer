@@ -1415,13 +1415,13 @@ test('automatic batch failures and no-ops preserve state, counters and redo', ()
 
 test('automatic policy import accepts omission and rejects invalid or unknown fields', () => {
   const { service } = fixture();
-  for (const role of ['melody', 'chords', 'arpeggio', 'drums']) {
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     assert.equal(service.updateTrackGenerationPolicy(role, { onCompose: true }), 'changed');
     const data = JSON.parse(service.exportProjectJson());
     data.trackGenerationPolicies[role].onCompose = 'true';
     assert.equal(service.importProjectJson(JSON.stringify(data)), false);
   }
-  assert.equal(service.updateTrackGenerationPolicy('bass', { onCompose: true }), 'invalid');
+  assert.equal(service.updateTrackGenerationPolicy('bass', { patterns: true }), 'invalid');
   assert.equal(service.updateTrackGenerationPolicy('drums', { onRegenerate: true }), 'invalid');
 });
 
@@ -5690,4 +5690,30 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
   assert.equal(popup.rows().find(row => row.id === first).hits, 4);
   popup.patch(first, { rhythm: 'melody' });
   assert.equal(popup.canMultiplyHits(), false);
+});
+
+
+test('Bass On Compose controls implicit rerolls, persists, and preserves locked tracks', () => {
+  const { service } = fixture();
+  service.updateSettings({ seed: '123' });
+  service.addTrack('bass');
+  service.setTrackRerollLock('track-bass-2', true);
+  const bass = () => JSON.parse(JSON.stringify(service.project().tracks.filter(track => track.role === 'bass')));
+  const before = bass();
+  service.generateComposition('compose');
+  assert.deepEqual(bass(), before);
+  assert.equal(service.updateTrackGenerationPolicy('bass', { onCompose: true }), 'changed');
+  const enabled = service.exportProjectJson();
+  assert.equal(service.importProjectJson(enabled), true);
+  assert.equal(service.project().trackGenerationPolicies.bass.onCompose, true);
+  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.project().trackRerollCounts.bass, 1);
+  assert.notDeepEqual(bass()[0].generatorSettings, before[0].generatorSettings);
+  assert.deepEqual(bass()[1], before[1]);
+  service.undo();
+  assert.deepEqual(projectData(service.exportProjectJson()), projectData(enabled));
+  service.updateTrackGenerationPolicy('bass', { onCompose: false });
+  service.generateComposition('compose');
+  assert.deepEqual(bass(), before);
+  assert.equal(service.project().trackRerollCounts?.bass ?? 0, 0);
 });
