@@ -788,7 +788,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const y = this.harmonicHeight + index * drumRowHeight;
       fill(0, y, this.width, drumRowHeight, index % 2 ? '--score-row-odd' : '--score-row-even');
       line(0, y, this.width, y, '--border-subtle');
-      rows.push({ midi, label: drumInstrumentName(midi), y, height: drumRowHeight, drum: true, black: false, inScale: false });
+      rows.push({ midi, label: drumInstrumentName(midi).toUpperCase(), y, height: drumRowHeight, drum: true, black: false, inScale: false });
     });
     if (this.drumHeight > 0) line(0, this.harmonicHeight + 0.5, this.width, this.harmonicHeight + 0.5, '--border-strong');
     this.gutterRows.set(rows);
