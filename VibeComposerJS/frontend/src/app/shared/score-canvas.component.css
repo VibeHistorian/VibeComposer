@@ -18,6 +18,9 @@
 
 /* Octave labels remain readable at condensed pitch heights */
 .pitch-key i { font-style: normal; }
-.pitch-key.octave-key { overflow: visible; z-index: 1; }
+.pitch-key.octave-key { overflow: visible; z-index: 1; border-bottom: 0; }
 .octave-key i { position: absolute; top: -3px; padding-right: 2px; background: var(--surface-low); line-height: 10px; }
 .out-of-scale.octave-key i { background: var(--score-out-of-scale); }
+
+/* Octave boundaries share canvas positions and brightness */
+.octave-boundary { position: absolute; z-index: 2; left: 0; right: 0; background: var(--score-octave-line); pointer-events: none; }

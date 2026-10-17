@@ -105,6 +105,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly applyRequested = output<void>();
   readonly noteAdded = output<{ trackId?: string; midi: number; startBeat: number }>();
   readonly gutterRows = signal<readonly { midi: number; label: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[]>([]);
+  readonly octaveLines = signal<readonly { midi: number; y: number; height: number; opacity: number }[]>([]);
   private pitchMin = 48;
   private pitchMax = 72;
   private drumPitches: number[] = [];
@@ -789,7 +790,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const h = Math.min(this.harmonicHeight, y + this.laneHeight) - Math.max(0, y);
       fill(0, y, this.width, h, black ? '--score-pitch-band' : '--score-row-even');
       if (this.scaleColoringActive() && !this.inScale(midi)) fill(0, y, this.width, h, '--score-out-of-scale');
-      line(0, Math.max(0, y), this.width, Math.max(0, y), midi % 12 === 0 ? '--grid-beat' : '--grid-subdivision');
+      if (midi % 12 !== 11) line(0, Math.max(0, y), this.width, Math.max(0, y), '--grid-subdivision');
       rows.push({ midi, label: midi % 12 === 0 ? `C${Math.floor(midi / 12) - 1}` : '', y: Math.max(0, y), height: h, drum: false, black, inScale: this.inScale(midi) });
     }
     const drumRowHeight = this.drumHeight / Math.max(1, this.drumPitches.length);
@@ -825,6 +826,23 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       if (x < 0 || x > this.width) continue;
       line(x, 0, x, scoreHeight, '--grid-measure', timeGridAlpha);
     }
+    // Pitch increases upward: the B/C boundary sits below C, not above it.
+    // Use absolute MIDI octaves so brightness stays consistent while zooming or scrolling.
+    const resolution = this.app.renderer?.resolution ?? 1;
+    const octaveLineHeight = Math.max(1, Math.round(resolution)) / resolution;
+    const octaveLines: { midi: number; y: number; height: number; opacity: number }[] = [];
+    for (let midi = 12; midi <= 120; midi += 12) {
+      const y = (this.pitchMax - midi + 1) * this.laneHeight - this.verticalOffset;
+      if (midi <= this.pitchMin || midi > this.pitchMax || y <= 0 || y >= this.harmonicHeight) continue;
+      // Filled, pixel-aligned strips avoid antialiasing different octaves to different brightnesses.
+      const top = Math.round(y * resolution) / resolution;
+      const height = Math.min(octaveLineHeight, this.harmonicHeight - top);
+      if (height <= 0) continue;
+      const opacity = 0.2 + 0.8 * midi / 120;
+      fill(0, top, this.width, height, '--score-octave-line', opacity);
+      octaveLines.push({ midi, y: top, height, opacity });
+    }
+    this.octaveLines.set(octaveLines);
     line(0, scoreHeight + 0.5, this.width, scoreHeight + 0.5, '--border-default');
     line(0, 0.5, this.width, 0.5, '--border-default');
     line(0.5, 0, 0.5, this.height, '--border-default');

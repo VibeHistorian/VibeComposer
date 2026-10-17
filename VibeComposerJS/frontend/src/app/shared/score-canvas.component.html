@@ -4,6 +4,10 @@
       [class.out-of-scale]="!row.drum && scaleColoringActive() && !row.inScale" [class.octave-key]="!row.drum && !!row.label"
       [style.top.px]="row.y" [style.height.px]="row.height" [title]="row.drum ? row.label : 'MIDI ' + row.midi"><i>{{ row.label }}</i></span>
   }
+  @for (line of octaveLines(); track line.midi) {
+    <span class="octave-boundary" aria-hidden="true" [style.top.px]="line.y"
+      [style.height.px]="line.height" [style.opacity]="line.opacity"></span>
+  }
 </div>
 <div class="score-canvas-host" #rendererHost></div>
 <div class="horizontal-scroll" #horizontalScroll (scroll)="onHorizontalScroll()" tabindex="0" aria-label="Score horizontal scroll">
