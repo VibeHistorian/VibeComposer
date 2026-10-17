@@ -30,6 +30,7 @@
 .group-mix-controls { flex: 0 0 auto; }
 .track-policy-header:has(vc-track-generation-policy:empty):not(:has([role="status"])) { display: none; }
 .add-track-button, .collapse-group-button { width: 22px; height: 22px; padding: 0; flex: 0 0 auto; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }
+.add-track-button { display: grid; place-items: center; line-height: 1; }
 .add-track-button:hover, .collapse-group-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 .collapse-group-button { font-size: 14px; line-height: 1; }
 /* Header policy toggles */

@@ -7,7 +7,7 @@
 .measure-total { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .08em; white-space: nowrap; }
 .reroll-button { height: 29px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 9px var(--font-mono); letter-spacing: .06em; }
 .reroll-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.add-section-button { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 16px; }
+.add-section-button { width: 29px; height: 29px; display: grid; place-items: center; padding: 0; line-height: 1; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 16px; }
 .add-section-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 /* Size the grid independently of its canvas; drawing adds any native scrollbar height. */
 .overview-scroll { min-width: 0; min-height: 0; height: 284px; flex: 0 0 auto; contain: size; overflow: hidden; }
