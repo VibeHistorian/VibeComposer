@@ -863,12 +863,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const bottom = note.color === 'drums' ? scoreHeight : this.harmonicHeight;
       if (centerY < top || centerY >= bottom) continue;
       const rowHeight = note.color === 'drums' ? drumRowHeight : this.laneHeight;
-      const y = Math.max(top, centerY - rowHeight / 4);
-      const noteHeight = Math.min(bottom, centerY + rowHeight / 4) - y;
+      const y = Math.max(top, centerY - rowHeight * 0.375);
+      const noteHeight = Math.min(bottom, centerY + rowHeight * 0.375) - y;
       const selectionOpacity = selectedTrackId === note.part ? 1 : 0.8;
-      const opacity = note.opacity * (selectedTrackId === note.part ? 1 : 0.72) * selectionOpacity;
+      const opacity = selectedTrackId === note.part ? note.opacity : this.editable() ? 0.3 : 0.3 + note.velocity / 127 * 0.5;
       const noteColors = COLORS[note.color];
-      if (noteHeight > 0 && selectedTrackId === note.part) {
+      if (noteHeight > 0 && selectedTrackId === note.part && (!this.editable() || note.color === 'drums')) {
         for (let radius = 6; radius >= 1; radius--) {
           fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2,
             noteColors.glow, (7 - radius) / 15);
@@ -876,11 +876,6 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
       const parsed = color(noteColors.note);
       if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2)).fill({ color: parsed.value, alpha: opacity * parsed.alpha });
-      if (noteHeight > 0 && note.color !== 'drums' && this.inScale(note.midi)) {
-        const highlight = color('--score-scale-note');
-        graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
-          .fill({ color: highlight.value, alpha: highlight.alpha * selectionOpacity });
-      }
       if (this.velocityVisible()) {
         const velocityColor = color(noteColors.velocity);
         const velocityHeight = Math.max(2, note.velocity / 127 * VELOCITY_HEIGHT);
@@ -888,7 +883,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
           .fill({ color: velocityColor.value, alpha: (selectedTrackId === note.part ? 0.9 : 0.32) * velocityColor.alpha * selectionOpacity });
       }
       if (noteHeight <= 0) continue;
-      const hitHalfHeight = Math.max(3, rowHeight / 4);
+      const hitHalfHeight = Math.max(3, rowHeight * 0.375);
       const hitY = Math.max(top, centerY - hitHalfHeight);
       const hitArea: NoteHitArea = {
         note,
@@ -958,7 +953,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         const centerY = area.note.color === 'drums'
           ? this.harmonicHeight + (this.drumPitches.indexOf(note.midi) + 0.5) * rowHeight
           : (this.pitchMax - note.midi + 0.5) * rowHeight - this.verticalOffset;
-        const noteHeight = rowHeight / 2;
+        const noteHeight = rowHeight * 0.75;
         graphics.roundRect(this.scoreX(note.startBeat), centerY - noteHeight / 2, Math.max(3, note.durationBeats / (this.model?.totalBeats ?? 1) * this.width * this.horizontalScale), noteHeight, Math.min(3, noteHeight / 2))
           .fill({ color: accent.toNumber(), alpha: 0.9 });
         if (this.velocityVisible()) {

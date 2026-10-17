@@ -353,7 +353,7 @@ test('drag audition follows each snapped cyan preview immediately, including ret
     shapes.length = 0;
     c.onPointerMove(pointer(300, 22 - semitones * c.laneHeight / 2));
     assert.equal(c.drag.current.midi, expectedPitch);
-    const cyan = shapes.find(shape => shape.height === c.laneHeight / 2);
+    const cyan = shapes.find(shape => shape.height === c.laneHeight * .75);
     assert.ok(cyan);
     const drawnPitch = c.pitchMax + .5 - (cyan.y + cyan.height / 2 + c.verticalOffset) / c.laneHeight;
     assert.equal(drawnPitch, expectedPitch, 'cyan preview uses the snapped pitch');
@@ -385,10 +385,10 @@ test('drum-only editing renders every unselected drum note at visible row-based 
   assert.ok(c.harmonicHeight > 0, 'space above the drums remains available');
   assert.equal(c.gutterRows().filter(row => row.drum).length, 5);
   assert.equal(shapes.length, notes.length, 'all drum tracks draw before any selection or click');
-  assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length / 2) < 1e-9), 'notes fill half of their drum row');
+  assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length * .75) < 1e-9), 'notes fill 75% of their drum row');
   assert.equal(c.hitAreas.length, notes.length, 'all rendered drum notes remain editable');
   c.model.selectedTrackId = tracks[0].id; c.drawStatic();
-  assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length / 2) < 1e-9), 'changing active tracks preserves row-based note height');
+  assert.ok(shapes.every(shape => Math.abs(shape.height - c.drumHeight / tracks.length * .75) < 1e-9), 'changing active tracks preserves row-based note height');
   for (const editable of [false, true]) {
     c.editable = () => editable;
     for (const height of [180, 600, 1000]) {
@@ -402,6 +402,36 @@ test('drum-only editing renders every unselected drum note at visible row-based 
       c.drawStatic();
       assert.deepEqual(c.gutterRows().filter(row => row.drum), drumRows, 'drum layout matches a score with other roles');
     }
+  }
+});
+
+test('note fills respect track selection and editor opacity while selected-track glow ignores velocity', () => {
+  const { component: c } = fixture();
+  c.horizontalOffset = 0; c.horizontalScale = 1;
+  c.model = { tracks: [{ id: 'selected', color: 'drums', drumPitch: 36 }, { id: 'other', color: 'drums', drumPitch: 38 }],
+    notes: ['selected', 'other'].flatMap(part => [0, 127].map((velocity, index) => ({ id: part + index,
+      part, color: 'drums', midi: part === 'selected' ? 36 : 38, velocity, startBeat: 4 + index * 4,
+      durationBeats: 1, opacity: .5 + velocity / 127 * .5 }))),
+    sections: [], totalBeats: 16, selectedTrackId: 'selected', hiddenTrackIds: new Set() };
+  const notes = [], glow = [];
+  let shape;
+  c.staticGraphics = { clear() { notes.length = 0; glow.length = 0; },
+    rect(x, y, width, height) { shape = { type: 'rect', x, width }; return this; },
+    roundRect() { shape = { type: 'note' }; return this; },
+    moveTo() { return this; }, lineTo() { return this; }, stroke() { return this; },
+    fill(style) {
+      if (shape?.type === 'note') notes.push(style.alpha);
+      else if (shape?.x === c.scoreX(4) - 6 || shape?.x === c.scoreX(8) - 6) glow.push(style.alpha);
+      return this;
+    } };
+  for (const editable of [false, true]) {
+    c.editable = () => editable;
+    c.model.notes = c.model.notes.map(note => ({ ...note,
+      opacity: editable ? .5 + note.velocity / 127 * .5 : .4 + note.velocity / 127 * .6 }));
+    c.drawStatic();
+    assert.deepEqual(notes, editable ? [.5, 1, .3, .3] : [.4, 1, .3, .8]);
+    assert.equal(glow.length, 2);
+    assert.equal(glow[0], glow[1], 'both velocities keep the same selected-track glow');
   }
 });
 
@@ -421,7 +451,7 @@ test('selected track glow fades outward over 5px and stays centered in short and
   for (const height of [50, 100, 600]) {
     c.height = height; c.drawStatic();
     const note = notes.find(shape => shape.x === c.scoreX(8));
-    assert.ok(Math.abs(note.height - c.laneHeight / 2) < 1e-9, 'notes fill half of their pitch row');
+    assert.ok(Math.abs(note.height - c.laneHeight * .75) < 1e-9, 'notes fill 75% of their pitch row');
     let previousAlpha = 0;
     for (let radius = 5; radius >= 1; radius--) {
       const glow = rectangles.find(shape => shape.x === note.x - radius && shape.width === note.width + radius * 2);

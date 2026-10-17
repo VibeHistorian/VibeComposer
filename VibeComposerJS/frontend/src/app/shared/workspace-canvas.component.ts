@@ -320,7 +320,8 @@ export class WorkspaceCanvasComponent {
     const editor = this.editor();
     if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.displayedRoles().has(note.color));
     return editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat(), part: note.trackId,
-      trackName: this.project().tracks.find(track => track.id === note.trackId)?.name, color: this.selectedPart(), topPercent: 0, opacity: 1 }));
+      trackName: this.project().tracks.find(track => track.id === note.trackId)?.name, color: this.selectedPart(), topPercent: 0,
+      opacity: 0.5 + note.velocity / 127 * 0.5 }));
   });
   applyOnEmptyMiddleClick(event: MouseEvent): void {
     if (event.button !== 1 || !this.editing()) return;
@@ -408,7 +409,7 @@ export class WorkspaceCanvasComponent {
         trackName: track.name,
         color: track.role,
         topPercent: (maxPitch - note.midi) / pitchSpan * 86 + 3,
-        opacity: 0.72 + note.velocity / 127 * 0.28,
+        opacity: 0.4 + note.velocity / 127 * 0.6,
       }));
     });
   });
