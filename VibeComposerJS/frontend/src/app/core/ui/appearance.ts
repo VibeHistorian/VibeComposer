@@ -104,7 +104,7 @@ export function roleColorTokens(role: ArrangedPart, base: string): Readonly<Reco
     [prefix]: base, [`${prefix}-glow`]: base + '50', [`${prefix}-strong`]: mix(255, .22),
     [`${prefix}-dark`]: mix(0, .4), [`${prefix}-surface`]: mix(0, .72),
     [`${prefix}-border`]: mix(0, .32), [`${prefix}-text`]: mix(255, .78),
-    [`${prefix}-header`]: mix(0, .65), [`${prefix}-cell-surface`]: mix(0, .79),
+    [`${prefix}-header`]: mix(0, .55), [`${prefix}-cell-surface`]: mix(0, .79),
   };
   if (role === 'drums') {
     for (const suffix of ['surface', 'border', 'cell-surface']) tokens[`--role-drum-${suffix}`] = tokens[`${prefix}-${suffix}`];
