@@ -352,6 +352,22 @@ export class WorkspaceCanvasComponent {
   canvasNoteSelected(note: ScoreNote): void {
     if (this.editing()) this.editor()?.selectNote(note.id); else this.openNoteEditor(note);
   }
+  selectNoteTrack(note: ScoreNote): void {
+    if (this.editing()) return;
+    const track = this.project().tracks.find(track => track.id === note.part);
+    if (!track) return;
+    const section = this.timelineSections().find((item, index, all) => note.startBeat >= item.startBeat
+      && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()))?.section;
+    if (section && (section.trackPhrases?.[track.id] !== undefined
+        || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id))) {
+      this.openNoteEditor(note);
+    } else if (section && (Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
+        || Object.keys(section.rolePartOverrides?.[track.role] ?? {}).length > 0)) {
+      this.selectSectionTrack(section.id, track.id);
+    } else {
+      this.selectTrack(track.id);
+    }
+  }
   readonly selectedTrack = computed<TrackRow>(() => this.tracks().find((track) => track.id === this.selectedTrackId()) ?? this.tracks()[0]);
   readonly selectedPart = computed(() => this.selectedTrack().role);
   readonly hasChannelCollision = computed(() => this.tracks().some((track) => track.id !== this.selectedTrack().id

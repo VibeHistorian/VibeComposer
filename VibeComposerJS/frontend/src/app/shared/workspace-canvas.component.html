@@ -215,7 +215,7 @@
                   (seekRequested)="seek($event)"
                   (trackSelected)="selectScoreTrack($event)"
                   [hiddenTrackIds]="editing() ? editingHiddenTracks : hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreSectionFocus() : null" [velocityVisible]="editing()"
-                  (noteSelected)="canvasNoteSelected($event)" (noteChanged)="canvasNoteChanged($event)"
+                  (noteSelected)="canvasNoteSelected($event)" (noteTrackSelected)="selectNoteTrack($event)" (noteChanged)="canvasNoteChanged($event)"
                   [selectedNoteIds]="editor()?.selectedNoteIds() ?? []" [snapBeats]="editor()?.snapBeats() ?? 0.25"
                   [snapToScale]="editor()?.snapToScale() ?? true" [scalePitchClasses]="editor()?.scalePitchClasses() ?? []"
                   (selectionChanged)="editor()?.selectNotes($event)" (notesChanged)="canvasNotesChanged($event)"

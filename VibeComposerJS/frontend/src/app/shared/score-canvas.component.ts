@@ -122,6 +122,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private suppressClick = false;
   readonly sectionFocus = input<ScoreSectionFocus | null>(null);
   readonly noteSelected = output<ScoreCanvasNote>();
+  readonly noteTrackSelected = output<ScoreCanvasNote>();
   readonly trackSelected = output<ScoreCanvasTrack>();
   readonly seekRequested = output<number>();
   readonly viewportChanged = output<ScoreViewport>();
@@ -567,7 +568,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
     if (event.button === 0) this.suppressClick = false;
-    if (event.button === 1) event.preventDefault();
+    if (event.button === 1) {
+      event.preventDefault();
+      if (!this.editable()) {
+        const area = this.hitAreaAt(event);
+        if (area) this.noteTrackSelected.emit(area.note);
+        return;
+      }
+    }
     if (!this.editable() || !this.app) return;
     event.preventDefault();
     this.app.canvas.focus?.();
@@ -661,9 +669,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.drawDynamic();
   };
   private readonly onAuxClick = (event: MouseEvent): void => {
-    if (event.button !== 1 || !this.editable()) return;
+    if (event.button !== 1) return;
     event.preventDefault();
     event.stopPropagation();
+    if (!this.editable()) return;
     const canApply = this.middlePress?.canApply;
     this.middlePress = null;
     if (canApply && this.emptyCanvasPoint(event)) this.applyRequested.emit();

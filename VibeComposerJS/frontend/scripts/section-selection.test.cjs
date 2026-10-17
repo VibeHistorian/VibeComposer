@@ -84,6 +84,45 @@ test('score lane selection chooses global tracks and preserves the active member
   assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'track-bass-1' });
 });
 
+for (const scenario of [
+  { name: 'inherited settings', expected: 'global-track' },
+  { name: 'empty overrides', section: { trackPartOverrides: { 'track-bass-1': {} }, rolePartOverrides: { bass: {} } }, expected: 'global-track' },
+  { name: 'track overrides', section: { trackPartOverrides: { 'track-bass-1': { swingPercent: 60 } } }, expected: 'section-track' },
+  { name: 'role overrides', section: { rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'section-track' },
+  { name: 'another track override', section: { trackPartOverrides: { other: { swingPercent: 60 } } }, expected: 'global-track' },
+  { name: 'section manual phrase before overrides', section: { trackPhrases: { 'track-bass-1': [] }, rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'phrase' },
+  { name: 'global manual phrase before overrides', track: { editedPhrase: [] }, section: { rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'phrase' },
+  { name: 'generated section bypasses global manual phrase', track: { editedPhrase: [] }, section: { generatedTrackIds: ['track-bass-1'] }, expected: 'global-track' },
+  { name: 'generated section retains its custom settings', track: { editedPhrase: [] }, section: { generatedTrackIds: ['track-bass-1'], rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'section-track' },
+  { name: 'section manual phrase overrides generated marker', section: { generatedTrackIds: ['track-bass-1'], trackPhrases: { 'track-bass-1': [] } }, expected: 'phrase' },
+]) {
+  test(`score smart selector follows arrangement indicators: ${scenario.name}`, () => {
+    const { workspace, ui, project } = fixture();
+    project.set({ ...project(), tracks: project().tracks.map(track => ({ ...track, ...scenario.track })),
+      arrangement: project().arrangement.map(section => section.id === 'b' ? { ...section, ...scenario.section } : section) });
+    ui.selectCell('a', 'bass');
+    const note = { id: 'bass-note', part: 'track-bass-1', startBeat: 8 };
+    workspace.selectNoteTrack(note);
+    if (scenario.expected === 'phrase') {
+      assert.equal(workspace.editing(), true);
+      assert.equal(workspace.editSectionId(), 'b', 'boundary note belongs to the following section');
+      assert.equal(workspace.editingNoteId(), note.id);
+    } else {
+      assert.equal(workspace.editing(), false);
+      assert.deepEqual(ui.settingsTarget(), scenario.expected === 'section-track'
+        ? { kind: 'section-track', sectionId: 'b', trackId: note.part }
+        : { kind: 'global-track', trackId: note.part });
+      workspace.selectNoteTrack({ ...note, startBeat: 0 });
+      if (scenario.track?.editedPhrase !== undefined) {
+        assert.equal(workspace.editing(), true, 'global manual phrase still applies in other sections');
+        assert.equal(workspace.editSectionId(), 'a');
+      } else {
+        assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: note.part });
+      }
+    }
+  });
+}
+
 for (const kind of ['global-track', 'global-role', 'section-track', 'section-role', 'section']) {
   test(`closing a score phrase restores the previous ${kind} inspector selection`, () => {
     const { workspace, ui, project } = fixture();

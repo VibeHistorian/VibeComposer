@@ -65,6 +65,29 @@ test('clicking a note emits only note selection even in a zoomed viewport', () =
   assert.deepEqual(component.trackSelected.values, []);
 });
 
+test('middle press on an overview note requests its track context without opening through normal selection', () => {
+  const { component } = fixture();
+  const note = { id: 'note', part: 'bass', color: 'bass', midi: 48, velocity: 100 };
+  const hit = { note, x: 390, y: 15, width: 20, height: 10 };
+  component.hitAreas = [hit]; component.hitColumnCount = 9; component.hitAreaBuckets.set(4, [hit]);
+  let prevented = false;
+  const event = { button: 1, clientX: 300, clientY: 20, pointerId: 1,
+    preventDefault() { prevented = true; }, stopPropagation() {} };
+  component.onPointerDown(event);
+  assert.equal(prevented, true);
+  assert.deepEqual(component.noteTrackSelected.values, [note]);
+  component.onPointerUp(event); component.onAuxClick(event);
+  assert.deepEqual(component.noteSelected.values, []);
+  assert.deepEqual(component.applyRequested.values, []);
+  component.onPointerDown({ ...event, clientX: 330 });
+  assert.deepEqual(component.noteTrackSelected.values, [note], 'empty space does not select a track');
+  component.editable = () => true;
+  component.model.notes = [note];
+  component.onPointerDown(event);
+  assert.deepEqual(component.noteTrackSelected.values, [note], 'editor middle press retains its editing gesture');
+  assert.equal(component.drag.mode, 'velocity');
+});
+
 test('the mouse guide is fainter than the playhead and disappears on pointer leave', () => {
   const { component, strokes } = fixture();
   component.playhead = 37.5;
