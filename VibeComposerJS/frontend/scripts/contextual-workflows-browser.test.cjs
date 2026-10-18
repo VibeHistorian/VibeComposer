@@ -4,6 +4,7 @@ const path = require('node:path');
 const http = require('node:http');
 const { spawn } = require('node:child_process');
 const test = require('node:test');
+const { DEFAULT_TRACK_POLICIES } = require('./music-loader.cjs').loadMusic('track-generation.ts');
 const browser = process.env.OVERVIEW_TEST_BROWSER || [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium',
@@ -43,6 +44,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       if (!sessionStorage.getItem('contextual-fixture')) {
         change(seed, '9007199254740993');
         const project = await wait(read, 'saved project');
+        // Keep the authored fixture stable until this workflow explicitly enables each reroll.
+        // Fresh projects now enable On Compose, which would otherwise replace the drum grids.
+        project.trackGenerationPolicies = ${JSON.stringify(DEFAULT_TRACK_POLICIES)};
+        for (const role of ['bass', 'chords', 'arpeggio', 'drums']) project.trackGenerationPolicies[role].onCompose = false;
+        project.randomizeTransposeOnCompose = false;
+        project.randomizeTempoOnCompose = false;
         for (const role of ['melody','bass','chords','arpeggio','drums']) {
           const base = project.tracks.find(track => track.role === role);
           for (let i = 2; i <= 6; i++) project.tracks.push({ ...base, id: 'track-' + role + '-' + i, name: base.name[0] + i,
@@ -235,7 +242,10 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       change(document.querySelector('#part-inspector [aria-label="Humanize"]'), '100');
       await wait(() => read().drums.ghosts && read().drums.humanize === 100, 'drum musical settings');
       document.querySelector('.part-settings-panel [aria-label="Edit rhythm pattern"]').click();
-      const multiply = await wait(() => document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]'), 'popup hit multiplier');
+      const multiply = await wait(() => {
+        const select = document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]');
+        return select && !select.disabled ? select : null;
+      }, 'enabled popup hit multiplier');
       change(multiply, '2');
       await wait(() => read().drums.hitsPerPattern === 8, 'multiply hits');
       await wait(() => document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8'
@@ -524,15 +534,29 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     const resetValue = await command('Runtime.evaluate', { expression: `JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).melodyGlobal.newBlocksChance`, returnByValue: true });
     assert.equal(resetValue.result.value, 25, 'real right-click resets New blocks');
     // Real left-button pointer capture/reorder through CDP, committing exactly once.
-    const snapshot = await command('Runtime.evaluate', { expression: `(() => {
+    const snapshot = await command('Runtime.evaluate', { awaitPromise: true, expression: `(async () => {
       const buttons = [...document.querySelectorAll('.chordlet-label')];
-      const points = buttons.slice(0,2).map(button => { const b = button.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
-      return { points, project: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')) };
+      buttons[0].scrollIntoView({ block: 'center', inline: 'start' });
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const box = buttons[0].getBoundingClientRect(), clip = buttons[0].closest('.chordlet-list').getBoundingClientRect();
+      const point = { x: (Math.max(box.left, clip.left) + Math.min(box.right, clip.right)) / 2, y: box.top + box.height / 2 };
+      return { point, project: JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')) };
     })()`, returnByValue: true });
     const beforeDrag = snapshot.result.value;
-    await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...beforeDrag.points[0], button: 'left', clickCount: 1 });
-    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...beforeDrag.points[1], button: 'left', buttons: 1 });
-    await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...beforeDrag.points[1], button: 'left', clickCount: 1 });
+    await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...beforeDrag.point, button: 'left', clickCount: 1 });
+    // The desktop chord strip can show only one chord at a time. Reveal the destination
+    // while the source retains pointer capture, and aim inside the strip's clipped bounds.
+    const destination = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
+      const button = document.querySelectorAll('.chordlet-label')[1];
+      button.scrollIntoView({ block: 'nearest', inline: 'center' });
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const box = button.getBoundingClientRect(), clip = button.closest('.chordlet-list').getBoundingClientRect();
+      const point = { x: (Math.max(box.left, clip.left) + Math.min(box.right, clip.right)) / 2, y: box.top + box.height / 2 };
+      return { point, target: document.elementFromPoint(point.x, point.y)?.closest('[data-chord-index]')?.dataset.chordIndex };
+    })()` });
+    assert.equal(destination.result.value.target, '1', 'drag destination is the second chord');
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destination.result.value.point, button: 'left', buttons: 1 });
+    await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destination.result.value.point, button: 'left', clickCount: 1 });
     await new Promise(done => setTimeout(done, 100));
     const moved = await command('Runtime.evaluate', { expression: `JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))`, returnByValue: true });
     assert.equal(moved.result.value.progression[1], beforeDrag.project.progression[0]);
