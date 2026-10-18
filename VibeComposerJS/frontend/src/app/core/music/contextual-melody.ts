@@ -22,6 +22,7 @@ type Role = 'CHORD' | 'EXTENSION' | 'PASSING' | 'CHROMATIC' | 'ANTICIPATION' | '
 interface Planned { slot: Slot; pitch: number; role: Role }
 interface State { path: Planned[]; score: number; last: number; previous: number; first: number; phraseFirst: number;
   phraseStart: number; run: number; serial: number }
+interface Candidate extends State { planned: Planned }
 
 /** Contextual planning operates on realized harmony before track/key transposition.
  * Rhythm is phrase based; a bounded beam resolves every ornament and respects range,
@@ -35,8 +36,8 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
   const options = { ...DEFAULT_MELODY_GLOBAL, ...global }, tonic = getPitchClass(key)!;
   if (options.rangeMin > options.rangeMax) throw new RangeError('Melody Low MIDI must not exceed Melody High MIDI.');
   const notesInScale = scaleNotes(scale), scaleClasses = new Set(notesInScale.map(p => mod(p)));
-  const chords = harmony?.soundingVoicings ?? progressionChords(key, scale, degrees, custom).map(c => chordPitches(c, 60));
   const definitions = progressionChords(key, scale, degrees, custom);
+  const chords = harmony?.soundingVoicings ?? definitions.map(c => chordPitches(c, 60));
   const events = chords.map((pitches, index) => ({ classes: new Set(pitches.map(p => mod(p - tonic))), root: mod(definitions[index].root - tonic),
     duration: Math.round((harmony?.durations?.[index] ?? 4) * BEAT), start: 0, end: 0 }));
   let total = 0;
@@ -145,7 +146,12 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
     }) : rhythm;
     const finalIndex = slots.reduce((last,slot,i) => slot.rest ? last : i, -1);
     const catalogue = new ContextualCatalogue(baseSeed, options.newBlocksChance);
-    const soundsRemaining = slots.map((_,i) => slots.slice(i + 1).filter(slot => !slot.rest).length);
+    const soundsRemaining = Array<number>(slots.length);
+    let remaining = 0;
+    for (let index = slots.length - 1; index >= 0; index--) {
+      soundsRemaining[index] = remaining;
+      if (!slots[index].rest) remaining++;
+    }
     const loopArrivals: number[] = [];
     if (options.ending === 'LOOP' && finalIndex >= 0) {
       for (let pitch = options.rangeMin; pitch <= options.rangeMax; pitch++) if (overlapping(slots[finalIndex]).every(chord => stableRole(chord,pitch))) loopArrivals.push(pitch);
@@ -153,29 +159,59 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
     let serial = 0;
     let beam: State[] = [{ path: [], score: 0, last: -1, previous: -1, first: -1, phraseFirst: -1, phraseStart: -1, run: 0, serial: serial++ }];
     for (let index = 0; index < slots.length && beam.length; index++) {
-      const slot = slots[index], event = at(slot.start), next: State[] = [];
+      const slot = slots[index], event = at(slot.start), next: Candidate[] = [];
       const accented = slot.start % BEAT === 0 && (slot.start / BEAT % options.beatsPerBar === 0
         || options.beatsPerBar % 2 === 0 && slot.start / BEAT % options.beatsPerBar === options.beatsPerBar / 2) || slot.duration >= BEAT;
       const random = new JavaRandom(baseSeed ^ BigInt(slot.start) * 0x9e3779b97f4a7c15n), preferences = Array.from({ length: 128 }, () => random.nextDouble() * 0.25);
+      // Harmony and contour are fixed for this slot, independent of the beam state.
+      const overlaps = overlapping(slot);
+      const stableRoles: (Role | undefined)[] = [];
+      for (let pitch = options.rangeMin; pitch <= options.rangeMax; pitch++) {
+        let role = stableRole(event, pitch);
+        if (!overlaps.every(chord => stableRole(chord, pitch))) role = undefined;
+        else if (overlaps.some(chord => !chord.classes.has(mod(pitch)))) role = 'EXTENSION';
+        stableRoles[pitch] = role;
+      }
+      const anticipates = !accented && slot.duration <= 480 && slot.start + slot.duration === event.end && event.end < total
+        && new JavaRandom(baseSeed ^ BigInt(slot.start) ^ 0x6c656164n).nextInt(100) < (settings.leadChordsChance ?? 0);
+      const nextEvent = anticipates ? at(event.end) : undefined;
+      const kind = contour(slot.phrase), position = (slot.start - slot.phrase.start) / (slot.phrase.end - slot.phrase.start);
+      const width = Math.min(5,(options.rangeMax - options.rangeMin) / 4), center = (options.rangeMin + options.rangeMax) / 2;
+      const arc = kind <= 1 ? position * 2 * width * (kind === 0 ? 1 : -1) : Math.sin(position * Math.PI) * width * (kind === 2 ? 1 : -1);
+      const direction = kind === 0 ? 1 : kind === 1 ? -1 : (position < 0.5 ? 1 : -1) * (kind === 2 ? 1 : -1);
       for (const state of beam) {
         const prior = state.path.at(-1);
         if (slot.rest) {
           if (!prior || prior.pitch < 0 || !pending(prior.role)) next.push({ ...state,
             phraseFirst: state.phraseStart === slot.phrase.start ? state.phraseFirst : -1, phraseStart: slot.phrase.start, run: 0,
-            path: [...state.path, { slot, pitch: -1, role: 'CHORD' }], serial: serial++ });
+            planned: { slot, pitch: -1, role: 'CHORD' }, serial: serial++ });
           continue;
         }
+        const origin = state.phraseStart === slot.phrase.start && state.phraseFirst >= 0 ? state.phraseFirst
+          : center + (kind === 0 ? -width : kind === 1 ? width : kind === 2 ? -width / 2 : width / 2);
+        // Each candidate compares with the same earlier motif and catalogue prefix.
+        let motifDirection: number | undefined;
+        for (let i = state.path.length - 1; i > 0; i--) {
+          const earlier = state.path[i];
+          if (earlier.slot.phrase.motif !== slot.phrase.motif || earlier.slot.start % (4 * BEAT) !== slot.start % (4 * BEAT)) continue;
+          for (let previous = i - 1; previous >= 0; previous--) if (state.path[previous].pitch >= 0) {
+            motifDirection = Math.sign(earlier.pitch - state.path[previous].pitch); break;
+          }
+          if (motifDirection !== undefined) break;
+        }
+        const earlier = state.path.at(-2);
+        const cataloguePrefix = prior && prior.pitch >= 0 && prior.slot.phrase.start === slot.phrase.start
+          ? earlier && earlier.pitch >= 0 && earlier.slot.phrase.start === slot.phrase.start ? [earlier.pitch, prior.pitch] : [prior.pitch] : undefined;
+        const catalogueChord = cataloguePrefix ? at((cataloguePrefix.length === 2 ? earlier! : prior!).slot.start).classes : undefined;
+        const sounds = cataloguePrefix ? state.path.filter(n => n.pitch >= 0 && n.slot.phrase.start === slot.phrase.start).length : 0;
+        const cataloguePhase = cataloguePrefix ? Math.max(0, sounds - cataloguePrefix.length) : 0;
         for (let pitch = options.rangeMin; pitch <= options.rangeMax; pitch++) {
-          let role = stableRole(event, pitch);
-          const overlaps = overlapping(slot);
-          if (!overlaps.every(chord => stableRole(chord,pitch))) role = undefined;
-          else if (overlaps.some(chord => !chord.classes.has(mod(pitch)))) role = 'EXTENSION';
+          let role = stableRoles[pitch];
           if (!role) {
             if (options.tension === 0 || index === finalIndex) continue;
             if (overlaps.length === 2 && event.classes.has(mod(pitch)) && !overlaps[1].classes.has(mod(pitch))
               && event.end - slot.start >= 240 && slot.start + slot.duration - event.end <= BEAT) role = 'SUSPENSION';
-            else if (!accented && slot.duration <= 480 && slot.start + slot.duration === event.end && event.end < total
-              && at(event.end).classes.has(mod(pitch)) && new JavaRandom(baseSeed ^ BigInt(slot.start) ^ 0x6c656164n).nextInt(100) < (settings.leadChordsChance ?? 0)) role = 'ANTICIPATION';
+            else if (nextEvent?.classes.has(mod(pitch))) role = 'ANTICIPATION';
             else if (slot.appoggiatura && slot.duration <= BEAT && state.last >= 0 && Math.abs(pitch - state.last) > 2 && scaleClasses.has(mod(pitch))) role = 'APPOGGIATURA';
             else if (!accented && state.last >= 0 && prior?.role === 'CHORD' && Math.abs(pitch - state.last) <= 2 && slot.start + slot.duration < event.end) {
               role = scaleClasses.has(mod(pitch)) ? 'PASSING' : options.chromaticApproaches ? 'CHROMATIC' : undefined;
@@ -186,20 +222,15 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
           if (state.last >= 0 && Math.abs(movement) > leap) continue;
           if (options.ending === 'LOOP' && finalIndex >= 0) {
             const first = state.first < 0 ? pitch : state.first;
-            const distances = loopArrivals.filter(target => Math.abs(target - first) <= leap).map(target => Math.abs(target - pitch));
-            if (Math.min(...distances) > soundsRemaining[index] * leap) continue;
+            let distance = Infinity;
+            for (const target of loopArrivals) if (Math.abs(target - first) <= leap) distance = Math.min(distance, Math.abs(target - pitch));
+            if (distance > soundsRemaining[index] * leap) continue;
           }
           if (prior && prior.pitch >= 0 && pending(prior.role) && (pending(role)
             || (prior.role === 'ANTICIPATION' ? movement !== 0 : prior.role === 'SUSPENSION' ? movement >= 0 || movement < -2
               : movement === 0 || Math.abs(movement) > (prior.role === 'CHROMATIC' ? 1 : 2)))) continue;
           if (index === finalIndex && options.ending === 'CLOSED' && event.classes.has(0) && mod(pitch) !== 0) continue;
           if (index === finalIndex && options.ending === 'LOOP' && state.first >= 0 && Math.abs(pitch - state.first) > leap) continue;
-          const kind = contour(slot.phrase), position = (slot.start - slot.phrase.start) / (slot.phrase.end - slot.phrase.start);
-          const width = Math.min(5,(options.rangeMax - options.rangeMin) / 4), center = (options.rangeMin + options.rangeMax) / 2;
-          const origin = state.phraseStart === slot.phrase.start && state.phraseFirst >= 0 ? state.phraseFirst
-            : center + (kind === 0 ? -width : kind === 1 ? width : kind === 2 ? -width / 2 : width / 2);
-          const arc = kind <= 1 ? position * 2 * width * (kind === 0 ? 1 : -1) : Math.sin(position * Math.PI) * width * (kind === 2 ? 1 : -1);
-          const direction = kind === 0 ? 1 : kind === 1 ? -1 : (position < 0.5 ? 1 : -1) * (kind === 2 ? 1 : -1);
           let score = state.score + preferences[pitch] + slot.duration / BEAT * (pending(role) ? -(1 - options.tension / 100) : accented ? 2 : 0.5)
             - Math.abs(pitch - origin - arc) * 0.18;
           if (state.last >= 0) {
@@ -225,19 +256,10 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
               }
               score -= Math.max(0,reversals - options.maxDirectionChanges) * 0.8;
             }
-            for (let i = state.path.length - 1; i > 0; i--) {
-              const earlier = state.path[i], previousPitch = state.path.slice(0,i).reverse().find(note => note.pitch >= 0)?.pitch;
-              if (earlier.slot.phrase.motif === slot.phrase.motif && earlier.slot.start % (4 * BEAT) === slot.start % (4 * BEAT) && previousPitch !== undefined) {
-                score += Math.sign(movement) === Math.sign(earlier.pitch - previousPitch) ? 0.8 : -0.4; break;
-              }
-            }
-            if (prior && prior.pitch >= 0 && prior.slot.phrase.start === slot.phrase.start) {
-              const earlier = state.path.at(-2), triple = earlier && earlier.pitch >= 0 && earlier.slot.phrase.start === slot.phrase.start;
-              const gesture = triple ? [earlier.pitch, prior.pitch, pitch] : [prior.pitch, pitch];
-              const beginning = triple ? earlier : prior;
-              const sounds = state.path.filter(n => n.pitch >= 0 && n.slot.phrase.start === slot.phrase.start).length;
-              score += catalogue.affinity(gesture, at(beginning.slot.start).classes, scaleClasses,
-                options.blockTypeWeights, slot.phrase.motif, Math.max(0, sounds - gesture.length + 1), direction);
+            if (motifDirection !== undefined) score += Math.sign(movement) === motifDirection ? 0.8 : -0.4;
+            if (cataloguePrefix) {
+              score += catalogue.affinity([...cataloguePrefix, pitch], catalogueChord!, scaleClasses,
+                options.blockTypeWeights, slot.phrase.motif, cataloguePhase, direction);
             }
           }
           if (slot.arrival) {
@@ -245,12 +267,15 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
             score -= Math.min(mod(pitch - pc),mod(pc - pitch)) * 0.6;
           }
           if (index === finalIndex && options.ending === 'LOOP' && state.first >= 0) score -= Math.abs(pitch - state.first) * 0.75;
-          next.push({ path: [...state.path, { slot, pitch, role }], score, last: pitch, previous: state.last,
+          next.push({ path: state.path, planned: { slot, pitch, role }, score, last: pitch, previous: state.last,
             first: state.first < 0 ? pitch : state.first, phraseFirst: state.phraseStart === slot.phrase.start && state.phraseFirst >= 0 ? state.phraseFirst : pitch,
             phraseStart: slot.phrase.start, run: state.phraseStart === slot.phrase.start && prior?.pitch === pitch ? state.run + 1 : 1, serial: serial++ });
         }
       }
-      next.sort((a,b) => b.score - a.score || a.serial - b.serial); beam = next.slice(0,32);
+      // Only surviving candidates need an extended history. Rejected candidates
+      // previously copied the entire path just to be discarded by this sort.
+      next.sort((a,b) => b.score - a.score || a.serial - b.serial);
+      beam = next.slice(0,32).map(({ planned, ...state }) => ({ ...state, path: [...state.path, planned] }));
     }
     result = beam[0]?.path;
   }

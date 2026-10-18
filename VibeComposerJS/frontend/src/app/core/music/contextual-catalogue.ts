@@ -26,11 +26,14 @@ const SHAPES = CATALOGUE.map((family,type) => {
 /** ContextualBlockCatalogue.Evaluator. Guide identity is independent of search order. */
 export class ContextualCatalogue {
   private readonly guides = new Map<string, { family: number; steps: number[] } | null>();
-  private readonly spaces = new Map<string, number[]>();
+  private readonly spaces = new Map<number, { pitches: number[]; positions: Int16Array }>();
+  private readonly weightKeys = new WeakMap<readonly number[], string>();
   constructor(private readonly seed: bigint, private readonly newChance: number) {}
   affinity(gesture: readonly number[], chord: ReadonlySet<number>, scale: ReadonlySet<number>, weights: readonly number[],
     motif: number, phase: number, direction: number): number {
-    const segment = Math.floor(phase / 4), key = `${motif}/${segment}/${direction}/${weights}`;
+    let weightKey = this.weightKeys.get(weights);
+    if (weightKey === undefined) { weightKey = String(weights); this.weightKeys.set(weights, weightKey); }
+    const segment = Math.floor(phase / 4), key = `${motif}/${segment}/${direction}/${weightKey}`;
     if (!this.guides.has(key)) {
       const random = new JavaRandom(mixContextualSeed(this.seed ^ BigInt(Math.abs(motif)) * 0x9e3779b97f4a7c15n ^ BigInt(segment) * 0xd1b54a32d192ed03n));
       const fresh = random.nextInt(100) < this.newChance, total = weights.reduce((sum,w) => sum+w,0);
@@ -56,10 +59,19 @@ export class ContextualCatalogue {
     }
     const guide = this.guides.get(key);
     if (!guide || gesture.length < 2) return 0;
-    const classes = members(guide.family) ? chord : scale, spaceKey = [...classes].sort((a,b) => a-b).join(',');
-    let pitches = this.spaces.get(spaceKey);
-    if (!pitches) { pitches = Array.from({ length: 128 },(_,i) => i).filter(p => classes.has(p % 12)); this.spaces.set(spaceKey,pitches); }
-    const position = pitches.indexOf(gesture[0]);
+    const classes = members(guide.family) ? chord : scale;
+    let spaceKey = 0;
+    for (const pitch of classes) spaceKey |= 1 << pitch;
+    let space = this.spaces.get(spaceKey);
+    if (!space) {
+      const pitches = Array.from({ length: 128 },(_,i) => i).filter(p => classes.has(p % 12));
+      const positions = new Int16Array(128).fill(-1);
+      pitches.forEach((pitch, index) => { positions[pitch] = index; });
+      space = { pitches, positions };
+      this.spaces.set(spaceKey, space);
+    }
+    const { pitches, positions } = space;
+    const position = positions[gesture[0]] ?? -1;
     if (position < 0) return 0;
     const offset = phase % 4, origin = guide.steps[offset % guide.steps.length];
     let distance = 0;

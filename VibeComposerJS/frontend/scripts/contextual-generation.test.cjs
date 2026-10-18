@@ -6,6 +6,13 @@ const { generateHarmony } = loadMusic('contextual-harmony.ts');
 const { SCALE_MODES } = loadMusic('scales.ts');
 const { mapChordNotes } = loadMusic('section-context.ts');
 
+test('contextual search preserves exact notes, patterns and skeletons across the optimization corpus', () => {
+  const { contextualDigest } = require('./benchmark-contextual-melody.cjs');
+  assert.deepEqual(contextualDigest(), {
+    sha256: 'c56b72fa80f8ad10d54defe44e6bf986d7e6978ca3e5c5e58fdc0a64b8b54498', failures: 0,
+  });
+});
+
 test('contextual defaults and seeded ranges use the lower octave', () => {
   const { DEFAULT_MELODY_GLOBAL } = loadMusic('melody-global-settings.ts');
   const { contextualRange } = loadMusic('contextual-randomizer.ts');

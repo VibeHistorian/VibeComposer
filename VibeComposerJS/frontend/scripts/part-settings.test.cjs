@@ -10,6 +10,7 @@ const compiledModules = new Map();
 
 test('track layouts share generation across consumers without sharing mutable note objects', () => {
   const { service, phrase, load } = fixture();
+  service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, 'track-melody-1', true));
   const generator = load('core/music/melody-generator.ts');
   const generate = generator.generateMelody;
   let calls = 0;
