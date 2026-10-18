@@ -13,6 +13,11 @@ h1 { margin: 0; font-size: 20px; font-weight: 550; }
 .settings-sidebar button { display: block; width: 100%; margin-bottom: 6px; padding: 10px 12px; border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--text-secondary); text-align: left; font: 12px var(--font-ui); cursor: pointer; }
 .settings-sidebar button:hover { background: var(--surface-hover); }
 .settings-sidebar button.selected { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
+.settings-category-group { margin-bottom: 14px; }
+.settings-sidebar .settings-category-heading { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 12px; color: var(--text-primary); font: 600 12px var(--font-heading); }
+.settings-category-heading span { color: var(--text-muted); }
+.settings-subcategories { margin-left: 19px; padding-left: 8px; border-left: 1px solid var(--border-default); }
+.settings-sidebar .settings-main-category { font-weight: 600; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
 /* Appearance preferences */

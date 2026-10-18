@@ -65,15 +65,19 @@ export class SettingsDialogComponent {
     input.value = '';
   }
   readonly categories = [
-    { id: 'appearance', label: 'Appearance' },
-    { id: 'behavior', label: 'Behavior' },
-    { id: 'score', label: 'Score' },
-    { id: 'midi', label: 'MIDI' },
-    { id: 'melody', label: 'Melody' },
-    { id: 'section-types', label: 'Section Types' },
-    { id: 'project', label: 'Project' },
+    { id: 'appearance', label: 'Appearance', children: [
+      { id: 'appearance', label: 'General' },
+      { id: 'score', label: 'Score' },
+    ] },
+    { id: 'behavior', label: 'Behavior', children: [
+      { id: 'behavior', label: 'General' },
+      { id: 'melody', label: 'Melody' },
+      { id: 'section-types', label: 'Section Types' },
+    ] },
+    { id: 'midi', label: 'MIDI', children: [] },
+    { id: 'project', label: 'Project', children: [] },
   ] as const;
-  readonly selectedCategory = signal<typeof this.categories[number]['id']>('appearance');
+  readonly selectedCategory = signal<typeof this.categories[number]['id'] | typeof this.categories[number]['children'][number]['id']>('appearance');
   readonly preview = signal(false);
 
   constructor() {

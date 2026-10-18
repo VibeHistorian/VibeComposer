@@ -17,7 +17,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
     const button=label=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label||b.getAttribute('aria-label')===label);
     const settings=async tab=>{
       button('Settings').click(); const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
-      (await wait(()=>[...dialog.querySelectorAll('.settings-sidebar button')].find(b=>b.textContent.trim()===tab),'settings tab '+tab)).click();return dialog;
+      (await wait(()=>[...dialog.querySelectorAll('.settings-sidebar button')].find(b=>(tab==='Behavior' ? b.getAttribute('aria-label')==='Behavior General' : b.textContent.trim()===tab)),'settings tab '+tab)).click();return dialog;
     };
     try {
       await wait(()=>innerWidth===${width}&&button('Settings'),'workspace');

@@ -34,7 +34,7 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         ensure(control(quick(),'feedbackCount'), 'persisted placement after reload');
         ensure(!control(quick(),'transpose'), 'removed quick control after reload');
         button('Settings').click();
-        (await wait(()=>button('Appearance'),'appearance after reload')).click();
+        (await wait(()=>button('Appearance General'),'appearance after reload')).click();
         await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'font selectors after reload');
         const checkFonts=()=>{
           ensure(document.querySelector('[aria-label="Interface text and controls font"]').value==='Verdana, sans-serif','saved interface font selected');
@@ -60,7 +60,7 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         await wait(()=>preview().endsWith('.vibe.json') && !/^\\d{8}_/.test(preview()),'project name only preview');
         for (const toggle of fields.querySelectorAll('button')) toggle.click();
         await wait(()=>JSON.parse(localStorage.getItem(key)).exportNameFields.length===5,'restore export fields');
-        button('Appearance').click();
+        button('Appearance General').click();
         await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'return to appearance');
         checkFonts();
         document.querySelector('[aria-label="Close settings"]').click();
@@ -124,7 +124,7 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         ensure(button('Preview').getAttribute('aria-pressed')==='false','preview defaults off');
         button('Preview').click();
         await wait(()=>getComputedStyle(backdrop()).backgroundColor==='rgba(0, 0, 0, 0)','preview clears dimming');
-        button('Behavior').click();
+        button('Behavior General').click();
         const restart=await wait(()=>button('Restart playback on Compose'),'restart Compose preference');
         ensure(restart.getAttribute('aria-pressed')==='true','restart defaults on');
         restart.click();
@@ -148,7 +148,7 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         await wait(()=>bassInstrument().options.length===128,'toggle restores full instrument catalog');
         await wait(()=>!backdrop().classList.contains('appearance-preview'),'preview only applies in Appearance');
         ensure(getComputedStyle(backdrop()).backgroundColor!=='rgba(0, 0, 0, 0)','other categories dim workspace');
-        button('Appearance').click();
+        button('Appearance General').click();
         await wait(()=>backdrop().classList.contains('appearance-preview'),'returning to Appearance restores preview');
         button('Preview').click();
         await wait(()=>!backdrop().classList.contains('appearance-preview'),'preview can be disabled');
