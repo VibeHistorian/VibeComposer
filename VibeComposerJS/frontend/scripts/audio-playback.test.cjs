@@ -37,8 +37,9 @@ function fixture({ loop = false } = {}) {
     createGain: node, createStereoPanner: node,
     createOscillator() { const source = node(); sources.push(source); return source; },
   };
+  const midi = { selectedOutput: signal(null), schedule() {}, configure() {}, silence() {} };
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
-    signal, effect, untracked, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
+    signal, effect, untracked, inject: () => midi, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
   const load = (file, dependencies) => {
     const source = fs.readFileSync(path.join(__dirname, '../src/app', file), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -53,6 +54,7 @@ function fixture({ loop = false } = {}) {
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     './tiny-synth-engine': { TinySynthEngine: class {} },
+    './midi-output.service': { MidiOutputService: class {} },
     '../music/phrase': { layOutTrackPhrase: (project, track) =>
       project.arrangement[0].trackPresence[track.id] === false ? [] : track.notes },
   });
@@ -74,8 +76,37 @@ function fixture({ loop = false } = {}) {
       { id: 'sustain', midi: 48, startBeat: 0, durationBeats: 8, velocity: 100 },
       { id: 'next', midi: 50, startBeat: 4, durationBeats: 1, velocity: 100 },
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
-  return { playback, context, sources, project, angular, load };
+  return { playback, context, sources, project, angular, load, midi };
 }
+
+test('MIDI playback uses assigned tracks and timestamps, respects mute, and clears notes on pause and routing changes', async () => {
+  const { playback, context, sources, project, midi } = fixture();
+  const sent = [];
+  let silenced = 0;
+  midi.schedule = (...args) => sent.push(args);
+  midi.silence = () => silenced++;
+  midi.selectedOutput.set({ id: 'external' });
+  const before = performance.now();
+  await playback.start(project);
+  assert.equal(sources.length, 0, 'external output replaces internal synth');
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0][0], project.tracks[0]);
+  assert.equal(sent[0][1], 48);
+  assert.ok(sent[0][3] >= before && sent[0][3] < performance.now() + 20);
+  assert.equal(sent[0][4], 4, 'sustain duration follows tempo map');
+  project.tracks[0].mix.muted = true;
+  playback.seek(project, 4);
+  assert.equal(sent.length, 1, 'muted MIDI track emits no notes');
+  project.tracks[0].mix.muted = false;
+  context.currentTime = .2;
+  const prior = silenced;
+  playback.pause();
+  assert.ok(silenced > prior, 'pause clears queued MIDI and held notes');
+  await playback.start(project);
+  midi.selectedOutput.set(null);
+  assert.ok(sources.length > 0, 'routing back resumes internal audio');
+  playback.stop();
+});
 
 test('P5f tempo boundaries integrate sustained notes, transport, partial loops and LIVE tempo reload', async () => {
   const { playback,project,context,sources }=fixture();

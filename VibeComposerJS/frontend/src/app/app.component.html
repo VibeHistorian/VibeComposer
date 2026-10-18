@@ -3,6 +3,34 @@
 
   <vc-transport-dock>
     <div transportHistory class="project-history-tools">
+      <button type="button" class="midi-port-button" [class.midi-connected]="midi.selectedOutput() !== null"
+        [cdkMenuTriggerFor]="midiMenu" [cdkMenuPosition]="exportMenuPositions"
+        (cdkMenuOpened)="!midi.ready() && midi.refresh()" [title]="midi.selectedOutput() ? 'MIDI output: ' + midi.label() : 'Choose MIDI output'"
+        [attr.aria-label]="'MIDI output: ' + midi.label()">
+        <span class="midi-port-name">{{ midi.label() }}</span><span aria-hidden="true">▾</span>
+      </button>
+      <ng-template #midiMenu>
+        <div cdkMenu class="export-menu midi-menu" aria-label="MIDI output">
+          <button type="button" cdkMenuItemRadio [cdkMenuItemChecked]="midi.selectedOutput() === null"
+            [cdkMenuItemDisabled]="midi.busy()" (cdkMenuItemTriggered)="midi.select(null)">
+            <span aria-hidden="true">{{ midi.selectedOutput() === null ? '✓' : '' }}</span>Internal synth
+          </button>
+          @for (port of midi.outputs(); track port.id) {
+            <button type="button" cdkMenuItemRadio [cdkMenuItemChecked]="midi.selectedOutput()?.id === port.id"
+              [cdkMenuItemDisabled]="midi.busy()" (cdkMenuItemTriggered)="midi.select(port.id)" [title]="port.manufacturer || port.name || 'MIDI output'">
+              <span aria-hidden="true">{{ midi.selectedOutput()?.id === port.id ? '✓' : '' }}</span>{{ port.name || 'MIDI output' }}
+            </button>
+          }
+          @if (midi.busy()) {
+            <p class="midi-status" role="status">Connecting to MIDI…</p>
+          } @else if (midi.error()) {
+            <p class="midi-status" role="status">{{ midi.error() }}</p>
+          } @else if (midi.ready() && !midi.outputs().length) {
+            <p class="midi-status" role="status">No MIDI outputs found. Connect a device, then refresh.</p>
+          }
+          <button type="button" cdkMenuItem [cdkMenuItemDisabled]="midi.busy()" (cdkMenuItemTriggered)="midi.refresh()">Refresh MIDI ports</button>
+        </div>
+      </ng-template>
       <button type="button" class="icon-button" (click)="openSettings()" aria-label="Settings" title="Settings" aria-haspopup="dialog">⚙</button>
       <div class="project-tool-group" role="group" aria-label="Project history">
         <button type="button" class="icon-button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>

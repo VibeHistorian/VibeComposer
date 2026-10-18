@@ -4,6 +4,16 @@
 .export-menu button:hover:not(:disabled), .export-menu button:focus-visible { outline: none; background: var(--surface-button-hover); }
 .export-menu button:disabled { color: var(--text-disabled); cursor: default; }
 
+/* MIDI output selector */
+.midi-port-button { display: inline-flex; align-items: center; gap: 7px; max-width: 180px; }
+.midi-port-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.midi-port-button.midi-connected { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
+.midi-menu { max-width: min(340px, calc(100vw - 32px)); max-height: min(420px, calc(100vh - 32px)); overflow: auto; }
+.midi-menu button { display: flex; align-items: baseline; gap: 8px; overflow-wrap: anywhere; }
+.midi-menu button span { flex: 0 0 12px; color: var(--accent-primary); }
+.midi-menu button[aria-disabled="true"] { color: var(--text-disabled); cursor: default; }
+.midi-status { margin: 0; padding: 9px 12px; color: var(--text-muted); font: 12px var(--font-ui); }
+
 /* Export completion glow */
 @property --export-border-angle {
   syntax: '<angle>';

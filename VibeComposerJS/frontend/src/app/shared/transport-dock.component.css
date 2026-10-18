@@ -43,7 +43,7 @@
 .transport-globals vc-chordlet-editor { flex: 1; min-width: 0; }.playback-error { position: absolute; right: 12px; bottom: calc(100% + 6px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); font-size: 10px; }
 
 /* Project actions at the right edge */
-.transport-tools { min-width: 0; justify-self: end; }
+.transport-tools { min-width: 0; max-width: 100%; justify-self: end; }
 
 /* Compact dock layout */
 @media (min-width: 1051px) and (max-width: 1400px) {

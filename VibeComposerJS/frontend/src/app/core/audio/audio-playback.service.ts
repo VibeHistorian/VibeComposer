@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { MidiOutputService } from './midi-output.service';
 import type { ArrangedPart, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
 import { layOutTrackPhrase } from '../music/phrase';
 import { TinySynthEngine } from './tiny-synth-engine';
@@ -15,6 +16,7 @@ const RELOAD_FADE_SECONDS = 0.012;
 
 @Injectable({ providedIn: 'root' })
 export class AudioPlaybackService {
+  private readonly midi = inject(MidiOutputService);
   private readonly playbackState = signal<PlaybackState>('stopped');
   private readonly position = signal(0);
   private readonly duration = signal(0);
@@ -46,11 +48,30 @@ export class AudioPlaybackService {
   private readonly programs = new Map<string, number>();
   private readonly activeSources = new Set<AudioScheduledSourceNode>();
 
+  constructor() {
+    effect(() => {
+      this.midi.selectedOutput();
+      untracked(() => {
+        if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
+        else this.stopSources();
+      });
+    });
+  }
+
   async audition(track: CompositionTrack, notes: readonly PhraseNote[]): Promise<void> {
     if (!notes.length) return;
     try {
       const context = this.getContext();
       if (context.state === 'suspended') await context.resume();
+      if (this.midi.selectedOutput()) {
+        const pitches = new Set<number>();
+        for (const note of notes) {
+          if (pitches.has(note.midi)) continue;
+          pitches.add(note.midi);
+          this.midi.schedule(track, note.midi, note.velocity, performance.now() + 3, 0.3);
+        }
+        return;
+      }
       const gain = context.createGain();
       const pan = context.createStereoPanner();
       gain.gain.value = 0.8 * track.mix.volumePercent / 100;
@@ -207,6 +228,7 @@ export class AudioPlaybackService {
       const settings = track.mix;
       this.programs.set(track.id, settings.program);
       const audible = !settings.muted && (!anySolo || settings.solo);
+      this.midi.configure(track, audible);
       const bus = this.buses.get(track.id);
       if (!bus) continue;
       bus.gain.gain.setTargetAtTime(audible ? settings.volumePercent / 100 : 0, now, 0.02);
@@ -341,6 +363,15 @@ export class AudioPlaybackService {
     if (!bus) return;
     const startTime = Math.max(context.currentTime + 0.003, this.originTime + this.absoluteSeconds(absoluteBeat));
     const duration = Math.max(0.035, this.absoluteSeconds(absoluteBeat + note.durationBeats) - this.absoluteSeconds(absoluteBeat));
+    if (this.midi.selectedOutput()) {
+      const project = this.mixProject;
+      const track = project?.tracks.find(track => track.id === note.trackId);
+      if (track && !track.mix.muted && (!project!.tracks.some(track => track.mix.solo) || track.mix.solo)) {
+        this.midi.schedule(track, note.midi, note.velocity,
+          performance.now() + (startTime - context.currentTime) * 1000, duration);
+      }
+      return;
+    }
     if (!this.synth) return;
     const voices = this.synth.schedule(bus.gain, this.programs.get(note.trackId) ?? 0,
       note.role === 'drums', note.midi, note.velocity, startTime, duration);
@@ -428,6 +459,7 @@ export class AudioPlaybackService {
   }
 
   private stopSources(stopTime?: number): void {
+    this.midi.silence();
     for (const source of this.activeSources) {
       try { source.stop(stopTime); } catch { /* It may have ended between scheduler ticks. */ }
     }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { AudioExportService } from './core/audio/audio-export.service';
+import { MidiOutputService } from './core/audio/midi-output.service';
 import { generateCompositionMidi } from './core/music/midi-export';
 import { downloadProjectFile } from './core/project/download-file';
 import { HistoryDialogComponent } from './shared/history-dialog.component';
@@ -24,6 +25,7 @@ import { isEditingText } from './shared/keyboard-shortcuts';
 export class AppComponent {
   readonly projectMessage = signal('');
   readonly audioExport = inject(AudioExportService);
+  readonly midi = inject(MidiOutputService);
   readonly exportMenuPositions = [
     { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -6 },
     { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 6 },
