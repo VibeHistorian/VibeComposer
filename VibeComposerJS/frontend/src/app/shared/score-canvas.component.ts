@@ -795,8 +795,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     graphics.rect(0, 0, this.width, this.height).fill({ color: color('--surface-score').value });
     const visibleNotes = notes.filter(note => !hiddenTrackIds.has(note.part));
     const harmonic = visibleNotes.filter(note => note.color !== 'drums');
-    const phrasePitchMin = Math.max(0, (harmonic.length ? harmonic.reduce((min, note) => Math.min(min, note.midi), 127) : 48) - 2);
-    const phrasePitchMax = Math.min(127, (harmonic.length ? harmonic.reduce((max, note) => Math.max(max, note.midi), 0) : 72) + 2);
+    const notePitchMin = harmonic.length ? harmonic.reduce((min, note) => Math.min(min, note.midi), 127) : 48;
+    const notePitchMax = harmonic.length ? harmonic.reduce((max, note) => Math.max(max, note.midi), 0) : 72;
+    const phrasePitchMin = Math.max(0, notePitchMin - 2);
+    const phrasePitchMax = Math.min(127, notePitchMax + 2);
     this.pitchMin = this.editable() ? 0 : phrasePitchMin;
     this.pitchMax = this.editable() ? 127 : phrasePitchMax;
     this.drumPitches = [...new Set([...visibleNotes.filter(note => note.color === 'drums').map(note => note.midi), ...tracks.filter(track => track.color === 'drums' && !hiddenTrackIds.has(track.id)).map(track => track.drumPitch ?? 36)])].sort((a, b) => b - a);
@@ -808,7 +810,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       // Fit the phrase initially, but keep every MIDI pitch reachable by zooming and scrolling.
       this.verticalScale = Math.min(this.maxVerticalScale,
         this.harmonicHeight > 0 ? 128 / (phrasePitchMax - phrasePitchMin + 1) : 1);
-      this.verticalOffset = (127 - phrasePitchMax) * this.laneHeight;
+      const phraseCenter = (notePitchMin + notePitchMax) / 2;
+      this.verticalOffset = (this.pitchMax - phraseCenter + 0.5) * this.laneHeight - this.harmonicHeight / 2;
     } else {
       this.verticalScale = Math.min(this.maxVerticalScale, this.verticalScale);
       if (preservePitchPosition) {

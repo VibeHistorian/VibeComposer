@@ -551,7 +551,9 @@ test('Alt-wheel reveals pitches outside the fitted phrase and allows adding note
   c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
     fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
   c.drawStatic();
-  assert.deepEqual(c.gutterRows().filter(row => !row.drum).map(row => row.midi), [50, 49, 48, 47, 46, 45, 44, 43]);
+  const fittedNote = c.hitAreas.find(area => area.note.id === 'a');
+  assert.ok(Math.abs(fittedNote.y + fittedNote.height / 2 - c.harmonicHeight / 2) < 1e-10,
+    'a single note is centered above the pinned drum rows');
   const cursorY = c.harmonicHeight / 2;
   const anchor = c.pitchMax - (c.verticalOffset + cursorY) / c.laneHeight;
   const wheel = { preventDefault() {}, stopPropagation() {}, altKey: true, deltaMode: 0,
@@ -574,6 +576,24 @@ test('Alt-wheel reveals pitches outside the fitted phrase and allows adding note
     Array.from({ length: 128 }, (_, i) => 127 - i));
   c.onCanvasWheel({ ...wheel, deltaY: -10000 });
   assert.equal(c.laneHeight, 30);
+});
+
+test('phrase auto-fit centers its min/max pitches when row height is capped', () => {
+  const { component: c } = fixture();
+  c.height = 600; c.editable = () => true; c.velocityVisible = () => true;
+  c.pendingEditPitchFocus = true;
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }],
+    notes: [48, 52, 52].map((midi, index) => ({ id: String(index), part: 'bass', color: 'bass',
+      midi, velocity: 90, startBeat: 20 + index, durationBeats: 1, opacity: 1 })),
+    sections: [], totalBeats: 64, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
+    fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
+  c.drawStatic();
+  assert.equal(c.laneHeight, 30);
+  const centers = c.hitAreas.map(area => area.y + area.height / 2);
+  assert.equal(centers.length, 3);
+  assert.ok(Math.abs((Math.min(...centers) + Math.max(...centers)) / 2 - c.harmonicHeight / 2) < 1e-10,
+    'center uses the pitch bounds, regardless of how many notes share a pitch');
 });
 
 test('pitch rows cap at 30px during fitting, repeated zooming and resizing in overview and edit mode', () => {
