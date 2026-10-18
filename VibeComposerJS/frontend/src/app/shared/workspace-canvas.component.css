@@ -104,8 +104,10 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .score-header-separator { position: absolute; z-index: 1; top: 0; height: 20px; width: 1px; background: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-foreground-tone)) 15%, transparent); pointer-events: none; }
 .score-header-separator.section-end { background: var(--grid-measure); }
 .score-chord-slot { position: absolute; top: 0; min-width: 0; height: 20px; box-sizing: border-box; overflow: hidden; }
-.score-section-measure { position: absolute; left: 4px; top: 3px; }
-.score-chord-label { position: absolute; right: 4px; top: 2px; width: max-content; box-sizing: border-box; white-space: nowrap; padding: 1px 3px; border-radius: var(--radius-micro); background: hsl(var(--chord-hue) var(--chordlet-background-tone)); color: hsl(var(--chord-hue) var(--chordlet-foreground-tone)); }
+.score-section-measure { position: absolute; right: 4px; top: 3px; width: max-content; white-space: nowrap; }
+.measure-end, .measures-compact .measure-range { position: absolute; right: 0; visibility: hidden; }
+.measures-compact .measure-end { position: static; visibility: visible; }
+.score-chord-label { position: absolute; left: 4px; top: 2px; width: max-content; box-sizing: border-box; white-space: nowrap; padding: 1px 3px; border-radius: var(--radius-micro); background: hsl(var(--chord-hue) var(--chordlet-background-tone)); color: hsl(var(--chord-hue) var(--chordlet-foreground-tone)); }
 .chords-hidden .score-chord-label { visibility: hidden; }
 .score-track-lanes { position: relative; min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-score); }
 .score-track-labels { position: relative; grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }

@@ -319,7 +319,10 @@ export class WorkspaceCanvasComponent {
       const duration = harmony.durations[index % harmony.durations.length];
       const slot = { id: `${item.section.id}:${index}`, startBeat: beat, endBeat: beat + duration,
         widthPercent: duration / durationBeats * 100, chord: harmony.chords[index % harmony.chords.length],
-        startMeasure: index === 0 ? item.startMeasure.toString().padStart(2, '0') : '' };
+        measureRange: index === item.section.measures - 1
+          ? (item.section.measures === 1 ? '' : item.startMeasure.toString().padStart(2, '0') + '–')
+            + (item.startMeasure + item.section.measures - 1).toString().padStart(2, '0') : '',
+        endMeasure: (item.startMeasure + item.section.measures - 1).toString().padStart(2, '0') };
       beat += duration;
       return slot;
     });

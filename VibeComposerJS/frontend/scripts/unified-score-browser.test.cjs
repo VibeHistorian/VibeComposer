@@ -220,14 +220,33 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const slots=[...document.querySelectorAll('.score-chord-slot')];
     return {labels:slots.map(s=>s.querySelector('.score-chord-label').textContent),
       beats:slots.map(s=>[+s.dataset.startBeat,+s.dataset.endBeat]),
-      measures:[...document.querySelectorAll('.score-section-measure')].map(s=>s.textContent),
+      measures:[...document.querySelectorAll('.measure-range')].map(s=>s.textContent),
+      leftAligned:slots.every(s=>Math.abs(s.querySelector('.score-chord-label').getBoundingClientRect().left-s.getBoundingClientRect().left-4)<.1),
+      rightAligned:[...document.querySelectorAll('.score-section-measure')].every(s=>Math.abs(s.parentElement.getBoundingClientRect().right-s.getBoundingClientRect().right-4)<.1),
       ratio:slots[3].getBoundingClientRect().width/slots[2].getBoundingClientRect().width,
       colors:slots.map(s=>getComputedStyle(s.querySelector('.score-chord-label')).color)};
   })()`);
   assert.deepEqual(harmonyHeader.labels,['D','G','Em','A']);
   assert.deepEqual(harmonyHeader.beats,[[0,4],[4,8],[8,10],[10,16]]);
-  assert.deepEqual(harmonyHeader.measures,['01','03']);assert.ok(Math.abs(harmonyHeader.ratio-3)<.02);
+  assert.deepEqual(harmonyHeader.measures,['01–02','03–04']);assert.ok(Math.abs(harmonyHeader.ratio-3)<.02);
+  assert.equal(harmonyHeader.leftAligned,true);assert.equal(harmonyHeader.rightAligned,true);
   assert.notEqual(harmonyHeader.colors[0],harmonyHeader.colors[2]);
+  const measureFallback=await evaluate(`(async()=>{${waitCode}
+    const section=document.querySelector('.score-ruler-section'),slot=section.querySelector('.score-chord-slot:last-of-type');
+    const label=slot.querySelector('.score-chord-label'),range=slot.querySelector('.measure-range'),end=slot.querySelector('.measure-end');
+    const sectionStyle=section.style.cssText,slotStyle=slot.style.cssText;
+    const resize=width=>{section.style.width=width+'px';slot.style.left='0px';slot.style.width=width+'px';};
+    resize(label.offsetWidth+end.offsetWidth+17);
+    await wait(()=>section.classList.contains('measures-compact'));
+    const compact=getComputedStyle(range).visibility==='hidden'&&getComputedStyle(end).visibility==='visible'
+      &&end.textContent==='02'&&getComputedStyle(label).visibility==='visible';
+    resize(label.offsetWidth+range.offsetWidth+20);
+    await wait(()=>!section.classList.contains('measures-compact'));
+    const expanded=getComputedStyle(range).visibility==='visible'&&getComputedStyle(end).visibility==='hidden';
+    section.style.cssText=sectionStyle;slot.style.cssText=slotStyle;
+    return {compact,expanded};
+  })()`);
+  assert.deepEqual(measureFallback,{compact:true,expanded:true});
   const harmonyTooltip=await evaluate(`(async()=>{${waitCode}
     for(const name of ['Melody','Chords','Arps','Drums']){
       const b=document.querySelector('.score-role-controls [aria-label="'+name+'"]');
@@ -291,7 +310,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   const shortSection=await evaluate(`(async()=>{${waitCode}
     const section=await wait(()=>document.querySelector('.score-ruler-section.chords-hidden'));
     const label=section.querySelector('.score-chord-label');
-    const initial={hidden:getComputedStyle(label).visibility==='hidden',measure:section.querySelector('.score-section-measure').textContent,
+    const initial={hidden:getComputedStyle(label).visibility==='hidden',measure:section.querySelector('.measure-end').textContent,
       separator:getComputedStyle(section.querySelector('.score-header-separator')).backgroundColor,
       saved:JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid};
     const canvas=await wait(()=>document.querySelector('vc-score-canvas canvas')),c=canvas.getBoundingClientRect();

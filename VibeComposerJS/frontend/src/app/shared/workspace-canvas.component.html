@@ -207,7 +207,11 @@
                       @for (slot of section.slots; track slot.id) {
                         <span class="score-chord-slot" [style.left.px]="slot.left" [style.width.px]="slot.width" [style.--chord-hue]="slot.chord.hue"
                           [attr.data-start-beat]="slot.startBeat" [attr.data-end-beat]="slot.endBeat">
-                          @if (slot.startMeasure) { <span class="score-section-measure">{{ slot.startMeasure }}</span> }
+                          @if (slot.measureRange) {
+                            <span class="score-section-measure" [title]="slot.measureRange">
+                              <span class="measure-range">{{ slot.measureRange }}</span><span class="measure-end">{{ slot.endMeasure }}</span>
+                            </span>
+                          }
                           <span class="score-chord-label" [title]="slot.chord.label">{{ slot.chord.label }}</span>
                         </span>
                         <i class="score-header-separator" [class.section-end]="slot.sectionEnd" [style.left.px]="slot.endX"
