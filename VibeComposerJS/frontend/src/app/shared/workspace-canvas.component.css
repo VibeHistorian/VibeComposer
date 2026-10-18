@@ -96,7 +96,10 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .score-ruler-viewport { min-width: 0; overflow: hidden; margin-left: 1px; }
 .score-ruler-sections { position: relative; min-width: 0; display: flex; }
 .score-loop-line { position: absolute; bottom: 0; height: 2px; background: var(--loop-line); pointer-events: none; }
-.score-ruler-sections span { min-width: 0; flex-shrink: 0; box-sizing: border-box; padding: 3px 5px; overflow: hidden; border-left: 1px solid var(--border-subtle); text-overflow: ellipsis; white-space: nowrap; }
+.score-chord-slot { position: relative; min-width: 0; height: 20px; flex-shrink: 0; box-sizing: border-box; overflow: hidden; border-right: 1px solid var(--border-subtle); }
+.score-section-measure { position: absolute; left: 4px; top: 3px; }
+.score-chord-label { position: absolute; right: 4px; top: 1px; max-width: calc(100% - 8px); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 1px 3px; border: 1px solid hsl(var(--chord-hue) var(--chordlet-border-tone)); border-radius: var(--radius-micro); background: hsl(var(--chord-hue) var(--chordlet-background-tone)); color: hsl(var(--chord-hue) var(--chordlet-foreground-tone)); }
+.score-chord-slot:has(.score-section-measure) .score-chord-label { max-width: calc(100% - 27px); }
 .score-track-lanes { position: relative; min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-score); }
 .score-track-labels { position: relative; grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
 .score-track-label { position: absolute; left: 0; width: 72px; box-sizing: border-box; z-index: 1; min-width: 0; min-height: 0; padding: 0 6px; display: flex; align-items: center; gap: 6px; overflow: hidden; border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font: 10px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }

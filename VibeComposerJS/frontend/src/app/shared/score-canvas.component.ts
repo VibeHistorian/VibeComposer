@@ -86,6 +86,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
   readonly notesReady = input(true);
   readonly sections = input.required<readonly ScoreCanvasSection[]>();
+  readonly chordBoundaries = input<readonly number[]>([]);
   readonly totalBeats = input.required<number>();
   readonly playheadPercent = input.required<number>();
   readonly selectedTrackId = input.required<string>();
@@ -168,6 +169,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.snapToScale();
     this.scalePitchClasses();
     this.notesReady();
+    this.chordBoundaries();
     this.model = {
       tracks: this.tracks(),
       notes: this.notes(),
@@ -478,6 +480,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const sources: Record<PhraseSource, string> = {
       'global-generated': 'Global generated', 'global-edited': 'Global edited phrase',
       'section-generated': 'Section generated', 'section-edited': 'Section edited phrase',
+      'global-section-harmony': 'Global track [Section harmony]',
     };
     this.noteTooltip.set({
       track: order && name !== defaultName ? `${name} (#${order})` : name,
@@ -853,6 +856,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const x = Math.floor(this.scoreX(section.startBeat)) + 0.5;
       if (x < 0 || x > this.width) continue;
       line(x, 0, x, scoreHeight, '--grid-measure', timeGridAlpha);
+    }
+    for (const beat of this.chordBoundaries()) {
+      const x = Math.floor(this.scoreX(beat)) + 0.5;
+      if (x >= 0 && x <= this.width) line(x, 0, x, scoreHeight, '--border-strong', 0.35);
     }
     // Pitch increases upward: the B/C boundary sits below C, not above it.
     // Use absolute MIDI octaves so brightness stays consistent while zooming or scrolling.

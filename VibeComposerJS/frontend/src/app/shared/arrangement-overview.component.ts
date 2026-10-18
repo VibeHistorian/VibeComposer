@@ -1,5 +1,6 @@
 import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import { sectionDurationBeats, sectionChordDurations } from '../core/music/section-context';
+import type { SectionHarmonyDisplay } from '../core/music/harmony-display';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack, SectionType } from '../core/project/project.model';
 import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
@@ -64,6 +65,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 })
 export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly project = input.required<CompositionProject>();
+  readonly sectionHarmony = input<Readonly<Record<string, SectionHarmonyDisplay>>>({});
   readonly selectedSectionIds = input<readonly string[]>([]);
   readonly selectedTrackId = input('');
   readonly settingsTarget = input<SettingsTarget | null>(null);
@@ -234,6 +236,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.selectedSectionIds();
     this.selectedTrackId();
     this.settingsTarget();
+    this.sectionHarmony();
     this.loopRange();
     this.scheduleDraw();
   });
@@ -514,16 +517,44 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const range = this.measureLabel(item);
       context.font = `10px ${monoFont}`;
       const rangeWidth = context.measureText(range).width;
+      const harmony = this.sectionHarmony()[item.section.id];
+      const compact = harmony?.chordsDiffer ? harmony : undefined;
+      const heading = this.sectionLabel(item.section.type);
+      const headingFontStyle = `600 10px ${headingFont}`;
+      context.font = headingFontStyle;
+      const headingWidth = context.measureText(heading).width;
+      const headingSpace = compact ? Math.min(headingWidth, Math.max(0, (width - rangeWidth - 22) * 0.3)) : width - rangeWidth - 22;
       context.save(); context.beginPath();
-      context.rect(x + 7, 0, Math.max(0, width - rangeWidth - 22), RULER_HEIGHT); context.clip();
-      text(this.sectionLabel(item.section.type), x + 7, 15, '--text-primary', `600 10px ${headingFont}`);
+      context.rect(x + 7, 0, Math.max(0, headingSpace), RULER_HEIGHT); context.clip();
+      text(heading, x + 7, 15, '--text-primary', headingFontStyle);
       context.restore();
+      if (compact) {
+        const end = x + width - rangeWidth - 18;
+        let left = x + 7 + headingSpace + 8;
+        context.font = `10px ${monoFont}`;
+        const suffix = compact.durationsDiffer ? '*' : '';
+        const suffixWidth = context.measureText(suffix).width;
+        for (const chord of compact.chords) {
+          const chordWidth = context.measureText(chord.label).width;
+          if (left + chordWidth + suffixWidth > end) {
+            if (left + context.measureText('…' + suffix).width <= end) {
+              text('…' + suffix, left, 15, '--text-secondary');
+            }
+            left = end;
+            break;
+          }
+          context.fillStyle = `hsl(${chord.hue} ${color('--chordlet-foreground-tone')})`;
+          context.fillText(chord.label, left, 15);
+          left += chordWidth + 5;
+        }
+        if (suffix && left + suffixWidth <= end) text(suffix, left - 3, 15, '--text-secondary');
+      }
       context.textAlign = 'right';
       text(range, x + width - 7, 15, '--text-muted');
       context.textAlign = 'start';
       context.restore();
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
-        label: `${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}`,
+        label: `${heading}, bars ${this.measureLabel(item)}${compact ? ', chords ' + compact.chords.map(chord => chord.label).join(' ') + (compact.durationsDiffer ? ' *, section beat durations' : '') : ''}`,
         activate: (event) => this.selectSection(item.section.id, event),
         reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reroll' }),
         reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reset' }),

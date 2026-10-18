@@ -8,6 +8,43 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('harmony headers compare effective chords and durations and reuse transposed chordlet labels', () => {
+  const { service } = fixture();
+  const { sectionHarmonyDisplay, trackHasSectionHarmony } = require('./music-loader.cjs').loadMusic('harmony-display.ts');
+  const project = { ...service.project(), key: 'C', scale: 'major', transposeSemitones: 2, progression: [1, 4], progressionChords: undefined };
+  const section = { ...project.arrangement[0], measures: 2 };
+  const inherited = sectionHarmonyDisplay(project, section);
+  assert.deepEqual(inherited.chords.map(chord => chord.label), ['D', 'G']);
+  assert.deepEqual(inherited.chords.map(chord => chord.hue), [0, 150]);
+  assert.equal(inherited.chordsDiffer, false); assert.equal(inherited.durationsDiffer, false);
+  const explicit = sectionHarmonyDisplay(project, { ...section, chordDegrees: [1, 4, 1, 4], customDurations: [4, 4, 4, 4] });
+  assert.equal(explicit.chordsDiffer, false); assert.equal(explicit.durationsDiffer, false);
+  const local = { ...section, chordDegrees: [2, 5], customDurations: [2, 6] };
+  const display = sectionHarmonyDisplay(project, local);
+  assert.deepEqual(display.chords.map(chord => chord.label), ['Em', 'A']);
+  assert.deepEqual(display.durations, [2, 6]);
+  assert.equal(display.chordsDiffer, true); assert.equal(display.durationsDiffer, true);
+  const bass = project.tracks.find(track => track.role === 'bass'), drums = project.tracks.find(track => track.role === 'drums');
+  assert.equal(trackHasSectionHarmony(project, bass, section), false);
+  assert.equal(trackHasSectionHarmony(project, bass, local), true);
+  assert.equal(trackHasSectionHarmony(project, drums, { ...section, chordDegrees: [2, 5] }), false);
+  assert.equal(trackHasSectionHarmony(project, drums, local), true);
+  assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { key: 'C', scale: 'major', tempoBpm: project.tempoBpm } }), false);
+  assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { key: 'D' } }), true);
+});
+
+test('global generated notes mark differing section harmony without claiming section track settings', () => {
+  const { service, phrase } = fixture();
+  const project = service.project(), track = project.tracks.find(track => track.role === 'bass');
+  const section = { ...project.arrangement[0], measures: 1, chordDegrees: [2], customDurations: [2], trackPresence: { [track.id]: true } };
+  assert.equal(phrase.trackPhraseSource(track, section, project), 'global-section-harmony');
+  assert.equal(phrase.trackPhraseSource(track, { ...section, trackPartOverrides: { [track.id]: { transpose: 12 } } }, project), 'section-generated');
+  assert.equal(phrase.trackPhraseSource({ ...track, editedPhrase: [] }, section, project), 'global-edited');
+  assert.equal(phrase.trackPhraseSource(track, { ...section, trackPhrases: { [track.id]: [] } }, project), 'section-edited');
+  const notes = phrase.layOutTrackPhrase({ ...project, arrangement: [section] }, track, true);
+  assert.ok(notes.length > 0); assert.ok(notes.every(note => note.phraseSource === 'global-section-harmony'));
+});
+
 test('score phrase sources follow local edits, forced generation and inherited global edits without changing layout output', () => {
   const { service, phrase } = fixture();
   const project = service.project(), track = project.tracks.find(track => track.role === 'bass');
@@ -16,8 +53,20 @@ test('score phrase sources follow local edits, forced generation and inherited g
   const section = { ...project.arrangement[0], measures: 1, trackPresence: { [track.id]: true } };
   assert.equal(phrase.trackPhraseSource(track, section), 'global-generated');
   assert.equal(phrase.trackPhraseSource(edited, section), 'global-edited');
-  assert.equal(phrase.trackPhraseSource(edited, { ...section, generatedTrackIds: [track.id] }), 'section-generated');
+  assert.equal(phrase.trackPhraseSource(edited, { ...section, generatedTrackIds: [track.id] }), 'global-generated');
   assert.equal(phrase.trackPhraseSource(track, { ...section, trackPartOverrides: { [track.id]: { transpose: 12 } } }), 'section-generated');
+  assert.equal(phrase.trackPhraseSource(track, { ...section, rolePartOverrides: { bass: { transpose: 12 } } }), 'section-generated');
+  assert.equal(phrase.trackPhraseSource(edited, { ...section, generatedTrackIds: [track.id],
+    trackPartOverrides: { [track.id]: { transpose: 12 } } }), 'section-generated');
+  for (const context of [
+    { context: { key: 'D', swingPercent: 60 } }, { chordDegrees: [1, 4] },
+    { customChords: [null] }, { customDurations: [2] }, { useMelodyHarmony: true }, { swapMelody: true },
+    { trackPartOverrides: { [track.id]: {} }, rolePartOverrides: { bass: {} } },
+    { trackPartOverrides: { 'another-track': { transpose: 12 } }, rolePartOverrides: { melody: { transpose: 12 } } },
+  ]) {
+    assert.equal(phrase.trackPhraseSource(track, { ...section, ...context }), 'global-generated', JSON.stringify(context));
+    assert.equal(phrase.trackPhraseSource(edited, { ...section, ...context }), 'global-edited', JSON.stringify(context));
+  }
   assert.equal(phrase.trackPhraseSource(edited, { ...section, trackPhrases: { [track.id]: [note] }, generatedTrackIds: [track.id] }), 'section-edited');
   const p = { ...project, arrangement: [section, { ...section, id: 'local', trackPhrases: { [track.id]: [note] } }] };
   const labeled = phrase.layOutTrackPhrase(p, edited, true);

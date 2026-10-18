@@ -107,6 +107,7 @@
         [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     }
       <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
+        [sectionHarmony]="sectionHarmony()"
         [loopRange]="loopRange()"
         [settingsTarget]="settingsTarget()"
         [selectedSectionIds]="selectedSectionIds()" [selectedTrackId]="selectedTrackId()" [playheadPercent]="playheadPercent()"
@@ -197,8 +198,11 @@
               <div class="score-ruler-viewport" [style.width.px]="scoreViewport().width">
                 <div class="score-ruler-sections" [style.width.px]="scoreViewport().width * scoreViewport().scale"
                   [style.transform]="'translateX(-' + scoreViewport().offsetPercent + '%)'">
-                  @for (item of timelineSections(); track item.section.id) {
-                    <span [style.width.%]="item.widthPercent">{{ item.startMeasure.toString().padStart(2, '0') }} · {{ sectionLabel(item.section.type) }}</span>
+                  @for (slot of scoreChordSlots(); track slot.id) {
+                    <div class="score-chord-slot" [style.width.%]="slot.widthPercent" [attr.data-start-beat]="slot.startBeat" [attr.data-end-beat]="slot.endBeat">
+                      @if (slot.startMeasure) { <span class="score-section-measure">{{ slot.startMeasure }}</span> }
+                      <span class="score-chord-label" [style.--chord-hue]="slot.chord.hue" [title]="slot.chord.label">{{ slot.chord.label }}</span>
+                    </div>
                   }
                   @if (loopRange(); as range) {
                     <i class="score-loop-line" [style.left.%]="range.startBeat / totalBeats() * 100"
@@ -209,6 +213,7 @@
             </div>
               <div class="score-track-lanes">
                 <vc-score-canvas [tracks]="scoreTracks()" [notes]="canvasNotes()" [sections]="timelineSections()"
+                  [chordBoundaries]="scoreChordBoundaries()"
                   [notesReady]="!editing() || (editor()?.draftReady() ?? false)"
                   [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"

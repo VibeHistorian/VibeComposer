@@ -3,6 +3,7 @@ import { isScaleMode } from '../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from './section-context-editor.component';
 import { sectionDurationBeats } from '../core/music/section-context';
+import { sectionHarmonyDisplay } from '../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import type {
@@ -307,6 +308,21 @@ export class WorkspaceCanvasComponent {
       return item;
     });
   });
+  readonly sectionHarmony = computed(() => Object.fromEntries(this.project().arrangement.map(section =>
+    [section.id, sectionHarmonyDisplay(this.project(), section)])));
+  readonly scoreChordSlots = computed(() => this.timelineSections().flatMap(item => {
+    const harmony = this.sectionHarmony()[item.section.id];
+    let beat = item.startBeat;
+    return Array.from({ length: item.section.measures }, (_, index) => {
+      const duration = harmony.durations[index % harmony.durations.length];
+      const slot = { id: `${item.section.id}:${index}`, startBeat: beat, endBeat: beat + duration,
+        widthPercent: duration / this.totalBeats() * 100, chord: harmony.chords[index % harmony.chords.length],
+        startMeasure: index === 0 ? item.startMeasure.toString().padStart(2, '0') : '' };
+      beat += duration;
+      return slot;
+    });
+  }));
+  readonly scoreChordBoundaries = computed(() => this.scoreChordSlots().map(slot => slot.endBeat));
   readonly tracks = computed<TrackRow[]>(() => this.project().tracks.map((track) => ({
     ...track,
     color: track.role,
@@ -325,7 +341,7 @@ export class WorkspaceCanvasComponent {
       const changed = editor.changedTracks().some(changed => changed.id === track.id);
       return { ...note, startBeat: note.startBeat + this.editStartBeat(), part: note.trackId,
         trackName: track.name, trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
-        phraseSource: changed ? section ? 'section-edited' : 'global-edited' : trackPhraseSource(track, section),
+        phraseSource: changed ? section ? 'section-edited' : 'global-edited' : trackPhraseSource(track, section, this.project()),
         color: track.role, topPercent: 0, opacity: 0.5 + note.velocity / 127 * 0.5 };
     });
   });

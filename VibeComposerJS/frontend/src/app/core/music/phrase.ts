@@ -11,6 +11,7 @@ import { melodyContext, type MelodyContext } from './melody-context';
 import { baseGenerationHarmony, sectionGenerationHarmony, withTrackSeed } from './project-harmony';
 import type { GenerationHarmony } from './harmony-voicing';
 import { mapChordNotes, sectionProject } from './section-context';
+import { trackHasSectionHarmony } from './harmony-display';
 
 /** Convert the seeded generators to note-level events shared by the editor and MIDI exporter. */
 export function generatePhrase(project: CompositionProject, part: ArrangedPart, context?: MelodyContext,
@@ -130,18 +131,17 @@ export function layOutPhrase(
   return part === 'bass' ? withBassOctaveInterval(result, project.bass.octaveInterval) : result;
 }
 
-export type PhraseSource = 'global-generated' | 'global-edited' | 'section-generated' | 'section-edited';
+export type PhraseSource = 'global-generated' | 'global-edited' | 'section-generated' | 'section-edited' | 'global-section-harmony';
 
-export function trackPhraseSource(track: CompositionTrack, section?: ArrangementSection): PhraseSource {
+export function trackPhraseSource(track: CompositionTrack, section?: ArrangementSection, project?: CompositionProject): PhraseSource {
   if (section?.trackPhrases?.[track.id] !== undefined) return 'section-edited';
   if (track.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(track.id)) return 'global-edited';
-  const local = section && (section.generatedTrackIds?.includes(track.id)
-    || Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
-    || Object.keys(section.rolePartOverrides?.[track.role] ?? {}).length > 0
-    || Object.keys(section.context ?? {}).length > 0 || section.chordDegrees !== undefined
-    || section.customChords !== undefined || section.customDurations !== undefined
-    || section.useMelodyHarmony || section.swapMelody);
-  return local ? 'section-generated' : 'global-generated';
+  // Phrase ownership follows the arrangement indicator and note-track selection.
+  // Section harmony/context still uses global track settings unless part overrides exist.
+  const local = section && (Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
+    || Object.keys(section.rolePartOverrides?.[track.role] ?? {}).length > 0);
+  if (local) return 'section-generated';
+  return section && project && trackHasSectionHarmony(project, track, section) ? 'global-section-harmony' : 'global-generated';
 }
 
 /** Repeat a track phrase through its sections, optionally retaining provenance for score tooltips. */
@@ -150,7 +150,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
   const result: (PhraseNote & { readonly phraseSource?: PhraseSource })[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
-    const phraseSource = trackPhraseSource(track, section);
+    const phraseSource = includeSource ? trackPhraseSource(track, section, project) : 'global-generated';
     const partEnters = shouldGenerateTrackInSection(section, track);
     const localPhrase = section.trackPhrases?.[track.id];
     if (localPhrase !== undefined) {

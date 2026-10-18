@@ -185,5 +185,51 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.ok(Math.abs(zoomOut.height-touchCanvas.height)<=1,'canvas does not grow during rendering');
   assert.equal(zoomOut.project,touchCanvas.project,'pinching does not commit note edits');
   assert.equal(zoomOut.notes,touchCanvas.notes,'pinching does not add notes');
+  await command('Emulation.setTouchEmulationEnabled',{enabled:false});
+  await command('Emulation.setDeviceMetricsOverride',{width:1600,height:1100,deviceScaleFactor:1,mobile:false});
+  await evaluate(`(()=>{
+    const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    p.key='C';p.scale='major';p.transposeSemitones=2;p.progression=[1,4];delete p.progressionChords;
+    const bass=p.tracks.find(t=>t.role==='bass');
+    const base={...p.arrangement[0],measures:2};
+    delete base.trackPhrases;delete base.trackPartOverrides;delete base.rolePartOverrides;
+    delete base.chordDegrees;delete base.customChords;delete base.customDurations;delete base.context;
+    delete base.useMelodyHarmony;delete base.swapMelody;delete base.generatedTrackIds;
+    p.arrangement=[base,{...base,id:'section-harmony',chordDegrees:[2,5],customDurations:[2,6],generatedTrackIds:[bass.id]}];
+    sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+  })()`);
+  await command('Page.reload');
+  const harmonyHeader=await evaluate(`(async()=>{${waitCode}
+    await wait(()=>document.querySelectorAll('.score-chord-slot').length===4);
+    await wait(()=>document.querySelector('vc-score-canvas canvas'));
+    const slots=[...document.querySelectorAll('.score-chord-slot')];
+    return {labels:slots.map(s=>s.querySelector('.score-chord-label').textContent),
+      beats:slots.map(s=>[+s.dataset.startBeat,+s.dataset.endBeat]),
+      measures:[...document.querySelectorAll('.score-section-measure')].map(s=>s.textContent),
+      ratio:slots[3].getBoundingClientRect().width/slots[2].getBoundingClientRect().width,
+      colors:slots.map(s=>getComputedStyle(s.querySelector('.score-chord-label')).color)};
+  })()`);
+  assert.deepEqual(harmonyHeader.labels,['D','G','Em','A']);
+  assert.deepEqual(harmonyHeader.beats,[[0,4],[4,8],[8,10],[10,16]]);
+  assert.deepEqual(harmonyHeader.measures,['01','03']);assert.ok(Math.abs(harmonyHeader.ratio-3)<.02);
+  assert.notEqual(harmonyHeader.colors[0],harmonyHeader.colors[2]);
+  const harmonyTooltip=await evaluate(`(async()=>{${waitCode}
+    for(const name of ['Melody','Chords','Arps','Drums']){
+      const b=document.querySelector('.score-role-controls [aria-label="'+name+'"]');
+      if(b.getAttribute('aria-pressed')==='true')b.click();
+    }
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect();
+    for(const fraction of [.505,.52,.55,.6])for(const row of document.querySelectorAll('.pitch-key')){
+      const box=row.getBoundingClientRect();
+      canvas.dispatchEvent(new PointerEvent('pointermove',{clientX:c.left+c.width*fraction,clientY:box.top+box.height/2}));
+      await new Promise(r=>requestAnimationFrame(r));
+      const text=document.querySelector('.note-tooltip')?.textContent;
+      if(text?.includes('Global track [Section harmony]'))return text;
+    }
+    throw Error('No generated bass note showed the section harmony source');
+  })()`);
+  assert.match(harmonyTooltip,/Global track \[Section harmony\]/);
+  await capture('section-harmony-headers');
  } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
 });

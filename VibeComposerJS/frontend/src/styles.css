@@ -65,6 +65,11 @@
   --mix-track-mute-active: color-mix(in srgb, var(--mix-mute-active) 75%, black);
   --mix-track-solo-active: color-mix(in srgb, var(--mix-solo-active) 75%, black);
 
+  /* Chordlet palette shared by editors and harmony headers */
+  --chordlet-border-tone: 45% 38%;
+  --chordlet-background-tone: 30% 18%;
+  --chordlet-foreground-tone: 70% 84%;
+
   /* Main generation actions */
   --compose-accent: #f2b544;
   --regenerate-accent: #3fc6a4;

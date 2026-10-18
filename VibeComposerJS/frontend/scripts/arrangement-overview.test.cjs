@@ -72,6 +72,19 @@ function fixture() {
   return { component, refs, base, overlay };
 }
 
+test('section headings show compact local chords with a duration star only for differing harmony', () => {
+  const { component, base } = fixture();
+  component.sectionHarmony.set({ intro: { chords: [{ label: 'Dm', hue: 60 }, { label: 'G7', hue: 210 }], durations: [2, 6], chordsDiffer: true, durationsDiffer: true } });
+  component.drawOverview();
+  const heading = component.hits.find(hit => hit.key === 'heading:intro');
+  assert.match(heading.label, /chords Dm G7 \*, section beat durations/);
+  assert.ok(base.texts.some(text => text.value === 'Dm'));
+  assert.ok(base.texts.some(text => text.value === '*'));
+  component.sectionHarmony.set({ intro: { chords: [{ label: 'C', hue: 0 }], durations: [2], chordsDiffer: false, durationsDiffer: true } });
+  component.drawOverview();
+  assert.doesNotMatch(component.hits.find(hit => hit.key === 'heading:intro').label, /chords/);
+});
+
 test('P5f variable chord slots align section hit areas, previews and loop markers', () => {
   const { component, base } = fixture();
   const project = component.project();
