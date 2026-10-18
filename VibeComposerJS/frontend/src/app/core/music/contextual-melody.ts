@@ -24,11 +24,32 @@ interface State { path: Planned[]; score: number; last: number; previous: number
   phraseStart: number; run: number; serial: number }
 interface Candidate extends State { planned: Planned }
 
+const MAX_CONTEXTUAL_RESULTS = 64;
+const contextualResults = new Map<string, ReturnType<typeof planContextualMelody>>();
+
+/** Presence and mix edits replace the project but leave these musical inputs intact.
+ * Keep a bounded value cache across project snapshots; copy results so callbacks and
+ * editors cannot mutate a later generation's notes, pattern or skeleton.
+ */
+export function generateContextualMelody(...args: Parameters<typeof planContextualMelody>): ReturnType<typeof planContextualMelody> {
+  const key = JSON.stringify([String(args[0]), ...args.slice(1)]);
+  let result = contextualResults.get(key);
+  if (result) contextualResults.delete(key);
+  else result = planContextualMelody(...args);
+  contextualResults.set(key, result);
+  if (contextualResults.size > MAX_CONTEXTUAL_RESULTS) contextualResults.delete(contextualResults.keys().next().value!);
+  return {
+    notes: result.notes.map(note => ({ ...note })),
+    pattern: result.pattern.map(note => ({ ...note })),
+    skeleton: result.skeleton.map(chord => chord.map(note => ({ ...note }))),
+  };
+}
+
 /** Contextual planning operates on realized harmony before track/key transposition.
  * Rhythm is phrase based; a bounded beam resolves every ornament and respects range,
  * leap and ending constraints. It bypasses the old melody quota/repair passes.
  */
-export function generateContextualMelody(seed: bigint | number, key: string, scale: ScaleMode,
+function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMode,
   degrees: readonly number[], settings: MelodySettings, offset: number, global: MelodyGlobalSettings,
   custom?: readonly (ProgressionChord | null)[], harmony?: GenerationHarmony & { durations?: readonly number[] }): {
     notes: PhraseNote[]; pattern: Pick<PhraseNote, 'midi' | 'startBeat'>[]; skeleton: { midi: number; rhythm: number }[][];
