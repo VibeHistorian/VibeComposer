@@ -34,7 +34,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
 function configureMix(track: ReturnType<Midi['addTrack']>, compositionTrack: CompositionTrack, anySolo: boolean): boolean {
   const { mix } = compositionTrack;
   if (compositionTrack.role !== 'drums') track.instrument.number = mix.program;
-  track.addCC({ number: 7, time: 0, value: mix.volumePercent / 100 });
+  track.addCC({ number: 7, time: 0, value: Math.max(0, Math.min(1, mix.volumePercent / 100)) });
   track.addCC({ number: 10, time: 0, value: Math.round((mix.panPercent + 100) * 127 / 200) / 127 });
   return !mix.muted && (!anySolo || mix.solo);
 }

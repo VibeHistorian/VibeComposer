@@ -107,6 +107,36 @@ test('Java drum mapping covers the ordered pool, Auto follows routing, and note-
   assert.equal(JSON.stringify(DEFAULT_PROJECT), original, 'export preserves stored pitches');
 });
 
+test('MIDI volume clamps boosted gain while preserving notes and stored mix', async () => {
+  const { loadMusic } = require('./music-loader.cjs');
+  const { Midi } = require('@tonejs/midi');
+  const { generateCompositionMidi } = loadMusic('midi-export.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project.model.ts');
+  const output = port('volume');
+  const service = fixture(async () => ({ outputs: new Map([[output.id, output]]), addEventListener() {}, removeEventListener() {} }));
+  await service.refresh();
+  await service.select(output.id);
+  const baseline = new Midi(generateCompositionMidi(DEFAULT_PROJECT));
+  for (const [volumePercent, expected] of [[-10, 0], [0, 0], [50, 64], [100, 127], [100 * 10 ** (6 / 20), 127]]) {
+    const project = { ...DEFAULT_PROJECT, tracks: DEFAULT_PROJECT.tracks.map(track => ({
+      ...track, mix: { ...track.mix, volumePercent },
+    })) };
+    const before = JSON.stringify(project);
+    output.messages.length = 0;
+    service.silence();
+    output.messages.length = 0;
+    service.configure(project.tracks[0]);
+    assert.deepEqual(output.messages.find(message => message.data[1] === 7).data.slice(1), [7, expected]);
+    const exported = new Midi(generateCompositionMidi(project));
+    for (const [index, track] of exported.tracks.entries()) {
+      assert.ok(Math.abs(track.controlChanges[7][0].value * 127 - expected) <= 1);
+      assert.deepEqual(track.notes, baseline.tracks[index].notes);
+    }
+    assert.equal(JSON.stringify(project), before);
+  }
+  service.ngOnDestroy();
+});
+
 test('denial and unsupported browsers report actionable status; retry works and failed opens never select a device', async () => {
   let deny = true;
   const output = port('one');

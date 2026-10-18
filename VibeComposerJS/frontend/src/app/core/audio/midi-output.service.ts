@@ -87,7 +87,7 @@ export class MidiOutputService {
   configure(track: CompositionTrack, audible = true): void {
     if (!this.output()) return;
     const channel = track.midiChannel - 1;
-    const volume = audible ? Math.round(track.mix.volumePercent * 127 / 100) : 0;
+    const volume = audible ? Math.max(0, Math.min(127, Math.round(track.mix.volumePercent * 127 / 100))) : 0;
     const pan = Math.round((track.mix.panPercent + 100) * 127 / 200);
     const key = `${track.mix.program}:${volume}:${pan}`;
     if (this.configurations.get(channel) === key) return;
