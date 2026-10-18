@@ -3,9 +3,10 @@ import type { CompositionProject, CompositionTrack } from '../project/project.mo
 import { tracksInRoleOrder } from '../project/project.model';
 import { layOutTrackPhrase } from './phrase';
 import { projectTempoMap } from './section-context';
+import { mapDrumPitch, type DrumMapping } from './drum-instruments';
 
 /** Serialize every independent instrument track with its assigned channel and mix controls. */
-export function generateCompositionMidi(project: CompositionProject): Uint8Array {
+export function generateCompositionMidi(project: CompositionProject, drumMapping: DrumMapping = 'general-midi'): Uint8Array {
   const midi = new Midi();
   midi.name = project.name;
   midi.header.tempos = projectTempoMap(project).map(point => ({ ticks: point.beat * midi.header.ppq, bpm: point.bpm }));
@@ -20,7 +21,7 @@ export function generateCompositionMidi(project: CompositionProject): Uint8Array
     if (!included) continue;
     for (const note of layOutTrackPhrase(project, compositionTrack)) {
       track.addNote({
-        midi: note.midi,
+        midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
         ticks: Math.round(note.startBeat * midi.header.ppq),
         durationTicks: Math.max(1, Math.round(note.durationBeats * midi.header.ppq)),
         velocity: note.velocity / 127,

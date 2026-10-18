@@ -13,7 +13,8 @@ import type {
 import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder, DEFAULT_MIX, DEFAULT_TRACKS } from '../core/project/project.model';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
-import { DRUM_INSTRUMENTS, drumInstrumentName } from '../core/music/drum-instruments';
+import { DRUM_INSTRUMENTS } from '../core/music/drum-instruments';
+import { MidiOutputService } from '../core/audio/midi-output.service';
 import { GM_INSTRUMENTS } from '../core/music/gm-instruments';
 import { layOutTrackPhrase, phraseForTrack, trackPhraseSource } from '../core/music/phrase';
 import { getDiatonicChords } from '../core/music/harmony';
@@ -112,6 +113,7 @@ export class WorkspaceCanvasComponent {
         instrument.program === track.mix.program || programs.includes(instrument.program)) : this.instruments];
     }));
   });
+  readonly midi = inject(MidiOutputService);
   readonly drumInstruments = DRUM_INSTRUMENTS;
   readonly sectionTypes = SECTION_TYPES;
   readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
@@ -742,7 +744,7 @@ export class WorkspaceCanvasComponent {
   }
 
   instrumentName(track: TrackRow): string {
-    return track.role === 'drums' ? drumInstrumentName(track.generatorSettings.pitch) : this.instruments.find((item) => item.program === track.mix.program)?.name ?? `GM ${track.mix.program + 1}`;
+    return track.role === 'drums' ? this.midi.drumLabel(track.generatorSettings.pitch) : this.instruments.find((item) => item.program === track.mix.program)?.name ?? `GM ${track.mix.program + 1}`;
   }
 
   drumPitch(track: CompositionTrack): number | undefined {

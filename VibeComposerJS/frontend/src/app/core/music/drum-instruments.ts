@@ -15,3 +15,21 @@ export function drumInstrumentName(midi: number): string {
 export function isDrumPitch(value: unknown): value is number {
   return DRUM_INSTRUMENTS.some((instrument) => instrument.midi === value);
 }
+
+export type DrumMapping = 'general-midi' | 'chromatic';
+export type DrumMappingPreference = DrumMapping | 'auto';
+
+export function resolveDrumMapping(preference: DrumMappingPreference, externalOutput: boolean): DrumMapping {
+  return preference === 'auto' ? externalOutput ? 'chromatic' : 'general-midi' : preference;
+}
+
+/** Java InstUtils.DRUM_INST_NUMBERS_SEMI maps the ordered drum pool to notes 36–51. */
+export function mapDrumPitch(pitch: number, mapping: DrumMapping): number {
+  if (mapping === 'general-midi') return pitch;
+  const index = DRUM_INSTRUMENTS.findIndex(instrument => instrument.midi === pitch);
+  return index < 0 ? pitch : 36 + index;
+}
+
+export function drumInstrumentLabel(pitch: number, mapping: DrumMapping): string {
+  return `${drumInstrumentName(pitch)} · ${mapDrumPitch(pitch, mapping)}`;
+}

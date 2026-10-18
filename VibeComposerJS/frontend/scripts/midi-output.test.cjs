@@ -4,20 +4,21 @@ const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
 
-function fixture(request) {
+function fixture(request, preferences = { drumMapping: () => 'auto' }) {
   const signal = value => {
     const read = () => value;
     read.set = next => { value = next; };
     read.asReadonly = () => read;
     return read;
   };
-  const angular = { signal, computed: read => read, Injectable: () => type => type };
+  const angular = { signal, computed: read => read, inject: () => preferences, Injectable: () => type => type };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/core/audio/midi-output.service.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
     target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
   } }).outputText;
   const module = { exports: {} };
-  new Function('require', 'module', 'exports', 'navigator', compiled)(() => angular, module, module.exports,
+  new Function('require', 'module', 'exports', 'navigator', compiled)(name => name.includes('drum-instruments')
+    ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports,
     request ? { requestMIDIAccess: request } : {});
   return new module.exports.MidiOutputService();
 }
@@ -66,6 +67,44 @@ test('permission is requested on demand without SysEx, ports update, selection o
   assert.equal(service.selectedOutput(), null);
   assert.match(service.error(), /disconnected/);
   service.ngOnDestroy();
+});
+
+test('Java drum mapping covers the ordered pool, Auto follows routing, and note-on/off and export agree', async () => {
+  const { DRUM_INSTRUMENTS, mapDrumPitch, resolveDrumMapping } = require('./music-loader.cjs').loadMusic('drum-instruments.ts');
+  for (const [index, instrument] of DRUM_INSTRUMENTS.entries()) {
+    assert.equal(mapDrumPitch(instrument.midi, 'general-midi'), instrument.midi);
+    assert.equal(mapDrumPitch(instrument.midi, 'chromatic'), 36 + index);
+  }
+  assert.equal(mapDrumPitch(99, 'chromatic'), 99, 'custom pitches outside the pool are preserved');
+  assert.equal(resolveDrumMapping('general-midi', true), 'general-midi');
+  assert.equal(resolveDrumMapping('chromatic', false), 'chromatic');
+  let mode = 'auto';
+  const output = port('drums');
+  const service = fixture(async () => ({ outputs: new Map([[output.id, output]]), addEventListener() {}, removeEventListener() {} }),
+    { drumMapping: () => mode });
+  assert.equal(service.drumMapping(), 'general-midi');
+  await service.refresh(); await service.select(output.id);
+  assert.equal(service.drumMapping(), 'chromatic');
+  assert.equal(service.drumLabel(38), 'Snare · 39');
+  const track = { midiChannel: 10, role: 'drums', mix: { program: 0, volumePercent: 100, panPercent: 0 } };
+  service.schedule(track, 38, 100, 1000, .5);
+  assert.deepEqual(output.messages.slice(-2).map(message => message.data), [[0x99, 39, 100], [0x89, 39, 0]]);
+  mode = 'general-midi'; service.schedule(track, 38, 100, 2000, .5);
+  assert.deepEqual(output.messages.slice(-2).map(message => message.data), [[0x99, 38, 100], [0x89, 38, 0]]);
+  mode = 'auto'; await service.select(null);
+  assert.equal(service.drumMapping(), 'general-midi');
+  service.ngOnDestroy();
+  const { Midi } = require('@tonejs/midi');
+  const { generateCompositionMidi } = require('./music-loader.cjs').loadMusic('midi-export.ts');
+  const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project.model.ts');
+  const original = JSON.stringify(DEFAULT_PROJECT);
+  const gm = new Midi(generateCompositionMidi(DEFAULT_PROJECT, 'general-midi'));
+  const chromatic = new Midi(generateCompositionMidi(DEFAULT_PROJECT, 'chromatic'));
+  for (const [index, exported] of chromatic.tracks.entries()) {
+    assert.deepEqual(exported.notes.map(note => note.midi), gm.tracks[index].notes.map(note =>
+      exported.channel === 9 ? mapDrumPitch(note.midi, 'chromatic') : note.midi));
+  }
+  assert.equal(JSON.stringify(DEFAULT_PROJECT), original, 'export preserves stored pitches');
 });
 
 test('denial and unsupported browsers report actionable status; retry works and failed opens never select a device', async () => {

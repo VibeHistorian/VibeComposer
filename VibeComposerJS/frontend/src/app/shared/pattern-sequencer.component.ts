@@ -5,7 +5,7 @@ import { ProjectService } from '../core/project/project.service';
 import { resolvePartTrack, settingsValues } from '../core/music/part-settings';
 import { chordRhythmMask } from '../core/music/rhythm-pattern';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../core/music/velocity-pattern';
-import { drumInstrumentName } from '../core/music/drum-instruments';
+import { MidiOutputService } from '../core/audio/midi-output.service';
 
 export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; velocities: boolean; melodyHits: number }
 
@@ -19,6 +19,7 @@ export class PatternSequencerComponent {
   readonly data = inject<PatternSequencerData>(DIALOG_DATA);
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
+  private readonly midi = inject(MidiOutputService);
   readonly showVelocities = signal(this.data.velocities);
   readonly draft = signal<{ id: string; pattern?: number[]; velocities?: number[] } | null>(null);
   private gesture: { pointer: number; id: string; last: number; sounded: number; project: ReturnType<ProjectService['project']> } | null = null;
@@ -40,7 +41,7 @@ export class PatternSequencerComponent {
         customPattern: values['customPattern'] as readonly number[] | undefined }) : [];
       const velocities = draft?.id === track.id && draft.velocities ? draft.velocities
         : [...(values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
-      return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? drumInstrumentName(effective.generatorSettings.pitch) : effective.role,
+      return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? this.midi.drumLabel(effective.generatorSettings.pitch) : effective.role,
         values, supported, hits, pattern, velocities: velocities.slice(0, Math.min(32, hits)), velocitySupported: hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'bass1'),
         active: 'trackId' in scope && track.id === scope.trackId };
     });

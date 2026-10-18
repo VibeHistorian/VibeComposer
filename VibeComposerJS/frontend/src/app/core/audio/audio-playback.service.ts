@@ -51,6 +51,7 @@ export class AudioPlaybackService {
   constructor() {
     effect(() => {
       this.midi.selectedOutput();
+      this.midi.drumMapping();
       untracked(() => {
         if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
         else this.stopSources();

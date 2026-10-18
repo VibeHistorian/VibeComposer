@@ -9,6 +9,8 @@ import { ARRANGED_PARTS, type ArrangedPart } from '../../core/project/project.mo
 import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
 import { HARMONY_GENERATIONS } from '../../core/music/contextual-harmony';
 import type { HarmonySettings } from '../../core/music/harmony-voicing';
+import { MidiOutputService } from '../../core/audio/midi-output.service';
+import type { DrumMappingPreference } from '../../core/music/drum-instruments';
 
 @Component({
   selector: 'vc-settings-dialog',
@@ -19,6 +21,10 @@ import type { HarmonySettings } from '../../core/music/harmony-voicing';
 })
 export class SettingsDialogComponent {
   readonly preferences = inject(UiPreferencesService);
+  readonly midi = inject(MidiOutputService);
+  changeDrumMapping(event: Event): void {
+    this.preferences.setDrumMapping((event.target as HTMLSelectElement).value as DrumMappingPreference);
+  }
   readonly transferMessage = signal('');
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
@@ -58,6 +64,7 @@ export class SettingsDialogComponent {
     { id: 'appearance', label: 'Appearance' },
     { id: 'behavior', label: 'Behavior' },
     { id: 'score', label: 'Score' },
+    { id: 'midi', label: 'MIDI' },
     { id: 'melody', label: 'Melody' },
     { id: 'section-types', label: 'Section Types' },
     { id: 'project-history', label: 'Project History' },

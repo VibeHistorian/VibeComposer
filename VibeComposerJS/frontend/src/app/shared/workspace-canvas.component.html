@@ -62,7 +62,7 @@
                     [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
                     (click)="$event.stopPropagation()" (change)="updateDrumPitch(track, $event)">
                     @for (instrument of drumInstruments; track instrument.midi) {
-                      <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(track)">{{ instrument.name }} · {{ instrument.midi }}</option>
+                      <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(track)">{{ midi.drumLabel(instrument.midi) }}</option>
                     }
                   </select>
                 } @else {

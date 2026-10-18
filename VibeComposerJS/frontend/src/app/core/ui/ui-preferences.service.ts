@@ -3,6 +3,7 @@ import type { ArrangedPart } from '../project/project.model';
 import { ARRANGED_PARTS } from '../project/project.model';
 import { adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type ColorAdjustment, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
+import type { DrumMappingPreference } from '../music/drum-instruments';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
 import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
@@ -18,6 +19,11 @@ export class UiPreferencesService {
   readonly scoreChordGrid = computed(() => this.state().scoreChordGrid);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly limitInstrumentsToPool = computed(() => this.state().limitInstrumentsToPool);
+  readonly drumMapping = computed(() => this.state().drumMapping);
+  setDrumMapping(drumMapping: DrumMappingPreference): void {
+    if (!['auto', 'general-midi', 'chromatic'].includes(drumMapping)) return;
+    this.commit({ ...this.state(), drumMapping });
+  }
   readonly appearance = computed(() => this.state().appearance);
   readonly editingQuickSettings = computed(() => this.draft() !== null);
   readonly quickSettings = computed(() => this.draft() ?? this.state().quickSettings);

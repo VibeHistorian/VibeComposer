@@ -69,7 +69,7 @@ export class AppComponent {
   exportMidi(): void {
     try {
       const project = this.project();
-      const bytes = new Uint8Array(generateCompositionMidi(project));
+      const bytes = new Uint8Array(generateCompositionMidi(project, this.midi.drumMapping()));
       downloadProjectFile(new Blob([bytes], { type: 'audio/midi' }), project.name, 'mid');
       this.projectMessage.set('MIDI exported.');
     } catch (error) {

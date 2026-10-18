@@ -114,6 +114,22 @@
             <p id="score-chord-grid-description">Show faint lines in each chord's color at its ending beat. Saved in your UI preferences.</p>
           </section>
         }
+        @case ('midi') {
+          <section aria-labelledby="midi-settings-title">
+            <h2 id="midi-settings-title">MIDI</h2>
+            <label class="appearance-setting">
+              <span>Drum pitch mapping</span>
+              <select aria-label="Drum pitch mapping" aria-describedby="drum-mapping-description"
+                [value]="preferences.drumMapping()" (change)="changeDrumMapping($event)">
+                <option value="auto">Auto</option>
+                <option value="general-midi">General MIDI</option>
+                <option value="chromatic">Chromatic (starting at note 36)</option>
+              </select>
+            </label>
+            <p id="drum-mapping-description">Applies to drum pitch labels, MIDI device playback, and MIDI file exports. Chromatic maps the 16 drum choices in order to notes 36–51. Auto uses General MIDI with the internal synth and Chromatic with a MIDI device.</p>
+            <p>Currently using {{ midi.drumMapping() === 'chromatic' ? 'Chromatic (36–51)' : 'General MIDI' }}. The internal synth keeps its General MIDI drum sounds. Saved in your UI preferences.</p>
+          </section>
+        }
         @case ('melody') {
           <section aria-labelledby="melody-settings-title">
             <h2 id="melody-settings-title">Melody</h2>

@@ -37,7 +37,7 @@ function fixture({ loop = false } = {}) {
     createGain: node, createStereoPanner: node,
     createOscillator() { const source = node(); sources.push(source); return source; },
   };
-  const midi = { selectedOutput: signal(null), schedule() {}, configure() {}, silence() {} };
+  const midi = { selectedOutput: signal(null), drumMapping: signal('general-midi'), schedule() {}, configure() {}, silence() {} };
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
     signal, effect, untracked, inject: () => midi, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
   const load = (file, dependencies) => {

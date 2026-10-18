@@ -3,7 +3,7 @@ import { DOCUMENT, TitleCasePipe } from '@angular/common';
 import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
 import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project/project.model';
 import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../core/music/phrase';
-import { drumInstrumentName } from '../../core/music/drum-instruments';
+import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
 import { getDiatonicChords, getPitchClass } from '../../core/music/harmony';
 import { ProjectService } from '../../core/project/project.service';
@@ -22,6 +22,7 @@ export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; 
 })
 export class EditWorkspaceComponent {
   readonly projects = inject(ProjectService);
+  private readonly midi = inject(MidiOutputService);
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
   readonly workspaceUi = inject(WorkspaceUiService);
@@ -36,7 +37,7 @@ export class EditWorkspaceComponent {
   readonly drumVoices = computed(() => {
     if (this.selectedPart() !== 'drums') return [];
     return [...new Set([...this.editedTracks().flatMap(track => track.role === 'drums' ? [track.generatorSettings.pitch] : []), ...this.notes().map(note => note.midi)])]
-      .sort((left, right) => left - right).map(midi => ({ midi, label: drumInstrumentName(midi) }));
+      .sort((left, right) => left - right).map(midi => ({ midi, label: this.midi.drumLabel(midi) }));
   });
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);
@@ -194,7 +195,7 @@ export class EditWorkspaceComponent {
   }
 
   noteName(midi: number): string {
-    if (this.selectedPart() === 'drums') return drumInstrumentName(midi);
+    if (this.selectedPart() === 'drums') return this.midi.drumLabel(midi);
     const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
     return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`;
   }

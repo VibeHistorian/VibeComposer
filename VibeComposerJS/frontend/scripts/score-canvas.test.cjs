@@ -10,7 +10,8 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect() {}, inject: () => ({ appearance: () => 'dark', scoreChordGrid: () => false }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
+    effect() {}, inject: () => ({ appearance: () => 'dark', scoreChordGrid: () => false,
+      drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/shared/score-canvas.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
     target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,

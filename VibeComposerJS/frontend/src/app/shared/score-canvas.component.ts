@@ -3,7 +3,7 @@ import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, viewChild,
 } from '@angular/core';
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
-import { drumInstrumentName } from '../core/music/drum-instruments';
+import { MidiOutputService } from '../core/audio/midi-output.service';
 import type { PhraseSource } from '../core/music/phrase';
 import { dragPhraseNotes, snapMidiToScale, type PhraseDragMode } from '../core/music/phrase-edit';
 import type { ArrangedPart, PhraseNote } from '../core/project/project.model';
@@ -142,8 +142,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private dynamicGraphics?: PixiGraphics;
   private colorClass?: typeof PixiColor;
   private readonly preferences = inject(UiPreferencesService);
+  private readonly midi = inject(MidiOutputService);
   private readonly modelEffect = effect(() => {
     this.preferences.appearance();
+    this.midi.drumMapping();
     const editable = this.editable();
     if (editable && !this.wasEditable) {
       this.overviewViewport = { horizontalScale: this.horizontalScale, horizontalOffset: this.horizontalOffset,
@@ -486,7 +488,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.noteTooltip.set({
       track: order && name !== defaultName ? `${name} (#${order})` : name,
       color: `var(--role-${note.color})`,
-      pitch: `${['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'][note.midi % 12]}${Math.floor(note.midi / 12) - 1} [${note.midi}]`,
+      pitch: note.color === 'drums' ? this.midi.drumLabel(note.midi)
+        : `${['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'][note.midi % 12]}${Math.floor(note.midi / 12) - 1} [${note.midi}]`,
       velocity: note.velocity, source: sources[note.phraseSource ?? 'global-generated'],
       x: Math.max(8, Math.min(x + 14, this.width - 248)),
       y: y + 90 <= this.height ? y + 14 : Math.max(8, y - 82),
@@ -830,7 +833,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const y = this.harmonicHeight + index * drumRowHeight;
       fill(0, y, this.width, drumRowHeight, index % 2 ? '--score-row-odd' : '--score-row-even');
       line(0, y, this.width, y, '--border-subtle');
-      rows.push({ midi, label: drumInstrumentName(midi).toUpperCase(), y, height: drumRowHeight, drum: true, black: false, inScale: false });
+      rows.push({ midi, label: this.midi.drumLabel(midi).toUpperCase(), y, height: drumRowHeight, drum: true, black: false, inScale: false });
     });
     if (this.drumHeight > 0) line(0, this.harmonicHeight + 0.5, this.width, this.harmonicHeight + 0.5, '--border-strong');
     this.gutterRows.set(rows);

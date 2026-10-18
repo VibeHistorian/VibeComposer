@@ -3247,6 +3247,29 @@ test('single-pitch drums match 96 complete production Java phrases at fixed seed
   }
 });
 
+test('drum mapping preferences persist and transfer without editing project notes or history', () => {
+  const { service, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const preferences = new UiPreferencesService();
+  const project = service.exportProjectJson(), position = service.historyPosition();
+  assert.equal(preferences.drumMapping(), 'auto');
+  for (const mode of ['chromatic', 'general-midi', 'auto']) {
+    preferences.setDrumMapping(mode);
+    assert.equal(new UiPreferencesService().drumMapping(), mode);
+    assert.equal(preferences.importJson(preferences.exportJson()), true);
+    assert.equal(preferences.drumMapping(), mode);
+  }
+  const saved = preferences.exportJson();
+  assert.equal(preferences.importJson(JSON.stringify({ ...JSON.parse(saved), drumMapping: 'unknown' })), false);
+  assert.equal(preferences.exportJson(), saved, 'invalid mapping import is atomic');
+  const withoutMapping = JSON.parse(saved); delete withoutMapping.drumMapping;
+  preferences.setDrumMapping('chromatic');
+  assert.equal(preferences.importJson(JSON.stringify(withoutMapping)), true);
+  assert.equal(preferences.drumMapping(), 'auto');
+  assert.equal(service.exportProjectJson(), project);
+  assert.equal(service.historyPosition(), position);
+});
+
 test('drum identities are independent, named, fixed to channel 10 and preserved by history and manual editing', () => {
   const { service, phrase, workspace, ui, load, settings } = fixture();
   const first = 'track-drums-1', track = id => service.project().tracks.find(track => track.id === id);
@@ -3254,7 +3277,7 @@ test('drum identities are independent, named, fixed to channel 10 and preserved 
   assert.ok(phrase.phraseForTrack(service.project(), track(first)).every(note => note.midi === 36));
   const before = service.exportProjectJson();
   service.updateTrackGeneratorSettings(first, { pitch: 38 });
-  assert.equal(workspace.instrumentName(track(first)), 'Snare');
+  assert.equal(workspace.instrumentName(track(first)), 'Snare · 38');
   assert.ok(phrase.phraseForTrack(service.project(), track(first)).every(note => note.midi === 38));
   const after = service.exportProjectJson();
   service.undo(); assert.equal(service.exportProjectJson(), before);
@@ -3274,7 +3297,7 @@ test('drum identities are independent, named, fixed to channel 10 and preserved 
   assert.equal(workspace.hasChannelCollision(), false);
   const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
   const editor = new EditWorkspaceComponent(); editor.ngOnInit();
-  assert.deepEqual(editor.drumVoices(), [{ midi: 36, label: 'Kick' }, { midi: 39, label: 'Clap' }, { midi: 42, label: 'Closed hi-hat' }]);
+  assert.deepEqual(editor.drumVoices(), [{ midi: 36, label: 'Kick · 36' }, { midi: 39, label: 'Clap · 39' }, { midi: 42, label: 'Closed hi-hat · 42' }]);
   const saved = service.exportProjectJson();
   service.updateTrack(first, { midiChannel: 1 }); service.updateTrack(first, { mix: { program: 5 } });
   service.updateRoleGeneratorSettings('drums', { pitch: 38 });
@@ -3862,7 +3885,8 @@ function fixture({ compactHistory = false } = {}) {
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
-      : type?.name === 'AudioPlaybackService' ? {} : type?.name === 'UiPreferencesService' ? uiPreferences : preferences,
+      : type?.name === 'AudioPlaybackService' ? {} : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
+      : type?.name === 'UiPreferencesService' ? uiPreferences : preferences,
   };
   const root = path.join(__dirname, '../src/app');
   function load(file) {
@@ -6019,13 +6043,13 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
   const first = 'track-drums-1', second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[0].id;
   const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
-  const { drumInstrumentName } = load('core/music/drum-instruments.ts');
+  const { drumInstrumentLabel } = load('core/music/drum-instruments.ts');
   const popup = new PatternSequencerComponent();
   popup.data.role = 'drums';
   popup.data.scope = { kind: 'section-track', sectionId, trackId: first };
   for (const row of popup.rows()) {
     const track = service.project().tracks.find(track => track.id === row.id);
-    assert.equal(row.instrument, drumInstrumentName(track.generatorSettings.pitch));
+    assert.equal(row.instrument, drumInstrumentLabel(track.generatorSettings.pitch, 'general-midi'));
   }
   const before = service.project().tracks;
   const position = service.historyPosition();
