@@ -5906,27 +5906,51 @@ test('contextual Local Apply preserves other phrase cycles and leaves the global
   service.undo(); assert.equal(service.exportProjectJson(), history, 'Local Apply is one undo entry');
 });
 
-test('display filters synchronize audible tracks atomically when enabled', () => {
+test('Highlight audible filters score tracks and notes from Solo/Mute without changing the mix', () => {
   const { service, workspace, uiPreferences, flushEffects } = fixture();
-  workspace.toggleScoreRole('drums');
-  assert.ok(workspace.scoreTracks().every(track => track.role !== 'drums'));
-  assert.ok(service.project().tracks.every(track => !track.mix.muted));
-  uiPreferences.toggleScoreMixSync();
-  flushEffects();
-  assert.ok(service.project().tracks.every(track => track.mix.muted === (track.role === 'drums') && !track.mix.solo));
-  assert.equal(service.canUndo(), false, 'audition sync is excluded from history');
-  workspace.toggleScoreRole('bass');
-  assert.ok(service.project().tracks.filter(track => ['drums','bass'].includes(track.role)).every(track => track.mix.muted));
-  uiPreferences.toggleScoreMixSync();
-  flushEffects();
+  service.setRoleTrackCount('bass', 2);
+  const tracks = service.project().tracks;
+  const [bass, otherBass] = tracks.filter(track => track.role === 'bass');
+  service.applyPhraseEdits(tracks.map(track => ({ trackId: track.id, notes: [
+    { id: track.id + '-note', midi: track.role === 'drums' ? 36 : 60, startBeat: 0, durationBeats: 1, velocity: 90 },
+  ] })));
+  service.updateTrack(bass.id, { mix: { muted: true } });
+  assert.ok(workspace.scoreTracks().some(track => track.id === bass.id), 'disabled preference shows muted tracks');
+  uiPreferences.toggleScoreMixSync(); flushEffects();
+  assert.ok(workspace.scoreTracks().every(track => track.id !== bass.id));
+  assert.ok(workspace.canvasNotes().length > 0);
+  assert.ok(workspace.canvasNotes().every(note => note.part !== bass.id));
+  assert.ok(workspace.scoreTracks().some(track => track.id === otherBass.id), 'audibility is per track within a role');
+
+  service.updateTrack(otherBass.id, { mix: { solo: true } });
+  assert.deepEqual(workspace.scoreTracks().map(track => track.id), [otherBass.id]);
+  assert.ok(workspace.canvasNotes().every(note => note.part === otherBass.id));
   const before = service.exportProjectJson();
+  const history = JSON.stringify(service.historyEntries());
+  workspace.toggleScoreRole('bass');
+  assert.deepEqual(workspace.scoreTracks(), [], 'manual role filters still apply');
+  assert.deepEqual(workspace.canvasNotes(), []);
+  workspace.toggleScoreRole('bass');
+  assert.deepEqual(workspace.scoreTracks().map(track => track.id), [otherBass.id]);
   workspace.toggleScoreRole('drums');
-  flushEffects();
-  assert.equal(service.exportProjectJson(), before, 'display changes preserve the mix when sync is disabled');
-  uiPreferences.toggleScoreMixSync();
-  flushEffects();
-  assert.ok(service.project().tracks.every(track => track.mix.muted === (track.role === 'bass') && !track.mix.solo));
-  assert.equal(service.canUndo(), false, 're-enabling sync is excluded from history');
+  uiPreferences.toggleScoreMixSync(); flushEffects();
+  assert.ok(workspace.scoreTracks().some(track => track.id === bass.id), 'disabling restores manual visibility');
+  assert.ok(workspace.scoreTracks().every(track => track.role !== 'drums'));
+  workspace.toggleScoreRole('drums');
+  uiPreferences.toggleScoreMixSync(); flushEffects();
+  assert.equal(service.exportProjectJson(), before, 'preference and display changes never change the mix');
+  assert.equal(JSON.stringify(service.historyEntries()), history, 'display changes do not affect history');
+
+  service.updateTrack(otherBass.id, { mix: { muted: true } });
+  assert.ok(workspace.scoreTracks().length > 1, 'muting the last solo clears solo and restores other audible tracks');
+  assert.ok(workspace.scoreTracks().every(track => track.id !== otherBass.id && track.id !== bass.id));
+  service.updateTrack(otherBass.id, { mix: { muted: false, solo: false } });
+  assert.ok(workspace.scoreTracks().length > 1, 'clearing solo restores other unmuted tracks');
+  for (const track of tracks) service.updateTrack(track.id, { mix: { muted: true } });
+  assert.deepEqual(workspace.scoreTracks(), [], 'all-muted mix produces an empty score');
+  workspace.selectedTrackId.set(bass.id);
+  workspace.editing.set(true);
+  assert.deepEqual(workspace.scoreTracks().map(track => track.id), [bass.id], 'muted tracks remain editable');
 });
 
 

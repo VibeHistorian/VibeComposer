@@ -87,7 +87,33 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   }
   await command('Emulation.setDeviceMetricsOverride',{width:1600,height:1100,deviceScaleFactor:1,mobile:false});
   await evaluate(`(async()=>{${waitCode}document.querySelector('.track-group.arpeggio .track-select').click();await wait(()=>document.querySelector('#part-inspector').dataset.controlRole==='arpeggio');})()`);
-  const filters=await evaluate(`(async()=>{${waitCode}const b=document.querySelector('.score-role-controls [aria-label="Drums"]');const before=document.querySelector('vc-score-canvas canvas');b.click();await wait(()=>!document.querySelector('.drum-label'));document.querySelector('[aria-label="Settings"]').click();await wait(()=>document.querySelector('vc-settings-dialog'));(await wait(()=>[...document.querySelectorAll('.settings-sidebar button')].find(b=>b.getAttribute('aria-label')==='Behavior General'))).click();const mix=await wait(()=>document.querySelector('.behavior-setting input'));mix.click();document.querySelector('[aria-label="Close settings"]').click();await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='drums').mix.muted);return document.querySelector('vc-score-canvas canvas')===before;})()`);assert.equal(filters,true);
+  const filters=await evaluate(`(async()=>{${waitCode}
+    const role=document.querySelector('.score-role-controls [aria-label="Drums"]');
+    const before=document.querySelector('vc-score-canvas canvas');
+    const project=()=>sessionStorage.getItem('vibecomposer.project.v12');
+    const original=project();
+    const openScore=async()=>{
+      document.querySelector('[aria-label="Settings"]').click();
+      (await wait(()=>document.querySelector('.settings-sidebar [aria-label="Appearance Score"]'))).click();
+      return await wait(()=>document.querySelector('[aria-label="Highlight audible"]'));
+    };
+    role.click();await wait(()=>!document.querySelector('.drum-label'));
+    (await openScore()).click();
+    document.querySelector('[aria-label="Close settings"]').click();
+    if(project()!==original)throw Error('Score preference changed mix');
+    role.click();await wait(()=>document.querySelectorAll('.drum-label').length===3);
+    const mute=document.querySelector('.track-group.drums .group-mix-controls .mute-toggle');
+    mute.click();await wait(()=>!document.querySelector('.drum-label'));
+    mute.click();await wait(()=>document.querySelectorAll('.drum-label').length===3);
+    const solo=document.querySelector('.track-group.bass .group-mix-controls .solo-toggle');
+    solo.click();await wait(()=>!document.querySelector('.drum-label'));
+    const soloed=project();role.click();role.click();
+    if(project()!==soloed)throw Error('Score role buttons changed Solo/Mute');
+    solo.click();await wait(()=>document.querySelectorAll('.drum-label').length===3);
+    (await openScore()).click();document.querySelector('[aria-label="Close settings"]').click();
+    role.click();await wait(()=>!document.querySelector('.drum-label'));
+    return document.querySelector('vc-score-canvas canvas')===before;
+  })()`);assert.equal(filters,true);
   const overviewViewport=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();canvas.dispatchEvent(new WheelEvent('wheel',{deltaY:-346.57,ctrlKey:true,clientX:c.left,clientY:c.top+10,bubbles:true,cancelable:true}));const content=document.querySelector('vc-score-canvas .horizontal-scroll > div');return content.style.width;})()`);
   const point=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...point,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...point,button:'left',clickCount:1});
@@ -167,10 +193,10 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   })()`);assert.deepEqual(smart,{local:true,unchanged:true});
   await command('Page.reload');
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.score-role-controls'));document.querySelector('.score-role-controls [aria-label="Drums"]').click();await wait(()=>!document.querySelector('.drum-label'));document.querySelector('.score-role-controls [aria-label="Drums"]').click();await wait(()=>document.querySelector('.drum-label'));})()`);
-  const drumPoint=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim().toUpperCase()==='KICK').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
+  const drumPoint=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim().toUpperCase().startsWith('KICK')).getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...drumPoint,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...drumPoint,button:'left',clickCount:1});
   await capture('unified-drums-unselected');
-  const editingDrumPoint=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));if(document.querySelectorAll('.drum-label').length!==3)throw Error('All drum rows must be visible');const canvas=document.querySelector('vc-score-canvas canvas');canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true,cancelable:true}));await new Promise(r=>requestAnimationFrame(r));if(!document.querySelector('.inspector-copy').textContent.includes('3 notes'))throw Error('All drum phrases must be selectable');const c=canvas.getBoundingClientRect(),row=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim().toUpperCase()==='KICK').getBoundingClientRect();return {x:c.left+c.width/32,y:row.top+row.height/2};})()`);
+  const editingDrumPoint=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));if(document.querySelectorAll('.drum-label').length!==3)throw Error('All drum rows must be visible');const canvas=document.querySelector('vc-score-canvas canvas');canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true,cancelable:true}));await new Promise(r=>requestAnimationFrame(r));if(!document.querySelector('.inspector-copy').textContent.includes('3 notes'))throw Error('All drum phrases must be selectable');const c=canvas.getBoundingClientRect(),row=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim().toUpperCase().startsWith('KICK')).getBoundingClientRect();return {x:c.left+c.width/32,y:row.top+row.height/2};})()`);
   await capture('unified-drums-edit');
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...editingDrumPoint,button:'middle',clickCount:1});
   await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'middle',buttons:4});

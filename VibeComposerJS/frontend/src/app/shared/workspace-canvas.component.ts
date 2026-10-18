@@ -6,7 +6,7 @@ import { sectionDurationBeats } from '../core/music/section-context';
 import { sectionHarmonyDisplay } from '../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
 import { samePhraseInputs } from '../core/music/phrase-inputs';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
   TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
@@ -265,15 +265,8 @@ export class WorkspaceCanvasComponent {
   readonly editPhraseOffset = signal(0);
   readonly editPhraseLength = signal(16);
   readonly displayedRoles = signal(new Set<ArrangedPart>(ARRANGED_PARTS));
-  private readonly scoreMixSyncEffect = effect(() => {
-    if (this.preferences.syncScoreMix()) untracked(() => this.synchronizeScoreMix());
-  });
   toggleScoreRole(role: ArrangedPart): void {
     this.displayedRoles.update(roles => { const next = new Set(roles); if (next.has(role)) next.delete(role); else next.add(role); return next; });
-    this.synchronizeScoreMix();
-  }
-  private synchronizeScoreMix(): void {
-    if (this.preferences.syncScoreMix()) this.projects.syncScoreMix(this.project().tracks.filter(track => this.displayedRoles().has(track.role)).map(track => track.id));
   }
   readonly editing = signal(false);
   private selectionBeforeEditing: SettingsSelection | null = null;
@@ -357,12 +350,20 @@ export class WorkspaceCanvasComponent {
     noteCount: this.trackNoteCounts().get(track.id) ?? 0,
   })));
   readonly arrangedTracks = computed(() => tracksInRoleOrder(this.tracks()));
+  private readonly scoreVisibleTrackIds = computed(() => {
+    const tracks = this.project().tracks;
+    const highlightAudible = this.preferences.syncScoreMix();
+    const anySolo = tracks.some(track => track.mix.solo);
+    return new Set(tracks.filter(track => this.displayedRoles().has(track.role)
+      && (!highlightAudible || !track.mix.muted && (!anySolo || track.mix.solo))).map(track => track.id));
+  });
   readonly scoreTracks = computed(() => this.arrangedTracks().filter(track => this.editing()
-    ? this.selectedPart() === 'drums' ? track.role === 'drums' : track.id === this.selectedTrackId() : this.displayedRoles().has(track.role))
+    ? this.selectedPart() === 'drums' ? track.role === 'drums' : track.id === this.selectedTrackId() : this.scoreVisibleTrackIds().has(track.id))
     .map(track => ({ ...track, drumPitch: track.role === 'drums' ? track.generatorSettings.pitch : undefined })));
   readonly canvasNotes = computed<ScoreNote[]>(() => {
     const editor = this.editor();
-    if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.displayedRoles().has(note.color));
+    if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.editing()
+      ? this.displayedRoles().has(note.color) : this.scoreVisibleTrackIds().has(note.part));
     const section = this.project().arrangement.find(section => section.id === this.editSectionId());
     return editor.notes().map(note => {
       const track = this.project().tracks.find(track => track.id === note.trackId)!;

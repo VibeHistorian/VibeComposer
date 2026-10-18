@@ -109,17 +109,17 @@
             <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.restartPlaybackOnCompose()"
               aria-describedby="restart-compose-description" (click)="preferences.toggleRestartPlaybackOnCompose()">Restart playback on Compose</button>
             <p id="restart-compose-description">Return to the beginning when composing, or to the loop start when looping. Playback continues if already playing.</p>
-            <label class="behavior-setting">
-              <input type="checkbox" [checked]="preferences.syncScoreMix()"
-                (change)="preferences.toggleScoreMixSync()" aria-describedby="sync-score-mix-description" />
-              <span>Sync Solo/Mute</span>
-            </label>
-            <p id="sync-score-mix-description">Set the mix to hear the roles displayed in the score. Changes apply immediately and are saved in your UI preferences.</p>
           </section>
         }
         @case ('score') {
           <section aria-labelledby="score-settings-title">
             <h2 id="score-settings-title">Score</h2>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Highlight audible" [checked]="preferences.syncScoreMix()"
+                (change)="preferences.toggleScoreMixSync()" aria-describedby="highlight-audible-description" />
+              <span>Highlight audible</span>
+            </label>
+            <p id="highlight-audible-description">Show only tracks audible under the current Solo/Mute settings. Score role filters still apply. Saved in your UI preferences.</p>
             <label class="behavior-setting">
               <input type="checkbox" aria-label="Chord-based grid subdivisions" [checked]="preferences.scoreChordGrid()"
                 (change)="preferences.toggleScoreChordGrid()" aria-describedby="score-chord-grid-description" />

@@ -965,13 +965,6 @@ export class ProjectService {
     this.commit(next, this.controlHistoryKey(['part', 'global-track', trackId], patch));
   }
 
-  syncScoreMix(visibleTrackIds: readonly string[]): void {
-    const current = this.state();
-    const visible = new Set(visibleTrackIds);
-    const tracks = current.tracks.map(track => ({ ...track, mix: { ...track.mix, solo: false, muted: !visible.has(track.id) } }));
-    if (tracks.some((track, index) => track.mix.muted !== current.tracks[index].mix.muted || current.tracks[index].mix.solo)) this.commit({ ...current, tracks });
-  }
-
   updateSectionTrackPhrase(sectionId: string, trackId: string, notes: readonly PhraseNote[]): boolean {
     const current = this.state();
     if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId) || !this.isPhrase(notes, 2048)) return false;
