@@ -1,6 +1,6 @@
 import { isScaleMode } from '../core/music/scales';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../core/music/scales';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked, signal } from '@angular/core';
+import { afterNextRender, Injector, ChangeDetectionStrategy, Component, computed, effect, inject, untracked, signal } from '@angular/core';
 import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { ProjectService } from '../core/project/project.service';
 import { UiPreferencesService } from '../core/ui/ui-preferences.service';
@@ -27,6 +27,7 @@ export class TransportDockComponent {
   readonly project = this.projects.project;
   readonly seedInput = this.projects.seedInput;
   private readonly preferences = inject(UiPreferencesService);
+  private readonly injector = inject(Injector);
 
   toggleComposeRandomization(field: 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose'): void {
     this.projects.updateSettings({ [field]: this.project()[field] === false });
@@ -36,6 +37,7 @@ export class TransportDockComponent {
   readonly generationMessage = computed(() => this.generationFeedback()?.project === this.project() ? this.generationFeedback()?.message : null);
 
   generate(event: 'compose' | 'regenerate'): void {
+    const started = event === 'compose' ? performance.now() : undefined;
     const result = this.projects.generateComposition(event);
     if (event === 'compose' && result !== 'invalid' && this.preferences.restartPlaybackOnCompose()) {
       this.playback.restartAfterCompose(this.project());
@@ -43,6 +45,12 @@ export class TransportDockComponent {
     this.generationFeedback.set({ project: this.project(), message: result === 'invalid'
       ? 'No settings changed. Generation conflicts with local settings.'
       : result === 'unchanged' ? 'Settings already match the generation rules.' : `${event === 'compose' ? 'Compose' : 'Regenerate'} settings applied.` });
+    if (started !== undefined) {
+      // Include Angular's update, canvas drawing and the browser's next paint.
+      afterNextRender(() => requestAnimationFrame(() => setTimeout(() => {
+        console.log(`[Compose] ${(performance.now() - started).toFixed(1)} ms`);
+      }, 0)), { injector: this.injector });
+    }
   }
   readonly trackIds = computed(() => this.project().tracks.map(track => track.id));
   private readonly liveReloadEffect = effect(() => {
