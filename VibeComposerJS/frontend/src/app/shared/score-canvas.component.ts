@@ -66,7 +66,7 @@ interface ScoreCanvasModel {
 const VELOCITY_HEIGHT = 34;
 const HIT_BUCKET_WIDTH = 96;
 const MIN_TIME_GRID_SPACING = 8;
-const MAX_PITCH_ROW_HEIGHT = 50;
+const MAX_PITCH_ROW_HEIGHT = 30;
 const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; glow: string }>> = {
   melody: { note: '--role-melody-strong', velocity: '--role-melody-strong', glow: '--role-melody-glow' },
   bass: { note: '--role-bass-strong', velocity: '--role-bass-strong', glow: '--role-bass-glow' },

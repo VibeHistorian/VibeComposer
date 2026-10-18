@@ -551,13 +551,13 @@ test('Alt-wheel reveals pitches outside the fitted phrase and allows adding note
   c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
     fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
   c.drawStatic();
-  assert.deepEqual(c.gutterRows().filter(row => !row.drum).map(row => row.midi), [50, 49, 48, 47, 46]);
+  assert.deepEqual(c.gutterRows().filter(row => !row.drum).map(row => row.midi), [50, 49, 48, 47, 46, 45, 44, 43]);
   const cursorY = c.harmonicHeight / 2;
   const anchor = c.pitchMax - (c.verticalOffset + cursorY) / c.laneHeight;
   const wheel = { preventDefault() {}, stopPropagation() {}, altKey: true, deltaMode: 0,
     deltaX: 0, deltaY: Math.log(2) / .002, clientX: 200, clientY: 10 + cursorY / 2 };
   c.onCanvasWheel(wheel);
-  assert.ok(Math.abs(c.verticalScale - 128 / 10) < 1e-10);
+  assert.ok(Math.abs(c.laneHeight - 15) < 1e-10, 'zooming out halves the capped 30px rows');
   assert.ok(Math.abs(c.pitchMax - (c.verticalOffset + cursorY) / c.laneHeight - anchor) < 1e-10,
     'the pitch under the cursor stays anchored even with pinned drum rows');
   const higher = c.gutterRows().find(row => !row.drum && row.midi > 50);
@@ -573,10 +573,10 @@ test('Alt-wheel reveals pitches outside the fitted phrase and allows adding note
   assert.deepEqual(c.gutterRows().filter(row => !row.drum).map(row => row.midi),
     Array.from({ length: 128 }, (_, i) => 127 - i));
   c.onCanvasWheel({ ...wheel, deltaY: -10000 });
-  assert.equal(c.laneHeight, 50);
+  assert.equal(c.laneHeight, 30);
 });
 
-test('pitch rows cap at 50px during fitting, repeated zooming and resizing in overview and edit mode', () => {
+test('pitch rows cap at 30px during fitting, repeated zooming and resizing in overview and edit mode', () => {
   const { component: c } = fixture();
   c.model = { tracks: [{ id: 'bass', color: 'bass' }],
     notes: [{ id: 'a', part: 'bass', color: 'bass', midi: 60, velocity: 90, startBeat: 20, durationBeats: 1, opacity: 1 }],
@@ -589,15 +589,15 @@ test('pitch rows cap at 50px during fitting, repeated zooming and resizing in ov
     c.editable = () => editable;
     c.height = 600; c.verticalScale = 1; c.pendingEditPitchFocus = editable;
     c.drawStatic();
-    assert.equal(c.laneHeight, 50, 'initial phrase fit respects the cap');
+    assert.equal(c.laneHeight, 30, 'initial phrase fit respects the cap');
     c.onCanvasWheel(wheel);
     const offset = c.verticalOffset;
     c.onCanvasWheel(wheel);
-    assert.equal(c.laneHeight, 50);
+    assert.equal(c.laneHeight, 30);
     assert.equal(c.verticalOffset, offset, 'zooming at the cap does not move the viewport');
     c.height = 1000; c.drawStatic(true);
-    assert.equal(c.laneHeight, 50, 'growing the canvas cannot exceed the cap');
-    assert.ok(c.gutterRows().every(row => row.height <= 50));
+    assert.equal(c.laneHeight, 30, 'growing the canvas cannot exceed the cap');
+    assert.ok(c.gutterRows().every(row => row.height <= 30));
     assert.equal(c.contentHeight, c.laneHeight * (c.pitchMax - c.pitchMin + 1), 'scroll range follows capped rows');
     c.onCanvasWheel({ ...wheel, deltaY: 10000 });
     assert.equal(c.verticalScale, 1, 'zooming out still reaches the full pitch range');
