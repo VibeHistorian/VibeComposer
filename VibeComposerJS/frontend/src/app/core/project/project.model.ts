@@ -89,6 +89,10 @@ export interface CommonPartSettings {
 /** Current block-generation part inputs; Java GUIConfig options have a separate global scope. */
 export interface MelodySettings extends CommonPartSettings {
   readonly algorithm: 'block';
+  readonly rhythm?: 'melody1' | 'custom';
+  readonly customMelodyDurations?: import('../music/melody-durations').MelodyDurations;
+  readonly customDurationChances?: readonly number[];
+  readonly customDurationRandomWeighting?: boolean;
   readonly speed?: number;
   readonly fillPauses?: boolean;
   readonly chordNoteChoices?: readonly number[];

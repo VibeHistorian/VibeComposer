@@ -2,6 +2,10 @@ import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import { combinedControlKeys } from '../core/ui/ui-preferences';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
+import { MelodyDurationsDialogComponent } from './melody-durations-dialog.component';
+import { melodyDurationPreview } from '../core/music/melody-durations';
+import { validateMelodyDurationDraft } from '../core/music/melody-duration-validation';
+import type { MelodySettings } from '../core/project/project.model';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { ArrangedPart, ChordRhythm, PartSettingsScope } from '../core/project/project.model';
 import { PART_CONTROLS, type PartControl, type PartSettingValue } from '../core/music/part-settings';
@@ -42,6 +46,10 @@ export class PartSettingsEditorComponent {
   private readonly dialogs = inject(Dialog);
   readonly scope = input.required<PartSettingsScope>();
   openSequencer(velocities = false): void {
+    if (this.role() === 'melody') {
+      this.dialogs.open(MelodyDurationsDialogComponent, { ariaLabel: 'Custom melody durations', data: { scope: this.scope() } });
+      return;
+    }
     this.dialogs.open(PatternSequencerComponent, { ariaLabel: this.role() === 'drums' ? 'Drum pattern sequencer' : 'Pattern sequencer',
       data: { scope: this.scope(), role: this.role(), velocities, melodyHits: this.melodyHits() } });
   }
@@ -58,10 +66,12 @@ export class PartSettingsEditorComponent {
   readonly inheritRequested = output<string | readonly string[]>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
-    !['patternFlip', 'fillFlip', 'customPattern'].includes(control.key) &&
+    !['patternFlip', 'fillFlip', 'customPattern', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting'].includes(control.key) &&
     (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)
       : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
     (this.preferences.editingQuickSettings() || (
+    (this.role() !== 'melody' || this.values()['rhythm'] !== 'custom'
+      || !['speed', 'doubledRhythmChance', 'pauseChance', 'fillPauses', 'splitChance', 'leadChordsChance', 'startNoteChance'].includes(control.key)) &&
     (this.role() !== 'melody' || !this.projects.project().melodyGlobal?.contextualMelody
       || !['fillPauses', 'patternFlexible', 'doubledRhythmChance', 'maxNoteExceptions', 'noteExceptionChance'].includes(control.key)) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
@@ -100,6 +110,11 @@ export class PartSettingsEditorComponent {
       euclideanPulses: values['euclideanPulses'] as number | undefined,
       customPattern: values['customPattern'] as readonly number[] | undefined });
   });
+  readonly melodyPreview = computed(() => {
+    if (this.role() !== 'melody' || this.values()['rhythm'] !== 'custom') return undefined;
+    if (this.values()['customMelodyDurations'] === null || this.values()['patternFlip'] === null) return null;
+    return melodyDurationPreview(this.values() as unknown as MelodySettings);
+  });
   readonly rhythmPreviewLabel = computed(() => {
     const pattern = this.rhythmPreview();
     return pattern ? `${pattern.filter((slot) => slot > 0).length} enabled slots in the ${pattern.length}-cell base rhythm. Span and Repeat change its placement; Pause and Fill can suppress notes; zero velocity silences individual hits.`
@@ -107,18 +122,29 @@ export class PartSettingsEditorComponent {
   });
 
   inheritanceFor(control: PartControl): ControlInheritance {
-    return this.local() ? combinedControlKeys(control.key).some(key => this.overriddenKeys().includes(key)) ? 'custom' : 'inherited' : 'global';
+    return this.local() ? combinedControlKeys(control.key, this.role()).some(key => this.overriddenKeys().includes(key)) ? 'custom' : 'inherited' : 'global';
   }
 
   resetControl(control: PartControl): void {
-    this.inheritRequested.emit(combinedControlKeys(control.key));
+    this.inheritRequested.emit(combinedControlKeys(control.key, this.role()));
   }
 
   flipControl(control: PartControl): PartControl | undefined {
+    if (control.key === 'rhythm' && this.role() === 'melody' && this.values()['rhythm'] !== 'custom') return undefined;
     if (control.key === 'rhythm' && this.role() === 'bass' && this.values()['rhythm'] === 'bass1'
         && !this.preferences.editingQuickSettings()) return undefined;
     const key = combinedControlKeys(control.key)[1];
     return key ? PART_CONTROLS[this.role()].find(control => control.key === key) : undefined;
+  }
+
+  toggleFlip(control: PartControl): void {
+    const value = this.values()[control.key] !== true;
+    if (this.role() === 'melody' && control.key === 'patternFlip'
+      && validateMelodyDurationDraft(this.projects.project(), this.scope(), { patternFlip: value })) {
+      this.dialogs.open(MelodyDurationsDialogComponent, { ariaLabel: 'Custom melody durations', data: { scope: this.scope(), flipped: value } });
+      return;
+    }
+    this.settingsChanged.emit({ key: control.key, value });
   }
 
   numericDefault(control: PartControl): number {
@@ -148,6 +174,12 @@ export class PartSettingsEditorComponent {
   choose(control: PartControl, event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     if (value === '') return;
+    if (this.role() === 'melody' && control.key === 'rhythm' && value === 'custom'
+      && validateMelodyDurationDraft(this.projects.project(), this.scope(), { rhythm: 'custom' })) {
+      (event.target as HTMLSelectElement).value = String(this.values()[control.key] ?? 'melody1');
+      this.openSequencer();
+      return;
+    }
     this.settingsChanged.emit({ key: control.key, value: typeof control.options?.[0] === 'number' ? Number(value) : value });
   }
 

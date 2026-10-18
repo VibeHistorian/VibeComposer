@@ -20,8 +20,8 @@ Preserve old parameter semantics, not old widget positions. The model/control re
 
 | Phase | Java lookup / exact symbols | Destination / remaining work |
 | --- | --- | --- |
-| P9 | [MelodyPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/MelodyPanel.java): `customDurationValues`, `customDurationChances` → `customDurationNotes`, `customDurationChances` | I/editor: custom duration templates and behavior, distinct from manual-note replacements. |
-| P9 | `melodyUseCustomDurations`, `melodyCustomDurationsRandomWeighting`, `melodyCustomDurationsStrictMode` | I musical controls alongside custom duration editor. |
+| P9 | [MelodyPanel](../midimasterpiece/src/main/java/org/vibehistorian/vibecomposer/Panels/MelodyPanel.java): `customDurationValues`, `customDurationChances` → `customDurationNotes`, `customDurationChances` | Delivered: Rhythm pattern preview opens the ten-lane custom melody duration editor; templates remain distinct from manual-note replacements. |
+| P9 | `melodyUseCustomDurations`, `melodyCustomDurationsRandomWeighting`, `melodyCustomDurationsStrictMode` | Delivered: scoped `melody1`/`custom` selection and popup lane weighting, with fixed duration boundaries. Optional non-strict reassignment remains deferred. |
 | P10 | `melodyRhythmAccents`, `melodyRhythmAccentsMode`, `melodyRhythmAccentsPocket` | I: drum-driven Melody rhythm accents, explicit same-section source/execution order. |
 | P11 | `useUserMelody`, `dropPane`, `userMelodyScaleModeSelect` | Import/editor + I: imported melody ownership, scale behavior and source inference audit. |
 | Future | `arpCopyMelodyInst` | Do not port this special-case copy. Use universal dynamic source-track instrument selection, deferred by user request. |

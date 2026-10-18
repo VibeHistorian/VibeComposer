@@ -727,8 +727,11 @@ export class ProjectService {
     if (role === 'melody') {
       const melody = this.decodeMelody({ ...current.melody, ...patch });
       if (!melody) return;
+      const replacements = new Map(current.tracks.filter(track => track.role === 'melody')
+        .map(track => [track.id, this.decodeMelody({ ...track.generatorSettings, ...patch })]));
+      if ([...replacements.values()].some(settings => !settings)) return;
       this.commit({ ...current, melody, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: melody } : track) }, controlKey);
+        ? { ...track, generatorSettings: replacements.get(track.id)! } : track) }, controlKey);
     } else if (role === 'bass') {
       const bass = { ...current.bass, ...patch } as BassSettings;
       if (!this.decodeBass(bass)) return;
@@ -1813,7 +1816,7 @@ export class ProjectService {
         || (value as MelodySettings).algorithm !== 'block') return undefined;
     const { algorithm, ...fields } = value as MelodySettings;
     const decoded = decodePartPatch('melody', fields);
-    return decoded && validVelocityRange(decoded, 'melody') ? { algorithm, ...decoded } : undefined;
+    return decoded && validVelocityRange(decoded, 'melody') ? { algorithm, ...decoded } as MelodySettings : undefined;
   }
 
   private decodeBass(value: unknown): BassSettings | undefined {

@@ -8,8 +8,8 @@ import { partFillMask } from './chord-span-fill';
 import { velocityBounds } from './part-settings';
 import { mixContextualSeed } from './contextual-harmony';
 import { convertScalePitch } from './scales';
+import { melodyDurationBlocks } from './melody-durations';
 
-// TODO: Translate supplied custom melody durations when the app implements them.
 // TODO: Move Blocks (the seven catalogue percentages), Phrase Bars, Beats per Bar,
 // Pattern Effect and MIDI/Chord Target Mode to Settings > Melody.
 // TODO: Move New Blocks%, Note Target Mode, Form and Purpose from global to track scope.
@@ -56,6 +56,29 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
   const overlapping = (slot: Slot) => events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
   const makeRhythm = (variant: number): Slot[] => {
     const slots: Slot[] = [];
+    if (settings.rhythm === 'custom') {
+      for (let chord = 0; chord < events.length; chord++) {
+        const event = events[chord];
+        const motif = motifs[chord % motifs.length];
+        const durations = melodyDurationBlocks(settings, Number(BigInt.asIntN(32, baseSeed)), chord,
+          options.patternEffect !== 1 ? Math.max(0, Math.abs(motif) - 1) : -1).flat();
+        let cursor = event.start, elapsed = 0;
+        for (const value of durations) {
+          elapsed += Math.abs(value);
+          const end = Math.min(event.end, event.start + Math.round(elapsed / 4 * event.duration));
+          if (end <= cursor) throw new RangeError('A custom duration is too short for this chord. Increase its length.');
+          // Custom lanes are per chord; split only at phrase boundaries to retain phrase ownership.
+          while (cursor < end) {
+            const phrase = phrases.find(phrase => cursor >= phrase.start && cursor < phrase.end)!;
+            const boundary = Math.min(end, phrase.end);
+            slots.push({ start: cursor, duration: boundary - cursor, rest: value < 0 || !fill[chord], phrase,
+              arrival: cursor === phrase.start || cursor === event.start, appoggiatura: false });
+            cursor = boundary;
+          }
+        }
+      }
+      return slots;
+    }
     for (const phrase of phrases) {
       const random = new JavaRandom(baseSeed ^ 0x72687974686dn ^ 0x9e3779b97f4a7c15n * BigInt(Math.abs(phrase.motif)) ^ BigInt(variant));
       const arrivals = [phrase.start];

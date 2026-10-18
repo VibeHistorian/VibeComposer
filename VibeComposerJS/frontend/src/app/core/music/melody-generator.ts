@@ -17,6 +17,7 @@ import { startingMelodyTarget } from './melody-targets';
 import type { GenerationHarmony } from './harmony-voicing';
 import type { MelodySkeleton } from './melody-chord-inference';
 import { generateContextualMelody } from './contextual-melody';
+import { melodyDurationBlocks, melodyDurationError } from './melody-durations';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const DURATION_MULTIPLIER = 0.95; // MidiGenerator.RunOptions.defaults()
@@ -94,6 +95,13 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     publishSkeleton?.(result.skeleton);
     return result.notes;
   }
+  const customRhythm = settings.rhythm === 'custom';
+  if (customRhythm) {
+    const error = melodyDurationError(settings);
+    if (error) throw new RangeError(error);
+    // Supplied durations own their note/rest boundaries, including the first and last pauses.
+    settings = { ...settings, splitChance: 0, leadChordsChance: 0, startNoteChance: 100, pauseChance: 0, fillPauses: false };
+  }
   const baseSeed = settings.patternSeed ? int(settings.patternSeed) : Number(BigInt.asIntN(32, BigInt(seed)));
   const blockSeed = int(baseSeed + notesSeedOffset);
   const durationRandom = new JavaRandom(int(blockSeed + 5));
@@ -108,14 +116,16 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const starting = (index: number) => startingMelodyTarget(roots, choices, index, globals.blockTargetMode);
   for (let chord = 0; chord < progression.length; chord++) {
     const originalOffset = structure[chord], offset = Math.max(0, Math.abs(originalOffset) - 1);
+    const customBlocks = customRhythm ? melodyDurationBlocks(settings, blockSeed, chord, globals.patternEffect !== 1 ? offset : -1) : undefined;
     const doubled = new JavaRandom(int(baseSeed + 3 + offset)).nextInt(100) < (settings.doubledRhythmChance ?? 0);
-    let durations = globals.patternEffect !== 1 ? rhythms.get(offset) : undefined;
+    let durations = customBlocks?.map(block => block.reduce((sum, value) => sum + Math.abs(value), 0))
+      ?? (globals.patternEffect !== 1 ? rhythms.get(offset) : undefined);
     if (!durations) {
       durations = blockRhythm(int(blockSeed + offset), doubled ? 2 : 4, outerWeights);
       if (doubled) durations = [...durations, ...durations];
       rhythms.set(offset, durations);
     }
-    const first = starting(chord), next = starting(chord + 1), existing = cache.get(offset);
+    const first = starting(chord), next = starting(chord + 1), existing = customRhythm ? undefined : cache.get(offset);
     let changes = existing && globals.patternEffect > 0 ? existing.changes
       : blockChangeSequence(first, next, blockSeed, durations.length, maxChange, globals.maxDirectionChanges);
     // Java stores the sequence's direction count alongside its unadjusted changes.
@@ -136,14 +146,17 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
         if (index > 0) startingDegree += changes[index - 1];
         const shape = selectMelodyBlock(changes[index], jump, new JavaRandom(shapeSeed),
           new JavaRandom(shapeSeed).nextInt(100) < globals.newBlocksChance,
-          globals.patternEffect !== 1 ? existing?.blocks[index]?.notes.length : undefined, variance, directions,
+          customBlocks ? customBlocks[index].filter(value => value > 0).length
+            : globals.patternEffect !== 1 ? existing?.blocks[index]?.notes.length : undefined, variance, directions,
           globals.blockChangePreference, globals.blockTypeWeights, startingDegree, previousType);
         const notes = shape.notes;
+        if (customBlocks && notes.length !== customBlocks[index].filter(value => value > 0).length)
+          throw new RangeError('No melody block fits this number of notes. Split a note or change the block settings.');
         previousType = shape.type;
         variance = Math.max(0, variance - blockVariance(notes));
         directions = Math.max(0, directions - directionChanges(notes));
-        let noteDurations = noteRhythm(shapeSeed, duration, notes.length, speed);
-        if (globals.arpySurprises && notes.length === 4 && (speed < 20 || speed > 80)) {
+        let noteDurations = customBlocks ? customBlocks[index].filter(value => value > 0) : noteRhythm(shapeSeed, duration, notes.length, speed);
+        if (!customBlocks && globals.arpySurprises && notes.length === 4 && (speed < 20 || speed > 80)) {
           const low = speed < 20 ? 0.25 * 0.99 : 1.5 * 0.99;
           const high = speed < 20 ? 0.25 * 1.01 : 4 * 1.01;
           if (noteDurations.some(value => value > low && value < high)) noteDurations = notes.map(() => duration / notes.length);
@@ -161,7 +174,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       if (index > 0) adjustment += changes[index - 1] * (originalOffset < 0 ? -1 : 1);
       const pitches = block.notes.map(note => degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment));
       let blockDurations = [...block.durations];
-      if (!existing && globals.emphasizeKey) {
+      if (!customBlocks && !existing && globals.emphasizeKey) {
         // Production inserts the mode target at index one, including tonic for Ionian.
         const target = modeTargetPitch(scale);
         const order = [0, 7, 4, 5, 9, 2, 11].filter(pitch => pitch !== target);
@@ -176,11 +189,14 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
         if (globals.patternEffect !== 1 && originalOffset >= 0) blocks = blocks!.map((stored, blockIndex) => blockIndex === index
           ? { ...stored, durations: blockDurations } : stored);
       } else if (existing && globals.patternEffect === 0) blockDurations = [...existing.blocks[index].durations];
+      const blockStart = notes.length;
+      const customNoteIndices = customBlocks?.[index].flatMap((value, slot) => value > 0 ? [slot] : []);
       block.notes.forEach((note, noteIndex) => {
         const rhythm = blockDurations[noteIndex];
         let pitch = pitches[noteIndex];
+        const slotIndex = customNoteIndices?.[noteIndex] ?? noteIndex;
         const exceptionIndexValid = globals.singleNoteExceptions
-          ? noteIndex === block.notes.length - 1 && index === blockCount - 1 : noteIndex > 0;
+          ? slotIndex === (customBlocks?.[index].length ?? block.notes.length) - 1 && index === blockCount - 1 : slotIndex > 0;
         if (exceptionIndexValid && exceptions > 0 && exceptionRandom.nextInt(100) < (settings.noteExceptionChance ?? 0)) {
           pitch += (exceptionRandom.nextBoolean() ? 1 : -1) * MAJOR[exceptionRandom.nextInt(globals.singleNoteExceptions ? 7 : 4)];
           const semitone = pitch % 12;
@@ -189,16 +205,25 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
           exceptions--;
         }
         notes.push({ midi: pitch + (settings.transpose ?? 0),
-          rhythm, duration: rhythm * (0.75 + durationRandom.nextDouble() / 4) * DURATION_MULTIPLIER,
+          rhythm, duration: customBlocks ? rhythm : rhythm * (0.75 + durationRandom.nextDouble() / 4) * DURATION_MULTIPLIER,
           velocity: 0, offset: 0 });
       });
+      if (customBlocks) {
+        const sounded = notes.splice(blockStart);
+        let sound = 0;
+        for (const value of customBlocks[index]) {
+          const duration = Math.abs(value) * (0.75 + durationRandom.nextDouble() / 4) * DURATION_MULTIPLIER;
+          notes.push(value > 0 ? { ...sounded[sound++], duration }
+            : { midi: -1, rhythm: -value, duration, velocity: 0, offset: 0 });
+        }
+      }
     });
     if (!existing) cache.set(offset, { changes, blocks });
     byChord.push(notes);
   }
   // Java skeleton pitches precede part transpose; the TS phrase path applies it during assembly.
   // Copy canonical values before expansion mutates objects, without consuming random values.
-  publishSkeleton?.(byChord.map(notes => notes.map(note => ({ midi: note.midi - (settings.transpose ?? 0), rhythm: note.rhythm }))));
+  publishSkeleton?.(byChord.map(notes => notes.map(note => ({ midi: note.midi < 0 ? -1 : note.midi - (settings.transpose ?? 0), rhythm: note.rhythm }))));
   const expanded = expandMelody(byChord, settings, baseSeed, notesSeedOffset, minimum, maximum);
   byChord.splice(0, byChord.length, ...expanded);
   const all = byChord.flat(), firstPitches = byChord.map((notes) => notes[0].midi);
@@ -235,7 +260,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     const remaining = notes.filter((note) => !removed.has(note)), first = remaining[0];
     if (!first) return;
     if (fill[chord] && (first.midi >= 0 || globals.fillPausesPerChord)) first.midi = firstPitches[chord];
-    if (remaining.length >= 3 && first.midi >= 0 && first.duration < 1.1
+    if (!customRhythm && remaining.length >= 3 && first.midi >= 0 && first.duration < 1.1
       && remaining[1].midi !== first.midi && remaining[2].midi !== first.midi) first.duration *= 1 + accent / 200;
   });
   delayMelodyStarts(byChord.map(notes => notes.filter(note => !removed.has(note))), settings, baseSeed);

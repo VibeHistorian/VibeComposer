@@ -1,0 +1,40 @@
+/* Duration dialog */
+:host { display: flex; flex-direction: column; width: min(1050px, 94vw); max-height: 90vh; padding: 16px; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-section); background: var(--surface-base); color: var(--text-primary); font: 12px var(--font-ui); }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h2 { margin: 0 0 4px; font: 600 16px var(--font-ui); }
+header span, .instructions { color: var(--text-secondary); }
+p { margin: 0; line-height: 1.5; }
+button, select, input { font: inherit; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); }
+button { padding: 5px 9px; background: var(--surface-button); cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+button.active, button.save { border-color: var(--parameter-rhythm); background: var(--surface-toggle-active); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+/* Drawing tools */
+.duration-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.duration-toolbar label { display: flex; align-items: center; gap: 5px; }
+.duration-toolbar select { padding: 4px; }
+input[type="checkbox"] { accent-color: var(--parameter-rhythm); }
+
+/* Rhythm lanes and beat ruler */
+.duration-scroll { overflow: auto; min-height: 0; }
+.duration-ruler { display: grid; grid-template-columns: 115px minmax(240px, 1fr) 220px 30px; gap: 8px; padding-block: 0 8px; color: var(--text-secondary); font-size: 10px; }
+.duration-ruler > div { display: grid; grid-template-columns: repeat(4, 1fr); }
+.duration-row { display: grid; grid-template-columns: 115px minmax(240px, 1fr) 220px 30px; align-items: center; gap: 8px; margin-bottom: 6px; }
+.lane-identity { display: flex; align-items: center; gap: 5px; }
+.lane-identity strong { width: 16px; text-align: right; }
+.lane-identity input { width: 58px; padding: 4px; }
+.duration-lane { position: relative; height: 30px; border: 1px solid var(--border-default); border-radius: var(--radius-micro); background: repeating-linear-gradient(to right, transparent 0 calc(100% / var(--cells) - 1px), var(--border-default) calc(100% / var(--cells) - 1px) calc(100% / var(--cells))); cursor: crosshair; touch-action: none; user-select: none; }
+.duration-event { position: absolute; top: 3px; bottom: 3px; border-inline: 1px solid var(--surface-input); color: var(--text-muted); text-align: center; pointer-events: none; overflow: hidden; }
+.duration-event.sounded { background: var(--parameter-rhythm); border: 1px solid var(--border-strong); border-radius: var(--radius-micro); }
+.duration-row.unused .duration-lane { opacity: .5; }
+.duration-text { min-width: 0; }
+.duration-text input { width: 100%; padding: 5px; font-family: var(--font-mono); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* Validation and commit */
+footer { display: flex; flex-direction: column; gap: 10px; }
+.validation { color: var(--text-secondary); min-height: 18px; }
+.error { color: var(--color-danger); }
+.duration-actions { display: flex; justify-content: end; gap: 8px; }

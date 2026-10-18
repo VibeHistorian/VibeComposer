@@ -1,0 +1,49 @@
+<header>
+  <div><h2>Custom melody durations</h2><span>{{ trackCount }} melody track{{ trackCount === 1 ? '' : 's' }} · four beats per chord</span></div>
+  <button type="button" aria-label="Close melody durations" (click)="dialog.close()">×</button>
+</header>
+<div class="duration-toolbar">
+  <label>Grid <select aria-label="Duration grid" [value]="grid()" (change)="grid.set(+$any($event.target).value)">
+    <option value="0.5">½ beat</option><option value="0.25">¼ beat</option><option value="0.125">⅛ beat</option><option [value]="1 / 3">⅓ beat</option><option [value]="1 / 6">⅙ beat</option>
+  </select></label>
+  <button type="button" [class.active]="tool() === 'note'" [attr.aria-pressed]="tool() === 'note'" (click)="tool.set('note')">Draw notes</button>
+  <button type="button" [class.active]="tool() === 'rest'" [attr.aria-pressed]="tool() === 'rest'" (click)="tool.set('rest')">Draw pauses</button>
+  <label><input type="checkbox" aria-label="Flip custom melody durations" [checked]="flipped()" (change)="flipped.set($any($event.target).checked)" /> Flip</label>
+  <label><input type="checkbox" aria-label="Weighted duration selection" [checked]="weighted()" (change)="weighted.set($any($event.target).checked)" /> Weighted selection</label>
+</div>
+<p class="instructions">Drag across a lane to set a note’s length or paint a pause. Separate notes keep their own boundaries. Empty lanes are skipped; otherwise lanes follow block identities, or their chances when weighted selection is on. Durations stretch with the chord.</p>
+@if (trackCount > 1) { <p class="instructions">Saving applies these rhythms to all selected melody tracks. The first track supplies the starting draft.</p> }
+<div class="duration-scroll">
+  <div class="duration-ruler"><span>Lane / chance</span><div><span>1</span><span>2</span><span>3</span><span>4</span></div><span>Durations in beats</span></div>
+  @for (row of displayRows(); track $index; let lane = $index) {
+    <div class="duration-row" [class.unused]="!rows()[lane].length">
+      <div class="lane-identity"><strong>{{ lane + 1 }}</strong>
+        <input type="number" min="0" max="100" [value]="chances()[lane]" [attr.aria-label]="'Lane ' + (lane + 1) + ' chance'" (input)="editChance(lane, $any($event.target).value)" /><span>%</span>
+      </div>
+      <div class="duration-lane" [style.--cells]="steps().length" [attr.aria-label]="'Lane ' + (lane + 1) + ' duration drawing area'"
+        (pointerdown)="start($event, lane)" (pointermove)="move($event)" (pointerup)="finish()" (pointercancel)="cancel()" (lostpointercapture)="finish()">
+        @for (slot of row; track $index) {
+          <span class="duration-event" [class.sounded]="!slot.rest" [style.left.%]="slot.start / 4 * 100" [style.width.%]="slot.duration / 4 * 100" aria-hidden="true">{{ slot.rest ? '·' : '' }}</span>
+        }
+      </div>
+      <label class="duration-text"><span class="sr-only">Lane {{ lane + 1 }} durations</span><input type="text" [attr.aria-label]="'Lane ' + (lane + 1) + ' durations'" [value]="texts()[lane]" placeholder="Unused" (input)="editRow(lane, $any($event.target).value)" /></label>
+      <button type="button" [attr.aria-label]="'Clear duration lane ' + (lane + 1)" (click)="editRow(lane, '')">×</button>
+    </div>
+  }
+</div>
+<p class="instructions">Keyboard editing: enter comma-separated beats in a lane. Positive values are notes; negative values are pauses (for example 1, -0.5, 0.5, 2). Any unused time becomes a pause. Flip swaps notes and pauses.</p>
+<footer>
+  <div class="validation" aria-live="polite">
+    @if (stale()) { <p class="error">The project changed while this popup was open. Reopen it to edit the current settings.</p> }
+    @else if (error(); as message) { <p class="error" role="alert">{{ message }}</p> }
+    @else if (validationMessage(); as message) { <p class="error" role="alert">{{ message }}</p> }
+    @else if (checking()) { <p>Checking melody generation…</p> }
+    @else if (canSave()) { <p>Valid for the selected tracks and harmony.</p> }
+    @else { <p>Validate durations before saving. Every selectable lane is checked.</p> }
+  </div>
+  <div class="duration-actions">
+    <button type="button" (click)="dialog.close()">Cancel</button>
+    <button type="button" [disabled]="!!error() || stale() || checking()" (click)="validate()">Validate durations</button>
+    <button type="button" class="save" [disabled]="!canSave()" (click)="save()">Save durations</button>
+  </div>
+</footer>

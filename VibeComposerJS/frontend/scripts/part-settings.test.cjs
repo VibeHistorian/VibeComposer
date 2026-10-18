@@ -974,7 +974,7 @@ test('P5e Melody flip and key emphasis preserve ownership, update consumers and 
     assert.equal(service.importProjectJson(JSON.stringify(imported)), false);
     for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
       { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
-      service.updatePartSettings(scope, { [key]: true }); assert.equal(service.exportProjectJson(), saved);
+      service.updatePartSettings(scope, { [key]: key === 'patternFlip' ? 'true' : true }); assert.equal(service.exportProjectJson(), saved);
     }
     assert.equal(service.canRedo(), true);
   }
@@ -3817,6 +3817,130 @@ function projectData(json) {
   return project;
 }
 
+test('custom melody durations preserve note/rest boundaries in both generators and Flip complements them', () => {
+  const { load } = fixture();
+  const { generateMelody } = load('core/music/melody-generator.ts');
+  const rows = [[1, -0.5, 0.5, 1, -1], ...Array.from({ length: 9 }, () => [])];
+  const settings = { algorithm: 'block', rhythm: 'custom', customMelodyDurations: rows };
+  for (const contextualMelody of [false, true]) for (const patternFlip of [false, true]) {
+    const notes = generateMelody(42n, 'C', 'major', [1, 5, 6, 4], { ...settings, patternFlip }, 0, undefined, { contextualMelody });
+    const starts = patternFlip ? [1, 3] : [0, 1.5, 2];
+    assert.deepEqual(notes.map(note => note.startBeat), [0, 4, 8, 12].flatMap(chord => starts.map(start => chord + start)), `${contextualMelody}/${patternFlip}`);
+    assert.ok(notes.every(note => note.midi >= 0 && note.velocity > 0));
+    const again = generateMelody(42n, 'C', 'major', [1, 5, 6, 4], { ...settings, patternFlip }, 0, undefined, { contextualMelody });
+    assert.deepEqual(again, notes);
+    const fast = generateMelody(42n, 'C', 'major', [1, 5, 6, 4], { ...settings, patternFlip, speed: 100 }, 0, undefined, { contextualMelody });
+    assert.deepEqual(fast.map(note => note.startBeat), notes.map(note => note.startBeat));
+  }
+  const normal = { algorithm: 'block', speed: 37 };
+  assert.deepEqual(generateMelody(9n, 'C', 'major', [1, 5], normal), generateMelody(9n, 'C', 'major', [1, 5], { ...normal, rhythm: 'melody1', patternFlip: true, customMelodyDurations: rows }));
+});
+
+test('custom melody lanes pad, cycle by block identity, weight deterministically and validate every selectable lane', () => {
+  const { load } = fixture();
+  const { melodyDurationBlocks, melodyDurationError, paddedMelodyDurations } = load('core/music/melody-durations.ts');
+  const rows = [[1, -1], [], [0.5, -0.5, 1, -2], ...Array.from({ length: 7 }, () => [])];
+  const settings = { algorithm: 'block', rhythm: 'custom', customMelodyDurations: rows };
+  assert.deepEqual(paddedMelodyDurations(rows[0]), [1, -1, -2]);
+  assert.deepEqual(melodyDurationBlocks(settings, 42, 0, 0).flat(), [1, -1, -2]);
+  assert.deepEqual(melodyDurationBlocks(settings, 42, 0, 1).flat(), rows[2]);
+  const chances = [0, 0, 100, ...Array(7).fill(0)];
+  for (let seed = 0; seed < 20; seed++) assert.deepEqual(melodyDurationBlocks({ ...settings, customDurationRandomWeighting: true, customDurationChances: chances }, seed, 0).flat(), rows[2]);
+  assert.match(melodyDurationError({ ...settings, customDurationRandomWeighting: true, customDurationChances: Array(10).fill(0) }), /positive chance/);
+  assert.match(melodyDurationError({ ...settings, customMelodyDurations: [[-4], ...rows.slice(1)] }), /Lane 1.*only pauses/);
+  assert.equal(melodyDurationError({ ...settings, customDurationRandomWeighting: true, customDurationChances: chances, customMelodyDurations: [[-4], ...rows.slice(1)] }), null);
+  assert.match(melodyDurationError({ ...settings, customMelodyDurations: [[4], ...Array.from({ length: 9 }, () => [])], patternFlip: true }), /after Flip/);
+});
+
+test('custom melody durations copy nested lanes, persist every scope, group inheritance and reject malformed imports', () => {
+  const { service, load } = fixture();
+  const sectionId = service.project().arrangement[0].id, trackId = 'track-melody-1';
+  const rows = [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])];
+  const scope = { kind: 'section-track', sectionId, trackId };
+  const patch = { rhythm: 'custom', patternFlip: true, customMelodyDurations: rows, customDurationChances: Array(10).fill(50), customDurationRandomWeighting: false };
+  service.updatePartSettings(scope, patch);
+  rows[0][0] = 2;
+  assert.equal(service.project().arrangement[0].trackPartOverrides[trackId].customMelodyDurations[0][0], 1);
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(projectData(service.exportProjectJson()), projectData(saved));
+  const keys = load('core/ui/ui-preferences.ts').combinedControlKeys('rhythm', 'melody');
+  service.resetPartSettings(scope, keys);
+  assert.equal(service.project().arrangement[0].trackPartOverrides[trackId], undefined);
+  service.undo();
+  assert.deepEqual(projectData(service.exportProjectJson()), projectData(saved));
+  const { decodePartPatch, copyPartSettings, partValuesEqual } = load('core/music/part-settings.ts');
+  const copy = copyPartSettings(patch);
+  assert.ok(partValuesEqual(patch.customMelodyDurations, copy.customMelodyDurations));
+  copy.customMelodyDurations[0][0] = 3;
+  assert.equal(patch.customMelodyDurations[0][0], 2);
+  for (const invalid of [[[0], ...rows.slice(1)], [[5], ...rows.slice(1)], [[NaN], ...rows.slice(1)], [[Infinity], ...rows.slice(1)], [[3, 2], ...rows.slice(1)], rows.slice(1)])
+    assert.equal(decodePartPatch('melody', { customMelodyDurations: invalid }), undefined);
+  assert.equal(decodePartPatch('melody', { customDurationChances: [50] }), undefined);
+  assert.equal(decodePartPatch('bass', { customMelodyDurations: rows }), undefined);
+});
+
+test('duration popup dry runs all lanes against contextual range and harmony without changing project or history', () => {
+  const { service, load } = fixture();
+  const { validateMelodyDurationDraft } = load('core/music/melody-duration-validation.ts');
+  const scope = { kind: 'global-track', trackId: 'track-melody-1' };
+  const patch = { rhythm: 'custom', customMelodyDurations: [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])] };
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  assert.equal(validateMelodyDurationDraft(service.project(), scope, patch), null);
+  const project = { ...service.project(), melodyGlobal: { contextualMelody: true, rangeMin: 60, rangeMax: 60 } };
+  assert.match(validateMelodyDurationDraft(project, scope, patch), /No contextual melody/);
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.historyPosition(), history);
+});
+
+test('group melody duration edits preserve independent pitch settings and section exceptions', () => {
+  const { service, load, uiPreferences: preferences } = fixture();
+  const first = 'track-melody-1', second = service.duplicateTrack(first);
+  const sectionId = service.project().arrangement[0].id;
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { transpose: 12, patternSeed: 123 });
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: second }, { chordNoteChoices: [4, 0] });
+  const patch = { rhythm: 'custom', customMelodyDurations: [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])] };
+  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, patch);
+  const tracks = service.project().tracks.filter(track => track.role === 'melody');
+  assert.equal(tracks[0].generatorSettings.transpose, undefined);
+  assert.equal(tracks[1].generatorSettings.transpose, 12);
+  assert.equal(tracks[1].generatorSettings.patternSeed, 123);
+  assert.deepEqual(service.project().arrangement[0].trackPartOverrides[second].chordNoteChoices, [4, 0]);
+  preferences.beginQuickSettings();
+  preferences.moveControl('melody', 'customMelodyDurations');
+  for (const key of ['rhythm', 'patternFlip', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting']) assert.equal(preferences.quickSettings().melody.includes(key), false);
+  preferences.moveControl('melody', 'rhythm');
+  for (const key of ['rhythm', 'patternFlip', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting']) assert.equal(preferences.quickSettings().melody.includes(key), true);
+});
+
+test('melody duration drawing and validation stay in the draft, save once, and reject stale project state', async () => {
+  const scope = { kind: 'global-track', trackId: 'track-melody-1' };
+  const { service, load } = fixture({ dialogData: { scope } });
+  const { MelodyDurationsDialogComponent } = load('shared/melody-durations-dialog.component.ts');
+  const popup = new MelodyDurationsDialogComponent();
+  let closed = false; popup.dialog.close = () => { closed = true; };
+  const before = service.exportProjectJson(), position = service.historyPosition();
+  const area = { getBoundingClientRect: () => ({ left: 0, width: 400 }), setPointerCapture() {} };
+  const event = x => ({ button: 0, pointerId: 1, clientX: x, currentTarget: area, preventDefault() {} });
+  popup.start(event(0), 1); popup.move(event(199));
+  assert.deepEqual(popup.rows()[1], [2, -2]);
+  popup.cancel(); assert.deepEqual(popup.rows()[1], []);
+  popup.flipped.set(true); popup.start(event(0), 1); popup.move(event(199)); popup.finish();
+  assert.deepEqual(popup.rows()[1], [-2, -2], 'drawing notes while flipped stores underlying pauses');
+  popup.editRow(1, ''); popup.flipped.set(false);
+  popup.editRow(0, '-4'); assert.match(popup.error(), /only pauses/); assert.equal(popup.canSave(), false);
+  popup.editRow(0, '1, -1, 1, -1');
+  popup.validate(); await new Promise(done => setTimeout(done, 5));
+  assert.equal(popup.canSave(), true);
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.historyPosition(), position);
+  popup.save(); assert.equal(closed, true); assert.equal(service.historyPosition(), position + 1);
+  const stale = new MelodyDurationsDialogComponent();
+  stale.editRow(0, '0.5, -0.5, 1, -2'); stale.validate();
+  service.updateSettings({ name: 'Changed while editing durations' });
+  await new Promise(done => setTimeout(done, 5));
+  assert.equal(stale.stale(), true); assert.equal(stale.canSave(), false);
+  const saved = service.exportProjectJson(); stale.save(); assert.equal(service.exportProjectJson(), saved);
+});
+
 test('failed project loads warn with property paths and preserve the current project', () => {
   const { service, stored, load } = fixture();
   const before = service.exportProjectJson();
@@ -3864,7 +3988,7 @@ test('failed project loads warn with property paths and preserve the current pro
   }
 });
 
-function fixture({ compactHistory = false } = {}) {
+function fixture({ compactHistory = false, dialogData = null } = {}) {
   const cache = new Map();
   const effects = [];
   // Tests that exercise effect-driven behavior flush callbacks after changing state.
@@ -3884,7 +4008,7 @@ function fixture({ compactHistory = false } = {}) {
     signal, computed: (read) => read, effect: callback => { effects.push(callback); }, untracked: read => read(), input,
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
-    inject: (type) => type === 'sequencer-data' ? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
+    inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
       : type?.name === 'AudioPlaybackService' ? {} : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
       : type?.name === 'UiPreferencesService' ? uiPreferences : preferences,
   };
@@ -3892,7 +4016,7 @@ function fixture({ compactHistory = false } = {}) {
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts', 'harmony-settings.component.ts', 'section-context-editor.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'melody-durations-dialog.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts', 'harmony-settings.component.ts', 'section-context-editor.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };

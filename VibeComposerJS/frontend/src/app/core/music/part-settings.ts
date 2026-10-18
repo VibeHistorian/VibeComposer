@@ -4,13 +4,14 @@ import { BASS_RHYTHMS, RHYTHM_PATTERNS, MELODY_RHYTHMS } from './rhythm-patterns
 import { DEFAULT_CUSTOM_VELOCITIES, isVelocityPattern } from './velocity-pattern';
 import { STRUM_TYPES } from './chord-strum';
 import { ARPEGGIO_PATTERNS } from './arpeggio-pattern';
+import { DEFAULT_MELODY_DURATIONS, DEFAULT_DURATION_CHANCES, isMelodyDurations, type MelodyDurations } from './melody-durations';
 
-export type PartSettingValue = string | number | boolean | readonly number[];
+export type PartSettingValue = string | number | boolean | readonly number[] | MelodyDurations;
 
 export interface PartControl {
   readonly key: string;
   readonly label: string;
-  readonly kind: 'number' | 'integer' | 'integers' | 'choice' | 'boolean' | 'pattern' | 'velocities';
+  readonly kind: 'number' | 'integer' | 'integers' | 'choice' | 'boolean' | 'pattern' | 'velocities' | 'durations';
   readonly minimum?: number;
   readonly maximum?: number;
   readonly step?: number;
@@ -77,7 +78,15 @@ const common: readonly PartControl[] = [
 
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
-  melody: [...fill, number('speed', 'Speed', -100, 100, 50, ''),
+  melody: [...fill,
+    { ...choice('rhythm', 'Rhythm pattern', ['melody1', 'custom']), defaultValue: 'melody1',
+      description: 'melody1 uses the generated melody rhythm. Custom supplies note lengths and pauses from the duration editor.' },
+    { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
+      description: 'Swap notes and pauses in custom melody durations.' },
+    { key: 'customMelodyDurations', label: 'Custom melody durations', kind: 'durations', defaultValue: DEFAULT_MELODY_DURATIONS },
+    { key: 'customDurationChances', label: 'Duration chances', kind: 'integers', minimum: 0, maximum: 100, defaultValue: DEFAULT_DURATION_CHANCES },
+    { key: 'customDurationRandomWeighting', label: 'Weighted durations', kind: 'boolean', defaultValue: false },
+    number('speed', 'Speed', -100, 100, 50, ''),
     { key: 'fillPauses', label: 'Fill pauses', kind: 'boolean', defaultValue: false,
       description: 'Extend preceding notes through generated pauses. Fill determines which pauses add note duration.' },
     { key: 'chordNoteChoices', label: 'Note targets', kind: 'integers', minimum: -24, maximum: 24, defaultValue: [0, 2, 2, 4],
@@ -158,7 +167,7 @@ export function settingsValues(settings: PartSettingsPatch, role: ArrangedPart):
 /** Arrays are complete musical values, compared by content rather than reference. */
 export function partValuesEqual(left: unknown, right: unknown): boolean {
   return Array.isArray(left) && Array.isArray(right)
-    ? left.length === right.length && left.every((value, index) => value === right[index]) : left === right;
+    ? left.length === right.length && left.every((value, index) => partValuesEqual(value, right[index])) : left === right;
 }
 
 /** Patch equality includes explicit inheritance boundaries and ignores object property order. */
@@ -172,7 +181,7 @@ export function partPatchesEqual(left: PartSettingsPatch | undefined, right: Par
 /** Array-valued settings belong to their copied track/snapshot, including melody target lists. */
 export function copyPartSettings<T extends PartSettingsPatch>(settings: T): T {
   return Object.fromEntries(Object.entries(settings).map(([key, value]) => [key,
-    Array.isArray(value) ? [...value] : value])) as T;
+    Array.isArray(value) ? value.map(item => Array.isArray(item) ? [...item] : item) : value])) as T;
 }
 
 export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps = false): PartSettingsPatch | undefined {
@@ -196,9 +205,11 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
     if (control.kind === 'pattern' && (!Array.isArray(field) || field.length !== 32
       || Array.from(field).some((slot) => slot !== 0 && slot !== 1))) return undefined;
     if (control.kind === 'velocities' && !isVelocityPattern(field)) return undefined;
+    if (control.kind === 'durations' && !isMelodyDurations(field)) return undefined;
+    if (key === 'customDurationChances' && (!Array.isArray(field) || field.length !== 10)) return undefined;
     if (control.kind === 'integers' && (!Array.isArray(field) || field.length < (control.allowEmpty ? 0 : 1) || field.length > 32
       || Array.from(field).some((slot) => !Number.isInteger(slot) || slot < control.minimum! || slot > control.maximum!))) return undefined;
-    result[key] = Array.isArray(field) ? [...field] : field as PartSettingValue;
+    result[key] = Array.isArray(field) ? field.map(item => Array.isArray(item) ? [...item] : item) : field as PartSettingValue;
   }
   return result as PartSettingsPatch;
 }

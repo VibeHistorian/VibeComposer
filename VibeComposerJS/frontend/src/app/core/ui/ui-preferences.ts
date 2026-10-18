@@ -6,7 +6,9 @@ import type { DrumMappingPreference } from '../music/drum-instruments';
 export type QuickSettings = Readonly<Record<ArrangedPart, readonly string[]>>;
 
 /** Joined controls share placement and inheritance in the musical editor. */
-export function combinedControlKeys(key: string): readonly string[] {
+export function combinedControlKeys(key: string, role?: ArrangedPart): readonly string[] {
+  const melodyKeys = ['rhythm', 'patternFlip', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting'];
+  if (role === 'melody' && melodyKeys.includes(key)) return melodyKeys;
   if (['rhythm', 'patternFlip', 'customPattern'].includes(key)) return ['rhythm', 'patternFlip', 'customPattern'];
   if (key === 'chordSpanFill' || key === 'fillFlip') return ['chordSpanFill', 'fillFlip'];
   return [key];
@@ -27,7 +29,7 @@ export interface UiPreferences {
 export function defaultQuickSettings(): QuickSettings {
   return {
     melody: [
-      'chordSpanFill', 'fillFlip', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
+      'chordSpanFill', 'fillFlip', 'rhythm', 'patternFlip', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
       'patternFlexible', 'pauseChance', 'swingPercent', 'transpose', 'velocityMin', 'velocityMax',
       'feedbackCount', 'feedbackDuration',
     ],
@@ -76,7 +78,7 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
   for (const role of ARRANGED_PARTS) {
     const keys = settings[role];
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
-    quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key).some(key => keys.includes(key))).map(control => control.key);
+    quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key, role).some(key => keys.includes(key))).map(control => control.key);
   }
   return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', quickSettings, appearance };
 }

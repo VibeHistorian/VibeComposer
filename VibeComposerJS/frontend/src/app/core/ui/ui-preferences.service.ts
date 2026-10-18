@@ -88,7 +88,7 @@ export class UiPreferencesService {
     const draft = this.draft();
     if (!draft || !PART_CONTROLS[role].some(control => control.key === key)) return;
     const keys = new Set(draft[role]);
-    const pairedKeys = combinedControlKeys(key);
+    const pairedKeys = combinedControlKeys(key, role);
     const remove = pairedKeys.some(key => keys.has(key));
     for (const pairedKey of pairedKeys) {
       if (remove) keys.delete(pairedKey); else keys.add(pairedKey);
