@@ -43,7 +43,7 @@ export class TransportDockComponent {
       this.playback.restartAfterCompose(this.project());
     }
     this.generationFeedback.set({ project: this.project(), message: result === 'invalid'
-      ? 'No settings changed. Generation conflicts with local settings.'
+      ? `${event === 'compose' ? 'Compose' : 'Regenerate'} cancelled. ${this.projects.generationError() ?? 'Generation conflicts with local settings.'} Previous arrangement kept.`
       : result === 'unchanged' ? 'Settings already match the generation rules.' : `${event === 'compose' ? 'Compose' : 'Regenerate'} settings applied.` });
     if (started !== undefined) {
       // Include Angular's update, canvas drawing and the browser's next paint.

@@ -34,6 +34,7 @@ import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolic
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
 import { sectionDegrees, sectionProject, sectionValuesEqual, validSectionHarmony } from '../music/section-context';
 import { baseGenerationHarmony } from '../music/project-harmony';
+import { layOutTrackPhrase, phraseForTrack } from '../music/phrase';
 import type { SectionMusicalContext } from './project.model';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
@@ -58,6 +59,8 @@ export class ProjectService {
   private readonly historyRevision = signal(0);
 
   readonly project = this.state.asReadonly();
+  private readonly generationFailure = signal<string | null>(null);
+  readonly generationError = this.generationFailure.asReadonly();
   private readonly automaticSeed = signal(BigInt(this.state().seed) === 0n);
   readonly seedInput = computed(() => this.automaticSeed() ? '0' : this.project().seed);
   readonly canUndo = this.undoAvailable.asReadonly();
@@ -410,6 +413,16 @@ export class ProjectService {
 
   /** User-triggered events only. Live reload, playback and ordinary edits never run policies. */
   generateComposition(event: 'compose' | 'regenerate'): PartWorkflowResult {
+    this.generationFailure.set(null);
+    try {
+      return this.prepareComposition(event);
+    } catch (error) {
+      this.generationFailure.set(error instanceof Error ? error.message : 'The requested music could not be generated.');
+      return 'invalid';
+    }
+  }
+
+  private prepareComposition(event: 'compose' | 'regenerate'): PartWorkflowResult {
     if (event !== 'compose' && event !== 'regenerate') return 'invalid';
     const current = this.state();
     let next = current;
@@ -471,7 +484,15 @@ export class ProjectService {
           trackRerollCounts: { ...next.trackRerollCounts, melody: count + 1 } };
       }
     }
-    return next === current ? 'unchanged' : this.commitPartWorkflow(next);
+    if (next === current) return 'unchanged';
+    // Rendering also asks for the global phrase (note counts) and for section
+    // layouts/dependencies. Resolve both before publishing any candidate state.
+    // Successful layouts are cached and reused by the view and playback.
+    for (const track of next.tracks) {
+      phraseForTrack(next, track);
+      layOutTrackPhrase(next, track, true);
+    }
+    return this.commitPartWorkflow(next);
   }
 
   updatePartSettings(scope: PartSettingsScope, patch: PartSettingsPatch): void {

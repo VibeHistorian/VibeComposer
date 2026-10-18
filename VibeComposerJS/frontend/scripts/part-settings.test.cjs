@@ -8,6 +8,59 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('failed contextual Compose keeps the rendered project, storage, history and playback and reports its cause', () => {
+  const { service, workspace, load, stored } = fixture();
+  service.updateSettings({ seed: '42' });
+  service.updateMelodyGlobal({ contextualMelody: true, rangeMin: 48, rangeMax: 72, rangeRandomizeOnCompose: true });
+  service.updateSettings({ name: 'Redo still available' });
+  service.undo();
+  const previous = service.project(), notes = workspace.scoreNotes();
+  const history = JSON.stringify(service.historyEntries());
+  const storage = [...stored];
+  assert.equal(service.canRedo(), true);
+  const ranges = load('core/music/contextual-randomizer.ts');
+  const range = ranges.contextualRange;
+  ranges.contextualRange = () => ({ rangeMin: 48, rangeMax: 48 });
+  const { TransportDockComponent } = load('shared/transport-dock.component.ts');
+  const transport = new TransportDockComponent();
+  let restarts = 0;
+  transport.playback.restartAfterCompose = () => { restarts++; };
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      transport.generate('compose');
+      assert.equal(service.project(), previous);
+      assert.match(service.generationError(), /No contextual melody satisfies/);
+      assert.match(transport.generationMessage(), /Compose cancelled.*No contextual melody.*Previous arrangement kept/);
+      assert.deepEqual(workspace.scoreNotes(), notes, 'later renders continue using the valid project');
+      assert.equal(JSON.stringify(service.historyEntries()), history);
+      assert.deepEqual([...stored], storage);
+      assert.equal(service.canRedo(), true);
+      assert.equal(restarts, 0);
+    }
+  } finally { ranges.contextualRange = range; }
+  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generationError(), null, 'a successful attempt clears the old error');
+  assert.equal(service.canRedo(), false);
+  assert.doesNotThrow(() => workspace.scoreNotes());
+});
+
+test('section layout failures reject Compose and Regenerate before publishing a candidate', () => {
+  const { service, phrase } = fixture();
+  service.updateTrackGenerationPolicy('melody', { onRegenerate: true, rerollSeeds: true });
+  const previous = service.project();
+  const layout = phrase.layOutTrackPhrase;
+  let attempts = 0;
+  phrase.layOutTrackPhrase = () => { attempts++; throw new RangeError('Section melody cannot be generated.'); };
+  try {
+    for (const event of ['compose', 'regenerate']) {
+      assert.equal(service.generateComposition(event), 'invalid');
+      assert.equal(service.project(), previous);
+      assert.equal(service.generationError(), 'Section melody cannot be generated.');
+    }
+    assert.equal(attempts, 2, 'both events validate section generation, beyond global note counts');
+  } finally { phrase.layOutTrackPhrase = layout; }
+});
+
 test('track layouts share generation across consumers without sharing mutable note objects', () => {
   const { service, phrase, load } = fixture();
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, 'track-melody-1', true));
@@ -4100,7 +4153,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity } = {})
   function load(file) {
     const absolute = path.resolve(root, file);
     // Workspace state is real; child rendering components are covered by the Angular build and overview tests.
-    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'melody-durations-dialog.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts', 'harmony-settings.component.ts', 'section-context-editor.component.ts']
+    if (absolute.endsWith('.component.ts') && !['workspace-canvas.component.ts', 'transport-dock.component.ts', 'score-canvas.component.ts', 'edit-workspace.component.ts', 'mix-buttons.component.ts', 'part-settings-editor.component.ts', 'pattern-sequencer.component.ts', 'melody-durations-dialog.component.ts', 'compact-knob.component.ts', 'melody-global-settings.component.ts', 'harmony-settings.component.ts', 'section-context-editor.component.ts']
       .some((name) => absolute.endsWith(name))) return {};
     if (cache.has(absolute)) return cache.get(absolute).exports;
     const module = { exports: {} };
