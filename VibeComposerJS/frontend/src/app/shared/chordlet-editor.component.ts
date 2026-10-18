@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { ProjectService } from '../core/project/project.service';
 import { CHORD_SPICES, KEYS, chordKeyOverlap, chordRootHue, effectiveKey, progressionChords, type ProgressionChord } from '../core/music/harmony';
-import { generateDiatonicProgression } from '../core/music/progression-generator';
 import type { ArrangementSection } from '../core/project/project.model';
 import { baseGenerationHarmony } from '../core/music/project-harmony';
 import { sectionProject } from '../core/music/section-context';
@@ -56,10 +55,8 @@ export class ChordletEditorComponent {
   add(): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
   remove(index: number): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
   generate(): void {
-    this.closeMenu(); const section = this.section();
-    const degrees = generateDiatonicProgression(BigInt(this.project().seed), this.chords().length);
-    if (section) this.projects.setSectionMusicalState(section.id, { chordDegrees: degrees, customChords: undefined });
-    else this.projects.setProgression(degrees);
+    this.closeMenu();
+    this.projects.generateProgression(this.section()?.id);
   }
   private setChord(index: number, chord: ProgressionChord): void {
     const section = this.section(); if (section) this.projects.setSectionChord(section.id, index, chord);

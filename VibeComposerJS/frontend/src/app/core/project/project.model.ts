@@ -111,6 +111,17 @@ export interface MelodySettings extends CommonPartSettings {
 
 /** GUIConfig musical inputs shared by every Melody track and section. */
 export interface MelodyGlobalSettings {
+  readonly contextualMelody?: boolean;
+  readonly rangeMin?: number;
+  readonly rangeMax?: number;
+  readonly rangeRandomizeOnCompose?: boolean;
+  readonly tension?: number;
+  readonly ending?: 'OPEN' | 'CLOSED' | 'LOOP';
+  readonly form?: 'STATEMENT_VARIATION' | 'QUESTION_ANSWER' | 'SENTENCE' | 'CONTINUOUS';
+  readonly style?: 'TONAL' | 'MODAL' | 'JAZZ';
+  readonly chromaticApproaches?: boolean;
+  readonly phraseBars?: number;
+  readonly beatsPerBar?: number;
   /** 0 chord-note index, 1 chord root + scale-degree offset, 2 MIDI 60 + scale-degree offset. */
   readonly blockTargetMode?: number;
   /** Requested tonic/mode note percentages before pauses; these are best-effort pitch repairs. */

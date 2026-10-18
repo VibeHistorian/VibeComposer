@@ -8,6 +8,7 @@ import { CHORD_SPICES, chordPitches, getPitchClass, type ProgressionChord } from
 import { convertScalePitch, scaleNotes, type ScaleMode } from '../music/scales';
 import { STATIC_RHYTHM_DEFINITIONS } from '../music/rhythm-patterns';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
+import { decodeHarmonySettings } from '../music/harmony-voicing';
 import { DEFAULT_TRACK_POLICIES } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES } from '../music/instrument-generation';
 import { applyPartTiming } from '../music/part-processing';
@@ -40,6 +41,10 @@ const JAVA_ARPS: Readonly<Record<string, string>> = {
   UP: 'up', DOWN: 'down', UPDOWN: 'up-down', DOWNUP: 'down-up', FROG_U: 'frog-up', FROG_D: 'frog-down', RANDOM: 'random', CUSTOM: 'custom',
 };
 const MELODY_GLOBAL: Readonly<Record<string, keyof MelodyGlobalSettings>> = {
+  contextualMelody: 'contextualMelody', melodyRangeMin: 'rangeMin', melodyRangeMax: 'rangeMax',
+  melodyRangeRandomizeOnCompose: 'rangeRandomizeOnCompose', melodyTension: 'tension',
+  melodyEnding: 'ending', melodyForm: 'form', melodyStyle: 'style',
+  melodyChromaticApproaches: 'chromaticApproaches', melodyPhraseBars: 'phraseBars', melodyBeatsPerBar: 'beatsPerBar',
   melodyBlockTargetMode: 'blockTargetMode', melodyTonicNoteTarget: 'tonicNoteTarget', melodyModeNoteTarget: 'modeNoteTarget',
   melodyChordNoteTarget: 'chordNoteTarget', melodyReplaceAvoidNotes: 'replaceAvoidNotes', melodyEmphasizeKey: 'emphasizeKey',
   melodyPatternFlip: 'patternFlip', melodySingleNoteExceptions: 'singleNoteExceptions', melodyMaxDirChanges: 'maxDirectionChanges',
@@ -431,9 +436,11 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   }
 
   const harmonySettings = {
+    generation: (text(root, 'progressionStrategy') ?? 'CURRENT') as import('../music/harmony-voicing').HarmonySettings['generation'],
     flattenVoicingChance: chordGen ? numeric(chordGen, 'flattenVoicingChance', 100)! : 100,
     flattenLargeChords: bool(root, 'spiceFlattenBigChords'), progressiveVoicing: bool(root, 'squishProgressively'),
   };
+  if (!decodeHarmonySettings(harmonySettings)) throw new Error('Java harmony settings are outside the supported ranges.');
   const trackGenerationPolicies = structuredClone(DEFAULT_TRACK_POLICIES);
   for (const [sourceTag, role, mapping] of [
     ['arpGenSettings','arpeggio',{ includePresets:'patterns', shiftChance:'shiftChance', useTranspose:'transpose' }],

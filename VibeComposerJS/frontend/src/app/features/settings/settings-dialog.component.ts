@@ -7,6 +7,8 @@ import { COLOR_ADJUSTMENTS, FONT_AREAS, FONT_CHOICES, type FontArea } from '../.
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ARRANGED_PARTS, type ArrangedPart } from '../../core/project/project.model';
 import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
+import { HARMONY_GENERATIONS } from '../../core/music/contextual-harmony';
+import type { HarmonySettings } from '../../core/music/harmony-voicing';
 
 @Component({
   selector: 'vc-settings-dialog',
@@ -25,6 +27,10 @@ export class SettingsDialogComponent {
   readonly roles = ARRANGED_PARTS;
   readonly themeColors = THEME_COLORS;
   readonly colorAdjustments = COLOR_ADJUSTMENTS;
+  readonly harmonyGenerations = HARMONY_GENERATIONS;
+  changeHarmony(event: Event): void {
+    this.projects.updateHarmonySettings({ generation: (event.target as HTMLSelectElement).value as HarmonySettings['generation'] });
+  }
   changeThemeColor(key: ThemeColor, event: Event): void { this.preferences.setThemeColor(key, (event.target as HTMLInputElement).value); }
   readonly roleNames: Record<ArrangedPart, string> = { melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arps', drums: 'Drums' };
   changeFont(area: FontArea, event: Event): void { this.preferences.setFont(area, (event.target as HTMLSelectElement).value); }
@@ -51,6 +57,7 @@ export class SettingsDialogComponent {
   readonly categories = [
     { id: 'appearance', label: 'Appearance' },
     { id: 'behavior', label: 'Behavior' },
+    { id: 'melody', label: 'Melody' },
     { id: 'section-types', label: 'Section Types' },
     { id: 'project-history', label: 'Project History' },
   ] as const;

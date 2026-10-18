@@ -12,6 +12,7 @@ import { CompactToggleComponent } from './compact-toggle.component';
 import { WheelSelectDirective } from './wheel-select.directive';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
 import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
+import { ProjectService } from '../core/project/project.service';
 
 @Component({
   selector: 'vc-part-settings-editor',
@@ -37,6 +38,7 @@ export class PartSettingsEditorComponent {
     return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
   }
   readonly preferences = inject(UiPreferencesService);
+  readonly projects = inject(ProjectService);
   private readonly dialogs = inject(Dialog);
   readonly scope = input.required<PartSettingsScope>();
   openSequencer(velocities = false): void {
@@ -60,6 +62,8 @@ export class PartSettingsEditorComponent {
     (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)
       : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
     (this.preferences.editingQuickSettings() || (
+    (this.role() !== 'melody' || !this.projects.project().melodyGlobal?.contextualMelody
+      || !['fillPauses', 'patternFlexible', 'doubledRhythmChance', 'maxNoteExceptions', 'noteExceptionChance'].includes(control.key)) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&
     (control.key !== 'arpPatternCustom' || this.values()['pattern'] === 'custom' || this.values()['pattern'] === null) &&

@@ -6,7 +6,7 @@ export const DEFAULT_BLOCK_CHANGE_PREFERENCE = Object.freeze([0, 7, 4, 3, 1, 2, 
 export const DEFAULT_BLOCK_TYPE_WEIGHTS = Object.freeze([100, 100, 100, 100, 100, 100, 100]);
 
 /** Production BlockType catalogue, in enum and insertion order. */
-const CATALOGUE: readonly (readonly (readonly number[])[])[] = [
+export const CATALOGUE: readonly (readonly (readonly number[])[])[] = [
   [[0,1,2], [0,1,2,3], [0,1,4], [0,1,2,1], [0,4,2], [0,1,2,0], [0,1,2,4], [0,0,0]],
   [[0,-1,0], [0,1,0,1], [0,1,-1], [0,-1,0,1], [0,-1,2], [0,1,-1,0], [0,-1,0,2], [0,1,3,2], [0,0,-1,0]],
   [[0,2,0,2], [0,2,1], [0,2,4,2], [0,2,1,3], [0,2,3], [0,3,1,2], [0,1,4,5], [0,1,7,6], [0,1,6,7]],

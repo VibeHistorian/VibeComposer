@@ -3,18 +3,21 @@ import { getPitchClass, type ScaleMode } from './harmony';
 import { convertScalePitch, scaleNotes } from './scales';
 
 export interface HarmonySettings {
+  readonly generation?: 'CURRENT' | 'FUNCTIONAL' | 'FIFTHS' | 'POP_LOOP' | 'MODAL' | 'RANDOM';
   readonly flattenVoicingChance?: number;
   readonly flattenLargeChords?: boolean;
   readonly progressiveVoicing?: boolean;
 }
 
-export const DEFAULT_HARMONY_SETTINGS = { flattenVoicingChance: 100, flattenLargeChords: false, progressiveVoicing: false } as const;
+export const DEFAULT_HARMONY_SETTINGS = { generation: 'CURRENT', flattenVoicingChance: 100, flattenLargeChords: false, progressiveVoicing: false } as const;
 
 export function decodeHarmonySettings(value: unknown): HarmonySettings | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const result: Record<string, number | boolean> = {};
+  const result: Record<string, number | boolean | string> = {};
   for (const [key, field] of Object.entries(value)) {
-    if (key === 'flattenVoicingChance') {
+    if (key === 'generation') {
+      if (!['CURRENT', 'FUNCTIONAL', 'FIFTHS', 'POP_LOOP', 'MODAL', 'RANDOM'].includes(field as string)) return undefined;
+    } else if (key === 'flattenVoicingChance') {
       if (!Number.isInteger(field) || field < 0 || field > 100) return undefined;
     } else if (key === 'flattenLargeChords' || key === 'progressiveVoicing') {
       if (typeof field !== 'boolean') return undefined;

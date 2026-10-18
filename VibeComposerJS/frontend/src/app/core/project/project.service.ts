@@ -26,6 +26,9 @@ import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multip
 import { chooseMelodyTargets, forceMelodyOutline } from '../music/melody-targets';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
 import { decodeHarmonySettings, DEFAULT_HARMONY_SETTINGS, type HarmonySettings } from '../music/harmony-voicing';
+import { generateHarmony } from '../music/contextual-harmony';
+import { contextualRange } from '../music/contextual-randomizer';
+import { DEFAULT_MELODY_GLOBAL } from '../music/melody-global-settings';
 import type { MelodyGlobalSettings } from './project.model';
 import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
@@ -88,9 +91,10 @@ export class ProjectService {
   }
 
   updateMelodyGlobal(patch: Partial<MelodyGlobalSettings>): PartWorkflowResult {
-    const decoded = decodeMelodyGlobal(patch);
+    const decoded = decodeMelodyGlobal(patch, true);
     if (!decoded) return 'invalid';
     const current = this.state(), melodyGlobal = { ...current.melodyGlobal, ...decoded };
+    if (!decodeMelodyGlobal({ ...DEFAULT_MELODY_GLOBAL, ...melodyGlobal })) return 'invalid';
     if (Object.entries(decoded).every(([key, value]) =>
       partValuesEqual(current.melodyGlobal?.[key as keyof MelodyGlobalSettings], value))) return 'unchanged';
     this.commit({ ...current, melodyGlobal });
@@ -419,6 +423,10 @@ export class ProjectService {
       next = { ...current, seed,
         transposeSemitones: current.randomizeTransposeOnCompose === false ? current.transposeSemitones : transpose,
         tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
+      if (next.melodyGlobal?.contextualMelody && next.melodyGlobal.rangeRandomizeOnCompose
+        && next.tracks.some(track => track.role === 'melody' && !track.rerollLocked && !track.editedPhrase)) {
+        next = { ...next, melodyGlobal: { ...next.melodyGlobal, ...contextualRange(BigInt(seed)) } };
+      }
       for (const role of ARRANGED_PARTS) {
         if ((current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose === false) continue;
         const candidate = this.buildRoleReroll(next, role);
@@ -431,7 +439,7 @@ export class ProjectService {
       const count = current.trackRerollCounts?.melody ?? 0;
       const sources = next.tracks.filter(track => track.role === 'melody' && !track.rerollLocked);
       if (sources.length && ((policy.patternsOnCompose ?? true) || (policy.targetsOnCompose ?? true)
-        || event === 'regenerate' && policy.rerollSeeds || next.melodyGlobal?.forceFirstOutline)) {
+        || event === 'regenerate' && policy.rerollSeeds || !next.melodyGlobal?.contextualMelody && next.melodyGlobal?.forceFirstOutline)) {
         if (count >= 2147483647) return 'invalid';
         const seed = this.trackRerollSeed(next, 'melody', count);
         const random = new JavaRandom(seed);
@@ -448,7 +456,7 @@ export class ProjectService {
           if (partPatchesEqual(track.generatorSettings, settings)) return track;
           return { ...track, generatorSettings: settings };
         });
-        if (next.melodyGlobal?.forceFirstOutline) {
+        if (!next.melodyGlobal?.contextualMelody && next.melodyGlobal?.forceFirstOutline) {
           const first = tracks.find(track => track.role === 'melody');
           if (first?.role === 'melody') tracks = tracks.map(track => {
             if (track.role !== 'melody' || track === first || track.rerollLocked) return track;
@@ -1196,6 +1204,16 @@ export class ProjectService {
       return;
     }
     this.commit({ ...this.state(), progression: [...progression], progressionChords: undefined });
+  }
+
+  generateProgression(sectionId?: string): void {
+    const project = this.state(), section = sectionId ? project.arrangement.find(s => s.id === sectionId) : undefined;
+    if (sectionId && !section) return;
+    const context = sectionProject(project, section);
+    const length = section?.customChords?.length ?? section?.chordDegrees?.length ?? project.progression.length;
+    const generated = generateHarmony(BigInt(project.seed), length, context.key, context.scale, project.harmonySettings, project.melodyGlobal);
+    if (section) this.setSectionMusicalState(section.id, { chordDegrees: generated.degrees, customChords: generated.chords });
+    else this.commit({ ...project, progression: generated.degrees, progressionChords: generated.chords });
   }
 
   addChord(): void {

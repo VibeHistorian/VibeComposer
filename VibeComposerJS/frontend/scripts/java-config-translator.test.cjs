@@ -13,6 +13,19 @@ const library = (name, notes, applied = true, role = 0, order = 1) => `<patternM
 const ref = (name, role = 0, order = 1) => `<pattern><usedPatternMap><entry><key>${order}</key><value><part>${role}</part><partOrder>${order}</partOrder><name>${name}</name></value></entry></usedPatternMap></pattern>`;
 const note = (pitch, rv, duration, offset = 0, dynamic = 80) => `<phraseNote><pitch>${pitch}</pitch><rv>${rv}</rv><duration>${duration}</duration><offset>${offset}</offset><dynamic>${dynamic}</dynamic></phraseNote>`;
 
+test('contextual melody fields and planned harmony strategy translate from Java config', () => {
+  const fields = { contextualMelody: true, melodyRangeMin: 55, melodyRangeMax: 79, melodyRangeRandomizeOnCompose: true,
+    melodyTension: 65, melodyEnding: 'CLOSED', melodyStyle: 'MODAL', melodyForm: 'SENTENCE',
+    melodyChromaticApproaches: true, melodyPhraseBars: 3, melodyBeatsPerBar: 3, progressionStrategy: 'FIFTHS' };
+  const extra = Object.entries(fields).map(([key,value]) => node(key,value)).join('');
+  const { project, diagnostics } = translate(config(section(),extra));
+  assert.deepEqual(project.melodyGlobal, { contextualMelody: true, rangeMin: 55, rangeMax: 79, rangeRandomizeOnCompose: true,
+    tension: 65, ending: 'CLOSED', form: 'SENTENCE', style: 'MODAL', chromaticApproaches: true, phraseBars: 3, beatsPerBar: 3 });
+  assert.equal(project.harmonySettings.generation,'FIFTHS');
+  assert.ok(!diagnostics.some(d => Object.keys(fields).some(key => d.path.includes('.'+key+'['))));
+  assert.equal(translate(config(section())).project.harmonySettings.generation,'CURRENT');
+});
+
 test('real Java XML translates actual sections, supported settings, presence and independent local phrases', () => {
   const result = translate(source, 'Java parity fixture'), { project } = result;
   assert.equal(project.tempoBpm, 33); assert.equal(project.scale, 'mixolydian');

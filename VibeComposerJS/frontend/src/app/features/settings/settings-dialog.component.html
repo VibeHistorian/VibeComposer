@@ -80,6 +80,15 @@
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>
+            <label class="appearance-setting">
+              <span>Harmony generation</span>
+              <select aria-label="Harmony generation" [value]="projects.project().harmonySettings?.generation ?? 'CURRENT'" (change)="changeHarmony($event)">
+                @for (generation of harmonyGenerations; track generation.value) {
+                  <option [value]="generation.value">{{ generation.label }}</option>
+                }
+              </select>
+            </label>
+            <p>Used when generating a chord progression. Random makes a seeded choice among Legacy, Functional, Fifths, Pop loop and Modal.</p>
             <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.limitInstrumentsToPool()"
               aria-describedby="instrument-pool-description" (click)="preferences.toggleLimitInstrumentsToPool()">Limit instrument options to selected pool</button>
             <p id="instrument-pool-description">Show only instruments in each role's selected pool, plus each track's current instrument. Turn off to show all instruments. The automatic Chords pool includes both Chord and Pluck instruments. Saved in your UI preferences.</p>
@@ -92,6 +101,17 @@
               <span>Sync Solo/Mute</span>
             </label>
             <p id="sync-score-mix-description">Set the mix to hear the roles displayed in the score. Changes apply immediately and are saved in your UI preferences.</p>
+          </section>
+        }
+        @case ('melody') {
+          <section aria-labelledby="melody-settings-title">
+            <h2 id="melody-settings-title">Melody</h2>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Contextual Melody" [checked]="projects.project().melodyGlobal?.contextualMelody ?? false"
+                (change)="projects.updateMelodyGlobal({ contextualMelody: $any($event.target).checked })" />
+              <span>Contextual Melody</span>
+            </label>
+            <p>Plan melody phrases against the current harmony. Algorithm-specific controls appear in the global Melody controls and track inspector.</p>
           </section>
         }
         @case ('section-types') { <vc-section-type-settings /> }

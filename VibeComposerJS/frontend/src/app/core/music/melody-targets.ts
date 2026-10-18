@@ -1,5 +1,6 @@
 import { isScaleMode } from './scales';
 import { JavaRandom } from './java-random';
+import { contextualTargets } from './contextual-randomizer';
 import type { MelodyGlobalSettings, MelodySettings } from '../project/project.model';
 import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
 import { melodyRootChords } from './melody-chord-targets';
@@ -63,6 +64,7 @@ export function chooseMelodyTargets(seed: number, progression: readonly number[]
     || getPitchClass(key) === undefined || !isScaleMode(scale)
     || !decodeMelodyGlobal(globalSettings) || !validProgressionChords(customChords, progression.length)) throw new RangeError('Invalid Melody target inputs.');
   const globals = { ...DEFAULT_MELODY_GLOBAL, ...globalSettings };
+  if (globals.contextualMelody) return contextualTargets(seed, progression, key, scale, globals, customChords);
   const mode = globals.blockTargetMode, roots = melodyRootChords(key, scale, progression, customChords);
   const rootOffsets = roots.map(chord => -MAJOR.indexOf(MAJOR.includes(chord[0] % 12) ? chord[0] % 12 : nearestPitch(chord[0] % 12)));
   const direction = globals.targetDirection === 'ASC' ? 1 : globals.targetDirection === 'DESC' ? -1 : 0;

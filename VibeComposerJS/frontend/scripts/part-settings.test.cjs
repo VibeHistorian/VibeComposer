@@ -8,6 +8,100 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('contextual Melody settings persist, undo, and filter controls by algorithm', () => {
+  const { service, load, uiPreferences } = fixture();
+  const { DEFAULT_MELODY_GLOBAL } = load('core/music/melody-global-settings.ts');
+  const { DEFAULT_HARMONY_SETTINGS } = load('core/music/harmony-voicing.ts');
+  assert.equal(DEFAULT_MELODY_GLOBAL.contextualMelody, false);
+  assert.equal(DEFAULT_HARMONY_SETTINGS.generation, 'CURRENT');
+  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const editor = new PartSettingsEditorComponent();
+  editor.role.set('melody'); editor.values.set({});
+  assert.ok(editor.controls().some(c => c.key === 'patternFlexible'));
+  const before = service.exportProjectJson();
+  assert.equal(service.updateMelodyGlobal({ contextualMelody: true, rangeMin: 62, rangeMax: 81, tension: 50,
+    ending: 'CLOSED', style: 'JAZZ', form: 'QUESTION_ANSWER', phraseBars: 3, beatsPerBar: 3, chromaticApproaches: true }), 'changed');
+  assert.ok(!editor.controls().some(c => c.key === 'patternFlexible'));
+  assert.ok(editor.controls().some(c => c.key === 'speed'));
+  uiPreferences.beginQuickSettings();
+  assert.ok(editor.controls().some(c => c.key === 'patternFlexible'));
+  uiPreferences.saveQuickSettings();
+  const saved = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(projectData(service.exportProjectJson()), projectData(saved));
+  assert.equal(service.updateMelodyGlobal({ rangeMin: 90 }), 'invalid');
+  assert.equal(service.updateHarmonySettings({ generation: 'RANDOM' }), 'changed');
+  const harmonySaved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(harmonySaved), true);
+  assert.equal(service.project().harmonySettings.generation, 'RANDOM');
+});
+
+test('harmony strategies are seeded, distinct, and Random chooses a concrete strategy', () => {
+  const { load, service } = fixture();
+  const { generateHarmony, HARMONY_GENERATIONS } = load('core/music/contextual-harmony.ts');
+  const { generateDiatonicProgression } = load('core/music/progression-generator.ts');
+  const seed = 9223372036854775807n;
+  assert.deepEqual(generateHarmony(seed, 4, 'C', 'major').degrees, generateDiatonicProgression(seed,4));
+  const results = HARMONY_GENERATIONS.slice(0,5).map(({ value }) => generateHarmony(seed,8,'C','natural-minor',{ generation: value }));
+  assert.ok(new Set(results.map(r => r.degrees.join(','))).size >= 4);
+  for (const { value } of HARMONY_GENERATIONS) {
+    const result = generateHarmony(seed,8,'C','natural-minor',{ generation: value });
+    assert.deepEqual(result,generateHarmony(seed,8,'C','natural-minor',{ generation: value }));
+    assert.equal(result.degrees.length,8);
+    if (value === 'RANDOM') assert.ok(results.some(r => JSON.stringify(r) === JSON.stringify(result)));
+  }
+  const fifths = generateHarmony(123n,7,'C','major',{ generation: 'FIFTHS' }).degrees;
+  assert.ok(fifths.slice(1).every((d,i) => d === (fifths[i] - 1 + 3) % 7 + 1));
+  const fixed = { root: 1, spice: 'm', inversion: 1 };
+  const locked = generateHarmony(123n,4,'C','major',{ generation: 'FUNCTIONAL' },{},[fixed,null,null,fixed]);
+  assert.deepEqual(locked.chords[0],fixed); assert.deepEqual(locked.chords[3],fixed);
+  service.updateHarmonySettings({ generation: 'FUNCTIONAL' });
+  const before = service.exportProjectJson(); service.generateProgression();
+  assert.ok(service.project().progressionChords); service.undo(); assert.equal(service.exportProjectJson(),before);
+});
+
+test('contextual range randomizes only on Compose and preserves disabled targets', () => {
+  const { service, load } = fixture();
+  const { contextualRange } = load('core/music/contextual-randomizer.ts');
+  service.updateSettings({ seed: '9223372036854775807' });
+  service.updateMelodyGlobal({ contextualMelody: true, rangeRandomizeOnCompose: true });
+  service.updateTrackGenerationPolicy('melody', { targetsOnCompose: false });
+  const targets = service.project().tracks.find(t => t.role === 'melody').generatorSettings.chordNoteChoices;
+  service.generateComposition('compose');
+  const range = contextualRange(9223372036854775807n);
+  assert.equal(service.project().melodyGlobal.rangeMin,range.rangeMin);
+  assert.equal(service.project().melodyGlobal.rangeMax,range.rangeMax);
+  assert.deepEqual(service.project().tracks.find(t => t.role === 'melody').generatorSettings.chordNoteChoices,targets);
+  service.generateComposition('regenerate');
+  assert.equal(service.project().melodyGlobal.rangeMin,range.rangeMin);
+  assert.equal(service.project().melodyGlobal.rangeMax,range.rangeMax);
+});
+
+test('contextual melody respects sounding harmony, range, ending, and ignores obsolete repair settings', () => {
+  const { load } = fixture();
+  const { generateMelody } = load('core/music/melody-generator.ts');
+  const { chordPitches, progressionChords } = load('core/music/harmony.ts');
+  const settings = { algorithm: 'block', speed: 30, maxBlockChange: 7, blockJump: 1 };
+  const globals = { contextualMelody: true, rangeMin: 60, rangeMax: 84, tension: 0, ending: 'CLOSED' };
+  for (const key of ['C','D']) for (const scale of ['major','natural-minor','dorian']) {
+    const progression = [1,4,5,1], chords = progressionChords(key,scale,progression);
+    const notes = generateMelody(123n,key,scale,progression,settings,0,undefined,globals);
+    assert.ok(notes.length > 0);
+    assert.deepEqual(notes,generateMelody(123n,key,scale,progression,settings,0,undefined,globals));
+    assert.equal(notes.at(-1).midi % 12, key === 'C' ? 0 : 2);
+    notes.forEach((n,i) => {
+      assert.ok(n.midi >= 60 + (key === 'C' ? 0 : 2) && n.midi <= 84 + (key === 'C' ? 0 : 2));
+      assert.ok(n.durationBeats > 0 && n.startBeat + n.durationBeats <= 16);
+      const classes = chordPitches(chords[Math.floor(n.startBeat/4)],0).map(p => p % 12);
+      assert.ok(classes.includes(n.midi % 12));
+      if (i) assert.ok(Math.abs(n.midi - notes[i-1].midi) <= 10);
+    });
+    const ignored = { ...globals, tonicNoteTarget: 100, chordNoteTarget: 100, modeNoteTarget: 100, replaceAvoidNotes: 2, arpySurprises: true };
+    assert.deepEqual(notes,generateMelody(123n,key,scale,progression,{ ...settings, doubledRhythmChance: 100, noteExceptionChance: 100, maxNoteExceptions: 4, fillPauses: true },0,undefined,ignored));
+  }
+});
+
 test('zero seed keeps automatic input, saves the generated seed and loads it as explicit input', () => {
   const { service, load } = fixture();
   service.updateSettings({ seed: '0' });
