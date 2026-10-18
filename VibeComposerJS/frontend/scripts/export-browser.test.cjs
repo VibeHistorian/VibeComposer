@@ -77,7 +77,7 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         await wait(()=>downloads.length===1,'project download');
         const saved=JSON.parse(await (await downloads[0].blob).text());
         const filenamePattern = /^\\d{8}_\\d{2}-\\d{2}_${project.key}_${project.tempoBpm}_${project.seed}_Export- test/;
-        ensure(saved.name==='Export: test' && filenamePattern.test(downloads[0].name) && downloads[0].name.endsWith('.vibecomposer.json'),'project export preserved with automatic filename');
+        ensure(saved.name==='Export: test' && filenamePattern.test(downloads[0].name) && downloads[0].name.endsWith('.vibe.json'),'project export preserved with automatic filename');
         trigger.click(); await wait(menu,'MIDI menu'); item('Export MIDI').click();
         await wait(()=>downloads.length===2,'MIDI download');
         const midi=await (await downloads[1].blob).arrayBuffer();
@@ -117,12 +117,12 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         const preview = () => settings.querySelector('.export-name-preview').textContent.trim();
         await wait(()=>filenamePattern.test(preview()),'current project filename preview');
         for (const toggle of fields.querySelectorAll('button')) toggle.click();
-        await wait(()=>preview()==='Export- test.vibecomposer.json','project name only preview');
+        await wait(()=>preview()==='Export- test.vibe.json','project name only preview');
         ensure(JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).exportNameFields.length===0,'filename preferences saved');
         settings.querySelector('[aria-label="Close settings"]').click();
         trigger.click(); await wait(menu,'project menu after filename settings'); item('Export Project').click();
         await wait(()=>downloads.length===4,'project name only download');
-        ensure(downloads[3].name==='Export- test.vibecomposer.json','exports honor disabled fields');
+        ensure(downloads[3].name==='Export- test.vibe.json','exports honor disabled fields');
         ensure(!document.querySelector('.export-finishing'),'completion clears animated border');
         ensure(unhandledRejections.length===0,'unhandled export rejections: '+unhandledRejections.join('; '));
         // Mute every track; report failure and allow retry.

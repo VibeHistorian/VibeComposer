@@ -17,13 +17,13 @@ if (require.main === module) {
   const args = process.argv.slice(2), force = args.includes('--force');
   const [input, output, ...extra] = args.filter(arg => arg !== '--force');
   if (!input || extra.length) {
-    console.error('Usage: npm run translate:java -- input.xml-config [output.vibecomposer.json] [--force]');
+    console.error('Usage: npm run translate:java -- input.xml-config [output.vibe.json] [--force]');
     process.exitCode = 1;
   } else {
     try {
       const name = path.basename(input).replace(/\.(?:xml-config|xml)$/i, '');
       const result = translate(fs.readFileSync(input, 'utf8'), name);
-      const target = output || input.replace(/\.(?:xml-config|xml)$/i, '') + '.vibecomposer.json';
+      const target = output || input.replace(/\.(?:xml-config|xml)$/i, '') + '.vibe.json';
       if (path.resolve(target) === path.resolve(input)) throw new Error('Output must differ from the input XML.');
       const report = target + '.translation-report.json';
       if (!force && (fs.existsSync(target) || fs.existsSync(report))) throw new Error('Output/report already exists; use --force to replace it.');

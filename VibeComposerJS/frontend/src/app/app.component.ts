@@ -65,7 +65,7 @@ export class AppComponent {
   exportProject(): void {
     const project = this.project();
     const blob = new Blob([this.projects.exportProjectJson()], { type: 'application/json' });
-    downloadProjectFile(blob, exportFilename(project, this.preferences.exportNameFields()), 'vibecomposer.json');
+    downloadProjectFile(blob, exportFilename(project, this.preferences.exportNameFields()), 'vibe.json');
     this.projectMessage.set('Project settings exported.');
   }
 

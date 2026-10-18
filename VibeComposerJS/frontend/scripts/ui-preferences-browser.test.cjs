@@ -57,7 +57,7 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         await wait(()=>seedToggle.getAttribute('aria-pressed')==='true','restore seed field');
         for (const toggle of fields.querySelectorAll('button')) toggle.click();
         await wait(()=>JSON.parse(localStorage.getItem(key)).exportNameFields.length===0,'disable all export fields');
-        await wait(()=>preview().endsWith('.vibecomposer.json') && !/^\\d{8}_/.test(preview()),'project name only preview');
+        await wait(()=>preview().endsWith('.vibe.json') && !/^\\d{8}_/.test(preview()),'project name only preview');
         for (const toggle of fields.querySelectorAll('button')) toggle.click();
         await wait(()=>JSON.parse(localStorage.getItem(key)).exportNameFields.length===5,'restore export fields');
         button('Appearance').click();
