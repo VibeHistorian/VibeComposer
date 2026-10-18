@@ -19,6 +19,19 @@ interface Shape { readonly type: number; readonly notes: readonly number[] }
 const ALL_BLOCKS: readonly Shape[] = CATALOGUE.flatMap((blocks, type) => blocks.map(notes => ({ type, notes })));
 const changeOf = (notes: readonly number[]) => notes[notes.length - 1] - notes[0];
 const inverse = (notes: readonly number[]) => notes.map(note => note === 0 ? 0 : -note);
+const ALL_NOTES = ALL_BLOCKS.map(block => block.notes);
+interface CatalogueShape extends Shape { readonly variance: number; readonly directions: number; }
+const describe = (block: Shape): CatalogueShape => ({ ...block,
+  variance: blockVariance(block.notes), directions: directionChanges(block.notes) });
+// Preserve catalogue insertion order and direct-before-inverted ordering, including
+// duplicate zero-change blocks. Selection indexes and random draws must stay identical.
+const DIRECT_BLOCKS = new Map<number, readonly CatalogueShape[]>();
+const INVERTED_BLOCKS = new Map<number, readonly CatalogueShape[]>();
+for (let change = -7; change <= 7; change++) {
+  DIRECT_BLOCKS.set(change, ALL_BLOCKS.filter(block => changeOf(block.notes) === change).map(describe));
+  INVERTED_BLOCKS.set(change, ALL_BLOCKS.filter(block => changeOf(block.notes) === -change)
+    .map(block => describe({ type: block.type, notes: inverse(block.notes) })));
+}
 
 /** Literal BlockType.containsBlock fallback classification, including its inverted comparison. */
 function classify(notes: readonly number[]): number {
@@ -38,7 +51,7 @@ function classify(notes: readonly number[]): number {
 function typedBlock(type: number | undefined, change: number, length: number | undefined,
   random: JavaRandom, approximation: number): readonly number[] | undefined {
   const clamped = Math.max(-7, Math.min(7, change));
-  const blocks = type === undefined ? ALL_BLOCKS.map(block => block.notes) : CATALOGUE[type];
+  const blocks = type === undefined ? ALL_NOTES : CATALOGUE[type];
   const viable = blocks.filter(notes => length === 1 || ((length === undefined || notes.length === length)
     && Math.abs(changeOf(notes) - Math.abs(clamped)) <= approximation));
   if (!viable.length) return undefined;
@@ -52,12 +65,13 @@ export function chooseCatalogueBlock(change: number, approximation: number, rand
   preference: readonly number[], weights: readonly number[]): Shape {
   let viable: Shape[] = [];
   for (let value = Math.max(change - approximation, -7); value <= Math.min(change + approximation, 7); value++) {
-    viable.push(...ALL_BLOCKS.filter(block => changeOf(block.notes) === value
-      && (length === undefined || block.notes.length === length)));
-    viable.push(...ALL_BLOCKS.filter(block => changeOf(block.notes) === -value
-      && (length === undefined || block.notes.length === length)).map(block => ({ type: block.type, notes: inverse(block.notes) })));
+    for (const pool of [DIRECT_BLOCKS.get(value), INVERTED_BLOCKS.get(value)]) {
+      for (const block of pool ?? []) {
+        if ((length === undefined || block.notes.length === length)
+          && block.variance <= variance && block.directions <= directions) viable.push(block);
+      }
+    }
   }
-  viable = viable.filter(block => blockVariance(block.notes) <= variance && directionChanges(block.notes) <= directions);
   if (!viable.length) {
     const notes = typedBlock(undefined, change, length, random, 4);
     if (!notes) throw new RangeError('No Melody catalogue block fits the requested length.');
@@ -81,7 +95,8 @@ export function chooseCatalogueBlock(change: number, approximation: number, rand
   }
   const selected = preference.length ? Math.min(viable.length - 1, Math.trunc(random.nextDouble() ** 2 * viable.length))
     : random.nextInt(viable.length);
-  return viable[selected];
+  const block = viable[selected];
+  return { type: block.type, notes: block.notes };
 }
 
 /** MelodyBlockSkeletonGenerator.selectBlockShape, retaining its post-selection draw order. */

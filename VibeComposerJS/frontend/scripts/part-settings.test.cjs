@@ -8,6 +8,36 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('track layouts share generation across consumers without sharing mutable note objects', () => {
+  const { service, phrase, load } = fixture();
+  const generator = load('core/music/melody-generator.ts');
+  const generate = generator.generateMelody;
+  let calls = 0;
+  generator.generateMelody = (...args) => { calls++; return generate(...args); };
+  const project = service.project();
+  const track = project.tracks.find(track => track.role === 'melody');
+  const score = phrase.layOutTrackPhrase(project, track, true);
+  const firstCalls = calls;
+  assert.ok(score.length > 0);
+  assert.ok(firstCalls > 0);
+  const overview = phrase.layOutTrackPhrase(project, track);
+  const playback = phrase.layOutTrackPhrase(project, track);
+  assert.equal(calls, firstCalls, 'other consumers reuse completed section generation');
+  assert.deepEqual(overview, score.map(({ phraseSource, ...note }) => note));
+  assert.deepEqual(playback, overview);
+  overview[0].midi = 0;
+  overview.pop();
+  assert.deepEqual(phrase.layOutTrackPhrase(project, track), playback, 'caller mutations cannot corrupt cached notes');
+  assert.deepEqual(phrase.layOutTrackPhrase(project, track, true), score, 'source annotations survive plain requests');
+  service.updateTrackGeneratorSettings(track.id, { transpose: 12 });
+  const updated = service.project();
+  const changed = phrase.layOutTrackPhrase(updated, updated.tracks.find(item => item.id === track.id));
+  assert.ok(calls > firstCalls);
+  assert.notDeepEqual(changed, playback, 'new settings invalidate the layout');
+  service.undo();
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track), playback);
+});
+
 test('mix edits reuse score phrases and note counts with real Angular signal equality', async () => {
   const reactivity = await import('@angular/core');
   const { service, workspace, phrase } = fixture({ reactivity });

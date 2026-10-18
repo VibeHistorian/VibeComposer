@@ -144,9 +144,28 @@ export function trackPhraseSource(track: CompositionTrack, section?: Arrangement
   return section && project && trackHasSectionHarmony(project, track, section) ? 'global-section-harmony' : 'global-generated';
 }
 
-/** Repeat a track phrase through its sections, optionally retaining provenance for score tooltips. */
+type ArrangedNote = PhraseNote & { readonly phraseSource?: PhraseSource };
+const trackLayouts = new WeakMap<CompositionProject, WeakMap<CompositionTrack, readonly ArrangedNote[]>>();
+
+/** Share generated layouts across score, overview and playback for an immutable project.
+ * Return copies so callers cannot change another consumer's cached note data.
+ */
 export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack, includeSource = false): (PhraseNote & { readonly phraseSource?: PhraseSource })[] {
-  const phrase = phraseForTrack(project, track);
+  let cache = trackLayouts.get(project);
+  if (!cache) { cache = new WeakMap(); trackLayouts.set(project, cache); }
+  let notes = cache.get(track);
+  if (!notes) {
+    notes = buildTrackLayout(project, track, true);
+    cache.set(track, notes);
+  }
+  return notes.map(note => {
+    if (includeSource) return { ...note };
+    const { phraseSource, ...plain } = note;
+    return plain;
+  });
+}
+
+function buildTrackLayout(project: CompositionProject, track: CompositionTrack, includeSource: boolean): ArrangedNote[] {
   const result: (PhraseNote & { readonly phraseSource?: PhraseSource })[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
@@ -171,7 +190,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
     const generated = !manual
       ? generateTrackPhrase({ ...sectionProject(project, section), progression, progressionChords: harmony.customChords }, effectiveTrack, false,
         (effectiveTrack.role === 'arpeggio' && (effectiveTrack.generatorSettings.rhythm === 'melody' || effectiveTrack.generatorSettings.correctMelodyNotes))
-          || (effectiveTrack.role === 'drums' && effectiveTrack.generatorSettings.rhythm === 'melody') ? sectionMelodyContext(project, section) : undefined, harmony) : phrase;
+          || (effectiveTrack.role === 'drums' && effectiveTrack.generatorSettings.rhythm === 'melody') ? sectionMelodyContext(project, section) : undefined, harmony) : track.editedPhrase!;
     const expandedPhrase = effectiveTrack.role === 'bass' && !manual
       ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;
     const keyChange = !manual && track.role !== 'drums' ? section.context?.keyChange ?? 0 : 0;
