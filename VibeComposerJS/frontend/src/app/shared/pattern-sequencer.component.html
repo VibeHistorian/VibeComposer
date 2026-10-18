@@ -18,7 +18,7 @@
         <div class="pattern-row">
           <div class="identity"><strong>{{ row.name }}</strong><span>{{ row.instrument }}</span>
             @if (row.supported) { <input type="number" min="1" max="32" [value]="row.hits" [attr.aria-label]="row.name + ' steps'" (change)="patch(row.id, { hitsPerPattern: +$any($event.target).value })" /> }
-            @if ('sectionId' in data.scope) { <button type="button" class="inherit" [attr.aria-label]="'Inherit ' + row.name + ' pattern'" (click)="inherit(row.id, 'customPattern')">Inherit grid</button> }
+            @if ('sectionId' in data.scope) { <button type="button" class="inherit" [attr.aria-label]="'Inherit ' + row.name + ' pattern'" (click)="inherit(row.id, 'customPattern')">Inherit rhythm</button> }
           </div>
           @if (row.supported) {
             <div class="cells custom-pattern-grid" [style.--row-steps]="row.pattern.length" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()" (lostpointercapture)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()">

@@ -18,12 +18,25 @@ test('compact pattern popup edits independent drum rows and commits velocities o
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const script = `<script>
   (async () => {
-    const wait = async (fn, label) => { for(let i=0;i<300;i++){ if(fn()) return; await new Promise(r=>setTimeout(r,30)); } throw Error(label); };
+    const wait = async (fn, label) => { for(let i=0;i<300;i++){ const value=fn(); if(value) return value; await new Promise(r=>setTimeout(r,30)); } throw Error(label); };
     const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     const check = (value, label) => { if(!value) throw Error(label); };
     try {
       sessionStorage.clear();
       await wait(()=>document.querySelector('.track-group.drums .group-select'), 'initial');
+      for (const role of ['bass', 'chords', 'arpeggio', 'drums']) {
+        document.querySelector('.track-group.' + role + ' .track-select').click();
+        const editor = await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="' + role + '"] [data-control-key="rhythm"]'), role + ' rhythm');
+        const selector = editor.querySelector('select');
+        selector.value='half'; selector.dispatchEvent(new Event('change', {bubbles:true}));
+        const preview = await wait(()=>editor.querySelector('.rhythm-preview-grid'), role + ' preview');
+        check(!document.querySelector('.part-control[data-control-key="customPattern"]'), role + ' has one combined control');
+        check(editor.querySelectorAll('vc-control-heading').length===1 && editor.querySelectorAll('.inherit-snowflake').length<=1, role + ' shared inheritance');
+        const selectBox=selector.getBoundingClientRect(), gridBox=preview.getBoundingClientRect(), box=editor.getBoundingClientRect();
+        check(selectBox.height<=22 && gridBox.height<=18 && gridBox.top>=selectBox.bottom && gridBox.right<=box.right && gridBox.bottom<=box.bottom, role + ' compact stacked layout');
+        const flip=editor.querySelector('.flip-button');
+        check(flip && flip.getBoundingClientRect().height<=22, role + ' compact flip');
+      }
       document.querySelector('.track-group.drums .group-select').click();
       const count = document.querySelector('input[aria-label="Drums track count"]');
       count.value='3'; count.dispatchEvent(new Event('change',{bubbles:true}));
@@ -35,7 +48,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       check(!document.querySelector('.part-settings-panel [aria-label="Multiply Hits"], #part-inspector [aria-label="Multiply Hits"]'), 'multiplier belongs only in popup');
       check(document.querySelector('[aria-label="Toggle loop"]').getAttribute('aria-pressed') === 'true', 'loop enabled by default');
       const launcher=document.querySelector('button[aria-label="Edit rhythm pattern"]');
-      check(launcher.getBoundingClientRect().width<=100 && launcher.getBoundingClientRect().height<=28, 'tiny preview');
+      check(launcher.getBoundingClientRect().width<=112 && launcher.getBoundingClientRect().height<=18, 'tiny preview');
       check(!document.querySelector('.custom-pattern-grid, .velocity-pattern-grid'),'no inline editors');
       launcher.click();
       await wait(()=>document.querySelectorAll('vc-pattern-sequencer .track').length===3,'all drum rows');

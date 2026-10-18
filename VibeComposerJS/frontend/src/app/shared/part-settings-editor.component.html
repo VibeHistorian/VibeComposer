@@ -22,7 +22,7 @@
       @if (showGroupTitles()) { <h3>{{ group.label }}</h3> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+          <div class="part-control" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (preferences.editingQuickSettings()) {
               <button type="button" class="placement-target" (click)="preferences.moveControl(role(), control.key)"
                 [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"
@@ -68,12 +68,13 @@
                     (click)="settingsChanged.emit({ key: flip.key, value: values()[flip.key] !== true })"><span aria-hidden="true">↔</span></button>
                 }
                 </div>
-              } @else if (control.kind === 'pattern') {
-                <button type="button" class="mini-preview rhythm-preview-grid" [style.--preview-steps]="rhythmPreview()?.length ?? 8" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [title]="rhythmPreviewLabel()" (click)="openSequencer()">
-                  @if (rhythmPreview(); as pattern) {
-                    @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [style.--step-index]="$index" [class.active]="slot > 0" aria-hidden="true"></span> }
-                  } @else { <span class="mixed">Mixed</span> }
-                </button>
+                @if (control.key === 'rhythm' && (rhythmPreview() !== undefined || role() === 'drums')) {
+                  <button type="button" class="mini-preview rhythm-preview-grid" [style.--preview-steps]="rhythmPreview()?.length ?? 8" aria-label="Edit rhythm pattern" aria-haspopup="dialog" [title]="rhythmPreviewLabel()" (click)="openSequencer()">
+                    @if (rhythmPreview(); as pattern) {
+                      @for (slot of pattern; track $index) { <span class="rhythm-preview-slot" [style.--step-index]="$index" [class.active]="slot > 0" aria-hidden="true"></span> }
+                    } @else { <span class="mixed">Mixed</span> }
+                  </button>
+                }
               } @else if (control.kind === 'velocities') {
                 <button type="button" class="mini-preview velocity-preview" aria-label="Edit pattern velocities" aria-haspopup="dialog" (click)="openSequencer(true)">
                   @if (velocitySlots(); as slots) {

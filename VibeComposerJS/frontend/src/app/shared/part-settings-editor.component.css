@@ -26,6 +26,13 @@
 .flip-button.mixed { border-style: dashed; }
 .flip-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
+/* Rhythm selector, inversion and grid share one heading */
+.part-control.rhythm-control { width: 112px; align-content: start; }
+.rhythm-control .control-content { gap: 3px; min-height: 64px; align-content: start; }
+.rhythm-control select { height: 22px; }
+.rhythm-control .flip-button { flex-basis: 21px; height: 22px; font-size: 12px; }
+.rhythm-control .mini-preview { max-width: none; height: 18px; }
+
 /* Compact pattern launchers */
 .part-control.pattern-control { width: 96px; min-width: 75px; }
 .mini-preview { width: 100%; max-width: 96px; min-width: 0; height: 28px; box-sizing: border-box; padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-micro); background: var(--surface-input); cursor: pointer; overflow: hidden; }

@@ -5,9 +5,9 @@ import type { DrumMappingPreference } from '../music/drum-instruments';
 
 export type QuickSettings = Readonly<Record<ArrangedPart, readonly string[]>>;
 
-/** Selector and inversion share placement and inheritance in the musical editor. */
+/** Joined controls share placement and inheritance in the musical editor. */
 export function combinedControlKeys(key: string): readonly string[] {
-  if (key === 'rhythm' || key === 'patternFlip') return ['rhythm', 'patternFlip'];
+  if (['rhythm', 'patternFlip', 'customPattern'].includes(key)) return ['rhythm', 'patternFlip', 'customPattern'];
   if (key === 'chordSpanFill' || key === 'fillFlip') return ['chordSpanFill', 'fillFlip'];
   return [key];
 }

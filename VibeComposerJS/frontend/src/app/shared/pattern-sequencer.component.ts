@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { combinedControlKeys } from '../core/ui/ui-preferences';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import type { ArrangedPart, ChordRhythm, PartSettingsPatch, PartSettingsScope } from '../core/project/project.model';
 import { ProjectService } from '../core/project/project.service';
@@ -150,6 +151,6 @@ export class PatternSequencerComponent {
 
   inherit(id: string, field: string): void {
     const scope = this.data.scope;
-    if ('sectionId' in scope) this.projects.resetPartSettings({ kind: 'section-track', sectionId: scope.sectionId, trackId: id }, field);
+    if ('sectionId' in scope) this.projects.resetPartSettings({ kind: 'section-track', sectionId: scope.sectionId, trackId: id }, combinedControlKeys(field));
   }
 }

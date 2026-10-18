@@ -58,7 +58,7 @@ export class PartSettingsEditorComponent {
   readonly inheritRequested = output<string | readonly string[]>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
-    !['patternFlip', 'fillFlip'].includes(control.key) &&
+    !['patternFlip', 'fillFlip', 'customPattern'].includes(control.key) &&
     (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)
       : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
     (this.preferences.editingQuickSettings() || (

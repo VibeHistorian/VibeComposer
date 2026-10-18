@@ -5989,7 +5989,7 @@ test('UI preferences customize per-role placement without changing project, hist
   assert.equal(preferences.quickSettings().chords.includes('velocityMax'), true);
 });
 
-test('combined selectors move together and reset both local values in one undo step', () => {
+test('combined selectors move together and reset all local values in one undo step', () => {
   const { service, uiPreferences: preferences, load } = fixture();
   const Editor = load('shared/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const editor = new Editor();
@@ -6000,18 +6000,31 @@ test('combined selectors move together and reset both local values in one undo s
     preferences.moveControl('chords', selector);
     assert.equal(preferences.quickSettings().chords.includes(selector), false);
     assert.equal(preferences.quickSettings().chords.includes(flip), false);
-    preferences.moveControl('chords', flip);
+    if (selector === 'rhythm') assert.equal(preferences.quickSettings().chords.includes('customPattern'), false);
+    preferences.moveControl('chords', selector === 'rhythm' ? 'customPattern' : flip);
     assert.ok(preferences.quickSettings().chords.includes(selector));
     assert.ok(preferences.quickSettings().chords.includes(flip));
     preferences.saveQuickSettings();
     const control = editor.controls().find(control => control.key === selector);
     editor.overriddenKeys.set([flip]);
     assert.equal(editor.inheritanceFor(control), 'custom', 'flip-only override enables the shared reset');
-    service.updatePartSettings(scope, { [selector]: value, [flip]: true, pauseChance: 12 });
+    const keys = load('core/ui/ui-preferences.ts').combinedControlKeys(selector);
+    if (selector === 'rhythm') {
+      assert.ok(preferences.quickSettings().chords.includes('customPattern'));
+      editor.overriddenKeys.set(['customPattern']);
+      assert.equal(editor.inheritanceFor(control), 'custom', 'grid-only override enables the shared reset');
+    }
+    service.updatePartSettings(scope, { [selector]: value, [flip]: true, pauseChance: 12,
+      ...(selector === 'rhythm' ? { customPattern: Array(32).fill(0) } : {}) });
     const before = service.exportProjectJson();
-    service.resetPartSettings(scope, [selector, flip]);
+    let resetKeys;
+    editor.inheritRequested.emit = value => { resetKeys = value; };
+    editor.resetControl(control);
+    assert.deepEqual(resetKeys, keys);
+    service.resetPartSettings(scope, keys);
     const remaining = service.project().arrangement[0].trackPartOverrides[scope.trackId];
     assert.equal(remaining[selector], undefined); assert.equal(remaining[flip], undefined);
+    if (selector === 'rhythm') assert.equal(remaining.customPattern, undefined);
     assert.equal(remaining.pauseChance, 12);
     const after = service.exportProjectJson();
     service.undo(); assert.equal(service.exportProjectJson(), before);
@@ -6032,7 +6045,7 @@ test('placement editing exposes dormant controls and partitions customized quick
   const quickKeys = quick.controls().map(control => control.key), inspectorKeys = inspector.controls().map(control => control.key);
   assert.ok(quickKeys.includes('feedbackCount')); assert.ok(inspectorKeys.includes('transpose'));
   assert.equal(quickKeys.some(key => inspectorKeys.includes(key)), false);
-  assert.deepEqual([...quickKeys, ...inspectorKeys].sort(), settings.PART_CONTROLS.bass.filter(control => !['patternFlip', 'fillFlip'].includes(control.key)).map(control => control.key).sort());
+  assert.deepEqual([...quickKeys, ...inspectorKeys].sort(), settings.PART_CONTROLS.bass.filter(control => !['patternFlip', 'fillFlip', 'customPattern'].includes(control.key)).map(control => control.key).sort());
   preferences.saveQuickSettings();
   assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
 });
