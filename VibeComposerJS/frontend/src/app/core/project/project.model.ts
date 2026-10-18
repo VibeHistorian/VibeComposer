@@ -244,6 +244,8 @@ export interface MixChannelSettings {
 interface TrackBase {
   readonly id: string;
   readonly name: string;
+  /** Saved Java part-order offset; independent of track ID, display order and pattern seed. */
+  readonly orderOffset?: number;
   /** MIDI channels are stored one-based to match the channel numbers shown in the UI. */
   readonly midiChannel: number;
   readonly mix: MixChannelSettings;

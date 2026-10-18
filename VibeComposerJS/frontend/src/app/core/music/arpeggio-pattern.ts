@@ -23,7 +23,7 @@ export function arpeggioPattern(pattern: ArpeggioPattern, hits: number, voices: 
   rotate = 0, custom: readonly number[] = [0, 1, 2], random?: JavaRandom): number[] {
   let source: number[];
   if (pattern === 'random') {
-    source = javaShuffle(Array.from({ length: hits }, (_, index) => index % 32), random!);
+    source = javaShuffle(Array.from({ length: hits }, (_, index) => index % 8), random!);
     source = rotateLeft(source, rotate);
   } else if (pattern === 'custom') {
     source = [...custom];

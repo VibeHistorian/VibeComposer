@@ -13,6 +13,15 @@ const library = (name, notes, applied = true, role = 0, order = 1) => `<patternM
 const ref = (name, role = 0, order = 1) => `<pattern><usedPatternMap><entry><key>${order}</key><value><part>${role}</part><partOrder>${order}</partOrder><name>${name}</name></value></entry></usedPatternMap></pattern>`;
 const note = (pitch, rv, duration, offset = 0, dynamic = 80) => `<phraseNote><pitch>${pitch}</pitch><rv>${rv}</rv><duration>${duration}</duration><offset>${offset}</offset><dynamic>${dynamic}</dynamic></phraseNote>`;
 
+test('Java order offset is preserved independently of display order and pattern seed', () => {
+  const { project } = translate(config(section(),part('<orderOffset>7</orderOffset><patternSeed>123</patternSeed>','arpeggio',3)));
+  const arp = project.tracks.find(track => track.id === 'track-arpeggio-3');
+  assert.equal(arp.orderOffset,7);
+  assert.equal(arp.generatorSettings.patternSeed,123);
+  const fallback = translate(config(section(),part('<patternSeed>123</patternSeed>','arpeggio',3))).project;
+  assert.equal(fallback.tracks.find(track => track.id === 'track-arpeggio-3').orderOffset,3);
+});
+
 test('contextual melody fields and planned harmony strategy translate from Java config', () => {
   const fields = { contextualMelody: true, melodyRangeMin: 55, melodyRangeMax: 79, melodyRangeRandomizeOnCompose: true,
     melodyTension: 65, melodyEnding: 'CLOSED', melodyStyle: 'MODAL', melodyForm: 'SENTENCE',

@@ -212,9 +212,11 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
       const id = `track-${role}-${order}`, path = `GUIConfig.${PART_TAGS[role]}[${order}]`;
       const defaults = DEFAULT_TRACKS.find(track => track.role === role)!;
       const settings = { ...defaults.generatorSettings, ...readPart(node, role, path) };
+      const orderOffset = numeric(node, 'orderOffset', order)!;
+      if (!Number.isInteger(orderOffset) || orderOffset < -2147483648 || orderOffset > 2147483647) throw new Error(`${path}.orderOffset: expected a Java int.`);
       const instrument = numeric(node, 'instrument', role === 'drums' ? 36 : defaults.mix.program)!;
       if (role === 'drums') (settings as { pitch: number }).pitch = instrument;
-      const track = { ...defaults, id, name: `${({ melody:'M', bass:'B', chords:'C', arpeggio:'A', drums:'D' })[role]}${order}`,
+      const track = { ...defaults, id, orderOffset, name: `${({ melody:'M', bass:'B', chords:'C', arpeggio:'A', drums:'D' })[role]}${order}`,
         midiChannel: role === 'drums' ? 10 : numeric(node, 'midiChannel', defaults.midiChannel)!, generatorSettings: settings,
         mix: { program: role === 'drums' ? 0 : instrument, volumePercent: numeric(node, 'sliderVolume', 100)!,
           panPercent: (numeric(node, 'sliderPan', 50)! - 50) * 2, muted: bool(node, 'muted'), solo: false },

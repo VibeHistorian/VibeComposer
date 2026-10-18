@@ -14,7 +14,7 @@ import { mapChordNotes, sectionProject } from './section-context';
 
 /** Convert the seeded generators to note-level events shared by the editor and MIDI exporter. */
 export function generatePhrase(project: CompositionProject, part: ArrangedPart, context?: MelodyContext,
-  harmony: GenerationHarmony = baseGenerationHarmony(project)): PhraseNote[] {
+  harmony: GenerationHarmony = baseGenerationHarmony(project), orderOffset = 1): PhraseNote[] {
   const seed = BigInt(project.seed);
   switch (part) {
     case 'melody': return generateMelody(seed, project.key, project.scale, project.progression, project.melody,
@@ -32,7 +32,7 @@ export function generatePhrase(project: CompositionProject, part: ArrangedPart, 
         })));
     case 'arpeggio':
       return generateArpeggio(seed, project.key, project.scale, project.progression, project.arpeggio, project.progressionChords,
-        context ?? (project.arpeggio.rhythm === 'melody' || project.arpeggio.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony)
+        context ?? (project.arpeggio.rhythm === 'melody' || project.arpeggio.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony, orderOffset)
         .map((note, index) => ({ id: `arpeggio-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
     case 'drums':
@@ -63,7 +63,8 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
       notes = generatePhrase({ ...trackProject, chords: track.generatorSettings, editedPhrases }, 'chords', undefined, harmony); break;
     case 'arpeggio':
       notes = generatePhrase({ ...trackProject, arpeggio: track.generatorSettings, editedPhrases }, 'arpeggio',
-        context ?? (track.generatorSettings.rhythm === 'melody' || track.generatorSettings.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony); break;
+        context ?? (track.generatorSettings.rhythm === 'melody' || track.generatorSettings.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony,
+        track.orderOffset ?? Math.max(1, project.tracks.filter(candidate => candidate.role === track.role).findIndex(candidate => candidate.id === track.id) + 1)); break;
     case 'drums':
       notes = generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums',
         context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined)); break;

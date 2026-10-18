@@ -1410,7 +1410,7 @@ export class ProjectService {
       if (Array.isArray(tracks)) tracks.forEach((raw, index) => {
         const path = `project.tracks[${index}]`;
         const keys = ['id', 'role', 'name', 'midiChannel', 'mix', 'generatorSettings'];
-        const track = object(raw, path, keys, [...keys, 'editedPhrase', 'rerollLocked', 'instrumentLocked', 'instrumentPool']);
+        const track = object(raw, path, keys, [...keys, 'editedPhrase', 'rerollLocked', 'instrumentLocked', 'instrumentPool', 'orderOffset']);
         if (!track) return;
         mix(track['mix'], `${path}.mix`);
         const role = track['role'] as ArrangedPart;
@@ -1586,6 +1586,8 @@ export class ProjectService {
           || typeof track.name !== 'string' || !track.name.trim() || track.name.length > 48
           || !Number.isInteger(track.midiChannel) || (track.midiChannel ?? 0) < 1 || (track.midiChannel ?? 17) > 16) return undefined;
       const mix = this.decodeTrackMix(track.mix);
+      if (track.orderOffset !== undefined && (!Number.isInteger(track.orderOffset)
+        || track.orderOffset < -2147483648 || track.orderOffset > 2147483647)) return undefined;
       const editedPhrase = track.editedPhrase === undefined ? undefined
         : this.isPhrase(track.editedPhrase) ? track.editedPhrase.map((note) => ({ ...note })) : null;
       if (!mix || editedPhrase === null || (track.rerollLocked !== undefined && typeof track.rerollLocked !== 'boolean')
@@ -1622,6 +1624,7 @@ export class ProjectService {
         }
       }
       if (!decoded) return undefined;
+      if (track.orderOffset !== undefined) decoded = { ...decoded, orderOffset: track.orderOffset };
       if (track.rerollLocked !== undefined) decoded = { ...decoded, rerollLocked: track.rerollLocked };
       if (track.instrumentLocked !== undefined) decoded = { ...decoded, instrumentLocked: track.instrumentLocked };
       if (track.instrumentPool !== undefined) decoded = { ...decoded, instrumentPool: track.instrumentPool };

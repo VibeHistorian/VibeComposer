@@ -8,6 +8,40 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('saved Java order offsets reach arpeggio generation and survive project round trips', () => {
+  const { service, load } = fixture();
+  const { generateTrackPhrase } = load('core/music/phrase.ts');
+  const project = service.project(), source = project.tracks.find(track => track.role === 'arpeggio');
+  const settings = { ...source.generatorSettings, pattern: 'random', patternSeed: 12345, rhythm: 'full', hitsPerPattern: 8, pauseChance: 0, exceptionChance: 0 };
+  const third = { ...source, orderOffset: 3, generatorSettings: settings };
+  const shifted = { ...source, orderOffset: 1, generatorSettings: { ...settings, patternSeed: 12347 } };
+  assert.deepEqual(generateTrackPhrase(project,third),generateTrackPhrase(project,shifted));
+  assert.notDeepEqual(generateTrackPhrase(project,third),generateTrackPhrase(project,{ ...third, orderOffset: 1 }));
+  const nativeThird = { ...source, id: 'track-arpeggio-3', generatorSettings: settings };
+  const multi = { ...project, tracks: [...project.tracks, { ...source, id: 'track-arpeggio-2' }, nativeThird] };
+  assert.deepEqual(generateTrackPhrase(multi,nativeThird),generateTrackPhrase(multi,{ ...nativeThird, orderOffset: 3 }));
+  const saved = JSON.parse(service.exportProjectJson());
+  saved.tracks.find(track => track.role === 'arpeggio').orderOffset = 3;
+  assert.equal(service.importProjectJson(JSON.stringify(saved)),true);
+  assert.equal(service.project().tracks.find(track => track.role === 'arpeggio').orderOffset,3);
+  assert.equal(JSON.parse(service.exportProjectJson()).tracks.find(track => track.role === 'arpeggio').orderOffset,3);
+  for (const orderOffset of [1.5,2147483648,'3']) {
+    saved.tracks.find(track => track.role === 'arpeggio').orderOffset = orderOffset;
+    assert.equal(service.importProjectJson(JSON.stringify(saved)),false);
+  }
+});
+
+test('random arpeggios repeat Java\'s eight-index vocabulary before shuffling long melody grids', () => {
+  const { load } = fixture();
+  const { arpeggioPattern } = load('core/music/arpeggio-pattern.ts');
+  const { JavaRandom } = load('core/music/java-random.ts');
+  // Captured from production ArpPhraseGenerator.generateArpMap with the debugger:
+  // patternSeed -2129510774, part offset 30000, order offset 3, random stream +1.
+  const pattern = arpeggioPattern('random',64,3,1,0,undefined,new JavaRandom(-2129480770));
+  assert.deepEqual(pattern.slice(0,10),[7,7,2,7,0,1,2,5,3,6]);
+  for (let index = 0; index < 8; index++) assert.equal(pattern.filter(value => value === index).length,8);
+});
+
 test('contextual Melody settings persist, undo, and filter controls by algorithm', () => {
   const { service, load, uiPreferences } = fixture();
   const { DEFAULT_MELODY_GLOBAL } = load('core/music/melody-global-settings.ts');

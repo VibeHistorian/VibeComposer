@@ -21,7 +21,8 @@ export interface ArpeggioNoteEvent {
 /** Supported ArpPhraseGenerator path with explicit section melody context. */
 export function generateArpeggio(seed: bigint | number, key: string, scale: ScaleMode,
   progression: readonly number[], settings: ArpeggioSettings,
-  customChords?: readonly (ProgressionChord | null)[], melody?: MelodyContext, harmony?: GenerationHarmony): ArpeggioNoteEvent[] {
+  customChords?: readonly (ProgressionChord | null)[], melody?: MelodyContext, harmony?: GenerationHarmony, orderOffset = 1): ArpeggioNoteEvent[] {
+  if (!Number.isInteger(orderOffset) || orderOffset < -2147483648 || orderOffset > 2147483647) throw new RangeError('Invalid arpeggio order offset.');
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) throw new RangeError('Use bigint for 64-bit seeds.');
   if (progression.length < 1 || progression.length > 32 || !ARPEGGIO_PATTERNS.includes(settings.pattern)
     || !['eighth', 'sixteenth'].includes(settings.rate) || ![1, 2].includes(settings.octaves)
@@ -33,7 +34,7 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     patternRepeat: follows ? 1 : settings.patternRepeat ?? 1 };
   const span = rhythmSettings.chordSpan, hits = rhythmSettings.hitsPerPattern, repeat = rhythmSettings.patternRepeat;
   const signedSeed = effectivePartSeed(seed, settings);
-  const random = (offset: number) => new JavaRandom(BigInt.asIntN(32, signedSeed + BigInt(offset)));
+  const random = (offset: number) => new JavaRandom(BigInt.asIntN(32, signedSeed + BigInt(orderOffset - 1) + BigInt(offset)));
   const pauses = follows ? melodyRhythm(melody, progression.length) : partRhythmMask({ ...rhythmSettings, patternFlip: false });
   const pauseRandom = random(30_004);
   for (let index = 0; index < pauses.length; index++) if (pauseRandom.nextInt(100) < (settings.pauseChance ?? 0)) pauses[index] = 0;
