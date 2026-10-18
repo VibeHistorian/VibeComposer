@@ -8,6 +8,35 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('arpeggio register matches all production Java pitches in the saved bug configuration and exported MIDI', () => {
+  const { service, phrase, midi } = fixture();
+  const reference = JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/arpeggio-saved-config.java.json'),'utf8'));
+  assert.equal(service.importProjectJson(JSON.stringify(reference.project)),true);
+  const project = service.project(), exported = new Midi(midi.generateCompositionMidi(project));
+  let compared = 0;
+  for (const track of project.tracks.filter(track => track.role === 'arpeggio')) {
+    const expected = reference.expectedArpeggioPitches[track.id];
+    assert.deepEqual(phrase.layOutTrackPhrase(project,track).map(note => note.midi),expected,track.id);
+    assert.deepEqual(exported.tracks.find(item => item.name === track.name).notes.map(note => note.midi),expected,`${track.id} MIDI`);
+    compared += expected.length;
+  }
+  assert.equal(compared,54);
+});
+
+test('canonical and realized arpeggio harmony use the Java role register before track transpose', () => {
+  const { load } = fixture();
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const settings = { pattern: 'up', rate: 'eighth', octaves: 1, rhythm: 'full', hitsPerPattern: 4,
+    exceptionChance: 0, pauseChance: 0, swingPercent: 50, useOctaveAdjustments: false };
+  const harmony = { roots: [[60,64,67]], voicings: [[60,64,67]] };
+  const generated = generateArpeggio(42n,'C','major',[1],settings,undefined,undefined,harmony);
+  assert.deepEqual(generated.map(note => note.midi),[36,40,43,36]);
+  assert.deepEqual(generateArpeggio(42n,'C','major',[1],settings,undefined,undefined,
+    { ...harmony, soundingVoicings: [[60,64,67]] }),generated);
+  const contour = generateArpeggio(42n,'C','major',[1],{ ...settings, arpContour: [0] },undefined,undefined,harmony);
+  assert.deepEqual(contour.map(note => note.midi),[60,40,43,36],'contour attacks receive the same -24 Java role transpose');
+});
+
 test('saved Java order offsets reach arpeggio generation and survive project round trips', () => {
   const { service, load } = fixture();
   const { generateTrackPhrase } = load('core/music/phrase.ts');
@@ -1142,7 +1171,7 @@ test('P5 dependencies use section melody settings, manual ownership and absent s
     chordSpan: 1, patternRepeat: 1, exceptionChance: 0, useOctaveAdjustments: false, correctMelodyNotes: true });
   // Isolate semitone collision correction from the new progression-wide voicing pass.
   service.updateHarmonySettings({ flattenVoicingChance: 0 });
-  assert.equal(phrase.generateTrackPhrase(service.project(), arp())[0].midi, 49);
+  assert.equal(phrase.generateTrackPhrase(service.project(), arp())[0].midi, 37);
   service.updateTrackPhrase('track-melody-1', [{ id: 'replacement', midi: 62, startBeat: 1, durationBeats: 1, velocity: 90 }]);
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), drums()).map(note => note.startBeat), [1, 17]);
   service.clearTrackPhrase('track-melody-1');
@@ -1377,7 +1406,7 @@ test('Chordlet edits follow reorder/add/remove through history, persistence and 
   const after = service.exportProjectJson();
   const byRole = role => service.project().tracks.find(track => track.role === role);
   assert.deepEqual(phrase.phraseForTrack(service.project(), byRole('chords')).slice(0, 4).map(note => note.midi), [65,68,71,73]);
-  assert.deepEqual(phrase.phraseForTrack(service.project(), byRole('arpeggio')).slice(0, 4).map(note => note.midi), [53,56,59,61]);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), byRole('arpeggio')).slice(0, 4).map(note => note.midi), [41,44,47,49]);
   assert.ok(phrase.phraseForTrack(service.project(), byRole('bass')).every(note => note.midi === 37));
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), after);

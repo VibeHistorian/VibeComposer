@@ -52,8 +52,11 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
   const [minimum, maximum] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings), diatonic = getDiatonicChords(key, scale);
   const timeline: Array<{ midi: number; rhythm: number; duration: number; velocity: number; chordIndex: number }> = [];
-  const voiced = harmony?.soundingVoicings ? harmony.soundingVoicings.map(chord => chord.map(pitch => pitch - 12))
-    : harmony ? soundingHarmony(harmony.voicings, key, scale, -12) : undefined;
+  // MidiGenerator.fillArpFromPart lowers canonical harmony by two octaves.
+  // Chords use -12; Arpeggio has its own -24 role register, before track transpose.
+  const harmonyTranspose = -24;
+  const voiced = harmony?.soundingVoicings ? harmony.soundingVoicings.map(chord => chord.map(pitch => pitch + harmonyTranspose))
+    : harmony ? soundingHarmony(harmony.voicings, key, scale, harmonyTranspose) : undefined;
   progression.forEach((degree, chordIndex) => {
     const chord = diatonic.find(candidate => candidate.degree === degree);
     if (!chord) throw new RangeError(`Invalid chord degree ${degree}.`);
@@ -80,7 +83,8 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
       let pitch = chordNote(index, pitches);
       const spannedPulse = chordIndex % span * (follows ? 16 : hits * repeat) + step;
       if (contour.length && spannedPulse % interval === 0) {
-        pitch = 24 + chordNote(contour[Math.floor(spannedPulse / interval) % contour.length], [60, 62, 64, 65, 67, 69, 71]);
+        pitch = 24 + (harmony ? harmonyTranspose : 0)
+          + chordNote(contour[Math.floor(spannedPulse / interval) % contour.length], [60, 62, 64, 65, 67, 69, 71]);
         if (settings.arpContourChordMode) pitch = closestMajorPitch(pitch + (customChords?.[chordIndex]?.root ?? root));
       }
       if (settings.useOctaveAdjustments && pitch >= 0) pitch += (index < 2 ? -12 : index < 6 ? 0 : 12) + octavePattern[pulse];
