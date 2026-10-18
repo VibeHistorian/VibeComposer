@@ -652,8 +652,10 @@ export class WorkspaceCanvasComponent {
     if (this.editing()) return;
     const index = sectionId === undefined ? this.selectedSectionIndex() : this.project().arrangement.findIndex(section => section.id === sectionId);
     if (index < 0 || this.project().arrangement.length <= 1) return;
+    const selected = this.selectedSectionIds();
+    const clearSelection = !selected.length || selected.includes(this.project().arrangement[index].id);
     this.projects.removeSection(index);
-    this.workspaceUi.setSectionSelection(this.project().arrangement[Math.min(index, this.project().arrangement.length - 1)]?.id ?? null);
+    if (clearSelection) this.workspaceUi.setSectionSelection(null);
   }
 
   moveSection(offset: -1 | 1): void {
