@@ -32,6 +32,8 @@ Part transpose is locked to octave multiples within -36…36 for Bass, Chords an
 
 The inspector remains the complete editor. A quick control and its inspector equivalent bind to the same value, validation, effective-value resolver, and mutation command. Shared musical controls must be available across every applicable role; Chords is the first implementation consumer, not their exclusive owner. Accent belongs only to Melody. A drum track owns one percussion note and one rhythm; the groove is the combined output of drum tracks. Global harmony, transport, playback/mix, and application preferences retain distinct homes.
 
+Preserve role exceptions: Chords/Arpeggio support voice expansion, and Melody's block structure remains distinct from generic rhythm grids.
+
 ## Interaction and context
 
 | Target | Primary action | Editing context |

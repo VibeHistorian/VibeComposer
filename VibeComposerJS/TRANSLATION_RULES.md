@@ -1,45 +1,35 @@
 # VibeComposerJS Translation Rules
 
-These rules guide the translation of VibeComposer's generation functionality into the TypeScript and Angular application. They are a starting point and can be refined as the rewrite progresses.
+These rules define translation constraints and implementation conventions. Workspace behavior lives in [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md); remaining migration work lives in [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md).
 
-0. **The Angular translation project is in a buildout stage** - it's OK for there to be breaking changes, and it's OK to remove or replace existing TS/html/css if it doesn't align with the overall goals.
+0. **The Angular translation project is in a buildout stage.** Breaking changes and replacing existing TypeScript, HTML, or CSS are acceptable when needed to meet the project goals.
 
    Target desktop and landscape layouts at viewport widths of at least 700 CSS pixels. Portrait mobile compatibility is out of scope; do not add requirements or browser viewport tests below 700px. Keep responsive behavior and input coverage within the supported range.
 
-1. **Do not port the older legacy melody algorithm (LegacyMelodySkeletonGenerator) or its controls (only the newer block-based melody generation should be ported).** Treat the legacy melody algorithm and its associated settings as out of scope for the rewrite.
+1. **Do not port the older legacy melody algorithm (`LegacyMelodySkeletonGenerator`) or its exclusive controls.** Only the newer block-based melody generation is in scope.
 
-2. **Match Java's seeded random behavior.** → Use the project's `java-random.ts`.
+2. **Match Java's seeded random behavior.** Use the project's `java-random.ts`.
 
    Pass seeds as `bigint` whenever they may exceed JavaScript's safe integer range; converting an already-rounded `number` cannot preserve a Java `long` seed.
 
    Keep random streams and seed derivation explicit. Reproducibility depends on matching both the Java algorithm and the order in which each generator consumes random values.
 
-3. **Port generation behavior, not the legacy control layout.** Preserve the musical generation functionality that remains in scope, while placing its controls in the consolidated workspace described in [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md). The split-parts moodboard at `frontend/UI_design_moodboard_split_parts.png` is visual inspiration, not a requirement to reproduce either the Java UI or a separate Create, Arrange, Edit, or Mix page.
+3. **Port generation behavior, not the legacy control layout.** Follow [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md) for workspace layout and interaction, [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md) for settings scopes, role exceptions, and reroll policy, and [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for control placement and Java lookups.
 
-4. **Choose state boundaries and update flows that can support history (undo/redo model).** E.g. components mutating state through a service which records the interaction and produces a new historical state. Long interactions, such as mouse events, should only produce a new state once (e.g. on release) rather than on every occurrence.
+4. **Use historical project commands; commit each gesture once.**
 
 5. **Use Web Audio and Web MIDI for audio and MIDI work.** Keep audio and MIDI processing asynchronous and non-blocking for the UI. Do not perform time-sensitive playback work in Angular rendering or change-detection paths.
 
-6. **Persist generation settings even if full UI-state persistence remains undecided.** Make generation-relevant settings serializable as JSON so users can export and restore them. Session storage is also an acceptable initial persistence mechanism.
+6. **Keep generation settings serializable for JSON export and restoration.**
 
-7. **Keep generation logic in a framework-independent TypeScript pseudo-library.** Angular components and services should call this library; the library itself should not import Angular, access the DOM, or depend on Wails. Keep the core usable independently of the UI and desktop host.
+7. **Keep generation logic in framework-independent TypeScript.** Angular components and services should call this library; the library itself should not import Angular, access the DOM, or depend on Wails. Keep the core usable independently of the UI and desktop host.
 
-8. **Keep Wails thin at first.** Initially use Wails to package and run the Angular web app as a desktop application. Defer desktop-specific features and native Go APIs until later phases, keeping the browser app usable without the Wails bridge wherever practical.
+8. **Keep browser operation independent of Wails.**
 
-9. **Use modern angular signals, @for/@if/@else syntax, and zoneless/OnPush strategies for optimal performance.**
+9. **Follow the Angular conventions.** Use signals, `@for`/`@if`/`@else`, zoneless change detection, and OnPush components. Keep component templates and styles in separate `.html` and `.css` files referenced by `templateUrl` and `styleUrl`. Omit the default `standalone: true`.
 
-10. **Keep Angular templates and styles in separate files.** Store component HTML in `.html` files and component CSS in `.css` files, referenced with `templateUrl` and `styleUrl` in the component metadata. Omit `standalone: true`; standalone is the default in Angular 19 and later.
+10. **Separate logical CSS sections with single-line comments.** Use a concise `/* Section name */` comment on its own line between groups of related rules in every CSS file.
 
-11. **Separate logical CSS sections with single-line comments.** Use a concise `/* Section name */` comment on its own line between groups of related rules in every CSS file.
+11. **Use the project's style theme throughout the Angular UI.** Reuse semantic CSS custom properties in `frontend/src/styles.css` for colors, typography, surfaces, borders, radii, and other shared visual values. Add reusable theme tokens for missing shared values instead of one-off hard-coded styles.
 
-12. **Use the project's style theme throughout the Angular UI.** Reuse the semantic CSS custom properties in `frontend/src/styles.css` for colors, typography, surfaces, borders, radii, and other shared visual values. The theme is being extracted from existing components; as component styles are updated or added, use those tokens and add reusable theme tokens for missing shared values instead of introducing one-off hard-coded styles.
-
-13. **Treat `schemaVersion` as informational during translation buildout.** Validate imported project structure and values, but do not gate loading on a schema version or add compatibility migrations. Backward compatibility can be considered during the finishing phase.
-
-14. **Keep the song canvas persistent and make editing contextual.** The app uses one workspace route: arrangement and dense score stay in the center canvas, note selection opens the selected track's piano roll or drum grid, and applying edits returns to arrangement. Mix controls live in the Tracks quick shortcuts; MIDI export is available in the main menu. Do not add route pages or a mode-controls drawer for Create, Arrange, Edit, or Mix.
-
-15. **Separate global, group, and track settings.** Key, transpose, tempo, and mode are editable in transport. Primary chord setup sits above the grouped Tracks list; detailed generation settings live in the inspector. Selecting a role group exposes controls for all tracks of that type, while selecting an individual track exposes its local generator and instrument settings. Preserve independent track IDs, phrases, instruments, channels, and mix state.
-
-16. **Separate MIDI-generation part values from track-reroll policy.** Follow [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md) and [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md): frequent musical part controls live between arrangement and score; the boxed number beside each Tracks role name edits its total track count, including when collapsed. Remove the separate Count/Generate N controls. Clamp the requested total to at least the number of locked tracks; decreases remove unlocked tracks starting with the highest number, increases append newly generated tracks, and the same total does nothing. Keep each count change in one undo entry and respect the project capacity. All supported track-randomization rules live in expanded group headers; the inspector supplies musical settings absent from quick access for the active scope without reroll policy. Rhythm appears first; Timing replaces Core and contains LEN, SPLIT, SWING, OFFS, DELAY, and D.TIM, while HITS belongs to Rhythm. LEN, SPLIT, and OFFS are inspector-only. Seed and Clear seed appear before and outside the inspector categories. Both musical editors use consistent impact categories and category colors across roles. Select sections through their arrangement headers, role cells with left-click, and track buttons with left-click; middle-click on track buttons toggles presence. Section-local settings must preserve explicit overrides independently of global track settings.
-
-17. **Complete the pre-P5 foundations before extending role-specific controls.** The current block-based melody generator must produce notes with a usable minimum set of musical controls; the manual-note role shell is only an intermediate checkpoint. Each default/new drum track selects one percussion pitch and generates its own rhythm: the combination of independent drum tracks is the groove. Replace per-track multi-voice groove presets rather than treating them as the percussion part model. Shared musical controls from `InstPart`/`InstPanel` must reach all applicable roles through their actual generator consumers, with the same settings pipeline in quick panel and inspector. Preserve genuine role exceptions, including Melody-only Accent, Chords/Arpeggio voice expansion, and Melody's block structure versus generic rhythm grids. A control remaining unported in a role is an open prerequisite, not evidence that it belongs only to Chords. See the named P1b/P4f/P4g gates in the contextual plan for scope and validation.
+12. **Treat `schemaVersion` as informational during translation buildout.** Validate imported project structure and values, but do not gate loading on a schema version or add compatibility migrations. Backward compatibility can be considered during the finishing phase.
