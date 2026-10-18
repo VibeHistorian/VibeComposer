@@ -88,6 +88,26 @@ test('middle press on an overview note requests its track context without openin
   assert.equal(component.drag.mode, 'velocity');
 });
 
+test('note hover immediately shows pitch, velocity, custom track order and source, and clears on exit', () => {
+  const { component, canvas } = fixture();
+  const note = { id: 'note', part: 'bass', trackName: 'Deep bass', trackOrder: 2, color: 'bass', midi: 61, velocity: 103, phraseSource: 'section-edited' };
+  const hit = { note, x: 390, y: 15, width: 20, height: 10 };
+  component.hitAreas = [hit]; component.hitColumnCount = 9; component.hitAreaBuckets.set(4, [hit]);
+  component.onPointerMove({ clientX: 300, clientY: 20 });
+  assert.deepEqual(component.noteTooltip(), { track: 'Deep bass (#2)', color: 'var(--role-bass)', pitch: 'C♯4 [61]', velocity: 103,
+    source: 'Section edited phrase', x: 414, y: 34 });
+  assert.equal(canvas.title, undefined);
+  component.onPointerMove({ clientX: 330, clientY: 20 });
+  assert.equal(component.noteTooltip(), null);
+  component.showNoteTooltip({ ...hit, note: { ...note, trackName: 'B2', midi: 0, phraseSource: 'global-generated' } }, 799, 299);
+  assert.equal(component.noteTooltip().track, 'B2');
+  assert.equal(component.noteTooltip().pitch, 'C-1 [0]');
+  assert.ok(component.noteTooltip().x + 240 <= component.width);
+  assert.ok(component.noteTooltip().y + 76 <= component.height);
+  component.onPointerLeave();
+  assert.equal(component.noteTooltip(), null);
+});
+
 test('the mouse guide is fainter than the playhead and disappears on pointer leave', () => {
   const { component, strokes } = fixture();
   component.playhead = 37.5;

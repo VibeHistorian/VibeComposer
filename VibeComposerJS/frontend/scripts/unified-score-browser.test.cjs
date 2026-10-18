@@ -23,6 +23,18 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.ok(initial.labels>=17);assert.equal(initial.drums,3);assert.equal(initial.arrangement,true);assert.equal(initial.velocity,false);
   const capture=async name=>{const png=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.resolve(__dirname,'../.angular/'+name+'.png'),Buffer.from(png.data,'base64'));};
   await capture('unified-score');
+  const tooltip = await evaluate(`(async()=>{${waitCode}
+    const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect();
+    const row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();
+    canvas.dispatchEvent(new PointerEvent('pointermove',{clientX:c.left+5,clientY:row.top+row.height/2}));
+    const tip=await wait(()=>document.querySelector('.note-tooltip'));
+    const result={text:tip.textContent,color:getComputedStyle(tip.querySelector('strong')).color,native:canvas.title,
+      fits:tip.getBoundingClientRect().right<=c.right,pointerEvents:getComputedStyle(tip).pointerEvents};
+    canvas.dispatchEvent(new PointerEvent('pointerleave'));
+    await wait(()=>!document.querySelector('.note-tooltip'));return result;
+  })()`);
+  assert.match(tooltip.text,/B1/);assert.match(tooltip.text,/C3 \[48\]/);assert.match(tooltip.text,/V90/);
+  assert.match(tooltip.text,/Global edited phrase/);assert.equal(tooltip.native,'');assert.equal(tooltip.fits,true);assert.equal(tooltip.pointerEvents,'none');
   const scrollbars=await evaluate(`(async()=>{
     const canvas=document.querySelector('vc-score-canvas canvas'),h=document.querySelector('.horizontal-scroll'),v=document.querySelector('.vertical-scroll');
     const wheel=extra=>canvas.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-350,clientX:canvas.getBoundingClientRect().left,clientY:canvas.getBoundingClientRect().top,...extra}));
@@ -140,10 +152,10 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   })()`);assert.deepEqual(smart,{local:true,unchanged:true});
   await command('Page.reload');
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.score-role-controls'));document.querySelector('.score-role-controls [aria-label="Drums"]').click();await wait(()=>!document.querySelector('.drum-label'));document.querySelector('.score-role-controls [aria-label="Drums"]').click();await wait(()=>document.querySelector('.drum-label'));})()`);
-  const drumPoint=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim()==='Kick').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
+  const drumPoint=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');canvas.scrollIntoView({block:'center'});const c=canvas.getBoundingClientRect(),key=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim().toUpperCase()==='KICK').getBoundingClientRect();return {x:c.left+c.width/32,y:key.top+key.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...drumPoint,button:'left',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...drumPoint,button:'left',clickCount:1});
   await capture('unified-drums-unselected');
-  const editingDrumPoint=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));if(document.querySelectorAll('.drum-label').length!==3)throw Error('All drum rows must be visible');const canvas=document.querySelector('vc-score-canvas canvas');canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true,cancelable:true}));await new Promise(r=>requestAnimationFrame(r));if(!document.querySelector('.inspector-copy').textContent.includes('3 notes'))throw Error('All drum phrases must be selectable');const c=canvas.getBoundingClientRect(),row=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim()==='Kick').getBoundingClientRect();return {x:c.left+c.width/32,y:row.top+row.height/2};})()`);
+  const editingDrumPoint=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));if(document.querySelectorAll('.drum-label').length!==3)throw Error('All drum rows must be visible');const canvas=document.querySelector('vc-score-canvas canvas');canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true,cancelable:true}));await new Promise(r=>requestAnimationFrame(r));if(!document.querySelector('.inspector-copy').textContent.includes('3 notes'))throw Error('All drum phrases must be selectable');const c=canvas.getBoundingClientRect(),row=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim().toUpperCase()==='KICK').getBoundingClientRect();return {x:c.left+c.width/32,y:row.top+row.height/2};})()`);
   await capture('unified-drums-edit');
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...editingDrumPoint,button:'middle',clickCount:1});
   await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'middle',buttons:4});

@@ -49,7 +49,7 @@
                   <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
                 </button>
                 <div class="track-reroll-actions" (click)="$event.stopPropagation()">
-                  <vc-mix-buttons [trackIds]="[track.id]" [label]="track.name" />
+                  <vc-mix-buttons class="track-level" [trackIds]="[track.id]" [label]="track.name" />
                   <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
                     [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
                     [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"

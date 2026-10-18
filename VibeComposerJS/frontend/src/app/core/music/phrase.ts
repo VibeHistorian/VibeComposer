@@ -130,18 +130,34 @@ export function layOutPhrase(
   return part === 'bass' ? withBassOctaveInterval(result, project.bass.octaveInterval) : result;
 }
 
-/** Repeat a track phrase across sections using the same seeded section-entry rules as its role. */
-export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack): PhraseNote[] {
+export type PhraseSource = 'global-generated' | 'global-edited' | 'section-generated' | 'section-edited';
+
+export function trackPhraseSource(track: CompositionTrack, section?: ArrangementSection): PhraseSource {
+  if (section?.trackPhrases?.[track.id] !== undefined) return 'section-edited';
+  if (track.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(track.id)) return 'global-edited';
+  const local = section && (section.generatedTrackIds?.includes(track.id)
+    || Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
+    || Object.keys(section.rolePartOverrides?.[track.role] ?? {}).length > 0
+    || Object.keys(section.context ?? {}).length > 0 || section.chordDegrees !== undefined
+    || section.customChords !== undefined || section.customDurations !== undefined
+    || section.useMelodyHarmony || section.swapMelody);
+  return local ? 'section-generated' : 'global-generated';
+}
+
+/** Repeat a track phrase through its sections, optionally retaining provenance for score tooltips. */
+export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack, includeSource = false): (PhraseNote & { readonly phraseSource?: PhraseSource })[] {
   const phrase = phraseForTrack(project, track);
-  const result: PhraseNote[] = [];
+  const result: (PhraseNote & { readonly phraseSource?: PhraseSource })[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
+    const phraseSource = trackPhraseSource(track, section);
     const partEnters = shouldGenerateTrackInSection(section, track);
     const localPhrase = section.trackPhrases?.[track.id];
     if (localPhrase !== undefined) {
       const length = sectionGenerationHarmony(project, section, track.role).durations;
       const sectionLength = Array.from({ length: section.measures }, (_, index) => length[index % length.length]).reduce((sum, value) => sum + value, 0);
-      if (partEnters) result.push(...localPhrase.filter(note => note.startBeat < sectionLength).map(note => ({ ...note, startBeat: arrangementBeat + note.startBeat })));
+      if (partEnters) result.push(...localPhrase.filter(note => note.startBeat < sectionLength).map(note => ({ ...note,
+        ...(includeSource ? { phraseSource } : {}), startBeat: arrangementBeat + note.startBeat })));
       arrangementBeat += sectionLength;
       continue;
     }
@@ -179,7 +195,8 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       }
       arrangementBeat += durations[measure % durations.length];
     }
-    result.push(...(!manual ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes));
+    const timedNotes = !manual ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes;
+    result.push(...(includeSource ? timedNotes.map(note => ({ ...note, phraseSource })) : timedNotes));
   }
   const notes = result;
   if (track.role === 'drums') return notes;

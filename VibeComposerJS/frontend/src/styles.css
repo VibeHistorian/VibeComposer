@@ -62,6 +62,8 @@
   /* Mixer status, distinct from role colors */
   --mix-mute-active: #ffff32;
   --mix-solo-active: #91ff28;
+  --mix-track-mute-active: color-mix(in srgb, var(--mix-mute-active) 75%, black);
+  --mix-track-solo-active: color-mix(in srgb, var(--mix-solo-active) 75%, black);
 
   /* Main generation actions */
   --compose-accent: #f2b544;

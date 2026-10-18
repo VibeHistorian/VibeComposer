@@ -9,7 +9,15 @@
       [style.height.px]="line.height" [style.opacity]="line.opacity"></span>
   }
 </div>
-<div class="score-canvas-host" #rendererHost></div>
+<div class="score-canvas-host" #rendererHost>
+  @if (noteTooltip(); as tooltip) {
+    <div class="note-tooltip" role="tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
+      <strong [style.color]="tooltip.color">{{ tooltip.track }}</strong>
+      <span class="note-tooltip-values"><span>{{ tooltip.pitch }}</span><span>V{{ tooltip.velocity }}</span></span>
+      <small class="note-tooltip-source"><i [style.background]="tooltip.color" aria-hidden="true"></i>{{ tooltip.source }}</small>
+    </div>
+  }
+</div>
 <div class="horizontal-scroll" #horizontalScroll (scroll)="onHorizontalScroll()" tabindex="0" aria-label="Score horizontal scroll">
   <div #horizontalContent></div>
 </div>

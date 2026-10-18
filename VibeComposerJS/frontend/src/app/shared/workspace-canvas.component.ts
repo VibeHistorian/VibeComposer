@@ -14,7 +14,7 @@ import { AudioPlaybackService } from '../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { DRUM_INSTRUMENTS, drumInstrumentName } from '../core/music/drum-instruments';
 import { GM_INSTRUMENTS } from '../core/music/gm-instruments';
-import { layOutTrackPhrase, phraseForTrack } from '../core/music/phrase';
+import { layOutTrackPhrase, phraseForTrack, trackPhraseSource } from '../core/music/phrase';
 import { getDiatonicChords } from '../core/music/harmony';
 import { sectionGenerationHarmony } from '../core/music/project-harmony';
 
@@ -319,9 +319,15 @@ export class WorkspaceCanvasComponent {
   readonly canvasNotes = computed<ScoreNote[]>(() => {
     const editor = this.editor();
     if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.displayedRoles().has(note.color));
-    return editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat(), part: note.trackId,
-      trackName: this.project().tracks.find(track => track.id === note.trackId)?.name, color: this.selectedPart(), topPercent: 0,
-      opacity: 0.5 + note.velocity / 127 * 0.5 }));
+    const section = this.project().arrangement.find(section => section.id === this.editSectionId());
+    return editor.notes().map(note => {
+      const track = this.project().tracks.find(track => track.id === note.trackId)!;
+      const changed = editor.changedTracks().some(changed => changed.id === track.id);
+      return { ...note, startBeat: note.startBeat + this.editStartBeat(), part: note.trackId,
+        trackName: track.name, trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
+        phraseSource: changed ? section ? 'section-edited' : 'global-edited' : trackPhraseSource(track, section),
+        color: track.role, topPercent: 0, opacity: 0.5 + note.velocity / 127 * 0.5 };
+    });
   });
   applyOnEmptyMiddleClick(event: MouseEvent): void {
     if (event.button !== 1 || !this.editing()) return;
@@ -394,7 +400,7 @@ export class WorkspaceCanvasComponent {
       section.chordDegrees?.[measure] ?? this.project().progression[measure % this.project().progression.length]) : [];
   });
   readonly scoreNotes = computed<ScoreNote[]>(() => {
-    const phrases = this.tracks().map(track => ({ track, notes: layOutTrackPhrase(this.project(), track) }));
+    const phrases = this.tracks().map(track => ({ track, notes: layOutTrackPhrase(this.project(), track, true) }));
     const drumPitches = phrases.filter(item => item.track.role === 'drums').flatMap(item => item.notes.map(note => note.midi));
     const drumMin = drumPitches.reduce((minimum, pitch) => Math.min(minimum, pitch), Infinity);
     const drumMax = drumPitches.reduce((maximum, pitch) => Math.max(maximum, pitch), -Infinity);
@@ -407,6 +413,7 @@ export class WorkspaceCanvasComponent {
         ...note,
         part: track.id,
         trackName: track.name,
+        trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
         color: track.role,
         topPercent: (maxPitch - note.midi) / pitchSpan * 86 + 3,
         opacity: 0.4 + note.velocity / 127 * 0.6,

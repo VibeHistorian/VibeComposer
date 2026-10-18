@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
 import { drumInstrumentName } from '../core/music/drum-instruments';
+import type { PhraseSource } from '../core/music/phrase';
 import { dragPhraseNotes, snapMidiToScale, type PhraseDragMode } from '../core/music/phrase-edit';
 import type { ArrangedPart, PhraseNote } from '../core/project/project.model';
 
@@ -19,6 +20,8 @@ export interface ScoreCanvasTrack {
 export interface ScoreCanvasNote extends PhraseNote {
   readonly part: string;
   readonly trackName?: string;
+  readonly trackOrder?: number;
+  readonly phraseSource?: PhraseSource;
   readonly color: ArrangedPart;
   readonly topPercent: number;
   readonly opacity: number;
@@ -106,6 +109,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly noteAdded = output<{ trackId?: string; midi: number; startBeat: number }>();
   readonly gutterRows = signal<readonly { midi: number; label: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[]>([]);
   readonly octaveLines = signal<readonly { midi: number; y: number; height: number; opacity: number }[]>([]);
+  readonly noteTooltip = signal<{ track: string; color: string; pitch: string; velocity: number; source: string; x: number; y: number } | null>(null);
   private pitchMin = 48;
   private pitchMax = 72;
   private drumPitches: number[] = [];
@@ -172,6 +176,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       selectedTrackId: this.selectedTrackId(),
       hiddenTrackIds: this.hiddenTrackIds(),
     };
+    this.noteTooltip.set(null);
     this.drawStatic();
   });
   private readonly playheadEffect = effect(() => {
@@ -290,6 +295,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private readonly onCanvasWheel = (event: WheelEvent): void => {
+    this.noteTooltip.set(null);
     event.preventDefault();
     event.stopPropagation();
     if (!this.app || this.width <= 0) return;
@@ -459,12 +465,32 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.drawDynamic();
     const area = this.hitAreaAt(event);
     canvas.style.cursor = area ? 'pointer' : 'default';
-    const trackName = area && (area.note.trackName ?? this.model?.tracks.find((track) => track.id === area.note.part)?.name);
-    const title = area ? `${trackName ?? area.note.color} · MIDI ${area.note.midi} · velocity ${area.note.velocity}` : '';
-    if (canvas.title !== title) canvas.title = title;
+    this.showNoteTooltip(this.drag || this.box || this.shape || event.pointerType === 'touch' ? undefined : area,
+      this.hoverX, (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height));
   };
 
+  private showNoteTooltip(area: NoteHitArea | undefined, x: number, y: number): void {
+    if (!area) { this.noteTooltip.set(null); return; }
+    const note = area.note;
+    const name = note.trackName ?? this.model?.tracks.find(track => track.id === note.part)?.name ?? note.color;
+    const order = note.trackOrder;
+    const defaultName = `${note.color[0].toUpperCase()}${order}`;
+    const sources: Record<PhraseSource, string> = {
+      'global-generated': 'Global generated', 'global-edited': 'Global edited phrase',
+      'section-generated': 'Section generated', 'section-edited': 'Section edited phrase',
+    };
+    this.noteTooltip.set({
+      track: order && name !== defaultName ? `${name} (#${order})` : name,
+      color: `var(--role-${note.color})`,
+      pitch: `${['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'][note.midi % 12]}${Math.floor(note.midi / 12) - 1} [${note.midi}]`,
+      velocity: note.velocity, source: sources[note.phraseSource ?? 'global-generated'],
+      x: Math.max(8, Math.min(x + 14, this.width - 248)),
+      y: y + 90 <= this.height ? y + 14 : Math.max(8, y - 82),
+    });
+  }
+
   private readonly onPointerLeave = (): void => {
+    this.noteTooltip.set(null);
     this.hoverX = null;
     this.drawDynamic();
   };
@@ -546,6 +572,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       && event.clientY >= bounds.top && event.clientY < bounds.top + bounds.height && !this.hitAreaAt(event);
   }
   private readonly onPointerDown = (event: PointerEvent): void => {
+    this.noteTooltip.set(null);
     if (event.pointerType === 'touch' && this.app) {
       event.preventDefault();
       this.touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -713,6 +740,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private drawStatic(preservePitchPosition = false): void {
+    this.noteTooltip.set(null);
     const model = this.model;
     if (!model || !this.app || this.width <= 0 || this.height <= 0) return;
     const graphics = this.staticGraphics;

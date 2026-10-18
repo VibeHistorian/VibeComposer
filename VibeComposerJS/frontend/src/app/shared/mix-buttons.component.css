@@ -5,5 +5,7 @@ button:hover:not(:disabled) { background: var(--surface-button-hover); }
 button:disabled { opacity: .4; cursor: default; }
 .mute-toggle.active { border-color: var(--mix-mute-active); background: var(--mix-mute-active); color: var(--surface-input); }
 .solo-toggle.active { border-color: var(--mix-solo-active); background: var(--mix-solo-active); color: var(--surface-input); }
+:host.track-level .mute-toggle.active { background: var(--mix-track-mute-active); }
+:host.track-level .solo-toggle.active { background: var(--mix-track-solo-active); }
 .mute-toggle.partial { border-color: var(--mix-mute-active); color: var(--mix-mute-active); background: linear-gradient(0deg, var(--surface-accent-hover) 50%, var(--surface-button) 50%); }
 .solo-toggle.partial { border-color: var(--mix-solo-active); color: var(--mix-solo-active); background: linear-gradient(0deg, var(--surface-accent-hover) 50%, var(--surface-button) 50%); }

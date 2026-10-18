@@ -8,6 +8,23 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('score phrase sources follow local edits, forced generation and inherited global edits without changing layout output', () => {
+  const { service, phrase } = fixture();
+  const project = service.project(), track = project.tracks.find(track => track.role === 'bass');
+  const note = { id: 'source-note', midi: 48, startBeat: 0, durationBeats: 1, velocity: 90 };
+  const edited = { ...track, editedPhrase: [note] };
+  const section = { ...project.arrangement[0], measures: 1, trackPresence: { [track.id]: true } };
+  assert.equal(phrase.trackPhraseSource(track, section), 'global-generated');
+  assert.equal(phrase.trackPhraseSource(edited, section), 'global-edited');
+  assert.equal(phrase.trackPhraseSource(edited, { ...section, generatedTrackIds: [track.id] }), 'section-generated');
+  assert.equal(phrase.trackPhraseSource(track, { ...section, trackPartOverrides: { [track.id]: { transpose: 12 } } }), 'section-generated');
+  assert.equal(phrase.trackPhraseSource(edited, { ...section, trackPhrases: { [track.id]: [note] }, generatedTrackIds: [track.id] }), 'section-edited');
+  const p = { ...project, arrangement: [section, { ...section, id: 'local', trackPhrases: { [track.id]: [note] } }] };
+  const labeled = phrase.layOutTrackPhrase(p, edited, true);
+  assert.deepEqual(labeled.map(note => note.phraseSource), ['global-edited', 'section-edited']);
+  assert.deepEqual(labeled.map(({ phraseSource, ...note }) => note), phrase.layOutTrackPhrase(p, edited));
+});
+
 test('arpeggio register matches all production Java pitches in the saved bug configuration and exported MIDI', () => {
   const { service, phrase, midi } = fixture();
   const reference = JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/arpeggio-saved-config.java.json'),'utf8'));
