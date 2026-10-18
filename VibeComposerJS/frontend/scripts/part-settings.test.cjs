@@ -8,6 +8,33 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('mix edits reuse score phrases and note counts with real Angular signal equality', async () => {
+  const reactivity = await import('@angular/core');
+  const { service, workspace, phrase } = fixture({ reactivity });
+  let generations = 0;
+  for (const name of ['phraseForTrack', 'layOutTrackPhrase']) {
+    const original = phrase[name];
+    phrase[name] = (...args) => { generations++; return original(...args); };
+  }
+  const notes = workspace.scoreNotes();
+  workspace.tracks();
+  const count = generations;
+  assert.ok(count > 0);
+  const original = service.project();
+  for (const panPercent of [-50, -25, 0, 25, 50]) {
+    service.updateTrack('track-bass-1', { mix: { panPercent, volumePercent: 150 } });
+    assert.equal(workspace.tracks().find(track => track.id === 'track-bass-1').mix.panPercent, panPercent);
+    assert.deepEqual(workspace.scoreNotes(), notes);
+    assert.equal(generations, count, 'knob commits must not invoke note generators');
+  }
+  const { samePhraseInputs } = require('./music-loader.cjs').loadMusic('phrase-inputs.ts');
+  assert.equal(samePhraseInputs(original, service.project()), true);
+  service.updateTrackGeneratorSettings('track-bass-1', { transpose: 12 });
+  workspace.scoreNotes();
+  assert.ok(generations > count, 'musical settings still regenerate notes');
+  assert.equal(samePhraseInputs(original, service.project()), false);
+});
+
 test('overview role presence clears mixed or full groups and fills empty groups in one undo step', () => {
   const { service } = fixture();
   service.duplicateTrack('track-bass-1');
@@ -4014,24 +4041,24 @@ test('failed project loads warn with property paths and preserve the current pro
   }
 });
 
-function fixture({ compactHistory = false, dialogData = null } = {}) {
+function fixture({ compactHistory = false, dialogData = null, reactivity } = {}) {
   const cache = new Map();
   const effects = [];
   // Tests that exercise effect-driven behavior flush callbacks after changing state.
   const flushEffects = () => { for (const callback of effects) callback(); };
-  const signal = (value) => {
+  const signal = reactivity?.signal ?? ((value) => {
     const read = () => value;
     read.set = (next) => { value = next; };
     read.update = updater => { value = updater(value); };
     read.asReadonly = () => read;
     return read;
-  };
+  });
   const input = (value) => signal(value);
   input.required = () => signal(undefined);
   let service, ui, uiPreferences;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
-    signal, computed: (read) => read, effect: callback => { effects.push(callback); }, untracked: read => read(), input,
+    signal, computed: reactivity?.computed ?? ((read) => read), effect: callback => { effects.push(callback); }, untracked: read => read(), input,
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui

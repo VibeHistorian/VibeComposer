@@ -6,6 +6,7 @@ import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionT
 import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
 import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
 import { layOutTrackPhrase } from '../core/music/phrase';
+import { samePhraseInputs } from '../core/music/phrase-inputs';
 import type { SettingsTarget } from './workspace-ui.service';
 import type { PlaybackRange } from '../core/audio/audio-playback.service';
 
@@ -140,8 +141,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     tracks: this.project().tracks.filter((track) => track.role === role),
   })));
 
+  private readonly phraseProject = computed(() => this.project(), { equal: samePhraseInputs });
   private readonly trackNotes = computed(() => {
-    const project = this.project();
+    const project = this.phraseProject();
     return new Map(project.tracks.map((track) => [track.id, layOutTrackPhrase(project, track)]));
   });
 

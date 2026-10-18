@@ -5,6 +5,7 @@ import { SectionContextEditorComponent } from './section-context-editor.componen
 import { sectionDurationBeats } from '../core/music/section-context';
 import { sectionHarmonyDisplay } from '../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
+import { samePhraseInputs } from '../core/music/phrase-inputs';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
@@ -103,6 +104,7 @@ export class WorkspaceCanvasComponent {
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
+  private readonly phraseProject = computed(() => this.project(), { equal: samePhraseInputs });
   readonly instruments = GM_INSTRUMENTS;
   readonly trackInstrumentOptions = computed(() => {
     const limited = this.preferences.limitInstrumentsToPool();
@@ -311,8 +313,8 @@ export class WorkspaceCanvasComponent {
       return item;
     });
   });
-  readonly sectionHarmony = computed(() => Object.fromEntries(this.project().arrangement.map(section =>
-    [section.id, sectionHarmonyDisplay(this.project(), section)])));
+  readonly sectionHarmony = computed(() => Object.fromEntries(this.phraseProject().arrangement.map(section =>
+    [section.id, sectionHarmonyDisplay(this.phraseProject(), section)])));
   readonly scoreRulerSections = computed(() => this.timelineSections().map(item => {
     const harmony = this.sectionHarmony()[item.section.id];
     let beat = item.startBeat;
@@ -345,10 +347,14 @@ export class WorkspaceCanvasComponent {
       return { ...slot, left: start - left, width: end - start, endX: end - left, sectionEnd: index === section.slots.length - 1 };
     }) };
   }));
+  private readonly trackNoteCounts = computed(() => {
+    const project = this.phraseProject();
+    return new Map(project.tracks.map(track => [track.id, phraseForTrack(project, track).length]));
+  });
   readonly tracks = computed<TrackRow[]>(() => this.project().tracks.map((track) => ({
     ...track,
     color: track.role,
-    noteCount: phraseForTrack(this.project(), track).length,
+    noteCount: this.trackNoteCounts().get(track.id) ?? 0,
   })));
   readonly arrangedTracks = computed(() => tracksInRoleOrder(this.tracks()));
   readonly scoreTracks = computed(() => this.arrangedTracks().filter(track => this.editing()
@@ -437,8 +443,12 @@ export class WorkspaceCanvasComponent {
     return section ? Array.from({ length: section.measures }, (_, measure) =>
       section.chordDegrees?.[measure] ?? this.project().progression[measure % this.project().progression.length]) : [];
   });
+  private readonly trackPhrases = computed(() => {
+    const project = this.phraseProject();
+    return new Map(project.tracks.map(track => [track.id, layOutTrackPhrase(project, track, true)]));
+  });
   readonly scoreNotes = computed<ScoreNote[]>(() => {
-    const phrases = this.tracks().map(track => ({ track, notes: layOutTrackPhrase(this.project(), track, true) }));
+    const phrases = this.tracks().map(track => ({ track, notes: this.trackPhrases().get(track.id) ?? [] }));
     const drumPitches = phrases.filter(item => item.track.role === 'drums').flatMap(item => item.notes.map(note => note.midi));
     const drumMin = drumPitches.reduce((minimum, pitch) => Math.min(minimum, pitch), Infinity);
     const drumMax = drumPitches.reduce((maximum, pitch) => Math.max(maximum, pitch), -Infinity);
@@ -537,8 +547,9 @@ export class WorkspaceCanvasComponent {
   }
 
   melodyRhythmHits(scope: PartSettingsScope): number {
-    const section = 'sectionId' in scope ? this.project().arrangement.find(item => item.id === scope.sectionId) : undefined;
-    return (section ? sectionGenerationHarmony(this.project(),section,'melody').degrees : this.project().progression).length * 16;
+    const project = this.phraseProject();
+    const section = 'sectionId' in scope ? project.arrangement.find(item => item.id === scope.sectionId) : undefined;
+    return (section ? sectionGenerationHarmony(project,section,'melody').degrees : project.progression).length * 16;
   }
 
   resetPartSettings(scope: PartSettingsScope, field?: string | readonly string[]): void {

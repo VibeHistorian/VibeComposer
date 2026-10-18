@@ -5,14 +5,14 @@ const test = require('node:test');
 const ts = require('typescript');
 
 // Exercise the component's real drawing and hit-testing code without a GPU or Angular bootstrap.
-function fixture() {
+function fixture(reactivity) {
   const refs = new Map();
-  const signal = (value) => Object.assign(() => value, { set: (next) => { value = next; } });
+  const signal = reactivity?.signal ?? ((value) => Object.assign(() => value, { set: (next) => { value = next; } }));
   const input = (value) => signal(value);
   input.required = () => signal(undefined);
   const angular = {
     Component: () => (component) => component, ChangeDetectionStrategy: { OnPush: 0 },
-    computed: (read) => read, effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }),
+    computed: reactivity?.computed ?? ((read) => read), effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }),
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     viewChild: { required: (name) => () => ({ nativeElement: refs.get(name) }) },
   };
@@ -22,6 +22,7 @@ function fixture() {
   }).outputText;
   const module = { exports: {} };
   const dependencies = {
+    '../core/music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
     '../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
@@ -71,6 +72,20 @@ function fixture() {
   component.drawOverview();
   return { component, refs, base, overlay };
 }
+
+test('overview note previews survive mix commits and refresh on musical changes', async () => {
+  const { component } = fixture(await import('@angular/core'));
+  const before = component.trackNotes();
+  const project = component.project();
+  for (const panPercent of [-50, 0, 50]) {
+    component.project.set({ ...project, tracks: project.tracks.map(track => ({
+      ...track, mix: { panPercent, volumePercent: 150 },
+    })) });
+    assert.equal(component.trackNotes(), before);
+  }
+  component.project.set({ ...project, seed: '1234' });
+  assert.notEqual(component.trackNotes(), before);
+});
 
 test('hover highlights only the hit target and clears on exit or follows a scrolled timeline', () => {
   const { component: c, refs, base } = fixture();

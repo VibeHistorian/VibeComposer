@@ -51,6 +51,7 @@ function fixture({ loop = false } = {}) {
     return module.exports;
   };
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts', {
+    '../music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     './tiny-synth-engine': { TinySynthEngine: class {} },
@@ -117,7 +118,8 @@ test('P5f tempo boundaries integrate sustained notes, transport, partial loops a
   assert.equal(playback.durationBeats(),8);
   assert.ok(Math.abs(sources[0].stopTime-3.023)<1e-9,'note crosses both tempo segments');
   context.currentTime=1.5; playback.tick(); assert.equal(playback.beat(),4.5);
-  project.arrangement[1].context.tempoBpm=120; playback.reload(project);
+  playback.reload({ ...project, arrangement: project.arrangement.map((section, index) => index === 1
+    ? { ...section, context: { ...section.context, tempoBpm: 120 } } : section) });
   assert.equal(playback.beat(),4.5); context.currentTime=2; playback.tick(); assert.equal(playback.beat(),5.5);
   playback.stop(); context.currentTime=0; project.arrangement[1].context.tempoBpm=60;
   playback.setLoopRange({startBeat:2,endBeat:6}); playback.toggleLoop(); await playback.start(project);
@@ -514,6 +516,28 @@ test('looping starts enabled and wraps the whole arrangement by default', async 
   assert.equal(playback.state(), 'playing');
   assert.equal(playback.beat(), 1);
   playback.stop();
+});
+
+test('pan and gain commits update active buses without generating a schedule', async () => {
+  const { playback, project, sources } = fixture();
+  await playback.start(project);
+  const schedule = playback.createSchedule;
+  playback.createSchedule = () => { throw Error('Mix changes must not rebuild notes'); };
+  const master = playback.master;
+  for (const panPercent of [-50, 0, 50]) {
+    const updated = { ...project, tracks: project.tracks.map(track => ({ ...track,
+      mix: { ...track.mix, panPercent, volumePercent: 150 },
+    })) };
+    playback.updateMix(updated); // Knob preview runs before the committed LIVE reload.
+    playback.reload(updated);
+    assert.equal(playback.buses.get('bass').gain.gain.events.at(-1).value, 1.5);
+    assert.equal(playback.buses.get('bass').pan.pan.events.at(-1).value, panPercent / 100);
+    assert.equal(playback.master, master);
+    assert.equal(sources.length, 1);
+  }
+  playback.createSchedule = schedule;
+  playback.reload({ ...project, tempoBpm: 60 });
+  assert.notEqual(playback.master, master, 'musical edits still rebuild the playing schedule');
 });
 
 test('Compose restart uses zero or selected loop origin and keeps paused/stopped transport inactive', async () => {

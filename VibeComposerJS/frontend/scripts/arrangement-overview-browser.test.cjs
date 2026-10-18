@@ -86,6 +86,9 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const contextCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/section-context.ts'), 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
+    const phraseInputsCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-inputs.ts'), 'utf8'), {
+      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+    }).outputText;
     const theme = fs.readFileSync(path.join(__dirname, '../src/styles.css'), 'utf8');
     const workspaceCss = fs.readFileSync(path.join(__dirname, '../src/app/shared/workspace-canvas.component.css'), 'utf8');
     const html = displayScale => `<!doctype html><html><head><style>${theme}\n${workspaceCss}\n${css}
@@ -112,6 +115,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       computed: read => read, effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }), output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
+      '../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
       '../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
       '../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),
       '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },

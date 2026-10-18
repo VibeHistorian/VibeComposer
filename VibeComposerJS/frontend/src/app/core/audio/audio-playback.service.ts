@@ -2,6 +2,7 @@ import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { MidiOutputService } from './midi-output.service';
 import type { ArrangedPart, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
 import { layOutTrackPhrase } from '../music/phrase';
+import { samePhraseInputs } from '../music/phrase-inputs';
 import { TinySynthEngine } from './tiny-synth-engine';
 import { beatToSeconds, secondsToBeat, projectTempoMap, sectionDurationBeats, type TempoPoint } from '../music/section-context';
 
@@ -39,6 +40,7 @@ export class AudioPlaybackService {
   private tempoMap: readonly TempoPoint[] = [{ beat: 0, seconds: 0, bpm: 120 }];
   private selectedLoopRange: PlaybackRange | null = null;
   private mixProject?: CompositionProject;
+  private scheduledProject?: CompositionProject;
   private notes: ScheduledNote[] = [];
   private queuedNotes: ScheduledNote[] = [];
   private nextNote = 0;
@@ -124,6 +126,7 @@ export class AudioPlaybackService {
       this.tempoMap = projectTempoMap(project);
       this.duration.set(project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
       this.notes = this.createSchedule(project);
+      this.scheduledProject = project;
       this.scheduleSignature = this.signature(project, this.notes);
       const safeStart = this.safeStartBeat(startBeat);
       this.position.set(safeStart);
@@ -199,9 +202,16 @@ export class AudioPlaybackService {
   /** Replace queued audio at the current musical position without pausing the transport. */
   reload(project: CompositionProject): void {
     if (!this.liveEnabled() || this.state() !== 'playing' || !this.context) return;
+    const previous = this.scheduledProject;
+    if (previous && samePhraseInputs(previous, project)
+      && previous.tracks.every((track, index) => track.mix.program === project.tracks[index].mix.program)) {
+      this.updateMix(project);
+      return;
+    }
     // Build first so generation time does not leave a gap in the old audio.
     const notes = this.createSchedule(project);
     const signature = this.signature(project, notes);
+    this.scheduledProject = project;
     this.updateMix(project);
     if (signature === this.scheduleSignature) return;
 
