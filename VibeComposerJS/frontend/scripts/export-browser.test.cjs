@@ -76,11 +76,12 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         trigger.click(); await wait(menu,'project menu'); item('Export Project').click();
         await wait(()=>downloads.length===1,'project download');
         const saved=JSON.parse(await (await downloads[0].blob).text());
-        ensure(saved.name==='Export: test' && downloads[0].name==='Export- test.vibecomposer.json','project export preserved');
+        const filenamePattern = /^\\d{8}_\\d{2}-\\d{2}_${project.key}_${project.tempoBpm}_${project.seed}_Export- test/;
+        ensure(saved.name==='Export: test' && filenamePattern.test(downloads[0].name) && downloads[0].name.endsWith('.vibecomposer.json'),'project export preserved with automatic filename');
         trigger.click(); await wait(menu,'MIDI menu'); item('Export MIDI').click();
         await wait(()=>downloads.length===2,'MIDI download');
         const midi=await (await downloads[1].blob).arrayBuffer();
-        ensure(new TextDecoder().decode(midi.slice(0,4))==='MThd' && downloads[1].name==='Export- test.mid','MIDI export');
+        ensure(new TextDecoder().decode(midi.slice(0,4))==='MThd' && filenamePattern.test(downloads[1].name) && downloads[1].name.endsWith('.mid'),'MIDI export');
         trigger.click(); await wait(menu,'audio menu'); item('Export Audio').click();
         trigger.click(); await wait(menu,'busy menu');
         ensure([...menu().querySelectorAll('button')].some(b=>b.disabled && b.textContent.includes('Audio')),'duplicate audio export disabled');
@@ -88,7 +89,7 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         await wait(()=>downloads.length===3,'audio download');
         ensure(realtimeContexts===0,'offline export never opens audio device');
         const audio=await downloads[2].blob;
-        ensure(downloads[2].name==='Export- test.opus' && audio.type.includes('audio/ogg'),'Opus filename and MIME');
+        ensure(filenamePattern.test(downloads[2].name) && downloads[2].name.endsWith('.opus') && audio.type.includes('audio/ogg'),'Opus filename and MIME');
         const bytes=await audio.arrayBuffer();
         ensure(new TextDecoder().decode(bytes.slice(0,4))==='OggS','Ogg container');
         const context=new NativeAudioContext({sampleRate:48000});
@@ -108,6 +109,20 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         ensure(renderProgress.some(percent=>percent>0 && percent<100),'intermediate render progress visible');
         ensure(renderProgress.every((percent,index)=>!index || percent>renderProgress[index-1]),'render progress increases');
         ensure(completionGlow,'100% render progress shows animated completion border');
+        document.querySelector('[aria-label="Settings"]').click();
+        const settings = await wait(()=>document.querySelector('vc-settings-dialog'),'settings');
+        (await wait(()=>[...settings.querySelectorAll('.settings-sidebar button')].find(b=>b.textContent.trim()==='Project'),'Project category')).click();
+        const fields = await wait(()=>settings.querySelector('.export-name-fields'),'filename toggles');
+        ensure(fields.querySelectorAll('button').length===5,'five filename fields enabled by default');
+        const preview = () => settings.querySelector('.export-name-preview').textContent.trim();
+        await wait(()=>filenamePattern.test(preview()),'current project filename preview');
+        for (const toggle of fields.querySelectorAll('button')) toggle.click();
+        await wait(()=>preview()==='Export- test.vibecomposer.json','project name only preview');
+        ensure(JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).exportNameFields.length===0,'filename preferences saved');
+        settings.querySelector('[aria-label="Close settings"]').click();
+        trigger.click(); await wait(menu,'project menu after filename settings'); item('Export Project').click();
+        await wait(()=>downloads.length===4,'project name only download');
+        ensure(downloads[3].name==='Export- test.vibecomposer.json','exports honor disabled fields');
         ensure(!document.querySelector('.export-finishing'),'completion clears animated border');
         ensure(unhandledRejections.length===0,'unhandled export rejections: '+unhandledRejections.join('; '));
         // Mute every track; report failure and allow retry.
@@ -119,7 +134,7 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         trigger.click(); await wait(menu,'silent audio menu'); item('Export Audio').click();
         await wait(()=>document.querySelector('.project-message')?.textContent.includes('no audible notes'),'export failure feedback');
         ensure(!document.querySelector('.export-finishing'),'failure clears animated border');
-        ensure(downloads.length===3,'failed export does not download');
+        ensure(downloads.length===4,'failed export does not download');
         trigger.click(); await wait(menu,'retry menu'); ensure(!item('Export Audio').disabled,'failure clears busy state');
         await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
       } catch(error) { await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack,

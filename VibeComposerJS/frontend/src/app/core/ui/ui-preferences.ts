@@ -2,6 +2,7 @@ import { PART_CONTROLS } from '../music/part-settings';
 import { decodeAppearance, defaultAppearance, type AppearancePreferences } from './appearance';
 import { ARRANGED_PARTS, type ArrangedPart } from '../project/project.model';
 import type { DrumMappingPreference } from '../music/drum-instruments';
+import { DEFAULT_EXPORT_NAME_FIELDS, EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 
 export type QuickSettings = Readonly<Record<ArrangedPart, readonly string[]>>;
 
@@ -22,6 +23,7 @@ export interface UiPreferences {
   readonly restartPlaybackOnCompose: boolean;
   readonly limitInstrumentsToPool: boolean;
   readonly drumMapping: DrumMappingPreference;
+  readonly exportNameFields: readonly ExportNameField[];
   readonly quickSettings: QuickSettings;
   readonly appearance: AppearancePreferences;
 }
@@ -57,7 +59,7 @@ export function defaultQuickSettings(): QuickSettings {
 }
 
 export function defaultUiPreferences(): UiPreferences {
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, restartPlaybackOnCompose: true, limitInstrumentsToPool: false, drumMapping: 'auto', quickSettings: defaultQuickSettings(), appearance: defaultAppearance() };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, restartPlaybackOnCompose: true, limitInstrumentsToPool: false, drumMapping: 'auto', exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance() };
 }
 
 /** Decode atomically, accepting only UI data and retaining the code's control order. */
@@ -67,6 +69,10 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
   if (data['kind'] !== 'vibecomposer-ui-preferences' || typeof data['compactHistory'] !== 'boolean'
       || !data['quickSettings'] || typeof data['quickSettings'] !== 'object' || Array.isArray(data['quickSettings'])) return null;
   const settings = data['quickSettings'] as Record<string, unknown>;
+  const fields = data['exportNameFields'];
+  if (fields !== undefined && (!Array.isArray(fields) || fields.some(field => !EXPORT_NAME_FIELDS.some(choice => choice.id === field)))) return null;
+  const exportNameFields = fields === undefined ? DEFAULT_EXPORT_NAME_FIELDS
+    : EXPORT_NAME_FIELDS.filter(field => (fields as unknown[]).includes(field.id)).map(field => field.id);
   if (data['syncScoreMix'] !== undefined && typeof data['syncScoreMix'] !== 'boolean') return null;
   if (data['scoreChordGrid'] !== undefined && typeof data['scoreChordGrid'] !== 'boolean') return null;
   if (data['restartPlaybackOnCompose'] !== undefined && typeof data['restartPlaybackOnCompose'] !== 'boolean') return null;
@@ -80,5 +86,5 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
     quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key, role).some(key => keys.includes(key))).map(control => control.key);
   }
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', quickSettings, appearance };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', exportNameFields, quickSettings, appearance };
 }

@@ -13,6 +13,7 @@
     "test:midi": "node --test scripts/midi-output.test.cjs",
     "test:midi:browser": "node --test scripts/midi-output-browser.test.cjs",
     "test:export:browser": "node --test scripts/export-browser.test.cjs",
+    "test:export": "node --test scripts/export-filename.test.cjs",
     "test:score:browser": "node --test scripts/unified-score-browser.test.cjs",
     "test:score": "node --test scripts/score-canvas.test.cjs",
     "test:synth:browser": "node --test scripts/tiny-synth-browser.test.cjs",

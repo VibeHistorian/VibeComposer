@@ -1,5 +1,6 @@
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { EXPORT_NAME_FIELDS, exportFilename } from '../../core/project/export-filename';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
@@ -28,6 +29,9 @@ export class SettingsDialogComponent {
   readonly transferMessage = signal('');
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
+  readonly exportNameFields = EXPORT_NAME_FIELDS;
+  private readonly previewTime = signal(new Date());
+  readonly exportNamePreview = computed(() => exportFilename(this.projects.project(), this.preferences.exportNameFields(), this.previewTime()));
   readonly fontAreas = FONT_AREAS;
   readonly fontChoices = FONT_CHOICES;
   readonly roles = ARRANGED_PARTS;
@@ -67,12 +71,14 @@ export class SettingsDialogComponent {
     { id: 'midi', label: 'MIDI' },
     { id: 'melody', label: 'Melody' },
     { id: 'section-types', label: 'Section Types' },
-    { id: 'project-history', label: 'Project History' },
+    { id: 'project', label: 'Project' },
   ] as const;
   readonly selectedCategory = signal<typeof this.categories[number]['id']>('appearance');
   readonly preview = signal(false);
 
   constructor() {
+    const timer = setInterval(() => this.previewTime.set(new Date()), 1000);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
     effect(onCleanup => {
       const backdrop = this.dialog.overlayRef.backdropElement;
       backdrop?.classList.toggle('appearance-preview', this.preview() && this.selectedCategory() === 'appearance');

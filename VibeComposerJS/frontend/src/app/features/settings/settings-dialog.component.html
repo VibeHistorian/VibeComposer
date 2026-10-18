@@ -142,9 +142,22 @@
           </section>
         }
         @case ('section-types') { <vc-section-type-settings /> }
-        @case ('project-history') {
-          <section aria-labelledby="project-history-title">
-            <h2 id="project-history-title">Project History</h2>
+        @case ('project') {
+          <section aria-labelledby="project-title">
+            <h2 id="project-title">Project</h2>
+            <h3>Export filenames</h3>
+            <p>Include these fields before the project name, separated by underscores. Time uses HH-mm; sharp keys use s and flat keys use b.</p>
+            <div class="export-name-fields" role="group" aria-label="Export filename fields">
+              @for (field of exportNameFields; track field.id) {
+                <button type="button" class="appearance-toggle" [class.active]="preferences.exportNameFields().includes(field.id)"
+                  [attr.aria-pressed]="preferences.exportNameFields().includes(field.id)"
+                  (click)="preferences.toggleExportNameField(field.id)">{{ field.label }}</button>
+              }
+            </div>
+            <p>Preview</p>
+            <output class="export-name-preview" aria-label="Export filename preview" aria-live="polite">{{ exportNamePreview() }}.vibecomposer.json</output>
+            <p>The same name is used for MIDI (.mid) and audio (.opus) exports.</p>
+            <h3>Project history</h3>
             <label class="history-setting">
               <input type="checkbox" [checked]="projects.compactHistory()"
                 (change)="projects.toggleCompactHistory()" aria-describedby="compact-history-description" />

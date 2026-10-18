@@ -5,6 +5,8 @@ import { AudioExportService } from './core/audio/audio-export.service';
 import { MidiOutputService } from './core/audio/midi-output.service';
 import { generateCompositionMidi } from './core/music/midi-export';
 import { downloadProjectFile } from './core/project/download-file';
+import { exportFilename } from './core/project/export-filename';
+import { UiPreferencesService } from './core/ui/ui-preferences.service';
 import { HistoryDialogComponent } from './shared/history-dialog.component';
 import { ProjectService } from './core/project/project.service';
 import { SettingsDialogComponent } from './features/settings/settings-dialog.component';
@@ -25,6 +27,7 @@ import { isEditingText } from './shared/keyboard-shortcuts';
 export class AppComponent {
   readonly projectMessage = signal('');
   readonly audioExport = inject(AudioExportService);
+  readonly preferences = inject(UiPreferencesService);
   readonly midi = inject(MidiOutputService);
   readonly exportMenuPositions = [
     { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -6 },
@@ -62,7 +65,7 @@ export class AppComponent {
   exportProject(): void {
     const project = this.project();
     const blob = new Blob([this.projects.exportProjectJson()], { type: 'application/json' });
-    downloadProjectFile(blob, project.name, 'vibecomposer.json');
+    downloadProjectFile(blob, exportFilename(project, this.preferences.exportNameFields()), 'vibecomposer.json');
     this.projectMessage.set('Project settings exported.');
   }
 
@@ -70,7 +73,7 @@ export class AppComponent {
     try {
       const project = this.project();
       const bytes = new Uint8Array(generateCompositionMidi(project, this.midi.drumMapping()));
-      downloadProjectFile(new Blob([bytes], { type: 'audio/midi' }), project.name, 'mid');
+      downloadProjectFile(new Blob([bytes], { type: 'audio/midi' }), exportFilename(project, this.preferences.exportNameFields()), 'mid');
       this.projectMessage.set('MIDI exported.');
     } catch (error) {
       this.projectMessage.set(error instanceof Error ? `Could not export MIDI: ${error.message}` : 'Could not export MIDI.');
@@ -83,7 +86,7 @@ export class AppComponent {
     this.projectMessage.set('');
     try {
       const blob = await this.audioExport.export(project);
-      downloadProjectFile(blob, project.name, 'opus');
+      downloadProjectFile(blob, exportFilename(project, this.preferences.exportNameFields()), 'opus');
       this.projectMessage.set('Audio exported.');
     } catch (error) {
       this.projectMessage.set(error instanceof Error ? `Could not export audio: ${error.message}` : 'Could not export audio.');

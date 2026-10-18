@@ -29,7 +29,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       // This workflow checks individual history entries, so opt out of compaction.
       (await wait(() => [...document.querySelectorAll('.project-tools button')].find(button => button.getAttribute('aria-label') === 'Settings'), 'settings button')).click();
       const settings = await wait(() => document.querySelector('vc-settings-dialog'), 'settings');
-      const category = await wait(() => [...settings.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Project History'), 'history category');
+      const category = await wait(() => [...settings.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Project'), 'history category');
       await wait(() => settings.contains(document.activeElement), 'settings focus');
       const bounds = settings.getBoundingClientRect();
       if (bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight) throw new Error('settings outside viewport');

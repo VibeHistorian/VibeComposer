@@ -50,3 +50,5 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 .preferences-transfer span { flex: 1 1 200px; color: var(--text-muted); font-size: 11px; }
 .preferences-transfer button { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); cursor: pointer; }
 .preferences-transfer button:hover { background: var(--surface-button-hover); }
+.export-name-fields { display: flex; flex-wrap: wrap; gap: 6px; }
+.export-name-preview { display: block; padding: 10px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-family: var(--font-mono); overflow-wrap: anywhere; }

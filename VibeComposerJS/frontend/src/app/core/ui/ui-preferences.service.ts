@@ -1,4 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
+import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 import type { ArrangedPart } from '../project/project.model';
 import { ARRANGED_PARTS } from '../project/project.model';
 import { adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type ColorAdjustment, type FontArea } from './appearance';
@@ -20,6 +21,12 @@ export class UiPreferencesService {
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly limitInstrumentsToPool = computed(() => this.state().limitInstrumentsToPool);
   readonly drumMapping = computed(() => this.state().drumMapping);
+  readonly exportNameFields = computed(() => this.state().exportNameFields);
+  toggleExportNameField(field: ExportNameField): void {
+    const current = this.exportNameFields();
+    const exportNameFields = EXPORT_NAME_FIELDS.filter(choice => choice.id === field ? !current.includes(field) : current.includes(choice.id)).map(choice => choice.id);
+    this.commit({ ...this.state(), exportNameFields });
+  }
   setDrumMapping(drumMapping: DrumMappingPreference): void {
     if (!['auto', 'general-midi', 'chromatic'].includes(drumMapping)) return;
     this.commit({ ...this.state(), drumMapping });
