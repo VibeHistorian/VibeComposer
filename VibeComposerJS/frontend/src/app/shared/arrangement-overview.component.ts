@@ -422,7 +422,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const x = this.beatX(item.startBeat);
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         if (x + width <= this.labelWidth || x >= this.width) continue;
-        fill(x, y, width, this.rowHeight, `--role-${role}-cell-surface`);
+        const cellSurface = color(`--role-${role}-cell-surface`);
+        context.fillStyle = this.hoveredKey === `cell:${item.section.id}:${group.role}`
+          ? `color-mix(in srgb, ${cellSurface} 85%, ${color('--text-primary')})` : cellSurface;
+        context.fillRect(x, y, width, this.rowHeight);
         fill(x, y, 1, this.rowHeight, '--surface-base');
         fill(x, y + this.rowHeight - 1, width, 1, '--border-subtle');
         const target = this.settingsTarget();
@@ -469,9 +472,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const centerX = x + (width - rowCount * TRACK_BUTTON_PITCH + 3) / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
           const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * TRACK_BUTTON_PITCH - 12;
           const present = this.trackPresent(item.section, track);
-          context.globalAlpha = present ? 0.6 : 0.48;
+          const hovered = this.hoveredKey === `toggle:${item.section.id}:${track.id}`;
+          context.globalAlpha = hovered ? 1 : present ? 0.6 : 0.48;
           context.beginPath(); context.arc(centerX, centerY, 8, 0, Math.PI * 2);
-          context.fillStyle = color(present ? `--role-${role}-surface` : '--surface-button'); context.fill();
+          const buttonSurface = color(present ? `--role-${role}-surface` : '--surface-button');
+          context.fillStyle = hovered ? `color-mix(in srgb, ${buttonSurface} 85%, ${color('--text-primary')})` : buttonSurface;
+          context.fill();
           context.strokeStyle = present ? noteColor : color('--border-default'); context.stroke();
           context.textAlign = 'center';
           text(String(trackNumber), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', `9px ${monoFont}`);
@@ -511,7 +517,11 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const x = this.beatX(item.startBeat);
       const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
       if (x + width <= this.labelWidth || x >= this.width) continue;
-      fill(x, 0, width, RULER_HEIGHT, this.selectedSectionIds().includes(item.section.id) ? '--surface-accent' : '--surface-base');
+      const selected = this.selectedSectionIds().includes(item.section.id);
+      const hovered = this.hoveredKey === `heading:${item.section.id}`;
+      fill(x, 0, width, RULER_HEIGHT, selected
+        ? hovered ? '--surface-accent-hover' : '--surface-accent'
+        : hovered ? '--surface-hover' : '--surface-base');
       fill(x, 0, 1, RULER_HEIGHT, '--border-subtle');
       context.save(); context.beginPath(); context.rect(x + 6, 0, Math.max(0, width - 12), RULER_HEIGHT); context.clip();
       const range = this.measureLabel(item);
@@ -568,7 +578,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const group = groups[row];
       const y = RULER_HEIGHT + row * this.rowHeight - this.offsetY;
       if (y + this.rowHeight <= RULER_HEIGHT || y >= this.height) continue;
-      fill(0, y, this.labelWidth, this.rowHeight, this.isGroupSelected(group) ? '--surface-accent' : '--surface-low');
+      const hovered = this.hoveredKey === `group:${group.role}`;
+      fill(0, y, this.labelWidth, this.rowHeight, this.isGroupSelected(group)
+        ? hovered ? '--surface-accent-hover' : '--surface-accent'
+        : hovered ? '--surface-hover' : '--surface-low');
       fill(0, y + this.rowHeight - 1, this.labelWidth, 1, '--border-subtle');
       context.fillStyle = color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}`);
       context.beginPath(); context.arc(this.labelWidth / 2, y + this.rowHeight / 2, 5, 0, Math.PI * 2); context.fill();
@@ -591,6 +604,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       context.strokeRect(focused.x + 1, focused.y + 1, focused.width - 2, focused.height - 2);
       canvas.setAttribute('aria-label', `${focused.label} Use arrow keys to navigate and Enter to activate.`);
     }
+    // Hit areas can move under a stationary pointer after scrolling, zooming or edits.
+    if (this.hoverPointer) this.onPointerMove(this.hoverPointer);
     this.drawPlayhead(this.playheadPercent());
   }
 
@@ -616,6 +631,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     }
     context.globalAlpha = 1;
   }
+
+  private hoveredKey: string | null = null;
+  private hoverPointer: PointerEvent | null = null;
 
   private hitAt(event: MouseEvent): OverviewHitArea | undefined {
     const bounds = this.scoreCanvas().nativeElement.getBoundingClientRect();
@@ -663,11 +681,26 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerMove(event: PointerEvent): void {
+    this.hoverPointer = event;
     const area = this.hitAt(event);
+    const key = area?.key ?? null;
+    if (this.hoveredKey !== key) {
+      this.hoveredKey = key;
+      this.scheduleDraw();
+    }
     const canvas = this.scoreCanvas().nativeElement;
     canvas.style.cursor = area ? 'pointer' : 'default';
     canvas.title = area ? area.label + (area.reroll ? ' Shift+middle-click rerolls settings; Shift+right-click resets settings and manual notes.' : '')
       + (area.duplicate ? ' Middle-click duplicates; right-click removes this section.' : '') : '';
+  }
+
+  onPointerLeave(): void {
+    this.hoverPointer = null;
+    this.hoveredKey = null;
+    const canvas = this.scoreCanvas().nativeElement;
+    canvas.style.cursor = 'default';
+    canvas.title = '';
+    this.scheduleDraw();
   }
 
   onCanvasKeydown(event: KeyboardEvent): void {

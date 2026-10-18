@@ -96,7 +96,11 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .score-ruler-viewport { min-width: 0; overflow: hidden; margin-left: 1px; }
 .score-ruler-sections { position: relative; min-width: 0; height: 20px; }
 .score-loop-line { position: absolute; bottom: 0; height: 2px; background: var(--loop-line); pointer-events: none; }
-.score-ruler-section { position: absolute; top: 0; min-width: 0; height: 20px; }
+.score-ruler-section { position: absolute; top: 0; min-width: 0; height: 20px; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.score-ruler-section.selected { background: var(--surface-accent); }
+.score-ruler-section:hover { background: var(--surface-hover); }
+.score-ruler-section.selected:hover { background: var(--surface-accent-hover); }
+.score-ruler-section:focus-visible { outline: 1px solid var(--border-focus); outline-offset: -1px; }
 .score-header-separator { position: absolute; z-index: 1; top: 0; height: 20px; width: 1px; background: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-foreground-tone)) 15%, transparent); pointer-events: none; }
 .score-header-separator.section-end { background: var(--grid-measure); }
 .score-chord-slot { position: absolute; top: 0; min-width: 0; height: 20px; box-sizing: border-box; overflow: hidden; }

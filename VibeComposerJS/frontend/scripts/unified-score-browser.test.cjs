@@ -17,6 +17,21 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   let id=0;const command=(method,params={})=>new Promise((r,j)=>{const n=++id;const listener=e=>{const m=JSON.parse(e.data);if(m.id!==n)return;socket.removeEventListener('message',listener);m.error?j(Error(JSON.stringify(m.error))):r(m.result);};socket.addEventListener('message',listener);socket.send(JSON.stringify({id:n,method,params}));});
   const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify(result));return result.result.value;};
   const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
+  const headerSelection=await evaluate(`(async()=>{${waitCode}
+    await wait(()=>document.querySelectorAll('button.score-ruler-section').length>=2);
+    const headers=()=>[...document.querySelectorAll('button.score-ruler-section')];
+    const selected=()=>headers().flatMap((button,index)=>button.getAttribute('aria-pressed')==='true'?[index]:[]);
+    const click=async(index,modifiers={})=>{headers()[index].dispatchEvent(new MouseEvent('click',{bubbles:true,...modifiers}));await new Promise(r=>setTimeout(r,60));return selected();};
+    const plain=await click(0),shift=await click(1,{shiftKey:true}),ctrl=await click(0,{ctrlKey:true}),meta=await click(1,{metaKey:true}),cleared=await click(1);
+    const b=headers()[0].getBoundingClientRect();
+    return {plain,shift,ctrl,meta,cleared,background:getComputedStyle(headers()[0]).backgroundColor,x:b.left+Math.min(8,b.width/2),y:b.top+b.height/2};
+  })()`);
+  assert.deepEqual(headerSelection.plain,[0]);assert.deepEqual(headerSelection.shift,[1]);
+  assert.deepEqual(headerSelection.ctrl,[0]);assert.deepEqual(headerSelection.meta,[1]);assert.deepEqual(headerSelection.cleared,[]);
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:headerSelection.x,y:headerSelection.y});
+  const hoveredHeader=await evaluate(`({background:getComputedStyle(document.querySelector('.score-ruler-section')).backgroundColor,
+    expected:getComputedStyle(document.documentElement).getPropertyValue('--surface-hover').trim(),hovered:document.querySelector('.score-ruler-section').matches(':hover')})`);
+  assert.equal(hoveredHeader.hovered,true);assert.notEqual(hoveredHeader.background,headerSelection.background);
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('vc-score-canvas canvas'));const seed=document.querySelector('[aria-label="Generation seed"]');seed.value='43';seed.dispatchEvent(new Event('change',{bubbles:true}));const p=await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')));p.arrangement=[{...p.arrangement[0],measures:4,trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,true]))}];for(const t of p.tracks)t.editedPhrase=[{id:t.id+'-fixture',midi:t.role==='drums'?36:t.role==='bass'?48:60,startBeat:0,durationBeats:1,velocity:90}];const bass=p.tracks.find(t=>t.role==='bass');bass.editedPhrase.push({id:'bass-low',midi:24,startBeat:4,durationBeats:1,velocity:90},{id:'bass-high',midi:96,startBeat:8,durationBeats:1,velocity:90});const drum=p.tracks.find(t=>t.role==='drums');for(const [index,pitch] of [[2,38],[3,42]])p.tracks.push({...drum,id:'track-drums-'+index,name:'D'+index,generatorSettings:{...drum.generatorSettings,pitch},editedPhrase:[{id:'shared-drum',midi:pitch,startBeat:0,durationBeats:1,velocity:90}]});sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));return true;})()`);
   await command('Page.reload');
   const initial=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));return {labels:document.querySelectorAll('.pitch-key').length,drums:document.querySelectorAll('.drum-label').length,arrangement:!!document.querySelector('vc-arrangement-overview canvas'),velocity:!!document.querySelector('.velocity-label')};})()`);

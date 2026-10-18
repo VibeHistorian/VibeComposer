@@ -198,17 +198,22 @@
               <div class="score-ruler-viewport" [style.width.px]="scoreViewport().width">
                 <div class="score-ruler-sections">
                   @for (section of scoreHeaderSections(); track section.section.id) {
-                    <div class="score-ruler-section" vcScoreChordLabels [style.left.px]="section.left" [style.width.px]="section.width">
+                    <button type="button" class="score-ruler-section" vcScoreChordLabels
+                      [style.left.px]="section.left" [style.width.px]="section.width"
+                      [class.selected]="selectedSectionIds().includes(section.section.id)"
+                      [attr.aria-pressed]="selectedSectionIds().includes(section.section.id)"
+                      [attr.aria-label]="'Select ' + sectionLabel(section.section.type) + ' section'"
+                      (click)="workspaceUi.selectSection(section.section.id)">
                       @for (slot of section.slots; track slot.id) {
-                        <div class="score-chord-slot" [style.left.px]="slot.left" [style.width.px]="slot.width" [style.--chord-hue]="slot.chord.hue"
+                        <span class="score-chord-slot" [style.left.px]="slot.left" [style.width.px]="slot.width" [style.--chord-hue]="slot.chord.hue"
                           [attr.data-start-beat]="slot.startBeat" [attr.data-end-beat]="slot.endBeat">
                           @if (slot.startMeasure) { <span class="score-section-measure">{{ slot.startMeasure }}</span> }
                           <span class="score-chord-label" [title]="slot.chord.label">{{ slot.chord.label }}</span>
-                        </div>
+                        </span>
                         <i class="score-header-separator" [class.section-end]="slot.sectionEnd" [style.left.px]="slot.endX"
                           [style.--chord-hue]="slot.chord.hue" [attr.data-beat]="slot.endBeat" aria-hidden="true"></i>
                       }
-                    </div>
+                    </button>
                   }
                   @if (loopRange(); as range) {
                     <i class="score-loop-line" [style.left.px]="scoreHeaderX(range.startBeat)"

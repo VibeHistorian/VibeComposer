@@ -32,14 +32,14 @@ function fixture() {
   new Function('require', 'module', 'exports', compiled)((name) => dependencies[name], module, module.exports);
   const component = new module.exports.ArrangementOverviewComponent();
   const context = () => ({
-    rectangles: [], texts: [], arcs: [], clears: 0, fillStyle: '', globalAlpha: 1,
+    rectangles: [], texts: [], arcs: [], fills: [], clears: 0, fillStyle: '', globalAlpha: 1,
     setTransform() {}, clearRect() { this.clears++; },
     fillRect(...bounds) { this.rectangles.push({ bounds, color: this.fillStyle, alpha: this.globalAlpha }); },
     save() {}, restore() {}, beginPath() {}, rect() {}, clip() {},
     fillText(value, x, y) { this.texts.push({ value, x, y }); },
     measureText(value) { return { width: value.length * 6 }; },
     arc(x, y, radius) { this.arcs.push({ x, y, radius, color: this.fillStyle }); },
-    fill() {}, stroke() {}, strokeRect() {},
+    fill() { this.fills.push({ color: this.fillStyle, alpha: this.globalAlpha }); }, stroke() {}, strokeRect() {},
   });
   const base = context();
   const overlay = context();
@@ -71,6 +71,41 @@ function fixture() {
   component.drawOverview();
   return { component, refs, base, overlay };
 }
+
+test('hover highlights only the hit target and clears on exit or follows a scrolled timeline', () => {
+  const { component: c, refs, base } = fixture();
+  const moveTo = key => {
+    const area = c.hits.find(hit => hit.key === key);
+    c.onPointerMove({ clientX: area.x + area.width / 2, clientY: area.y + area.height / 2 });
+    base.rectangles.length = 0;
+    c.drawOverview();
+  };
+  moveTo('heading:intro');
+  assert.equal(c.hoveredKey, 'heading:intro');
+  assert.ok(base.rectangles.some(rect => rect.color === '--surface-hover' && rect.bounds[1] === 0));
+  c.selectedSectionIds.set(['intro']);
+  base.rectangles.length = 0; c.drawOverview();
+  assert.ok(base.rectangles.some(rect => rect.color === '--surface-accent-hover'));
+  moveTo('group:bass');
+  assert.ok(base.rectangles.some(rect => rect.color === '--surface-hover' && rect.bounds[0] === 0));
+  // Use the note preview, away from the track circle.
+  const cell = c.hits.find(hit => hit.key === 'cell:intro:bass');
+  c.onPointerMove({ clientX: cell.x + 2, clientY: cell.y + 2 });
+  base.rectangles.length = 0; c.drawOverview();
+  assert.ok(base.rectangles.some(rect => rect.color.includes('color-mix') && rect.color.includes('--role-bass-cell-surface')));
+  moveTo('toggle:intro:bass-1');
+  assert.equal(base.rectangles.some(rect => rect.color.includes('color-mix')), false, 'track hover must not brighten its cell');
+  assert.ok(base.fills.some(fill => fill.color.includes('color-mix') && fill.alpha === 1));
+  c.onPointerLeave();
+  assert.equal(c.hoveredKey, null);
+  assert.equal(refs.get('scoreCanvas').style.cursor, 'default');
+  assert.equal(refs.get('scoreCanvas').title, '');
+  c.horizontalScale = 2; c.drawOverview();
+  moveTo('heading:intro');
+  refs.get('scrollHost').scrollLeft = 500;
+  c.drawOverview();
+  assert.notEqual(c.hoveredKey, 'heading:intro', 'scrolling rechecks a stationary pointer');
+});
 
 test('section headings show compact local chords with a duration star only for differing harmony', () => {
   const { component, base } = fixture();
