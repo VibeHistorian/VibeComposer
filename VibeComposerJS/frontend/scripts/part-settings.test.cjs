@@ -5910,6 +5910,25 @@ test('appearance preferences persist, transfer atomically and derive every role 
   assert.deepEqual(preferences.appearance(), defaultAppearance());
 });
 
+test('score chord grid defaults off and persists and transfers without changing project history', () => {
+  const { service, uiPreferences: preferences, load } = fixture();
+  const before = service.exportProjectJson(), position = service.historyPosition();
+  assert.equal(preferences.scoreChordGrid(), false);
+  const defaults = preferences.exportJson();
+  preferences.toggleScoreChordGrid();
+  assert.equal(preferences.scoreChordGrid(), true);
+  const enabled = preferences.exportJson();
+  const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  assert.equal(restored.scoreChordGrid(), true);
+  assert.equal(preferences.importJson(defaults), true); assert.equal(preferences.scoreChordGrid(), false);
+  assert.equal(preferences.importJson(enabled), true); assert.equal(preferences.scoreChordGrid(), true);
+  assert.equal(preferences.importJson(JSON.stringify({ ...JSON.parse(enabled), scoreChordGrid: 'true' })), false);
+  assert.equal(preferences.exportJson(), enabled);
+  const missing = JSON.parse(defaults); delete missing.scoreChordGrid;
+  assert.equal(preferences.importJson(JSON.stringify(missing)), true); assert.equal(preferences.scoreChordGrid(), false);
+  assert.equal(service.exportProjectJson(), before); assert.equal(service.historyPosition(), position);
+});
+
 test('UI preferences customize per-role placement without changing project, history, or fixed order', () => {
   const { service, uiPreferences: preferences, uiStored, load } = fixture();
   const before = service.exportProjectJson(), position = service.historyPosition();

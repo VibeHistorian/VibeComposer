@@ -86,7 +86,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
   readonly notesReady = input(true);
   readonly sections = input.required<readonly ScoreCanvasSection[]>();
-  readonly chordBoundaries = input<readonly number[]>([]);
+  readonly chordBoundaries = input<readonly { beat: number; hue: number }[]>([]);
   readonly totalBeats = input.required<number>();
   readonly playheadPercent = input.required<number>();
   readonly selectedTrackId = input.required<string>();
@@ -170,6 +170,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.scalePitchClasses();
     this.notesReady();
     this.chordBoundaries();
+    this.preferences.scoreChordGrid();
     this.model = {
       tracks: this.tracks(),
       notes: this.notes(),
@@ -857,9 +858,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       if (x < 0 || x > this.width) continue;
       line(x, 0, x, scoreHeight, '--grid-measure', timeGridAlpha);
     }
-    for (const beat of this.chordBoundaries()) {
-      const x = Math.floor(this.scoreX(beat)) + 0.5;
-      if (x >= 0 && x <= this.width) line(x, 0, x, scoreHeight, '--border-strong', 0.35);
+    if (this.preferences.scoreChordGrid()) for (const boundary of this.chordBoundaries()) {
+      const x = Math.floor(this.scoreX(boundary.beat)) + 0.5;
+      if (x < 0 || x > this.width) continue;
+      const tint = new Color(`hsl(${boundary.hue} ${rootStyle.getPropertyValue('--chordlet-foreground-tone').trim()})`);
+      graphics.moveTo(x, 0).lineTo(x, scoreHeight).stroke({ color: tint.toNumber(), alpha: tint.alpha * 0.175, width: 1 });
     }
     // Pitch increases upward: the B/C boundary sits below C, not above it.
     // Use absolute MIDI octaves so brightness stays consistent while zooming or scrolling.

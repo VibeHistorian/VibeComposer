@@ -10,7 +10,7 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect() {}, inject: () => ({ appearance: () => 'dark' }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
+    effect() {}, inject: () => ({ appearance: () => 'dark', scoreChordGrid: () => false }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/shared/score-canvas.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
     target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
@@ -41,6 +41,29 @@ function fixture() {
   global.getComputedStyle = () => ({ getPropertyValue: () => '#32d7f4' });
   return { component, canvas, strokes, fills };
 }
+
+test('optional chord grid draws chord colors at half the previous opacity only when enabled', () => {
+  const { component: c } = fixture();
+  c.horizontalOffset = 0; c.horizontalScale = 1;
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }], notes: [], sections: [], totalBeats: 8, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  c.chordBoundaries = () => [{ beat: 2, hue: 60 }, { beat: 6, hue: 150 }, { beat: 16, hue: 0 }];
+  const strokes = [], tints = [];
+  c.colorClass = class { alpha = 1; constructor(value) { tints.push(value); } toNumber() { return 123; } };
+  let x;
+  c.staticGraphics = { clear() { strokes.length = 0; }, rect() { return this; }, roundRect() { return this; },
+    moveTo(left) { x = left; return this; }, lineTo() { return this; }, fill() { return this; },
+    stroke(style) { strokes.push({ x, ...style }); return this; } };
+  global.getComputedStyle = () => ({ getPropertyValue: key => key === '--chordlet-foreground-tone' ? '70% 84%' : '#32d7f4' });
+  c.drawStatic();
+  assert.equal(strokes.some(stroke => stroke.alpha === .175), false);
+  c.preferences.scoreChordGrid = () => true;
+  c.drawStatic();
+  assert.deepEqual(strokes.filter(stroke => stroke.alpha === .175).map(stroke => stroke.x), [200.5, 600.5]);
+  assert.ok(tints.includes('hsl(60 70% 84%)')); assert.ok(tints.includes('hsl(150 70% 84%)'));
+  c.preferences.scoreChordGrid = () => false;
+  c.drawStatic();
+  assert.equal(strokes.some(stroke => stroke.alpha === .175), false);
+});
 
 test('empty score clicks seek through the zoomed and panned viewport, including scaled canvas bounds', () => {
   const { component } = fixture();

@@ -25,6 +25,7 @@ import { WorkspaceUiService } from './workspace-ui.service';
 import type { SettingsSelection } from './workspace-ui.service';
 import { ArrangementOverviewComponent } from './arrangement-overview.component';
 import { ScoreCanvasComponent } from './score-canvas.component';
+import { ScoreChordLabelsDirective } from './score-chord-labels.directive';
 import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
 import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
 import { PartSettingsEditorComponent } from './part-settings-editor.component';
@@ -61,7 +62,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, MelodyGlobalSettingsComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',
@@ -310,19 +311,35 @@ export class WorkspaceCanvasComponent {
   });
   readonly sectionHarmony = computed(() => Object.fromEntries(this.project().arrangement.map(section =>
     [section.id, sectionHarmonyDisplay(this.project(), section)])));
-  readonly scoreChordSlots = computed(() => this.timelineSections().flatMap(item => {
+  readonly scoreRulerSections = computed(() => this.timelineSections().map(item => {
     const harmony = this.sectionHarmony()[item.section.id];
     let beat = item.startBeat;
-    return Array.from({ length: item.section.measures }, (_, index) => {
+    const durationBeats = sectionDurationBeats(this.project(), item.section);
+    const slots = Array.from({ length: item.section.measures }, (_, index) => {
       const duration = harmony.durations[index % harmony.durations.length];
       const slot = { id: `${item.section.id}:${index}`, startBeat: beat, endBeat: beat + duration,
-        widthPercent: duration / this.totalBeats() * 100, chord: harmony.chords[index % harmony.chords.length],
+        widthPercent: duration / durationBeats * 100, chord: harmony.chords[index % harmony.chords.length],
         startMeasure: index === 0 ? item.startMeasure.toString().padStart(2, '0') : '' };
       beat += duration;
       return slot;
     });
+    return { ...item, slots };
   }));
-  readonly scoreChordBoundaries = computed(() => this.scoreChordSlots().map(slot => slot.endBeat));
+  readonly scoreChordBoundaries = computed(() => this.scoreRulerSections().flatMap(section =>
+    section.slots.map(slot => ({ beat: slot.endBeat, hue: slot.chord.hue }))));
+  scoreHeaderX(beat: number): number {
+    const viewport = this.scoreViewport();
+    // Match the canvas's floor(x) + 0.5 stroke center with a one-pixel DOM strip.
+    return Math.floor((beat / Math.max(1, this.totalBeats()) - viewport.offsetPercent / 100) * viewport.width * viewport.scale);
+  }
+  readonly scoreHeaderSections = computed(() => this.scoreRulerSections().map(section => {
+    const left = this.scoreHeaderX(section.startBeat);
+    const end = this.scoreHeaderX(section.slots.at(-1)?.endBeat ?? section.startBeat);
+    return { ...section, left, width: end - left, slots: section.slots.map((slot, index) => {
+      const start = this.scoreHeaderX(slot.startBeat), end = this.scoreHeaderX(slot.endBeat);
+      return { ...slot, left: start - left, width: end - start, endX: end - left, sectionEnd: index === section.slots.length - 1 };
+    }) };
+  }));
   readonly tracks = computed<TrackRow[]>(() => this.project().tracks.map((track) => ({
     ...track,
     color: track.role,

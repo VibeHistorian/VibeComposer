@@ -231,5 +231,61 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   })()`);
   assert.match(harmonyTooltip,/Global track \[Section harmony\]/);
   await capture('section-harmony-headers');
+  const scoreSettings=await evaluate(`(async()=>{${waitCode}
+    const button=text=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===text||b.getAttribute('aria-label')===text);
+    button('Settings').click();(await wait(()=>button('Score'))).click();
+    const toggle=await wait(()=>document.querySelector('[aria-label="Chord-based grid subdivisions"]'));
+    const defaultOff=!toggle.checked;toggle.click();
+    await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid===true);
+    button('Close settings').click();
+    return {defaultOff,saved:JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid,
+      border:getComputedStyle(document.querySelector('.score-chord-label')).borderTopWidth,
+      sectionSeparator:getComputedStyle(document.querySelector('.score-header-separator.section-end')).width,
+      chordSeparator:getComputedStyle(document.querySelector('.score-header-separator')).width};
+  })()`);
+  assert.deepEqual(scoreSettings,{defaultOff:true,saved:true,border:'0px',sectionSeparator:'1px',chordSeparator:'1px'});
+  for(const width of [1600,1023,781]) {
+    await command('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:false});
+    const alignment=await evaluate(`(async()=>{${waitCode}
+      const settle=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      await settle();
+      const canvas=document.querySelector('vc-score-canvas canvas'),h=document.querySelector('.horizontal-scroll');
+      const check=()=>{
+        const bounds=canvas.getBoundingClientRect(),content=parseFloat(document.querySelector('.horizontal-scroll > div').style.width);
+        return [...document.querySelectorAll('.score-header-separator')].map(line=>{
+          const expected=Math.floor(+line.dataset.beat/16*content-h.scrollLeft);
+          return Math.abs(line.getBoundingClientRect().left-bounds.left-expected);
+        });
+      };
+      const c=canvas.getBoundingClientRect();
+      const wheel=deltaY=>canvas.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,deltaY,clientX:c.left,clientY:c.top}));
+      wheel(10000);await settle();const fit=check();
+      wheel(-350);await settle();h.scrollLeft=37;await settle();const zoomed=check();
+      wheel(10000);await settle();
+      return {fit,zoomed};
+    })()`);
+    assert.ok([...alignment.fit,...alignment.zoomed].every(error=>error<.02),'pixel-aligned separators at '+width+'px: '+JSON.stringify(alignment));
+  }
+  await command('Emulation.setDeviceMetricsOverride',{width:1600,height:1100,deviceScaleFactor:1,mobile:false});
+  await evaluate(`(()=>{
+    const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    p.arrangement=[{...p.arrangement[0],measures:1,customDurations:[.25],chordDegrees:[1]},p.arrangement[1]];
+    sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+  })()`);
+  await command('Page.reload');
+  const shortSection=await evaluate(`(async()=>{${waitCode}
+    const section=await wait(()=>document.querySelector('.score-ruler-section.chords-hidden'));
+    const label=section.querySelector('.score-chord-label');
+    const initial={hidden:getComputedStyle(label).visibility==='hidden',measure:section.querySelector('.score-section-measure').textContent,
+      separator:getComputedStyle(section.querySelector('.score-header-separator')).backgroundColor,
+      saved:JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid};
+    const canvas=await wait(()=>document.querySelector('vc-score-canvas canvas')),c=canvas.getBoundingClientRect();
+    canvas.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,deltaY:-1000,clientX:c.left,clientY:c.top}));
+    await wait(()=>!section.classList.contains('chords-hidden'));
+    return {...initial,reappeared:getComputedStyle(label).visibility==='visible'};
+  })()`);
+  assert.equal(shortSection.hidden,true);assert.equal(shortSection.measure,'01');assert.equal(shortSection.saved,true);
+  assert.equal(shortSection.reappeared,true);assert.notEqual(shortSection.separator,'rgba(0, 0, 0, 0)');
+  await capture('score-chord-grid-short-sections');
  } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
 });

@@ -103,6 +103,17 @@
             <p id="sync-score-mix-description">Set the mix to hear the roles displayed in the score. Changes apply immediately and are saved in your UI preferences.</p>
           </section>
         }
+        @case ('score') {
+          <section aria-labelledby="score-settings-title">
+            <h2 id="score-settings-title">Score</h2>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Chord-based grid subdivisions" [checked]="preferences.scoreChordGrid()"
+                (change)="preferences.toggleScoreChordGrid()" aria-describedby="score-chord-grid-description" />
+              <span>Chord-based grid subdivisions</span>
+            </label>
+            <p id="score-chord-grid-description">Show faint lines in each chord's color at its ending beat. Saved in your UI preferences.</p>
+          </section>
+        }
         @case ('melody') {
           <section aria-labelledby="melody-settings-title">
             <h2 id="melody-settings-title">Melody</h2>
