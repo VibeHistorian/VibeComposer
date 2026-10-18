@@ -55,8 +55,8 @@ public class GUIConfig {
 			org.vibehistorian.vibecomposer.generation.HarmonicProgressionPlanner.Strategy.CURRENT;
 	private org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending melodyEnding =
 			org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.LOOP;
-	private int melodyRangeMin = 60;
-	private int melodyRangeMax = 84;
+	private int melodyRangeMin = 48;
+	private int melodyRangeMax = 72;
 	private boolean melodyRangeRandomizeOnCompose;
 	private int melodyTension = 35;
 	private org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form melodyForm = org.vibehistorian.vibecomposer.generation.MelodyPhrasePlan.Form.STATEMENT_VARIATION;

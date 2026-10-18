@@ -5,7 +5,7 @@ import { DEFAULT_MELODY_GLOBAL } from './melody-global-settings';
 
 export function contextualRange(seed: bigint): { rangeMin: number; rangeMax: number } {
   const random = new JavaRandom(seed ^ 0x72616e67654cn), span = [12,14,16,19,24][random.nextInt(5)];
-  const center = 67 + random.nextInt(10), rangeMin = center - Math.trunc(span / 2);
+  const center = 55 + random.nextInt(10), rangeMin = center - Math.trunc(span / 2);
   return { rangeMin, rangeMax: rangeMin + span };
 }
 

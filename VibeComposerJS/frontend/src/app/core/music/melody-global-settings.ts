@@ -2,7 +2,7 @@ import type { MelodyGlobalSettings } from '../project/project.model';
 import { DEFAULT_BLOCK_TYPE_WEIGHTS } from './melody-catalogue';
 
 export const DEFAULT_MELODY_GLOBAL = Object.freeze({
-  contextualMelody: false, rangeMin: 60, rangeMax: 84, rangeRandomizeOnCompose: false,
+  contextualMelody: false, rangeMin: 48, rangeMax: 72, rangeRandomizeOnCompose: false,
   tension: 35, ending: 'LOOP' as const, form: 'STATEMENT_VARIATION' as const,
   style: 'TONAL' as const, chromaticApproaches: false, phraseBars: 2, beatsPerBar: 4,
   singleNoteExceptions: false, maxDirectionChanges: 2, fillPausesPerChord: false,

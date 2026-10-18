@@ -456,8 +456,8 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 		ScrollComboBox.addAll(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.values(), melodyEnding);
 		melodyEnding.setVal(org.vibehistorian.vibecomposer.generation.ContextualMelodyPlanner.Ending.LOOP);
 		melodyEnding.setToolTipText("Contextual phrase ending: open, close on tonic when harmony supports it, or connect the loop.");
-		melodyRangeMin = new KnobPanel("Melody Low<br>MIDI", 60, 0, 127);
-		melodyRangeMax = new KnobPanel("Melody High<br>MIDI", 84, 0, 127);
+		melodyRangeMin = new KnobPanel("Melody Low<br>MIDI", 48, 0, 127);
+		melodyRangeMax = new KnobPanel("Melody High<br>MIDI", 72, 0, 127);
 		melodyRangeMin.setToolTipText("Contextual generator range before track and key transposition.");
 		melodyRangeMax.setToolTipText("Contextual generator range before track and key transposition.");
 		melodyTension = new KnobPanel("Melody<br>Tension", 35, 0, 100);
@@ -675,7 +675,7 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
         panel.setSpeed(primary ? 35 : 0);
         panel.setPauseChance(primary ? 5 : 50);
         panel.setStartNoteChance(primary ? 100 : 80);
-        panel.setTranspose(primary ? 0 : order % 2 == 0 ? -12 : -24);
+        panel.setTranspose(primary ? 12 : order % 2 == 0 ? 0 : -12);
     }
 
     public void randomizeContextualRangeOnCompose(boolean regenerate,int seed) {
@@ -825,7 +825,8 @@ public class MelodyGUI extends InstGUI<MelodyPanel> {
 			panel.setNoteExceptionChance(10 + panelGenerator.nextInt(15));
 			panel.setMaxNoteExceptions(panelGenerator.nextInt(2));
 			panel.setLeadChordsChance(panelGenerator.nextInt(50));
-			panel.setChordSpanFill(melodyFills[panelGenerator.nextInt(melodyFills.length)]);
+			ChordSpanFill fill = melodyFills[panelGenerator.nextInt(melodyFills.length)];
+			panel.setChordSpanFill(panel.getPanelOrder() == 1 ? ChordSpanFill.ALL : fill);
 			panel.setFillFlip(false);
 
 			int panelOrder = panel.getPanelOrder();

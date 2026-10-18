@@ -6,6 +6,34 @@ const { generateHarmony } = loadMusic('contextual-harmony.ts');
 const { SCALE_MODES } = loadMusic('scales.ts');
 const { mapChordNotes } = loadMusic('section-context.ts');
 
+test('contextual defaults and seeded ranges use the lower octave', () => {
+  const { DEFAULT_MELODY_GLOBAL } = loadMusic('melody-global-settings.ts');
+  const { contextualRange } = loadMusic('contextual-randomizer.ts');
+  assert.equal(DEFAULT_MELODY_GLOBAL.rangeMin, 48);
+  assert.equal(DEFAULT_MELODY_GLOBAL.rangeMax, 72);
+  for (let seed = 0n; seed < 64n; seed++) {
+    const range = contextualRange(seed);
+    assert.ok(range.rangeMin >= 43 && range.rangeMax <= 76);
+    assert.ok([12,14,16,19,24].includes(range.rangeMax - range.rangeMin));
+  }
+});
+
+test('melody rerolls use balanced octaves and always give Melody #1 an unflipped ALL fill', () => {
+  const { rerollRoleSettings, DEFAULT_TRACK_POLICIES } = loadMusic('track-generation.ts');
+  const track = { role: 'melody', generatorSettings: { algorithm: 'block', chordSpanFill: 'ODD', fillFlip: true } };
+  const secondaryFills = new Set();
+  for (let seed = 0n; seed < 64n; seed++) {
+    const settings = rerollRoleSettings(seed, 'melody', DEFAULT_TRACK_POLICIES.melody, [track,track,track], [1,2,3]);
+    assert.deepEqual(settings.map(s => s.transpose), [12,0,-12]);
+    assert.equal(settings[0].chordSpanFill, 'ALL');
+    assert.ok(settings.every(s => !s.fillFlip));
+    secondaryFills.add(settings[1].chordSpanFill);
+  }
+  assert.ok(secondaryFills.size > 1);
+  const [secondary] = rerollRoleSettings(42n, 'melody', DEFAULT_TRACK_POLICIES.melody, [track], [3]);
+  assert.equal(secondary.transpose, -12, 'stable track order survives locked or skipped siblings');
+});
+
 test('bounded contextual search retains reachable loop endings across modes and harmony strategies', () => {
   for (const scale of SCALE_MODES) for (let seed = 1; seed <= 6; seed++) for (const ending of ['OPEN','CLOSED','LOOP']) {
     const harmony = generateHarmony(BigInt(seed),4,'C',scale,{ generation: ['FUNCTIONAL','FIFTHS','POP_LOOP','MODAL'][seed % 4] });

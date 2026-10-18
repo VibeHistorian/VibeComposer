@@ -17,8 +17,8 @@ import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 export class MelodyGlobalSettingsComponent {
   readonly preferences = inject(UiPreferencesService);
   readonly contextualNumbers = [
-    { key: 'rangeMin', label: 'Melody Low MIDI', min: 0, max: 127, fallback: 60 },
-    { key: 'rangeMax', label: 'Melody High MIDI', min: 0, max: 127, fallback: 84 },
+    { key: 'rangeMin', label: 'Melody Low MIDI', min: 0, max: 127, fallback: 48 },
+    { key: 'rangeMax', label: 'Melody High MIDI', min: 0, max: 127, fallback: 72 },
     { key: 'tension', label: 'Melody Tension', min: 0, max: 100, fallback: 35 },
     { key: 'phraseBars', label: 'Phrase Bars', min: 1, max: 16, fallback: 2 },
     { key: 'beatsPerBar', label: 'Beats per Bar', min: 1, max: 12, fallback: 4 },

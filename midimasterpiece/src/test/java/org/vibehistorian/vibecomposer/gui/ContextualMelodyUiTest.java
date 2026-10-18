@@ -15,6 +15,46 @@ import org.vibehistorian.vibecomposer.Parts.MelodyPart;
 import static org.junit.Assert.*;
 
 public class ContextualMelodyUiTest {
+    @Test public void rerollsUseBalancedOctavesAndPrimaryFillWhileRespectingFillLocks() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            JCheckBox previousAllowValues = ExtraSettingsGUI.allowValuesOutOfRange;
+            try {
+                ExtraSettingsGUI.allowValuesOutOfRange = new JCheckBox();
+                MelodyGUI[] holder = new MelodyGUI[1];
+                org.vibehistorian.vibecomposer.controllers.InstrumentPanelController controller =
+                    new org.vibehistorian.vibecomposer.controllers.InstrumentPanelController(
+                        context(org.vibehistorian.vibecomposer.controllers.InstrumentPanelController.Context.class),
+                        role -> null, role -> holder[0], () -> 1, () -> null);
+                MelodyGUI gui = holder[0] = new MelodyGUI(context(MelodyGUI.Context.class),controller);
+                gui.initExtraSettingsMelody(new JPanel()); gui.initMelodyGenSettings();
+                for (int order = 1; order <= 3; order++) {
+                    MelodyPanel panel = gui.createPanel(context(SoloMuter.Context.class));
+                    panel.setOrderAndOffset(order,order); gui.getPanels().add(panel);
+                }
+                MelodyPanel primary = gui.getPanels().get(0);
+                for (boolean contextual : new boolean[] {true,false}) {
+                    gui.contextualMelody.setSelected(contextual);
+                    gui.melodyLegacyMode.setSelected(!contextual);
+                    for (int seed = 1; seed <= 12; seed++) {
+                        primary.setChordSpanFill(org.vibehistorian.vibecomposer.Enums.ChordSpanFill.ODD);
+                        primary.setFillFlip(true);
+                        gui.createRandomMelodyPanels(seed,3,false,null);
+                        assertEquals(12,primary.getTranspose());
+                        assertEquals(0,gui.getPanels().get(1).getTranspose());
+                        assertEquals(-12,gui.getPanels().get(2).getTranspose());
+                        assertEquals(org.vibehistorian.vibecomposer.Enums.ChordSpanFill.ALL,primary.getChordSpanFill());
+                        assertFalse(primary.getFillFlip());
+                    }
+                }
+                primary.setChordSpanFill(org.vibehistorian.vibecomposer.Enums.ChordSpanFill.ODD);
+                java.lang.reflect.Field fill = org.vibehistorian.vibecomposer.Panels.InstPanel.class.getDeclaredField("chordSpanFill");
+                fill.setAccessible(true); ((Component) fill.get(primary)).setEnabled(false);
+                gui.createRandomMelodyPanels(42,3,false,null);
+                assertEquals(org.vibehistorian.vibecomposer.Enums.ChordSpanFill.ODD,primary.getChordSpanFill());
+            } catch (Exception failure) { throw new AssertionError(failure); }
+            finally { ExtraSettingsGUI.allowValuesOutOfRange = previousAllowValues; }
+        });
+    }
     @SuppressWarnings("unchecked") private static <T> T context(Class<T> type) {
         return (T) Proxy.newProxyInstance(type.getClassLoader(),new Class<?>[] {type},(proxy,method,args) -> {
             Class<?> result = method.getReturnType();
@@ -48,7 +88,7 @@ public class ContextualMelodyUiTest {
                 MelodyPanel panel = gui.createPanel(context(SoloMuter.Context.class)); gui.getPanels().add(panel);
                 gui.melodyRangeRandomizeOnCompose.setSelected(true);
                 gui.randomizeContextualRangeOnCompose(true,17);
-                assertEquals(60,gui.melodyRangeMin.getInt()); assertEquals(84,gui.melodyRangeMax.getInt());
+                assertEquals(48,gui.melodyRangeMin.getInt()); assertEquals(72,gui.melodyRangeMax.getInt());
                 gui.randomizeContextualRangeOnCompose(false,17);
                 int selectedLow = gui.melodyRangeMin.getInt(), selectedHigh = gui.melodyRangeMax.getInt();
                 panel.setLockInst(true); gui.randomizeContextualRangeOnCompose(false,18);

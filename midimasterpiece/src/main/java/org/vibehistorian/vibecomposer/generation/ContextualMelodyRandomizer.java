@@ -10,7 +10,7 @@ public final class ContextualMelodyRandomizer {
     public static int[] range(long seed, int direction, Collection<Integer> anchors) {
         Random random = new Random(seed ^ 0x72616e67654cL);
         int span = new int[] {12,14,16,19,24}[random.nextInt(5)];
-        int center = 67 + random.nextInt(10);
+        int center = 55 + random.nextInt(10);
         int low = center - span / 2, high = low + span;
         for (int pitch : anchors) {
             // Leave movement space on the requested side of an exact anchor.

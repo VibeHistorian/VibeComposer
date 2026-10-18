@@ -391,6 +391,7 @@ function rerollMelody(random: JavaRandom, seed: bigint, policy: TrackGenerationP
   const noteExceptionChance = 10 + random.nextInt(15), maxNoteExceptions = random.nextInt(2), leadChordsChance = random.nextInt(50);
   const next = { ...source, speed, maxBlockChange, noteExceptionChance, maxNoteExceptions, leadChordsChance,
     chordSpanFill: SECONDARY_FILLS[random.nextInt(6)], fillFlip: false };
+  if (order === 1) next.chordSpanFill = 'ALL';
   if (order > 1) Object.assign(next, { fillPauses: true, pauseChance: 50 + random.nextInt(40),
     velocityMax: 64 + random.nextInt(20), velocityMin: 40 + random.nextInt(20), transpose: order % 2 === 0 ? 0 : -12,
     noteLengthMultiplier: 70 + random.nextInt(40) });

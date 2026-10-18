@@ -13,7 +13,7 @@ public class ContextualComposeRandomizationTest {
         Set<String> ranges = new HashSet<>();
         for (int seed = 0; seed < 64; seed++) {
             int[] range = ContextualMelodyRandomizer.range(seed,0,Collections.emptyList());
-            assertTrue(range[0] >= 55 && range[1] <= 88);
+            assertTrue(range[0] >= 43 && range[1] <= 76);
             assertTrue(range[1] - range[0] >= 12 && range[1] - range[0] <= 24);
             assertArrayEquals(range,ContextualMelodyRandomizer.range(seed,0,Collections.emptyList()));
             ranges.add(Arrays.toString(range));
