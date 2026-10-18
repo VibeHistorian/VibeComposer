@@ -112,6 +112,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly cellSelected = output<{ readonly sectionId: string; readonly role: ArrangedPart }>();
   readonly trackSelected = output<{ readonly sectionId: string; readonly trackId: string }>();
   readonly partToggled = output<{ readonly sectionId: string; readonly trackId: string; readonly present: boolean }>();
+  readonly groupPresenceToggled = output<{ readonly sectionId: string; readonly role: ArrangedPart }>();
   readonly tracksChangeRequested = output<{ readonly sectionId: string; readonly role?: ArrangedPart;
   readonly trackId?: string; readonly action: 'reroll' | 'reset' }>();
   readonly sectionDuplicateRequested = output<string>();
@@ -437,8 +438,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.strokeRect(x + 0.5, y + 0.5, width - 1, this.rowHeight - 1);
         }
         hit({ key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
-          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}.`,
+          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Middle-click or press I to clear all tracks if any are present, otherwise include all tracks.`,
           activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }),
+          togglePresence: () => this.groupPresenceToggled.emit({ sectionId: item.section.id, role: group.role }),
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
           reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reset' }) }, this.labelWidth, RULER_HEIGHT);
         const visibleTracks = this.overviewTracks(item.section, group);

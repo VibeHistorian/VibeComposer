@@ -477,7 +477,11 @@ test('cell bodies select role settings while section selection is header-only', 
   assert.equal(component.sectionSelected.values.length, 0);
   assert.equal(component.partToggled.values.length, 0);
   component.onCanvasAuxclick({ button: 1, clientX: cell.x + 5, clientY: cell.y + 5, preventDefault() {} });
-  assert.equal(component.partToggled.values.length, 0, 'cell bodies cannot toggle presence');
+  assert.equal(component.partToggled.values.length, 0, 'cell bodies emit a group action');
+  assert.deepEqual(component.groupPresenceToggled.values, [{ sectionId: 'verse', role: 'bass' }]);
+  assert.equal(component.cellSelected.values.length, 1, 'middle-click preserves selection');
+  component.onCanvasAuxclick({ button: 1, shiftKey: true, clientX: cell.x + 5, clientY: cell.y + 5, preventDefault() {} });
+  assert.equal(component.groupPresenceToggled.values.length, 1, 'Shift-middle-click only rerolls');
 });
 
 test('manual section notes replace nearby freeze markers, including an empty saved phrase', () => {

@@ -8,6 +8,32 @@ const { Midi } = require('@tonejs/midi');
 // Share immutable compiled text; each fixture still evaluates fresh modules and services.
 const compiledModules = new Map();
 
+test('overview role presence clears mixed or full groups and fills empty groups in one undo step', () => {
+  const { service } = fixture();
+  service.duplicateTrack('track-bass-1');
+  const tracks = service.project().tracks.filter(track => track.role === 'bass');
+  assert.equal(tracks.length, 2);
+  const sectionId = service.project().arrangement[0].id;
+  for (const flags of [[true, false], [false, true], [true, true], [false, false]]) {
+    tracks.forEach((track, index) => service.setSectionTrackPresence(0, track.id, flags[index]));
+    const before = service.exportProjectJson();
+    const section = service.project().arrangement[0];
+    const otherSections = service.project().arrangement.slice(1);
+    service.toggleSectionRolePresence(sectionId, 'bass');
+    const updated = service.project().arrangement[0];
+    for (const track of service.project().tracks) {
+      assert.equal(updated.trackPresence[track.id], track.role === 'bass' ? !flags.some(Boolean) : section.trackPresence[track.id]);
+    }
+    assert.deepEqual(service.project().arrangement.slice(1), otherSections);
+    const after = service.exportProjectJson();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+  }
+  const unchanged = service.project();
+  service.toggleSectionRolePresence('missing-section', 'bass');
+  assert.strictEqual(service.project(), unchanged);
+});
+
 test('harmony headers compare effective chords and durations and reuse transposed chordlet labels', () => {
   const { service } = fixture();
   const { sectionHarmonyDisplay, trackHasSectionHarmony } = require('./music-loader.cjs').loadMusic('harmony-display.ts');

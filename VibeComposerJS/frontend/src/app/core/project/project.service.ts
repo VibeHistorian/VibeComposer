@@ -1152,6 +1152,18 @@ export class ProjectService {
     this.commit({ ...project, arrangement: next });
   }
 
+  toggleSectionRolePresence(sectionId: string, role: ArrangedPart): void {
+    const project = this.state();
+    const section = project.arrangement.find(candidate => candidate.id === sectionId);
+    const tracks = project.tracks.filter(track => track.role === role);
+    if (!section || !tracks.length) return;
+    const present = !tracks.some(track => section.trackPresence[track.id] ?? false);
+    const trackPresence = { ...section.trackPresence,
+      ...Object.fromEntries(tracks.map(track => [track.id, present])) };
+    this.commit({ ...project, arrangement: project.arrangement.map(candidate => candidate.id === sectionId
+      ? { ...section, trackPresence } : candidate) });
+  }
+
   setSectionTrackPresence(index: number, trackId: string, present: boolean): void {
     const project = this.state();
     const section = project.arrangement[index];

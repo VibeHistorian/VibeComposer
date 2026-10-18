@@ -121,7 +121,8 @@
         (selectionCleared)="workspaceUi.clearSelection()"
         (cellSelected)="selectCell($event.sectionId, $event.role)"
         (trackSelected)="selectSectionTrack($event.sectionId, $event.trackId)"
-        (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)" />
+        (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)"
+        (groupPresenceToggled)="projects.toggleSectionRolePresence($event.sectionId, $event.role)" />
 
       @if (!partSettingsInInspector()) {
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
