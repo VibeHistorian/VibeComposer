@@ -191,13 +191,17 @@ export function generateContextualMelody(seed: bigint | number, key: string, sca
                 if (before.classes.has(mod(before.root + 10)) && mod(state.last - before.root) === 10) score += movement < 0 && movement >= -2 ? 4 : -3;
               }
             }
-            let reversals = 0, dir = Math.sign(movement);
-            for (let i = state.path.length - 1; i > 0 && state.path[i].slot.start >= slot.phrase.start; i--) {
-              const a = state.path[i].pitch, b = state.path[i - 1].pitch;
-              if (a < 0 || b < 0 || a === b) continue;
-              const d = Math.sign(a - b); if (dir && d !== dir) reversals++; dir = d;
+            // Java applies the history penalty only when this note introduces a reversal.
+            if (state.previous >= 0 && movement !== 0 && state.last !== state.previous
+                && Math.sign(movement) !== Math.sign(state.last - state.previous)) {
+              let reversals = 0, dir = Math.sign(movement);
+              for (let i = state.path.length - 1; i > 0 && state.path[i].slot.start >= slot.phrase.start; i--) {
+                const a = state.path[i].pitch, b = state.path[i - 1].pitch;
+                if (a < 0 || b < 0 || a === b) continue;
+                const d = Math.sign(a - b); if (dir && d !== dir) reversals++; dir = d;
+              }
+              score -= Math.max(0,reversals - options.maxDirectionChanges) * 0.8;
             }
-            score -= Math.max(0,reversals - options.maxDirectionChanges) * 0.8;
             for (let i = state.path.length - 1; i > 0; i--) {
               const earlier = state.path[i], previousPitch = state.path.slice(0,i).reverse().find(note => note.pitch >= 0)?.pitch;
               if (earlier.slot.phrase.motif === slot.phrase.motif && earlier.slot.start % (4 * BEAT) === slot.start % (4 * BEAT) && previousPitch !== undefined) {

@@ -23,6 +23,18 @@ test('arpeggio register matches all production Java pitches in the saved bug con
   assert.equal(compared,54);
 });
 
+test('contextual melodies match production Java pitches in the saved bug configuration and exported MIDI', () => {
+  const { service, phrase, midi } = fixture();
+  const reference = JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/arpeggio-saved-config.java.json'),'utf8'));
+  assert.equal(service.importProjectJson(JSON.stringify(reference.project)),true);
+  const project = service.project(), exported = new Midi(midi.generateCompositionMidi(project));
+  for (const track of project.tracks.filter(track => track.role === 'melody')) {
+    const expected = reference.expectedMelodyPitches[track.id];
+    assert.deepEqual(phrase.layOutTrackPhrase(project,track).map(note => note.midi),expected,track.id);
+    assert.deepEqual(exported.tracks.find(item => item.name === track.name)?.notes.map(note => note.midi) ?? [],expected,`${track.id} MIDI`);
+  }
+});
+
 test('canonical and realized arpeggio harmony use the Java role register before track transpose', () => {
   const { load } = fixture();
   const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
