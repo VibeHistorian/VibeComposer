@@ -322,7 +322,7 @@ test('sections of at least four beats enforce enough zoom for at most two track-
     assert.ok(new Set(buttons.map((button) => button.y)).size <= 2, `${count} tracks use at most two rows`);
     for (const button of buttons) {
       assert.ok(button.x >= cell.x && button.x + button.width <= cell.x + cell.width + 1e-7);
-      assert.ok(button.y >= cell.y + 13, 'buttons leave the top of the compact cell for notes');
+      assert.ok(button.y >= cell.y + 11.5, 'buttons leave the top of the compact cell for notes');
       assert.ok(button.y + button.height <= cell.y + cell.height);
       assert.equal(component.hitAt({ clientX: button.x + 8, clientY: button.y + 8 }).key, button.key);
     }
@@ -492,7 +492,7 @@ test('manual section notes replace nearby freeze markers, including an empty sav
   assert.equal(component.rowHeight, 52, 'rows stay 20% shorter than the previous 65px height');
   for (const sectionId of ['intro', 'verse', 'outro']) {
     const button = component.hits.find(area => area.key === `toggle:${sectionId}:bass-1`);
-    const x = button.x + 14, y = button.y + 2;
+    const x = button.x + button.width / 2 + 6, y = button.y + button.height / 2 - 6;
     const manual = sectionId === 'verse';
     assert.equal(base.texts.some(mark => mark.value === '*' && mark.x === x && mark.y === y + 4), !manual);
     assert.equal(base.arcs.some(mark => mark.radius === 2.5 && mark.x === x && mark.y === y
@@ -568,7 +568,8 @@ test('global manual phrase dots use role accents and section manual dots use the
   base.arcs = []; component.drawOverview();
   for (const section of project.arrangement) {
     const button = component.hits.find(area => area.key === 'toggle:' + section.id + ':bass-1');
-    const dot = base.arcs.find(mark => mark.radius === 2.5 && mark.x === button.x + 14 && mark.y === button.y + 2);
+    const dot = base.arcs.find(mark => mark.radius === 2.5
+      && mark.x === button.x + button.width / 2 + 6 && mark.y === button.y + button.height / 2 - 6);
     assert.equal(dot.color, section.id === 'verse' ? '--accent-primary' : '--role-bass-strong');
   }
 });

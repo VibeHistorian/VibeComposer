@@ -498,8 +498,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             text('*', centerX + 6, centerY - 2, '--text-primary', `bold 10px ${monoFont}`);
             context.textAlign = 'start';
           }
-          const buttonLeft = Math.max(x, centerX - 8), buttonRight = Math.min(x + width, centerX + 8);
-          hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: centerY - 8, width: buttonRight - buttonLeft, height: 16,
+          const hitRadius = TRACK_BUTTON_PITCH / 2;
+          const buttonLeft = Math.max(x, centerX - hitRadius), buttonRight = Math.min(x + width, centerX + hitRadius);
+          hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: centerY - hitRadius,
+            width: buttonRight - buttonLeft, height: TRACK_BUTTON_PITCH,
             label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
