@@ -38,6 +38,7 @@
 
 /* Dense transport knobs */
 .dense { width: 58px; gap: 2px; }
+.dense > vc-control-heading { justify-content: center; }
 .dense .knob-face { width: 32px; height: 32px; padding: 2px; }
 .dense .knob-face > span { width: 24px; height: 24px; }
 .dense input { top: 20px; width: 32px; height: 32px; }

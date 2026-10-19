@@ -2,7 +2,7 @@
   <vc-workspace-canvas />
 
   <vc-transport-dock>
-    <div transportHistory class="project-history-tools">
+      <div transportDevices class="project-tool-group project-device-tools" role="group" aria-label="MIDI and settings">
       <button type="button" class="midi-port-button" [class.midi-connected]="midi.selectedOutput() !== null"
         [cdkMenuTriggerFor]="midiMenu" [cdkMenuPosition]="exportMenuPositions"
         (cdkMenuOpened)="!midi.ready() && midi.refresh()" [title]="midi.selectedOutput() ? 'MIDI output: ' + midi.label() : 'Choose MIDI output'"
@@ -32,13 +32,13 @@
         </div>
       </ng-template>
       <button type="button" class="icon-button" (click)="openSettings()" aria-label="Settings" title="Settings" aria-haspopup="dialog">⚙</button>
-      <div class="project-tool-group" role="group" aria-label="Project history">
+      </div>
+      <div transportHistory class="project-tool-group project-history-group" role="group" aria-label="Project history">
         <button type="button" class="icon-button" (click)="projects.undo()" [disabled]="!projects.canUndo() || workspaceUi.editingNoteId() !== null" aria-label="Undo" title="Undo">↶</button>
         <button type="button" class="icon-button" (click)="projects.redo()" [disabled]="!projects.canRedo() || workspaceUi.editingNoteId() !== null" aria-label="Redo" title="Redo">↷</button>
         <button type="button" class="icon-button" (click)="openHistory()" aria-label="History" title="History" aria-haspopup="dialog">🕘</button>
       </div>
-    </div>
-    <div transportFiles class="project-tool-group" role="group" aria-label="Project files">
+    <div transportFiles class="project-tool-group project-file-tools" role="group" aria-label="Project files">
       <button type="button" [cdkMenuTriggerFor]="exportMenu" [cdkMenuPosition]="exportMenuPositions" title="Export">Export... ▾</button>
       <ng-template #exportMenu>
         <div cdkMenu class="export-menu" aria-label="Export">

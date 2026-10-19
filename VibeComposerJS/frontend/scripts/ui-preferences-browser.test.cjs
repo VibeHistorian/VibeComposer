@@ -6,7 +6,7 @@ const test = require('node:test');
 const browser = findBrowser();
 
 // Stay tall enough to exercise the quick-settings panel rather than its inspector layout.
-for (const width of [1440, 780]) test(`quick-settings placement and UI preference transfer at ${width}px`, { skip: !browser }, async () => {
+for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI preference transfer at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const script = `<script>(async () => {
@@ -86,7 +86,18 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         ensure(seedInput.value==='0','automatic seed input remains zero');
         ensure(document.querySelector('input[aria-label="Tempo in beats per minute"]').value===tempo,'disabled BPM star preserves tempo');
         ensure(document.querySelector('input[aria-label="Transpose in semitones"]').value===transpose,'disabled transpose star preserves transpose');
-        ensure(document.querySelector('.transport-project').getBoundingClientRect().width>=260,'expanded project name width');
+        const name = document.querySelector('textarea[aria-label="Project name"]');
+        ensure(document.querySelector('.transport-project').getBoundingClientRect().width===140,'compact project name width');
+        ensure(name.rows===2 && getComputedStyle(name).textAlign==='center','centered two-line project name');
+        const summary = document.querySelector('.transport-project span');
+        ensure(/^SEED -?\\d+$/.test(summary.textContent.trim()) && summary.title.includes(' BPM | SEED '),'seed hint retains full song tooltip');
+        const box = label => button(label).getBoundingClientRect();
+        const midi = document.querySelector('.midi-port-button').getBoundingClientRect();
+        ensure(box('Settings').top > midi.top && box('Settings').width===midi.width,'MIDI and settings stack with matching widths');
+        ensure(box('Undo').top===box('Redo').top && box('History').top>box('Undo').top,'history below undo and redo');
+        ensure(box('History').width===box('Redo').right-box('Undo').left,'history spans undo and redo');
+        const files = [...document.querySelectorAll('.project-file-tools > button')].map(element => element.getBoundingClientRect());
+        ensure(files[1].top>files[0].top && files[0].width===files[1].width,'matching stacked file actions');
         const dock = document.querySelector('.transport-dock').getBoundingClientRect();
         ensure([...document.querySelectorAll('.transport-tools > *')].every(element => {
           const box = element.getBoundingClientRect();

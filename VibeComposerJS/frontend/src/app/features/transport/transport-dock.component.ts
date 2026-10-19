@@ -115,7 +115,7 @@ export class TransportDockComponent {
   }
 
   updateProjectName(event: Event): void {
-    const input = event.target as HTMLInputElement;
+    const input = event.target as HTMLTextAreaElement;
     this.projects.updateSettings({ name: input.value.trim() || 'Untitled composition' });
     input.value = this.project().name;
   }

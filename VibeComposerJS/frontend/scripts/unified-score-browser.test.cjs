@@ -68,7 +68,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.deepEqual(scrollbars,{fit:true,ranges:true,visible:true,moved:true,reset:true,restored:true},'native scrollbars are visible and track zoom and pan in both directions');
   await command('Page.reload');
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));})()`);
-  for (const [width,height,visible,padding] of [[1600,766,true,87],[1600,765,true,87],[1400,906,true,135],[1400,905,true,135],[1401,905,true,135],[1500,905,true,135],[1501,905,true,87],[1280,800,true,135]]) {
+  for (const [width,height,visible,padding] of [[1600,766,true,87],[1600,765,true,87],[1400,906,true,135],[1400,905,true,135],[1401,905,true,87],[1280,800,true,135]]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
     const layout=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
       const box=selector=>document.querySelector(selector).getBoundingClientRect();
