@@ -12,11 +12,15 @@ Measurements below are a snapshot from 2026-10-19, not file-size targets.
 
 `src/app/core/project/project.service.ts` has 1,996 lines and roughly 124K characters. It combines validation, persistence, history, generation orchestration, and editing commands.
 
-- [ ] Extract pure project decoding and validation into focused modules, retaining value/reference validation without introducing schema-version gates or compatibility migrations.
-- [ ] Extract coherent command groups as their areas are changed, using explicit inputs and results.
-- [ ] Keep the service as the signal owner and the single history/persistence commit boundary. Preserve atomic gestures and failed-operation behavior.
+- [x] Extract pure project decoding and validation into focused modules, retaining value/reference validation without introducing schema-version gates or compatibility migrations.
+- [x] Extract coherent command groups as their areas are changed, using explicit inputs and results. Ten arrangement-edit commands now build candidates outside the service; continue this pattern when other command groups need changes.
+- [x] Keep the service as the signal owner and the single history/persistence commit boundary. Preserve atomic gestures and failed-operation behavior.
 
 Start with validation: it provides a clear extraction boundary without changing UI ownership or command dispatch.
+
+Delivered 2026-10-19: extracted codecs, diagnostics, default construction, section chance data, and arrangement commands. Section preferences and presence randomness are explicit inputs. `ProjectService` decreased from 1,996 to approximately 1,300 lines. Module ownership and verification entry points are documented in [the project-state guide](src/app/core/project/README.md).
+
+Validation: 334 tests passed across part settings, the new codec checks, Java XML imports, section selection, arrangement overview, and contextual generation. The production build passed with the existing Pixi/xmldom CommonJS warning. Both contextual-generation browser cases and the 780px contextual workflow passed. The 1440px contextual workflow failed its real chord-drag assertion at `scripts/contextual-workflows-browser.test.cjs:562` (`5 !== 1`); the same failure reproduced against an isolated build of the pre-cleanup source. That browser failure remains outside this cleanup.
 
 ### 2. Split the broad part-settings test suite
 

@@ -20,6 +20,8 @@ Measured on 2026-10-16: the focused matrix passed in 44.9 seconds; the preceding
 
 ## Part-settings fixture compilation
 
+`npm run test:parts` also runs `project-codec.test.cjs`, which exercises project decoding, validation, diagnostics, defaults, and arrangement candidates without Angular or browser storage. Module ownership is documented in [the project-state guide](../src/app/core/project/README.md).
+
 `npm run test:parts` caches transpiled TypeScript text within the test process. Each fixture still evaluates fresh modules, creates fresh services and signals, and owns separate project/history/storage state. The cache does not share evaluated module exports, skip tests, reduce Java parity matrices, or persist across test processes.
 
 Measured on 2026-10-16: caching reduced the 216-test suite from 107.9 to 5.3 seconds, with identical results at that checkpoint (213 passing and three existing failures). Those failures were subsequently fixed by testing mix synchronization through the preference service and its effect, and keeping default theme-color key order consistent with imported preferences. All 216 tests now pass. Raw timing reports from the original comparison are under `.angular/parts-timing-before.tap` and `.angular/parts-timing-after.tap` when retained locally.

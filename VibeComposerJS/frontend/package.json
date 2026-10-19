@@ -18,7 +18,7 @@
     "test:score": "node --test scripts/score-canvas.test.cjs",
     "test:synth:browser": "node --test scripts/tiny-synth-browser.test.cjs",
     "test:selection": "node --test scripts/section-selection.test.cjs",
-    "test:parts": "node --test scripts/part-settings.test.cjs",
+    "test:parts": "node --test scripts/part-settings.test.cjs scripts/project-codec.test.cjs",
     "test:generation": "node --test scripts/contextual-generation.test.cjs",
     "test:generation:browser": "node --test scripts/contextual-generation-browser.test.cjs",
     "test:preferences:browser": "node --test scripts/ui-preferences-browser.test.cjs",

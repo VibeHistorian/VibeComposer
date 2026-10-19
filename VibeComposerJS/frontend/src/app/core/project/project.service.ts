@@ -1,28 +1,30 @@
+import * as arrangementCommands from './project-arrangement-commands';
+import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
+import { isPhrase } from './project-track-decoder';
+import { decodeProject, isProject } from './project-codec';
+import { copyDefaultProject } from './project-defaults';
+import { projectLoadIssues } from './project-load-diagnostics';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
 import { isScaleMode } from '../music/scales';
 import { followManualPhraseMode } from '../music/manual-phrase-mode';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { historyContent, preserveAudition, projectDiff } from './project-history';
-import { KEYS, getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
-import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';
+import { getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
+import { generateTrackPresence } from '../music/arrangement-generator';
 import type {
   ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
   MixChannelSettings, PhraseNote, SectionType, PartSettingsPatch, PartSettingsScope, MelodySettings,
   LocalPartSettingsScope, PartWorkflowResult, InstrumentGenerationPolicy,
-  ArpeggioGenerationPolicy, TrackGenerationPolicyPatch, TrackGenerationPolicies,
+  ArpeggioGenerationPolicy, TrackGenerationPolicyPatch,
 } from './project.model';
 import type { CompositionProject } from './project.model';
 import {
-  ARRANGED_PARTS, DEFAULT_ARPEGGIO_SETTINGS, DEFAULT_ARRANGEMENT, DEFAULT_BASS_SETTINGS, DEFAULT_CHORD_SETTINGS,
-  DEFAULT_DRUM_SETTINGS, DEFAULT_MELODY_SETTINGS, DEFAULT_MIX, DEFAULT_PROJECT, DEFAULT_TRACKS, SECTION_TYPES,
+  ARRANGED_PARTS, DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_TRACKS,
 } from './project.model';
-import { DEFAULT_SECTION_TYPE_CHANCES, SectionTypeSettingsService } from './section-type-settings.service';
-import { copyPartSettings, decodeCommonPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, validVelocityRange } from '../music/part-settings';
-import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
-import { isDrumPitch } from '../music/drum-instruments';
+import { SectionTypeSettingsService } from './section-type-settings.service';
+import { copyPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS } from '../music/part-settings';
 import { JavaRandom } from '../music/java-random';
-import { ARPEGGIO_PATTERNS } from '../music/arpeggio-pattern';
 import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multiplier';
 import { chooseMelodyTargets, forceMelodyOutline } from '../music/melody-targets';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
@@ -31,8 +33,8 @@ import { generateHarmony } from '../music/contextual-harmony';
 import { contextualRange } from '../music/contextual-randomizer';
 import { DEFAULT_MELODY_GLOBAL } from '../music/melody-global-settings';
 import type { MelodyGlobalSettings } from './project.model';
-import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings, validTrackGenerationMetadata } from '../music/track-generation';
-import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS, decodeInstrumentPolicy, validInstrumentPolicies, rerollInstruments } from '../music/instrument-generation';
+import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings } from '../music/track-generation';
+import { DEFAULT_INSTRUMENT_POLICIES, decodeInstrumentPolicy, rerollInstruments } from '../music/instrument-generation';
 import { sectionDegrees, sectionProject, sectionValuesEqual, validSectionHarmony } from '../music/section-context';
 import { baseGenerationHarmony } from '../music/project-harmony';
 import { layOutTrackPhrase, phraseForTrack } from '../music/phrase';
@@ -42,10 +44,6 @@ const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
 const MAX_HISTORY = 100;
 const COMPACT_HISTORY_WINDOW_MS = 1000;
-const MAX_ARRANGEMENT_SECTIONS = 32;
-const MAX_ARRANGEMENT_MEASURES = 128;
-const CHORD_VOICINGS = ['close', 'open'] as const;
-const ARPEGGIO_RATES = ['eighth', 'sixteenth'] as const;
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -695,7 +693,7 @@ export class ProjectService {
 
   private commitPartWorkflow(next: CompositionProject, controlKey?: string): PartWorkflowResult {
     // Validate the complete candidate before committing: a conflict in one destination rejects the entire batch.
-    if (!this.isProject(next)) return 'invalid';
+    if (!isProject(next, this.sectionTypeSettings.chances(), Math.random)) return 'invalid';
     const before = this.state();
     this.commit(next, controlKey);
     return before === this.state() ? 'unchanged' : 'changed';
@@ -705,7 +703,7 @@ export class ProjectService {
     let value: unknown;
     try {
       value = JSON.parse(json);
-      const project = this.decodeProject(value);
+      const project = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
       if (!project) {
         this.warnProjectLoadFailure('imported JSON', value);
         return false;
@@ -751,31 +749,31 @@ export class ProjectService {
     if (role === 'drums' && 'pitch' in patch) return;
     if (!current.tracks.some((track) => track.role === role)) return;
     if (role === 'melody') {
-      const melody = this.decodeMelody({ ...current.melody, ...patch });
+      const melody = decodeMelody({ ...current.melody, ...patch });
       if (!melody) return;
       const replacements = new Map(current.tracks.filter(track => track.role === 'melody')
-        .map(track => [track.id, this.decodeMelody({ ...track.generatorSettings, ...patch })]));
+        .map(track => [track.id, decodeMelody({ ...track.generatorSettings, ...patch })]));
       if ([...replacements.values()].some(settings => !settings)) return;
       this.commit({ ...current, melody, tracks: current.tracks.map((track) => track.role === role
         ? { ...track, generatorSettings: replacements.get(track.id)! } : track) }, controlKey);
     } else if (role === 'bass') {
       const bass = { ...current.bass, ...patch } as BassSettings;
-      if (!this.decodeBass(bass)) return;
+      if (!decodeBass(bass)) return;
       this.commit({ ...current, bass, tracks: current.tracks.map((track) => track.role === role
         ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as BassSettings } : track) }, controlKey);
     } else if (role === 'chords') {
       const chords = { ...current.chords, ...patch } as ChordSettings;
-      if (!this.decodeChords(chords)) return;
+      if (!decodeChords(chords)) return;
       this.commit({ ...current, chords, tracks: current.tracks.map((track) => track.role === role
         ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ChordSettings } : track) }, controlKey);
     } else if (role === 'arpeggio') {
       const arpeggio = { ...current.arpeggio, ...patch } as ArpeggioSettings;
-      if (!this.decodeArpeggio(arpeggio)) return;
+      if (!decodeArpeggio(arpeggio)) return;
       this.commit({ ...current, arpeggio, tracks: current.tracks.map((track) => track.role === role
         ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ArpeggioSettings } : track) }, controlKey);
     } else {
       const drums = { ...current.drums, ...patch } as DrumSettings;
-      if (!this.decodeDrums(drums)) return;
+      if (!decodeDrums(drums)) return;
       this.commit({ ...current, drums, tracks: current.tracks.map((track) => track.role === role
         ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as DrumSettings } : track) }, controlKey);
     }
@@ -844,7 +842,7 @@ export class ProjectService {
   }
 
   updateEditedPhrase(part: ArrangedPart, notes: readonly PhraseNote[]): void {
-    if (!ARRANGED_PARTS.includes(part) || !this.isPhrase(notes)) {
+    if (!ARRANGED_PARTS.includes(part) || !isPhrase(notes)) {
       return;
     }
     const current = this.state();
@@ -952,11 +950,11 @@ export class ProjectService {
     const tracks = [...current.tracks];
     const track = tracks[index];
     const generatorSettings = { ...track.generatorSettings, ...patch };
-    const validSettings = track.role === 'melody' ? this.decodeMelody(generatorSettings) !== undefined
-      : track.role === 'bass' ? this.decodeBass(generatorSettings) !== undefined
-      : track.role === 'chords' ? this.decodeChords(generatorSettings) !== undefined
-        : track.role === 'arpeggio' ? this.decodeArpeggio(generatorSettings) !== undefined
-          : this.decodeDrums(generatorSettings) !== undefined;
+    const validSettings = track.role === 'melody' ? decodeMelody(generatorSettings) !== undefined
+      : track.role === 'bass' ? decodeBass(generatorSettings) !== undefined
+      : track.role === 'chords' ? decodeChords(generatorSettings) !== undefined
+        : track.role === 'arpeggio' ? decodeArpeggio(generatorSettings) !== undefined
+          : decodeDrums(generatorSettings) !== undefined;
     if (!validSettings) return;
     tracks[index] = { ...track, generatorSettings } as CompositionTrack;
     const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
@@ -972,7 +970,7 @@ export class ProjectService {
 
   updateSectionTrackPhrase(sectionId: string, trackId: string, notes: readonly PhraseNote[]): boolean {
     const current = this.state();
-    if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId) || !this.isPhrase(notes, 2048)) return false;
+    if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId) || !isPhrase(notes, 2048)) return false;
     this.commit({ ...current, arrangement: current.arrangement.map(section => section.id === sectionId
       ? { ...section, trackPhrases: { ...section.trackPhrases, [trackId]: notes.map(note => ({ ...note })) } } : section) });
     return true;
@@ -983,7 +981,7 @@ export class ProjectService {
     const current = this.state();
     if (!edits.length || edits.some(edit => !current.tracks.some(track => track.id === edit.trackId)
       || edit.sectionId !== undefined && !current.arrangement.some(section => section.id === edit.sectionId)
-      || edit.notes !== null && !this.isPhrase(edit.notes, edit.sectionId ? 2048 : undefined))) return false;
+      || edit.notes !== null && !isPhrase(edit.notes, edit.sectionId ? 2048 : undefined))) return false;
     let tracks = [...current.tracks];
     let arrangement = [...current.arrangement];
     const editedPhrases = { ...current.editedPhrases };
@@ -1007,7 +1005,7 @@ export class ProjectService {
       }
     }
     const next = { ...current, tracks, arrangement, editedPhrases };
-    if (!this.isProject(next)) return false;
+    if (!isProject(next, this.sectionTypeSettings.chances(), Math.random)) return false;
     this.commit(next);
     return true;
   }
@@ -1015,7 +1013,7 @@ export class ProjectService {
   updateTrackPhrase(trackId: string, notes: readonly PhraseNote[]): boolean {
     const current = this.state();
     const index = current.tracks.findIndex((track) => track.id === trackId);
-    if (index < 0 || !this.isPhrase(notes)) return false;
+    if (index < 0 || !isPhrase(notes)) return false;
     const tracks = [...current.tracks];
     tracks[index] = { ...tracks[index], editedPhrase: notes.map((note) => ({ ...note })) } as CompositionTrack;
     const isPrimary = current.tracks.find((candidate) => candidate.role === tracks[index].role)?.id === trackId;
@@ -1064,142 +1062,54 @@ export class ProjectService {
   }
 
   addSection(type: SectionType = 'VERSE1', afterIndex = this.state().arrangement.length - 1): void {
-    const sections = this.state().arrangement;
-    if (sections.length >= MAX_ARRANGEMENT_SECTIONS || !SECTION_TYPES.includes(type)) {
-      return;
-    }
-    const insertAt = Math.max(0, Math.min(sections.length, afterIndex + 1));
-    const nextId = sections.reduce((maximum, section) => {
-      const match = /^section-(\d+)$/.exec(section.id);
-      return match ? Math.max(maximum, Number(match[1])) : maximum;
-    }, 0) + 1;
-    const next = [...sections];
-    const project = this.state();
-    next.splice(insertAt, 0, {
-      id: `section-${nextId}`,
-      type,
-      measures: 4,
-      trackPresence: generateTrackPresence(project.tracks, this.sectionTypeSettings.chances()[type]),
-    });
-    this.commit({ ...this.state(), arrangement: next });
+    const next = arrangementCommands.addSection(this.state(), type, afterIndex, this.sectionTypeSettings.chances(), Math.random);
+    if (next) this.commit(next);
   }
 
   duplicateSection(index: number): void {
-    const sections = this.state().arrangement;
-    if (!Number.isInteger(index) || index < 0 || index >= sections.length
-        || sections.length >= MAX_ARRANGEMENT_SECTIONS) {
-      return;
-    }
-    const nextId = sections.reduce((maximum, section) => {
-      const match = /^section-(\d+)$/.exec(section.id);
-      return match ? Math.max(maximum, Number(match[1])) : maximum;
-    }, 0) + 1;
-    const next = [...sections];
-    next.splice(index + 1, 0, {
-      ...sections[index], id: `section-${nextId}`,
-      context: sections[index].context ? { ...sections[index].context } : undefined,
-      customChords: sections[index].customChords?.map(chord => chord ? { ...chord } : null),
-      customDurations: sections[index].customDurations ? [...sections[index].customDurations] : undefined,
-      chordDegrees: sections[index].chordDegrees ? [...sections[index].chordDegrees] : undefined,
-      trackPresence: { ...sections[index].trackPresence },
-      ...(sections[index].generatedTrackIds ? { generatedTrackIds: [...sections[index].generatedTrackIds] } : {}),
-      ...(sections[index].trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(sections[index].trackPhrases).map(([id, notes]) => [id, notes.map(note => ({ ...note }))])) } : {}),
-      rolePartOverrides: Object.fromEntries(Object.entries(sections[index].rolePartOverrides ?? {}).map(([role, patch]) => [role, copyPartSettings(patch)])),
-      trackPartOverrides: Object.fromEntries(Object.entries(sections[index].trackPartOverrides ?? {}).map(([id, patch]) => [id, copyPartSettings(patch)])),
-    });
-    this.commit({ ...this.state(), arrangement: next });
+    const next = arrangementCommands.duplicateSection(this.state(), index);
+    if (next) this.commit(next);
   }
 
   removeSection(index: number): void {
-    const sections = this.state().arrangement;
-    if (!Number.isInteger(index) || index < 0 || index >= sections.length || sections.length <= 1) {
-      return;
-    }
-    this.commit({ ...this.state(), arrangement: sections.filter((_, sectionIndex) => sectionIndex !== index) });
+    const next = arrangementCommands.removeSection(this.state(), index);
+    if (next) this.commit(next);
   }
 
   moveSection(index: number, offset: -1 | 1): void {
-    const sections = this.state().arrangement;
-    const target = index + offset;
-    if (!Number.isInteger(index) || index < 0 || target < 0 || target >= sections.length) {
-      return;
-    }
-    const next = [...sections];
-    [next[index], next[target]] = [next[target], next[index]];
-    this.commit({ ...this.state(), arrangement: next });
+    const next = arrangementCommands.moveSection(this.state(), index, offset);
+    if (next) this.commit(next);
   }
 
   updateSection(index: number, patch: Partial<Pick<ArrangementSection, 'type' | 'measures'>>): void {
-    const sections = this.state().arrangement;
-    if (!Number.isInteger(index) || index < 0 || index >= sections.length) {
-      return;
-    }
-    const next = [...sections];
-    const current = sections[index];
-    const updated = { ...current, ...patch };
-    if (patch.measures !== undefined && !current.customChords && !current.customDurations) {
-      const progression = this.state().progression;
-      const chordDegrees = Array.from({ length: patch.measures }, (_, measure) =>
-        current.chordDegrees?.[measure] ?? progression[measure % progression.length]);
-      updated.chordDegrees = this.matchesMainProgression(chordDegrees) ? undefined : chordDegrees;
-    }
-    next[index] = updated;
-    this.commit({ ...this.state(), arrangement: next }, this.controlHistoryKey(['section', current.id], patch));
+    const current = this.state();
+    const next = arrangementCommands.updateSection(current, index, patch);
+    if (next) this.commit(next, this.controlHistoryKey(['section', current.arrangement[index].id], patch));
   }
 
   setSectionChordDegree(sectionIndex: number, measureIndex: number, degree: number): void {
-    const project = this.state();
-    const section = project.arrangement[sectionIndex];
-    if (!section || !Number.isInteger(measureIndex) || measureIndex < 0 || measureIndex >= section.measures
-        || !getDiatonicChords(project.key, project.scale).some((chord) => chord.degree === degree)) {
-      return;
-    }
-    const chordDegrees = Array.from({ length: section.measures }, (_, measure) =>
-      section.chordDegrees?.[measure] ?? project.progression[measure % project.progression.length]);
-    chordDegrees[measureIndex] = degree;
-    const next = [...project.arrangement];
-    next[sectionIndex] = { ...section, chordDegrees: this.matchesMainProgression(chordDegrees) ? undefined : chordDegrees };
-    this.commit({ ...project, arrangement: next });
+    const next = arrangementCommands.setSectionChordDegree(this.state(), sectionIndex, measureIndex, degree);
+    if (next) this.commit(next);
   }
 
   clearSectionChordOverrides(sectionIndex: number): void {
-    const project = this.state();
-    const section = project.arrangement[sectionIndex];
-    if (!section || !section.chordDegrees && !section.customChords) return;
-    const next = [...project.arrangement];
-    next[sectionIndex] = { ...section, chordDegrees: undefined, customChords: undefined };
-    this.commit({ ...project, arrangement: next });
+    const next = arrangementCommands.clearSectionChordOverrides(this.state(), sectionIndex);
+    if (next) this.commit(next);
   }
 
   toggleSectionRolePresence(sectionId: string, role: ArrangedPart): void {
-    const project = this.state();
-    const section = project.arrangement.find(candidate => candidate.id === sectionId);
-    const tracks = project.tracks.filter(track => track.role === role);
-    if (!section || !tracks.length) return;
-    const present = !tracks.some(track => section.trackPresence[track.id] ?? false);
-    const trackPresence = { ...section.trackPresence,
-      ...Object.fromEntries(tracks.map(track => [track.id, present])) };
-    this.commit({ ...project, arrangement: project.arrangement.map(candidate => candidate.id === sectionId
-      ? { ...section, trackPresence } : candidate) });
+    const next = arrangementCommands.toggleSectionRolePresence(this.state(), sectionId, role);
+    if (next) this.commit(next);
   }
 
   setSectionTrackPresence(index: number, trackId: string, present: boolean): void {
-    const project = this.state();
-    const section = project.arrangement[index];
-    if (!section || typeof present !== 'boolean' || !project.tracks.some((candidate) => candidate.id === trackId)) return;
-    const trackPresence = { ...section.trackPresence, [trackId]: present };
-    this.commit({ ...project, arrangement: project.arrangement.map((candidate, candidateIndex) => candidateIndex === index
-      ? { ...section, trackPresence } : candidate) });
+    const next = arrangementCommands.setSectionTrackPresence(this.state(), index, trackId, present);
+    if (next) this.commit(next);
   }
 
   randomizeArrangementPresence(sectionId?: string): void {
-    const project = this.state();
-    const settings = this.sectionTypeSettings.chances();
-    const arrangement = project.arrangement.map((section) => sectionId === undefined || section.id === sectionId
-      ? { ...section, trackPresence: generateTrackPresence(project.tracks, settings[section.type]) }
-      : section);
-    if (sectionId !== undefined && !project.arrangement.some((section) => section.id === sectionId)) return;
-    this.commit({ ...project, arrangement });
+    const next = arrangementCommands.randomizeArrangementPresence(this.state(), sectionId, this.sectionTypeSettings.chances(), Math.random);
+    if (next) this.commit(next);
   }
 
   setChordDegree(index: number, degree: number): void {
@@ -1299,7 +1209,7 @@ export class ProjectService {
 
   private commit(next: CompositionProject, controlKey?: string): void {
     const current = this.state();
-    if (!this.isProject(next) || JSON.stringify(current) === JSON.stringify(next)) {
+    if (!isProject(next, this.sectionTypeSettings.chances(), Math.random) || JSON.stringify(current) === JSON.stringify(next)) {
       return;
     }
     if (historyContent(current) === historyContent(next)) {
@@ -1364,7 +1274,7 @@ export class ProjectService {
         const raw = globalThis.sessionStorage?.getItem(key);
         if (!raw) continue;
         const value: unknown = JSON.parse(raw);
-        const decoded = this.decodeProject(value);
+        const decoded = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
         if (decoded) {
           if (key !== STORAGE_KEY) this.persist(decoded);
           return decoded;
@@ -1374,609 +1284,13 @@ export class ProjectService {
         console.warn(`Could not load project from session storage (${key}).`, error);
       }
     }
-    const initial = this.copyDefaultProject();
+    const initial = copyDefaultProject(this.sectionTypeSettings.chances(), Math.random);
     this.persist(initial);
     return initial;
   }
 
-  /** Only gather diagnostics after rejection; normal loading keeps its existing acceptance rules. */
   private warnProjectLoadFailure(source: string, value: unknown): void {
-    const issues: string[] = [];
-    const object = (raw: unknown, path: string, required: readonly string[], allowed: readonly string[]): Record<string, unknown> | undefined => {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-        issues.push(`${path}: expected an object`);
-        return undefined;
-      }
-      const fields = raw as Record<string, unknown>;
-      for (const key of required) if (fields[key] === undefined) issues.push(`${path}.${key}: missing required property`);
-      for (const key of Object.keys(fields)) if (!allowed.includes(key)) issues.push(`${path}.${key}: unknown property encountered`);
-      return fields;
-    };
-    const check = (path: string, valid: boolean, expected: string) => {
-      if (!valid) issues.push(`${path}: ${expected}`);
-    };
-    const settings = (role: ArrangedPart, raw: unknown, path: string, patch = false) => {
-      const required = patch ? [] : role === 'melody' ? ['algorithm'] : role === 'bass' ? ['rhythm', 'noteVariation']
-        : role === 'chords' ? ['rhythm', 'voicing', 'noteLengthPercent'] : role === 'arpeggio' ? ['pattern', 'rate', 'octaves']
-        : ['pitch', 'rhythm', 'swingPercent'];
-      const allowed = PART_CONTROLS[role].map(control => control.key as string);
-      if (role === 'arpeggio') allowed.push('rate');
-      if (!patch && role === 'melody') allowed.push('algorithm');
-      if (!patch && role === 'drums') allowed.push('pitch');
-      const fields = object(raw, path, required, allowed);
-      if (!fields) return;
-      for (const [key, field] of Object.entries(fields)) {
-        if (!allowed.includes(key)) continue;
-        if (key === 'algorithm') check(`${path}.${key}`, field === 'block', 'expected "block"');
-        else if (key === 'pitch') check(`${path}.${key}`, isDrumPitch(field), 'expected a supported percussion MIDI pitch');
-        else check(`${path}.${key}`, !!decodePartPatch(role, { [key]: field }), 'invalid value for this generator setting');
-      }
-      check(path, validVelocityRange(fields as PartSettingsPatch, role), 'velocityMin must not exceed velocityMax');
-    };
-    const mix = (raw: unknown, path: string) => {
-      const keys = ['program', 'volumePercent', 'panPercent', 'muted', 'solo'];
-      const fields = object(raw, path, keys, keys);
-      if (!fields) return;
-      check(`${path}.program`, Number.isInteger(fields['program']) && (fields['program'] as number) >= 0 && (fields['program'] as number) <= 127, 'expected an integer from 0 to 127');
-      check(`${path}.volumePercent`, validVolumePercent(fields['volumePercent']), 'invalid volume percentage');
-      check(`${path}.panPercent`, Number.isInteger(fields['panPercent']) && Math.abs(fields['panPercent'] as number) <= 100, 'expected an integer from -100 to 100');
-      for (const key of ['muted', 'solo']) check(`${path}.${key}`, typeof fields[key] === 'boolean', 'expected a boolean');
-    };
-    const required = ['name', 'key', 'scale', 'tempoBpm', 'seed', 'progression', 'bass', 'chords', 'arpeggio', 'drums', 'editedPhrases', 'mix', 'tracks', 'arrangement'];
-    const project = object(value, 'project', required, [...required, 'schemaVersion', 'transposeSemitones', 'progressionChords', 'melody',
-      'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies']);
-    if (project) {
-      check('project.name', typeof project['name'] === 'string', 'expected a string');
-      check('project.key', KEYS.includes(project['key'] as string), `expected one of ${KEYS.join(', ')}`);
-      check('project.scale', isScaleMode(project['scale']), 'expected a supported scale/mode');
-      check('project.tempoBpm', Number.isInteger(project['tempoBpm']) && (project['tempoBpm'] as number) >= 30 && (project['tempoBpm'] as number) <= 240, 'expected an integer from 30 to 240');
-      const seed = project['seed'];
-      check('project.seed', typeof seed === 'string' && /^-?\d+$/.test(seed) && BigInt(seed) >= -(1n << 63n) && BigInt(seed) <= (1n << 63n) - 1n, 'expected a decimal string within the signed 64-bit seed range');
-      const progression = project['progression'];
-      check('project.progression', Array.isArray(progression) && progression.length > 0 && progression.length <= 32 && progression.every(degree => Number.isInteger(degree) && degree >= 1 && degree <= 7), 'expected 1–32 chord degrees, each an integer from 1 to 7');
-      if (project['transposeSemitones'] !== undefined) check('project.transposeSemitones', Number.isInteger(project['transposeSemitones']) && Math.abs(project['transposeSemitones'] as number) <= 24, 'expected an integer from -24 to 24');
-      if (Array.isArray(progression)) check('project.progressionChords', !!validProgressionChords(project['progressionChords'], progression.length), 'invalid chords or length does not match progression');
-      for (const role of ARRANGED_PARTS) if (role !== 'melody' || project[role] !== undefined) settings(role, project[role], `project.${role}`);
-      const channels = object(project['mix'], 'project.mix', ARRANGED_PARTS.filter(role => role !== 'melody'), ARRANGED_PARTS);
-      if (channels) for (const role of ARRANGED_PARTS) if (channels[role] !== undefined) mix(channels[role], `project.mix.${role}`);
-      const tracks = project['tracks'];
-      check('project.tracks', Array.isArray(tracks) && tracks.length <= 64, 'expected an array of at most 64 tracks');
-      if (Array.isArray(tracks)) tracks.forEach((raw, index) => {
-        const path = `project.tracks[${index}]`;
-        const keys = ['id', 'role', 'name', 'midiChannel', 'mix', 'generatorSettings'];
-        const track = object(raw, path, keys, [...keys, 'editedPhrase', 'rerollLocked', 'instrumentLocked', 'instrumentPool', 'orderOffset']);
-        if (!track) return;
-        mix(track['mix'], `${path}.mix`);
-        const role = track['role'] as ArrangedPart;
-        check(`${path}.role`, ARRANGED_PARTS.includes(role), `expected one of ${ARRANGED_PARTS.join(', ')}`);
-        check(`${path}.id`, typeof track['id'] === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(track['id']), 'expected 1–64 letters, digits, underscores, or hyphens');
-        check(`${path}.name`, typeof track['name'] === 'string' && !!track['name'].trim() && track['name'].length <= 48, 'expected a nonempty name of at most 48 characters');
-        check(`${path}.midiChannel`, Number.isInteger(track['midiChannel']) && (track['midiChannel'] as number) >= 1 && (track['midiChannel'] as number) <= 16 && (role !== 'drums' || track['midiChannel'] === 10), 'expected channel 1–16 (10 for drums)');
-        if (ARRANGED_PARTS.includes(role)) settings(role, track['generatorSettings'], `${path}.generatorSettings`);
-        check(path, !!this.decodeTracks([raw]), 'invalid track identity, name, channel, locks, instrument pool, settings, or phrase');
-        check(`${path}.id`, !tracks.slice(0, index).some(previous => previous?.id === track['id']), 'duplicate track ID');
-      });
-      const phrases = object(project['editedPhrases'], 'project.editedPhrases', [], ARRANGED_PARTS);
-      if (phrases) for (const [role, notes] of Object.entries(phrases)) check(`project.editedPhrases.${role}`, this.isPhrase(notes), 'invalid phrase: check note IDs, MIDI pitches, beat bounds, durations, and velocities');
-      for (const [key, valid] of [
-        ['trackGenerationPolicies', validTrackGenerationMetadata(project['trackGenerationPolicies'], undefined)],
-        ['trackRerollCounts', validTrackGenerationMetadata(undefined, project['trackRerollCounts'])],
-        ['instrumentGenerationPolicies', validInstrumentPolicies(project['instrumentGenerationPolicies'])],
-        ['melodyGlobal', project['melodyGlobal'] === undefined || !!decodeMelodyGlobal(project['melodyGlobal'])],
-        ['harmonySettings', project['harmonySettings'] === undefined || !!decodeHarmonySettings(project['harmonySettings'])],
-      ] as const) check(`project.${key}`, valid, 'invalid settings, property names, or values');
-      for (const key of ['trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies']) {
-        if (project[key] === undefined) continue;
-        const policies = object(project[key], `project.${key}`, [], ARRANGED_PARTS);
-        if (!policies || key === 'trackRerollCounts') continue;
-        for (const [role, policy] of Object.entries(policies)) {
-          if (!ARRANGED_PARTS.includes(role as ArrangedPart)) continue;
-          const defaults = key === 'trackGenerationPolicies' ? DEFAULT_TRACK_POLICIES[role as ArrangedPart] : DEFAULT_INSTRUMENT_POLICIES[role as ArrangedPart];
-          const keys = Object.keys(defaults);
-          const validPolicy = (candidate: unknown) => key === 'trackGenerationPolicies'
-            ? !!decodeTrackGenerationPolicy(role as ArrangedPart, candidate) : !!decodeInstrumentPolicy(role as ArrangedPart, candidate);
-          const requiredKeys = keys.filter(field => !validPolicy({ ...defaults, [field]: undefined }));
-          const fields = object(policy, `project.${key}.${role}`, requiredKeys, keys);
-          if (!fields) continue;
-          for (const field of keys) {
-            const candidate = { ...defaults, [field]: fields[field] };
-            check(`project.${key}.${role}.${field}`, validPolicy(candidate), 'invalid policy value');
-          }
-        }
-      }
-      const arrangement = project['arrangement'];
-      check('project.arrangement', Array.isArray(arrangement) && arrangement.length >= 1 && arrangement.length <= MAX_ARRANGEMENT_SECTIONS, `expected 1–${MAX_ARRANGEMENT_SECTIONS} sections`);
-      if (Array.isArray(arrangement)) arrangement.forEach((raw, index) => {
-        const path = `project.arrangement[${index}]`;
-        const section = object(raw, path, ['id', 'type', 'measures'], ['id', 'type', 'measures', 'context', 'customChords', 'customDurations', 'chordDegrees',
-          'useMelodyHarmony', 'swapMelody', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
-        if (!section) return;
-        check(`${path}.type`, SECTION_TYPES.includes(section['type'] as SectionType), `expected one of ${SECTION_TYPES.join(', ')}`);
-        check(`${path}.measures`, Number.isInteger(section['measures']) && (section['measures'] as number) >= 1 && (section['measures'] as number) <= 32, 'expected an integer from 1 to 32');
-        for (const [role, patch] of Object.entries(section['rolePartOverrides'] ?? {})) if (ARRANGED_PARTS.includes(role as ArrangedPart)) settings(role as ArrangedPart, patch, `${path}.rolePartOverrides.${role}`, true);
-        const decodedTracks = this.decodeTracks(tracks);
-        if (decodedTracks) {
-          for (const [id, patch] of Object.entries(section['trackPartOverrides'] ?? {})) {
-            const track = decodedTracks.find(track => track.id === id);
-            if (track) settings(track.role, patch, `${path}.trackPartOverrides.${id}`, true);
-          }
-          check(path, !!this.decodeArrangement([raw], decodedTracks, 0n), 'invalid section identity, type, measures, harmony, track references, overrides, or phrases');
-        }
-        check(`${path}.id`, !arrangement.slice(0, index).some(previous => previous?.id === section['id']), 'duplicate section ID');
-      });
-      if (Array.isArray(arrangement)) check('project.arrangement', arrangement.reduce((total, section) => total + (section?.measures ?? 0), 0) <= MAX_ARRANGEMENT_MEASURES, `total length must not exceed ${MAX_ARRANGEMENT_MEASURES} measures`);
-    }
-    console.warn(`Could not load project from ${source}.`, issues.length ? issues : ['Project structure or values failed validation.']);
-  }
-
-  private decodeProject(value: unknown): CompositionProject | undefined {
-    if (!value || typeof value !== 'object') {
-      return undefined;
-    }
-
-    const project = value as Partial<CompositionProject> & { bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown; tracks?: unknown };
-    const validBase = typeof project.name === 'string'
-      && typeof project.key === 'string' && KEYS.includes(project.key)
-      && (isScaleMode(project.scale))
-      && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
-      && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
-      && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
-      && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
-      && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
-      && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
-      && Array.isArray(project.progression)
-      && project.progression.length > 0 && project.progression.length <= 32
-      && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7)
-      && validProgressionChords(project.progressionChords, project.progression.length);
-    if (!validBase || !validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
-      || !validInstrumentPolicies(project.instrumentGenerationPolicies)
-      || (project.melodyGlobal !== undefined && !decodeMelodyGlobal(project.melodyGlobal))
-      || (project.harmonySettings !== undefined && !decodeHarmonySettings(project.harmonySettings))) {
-      return undefined;
-    }
-
-    const melody = this.decodeMelody(project.melody === undefined ? DEFAULT_MELODY_SETTINGS : project.melody);
-    const bass = this.decodeBass(project.bass);
-    const chords = this.decodeChords(project.chords);
-    const arpeggio = this.decodeArpeggio(project.arpeggio);
-    const drums = this.decodeDrums(project.drums);
-    const editedPhrases = this.decodeEditedPhrases(project.editedPhrases);
-    const mix = this.decodeMix(project.mix);
-    const tracks = this.decodeTracks(project.tracks);
-    const arrangement = tracks ? this.decodeArrangement(project.arrangement, tracks, BigInt(project.seed!)) : undefined;
-    if (!melody || !bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases || !mix || !tracks) {
-      return undefined;
-    }
-    const trackIds = new Set(tracks.map((track) => track.id));
-    if (arrangement.some((section) => Object.keys(section.trackPresence).some((trackId) => !trackIds.has(trackId)))) return undefined;
-    return {
-      schemaVersion: 12,
-      name: project.name!,
-      key: project.key!,
-      scale: project.scale!,
-      transposeSemitones: project.transposeSemitones ?? 0,
-      tempoBpm: project.tempoBpm!,
-      ...(project.randomizeTempoOnCompose !== undefined ? { randomizeTempoOnCompose: project.randomizeTempoOnCompose } : {}),
-      ...(project.randomizeTransposeOnCompose !== undefined ? { randomizeTransposeOnCompose: project.randomizeTransposeOnCompose } : {}),
-      seed: project.seed!,
-      progression: [...project.progression!],
-      ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
-      melody,
-      ...(project.harmonySettings !== undefined ? { harmonySettings: decodeHarmonySettings(project.harmonySettings)! } : {}),
-      ...(project.melodyGlobal !== undefined ? { melodyGlobal: decodeMelodyGlobal(project.melodyGlobal)! } : {}),
-      bass,
-      chords,
-      arpeggio,
-      drums,
-      editedPhrases,
-      mix,
-      tracks,
-      arrangement,
-      ...(project.trackGenerationPolicies !== undefined ? { trackGenerationPolicies: Object.fromEntries(
-        Object.entries(project.trackGenerationPolicies).map(([role, policy]) => [role, decodeTrackGenerationPolicy(role as ArrangedPart, policy)!])
-      ) as Partial<TrackGenerationPolicies> } : {}),
-      ...(project.trackRerollCounts !== undefined ? { trackRerollCounts: { ...project.trackRerollCounts } } : {}),
-      ...(project.instrumentGenerationPolicies !== undefined ? { instrumentGenerationPolicies: Object.fromEntries(
-        Object.entries(project.instrumentGenerationPolicies).map(([role, policy]) => [role, decodeInstrumentPolicy(role as ArrangedPart, policy)!])
-      ) } : {}),
-    };
-  }
-
-  private decodeMix(value: unknown): Record<ArrangedPart, MixChannelSettings> | undefined {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return undefined;
-    }
-    const mix = value as Partial<Record<ArrangedPart, unknown>>;
-    if (Object.keys(mix).some((part) => !ARRANGED_PARTS.includes(part as ArrangedPart))
-        || ARRANGED_PARTS.some((part) => part === 'melody' && mix[part] === undefined
-          ? false : !mix[part] || typeof mix[part] !== 'object')) {
-      return undefined;
-    }
-    const decoded = {} as Record<ArrangedPart, MixChannelSettings>;
-    for (const part of ARRANGED_PARTS) {
-      const settings = (part === 'melody' && mix[part] === undefined ? DEFAULT_MIX.melody : mix[part]) as Partial<MixChannelSettings>;
-      if (!Number.isInteger(settings.program) || (settings.program ?? -1) < 0 || (settings.program ?? 128) > 127
-          || !validVolumePercent(settings.volumePercent)
-          || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
-          || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') {
-        return undefined;
-      }
-      decoded[part] = {
-        program: settings.program!, volumePercent: normalizeVolumePercent(settings.volumePercent!), panPercent: settings.panPercent!,
-        muted: settings.muted, solo: settings.solo,
-      };
-    }
-    return decoded;
-  }
-
-  private decodeTracks(value: unknown): CompositionTrack[] | undefined {
-    if (!Array.isArray(value) || value.length > 64) return undefined;
-    const tracks: CompositionTrack[] = [];
-    const ids = new Set<string>();
-    for (const raw of value) {
-      if (!raw || typeof raw !== 'object') return undefined;
-      const track = raw as Partial<CompositionTrack> & { generatorSettings?: unknown; mix?: unknown; editedPhrase?: unknown };
-      if (typeof track.id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(track.id) || ids.has(track.id)
-          || typeof track.name !== 'string' || !track.name.trim() || track.name.length > 48
-          || !Number.isInteger(track.midiChannel) || (track.midiChannel ?? 0) < 1 || (track.midiChannel ?? 17) > 16) return undefined;
-      const mix = this.decodeTrackMix(track.mix);
-      if (track.orderOffset !== undefined && (!Number.isInteger(track.orderOffset)
-        || track.orderOffset < -2147483648 || track.orderOffset > 2147483647)) return undefined;
-      const editedPhrase = track.editedPhrase === undefined ? undefined
-        : this.isPhrase(track.editedPhrase) ? track.editedPhrase.map((note) => ({ ...note })) : null;
-      if (!mix || editedPhrase === null || (track.rerollLocked !== undefined && typeof track.rerollLocked !== 'boolean')
-        || (track.instrumentLocked !== undefined && typeof track.instrumentLocked !== 'boolean')) return undefined;
-      if (track.instrumentPool !== undefined && (typeof track.instrumentPool !== 'string' || track.role === 'drums' || track.instrumentPool === 'DRUM'
-        || !Object.hasOwn(INSTRUMENT_POOLS, track.instrumentPool)
-        || !INSTRUMENT_POOLS[track.instrumentPool]?.includes(mix.program))) return undefined;
-      let decoded: CompositionTrack | undefined;
-      switch (track.role) {
-        case 'melody': {
-          const generatorSettings = this.decodeMelody(track.generatorSettings);
-          if (generatorSettings) decoded = { id: track.id, role: 'melody', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
-          break;
-        }
-        case 'bass': {
-          const generatorSettings = this.decodeBass(track.generatorSettings);
-          if (generatorSettings) decoded = { id: track.id, role: 'bass', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
-          break;
-        }
-        case 'chords': {
-          const generatorSettings = this.decodeChords(track.generatorSettings);
-          if (generatorSettings) decoded = { id: track.id, role: 'chords', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
-          break;
-        }
-        case 'arpeggio': {
-          const generatorSettings = this.decodeArpeggio(track.generatorSettings);
-          if (generatorSettings) decoded = { id: track.id, role: 'arpeggio', name: track.name.trim(), midiChannel: track.midiChannel!, mix, generatorSettings, editedPhrase };
-          break;
-        }
-        case 'drums': {
-          const generatorSettings = this.decodeDrums(track.generatorSettings);
-          if (generatorSettings && track.midiChannel === 10) decoded = { id: track.id, role: 'drums', name: track.name.trim(), midiChannel: 10, mix, generatorSettings, editedPhrase };
-          break;
-        }
-      }
-      if (!decoded) return undefined;
-      if (track.orderOffset !== undefined) decoded = { ...decoded, orderOffset: track.orderOffset };
-      if (track.rerollLocked !== undefined) decoded = { ...decoded, rerollLocked: track.rerollLocked };
-      if (track.instrumentLocked !== undefined) decoded = { ...decoded, instrumentLocked: track.instrumentLocked };
-      if (track.instrumentPool !== undefined) decoded = { ...decoded, instrumentPool: track.instrumentPool };
-      ids.add(decoded.id);
-      tracks.push(decoded);
-    }
-    return tracks;
-  }
-
-  private decodeTrackMix(value: unknown): MixChannelSettings | undefined {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-    const settings = value as Partial<MixChannelSettings>;
-    if (!Number.isInteger(settings.program) || (settings.program ?? -1) < 0 || (settings.program ?? 128) > 127
-        || !validVolumePercent(settings.volumePercent)
-        || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
-        || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') return undefined;
-    return { program: settings.program!, volumePercent: normalizeVolumePercent(settings.volumePercent!), panPercent: settings.panPercent!, muted: settings.muted, solo: settings.solo };
-  }
-
-  private decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart, PhraseNote[]>> | undefined {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return undefined;
-    }
-    const phrases = value as Partial<Record<ArrangedPart, unknown>>;
-    if (Object.keys(phrases).some((part) => !ARRANGED_PARTS.includes(part as ArrangedPart))) {
-      return undefined;
-    }
-    const decoded: Partial<Record<ArrangedPart, PhraseNote[]>> = {};
-    for (const part of ARRANGED_PARTS) {
-      const notes = phrases[part];
-      if (notes === undefined) {
-        continue;
-      }
-      if (!Array.isArray(notes) || !this.isPhrase(notes)) {
-        return undefined;
-      }
-      decoded[part] = notes.map((note) => ({ ...note }));
-    }
-    return decoded;
-  }
-
-  private isPhrase(value: unknown, maximumBeat = 128): value is readonly PhraseNote[] {
-    if (!Array.isArray(value) || value.length > 2048) {
-      return false;
-    }
-    const ids = new Set<string>();
-    for (const candidate of value) {
-      if (!candidate || typeof candidate !== 'object') {
-        return false;
-      }
-      const note = candidate as Partial<PhraseNote>;
-      if (typeof note.id !== 'string' || note.id.length < 1 || note.id.length > 120 || ids.has(note.id)
-          || !Number.isInteger(note.midi) || (note.midi ?? -1) < 0 || (note.midi ?? 128) > 127
-          || typeof note.startBeat !== 'number' || !Number.isFinite(note.startBeat)
-          || note.startBeat < 0 || note.startBeat >= maximumBeat
-          || typeof note.durationBeats !== 'number' || !Number.isFinite(note.durationBeats)
-          || note.durationBeats <= 0 || note.durationBeats > maximumBeat - note.startBeat
-          || !Number.isInteger(note.velocity) || (note.velocity ?? 0) < 1 || (note.velocity ?? 128) > 127) {
-        return false;
-      }
-      ids.add(note.id);
-    }
-    return true;
-  }
-
-  private decodeArrangement(value: unknown, tracks: readonly CompositionTrack[], projectSeed: bigint): ArrangementSection[] | undefined {
-    if (!Array.isArray(value) || value.length < 1 || value.length > MAX_ARRANGEMENT_SECTIONS) {
-      return undefined;
-    }
-    const sections: ArrangementSection[] = [];
-    const ids = new Set<string>();
-    const trackIds = new Set(tracks.map((track) => track.id));
-    let measureCount = 0;
-    for (const candidate of value) {
-      if (!candidate || typeof candidate !== 'object') {
-        return undefined;
-      }
-      const section = candidate as Partial<ArrangementSection> & {
-        parts?: Partial<Record<ArrangedPart, unknown>>;
-        partChances?: Partial<Record<ArrangedPart, unknown>>;
-        trackParts?: Record<string, unknown>;
-        trackPartChances?: Record<string, unknown>;
-      };
-      const sectionType = section.type as SectionType;
-      const parts = section.parts;
-      const chances = section.partChances;
-      const trackParts = section.trackParts;
-      const trackPartChances = section.trackPartChances;
-      const trackPresence = section.trackPresence as Record<string, unknown> | undefined;
-      const chordDegrees = section.chordDegrees;
-      if ((section.useMelodyHarmony !== undefined && typeof section.useMelodyHarmony !== 'boolean')
-        || (section.swapMelody !== undefined && typeof section.swapMelody !== 'boolean')) return undefined;
-      if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
-          || !SECTION_TYPES.includes(sectionType)
-          || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
-          || !validSectionHarmony(section as ArrangementSection)
-          || (chordDegrees !== undefined && (!Array.isArray(chordDegrees) || chordDegrees.length < 1 || chordDegrees.length > 32
-            || chordDegrees.some((degree) => !Number.isInteger(degree) || degree < 1 || degree > 7)))
-          || (parts !== undefined && (!parts || typeof parts !== 'object' || Array.isArray(parts)
-            || ARRANGED_PARTS.some((part) => part === 'melody' && parts[part] === undefined ? false : typeof parts[part] !== 'boolean')))
-          || (chances !== undefined && (!chances || typeof chances !== 'object' || Array.isArray(chances)
-            || ARRANGED_PARTS.some((part) => part === 'melody' && chances[part] === undefined ? false : !Number.isInteger(chances[part])
-              || (chances[part] as number) < 0 || (chances[part] as number) > 100)))
-          || (trackParts !== undefined && (!trackParts || typeof trackParts !== 'object' || Array.isArray(trackParts)
-            || Object.entries(trackParts).some(([id, included]) => !/^[a-zA-Z0-9_-]{1,64}$/.test(id) || typeof included !== 'boolean')))
-          || (trackPartChances !== undefined && (!trackPartChances || typeof trackPartChances !== 'object' || Array.isArray(trackPartChances)
-            || Object.entries(trackPartChances).some(([id, chance]) => !/^[a-zA-Z0-9_-]{1,64}$/.test(id)
-              || !Number.isInteger(chance) || (chance as number) < 0 || (chance as number) > 100)))
-          || (trackPresence !== undefined && (!trackPresence || typeof trackPresence !== 'object' || Array.isArray(trackPresence)
-            || Object.entries(trackPresence).some(([id, present]) => !/^[a-zA-Z0-9_-]{1,64}$/.test(id) || typeof present !== 'boolean')))) {
-        return undefined;
-      }
-      if ([...Object.keys(trackParts ?? {}), ...Object.keys(trackPartChances ?? {}), ...Object.keys(trackPresence ?? {})]
-        .some((trackId) => !trackIds.has(trackId))) return undefined;
-      const rolePartOverrides: Partial<Record<ArrangedPart, PartSettingsPatch>> = {};
-      const trackPartOverrides: Record<string, PartSettingsPatch> = {};
-      for (const [raw, decoded, byTrack] of [[section.rolePartOverrides, rolePartOverrides, false],
-        [section.trackPartOverrides, trackPartOverrides, true]] as const) {
-        if (raw === undefined) continue;
-        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
-        for (const [key, patch] of Object.entries(raw)) {
-          const role = byTrack ? tracks.find((track) => track.id === key)?.role : key as ArrangedPart;
-          if (!role || !ARRANGED_PARTS.includes(role)) return undefined;
-          const result = decodePartPatch(role, patch);
-          if (!result) return undefined;
-          (decoded as Record<string, PartSettingsPatch>)[key] = result;
-        }
-      }
-      const trackPhrases: Record<string, readonly PhraseNote[]> = {};
-      if (section.generatedTrackIds !== undefined && (!Array.isArray(section.generatedTrackIds)
-        || section.generatedTrackIds.some(id => typeof id !== 'string' || !trackIds.has(id))
-        || new Set(section.generatedTrackIds).size !== section.generatedTrackIds.length)) return undefined;
-      if (section.trackPhrases !== undefined) {
-        if (!section.trackPhrases || typeof section.trackPhrases !== 'object' || Array.isArray(section.trackPhrases)) return undefined;
-        for (const [trackId, notes] of Object.entries(section.trackPhrases)) {
-          if (!trackIds.has(trackId) || !this.isPhrase(notes, 2048)) return undefined;
-          trackPhrases[trackId] = notes.map(note => ({ ...note }));
-        }
-      }
-      const effectiveSection = { rolePartOverrides, trackPartOverrides } as ArrangementSection;
-      if (tracks.some((track) => !validVelocityRange(resolvePartTrack(track, effectiveSection).generatorSettings, track.role))) return undefined;
-      ids.add(section.id);
-      measureCount += section.measures!;
-      if (measureCount > MAX_ARRANGEMENT_MEASURES) {
-        return undefined;
-      }
-      const hasLegacyChanceData = parts !== undefined || chances !== undefined
-        || trackParts !== undefined || trackPartChances !== undefined;
-      const generatedPresence = hasLegacyChanceData ? {} : generateTrackPresence(tracks, this.sectionTypeSettings.chances()[sectionType]);
-      const presence: Record<string, boolean> = {};
-      for (const track of tracks) {
-        const explicit = trackPresence?.[track.id];
-        if (typeof explicit === 'boolean') {
-          presence[track.id] = explicit;
-        } else if (hasLegacyChanceData) {
-          const included = trackParts?.[track.id] ?? parts?.[track.role] ?? true;
-          const chance = trackPartChances?.[track.id] ?? chances?.[track.role]
-            ?? DEFAULT_SECTION_TYPE_CHANCES[sectionType][track.role];
-          presence[track.id] = legacyTrackPresence(projectSeed, track, included as boolean, chance as number);
-        } else {
-          presence[track.id] = generatedPresence[track.id];
-        }
-      }
-      sections.push({
-        id: section.id,
-        type: sectionType,
-        measures: section.measures!,
-        ...(section.context ? { context: { ...section.context } } : {}),
-        ...(section.customChords ? { customChords: section.customChords.map(chord => chord ? { ...chord } : null) } : {}),
-        ...(section.customDurations ? { customDurations: [...section.customDurations] } : {}),
-        chordDegrees: chordDegrees === undefined ? undefined : [...chordDegrees],
-        ...(section.useMelodyHarmony !== undefined ? { useMelodyHarmony: section.useMelodyHarmony } : {}),
-        ...(section.swapMelody !== undefined ? { swapMelody: section.swapMelody } : {}),
-        trackPresence: presence,
-        rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,
-        trackPartOverrides,
-        ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
-        ...(section.generatedTrackIds !== undefined ? { generatedTrackIds: [...section.generatedTrackIds] } : {}),
-      });
-    }
-    return sections;
-  }
-
-  private decodeMelody(value: unknown): MelodySettings | undefined {
-    if (!value || typeof value !== 'object' || Array.isArray(value)
-        || (value as MelodySettings).algorithm !== 'block') return undefined;
-    const { algorithm, ...fields } = value as MelodySettings;
-    const decoded = decodePartPatch('melody', fields);
-    return decoded && validVelocityRange(decoded, 'melody') ? { algorithm, ...decoded } as MelodySettings : undefined;
-  }
-
-  private decodeBass(value: unknown): BassSettings | undefined {
-    const common = decodeCommonPartSettings('bass', value);
-    if (!common) return undefined;
-    if (!value || typeof value !== 'object') {
-      return undefined;
-    }
-    const bass = value as Partial<BassSettings>;
-    if (!BASS_RHYTHMS.includes(bass.rhythm as typeof BASS_RHYTHMS[number])
-        || !Number.isInteger(bass.noteVariation) || (bass.noteVariation ?? -1) < 0 || (bass.noteVariation ?? 101) > 100
-        || (bass.octaveInterval !== undefined && typeof bass.octaveInterval !== 'boolean')) {
-      return undefined;
-    }
-    return { ...common, rhythm: bass.rhythm!, noteVariation: bass.noteVariation!, octaveInterval: bass.octaveInterval ?? false };
-  }
-
-  private decodeChords(value: unknown): ChordSettings | undefined {
-    const common = decodeCommonPartSettings('chords', value);
-    if (!common) return undefined;
-    if (!value || typeof value !== 'object') {
-      return undefined;
-    }
-    const chords = value as Partial<ChordSettings>;
-    if (!RHYTHM_PATTERNS.includes(chords.rhythm as typeof RHYTHM_PATTERNS[number])
-        || !CHORD_VOICINGS.includes(chords.voicing as typeof CHORD_VOICINGS[number])
-        || !Number.isInteger(chords.noteLengthPercent)
-        || (chords.noteLengthPercent ?? 0) < 25 || (chords.noteLengthPercent ?? 201) > 200) {
-      return undefined;
-    }
-    return {
-      ...common,
-      rhythm: chords.rhythm!,
-      voicing: chords.voicing!,
-      noteLengthPercent: chords.noteLengthPercent!,
-    };
-  }
-
-  private decodeArpeggio(value: unknown): ArpeggioSettings | undefined {
-    const common = decodeCommonPartSettings('arpeggio', value);
-    if (!common) return undefined;
-    if (!value || typeof value !== 'object') {
-      return undefined;
-    }
-    const arpeggio = value as Partial<ArpeggioSettings>;
-    if (!ARPEGGIO_PATTERNS.includes(arpeggio.pattern as typeof ARPEGGIO_PATTERNS[number])
-        || !ARPEGGIO_RATES.includes(arpeggio.rate as typeof ARPEGGIO_RATES[number])
-        || (arpeggio.octaves !== 1 && arpeggio.octaves !== 2)) {
-      return undefined;
-    }
-    return { ...common, pattern: arpeggio.pattern!, rate: arpeggio.rate!, octaves: arpeggio.octaves! };
-  }
-
-  private decodeDrums(value: unknown): DrumSettings | undefined {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-    const { pitch, ...fields } = value as DrumSettings;
-    const decoded = decodePartPatch('drums', fields);
-    return isDrumPitch(pitch) && decoded && fields.rhythm && fields.swingPercent !== undefined
-      && validVelocityRange(decoded, 'drums') ? { pitch, ...decoded } as DrumSettings : undefined;
-  }
-
-  private copyDefaultProject(): CompositionProject {
-    const tracks = DEFAULT_TRACKS.map((track) => ({ ...track, mix: { ...track.mix }, generatorSettings: { ...track.generatorSettings } } as CompositionTrack));
-    return {
-      ...DEFAULT_PROJECT,
-      progression: [...DEFAULT_PROJECT.progression],
-      melody: { ...DEFAULT_MELODY_SETTINGS },
-      bass: { ...DEFAULT_BASS_SETTINGS },
-      chords: { ...DEFAULT_CHORD_SETTINGS },
-      arpeggio: { ...DEFAULT_ARPEGGIO_SETTINGS },
-      drums: { ...DEFAULT_DRUM_SETTINGS },
-      arrangement: this.copyDefaultArrangement(tracks),
-      mix: this.copyDefaultMix(),
-      tracks,
-    };
-  }
-
-  private copyDefaultArrangement(tracks: readonly CompositionTrack[]): ArrangementSection[] {
-    const chances = this.sectionTypeSettings.chances();
-    return DEFAULT_ARRANGEMENT.map((section) => ({
-      ...section,
-      chordDegrees: section.chordDegrees ? [...section.chordDegrees] : undefined,
-      trackPresence: generateTrackPresence(tracks, chances[section.type]),
-    }));
-  }
-
-  private copyDefaultMix(): Record<ArrangedPart, MixChannelSettings> {
-    return {
-      melody: { ...DEFAULT_MIX.melody },
-      bass: { ...DEFAULT_MIX.bass },
-      chords: { ...DEFAULT_MIX.chords },
-      arpeggio: { ...DEFAULT_MIX.arpeggio },
-      drums: { ...DEFAULT_MIX.drums },
-    };
-  }
-
-  private isProject(value: unknown): value is CompositionProject {
-    if (!value || typeof value !== 'object') {
-      return false;
-    }
-    const project = value as Partial<CompositionProject>;
-    const tracks = this.decodeTracks(project.tracks);
-    return typeof project.name === 'string'
-      && typeof project.key === 'string' && KEYS.includes(project.key)
-      && (isScaleMode(project.scale))
-      && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
-      && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
-      && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
-      && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
-      && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
-      && BigInt(project.seed) >= -(1n << 63n) && BigInt(project.seed) <= (1n << 63n) - 1n
-      && Array.isArray(project.progression)
-      && project.progression.length > 0
-      && project.progression.length <= 32
-      && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7)
-      && validProgressionChords(project.progressionChords, project.progression.length)
-      && this.decodeMelody(project.melody) !== undefined
-      && this.decodeBass(project.bass) !== undefined
-      && this.decodeChords(project.chords) !== undefined
-      && this.decodeArpeggio(project.arpeggio) !== undefined
-      && this.decodeDrums(project.drums) !== undefined
-      && tracks !== undefined
-      && this.decodeArrangement(project.arrangement, tracks, BigInt(project.seed!)) !== undefined
-      && this.decodeEditedPhrases(project.editedPhrases) !== undefined
-      && this.decodeMix(project.mix) !== undefined
-      && validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
-      && validInstrumentPolicies(project.instrumentGenerationPolicies)
-      && (project.harmonySettings === undefined || decodeHarmonySettings(project.harmonySettings) !== undefined)
-      && (project.melodyGlobal === undefined || decodeMelodyGlobal(project.melodyGlobal) !== undefined);
+    console.warn(`Could not load project from ${source}.`, projectLoadIssues(value, this.sectionTypeSettings.chances(), Math.random));
   }
 
   private persist(project: CompositionProject): void {
@@ -1985,11 +1299,5 @@ export class ProjectService {
     } catch {
       // Keep the project usable if storage is disabled or full.
     }
-  }
-
-  private matchesMainProgression(chordDegrees: readonly number[]): boolean {
-    if (this.state().progressionChords?.some(Boolean)) return false;
-    const progression = this.state().progression;
-    return chordDegrees.every((degree, index) => degree === progression[index % progression.length]);
   }
 }
