@@ -94,6 +94,12 @@
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Manual phrases follow global Mode" [checked]="preferences.manualPhrasesFollowMode()"
+                (change)="preferences.toggleManualPhrasesFollowMode()" aria-describedby="manual-mode-description" />
+              <span>Manual phrases follow global Mode</span>
+            </label>
+            <p id="manual-mode-description">When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.</p>
             <label class="appearance-setting">
               <span>Harmony generation</span>
               <select aria-label="Harmony generation" [value]="projects.project().harmonySettings?.generation ?? 'CURRENT'" (change)="changeHarmony($event)">

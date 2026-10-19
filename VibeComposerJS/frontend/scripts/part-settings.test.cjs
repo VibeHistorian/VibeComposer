@@ -4424,6 +4424,64 @@ test('empty roles can be recreated from their defaults, while the final project 
   assert.equal(service.exportProjectJson(), before);
 });
 
+test('manual phrases follow global Mode by degree only when the entire phrase matches, with atomic undo', () => {
+  const { service, uiPreferences } = fixture();
+  const bass = 'track-bass-1', chords = 'track-chords-1', drums = 'track-drums-1';
+  const notes = pitches => pitches.map((midi, index) => ({ id: 'mode-' + index, midi, startBeat: index, durationBeats: .5, velocity: 90 + index }));
+  service.updateTrackPhrase(bass, notes([60,64,67,71]));
+  service.updateTrackPhrase(chords, notes([60,61,64]));
+  service.updateTrackPhrase(drums, notes([60,64]));
+  service.updateSettings({ transposeSemitones: 7 });
+  const before = service.exportProjectJson();
+  assert.equal(uiPreferences.manualPhrasesFollowMode(), true);
+  service.updateSettings({ scale: 'natural-minor' });
+  const track = id => service.project().tracks.find(track => track.id === id);
+  assert.deepEqual(track(bass).editedPhrase.map(note => note.midi), [60,63,67,70]);
+  assert.deepEqual(track(chords).editedPhrase, notes([60,61,64]), 'one chromatic note preserves the whole phrase');
+  assert.deepEqual(track(drums).editedPhrase, notes([60,64]), 'drums remain unchanged');
+  assert.deepEqual(track(bass).editedPhrase.map(({ midi, ...note }) => note), notes([60,64,67,71]).map(({ midi, ...note }) => note));
+  assert.deepEqual(service.project().editedPhrases.bass, track(bass).editedPhrase, 'primary role cache follows its track');
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  uiPreferences.toggleManualPhrasesFollowMode();
+  service.updateSettings({ scale: 'major' });
+  assert.deepEqual(track(bass).editedPhrase.map(note => note.midi), [60,63,67,70], 'disabled setting preserves manual pitches');
+});
+
+test('manual section phrases inherit Mode while explicit section modes and chromatic phrases retain ownership', () => {
+  const { service } = fixture();
+  const notes = (midi, id = 'section-mode') => [{ id, midi, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  const [a,b,c] = service.project().arrangement;
+  service.updateSectionTrackPhrase(a.id, 'track-bass-1', notes(64));
+  service.updateSectionTrackPhrase(a.id, 'track-chords-1', notes(61));
+  service.updateSectionTrackPhrase(a.id, 'track-drums-1', notes(64));
+  service.updateSectionContext(b.id, { scale: 'major' });
+  service.updateSectionTrackPhrase(b.id, 'track-bass-1', notes(64));
+  service.updateSectionContext(c.id, { key: 'D' });
+  service.updateSectionTrackPhrase(c.id, 'track-bass-1', notes(66));
+  service.updateSettings({ scale: 'natural-minor' });
+  const [first, fixed, differentKey] = service.project().arrangement;
+  assert.equal(first.trackPhrases['track-bass-1'][0].midi, 63);
+  assert.equal(first.trackPhrases['track-chords-1'][0].midi, 61);
+  assert.equal(first.trackPhrases['track-drums-1'][0].midi, 64);
+  assert.equal(fixed.trackPhrases['track-bass-1'][0].midi, 64);
+  assert.equal(differentKey.trackPhrases['track-bass-1'][0].midi, 65);
+});
+
+test('manual Mode preference defaults on for existing preferences and persists explicit off through import/export', () => {
+  const { uiPreferences, load } = fixture();
+  const { decodeUiPreferences } = load('core/ui/ui-preferences.ts');
+  const previous = JSON.parse(uiPreferences.exportJson()); delete previous.manualPhrasesFollowMode;
+  assert.equal(decodeUiPreferences(previous).manualPhrasesFollowMode, true);
+  assert.equal(decodeUiPreferences({ ...previous, manualPhrasesFollowMode: 'true' }), null);
+  uiPreferences.toggleManualPhrasesFollowMode();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  assert.equal(new UiPreferencesService().manualPhrasesFollowMode(), false);
+  assert.equal(uiPreferences.importJson(JSON.stringify(previous)), true);
+  assert.equal(uiPreferences.manualPhrasesFollowMode(), true);
+});
+
 test('free phrase transpose accepts semitones, ignores scale snapping, records once and resets on reopening', () => {
   const { service, ui, load } = fixture();
   const id = 'track-bass-1';

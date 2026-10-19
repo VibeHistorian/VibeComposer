@@ -19,6 +19,10 @@ export class UiPreferencesService {
   readonly syncScoreMix = computed(() => this.state().syncScoreMix);
   readonly scoreChordGrid = computed(() => this.state().scoreChordGrid);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
+  readonly manualPhrasesFollowMode = computed(() => this.state().manualPhrasesFollowMode);
+  toggleManualPhrasesFollowMode(): void {
+    this.commit({ ...this.state(), manualPhrasesFollowMode: !this.manualPhrasesFollowMode() });
+  }
   readonly limitInstrumentsToPool = computed(() => this.state().limitInstrumentsToPool);
   readonly drumMapping = computed(() => this.state().drumMapping);
   readonly discardPhraseNotesOnMidiDrop = computed(() => this.state().discardPhraseNotesOnMidiDrop);

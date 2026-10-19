@@ -24,6 +24,7 @@ export interface UiPreferences {
   readonly limitInstrumentsToPool: boolean;
   readonly drumMapping: DrumMappingPreference;
   readonly discardPhraseNotesOnMidiDrop: boolean;
+  readonly manualPhrasesFollowMode: boolean;
   readonly exportNameFields: readonly ExportNameField[];
   readonly quickSettings: QuickSettings;
   readonly appearance: AppearancePreferences;
@@ -60,7 +61,7 @@ export function defaultQuickSettings(): QuickSettings {
 }
 
 export function defaultUiPreferences(): UiPreferences {
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, restartPlaybackOnCompose: true, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance() };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, restartPlaybackOnCompose: true, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance() };
 }
 
 /** Decode atomically, accepting only UI data and retaining the code's control order. */
@@ -80,6 +81,7 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
   if (data['limitInstrumentsToPool'] !== undefined && typeof data['limitInstrumentsToPool'] !== 'boolean') return null;
   if (data['drumMapping'] !== undefined && !['auto', 'general-midi', 'chromatic'].includes(data['drumMapping'] as string)) return null;
   if (data['discardPhraseNotesOnMidiDrop'] !== undefined && typeof data['discardPhraseNotesOnMidiDrop'] !== 'boolean') return null;
+  if (data['manualPhrasesFollowMode'] !== undefined && typeof data['manualPhrasesFollowMode'] !== 'boolean') return null;
   const appearance = data['appearance'] === undefined ? defaultAppearance() : decodeAppearance(data['appearance']);
   if (!appearance) return null;
   const quickSettings = { ...defaultQuickSettings() };
@@ -88,5 +90,5 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
     quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key, role).some(key => keys.includes(key))).map(control => control.key);
   }
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, exportNameFields, quickSettings, appearance };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance };
 }

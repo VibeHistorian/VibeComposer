@@ -1,5 +1,6 @@
 import { UiPreferencesService } from '../ui/ui-preferences.service';
 import { isScaleMode } from '../music/scales';
+import { followManualPhraseMode } from '../music/manual-phrase-mode';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { historyContent, preserveAudition, projectDiff } from './project-history';
@@ -725,6 +726,7 @@ export class ProjectService {
   }
 
   updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose'>>): void {
+    if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;
     if (patch.seed !== undefined) {
@@ -737,7 +739,10 @@ export class ProjectService {
         return;
       }
     }
-    this.commit({ ...this.state(), ...patch }, this.controlHistoryKey(['project'], patch));
+    const current = this.state();
+    const next = { ...current, ...patch };
+    this.commit(this.uiPreferences.manualPhrasesFollowMode() ? followManualPhraseMode(current, next) : next,
+      this.controlHistoryKey(['project'], patch));
   }
 
   updateRoleGeneratorSettings(role: ArrangedPart, patch: PartSettingsPatch): void {
