@@ -554,18 +554,27 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
     const trackCount = this.model?.tracks.length ?? 0;
     if (trackCount === 0 || y < 0 || x < 0 || x >= this.width) return undefined;
+    const selectedIds = this.editable() ? this.selectedNoteIds() : [];
     if (y >= this.scoreHeight) {
-      if (this.editable() && this.velocityVisible() && y < this.height) return this.hitAreas.find(area => Math.abs(x - area.x) <= 5);
+      if (this.editable() && this.velocityVisible() && y < this.height) {
+        const matches = (area: NoteHitArea): boolean => Math.abs(x - area.x) <= 5;
+        return this.hitAreas.find(area => selectedIds.includes(area.note.id) && matches(area))
+          ?? this.hitAreas.find(matches);
+      }
       return undefined;
     }
     const trackIndex = y >= this.harmonicHeight && this.drumHeight > 0 ? 1 : 0;
     const column = Math.min(this.hitColumnCount - 1, Math.floor(x / HIT_BUCKET_WIDTH));
     const candidates = this.hitAreaBuckets.get(trackIndex * this.hitColumnCount + column) ?? [];
+    let fallback: NoteHitArea | undefined;
     for (let index = candidates.length - 1; index >= 0; index--) {
       const area = candidates[index];
-      if (x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height) return area;
+      if (x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height) {
+        if (selectedIds.includes(area.note.id)) return area;
+        fallback ??= area;
+      }
     }
-    return undefined;
+    return fallback;
   }
 
   private beatAt(event: MouseEvent): number {

@@ -209,6 +209,44 @@ test('playhead glow follows the actual note duration independently of the enlarg
   component.playhead = 21 / 64 * 100; component.drawDynamic(); assert.equal(fills.length, 1, 'ending notes stop glowing at their true boundary');
 });
 
+test('selected notes retain overlapping resize zones regardless of draw order', () => {
+  const { component: c } = fixture();
+  c.editable = () => true;
+  const note = { id: 'selected', part: 'bass', color: 'bass', midi: 48, velocity: 90, startBeat: 20, durationBeats: 1 };
+  const selected = { note, x: 375, y: 15, width: 26, height: 10 };
+  const neighbor = { note: { ...note, id: 'neighbor', startBeat: 21 }, x: 399, y: 15, width: 25, height: 10 };
+  c.model.notes = [note, neighbor.note]; c.hitColumnCount = 9;
+  c.selectedNoteIds = () => ['selected'];
+  const pointer = { button: 0, clientX: 300, clientY: 20, pointerId: 1, preventDefault() {} };
+  for (const candidates of [[selected, neighbor], [neighbor, selected]]) {
+    c.hitAreas = candidates; c.hitAreaBuckets.set(4, candidates);
+    assert.equal(c.hitAreaAt(pointer), selected);
+  }
+  c.hitAreas = [selected, neighbor]; c.hitAreaBuckets.set(4, c.hitAreas);
+  c.onPointerDown(pointer);
+  assert.equal(c.drag.note.id, 'selected');
+  assert.equal(c.drag.mode, 'duration', 'the selected right edge wins over the neighboring left edge');
+  assert.equal(c.hitAreaAt({ clientX: 305, clientY: 20 }), neighbor, 'selection does not expand the hit zone');
+  c.selectedNoteIds = () => [];
+  assert.equal(c.hitAreaAt(pointer), neighbor, 'unselected overlap keeps the existing draw-order priority');
+  c.selectedNoteIds = () => ['selected']; c.editable = () => false;
+  assert.equal(c.hitAreaAt(pointer), neighbor, 'overview hit detection keeps draw-order priority');
+});
+
+test('selected velocity handles take priority over overlapping neighboring handles', () => {
+  const { component: c } = fixture();
+  c.editable = () => true; c.velocityVisible = () => true;
+  const neighbor = { note: { id: 'neighbor' }, x: 390 };
+  const selected = { note: { id: 'selected' }, x: 394 };
+  c.hitAreas = [neighbor, selected]; c.selectedNoteIds = () => ['selected'];
+  const pointer = { clientX: 296, clientY: 150 };
+  assert.equal(c.hitAreaAt(pointer), selected);
+  c.selectedNoteIds = () => [];
+  assert.equal(c.hitAreaAt(pointer), neighbor);
+  c.selectedNoteIds = () => ['selected'];
+  assert.equal(c.hitAreaAt({ ...pointer, clientX: 294 }), neighbor);
+});
+
 test('phrase hover tints only the active editing zone and glows along its exposed edges', () => {
   const { component: c, canvas } = fixture();
   c.editable = () => true;
