@@ -52,6 +52,7 @@ interface NoteHitArea {
   readonly y: number;
   readonly width: number;
   readonly height: number;
+  readonly visualBounds?: { x: number; y: number; width: number; height: number };
 }
 
 interface ScoreCanvasModel {
@@ -197,6 +198,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private hitColumnCount = 0;
   private playhead = 0;
   private hoverX: number | null = null;
+  private hoveredNote: { area: NoteHitArea; zone: 'start' | 'move' | 'duration' } | null = null;
   private focusedNoteIndex = -1;
   private destroyed = false;
   private width = 0;
@@ -467,11 +469,16 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         }
       }
     }
-    this.drawDynamic();
     const area = this.hitAreaAt(event);
-    canvas.style.cursor = area ? 'pointer' : 'default';
+    const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+    this.hoveredNote = this.editable() && area && y < this.scoreHeight
+      && !this.drag && !this.box && !this.shape && event.pointerType !== 'touch'
+      ? { area, zone: this.noteDragZone(area, this.hoverX, event.altKey) } : null;
+    canvas.style.cursor = this.hoveredNote ? (this.hoveredNote.zone === 'move' ? 'grab' : 'ew-resize')
+      : area ? 'pointer' : 'default';
+    this.drawDynamic();
     this.showNoteTooltip(this.drag || this.box || this.shape || event.pointerType === 'touch' ? undefined : area,
-      this.hoverX, (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height));
+      this.hoverX, y);
   };
 
   private showNoteTooltip(area: NoteHitArea | undefined, x: number, y: number): void {
@@ -499,6 +506,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private readonly onPointerLeave = (): void => {
     this.noteTooltip.set(null);
     this.hoverX = null;
+    this.hoveredNote = null;
     this.drawDynamic();
   };
 
@@ -627,9 +635,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     } else if (area && (event.button === 0 || event.button === 1)) {
       const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
       this.selectionChanged.emit(ids);
-      const resize = x >= area.x + area.width - Math.min(7, area.width / 3);
       const mode: PhraseDragMode = y >= this.scoreHeight ? 'velocity' : event.button === 1 ? (event.altKey ? 'duration' : event.shiftKey ? 'pitch' : 'velocity')
-        : event.altKey || x <= area.x + Math.min(5, area.width / 3) ? 'start' : resize ? 'duration' : 'move';
+        : this.noteDragZone(area, x, event.altKey);
       const originals = (this.model?.notes ?? []).filter(note => ids.includes(note.id));
       this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
         current: area.note, mode, originals, preview: originals, duplicate: event.button === 0 && !!(event.ctrlKey || event.metaKey), lockPitch: area.note.color === 'drums' };
@@ -640,6 +647,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.onDoubleClick(event);
     }
     this.app.canvas.setPointerCapture(event.pointerId);
+    this.hoveredNote = null;
+    this.drawDynamic();
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
@@ -746,6 +755,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.drawStatic(true);
   }
 
+  private noteDragZone(area: NoteHitArea, x: number, altKey = false): 'start' | 'move' | 'duration' {
+    if (altKey || x <= area.x + Math.min(5, area.width / 3)) return 'start';
+    return x >= area.x + area.width - Math.min(7, area.width / 3) ? 'duration' : 'move';
+  }
+
   private drawStatic(preservePitchPosition = false): void {
     this.noteTooltip.set(null);
     const model = this.model;
@@ -756,6 +770,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     graphics.clear();
     const focusedNote = this.hitAreas[this.focusedNoteIndex]?.note;
     this.hitAreas = [];
+    this.hoveredNote = null;
     this.hitAreaBuckets.clear();
     const { tracks, notes, sections, selectedTrackId, hiddenTrackIds } = model;
     const totalBeats = Math.max(1, model.totalBeats);
@@ -935,6 +950,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const hitArea: NoteHitArea = {
         note,
         trackIndex,
+        visualBounds: { x, y, width: noteWidth, height: noteHeight },
         x: Math.max(0, x - 1),
         y: hitY,
         width: Math.min(this.width, x + Math.max(5, noteWidth + 2)) - Math.max(0, x - 1),
@@ -1018,6 +1034,37 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const b = this.box;
       graphics.rect(Math.min(b.x, b.endX), Math.min(b.y, b.endY), Math.abs(b.endX - b.x), Math.abs(b.endY - b.y))
         .fill({ color: accent.toNumber(), alpha: 0.12 }).stroke({ color: accent.toNumber(), alpha: 0.8, width: 1 });
+    }
+    const hover = this.hoveredNote;
+    if (hover && this.editable() && !this.drag && !this.box && !this.shape) {
+      const bounds = hover.area.visualBounds ?? hover.area;
+      const leftWidth = Math.min(5, hover.area.width / 3);
+      const rightWidth = Math.min(7, hover.area.width / 3);
+      // Use the same edge zones as pointer editing, clipped to the painted note.
+      const left = Math.max(bounds.x, hover.area.x + leftWidth);
+      const right = Math.min(bounds.x + bounds.width, hover.area.x + hover.area.width - rightWidth);
+      const x = hover.zone === 'start' ? bounds.x : hover.zone === 'move' ? left : right;
+      const end = hover.zone === 'start' ? left : hover.zone === 'move' ? right : bounds.x + bounds.width;
+      const width = Math.max(0, end - x);
+      if (width > 0) {
+        // White at 20% mixes with the rendered note, including its current brightness.
+        graphics.rect(x, bounds.y, width, bounds.height).fill({ color: 0xffffff, alpha: 0.2 });
+        // Fading strips form a white glow only on the active part's outer edges.
+        for (let distance = 1; distance <= 6; distance++) {
+          const alpha = 0.3 * Math.pow(1 - distance / 7, 2);
+          const left = x - (hover.zone === 'start' ? distance : 0);
+          const right = end + (hover.zone === 'duration' ? distance : 0);
+          graphics.moveTo(left, bounds.y - distance + 0.5).lineTo(right, bounds.y - distance + 0.5)
+            .stroke({ color: 0xffffff, alpha, width: 1 });
+          graphics.moveTo(left, bounds.y + bounds.height + distance - 0.5).lineTo(right, bounds.y + bounds.height + distance - 0.5)
+            .stroke({ color: 0xffffff, alpha, width: 1 });
+          if (hover.zone !== 'move') {
+            const edge = hover.zone === 'start' ? left + 0.5 : right - 0.5;
+            graphics.moveTo(edge, bounds.y - distance).lineTo(edge, bounds.y + bounds.height + distance)
+              .stroke({ color: 0xffffff, alpha, width: 1 });
+          }
+        }
+      }
     }
     const focused = this.hitAreas[this.focusedNoteIndex];
     if (focused) {

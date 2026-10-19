@@ -209,6 +209,49 @@ test('playhead glow follows the actual note duration independently of the enlarg
   component.playhead = 21 / 64 * 100; component.drawDynamic(); assert.equal(fills.length, 1, 'ending notes stop glowing at their true boundary');
 });
 
+test('phrase hover tints only the active editing zone and glows along its exposed edges', () => {
+  const { component: c, canvas } = fixture();
+  c.editable = () => true;
+  c.playhead = -1;
+  const note = { id: 'hover', part: 'bass', color: 'bass', midi: 48, velocity: 90, startBeat: 20, durationBeats: 1 };
+  const area = { note, x: 390, y: 15, width: 30, height: 10,
+    visualBounds: { x: 391, y: 16, width: 28, height: 8 } };
+  c.hitAreas = [area]; c.hitColumnCount = 9; c.hitAreaBuckets.set(4, [area]);
+  const fills = [], strokes = [];
+  let rect, from, to;
+  c.dynamicGraphics = {
+    clear() { fills.length = 0; strokes.length = 0; },
+    rect(...value) { rect = value; return this; }, roundRect() { return this; },
+    fill(style) { fills.push({ rect, ...style }); return this; },
+    moveTo(x, y) { from = [x, y]; return this; }, lineTo(x, y) { to = [x, y]; return this; },
+    stroke(style) { strokes.push({ from, to, ...style }); return this; },
+  };
+  const move = (x, extra = {}) => c.onPointerMove({ clientX: 100 + x / 2, clientY: 20, pointerType: 'mouse', ...extra });
+  for (const [x, zone, expectedRect, cursor] of [
+    [392, 'start', [391, 16, 4, 8], 'ew-resize'],
+    [400, 'move', [395, 16, 18, 8], 'grab'],
+    [418, 'duration', [413, 16, 6, 8], 'ew-resize'],
+  ]) {
+    move(x);
+    assert.equal(c.hoveredNote.zone, zone);
+    assert.equal(c.noteDragZone(area, x), zone);
+    assert.equal(canvas.style.cursor, cursor);
+    assert.deepEqual(fills, [{ rect: expectedRect, color: 0xffffff, alpha: 0.2 }]);
+    const glow = strokes.filter(s => s.color === 0xffffff);
+    assert.equal(glow.length, zone === 'move' ? 12 : 18);
+    assert.ok(glow[0].alpha > glow.at(-1).alpha, 'glow fades outward');
+    const sides = glow.filter(s => s.from[0] === s.to[0]);
+    assert.equal(sides.length, zone === 'move' ? 0 : 6);
+    assert.ok(sides.every(s => zone === 'start' ? s.from[0] < expectedRect[0] : s.from[0] > expectedRect[0] + expectedRect[2]));
+  }
+  move(400, { altKey: true });
+  assert.equal(c.hoveredNote.zone, 'start', 'Alt hover follows the start-trim gesture');
+  move(430); assert.equal(fills.length, 0);
+  move(400); c.onPointerLeave(); assert.equal(fills.length, 0);
+  move(400, { pointerType: 'touch' }); assert.equal(fills.length, 0);
+  c.editable = () => false; move(400); assert.equal(fills.length, 0);
+});
+
 test('playhead glow fades with the fraction played for both short and long notes', () => {
   const { component, strokes, fills } = fixture();
   for (const durationBeats of [.25, 4]) {
