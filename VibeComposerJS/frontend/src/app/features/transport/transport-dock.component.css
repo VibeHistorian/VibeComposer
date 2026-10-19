@@ -2,7 +2,7 @@
 
 /* Dock surface and fixed placement */
 .transport-dock { position: fixed; z-index: 50; right: 0; bottom: 14px; left: 0; width: min(calc(100vw - 48px), 1920px); min-height: 68px; margin: 0 auto; padding: 10px 15px; display: grid; grid-template-columns: auto minmax(85px, .7fr) minmax(350px, 3fr) auto; align-items: center; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); box-shadow: 0 10px 35px var(--shadow-ink), inset 0 1px var(--shadow-highlight);  }
-.transport-project { width: 280px; min-width: 0; display: grid; gap: 4px; }
+.transport-project { width: 280px; flex: 0 0 280px; min-width: 0; display: grid; gap: 4px; }
 .transport-project .project-name { width: 100%; font: 600 10px var(--font-ui); text-overflow: ellipsis; }
 .transport-project span { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .04em; }
 
@@ -46,7 +46,7 @@
 .transport-tools { min-width: 0; max-width: 100%; justify-self: end; }
 
 /* Compact dock layout */
-@media (min-width: 1051px) and (max-width: 1400px) {
+@media (min-width: 1051px) and (max-width: 1500px) {
   .transport-dock { grid-template-columns: minmax(350px, 1fr) auto; }
   .transport-globals { grid-column: 1; }
   .transport-tools { grid-column: 2; grid-row: 2; }
@@ -54,7 +54,7 @@
 @media (max-width: 1050px) {
   .transport-dock { grid-template-columns: auto minmax(120px, 1fr); }
   .transport-globals { grid-column: 1 / -1; }
-  .transport-tools { grid-column: 1 / -1; }
+  .transport-tools { grid-column: 1 / -1; flex-wrap: wrap; }
 }
 @media (max-width: 620px) {
   .transport-dock { bottom: 8px; width: calc(100vw - 20px); min-height: 100px; padding: 8px 10px; grid-template-columns: auto minmax(60px, 1fr); grid-template-rows: auto auto; gap: 7px 9px; }

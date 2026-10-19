@@ -26,11 +26,12 @@ test('production Angular controls initialize selects from settings and support r
   const script = `<script>
     (async () => {
       const waitFor = async (read, label = 'initial controls') => {
+        const caller = new Error('Waiting for ' + label).stack;
         for (let attempt = 0; attempt < 300; attempt++) {
           const result = read(); if (result) return result;
           await new Promise(resolve => setTimeout(resolve, 50));
         }
-        throw new Error('Angular UI did not reach expected state: ' + label);
+        throw new Error('Angular UI did not reach expected state: ' + label + '\\n' + caller);
       };
       try {
         sessionStorage.clear();
@@ -128,7 +129,8 @@ test('production Angular controls initialize selects from settings and support r
         const melodySelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.value);
         const group = await waitFor(() => document.querySelector('.track-group.chords .group-select'));
         group.click();
-        const pickers = await waitFor(() => {
+        await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="chords"]'), 'Chords musical inspector');
+        let pickers = await waitFor(() => {
           const result = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
           return result.length === 1 ? result : null;
         });
@@ -151,8 +153,13 @@ test('production Angular controls initialize selects from settings and support r
           new WheelEvent('wheel', { deltaY, shiftKey, bubbles: true, cancelable: true }));
         document.querySelector('button[aria-label="Close pattern sequencer"]').click();
         await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
+        // Pattern commits rebuild the control groups. Use the mounted select rather
+        // than the detached element captured before opening the sequencer.
+        pickers = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
         wheel(pickers[0], 100);
-        await waitFor(() => pickers.every(select => select.value === 'full'));
+        await waitFor(() => document.querySelector('select[aria-label="Rhythm pattern"]')?.value === 'full'
+          && JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).chords.rhythm === 'full', 'rhythm wheel commit');
+        pickers = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
         result.wheelRhythm = pickers.map(select => select.value);
         const track = document.querySelector('.track-group.chords .track-row-card');
         const pan = track.querySelector('input[aria-label="Pan C1"]');
@@ -223,7 +230,9 @@ test('production Angular controls initialize selects from settings and support r
         result.miniWidths = [pan, volume].map(input => input.closest('.compact-knob').getBoundingClientRect().width);
         result.volumeCenter = volume.closest('.compact-knob').querySelector('.knob-face > span').textContent.trim();
         result.volumeAccessibleValue = volume.getAttribute('aria-valuetext');
-        result.colors = [muteColor, getComputedStyle(track.querySelector('.solo-toggle')).backgroundColor];
+        result.colors = [muteColor, getComputedStyle(track.querySelector('.solo-toggle')).backgroundColor].map(rgb);
+        result.mixColors = ['--mix-track-mute-active', '--mix-track-solo-active']
+          .map(token => rgb(getComputedStyle(track).getPropertyValue(token)));
         const readMixProject = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
         const globalMix = document.querySelector('.transport-actions vc-mix-buttons');
         await waitFor(() => globalMix.querySelector('.solo-toggle').getAttribute('aria-pressed') === 'mixed');
@@ -318,7 +327,8 @@ test('production Angular controls initialize selects from settings and support r
             const select = document.querySelector('select[aria-label="' + selectorLabel + '"]');
             const control = select.closest('.part-control');
             const flip = control.querySelector('button[aria-label="' + flipLabel + '"]');
-            if (!flip || control.querySelectorAll('.inherit-snowflake').length !== 1) throw new Error(selectorLabel + ' must share one inheritance icon');
+            if (!flip || control.querySelectorAll('vc-control-heading').length !== 1) throw new Error(selectorLabel + ' and its flip must share one heading');
+            if (control.querySelector('.inherit-snowflake')) throw new Error(selectorLabel + ' global settings must not show section inheritance');
             if (flip.textContent.trim() !== '↔' || flip.getBoundingClientRect().left < select.getBoundingClientRect().right) throw new Error(flipLabel + ' must be an icon to the right');
             if (getComputedStyle(select).appearance !== 'none') throw new Error(selectorLabel + ' must be arrowless');
             const before = flip.getAttribute('aria-pressed');
@@ -395,7 +405,7 @@ test('production Angular controls initialize selects from settings and support r
         const drumPitch = await waitFor(() => document.querySelector('.track-group.drums .track-instrument'), 'drum pitch picker');
         result.initialDrumPitch = drumPitch.value;
         drumPitch.value = '38'; drumPitch.dispatchEvent(new Event('change', { bubbles: true }));
-        await waitFor(() => document.querySelector('.track-group.drums .track-instrument').selectedOptions[0].textContent === 'SNARE · 38', 'drum track name');
+        await waitFor(() => document.querySelector('.track-group.drums .track-instrument').selectedOptions[0].textContent === 'Snare · 38', 'drum track name');
         const drumRhythms = [...document.querySelectorAll('select[aria-label="Rhythm pattern"]')];
         result.drumRhythmOptions = drumRhythms.map(select => [...select.options].map(option => option.value));
         drumRhythms[0].value = 'custom'; drumRhythms[0].dispatchEvent(new Event('change', { bubbles: true }));
@@ -469,7 +479,8 @@ test('production Angular controls initialize selects from settings and support r
           result.parameterAreas.push({ role, pitch: pitch.map(area => area ? getComputedStyle(area).getPropertyValue('--accent-primary').trim() : null),
             rhythm: rhythm.filter(Boolean).map(area => getComputedStyle(area).getPropertyValue('--accent-primary').trim()),
             backgrounds: rhythm.filter(Boolean).map(area => getComputedStyle(area).backgroundColor),
-            knobs: rhythm.filter(Boolean).map(area => getComputedStyle(area.querySelector('.knob-face')).backgroundImage.includes('86, 182, 188')) });
+            knobs: rhythm.filter(Boolean).flatMap(area => [...area.querySelectorAll('.knob-face')])
+              .map(knob => getComputedStyle(knob).backgroundImage.includes('86, 182, 188')) });
         }
         result.inspectorPolicyRemoved = !document.querySelector('#part-inspector vc-track-generation-policy');
         result.bassColor = getComputedStyle(document.querySelector('.track-group.bass .role-dot')).backgroundColor;
@@ -531,9 +542,13 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 10'), 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
         await waitFor(() => [...document.querySelectorAll('.score-display-header button')].some(button => button.textContent.trim() === 'Cancel'), 'all-drum phrase editor');
-        result.allDrumsEditor = document.querySelector('.score-display-header').textContent.includes('All drums');
+        const drumLabels = [...document.querySelectorAll('.track-group.drums .track-instrument')]
+          .map(select => select.selectedOptions[0].textContent);
+        result.allDrumsEditor = await waitFor(() => document.querySelector('#inspector-title')?.textContent === 'Drums notes'
+          && drumLabels.every(label => [...document.querySelectorAll('vc-score-canvas .drum-label')].some(row => row.title === label.toUpperCase())), 'all drum pitches in the score editor');
         [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent.trim() === 'Cancel').click();
-        await waitFor(() => !document.querySelector('.score-display-header')?.textContent.includes('All drums'), 'close drum editor');
+        await waitFor(() => !document.querySelector('.score-display-header')
+          && !document.querySelector('.track-group.drums .group-select').disabled, 'close drum editor');
         const drumGroup = document.querySelector('.track-group.drums');
         drumGroup.querySelector('.group-select').click();
         await waitFor(() => drumGroup.querySelector('.policy-controls'), 'drums expanded by selection');
@@ -567,11 +582,9 @@ test('production Angular controls initialize selects from settings and support r
         result.compactControls = [...document.querySelectorAll('.part-control.compact-control')].map(control => {
           const code = control.querySelector('.control-name, .toggle-button');
           const status = control.querySelector('.knob-status .inherit-snowflake, .toggle-status .inherit-snowflake');
-          const owner = status?.closest('.compact-knob, .toggle-control');
-          const box = owner?.getBoundingClientRect(), snow = status?.getBoundingClientRect();
           return { code: code.textContent.trim(), width: control.getBoundingClientRect().width,
             toggleHeight: control.querySelector('.toggle-button')?.getBoundingClientRect().height ?? null,
-            tooltip: control.title, statusInside: !!box && snow.left >= box.left && snow.right <= box.right + 1 && snow.bottom <= box.bottom + 1 };
+            tooltip: control.title, hasInheritanceStatus: !!status };
         });
         result.scoreCanvasPresent = !!document.querySelector('vc-score-canvas canvas');
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
@@ -623,7 +636,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.inlineActions.length, 5);
     assert.deepEqual(actual.instrumentDefaultChecks, [true, true, true, true, true]);
     for (const actions of actual.inlineActions) {
-      assert.deepEqual(actions, { symbols: ['⍟', '↻'], actionsBeforeInstrument: true, oneLine: true, fits: true });
+      assert.deepEqual(actions, { symbols: ['M', 'S', '⍟', '↻'], actionsBeforeInstrument: true, oneLine: true, fits: true });
     }
     assert.deepEqual(actual.inlineIdentity, { program: 0, channel: 5, bassProgram: 33, bassChannel: 1,
       selectionPreserved: true, noInspectorIdentity: true, noG: true, hiddenArrow: true });
@@ -659,7 +672,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.initiallyCollapsed, true);
     assert.equal(actual.scoreCanvasPresent, true);
     assert.ok(actual.compactControls.length > 0);
-    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 75 && control.tooltip && control.statusInside), JSON.stringify(actual.compactControls));
+    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 75 && control.tooltip && !control.hasInheritanceStatus), JSON.stringify(actual.compactControls));
     assert.ok(actual.compactControls.filter(control => control.toggleHeight !== null).every(control => control.toggleHeight <= 26));
     assert.ok(actual.generationMiniKnobs.length > 10);
     assert.ok(actual.generationMiniKnobs.every(knob => knob.type === 'range' && knob.width <= 48 && knob.diameter <= 28
@@ -678,7 +691,7 @@ test('production Angular controls initialize selects from settings and support r
       assert.ok(areas.rhythm.length > 0);
       assert.ok(areas.rhythm.every(color => color === '#56b6bc'));
       assert.equal(new Set(areas.backgrounds).size, 1);
-      assert.ok(areas.knobs.every(Boolean));
+      assert.ok(areas.knobs.length > 0 && areas.knobs.every(Boolean), areas.role + ' rhythm knob colors');
     }
     assert.equal(new Set(actual.parameterAreas.map(areas => areas.backgrounds[0])).size, 1);
     assert.deepEqual(actual.sharedRoles, [
@@ -694,7 +707,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.drumSettings.customPattern[0], 0);
     assert.equal(actual.drumSettings.useCustomVelocities, true);
     assert.equal(actual.drumPitch, '38');
-    assert.equal(actual.drumName, 'SNARE · 38');
+    assert.equal(actual.drumName, 'Snare · 38');
     assert.equal(actual.allDrumsEditor, true);
     assert.deepEqual(actual.initialChords, ['C', 'G', 'Am', 'F']);
     assert.deepEqual(actual.options, [expected]);
@@ -723,7 +736,8 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.miniWidths, [34, 34]);
     assert.equal(actual.volumeCenter, 'dB');
     assert.equal(actual.volumeAccessibleValue, '-6.0 dB');
-    assert.deepEqual(actual.colors, ['rgb(255, 255, 50)', 'rgb(145, 255, 40)']);
+    assert.deepEqual(actual.colors, actual.mixColors, 'track mix buttons use their semantic active colors');
+    assert.notDeepEqual(actual.colors[0], actual.colors[1], 'mute and solo remain visually distinct');
     assert.equal(actual.controlsFit, true);
     assert.equal(actual.groupStillSelected, 'true');
     assert.deepEqual(actual.velocityCounts, [8]);

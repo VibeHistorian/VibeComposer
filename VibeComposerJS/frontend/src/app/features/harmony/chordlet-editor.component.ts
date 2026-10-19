@@ -136,7 +136,7 @@ export class ChordletEditorComponent {
   move(event: PointerEvent): void {
     if (event.pointerId !== this.drag?.pointerId) return;
     if (this.drag.project !== this.project() || this.drag.sectionId !== this.section()?.id) { this.cancel(); return; }
-    if (Math.hypot(event.clientX - this.drag.x, event.clientY - this.drag.y) < 4) return;
+    if (this.dragging() === null && Math.hypot(event.clientX - this.drag.x, event.clientY - this.drag.y) < 4) return;
     this.dragging.set(this.drag.index);
     const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-chord-index]');
     if (target?.closest('vc-chordlet-editor') === (event.currentTarget as HTMLElement).closest('vc-chordlet-editor')) this.dropIndex.set(Number(target!.dataset['chordIndex']));

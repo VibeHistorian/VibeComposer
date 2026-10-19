@@ -89,6 +89,11 @@ for (const width of [1440, 780]) test(`quick-settings placement and UI preferenc
         ensure(document.querySelector('input[aria-label="Tempo in beats per minute"]').value===tempo,'disabled BPM star preserves tempo');
         ensure(document.querySelector('input[aria-label="Transpose in semitones"]').value===transpose,'disabled transpose star preserves transpose');
         ensure(document.querySelector('.transport-project').getBoundingClientRect().width>=260,'expanded project name width');
+        const dock = document.querySelector('.transport-dock').getBoundingClientRect();
+        ensure([...document.querySelectorAll('.transport-tools > *')].every(element => {
+          const box = element.getBoundingClientRect();
+          return box.left >= dock.left && box.right <= dock.right;
+        }), 'project actions fit inside transport');
         const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'),'seed');
         seed.value='123'; seed.dispatchEvent(new Event('change',{bubbles:true}));
         await wait(()=>sessionStorage.getItem('vibecomposer.project.v12'),'project saved');

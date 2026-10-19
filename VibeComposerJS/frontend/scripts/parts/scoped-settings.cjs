@@ -6,6 +6,41 @@ const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('an active chord drag accepts a new target near its starting point and commits once', () => {
+  const { service, load } = fixture();
+  const { ChordletEditorComponent } = load('features/harmony/chordlet-editor.component.ts');
+  const editor = new ChordletEditorComponent();
+  editor.focusChord = () => {};
+  const before = service.exportProjectJson();
+  const host = {};
+  const currentTarget = { focus() {}, setPointerCapture() {}, closest: () => host };
+  const event = x => ({ pointerId: 1, button: 0, clientX: x, clientY: 100, currentTarget, preventDefault() {} });
+  let target = 1;
+  const originalDocument = global.document;
+  global.document = { elementFromPoint: () => ({ closest: () => ({ dataset: { chordIndex: String(target) }, closest: () => host }) }) };
+  try {
+    editor.start(0, event(100));
+    editor.move(event(102));
+    assert.equal(editor.dragging(), null, 'a click-sized movement does not activate dragging');
+    target = 0;
+    editor.move(event(106));
+    assert.equal(editor.dragging(), 0);
+    // Scrolling a clipped strip can reveal another chord at the original pointer position.
+    target = 1;
+    editor.move(event(100.1));
+    assert.equal(editor.dropIndex(), 1);
+    editor.finish(event(100.1));
+    const after = service.exportProjectJson();
+    assert.deepEqual(service.project().progression, [5, 1, 6, 4]);
+    assert.equal(editor.dragging(), null);
+    service.undo(); assert.equal(service.exportProjectJson(), before, 'one undo restores the entire gesture');
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+  } finally {
+    if (originalDocument === undefined) delete global.document;
+    else global.document = originalDocument;
+  }
+});
+
 test('harmony headers compare effective chords and durations and reuse transposed chordlet labels', () => {
   const { service } = fixture();
   const { sectionHarmonyDisplay, trackHasSectionHarmony } = require('../music-loader.cjs').loadMusic('harmony-display.ts');

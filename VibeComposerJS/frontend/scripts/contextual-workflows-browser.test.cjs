@@ -544,6 +544,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     })()`, returnByValue: true });
     const beforeDrag = snapshot.result.value;
     await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...beforeDrag.point, button: 'left', clickCount: 1 });
+    // Cross the drag threshold before scrolling: revealing the next chord can put
+    // its center at the same screen coordinates as the source in a narrow strip.
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: beforeDrag.point.x + 6, y: beforeDrag.point.y, button: 'left', buttons: 1 });
+    const dragging = await command('Runtime.evaluate', { expression: `document.querySelector('.chordlet.dragging')?.dataset.chordIndex`, returnByValue: true });
+    assert.equal(dragging.result.value, '0', 'real pointer movement starts the chord drag');
     // The desktop chord strip can show only one chord at a time. Reveal the destination
     // while the source retains pointer capture, and aim inside the strip's clipped bounds.
     const destination = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {

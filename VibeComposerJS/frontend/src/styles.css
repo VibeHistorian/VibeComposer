@@ -341,6 +341,6 @@ button[aria-pressed="false"]:not(.group-select, .track-select, .score-ruler-sect
 }
 
 /* Room for the two-row transport on smaller desktops */
-@media (min-width: 1051px) and (max-width: 1400px) {
+@media (min-width: 1051px) and (max-width: 1500px) {
   .app-frame { padding-bottom: 135px; }
 }
