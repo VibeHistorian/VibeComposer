@@ -102,9 +102,11 @@
   </aside>
 
   <main class="song-canvas" [class.editing]="editing()" [class.settings-in-inspector]="partSettingsInInspector()">
+    @defer (when editing()) {
     @if (editing()) {
-      <vc-edit-workspace [initialNoteId]="editingNoteId()" [sectionId]="editSectionId()" [phraseStartBeat]="editPhraseOffset()"
+      <vc-edit-workspace #phraseEditor [initialNoteId]="editingNoteId()" [sectionId]="editSectionId()" [phraseStartBeat]="editPhraseOffset()"
         [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
+    }
     }
       <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
         [sectionHarmony]="sectionHarmony()"

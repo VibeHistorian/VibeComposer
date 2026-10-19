@@ -259,7 +259,7 @@ export class WorkspaceCanvasComponent {
   });
   private readonly editFailure = signal<{ scope: string; message: string } | null>(null);
   readonly partEditError = computed(() => this.editFailure()?.scope === JSON.stringify(this.partScope()) ? this.editFailure()?.message : null);
-  readonly editor = viewChild(EditWorkspaceComponent);
+  readonly editor = viewChild<EditWorkspaceComponent>('phraseEditor');
   readonly editSectionId = signal<string | null>(null);
   readonly editStartBeat = signal(0);
   readonly editPhraseOffset = signal(0);

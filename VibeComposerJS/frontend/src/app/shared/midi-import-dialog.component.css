@@ -1,0 +1,18 @@
+/* Import dialog layout */
+:host { display: block; width: min(620px, 90vw); max-height: 90vh; overflow: auto; padding: 18px; border: 1px solid var(--border-strong); border-radius: var(--radius-section); background: var(--surface-base); color: var(--text-primary); font: 12px var(--font-ui); }
+form { display: grid; gap: 18px; }
+header, footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h2 { margin: 0; font: 600 16px var(--font-ui); }
+section { display: grid; gap: 8px; }
+p { margin: 0; line-height: 1.5; color: var(--text-secondary); }
+footer { justify-content: flex-end; }
+
+/* Import controls and validation */
+button, input, select { min-width: 0; padding: 6px 9px; font: inherit; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); }
+select, input { width: 100%; }
+button { cursor: pointer; background: var(--surface-button); }
+button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+button.apply { border-color: var(--accent-primary); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.error { color: var(--color-danger); }

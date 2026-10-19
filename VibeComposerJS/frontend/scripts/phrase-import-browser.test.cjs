@@ -35,6 +35,10 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     .addNote({ midi: 65, ticks: 20 * 480, durationTicks: 480 });
   midi.addTrack().addNote({ midi: 90, ticks: 0, durationTicks: 480 });
   const bytes = JSON.stringify([...midi.toArray()]);
+  const shortMidi = new Midi(); shortMidi.addTrack().addNote({ midi: 61, ticks: 0, durationTicks: 480 });
+  const shortBytes = JSON.stringify([...shortMidi.toArray()]);
+  const inKeyMidi = new Midi(); inKeyMidi.addTrack().addNote({ midi: 67, ticks: 0, durationTicks: 480 });
+  const inKeyBytes = JSON.stringify([...inKeyMidi.toArray()]);
   await evaluate(`(async()=>{${waitCode}
     const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'));
     seed.value='43';seed.dispatchEvent(new Event('change',{bubbles:true}));
@@ -55,7 +59,8 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     const settings=async()=>{(await wait(()=>document.querySelector('[aria-label="Settings"]'))).click();await wait(()=>document.querySelector('vc-settings-dialog'));(await wait(()=>button('MIDI'))).click();return await wait(()=>document.querySelector('[aria-label="Discard phrase notes on MIDI drop"]'));};
     const closeSettings=()=>document.querySelector('[aria-label="Close settings"]').click();
     const open=async role=>{const row=await wait(()=>document.querySelector('.track-group.'+role+' .track-line'));row.querySelector('.track-select').click();(await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')))).click();await wait(()=>document.querySelector('#phrase-grid'));};
-    const drop=async()=>{const panel=document.querySelector('.score-panel'),data=new DataTransfer();data.items.add(new File([new Uint8Array(${bytes})],'phrase.mid',{type:'audio/midi'}));panel.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));await wait(()=>document.querySelector('#note-pitch')?.value==='61');};
+    const startDrop=()=>{const panel=document.querySelector('.score-panel'),data=new DataTransfer();data.items.add(new File([new Uint8Array(${bytes})],'phrase.mid',{type:'audio/midi'}));panel.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));};
+    const drop=async()=>{startDrop();const popup=await wait(()=>document.querySelector('vc-midi-import-dialog button[type="submit"]'));popup.click();await wait(()=>!document.querySelector('vc-midi-import-dialog'));await wait(()=>document.querySelector('#note-pitch')?.value==='61');};
   `;
   const result=await evaluate(`(async()=>{${waitCode}${setup}
     const preference=await settings(), defaultOff=!preference.checked;closeSettings();
@@ -92,5 +97,44 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
   for(const [key,value] of Object.entries(result))assert.equal(value,true,key);
   await reload();
   assert.equal(await evaluate(`(async()=>{${waitCode}${setup}return (await settings()).checked;})()`),true,'discard preference survives reload');
+  const options=await evaluate(`(async()=>{${waitCode}${setup}
+    closeSettings();await open('bass');
+    const before=read().tracks.find(t=>t.role==='bass').editedPhrase;
+    startDrop();const popup=await wait(()=>document.querySelector('vc-midi-import-dialog #midi-import-duration'));
+    const dialog=popup.closest('vc-midi-import-dialog'),apply=dialog.querySelector('button[type="submit"]');
+    const combined=!!dialog.querySelector('#midi-import-scale')&&dialog.textContent.includes('21 beats')&&dialog.textContent.includes('16 beats');
+    const emptyDefault=popup.value===''&&dialog.querySelector('#midi-import-scale').value==='';
+    popup.value='16';popup.dispatchEvent(new Event('input',{bubbles:true}));await wait(()=>apply.disabled);
+    const rejectsEqual=dialog.querySelector('[role="alert"]').textContent.includes('less than 16');
+    popup.value='0';popup.dispatchEvent(new Event('input',{bubbles:true}));await new Promise(r=>setTimeout(r,30));const rejectsZero=apply.disabled;
+    popup.value='12';popup.dispatchEvent(new Event('input',{bubbles:true}));await wait(()=>!apply.disabled);
+    const select=dialog.querySelector('#midi-import-scale');const choice=select.options[1];change(select,choice.value);
+    apply.click();await wait(()=>!document.querySelector('vc-midi-import-dialog'));
+    await wait(()=>document.querySelector('.score-display-header button.active'));
+    button('Undo phrase').click();await wait(()=>document.querySelector('[aria-label="Transpose phrase"]').value==='0');
+    const singleUndo=button('Undo phrase').disabled;
+    button('Redo phrase').click();await wait(()=>!button('Undo phrase').disabled);
+    button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    const notes=read().tracks.find(t=>t.role==='bass').editedPhrase;
+    const scaled=notes.length===3&&Math.abs(Math.max(...notes.map(n=>n.startBeat+n.durationBeats))-12)<1e-8;
+    const translated=notes.every(n=>[0,2,4,5,7,9,11].includes(n.midi%12));
+    await open('bass');startDrop();await wait(()=>document.querySelector('vc-midi-import-dialog button[type="submit"]'));
+    document.querySelector('[aria-label="Cancel MIDI import"]').click();await wait(()=>!document.querySelector('vc-midi-import-dialog'));
+    const cancelClean=button('Undo phrase').disabled;
+    button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    await open('bass');const snap=document.querySelector('[aria-label="Snap to scale/key"]');if(snap.getAttribute('aria-pressed')==='true')snap.click();
+    startDrop();await wait(()=>document.querySelector('vc-midi-import-dialog button[type="submit"]'));
+    const snapOffNoTranslation=!document.querySelector('#midi-import-scale')&&!!document.querySelector('#midi-import-duration');
+    document.querySelector('[aria-label="Cancel MIDI import"]').click();
+    await wait(()=>!document.querySelector('vc-midi-import-dialog'));snap.click();
+    const dropBytes=bytes=>{const data=new DataTransfer();data.items.add(new File([new Uint8Array(bytes)],'short.mid'));document.querySelector('.score-panel').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));};
+    dropBytes(${shortBytes});await wait(()=>document.querySelector('#midi-import-scale'));
+    const translationOnly=!document.querySelector('#midi-import-duration');
+    document.querySelector('[aria-label="Cancel MIDI import"]').click();await wait(()=>!document.querySelector('vc-midi-import-dialog'));
+    dropBytes(${inKeyBytes});await wait(()=>document.querySelector('#note-pitch')?.value==='67');
+    const noPopupForFittingMidi=!document.querySelector('vc-midi-import-dialog');
+    return {combined,emptyDefault,rejectsEqual,rejectsZero,singleUndo,scaled,translated,cancelClean,snapOffNoTranslation,translationOnly,noPopupForFittingMidi};
+  })()`);
+  for(const [key,value] of Object.entries(options))assert.equal(value,true,key);
  } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
 });

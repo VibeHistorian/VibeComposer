@@ -1,12 +1,19 @@
 import { Midi } from '@tonejs/midi';
 import type { PhraseNote } from '../project/project.model';
 import { MAX_MIDI_IMPORT_BYTES } from './midi-import-limits';
+import type { ImportedMidiTrack } from './midi-import-options';
 
 /** Read only the first physical note track, skipping conductor/metadata tracks.
  * Keep its channels together even though Tone splits them into instrument tracks.
  * Tick timing deliberately ignores the source tempo: a beat remains a beat.
  */
 export function importMidiPhrase(buffer: ArrayBuffer, maximumBeats: number, maximumNotes = 2048): PhraseNote[] {
+  if (!Number.isFinite(maximumBeats) || maximumBeats <= 0) throw new Error('The phrase has no available duration.');
+  return readMidiTrack(buffer, maximumNotes).notes.filter(note => note.startBeat < maximumBeats)
+    .map(note => ({ ...note, durationBeats: Math.min(note.durationBeats, maximumBeats - note.startBeat) }));
+}
+
+export function readMidiTrack(buffer: ArrayBuffer, maximumNotes = 2048): ImportedMidiTrack {
   const bytes = new Uint8Array(buffer);
   const view = new DataView(buffer);
   const tag = (offset: number, text: string) => [...text].every((char, index) => bytes[offset + index] === char.charCodeAt(0));
@@ -14,7 +21,6 @@ export function importMidiPhrase(buffer: ArrayBuffer, maximumBeats: number, maxi
   const headerLength = view.getUint32(4);
   const ppq = view.getUint16(12);
   if (headerLength < 6 || !ppq || ppq & 0x8000) throw new Error('This MIDI time format is not supported. Use beat-based MIDI timing.');
-  if (!Number.isFinite(maximumBeats) || maximumBeats <= 0) throw new Error('The phrase has no available duration.');
   const count = view.getUint16(10);
   let offset = 8 + headerLength;
   for (let trackIndex = 0; trackIndex < count; trackIndex++) {
@@ -32,12 +38,14 @@ export function importMidiPhrase(buffer: ArrayBuffer, maximumBeats: number, maxi
     const notes = midi.tracks.flatMap(track => track.notes).sort((a, b) => a.ticks - b.ticks || a.midi - b.midi);
     offset = end;
     if (!notes.length) continue;
-    return notes.filter(note => Number.isFinite(note.ticks) && note.ticks >= 0 && note.ticks / ppq < maximumBeats
-      && Number.isFinite(note.durationTicks) && note.durationTicks > 0)
+    const valid = notes.filter(note => Number.isFinite(note.ticks) && note.ticks >= 0
+      && Number.isFinite(note.durationTicks) && note.durationTicks > 0 && Number.isFinite(note.ticks + note.durationTicks));
+    const durationBeats = valid.reduce((end, note) => Math.max(end, (note.ticks + note.durationTicks) / ppq), 0);
+    return { durationBeats, notes: valid
       .slice(0, Math.max(0, Math.min(2048, maximumNotes)))
       .map((note, index) => ({ id: `import-${index}`, midi: note.midi, startBeat: note.ticks / ppq,
-        durationBeats: Math.min(note.durationTicks / ppq, maximumBeats - note.ticks / ppq),
-        velocity: Math.max(1, Math.min(127, Math.round(note.velocity * 127))) }));
+        durationBeats: note.durationTicks / ppq,
+        velocity: Math.max(1, Math.min(127, Math.round(note.velocity * 127))) })) };
   }
-  return [];
+  return { notes: [], durationBeats: 0 };
 }

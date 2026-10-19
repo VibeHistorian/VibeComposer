@@ -84,9 +84,12 @@ export class EditWorkspaceComponent {
     try {
       const buffer = await file.arrayBuffer();
       const { readMidiFile } = await import('../../core/ui/midi-file-import');
-      const imported = await readMidiFile(buffer, Math.min(128, this.phraseBeats()), 2048, controller.signal);
-      if (controller.signal.aborted) return;
-      const current = this.notes();
+      const imported = await readMidiFile(buffer, Math.min(128, this.phraseBeats()), 2048, controller.signal, {
+        injector: this.injector, transpose: this.displayTranspose(), root: getPitchClass(this.project().key)!,
+        mode: this.project().scale, snap: this.snapToScale() && track.role !== 'drums',
+      });
+      if (controller.signal.aborted || !imported) return;
+      const current = this.draftNotes();
       const remaining = discard ? [] : current;
       const capacity = 2048 - remaining.filter(note => note.trackId === track.id).length;
       const added = imported.slice(0, Math.max(0, capacity)).map(note => ({ ...note, id: this.makeNoteId(), trackId: track.id }));
@@ -95,8 +98,7 @@ export class EditWorkspaceComponent {
           : 'The first MIDI note track has no notes within this phrase’s duration.');
         return;
       }
-      // Incoming MIDI pitches are sounding pitches; this subtracts global transpose for pitched roles.
-      this.setDisplayNotes([...remaining, ...added]);
+      this.draftNotes.set([...remaining, ...added]);
       this.markManual(discard ? [...new Set([...current.map(note => note.trackId), track.id])] : [track.id]);
       this.selectNotes(added.map(note => note.id));
       this.record();
