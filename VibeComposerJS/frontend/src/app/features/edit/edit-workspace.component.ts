@@ -51,7 +51,7 @@ export class EditWorkspaceComponent {
   readonly snapBeats = signal(0.25);
   readonly snapToScale = signal(true);
   readonly scalePitchClasses = computed(() => {
-    const transpose = this.sectionId ? this.project().transposeSemitones ?? 0 : 0;
+    const transpose = this.displayTranspose();
     return getDiatonicChords(this.project().key, this.project().scale)
       .map(chord => ((getPitchClass(chord.root)! + transpose) % 12 + 12) % 12);
   });
@@ -62,7 +62,7 @@ export class EditWorkspaceComponent {
   readonly changedTracks = computed(() => {
     this.historyRevision();
     return this.editedTracks().filter(track => this.restoredTrackIds().includes(track.id)
-      || !phraseNotesEqual(this.notes().filter(note => note.trackId === track.id), this.baselineNotes.filter(note => note.trackId === track.id)));
+      || !phraseNotesEqual(this.draftNotes().filter(note => note.trackId === track.id), this.baselineNotes.filter(note => note.trackId === track.id)));
   });
   private markManual(trackIds: readonly string[]): void {
     this.restoredTrackIds.update(ids => ids.filter(id => !trackIds.includes(id)));
@@ -89,7 +89,11 @@ export class EditWorkspaceComponent {
   readonly phraseBeats = computed(() => this.phraseLength ?? this.project().progression.length * 4);
   readonly draftNotes = signal<PhraseDraftNote[]>([]);
   readonly draftReady = signal(false);
-  readonly notes = computed(() => [...this.draftNotes()].sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
+  // Drafts and their history use project pitches; the roll and inspector use sounding pitches.
+  readonly displayTranspose = computed(() => this.selectedPart() === 'drums' ? 0 : this.project().transposeSemitones ?? 0);
+  readonly notes = computed(() => this.draftNotes().map(note => ({ ...note,
+    midi: Math.max(0, Math.min(127, note.midi + this.displayTranspose())),
+  })).sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
   readonly displayNotes = this.notes;
   readonly selectedNote = computed(() => this.displayNotes().find((note) => note.id === this.selectedNoteId()) ?? null);
   readonly isEdited = computed(() => this.selectedTrack().editedPhrase !== undefined
@@ -170,7 +174,7 @@ export class EditWorkspaceComponent {
     });
     if (this.editedTracks().some(track => next.filter(note => note.trackId === track.id).length > 2048)) return;
     this.markManual(this.notes().filter(note => ids.includes(note.id)).map(note => note.trackId));
-    this.draftNotes.set(next);
+    this.setDisplayNotes(next);
     this.record();
   }
   replaceNotes(notes: readonly PhraseNote[], duplicate = false): void {
@@ -179,11 +183,11 @@ export class EditWorkspaceComponent {
       + notes.filter(note => this.notes().find(existing => existing.id === note.id)?.trackId === track.id).length > 2048)) return;
     if (duplicate) {
       const copies = notes.map(note => ({ ...note, id: this.makeNoteId(), trackId: this.notes().find(existing => existing.id === note.id)?.trackId ?? this.selectedTrack().id }));
-      this.draftNotes.update(existing => [...existing, ...copies]);
+      this.setDisplayNotes([...this.notes(), ...copies]);
       this.selectNotes(copies.map(note => note.id));
     } else {
       const updates = new Map(notes.map(note => [note.id, note]));
-      this.draftNotes.update(existing => existing.map(note => {
+      this.setDisplayNotes(this.notes().map(note => {
         const updated = updates.get(note.id);
         return updated ? { trackId: note.trackId, id: updated.id, midi: updated.midi, startBeat: updated.startBeat,
           durationBeats: updated.durationBeats, velocity: updated.velocity } : note;
@@ -217,7 +221,7 @@ export class EditWorkspaceComponent {
       trackId: track.id,
       id: this.makeNoteId(), midi: pitch, startBeat, durationBeats, velocity: 90,
     };
-    this.draftNotes.set([...this.notes(), note]);
+    this.setDisplayNotes([...this.notes(), note]);
     this.markManual([track.id]);
     this.selectNote(note.id);
     this.record();
@@ -239,7 +243,7 @@ export class EditWorkspaceComponent {
     }
     if (field === 'midi') (event.target as HTMLInputElement).value = String(value);
     const next = this.notes().map((note) => note.id === selected.id ? { ...note, [field]: value } : note);
-    this.draftNotes.set(next);
+    this.setDisplayNotes(next);
     this.markManual([selected.trackId]);
     this.record();
   }
@@ -248,7 +252,7 @@ export class EditWorkspaceComponent {
     const ids = this.selectedNoteIds();
     if (!ids.length) return;
     this.markManual(this.notes().filter(note => ids.includes(note.id)).map(note => note.trackId));
-    this.draftNotes.set(this.notes().filter(note => !ids.includes(note.id)));
+    this.setDisplayNotes(this.notes().filter(note => !ids.includes(note.id)));
     this.selectedNoteIds.set([]);
     this.record();
   }
@@ -279,7 +283,7 @@ export class EditWorkspaceComponent {
     if (this.notes().filter(note => note.trackId === track.id).length >= 2048 || position.startBeat >= this.phraseBeats()) return;
     const note = { id: this.makeNoteId(), trackId: track.id, midi: this.snapPitch(position.midi), startBeat: Math.max(0, position.startBeat),
       durationBeats: Math.min(position.durationBeats ?? this.lastDuration, this.phraseBeats() - position.startBeat), velocity: position.velocity ?? 90 };
-    this.draftNotes.update(notes => [...notes, note]);
+    this.setDisplayNotes([...this.notes(), note]);
     this.selectNote(note.id);
     this.markManual([track.id]);
     this.record();
@@ -296,10 +300,9 @@ export class EditWorkspaceComponent {
     const section = this.project().arrangement.find(section => section.id === this.sectionId);
     const edits = this.changedTracks().map(track => {
       const local = destination === 'local' || destination === 'smart' && section?.trackPhrases?.[track.id] !== undefined;
-      const transpose = this.sectionId && track.role !== 'drums' ? this.project().transposeSemitones ?? 0 : 0;
-      const draft = this.notes().filter(note => note.trackId === track.id);
+      const draft = this.draftNotes().filter(note => note.trackId === track.id);
       if (!local && this.restoredTrackIds().includes(track.id)) return { trackId: track.id, notes: null };
-      const source = local && section ? layOutTrackPhrase({ ...this.project(), arrangement: [{ ...section,
+      const source = local && section ? layOutTrackPhrase({ ...this.project(), transposeSemitones: 0, arrangement: [{ ...section,
         trackPresence: { ...section.trackPresence, [track.id]: true } }] }, track) : [];
       const end = this.phraseStartBeat + this.phraseBeats();
       const preserved = source.filter(note => note.startBeat < this.phraseStartBeat || note.startBeat >= end);
@@ -307,7 +310,7 @@ export class EditWorkspaceComponent {
       const ids = new Set<string>();
       const notes = [...preserved, ...changed].map(note => {
         const id = ids.has(note.id) ? this.makeNoteId() : note.id; ids.add(id);
-        return { id, midi: Math.max(0, Math.min(127, note.midi - transpose)), startBeat: note.startBeat,
+        return { id, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity };
       });
       return { trackId: track.id, ...(local && section ? { sectionId: section.id } : {}), notes };
@@ -321,6 +324,17 @@ export class EditWorkspaceComponent {
 
   cancelChanges(): void { this.cancelled.emit(); }
 
+  private setDisplayNotes(notes: readonly PhraseDraftNote[]): void {
+    const transpose = this.displayTranspose();
+    const originals = new Map(this.draftNotes().map(note => [note.id, note]));
+    this.draftNotes.set(notes.map(note => {
+      const original = originals.get(note.id);
+      // Keep underlying pitches when only timing/velocity changes, including clipped notes.
+      const unchangedPitch = original && note.midi === Math.max(0, Math.min(127, original.midi + transpose));
+      return { ...note, midi: unchangedPitch ? original.midi : Math.max(0, Math.min(127, note.midi - transpose)) };
+    }));
+  }
+
   private makeNoteId(): string {
     this.newNoteId++;
     return `edit-${Date.now()}-${this.newNoteId}`;
@@ -331,7 +345,7 @@ export class EditWorkspaceComponent {
     const tracks = track.role === 'drums' ? [track, ...this.project().tracks.filter(candidate => candidate.role === 'drums' && candidate.id !== track.id)] : [track];
     const ids = new Set<string>();
     this.baselineNotes = tracks.flatMap(track => {
-      const source = section ? layOutTrackPhrase({ ...this.project(), arrangement: [{ ...section, trackPresence: { ...section.trackPresence, [track.id]: true } }] }, track)
+      const source = section ? layOutTrackPhrase({ ...this.project(), transposeSemitones: 0, arrangement: [{ ...section, trackPresence: { ...section.trackPresence, [track.id]: true } }] }, track)
         .filter(note => note.startBeat >= this.phraseStartBeat && note.startBeat < this.phraseStartBeat + this.phraseBeats())
         .map(note => ({ ...note, startBeat: note.startBeat - this.phraseStartBeat, durationBeats: Math.min(note.durationBeats, this.phraseBeats() - (note.startBeat - this.phraseStartBeat)) }))
         : phraseForTrack(this.project(), track);

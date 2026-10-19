@@ -170,6 +170,22 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return {typingUnaffected:!typing.defaultPrevented,globalUntouched:persisted.tracks.find(t=>t.role==='bass').editedPhrase[0].midi===48,localUntouched:!persisted.arrangement[0].trackPhrases};
   })()`);
   assert.deepEqual(shortcuts,{typingUnaffected:true,globalUntouched:true,localUntouched:true});
+  assert.equal(await evaluate(`(async()=>{${waitCode}
+    const change=(field,value)=>{field.value=value;field.dispatchEvent(new Event('change',{bubbles:true}));};
+    const transpose=document.querySelector('[aria-label="Transpose in semitones"]');
+    const pitch=()=>document.querySelector('#note-pitch');
+    const apply=()=>[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply');
+    const key=key=>document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown',{key,ctrlKey:true,bubbles:true,cancelable:true}));
+    change(transpose,'7');await wait(()=>pitch().value==='55');
+    if(!apply().disabled || !document.querySelector('.pitch-key[title="MIDI 55"].in-scale')) throw Error('Transpose must update the roll and scale without dirtying the draft');
+    change(pitch(),'57');await wait(()=>!apply().disabled);
+    change(transpose,'-5');await wait(()=>pitch().value==='45');
+    key('z');await wait(()=>pitch().value==='43' && apply().disabled);
+    key('y');await wait(()=>pitch().value==='45' && !apply().disabled);
+    change(transpose,'0');await wait(()=>pitch().value==='50');
+    key('z');await wait(()=>pitch().value==='48' && apply().disabled);
+    return true;
+  })()`),true,'open phrase follows global transpose while preserving draft edits and history');
   const middleStart=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();const row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();return {x:c.left+c.width/32,y:row.top+row.height/2};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...middleStart,button:'middle',clickCount:1});
   const middleEnd={x:middleStart.x+100,y:middleStart.y-10};
@@ -177,7 +193,17 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await command('Input.dispatchMouseEvent',{type:'mouseReleased',...middleEnd,button:'middle',clickCount:1});
   const middleGuard=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(r));const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return {editing:!!document.querySelector('#note-velocity'),global:p.tracks.find(t=>t.role==='bass').editedPhrase[0].velocity,local:!!p.arrangement[0].trackPhrases};})()`);
   assert.deepEqual(middleGuard,{editing:true,global:90,local:false},'MMB velocity drag ending empty must not apply');
-  const local=await evaluate(`(async()=>{${waitCode}const input=document.querySelector('#note-velocity');input.value='115';input.dispatchEvent(new Event('change',{bubbles:true}));[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Local Apply').click();const p=await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.arrangement[0].trackPhrases?p:null;});return {global:p.tracks.find(t=>t.role==='bass').editedPhrase[0].velocity,local:p.arrangement[0].trackPhrases['track-bass-1'][0].velocity};})()`);assert.deepEqual(local,{global:90,local:115});
+  const local=await evaluate(`(async()=>{${waitCode}
+    const transpose=document.querySelector('[aria-label="Transpose in semitones"]');
+    transpose.value='7';transpose.dispatchEvent(new Event('change',{bubbles:true}));
+    await wait(()=>document.querySelector('#note-pitch').value==='55');
+    const input=document.querySelector('#note-velocity');input.value='115';input.dispatchEvent(new Event('change',{bubbles:true}));
+    [...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Local Apply').click();
+    const p=await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.arrangement[0].trackPhrases?p:null;});
+    transpose.value='0';transpose.dispatchEvent(new Event('change',{bubbles:true}));
+    await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).transposeSemitones===0);
+    return {global:p.tracks.find(t=>t.role==='bass').editedPhrase[0].velocity,local:p.arrangement[0].trackPhrases['track-bass-1'][0].velocity,pitch:p.arrangement[0].trackPhrases['track-bass-1'][0].midi};
+  })()`);assert.deepEqual(local,{global:90,local:115,pitch:48});
   const restored=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return document.querySelector('vc-score-canvas .horizontal-scroll > div').style.width;})()`);
   assert.equal(restored,overviewViewport,'closing the editor restores the overview time zoom');
   const smart=await evaluate(`(async()=>{${waitCode}
@@ -198,6 +224,17 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await capture('unified-drums-unselected');
   const editingDrumPoint=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('#note-velocity'));if(document.querySelectorAll('.drum-label').length!==3)throw Error('All drum rows must be visible');const canvas=document.querySelector('vc-score-canvas canvas');canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true,cancelable:true}));await new Promise(r=>requestAnimationFrame(r));if(!document.querySelector('.inspector-copy').textContent.includes('3 notes'))throw Error('All drum phrases must be selectable');const c=canvas.getBoundingClientRect(),row=[...document.querySelectorAll('.drum-label')].find(row=>row.textContent.trim().toUpperCase().startsWith('KICK')).getBoundingClientRect();return {x:c.left+c.width/32,y:row.top+row.height/2};})()`);
   await capture('unified-drums-edit');
+  assert.equal(await evaluate(`(async()=>{${waitCode}
+    const transpose=document.querySelector('[aria-label="Transpose in semitones"]');
+    const pitch=document.querySelector('#note-pitch').value;
+    transpose.value='7';transpose.dispatchEvent(new Event('change',{bubbles:true}));
+    await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).transposeSemitones===7);
+    const unchanged=document.querySelector('#note-pitch').value===pitch
+      && [...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply').disabled;
+    transpose.value='0';transpose.dispatchEvent(new Event('change',{bubbles:true}));
+    await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).transposeSemitones===0);
+    return unchanged;
+  })()`),true,'global transpose leaves drum drafts unchanged');
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...editingDrumPoint,button:'middle',clickCount:1});
   await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'middle',buttons:4});
   await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'middle',clickCount:1});
