@@ -1,21 +1,16 @@
+const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const http = require('node:http');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
 const test = require('node:test');
 const ts = require('typescript');
 
-const browser = process.env.OVERVIEW_TEST_BROWSER || [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-  '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome',
-].find((file) => fs.existsSync(file));
+const browser = findBrowser();
 
 test('production Angular controls initialize selects from settings and support rhythm, wheel and mix edits', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
 }, async () => {
-  const root = path.resolve(__dirname, '../dist/browser');
+  const root = requireProductionBuild();
   const source = fs.readFileSync(path.join(__dirname, '../src/app/core/music/rhythm-patterns.ts'), 'utf8');
   const module = { exports: {} };
   new Function('exports', ts.transpileModule(source, { compilerOptions: {
@@ -595,40 +590,14 @@ test('production Angular controls initialize selects from settings and support r
   </script>`;
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
-  const server = http.createServer((request, response) => {
-    if (request.url === '/result') {
-      let body = '';
-      request.on('data', chunk => { body += chunk; });
-      request.on('end', () => {
-        response.end('OK');
-        try { resolve(JSON.parse(body)); } catch (error) { reject(error); }
-      });
-      return;
-    }
-    const pathname = new URL(request.url, 'http://localhost').pathname;
-    if (pathname === '/') {
-      response.setHeader('Content-Type', 'text/html');
-      response.end(index.replace('</body>', script + '</body>'));
-      return;
-    }
-    const file = path.resolve(root, '.' + pathname);
-    if (path.relative(root, file).startsWith('..') || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
-      response.writeHead(404); response.end(); return;
-    }
-    response.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript'
-      : file.endsWith('.css') ? 'text/css' : 'application/octet-stream');
-    fs.createReadStream(file).pipe(response);
-  });
-  await new Promise(done => server.listen(0, '127.0.0.1', done));
+  result.catch(() => {}); // CDP setup can fail before the result is awaited.
+  const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
+  await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/rhythm-picker-browser-'));
-  const child = spawn(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
+  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
     '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
-  let errors = '';
-  child.stderr.on('data', chunk => { errors = (errors + chunk).slice(-2000); });
-  child.on('error', reject);
-  child.on('exit', code => reject(new Error('Chromium exited (' + code + '): ' + errors)));
-  const timeout = setTimeout(() => reject(new Error('Chromium timed out: ' + errors)), 30000);
+  const watchdog = watchBrowser(child, reject, 30000);
   try {
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
@@ -755,9 +724,6 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.melodyHasSpeed, 1);
     assert.equal(actual.melodyHasAccent, 1);
   } finally {
-    clearTimeout(timeout); child.kill(); server.close();
-    // Remove only the fresh profile created by this test after Chromium exits.
-    await new Promise(done => child.exitCode !== null ? done() : child.once('exit', done));
-    fs.rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    await closeBrowser({ child, server, watchdog });
   }
 });

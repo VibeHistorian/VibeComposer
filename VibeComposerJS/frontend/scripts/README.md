@@ -1,6 +1,35 @@
 # Frontend tests
 
-Run tests from `frontend/` using the `test:*` scripts in `package.json`. Production browser suites use `dist/browser`, so run `npm run build` after changing application code. Browser tests detect Chromium automatically; suites that support `OVERVIEW_TEST_BROWSER` also accept an explicit executable path. Supported viewport widths start at 700 CSS pixels.
+Run tests from `frontend/` using the `test:*` scripts in `package.json`. `npm test` (or `npm run test:unit`) runs all functional suites without Chromium. `npm run test:browser` runs all twelve browser suites sequentially, including the focused overview matrix. Focused commands remain available below. Append `-- --list` to either aggregate command to list its suites without running them; other arguments are forwarded to Node's test runner.
+
+Production browser suites use `dist/browser`: run `npm run build` first and rebuild after changing application code. The browser aggregate checks for the build and a browser before starting; focused production suites also report a missing build explicitly. Existing assets can be reused for test-only changes. The overview layout and TinySynth fixture suites read source directly and do not require a production build. Browser discovery accepts `OVERVIEW_TEST_BROWSER` as an explicit Chromium executable path, then checks common Chrome/Edge/Chromium locations on Windows, Linux and macOS. Focused suites skip when no browser is installed; the aggregate fails with a setup instruction. Supported viewport widths start at 700 CSS pixels.
+
+## Change area to checks
+
+Run the relevant functional commands, then the browser commands for affected interactions. Build first when application code changes. For changes across owners, use both aggregate commands.
+
+| Change area | Functional commands (`npm run …`) | Browser commands (`npm run …`) |
+| --- | --- | --- |
+| Project decoding, persistence, Java XML import | `test:parts:imports`, `test:java-import` | `test:preferences:browser` |
+| History, arrangement commands, selection | `test:parts:history`, `test:selection`, `test:overview` | `test:overview:browser`, `test:contextual:browser` |
+| Settings inheritance, contextual generation, seeded parity | `test:parts:scopes`, `test:parts:generation`, `test:generation` | `test:generation:browser`, `test:contextual:browser` |
+| Manual phrases, draft history, manual Mode preference | `test:parts:phrases`, `test:parts:preferences` | `test:manual:browser`, `test:score:browser` |
+| MIDI import, phrase drop and transpose | `test:midi-import`, `test:parts:phrases` | `test:phrase-import:browser` |
+| Score geometry, notes, piano roll and drum editing | `test:score`, `test:selection` | `test:score:browser`, `test:phrase-import:browser` |
+| Rhythm controls and pattern sequencer | `test:parts:scopes`, `test:parts:phrases` | `test:rhythm:browser`, `test:patterns:browser` |
+| Theme, appearance, quick settings and responsive workspace | `test:appearance`, `test:parts:preferences` | `test:preferences:browser`, `test:rhythm:browser`, `test:overview:browser` |
+| Keyboard shortcuts | `test:keyboard` | `test:contextual:browser`, `test:export:browser` |
+| Playback, scheduling and TinySynth adapter/patch | `test:playback` | `test:synth:browser`, `test:export:browser` |
+| MIDI routing/output and export | `test:midi`, `test:export` | `test:midi:browser`, `test:export:browser` |
+| Test fixtures and browser infrastructure | `test:parts:support`, `test:harness`, `test:unit` | `test:browser` |
+
+`test:unit` discovers top-level `*.test.cjs` files, excluding browser suites and `parts-generation.test.cjs`: the latter already runs through `part-settings.test.cjs`. Parts stay in one process with the transpilation cache intact. Files run sequentially to limit compiler/browser contention. Keep new standalone suites at this level (or add them to an existing aggregate), and add focused commands as needed. `browser-harness.test.cjs` verifies aggregate coverage without running the suites twice.
+
+## Shared browser infrastructure
+
+`support/browser-harness.cjs` owns executable discovery, production-build preflight, loopback HTTP serving, JSON result parsing, Chromium launch, debugging-protocol connection/command timeouts, process watchdogs and cleanup. All twelve browser suites use it. Each launch uses a separate profile under `.angular/`; cleanup closes sockets/server connections, waits for Chromium to exit, verifies the profile path and removes that profile. Spawn errors, early exits and watchdog timeouts remain visible, with recent stderr on result-driven failures. `test:harness` covers serving/results, invalid JSON, asset path boundaries, missing-build diagnostics, watchdog failure handling and failed-launch cleanup.
+
+Suites retain their HTML/fixtures, injected workflows, browser flags, viewport sizes, assertions and screenshots. Result-posting suites choose their existing 25–45 second watchdogs; protocol commands have a 20 second deadline. Page startup and DOM polling remain suite-specific. Layout checks continue to wait for real animation frames and ResizeObserver work; do not replace these waits with virtual time or shorten the stability sequence.
 
 Component fixtures and source-reading browser suites follow the [feature ownership map](../src/app/features/README.md). Domain components live under `src/app/features/`; workspace selection state lives in `src/app/core/ui/workspace-ui.service.ts`. Update fixture module paths and dependency stand-ins together when moving an owner. Templates and styles remain alongside their components; the old `shared/` paths have no forwarding modules.
 
@@ -10,7 +39,7 @@ Component fixtures and source-reading browser suites follow the [feature ownersh
 
 The default has 109 cases instead of crossing all 21 layouts with all 12 scale combinations (252 cases). Both modes retain 12 rounds of alternating track/role edits per case, two real animation frames between rounds, and the final four-sample stability assertion. Return-to-fit scenarios remain in the baseline sequence. Per-display-scale diagnostics report case counts and elapsed time.
 
-For exhaustive checks after changing layout or rounding behavior, set `OVERVIEW_TEST_FULL_MATRIX=1`. In PowerShell:
+For exhaustive checks after changing layout or rounding behavior, run `npm run test:overview:browser:full` (252 cases). The existing `OVERVIEW_TEST_FULL_MATRIX=1` override still works. In PowerShell:
 
 ```powershell
 $env:OVERVIEW_TEST_FULL_MATRIX = '1'

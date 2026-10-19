@@ -1,16 +1,12 @@
+const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const http = require('node:http');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
 const test = require('node:test');
-const browser = process.env.OVERVIEW_TEST_BROWSER || [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium',
-].find(file => fs.existsSync(file));
+const browser = findBrowser();
 
 for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard, selection and hotplug at ${width}px`, { skip: !browser }, async () => {
-  const root = path.resolve(__dirname, '../dist/browser');
+  const root = requireProductionBuild();
   const script = `<script>
     let requests=0, denied=true, changed;
     const output={id:'test',name:'External synthesizer with a very long device name',manufacturer:'Test',state:'connected',
@@ -87,32 +83,17 @@ for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard,
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace('</body>', script + '</body>');
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
-  const server = http.createServer((request, response) => {
-    if (request.url === '/result') {
-      let body = ''; request.on('data', chunk => body += chunk); request.on('end', () => {
-        response.end('OK'); try { resolve(JSON.parse(body)); } catch (error) { reject(error); }
-      }); return;
-    }
-    const pathname = new URL(request.url, 'http://localhost').pathname;
-    if (pathname === '/') { response.setHeader('Content-Type', 'text/html'); response.end(index); return; }
-    const file = path.resolve(root, '.' + pathname);
-    if (path.relative(root, file).startsWith('..') || !fs.existsSync(file) || !fs.statSync(file).isFile()) { response.writeHead(404); response.end(); return; }
-    response.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'application/octet-stream');
-    fs.createReadStream(file).pipe(response);
-  });
-  await new Promise(done => server.listen(0, '127.0.0.1', done));
+  result.catch(() => {}); // CDP setup can fail before the result is awaited.
+  const server = createBrowserServer({ root, html: index, resolve, reject });
+  await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/midi-browser-'));
-  const child = spawn(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
+  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
     '--user-data-dir=' + profile, '--autoplay-policy=no-user-gesture-required', '--window-size=' + width + ',1000',
     'http://127.0.0.1:' + server.address().port], { stdio: ['ignore', 'ignore', 'pipe'] });
-  let errors = ''; child.stderr.on('data', chunk => errors = (errors + chunk).slice(-2000));
-  child.on('error', reject); child.on('exit', code => reject(Error('Chromium exited ' + code + ': ' + errors)));
-  const timeout = setTimeout(() => reject(Error('MIDI test timed out: ' + errors)), 25000);
+  const watchdog = watchBrowser(child, reject, 25000);
   try { const output = await result; assert.equal(output.error, undefined, JSON.stringify(output)); assert.equal(output.ok, true); }
   finally {
-    clearTimeout(timeout); child.kill(); server.close();
-    await new Promise(done => child.exitCode !== null ? done() : child.once('exit', done));
-    await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    await closeBrowser({ child, server, watchdog });
   }
 });

@@ -1,16 +1,11 @@
+const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const http = require('node:http');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
 const test = require('node:test');
 const ts = require('typescript');
 
-const browser = process.env.OVERVIEW_TEST_BROWSER || [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-  '/usr/bin/chromium', '/usr/bin/google-chrome',
-].find((file) => fs.existsSync(file));
+const browser = findBrowser();
 
 test('TinySynth renders GM presets and drums with independent voices and track routing', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
@@ -94,26 +89,14 @@ test('TinySynth renders GM presets and drums with independent voices and track r
   })();</script>`;
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
-  const server = http.createServer((request, response) => {
-    if (request.url === '/result') {
-      let body = '';
-      request.on('data', chunk => { body += chunk; });
-      request.on('end', () => {
-        response.end('OK');
-        try { resolve(JSON.parse(body)); } catch (error) { reject(error); }
-      });
-    } else { response.setHeader('Content-Type', 'text/html'); response.end(html); }
-  });
-  await new Promise(done => server.listen(0, '127.0.0.1', done));
-  const child = spawn(browser, ['--headless', '--disable-gpu', '--no-first-run',
+  result.catch(() => {}); // CDP setup can fail before the result is awaited.
+  const server = createBrowserServer({ html, resolve: resolve, reject });
+  await listen(server);
+  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run',
     '--disable-background-networking', '--disable-component-update', '--disable-sync',
     '--no-default-browser-check', '--autoplay-policy=no-user-gesture-required',
     'http://127.0.0.1:' + server.address().port], { stdio: ['ignore', 'ignore', 'pipe'] });
-  let errors = '';
-  child.stderr.on('data', chunk => { errors = (errors + chunk).slice(-3000); });
-  child.on('error', reject);
-  child.on('exit', code => reject(new Error('Chromium exited (' + code + '): ' + errors)));
-  const timeout = setTimeout(() => reject(new Error('Synth render timed out: ' + errors)), 30000);
+  const watchdog = watchBrowser(child, reject, 30000);
   try {
     const output = await result;
     assert.equal(output.error, undefined);
@@ -128,5 +111,7 @@ test('TinySynth renders GM presets and drums with independent voices and track r
     assert.equal(output.independent, true, 'same-pitch notes retain independent durations');
     assert.equal(output.detached, true, 'the adapter owns voices outside TinySynth sequencer cleanup');
     assert.ok(output.silence < .000001, 'silent buses and cancelled future voices emit no sound');
-  } finally { clearTimeout(timeout); child.kill(); server.close(); }
+  } finally {
+    await closeBrowser({ child, server, watchdog });
+  }
 });

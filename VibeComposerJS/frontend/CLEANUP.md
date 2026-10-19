@@ -70,12 +70,18 @@ Prefer these concrete boundaries over splitting methods merely to meet a line li
 
 Five test files currently have no corresponding package script: `appearance.test.cjs`, `keyboard-shortcuts.test.cjs`, `manual-phrase-mode-browser.test.cjs`, `midi-import.test.cjs`, and `phrase-import-browser.test.cjs`. Twelve browser suites contain HTTP-server setup.
 
-- [ ] Provide discoverable unit and browser commands, including currently unmapped suites, while retaining focused commands.
-- [ ] Add a change-area-to-checks table to `scripts/README.md` so targeted edits have an obvious verification path.
-- [ ] Extract common browser discovery, server/process lifecycle, timeout, and result handling where suites share the same needs.
-- [ ] Make production-build prerequisites explicit and preserve real animation-frame waits where layout correctness requires them.
+- [x] Provide discoverable unit and browser commands, including currently unmapped suites, while retaining focused commands.
+- [x] Add a change-area-to-checks table to `scripts/README.md` so targeted edits have an obvious verification path.
+- [x] Extract common browser discovery, server/process lifecycle, timeout, and result handling where suites share the same needs.
+- [x] Make production-build prerequisites explicit and preserve real animation-frame waits where layout correctness requires them.
 
 Retain the supported viewport range of at least 700 CSS pixels and the distinction between focused and exhaustive browser matrices.
+
+Delivered 2026-10-19: added `npm test`/`test:unit`, `test:browser`, focused commands for all five previously unmapped suites, `test:harness`, and `test:overview:browser:full`. Aggregate discovery includes new top-level suites automatically, supports `-- --list`, and avoids rerunning the generation entry point already loaded by the parts aggregate. All twelve browser suites share discovery, HTTP serving/result parsing, launch and profile/server cleanup through `scripts/support/browser-harness.cjs`; six protocol-driven suites also share connection and command handling. Existing result watchdog durations, real animation-frame waits, workflows and behavioral assertions remain intact. Production-build prerequisites, supported widths, command ownership and a change-area-to-checks table are documented in [the test guide](scripts/README.md). Application code is unchanged.
+
+Verification also exposed a stale unified-score layout expectation: the unchanged pre-cleanup test failed with `135 !== 87` at 1401px against the existing 1500px two-row transport contract. Corrected that expected clearance and added explicit 1500px/1501px boundary cases. Evidence is retained in `.angular/test-infrastructure-score-baseline.tap` and `.angular/test-infrastructure-score-final.tap`.
+
+Validation: `test:unit` passed all 425 checks, including five new infrastructure checks; `test:browser` passed all 18 cases across twelve suites in 105.44 seconds, including the 109-case focused overview matrix. A source/AST audit confirmed preservation of every behavioral assertion and embedded page workflow across the twelve suites; only redundant startup-port assertions moved into shared connection handling, alongside the documented score matrix correction. `git diff --check` passed. Reports: `.angular/test-infrastructure-unit.tap` and `.angular/test-infrastructure-browser-final.tap`. Browser verification required execution outside the sandbox because sandboxed Chromium renderers crashed. Existing production assets were reused for this test/documentation-only cleanup; no new application build was needed. The exhaustive overview command remains separate and was not run for this cleanup.
 
 ### 6. Make installation reproducible
 

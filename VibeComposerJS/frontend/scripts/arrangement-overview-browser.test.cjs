@@ -1,17 +1,12 @@
+const { findBrowser, createBrowserServer, listen, launchBrowser, watchBrowser, closeBrowser } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const http = require('node:http');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
 const test = require('node:test');
 const ts = require('typescript');
 
 // Real Chromium layout is necessary here: DOM stubs cannot model scrollbar reflow.
-const browser = process.env.OVERVIEW_TEST_BROWSER || [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-  '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome',
-].find((file) => fs.existsSync(file));
+const browser = findBrowser();
 
 const fullMatrix = process.env.OVERVIEW_TEST_FULL_MATRIX === '1';
 // Every layout runs at normal zoom/DPI. Cross the scale matrix only for cases
@@ -44,34 +39,19 @@ async function render(html, displayScale) {
   let finish;
   let reject;
   const result = new Promise((resolve, fail) => { finish = resolve; reject = fail; });
-  const server = http.createServer((request, response) => {
-    if (request.url === '/result') {
-      let body = '';
-      request.on('data', (chunk) => { body += chunk; });
-      request.on('end', () => {
-        response.end('OK');
-        try { finish(JSON.parse(body)); } catch (error) { reject(error); }
-      });
-    } else {
-      response.setHeader('Content-Type', 'text/html'); response.end(html);
-    }
-  });
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const server = createBrowserServer({ html, resolve: finish, reject });
+  await listen(server);
   // Run in real time: virtual-time dump-dom can finish before animation frames
   // and ResizeObserver callbacks run, giving false confidence about resize loops.
   // Keep the CSS viewport above 700px throughout the display-scale matrix.
-  const child = spawn(browser, ['--headless', '--window-size=1920,1200', '--disable-gpu', '--no-first-run',
+  const child = launchBrowser(browser, ['--headless', '--window-size=1920,1200', '--disable-gpu', '--no-first-run',
     '--disable-background-networking', '--disable-component-update', '--disable-sync',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
     '--force-device-scale-factor=' + displayScale, '--no-default-browser-check',
     `http://127.0.0.1:${server.address().port}/`], { stdio: ['ignore', 'ignore', 'pipe'] });
-  let errors = '';
-  child.stderr.on('data', (chunk) => { errors = (errors + chunk).slice(-4000); });
-  child.on('error', reject);
-  child.on('exit', (code) => reject(new Error(`Chromium exited (${code}): ${errors}`)));
-  const timeout = setTimeout(() => reject(new Error(`Chromium test timed out: ${errors}`)), 45000);
+  const watchdog = watchBrowser(child, reject, 45000);
   try { return await result; } finally {
-    clearTimeout(timeout); child.kill(); server.close();
+    await closeBrowser({ child, server, watchdog });
   }
 }
 

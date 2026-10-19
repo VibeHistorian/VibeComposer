@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test": "npm run test:unit",
+    "test:unit": "node scripts/run-tests.cjs unit",
+    "test:browser": "node scripts/run-tests.cjs browser",
     "translate:java": "node scripts/translate-java-config.cjs",
     "test:java-import": "node --test scripts/java-config-translator.test.cjs",
     "start": "ng serve",
@@ -32,7 +35,14 @@
     "test:patterns:browser": "node --test scripts/pattern-sequencer-browser.test.cjs",
     "test:rhythm:browser": "node --test scripts/rhythm-picker-browser.test.cjs",
     "test:contextual:browser": "node --test scripts/contextual-workflows-browser.test.cjs",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "test:appearance": "node --test scripts/appearance.test.cjs",
+    "test:keyboard": "node --test scripts/keyboard-shortcuts.test.cjs",
+    "test:midi-import": "node --test scripts/midi-import.test.cjs",
+    "test:manual:browser": "node --test scripts/manual-phrase-mode-browser.test.cjs",
+    "test:phrase-import:browser": "node --test scripts/phrase-import-browser.test.cjs",
+    "test:overview:browser:full": "node scripts/run-tests.cjs overview-full",
+    "test:harness": "node --test scripts/browser-harness.test.cjs"
   },
   "dependencies": {
     "@angular/cdk": "22.2.1",

@@ -1,20 +1,18 @@
+const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert=require('node:assert/strict');
-const fs=require('node:fs'); const path=require('node:path'); const http=require('node:http');
-const {spawn}=require('node:child_process'); const test=require('node:test');
-const browser=['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(p=>fs.existsSync(p));
+const fs=require('node:fs'); const path=require('node:path'); const test=require('node:test');
+const browser=findBrowser();
 test('phrase MIDI drop, transpose, preferences and draft undo work in the production browser', {skip:!browser,timeout:60000},async()=>{
- const root=path.resolve(__dirname,'../dist/browser');
- const server=http.createServer((req,res)=>{const p=path.resolve(root, '.'+(req.url==='/'?'/index.html':req.url));if(path.relative(root,p).startsWith('..')||!fs.existsSync(p)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'text/html');fs.createReadStream(p).pipe(res);});
- await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const root=requireProductionBuild();
+ const server=createBrowserServer({ root });
+ await listen(server);
  const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/phrase-import-'));
- const child=spawn(browser,['--headless','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--window-size=1600,1100','--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port]);
+ const child=launchBrowser(browser,['--headless','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--window-size=1600,1100','--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port]);
  let socket;
  try {
-  let port; for(let i=0;i<100&&!port;i++){try{port=+fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];}catch{}if(!port)await new Promise(r=>setTimeout(r,50));}
-  assert.ok(port);
-  const target=(await(await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(t=>t.type==='page');
-  socket=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{socket.addEventListener('open',r,{once:true});socket.addEventListener('error',j,{once:true});});
-  let id=0;const command=(method,params={})=>new Promise((r,j)=>{const n=++id;const timer=setTimeout(()=>j(Error('CDP timeout: '+method)),20000);const listener=e=>{const m=JSON.parse(e.data);if(m.id!==n)return;clearTimeout(timer);socket.removeEventListener('message',listener);m.error?j(Error(JSON.stringify(m.error))):r(m.result);};socket.addEventListener('message',listener);socket.send(JSON.stringify({id:n,method,params}));});
+  const connection = await connectToPage(child);
+  socket = connection.socket;
+  const command = connection.command;
   const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify(result));return result.result.value;};
   const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
   await command('Page.enable');
@@ -162,5 +160,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     return {combined,emptyDefault,rejectsEqual,rejectsZero,singleUndo,scaled,translated,cancelClean,snapOffNoTranslation,translationOnly,noPopupForFittingMidi};
   })()`);
   for(const [key,value] of Object.entries(options))assert.equal(value,true,key);
- } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
+ } finally {
+    await closeBrowser({ child, server, socket });
+  }
 });

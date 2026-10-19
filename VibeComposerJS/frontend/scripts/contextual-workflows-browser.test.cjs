@@ -1,19 +1,15 @@
+const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const http = require('node:http');
-const { spawn } = require('node:child_process');
 const test = require('node:test');
 const { DEFAULT_TRACK_POLICIES } = require('./music-loader.cjs').loadMusic('track-generation.ts');
-const browser = process.env.OVERVIEW_TEST_BROWSER || [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium',
-].find(file => fs.existsSync(file));
+const browser = findBrowser();
 
 for (const width of [1440, 780]) test(`production contextual workflows with 30 tracks at ${width}px`, {
   skip: browser ? false : 'Chromium unavailable',
 }, async () => {
-  const root = path.resolve(__dirname, '../dist/browser');
+  const root = requireProductionBuild();
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const script = `<script>(async () => {
     const wait = async (read, label) => {
@@ -471,50 +467,20 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
   new (require('node:vm').Script)(script.slice('<script>'.length, -'</script>'.length));
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
+  result.catch(() => {}); // CDP setup can fail before the result is awaited.
   result.catch(() => {}); // Startup failure can precede awaiting the browser result.
-  const server = http.createServer((request, response) => {
-    if (request.url === '/result') {
-      let body = ''; request.on('data', chunk => body += chunk);
-      request.on('end', () => { response.end('OK'); try { resolve(JSON.parse(body)); } catch (error) { reject(error); } }); return;
-    }
-    if (request.url === '/') { response.setHeader('Content-Type', 'text/html'); response.end(index.replace('</body>', script + '</body>')); return; }
-    const file = path.resolve(root, '.' + new URL(request.url, 'http://localhost').pathname);
-    if (path.relative(root, file).startsWith('..') || !fs.existsSync(file) || !fs.statSync(file).isFile()) { response.writeHead(404); response.end(); return; }
-    response.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'application/octet-stream');
-    fs.createReadStream(file).pipe(response);
-  });
-  await new Promise(done => server.listen(0, '127.0.0.1', done));
+  const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
+  await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/contextual-browser-'));
-  const child = spawn(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
+  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
     '--remote-debugging-port=0', '--window-size=' + width + ',1100', '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
-  let errors = ''; child.stderr.on('data', chunk => errors = (errors + chunk).slice(-1000));
-  child.on('error', reject); child.on('exit', code => reject(new Error('Chromium exited ' + code + ': ' + errors)));
-  const timer = setTimeout(() => reject(new Error('Browser timed out: ' + errors)), 45000);
+  const watchdog = watchBrowser(child, reject, 45000);
   let socket;
   try {
-    const portFile = path.join(profile, 'DevToolsActivePort');
-    let port;
-    for (let i = 0; !port && i < 100; i++) {
-      try { port = Number(fs.readFileSync(portFile, 'utf8').split('\n')[0]); }
-      catch (error) { if (!['ENOENT','EBUSY','EPERM'].includes(error.code)) throw error; }
-      if (!port) await new Promise(done => setTimeout(done, 50));
-    }
-    if (!port) throw new Error('Chromium debugging port unavailable: ' + errors);
-    let target;
-    for (let i = 0; !target && i < 100; i++) {
-      target = (await (await fetch('http://127.0.0.1:' + port + '/json/list', { signal: AbortSignal.timeout(5000) })).json()).find(item => item.type === 'page');
-      if (!target) await new Promise(done => setTimeout(done, 50));
-    }
-    socket = new WebSocket(target.webSocketDebuggerUrl);
-    await new Promise((done, fail) => { socket.addEventListener('open', done, { once: true }); socket.addEventListener('error', fail, { once: true }); });
-    let commandId = 0;
-    const command = (method, params = {}) => new Promise((done, fail) => {
-      const id = ++commandId;
-      const listener = event => { const message = JSON.parse(event.data); if (message.id !== id) return;
-        socket.removeEventListener('message', listener); message.error ? fail(new Error(JSON.stringify(message.error))) : done(message.result); };
-      socket.addEventListener('message', listener); socket.send(JSON.stringify({ id, method, params }));
-    });
+    const connection = await connectToPage(child);
+    socket = connection.socket;
+    const command = connection.command;
     await command('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
@@ -775,9 +741,6 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','rootColors','spiceColors','menuKeyboard','chordletGestures',
       'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
-    socket?.close();
-    clearTimeout(timer); child.kill(); server.close();
-    await new Promise(done => child.exitCode !== null || child.signalCode !== null ? done() : child.once('exit', done));
-    await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
+    await closeBrowser({ child, server, socket, watchdog });
   }
 });

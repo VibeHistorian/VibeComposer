@@ -1,20 +1,18 @@
+const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert=require('node:assert/strict');
-const fs=require('node:fs'); const path=require('node:path'); const http=require('node:http');
-const {spawn}=require('node:child_process'); const test=require('node:test');
-const browser=['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(p=>fs.existsSync(p));
+const fs=require('node:fs'); const path=require('node:path'); const test=require('node:test');
+const browser=findBrowser();
 test('unified score keeps the workspace, filters drums and applies contextual harmonic and drum edits', {skip:!browser,timeout:60000},async()=>{
- const root=path.resolve(__dirname,'../dist/browser');
- const server=http.createServer((req,res)=>{const p=path.resolve(root, '.'+(req.url==='/'?'/index.html':req.url));if(path.relative(root,p).startsWith('..')||!fs.existsSync(p)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'text/html');fs.createReadStream(p).pipe(res);});
- await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const root=requireProductionBuild();
+ const server=createBrowserServer({ root });
+ await listen(server);
  const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/unified-score-'));
- const child=spawn(browser,['--headless','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--window-size=1600,1100','--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port]);
+ const child=launchBrowser(browser,['--headless','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--window-size=1600,1100','--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port]);
  let socket;
  try {
-  let port; for(let i=0;i<100&&!port;i++){try{port=+fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];}catch{}if(!port)await new Promise(r=>setTimeout(r,50));}
-  assert.ok(port);
-  const target=(await(await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(t=>t.type==='page');
-  socket=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{socket.addEventListener('open',r,{once:true});socket.addEventListener('error',j,{once:true});});
-  let id=0;const command=(method,params={})=>new Promise((r,j)=>{const n=++id;const listener=e=>{const m=JSON.parse(e.data);if(m.id!==n)return;socket.removeEventListener('message',listener);m.error?j(Error(JSON.stringify(m.error))):r(m.result);};socket.addEventListener('message',listener);socket.send(JSON.stringify({id:n,method,params}));});
+  const connection = await connectToPage(child);
+  socket = connection.socket;
+  const command = connection.command;
   const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify(result));return result.result.value;};
   const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
   const headerSelection=await evaluate(`(async()=>{${waitCode}
@@ -70,7 +68,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.deepEqual(scrollbars,{fit:true,ranges:true,visible:true,moved:true,reset:true,restored:true},'native scrollbars are visible and track zoom and pan in both directions');
   await command('Page.reload');
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));})()`);
-  for (const [width,height,visible,padding] of [[1600,766,true,87],[1600,765,true,87],[1400,906,true,135],[1400,905,true,135],[1401,905,true,87],[1280,800,true,135]]) {
+  for (const [width,height,visible,padding] of [[1600,766,true,87],[1600,765,true,87],[1400,906,true,135],[1400,905,true,135],[1401,905,true,135],[1500,905,true,135],[1501,905,true,87],[1280,800,true,135]]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
     const layout=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
       const box=selector=>document.querySelector(selector).getBoundingClientRect();
@@ -384,5 +382,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.equal(shortSection.hidden,true);assert.equal(shortSection.measure,'01');assert.equal(shortSection.saved,true);
   assert.equal(shortSection.reappeared,true);assert.notEqual(shortSection.separator,'rgba(0, 0, 0, 0)');
   await capture('score-chord-grid-short-sections');
- } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
+ } finally {
+    await closeBrowser({ child, server, socket });
+  }
 });
