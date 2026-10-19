@@ -827,7 +827,6 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const black = [1, 3, 6, 8, 10].includes(midi % 12);
       const h = Math.min(this.harmonicHeight, y + this.laneHeight) - Math.max(0, y);
       fill(0, y, this.width, h, black ? '--score-pitch-band' : '--score-row-even');
-      if (this.scaleColoringActive() && !this.inScale(midi)) fill(0, y, this.width, h, '--score-out-of-scale');
       if (midi % 12 !== 11) line(0, Math.max(0, y), this.width, Math.max(0, y), '--grid-subdivision');
       rows.push({ midi, label: midi % 12 === 0 ? `C${Math.floor(midi / 12) - 1}` : '', y: Math.max(0, y), height: h, drum: false, black, inScale: this.inScale(midi) });
     }
@@ -869,6 +868,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       if (x < 0 || x > this.width) continue;
       const tint = new Color(`hsl(${boundary.hue} ${rootStyle.getPropertyValue('--chordlet-foreground-tone').trim()})`);
       graphics.moveTo(x, 0).lineTo(x, scoreHeight).stroke({ color: tint.toNumber(), alpha: tint.alpha * 0.175, width: 1 });
+    }
+    // Blocked pitches cover the grid while notes remain visible above them.
+    if (this.scaleColoringActive()) for (const row of rows) {
+      if (!row.drum && !row.inScale) fill(0, row.y, this.width, row.height, '--score-out-of-scale');
     }
     // Pitch increases upward: the B/C boundary sits below C, not above it.
     // Use absolute MIDI octaves so brightness stays consistent while zooming or scrolling.
