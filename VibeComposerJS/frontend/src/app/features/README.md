@@ -15,7 +15,6 @@ Current layout and state contracts are defined in [the workspace guide](../../..
 - Keep music-domain behavior with the feature component that owns the interaction, even when that component is embedded in the workspace canvas.
 - Promote presentation primitives to `shared/` only when they have a real use across features. See the shared UI README for the visual conventions and promotion rule.
 
-## Visuals
+## Compatibility
 
-- Use [the split-parts moodboard](../../../UI_design_moodboard_split_parts.png) as layout direction.
 - Use actual translated parameters and the shared theme; the legacy Java layout is a reference for capability breadth, not a screen to reproduce.

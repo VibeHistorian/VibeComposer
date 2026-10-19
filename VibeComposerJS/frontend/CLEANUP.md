@@ -26,12 +26,16 @@ Validation: 334 tests passed across part settings, the new codec checks, Java XM
 
 `scripts/part-settings.test.cjs` has 6,483 lines and roughly 441K characters, covering substantially more than part settings. Its current run executes 249 tests.
 
-- [ ] Extract the fixture loader into shared test support.
-- [ ] Divide tests by behavior: imports/validation, history, scoped settings, generation, manual phrases, and preferences.
-- [ ] Preserve fresh module/service/storage state for each fixture and retain transpilation caching. Check aggregate results and runtime after splitting; separate Node processes do not share the current in-process cache.
-- [ ] Capture and assert expected invalid-import diagnostics so successful negative tests do not flood command output. Preserve visibility of unexpected diagnostics.
+- [x] Extract the fixture loader into shared test support.
+- [x] Divide tests by behavior: imports/validation, history, scoped settings, generation, manual phrases, and preferences.
+- [x] Preserve fresh module/service/storage state for each fixture and retain transpilation caching. Check aggregate results and runtime after splitting; separate Node processes do not share the current in-process cache.
+- [x] Capture and assert expected invalid-import diagnostics so successful negative tests do not flood command output. Preserve visibility of unexpected diagnostics.
 
 Baseline: `npm run test:parts` passed all 249 tests in approximately 14 seconds on 2026-10-19. This is evidence for comparison, not a permanent performance requirement.
+
+Delivered 2026-10-19: `part-settings.test.cjs` now loads behavior suites in one process; generation policies and Java parity have separate files with a shared entry point. Fixtures and JSON comparison support live in `scripts/support/project-fixture.cjs`. Negative-import assertions capture and validate expected property diagnostics while forwarding unexpected warnings; detailed diagnostic-path tests remain intact. Focused commands and suite ownership are documented in [the test guide](scripts/README.md).
+
+Validation: the baseline passed 254 tests (249 part tests and 5 codec tests) in 14.57 seconds. The final split aggregate passed all 257 tests in 12.04 seconds (an earlier split run took 14.70 seconds), retaining every existing test and adding three checks for fixture isolation/cache reuse and diagnostic handling. All six focused behavior commands passed independently. No application code changed.
 
 ### 3. Align feature ownership with folder structure
 

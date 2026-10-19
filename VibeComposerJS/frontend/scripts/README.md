@@ -18,10 +18,24 @@ finally { Remove-Item Env:OVERVIEW_TEST_FULL_MATRIX }
 
 Measured on 2026-10-16: the focused matrix passed in 44.9 seconds; the preceding full-matrix run took 102.6 seconds. Real animation-frame waits dominate this suite, so reducing only the failure timeout would not improve successful runs.
 
-## Part-settings fixture compilation
+## Project behavior tests and fixture support
 
 `npm run test:parts` also runs `project-codec.test.cjs`, which exercises project decoding, validation, diagnostics, defaults, and arrangement candidates without Angular or browser storage. Module ownership is documented in [the project-state guide](../src/app/core/project/README.md).
 
-`npm run test:parts` caches transpiled TypeScript text within the test process. Each fixture still evaluates fresh modules, creates fresh services and signals, and owns separate project/history/storage state. The cache does not share evaluated module exports, skip tests, reduce Java parity matrices, or persist across test processes.
+`scripts/part-settings.test.cjs` is the aggregate entry point. It requires the behavior suites under `scripts/parts/` in one Node test process, preserving the shared transpilation cache. Keep these tests sequential: fixtures install global session/local-storage stand-ins. Do not replace the aggregate command with a file glob or parallel suite processes; those processes each pay the compilation cost.
 
-Measured on 2026-10-16: caching reduced the 216-test suite from 107.9 to 5.3 seconds, with identical results at that checkpoint (213 passing and three existing failures). Those failures were subsequently fixed by testing mix synchronization through the preference service and its effect, and keeping default theme-color key order consistent with imported preferences. All 216 tests now pass. Raw timing reports from the original comparison are under `.angular/parts-timing-before.tap` and `.angular/parts-timing-after.tap` when retained locally.
+| Behavior | Focused command | Suite under `scripts/` |
+| --- | --- | --- |
+| Project imports, validation and atomic rejection | `npm run test:parts:imports` | `parts/imports-validation.cjs`, `project-codec.test.cjs` |
+| History, gestures, audition and arrangement commands | `npm run test:parts:history` | `parts/history.cjs` |
+| Scoped settings, inheritance, copy/freeze and editors | `npm run test:parts:scopes` | `parts/scoped-settings.cjs` |
+| Compose/reroll policies and Java generation parity | `npm run test:parts:generation` | `parts-generation.test.cjs` loads `parts/generation-policy.cjs` and `parts/generation-parity.cjs` |
+| Manual phrase ownership, drafts and local Apply | `npm run test:parts:phrases` | `parts/manual-phrases.cjs` |
+| UI preferences, appearance and control placement | `npm run test:parts:preferences` | `parts/preferences.cjs` |
+| Fixture isolation, cache reuse and diagnostic handling | `npm run test:parts:support` | `parts/test-support.cjs` |
+
+For a narrower selection, use Node's test-name filter, for example `node --test --test-name-pattern='catalogue' scripts/parts-generation.test.cjs`. Cross-cutting tests stay together under their primary behavior so their history, persistence, MIDI and ownership assertions remain intact.
+
+`support/project-fixture.cjs` caches only transpiled TypeScript text within the process. Each fixture evaluates fresh modules, creates fresh services and signals, and owns separate project/history/storage state. Its Angular stand-ins and manually flushed effects retain the existing harness behavior; it does not replace browser coverage. The cache does not share evaluated module exports, skip tests, reduce Java parity matrices, or persist across processes. `support/project-import-assertions.cjs` captures only an expected rejection operation, asserts a single import warning with nonempty property-path diagnostics, and forwards unexpected diagnostics. The imports suite retains detailed field-path, malformed-JSON, session-load and successful-load warning assertions.
+
+Measured on 2026-10-19: before splitting, all 249 part tests plus 5 codec tests passed in 14.57 seconds. The final split aggregate passed all 257 tests in 12.04 seconds (an earlier split run took 14.70 seconds): the same 254 checks plus three fixture/diagnostic support tests. All six focused commands also pass independently. Local reports are `.angular/parts-cleanup-before.tap`, `.angular/parts-cleanup-after.tap`, and `.angular/parts-cleanup-<behavior>.tap` when retained. Application code is unchanged, so this cleanup does not require rebuilding browser assets.
