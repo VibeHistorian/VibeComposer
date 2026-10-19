@@ -11,6 +11,10 @@ import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 import { isEditingText } from '../../shared/keyboard-shortcuts';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { MAX_MIDI_IMPORT_BYTES } from '../../core/music/midi-import-limits';
+import { generatePhraseMidi } from '../../core/music/midi-export';
+import { downloadProjectFile } from '../../core/project/download-file';
+import { exportFilename, safeExportName } from '../../core/project/export-filename';
+import { sectionProject } from '../../core/music/section-context';
 
 
 export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; }
@@ -52,6 +56,27 @@ export class EditWorkspaceComponent {
   readonly midiDragOver = signal(false);
   readonly freeTranspose = signal(0);
   private midiImport: AbortController | null = null;
+
+  private phraseExport(): { bytes: Uint8Array<ArrayBuffer>; name: string } {
+    const project = this.project();
+    const section = project.arrangement.find(section => section.id === this.sectionId);
+    const context = sectionProject(project, section);
+    const label = this.selectedPart() === 'drums' ? 'Drums' : this.selectedTrack().name;
+    const name = `${exportFilename(context, this.preferences.exportNameFields())}_${safeExportName(label) || 'Phrase'}_phrase`;
+    const notes = this.notes();
+    const tracks = this.editedTracks().map(track => ({ track, notes: notes.filter(note => note.trackId === track.id) }));
+    return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(), this.midi.drumMapping())) };
+  }
+
+  exportPhrase(): void {
+    try {
+      const { bytes, name } = this.phraseExport();
+      downloadProjectFile(new Blob([bytes], { type: 'audio/midi' }), name, 'mid');
+      this.applyError.set(null);
+    } catch (error) {
+      this.applyError.set(error instanceof Error ? `Could not export phrase: ${error.message}` : 'Could not export phrase.');
+    }
+  }
 
   midiDragEnter(event: DragEvent): void {
     if (!event.dataTransfer?.types.includes('Files')) return;

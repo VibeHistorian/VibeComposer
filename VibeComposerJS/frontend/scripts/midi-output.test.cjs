@@ -160,3 +160,27 @@ test('denial and unsupported browsers report actionable status; retry works and 
   assert.match(unsupported.error(), /unavailable|HTTPS/);
   unsupported.ngOnDestroy();
 });
+test('phrase MIDI exports draft tracks despite mute/solo and clips phrase bounds', () => {
+  const { Midi } = require('@tonejs/midi');
+  const { loadMusic } = require('./music-loader.cjs');
+  const { generatePhraseMidi } = loadMusic('midi-export.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project.model.ts');
+  const bass = DEFAULT_PROJECT.tracks.find(t => t.role === 'bass');
+  const drum = DEFAULT_PROJECT.tracks.find(t => t.role === 'drums');
+  const notes = [{ id:'draft', midi:66, startBeat:1, durationBeats:2, velocity:93 },
+    { id:'tail', midi:67, startBeat:7, durationBeats:4, velocity:100 },
+    { id:'outside', midi:68, startBeat:9, durationBeats:1, velocity:100 }];
+  const midi = new Midi(generatePhraseMidi('Draft', 87, [
+    { track:{...bass,mix:{...bass.mix,muted:true,solo:false}}, notes },
+    { track:drum,notes:[{id:'hit',midi:38,startBeat:0,durationBeats:.25,velocity:100}] },
+    { track:{...drum,id:'empty',name:'Empty drum'},notes:[] },
+  ], 8, 'chromatic'));
+  assert.ok(Math.abs(midi.header.tempos[0].bpm-87)<.001);
+  assert.equal(midi.tracks.length,3);
+  assert.equal(midi.tracks[0].channel,bass.midiChannel-1);
+  assert.equal(midi.tracks[0].instrument.number,bass.mix.program);
+  assert.deepEqual(midi.tracks[0].notes.map(n=>[n.midi,n.ticks/midi.header.ppq,n.durationTicks/midi.header.ppq]),[[66,1,2],[67,7,1]]);
+  assert.ok(Math.abs(midi.tracks[0].notes[0].velocity-93/127)<.01);
+  assert.equal(midi.tracks[1].channel,drum.midiChannel-1);
+  assert.equal(midi.tracks[1].notes[0].midi,39);
+});

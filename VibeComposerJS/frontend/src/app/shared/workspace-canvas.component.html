@@ -252,7 +252,9 @@
         </div>
         @if (editing()) {
         <footer class="score-display-header" aria-label="Score edit actions">
-            <span>{{ selectedPart() === 'drums' ? 'All drums · Edit phrases' : selectedTrack().name + ' · Edit phrase' }}</span>
+            <button type="button" class="export-phrase" [disabled]="!editor()?.draftReady()"
+              title="Download the current phrase as a MIDI file, including unapplied edits."
+              (click)="editor()?.exportPhrase()">Export Phrase</button>
             <vc-compact-knob label="Transpose phrase" description="Transpose the whole phrase freely in semitones" unit=" st"
               [mini]="true" [hoverLabelOnly]="true" [minimum]="-36" [maximum]="36" [defaultValue]="0"
               [value]="editor()?.freeTranspose() ?? 0" (valueCommit)="editor()?.transposePhrase($event)" />

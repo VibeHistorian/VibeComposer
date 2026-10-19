@@ -1,9 +1,37 @@
 import { Midi } from '@tonejs/midi';
-import type { CompositionProject, CompositionTrack } from '../project/project.model';
+import type { CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
 import { tracksInRoleOrder } from '../project/project.model';
 import { layOutTrackPhrase } from './phrase';
 import { projectTempoMap } from './section-context';
 import { mapDrumPitch, type DrumMapping } from './drum-instruments';
+
+/** Export the current editor draft in phrase-relative beats, regardless of mute/solo state.
+ * Notes already contain their sounding pitches; do not transpose them a second time. */
+export function generatePhraseMidi(name: string, tempoBpm: number,
+  tracks: readonly { track: CompositionTrack; notes: readonly PhraseNote[] }[],
+  phraseBeats: number, drumMapping: DrumMapping = 'general-midi'): Uint8Array {
+  const midi = new Midi();
+  midi.name = name;
+  midi.header.setTempo(tempoBpm);
+  for (const { track: source, notes } of tracks) {
+    const track = midi.addTrack();
+    track.name = source.name;
+    track.channel = source.midiChannel - 1;
+    configureMix(track, source, false);
+    for (const note of notes) {
+      const start = Math.max(0, note.startBeat);
+      const end = Math.min(phraseBeats, note.startBeat + note.durationBeats);
+      if (end <= start) continue;
+      track.addNote({
+        midi: source.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
+        ticks: Math.round(start * midi.header.ppq),
+        durationTicks: Math.max(1, Math.round(end * midi.header.ppq) - Math.round(start * midi.header.ppq)),
+        velocity: note.velocity / 127,
+      });
+    }
+  }
+  return midi.toArray();
+}
 
 /** Serialize every independent instrument track with its assigned channel and mix controls. */
 export function generateCompositionMidi(project: CompositionProject, drumMapping: DrumMapping = 'general-midi'): Uint8Array {

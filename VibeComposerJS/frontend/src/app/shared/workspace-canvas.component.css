@@ -230,7 +230,7 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 
 /* Score display and contextual edit actions */
 .score-display-header { min-height: 28px; padding-top: 6px; flex-shrink: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-.score-display-header span { margin-right: auto; color: var(--text-secondary); font: 10px var(--font-ui); }
+.score-display-header .export-phrase { margin-right: auto; }
 .score-display-header button { display: flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 10px var(--font-ui); cursor: pointer; }
 .score-display-header button:hover:not(:disabled) { background: var(--surface-button-hover); border-color: var(--accent-primary); }
 .score-display-header button:disabled { background: var(--surface-input); color: var(--text-disabled); border-color: var(--border-subtle); cursor: default; }

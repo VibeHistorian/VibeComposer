@@ -77,6 +77,18 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     const noGlow=!panel.classList.contains('midi-drag-over');
     const freePitch=document.querySelector('#note-pitch').value==='61';
     change(knob(),'5');await wait(()=>document.querySelector('#note-pitch').value==='66');
+    const savedBeforeExport=sessionStorage.getItem('vibecomposer.project.v12');
+    const exportButton=button('Export Phrase');
+    const originalClick=HTMLAnchorElement.prototype.click;
+    let download;
+    HTMLAnchorElement.prototype.click=function(){download={name:this.download,blob:fetch(this.href).then(r=>r.arrayBuffer())};};
+    try { exportButton.click(); } finally { HTMLAnchorElement.prototype.click=originalClick; }
+    window.phraseExport={
+      name:download.name,bytes:[...new Uint8Array(await download.blob)],
+      unchanged:savedBeforeExport===sessionStorage.getItem('vibecomposer.project.v12'),
+      stillEditing:!!document.querySelector('#phrase-grid'),draggable:exportButton.draggable,
+      firstAction:document.querySelector('.score-display-header').firstElementChild===exportButton,
+      hint:exportButton.title};
     button('Undo phrase').click();await wait(()=>knob().value==='0'&&document.querySelector('#note-pitch').value==='61');
     button('Redo phrase').click();await wait(()=>knob().value==='5'&&document.querySelector('#note-pitch').value==='66');
     button('Undo phrase').click();await wait(()=>knob().value==='0');
@@ -95,6 +107,18 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     return {defaultOff,initialZero,noAddNote,glow,noGlow,freePitch,compensation,preserved,clipped,reopenedZero,replaced,drumsUntransposed,oldDrumsCleared};
   })()`);
   for(const [key,value] of Object.entries(result))assert.equal(value,true,key);
+  const exported=await evaluate('window.phraseExport');
+  assert.equal(exported.unchanged,true,'export leaves project and unapplied draft open');
+  assert.equal(exported.stillEditing,true);
+  assert.equal(exported.draggable,false);
+  assert.equal(exported.firstAction,true);
+  assert.equal(exported.hint,'Download the current phrase as a MIDI file, including unapplied edits.');
+  assert.ok(exported.name.endsWith('_phrase.mid'));
+  assert.ok(!/[<>:"/\\|?*]/.test(exported.name));
+  const phrase=new Midi(Buffer.from(exported.bytes));
+  assert.equal(phrase.tracks.length,1,'only edited instrument exported');
+  assert.ok(phrase.tracks[0].notes.some(n=>n.midi===66&&n.ticks===0),'unapplied pitch edits exported in sounding pitch');
+  assert.ok(phrase.tracks[0].notes.some(n=>n.ticks/phrase.header.ppq===15&&n.durationTicks/phrase.header.ppq===1),'phrase-relative timing and clipped duration');
   await reload();
   assert.equal(await evaluate(`(async()=>{${waitCode}${setup}return (await settings()).checked;})()`),true,'discard preference survives reload');
   const options=await evaluate(`(async()=>{${waitCode}${setup}
@@ -123,10 +147,12 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     const cancelClean=button('Undo phrase').disabled;
     button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'));
     await open('bass');const snap=document.querySelector('[aria-label="Snap to scale/key"]');if(snap.getAttribute('aria-pressed')==='true')snap.click();
+    await wait(()=>snap.getAttribute('aria-pressed')==='false');
     startDrop();await wait(()=>document.querySelector('vc-midi-import-dialog button[type="submit"]'));
     const snapOffNoTranslation=!document.querySelector('#midi-import-scale')&&!!document.querySelector('#midi-import-duration');
     document.querySelector('[aria-label="Cancel MIDI import"]').click();
     await wait(()=>!document.querySelector('vc-midi-import-dialog'));snap.click();
+    await wait(()=>snap.getAttribute('aria-pressed')==='true');
     const dropBytes=bytes=>{const data=new DataTransfer();data.items.add(new File([new Uint8Array(bytes)],'short.mid'));document.querySelector('.score-panel').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));};
     dropBytes(${shortBytes});await wait(()=>document.querySelector('#midi-import-scale'));
     const translationOnly=!document.querySelector('#midi-import-duration');
