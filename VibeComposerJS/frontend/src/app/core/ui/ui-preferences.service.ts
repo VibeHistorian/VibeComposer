@@ -21,6 +21,10 @@ export class UiPreferencesService {
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly limitInstrumentsToPool = computed(() => this.state().limitInstrumentsToPool);
   readonly drumMapping = computed(() => this.state().drumMapping);
+  readonly discardPhraseNotesOnMidiDrop = computed(() => this.state().discardPhraseNotesOnMidiDrop);
+  toggleDiscardPhraseNotesOnMidiDrop(): void {
+    this.commit({ ...this.state(), discardPhraseNotesOnMidiDrop: !this.discardPhraseNotesOnMidiDrop() });
+  }
   readonly exportNameFields = computed(() => this.state().exportNameFields);
   toggleExportNameField(field: ExportNameField): void {
     const current = this.exportNameFields();

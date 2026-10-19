@@ -251,3 +251,6 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 @media (max-width: 680px) {
   .song-canvas.settings-in-inspector { grid-template-rows: auto auto; }
 }
+/* MIDI drop feedback */
+.score-panel.midi-drag-over { outline: 2px solid var(--border-focus); outline-offset: -2px; box-shadow: inset 0 0 32px var(--accent-glow); }
+.score-panel.midi-drag-over .score-track-lanes { filter: brightness(1.2); }

@@ -185,7 +185,9 @@
 
       }
 
-      <section class="score-panel" aria-label="Song score">
+      <section class="score-panel" aria-label="Song score" [class.midi-drag-over]="editor()?.midiDragOver()"
+        (dragenter)="editor()?.midiDragEnter($event)" (dragover)="editor()?.midiDragEnter($event)"
+        (dragleave)="editor()?.midiDragLeave($event)" (drop)="editor()?.dropMidi($event)">
         <div class="score-scroll">
           <div class="score-canvas">
             <div class="score-ruler">
@@ -249,7 +251,9 @@
         @if (editing()) {
         <footer class="score-display-header" aria-label="Score edit actions">
             <span>{{ selectedPart() === 'drums' ? 'All drums · Edit phrases' : selectedTrack().name + ' · Edit phrase' }}</span>
-            <button type="button" (click)="editor()?.addNote()">＋ Note</button>
+            <vc-compact-knob label="Transpose phrase" description="Transpose the whole phrase freely in semitones" unit=" st"
+              [mini]="true" [hoverLabelOnly]="true" [minimum]="-36" [maximum]="36" [defaultValue]="0"
+              [value]="editor()?.freeTranspose() ?? 0" (valueCommit)="editor()?.transposePhrase($event)" />
             <button type="button" title="Ctrl+Z" [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
             <button type="button" title="Ctrl+Y" [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
             <button type="button" (click)="editor()?.cancelChanges()">Cancel</button>

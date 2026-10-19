@@ -9,6 +9,8 @@ import { getDiatonicChords, getPitchClass } from '../../core/music/harmony';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../shared/workspace-ui.service';
 import { isEditingText } from '../../shared/keyboard-shortcuts';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { MAX_MIDI_IMPORT_BYTES } from '../../core/music/midi-import-limits';
 
 
 export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; }
@@ -22,6 +24,7 @@ export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; 
 })
 export class EditWorkspaceComponent {
   readonly projects = inject(ProjectService);
+  private readonly preferences = inject(UiPreferencesService);
   private readonly midi = inject(MidiOutputService);
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
@@ -46,6 +49,74 @@ export class EditWorkspaceComponent {
   readonly tracks = computed(() => tracksInRoleOrder(this.project().tracks));
   readonly generationAvailable = computed(() => PART_GENERATION_AVAILABLE[this.selectedPart()]);
   readonly applyError = signal<string | null>(null);
+  readonly midiDragOver = signal(false);
+  readonly freeTranspose = signal(0);
+  private midiImport: AbortController | null = null;
+
+  midiDragEnter(event: DragEvent): void {
+    if (!event.dataTransfer?.types.includes('Files')) return;
+    event.preventDefault(); event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+    this.midiDragOver.set(true);
+  }
+
+  midiDragLeave(event: DragEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    if (event.relatedTarget instanceof Node && target.contains(event.relatedTarget)) return;
+    this.midiDragOver.set(false);
+  }
+
+  async dropMidi(event: DragEvent): Promise<void> {
+    event.preventDefault(); event.stopPropagation();
+    this.midiDragOver.set(false);
+    this.midiImport?.abort();
+    const file = event.dataTransfer?.files[0];
+    if (!file) return;
+    if (!/\.(mid|midi)$/i.test(file.name) || file.size > MAX_MIDI_IMPORT_BYTES) {
+      this.applyError.set('Drop a MIDI (.mid or .midi) file up to 8 MB.');
+      return;
+    }
+    const controller = new AbortController();
+    this.midiImport = controller;
+    const track = this.selectedTrack();
+    const discard = this.preferences.discardPhraseNotesOnMidiDrop();
+    this.applyError.set(null);
+    try {
+      const buffer = await file.arrayBuffer();
+      const { readMidiFile } = await import('../../core/ui/midi-file-import');
+      const imported = await readMidiFile(buffer, Math.min(128, this.phraseBeats()), 2048, controller.signal);
+      if (controller.signal.aborted) return;
+      const current = this.notes();
+      const remaining = discard ? [] : current;
+      const capacity = 2048 - remaining.filter(note => note.trackId === track.id).length;
+      const added = imported.slice(0, Math.max(0, capacity)).map(note => ({ ...note, id: this.makeNoteId(), trackId: track.id }));
+      if (!added.length) {
+        this.applyError.set(capacity <= 0 ? 'This track already has 2048 notes. Enable discarding old notes in Settings > MIDI or remove some notes first.'
+          : 'The first MIDI note track has no notes within this phrase’s duration.');
+        return;
+      }
+      // Incoming MIDI pitches are sounding pitches; this subtracts global transpose for pitched roles.
+      this.setDisplayNotes([...remaining, ...added]);
+      this.markManual(discard ? [...new Set([...current.map(note => note.trackId), track.id])] : [track.id]);
+      this.selectNotes(added.map(note => note.id));
+      this.record();
+    } catch (error) {
+      if (!controller.signal.aborted) this.applyError.set(error instanceof Error ? error.message : 'Cannot read this MIDI file.');
+    } finally {
+      if (this.midiImport === controller) this.midiImport = null;
+    }
+  }
+
+  transposePhrase(value: number): void {
+    if (!Number.isInteger(value) || value < -36 || value > 36 || value === this.freeTranspose()) return;
+    const delta = value - this.freeTranspose();
+    this.draftNotes.update(notes => notes.map(note => ({ ...note, midi: Math.max(0, Math.min(127, note.midi + delta)) })));
+    this.freeTranspose.set(value);
+    this.markManual(this.editedTracks().map(track => track.id));
+    this.record();
+  }
+
+  ngOnDestroy(): void { this.midiImport?.abort(); }
   readonly selectedNoteIds = signal<readonly string[]>([]);
   readonly selectedNoteId = computed(() => this.selectedNoteIds()[0] ?? null);
   readonly snapBeats = signal(0.25);
@@ -135,11 +206,12 @@ export class EditWorkspaceComponent {
     this.draftNotes.set([...snapshot.notes]);
     this.selectNotes(snapshot.selection);
     this.restoredTrackIds.set(snapshot.restoredTrackIds ?? []);
+    this.freeTranspose.set(snapshot.phraseTranspose ?? 0);
     this.historyRevision.update(value => value + 1);
     this.applyError.set(null);
   }
   private record(): void {
-    this.history.record({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: this.restoredTrackIds().length > 0, restoredTrackIds: this.restoredTrackIds() });
+    this.history.record({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: this.restoredTrackIds().length > 0, restoredTrackIds: this.restoredTrackIds(), phraseTranspose: this.freeTranspose() });
     this.historyRevision.update(value => value + 1);
     this.applyError.set(null);
   }
@@ -202,29 +274,6 @@ export class EditWorkspaceComponent {
     if (this.selectedPart() === 'drums') return this.midi.drumLabel(midi);
     const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
     return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`;
-  }
-
-  addNote(): void {
-    if (this.notes().filter(note => note.trackId === this.selectedTrack().id).length >= 2048) {
-      return;
-    }
-    const track = this.selectedTrack();
-    const preferredPitch = this.selectedNote()?.midi ?? (track.role === 'drums' ? track.generatorSettings.pitch : track.role === 'bass' ? 48 : 60);
-    const pitch = this.snapPitch(Math.max(0, Math.min(127, preferredPitch)));
-    const durationBeats = Math.min(0.5, this.phraseBeats());
-    const occupied = new Set(this.notes().filter((note) => note.midi === pitch)
-      .map((note) => Math.round(note.startBeat * 4)));
-    let slot = 0;
-    while (slot < this.phraseBeats() * 4 && occupied.has(slot)) slot++;
-    const startBeat = Math.min(slot / 4, Math.max(0, this.phraseBeats() - durationBeats));
-    const note: PhraseDraftNote = {
-      trackId: track.id,
-      id: this.makeNoteId(), midi: pitch, startBeat, durationBeats, velocity: 90,
-    };
-    this.setDisplayNotes([...this.notes(), note]);
-    this.markManual([track.id]);
-    this.selectNote(note.id);
-    this.record();
   }
 
   updateSelected(field: 'midi' | 'startBeat' | 'durationBeats' | 'velocity', event: Event): void {
@@ -341,6 +390,9 @@ export class EditWorkspaceComponent {
   }
 
   private loadTrackDraft(track: CompositionTrack): void {
+    this.midiImport?.abort();
+    this.freeTranspose.set(0);
+    this.midiDragOver.set(false);
     const section = this.project().arrangement.find(section => section.id === this.sectionId);
     const tracks = track.role === 'drums' ? [track, ...this.project().tracks.filter(candidate => candidate.role === 'drums' && candidate.id !== track.id)] : [track];
     const ids = new Set<string>();

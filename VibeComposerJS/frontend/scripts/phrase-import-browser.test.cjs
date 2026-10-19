@@ -1,0 +1,96 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs'); const path=require('node:path'); const http=require('node:http');
+const {spawn}=require('node:child_process'); const test=require('node:test');
+const browser=['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(p=>fs.existsSync(p));
+test('phrase MIDI drop, transpose, preferences and draft undo work in the production browser', {skip:!browser,timeout:60000},async()=>{
+ const root=path.resolve(__dirname,'../dist/browser');
+ const server=http.createServer((req,res)=>{const p=path.resolve(root, '.'+(req.url==='/'?'/index.html':req.url));if(path.relative(root,p).startsWith('..')||!fs.existsSync(p)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'text/html');fs.createReadStream(p).pipe(res);});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/phrase-import-'));
+ const child=spawn(browser,['--headless','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--window-size=1600,1100','--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port]);
+ let socket;
+ try {
+  let port; for(let i=0;i<100&&!port;i++){try{port=+fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];}catch{}if(!port)await new Promise(r=>setTimeout(r,50));}
+  assert.ok(port);
+  const target=(await(await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(t=>t.type==='page');
+  socket=new WebSocket(target.webSocketDebuggerUrl);await new Promise((r,j)=>{socket.addEventListener('open',r,{once:true});socket.addEventListener('error',j,{once:true});});
+  let id=0;const command=(method,params={})=>new Promise((r,j)=>{const n=++id;const timer=setTimeout(()=>j(Error('CDP timeout: '+method)),20000);const listener=e=>{const m=JSON.parse(e.data);if(m.id!==n)return;clearTimeout(timer);socket.removeEventListener('message',listener);m.error?j(Error(JSON.stringify(m.error))):r(m.result);};socket.addEventListener('message',listener);socket.send(JSON.stringify({id:n,method,params}));});
+  const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify(result));return result.result.value;};
+  const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
+  await command('Page.enable');
+  const reload = async () => {
+    const loaded = new Promise(resolve => {
+      const listener = event => { if (JSON.parse(event.data).method !== 'Page.loadEventFired') return;
+        socket.removeEventListener('message', listener); resolve(); };
+      socket.addEventListener('message', listener);
+    });
+    await command('Page.reload'); await loaded;
+  };
+  await reload();
+
+  const { Midi } = require('@tonejs/midi');
+  const midi = new Midi();
+  midi.addTrack().addNote({ midi: 61, ticks: 0, durationTicks: 480, velocity: 100/127 })
+    .addNote({ midi: 64, ticks: 15 * 480, durationTicks: 3 * 480 })
+    .addNote({ midi: 65, ticks: 20 * 480, durationTicks: 480 });
+  midi.addTrack().addNote({ midi: 90, ticks: 0, durationTicks: 480 });
+  const bytes = JSON.stringify([...midi.toArray()]);
+  await evaluate(`(async()=>{${waitCode}
+    const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'));
+    seed.value='43';seed.dispatchEvent(new Event('change',{bubbles:true}));
+    const project=await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')));
+    project.transposeSemitones=7;
+    const drum=project.tracks.find(track=>track.role==='drums');
+    project.tracks.push({...drum,id:'track-drums-extra',name:'D2',generatorSettings:{...drum.generatorSettings,pitch:38}});
+    project.progression=[1,5,6,4];
+    project.arrangement=[{...project.arrangement[0],measures:4,trackPresence:Object.fromEntries(project.tracks.map(t=>[t.id,true]))}];
+    for(const track of project.tracks)track.editedPhrase=[{id:track.id+'-old',midi:track.role==='drums'?36:48,startBeat:2,durationBeats:1,velocity:90}];
+    sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
+  })()`);
+  await reload();
+  const setup=`
+    const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    const button=text=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
+    const change=(input,value)=>{input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));};
+    const settings=async()=>{(await wait(()=>document.querySelector('[aria-label="Settings"]'))).click();await wait(()=>document.querySelector('vc-settings-dialog'));(await wait(()=>button('MIDI'))).click();return await wait(()=>document.querySelector('[aria-label="Discard phrase notes on MIDI drop"]'));};
+    const closeSettings=()=>document.querySelector('[aria-label="Close settings"]').click();
+    const open=async role=>{const row=await wait(()=>document.querySelector('.track-group.'+role+' .track-line'));row.querySelector('.track-select').click();(await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')))).click();await wait(()=>document.querySelector('#phrase-grid'));};
+    const drop=async()=>{const panel=document.querySelector('.score-panel'),data=new DataTransfer();data.items.add(new File([new Uint8Array(${bytes})],'phrase.mid',{type:'audio/midi'}));panel.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));await wait(()=>document.querySelector('#note-pitch')?.value==='61');};
+  `;
+  const result=await evaluate(`(async()=>{${waitCode}${setup}
+    const preference=await settings(), defaultOff=!preference.checked;closeSettings();
+    await open('bass');
+    const knob=()=>document.querySelector('[aria-label="Transpose phrase"]');
+    const initialZero=knob().value==='0'&&knob().min==='-36'&&knob().max==='36';
+    const noAddNote=!button('＋ Note');
+    const data=new DataTransfer();data.items.add(new File([new Uint8Array(${bytes})],'phrase.mid'));
+    const panel=document.querySelector('.score-panel');panel.dispatchEvent(new DragEvent('dragenter',{bubbles:true,cancelable:true,dataTransfer:data}));
+    await wait(()=>panel.classList.contains('midi-drag-over'));
+    const glow=getComputedStyle(panel).boxShadow!=='none';
+    panel.dispatchEvent(new DragEvent('dragleave',{bubbles:true}));await wait(()=>!panel.classList.contains('midi-drag-over'));
+    await drop();
+    const noGlow=!panel.classList.contains('midi-drag-over');
+    const freePitch=document.querySelector('#note-pitch').value==='61';
+    change(knob(),'5');await wait(()=>document.querySelector('#note-pitch').value==='66');
+    button('Undo phrase').click();await wait(()=>knob().value==='0'&&document.querySelector('#note-pitch').value==='61');
+    button('Redo phrase').click();await wait(()=>knob().value==='5'&&document.querySelector('#note-pitch').value==='66');
+    button('Undo phrase').click();await wait(()=>knob().value==='0');
+    button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    const notes=read().tracks.find(t=>t.role==='bass').editedPhrase;
+    const compensation=notes.some(n=>n.midi===54&&n.startBeat===0);
+    const preserved=notes.some(n=>n.id.endsWith('-old'));
+    const clipped=notes.some(n=>n.startBeat===15&&n.durationBeats===1)&&notes.length===3;
+    await open('bass');const reopenedZero=knob().value==='0';button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    const checkbox=await settings();checkbox.click();closeSettings();
+    await open('bass');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    const replaced=read().tracks.find(t=>t.role==='bass').editedPhrase.length===2;
+    await open('drums');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    const drumsUntransposed=read().tracks.find(t=>t.role==='drums').editedPhrase.some(n=>n.midi===61);
+    const oldDrumsCleared=read().tracks.find(t=>t.id==='track-drums-extra').editedPhrase.length===0;
+    return {defaultOff,initialZero,noAddNote,glow,noGlow,freePitch,compensation,preserved,clipped,reopenedZero,replaced,drumsUntransposed,oldDrumsCleared};
+  })()`);
+  for(const [key,value] of Object.entries(result))assert.equal(value,true,key);
+  await reload();
+  assert.equal(await evaluate(`(async()=>{${waitCode}${setup}return (await settings()).checked;})()`),true,'discard preference survives reload');
+ } finally {socket?.close();child.kill();server.close();await new Promise(r=>child.exitCode!==null||child.signalCode!==null?r():child.once('exit',r));await fs.promises.rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:150});}
+});

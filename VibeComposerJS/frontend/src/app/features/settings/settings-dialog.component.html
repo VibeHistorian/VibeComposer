@@ -131,6 +131,11 @@
         @case ('midi') {
           <section aria-labelledby="midi-settings-title">
             <h2 id="midi-settings-title">MIDI</h2>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Discard phrase notes on MIDI drop" [checked]="preferences.discardPhraseNotesOnMidiDrop()" (change)="preferences.toggleDiscardPhraseNotesOnMidiDrop()" />
+              <span>Discard old phrase editor notes when MIDI is dropped</span>
+            </label>
+            <p>When off, dropped MIDI is added to the existing phrase. Saved in your UI preferences.</p>
             <label class="appearance-setting">
               <span>Drum pitch mapping</span>
               <select aria-label="Drum pitch mapping" aria-describedby="drum-mapping-description"

@@ -4424,6 +4424,37 @@ test('empty roles can be recreated from their defaults, while the final project 
   assert.equal(service.exportProjectJson(), before);
 });
 
+test('free phrase transpose accepts semitones, ignores scale snapping, records once and resets on reopening', () => {
+  const { service, ui, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateTrackPhrase(id, [{ id: 'free', midi: 48, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  service.updateSettings({ transposeSemitones: 7 });
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.ngOnInit();
+  assert.equal(editor.freeTranspose(), 0);
+  assert.equal(editor.notes()[0].midi, 55);
+  editor.transposePhrase(5);
+  assert.equal(editor.draftNotes()[0].midi, 53);
+  assert.equal(editor.notes()[0].midi, 60);
+  editor.undo();
+  assert.equal(editor.freeTranspose(), 0);
+  assert.equal(editor.draftNotes()[0].midi, 48);
+  assert.equal(editor.canUndo(), false);
+  editor.redo();
+  assert.equal(editor.freeTranspose(), 5);
+  editor.transposePhrase(6);
+  assert.equal(editor.draftNotes()[0].midi, 54, 'each edit applies only the knob delta');
+  editor.transposePhrase(-36);
+  assert.equal(editor.draftNotes()[0].midi, 12);
+  editor.transposePhrase(36);
+  assert.equal(editor.draftNotes()[0].midi, 84);
+  editor.applyChanges();
+  const reopened = new Editor(); reopened.ngOnInit();
+  assert.equal(reopened.freeTranspose(), 0);
+  assert.equal(reopened.draftNotes()[0].midi, 84);
+});
+
 test('manual melody notes work through the editor, scoped presence, history, persistence, and parsed MIDI', () => {
   const { service, ui, workspace, phrase, midi, stored, load } = fixture();
   const id = 'track-melody-1';
@@ -4438,7 +4469,7 @@ test('manual melody notes work through the editor, scoped presence, history, per
   assert.equal(editor.generationAvailable(), true);
   assert.equal(editor.tracks()[0].role, 'melody');
   const before = service.exportProjectJson();
-  editor.addNote();
+  editor.addNoteAt({ midi: 60, startBeat: 15.5 });
   assert.ok(editor.noteCount() > 0);
   assert.equal(service.exportProjectJson(), before, 'draft edits do not write project history');
   const draft = editor.notes().map(({ trackId, ...note }) => note);
