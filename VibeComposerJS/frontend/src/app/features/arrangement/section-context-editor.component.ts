@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import type { ArrangementSection, SectionMusicalContext } from '../core/project/project.model';
-import { ProjectService } from '../core/project/project.service';
-import { KEYS } from '../core/music/harmony';
-import { SCALE_MODES, SCALE_DEFINITIONS } from '../core/music/scales';
-import { sectionChordDurations, sectionDurationBeats, sectionHasChordOverride } from '../core/music/section-context';
-import { ChordletEditorComponent } from './chordlet-editor.component';
-import { WheelSelectDirective } from './wheel-select.directive';
+import type { ArrangementSection, SectionMusicalContext } from '../../core/project/project.model';
+import { ProjectService } from '../../core/project/project.service';
+import { KEYS } from '../../core/music/harmony';
+import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
+import { sectionChordDurations, sectionDurationBeats, sectionHasChordOverride } from '../../core/music/section-context';
+import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
 
 @Component({
   selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, WheelSelectDirective],

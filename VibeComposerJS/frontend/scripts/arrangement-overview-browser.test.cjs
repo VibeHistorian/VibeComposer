@@ -78,11 +78,11 @@ async function render(html, displayScale) {
 test('arrangement scrollbar layout settles after local edits, zoom, and resizing', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
 }, async (context) => {
-    const source = fs.readFileSync(path.join(__dirname, '../src/app/shared/arrangement-overview.component.ts'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.ts'), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
     } }).outputText;
-    const css = fs.readFileSync(path.join(__dirname, '../src/app/shared/arrangement-overview.component.css'), 'utf8');
+    const css = fs.readFileSync(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.css'), 'utf8');
     const contextCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/section-context.ts'), 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
@@ -90,7 +90,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
     const theme = fs.readFileSync(path.join(__dirname, '../src/styles.css'), 'utf8');
-    const workspaceCss = fs.readFileSync(path.join(__dirname, '../src/app/shared/workspace-canvas.component.css'), 'utf8');
+    const workspaceCss = fs.readFileSync(path.join(__dirname, '../src/app/features/workspace/workspace-canvas.component.css'), 'utf8');
     const html = displayScale => `<!doctype html><html><head><style>${theme}\n${workspaceCss}\n${css}
       .fixture { width: 1218px; height: 384px; }
       .fixture > vc-arrangement-overview { display: block; min-width: 0; min-height: 0; }
@@ -115,12 +115,12 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       computed: read => read, effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }), output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
-      '../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
-      '../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
-      '../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),
-      '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
-      '../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.trackPresence?.[track.id] ?? true },
-      '../core/music/phrase': { layOutTrackPhrase: () => [] } };
+      '../../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
+      '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
+      '../../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),
+      '../../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
+      '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.trackPresence?.[track.id] ?? true },
+      '../../core/music/phrase': { layOutTrackPhrase: () => [] } };
     const module = { exports: {} }; const exports = module.exports;
     const require = name => dependencies[name];
     ${compiled}
@@ -165,7 +165,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
           samples.push(sample());
         }
         const buttonRows = currentProject.arrangement.map(section =>
-          Math.ceil(component.overviewTracks(section,{role:'bass',tracks:currentProject.tracks}).length / Math.max(1, Math.floor((dependencies['../core/music/section-context'].sectionDurationBeats(currentProject,section) * component.pixelsPerBeat - 10 + 1e-7) / 19))));
+          Math.ceil(component.overviewTracks(section,{role:'bass',tracks:currentProject.tracks}).length / Math.max(1, Math.floor((dependencies['../../core/music/section-context'].sectionDurationBeats(currentProject,section) * component.pixelsPerBeat - 10 + 1e-7) / 19))));
         if(gaps) {
           const gapButtons=component.hits.filter(hit=>hit.key.startsWith('toggle:gap:'));
           if(component.effectiveHorizontalScale!==1||gapButtons.length!==1||gapButtons[0].key!=='toggle:gap:bass-2') throw new Error('gap sections must fit and show only their first included track');

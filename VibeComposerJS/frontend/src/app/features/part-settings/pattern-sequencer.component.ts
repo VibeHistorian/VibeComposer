@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { combinedControlKeys } from '../core/ui/ui-preferences';
+import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import type { ArrangedPart, ChordRhythm, PartSettingsPatch, PartSettingsScope } from '../core/project/project.model';
-import { ProjectService } from '../core/project/project.service';
-import { resolvePartTrack, settingsValues } from '../core/music/part-settings';
-import { chordRhythmMask } from '../core/music/rhythm-pattern';
-import { DEFAULT_CUSTOM_VELOCITIES } from '../core/music/velocity-pattern';
-import { MidiOutputService } from '../core/audio/midi-output.service';
+import type { ArrangedPart, ChordRhythm, PartSettingsPatch, PartSettingsScope } from '../../core/project/project.model';
+import { ProjectService } from '../../core/project/project.service';
+import { resolvePartTrack, settingsValues } from '../../core/music/part-settings';
+import { chordRhythmMask } from '../../core/music/rhythm-pattern';
+import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
+import { MidiOutputService } from '../../core/audio/midi-output.service';
 
 export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; velocities: boolean; melodyHits: number }
 

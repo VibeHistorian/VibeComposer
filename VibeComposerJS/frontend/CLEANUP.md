@@ -41,15 +41,21 @@ Validation: the baseline passed 254 tests (249 part tests and 5 codec tests) in 
 
 `shared/` contains 21 component classes, including the workspace, score, arrangement, and musical editors; `features/` contains three. This does not match the ownership guidance in the [feature README](src/app/features/README.md) and [shared UI README](src/app/shared/README.md).
 
-- [ ] Move domain UI into cohesive feature folders incrementally when those areas are changed.
-- [ ] Reserve `shared/` for controls and presentation helpers with concrete reuse across features.
-- [ ] Update imports, test fixture paths, and ownership documentation with each move.
+- [x] Move domain UI into cohesive feature folders incrementally when those areas are changed.
+- [x] Reserve `shared/` for controls and presentation helpers with concrete reuse across features.
+- [x] Update imports, test fixture paths, and ownership documentation with each move.
 
 Feature folders do not imply additional routes: preserve the single persistent workspace. Avoid a large move-only reorganization as a prerequisite for useful work.
 
+Delivered 2026-10-19: performed area 3 as an explicitly requested standalone move-only cleanup. Moved 16 domain components and their templates/styles into workspace, arrangement, score, part-settings, harmony, transport, tracks, history and MIDI-import feature folders. Score chord labels moved with the score, part control groups with part settings, and app-wide selection state to `core/ui/workspace-ui.service.ts`. `shared/` now contains three presentation components plus wheel-select and keyboard helpers, each with concrete consumers documented in [the shared UI guide](src/app/shared/README.md). Direct imports, test fixture/source paths and the active backlog navigation map follow the new owners. Workspace conventions and the complete owner table live in [the feature guide](src/app/features/README.md). The single persistent workspace and behavior are preserved.
+
+Validation: all 397 functional checks passed, covering parts/codecs, arrangement, score, selection, playback, keyboard shortcuts, contextual generation, appearance and MIDI import. Production build passed with the existing Pixi/xmldom CommonJS warning. An audit of all 51 moved files confirmed unchanged templates/styles apart from checkout line endings and TypeScript changes limited to relative paths. `git diff --check` passed.
+
+Browser validation: nine of twelve cases passed, including the 109-case focused arrangement layout matrix, both contextual-generation widths, the 780px contextual workflow, manual mode, pattern sequencing, phrase import, 780px preferences and unified score editing. Three failures predate this cleanup: the already documented 1440px contextual chord drag (`5 !== 1` at `contextual-workflows-browser.test.cjs:562`), rhythm-picker initialization (`initial controls` at `rhythm-picker-browser.test.cjs:621`) and 1440px preferences (`expanded project name width` at `ui-preferences-browser.test.cjs:336`). The latter two reproduced with identical diagnostics against an isolated production build of the pre-cleanup HEAD; the chord-drag baseline is recorded under area 1. Local evidence is retained under `.angular/ownership-unit-final.tap`, `.angular/ownership-browser-final.tap`, `.angular/ownership-baseline-browser.tap` and `.angular/ownership-move-audit.txt`. Chromium checks required execution outside the sandbox because sandboxed GPU processes could not start. No browser assertions were changed.
+
 ### 4. Extract score geometry and interaction boundaries
 
-`src/app/shared/score-canvas.component.ts` has 1,086 lines combining viewport calculations, hit testing, gestures, drawing, and Pixi lifecycle management.
+`src/app/features/score/score-canvas.component.ts` has 1,086 lines combining viewport calculations, hit testing, gestures, drawing, and Pixi lifecycle management.
 
 - [ ] Extract viewport geometry and coordinate transformations into focused, testable helpers.
 - [ ] Extract hit testing using explicit geometry inputs.

@@ -63,9 +63,9 @@ function fixture({ compactHistory = false, dialogData = null, reactivity } = {})
   service = new ProjectService();
   // Most workflows assert one undo entry per edit; compact-history tests use the app default.
   if (!compactHistory) service.toggleCompactHistory();
-  const { WorkspaceUiService } = load('shared/workspace-ui.service.ts');
+  const { WorkspaceUiService } = load('core/ui/workspace-ui.service.ts');
   ui = new WorkspaceUiService();
-  const { WorkspaceCanvasComponent } = load('shared/workspace-canvas.component.ts');
+  const { WorkspaceCanvasComponent } = load('features/workspace/workspace-canvas.component.ts');
   const workspace = new WorkspaceCanvasComponent();
   const phrase = load('core/music/phrase.ts');
   const settings = load('core/music/part-settings.ts');

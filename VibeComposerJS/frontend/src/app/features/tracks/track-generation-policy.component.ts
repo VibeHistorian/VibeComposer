@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../core/project/project.model';
-import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../core/music/instrument-generation';
-import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../core/music/track-generation';
-import { CompactToggleComponent } from './compact-toggle.component';
-import { WheelSelectDirective } from './wheel-select.directive';
-import { CompactKnobComponent } from './compact-knob.component';
+import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../../core/project/project.model';
+import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../../core/music/instrument-generation';
+import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../../core/music/track-generation';
+import { CompactToggleComponent } from '../../shared/compact-toggle.component';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { CompactKnobComponent } from '../../shared/compact-knob.component';
 
 @Component({
   selector: 'vc-track-generation-policy',

@@ -64,7 +64,7 @@ test('score combines drums on a shared pitch axis while preserving note ownershi
   workspace.toggleVisibility(snare); workspace.toggleVisibility(otherKick);
   assert.equal(workspace.isScoreTrackVisible(drumRow), false);
   workspace.toggleVisibility(snare);
-  const { ScoreCanvasComponent } = load('shared/score-canvas.component.ts');
+  const { ScoreCanvasComponent } = load('features/score/score-canvas.component.ts');
   const score = new ScoreCanvasComponent();
   score.model = { tracks: rows, notes, sections: [], totalBeats: workspace.totalBeats(),
     selectedTrackId: snare, hiddenTrackIds: workspace.hiddenTracks() };

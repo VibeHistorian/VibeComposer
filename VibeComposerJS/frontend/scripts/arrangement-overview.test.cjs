@@ -16,19 +16,19 @@ function fixture(reactivity) {
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     viewChild: { required: (name) => () => ({ nativeElement: refs.get(name) }) },
   };
-  const source = fs.readFileSync(path.join(__dirname, '../src/app/shared/arrangement-overview.component.ts'), 'utf8');
+  const source = fs.readFileSync(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true },
   }).outputText;
   const module = { exports: {} };
   const dependencies = {
-    '../core/music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
-    '../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
-    '../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
+    '../../core/music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
+    '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
+    '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
-    '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
-    '../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
-    '../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes },
+    '../../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
+    '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
+    '../../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes },
   };
   new Function('require', 'module', 'exports', compiled)((name) => dependencies[name], module, module.exports);
   const component = new module.exports.ArrangementOverviewComponent();

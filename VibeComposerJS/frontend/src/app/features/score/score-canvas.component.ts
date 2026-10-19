@@ -1,12 +1,12 @@
-import { UiPreferencesService } from '../core/ui/ui-preferences.service';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, viewChild,
 } from '@angular/core';
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
-import { MidiOutputService } from '../core/audio/midi-output.service';
-import type { PhraseSource } from '../core/music/phrase';
-import { dragPhraseNotes, snapMidiToScale, type PhraseDragMode } from '../core/music/phrase-edit';
-import type { ArrangedPart, PhraseNote } from '../core/project/project.model';
+import { MidiOutputService } from '../../core/audio/midi-output.service';
+import type { PhraseSource } from '../../core/music/phrase';
+import { dragPhraseNotes, snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
+import type { ArrangedPart, PhraseNote } from '../../core/project/project.model';
 
 export interface ScoreCanvasTrack {
   readonly id: string;

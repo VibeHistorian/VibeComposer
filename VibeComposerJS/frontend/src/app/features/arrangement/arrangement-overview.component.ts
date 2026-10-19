@@ -1,14 +1,14 @@
-import { UiPreferencesService } from '../core/ui/ui-preferences.service';
-import { sectionDurationBeats, sectionChordDurations } from '../core/music/section-context';
-import type { SectionHarmonyDisplay } from '../core/music/harmony-display';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { sectionDurationBeats, sectionChordDurations } from '../../core/music/section-context';
+import type { SectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack, SectionType } from '../core/project/project.model';
-import { ARRANGED_PARTS, SECTION_TYPES } from '../core/project/project.model';
-import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
-import { layOutTrackPhrase } from '../core/music/phrase';
-import { samePhraseInputs } from '../core/music/phrase-inputs';
-import type { SettingsTarget } from './workspace-ui.service';
-import type { PlaybackRange } from '../core/audio/audio-playback.service';
+import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack, SectionType } from '../../core/project/project.model';
+import { ARRANGED_PARTS, SECTION_TYPES } from '../../core/project/project.model';
+import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
+import { layOutTrackPhrase } from '../../core/music/phrase';
+import { samePhraseInputs } from '../../core/music/phrase-inputs';
+import type { SettingsTarget } from '../../core/ui/workspace-ui.service';
+import type { PlaybackRange } from '../../core/audio/audio-playback.service';
 
 interface OverviewSection {
   readonly section: ArrangementSection;

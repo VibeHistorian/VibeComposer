@@ -2,6 +2,8 @@
 
 Run tests from `frontend/` using the `test:*` scripts in `package.json`. Production browser suites use `dist/browser`, so run `npm run build` after changing application code. Browser tests detect Chromium automatically; suites that support `OVERVIEW_TEST_BROWSER` also accept an explicit executable path. Supported viewport widths start at 700 CSS pixels.
 
+Component fixtures and source-reading browser suites follow the [feature ownership map](../src/app/features/README.md). Domain components live under `src/app/features/`; workspace selection state lives in `src/app/core/ui/workspace-ui.service.ts`. Update fixture module paths and dependency stand-ins together when moving an owner. Templates and styles remain alongside their components; the old `shared/` paths have no forwarding modules.
+
 ## Overview layout matrix
 
 `npm run test:overview:browser` runs all 21 layout scenarios at normal page zoom and display scale. Eight scenarios also run at every combination of page zoom (0.8, 1, 1.25, 1.5) and display scale (1, 1.25, 1.5). These cover fractional-pixel rounding, fitted and overflowing timelines, fractional timeline zoom, dense track buttons, remaining score space, and gap sections.

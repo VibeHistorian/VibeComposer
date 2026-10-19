@@ -1,22 +1,22 @@
-import { UiPreferencesService } from '../core/ui/ui-preferences.service';
-import { combinedControlKeys } from '../core/ui/ui-preferences';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { MelodyDurationsDialogComponent } from './melody-durations-dialog.component';
-import { melodyDurationPreview } from '../core/music/melody-durations';
-import { validateMelodyDurationDraft } from '../core/music/melody-duration-validation';
-import type { MelodySettings } from '../core/project/project.model';
+import { melodyDurationPreview } from '../../core/music/melody-durations';
+import { validateMelodyDurationDraft } from '../../core/music/melody-duration-validation';
+import type { MelodySettings } from '../../core/project/project.model';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import type { ArrangedPart, ChordRhythm, PartSettingsScope } from '../core/project/project.model';
-import { PART_CONTROLS, type PartControl, type PartSettingValue } from '../core/music/part-settings';
-import { chordRhythmMask } from '../core/music/rhythm-pattern';
-import { DEFAULT_CUSTOM_VELOCITIES } from '../core/music/velocity-pattern';
-import { CompactKnobComponent } from './compact-knob.component';
-import { CompactToggleComponent } from './compact-toggle.component';
-import { WheelSelectDirective } from './wheel-select.directive';
-import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
+import type { ArrangedPart, ChordRhythm, PartSettingsScope } from '../../core/project/project.model';
+import { PART_CONTROLS, type PartControl, type PartSettingValue } from '../../core/music/part-settings';
+import { chordRhythmMask } from '../../core/music/rhythm-pattern';
+import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
+import { CompactKnobComponent } from '../../shared/compact-knob.component';
+import { CompactToggleComponent } from '../../shared/compact-toggle.component';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { ControlHeadingComponent, type ControlInheritance } from '../../shared/control-heading.component';
 import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
-import { ProjectService } from '../core/project/project.service';
+import { ProjectService } from '../../core/project/project.service';
 
 @Component({
   selector: 'vc-part-settings-editor',

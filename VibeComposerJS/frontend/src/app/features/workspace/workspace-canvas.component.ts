@@ -1,47 +1,47 @@
-import { UiPreferencesService } from '../core/ui/ui-preferences.service';
-import { isScaleMode } from '../core/music/scales';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
-import { SectionContextEditorComponent } from './section-context-editor.component';
-import { sectionDurationBeats } from '../core/music/section-context';
-import { sectionHarmonyDisplay } from '../core/music/harmony-display';
-import { MAX_VOLUME_PERCENT, validVolumePercent } from '../core/audio/mix-values';
-import { samePhraseInputs } from '../core/music/phrase-inputs';
+import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
+import { sectionDurationBeats } from '../../core/music/section-context';
+import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
+import { MAX_VOLUME_PERCENT, validVolumePercent } from '../../core/audio/mix-values';
+import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import type {
   ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
   TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
-} from '../core/project/project.model';
-import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder, DEFAULT_MIX, DEFAULT_TRACKS } from '../core/project/project.model';
-import { AudioPlaybackService } from '../core/audio/audio-playback.service';
-import { shouldGenerateTrackInSection } from '../core/music/arrangement-generator';
-import { DRUM_INSTRUMENTS } from '../core/music/drum-instruments';
-import { MidiOutputService } from '../core/audio/midi-output.service';
-import { GM_INSTRUMENTS } from '../core/music/gm-instruments';
-import { layOutTrackPhrase, phraseForTrack, trackPhraseSource } from '../core/music/phrase';
-import { getDiatonicChords } from '../core/music/harmony';
-import { sectionGenerationHarmony } from '../core/music/project-harmony';
+} from '../../core/project/project.model';
+import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder, DEFAULT_MIX, DEFAULT_TRACKS } from '../../core/project/project.model';
+import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
+import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
+import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
+import { MidiOutputService } from '../../core/audio/midi-output.service';
+import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
+import { layOutTrackPhrase, phraseForTrack, trackPhraseSource } from '../../core/music/phrase';
+import { getDiatonicChords } from '../../core/music/harmony';
+import { sectionGenerationHarmony } from '../../core/music/project-harmony';
 
 
-import { ProjectService } from '../core/project/project.service';
-import { WorkspaceUiService } from './workspace-ui.service';
-import type { SettingsSelection } from './workspace-ui.service';
-import { ArrangementOverviewComponent } from './arrangement-overview.component';
-import { ScoreCanvasComponent } from './score-canvas.component';
-import { ScoreChordLabelsDirective } from './score-chord-labels.directive';
-import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from './score-canvas.component';
-import { EditWorkspaceComponent } from '../features/edit/edit-workspace.component';
-import { PartSettingsEditorComponent } from './part-settings-editor.component';
-import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
-import { HarmonySettingsComponent } from './harmony-settings.component';
-import { PartScopeActionsComponent } from './part-scope-actions.component';
-import { CompactKnobComponent } from './compact-knob.component';
-import { CompactToggleComponent } from './compact-toggle.component';
-import { MixButtonsComponent } from './mix-buttons.component';
-import { WheelSelectDirective } from './wheel-select.directive';
-import { TrackGenerationPolicyComponent } from './track-generation-policy.component';
-import { DEFAULT_TRACK_POLICIES } from '../core/music/track-generation';
-import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS } from '../core/music/instrument-generation';
-import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../core/music/part-settings';
+import { ProjectService } from '../../core/project/project.service';
+import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
+import type { SettingsSelection } from '../../core/ui/workspace-ui.service';
+import { ArrangementOverviewComponent } from '../arrangement/arrangement-overview.component';
+import { ScoreCanvasComponent } from '../score/score-canvas.component';
+import { ScoreChordLabelsDirective } from '../score/score-chord-labels.directive';
+import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from '../score/score-canvas.component';
+import { EditWorkspaceComponent } from '../edit/edit-workspace.component';
+import { PartSettingsEditorComponent } from '../part-settings/part-settings-editor.component';
+import { MelodyGlobalSettingsComponent } from '../part-settings/melody-global-settings.component';
+import { HarmonySettingsComponent } from '../harmony/harmony-settings.component';
+import { PartScopeActionsComponent } from '../part-settings/part-scope-actions.component';
+import { CompactKnobComponent } from '../../shared/compact-knob.component';
+import { CompactToggleComponent } from '../../shared/compact-toggle.component';
+import { MixButtonsComponent } from '../tracks/mix-buttons.component';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { TrackGenerationPolicyComponent } from '../tracks/track-generation-policy.component';
+import { DEFAULT_TRACK_POLICIES } from '../../core/music/track-generation';
+import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS } from '../../core/music/instrument-generation';
+import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValue } from '../../core/music/part-settings';
 
 type TrackRow = CompositionTrack & {
   readonly color: ArrangedPart;
@@ -382,7 +382,7 @@ export class WorkspaceCanvasComponent {
     event.preventDefault();
     this.editor()?.smartExit();
   }
-  canvasNoteChanged(note: ScoreNote | import('../core/project/project.model').PhraseNote): void {
+  canvasNoteChanged(note: ScoreNote | import('../../core/project/project.model').PhraseNote): void {
     this.editor()?.replaceNote({ ...note, startBeat: note.startBeat - this.editStartBeat() });
   }
   canvasNoteAdded(position: { trackId?: string; midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
@@ -390,10 +390,10 @@ export class WorkspaceCanvasComponent {
     const note = this.editor()?.selectedNote();
     if (note) void this.playback.audition(this.selectedTrack(), [note]);
   }
-  canvasNotesChanged(change: { notes: readonly import('../core/project/project.model').PhraseNote[]; duplicate: boolean }): void {
+  canvasNotesChanged(change: { notes: readonly import('../../core/project/project.model').PhraseNote[]; duplicate: boolean }): void {
     this.editor()?.replaceNotes(change.notes.map(note => ({ ...note, startBeat: note.startBeat - this.editStartBeat() })), change.duplicate);
   }
-  auditionCanvasNotes(notes: readonly import('../core/project/project.model').PhraseNote[]): void {
+  auditionCanvasNotes(notes: readonly import('../../core/project/project.model').PhraseNote[]): void {
     const editor = this.editor();
     if (!editor) return;
     for (const track of editor.editedTracks()) {

@@ -726,7 +726,7 @@ test('every applicable shared control has a role consumer and genuine Java excep
       assert.notDeepEqual(generate({ stretchEnabled: true, chordNotesStretch: 2 }), full);
     }
   }
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent(); editor.role.set('bass');
   editor.values.set({ ...settings.settingsValues(service.project().bass, 'bass'), useCustomVelocities: true });
   assert.equal(editor.controls().some(control => control.key === 'hitsPerPattern'), false);

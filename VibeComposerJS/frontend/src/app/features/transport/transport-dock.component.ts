@@ -1,15 +1,15 @@
-import { isScaleMode } from '../core/music/scales';
-import { SCALE_MODES, SCALE_DEFINITIONS } from '../core/music/scales';
+import { isScaleMode } from '../../core/music/scales';
+import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
 import { afterNextRender, Injector, ChangeDetectionStrategy, Component, computed, effect, inject, untracked, signal } from '@angular/core';
-import { AudioPlaybackService } from '../core/audio/audio-playback.service';
-import { ProjectService } from '../core/project/project.service';
-import { UiPreferencesService } from '../core/ui/ui-preferences.service';
-import { WorkspaceUiService } from './workspace-ui.service';
-import { effectiveKey } from '../core/music/harmony';
-import { WheelSelectDirective } from './wheel-select.directive';
-import { MixButtonsComponent } from './mix-buttons.component';
-import { CompactKnobComponent } from './compact-knob.component';
-import { ChordletEditorComponent } from './chordlet-editor.component';
+import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
+import { ProjectService } from '../../core/project/project.service';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
+import { effectiveKey } from '../../core/music/harmony';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { MixButtonsComponent } from '../tracks/mix-buttons.component';
+import { CompactKnobComponent } from '../../shared/compact-knob.component';
+import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 
 @Component({
   selector: 'vc-transport-dock',

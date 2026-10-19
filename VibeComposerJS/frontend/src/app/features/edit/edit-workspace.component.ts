@@ -7,7 +7,7 @@ import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
 import { getDiatonicChords, getPitchClass } from '../../core/music/harmony';
 import { ProjectService } from '../../core/project/project.service';
-import { WorkspaceUiService } from '../../shared/workspace-ui.service';
+import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
 import { isEditingText } from '../../shared/keyboard-shortcuts';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { MAX_MIDI_IMPORT_BYTES } from '../../core/music/midi-import-limits';

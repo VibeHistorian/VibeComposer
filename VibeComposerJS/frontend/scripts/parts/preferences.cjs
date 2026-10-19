@@ -263,7 +263,7 @@ test('UI preferences customize per-role placement without changing project, hist
 
 test('combined selectors move together and reset all local values in one undo step', () => {
   const { service, uiPreferences: preferences, load } = fixture();
-  const Editor = load('shared/part-settings-editor.component.ts').PartSettingsEditorComponent;
+  const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const editor = new Editor();
   editor.role.set('chords'); editor.local.set(true); editor.values.set({ rhythm: 'full' });
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: 'track-chords-1' };
@@ -306,7 +306,7 @@ test('combined selectors move together and reset all local values in one undo st
 
 test('placement editing exposes dormant controls and partitions customized quick/inspector sets', () => {
   const { load, uiPreferences: preferences, settings } = fixture();
-  const Editor = load('shared/part-settings-editor.component.ts').PartSettingsEditorComponent;
+  const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const quick = new Editor(), inspector = new Editor();
   for (const editor of [quick, inspector]) { editor.role.set('bass'); editor.values.set({ rhythm: 'bass1' }); }
   quick.advanced.set(false); inspector.inspectorOnly.set(true);

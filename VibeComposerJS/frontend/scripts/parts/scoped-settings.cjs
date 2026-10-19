@@ -37,7 +37,7 @@ test('contextual Melody settings persist, undo, and filter controls by algorithm
   const { DEFAULT_HARMONY_SETTINGS } = load('core/music/harmony-voicing.ts');
   assert.equal(DEFAULT_MELODY_GLOBAL.contextualMelody, false);
   assert.equal(DEFAULT_HARMONY_SETTINGS.generation, 'CURRENT');
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent();
   editor.role.set('melody'); editor.values.set({});
   assert.ok(editor.controls().some(c => c.key === 'patternFlexible'));
@@ -239,8 +239,8 @@ test('matching explicit section chords share primary harmony checks in both edit
   const { sectionHasChordOverride } = load('core/music/section-context.ts');
   const { progressionChords } = load('core/music/harmony.ts');
   const { sectionGenerationHarmony } = load('core/music/project-harmony.ts');
-  const harmonyEditor = new (load('shared/harmony-settings.component.ts').HarmonySettingsComponent)();
-  const contextEditor = new (load('shared/section-context-editor.component.ts').SectionContextEditorComponent)();
+  const harmonyEditor = new (load('features/harmony/harmony-settings.component.ts').HarmonySettingsComponent)();
+  const contextEditor = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
   service.setProgression([1,5,6,4]);
   const id = service.project().arrangement[0].id;
   const section = () => service.project().arrangement[0];
@@ -645,7 +645,7 @@ test('P5d Multiply Hits transforms mixed drums atomically at global/local scopes
 
 test('P5 editor supports empty contour and separates pitch direction from melody rhythm and hit actions', () => {
   const { load } = fixture();
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent(); editor.role.set('arpeggio');
   editor.values.set({ pattern: 'custom', rhythm: 'melody', arpContour: [1] });
   assert.ok(editor.controls().some(control => control.key === 'arpPatternCustom'));
@@ -813,7 +813,7 @@ test('bass join articulation resolves at all scopes, persists snapshots and expo
   service.updateTrackPhrase(id, manual); service.updatePartSettings(part, { patternJoinMode: 'JOIN', octaveInterval: true });
   assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
   assert.ok(phrase.layOutTrackPhrase(service.project(), track()).every(note => note.midi === 40 && note.durationBeats === 0.75));
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent(); editor.role.set('bass'); editor.values.set({ rhythm: 'full' });
   assert.ok(editor.controls().some(control => control.key === 'patternJoinMode'));
   editor.advanced.set(false); assert.equal(editor.controls().some(control => control.key === 'patternJoinMode'), false);
@@ -976,7 +976,7 @@ test('P5e catalogue inputs preserve independent arrays, atomic history, scopes a
 
 test('P5e catalogue preference editor rejects partial or duplicate lists without committing', () => {
   const { service, load } = fixture();
-  const { MelodyGlobalSettingsComponent } = load('shared/melody-global-settings.component.ts');
+  const { MelodyGlobalSettingsComponent } = load('features/part-settings/melody-global-settings.component.ts');
   const editor = new MelodyGlobalSettingsComponent(), commits = [];
   editor.settingsChanged.emit = patch => { commits.push(patch); service.updateMelodyGlobal(patch); editor.values.set(service.project().melodyGlobal ?? {}); };
   editor.useBlockPreference(true);
@@ -1216,7 +1216,7 @@ test('P5e part controls resolve every scope, mixed values, copy/freeze and inher
 
 test('melody integer-list editors commit once and reject invalid or stale drafts', () => {
   const { service, settings, load } = fixture();
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent();
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId: 'track-melody-1' };
   editor.role.set('melody'); editor.values.set(settings.settingsValues({ algorithm: 'block' }, 'melody'));
@@ -1324,7 +1324,7 @@ test('group melody duration edits preserve independent pitch settings and sectio
 test('melody duration drawing and validation stay in the draft, save once, and reject stale project state', async () => {
   const scope = { kind: 'global-track', trackId: 'track-melody-1' };
   const { service, load } = fixture({ dialogData: { scope } });
-  const { MelodyDurationsDialogComponent } = load('shared/melody-durations-dialog.component.ts');
+  const { MelodyDurationsDialogComponent } = load('features/part-settings/melody-durations-dialog.component.ts');
   const popup = new MelodyDurationsDialogComponent();
   let closed = false; popup.dialog.close = () => { closed = true; };
   const before = service.exportProjectJson(), position = service.historyPosition();
@@ -1991,8 +1991,8 @@ test('Euclidean pulse edits retain mixed values and requested counts across scop
 
 test('quick access and inspector partition musical controls across roles and rhythm modes', () => {
   const { service, load, settings } = fixture();
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
-  const { partControlGroup } = load('shared/part-control-groups.ts');
+  const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
+  const { partControlGroup } = load('features/part-settings/part-control-groups.ts');
   const quick = new PartSettingsEditorComponent(), inspector = new PartSettingsEditorComponent();
   quick.advanced.set(false);
   inspector.inspectorOnly.set(true);
@@ -2031,7 +2031,7 @@ test('quick access and inspector partition musical controls across roles and rhy
 
 test('the chord rhythm preview shares generation masks and shows mixed values only for active rhythm inputs', () => {
   const { service, load, settings } = fixture();
-  const { PartSettingsEditorComponent } = load('shared/part-settings-editor.component.ts');
+  const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
   const editor = new PartSettingsEditorComponent();
   editor.role.set('chords');
@@ -2266,7 +2266,7 @@ test('drum pattern popup resolves every row in the selected section and edits on
   const sectionId = service.project().arrangement[1].id;
   service.updatePartSettings({ kind: 'section-role', sectionId, role: 'drums' }, { hitsPerPattern: 12 });
   const before = service.project().tracks;
-  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  const { PatternSequencerComponent } = load('features/part-settings/pattern-sequencer.component.ts');
   const popup = new PatternSequencerComponent();
   popup.data.role = 'drums';
   popup.data.scope = { kind: 'section-track', sectionId, trackId: tracks[0].id };
@@ -2286,7 +2286,7 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
   const { service, load } = fixture();
   const first = 'track-drums-1', second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[0].id;
-  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  const { PatternSequencerComponent } = load('features/part-settings/pattern-sequencer.component.ts');
   const { drumInstrumentLabel } = load('core/music/drum-instruments.ts');
   const popup = new PatternSequencerComponent();
   popup.data.role = 'drums';

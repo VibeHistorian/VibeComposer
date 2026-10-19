@@ -234,7 +234,7 @@ test('middle-click solos only the selected track/group, unmutes it, and ignores 
   service.addTrack('bass');
   const bass = service.project().tracks.filter(track => track.role === 'bass').map(track => track.id);
   service.toggleTrackMix(service.project().tracks.map(track => track.id), 'muted');
-  const { MixButtonsComponent } = load('shared/mix-buttons.component.ts');
+  const { MixButtonsComponent } = load('features/tracks/mix-buttons.component.ts');
   const buttons = new MixButtonsComponent();
   buttons.trackIds.set(bass); buttons.label.set('Bass tracks');
   let updates = 0, prevented = 0, stopped = 0;
@@ -520,7 +520,7 @@ test('mixer accents mute at defaults, jump for tiny edits, reach both endpoints 
 
 test('popup velocity previews commit once, preserve hidden cells and cancel stale gestures', () => {
   const { service, load } = fixture();
-  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  const { PatternSequencerComponent } = load('features/part-settings/pattern-sequencer.component.ts');
   const editor = new PatternSequencerComponent();
   const before = service.exportProjectJson();
   const input = { value: '110' }, event = { target: input };
@@ -544,7 +544,7 @@ test('popup velocity previews commit once, preserve hidden cells and cancel stal
 
 test('popup painting commits one gesture in audible coordinates and rejects stale project state', () => {
   const { service, load } = fixture();
-  const { PatternSequencerComponent } = load('shared/pattern-sequencer.component.ts');
+  const { PatternSequencerComponent } = load('features/part-settings/pattern-sequencer.component.ts');
   service.updatePartSettings({ kind: 'global-track', trackId: 'track-chords-1' }, { rhythm: 'custom', patternShift: 3, patternFlip: true });
   const editor = new PatternSequencerComponent();
   const before = service.exportProjectJson();

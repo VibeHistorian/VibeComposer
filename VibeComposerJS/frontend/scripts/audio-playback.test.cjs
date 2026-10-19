@@ -333,16 +333,16 @@ test('transport watches project changes and enabling LIVE without subscribing to
   const projects = { project: projectSignal };
   const workspaceUi = { sectionRange: angular.signal(null), selectedSectionIds: () => [] };
   angular.inject = (type) => type === 'audio' ? playback : type === 'ui' ? workspaceUi : projects;
-  const { TransportDockComponent } = load('shared/transport-dock.component.ts', {
-    '@angular/core': angular, '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
-    '../core/project/project.service': { ProjectService: 'projects' }, '../core/music/harmony': { KEYS: [] },
-    '../core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
-    '../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
-    './workspace-ui.service': { WorkspaceUiService: 'ui' },
-    './wheel-select.directive': { WheelSelectDirective: class {} },
-    './mix-buttons.component': { MixButtonsComponent: class {} },
-    './compact-knob.component': { CompactKnobComponent: class {} },
-    './chordlet-editor.component': { ChordletEditorComponent: class {} },
+  const { TransportDockComponent } = load('features/transport/transport-dock.component.ts', {
+    '@angular/core': angular, '../../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
+    '../../core/project/project.service': { ProjectService: 'projects' }, '../../core/music/harmony': { KEYS: [] },
+    '../../core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
+    '../../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
+    '../../core/ui/workspace-ui.service': { WorkspaceUiService: 'ui' },
+    '../../shared/wheel-select.directive': { WheelSelectDirective: class {} },
+    '../tracks/mix-buttons.component': { MixButtonsComponent: class {} },
+    '../../shared/compact-knob.component': { CompactKnobComponent: class {} },
+    '../harmony/chordlet-editor.component': { ChordletEditorComponent: class {} },
   });
   let reloads = 0;
   const reload = playback.reload.bind(playback);

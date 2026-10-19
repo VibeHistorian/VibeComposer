@@ -7,12 +7,12 @@ import { generateCompositionMidi } from './core/music/midi-export';
 import { downloadProjectFile } from './core/project/download-file';
 import { exportFilename } from './core/project/export-filename';
 import { UiPreferencesService } from './core/ui/ui-preferences.service';
-import { HistoryDialogComponent } from './shared/history-dialog.component';
+import { HistoryDialogComponent } from './features/history/history-dialog.component';
 import { ProjectService } from './core/project/project.service';
 import { SettingsDialogComponent } from './features/settings/settings-dialog.component';
-import { TransportDockComponent } from './shared/transport-dock.component';
-import { WorkspaceCanvasComponent } from './shared/workspace-canvas.component';
-import { WorkspaceUiService } from './shared/workspace-ui.service';
+import { TransportDockComponent } from './features/transport/transport-dock.component';
+import { WorkspaceCanvasComponent } from './features/workspace/workspace-canvas.component';
+import { WorkspaceUiService } from './core/ui/workspace-ui.service';
 import { translateJavaConfig } from './core/project/java-config-translator';
 import { isEditingText } from './shared/keyboard-shortcuts';
 

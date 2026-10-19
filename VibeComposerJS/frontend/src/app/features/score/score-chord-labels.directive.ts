@@ -1,5 +1,5 @@
 import { AfterViewInit, Directive, ElementRef, OnDestroy, afterRenderEffect, inject, signal } from '@angular/core';
-import { UiPreferencesService } from '../core/ui/ui-preferences.service';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 
 /** Hide a section's chord names together when any label would collide or be clipped. */
 @Directive({ selector: '[vcScoreChordLabels]', host: {

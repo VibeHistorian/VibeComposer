@@ -1,7 +1,7 @@
-import { sectionDurationBeats } from '../core/music/section-context';
+import { sectionDurationBeats } from '../music/section-context';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import type { ArrangedPart } from '../core/project/project.model';
-import { ProjectService } from '../core/project/project.service';
+import type { ArrangedPart } from '../project/project.model';
+import { ProjectService } from '../project/project.service';
 
 export type SettingsTarget =
   | { readonly kind: 'global-role'; readonly role: ArrangedPart }

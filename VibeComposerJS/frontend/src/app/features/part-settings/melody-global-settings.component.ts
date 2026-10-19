@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
-import type { MelodyGlobalSettings } from '../core/project/project.model';
-import { CompactKnobComponent } from './compact-knob.component';
-import { CompactToggleComponent } from './compact-toggle.component';
-import { DEFAULT_BLOCK_CHANGE_PREFERENCE, DEFAULT_BLOCK_TYPE_WEIGHTS, MELODY_BLOCK_FAMILIES } from '../core/music/melody-catalogue';
-import { WheelSelectDirective } from './wheel-select.directive';
-import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from '../core/music/melody-global-settings';
-import { UiPreferencesService } from '../core/ui/ui-preferences.service';
+import type { MelodyGlobalSettings } from '../../core/project/project.model';
+import { CompactKnobComponent } from '../../shared/compact-knob.component';
+import { CompactToggleComponent } from '../../shared/compact-toggle.component';
+import { DEFAULT_BLOCK_CHANGE_PREFERENCE, DEFAULT_BLOCK_TYPE_WEIGHTS, MELODY_BLOCK_FAMILIES } from '../../core/music/melody-catalogue';
+import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from '../../core/music/melody-global-settings';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 
 @Component({
   selector: 'vc-melody-global-settings',

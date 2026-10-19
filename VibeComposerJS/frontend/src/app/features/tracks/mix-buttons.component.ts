@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { ProjectService } from '../core/project/project.service';
-import { AudioPlaybackService } from '../core/audio/audio-playback.service';
+import { ProjectService } from '../../core/project/project.service';
+import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 
 @Component({
   selector: 'vc-mix-buttons',

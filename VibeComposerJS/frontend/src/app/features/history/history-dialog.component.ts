@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DialogRef } from '@angular/cdk/dialog';
-import { ProjectService } from '../core/project/project.service';
-import { WorkspaceUiService } from './workspace-ui.service';
+import { ProjectService } from '../../core/project/project.service';
+import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
 
 @Component({
   selector: 'vc-history-dialog',

@@ -25,30 +25,31 @@ function fixture() {
   let ui;
   angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? {} : projects;
   const load = (file, dependencies = {}) => {
-    const source = fs.readFileSync(path.join(__dirname, '../src/app/shared', file), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../src/app', file), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
     } }).outputText;
     const module = { exports: {} };
     const defaults = {
-      '../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
-      '@angular/core': angular, '../core/project/project.service': { ProjectService: 'project' },
-      '../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
-      '../core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
-      './workspace-ui.service': { WorkspaceUiService: 'ui' },
-      '../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'], SECTION_TYPES: [],
+      'core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
+      '@angular/core': angular, 'core/project/project.service': { ProjectService: 'project' },
+      'core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
+      'core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
+      'core/ui/workspace-ui.service': { WorkspaceUiService: 'ui' },
+      'core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'], SECTION_TYPES: [],
         PART_GENERATION_AVAILABLE: { melody: false, bass: true, chords: true, arpeggio: true, drums: true },
         tracksInRoleOrder: (tracks) => [...tracks].sort((left, right) =>
           ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(left.role) - ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(right.role)) },
-      '../core/music/harmony': { KEYS: [] },
+      'core/music/harmony': { KEYS: [] },
     };
     new Function('require', 'module', 'exports', compiled)(
-      (name) => dependencies[name] ?? defaults[name] ?? {}, module, module.exports);
+      (name) => dependencies[name] ?? defaults[name.startsWith('.')
+        ? path.posix.normalize(path.posix.join(path.posix.dirname(file), name)) : name] ?? {}, module, module.exports);
     return module.exports;
   };
-  const { WorkspaceUiService } = load('workspace-ui.service.ts');
+  const { WorkspaceUiService } = load('core/ui/workspace-ui.service.ts');
   ui = new WorkspaceUiService();
-  const { WorkspaceCanvasComponent } = load('workspace-canvas.component.ts');
+  const { WorkspaceCanvasComponent } = load('features/workspace/workspace-canvas.component.ts');
   const workspace = new WorkspaceCanvasComponent();
   return { ui, project, workspace, load, flushEffects: () => effects.forEach(callback => callback()) };
 }
@@ -293,7 +294,7 @@ test('invalid or deleted part targets fall back safely without retaining a local
 
 test('score canvas fits an unequal section range and restores full-score zoom on clearing', () => {
   const { load, ui, workspace } = fixture();
-  const { ScoreCanvasComponent } = load('score-canvas.component.ts');
+  const { ScoreCanvasComponent } = load('features/score/score-canvas.component.ts');
   const score = new ScoreCanvasComponent();
   score.model = { tracks: [], notes: [], sections: [], totalBeats: 48, selectedTrackId: '', hiddenTrackIds: new Set() };
   score.app = { render() {}, canvas: { setAttribute() {} } };
@@ -333,7 +334,7 @@ test('score canvas fits an unequal section range and restores full-score zoom on
 
 test('score time grid progressively reveals subdivisions with at least eight pixels between regular lines', () => {
   const { load } = fixture();
-  const { ScoreCanvasComponent } = load('score-canvas.component.ts');
+  const { ScoreCanvasComponent } = load('features/score/score-canvas.component.ts');
   const score = new ScoreCanvasComponent();
   score.model = { tracks: [], notes: [], sections: [], totalBeats: 512, selectedTrackId: '', hiddenTrackIds: new Set() };
   score.app = { render() {}, canvas: { setAttribute() {} } };

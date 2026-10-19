@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { fitImportedMidi, midiDurationError, type ImportedMidiTrack, type MidiScaleChoice } from '../core/music/midi-import-options';
+import { fitImportedMidi, midiDurationError, type ImportedMidiTrack, type MidiScaleChoice } from '../../core/music/midi-import-options';
 
 export interface MidiImportDialogData {
   readonly track: ImportedMidiTrack;

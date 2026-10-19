@@ -3,7 +3,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import type { Injector } from '@angular/core';
 import { fitImportedMidi, type ImportedMidiTrack, type MidiScaleChoice } from '../music/midi-import-options';
 import type { ScaleMode } from '../music/scales';
-import { MidiImportDialogComponent } from '../../shared/midi-import-dialog.component';
+import { MidiImportDialogComponent } from '../../features/midi-import/midi-import-dialog.component';
 
 export interface MidiDropOptions {
   readonly injector: Injector;

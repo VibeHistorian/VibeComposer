@@ -19,7 +19,7 @@ test('failed contextual Compose keeps the rendered project, storage, history and
   const ranges = load('core/music/contextual-randomizer.ts');
   const range = ranges.contextualRange;
   ranges.contextualRange = () => ({ rangeMin: 48, rangeMax: 48 });
-  const { TransportDockComponent } = load('shared/transport-dock.component.ts');
+  const { TransportDockComponent } = load('features/transport/transport-dock.component.ts');
   const transport = new TransportDockComponent();
   let restarts = 0;
   transport.playback.restartAfterCompose = () => { restarts++; };
