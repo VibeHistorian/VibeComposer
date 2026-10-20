@@ -5,6 +5,7 @@
 | Module | Responsibility |
 | --- | --- |
 | `project-codec.ts` | Decode imported/session data; validate complete command candidates. |
+| `project-json.ts` | Format project exports with inline numeric arrays and one manual note per line. |
 | `project-part-decoder.ts` | Decode and validate each role's full generator settings. |
 | `project-track-decoder.ts` | Decode tracks, mix values, and manual phrases; validate phrase bounds. |
 | `project-arrangement-decoder.ts` | Decode sections, scoped overrides, track references, and presence; define arrangement limits. |

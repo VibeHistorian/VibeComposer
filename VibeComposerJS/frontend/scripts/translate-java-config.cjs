@@ -27,7 +27,7 @@ if (require.main === module) {
       if (path.resolve(target) === path.resolve(input)) throw new Error('Output must differ from the input XML.');
       const report = target + '.translation-report.json';
       if (!force && (fs.existsSync(target) || fs.existsSync(report))) throw new Error('Output/report already exists; use --force to replace it.');
-      fs.writeFileSync(target, JSON.stringify(result.project, null, 2) + '\n', { flag: force ? 'w' : 'wx' });
+      fs.writeFileSync(target, loadMusic('../project/project-json.ts').formatProjectJson(result.project) + '\n', { flag: force ? 'w' : 'wx' });
       fs.writeFileSync(report, JSON.stringify({ input, tracks: result.project.tracks.length,
         sections: result.project.arrangement.length, savedPhrases: result.savedPhraseCount,
         diagnostics: result.diagnostics }, null, 2) + '\n');

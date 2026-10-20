@@ -2,6 +2,7 @@ import * as arrangementCommands from './project-arrangement-commands';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase } from './project-track-decoder';
 import { decodeProject, isProject } from './project-codec';
+import { formatProjectJson } from './project-json';
 import { copyDefaultProject } from './project-defaults';
 import { projectLoadIssues } from './project-load-diagnostics';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
@@ -189,7 +190,7 @@ export class ProjectService {
   }
 
   exportProjectJson(): string {
-    return JSON.stringify(this.state(), null, 2);
+    return formatProjectJson(this.state());
   }
 
   updateArpeggioPolicy(patch: Partial<ArpeggioGenerationPolicy>): PartWorkflowResult {

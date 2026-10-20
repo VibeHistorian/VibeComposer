@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { loadMusic } = require('./music-loader.cjs');
 const { decodeProject, isProject } = loadMusic('../project/project-codec.ts');
+const { formatProjectJson } = loadMusic('../project/project-json.ts');
 const { copyDefaultProject } = loadMusic('../project/project-defaults.ts');
 const { projectLoadIssues } = loadMusic('../project/project-load-diagnostics.ts');
 const { DEFAULT_SECTION_TYPE_CHANCES } = loadMusic('../project/section-type-chances.ts');
@@ -14,6 +15,40 @@ function freeze(value) {
   }
   return value;
 }
+
+test('compact project exports preserve JSON data and keep numeric arrays and manual notes inline', () => {
+  const input = copyDefaultProject(DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
+  input.name = 'Quotes " and brackets [1, 2] and newline\nwith backslash \\';
+  input.seed = '9223372036854775807';
+  const notes = [
+    { id: 'n"1', midi: 48, startBeat: 0, durationBeats: 0.5, velocity: 90 },
+    { id: 'n2', midi: 55, startBeat: 0.5, durationBeats: 1, velocity: 85 },
+  ];
+  input.editedPhrases = { bass: notes };
+  const track = input.tracks.find(track => track.role === 'bass');
+  track.editedPhrase = notes;
+  input.arrangement[0].trackPhrases = { [track.id]: notes };
+  input.arrangement[0].rolePartOverrides = {};
+  input.arrangement[0].generatedTrackIds = [];
+  input.randomizeTempoOnCompose = undefined;
+  const originalJson = JSON.stringify(input);
+  const exported = formatProjectJson(freeze(input));
+  assert.deepEqual(JSON.parse(exported), JSON.parse(originalJson));
+  assert.equal(JSON.stringify(input), originalJson);
+  assert.ok(exported.includes(`"progression": [${input.progression.join(', ')}]`));
+  assert.ok(exported.includes('"generatedTrackIds": []'));
+  assert.ok(exported.includes('"rolePartOverrides": {}'));
+  const noteLines = exported.split('\n').filter(line => line.includes('"startBeat":'));
+  assert.equal(noteLines.length, 6, 'all three phrase scopes contain one line per note');
+  for (const line of noteLines) {
+    const note = JSON.parse(line.trim().replace(/,$/, ''));
+    assert.deepEqual(note, notes.find(item => item.id === note.id));
+  }
+  const decoded = decodeProject(JSON.parse(exported), DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
+  assert.ok(decoded);
+  assert.deepEqual(decoded.tracks.find(item => item.id === track.id).editedPhrase, notes);
+  assert.equal(formatProjectJson(JSON.parse(exported)), exported);
+});
 
 test('project decoding works without Angular or storage and preserves import defaults and exact seeds', () => {
   const input = copyDefaultProject(DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
