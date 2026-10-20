@@ -48,7 +48,8 @@ function createBrowserServer({ root, html, resolve, reject }) {
         response.writeHead(404); response.end(); return;
       }
       const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
-        '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml' };
+        '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml',
+        '.woff': 'font/woff', '.woff2': 'font/woff2' };
       response.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream');
       const stream = fs.createReadStream(file);
       stream.on('error', error => { response.destroy(error); reject?.(error); });
@@ -74,16 +75,19 @@ function launchBrowser(browser, args, options = {}) {
   const child = spawn(browser, [...args, ...(!supplied ? ['--user-data-dir=' + profile] : [])],
     { stdio: ['ignore', 'ignore', 'pipe'], ...options });
   child.testProfile = profile;
+  child.testStderr = '';
+  child.stderr?.on('data', chunk => { child.testStderr = (child.testStderr + chunk).slice(-4000); });
   child.on('error', error => { child.testLaunchError = error; });
   return child;
 }
 
 async function connectToPage(child) {
+  const browserError = message => new Error(message + (child.testStderr ? '\n' + child.testStderr : ''));
   const deadline = Date.now() + 10000;
   let target;
   while (!target && Date.now() < deadline) {
     if (child.testLaunchError) throw child.testLaunchError;
-    if (child.exitCode !== null || child.signalCode !== null) throw new Error('Chromium exited before debugging connected');
+    if (child.exitCode !== null || child.signalCode !== null) throw browserError('Chromium exited before debugging connected');
     try {
       const port = Number(fs.readFileSync(path.join(child.testProfile, 'DevToolsActivePort'), 'utf8').split('\n')[0]);
       target = (await (await fetch(`http://127.0.0.1:${port}/json/list`, {
@@ -113,11 +117,11 @@ async function connectToPage(child) {
       clearTimeout(timer); socket.removeEventListener('message', message); socket.removeEventListener('close', closed);
     };
     const timer = setTimeout(() => { cleanup(); reject(new Error('CDP timeout: ' + method)); }, 20000);
-    const closed = () => { cleanup(); reject(new Error('Chromium debugging socket closed: ' + method)); };
+    const closed = () => { cleanup(); reject(browserError('Chromium debugging socket closed: ' + method)); };
     const message = event => {
       const result = JSON.parse(event.data);
       if (result.id !== id) return;
-      cleanup(); result.error ? reject(new Error(JSON.stringify(result.error))) : resolve(result.result);
+      cleanup(); result.error ? reject(browserError(JSON.stringify(result.error))) : resolve(result.result);
     };
     socket.addEventListener('message', message); socket.addEventListener('close', closed);
     try { socket.send(JSON.stringify({ id, method, params })); }
@@ -165,4 +169,23 @@ async function closeBrowser({ child, server, socket, watchdog }) {
   await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 }
 
-module.exports = { findBrowser, requireProductionBuild, createBrowserServer, listen, launchBrowser, connectToPage, watchBrowser, closeBrowser };
+async function preflightBrowser(browser) {
+  const server = createBrowserServer({ html: '<!doctype html><title>Browser preflight</title>' });
+  await listen(server);
+  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run',
+    '--disable-background-networking', '--remote-debugging-port=0', 'http://127.0.0.1:' + server.address().port]);
+  let socket;
+  try {
+    const connection = await connectToPage(child);
+    socket = connection.socket;
+    const result = await connection.command('Runtime.evaluate', {
+      expression: `!!document.createElement('canvas').getContext('2d') && !!document.createElement('canvas').getContext('webgl2')`,
+      returnByValue: true,
+    });
+    if (result.result?.value !== true) throw new Error('Canvas 2D or WebGL2 is unavailable; score browser tests require both.');
+  } catch (error) {
+    throw new Error('Browser preflight failed before running suites. On Windows, Chromium child processes can be blocked by the agent sandbox (0xC0000022 / access denied). Run the browser command through the host\'s explicit approval flow when that restriction applies.\n' + error.message, { cause: error });
+  } finally { await closeBrowser({ child, server, socket }); }
+}
+
+module.exports = { findBrowser, requireProductionBuild, createBrowserServer, listen, launchBrowser, connectToPage, watchBrowser, closeBrowser, preflightBrowser };

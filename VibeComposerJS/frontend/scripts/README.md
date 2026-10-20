@@ -37,6 +37,12 @@ Suites retain their HTML/fixtures, injected workflows, browser flags, viewport s
 
 Component fixtures and source-reading browser suites follow the [feature ownership map](../src/app/features/README.md). Domain components live under `src/app/features/`; workspace selection state lives in `src/app/core/ui/workspace-ui.service.ts`. Update fixture module paths and dependency stand-ins together when moving an owner. Templates and styles remain alongside their components; the old `shared/` paths have no forwarding modules.
 
+Browser aggregates first check Chromium startup, Canvas 2D and WebGL2 in a temporary profile. A blocked browser fails once before launching the suites. Debugging-protocol failures include recent browser stderr, including GPU startup errors that otherwise appear only as `Target crashed`.
+
+On this Windows host, both Chrome and Edge fail under the agent's restricted account with Chromium child-process exit code `0xC0000022` (access denied). Moving GPU work into the browser process with `--in-process-gpu` also leaves the page crashing, so the harness preserves Chromium's default process isolation. This is a host sandbox compatibility issue; changing fonts, browser choice or individual suite flags does not resolve it. Use the host's explicit approval flow for `pnpm run test:browser` (or a focused browser command), retaining a narrowly scoped command approval when available. The same tests run from a regular user terminal without administrator rights. Do not add `--no-sandbox` or `--disable-gpu-sandbox` to individual suites.
+
+`CreateProcessWithLogonW failed: 1909` happens before pnpm or Chromium starts: the Windows sandbox account is locked. Workspace flags cannot repair that host account. Restart or repair the agent's Windows sandbox through its host, then retry a simple sandboxed shell command before retrying builds or tests. A GPU startup crash and a locked account are separate failures. Keep permission escalation explicit while the host is unavailable.
+
 ## Overview layout matrix
 
 `pnpm run test:overview:browser` runs all 21 layout scenarios at normal page zoom and display scale. Eight scenarios also run at every combination of page zoom (0.8, 1, 1.25, 1.5) and display scale (1, 1.25, 1.5). These cover fractional-pixel rounding, fitted and overflowing timelines, fractional timeline zoom, dense track buttons, remaining score space, and gap sections.

@@ -36,6 +36,8 @@ pnpm start
 
 The Angular shell reports when it is running outside Wails. To make a desktop build, run `wails build`; the generated application is written under `build/bin/`. Wails uses the same frozen pnpm installation and `pnpm run build` for production.
 
+DM Sans and DM Mono are bundled through pinned `@fontsource` packages, including Latin extended glyphs and the weights used by the UI. After installing dependencies, building and displaying the app require no Google Fonts connection. Keep font imports in `frontend/src/styles.css` local; remote font links in `src/index.html` make Angular's production font inlining depend on network access. Their SIL Open Font License notices ship from `frontend/public/licenses/`; update these copies when upgrading the font packages.
+
 Wails v2 caches installation using only `package.json.md5`, and writes that checksum before installation succeeds. This explains why a failed install can appear to succeed on a second build: that attempt may skip installation. Run `pnpm install --frozen-lockfile` after pulling lockfile/workspace/patch changes, or use `wails build -f` to force installation. Never rely on retrying a failed install.
 
 If migrating an existing npm or mixed npm/pnpm checkout, remove only `frontend/node_modules` and any untracked `frontend/package-lock.json`, then run the frozen pnpm install. The previous `npm install` Wails command could crash while traversing pnpm links (`Cannot read properties of null (reading 'children')`); using pnpm throughout fixes that failure.

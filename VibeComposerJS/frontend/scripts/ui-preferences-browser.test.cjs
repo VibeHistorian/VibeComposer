@@ -23,6 +23,12 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     try {
       await wait(()=>innerWidth===${width},'viewport');
       await wait(()=>button('Edit quick settings'),'workspace');
+      for (const [family, weights] of [['DM Sans', [400, 500, 600, 700]], ['DM Mono', [400, 500]]]) {
+        for (const weight of weights) {
+          const faces = await document.fonts.load(weight + ' 12px "' + family + '"', 'Árvíztűrő tükörfúrógép');
+          ensure(faces.length > 0 && faces.every(face => face.status === 'loaded'), 'bundled font loaded: ' + family + ' ' + weight);
+        }
+      }
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
         ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','inspector background restored after reload');

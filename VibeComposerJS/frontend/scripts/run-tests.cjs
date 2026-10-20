@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const { findBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
+const { findBrowser, requireProductionBuild, preflightBrowser } = require('./support/browser-harness.cjs');
 
 const [group, ...args] = process.argv.slice(2);
 if (!['unit', 'browser', 'overview-full'].includes(group)) {
@@ -18,13 +18,16 @@ const files = fs.readdirSync(scripts).filter(name => {
 if (args.includes('--list')) {
   for (const file of files) console.log('scripts/' + file);
 } else {
-  if (group === 'browser') requireProductionBuild();
-  if (group !== 'unit' && !findBrowser()) throw new Error('Set OVERVIEW_TEST_BROWSER to a Chromium executable');
-  const result = spawnSync(process.execPath,
-    ['--test', '--test-concurrency=1', ...args, ...files.map(file => path.join(scripts, file))], {
-      cwd: path.resolve(__dirname, '..'), stdio: 'inherit',
-      env: { ...process.env, ...(group === 'overview-full' ? { OVERVIEW_TEST_FULL_MATRIX: '1' } : {}) },
-    });
-  if (result.error) throw result.error;
-  process.exitCode = result.status ?? 1;
+  (async () => {
+    if (group === 'browser') requireProductionBuild();
+    if (group !== 'unit' && !findBrowser()) throw new Error('Set OVERVIEW_TEST_BROWSER to a Chromium executable');
+    if (group !== 'unit') await preflightBrowser(findBrowser());
+    const result = spawnSync(process.execPath,
+      ['--test', '--test-concurrency=1', ...args, ...files.map(file => path.join(scripts, file))], {
+        cwd: path.resolve(__dirname, '..'), stdio: 'inherit',
+        env: { ...process.env, ...(group === 'overview-full' ? { OVERVIEW_TEST_FULL_MATRIX: '1' } : {}) },
+      });
+    if (result.error) throw result.error;
+    process.exitCode = result.status ?? 1;
+  })().catch(error => { console.error(error.message); process.exitCode = 1; });
 }

@@ -5,7 +5,7 @@ const { execFileSync } = require('node:child_process');
 const { EventEmitter, once } = require('node:events');
 const test = require('node:test');
 const { createBrowserServer, listen, launchBrowser, watchBrowser, closeBrowser,
-  requireProductionBuild } = require('./support/browser-harness.cjs');
+  requireProductionBuild, connectToPage, preflightBrowser } = require('./support/browser-harness.cjs');
 
 test('browser server serves injected pages, assets and JSON results; rejects malformed results and escaped paths', async () => {
   const parent = path.resolve(__dirname, '../.angular');
@@ -15,6 +15,7 @@ test('browser server serves injected pages, assets and JSON results; rejects mal
   fs.mkdirSync(root);
   fs.writeFileSync(path.join(root, 'index.html'), '<p>production</p>');
   fs.writeFileSync(path.join(root, 'main.js'), 'window.loaded = true;');
+  fs.writeFileSync(path.join(root, 'font.woff2'), Buffer.from('wOF2'));
   fs.writeFileSync(path.join(fixture, 'secret'), 'outside');
   let result, failure;
   const server = createBrowserServer({ root, html: '<p>injected</p>',
@@ -26,6 +27,9 @@ test('browser server serves injected pages, assets and JSON results; rejects mal
     const asset = await fetch(url + '/main.js?v=1');
     assert.equal(asset.headers.get('content-type'), 'text/javascript');
     assert.equal(await asset.text(), 'window.loaded = true;');
+    const font = await fetch(url + '/font.woff2');
+    assert.equal(font.headers.get('content-type'), 'font/woff2');
+    assert.equal(await font.text(), 'wOF2');
     for (const route of ['/missing', '/%2e%2e%2fsecret', '/%2e%2e%5csecret']) {
       const response = await fetch(url + route);
       assert.equal(response.status, 404, route);
@@ -88,4 +92,14 @@ test('aggregate discovery covers every top-level suite without duplicating gener
   assert.ok(unit.includes('part-settings.test.cjs'));
   assert.ok(!unit.includes('parts-generation.test.cjs'));
   assert.deepEqual(list('overview-full'), ['arrangement-overview-browser.test.cjs']);
+});
+
+test('debugging startup failures retain browser stderr and preflight cleans up a failed launch', async () => {
+  await assert.rejects(connectToPage({ exitCode: 1, signalCode: null, testStderr: 'GPU exit code 0xC0000022' }),
+    /Chromium exited before debugging connected\nGPU exit code 0xC0000022/);
+  const root = path.resolve(__dirname, '../.angular');
+  const profiles = () => fs.readdirSync(root).filter(name => name.startsWith('browser-harness-')).sort();
+  const before = profiles();
+  await assert.rejects(preflightBrowser(path.join(__dirname, 'missing-chromium-executable')), /Browser preflight failed.*\n.*ENOENT/);
+  assert.deepEqual(profiles(), before, 'failed preflight removes its temporary browser profile');
 });
