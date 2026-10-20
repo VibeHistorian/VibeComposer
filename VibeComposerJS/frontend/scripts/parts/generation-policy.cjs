@@ -1023,7 +1023,7 @@ test('melody has explicit type zero and generated tracks, with stable existing r
   const notes = existing.map((track) => phrase.generateTrackPhrase(service.project(), track));
   const saved = JSON.parse(service.exportProjectJson());
   saved.tracks = saved.tracks.filter((track) => track.role !== 'melody');
-  for (const section of saved.arrangement) delete section.trackPresence[melody.id];
+  for (const section of saved.arrangement) section.trackPresence.melody = [];
   assert.equal(service.importProjectJson(JSON.stringify(saved)), true);
   assert.deepEqual(JSON.parse(JSON.stringify(service.project().tracks)), existing, 'loading a four-role project preserves its track identities');
   for (let index = 0; index < existing.length; index++) {

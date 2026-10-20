@@ -1,11 +1,12 @@
 import type { CompositionProject } from './project.model';
+import { encodeProjectStorage } from './project-storage';
 
 type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
-/** Keep settings structured, numeric arrays inline, and manual phrases one note per line. */
+/** Keep settings structured, numeric/boolean arrays inline, and manual phrases one note per line. */
 export function formatProjectJson(project: CompositionProject): string {
   // Preserve JSON.stringify's handling of optional undefined fields and string escaping.
-  const value: JsonValue = JSON.parse(JSON.stringify(project));
+  const value: JsonValue = JSON.parse(JSON.stringify(encodeProjectStorage(project)));
   return formatValue(value, 0);
 }
 
@@ -15,7 +16,7 @@ function formatValue(value: JsonValue, depth: number): string {
   const indent = '  '.repeat(depth);
   const childIndent = indent + '  ';
   if (Array.isArray(value)) {
-    if (value.every(item => typeof item === 'number')) return `[${value.join(', ')}]`;
+    if (value.every(item => typeof item === 'number' || typeof item === 'boolean')) return `[${value.join(', ')}]`;
     return `[\n${value.map(item => childIndent + formatValue(item, depth + 1)).join(',\n')}\n${indent}]`;
   }
 

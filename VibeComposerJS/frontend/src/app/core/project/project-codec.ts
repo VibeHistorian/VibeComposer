@@ -7,6 +7,7 @@ import { decodeTrackGenerationPolicy, validTrackGenerationMetadata } from '../mu
 import { decodeInstrumentPolicy, validInstrumentPolicies } from '../music/instrument-generation';
 import { decodeTracks, decodeEditedPhrases } from './project-track-decoder';
 import { decodeArrangement } from './project-arrangement-decoder';
+import { decodeStoredArrangement } from './project-storage';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 
 /** Decode imported/session data, retaining the existing optional-field defaults and recovery rules. */
@@ -38,7 +39,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
 
   const editedPhrases = decodeEditedPhrases(project.editedPhrases);
   const tracks = decodeTracks(project.tracks);
-  const arrangement = tracks ? decodeArrangement(project.arrangement, tracks, BigInt(project.seed!), chances, random) : undefined;
+  const arrangement = tracks ? decodeArrangement(decodeStoredArrangement(project.arrangement, tracks), tracks, BigInt(project.seed!), chances, random) : undefined;
   if (!arrangement || !editedPhrases || !tracks) {
     return undefined;
   }

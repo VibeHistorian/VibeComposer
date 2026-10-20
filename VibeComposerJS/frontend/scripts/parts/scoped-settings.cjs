@@ -555,7 +555,7 @@ test('P5 dependencies use section melody settings, manual ownership and absent s
   const { service, phrase, midi } = fixture();
   const project = JSON.parse(service.exportProjectJson());
   project.arrangement = project.arrangement.slice(0, 2).map(section => ({ ...section, measures: 4,
-    trackPresence: { ...section.trackPresence, 'track-melody-1': false, 'track-drums-1': true, 'track-arpeggio-1': true } }));
+    trackPresence: { ...section.trackPresence, melody: [false], drums: [true], arpeggio: [true] } }));
   assert.equal(service.importProjectJson(JSON.stringify(project)), true);
   const first = service.project().arrangement[0], second = service.project().arrangement[1];
   service.updateTrackPhrase('track-melody-1', [

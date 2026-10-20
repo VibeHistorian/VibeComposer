@@ -3,6 +3,7 @@ import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } f
 import { isPhrase } from './project-track-decoder';
 import { decodeProject, isProject } from './project-codec';
 import { formatProjectJson } from './project-json';
+import { encodeProjectStorage } from './project-storage';
 import { copyDefaultProject } from './project-defaults';
 import { projectLoadIssues } from './project-load-diagnostics';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
@@ -1180,7 +1181,7 @@ export class ProjectService {
         const value: unknown = JSON.parse(raw);
         const decoded = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
         if (decoded) {
-          if (key !== STORAGE_KEY) this.persist(decoded);
+          this.persist(decoded);
           return decoded;
         }
         this.warnProjectLoadFailure(`session storage (${key})`, value);
@@ -1199,7 +1200,7 @@ export class ProjectService {
 
   private persist(project: CompositionProject): void {
     try {
-      globalThis.sessionStorage?.setItem(STORAGE_KEY, JSON.stringify(project));
+      globalThis.sessionStorage?.setItem(STORAGE_KEY, JSON.stringify(encodeProjectStorage(project)));
     } catch {
       // Keep the project usable if storage is disabled or full.
     }

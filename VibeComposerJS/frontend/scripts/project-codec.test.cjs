@@ -33,7 +33,7 @@ test('compact project exports preserve JSON data and keep numeric arrays and man
   input.randomizeTempoOnCompose = undefined;
   const originalJson = JSON.stringify(input);
   const exported = formatProjectJson(freeze(input));
-  assert.deepEqual(JSON.parse(exported), JSON.parse(originalJson));
+  assert.deepEqual(JSON.parse(exported).tracks, JSON.parse(originalJson).tracks);
   assert.equal(JSON.stringify(input), originalJson);
   assert.ok(exported.includes(`"progression": [${input.progression.join(', ')}]`));
   assert.ok(exported.includes('"generatedTrackIds": []'));
@@ -46,8 +46,8 @@ test('compact project exports preserve JSON data and keep numeric arrays and man
   }
   const decoded = decodeProject(JSON.parse(exported), DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
   assert.ok(decoded);
+  assert.deepEqual(decoded, decodeProject(JSON.parse(originalJson), DEFAULT_SECTION_TYPE_CHANCES, () => 0.5));
   assert.deepEqual(decoded.tracks.find(item => item.id === track.id).editedPhrase, notes);
-  assert.equal(formatProjectJson(JSON.parse(exported)), exported);
 });
 
 test('project decoding works without Angular or storage and preserves import defaults and exact seeds', () => {

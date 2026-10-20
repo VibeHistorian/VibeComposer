@@ -346,6 +346,8 @@ test('generation handles empty roles, project capacity and no-op rerolls without
   project.tracks = [...project.tracks, ...Array.from({ length: 63 - project.tracks.length }, (_, index) => ({
     ...original, id: 'capacity-' + index, name: 'Capacity ' + index,
   }))];
+  for (const section of project.arrangement) section.trackPresence[original.role] = project.tracks
+    .filter(track => track.role === original.role).map((_, index) => section.trackPresence[original.role][index] ?? false);
   assert.equal(service.importProjectJson(JSON.stringify(project)), true);
   service.updateSettings({ name: 'redo-capacity' }); service.undo(); const full = service.exportProjectJson();
   assert.equal(service.generateRoleTracks('drums', 2), 'invalid'); assert.equal(service.exportProjectJson(), full);

@@ -12,6 +12,7 @@ import { DEFAULT_INSTRUMENT_POLICIES, decodeInstrumentPolicy, validInstrumentPol
 import { decodeTracks, isPhrase } from './project-track-decoder';
 import { decodeArrangement, MAX_ARRANGEMENT_SECTIONS, MAX_ARRANGEMENT_MEASURES } from './project-arrangement-decoder';
 import type { SectionTypeChanceSettings } from './section-type-chances';
+import { decodeStoredArrangement, decodeStoredTrackPresence } from './project-storage';
 
 /** Gather diagnostics only after rejection; these messages do not define acceptance rules. */
 export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSettings, random: () => number): readonly string[] {
@@ -127,11 +128,14 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
       for (const [role, patch] of Object.entries(section['rolePartOverrides'] ?? {})) if (ARRANGED_PARTS.includes(role as ArrangedPart)) settings(role as ArrangedPart, patch, `${path}.rolePartOverrides.${role}`, true);
       const decodedTracks = decodeTracks(tracks);
       if (decodedTracks) {
+        if (section['trackPresence'] !== undefined) check(`${path}.trackPresence`,
+          decodeStoredTrackPresence(section['trackPresence'], decodedTracks) !== undefined,
+          'expected an ID-to-boolean map or role arrays with one boolean per track, in track order');
         for (const [id, patch] of Object.entries(section['trackPartOverrides'] ?? {})) {
           const track = decodedTracks.find(track => track.id === id);
           if (track) settings(track.role, patch, `${path}.trackPartOverrides.${id}`, true);
         }
-        check(path, !!decodeArrangement([raw], decodedTracks, 0n, chances, random), 'invalid section identity, type, measures, harmony, track references, overrides, or phrases');
+        check(path, !!decodeArrangement(decodeStoredArrangement([raw], decodedTracks), decodedTracks, 0n, chances, random), 'invalid section identity, type, measures, harmony, track references, overrides, or phrases');
       }
       check(`${path}.id`, !arrangement.slice(0, index).some(previous => previous?.id === section['id']), 'duplicate section ID');
     });

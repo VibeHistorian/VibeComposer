@@ -4,10 +4,13 @@
 
 Independent tracks own generator settings and mix values. Global role edits update their member tracks; there is no duplicated project-level generator settings or role mix layer. Adding a track to an empty role uses the corresponding `DEFAULT_TRACKS` entry. Imports read track values and omit obsolete top-level role settings and mix when constructing project state.
 
+Exported files and session storage use `trackPresence: { melody: [...], bass: [...], chords: [...], arpeggio: [...], drums: [...] }`. Each boolean array follows the order of tracks with that role in `tracks`, with exactly one value per member. Empty roles export as `[]`. Import expands these arrays to ID-keyed app maps and also accepts existing ID-map files. Mixed forms, unknown roles, non-booleans, and incorrect array lengths are rejected.
+
 | Module | Responsibility |
 | --- | --- |
 | `project-codec.ts` | Decode imported/session data; validate complete command candidates. |
-| `project-json.ts` | Format project exports with inline numeric arrays and one manual note per line. |
+| `project-json.ts` | Format project exports with inline numeric/boolean arrays and one manual note per line. |
+| `project-storage.ts` | Store presence as role arrays; expand them to ID maps on import/session restore. |
 | `project-part-decoder.ts` | Decode and validate each role's full generator settings. |
 | `project-track-decoder.ts` | Decode tracks, mix values, and manual phrases; validate phrase bounds. |
 | `project-arrangement-decoder.ts` | Decode sections, scoped overrides, track references, and presence; define arrangement limits. |
