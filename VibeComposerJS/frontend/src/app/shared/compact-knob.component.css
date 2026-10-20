@@ -20,7 +20,7 @@
 .mini vc-control-heading { display: none; }
 .mini .knob-face { width: 24px; height: 24px; padding: 2px; box-shadow: none; }
 .mini:has(input:focus-visible) .knob-face { box-shadow: 0 0 0 2px var(--accent-outline); }
-.mini .knob-face > span { width: 18px; height: 18px; padding: 0; font-size: 9px; }
+.mini .knob-face > span { width: 18px; height: 18px; padding: 0; overflow: visible; text-overflow: clip; font-size: 9px; }
 .mini input { top: 0; width: 24px; height: 24px; }
 .mini .mix-face { border-color: var(--knob-accent); }
 .mini .mix-face > span { color: var(--knob-accent); }
