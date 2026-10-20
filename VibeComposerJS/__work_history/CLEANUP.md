@@ -136,14 +136,6 @@ Browser validation: 16 of 19 cases passed across the twelve suites, including th
 
 Follow-up 2026-10-20: fixed the three preferences browser cases. The seed summary assertion now follows the current `USED SEED` label and checks the displayed seed and tooltip against the saved generated project. The Compose wait now requires the rendered summary to match that project; the previous `includes('SEED')` check also matched the pre-Compose text and could proceed before Angular rendered the new seed. All three cases pass at 1440px, 1400px and 780px, including the remaining preference transfer, appearance, reload and layout assertions. Application code is unchanged, so the existing production build was reused. Chromium required execution outside the sandbox after sandboxed debugging targets crashed. Report: `.angular/seed-hint-browser.tap`.
 
-### Optimize readability rather than line count
-
-Some CSS and test code packs substantial behavior onto long lines.
-
-- [ ] Expand dense code into predictable formatting when touching it, keeping unrelated formatting churn out of functional changes.
-- [ ] Prefer coherent modules and easy-to-review patches over compressed source or arbitrary maximum file lengths.
-- [ ] Preserve separate component templates/styles, semantic theme tokens, and CSS section comments.
-
 ## Working approach
 
 Take one coherent item at a time, preserve behavior, update affected navigation references, and run the relevant functional/browser checks and production build for application changes. Preserve the framework-independent music library, existing Java parity coverage, and playback scheduling outside Angular rendering. Record completion here as cleanup is delivered.
