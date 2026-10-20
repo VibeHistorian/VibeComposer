@@ -90,8 +90,8 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         button('Compose').click();
         await wait(()=>{
           const generated = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-          return generated?.seed!=='0' && document.querySelector('.transport-project span').textContent.trim()==='USED SEED '+generated?.seed;
-        },'generated seed summary');
+          return generated?.seed!=='0' && document.querySelector('.transport-project span').textContent.trim()==='ID '+generated?.seed;
+        },'generated ID summary');
         ensure(seedInput.value==='0','automatic seed input remains zero');
         ensure(document.querySelector('input[aria-label="Tempo in beats per minute"]').value===tempo,'disabled BPM star preserves tempo');
         ensure(document.querySelector('input[aria-label="Transpose in semitones"]').value===transpose,'disabled transpose star preserves transpose');
@@ -100,7 +100,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(name.rows===2 && getComputedStyle(name).textAlign==='center','centered two-line project name');
         const summary = document.querySelector('.transport-project span');
         const generatedProject = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        ensure(summary.textContent.trim()==='USED SEED '+generatedProject.seed,'used-seed hint shows actual generation seed');
+        ensure(summary.textContent.trim()==='ID '+generatedProject.seed,'ID hint shows actual generation seed');
         ensure(summary.title.endsWith(generatedProject.tempoBpm+' BPM | SEED '+generatedProject.seed),'seed hint retains full song tooltip');
         const box = label => button(label).getBoundingClientRect();
         const midi = document.querySelector('.midi-port-button').getBoundingClientRect();

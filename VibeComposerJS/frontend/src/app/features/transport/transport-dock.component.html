@@ -57,12 +57,14 @@
       }
     </select></label>
     <label class="seed-control"><span>SEED</span><input aria-label="Generation seed" inputmode="numeric" [value]="seedInput()"
-      title="Generation seed (0 chooses a random seed on Compose)" (change)="updateSeed($event)" (keydown.enter)="$any($event.target).blur()" /></label>
+      title="Generation seed (0 chooses a random seed on Compose). Right-click: reset to 0. Middle-click: randomize."
+      (contextmenu)="resetSeed($event)" (mousedown)="seedMouseDown($event)" (auxclick)="randomizeSeed($event)"
+      (change)="updateSeed($event)" (keydown.enter)="$any($event.target).blur()" /></label>
     </div>
     <div class="transport-project">
       <textarea class="project-name" rows="2" [value]="project().name" maxlength="80" aria-label="Project name"
         [title]="project().name" (change)="updateProjectName($event)" (keydown.enter)="$event.preventDefault(); $any($event.target).blur()"></textarea>
-      <span [title]="key() + ' ' + scaleDefinitions[project().scale].label.toUpperCase() + ' | ' + project().tempoBpm + ' BPM | SEED ' + project().seed">USED SEED {{ project().seed }}</span>
+      <span [title]="key() + ' ' + scaleDefinitions[project().scale].label.toUpperCase() + ' | ' + project().tempoBpm + ' BPM | SEED ' + project().seed">ID {{ project().seed }}</span>
     </div>
     <ng-content select="[transportHistory]" />
     <ng-content select="[transportDevices]" />

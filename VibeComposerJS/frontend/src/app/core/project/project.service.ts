@@ -701,6 +701,10 @@ export class ProjectService {
     }
   }
 
+  randomizeSeed(): void {
+    this.updateSettings({ seed: this.randomCompositionSeed() });
+  }
+
   private randomCompositionSeed(): string {
     const values = new Int32Array(1);
     globalThis.crypto.getRandomValues(values);

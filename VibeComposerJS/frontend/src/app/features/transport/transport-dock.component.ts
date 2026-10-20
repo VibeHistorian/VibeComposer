@@ -132,6 +132,25 @@ export class TransportDockComponent {
   updateTranspose(transpose: number): void {
     if (Number.isInteger(transpose) && transpose >= -24 && transpose <= 24) this.projects.updateSettings({ transposeSemitones: transpose });
   }
+  resetSeed(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.projects.updateSettings({ seed: '0' });
+    (event.target as HTMLInputElement).value = this.seedInput();
+  }
+
+  seedMouseDown(event: MouseEvent): void {
+    if (event.button === 1) event.preventDefault();
+  }
+
+  randomizeSeed(event: MouseEvent): void {
+    if (event.button !== 1) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.projects.randomizeSeed();
+    (event.target as HTMLInputElement).value = this.seedInput();
+  }
+
   updateSeed(event: Event): void {
     const input = event.target as HTMLInputElement, seed = input.value.trim();
     if (/^-?\d+$/.test(seed)) {
