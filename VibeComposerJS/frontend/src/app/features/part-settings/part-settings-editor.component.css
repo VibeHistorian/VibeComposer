@@ -57,7 +57,7 @@
 /* Flowing quick settings */
 :host(.quick-layout) .part-controls { align-items: stretch; gap: 6px; }
 :host(.quick-layout) .part-control-area, :host(.quick-layout) .part-area-controls { display: contents; }
-:host(.quick-layout) .part-control { padding: 7px; border: 1px solid var(--border-default); border-top: 2px solid var(--control-role-color); border-radius: var(--radius-control); background: var(--parameter-surface); }
+:host(.quick-layout) .part-control { padding: 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--parameter-surface); }
 :host(.quick-layout) .part-control.compact-control { min-width: 74px; width: 74px; }
 :host(.quick-layout) .part-control.knob-control { min-width: 0; width: auto; padding-inline: 2px; }
 :host(.quick-layout) .part-control.pattern-control { width: 112px; }
