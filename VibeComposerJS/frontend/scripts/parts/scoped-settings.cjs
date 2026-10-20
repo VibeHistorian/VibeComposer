@@ -757,7 +757,7 @@ test('copy to globals preserves mixed cell members, track exceptions and local o
       for (const key of ['mix', 'editedPhrase', 'rerollLocked', 'midiChannel']) assert.deepEqual(result[key], track[key]);
     }
   }
-  assert.equal(next.bass.transpose, -12);
+  assert.equal(next.tracks.find(track => track.role === 'bass').generatorSettings.transpose, -12);
   assert.equal(next.tracks.find(track => track.id === 'track-bass-2').generatorSettings.transpose, 12);
   assert.equal(service.partSettingsGlobalsWouldChange(cell), false);
   assert.equal(service.copyPartSettingsToGlobals(cell), 'unchanged');
@@ -796,7 +796,7 @@ test('global copy ignores inherited defaults and a single-track copy leaves othe
   const before = service.project();
   assert.equal(service.copyPartSettingsToGlobals(scope), 'changed');
   assert.strictEqual(service.project().tracks.find(track => track.id === 'track-bass-1'), before.tracks.find(track => track.id === 'track-bass-1'));
-  assert.strictEqual(service.project().bass, before.bass);
+  assert.strictEqual(service.project().tracks.find(track => track.role === 'bass').generatorSettings, before.tracks.find(track => track.role === 'bass').generatorSettings);
   assert.equal(service.project().tracks.find(track => track.id === scope.trackId).generatorSettings.noteVariation, 45);
 });
 
@@ -1034,7 +1034,6 @@ test('P5e pattern effects and arpy surprises update section dependencies and MID
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/melody-effects.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   const sample = cases[1], project = JSON.parse(service.exportProjectJson());
   project.seed = sample.seed; project.progression = [1, 1, 1]; delete project.progressionChords;
-  project.melody = sample.settings;
   project.tracks.find(track => track.role === 'melody').generatorSettings = sample.settings;
   project.arrangement = [{ ...project.arrangement[0], measures: 3, trackPresence: {
     'track-melody-1': true, 'track-drums-1': true, 'track-arpeggio-1': true,
@@ -2033,7 +2032,7 @@ test('quick access and inspector partition musical controls across roles and rhy
   inspector.inspectorOnly.set(true);
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     for (const rhythm of ['full', 'euclid', 'custom', 'melody', 'bass1']) {
-      const values = { ...settings.settingsValues(service.project()[role], role), rhythm,
+      const values = { ...settings.settingsValues(service.project().tracks.find(track => track.role === role).generatorSettings, role), rhythm,
         useCustomVelocities: true };
       const complete = new PartSettingsEditorComponent();
       for (const editor of [quick, inspector, complete]) {
@@ -2070,9 +2069,9 @@ test('the chord rhythm preview shares generation masks and shows mixed values on
   const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
   const editor = new PartSettingsEditorComponent();
   editor.role.set('chords');
-  const values = settings.settingsValues(service.project().chords, 'chords');
+  const values = settings.settingsValues(service.project().tracks.find(track => track.role === 'chords').generatorSettings, 'chords');
   editor.values.set(values);
-  assert.deepEqual(editor.rhythmPreview(), chordRhythmMask(service.project().chords));
+  assert.deepEqual(editor.rhythmPreview(), chordRhythmMask(service.project().tracks.find(track => track.role === 'chords').generatorSettings));
   assert.equal(editor.controls().some((control) => control.key === 'euclideanPulses'), false);
   editor.values.set({ ...values, rhythm: 'euclid', hitsPerPattern: 5, euclideanPulses: 2, patternShift: 1, patternFlip: true });
   assert.equal(editor.controls().some((control) => control.key === 'euclideanPulses'), true);
@@ -2146,7 +2145,7 @@ test('velocity enable and arrays preserve mixed scopes, inherited resets, snapsh
   const grid = Array.from({ length: 32 }, (_, index) => 30 + index);
   service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { useCustomVelocities: true, customVelocities: grid });
   grid[0] = 0;
-  assert.equal(service.project().chords.customVelocities[0], 30);
+  assert.equal(service.project().tracks.find(track => track.role === 'chords').generatorSettings.customVelocities[0], 30);
   const override = Array(32).fill(120);
   service.updatePartSettings(part, { customVelocities: override, useCustomVelocities: false });
   ui.selectCell(sectionId, 'chords');
@@ -2220,8 +2219,8 @@ test('custom grid arrays resolve by content, replace whole values, and restore i
   const base = Array.from({ length: 32 }, (_, index) => +(index % 3 === 0));
   service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { rhythm: 'custom', customPattern: base });
   base[0] = 0;
-  assert.equal(service.project().chords.customPattern[0], 1, 'caller array is copied');
-  service.updatePartSettings({ kind: 'global-track', trackId: second }, { customPattern: [...service.project().chords.customPattern] });
+  assert.equal(service.project().tracks.find(track => track.role === 'chords').generatorSettings.customPattern[0], 1, 'caller array is copied');
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { customPattern: [...service.project().tracks.find(track => track.role === 'chords').generatorSettings.customPattern] });
   ui.selectCell(sectionId, 'chords');
   assert.ok(Array.isArray(workspace.partValues().customPattern), 'separate equal arrays are not Mixed');
   const exception = Array(32).fill(0); exception[31] = 1;
@@ -2234,7 +2233,7 @@ test('custom grid arrays resolve by content, replace whole values, and restore i
   service.updatePartSettings(part, { customPattern: [...common] });
   assert.equal(service.project().arrangement[1].trackPartOverrides[second], undefined);
   assert.deepEqual(effective().customPattern, common);
-  service.updatePartSettings(cell, { customPattern: [...service.project().chords.customPattern] });
+  service.updatePartSettings(cell, { customPattern: [...service.project().tracks.find(track => track.role === 'chords').generatorSettings.customPattern] });
   assert.equal(service.project().arrangement[1].rolePartOverrides.chords, undefined);
   assert.equal(service.freezePartSettings(part), 'changed');
   assert.equal(service.freezePartSettings(part), 'unchanged');

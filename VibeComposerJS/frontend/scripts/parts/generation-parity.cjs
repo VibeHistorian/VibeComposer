@@ -728,7 +728,7 @@ test('every applicable shared control has a role consumer and genuine Java excep
   }
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent(); editor.role.set('bass');
-  editor.values.set({ ...settings.settingsValues(service.project().bass, 'bass'), useCustomVelocities: true });
+  editor.values.set({ ...settings.settingsValues(service.project().tracks.find(track => track.role === 'bass').generatorSettings, 'bass'), useCustomVelocities: true });
   assert.equal(editor.controls().some(control => control.key === 'hitsPerPattern'), false);
   assert.equal(editor.controls().some(control => control.key === 'velocityMin'), true);
 });
@@ -856,7 +856,7 @@ test('fill produces rests in every supported generator and preserves role-specif
     drums: (settings) => generateDrumPart(seed, progression.length, settings),
   };
   for (const [role, generate] of Object.entries(calls)) {
-    const settings = service.project()[role];
+    const settings = service.project().tracks.find(track => track.role === role).generatorSettings;
     const baseline = generate(settings);
     assert.deepEqual(generate({ ...settings, chordSpanFill: 'ALL', fillFlip: false }), baseline, role + ' defaults');
     assert.deepEqual(generate({ ...settings, chordSpanFill: 'ALL', fillFlip: true }), [], role + ' silence');
@@ -895,7 +895,7 @@ test('chord rhythm hits, shift and flip affect note onsets/durations while retai
   const { generateChordPart } = load('core/music/chord-generator.ts');
   const { JavaRandom } = load('core/music/java-random.ts');
   const seed = 9223372036854775807n;
-  const settings = service.project().chords;
+  const settings = service.project().tracks.find(track => track.role === 'chords').generatorSettings;
   const generate = (patch) => generateChordPart(seed, 'C', 'major', [1, 5], { ...settings, ...patch });
   const baseline = generate({});
   assert.deepEqual(generate({ hitsPerPattern: 8, patternShift: 0, patternFlip: false }), baseline);
@@ -945,7 +945,7 @@ test('Euclidean chord generation uses shifted/flipped subdivisions and preserves
   const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
   const { JavaRandom } = load('core/music/java-random.ts');
   const seed = 9223372036854775807n;
-  const base = service.project().chords;
+  const base = service.project().tracks.find(track => track.role === 'chords').generatorSettings;
   const settings = { ...base, rhythm: 'euclid', hitsPerPattern: 8, euclideanPulses: 3, patternShift: 1, noteLengthPercent: 75 };
   const mask = chordRhythmMask(settings);
   const notes = generateChordPart(seed, 'C', 'major', [1, 5], settings);
@@ -1022,7 +1022,7 @@ test('custom velocities replace dynamics without changing rhythm timing and zero
   const { service, load } = fixture();
   const { generateChordPart } = load('core/music/chord-generator.ts');
   const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
-  const base = service.project().chords;
+  const base = service.project().tracks.find(track => track.role === 'chords').generatorSettings;
   const generate = (patch = {}) => generateChordPart(42n, 'C', 'major', [1, 4, 5], { ...base, ...patch });
   const original = generate();
   assert.deepEqual(generate({ useCustomVelocities: false, customVelocities: Array(32).fill(0) }), original);

@@ -299,7 +299,7 @@ test('P6 drum rule-only edits, rerolls, Compose and additions preserve ownership
 
 test('P6 Arpeggio later weighting handles 64 tracks, retains shared counts and produces baked grids and melody rhythms', () => {
   const {service,load}=fixture(), core=load('core/music/track-generation.ts');
-  const source=service.project().arpeggio; let custom=0,melody=0;
+  const source=service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings; let custom=0,melody=0;
   for(let seed=0n;seed<64n;seed++) {
     const settings=core.rerollArpeggioSettings(seed,core.DEFAULT_ARPEGGIO_POLICY,Array(64).fill(source));
     assert.equal(new Set(settings.map(next=>next.hitsPerPattern)).size,1);
@@ -735,13 +735,13 @@ test('Arp direction covers every selection and Bass randomized variance stays wi
   assert.deepEqual([...directions].sort(), ['down', 'down-up', 'frog-down', 'frog-up', 'random', 'up', 'up-down']);
   assert.ok(variances.has(0) && variances.has(50));
   service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { noteVariation: 100 });
-  assert.equal(service.project().bass.noteVariation, 100);
+  assert.equal(service.project().tracks.find(track => track.role === 'bass').generatorSettings.noteVariation, 100);
   const second = service.addTrack('bass'), sectionId = service.project().arrangement[0].id;
   service.updatePartSettings({ kind: 'section-track', sectionId, trackId: second }, { noteVariation: 90 });
   service.setTrackRerollLock(second, true);
   const previous = service.exportProjectJson();
   service.rerollRoleTracks('bass');
-  assert.ok(service.project().bass.noteVariation <= 50);
+  assert.ok(service.project().tracks.find(track => track.role === 'bass').generatorSettings.noteVariation <= 50);
   assert.equal(service.project().tracks.find(track => track.id === second).generatorSettings.noteVariation, 100);
   assert.equal(service.project().arrangement[0].trackPartOverrides[second].noteVariation, 90);
   const after = service.exportProjectJson(); service.undo(); assert.equal(service.exportProjectJson(), previous);
@@ -831,7 +831,7 @@ test('role rerolls match production melody patterns, drum blueprint data and aud
   const expected = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/role-policy.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   for (const sample of expected.melodyPatterns) assert.deepEqual(core.chooseMelodyPattern(sample.seed), sample.pattern);
   for (const sample of expected.bass) {
-    const source = { ...service.project().tracks.find(track => track.role === 'bass'), generatorSettings: { ...service.project().bass, chordSpan: sample.span } };
+    const source = { ...service.project().tracks.find(track => track.role === 'bass'), generatorSettings: { ...service.project().tracks.find(track => track.role === 'bass').generatorSettings, chordSpan: sample.span } };
     const [actual] = core.rerollRoleSettings(BigInt(sample.seed), 'bass', {}, [source], [sample.order]);
     for (const [key, value] of Object.entries(sample.values)) {
       if (key === 'javaRhythm') assert.equal(actual.rhythm, names[value]);
@@ -841,7 +841,7 @@ test('role rerolls match production melody patterns, drum blueprint data and aud
   [36,38,42,53,60].forEach((pitch, family) => {
     const seen = new Set();
     for (let seed = 0; seed < 100; seed++) {
-      const source = { ...service.project().tracks.find(track => track.role === 'drums'), generatorSettings: { ...service.project().drums, pitch } };
+      const source = { ...service.project().tracks.find(track => track.role === 'drums'), generatorSettings: { ...service.project().tracks.find(track => track.role === 'drums').generatorSettings, pitch } };
       const [actual] = core.rerollRoleSettings(BigInt(seed), 'drums', { ...core.DEFAULT_TRACK_POLICIES.drums, shiftChance: 0, melodyChance: 0 }, [source], [1]);
       const tuple = [actual.rhythm, actual.hitsPerPattern, actual.chordSpan, actual.patternShift];
       const blueprints = expected.drums[family].map(([rhythm, ...values]) => [names[rhythm], ...values]);
@@ -859,7 +859,7 @@ test('role-specific policies preserve opt-outs and share only eligible seeds and
   const { service, load } = fixture();
   const core = load('core/music/track-generation.ts');
   const tracks = role => service.project().tracks.filter(track => track.role === role);
-  const source = { ...tracks('chords')[0], generatorSettings: { ...service.project().chords,
+  const source = { ...tracks('chords')[0], generatorSettings: { ...service.project().tracks.find(track => track.role === 'chords').generatorSettings,
     rhythm: 'custom', patternFlip: true, patternShift: 4, customPattern: Array(32).fill(1),
     useCustomVelocities: true, chordSpanFill: 'HALF1', fillFlip: true, transpose: 24, offset: 125, noteLengthPercent: 150 } };
   const policy = { ...core.DEFAULT_TRACK_POLICIES.chords, fills: false, patterns: false, varyLength: false, transpose: false, delay: false };
@@ -873,8 +873,8 @@ test('role-specific policies preserve opt-outs and share only eligible seeds and
   service.rerollRoleTracks('melody');
   assert.equal(tracks('melody')[0].generatorSettings.patternSeed, lockedSeed);
   assert.equal(tracks('melody')[1].generatorSettings.patternSeed, tracks('melody')[2].generatorSettings.patternSeed);
-  for (const track of tracks('melody')) assert.deepEqual(track.generatorSettings.melodyPatternOffsets, service.project().melody.melodyPatternOffsets);
-  const drums = [42, 60, 38].map(pitch => ({ ...tracks('drums')[0], generatorSettings: { ...service.project().drums, pitch } }));
+  for (const track of tracks('melody')) assert.deepEqual(track.generatorSettings.melodyPatternOffsets, service.project().tracks.find(track => track.role === 'melody').generatorSettings.melodyPatternOffsets);
+  const drums = [42, 60, 38].map(pitch => ({ ...tracks('drums')[0], generatorSettings: { ...service.project().tracks.find(track => track.role === 'drums').generatorSettings, pitch } }));
   const generated = core.rerollRoleSettings(42n, 'drums', { ...core.DEFAULT_TRACK_POLICIES.drums, maxSwing: 50, randomOffset: true, hitsMultiplier: '2' }, drums, [1,2,3]);
   assert.equal(generated[0].swingPercent, generated[1].swingPercent); assert.equal(generated[0].offset, generated[1].offset);
   assert.equal(generated[2].swingPercent, 50);
@@ -957,27 +957,27 @@ test('Arpeggio group rerolls preserve ownership, locks, local overrides and manu
 test('Arpeggio rerolls are deterministic across undo, exact long seeds and restored roll counts', () => {
   const { service, load } = fixture();
   const core = load('core/music/track-generation.ts');
-  const source = service.project().arpeggio;
+  const source = service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings;
   for (const seed of [42n, -2147483648n, 9007199254740993n, 9223372036854775807n]) {
     assert.deepEqual(core.rerollArpeggioSettings(seed, core.DEFAULT_ARPEGGIO_POLICY, [source, source]),
       core.rerollArpeggioSettings(seed, core.DEFAULT_ARPEGGIO_POLICY, [source, source]));
   }
   service.updateSettings({ seed: '9007199254740993' });
-  const before = service.exportProjectJson(); service.rerollArpeggioTracks(); const first = service.project().arpeggio;
+  const before = service.exportProjectJson(); service.rerollArpeggioTracks(); const first = service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings;
   service.undo(); assert.equal(service.exportProjectJson(), before);
-  service.rerollArpeggioTracks(); assert.deepEqual(service.project().arpeggio, first);
+  service.rerollArpeggioTracks(); assert.deepEqual(service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings, first);
   service.rerollArpeggioTracks(); assert.equal(service.project().trackRerollCounts.arpeggio, 2);
-  assert.notDeepEqual(service.project().arpeggio, first);
+  assert.notDeepEqual(service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings, first);
   const saved = service.exportProjectJson();
-  service.rerollArpeggioTracks(); const third = service.project().arpeggio;
+  service.rerollArpeggioTracks(); const third = service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings;
   assert.equal(service.importProjectJson(saved), true); service.rerollArpeggioTracks();
-  assert.deepEqual(service.project().arpeggio, third);
+  assert.deepEqual(service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings, third);
 });
 
 test('Arpeggio policy preserves opted-out fields, shared counts and no-op history', () => {
   const { service, load } = fixture();
   const core = load('core/music/track-generation.ts');
-  const source = { ...service.project().arpeggio, rhythm: 'custom', customPattern: Array(32).fill(1),
+  const source = { ...service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings, rhythm: 'custom', customPattern: Array(32).fill(1),
     useCustomVelocities: true, customVelocities: Array(32).fill(77), patternFlip: true, patternShift: 3,
     chordSpanFill: 'HALF1', fillFlip: true, transpose: 24, chordSpan: 4 };
   const policy = { ...core.DEFAULT_ARPEGGIO_POLICY, randomHits: false, fixedHits: 32, randomSpan: false,
@@ -998,9 +998,9 @@ test('Arpeggio policy preserves opted-out fields, shared counts and no-op histor
   service.updateInstrumentPolicy('arpeggio', { randomize: false });
   service.rerollArpeggioTracks();
   const nextSeed = service.trackRerollSeed(service.project(), 'arpeggio', service.project().trackRerollCounts.arpeggio);
-  const nextPattern = core.rerollArpeggioSettings(nextSeed, service.project().trackGenerationPolicies.arpeggio, [service.project().arpeggio])[0].pattern;
+  const nextPattern = core.rerollArpeggioSettings(nextSeed, service.project().trackGenerationPolicies.arpeggio, [service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings])[0].pattern;
   service.updatePartSettings({ kind: 'global-role', role: 'arpeggio' }, { pattern: nextPattern });
-  const nextRotation = core.rerollArpeggioSettings(nextSeed, service.project().trackGenerationPolicies.arpeggio, [service.project().arpeggio])[0].arpPatternRotate;
+  const nextRotation = core.rerollArpeggioSettings(nextSeed, service.project().trackGenerationPolicies.arpeggio, [service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings])[0].arpPatternRotate;
   service.updatePartSettings({ kind: 'global-role', role: 'arpeggio' }, { arpPatternRotate: nextRotation });
   service.updateSettings({ name: 'redo' }); service.undo();
   const before = service.exportProjectJson();
@@ -1022,7 +1022,6 @@ test('melody has explicit type zero and generated tracks, with stable existing r
   const existing = service.project().tracks.filter((track) => track.role !== 'melody');
   const notes = existing.map((track) => phrase.generateTrackPhrase(service.project(), track));
   const saved = JSON.parse(service.exportProjectJson());
-  delete saved.melody; delete saved.mix.melody;
   saved.tracks = saved.tracks.filter((track) => track.role !== 'melody');
   for (const section of saved.arrangement) delete section.trackPresence[melody.id];
   assert.equal(service.importProjectJson(JSON.stringify(saved)), true);
@@ -1042,13 +1041,16 @@ test('empty roles can be recreated from their defaults, while the final project 
   const model = load('core/project/project.model.ts');
   for (const role of model.ARRANGED_PARTS) {
     const track = service.project().tracks.find((candidate) => candidate.role === role);
-    const defaults = service.project()[role];
+    const defaults = model.DEFAULT_TRACKS.find(track => track.role === role).generatorSettings;
+    service.updateTrackGeneratorSettings(track.id, { velocityMin: 1 });
+    service.updateTrack(track.id, { mix: { volumePercent: 23, panPercent: 45 } });
     service.removeTrack(track.id);
     assert.equal(service.project().tracks.some((candidate) => candidate.role === role), false);
     const id = service.addTrack(role);
     const added = service.project().tracks.find((candidate) => candidate.id === id);
     assert.equal(added.role, role);
     assert.deepEqual(added.generatorSettings, defaults);
+    assert.deepEqual(added.mix, model.DEFAULT_TRACKS.find(track => track.role === role).mix);
     assert.equal(added.editedPhrase, undefined);
     assert.equal(added.midiChannel === 10, role === 'drums');
     for (const section of service.project().arrangement) assert.equal(typeof section.trackPresence[id], 'boolean');

@@ -1,13 +1,11 @@
 import type { ArrangedPart, CompositionProject, TrackGenerationPolicies } from './project.model';
-import { DEFAULT_MELODY_SETTINGS } from './project.model';
 import { KEYS, validProgressionChords } from '../music/harmony';
 import { isScaleMode } from '../music/scales';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
 import { decodeHarmonySettings } from '../music/harmony-voicing';
 import { decodeTrackGenerationPolicy, validTrackGenerationMetadata } from '../music/track-generation';
 import { decodeInstrumentPolicy, validInstrumentPolicies } from '../music/instrument-generation';
-import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
-import { decodeTracks, decodeEditedPhrases, decodeMix } from './project-track-decoder';
+import { decodeTracks, decodeEditedPhrases } from './project-track-decoder';
 import { decodeArrangement } from './project-arrangement-decoder';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 
@@ -17,7 +15,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     return undefined;
   }
 
-  const project = value as Partial<CompositionProject> & { bass?: unknown; chords?: unknown; arpeggio?: unknown; drums?: unknown; tracks?: unknown };
+  const project = value as Partial<CompositionProject>;
   const validBase = typeof project.name === 'string'
     && typeof project.key === 'string' && KEYS.includes(project.key)
     && (isScaleMode(project.scale))
@@ -38,16 +36,10 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     return undefined;
   }
 
-  const melody = decodeMelody(project.melody === undefined ? DEFAULT_MELODY_SETTINGS : project.melody);
-  const bass = decodeBass(project.bass);
-  const chords = decodeChords(project.chords);
-  const arpeggio = decodeArpeggio(project.arpeggio);
-  const drums = decodeDrums(project.drums);
   const editedPhrases = decodeEditedPhrases(project.editedPhrases);
-  const mix = decodeMix(project.mix);
   const tracks = decodeTracks(project.tracks);
   const arrangement = tracks ? decodeArrangement(project.arrangement, tracks, BigInt(project.seed!), chances, random) : undefined;
-  if (!melody || !bass || !chords || !arpeggio || !drums || !arrangement || !editedPhrases || !mix || !tracks) {
+  if (!arrangement || !editedPhrases || !tracks) {
     return undefined;
   }
   const trackIds = new Set(tracks.map((track) => track.id));
@@ -64,15 +56,9 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     seed: project.seed!,
     progression: [...project.progression!],
     ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
-    melody,
     ...(project.harmonySettings !== undefined ? { harmonySettings: decodeHarmonySettings(project.harmonySettings)! } : {}),
     ...(project.melodyGlobal !== undefined ? { melodyGlobal: decodeMelodyGlobal(project.melodyGlobal)! } : {}),
-    bass,
-    chords,
-    arpeggio,
-    drums,
     editedPhrases,
-    mix,
     tracks,
     arrangement,
     ...(project.trackGenerationPolicies !== undefined ? { trackGenerationPolicies: Object.fromEntries(
@@ -106,15 +92,9 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && project.progression.length <= 32
     && project.progression.every((degree) => Number.isInteger(degree) && degree >= 1 && degree <= 7)
     && validProgressionChords(project.progressionChords, project.progression.length)
-    && decodeMelody(project.melody) !== undefined
-    && decodeBass(project.bass) !== undefined
-    && decodeChords(project.chords) !== undefined
-    && decodeArpeggio(project.arpeggio) !== undefined
-    && decodeDrums(project.drums) !== undefined
     && tracks !== undefined
     && decodeArrangement(project.arrangement, tracks, BigInt(project.seed!), chances, random) !== undefined
     && decodeEditedPhrases(project.editedPhrases) !== undefined
-    && decodeMix(project.mix) !== undefined
     && validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
     && validInstrumentPolicies(project.instrumentGenerationPolicies)
     && (project.harmonySettings === undefined || decodeHarmonySettings(project.harmonySettings) !== undefined)

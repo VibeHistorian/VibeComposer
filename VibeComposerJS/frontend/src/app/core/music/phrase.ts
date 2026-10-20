@@ -1,4 +1,4 @@
-import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
+import type { ArrangementSection, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
 import { shouldGenerateTrackInSection } from './arrangement-generator';
 import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';
@@ -13,62 +13,42 @@ import type { GenerationHarmony } from './harmony-voicing';
 import { mapChordNotes, sectionProject } from './section-context';
 import { trackHasSectionHarmony } from './harmony-display';
 
-/** Convert the seeded generators to note-level events shared by the editor and MIDI exporter. */
-export function generatePhrase(project: CompositionProject, part: ArrangedPart, context?: MelodyContext,
-  harmony: GenerationHarmony = baseGenerationHarmony(project), orderOffset = 1): PhraseNote[] {
-  const seed = BigInt(project.seed);
-  switch (part) {
-    case 'melody': return generateMelody(seed, project.key, project.scale, project.progression, project.melody,
-      harmony.melodySeedOffset ?? 0, undefined, project.melodyGlobal, project.progressionChords, harmony);
+/** Generate a phrase using the independent track's settings. */
+export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack, includeTiming = true, context?: MelodyContext,
+  harmony: GenerationHarmony = baseGenerationHarmony(project)): PhraseNote[] {
+  const seed = BigInt(withTrackSeed(project, track).seed);
+  let notes: PhraseNote[];
+  switch (track.role) {
+    case 'melody':
+      notes = generateMelody(seed, project.key, project.scale, project.progression, track.generatorSettings,
+        harmony.melodySeedOffset ?? 0, undefined, project.melodyGlobal, project.progressionChords, harmony);
+      break;
     case 'bass':
-      return generateBassline(seed, project.key, project.scale, project.progression,
-        project.bass.rhythm, project.bass.noteVariation, project.bass, project.progressionChords, harmony)
+      notes = generateBassline(seed, project.key, project.scale, project.progression,
+        track.generatorSettings.rhythm, track.generatorSettings.noteVariation, track.generatorSettings, project.progressionChords, harmony)
         .map((note, index) => ({ id: `bass-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
+      break;
     case 'chords':
-      return generateChordPart(seed, project.key, project.scale, project.progression, project.chords, project.progressionChords, harmony)
+      notes = generateChordPart(seed, project.key, project.scale, project.progression, track.generatorSettings, project.progressionChords, harmony)
         .flatMap((hit, hitIndex) => hit.pitches.map((midi, pitchIndex) => ({
           id: `chords-${hitIndex}-${pitchIndex}`, midi, startBeat: hit.startBeat + (hit.pitchOffsets?.[pitchIndex] ?? 0),
           durationBeats: hit.pitchDurations?.[pitchIndex] ?? hit.durationBeats, velocity: hit.velocity,
         })));
+      break;
     case 'arpeggio':
-      return generateArpeggio(seed, project.key, project.scale, project.progression, project.arpeggio, project.progressionChords,
-        context ?? (project.arpeggio.rhythm === 'melody' || project.arpeggio.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony, orderOffset)
+      notes = generateArpeggio(seed, project.key, project.scale, project.progression, track.generatorSettings, project.progressionChords,
+        context ?? (track.generatorSettings.rhythm === 'melody' || track.generatorSettings.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony,
+        track.orderOffset ?? Math.max(1, project.tracks.filter(candidate => candidate.role === track.role).findIndex(candidate => candidate.id === track.id) + 1))
         .map((note, index) => ({ id: `arpeggio-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
+      break;
     case 'drums':
-      return generateDrumPart(seed, project.progression.length, project.drums,
-        context ?? (project.drums.rhythm === 'melody' ? sectionMelodyContext(project) : undefined))
+      notes = generateDrumPart(seed, project.progression.length, track.generatorSettings,
+        context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined))
         .map((hit, index) => ({ id: `drums-${index}`, midi: hit.midi, startBeat: hit.startBeat,
           durationBeats: hit.durationBeats, velocity: hit.velocity }));
-  }
-}
-
-/** Return saved note edits when present, otherwise build the phrase from project settings. */
-export function phraseForProject(project: CompositionProject, part: ArrangedPart): readonly PhraseNote[] {
-  return project.editedPhrases[part] ?? generatePhrase(project, part);
-}
-
-/** Generate a phrase from one independent track while keeping the generator library role-based. */
-export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack, includeTiming = true, context?: MelodyContext,
-  harmony: GenerationHarmony = baseGenerationHarmony(project)): PhraseNote[] {
-  const trackProject = withTrackSeed(project, track);
-  const editedPhrases = { ...trackProject.editedPhrases, [track.role]: undefined };
-  let notes: PhraseNote[];
-  switch (track.role) {
-    case 'melody':
-      notes = generatePhrase({ ...trackProject, melody: track.generatorSettings, editedPhrases }, 'melody', undefined, harmony); break;
-    case 'bass':
-      notes = generatePhrase({ ...trackProject, bass: track.generatorSettings, editedPhrases }, 'bass', undefined, harmony); break;
-    case 'chords':
-      notes = generatePhrase({ ...trackProject, chords: track.generatorSettings, editedPhrases }, 'chords', undefined, harmony); break;
-    case 'arpeggio':
-      notes = generatePhrase({ ...trackProject, arpeggio: track.generatorSettings, editedPhrases }, 'arpeggio',
-        context ?? (track.generatorSettings.rhythm === 'melody' || track.generatorSettings.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony,
-        track.orderOffset ?? Math.max(1, project.tracks.filter(candidate => candidate.role === track.role).findIndex(candidate => candidate.id === track.id) + 1)); break;
-    case 'drums':
-      notes = generatePhrase({ ...trackProject, drums: track.generatorSettings, editedPhrases }, 'drums',
-        context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined)); break;
+      break;
   }
   // Melody applies transpose before interval repair and length before mode conversion, as Java does.
   if (track.role === 'melody') return includeTiming ? applyPartTiming(notes, track.generatorSettings) : notes;
@@ -95,40 +75,6 @@ export function withBassOctaveInterval(notes: readonly PhraseNote[], enabled: bo
       velocity: Math.max(1, note.velocity - 15),
     })),
   ];
-}
-
-/** Repeat a phrase through arrangement sections where its part enters. */
-export function layOutPhrase(
-  project: CompositionProject,
-  part: ArrangedPart,
-  phrase: readonly PhraseNote[],
-): PhraseNote[] {
-  const result: PhraseNote[] = [];
-  let arrangementBeat = 0;
-  for (const section of project.arrangement) {
-    const partEnters = project.tracks.some((track) => track.role === part && shouldGenerateTrackInSection(section, track));
-    const hasEditedPhrase = project.editedPhrases[part] !== undefined;
-    const harmony = sectionGenerationHarmony(project, section, part);
-    const progression = hasEditedPhrase ? project.progression : harmony.degrees;
-    const sectionPhrase = !hasEditedPhrase && (section.chordDegrees || harmony.inferred)
-      ? generatePhrase({ ...project, progression, progressionChords: harmony.customChords }, part,
-        part === 'arpeggio' || part === 'drums' ? sectionMelodyContext(project, section) : undefined, harmony)
-      : phrase;
-    for (let measure = 0; measure < section.measures; measure++) {
-      if (partEnters) {
-        const sourceMeasure = measure % progression.length;
-        const sourceStartBeat = sourceMeasure * 4;
-        const sourceEndBeat = sourceStartBeat + 4;
-        for (const event of sectionPhrase) {
-          if (event.startBeat >= sourceStartBeat && event.startBeat < sourceEndBeat) {
-            result.push({ ...event, startBeat: arrangementBeat + event.startBeat - sourceStartBeat });
-          }
-        }
-      }
-      arrangementBeat += 4;
-    }
-  }
-  return part === 'bass' ? withBassOctaveInterval(result, project.bass.octaveInterval) : result;
 }
 
 export type PhraseSource = 'global-generated' | 'global-edited' | 'section-generated' | 'section-edited' | 'global-section-harmony';

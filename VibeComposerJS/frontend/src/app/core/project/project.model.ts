@@ -369,16 +369,10 @@ export interface CompositionProject {
   readonly progression: readonly number[];
   /** Explicit Chordlet edits; null entries continue to follow the diatonic mode. */
   readonly progressionChords?: readonly (import('../music/harmony').ProgressionChord | null)[];
-  readonly melody: MelodySettings;
-  readonly bass: BassSettings;
-  readonly chords: ChordSettings;
-  readonly arpeggio: ArpeggioSettings;
-  readonly drums: DrumSettings;
   readonly arrangement: readonly ArrangementSection[];
-  /** Phrase-level note edits. Missing parts continue to use their seeded generator output. */
+  /** Role-level phrase edits retained by the phrase editing API. */
   readonly editedPhrases: Readonly<Partial<Record<ArrangedPart, readonly PhraseNote[]>>>;
-  readonly mix: Readonly<Record<ArrangedPart, MixChannelSettings>>;
-  /** Independent instrument tracks. Legacy role fields above remain for the existing workspace tools. */
+  /** Independent tracks own their generator settings and mix. */
   readonly tracks: readonly CompositionTrack[];
   readonly trackGenerationPolicies?: Readonly<Partial<TrackGenerationPolicies>>;
   readonly instrumentGenerationPolicies?: Readonly<Partial<Record<ArrangedPart, InstrumentGenerationPolicy>>>;
@@ -472,13 +466,7 @@ export const DEFAULT_PROJECT: CompositionProject = {
   tempoBpm: 120,
   seed: '42',
   progression: [1, 5, 6, 4],
-  melody: DEFAULT_MELODY_SETTINGS,
-  bass: DEFAULT_BASS_SETTINGS,
-  chords: DEFAULT_CHORD_SETTINGS,
-  arpeggio: DEFAULT_ARPEGGIO_SETTINGS,
-  drums: DEFAULT_DRUM_SETTINGS,
   arrangement: DEFAULT_ARRANGEMENT,
   editedPhrases: {},
-  mix: DEFAULT_MIX,
   tracks: DEFAULT_TRACKS,
 };

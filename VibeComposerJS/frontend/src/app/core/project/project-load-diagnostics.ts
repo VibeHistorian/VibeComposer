@@ -56,8 +56,8 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     check(`${path}.panPercent`, Number.isInteger(fields['panPercent']) && Math.abs(fields['panPercent'] as number) <= 100, 'expected an integer from -100 to 100');
     for (const key of ['muted', 'solo']) check(`${path}.${key}`, typeof fields[key] === 'boolean', 'expected a boolean');
   };
-  const required = ['name', 'key', 'scale', 'tempoBpm', 'seed', 'progression', 'bass', 'chords', 'arpeggio', 'drums', 'editedPhrases', 'mix', 'tracks', 'arrangement'];
-  const project = object(value, 'project', required, [...required, 'schemaVersion', 'transposeSemitones', 'progressionChords', 'melody',
+  const required = ['name', 'key', 'scale', 'tempoBpm', 'seed', 'progression', 'editedPhrases', 'tracks', 'arrangement'];
+  const project = object(value, 'project', required, [...required, 'schemaVersion', 'transposeSemitones', 'progressionChords',
     'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies']);
   if (project) {
     check('project.name', typeof project['name'] === 'string', 'expected a string');
@@ -70,9 +70,6 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     check('project.progression', Array.isArray(progression) && progression.length > 0 && progression.length <= 32 && progression.every(degree => Number.isInteger(degree) && degree >= 1 && degree <= 7), 'expected 1–32 chord degrees, each an integer from 1 to 7');
     if (project['transposeSemitones'] !== undefined) check('project.transposeSemitones', Number.isInteger(project['transposeSemitones']) && Math.abs(project['transposeSemitones'] as number) <= 24, 'expected an integer from -24 to 24');
     if (Array.isArray(progression)) check('project.progressionChords', !!validProgressionChords(project['progressionChords'], progression.length), 'invalid chords or length does not match progression');
-    for (const role of ARRANGED_PARTS) if (role !== 'melody' || project[role] !== undefined) settings(role, project[role], `project.${role}`);
-    const channels = object(project['mix'], 'project.mix', ARRANGED_PARTS.filter(role => role !== 'melody'), ARRANGED_PARTS);
-    if (channels) for (const role of ARRANGED_PARTS) if (channels[role] !== undefined) mix(channels[role], `project.mix.${role}`);
     const tracks = project['tracks'];
     check('project.tracks', Array.isArray(tracks) && tracks.length <= 64, 'expected an array of at most 64 tracks');
     if (Array.isArray(tracks)) tracks.forEach((raw, index) => {

@@ -15,7 +15,7 @@ function measure(name, run) {
 console.log(JSON.stringify([
   measure('melody with pattern and skeleton', index => {
     let pattern, skeleton;
-    const notes = generateMelody(BigInt(index + 1), 'C', 'major', [1, 5, 6, 4], DEFAULT_PROJECT.melody,
+    const notes = generateMelody(BigInt(index + 1), 'C', 'major', [1, 5, 6, 4], DEFAULT_PROJECT.tracks.find(track => track.role === 'melody').generatorSettings,
       0, value => { pattern = value; }, { newBlocksChance: index % 3 * 50 }, undefined, undefined,
       value => { skeleton = value; });
     return { notes, pattern, skeleton };

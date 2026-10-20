@@ -1,35 +1,8 @@
 import type { ArrangedPart, CompositionTrack, MixChannelSettings, PhraseNote } from './project.model';
-import { ARRANGED_PARTS, DEFAULT_MIX } from './project.model';
+import { ARRANGED_PARTS } from './project.model';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { INSTRUMENT_POOLS } from '../music/instrument-generation';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
-
-export function decodeMix(value: unknown): Record<ArrangedPart, MixChannelSettings> | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return undefined;
-  }
-  const mix = value as Partial<Record<ArrangedPart, unknown>>;
-  if (Object.keys(mix).some((part) => !ARRANGED_PARTS.includes(part as ArrangedPart))
-      || ARRANGED_PARTS.some((part) => part === 'melody' && mix[part] === undefined
-        ? false : !mix[part] || typeof mix[part] !== 'object')) {
-    return undefined;
-  }
-  const decoded = {} as Record<ArrangedPart, MixChannelSettings>;
-  for (const part of ARRANGED_PARTS) {
-    const settings = (part === 'melody' && mix[part] === undefined ? DEFAULT_MIX.melody : mix[part]) as Partial<MixChannelSettings>;
-    if (!Number.isInteger(settings.program) || (settings.program ?? -1) < 0 || (settings.program ?? 128) > 127
-        || !validVolumePercent(settings.volumePercent)
-        || !Number.isInteger(settings.panPercent) || (settings.panPercent ?? -101) < -100 || (settings.panPercent ?? 101) > 100
-        || typeof settings.muted !== 'boolean' || typeof settings.solo !== 'boolean') {
-      return undefined;
-    }
-    decoded[part] = {
-      program: settings.program!, volumePercent: normalizeVolumePercent(settings.volumePercent!), panPercent: settings.panPercent!,
-      muted: settings.muted, solo: settings.solo,
-    };
-  }
-  return decoded;
-}
 
 export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
   if (!Array.isArray(value) || value.length > 64) return undefined;

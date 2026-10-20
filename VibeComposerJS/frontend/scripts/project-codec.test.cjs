@@ -54,20 +54,18 @@ test('project decoding works without Angular or storage and preserves import def
   const input = copyDefaultProject(DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
   input.seed = '9223372036854775807';
   input.schemaVersion = 'informational';
-  delete input.melody;
-  delete input.mix.melody;
+  // Optional metadata is defaulted at the import boundary.
+  delete input.transposeSemitones;
   freeze(input);
 
-  // Imported data may omit these fields; complete command candidates may not omit melody.
-  assert.equal(isProject(input, DEFAULT_SECTION_TYPE_CHANCES, () => 0.5), false);
+  assert.equal(isProject(input, DEFAULT_SECTION_TYPE_CHANCES, () => 0.5), true);
   const decoded = decodeProject(input, DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
   assert.ok(decoded);
   assert.equal(decoded.seed, '9223372036854775807');
-  assert.equal(decoded.melody.algorithm, 'block');
-  assert.ok(decoded.mix.melody);
+  assert.equal(decoded.transposeSemitones, 0);
+  assert.equal(decoded.tracks.find(track => track.role === 'melody').generatorSettings.algorithm, 'block');
   assert.equal(isProject(decoded, DEFAULT_SECTION_TYPE_CHANCES, () => 0.5), true);
-  assert.equal(input.melody, undefined);
-  assert.equal(input.mix.melody, undefined);
+  assert.equal(input.transposeSemitones, undefined);
 });
 
 test('decoded local phrases and settings are detached from input and reject dangling references', () => {

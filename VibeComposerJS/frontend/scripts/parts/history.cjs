@@ -161,7 +161,6 @@ test('history navigation preserves audition switches, redo branches and abbrevia
   service.goToHistory(0);
   assert.equal(service.project().tempoBpm, start);
   assert.equal(service.project().tracks[0].mix.solo, true);
-  assert.equal(service.project().mix[track.role].solo, true);
   assert.equal(service.historyPosition(), 0);
   service.goToHistory(2);
   assert.equal(service.project().tempoBpm, 140);
@@ -195,15 +194,14 @@ test('mixed audition and volume patches undo only volume; compact history shows 
   assert.equal(service.project().tracks[0].mix.solo, true);
 });
 
-test('mute/solo controls clear the opposite state across track and legacy mix updates', () => {
+test('mute/solo controls clear the opposite state across track mix updates', () => {
   const { service } = fixture();
   const track = service.project().tracks[0];
   service.updateTrack(track.id, { mix: { muted: true } });
   service.updateTrack(track.id, { mix: { solo: true } });
   assert.equal(service.project().tracks[0].mix.muted, false);
-  service.updateMixSettings(track.role, { muted: true });
+  service.updateTrack(track.id, { mix: { muted: true } });
   assert.equal(service.project().tracks[0].mix.solo, false);
-  assert.deepEqual(service.project().mix[track.role], service.project().tracks[0].mix);
 });
 
 test('role/global mute and solo clear partial states without entering undo history', () => {
@@ -434,7 +432,7 @@ test('quick mixer knobs format linear gain and pan, audition without history, an
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo();
   workspace.updateTrackMix('track-bass-1', 'volumePercent', 50);
-  assert.equal(service.project().mix.bass.volumePercent, 50);
+  assert.equal(service.project().tracks.find(track => track.role === 'bass').mix.volumePercent, 50);
   assert.equal(heard.at(-1).tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, 50);
 });
 
@@ -448,7 +446,7 @@ test('track gain supports +6 dB, fractional attenuation, history and project rou
   const saved = service.exportProjectJson();
   assert.equal(service.project().tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, MAX_VOLUME_PERCENT);
   service.undo();
-  assert.equal(service.project().mix.bass.volumePercent, 100);
+  assert.equal(service.project().tracks.find(track => track.role === 'bass').mix.volumePercent, 100);
   service.redo();
   assert.equal(service.exportProjectJson(), saved);
   assert.equal(service.importProjectJson(saved), true);
@@ -480,7 +478,7 @@ test('volume rounds displayed zero to unity and scrolls by exact 1% or 10% steps
     knob.commitValue({ target: { value: String(value) } });
     assert.equal(commits.at(-1), 100);
     service.updateTrack('track-bass-1', { mix: { volumePercent: value } });
-    assert.equal(service.project().mix.bass.volumePercent, 100);
+    assert.equal(service.project().tracks.find(track => track.role === 'bass').mix.volumePercent, 100);
   }
   assert.equal(volumeDecibels(99.4), '-0.1');
   assert.equal(volumeDecibels(100.6), '+0.1');
@@ -528,8 +526,8 @@ test('popup velocity previews commit once, preserve hidden cells and cancel stal
   assert.equal(editor.rows()[0].velocities[1], 110);
   assert.equal(service.exportProjectJson(), before);
   editor.commitVelocity('track-chords-1', 1, event);
-  assert.equal(service.project().chords.customVelocities[1], 110);
-  assert.equal(service.project().chords.customVelocities.length, 32);
+  assert.equal(service.project().tracks.find(track => track.role === 'chords').generatorSettings.customVelocities[1], 110);
+  assert.equal(service.project().tracks.find(track => track.role === 'chords').generatorSettings.customVelocities.length, 32);
   service.undo(); assert.equal(service.exportProjectJson(), before);
   editor.previewVelocity('track-chords-1', 2, event); editor.cancel();
   assert.equal(editor.rows()[0].velocities[2], 79);
@@ -539,7 +537,7 @@ test('popup velocity previews commit once, preserve hidden cells and cancel stal
   editor.commitVelocity('track-chords-1', 2, event);
   assert.equal(service.exportProjectJson(), changed);
   editor.wheelVelocity('track-chords-1', 3, { deltaY: -1, shiftKey: true, preventDefault() {}, stopPropagation() {} });
-  assert.equal(service.project().chords.customVelocities[3], 80);
+  assert.equal(service.project().tracks.find(track => track.role === 'chords').generatorSettings.customVelocities[3], 80);
 });
 
 test('popup painting commits one gesture in audible coordinates and rejects stale project state', () => {
@@ -556,7 +554,7 @@ test('popup painting commits one gesture in audible coordinates and rejects stal
   editor.move({ pointerId: 9, currentTarget: grid, clientX: 1, clientY: 1 });
   assert.equal(service.exportProjectJson(), before);
   editor.finish({ pointerId: 9 });
-  assert.deepEqual(service.project().chords.customPattern.slice(29), [0, 0, 0]);
+  assert.deepEqual(service.project().tracks.find(track => track.role === 'chords').generatorSettings.customPattern.slice(29), [0, 0, 0]);
   service.undo(); assert.equal(service.exportProjectJson(), before);
   editor.start({ button: 0, pointerId: 10, target: button, currentTarget: button, preventDefault() {} }, 'track-chords-1', 0);
   editor.cancel(); editor.finish({ pointerId: 10 });

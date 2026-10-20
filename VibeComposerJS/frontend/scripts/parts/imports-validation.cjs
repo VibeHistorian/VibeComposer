@@ -5,6 +5,36 @@ const path = require('node:path');
 const { fixture } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('track-only projects preserve MIDI and session state through role edits, rerolls and reload', () => {
+  const { service, stored, load } = fixture();
+  const model = load('core/project/project.model.ts');
+  const { generateCompositionMidi } = load('core/music/midi-export.ts');
+  const legacyKeys = [...model.ARRANGED_PARTS, 'mix'];
+  const assertTrackOnly = project => {
+    for (const key of legacyKeys) assert.equal(Object.hasOwn(project, key), false, key);
+  };
+  assertTrackOnly(service.project());
+  for (const role of model.ARRANGED_PARTS) {
+    service.updatePartSettings({ kind: 'global-role', role }, { velocityMin: 1 });
+    service.rerollRoleInstruments(role);
+    service.rerollRoleTracks(role);
+    assertTrackOnly(service.project());
+  }
+  service.toggleTrackMix(['track-bass-1'], 'solo');
+  const expected = generateCompositionMidi(service.project());
+  const saved = service.exportProjectJson();
+  const input = JSON.parse(saved);
+  for (const key of legacyKeys) input[key] = { obsolete: 'ignored' };
+  assert.equal(service.importProjectJson(JSON.stringify(input)), true);
+  assertTrackOnly(service.project());
+  assert.deepEqual(generateCompositionMidi(service.project()), expected);
+  assertTrackOnly(JSON.parse(service.exportProjectJson()));
+  assertTrackOnly(JSON.parse(stored.get('vibecomposer.project.v12')));
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assertTrackOnly(restored.project());
+  assert.deepEqual(generateCompositionMidi(restored.project()), expected);
+});
+
 test('saved Java order offsets reach arpeggio generation and survive project round trips', () => {
   const { service, load } = fixture();
   const { generateTrackPhrase } = load('core/music/phrase.ts');
@@ -151,9 +181,9 @@ test('chord articulation rejects malformed imports and wrong-role controls witho
   for (const patch of [{ strum: -1 }, { strum: 2001 }, { strum: 1.5 }, { strumType: 'UP' }, { strumPauseChance: 101 },
     { transitionChance: null }, { transitionSplit: 1001 }, { patternJoinMode: 'expand' }]) {
     service.updatePartSettings({ kind: 'global-role', role: 'chords' }, patch);
-    for (const location of ['role', 'track', 'section-role', 'section-track']) {
+    for (const location of ['track', 'section-role', 'section-track']) {
       const data = JSON.parse(saved);
-      if (location === 'role') Object.assign(data.chords, patch);
+
       if (location === 'track') Object.assign(data.tracks.find(track => track.role === 'chords').generatorSettings, patch);
       if (location === 'section-role') data.arrangement[0].rolePartOverrides = { chords: patch };
       if (location === 'section-track') data.arrangement[0].trackPartOverrides = { 'track-chords-1': patch };
@@ -288,10 +318,9 @@ test('bass join validation rejects malformed and wrong-role patches without losi
       service.updatePartSettings(scope, patch);
     }
     assert.throws(() => generateBassline(42n, 'C', 'major', [1], 'full', 0, patch), RangeError);
-    for (const location of ['track', 'role', 'section-role', 'section-track']) {
+    for (const location of ['track', 'section-role', 'section-track']) {
       const project = JSON.parse(saved);
       if (location === 'track') Object.assign(project.tracks.find(track => track.role === 'bass').generatorSettings, patch);
-      if (location === 'role') Object.assign(project.bass, patch);
       if (location === 'section-role') project.arrangement[0].rolePartOverrides = { bass: patch };
       if (location === 'section-track') project.arrangement[0].trackPartOverrides = { 'track-bass-1': patch };
       assertRejectedProjectImport(service, JSON.stringify(project));
@@ -338,18 +367,18 @@ test('drums reject obsolete groove models, invalid identities and malformed musi
     const project = JSON.parse(before);
     Object.assign(project.tracks.find(track => track.id === first).generatorSettings, patch);
     assertRejectedProjectImport(service, JSON.stringify(project));
-    assert.throws(() => generateDrumPart(42n, 4, { ...service.project().drums, ...patch }), RangeError);
+    assert.throws(() => generateDrumPart(42n, 4, { ...service.project().tracks.find(track => track.role === 'drums').generatorSettings, ...patch }), RangeError);
   }
   for (const scope of [{ kind: 'global-role', role: 'drums' }, { kind: 'global-track', trackId: first },
     { kind: 'section-role', sectionId, role: 'drums' }, { kind: 'section-track', sectionId, trackId: first }]) {
     for (const patch of [...invalid, { pitch: 38 }]) service.updatePartSettings(scope, patch);
   }
-  const obsolete = JSON.parse(before); obsolete.drums = { groove: 'rock', swingPercent: 50 };
+  const obsolete = JSON.parse(before); obsolete.tracks.find(track => track.role === 'drums').generatorSettings = { groove: 'rock', swingPercent: 50 };
   assertRejectedProjectImport(service, JSON.stringify(obsolete));
   const wrongChannel = JSON.parse(before); wrongChannel.tracks.find(track => track.id === first).midiChannel = 1;
   assertRejectedProjectImport(service, JSON.stringify(wrongChannel));
   assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
-  assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().drums), RangeError);
+  assert.throws(() => generateDrumPart(9007199254740992, 4, service.project().tracks.find(track => track.role === 'drums').generatorSettings), RangeError);
 });
 
 test('melody imports and every scope reject malformed core inputs without losing redo', () => {
@@ -390,18 +419,18 @@ test('failed project loads warn with property paths and preserve the current pro
     const invalid = JSON.parse(before);
     delete invalid.name;
     invalid.tempoBpm = 300;
-    invalid.drums.obsoleteGroove = 'rock';
+    invalid.tracks.find(track => track.role === 'drums').generatorSettings.obsoleteGroove = 'rock';
     invalid.tracks[0].generatorSettings.unknownControl = 1;
-    invalid.mix.bass.panPercent = 200;
+    invalid.tracks.find(track => track.role === 'bass').mix.panPercent = 200;
     assert.equal(service.importProjectJson(JSON.stringify(invalid)), false);
     assert.equal(service.exportProjectJson(), before);
     assert.equal(warnings.length, 1);
     const details = warnings[0][1].join('\n');
     assert.match(details, /project\.name: missing required property/);
     assert.match(details, /project\.tempoBpm: expected an integer from 30 to 240/);
-    assert.match(details, /project\.drums\.obsoleteGroove: unknown property/);
+    assert.match(details, /project\.tracks\[4\]\.generatorSettings\.obsoleteGroove: unknown property/);
     assert.match(details, /project\.tracks\[0\]\.generatorSettings\.unknownControl: unknown property/);
-    assert.match(details, /project\.mix\.bass\.panPercent/);
+    assert.match(details, /project\.tracks\[1\]\.mix\.panPercent/);
 
     warnings.length = 0;
     assert.equal(service.importProjectJson('{'), false);

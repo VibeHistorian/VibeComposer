@@ -246,10 +246,7 @@ export class ProjectService {
       { remaining: current.tracks.filter(track => track.role === 'drums' && !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) });
     if (targets.every((track, index) => track === sources[index])) return 'unchanged';
     const replacements = new Map(targets.map(track => [track.id, track]));
-    const primary = replacements.get(`track-${role}-1`);
     return this.commitPartWorkflow({ ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
-      [role]: primary?.generatorSettings ?? current[role],
-      mix: primary && role !== 'drums' ? { ...current.mix, [role]: primary.mix } : current.mix,
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } });
   }
 
@@ -286,9 +283,7 @@ export class ProjectService {
     const count = current.trackRerollCounts?.[role] ?? 0;
     if (count >= 2147483647) return 'invalid';
     const tracks = [...current.tracks];
-    const source = tracks.find(track => track.role === role) ?? {
-      ...DEFAULT_TRACKS.find(track => track.role === role)!, generatorSettings: current[role], mix: current.mix[role],
-    } as CompositionTrack;
+    const source = tracks.find(track => track.role === role) ?? DEFAULT_TRACKS.find(track => track.role === role)!;
     const created: CompositionTrack[] = [];
     for (let index = 0; index < amount; index++) {
       const number = Math.max(0, ...tracks.filter(track => track.role === role)
@@ -309,11 +304,8 @@ export class ProjectService {
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, created.map(track => members.indexOf(track) + 1), drumContext);
     const generated = instrumentTracks.map((track, index) => ({ ...track, generatorSettings: settings[index] } as CompositionTrack));
     const replacements = new Map(generated.map(track => [track.id, track]));
-    const primary = replacements.get(`track-${role}-1`);
     const presenceRandom = new JavaRandom(BigInt.asIntN(64, seed ^ 0x50524553454e4345n));
     return this.commitPartWorkflow({ ...current, tracks: tracks.map(track => replacements.get(track.id) ?? track),
-      [role]: primary?.generatorSettings ?? current[role],
-      mix: primary && role !== 'drums' ? { ...current.mix, [role]: primary.mix } : current.mix,
       arrangement: current.arrangement.map(section => ({ ...section, trackPresence: { ...section.trackPresence,
         ...generateTrackPresence(generated, this.sectionTypeSettings.chances()[section.type], () => presenceRandom.nextDouble()) } })),
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } });
@@ -403,10 +395,7 @@ export class ProjectService {
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1), drumContext);
     if (sources.every((track, index) => track === instrumentTracks[index] && partPatchesEqual(track.generatorSettings, settings[index]))) return current;
     const replacements = new Map(instrumentTracks.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] } as CompositionTrack]));
-    const primary = replacements.get('track-' + role + '-1');
     const next = { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
-      [role]: primary?.generatorSettings ?? current[role],
-      mix: primary && role !== 'drums' ? { ...current.mix, [role]: primary.mix } : current.mix,
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
     return next;
   }
@@ -480,7 +469,7 @@ export class ProjectService {
         }
         // Forced outline can erase intermediate per-track preparation changes.
         const changed = tracks.some((track, index) => !partPatchesEqual(track.generatorSettings, next.tracks[index].generatorSettings));
-        if (changed) next = { ...next, tracks, melody: tracks.find(track => track.id === 'track-melody-1')?.generatorSettings as MelodySettings ?? next.melody,
+        if (changed) next = { ...next, tracks,
           trackRerollCounts: { ...next.trackRerollCounts, melody: count + 1 } };
       }
     }
@@ -575,8 +564,7 @@ export class ProjectService {
     }
     const tracks = current.tracks.map(track => patches.has(track.id)
       ? { ...track, generatorSettings: copyPartSettings({ ...track.generatorSettings, ...patches.get(track.id) }) } as CompositionTrack : track);
-    const primary = tracks.find(track => track.id === 'track-drums-1');
-    return this.commitPartWorkflow({ ...current, tracks, drums: primary?.generatorSettings as DrumSettings ?? current.drums });
+    return this.commitPartWorkflow({ ...current, tracks });
   }
 
   /** Snapshot each current member independently; mixed cells never pick a representative track. */
@@ -606,9 +594,7 @@ export class ProjectService {
       return [track.id, partPatchesEqual(track.generatorSettings, settings) ? track : { ...track, generatorSettings: settings } as CompositionTrack];
     }));
     if (members.every(track => replacements.get(track.id) === track)) return current;
-    const role = members[0].role, primary = replacements.get(`track-${role}-1`);
-    return { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
-      [role]: primary?.generatorSettings ?? current[role] };
+    return { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track) };
   }
 
   /** Merge only the chosen musical layer, or snapshot effective values into each destination track. */
@@ -749,74 +735,9 @@ export class ProjectService {
     const controlKey = this.controlHistoryKey(['part', 'global-role', role], patch);
     if (role === 'drums' && 'pitch' in patch) return;
     if (!current.tracks.some((track) => track.role === role)) return;
-    if (role === 'melody') {
-      const melody = decodeMelody({ ...current.melody, ...patch });
-      if (!melody) return;
-      const replacements = new Map(current.tracks.filter(track => track.role === 'melody')
-        .map(track => [track.id, decodeMelody({ ...track.generatorSettings, ...patch })]));
-      if ([...replacements.values()].some(settings => !settings)) return;
-      this.commit({ ...current, melody, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: replacements.get(track.id)! } : track) }, controlKey);
-    } else if (role === 'bass') {
-      const bass = { ...current.bass, ...patch } as BassSettings;
-      if (!decodeBass(bass)) return;
-      this.commit({ ...current, bass, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as BassSettings } : track) }, controlKey);
-    } else if (role === 'chords') {
-      const chords = { ...current.chords, ...patch } as ChordSettings;
-      if (!decodeChords(chords)) return;
-      this.commit({ ...current, chords, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ChordSettings } : track) }, controlKey);
-    } else if (role === 'arpeggio') {
-      const arpeggio = { ...current.arpeggio, ...patch } as ArpeggioSettings;
-      if (!decodeArpeggio(arpeggio)) return;
-      this.commit({ ...current, arpeggio, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as ArpeggioSettings } : track) }, controlKey);
-    } else {
-      const drums = { ...current.drums, ...patch } as DrumSettings;
-      if (!decodeDrums(drums)) return;
-      this.commit({ ...current, drums, tracks: current.tracks.map((track) => track.role === role
-        ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } as DrumSettings } : track) }, controlKey);
-    }
-  }
-
-  updateBassSettings(patch: Partial<BassSettings>): void {
-    const current = this.state();
-    const bass = { ...current.bass, ...patch };
-    this.commit({ ...current, bass, tracks: this.updatePrimaryTrack(current.tracks, 'bass', { generatorSettings: bass }) },
-      this.controlHistoryKey(['primary-part', 'bass'], patch));
-  }
-
-  updateChordSettings(patch: Partial<ChordSettings>): void {
-    const current = this.state();
-    const chords = { ...current.chords, ...patch };
-    this.commit({ ...current, chords, tracks: this.updatePrimaryTrack(current.tracks, 'chords', { generatorSettings: chords }) },
-      this.controlHistoryKey(['primary-part', 'chords'], patch));
-  }
-
-  updateArpeggioSettings(patch: Partial<ArpeggioSettings>): void {
-    const current = this.state();
-    const arpeggio = { ...current.arpeggio, ...patch };
-    this.commit({ ...current, arpeggio, tracks: this.updatePrimaryTrack(current.tracks, 'arpeggio', { generatorSettings: arpeggio }) },
-      this.controlHistoryKey(['primary-part', 'arpeggio'], patch));
-  }
-
-  updateDrumSettings(patch: Partial<DrumSettings>): void {
-    const current = this.state();
-    const drums = { ...current.drums, ...patch };
-    this.commit({ ...current, drums, tracks: this.updatePrimaryTrack(current.tracks, 'drums', { generatorSettings: drums }) },
-      this.controlHistoryKey(['primary-part', 'drums'], patch));
-  }
-
-  updateMixSettings(part: ArrangedPart, patch: Partial<MixChannelSettings>): void {
-    if (!ARRANGED_PARTS.includes(part)) {
-      return;
-    }
-    const current = this.state();
-    const mix = { ...current.mix, [part]: { ...current.mix[part], ...patch,
-      ...(patch.solo === true ? { muted: false } : patch.muted === true ? { solo: false } : {}) } };
-    this.commit({ ...current, mix, tracks: this.updatePrimaryTrack(current.tracks, part, { mix: mix[part] }) },
-      this.controlHistoryKey(['primary-mix', part], patch));
+    const tracks = current.tracks.map(track => track.role === role
+      ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } } as CompositionTrack : track);
+    this.commit({ ...current, tracks }, controlKey);
   }
 
   /** Group/global audition gestures persist without entering editing history. */
@@ -834,12 +755,7 @@ export class ProjectService {
       return mix.muted === track.mix.muted && mix.solo === track.mix.solo ? track : { ...track, mix };
     });
     if (tracks.every((track, index) => track === current.tracks[index])) return;
-    const mix = { ...current.mix };
-    for (const role of ARRANGED_PARTS) {
-      const primary = tracks.find(track => track.role === role);
-      if (primary) mix[role] = primary.mix;
-    }
-    this.commit({ ...current, tracks, mix });
+    this.commit({ ...current, tracks });
   }
 
   updateEditedPhrase(part: ArrangedPart, notes: readonly PhraseNote[]): void {
@@ -868,10 +784,7 @@ export class ProjectService {
   addTrack(role: ArrangedPart): string | undefined {
     const current = this.state();
     if (!ARRANGED_PARTS.includes(role) || current.tracks.length >= 64) return undefined;
-    const source = current.tracks.find((track) => track.role === role) ?? {
-      ...DEFAULT_TRACKS.find((track) => track.role === role)!,
-      generatorSettings: current[role], mix: current.mix[role],
-    } as CompositionTrack;
+    const source = current.tracks.find((track) => track.role === role) ?? DEFAULT_TRACKS.find(track => track.role === role)!;
     const nextNumber = current.tracks.reduce((maximum, track) => {
       const match = new RegExp(`^track-${role}-(\\d+)$`).exec(track.id);
       return match ? Math.max(maximum, Number(match[1])) : maximum;
@@ -938,9 +851,7 @@ export class ProjectService {
     if (patch.mix?.program !== undefined && patch.mix.program !== track.mix.program) {
       delete (tracks[index] as { instrumentPool?: string }).instrumentPool;
     }
-    const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
-    const mix = patch.mix && isPrimary ? { ...current.mix, [track.role]: tracks[index].mix } : current.mix;
-    this.commit({ ...current, tracks, mix }, Object.keys(patch).length === 1
+    this.commit({ ...current, tracks }, Object.keys(patch).length === 1
       ? this.controlHistoryKey(['track', trackId, ...(patch.mix ? ['mix'] : [])], patch.mix ?? patch) : undefined);
   }
 
@@ -958,15 +869,7 @@ export class ProjectService {
           : decodeDrums(generatorSettings) !== undefined;
     if (!validSettings) return;
     tracks[index] = { ...track, generatorSettings } as CompositionTrack;
-    const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === track.id;
-    const legacySettings = isPrimary ? tracks[index].generatorSettings : undefined;
-    const next = track.role === 'melody' && legacySettings ? { ...current, melody: legacySettings as MelodySettings, tracks }
-      : track.role === 'bass' && legacySettings ? { ...current, bass: legacySettings as BassSettings, tracks }
-      : track.role === 'chords' && legacySettings ? { ...current, chords: legacySettings as ChordSettings, tracks }
-        : track.role === 'arpeggio' && legacySettings ? { ...current, arpeggio: legacySettings as ArpeggioSettings, tracks }
-          : track.role === 'drums' && legacySettings ? { ...current, drums: legacySettings as DrumSettings, tracks }
-            : { ...current, tracks };
-    this.commit(next, this.controlHistoryKey(['part', 'global-track', trackId], patch));
+    this.commit({ ...current, tracks }, this.controlHistoryKey(['part', 'global-track', trackId], patch));
   }
 
   updateSectionTrackPhrase(sectionId: string, trackId: string, notes: readonly PhraseNote[]): boolean {

@@ -4,7 +4,6 @@ import type { CompositionProject, MixChannelSettings } from './project.model';
 export function historyContent(project: CompositionProject): string {
   const mix = ({ muted, solo, ...settings }: MixChannelSettings) => settings;
   return JSON.stringify({ ...project,
-    mix: Object.fromEntries(Object.entries(project.mix).map(([role, settings]) => [role, mix(settings)])),
     tracks: project.tracks.map(track => ({ ...track, mix: mix(track.mix) })),
   });
 }
@@ -19,12 +18,7 @@ export function preserveAudition(target: CompositionProject, current: Compositio
     return mix === track.mix ? track : { ...track, mix };
   });
   const tracks = updatedTracks.every((track, index) => track === target.tracks[index]) ? target.tracks : updatedTracks;
-  const updatedMix = Object.fromEntries(Object.entries(target.mix).map(([role, mix]) =>
-    [role, withSwitches(mix, tracks.find(track => track.role === role)?.mix
-      ?? current.mix[role as keyof typeof current.mix])])) as CompositionProject['mix'];
-  const mix = Object.keys(target.mix).every(role => updatedMix[role as keyof typeof updatedMix] === target.mix[role as keyof typeof target.mix])
-    ? target.mix : updatedMix;
-  return tracks === target.tracks && mix === target.mix ? target : { ...target, mix, tracks };
+  return tracks === target.tracks ? target : { ...target, tracks };
 }
 
 const label = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ');

@@ -457,12 +457,10 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   }
   const instrumentGenerationPolicies = structuredClone(DEFAULT_INSTRUMENT_POLICIES);
   if (chordGen && one(chordGen, 'sustainChance')) Object.assign(instrumentGenerationPolicies.chords, { sustainChance: numeric(chordGen, 'sustainChance') });
-  const roleSettings = Object.fromEntries(ARRANGED_PARTS.map(role => [role, tracks.find(track => track.role === role)?.generatorSettings ?? DEFAULT_PROJECT[role]]));
-  const mix = Object.fromEntries(ARRANGED_PARTS.map(role => [role, tracks.find(track => track.role === role)?.mix ?? DEFAULT_PROJECT.mix[role]])) as CompositionProject['mix'];
-  const project = { ...DEFAULT_PROJECT, ...roleSettings, name: options.name?.trim() || 'Imported Java composition', key: 'C', scale,
+  const project = { ...DEFAULT_PROJECT, name: options.name?.trim() || 'Imported Java composition', key: 'C', scale,
     tempoBpm: Math.max(30, Math.min(240, Math.round(bpm))), transposeSemitones: numeric(root, 'transpose', 0)!, seed: BigInt(seedText).toString(),
     progression, ...(globalChords ? { progressionChords: globalChords } : {}), melodyGlobal, harmonySettings,
-    tracks, mix, arrangement, editedPhrases: {}, trackGenerationPolicies, instrumentGenerationPolicies,
+    tracks, arrangement, editedPhrases: {}, trackGenerationPolicies, instrumentGenerationPolicies,
   } as CompositionProject;
   if (arrangement.reduce((sum, section) => sum + section.measures, 0) > 128) throw new Error('Actual arrangement exceeds 128 chord slots.');
   // Deliberately omitted by the translator's contract, rather than lost options.
