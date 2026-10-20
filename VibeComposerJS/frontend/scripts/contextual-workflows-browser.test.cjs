@@ -93,7 +93,16 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       history.querySelector('[aria-label="Close history"]').click();
       await wait(() => !document.querySelector('vc-history-dialog') && document.activeElement === historyButton, 'history closes and restores focus');
       const mode = document.querySelector('.transport-dock [aria-label="Mode"]');
-      result.modeCompact = getComputedStyle(mode).appearance === 'none' && mode.getBoundingClientRect().width < 70;
+      const modeRow = mode.closest('.mode-control'), modeGroup = mode.closest('.mode-seed');
+      const modeBounds = mode.getBoundingClientRect(), rowBounds = modeRow.getBoundingClientRect();
+      const labelBounds = modeRow.querySelector('span').getBoundingClientRect(), groupBounds = modeGroup.getBoundingClientRect();
+      const modeGap = parseFloat(getComputedStyle(modeRow).columnGap);
+      // Mode flexes into the space left by its label inside the shared Mode/Seed column.
+      result.modeSizing = { width: modeBounds.width, available: rowBounds.right - labelBounds.right - modeGap };
+      result.modeFitsRow = getComputedStyle(mode).appearance === 'none' && modeBounds.width > 0
+        && Math.abs(modeBounds.left - labelBounds.right - modeGap) <= 1
+        && Math.abs(modeBounds.right - rowBounds.right) <= 1
+        && modeBounds.left >= groupBounds.left - 1 && modeBounds.right <= groupBounds.right + 1;
       change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode change');
       if(mode.options.length!==17) throw new Error('missing Java modes');
       change(mode,'mixolydian'); await wait(()=>read().scale==='mixolydian'&&document.querySelector('.transport-project span').title.includes('MIXOLYDIAN'),'Mixolydian mode');
@@ -740,7 +749,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     assert.equal(actual.width, width);
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','quickCustomization',
-      'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeCompact','rootMenuFits','rootColors','spiceColors','menuKeyboard','chordletGestures',
+      'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeFitsRow','rootMenuFits','rootColors','spiceColors','menuKeyboard','chordletGestures',
       'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     await closeBrowser({ child, server, socket, watchdog });
