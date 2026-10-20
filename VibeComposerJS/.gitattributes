@@ -1,0 +1,2 @@
+# Wails regenerates these tracked bindings and runtime files with LF endings.
+frontend/wailsjs/** text eol=lf
