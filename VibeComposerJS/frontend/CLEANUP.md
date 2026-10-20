@@ -106,7 +106,7 @@ Follow-up 2026-10-20: Wails regenerates the six tracked `frontend/wailsjs/` bind
 
 ## Documentation addition
 
-- [ ] Add a short frontend `AGENTS.md` entry map linking existing contracts rather than duplicating them.
+- [x] Add a short frontend `AGENTS.md` entry map linking existing contracts rather than duplicating them.
 
 Include:
 
@@ -116,6 +116,8 @@ Include:
 - Critical invariants: exact seeds and random draw order, one historical commit per gesture, track base → section role patch → section track patch precedence, manual-phrase ownership, and shared generated output across consumers.
 
 Keep the entry map small and current. Product rules remain authoritative in the existing translation/workspace documents.
+
+Delivered 2026-10-20: added [the frontend entry map](AGENTS.md) with ownership paths, links to authoritative contracts and targeted checks, frozen pnpm installation, and the critical seed, history, precedence, manual-phrase and shared-output invariants. Included the observed Windows sandbox account/PowerShell startup failure (`CreateProcessWithLogonW failed: 1909`) and guidance to retry safe workspace commands in the normal sandbox before escalating, including rechecking subsequent reads after recovery. Verified local link targets and ownership paths; `git diff --check` passed. Documentation only; no application build or browser checks required.
 
 ## Secondary improvements
 
