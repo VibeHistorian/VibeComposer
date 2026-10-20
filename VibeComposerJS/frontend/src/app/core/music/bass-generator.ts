@@ -1,7 +1,8 @@
 import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
-import type { BassRhythm, BassSettings } from '../project/project.model';
+import type { BassRhythm } from './rhythm-patterns';
+import type { BassSettings } from './part-settings.model';
 import { decodePartPatch, velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
 import { effectivePartSeed, spannedPattern, spannedVelocities } from './part-processing';

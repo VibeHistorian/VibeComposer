@@ -1,6 +1,9 @@
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { MidiOutputService } from './midi-output.service';
-import type { ArrangedPart, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
+import type { ArrangedPart } from '../music/part-role';
+import type { CompositionProject } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
+import type { PhraseNote } from '../music/phrase-note';
 import { layOutTrackPhrase } from '../music/phrase';
 import { samePhraseInputs } from '../music/phrase-inputs';
 import { TinySynthEngine } from './tiny-synth-engine';

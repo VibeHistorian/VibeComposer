@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
-import type { MelodyGlobalSettings } from '../../core/project/project.model';
+import type { MelodyGlobalSettings } from '../../core/music/part-settings.model';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
 import { DEFAULT_BLOCK_CHANGE_PREFERENCE, DEFAULT_BLOCK_TYPE_WEIGHTS, MELODY_BLOCK_FAMILIES } from '../../core/music/melody-catalogue';

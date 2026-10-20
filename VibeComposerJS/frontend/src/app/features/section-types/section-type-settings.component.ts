@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import type { ArrangedPart, SectionType } from '../../core/project/project.model';
-import { ARRANGED_PARTS, SECTION_TYPES } from '../../core/project/project.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../../core/music/part-role';
+import { type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
 
 const PART_NAMES: Readonly<Record<ArrangedPart, string>> = {

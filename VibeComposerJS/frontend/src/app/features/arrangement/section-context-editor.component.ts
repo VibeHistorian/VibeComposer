@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import type { ArrangementSection, SectionMusicalContext } from '../../core/project/project.model';
+import type { ArrangementSection, SectionMusicalContext } from '../../core/project/arrangement.model';
 import { ProjectService } from '../../core/project/project.service';
 import { KEYS } from '../../core/music/harmony';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';

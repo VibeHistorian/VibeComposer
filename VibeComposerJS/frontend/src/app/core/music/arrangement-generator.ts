@@ -1,4 +1,6 @@
-import type { ArrangedPart, ArrangementSection, CompositionTrack } from '../project/project.model';
+import type { ArrangedPart } from './part-role';
+import type { ArrangementSection } from '../project/arrangement.model';
+import type { CompositionTrack } from '../project/track.model';
 import { JavaRandom } from './java-random';
 
 const ARRANGEMENT_PART_SEED_OFFSETS: Readonly<Record<ArrangedPart, number>> = {

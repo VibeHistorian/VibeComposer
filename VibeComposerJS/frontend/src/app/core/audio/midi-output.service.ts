@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import type { CompositionTrack } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
 import { drumInstrumentLabel, mapDrumPitch, resolveDrumMapping } from '../music/drum-instruments';
 

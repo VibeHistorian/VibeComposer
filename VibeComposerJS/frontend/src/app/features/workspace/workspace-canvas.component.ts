@@ -7,11 +7,13 @@ import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, validVolumePercent } from '../../core/audio/mix-values';
 import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
-import type {
-  ArrangedPart, ArrangementSection, SectionType, CompositionTrack, CompositionProject, PartSettingsScope,
-  TrackGenerationPolicyPatch, InstrumentGenerationPolicy,
-} from '../../core/project/project.model';
-import { ARRANGED_PARTS, PART_GENERATION_AVAILABLE, SECTION_TYPES, tracksInRoleOrder, DEFAULT_MIX, DEFAULT_TRACKS } from '../../core/project/project.model';
+import { type ArrangedPart, ARRANGED_PARTS, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
+import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
+import type { CompositionTrack } from '../../core/project/track.model';
+import type { CompositionProject } from '../../core/project/project.model';
+import type { PartSettingsScope } from '../../core/project/part-settings-scope';
+import type { TrackGenerationPolicyPatch, InstrumentGenerationPolicy } from '../../core/music/generation-policy.model';
+import { DEFAULT_MIX, DEFAULT_TRACKS } from '../../core/project/project-defaults';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
 import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
@@ -382,7 +384,7 @@ export class WorkspaceCanvasComponent {
     event.preventDefault();
     this.editor()?.smartExit();
   }
-  canvasNoteChanged(note: ScoreNote | import('../../core/project/project.model').PhraseNote): void {
+  canvasNoteChanged(note: ScoreNote | import('../../core/music/phrase-note').PhraseNote): void {
     this.editor()?.replaceNote({ ...note, startBeat: note.startBeat - this.editStartBeat() });
   }
   canvasNoteAdded(position: { trackId?: string; midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
@@ -390,10 +392,10 @@ export class WorkspaceCanvasComponent {
     const note = this.editor()?.selectedNote();
     if (note) void this.playback.audition(this.selectedTrack(), [note]);
   }
-  canvasNotesChanged(change: { notes: readonly import('../../core/project/project.model').PhraseNote[]; duplicate: boolean }): void {
+  canvasNotesChanged(change: { notes: readonly import('../../core/music/phrase-note').PhraseNote[]; duplicate: boolean }): void {
     this.editor()?.replaceNotes(change.notes.map(note => ({ ...note, startBeat: note.startBeat - this.editStartBeat() })), change.duplicate);
   }
-  auditionCanvasNotes(notes: readonly import('../../core/project/project.model').PhraseNote[]): void {
+  auditionCanvasNotes(notes: readonly import('../../core/music/phrase-note').PhraseNote[]): void {
     const editor = this.editor();
     if (!editor) return;
     for (const track of editor.editedTracks()) {

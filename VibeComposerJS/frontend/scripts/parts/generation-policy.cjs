@@ -1009,8 +1009,8 @@ test('Arpeggio policy preserves opted-out fields, shared counts and no-op histor
 
 test('melody has explicit type zero and generated tracks, with stable existing role seeds and channels', () => {
   const { service, ui, workspace, phrase, load } = fixture();
-  const model = load('core/project/project.model.ts');
-  assert.deepEqual(model.ARRANGED_PARTS.map((role) => model.PART_TYPES[role]), [0, 1, 2, 3, 4]);
+  const { ARRANGED_PARTS, PART_TYPES } = load('core/music/part-role.ts');
+  assert.deepEqual(ARRANGED_PARTS.map((role) => PART_TYPES[role]), [0, 1, 2, 3, 4]);
   assert.equal(workspace.arrangedTracks()[0].role, 'melody');
   const melody = service.project().tracks.find((track) => track.role === 'melody');
   assert.equal(melody.midiChannel, 4);
@@ -1038,10 +1038,11 @@ test('melody has explicit type zero and generated tracks, with stable existing r
 
 test('empty roles can be recreated from their defaults, while the final project track is retained', () => {
   const { service, workspace, load } = fixture();
-  const model = load('core/project/project.model.ts');
-  for (const role of model.ARRANGED_PARTS) {
+  const { DEFAULT_TRACKS } = load('core/project/project-defaults.ts');
+  const { ARRANGED_PARTS } = load('core/music/part-role.ts');
+  for (const role of ARRANGED_PARTS) {
     const track = service.project().tracks.find((candidate) => candidate.role === role);
-    const defaults = model.DEFAULT_TRACKS.find(track => track.role === role).generatorSettings;
+    const defaults = DEFAULT_TRACKS.find(track => track.role === role).generatorSettings;
     service.updateTrackGeneratorSettings(track.id, { velocityMin: 1 });
     service.updateTrack(track.id, { mix: { volumePercent: 23, panPercent: 45 } });
     service.removeTrack(track.id);
@@ -1050,7 +1051,7 @@ test('empty roles can be recreated from their defaults, while the final project 
     const added = service.project().tracks.find((candidate) => candidate.id === id);
     assert.equal(added.role, role);
     assert.deepEqual(added.generatorSettings, defaults);
-    assert.deepEqual(added.mix, model.DEFAULT_TRACKS.find(track => track.role === role).mix);
+    assert.deepEqual(added.mix, DEFAULT_TRACKS.find(track => track.role === role).mix);
     assert.equal(added.editedPhrase, undefined);
     assert.equal(added.midiChannel === 10, role === 'drums');
     for (const section of service.project().arrangement) assert.equal(typeof section.trackPresence[id], 'boolean');

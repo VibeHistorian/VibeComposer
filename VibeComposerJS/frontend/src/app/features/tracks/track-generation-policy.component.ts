@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import type { ArrangedPart, InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../../core/project/project.model';
+import type { ArrangedPart } from '../../core/music/part-role';
+import type { InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGenerationPolicyPatch } from '../../core/music/generation-policy.model';
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../../core/music/instrument-generation';
 import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../../core/music/track-generation';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';

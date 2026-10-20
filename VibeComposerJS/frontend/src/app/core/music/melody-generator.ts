@@ -1,6 +1,7 @@
 import { isScaleMode } from './scales';
 import { convertScalePitch, modeTargetPitch, scaleNotes } from './scales';
-import type { MelodySettings, MelodyGlobalSettings, PhraseNote } from '../project/project.model';
+import type { MelodySettings, MelodyGlobalSettings } from './part-settings.model';
+import type { PhraseNote } from './phrase-note';
 import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
 import { getPitchClass, validProgressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';

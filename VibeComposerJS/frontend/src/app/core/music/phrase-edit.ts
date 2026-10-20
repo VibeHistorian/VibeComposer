@@ -1,4 +1,4 @@
-import type { PhraseNote } from '../project/project.model';
+import type { PhraseNote } from './phrase-note';
 
 export type PhraseDragMode = 'move' | 'start' | 'duration' | 'pitch' | 'velocity';
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));

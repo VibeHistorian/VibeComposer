@@ -1,5 +1,8 @@
-import type { ArrangedPart, ArrangementSection, CompositionTrack, PartSettingsPatch, PhraseNote, SectionType } from './project.model';
-import { ARRANGED_PARTS, SECTION_TYPES } from './project.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
+import { type ArrangementSection, type SectionType, SECTION_TYPES } from './arrangement.model';
+import type { CompositionTrack } from './track.model';
+import type { PartSettingsPatch } from '../music/part-settings.model';
+import type { PhraseNote } from '../music/phrase-note';
 import { DEFAULT_SECTION_TYPE_CHANCES } from './section-type-chances';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement-generator';

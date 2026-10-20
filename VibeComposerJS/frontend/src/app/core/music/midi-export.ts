@@ -1,6 +1,8 @@
 import { Midi } from '@tonejs/midi';
-import type { CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
-import { tracksInRoleOrder } from '../project/project.model';
+import type { CompositionProject } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
+import type { PhraseNote } from './phrase-note';
+import { tracksInRoleOrder } from './part-role';
 import { layOutTrackPhrase } from './phrase';
 import { projectTempoMap } from './section-context';
 import { mapDrumPitch, type DrumMapping } from './drum-instruments';

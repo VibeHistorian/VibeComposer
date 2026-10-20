@@ -1,6 +1,7 @@
-import type { ArpeggioGenerationPolicy, ArpeggioSettings, ArrangedPart, CompositionTrack, BassSettings,
-  ChordSettings, DrumSettings, MelodySettings, TrackGenerationPolicies, TrackGenerationPolicy } from '../project/project.model';
-import { ARRANGED_PARTS } from '../project/project.model';
+import type { ArpeggioGenerationPolicy, TrackGenerationPolicies, TrackGenerationPolicy } from './generation-policy.model';
+import type { ArpeggioSettings, BassSettings, ChordSettings, DrumSettings, MelodySettings } from './part-settings.model';
+import { type ArrangedPart, ARRANGED_PARTS } from './part-role';
+import type { CompositionTrack } from '../project/track.model';
 import { JavaRandom } from './java-random';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { partPatchesEqual } from './part-settings';

@@ -82,7 +82,10 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const seedInput = document.querySelector('input[aria-label="Generation seed"]');
         seedInput.value='0'; seedInput.dispatchEvent(new Event('change',{bubbles:true}));
         button('Compose').click();
-        await wait(()=>document.querySelector('.transport-project span').textContent.includes('SEED'),'generated seed summary');
+        await wait(()=>{
+          const generated = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+          return generated?.seed!=='0' && document.querySelector('.transport-project span').textContent.trim()==='USED SEED '+generated?.seed;
+        },'generated seed summary');
         ensure(seedInput.value==='0','automatic seed input remains zero');
         ensure(document.querySelector('input[aria-label="Tempo in beats per minute"]').value===tempo,'disabled BPM star preserves tempo');
         ensure(document.querySelector('input[aria-label="Transpose in semitones"]').value===transpose,'disabled transpose star preserves transpose');
@@ -90,7 +93,9 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(document.querySelector('.transport-project').getBoundingClientRect().width===140,'compact project name width');
         ensure(name.rows===2 && getComputedStyle(name).textAlign==='center','centered two-line project name');
         const summary = document.querySelector('.transport-project span');
-        ensure(/^SEED -?\\d+$/.test(summary.textContent.trim()) && summary.title.includes(' BPM | SEED '),'seed hint retains full song tooltip');
+        const generatedProject = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+        ensure(summary.textContent.trim()==='USED SEED '+generatedProject.seed,'used-seed hint shows actual generation seed');
+        ensure(summary.title.endsWith(generatedProject.tempoBpm+' BPM | SEED '+generatedProject.seed),'seed hint retains full song tooltip');
         const box = label => button(label).getBoundingClientRect();
         const midi = document.querySelector('.midi-port-button').getBoundingClientRect();
         ensure(box('Settings').top > midi.top && box('Settings').width===midi.width,'MIDI and settings stack with matching widths');

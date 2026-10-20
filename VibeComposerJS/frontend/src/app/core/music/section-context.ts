@@ -1,5 +1,7 @@
 import { isScaleMode } from './scales';
-import type { ArrangementSection, CompositionProject, PhraseNote, SectionMusicalContext } from '../project/project.model';
+import type { ArrangementSection, SectionMusicalContext } from '../project/arrangement.model';
+import type { CompositionProject } from '../project/project.model';
+import type { PhraseNote } from './phrase-note';
 import { chordPitches, KEYS, progressionChords, validProgressionChords } from './harmony';
 
 export function validSectionContext(value: unknown): value is SectionMusicalContext {

@@ -1,4 +1,4 @@
-import type { MelodySettings } from '../project/project.model';
+import type { MelodySettings } from './part-settings.model';
 import { JavaRandom } from './java-random';
 import { cumulativeWeights } from './melody-blocks';
 

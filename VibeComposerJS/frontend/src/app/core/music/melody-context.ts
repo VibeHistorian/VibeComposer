@@ -1,4 +1,4 @@
-import type { PhraseNote } from '../project/project.model';
+import type { PhraseNote } from './phrase-note';
 
 /** Sixteenth onset pitches, with zero for an empty/rest slot. Independent of arrangement presence. */
 export interface MelodyContext {

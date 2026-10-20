@@ -1,4 +1,4 @@
-import type { DrumSettings } from '../project/project.model';
+import type { DrumSettings } from './part-settings.model';
 import { JavaRandom } from './java-random';
 import { DRUM_INSTRUMENTS } from './drum-instruments';
 import { partRhythmMask } from './rhythm-pattern';
@@ -51,7 +51,7 @@ export function bakeDrumPattern(random: JavaRandom, settings: DrumSettings): Dru
 }
 
 /** MELODY1 keeps its phrase-time Pause and never bakes or grows a static grid. */
-export function bakeRerollPauses<T extends DrumSettings | import('../project/project.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
+export function bakeRerollPauses<T extends DrumSettings | import('./part-settings.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
   if (settings.rhythm === 'melody') return settings;
   const hits = settings.hitsPerPattern ?? 8, shift = settings.patternShift ?? 0;
   const grid = partRhythmMask({ ...settings, rhythm: settings.rhythm ?? 'full', hitsPerPattern: 32, patternShift: 0, patternFlip: false });
@@ -70,7 +70,7 @@ export function bakeRerollPauses<T extends DrumSettings | import('../project/pro
     ...(rhythm === 'custom' ? { customPattern: grid } : {}) };
 }
 
-export function growRerollPattern<T extends DrumSettings | import('../project/project.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
+export function growRerollPattern<T extends DrumSettings | import('./part-settings.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
   if (settings.rhythm === 'melody' || settings.rhythm === 'full') return settings;
   const hits = settings.hitsPerPattern ?? 8, shift = settings.patternShift ?? 0;
   const grid = partRhythmMask({ ...settings, rhythm: settings.rhythm ?? 'full', hitsPerPattern: 32, patternShift: 0, patternFlip: false });

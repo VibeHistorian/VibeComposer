@@ -123,8 +123,16 @@ Keep the entry map small and current. Product rules remain authoritative in the 
 
 `src/app/core/project/project.model.ts` has 75 importing source files and combines musical types, project structure, and defaults. Its location alone does not violate framework independence.
 
-- [ ] Gradually separate musical types, project composition types, and default values when changes justify a clearer dependency boundary.
-- [ ] Keep dependencies explicit and avoid introducing circular runtime imports or unnecessary forwarding modules.
+- [x] Gradually separate musical types, project composition types, and default values when changes justify a clearer dependency boundary.
+- [x] Keep dependencies explicit and avoid introducing circular runtime imports or unnecessary forwarding modules.
+
+Delivered 2026-10-20: split the model into musical note, role, part-settings and generation-policy contracts under `core/music/`, plus track, arrangement and editing-scope contracts under `core/project/`. `project.model.ts` now contains only `CompositionProject` and its type imports (34 lines, down from 472 at implementation). Project, track, part, mix and arrangement defaults moved into the existing `project-defaults.ts`, alongside unchanged fresh-project construction. Consumers and source-loading test fixtures import their owners directly; rhythm and arpeggio types use their existing musical modules without forwarding exports. Generator-specific defaults remain with their existing helpers. See [domain ownership](src/app/core/project/README.md#domain-contracts).
+
+Validation: all 436 functional checks and the production build passed, retaining the existing Pixi/xmldom CommonJS warning. An AST comparison against pre-refactor HEAD confirmed preservation of all 51 moved declarations, comments, default values and function bodies; the other 67 changed TypeScript source files differ only in imports, including inline type imports. An emitted-import audit found no runtime cycles reachable from the nine model/default owners. `git diff --check` passed.
+
+Browser validation: 16 of 19 cases passed across the twelve suites, including the 109-case focused overview matrix, contextual generation/workflows, score/manual editing, MIDI, playback and export. All three preferences cases (1440px, 1400px and 780px) fail `seed hint retains full song tooltip` in `scripts/ui-preferences-browser.test.cjs:93`; the identical assertion failure reproduced at all three widths against an isolated production build of pre-refactor HEAD. No browser assertions were changed. Browser checks required execution outside the sandbox after sandboxed Chromium targets crashed; production compilation required access to Google Fonts. Reports: `.angular/model-split-unit.tap`, `.angular/model-split-build.log`, `.angular/model-split-audit.log`, `.angular/model-split-browser-final.tap` and `.angular/model-split-baseline-browser.tap`.
+
+Follow-up 2026-10-20: fixed the three preferences browser cases. The seed summary assertion now follows the current `USED SEED` label and checks the displayed seed and tooltip against the saved generated project. The Compose wait now requires the rendered summary to match that project; the previous `includes('SEED')` check also matched the pre-Compose text and could proceed before Angular rendered the new seed. All three cases pass at 1440px, 1400px and 780px, including the remaining preference transfer, appearance, reload and layout assertions. Application code is unchanged, so the existing production build was reused. Chromium required execution outside the sandbox after sandboxed debugging targets crashed. Report: `.angular/seed-hint-browser.tap`.
 
 ### Optimize readability rather than line count
 

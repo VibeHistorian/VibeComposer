@@ -1,4 +1,7 @@
-import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack } from '../project/project.model';
+import type { ArrangedPart } from './part-role';
+import type { ArrangementSection } from '../project/arrangement.model';
+import type { CompositionProject } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
 import { flattenProgression, soundingHarmony, voicedSoundingChords, type GenerationHarmony } from './harmony-voicing';
 import { chordPitches, getPitchClass, progressionChords } from './harmony';
 import { sectionChordDurations, sectionDegrees, sectionHasChordOverride, sectionProject } from './section-context';

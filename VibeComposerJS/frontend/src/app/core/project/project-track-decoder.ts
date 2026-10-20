@@ -1,5 +1,6 @@
-import type { ArrangedPart, CompositionTrack, MixChannelSettings, PhraseNote } from './project.model';
-import { ARRANGED_PARTS } from './project.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
+import type { CompositionTrack, MixChannelSettings } from './track.model';
+import type { PhraseNote } from '../music/phrase-note';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { INSTRUMENT_POOLS } from '../music/instrument-generation';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';

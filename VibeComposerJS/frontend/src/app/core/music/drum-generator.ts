@@ -1,4 +1,4 @@
-import type { DrumSettings } from '../project/project.model';
+import type { DrumSettings } from './part-settings.model';
 import { JavaRandom } from './java-random';
 import { partFillMask } from './chord-span-fill';
 import { partRhythmMask } from './rhythm-pattern';

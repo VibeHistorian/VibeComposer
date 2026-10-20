@@ -1,4 +1,5 @@
-import type { CompositionProject, PhraseNote } from '../project/project.model';
+import type { CompositionProject } from '../project/project.model';
+import type { PhraseNote } from './phrase-note';
 import { getPitchClass } from './harmony';
 import { scaleNotes, type ScaleMode } from './scales';
 

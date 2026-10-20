@@ -1,5 +1,6 @@
-import type { ArrangedPart, CompositionProject, CompositionTrack } from './project.model';
-import { ARRANGED_PARTS } from './project.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
+import type { CompositionProject } from './project.model';
+import type { CompositionTrack } from './track.model';
 
 /** Array positions follow tracks filtered by role, preserving their order in the file. */
 export function encodeProjectStorage(project: CompositionProject) {

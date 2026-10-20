@@ -1,4 +1,5 @@
-import type { MelodyGlobalSettings, MelodySettings, PhraseNote } from '../project/project.model';
+import type { MelodyGlobalSettings, MelodySettings } from './part-settings.model';
+import type { PhraseNote } from './phrase-note';
 import { chordPitches, getPitchClass, progressionChords, scaleNotes, type ProgressionChord, type ScaleMode } from './harmony';
 import type { GenerationHarmony } from './harmony-voicing';
 import { JavaRandom } from './java-random';

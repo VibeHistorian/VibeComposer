@@ -1,4 +1,4 @@
-import type { CommonPartSettings } from '../project/project.model';
+import type { CommonPartSettings } from './part-settings.model';
 
 export const CHORD_SPAN_FILLS = ['ALL', 'ODD', 'EVEN', 'F1', 'F2', 'F3', 'F4', 'F12', 'F23', 'F34', 'HALF1', 'HALF2'] as const;
 export type ChordSpanFill = typeof CHORD_SPAN_FILLS[number];

@@ -1,5 +1,5 @@
 import { dragPhraseNotes, snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
-import type { PhraseNote } from '../../core/project/project.model';
+import type { PhraseNote } from '../../core/music/phrase-note';
 import type { ScorePoint, ScoreTimeGeometry } from './score-geometry';
 
 /** The renderer reads this snapshot; only pointer handlers own gesture state and edits. */

@@ -1,4 +1,4 @@
-import type { PhraseNote } from '../project/project.model';
+import type { PhraseNote } from './phrase-note';
 import { SCALE_DEFINITIONS, SCALE_MODES, scaleNotes, type ScaleMode } from './scales';
 import { snapMidiToScale } from './phrase-edit';
 

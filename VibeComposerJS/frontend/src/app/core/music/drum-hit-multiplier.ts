@@ -1,4 +1,4 @@
-import type { DrumSettings } from '../project/project.model';
+import type { DrumSettings } from './part-settings.model';
 import { rotateLeft } from './arpeggio-pattern';
 
 export const DRUM_HIT_MULTIPLIERS = [0.5, 0.75, 1.5, 2] as const;

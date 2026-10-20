@@ -1,4 +1,7 @@
-import type { ArrangedPart, ArrangementSection, CommonPartSettings, CompositionTrack, PartSettingsPatch } from '../project/project.model';
+import type { ArrangedPart } from './part-role';
+import type { ArrangementSection } from '../project/arrangement.model';
+import type { CommonPartSettings, PartSettingsPatch } from './part-settings.model';
+import type { CompositionTrack } from '../project/track.model';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS, MELODY_RHYTHMS } from './rhythm-patterns';
 import { DEFAULT_CUSTOM_VELOCITIES, isVelocityPattern } from './velocity-pattern';

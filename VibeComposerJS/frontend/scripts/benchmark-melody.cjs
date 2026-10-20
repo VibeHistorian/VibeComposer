@@ -2,7 +2,7 @@ const { createHash } = require('node:crypto');
 const { loadMusic } = require('./music-loader.cjs');
 const { generateMelody } = loadMusic('melody-generator.ts');
 const { layOutTrackPhrase } = loadMusic('phrase.ts');
-const { DEFAULT_PROJECT } = loadMusic('../project/project.model.ts');
+const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
 
 function measure(name, run) {
   for (let index = 0; index < 20; index++) run(index);

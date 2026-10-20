@@ -1,4 +1,7 @@
-import type { CompositionProject, CompositionTrack, MelodySettings, PartSettingsScope } from '../project/project.model';
+import type { CompositionProject } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
+import type { MelodySettings } from './part-settings.model';
+import type { PartSettingsScope } from '../project/part-settings-scope';
 import { DEFAULT_MELODY_DURATIONS, melodyDurationError } from './melody-durations';
 import { resolvePartTrack } from './part-settings';
 import { generateTrackPhrase } from './phrase';

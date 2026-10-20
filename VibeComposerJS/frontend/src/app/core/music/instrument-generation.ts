@@ -1,5 +1,7 @@
-import { ARRANGED_PARTS, type ArrangedPart, type CompositionTrack, type DrumSettings,
-  type InstrumentGenerationPolicy, type InstrumentPool } from '../project/project.model';
+import { ARRANGED_PARTS, type ArrangedPart } from './part-role';
+import type { CompositionTrack } from '../project/track.model';
+import type { DrumSettings } from './part-settings.model';
+import type { InstrumentGenerationPolicy, InstrumentPool } from './generation-policy.model';
 import { JavaRandom } from './java-random';
 import { DRUM_INSTRUMENTS } from './drum-instruments';
 import { chooseDrumPitches, type DrumRerollContext } from './drum-reroll';

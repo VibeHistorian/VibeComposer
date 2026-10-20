@@ -1,4 +1,4 @@
-import type { ChordSettings } from '../project/project.model';
+import type { ChordSettings } from './part-settings.model';
 import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord } from './harmony';
 import type { ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';

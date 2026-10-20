@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import type { ArrangedPart, ChordRhythm, PartSettingsPatch, PartSettingsScope } from '../../core/project/project.model';
+import type { ArrangedPart } from '../../core/music/part-role';
+import type { ChordRhythm, PartSettingsPatch } from '../../core/music/part-settings.model';
+import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { ProjectService } from '../../core/project/project.service';
 import { resolvePartTrack, settingsValues } from '../../core/music/part-settings';
 import { chordRhythmMask } from '../../core/music/rhythm-pattern';

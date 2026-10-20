@@ -1,6 +1,6 @@
 import { PART_CONTROLS } from '../music/part-settings';
 import { decodeAppearance, defaultAppearance, type AppearancePreferences } from './appearance';
-import { ARRANGED_PARTS, type ArrangedPart } from '../project/project.model';
+import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
 import type { DrumMappingPreference } from '../music/drum-instruments';
 import { DEFAULT_EXPORT_NAME_FIELDS, EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 

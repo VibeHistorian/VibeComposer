@@ -1,4 +1,4 @@
-import type { ArpeggioSettings } from '../project/project.model';
+import type { ArpeggioSettings } from './part-settings.model';
 import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { decodePartPatch, velocityBounds } from './part-settings';

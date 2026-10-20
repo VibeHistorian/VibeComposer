@@ -1,5 +1,5 @@
 import { Midi } from '@tonejs/midi';
-import type { PhraseNote } from '../project/project.model';
+import type { PhraseNote } from './phrase-note';
 import { MAX_MIDI_IMPORT_BYTES } from './midi-import-limits';
 import type { ImportedMidiTrack } from './midi-import-options';
 

@@ -96,7 +96,7 @@ test('Java drum mapping covers the ordered pool, Auto follows routing, and note-
   service.ngOnDestroy();
   const { Midi } = require('@tonejs/midi');
   const { generateCompositionMidi } = require('./music-loader.cjs').loadMusic('midi-export.ts');
-  const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project.model.ts');
+  const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
   const original = JSON.stringify(DEFAULT_PROJECT);
   const gm = new Midi(generateCompositionMidi(DEFAULT_PROJECT, 'general-midi'));
   const chromatic = new Midi(generateCompositionMidi(DEFAULT_PROJECT, 'chromatic'));
@@ -111,7 +111,7 @@ test('MIDI volume clamps boosted gain while preserving notes and stored mix', as
   const { loadMusic } = require('./music-loader.cjs');
   const { Midi } = require('@tonejs/midi');
   const { generateCompositionMidi } = loadMusic('midi-export.ts');
-  const { DEFAULT_PROJECT } = loadMusic('../project/project.model.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
   const output = port('volume');
   const service = fixture(async () => ({ outputs: new Map([[output.id, output]]), addEventListener() {}, removeEventListener() {} }));
   await service.refresh();
@@ -164,7 +164,7 @@ test('phrase MIDI exports draft tracks despite mute/solo and clips phrase bounds
   const { Midi } = require('@tonejs/midi');
   const { loadMusic } = require('./music-loader.cjs');
   const { generatePhraseMidi } = loadMusic('midi-export.ts');
-  const { DEFAULT_PROJECT } = loadMusic('../project/project.model.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
   const bass = DEFAULT_PROJECT.tracks.find(t => t.role === 'bass');
   const drum = DEFAULT_PROJECT.tracks.find(t => t.role === 'drums');
   const notes = [{ id:'draft', midi:66, startBeat:1, durationBeats:2, velocity:93 },

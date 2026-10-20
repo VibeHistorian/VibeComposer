@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import type { MelodySettings, PartSettingsScope } from '../../core/project/project.model';
+import type { MelodySettings } from '../../core/music/part-settings.model';
+import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { ProjectService } from '../../core/project/project.service';
 import { resolvePartTrack } from '../../core/music/part-settings';
 import { DEFAULT_DURATION_CHANCES, DEFAULT_MELODY_DURATIONS, melodyDurationError, paddedMelodyDurations } from '../../core/music/melody-durations';

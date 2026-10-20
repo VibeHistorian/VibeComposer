@@ -7,14 +7,14 @@ const { assertRejectedProjectImport } = require('../support/project-import-asser
 
 test('track-only projects preserve MIDI and session state through role edits, rerolls and reload', () => {
   const { service, stored, load } = fixture();
-  const model = load('core/project/project.model.ts');
+  const { ARRANGED_PARTS } = load('core/music/part-role.ts');
   const { generateCompositionMidi } = load('core/music/midi-export.ts');
-  const legacyKeys = [...model.ARRANGED_PARTS, 'mix'];
+  const legacyKeys = [...ARRANGED_PARTS, 'mix'];
   const assertTrackOnly = project => {
     for (const key of legacyKeys) assert.equal(Object.hasOwn(project, key), false, key);
   };
   assertTrackOnly(service.project());
-  for (const role of model.ARRANGED_PARTS) {
+  for (const role of ARRANGED_PARTS) {
     service.updatePartSettings({ kind: 'global-role', role }, { velocityMin: 1 });
     service.rerollRoleInstruments(role);
     service.rerollRoleTracks(role);

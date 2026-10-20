@@ -2,7 +2,7 @@ import { JavaRandom } from './java-random';
 import { chordPitches, progressionChords, scaleNotes, type ProgressionChord, type ScaleMode } from './harmony';
 import { generateDiatonicProgression } from './progression-generator';
 import type { HarmonySettings } from './harmony-voicing';
-import type { MelodyGlobalSettings } from '../project/project.model';
+import type { MelodyGlobalSettings } from './part-settings.model';
 
 export const HARMONY_GENERATIONS = [
   { value: 'CURRENT', label: 'Legacy' }, { value: 'FUNCTIONAL', label: 'Functional' },

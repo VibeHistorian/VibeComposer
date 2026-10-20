@@ -1,7 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
-import type { ArrangedPart } from '../project/project.model';
-import { ARRANGED_PARTS } from '../project/project.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
 import { adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type ColorAdjustment, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
 import type { DrumMappingPreference } from '../music/drum-instruments';

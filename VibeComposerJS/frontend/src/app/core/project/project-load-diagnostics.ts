@@ -1,5 +1,6 @@
-import type { ArrangedPart, PartSettingsPatch, SectionType } from './project.model';
-import { ARRANGED_PARTS, SECTION_TYPES } from './project.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
+import type { PartSettingsPatch } from '../music/part-settings.model';
+import { type SectionType, SECTION_TYPES } from './arrangement.model';
 import { KEYS, validProgressionChords } from '../music/harmony';
 import { isScaleMode } from '../music/scales';
 import { validVolumePercent } from '../audio/mix-values';

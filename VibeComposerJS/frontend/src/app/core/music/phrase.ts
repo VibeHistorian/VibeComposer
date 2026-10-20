@@ -1,4 +1,7 @@
-import type { ArrangementSection, CompositionProject, CompositionTrack, PhraseNote } from '../project/project.model';
+import type { ArrangementSection } from '../project/arrangement.model';
+import type { CompositionProject } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
+import type { PhraseNote } from './phrase-note';
 import { shouldGenerateTrackInSection } from './arrangement-generator';
 import { generateArpeggio } from './arpeggio-generator';
 import { generateBassline } from './bass-generator';

@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
-import type { ArrangedPart, SectionType } from './project.model';
-import { ARRANGED_PARTS, SECTION_TYPES } from './project.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
+import { type SectionType, SECTION_TYPES } from './arrangement.model';
 import { DEFAULT_SECTION_TYPE_CHANCES, type SectionTypeChanceSettings } from './section-type-chances';
 
 export { DEFAULT_SECTION_TYPE_CHANCES, type SectionTypeChanceSettings } from './section-type-chances';

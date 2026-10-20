@@ -1,4 +1,4 @@
-import type { RhythmSettings } from '../project/project.model';
+import type { RhythmSettings } from './part-settings.model';
 import { STATIC_RHYTHM_DEFINITIONS, STATIC_RHYTHM_PATTERNS, type StaticRhythmPattern } from './rhythm-patterns';
 export { STATIC_RHYTHM_PATTERNS, type StaticRhythmPattern } from './rhythm-patterns';
 

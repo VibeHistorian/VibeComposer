@@ -1,4 +1,4 @@
-import type { MelodyGlobalSettings } from '../project/project.model';
+import type { MelodyGlobalSettings } from './part-settings.model';
 import { DEFAULT_BLOCK_TYPE_WEIGHTS } from './melody-catalogue';
 
 export const DEFAULT_MELODY_GLOBAL = Object.freeze({

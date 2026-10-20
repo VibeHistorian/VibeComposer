@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import type { ArrangementSection } from '../../core/project/project.model';
+import type { ArrangementSection } from '../../core/project/arrangement.model';
 import { ProjectService } from '../../core/project/project.service';
 import { DEFAULT_HARMONY_SETTINGS } from '../../core/music/harmony-voicing';
 import { projectMelodyHarmony } from '../../core/music/project-harmony';

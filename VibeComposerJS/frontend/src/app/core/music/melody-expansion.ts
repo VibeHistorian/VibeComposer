@@ -1,4 +1,4 @@
-import type { MelodySettings } from '../project/project.model';
+import type { MelodySettings } from './part-settings.model';
 import { JavaRandom } from './java-random';
 import { melodyInt as int, MELODY_EPSILON as EPS } from './melody-blocks';
 

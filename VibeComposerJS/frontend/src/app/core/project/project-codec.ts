@@ -1,4 +1,6 @@
-import type { ArrangedPart, CompositionProject, TrackGenerationPolicies } from './project.model';
+import type { ArrangedPart } from '../music/part-role';
+import type { CompositionProject } from './project.model';
+import type { TrackGenerationPolicies } from '../music/generation-policy.model';
 import { KEYS, validProgressionChords } from '../music/harmony';
 import { isScaleMode } from '../music/scales';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';

@@ -6,7 +6,7 @@ import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
 import { COLOR_ADJUSTMENTS, FONT_AREAS, FONT_CHOICES, type FontArea } from '../../core/ui/appearance';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
-import { ARRANGED_PARTS, type ArrangedPart } from '../../core/project/project.model';
+import { ARRANGED_PARTS, type ArrangedPart } from '../../core/music/part-role';
 import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
 import { HARMONY_GENERATIONS } from '../../core/music/contextual-harmony';
 import type { HarmonySettings } from '../../core/music/harmony-voicing';

@@ -1,6 +1,6 @@
 import { sectionDurationBeats } from '../music/section-context';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import type { ArrangedPart } from '../project/project.model';
+import type { ArrangedPart } from '../music/part-role';
 import { ProjectService } from '../project/project.service';
 
 export type SettingsTarget =

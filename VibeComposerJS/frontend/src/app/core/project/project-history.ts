@@ -1,4 +1,5 @@
-import type { CompositionProject, MixChannelSettings } from './project.model';
+import type { CompositionProject } from './project.model';
+import type { MixChannelSettings } from './track.model';
 
 /** Audition switches persist with the project, but are independent of editing history. */
 export function historyContent(project: CompositionProject): string {

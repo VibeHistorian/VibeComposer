@@ -1,4 +1,4 @@
-import type { PhraseNote } from '../project/project.model';
+import type { PhraseNote } from '../music/phrase-note';
 import { Dialog } from '@angular/cdk/dialog';
 import type { Injector } from '@angular/core';
 import { fitImportedMidi, type ImportedMidiTrack, type MidiScaleChoice } from '../music/midi-import-options';

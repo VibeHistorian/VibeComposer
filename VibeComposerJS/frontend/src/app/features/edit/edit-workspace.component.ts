@@ -1,7 +1,8 @@
 import { afterNextRender, Injector, ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
 import { DOCUMENT, TitleCasePipe } from '@angular/common';
-import type { ArrangedPart, CompositionTrack, PhraseNote } from '../../core/project/project.model';
-import { PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/project/project.model';
+import { type ArrangedPart, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
+import type { CompositionTrack } from '../../core/project/track.model';
+import type { PhraseNote } from '../../core/music/phrase-note';
 import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../core/music/phrase';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSnapshot } from '../../core/music/phrase-edit';

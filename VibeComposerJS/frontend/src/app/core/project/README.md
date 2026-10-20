@@ -6,6 +6,26 @@ Independent tracks own generator settings and mix values. Global role edits upda
 
 Exported files and session storage use `trackPresence: { melody: [...], bass: [...], chords: [...], arpeggio: [...], drums: [...] }`. Each boolean array follows the order of tracks with that role in `tracks`, with exactly one value per member. Empty roles export as `[]`. Import expands these arrays to ID-keyed app maps and also accepts existing ID-map files. Mixed forms, unknown roles, non-booleans, and incorrect array lengths are rejected.
 
+## Domain contracts
+
+Import contracts directly from their owner. `project.model.ts` defines the complete project and does not forward the musical, track or section contracts. All model dependencies use type-only imports; role/section constants and project defaults have explicit runtime owners. These modules remain independent of Angular, the DOM and Wails.
+
+| Module relative to `core/` | Responsibility |
+| --- | --- |
+| `music/phrase-note.ts` | Shared note shape for generation, manual editing, playback and MIDI. |
+| `music/part-role.ts` | Five roles, Java group numbers, generation availability and stable role ordering. |
+| `music/part-settings.model.ts` | Common/rhythm inputs, role settings, melody globals and part settings patches. |
+| `music/generation-policy.model.ts` | Instrument pools and policies; track generation policies and patches. |
+| `project/track.model.ts` | Track identity, mix, manual phrase ownership and role/settings discriminated union. |
+| `project/arrangement.model.ts` | Section types and their catalogue, musical context, presence, overrides and phrases. |
+| `project/part-settings-scope.ts` | Application editing scopes and workflow results. |
+| `project/project.model.ts` | `CompositionProject`, composing the narrower contracts. |
+| `project/project-defaults.ts` | Project/track/part/mix/arrangement defaults and fresh project construction. |
+
+Rhythm, arpeggio and harmony vocabulary stays with its existing musical owner (`rhythm-patterns.ts`, `arpeggio-pattern.ts`, `harmony.ts`, etc.). Generator-specific defaults stay with their existing helpers, including `melody-global-settings.ts` and `track-generation.ts`. Low-level musical settings do not depend on project, track or section structures. Existing type-only relationships through `chord-span-fill.ts` and `melody-durations.ts` introduce no runtime cycles.
+
+## State operations
+
 | Module | Responsibility |
 | --- | --- |
 | `project-codec.ts` | Decode imported/session data; validate complete command candidates. |
@@ -15,7 +35,7 @@ Exported files and session storage use `trackPresence: { melody: [...], bass: [.
 | `project-track-decoder.ts` | Decode tracks, mix values, and manual phrases; validate phrase bounds. |
 | `project-arrangement-decoder.ts` | Decode sections, scoped overrides, track references, and presence; define arrangement limits. |
 | `project-load-diagnostics.ts` | Return field diagnostics after a rejected load; diagnostics do not define acceptance rules. |
-| `project-defaults.ts` | Construct a fresh default project. |
+| `project-defaults.ts` | Define stored defaults and construct a fresh default project with explicit section chances/randomness. |
 | `section-type-chances.ts` | Framework-independent section chance defaults and their type. |
 | `project-arrangement-commands.ts` | Build immutable candidates for section structure, degree overrides, and presence edits. |
 | `project-history.ts` | Compare history content and preserve audition state during restoration. |

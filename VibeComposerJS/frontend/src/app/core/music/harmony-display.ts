@@ -1,4 +1,7 @@
-import type { ArrangedPart, ArrangementSection, CompositionProject, CompositionTrack } from '../project/project.model';
+import type { ArrangedPart } from './part-role';
+import type { ArrangementSection } from '../project/arrangement.model';
+import type { CompositionProject } from '../project/project.model';
+import type { CompositionTrack } from '../project/track.model';
 import { chordPitches, chordRootHue, effectiveKey, KEYS, progressionChords } from './harmony';
 import { baseGenerationHarmony, sectionGenerationHarmony } from './project-harmony';
 import { sectionProject } from './section-context';

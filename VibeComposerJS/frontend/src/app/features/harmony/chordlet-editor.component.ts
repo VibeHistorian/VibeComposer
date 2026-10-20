@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { ProjectService } from '../../core/project/project.service';
 import { CHORD_SPICES, KEYS, chordKeyOverlap, chordRootHue, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
-import type { ArrangementSection } from '../../core/project/project.model';
+import type { ArrangementSection } from '../../core/project/arrangement.model';
 import { baseGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
 import { SCALE_DEFINITIONS } from '../../core/music/scales';

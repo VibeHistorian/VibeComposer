@@ -4,7 +4,7 @@ import { isPhrase } from './project-track-decoder';
 import { decodeProject, isProject } from './project-codec';
 import { formatProjectJson } from './project-json';
 import { encodeProjectStorage } from './project-storage';
-import { copyDefaultProject } from './project-defaults';
+import { copyDefaultProject, DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_TRACKS } from './project-defaults';
 import { projectLoadIssues } from './project-load-diagnostics';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
 import { isScaleMode } from '../music/scales';
@@ -14,16 +14,14 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { historyContent, preserveAudition, projectDiff } from './project-history';
 import { getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
 import { generateTrackPresence } from '../music/arrangement-generator';
-import type {
-  ArpeggioSettings, ArrangedPart, ArrangementSection, BassSettings, ChordSettings, CompositionTrack, DrumSettings,
-  MixChannelSettings, PhraseNote, SectionType, PartSettingsPatch, PartSettingsScope, MelodySettings,
-  LocalPartSettingsScope, PartWorkflowResult, InstrumentGenerationPolicy,
-  ArpeggioGenerationPolicy, TrackGenerationPolicyPatch,
-} from './project.model';
+import type { ArpeggioSettings, BassSettings, ChordSettings, DrumSettings, PartSettingsPatch, MelodySettings, MelodyGlobalSettings } from '../music/part-settings.model';
+import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
+import type { ArrangementSection, SectionType, SectionMusicalContext } from './arrangement.model';
+import type { CompositionTrack, MixChannelSettings } from './track.model';
+import type { PhraseNote } from '../music/phrase-note';
+import type { PartSettingsScope, LocalPartSettingsScope, PartWorkflowResult } from './part-settings-scope';
+import type { InstrumentGenerationPolicy, ArpeggioGenerationPolicy, TrackGenerationPolicyPatch } from '../music/generation-policy.model';
 import type { CompositionProject } from './project.model';
-import {
-  ARRANGED_PARTS, DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_TRACKS,
-} from './project.model';
 import { SectionTypeSettingsService } from './section-type-settings.service';
 import { copyPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS } from '../music/part-settings';
 import { JavaRandom } from '../music/java-random';
@@ -34,13 +32,11 @@ import { decodeHarmonySettings, DEFAULT_HARMONY_SETTINGS, type HarmonySettings }
 import { generateHarmony } from '../music/contextual-harmony';
 import { contextualRange } from '../music/contextual-randomizer';
 import { DEFAULT_MELODY_GLOBAL } from '../music/melody-global-settings';
-import type { MelodyGlobalSettings } from './project.model';
 import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolicy, rerollRoleSettings } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, decodeInstrumentPolicy, rerollInstruments } from '../music/instrument-generation';
 import { sectionDegrees, sectionProject, sectionValuesEqual, validSectionHarmony } from '../music/section-context';
 import { baseGenerationHarmony } from '../music/project-harmony';
 import { layOutTrackPhrase, phraseForTrack } from '../music/phrase';
-import type { SectionMusicalContext } from './project.model';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';

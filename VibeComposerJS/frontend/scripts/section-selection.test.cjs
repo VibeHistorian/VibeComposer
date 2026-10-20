@@ -37,7 +37,8 @@ function fixture() {
       'core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
       'core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
       'core/ui/workspace-ui.service': { WorkspaceUiService: 'ui' },
-      'core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'], SECTION_TYPES: [],
+      'core/project/arrangement.model': { SECTION_TYPES: [] },
+      'core/music/part-role': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'],
         PART_GENERATION_AVAILABLE: { melody: false, bass: true, chords: true, arpeggio: true, drums: true },
         tracksInRoleOrder: (tracks) => [...tracks].sort((left, right) =>
           ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(left.role) - ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(right.role)) },

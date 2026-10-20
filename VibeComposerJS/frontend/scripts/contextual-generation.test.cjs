@@ -36,7 +36,7 @@ test('contextual results reuse musical inputs and isolate callers while invalida
 });
 
 test('section presence toggles reuse contextual search for melody and dependent tracks', () => {
-  const { DEFAULT_PROJECT } = loadMusic('../project/project.model.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
   const { layOutTrackPhrase, phraseForTrack } = loadMusic('phrase.ts');
   const contextual = loadMusic('contextual-melody.ts');
   const { JavaRandom } = loadMusic('java-random.ts');

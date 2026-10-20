@@ -1,8 +1,10 @@
-import {
-  ARRANGED_PARTS, DEFAULT_PROJECT, DEFAULT_TRACKS, PART_TYPES, SECTION_TYPES,
-  type ArrangedPart, type ArrangementSection, type CompositionProject, type CompositionTrack,
-  type MelodyGlobalSettings, type PartSettingsPatch, type PhraseNote, type SectionMusicalContext, type SectionType,
-} from './project.model';
+import { ARRANGED_PARTS, PART_TYPES, type ArrangedPart } from '../music/part-role';
+import { DEFAULT_PROJECT, DEFAULT_TRACKS } from './project-defaults';
+import { SECTION_TYPES, type ArrangementSection, type SectionMusicalContext, type SectionType } from './arrangement.model';
+import type { CompositionProject } from './project.model';
+import type { CompositionTrack } from './track.model';
+import type { MelodyGlobalSettings, PartSettingsPatch } from '../music/part-settings.model';
+import type { PhraseNote } from '../music/phrase-note';
 import { PART_CONTROLS, decodePartPatch, partValuesEqual, settingsValues, validVelocityRange } from '../music/part-settings';
 import { CHORD_SPICES, chordPitches, getPitchClass, type ProgressionChord } from '../music/harmony';
 import { convertScalePitch, scaleNotes, type ScaleMode } from '../music/scales';

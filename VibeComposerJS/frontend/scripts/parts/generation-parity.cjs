@@ -193,7 +193,7 @@ test('P5e base skeleton, alternate roots/voicings and complete swapped Melody ph
   const { generateMelody } = load('core/music/melody-generator.ts');
   const { inferMelodyChordDegrees, INFERENCE_CHORD_NAMES } = load('core/music/melody-chord-inference.ts');
   const { baseGenerationHarmony, projectMelodyHarmony } = load('core/music/project-harmony.ts');
-  const { DEFAULT_PROJECT } = load('core/project/project.model.ts');
+  const { DEFAULT_PROJECT } = load('core/project/project-defaults.ts');
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/harmony-inference.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   assert.equal(data.phrases.length, 96);
   for (const entry of data.phrases) {

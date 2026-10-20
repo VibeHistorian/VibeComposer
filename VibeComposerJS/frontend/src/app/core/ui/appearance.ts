@@ -1,4 +1,4 @@
-import { ARRANGED_PARTS, type ArrangedPart } from '../project/project.model';
+import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
 import { DEFAULT_THEME_COLORS, THEME_COLORS, type ThemeColors } from './theme';
 
 export const FONT_CHOICES = [

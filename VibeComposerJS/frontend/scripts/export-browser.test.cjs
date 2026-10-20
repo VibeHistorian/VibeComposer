@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
-const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project.model.ts');
+const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
 const browser = findBrowser();
 
 for (const width of [1440, 780]) test(`production export menu and offline Opus download at ${width}px`, { skip: !browser }, async () => {

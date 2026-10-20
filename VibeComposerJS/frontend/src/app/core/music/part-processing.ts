@@ -1,4 +1,5 @@
-import type { CommonPartSettings, PhraseNote, RhythmSettings } from '../project/project.model';
+import type { CommonPartSettings, RhythmSettings } from './part-settings.model';
+import type { PhraseNote } from './phrase-note';
 import { partRhythmMask } from './rhythm-pattern';
 import { partVelocityPattern } from './velocity-pattern';
 

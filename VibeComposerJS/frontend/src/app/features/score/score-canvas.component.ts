@@ -6,7 +6,8 @@ import type { Application as PixiApplication, Color as PixiColor, Graphics as Pi
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import type { PhraseSource } from '../../core/music/phrase';
 import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
-import type { ArrangedPart, PhraseNote } from '../../core/project/project.model';
+import type { ArrangedPart } from '../../core/music/part-role';
+import type { PhraseNote } from '../../core/music/phrase-note';
 import {
   canvasPoint, clampViewport, contentHeight, laneHeight, maxVerticalScale, pitchAt,
   scoreBeat, scoreHeight, scoreX, sectionViewport, VELOCITY_HEIGHT,

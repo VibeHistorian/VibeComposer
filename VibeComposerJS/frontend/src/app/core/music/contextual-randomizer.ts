@@ -1,6 +1,6 @@
 import { JavaRandom } from './java-random';
 import { chordPitches, getPitchClass, progressionChords, scaleNotes, type ProgressionChord, type ScaleMode } from './harmony';
-import type { MelodyGlobalSettings } from '../project/project.model';
+import type { MelodyGlobalSettings } from './part-settings.model';
 import { DEFAULT_MELODY_GLOBAL } from './melody-global-settings';
 
 export function contextualRange(seed: bigint): { rangeMin: number; rangeMax: number } {

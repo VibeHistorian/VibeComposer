@@ -1,4 +1,4 @@
-import type { MelodySettings, BassSettings, ChordSettings, ArpeggioSettings, DrumSettings } from './project.model';
+import type { MelodySettings, BassSettings, ChordSettings, ArpeggioSettings, DrumSettings } from '../music/part-settings.model';
 import { decodeCommonPartSettings, decodePartPatch, validVelocityRange } from '../music/part-settings';
 import { BASS_RHYTHMS, RHYTHM_PATTERNS } from '../music/rhythm-patterns';
 import { ARPEGGIO_PATTERNS } from '../music/arpeggio-pattern';

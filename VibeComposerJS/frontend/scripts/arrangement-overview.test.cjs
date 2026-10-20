@@ -26,7 +26,8 @@ function fixture(reactivity) {
     '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
     '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
-    '../../core/project/project.model': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
+    '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
+    '../../core/project/arrangement.model': { SECTION_TYPES: [] },
     '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
     '../../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes },
   };

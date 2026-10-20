@@ -1,4 +1,5 @@
-import type { ArrangedPart, SectionType } from './project.model';
+import type { ArrangedPart } from '../music/part-role';
+import type { SectionType } from './arrangement.model';
 
 export type SectionTypeChanceSettings = Readonly<Record<SectionType, Readonly<Record<ArrangedPart, number>>>>;
 

@@ -1,5 +1,6 @@
-import type { ArrangedPart, ArrangementSection, CompositionProject, SectionType } from './project.model';
-import { SECTION_TYPES } from './project.model';
+import type { ArrangedPart } from '../music/part-role';
+import { type ArrangementSection, type SectionType, SECTION_TYPES } from './arrangement.model';
+import type { CompositionProject } from './project.model';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { MAX_ARRANGEMENT_SECTIONS } from './project-arrangement-decoder';
 import { generateTrackPresence } from '../music/arrangement-generator';

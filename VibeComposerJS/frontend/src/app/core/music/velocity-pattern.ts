@@ -1,4 +1,4 @@
-import type { RhythmSettings } from '../project/project.model';
+import type { RhythmSettings } from './part-settings.model';
 
 /** Midpoint of the legacy default velocity bounds (69–89). */
 export const DEFAULT_CUSTOM_VELOCITIES: readonly number[] = Object.freeze(Array(32).fill(79));
