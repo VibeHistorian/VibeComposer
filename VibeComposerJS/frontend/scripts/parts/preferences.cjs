@@ -362,7 +362,7 @@ test('placement editing exposes dormant controls and partitions customized quick
   const quickKeys = quick.controls().map(control => control.key), inspectorKeys = inspector.controls().map(control => control.key);
   assert.ok(quickKeys.includes('feedbackCount')); assert.ok(inspectorKeys.includes('transpose'));
   assert.equal(quickKeys.some(key => inspectorKeys.includes(key)), false);
-  assert.deepEqual([...quickKeys, ...inspectorKeys].sort(), settings.PART_CONTROLS.bass.filter(control => !['patternFlip', 'fillFlip', 'customPattern'].includes(control.key)).map(control => control.key).sort());
+  assert.deepEqual([...quickKeys, ...inspectorKeys].sort(), settings.PART_CONTROLS.bass.filter(control => !['patternFlip', 'fillFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting'].includes(control.key)).map(control => control.key).sort());
   preferences.saveQuickSettings();
   assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
 });

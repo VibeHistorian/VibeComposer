@@ -9,7 +9,7 @@ import { partFillMask } from './chord-span-fill';
 import { velocityBounds } from './part-settings';
 import { mixContextualSeed } from './contextual-harmony';
 import { convertScalePitch } from './scales';
-import { melodyDurationBlocks } from './melody-durations';
+import { durationBlocks } from './durations';
 
 // TODO: Move Blocks (the seven catalogue percentages), Phrase Bars, Beats per Bar,
 // Pattern Effect and MIDI/Chord Target Mode to Settings > Melody.
@@ -79,11 +79,11 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   const overlapping = (slot: Slot) => events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
   const makeRhythm = (variant: number): Slot[] => {
     const slots: Slot[] = [];
-    if (settings.rhythm === 'custom') {
+    if (settings.rhythm === 'durations') {
       for (let chord = 0; chord < events.length; chord++) {
         const event = events[chord];
         const motif = motifs[chord % motifs.length];
-        const durations = melodyDurationBlocks(settings, Number(BigInt.asIntN(32, baseSeed)), chord,
+        const durations = durationBlocks(settings, Number(BigInt.asIntN(32, baseSeed)), chord,
           options.patternEffect !== 1 ? Math.max(0, Math.abs(motif) - 1) : -1).flat();
         let cursor = event.start, elapsed = 0;
         for (const value of durations) {

@@ -10,6 +10,9 @@ export type ChordVoicing = 'close' | 'open';
 export type ArpeggioRate = 'eighth' | 'sixteenth';
 
 export interface CommonPartSettings {
+  readonly customDurations?: import('./durations').Durations;
+  readonly customDurationChances?: readonly number[];
+  readonly customDurationRandomWeighting?: boolean;
   readonly patternSeed?: number;
   /** Thousandths of a beat, matching Java's noteMultiplier units at normal stretch. */
   readonly offset?: number;
@@ -42,10 +45,7 @@ export interface CommonPartSettings {
 /** Current block-generation part inputs; Java GUIConfig options have a separate global scope. */
 export interface MelodySettings extends CommonPartSettings {
   readonly algorithm: 'block';
-  readonly rhythm?: 'melody1' | 'custom';
-  readonly customMelodyDurations?: import('./melody-durations').MelodyDurations;
-  readonly customDurationChances?: readonly number[];
-  readonly customDurationRandomWeighting?: boolean;
+  readonly rhythm?: 'melody1' | 'durations';
   readonly speed?: number;
   readonly fillPauses?: boolean;
   readonly chordNoteChoices?: readonly number[];
@@ -149,7 +149,7 @@ export interface ChordSettings extends CommonPartSettings, RhythmSettings {
 }
 
 export interface ArpeggioSettings extends CommonPartSettings {
-  readonly rhythm?: RhythmPattern;
+  readonly rhythm?: RhythmPattern | 'durations';
   readonly pattern: ArpeggioPattern;
   readonly rate: ArpeggioRate;
   readonly octaves: 1 | 2;

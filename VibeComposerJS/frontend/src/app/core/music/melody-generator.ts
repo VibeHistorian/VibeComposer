@@ -18,7 +18,7 @@ import { startingMelodyTarget } from './melody-targets';
 import type { GenerationHarmony } from './harmony-voicing';
 import type { MelodySkeleton } from './melody-chord-inference';
 import { generateContextualMelody } from './contextual-melody';
-import { melodyDurationBlocks, melodyDurationError } from './melody-durations';
+import { durationBlocks, durationError } from './durations';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const DURATION_MULTIPLIER = 0.95; // MidiGenerator.RunOptions.defaults()
@@ -96,9 +96,9 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     publishSkeleton?.(result.skeleton);
     return result.notes;
   }
-  const customRhythm = settings.rhythm === 'custom';
-  if (customRhythm) {
-    const error = melodyDurationError(settings);
+  const usesDurations = settings.rhythm === 'durations';
+  if (usesDurations) {
+    const error = durationError(settings);
     if (error) throw new RangeError(error);
     // Supplied durations own their note/rest boundaries, including the first and last pauses.
     settings = { ...settings, splitChance: 0, leadChordsChance: 0, startNoteChance: 100, pauseChance: 0, fillPauses: false };
@@ -117,7 +117,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   const starting = (index: number) => startingMelodyTarget(roots, choices, index, globals.blockTargetMode);
   for (let chord = 0; chord < progression.length; chord++) {
     const originalOffset = structure[chord], offset = Math.max(0, Math.abs(originalOffset) - 1);
-    const customBlocks = customRhythm ? melodyDurationBlocks(settings, blockSeed, chord, globals.patternEffect !== 1 ? offset : -1) : undefined;
+    const customBlocks = usesDurations ? durationBlocks(settings, blockSeed, chord, globals.patternEffect !== 1 ? offset : -1) : undefined;
     const doubled = new JavaRandom(int(baseSeed + 3 + offset)).nextInt(100) < (settings.doubledRhythmChance ?? 0);
     let durations = customBlocks?.map(block => block.reduce((sum, value) => sum + Math.abs(value), 0))
       ?? (globals.patternEffect !== 1 ? rhythms.get(offset) : undefined);
@@ -126,7 +126,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       if (doubled) durations = [...durations, ...durations];
       rhythms.set(offset, durations);
     }
-    const first = starting(chord), next = starting(chord + 1), existing = customRhythm ? undefined : cache.get(offset);
+    const first = starting(chord), next = starting(chord + 1), existing = usesDurations ? undefined : cache.get(offset);
     let changes = existing && globals.patternEffect > 0 ? existing.changes
       : blockChangeSequence(first, next, blockSeed, durations.length, maxChange, globals.maxDirectionChanges);
     // Java stores the sequence's direction count alongside its unadjusted changes.
@@ -261,7 +261,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     const remaining = notes.filter((note) => !removed.has(note)), first = remaining[0];
     if (!first) return;
     if (fill[chord] && (first.midi >= 0 || globals.fillPausesPerChord)) first.midi = firstPitches[chord];
-    if (!customRhythm && remaining.length >= 3 && first.midi >= 0 && first.duration < 1.1
+    if (!usesDurations && remaining.length >= 3 && first.midi >= 0 && first.duration < 1.1
       && remaining[1].midi !== first.midi && remaining[2].midi !== first.midi) first.duration *= 1 + accent / 200;
   });
   delayMelodyStarts(byChord.map(notes => notes.filter(note => !removed.has(note))), settings, baseSeed);

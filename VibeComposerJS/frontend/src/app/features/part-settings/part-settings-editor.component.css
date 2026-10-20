@@ -41,9 +41,9 @@
 .rhythm-preview-grid { display: block; position: relative; }
 .rhythm-preview-slot { position: absolute; top: 3px; bottom: 3px; left: calc(3px + var(--step-index) * (100% - 6px) / var(--preview-steps)); width: calc((100% - 6px) / max(8, var(--preview-steps)) - 1px); background: var(--border-default); }
 .rhythm-preview-slot.active { background: var(--parameter-rhythm); }
-.melody-duration-preview { display: block; position: relative; }
-.melody-duration-preview > span:not(.mixed) { position: absolute; top: 3px; bottom: 3px; border-inline: 1px solid var(--surface-input); background: var(--border-default); }
-.melody-duration-preview > span.active { background: var(--parameter-rhythm); }
+.duration-preview { display: block; position: relative; }
+.duration-preview > span:not(.mixed) { position: absolute; top: 3px; bottom: 3px; border-inline: 1px solid var(--surface-input); background: var(--border-default); }
+.duration-preview > span.active { background: var(--parameter-rhythm); }
 .velocity-preview { display: flex; align-items: end; gap: 1px; }
 .velocity-preview > span { flex: 1; min-width: 0; background: var(--parameter-dynamics); }
 .mini-preview .mixed { grid-column: 1 / -1; font: 10px var(--font-ui); color: var(--text-muted); background: transparent; }

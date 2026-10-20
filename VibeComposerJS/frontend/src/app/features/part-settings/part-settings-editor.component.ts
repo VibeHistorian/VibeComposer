@@ -2,10 +2,10 @@ import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
-import { MelodyDurationsDialogComponent } from './melody-durations-dialog.component';
-import { melodyDurationPreview } from '../../core/music/melody-durations';
-import { validateMelodyDurationDraft } from '../../core/music/melody-duration-validation';
-import type { MelodySettings, ChordRhythm } from '../../core/music/part-settings.model';
+import { DurationsDialogComponent } from './durations-dialog.component';
+import { durationPreview } from '../../core/music/durations';
+import { validateDurationDraft } from '../../core/music/duration-validation';
+import type { CommonPartSettings, ChordRhythm } from '../../core/music/part-settings.model';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
@@ -47,13 +47,18 @@ export class PartSettingsEditorComponent {
   private readonly dialogs = inject(Dialog);
   readonly scope = input.required<PartSettingsScope>();
   openSequencer(velocities = false): void {
-    if (this.role() === 'melody') {
-      this.dialogs.open(MelodyDurationsDialogComponent, { ariaLabel: 'Custom melody durations', data: { scope: this.scope() } });
+    if (!velocities && (this.role() === 'melody' || this.usesDurations())) {
+      this.openDurations();
       return;
     }
     this.dialogs.open(PatternSequencerComponent, { ariaLabel: this.role() === 'drums' ? 'Drum pattern sequencer' : 'Pattern sequencer',
       data: { scope: this.scope(), role: this.role(), velocities, melodyHits: this.melodyHits() } });
   }
+  private openDurations(flipped?: boolean): void {
+    this.dialogs.open(DurationsDialogComponent, { ariaLabel: `Custom ${this.role()} durations`,
+      data: { scope: this.scope(), flipped } });
+  }
+  readonly usesDurations = computed(() => this.values()['rhythm'] === 'durations');
   readonly emptyAllowedValues: readonly number[] = [];
   readonly role = input.required<ArrangedPart>();
   readonly values = input.required<Readonly<Record<string, PartSettingValue | null>>>();
@@ -67,14 +72,15 @@ export class PartSettingsEditorComponent {
   readonly inheritRequested = output<string | readonly string[]>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
-    !['patternFlip', 'fillFlip', 'customPattern', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting'].includes(control.key) &&
+    !['patternFlip', 'fillFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting'].includes(control.key) &&
     (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)
       : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
     (this.preferences.editingQuickSettings() || (
-    (this.role() !== 'melody' || this.values()['rhythm'] !== 'custom'
+    (!this.usesDurations() || this.role() !== 'melody'
       || !['speed', 'doubledRhythmChance', 'pauseChance', 'fillPauses', 'splitChance', 'leadChordsChance', 'startNoteChance'].includes(control.key)) &&
     (this.role() !== 'melody' || !this.projects.project().melodyGlobal?.contextualMelody
       || !['fillPauses', 'patternFlexible', 'doubledRhythmChance', 'maxNoteExceptions', 'noteExceptionChance'].includes(control.key)) &&
+    (!this.usesDurations() || this.role() === 'melody' || !['patternShift', 'chordSpan', 'patternRepeat', 'patternJoinMode', 'euclideanPulses', 'useCustomVelocities', 'customVelocities', 'pauseChance', 'exceptionChance', ...(this.role() === 'bass' ? ['hitsPerPattern'] : [])].includes(control.key)) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&
     (control.key !== 'arpPatternCustom' || this.values()['pattern'] === 'custom' || this.values()['pattern'] === null) &&
@@ -84,7 +90,7 @@ export class PartSettingsEditorComponent {
     (control.key !== 'euclideanPulses' || this.values()['rhythm'] === 'euclid' || this.values()['rhythm'] === null)
     && (control.key !== 'customPattern' || this.values()['rhythm'] !== 'melody' || this.role() === 'drums')
     && (control.key !== 'customVelocities' || this.values()['useCustomVelocities'] === true)
-    && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true
+    && (!['velocityMin', 'velocityMax'].includes(control.key) || this.values()['useCustomVelocities'] !== true || this.usesDurations()
       || (this.values()['rhythm'] === 'melody' && this.melodyHits() > 32)
       || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1'))))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
@@ -98,7 +104,7 @@ export class PartSettingsEditorComponent {
     return (values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES).slice(0, values['rhythm'] === 'melody' ? this.melodyHits() : values['hitsPerPattern'] as number ?? 8);
   });
   readonly rhythmPreview = computed(() => {
-    if (this.role() === 'melody' || this.values()['rhythm'] === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1')) return undefined;
+    if (this.usesDurations() || this.role() === 'melody' || this.values()['rhythm'] === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1')) return undefined;
     const values = this.values();
     const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
       ...(values['rhythm'] === 'euclid' ? ['euclideanPulses'] : []),
@@ -111,10 +117,11 @@ export class PartSettingsEditorComponent {
       euclideanPulses: values['euclideanPulses'] as number | undefined,
       customPattern: values['customPattern'] as readonly number[] | undefined });
   });
-  readonly melodyPreview = computed(() => {
-    if (this.role() !== 'melody' || this.values()['rhythm'] !== 'custom') return undefined;
-    if (this.values()['customMelodyDurations'] === null || this.values()['patternFlip'] === null) return null;
-    return melodyDurationPreview(this.values() as unknown as MelodySettings);
+  readonly durationPreview = computed(() => {
+    if (!this.usesDurations()) return undefined;
+    if (['customDurations', 'patternFlip', 'customDurationChances', 'customDurationRandomWeighting']
+      .some(key => this.values()[key] === null)) return null;
+    return durationPreview(this.values() as unknown as CommonPartSettings);
   });
   readonly rhythmPreviewLabel = computed(() => {
     const pattern = this.rhythmPreview();
@@ -131,7 +138,7 @@ export class PartSettingsEditorComponent {
   }
 
   flipControl(control: PartControl): PartControl | undefined {
-    if (control.key === 'rhythm' && this.role() === 'melody' && this.values()['rhythm'] !== 'custom') return undefined;
+    if (control.key === 'rhythm' && this.role() === 'melody' && !this.usesDurations()) return undefined;
     if (control.key === 'rhythm' && this.role() === 'bass' && this.values()['rhythm'] === 'bass1'
         && !this.preferences.editingQuickSettings()) return undefined;
     const key = combinedControlKeys(control.key)[1];
@@ -140,9 +147,9 @@ export class PartSettingsEditorComponent {
 
   toggleFlip(control: PartControl): void {
     const value = this.values()[control.key] !== true;
-    if (this.role() === 'melody' && control.key === 'patternFlip'
-      && validateMelodyDurationDraft(this.projects.project(), this.scope(), { patternFlip: value })) {
-      this.dialogs.open(MelodyDurationsDialogComponent, { ariaLabel: 'Custom melody durations', data: { scope: this.scope(), flipped: value } });
+    if (this.usesDurations() && control.key === 'patternFlip'
+      && validateDurationDraft(this.projects.project(), this.scope(), { patternFlip: value })) {
+      this.openDurations(value);
       return;
     }
     this.settingsChanged.emit({ key: control.key, value });
@@ -175,10 +182,10 @@ export class PartSettingsEditorComponent {
   choose(control: PartControl, event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     if (value === '') return;
-    if (this.role() === 'melody' && control.key === 'rhythm' && value === 'custom'
-      && validateMelodyDurationDraft(this.projects.project(), this.scope(), { rhythm: 'custom' })) {
+    if (control.key === 'rhythm' && value === 'durations'
+      && validateDurationDraft(this.projects.project(), this.scope(), { rhythm: 'durations' })) {
       (event.target as HTMLSelectElement).value = String(this.values()[control.key] ?? 'melody1');
-      this.openSequencer();
+      this.openDurations();
       return;
     }
     this.settingsChanged.emit({ key: control.key, value: typeof control.options?.[0] === 'number' ? Number(value) : value });

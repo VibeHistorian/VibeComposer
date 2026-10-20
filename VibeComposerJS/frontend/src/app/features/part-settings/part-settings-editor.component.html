@@ -68,10 +68,10 @@
                     (click)="toggleFlip(flip)"><span aria-hidden="true">↔</span></button>
                 }
                 </div>
-                @if (control.key === 'rhythm' && role() === 'melody' && values()['rhythm'] === 'custom') {
-                  <button type="button" class="mini-preview melody-duration-preview" aria-label="Edit custom melody durations" aria-haspopup="dialog"
-                    title="First active lane. Edit melody note lengths and pauses." (click)="openSequencer()">
-                    @if (melodyPreview(); as slots) {
+                @if (control.key === 'rhythm' && usesDurations()) {
+                  <button type="button" class="mini-preview duration-preview" [attr.aria-label]="'Edit custom ' + role() + ' durations'" aria-haspopup="dialog"
+                    title="First active lane. Edit note lengths and pauses." (click)="openSequencer()">
+                    @if (durationPreview(); as slots) {
                       @for (slot of slots; track $index) {
                         <span [class.active]="!slot.rest" [style.left.%]="slot.start / 4 * 100" [style.width.%]="slot.duration / 4 * 100" aria-hidden="true"></span>
                       }

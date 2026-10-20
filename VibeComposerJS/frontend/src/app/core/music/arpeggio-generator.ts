@@ -1,6 +1,7 @@
 import type { ArpeggioSettings } from './part-settings.model';
 import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
+import { durationBlocks } from './durations';
 import { decodePartPatch, velocityBounds } from './part-settings';
 import { partFillMask } from './chord-span-fill';
 import { effectivePartSeed, spannedPattern, spannedVelocities, expandedVoices } from './part-processing';
@@ -28,10 +29,11 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     || !['eighth', 'sixteenth'].includes(settings.rate) || ![1, 2].includes(settings.octaves)
     || !decodePartPatch('arpeggio', settings)) throw new RangeError('Arps settings are outside the supported range.');
   const follows = settings.rhythm === 'melody';
-  const rhythmSettings = { ...settings, rhythm: settings.rhythm ?? 'full' as const,
+  const usesDurations = settings.rhythm === 'durations';
+  const rhythmSettings = { ...settings, rhythm: settings.rhythm === 'durations' ? 'full' as const : settings.rhythm ?? 'full' as const,
     hitsPerPattern: follows ? progression.length * 16 : settings.hitsPerPattern ?? (settings.rate === 'eighth' ? 8 : 16),
-    chordSpan: follows ? progression.length : settings.chordSpan ?? 1,
-    patternRepeat: follows ? 1 : settings.patternRepeat ?? 1 };
+    chordSpan: follows ? progression.length : usesDurations ? 1 : settings.chordSpan ?? 1,
+    patternRepeat: follows || usesDurations ? 1 : settings.patternRepeat ?? 1 };
   const span = rhythmSettings.chordSpan, hits = rhythmSettings.hitsPerPattern, repeat = rhythmSettings.patternRepeat;
   const signedSeed = effectivePartSeed(seed, settings);
   const random = (offset: number) => new JavaRandom(BigInt.asIntN(32, signedSeed + BigInt(orderOffset - 1) + BigInt(offset)));
@@ -73,12 +75,15 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     const pattern = follows ? (melody?.pitches[chordIndex] ?? Array<number>(16).fill(0))
       .map(value => settings.patternFlip ? value > 0 ? 0 : 1 : value)
       : spannedPattern(rhythmSettings, chordIndex, true, pauses);
-    const custom = follows && hits > 32 ? undefined : spannedVelocities(rhythmSettings, chordIndex, true);
+    const custom = usesDurations || follows && hits > 32 ? undefined : spannedVelocities(rhythmSettings, chordIndex, true);
     const rate = follows ? 0.25 : 4 / (hits * repeat);
     const contour = settings.arpContour ?? [], interval = Math.max(Math.floor(hits * repeat / contour.length), 1);
     const melodyPitches = melody?.pitches[chordIndex];
     let lastMelodyIndex = 0;
-    for (let step = 0, time = 0; time + 1e-9 < 4; step++, time += rate) {
+    const durations = usesDurations ? durationBlocks(settings, Number(signedSeed), chordIndex).flat() : undefined;
+    let time = 0;
+    for (let step = 0; time + 1e-9 < 4; step++) {
+      const stepDuration = durations ? Math.abs(durations[step]) : rate;
       const pulse = step % pitchPattern.length, index = pitchPattern[pulse];
       let pitch = chordNote(index, pitches);
       const spannedPulse = chordIndex % span * (follows ? 16 : hits * repeat) + step;
@@ -90,7 +95,7 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
       if (settings.useOctaveAdjustments && pitch >= 0) pitch += (index < 2 ? -12 : index < 6 ? 0 : 12) + octavePattern[pulse];
       if (settings.correctMelodyNotes && melody?.available !== false && melodyPitches?.length && pitch >= 0) {
         const melodyPitch = melodyPitches[lastMelodyIndex];
-        lastMelodyIndex = Math.round((time + rate) / (4 / melodyPitches.length));
+        lastMelodyIndex = Math.round((time + stepDuration) / (4 / melodyPitches.length));
         if (melodyPitch !== undefined) {
           const distance = Math.abs(melodyPitch % 12 - pitch % 12);
           if (Math.min(distance, 12 - distance) === 1) pitch = pitch - pitch % 12 + melodyPitch % 12
@@ -98,15 +103,16 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
         }
       }
       const velocity = custom ? custom[step % custom.length] : velocities.nextInt(maximum - minimum + 1) + minimum;
-      const active = !!fill[chordIndex] && pattern[step % pattern.length] > 0 && velocity > 0 && pitch >= 0;
-      const split = exceptions.nextInt(100) < (settings.exceptionChance ?? 0) && active;
-      const duration = Math.min(rate, 4 - time) / (split ? 2 : 1);
-      timeline.push({ midi: active ? pitch : -1, rhythm: duration, duration: duration * span, velocity, chordIndex });
+      const active = !!fill[chordIndex] && (durations ? durations[step] > 0 : pattern[step % pattern.length] > 0) && velocity > 0 && pitch >= 0;
+      const split = exceptions.nextInt(100) < (usesDurations ? 0 : settings.exceptionChance ?? 0) && active;
+      const duration = Math.min(stepDuration, 4 - time) / (split ? 2 : 1);
+      timeline.push({ midi: active ? pitch : -1, rhythm: duration, duration: duration * (usesDurations ? 1 : span), velocity, chordIndex });
       if (split) {
         const next = chordNote(pitchPattern[(pulse + 1) % pitchPattern.length], pitches);
         const second = next < 0 ? pitch : closestMajorPitch(Math.trunc((pitch + next) / 2));
         timeline.push({ midi: second, rhythm: duration, duration: duration * span, velocity: Math.max(0, velocity - 15), chordIndex });
       }
+      time += stepDuration;
     }
   });
   swingNotes(timeline, hits % 2 === 0 ? settings.swingPercent ?? 50 : 50);

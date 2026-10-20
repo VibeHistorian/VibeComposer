@@ -1300,10 +1300,10 @@ test('custom melody durations copy nested lanes, persist every scope, group inhe
   const sectionId = service.project().arrangement[0].id, trackId = 'track-melody-1';
   const rows = [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])];
   const scope = { kind: 'section-track', sectionId, trackId };
-  const patch = { rhythm: 'custom', patternFlip: true, customMelodyDurations: rows, customDurationChances: Array(10).fill(50), customDurationRandomWeighting: false };
+  const patch = { rhythm: 'durations', patternFlip: true, customDurations: rows, customDurationChances: Array(10).fill(50), customDurationRandomWeighting: false };
   service.updatePartSettings(scope, patch);
   rows[0][0] = 2;
-  assert.equal(service.project().arrangement[0].trackPartOverrides[trackId].customMelodyDurations[0][0], 1);
+  assert.equal(service.project().arrangement[0].trackPartOverrides[trackId].customDurations[0][0], 1);
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   assert.deepEqual(projectData(service.exportProjectJson()), projectData(saved));
@@ -1314,24 +1314,26 @@ test('custom melody durations copy nested lanes, persist every scope, group inhe
   assert.deepEqual(projectData(service.exportProjectJson()), projectData(saved));
   const { decodePartPatch, copyPartSettings, partValuesEqual } = load('core/music/part-settings.ts');
   const copy = copyPartSettings(patch);
-  assert.ok(partValuesEqual(patch.customMelodyDurations, copy.customMelodyDurations));
-  copy.customMelodyDurations[0][0] = 3;
-  assert.equal(patch.customMelodyDurations[0][0], 2);
+  assert.ok(partValuesEqual(patch.customDurations, copy.customDurations));
+  copy.customDurations[0][0] = 3;
+  assert.equal(patch.customDurations[0][0], 2);
   for (const invalid of [[[0], ...rows.slice(1)], [[5], ...rows.slice(1)], [[NaN], ...rows.slice(1)], [[Infinity], ...rows.slice(1)], [[3, 2], ...rows.slice(1)], rows.slice(1)])
-    assert.equal(decodePartPatch('melody', { customMelodyDurations: invalid }), undefined);
+    assert.equal(decodePartPatch('melody', { customDurations: invalid }), undefined);
   assert.equal(decodePartPatch('melody', { customDurationChances: [50] }), undefined);
-  assert.equal(decodePartPatch('bass', { customMelodyDurations: rows }), undefined);
+  assert.equal(decodePartPatch('melody', { rhythm: 'custom' }), undefined);
+  for (const role of ['melody', 'bass', 'arpeggio']) assert.deepEqual(decodePartPatch(role, { rhythm: 'durations' }), { rhythm: 'durations' });
+  assert.equal(decodePartPatch('chords', { customDurations: rows }), undefined);
 });
 
 test('duration popup dry runs all lanes against contextual range and harmony without changing project or history', () => {
   const { service, load } = fixture();
-  const { validateMelodyDurationDraft } = load('core/music/melody-duration-validation.ts');
+  const { validateDurationDraft } = load('core/music/duration-validation.ts');
   const scope = { kind: 'global-track', trackId: 'track-melody-1' };
-  const patch = { rhythm: 'custom', customMelodyDurations: [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])] };
+  const patch = { rhythm: 'durations', customDurations: [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])] };
   const before = service.exportProjectJson(), history = service.historyPosition();
-  assert.equal(validateMelodyDurationDraft(service.project(), scope, patch), null);
+  assert.equal(validateDurationDraft(service.project(), scope, patch), null);
   const project = { ...service.project(), melodyGlobal: { contextualMelody: true, rangeMin: 60, rangeMax: 60 } };
-  assert.match(validateMelodyDurationDraft(project, scope, patch), /No contextual melody/);
+  assert.match(validateDurationDraft(project, scope, patch), /No contextual melody/);
   assert.equal(service.exportProjectJson(), before); assert.equal(service.historyPosition(), history);
 });
 
@@ -1341,7 +1343,7 @@ test('group melody duration edits preserve independent pitch settings and sectio
   const sectionId = service.project().arrangement[0].id;
   service.updatePartSettings({ kind: 'global-track', trackId: second }, { transpose: 12, patternSeed: 123 });
   service.updatePartSettings({ kind: 'section-track', sectionId, trackId: second }, { chordNoteChoices: [4, 0] });
-  const patch = { rhythm: 'custom', customMelodyDurations: [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])] };
+  const patch = { rhythm: 'durations', customDurations: [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])] };
   service.updatePartSettings({ kind: 'global-role', role: 'melody' }, patch);
   const tracks = service.project().tracks.filter(track => track.role === 'melody');
   assert.equal(tracks[0].generatorSettings.transpose, undefined);
@@ -1349,17 +1351,17 @@ test('group melody duration edits preserve independent pitch settings and sectio
   assert.equal(tracks[1].generatorSettings.patternSeed, 123);
   assert.deepEqual(service.project().arrangement[0].trackPartOverrides[second].chordNoteChoices, [4, 0]);
   preferences.beginQuickSettings();
-  preferences.moveControl('melody', 'customMelodyDurations');
-  for (const key of ['rhythm', 'patternFlip', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting']) assert.equal(preferences.quickSettings().melody.includes(key), false);
+  preferences.moveControl('melody', 'customDurations');
+  for (const key of ['rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting']) assert.equal(preferences.quickSettings().melody.includes(key), false);
   preferences.moveControl('melody', 'rhythm');
-  for (const key of ['rhythm', 'patternFlip', 'customMelodyDurations', 'customDurationChances', 'customDurationRandomWeighting']) assert.equal(preferences.quickSettings().melody.includes(key), true);
+  for (const key of ['rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting']) assert.equal(preferences.quickSettings().melody.includes(key), true);
 });
 
 test('melody duration drawing and validation stay in the draft, save once, and reject stale project state', async () => {
   const scope = { kind: 'global-track', trackId: 'track-melody-1' };
   const { service, load } = fixture({ dialogData: { scope } });
-  const { MelodyDurationsDialogComponent } = load('features/part-settings/melody-durations-dialog.component.ts');
-  const popup = new MelodyDurationsDialogComponent();
+  const { DurationsDialogComponent } = load('features/part-settings/durations-dialog.component.ts');
+  const popup = new DurationsDialogComponent();
   let closed = false; popup.dialog.close = () => { closed = true; };
   const before = service.exportProjectJson(), position = service.historyPosition();
   const area = { getBoundingClientRect: () => ({ left: 0, width: 400 }), setPointerCapture() {} };
@@ -1376,7 +1378,7 @@ test('melody duration drawing and validation stay in the draft, save once, and r
   assert.equal(popup.canSave(), true);
   assert.equal(service.exportProjectJson(), before); assert.equal(service.historyPosition(), position);
   popup.save(); assert.equal(closed, true); assert.equal(service.historyPosition(), position + 1);
-  const stale = new MelodyDurationsDialogComponent();
+  const stale = new DurationsDialogComponent();
   stale.editRow(0, '0.5, -0.5, 1, -2'); stale.validate();
   service.updateSettings({ name: 'Changed while editing durations' });
   await new Promise(done => setTimeout(done, 5));
@@ -2343,4 +2345,54 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
   assert.equal(popup.rows().find(row => row.id === first).hits, 4);
   popup.patch(first, { rhythm: 'melody' });
   assert.equal(popup.canMultiplyHits(), false);
+});
+
+for (const role of ['bass', 'arpeggio']) {
+  test(role + ' durations preserve signed timing, lanes, scoped inheritance, undo and JSON restoration', () => {
+    const { service, load, phrase } = fixture();
+    const track = service.project().tracks.find(track => track.role === role);
+    const scope = { kind: 'global-track', trackId: track.id };
+    const rows = [[0.5, -0.5, 1, -2], [2, -1, 1], ...Array.from({length: 8}, () => [])];
+    const patch = { rhythm: 'durations', customDurations: rows, customDurationRandomWeighting: false,
+      patternFlip: false, chordSpanFill: 'ALL', fillFlip: false, noteLengthMultiplier: 100, ...(role === 'arpeggio' ? { swingPercent: 50 } : {}) };
+    const { validateDurationDraft } = load('core/music/duration-validation.ts');
+    assert.equal(validateDurationDraft(service.project(), scope, patch), null);
+    const position = service.historyPosition();
+    service.updatePartSettings(scope, patch);
+    assert.equal(service.historyPosition(), position + 1);
+    const current = () => service.project().tracks.find(candidate => candidate.id === track.id);
+    const notes = () => phrase.generateTrackPhrase(service.project(), current());
+    const timing = notes().filter(note => note.startBeat < 8).map(note => [note.startBeat, note.durationBeats]);
+    assert.deepEqual(timing, [[0, 0.5], [1, 1], [4, 2], [7, 1]]);
+    assert.deepEqual(notes(), notes(), 'seeded output is repeatable');
+    service.undo(); assert.notEqual(current().generatorSettings.rhythm, 'durations');
+    service.redo(); assert.deepEqual(notes().filter(note => note.startBeat < 8).map(note => [note.startBeat, note.durationBeats]), timing);
+    const sectionId = service.project().arrangement[0].id;
+    const local = { kind: 'section-role', sectionId, role };
+    assert.equal(validateDurationDraft(service.project(), local, { customDurations: [[-4], ...Array.from({length: 9}, () => [])] }).includes('only pauses'), true);
+    service.updatePartSettings(local, { customDurations: [[1, -3], ...Array.from({length: 9}, () => [])] });
+    assert.deepEqual(current().generatorSettings.customDurations, rows, 'local edits preserve base');
+    const saved = service.exportProjectJson();
+    assert.equal(service.importProjectJson(saved), true);
+    assert.equal(current().generatorSettings.rhythm, 'durations');
+    assert.deepEqual(current().generatorSettings.customDurations, rows);
+  });
+}
+
+test('bass and arp duration selection honors weights and flip while ignoring stored grid shaping', () => {
+  const { load } = fixture();
+  const { generateBassline } = load('core/music/bass-generator.ts');
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const common = { rhythm: 'durations', customDurations: [[1, -1, 1, -1], [0.5, -0.5, 1, -2], ...Array.from({length:8},()=>[])],
+    customDurationRandomWeighting: true, customDurationChances: [0, 100, ...Array(8).fill(0)],
+    patternFlip: true, chordSpan: 4, patternShift: 3, customPattern: Array(32).fill(0),
+    useCustomVelocities: true, customVelocities: Array(32).fill(0), velocityMin: 80, velocityMax: 80 };
+  const bass = { ...common, noteVariation: 0, octaveInterval: false, patternJoinMode: 'JOIN' };
+  const arp = { ...common, patternRepeat: 4, pattern: 'up', rate: 'eighth', octaves: 1, swingPercent: 50, pauseChance: 100, exceptionChance: 100 };
+  for (const generate of [()=>generateBassline(42n,'C','major',[1,4], 'durations',0,bass),
+    ()=>generateArpeggio(42n,'C','major',[1,4],arp)]) {
+    const notes=generate();
+    assert.deepEqual(notes.map(note=>[note.startBeat,note.durationBeats]),[[0.5,0.5],[2,2],[4.5,0.5],[6,2]]);
+    assert.ok(notes.every(note=>note.velocity===80));
+  }
 });

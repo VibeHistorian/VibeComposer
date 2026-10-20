@@ -1,37 +1,38 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import type { MelodySettings } from '../../core/music/part-settings.model';
+import type { CommonPartSettings, PartSettingsPatch } from '../../core/music/part-settings.model';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { ProjectService } from '../../core/project/project.service';
 import { resolvePartTrack } from '../../core/music/part-settings';
-import { DEFAULT_DURATION_CHANCES, DEFAULT_MELODY_DURATIONS, melodyDurationError, paddedMelodyDurations } from '../../core/music/melody-durations';
-import { validateMelodyDurationDraft } from '../../core/music/melody-duration-validation';
+import { DEFAULT_DURATION_CHANCES, DEFAULT_DURATIONS, durationError, paddedDurations } from '../../core/music/durations';
+import { validateDurationDraft } from '../../core/music/duration-validation';
 
 @Component({
-  selector: 'vc-melody-durations-dialog',
-  templateUrl: './melody-durations-dialog.component.html',
-  styleUrl: './melody-durations-dialog.component.css',
+  selector: 'vc-durations-dialog',
+  templateUrl: './durations-dialog.component.html',
+  styleUrl: './durations-dialog.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MelodyDurationsDialogComponent {
+export class DurationsDialogComponent {
   readonly data = inject<{ scope: PartSettingsScope; flipped?: boolean }>(DIALOG_DATA);
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
   private readonly initialProject = this.projects.project();
   private readonly section = 'sectionId' in this.data.scope ? this.initialProject.arrangement.find(section => section.id === (this.data.scope as { sectionId: string }).sectionId) : undefined;
-  private readonly tracks = this.initialProject.tracks.filter(track => track.role === 'melody' && (!('trackId' in this.data.scope) || track.id === this.data.scope.trackId));
-  private readonly initial = resolvePartTrack(this.tracks[0], this.section).generatorSettings as MelodySettings;
+  readonly role = 'role' in this.data.scope ? this.data.scope.role : this.initialProject.tracks.find(track => track.id === (this.data.scope as { trackId: string }).trackId)!.role;
+  private readonly tracks = this.initialProject.tracks.filter(track => track.role === this.role && (!('trackId' in this.data.scope) || track.id === this.data.scope.trackId));
+  private readonly initial = resolvePartTrack(this.tracks[0], this.section).generatorSettings as CommonPartSettings;
   readonly trackCount = this.tracks.length;
-  readonly texts = signal((this.initial.customMelodyDurations ?? DEFAULT_MELODY_DURATIONS).map(row => row.join(', ')));
+  readonly texts = signal((this.initial.customDurations ?? DEFAULT_DURATIONS).map(row => row.join(', ')));
   readonly chances = signal([...(this.initial.customDurationChances ?? DEFAULT_DURATION_CHANCES)]);
   readonly weighted = signal(this.initial.customDurationRandomWeighting ?? false);
   readonly flipped = signal(this.data.flipped ?? this.initial.patternFlip ?? false);
   readonly grid = signal(0.25);
   readonly tool = signal<'note' | 'rest'>('note');
   readonly rows = computed(() => this.texts().map(text => text.trim() ? text.split(',').map(value => value.trim() ? Number(value) : NaN) : []));
-  readonly patch = computed<Partial<MelodySettings>>(() => ({ rhythm: 'custom', customMelodyDurations: this.rows(),
+  readonly patch = computed<PartSettingsPatch>(() => ({ rhythm: 'durations', customDurations: this.rows(),
     customDurationChances: this.chances(), customDurationRandomWeighting: this.weighted(), patternFlip: this.flipped() }));
-  readonly error = computed(() => melodyDurationError({ ...this.initial, ...this.patch() }));
+  readonly error = computed(() => durationError({ ...this.initial, ...this.patch() }));
   readonly stale = computed(() => this.projects.project() !== this.initialProject);
   readonly checked = signal<{ draft: string; error: string | null } | null>(null);
   readonly checking = signal(false);
@@ -43,7 +44,7 @@ export class MelodyDurationsDialogComponent {
   readonly displayRows = computed(() => this.rows().map(row => {
     if (!row.length || row.some(value => !Number.isFinite(value) || value === 0) || row.reduce((sum, value) => sum + Math.abs(value), 0) > 4.0000001) return [];
     let start = 0;
-    return paddedMelodyDurations(row, this.flipped()).map(value => {
+    return paddedDurations(row, this.flipped()).map(value => {
       const slot = { start, duration: Math.abs(value), rest: value < 0 }; start += slot.duration; return slot;
     });
   }));
@@ -80,7 +81,7 @@ export class MelodyDurationsDialogComponent {
     const left = Math.min(gesture.start, gesture.end) * this.grid(), right = (Math.max(gesture.start, gesture.end) + 1) * this.grid();
     const before: number[] = [], after: number[] = [];
     let time = 0;
-    for (const value of paddedMelodyDurations(gesture.original)) {
+    for (const value of paddedDurations(gesture.original)) {
       const end = time + Math.abs(value), sign = Math.sign(value);
       if (time < left) before.push(sign * (Math.min(left, end) - time));
       if (end > right) after.push(sign * (end - Math.max(time, right)));
@@ -95,7 +96,7 @@ export class MelodyDurationsDialogComponent {
     const draft = this.fingerprint(), patch = this.patch();
     // Give the popup a render before running the bounded generator checks.
     setTimeout(() => {
-      try { this.checked.set({ draft, error: validateMelodyDurationDraft(this.initialProject, this.data.scope, patch) }); }
+      try { this.checked.set({ draft, error: validateDurationDraft(this.initialProject, this.data.scope, patch) }); }
       catch (error) { this.checked.set({ draft, error: error instanceof Error ? error.message : 'Cannot generate these durations.' }); }
       finally { this.checking.set(false); }
     }, 0);

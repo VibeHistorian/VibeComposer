@@ -3,13 +3,13 @@ import type { ArrangementSection } from '../project/arrangement.model';
 import type { CommonPartSettings, PartSettingsPatch } from './part-settings.model';
 import type { CompositionTrack } from '../project/track.model';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
-import { BASS_RHYTHMS, RHYTHM_PATTERNS, MELODY_RHYTHMS } from './rhythm-patterns';
+import { BASS_RHYTHMS, ARPEGGIO_RHYTHMS, RHYTHM_PATTERNS, MELODY_RHYTHMS } from './rhythm-patterns';
 import { DEFAULT_CUSTOM_VELOCITIES, isVelocityPattern } from './velocity-pattern';
 import { STRUM_TYPES } from './chord-strum';
 import { ARPEGGIO_PATTERNS } from './arpeggio-pattern';
-import { DEFAULT_MELODY_DURATIONS, DEFAULT_DURATION_CHANCES, isMelodyDurations, type MelodyDurations } from './melody-durations';
+import { DEFAULT_DURATIONS, DEFAULT_DURATION_CHANCES, isDurations, type Durations } from './durations';
 
-export type PartSettingValue = string | number | boolean | readonly number[] | MelodyDurations;
+export type PartSettingValue = string | number | boolean | readonly number[] | Durations;
 
 export interface PartControl {
   readonly key: string;
@@ -79,16 +79,20 @@ const common: readonly PartControl[] = [
   { ...number('feedbackVol', 'FB velocity', 10, 150, 65), advanced: true },
 ];
 
+const durationControls: readonly PartControl[] = [
+  { key: 'customDurations', label: 'Custom durations', kind: 'durations', defaultValue: DEFAULT_DURATIONS },
+  { key: 'customDurationChances', label: 'Duration chances', kind: 'integers', minimum: 0, maximum: 100, defaultValue: DEFAULT_DURATION_CHANCES },
+  { key: 'customDurationRandomWeighting', label: 'Weighted durations', kind: 'boolean', defaultValue: false },
+];
+
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [...fill,
-    { ...choice('rhythm', 'Rhythm pattern', ['melody1', 'custom']), defaultValue: 'melody1',
-      description: 'melody1 uses the generated melody rhythm. Custom supplies note lengths and pauses from the duration editor.' },
+    { ...choice('rhythm', 'Rhythm pattern', ['melody1', 'durations']), defaultValue: 'melody1',
+      description: 'melody1 uses the generated melody rhythm. Durations supplies note lengths and pauses from the duration editor.' },
     { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
-      description: 'Swap notes and pauses in custom melody durations.' },
-    { key: 'customMelodyDurations', label: 'Custom melody durations', kind: 'durations', defaultValue: DEFAULT_MELODY_DURATIONS },
-    { key: 'customDurationChances', label: 'Duration chances', kind: 'integers', minimum: 0, maximum: 100, defaultValue: DEFAULT_DURATION_CHANCES },
-    { key: 'customDurationRandomWeighting', label: 'Weighted durations', kind: 'boolean', defaultValue: false },
+      description: 'Swap notes and pauses in custom durations.' },
+    ...durationControls,
     number('speed', 'Speed', -100, 100, 50, ''),
     { key: 'fillPauses', label: 'Fill pauses', kind: 'boolean', defaultValue: false,
       description: 'Extend preceding notes through generated pauses. Fill determines which pauses add note duration.' },
@@ -117,7 +121,7 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     number('velocityMin', 'Min velocity', 1, 127, 80, ''), number('velocityMax', 'Max velocity', 1, 127, 105, ''),
     number('noteLengthMultiplier', 'Note length', 25, 200, 100),
     ...common],
-  bass: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: BASS_RHYTHMS, defaultValue: 'bass1' } : control), span,
+  bass: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: BASS_RHYTHMS, defaultValue: 'bass1' } : control), ...durationControls, span,
     number('noteVariation', 'Note variance', 0, 100, 20), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
     { ...choice('patternJoinMode', 'Pattern join', ['NOJOIN', 'EXPAND', 'JOIN']), defaultValue: 'NOJOIN', advanced: true,
       description: 'Grid rhythms only. NOJOIN keeps subdivisions; EXPAND sustains through rests; JOIN sustains through consecutive hits and suppresses their retriggers. Java also looks into the next chord within a Span group, before its flip/fill. Omission retains NOJOIN in this translation.' },
@@ -136,7 +140,7 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     { ...number('transitionSplit', 'Transition split', 0, 1000, 625, ' /1000 chord'), advanced: true,
       description: 'Position within the current chord at which an activated transition can switch pitch. 625 means 62.5%; 0 starts immediately and 1000 leaves the chord unchanged.' },
     choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 200), ...pitched, ...common],
-  arpeggio: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: MELODY_RHYTHMS, defaultValue: 'full' } : control), span,
+  arpeggio: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: ARPEGGIO_RHYTHMS, defaultValue: 'full' } : control), ...durationControls, span,
     number('patternRepeat', 'Repeat', 1, 4, 1, ''), pause, split, swing, ...voices, choice('pattern', 'Pitch direction', ARPEGGIO_PATTERNS),
     number('arpPatternRotate', 'Rotate', 0, 8, 0, ''),
     { key: 'arpPatternCustom', label: 'Custom direction', kind: 'integers', minimum: -12, maximum: 12, defaultValue: [0, 1, 2], advanced: true,
@@ -208,7 +212,7 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
     if (control.kind === 'pattern' && (!Array.isArray(field) || field.length !== 32
       || Array.from(field).some((slot) => slot !== 0 && slot !== 1))) return undefined;
     if (control.kind === 'velocities' && !isVelocityPattern(field)) return undefined;
-    if (control.kind === 'durations' && !isMelodyDurations(field)) return undefined;
+    if (control.kind === 'durations' && !isDurations(field)) return undefined;
     if (key === 'customDurationChances' && (!Array.isArray(field) || field.length !== 10)) return undefined;
     if (control.kind === 'integers' && (!Array.isArray(field) || field.length < (control.allowEmpty ? 0 : 1) || field.length > 32
       || Array.from(field).some((slot) => !Number.isInteger(slot) || slot < control.minimum! || slot > control.maximum!))) return undefined;

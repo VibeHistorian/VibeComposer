@@ -791,7 +791,7 @@ test('custom melody durations preserve note/rest boundaries in both generators a
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
   const rows = [[1, -0.5, 0.5, 1, -1], ...Array.from({ length: 9 }, () => [])];
-  const settings = { algorithm: 'block', rhythm: 'custom', customMelodyDurations: rows };
+  const settings = { algorithm: 'block', rhythm: 'durations', customDurations: rows };
   for (const contextualMelody of [false, true]) for (const patternFlip of [false, true]) {
     const notes = generateMelody(42n, 'C', 'major', [1, 5, 6, 4], { ...settings, patternFlip }, 0, undefined, { contextualMelody });
     const starts = patternFlip ? [1, 3] : [0, 1.5, 2];
@@ -803,23 +803,23 @@ test('custom melody durations preserve note/rest boundaries in both generators a
     assert.deepEqual(fast.map(note => note.startBeat), notes.map(note => note.startBeat));
   }
   const normal = { algorithm: 'block', speed: 37 };
-  assert.deepEqual(generateMelody(9n, 'C', 'major', [1, 5], normal), generateMelody(9n, 'C', 'major', [1, 5], { ...normal, rhythm: 'melody1', patternFlip: true, customMelodyDurations: rows }));
+  assert.deepEqual(generateMelody(9n, 'C', 'major', [1, 5], normal), generateMelody(9n, 'C', 'major', [1, 5], { ...normal, rhythm: 'melody1', patternFlip: true, customDurations: rows }));
 });
 
 test('custom melody lanes pad, cycle by block identity, weight deterministically and validate every selectable lane', () => {
   const { load } = fixture();
-  const { melodyDurationBlocks, melodyDurationError, paddedMelodyDurations } = load('core/music/melody-durations.ts');
+  const { durationBlocks, durationError, paddedDurations } = load('core/music/durations.ts');
   const rows = [[1, -1], [], [0.5, -0.5, 1, -2], ...Array.from({ length: 7 }, () => [])];
-  const settings = { algorithm: 'block', rhythm: 'custom', customMelodyDurations: rows };
-  assert.deepEqual(paddedMelodyDurations(rows[0]), [1, -1, -2]);
-  assert.deepEqual(melodyDurationBlocks(settings, 42, 0, 0).flat(), [1, -1, -2]);
-  assert.deepEqual(melodyDurationBlocks(settings, 42, 0, 1).flat(), rows[2]);
+  const settings = { algorithm: 'block', rhythm: 'durations', customDurations: rows };
+  assert.deepEqual(paddedDurations(rows[0]), [1, -1, -2]);
+  assert.deepEqual(durationBlocks(settings, 42, 0, 0).flat(), [1, -1, -2]);
+  assert.deepEqual(durationBlocks(settings, 42, 0, 1).flat(), rows[2]);
   const chances = [0, 0, 100, ...Array(7).fill(0)];
-  for (let seed = 0; seed < 20; seed++) assert.deepEqual(melodyDurationBlocks({ ...settings, customDurationRandomWeighting: true, customDurationChances: chances }, seed, 0).flat(), rows[2]);
-  assert.match(melodyDurationError({ ...settings, customDurationRandomWeighting: true, customDurationChances: Array(10).fill(0) }), /positive chance/);
-  assert.match(melodyDurationError({ ...settings, customMelodyDurations: [[-4], ...rows.slice(1)] }), /Lane 1.*only pauses/);
-  assert.equal(melodyDurationError({ ...settings, customDurationRandomWeighting: true, customDurationChances: chances, customMelodyDurations: [[-4], ...rows.slice(1)] }), null);
-  assert.match(melodyDurationError({ ...settings, customMelodyDurations: [[4], ...Array.from({ length: 9 }, () => [])], patternFlip: true }), /after Flip/);
+  for (let seed = 0; seed < 20; seed++) assert.deepEqual(durationBlocks({ ...settings, customDurationRandomWeighting: true, customDurationChances: chances }, seed, 0).flat(), rows[2]);
+  assert.match(durationError({ ...settings, customDurationRandomWeighting: true, customDurationChances: Array(10).fill(0) }), /positive chance/);
+  assert.match(durationError({ ...settings, customDurations: [[-4], ...rows.slice(1)] }), /Lane 1.*only pauses/);
+  assert.equal(durationError({ ...settings, customDurationRandomWeighting: true, customDurationChances: chances, customDurations: [[-4], ...rows.slice(1)] }), null);
+  assert.match(durationError({ ...settings, customDurations: [[4], ...Array.from({ length: 9 }, () => [])], patternFlip: true }), /after Flip/);
 });
 
 test('all fill masks match the actual Java enum, including odd halves, flipped silence and repeated slots', () => {

@@ -22,7 +22,7 @@ Import contracts directly from their owner. `project.model.ts` defines the compl
 | `project/project.model.ts` | `CompositionProject`, composing the narrower contracts. |
 | `project/project-defaults.ts` | Project/track/part/mix/arrangement defaults and fresh project construction. |
 
-Rhythm, arpeggio and harmony vocabulary stays with its existing musical owner (`rhythm-patterns.ts`, `arpeggio-pattern.ts`, `harmony.ts`, etc.). Generator-specific defaults stay with their existing helpers, including `melody-global-settings.ts` and `track-generation.ts`. Low-level musical settings do not depend on project, track or section structures. Existing type-only relationships through `chord-span-fill.ts` and `melody-durations.ts` introduce no runtime cycles.
+Rhythm, arpeggio and harmony vocabulary stays with its existing musical owner (`rhythm-patterns.ts`, `arpeggio-pattern.ts`, `harmony.ts`, etc.). Generator-specific defaults stay with their existing helpers, including `melody-global-settings.ts` and `track-generation.ts`. Low-level musical settings do not depend on project, track or section structures. Existing type-only relationships through `chord-span-fill.ts` and `durations.ts` introduce no runtime cycles.
 
 ## State operations
 

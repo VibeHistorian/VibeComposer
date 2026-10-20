@@ -1,6 +1,6 @@
 <header>
-  <div><h2>Custom melody durations</h2><span>{{ trackCount }} melody track{{ trackCount === 1 ? '' : 's' }} · four beats per chord</span></div>
-  <button type="button" aria-label="Close melody durations" (click)="dialog.close()">×</button>
+  <div><h2>Custom {{ role === 'arpeggio' ? 'arp' : role }} durations</h2><span>{{ trackCount }} {{ role === 'arpeggio' ? 'arp' : role }} track{{ trackCount === 1 ? '' : 's' }} · four beats per chord</span></div>
+  <button type="button" [attr.aria-label]="'Close ' + role + ' durations'" (click)="dialog.close()">×</button>
 </header>
 <div class="duration-toolbar">
   <label>Grid <select aria-label="Duration grid" [value]="grid()" (change)="grid.set(+$any($event.target).value)">
@@ -8,11 +8,11 @@
   </select></label>
   <button type="button" [class.active]="tool() === 'note'" [attr.aria-pressed]="tool() === 'note'" (click)="tool.set('note')">Draw notes</button>
   <button type="button" [class.active]="tool() === 'rest'" [attr.aria-pressed]="tool() === 'rest'" (click)="tool.set('rest')">Draw pauses</button>
-  <label><input type="checkbox" aria-label="Flip custom melody durations" [checked]="flipped()" (change)="flipped.set($any($event.target).checked)" /> Flip</label>
+  <label><input type="checkbox" aria-label="Flip custom durations" [checked]="flipped()" (change)="flipped.set($any($event.target).checked)" /> Flip</label>
   <label><input type="checkbox" aria-label="Weighted duration selection" [checked]="weighted()" (change)="weighted.set($any($event.target).checked)" /> Weighted selection</label>
 </div>
-<p class="instructions">Drag across a lane to set a note’s length or paint a pause. Separate notes keep their own boundaries. Empty lanes are skipped; otherwise lanes follow block identities, or their chances when weighted selection is on. Durations stretch with the chord.</p>
-@if (trackCount > 1) { <p class="instructions">Saving applies these rhythms to all selected melody tracks. The first track supplies the starting draft.</p> }
+<p class="instructions">Drag across a lane to set a note’s length or paint a pause. Separate notes keep their own boundaries. Empty lanes are skipped; otherwise lanes follow {{ role === 'melody' ? 'block identities' : 'chord order' }}, or their chances when weighted selection is on. Durations stretch with the chord.</p>
+@if (trackCount > 1) { <p class="instructions">Saving applies these rhythms to all selected tracks. The first track supplies the starting draft.</p> }
 <div class="duration-scroll">
   <div class="duration-ruler"><span>Lane / chance</span><div><span>1</span><span>2</span><span>3</span><span>4</span></div><span>Durations in beats</span></div>
   @for (row of displayRows(); track $index; let lane = $index) {
@@ -37,7 +37,7 @@
     @if (stale()) { <p class="error">The project changed while this popup was open. Reopen it to edit the current settings.</p> }
     @else if (error(); as message) { <p class="error" role="alert">{{ message }}</p> }
     @else if (validationMessage(); as message) { <p class="error" role="alert">{{ message }}</p> }
-    @else if (checking()) { <p>Checking melody generation…</p> }
+    @else if (checking()) { <p>Checking generation…</p> }
     @else if (canSave()) { <p>Valid for the selected tracks and harmony.</p> }
     @else { <p>Validate durations before saving. Every selectable lane is checked.</p> }
   </div>

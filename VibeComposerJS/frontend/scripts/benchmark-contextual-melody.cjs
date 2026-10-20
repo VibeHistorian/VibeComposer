@@ -7,8 +7,8 @@ function contextualCase(index) {
   const settings = { algorithm: 'block', speed: [-20, 30, 80][index % 3], pauseChance: index % 4 * 10,
     splitChance: index % 3 * 20, leadChordsChance: index % 2 * 100,
     melodyPatternOffsets: [1, -1, 2, 1], swingPercent: index % 2 ? 66 : 50 };
-  if (index % 7 === 0) Object.assign(settings, { rhythm: 'custom',
-    customMelodyDurations: [[1, -0.5, 0.5, 1, -1], ...Array.from({ length: 9 }, () => [])] });
+  if (index % 7 === 0) Object.assign(settings, { rhythm: 'durations',
+    customDurations: [[1, -0.5, 0.5, 1, -1], ...Array.from({ length: 9 }, () => [])] });
   const global = { contextualMelody: true, ending: ['OPEN', 'CLOSED', 'LOOP'][index % 3],
     form: ['STATEMENT_VARIATION', 'QUESTION_ANSWER', 'SENTENCE', 'CONTINUOUS'][index % 4],
     style: ['TONAL', 'MODAL', 'JAZZ'][Math.floor(index / 3) % 3], tension: [0, 35, 100][Math.floor(index / 9) % 3],

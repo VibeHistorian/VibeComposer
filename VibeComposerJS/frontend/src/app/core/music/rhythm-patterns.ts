@@ -17,5 +17,6 @@ export const MELODY_RHYTHMS = [...RHYTHM_PATTERNS, 'melody'] as const;
 export type RhythmPattern = typeof MELODY_RHYTHMS[number];
 
 /** Bass supports the shared grid catalogue plus generated alternating durations. */
-export const BASS_RHYTHMS = ['bass1', ...RHYTHM_PATTERNS] as const;
+export const BASS_RHYTHMS = ['bass1', ...RHYTHM_PATTERNS, 'durations'] as const;
+export const ARPEGGIO_RHYTHMS = [...MELODY_RHYTHMS, 'durations'] as const;
 export type BassRhythm = typeof BASS_RHYTHMS[number];

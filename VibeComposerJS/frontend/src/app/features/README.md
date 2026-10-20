@@ -25,7 +25,7 @@ Paths below are relative to `src/app/`. Feature folders group embedded interacti
 | `features/arrangement/` | `arrangement-overview.component.*`, `section-context-editor.component.*`: section selection, presence and musical context |
 | `features/score/` | `score-canvas.component.*`, `score-chord-labels.directive.ts` and plain geometry/hit-testing/interaction helpers; see [score ownership](score/README.md) |
 | `features/edit/` | `edit-workspace.component.*`: phrase drafts, note properties, Apply/Local Apply/Cancel and phrase import/export |
-| `features/part-settings/` | Part editor, scope actions, control groups, pattern sequencer, global Melody settings and Melody duration dialog |
+| `features/part-settings/` | Part editor, scope actions, control groups, pattern sequencer, global Melody settings and shared Melody/Bass/Arpeggio duration dialog |
 | `features/harmony/` | Chordlet editor and harmony settings, reused by transport and section/workspace editors |
 | `features/tracks/` | Mix buttons and track generation policies embedded in Tracks and transport |
 | `features/transport/` | `transport-dock.component.*`: playback and global musical controls |

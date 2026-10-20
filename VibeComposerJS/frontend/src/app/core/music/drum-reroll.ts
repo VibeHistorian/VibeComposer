@@ -52,7 +52,7 @@ export function bakeDrumPattern(random: JavaRandom, settings: DrumSettings): Dru
 
 /** MELODY1 keeps its phrase-time Pause and never bakes or grows a static grid. */
 export function bakeRerollPauses<T extends DrumSettings | import('./part-settings.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
-  if (settings.rhythm === 'melody') return settings;
+  if (settings.rhythm === 'melody' || settings.rhythm === 'durations') return settings;
   const hits = settings.hitsPerPattern ?? 8, shift = settings.patternShift ?? 0;
   const grid = partRhythmMask({ ...settings, rhythm: settings.rhythm ?? 'full', hitsPerPattern: 32, patternShift: 0, patternFlip: false });
   let rhythm = settings.rhythm;
@@ -71,7 +71,7 @@ export function bakeRerollPauses<T extends DrumSettings | import('./part-setting
 }
 
 export function growRerollPattern<T extends DrumSettings | import('./part-settings.model').ArpeggioSettings>(random: JavaRandom, settings: T): T {
-  if (settings.rhythm === 'melody' || settings.rhythm === 'full') return settings;
+  if (settings.rhythm === 'melody' || settings.rhythm === 'full' || settings.rhythm === 'durations') return settings;
   const hits = settings.hitsPerPattern ?? 8, shift = settings.patternShift ?? 0;
   const grid = partRhythmMask({ ...settings, rhythm: settings.rhythm ?? 'full', hitsPerPattern: 32, patternShift: 0, patternFlip: false });
   const empty = grid.slice(0, hits).flatMap((value, slot) => value < 1 ? [slot] : []);
