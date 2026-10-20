@@ -2,8 +2,13 @@
   "name": "vibecomposerjs-frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
+    "pnpm": "12.9.1"
+  },
   "scripts": {
-    "test": "npm run test:unit",
+    "test": "pnpm run test:unit",
     "test:unit": "node scripts/run-tests.cjs unit",
     "test:browser": "node scripts/run-tests.cjs browser",
     "translate:java": "node scripts/translate-java-config.cjs",

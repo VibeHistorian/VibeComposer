@@ -5,3 +5,16 @@ opening a realtime audio device. It also exposes the existing sequencer timer as
 auto-resumes realtime contexts: offline contexts start via `startRendering()`.
 This prevents rejected resume promises from the two initialization MIDI messages.
 Synthesis is unchanged.
+
+The authoritative installer is pnpm 12.9.1. Run `pnpm install --frozen-lockfile`
+from `frontend/`; `pnpm-workspace.yaml` registers this patch and
+`pnpm-lock.yaml` records its content hash. Wails uses the same install command.
+Do not apply the patch by hand or install with npm: npm does not apply pnpm patches.
+
+After changing the patch, regenerate the lockfile with pnpm and review both files.
+Verify a fresh installation with `pnpm run test:playback` and
+`pnpm run test:synth:browser`. The Chromium test binds an OfflineAudioContext,
+rejects any realtime AudioContext construction and unhandled resume rejection,
+checks GM/drum rendering and voice cancellation, and disposes the engine.
+Run `pnpm run build` followed by `pnpm run test:export:browser` to cover offline
+WAV/MP3/Opus export through the production application as well.

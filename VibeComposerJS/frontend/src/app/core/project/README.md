@@ -26,4 +26,4 @@ Keep imported-data decoding distinct from complete-candidate validation: imports
 
 The service validates candidates before committing. It owns no-op detection, history compaction, redo invalidation, persistence, and atomic rejection of invalid batches. A command helper may return `undefined` for a rejected request; a returned candidate still passes through the service's validation boundary.
 
-Run `npm run test:parts` for project workflow coverage and the framework-independent codec/command checks in `scripts/project-codec.test.cjs`. Import, arrangement, and generation changes also use the relevant suites listed in `package.json`; production browser suites require a fresh `npm run build`. See [the test guide](../../../../scripts/README.md).
+Run `pnpm run test:parts` for project workflow coverage and the framework-independent codec/command checks in `scripts/project-codec.test.cjs`. Import, arrangement, and generation changes also use the relevant suites listed in `package.json`; production browser suites require a fresh `pnpm run build`. See [the test guide](../../../../scripts/README.md).

@@ -89,12 +89,18 @@ Validation: `test:unit` passed all 425 checks, including five new infrastructure
 
 ### 6. Make installation reproducible
 
-The project README and Wails configuration use `npm install`, while the TinySynth patch is configured through `pnpm-workspace.yaml` alongside `pnpm-lock.yaml`.
+The project README and Wails configuration previously used `npm install`, while the TinySynth patch was configured through `pnpm-workspace.yaml` alongside `pnpm-lock.yaml`.
 
-- [ ] Choose and document one authoritative package manager and locked installation path.
-- [ ] Align the README, package metadata, lockfile, and Wails install/build commands with that choice.
-- [ ] Ensure a clean installation applies the TinySynth patch through the chosen mechanism.
-- [ ] Verify the patched behavior with the relevant audio/browser checks; see `patches/README.md` for the patch contract.
+- [x] Choose and document one authoritative package manager and locked installation path.
+- [x] Align the README, package metadata, lockfile, and Wails install/build commands with that choice.
+- [x] Ensure a clean installation applies the TinySynth patch through the chosen mechanism.
+- [x] Verify the patched behavior with the relevant audio/browser checks; see `patches/README.md` for the patch contract.
+
+Delivered 2026-10-20: pinned pnpm 12.9.1 in package metadata and its lockfile, declared Angular-compatible Node engines, and aligned Wails installation/build/dev commands, active guides, test diagnostics and CLI usage. The authoritative installation is `pnpm install --frozen-lockfile` from `frontend/`. Application dependency resolutions and the TinySynth patch hash are unchanged; the lockfile adds pnpm's own pinned package-manager metadata. Replaced unresolved dependency-build placeholders with explicit approvals for Angular's watcher, esbuild and optional native cache dependencies. Removed the tracked generated Wails install checksum; it remains ignored.
+
+Reproduced the first-build failure: the old Wails `npm install` traversed a pnpm dependency tree and failed with `Cannot read properties of null (reading 'children')`. Wails v2.16.0 writes `package.json.md5` before running installation, so a second attempt can skip that failed step. Frozen pnpm installation fixes the reproduced failure. The [setup guide](../README.md#setup-and-builds) explains migrating mixed installations and explicitly reinstalling after lockfile/workspace/patch changes, which Wails' manifest-only checksum does not detect.
+
+Validation: the corrected Wails build passed immediately; a separate clean verification with `node_modules`, the production browser bundle and Angular cache moved aside also passed on its first invocation (15.67 seconds), including frozen installation, frontend compilation and desktop packaging. The clean install ran all four approved native dependency scripts. `pnpm test` passed all 436 functional checks. All three TinySynth/production export browser cases passed, including exports at 1440px and 780px. TinySynth assertions now explicitly verify timer exposure/cleanup and no unhandled offline resume rejection in addition to existing offline-context, GM/drum rendering and voice-cancellation coverage. Browser checks required execution outside the sandbox after Chromium GPU processes failed to start inside it. Production compilation retains the existing Pixi/xmldom CommonJS warning. `pnpm test --list` and `git diff --check` passed. Reports: `.angular/install-unit.tap` and `.angular/install-audio-browser.tap`.
 
 ## Documentation addition
 

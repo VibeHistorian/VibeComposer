@@ -1,14 +1,16 @@
 # Frontend tests
 
-Run tests from `frontend/` using the `test:*` scripts in `package.json`. `npm test` (or `npm run test:unit`) runs all functional suites without Chromium. `npm run test:browser` runs all twelve browser suites sequentially, including the focused overview matrix. Focused commands remain available below. Append `-- --list` to either aggregate command to list its suites without running them; other arguments are forwarded to Node's test runner.
+Install from `frontend/` with `pnpm install --frozen-lockfile` using the version pinned in `package.json`; see [setup](../../README.md#setup-and-builds) and the [TinySynth patch contract](../patches/README.md).
 
-Production browser suites use `dist/browser`: run `npm run build` first and rebuild after changing application code. The browser aggregate checks for the build and a browser before starting; focused production suites also report a missing build explicitly. Existing assets can be reused for test-only changes. The overview layout and TinySynth fixture suites read source directly and do not require a production build. Browser discovery accepts `OVERVIEW_TEST_BROWSER` as an explicit Chromium executable path, then checks common Chrome/Edge/Chromium locations on Windows, Linux and macOS. Focused suites skip when no browser is installed; the aggregate fails with a setup instruction. Supported viewport widths start at 700 CSS pixels.
+Run tests from `frontend/` using the `test:*` scripts in `package.json`. `pnpm test` (or `pnpm run test:unit`) runs all functional suites without Chromium. `pnpm run test:browser` runs all twelve browser suites sequentially, including the focused overview matrix. Focused commands remain available below. Append `--list` to either aggregate command to list its suites without running them; other arguments are forwarded to Node's test runner. With pnpm, pass script arguments directly, without npm's extra `--` separator.
+
+Production browser suites use `dist/browser`: run `pnpm run build` first and rebuild after changing application code. The browser aggregate checks for the build and a browser before starting; focused production suites also report a missing build explicitly. Existing assets can be reused for test-only changes. The overview layout and TinySynth fixture suites read source directly and do not require a production build. Browser discovery accepts `OVERVIEW_TEST_BROWSER` as an explicit Chromium executable path, then checks common Chrome/Edge/Chromium locations on Windows, Linux and macOS. Focused suites skip when no browser is installed; the aggregate fails with a setup instruction. Supported viewport widths start at 700 CSS pixels.
 
 ## Change area to checks
 
 Run the relevant functional commands, then the browser commands for affected interactions. Build first when application code changes. For changes across owners, use both aggregate commands.
 
-| Change area | Functional commands (`npm run …`) | Browser commands (`npm run …`) |
+| Change area | Functional commands (`pnpm run …`) | Browser commands (`pnpm run …`) |
 | --- | --- | --- |
 | Project decoding, persistence, Java XML import | `test:parts:imports`, `test:java-import` | `test:preferences:browser` |
 | History, arrangement commands, selection | `test:parts:history`, `test:selection`, `test:overview` | `test:overview:browser`, `test:contextual:browser` |
@@ -37,15 +39,15 @@ Component fixtures and source-reading browser suites follow the [feature ownersh
 
 ## Overview layout matrix
 
-`npm run test:overview:browser` runs all 21 layout scenarios at normal page zoom and display scale. Eight scenarios also run at every combination of page zoom (0.8, 1, 1.25, 1.5) and display scale (1, 1.25, 1.5). These cover fractional-pixel rounding, fitted and overflowing timelines, fractional timeline zoom, dense track buttons, remaining score space, and gap sections.
+`pnpm run test:overview:browser` runs all 21 layout scenarios at normal page zoom and display scale. Eight scenarios also run at every combination of page zoom (0.8, 1, 1.25, 1.5) and display scale (1, 1.25, 1.5). These cover fractional-pixel rounding, fitted and overflowing timelines, fractional timeline zoom, dense track buttons, remaining score space, and gap sections.
 
 The default has 109 cases instead of crossing all 21 layouts with all 12 scale combinations (252 cases). Both modes retain 12 rounds of alternating track/role edits per case, two real animation frames between rounds, and the final four-sample stability assertion. Return-to-fit scenarios remain in the baseline sequence. Per-display-scale diagnostics report case counts and elapsed time.
 
-For exhaustive checks after changing layout or rounding behavior, run `npm run test:overview:browser:full` (252 cases). The existing `OVERVIEW_TEST_FULL_MATRIX=1` override still works. In PowerShell:
+For exhaustive checks after changing layout or rounding behavior, run `pnpm run test:overview:browser:full` (252 cases). The existing `OVERVIEW_TEST_FULL_MATRIX=1` override still works. In PowerShell:
 
 ```powershell
 $env:OVERVIEW_TEST_FULL_MATRIX = '1'
-try { npm run test:overview:browser }
+try { pnpm run test:overview:browser }
 finally { Remove-Item Env:OVERVIEW_TEST_FULL_MATRIX }
 ```
 
@@ -53,19 +55,19 @@ Measured on 2026-10-16: the focused matrix passed in 44.9 seconds; the preceding
 
 ## Project behavior tests and fixture support
 
-`npm run test:parts` also runs `project-codec.test.cjs`, which exercises project decoding, validation, diagnostics, defaults, and arrangement candidates without Angular or browser storage. Module ownership is documented in [the project-state guide](../src/app/core/project/README.md).
+`pnpm run test:parts` also runs `project-codec.test.cjs`, which exercises project decoding, validation, diagnostics, defaults, and arrangement candidates without Angular or browser storage. Module ownership is documented in [the project-state guide](../src/app/core/project/README.md).
 
 `scripts/part-settings.test.cjs` is the aggregate entry point. It requires the behavior suites under `scripts/parts/` in one Node test process, preserving the shared transpilation cache. Keep these tests sequential: fixtures install global session/local-storage stand-ins. Do not replace the aggregate command with a file glob or parallel suite processes; those processes each pay the compilation cost.
 
 | Behavior | Focused command | Suite under `scripts/` |
 | --- | --- | --- |
-| Project imports, validation and atomic rejection | `npm run test:parts:imports` | `parts/imports-validation.cjs`, `project-codec.test.cjs` |
-| History, gestures, audition and arrangement commands | `npm run test:parts:history` | `parts/history.cjs` |
-| Scoped settings, inheritance, copy/freeze and editors | `npm run test:parts:scopes` | `parts/scoped-settings.cjs` |
-| Compose/reroll policies and Java generation parity | `npm run test:parts:generation` | `parts-generation.test.cjs` loads `parts/generation-policy.cjs` and `parts/generation-parity.cjs` |
-| Manual phrase ownership, drafts and local Apply | `npm run test:parts:phrases` | `parts/manual-phrases.cjs` |
-| UI preferences, appearance and control placement | `npm run test:parts:preferences` | `parts/preferences.cjs` |
-| Fixture isolation, cache reuse and diagnostic handling | `npm run test:parts:support` | `parts/test-support.cjs` |
+| Project imports, validation and atomic rejection | `pnpm run test:parts:imports` | `parts/imports-validation.cjs`, `project-codec.test.cjs` |
+| History, gestures, audition and arrangement commands | `pnpm run test:parts:history` | `parts/history.cjs` |
+| Scoped settings, inheritance, copy/freeze and editors | `pnpm run test:parts:scopes` | `parts/scoped-settings.cjs` |
+| Compose/reroll policies and Java generation parity | `pnpm run test:parts:generation` | `parts-generation.test.cjs` loads `parts/generation-policy.cjs` and `parts/generation-parity.cjs` |
+| Manual phrase ownership, drafts and local Apply | `pnpm run test:parts:phrases` | `parts/manual-phrases.cjs` |
+| UI preferences, appearance and control placement | `pnpm run test:parts:preferences` | `parts/preferences.cjs` |
+| Fixture isolation, cache reuse and diagnostic handling | `pnpm run test:parts:support` | `parts/test-support.cjs` |
 
 For a narrower selection, use Node's test-name filter, for example `node --test --test-name-pattern='catalogue' scripts/parts-generation.test.cjs`. Cross-cutting tests stay together under their primary behavior so their history, persistence, MIDI and ownership assertions remain intact.
 

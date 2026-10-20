@@ -17,7 +17,7 @@ function findBrowser() {
 
 function requireProductionBuild(root = path.join(frontend, 'dist/browser')) {
   if (!fs.existsSync(path.join(root, 'index.html'))) {
-    throw new Error('Production browser tests require dist/browser. Run npm run build from frontend/ first.');
+    throw new Error('Production browser tests require dist/browser. Run pnpm run build from frontend/ first.');
   }
   return root;
 }

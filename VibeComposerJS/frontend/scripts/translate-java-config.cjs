@@ -17,7 +17,7 @@ if (require.main === module) {
   const args = process.argv.slice(2), force = args.includes('--force');
   const [input, output, ...extra] = args.filter(arg => arg !== '--force');
   if (!input || extra.length) {
-    console.error('Usage: npm run translate:java -- input.xml-config [output.vibe.json] [--force]');
+    console.error('Usage: pnpm run translate:java input.xml-config [output.vibe.json] [--force]');
     process.exitCode = 1;
   } else {
     try {

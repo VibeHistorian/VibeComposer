@@ -23,11 +23,28 @@ test('TinySynth renders GM presets and drums with independent voices and track r
     (async () => {
       try {
         const rate = 22050;
+        const unhandled = [];
+        window.addEventListener('unhandledrejection', event => {
+          unhandled.push(String(event.reason));
+        });
+        const timers = new Set();
+        const setTimer = window.setInterval.bind(window);
+        const clearTimer = window.clearInterval.bind(window);
+        window.setInterval = (...args) => {
+          const id = setTimer(...args);
+          timers.add(id);
+          return id;
+        };
+        window.clearInterval = id => {
+          timers.delete(id);
+          clearTimer(id);
+        };
         window.AudioContext = class {
           constructor() { throw Error('An offline synth must not create a realtime context'); }
         };
         const engine = new module.exports.TinySynthEngine(new OfflineAudioContext(2, rate * 12, rate));
         const context = engine.context;
+        const timerExposed = timers.size === 1 && timers.has(engine.synth.timerId);
         const track = context.createGain(); track.connect(context.destination);
         const silent = context.createGain(); silent.gain.value = 0; silent.connect(context.destination);
         const finish = (voices) => {
@@ -78,8 +95,11 @@ test('TinySynth renders GM presets and drums with independent voices and track r
           bass.slice(index + 1).map(other => rms(values.map((v, i) => v - other[i]))));
         const silence = rms(Array.from(data.slice(9 * rate)));
         engine.dispose();
+        // Give rejected resume promises a task boundary to reach the listener.
+        await new Promise(resolve => setTimeout(resolve, 0));
         await fetch('/result', { method: 'POST', body: JSON.stringify({
           programs, drums, levels, differences, bassDifferences, independent, silence, maxTail,
+          timerExposed, timersRemaining: timers.size, unhandled,
           detached: engine.synth.notetab.length === 0,
         }) });
       } catch (error) {
@@ -100,6 +120,9 @@ test('TinySynth renders GM presets and drums with independent voices and track r
   try {
     const output = await result;
     assert.equal(output.error, undefined);
+    assert.equal(output.timerExposed, true, 'the patch exposes the sequencer timer');
+    assert.equal(output.timersRemaining, 0, 'disposing the offline engine clears its timer');
+    assert.deepEqual(output.unhandled, [], 'offline initialization must not reject resume promises');
     assert.equal(output.programs.length, 128);
     assert.ok(output.programs.every(count => count > 0));
     assert.equal(output.drums.length, 47);

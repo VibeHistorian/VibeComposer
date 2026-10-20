@@ -45,7 +45,7 @@ test('browser server serves injected pages, assets and JSON results; rejects mal
 
 test('missing production build gives an actionable prerequisite', () => {
   assert.throws(() => requireProductionBuild(path.join(__dirname, 'missing-production-build')),
-    /Run npm run build from frontend\/ first/);
+    /Run pnpm run build from frontend\/ first/);
 });
 
 test('watchdog reports stderr on timeout and early exit and detaches listeners', async () => {

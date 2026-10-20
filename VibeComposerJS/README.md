@@ -4,7 +4,21 @@ The starting point for the Angular rewrite of VibeComposer. The desktop window i
 
 This project is separate from the existing Java application. The rewrite can move feature by feature while the Java app remains available as a reference and working product.
 
-Then start the desktop app from this directory:
+## Setup and builds
+
+Use **pnpm 12.9.1** (pinned in `frontend/package.json`) and a Node.js version matching its `engines` field: 22.22.3+, 24.15.0+, or 26+. Install the pinned pnpm version using the [pnpm installation instructions](https://pnpm.io/installation), and ensure `pnpm` is on PATH for Wails.
+
+`frontend/pnpm-lock.yaml` is the authoritative frontend lockfile. From this directory, install exactly that dependency tree:
+
+```powershell
+cd frontend
+pnpm install --frozen-lockfile
+cd ..
+```
+
+Use pnpm for all frontend commands. Its workspace configuration applies the required [TinySynth patch](frontend/patches/README.md) during installation and explicitly permits Angular's native dependency build scripts. When intentionally updating dependencies or patches, use pnpm, regenerate and review the lockfile, and commit it with the manifest/patch changes. Do not generate npm or Yarn lockfiles.
+
+Start the desktop app from this directory:
 
 ```powershell
 wails dev
@@ -16,11 +30,15 @@ To work on the UI in a browser without starting Wails:
 
 ```powershell
 cd frontend
-npm install
-npm start
+pnpm install --frozen-lockfile
+pnpm start
 ```
 
-The Angular shell reports when it is running outside Wails. To make a desktop build, run `wails build`; the generated application is written under `build/bin/`.
+The Angular shell reports when it is running outside Wails. To make a desktop build, run `wails build`; the generated application is written under `build/bin/`. Wails uses the same frozen pnpm installation and `pnpm run build` for production.
+
+Wails v2 caches installation using only `package.json.md5`, and writes that checksum before installation succeeds. This explains why a failed install can appear to succeed on a second build: that attempt may skip installation. Run `pnpm install --frozen-lockfile` after pulling lockfile/workspace/patch changes, or use `wails build -f` to force installation. Never rely on retrying a failed install.
+
+If migrating an existing npm or mixed npm/pnpm checkout, remove only `frontend/node_modules` and any untracked `frontend/package-lock.json`, then run the frozen pnpm install. The previous `npm install` Wails command could crash while traversing pnpm links (`Cannot read properties of null (reading 'children')`); using pnpm throughout fixes that failure.
 
 ## Project layout
 
@@ -46,7 +64,7 @@ Browser and desktop playback use `webaudio-tinysynth` 1.1.3 with its higher-qual
 
 The adapter deliberately uses the pinned library's `_note`, `_releaseNote`, timbre bank and voice handles: the public channel/pitch note-off API cannot express independent overlapping voices. Revalidate this bridge before upgrading TinySynth. The engine's internal housekeeping timer remains a single app-lifetime timer; it is not recreated per track or reload.
 
-From `frontend/`, run `npm run test:playback` for transport/routing checks and `npm run test:synth:browser` for actual Chromium offline audio rendering of GM presets, percussion, distinct bass timbres and voice cancellation. The browser test auto-detects Chrome/Edge, or accepts `OVERVIEW_TEST_BROWSER` pointing to a Chromium executable.
+From `frontend/`, run `pnpm run test:playback` for transport/routing checks and `pnpm run test:synth:browser` for actual Chromium offline audio rendering of GM presets, percussion, distinct bass timbres and voice cancellation. The browser test auto-detects Chrome/Edge, or accepts `OVERVIEW_TEST_BROWSER` pointing to a Chromium executable.
 
 ## Workspace and migration
 
