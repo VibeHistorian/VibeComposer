@@ -139,6 +139,15 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
         await wait(()=>dialog.querySelector('#appearance-title'),'Appearance opens by default');
         ensure(dialog.querySelector('#appearance-title'),'Appearance opens by default');
+        button('Appearance Score').click();
+        const ghostToggle = await wait(()=>document.querySelector('[aria-label="Ghost notes from other tracks"]'),'ghost preference');
+        ensure(ghostToggle.checked, 'ghost notes default on');
+        ghostToggle.click();
+        await wait(()=>JSON.parse(localStorage.getItem(key)).scoreGhostNotes===false,'ghost preference off persisted');
+        ghostToggle.click();
+        await wait(()=>JSON.parse(localStorage.getItem(key)).scoreGhostNotes===true,'ghost preference on persisted');
+        button('Appearance General').click();
+        await wait(()=>dialog.querySelector('#appearance-title'),'return to general appearance');
         const backdrop=()=>document.querySelector('.cdk-overlay-backdrop');
         ensure(button('Preview').getAttribute('aria-pressed')==='false','preview defaults off');
         button('Preview').click();

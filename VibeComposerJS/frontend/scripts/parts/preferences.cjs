@@ -2,6 +2,51 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('../support/project-fixture.cjs');
 
+test('ghost note preference defaults on, persists, transfers and rejects invalid values atomically', () => {
+  const { service, uiPreferences, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  assert.equal(uiPreferences.scoreGhostNotes(), true);
+  uiPreferences.toggleScoreGhostNotes();
+  assert.equal(new UiPreferencesService().scoreGhostNotes(), false);
+  const saved = uiPreferences.exportJson();
+  assert.equal(uiPreferences.importJson(saved), true);
+  assert.equal(uiPreferences.scoreGhostNotes(), false);
+  assert.equal(uiPreferences.importJson(JSON.stringify({ ...JSON.parse(saved), scoreGhostNotes: 'true' })), false);
+  assert.equal(uiPreferences.exportJson(), saved);
+  const previous = JSON.parse(saved); delete previous.scoreGhostNotes;
+  assert.equal(uiPreferences.importJson(JSON.stringify(previous)), true);
+  assert.equal(uiPreferences.scoreGhostNotes(), true);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), history);
+});
+
+test('phrase ghosts use arranged notes from other tracks, clipped to the edited phrase', () => {
+  const { service, workspace, ui, uiPreferences } = fixture();
+  const [section] = service.project().arrangement;
+  const bass = service.project().tracks.find(track => track.role === 'bass');
+  const chords = service.project().tracks.find(track => track.role === 'chords');
+  service.setSectionTrackPresence(0, chords.id, true);
+  service.updateSectionTrackPhrase(section.id, chords.id, [
+    { id: 'overlap', midi: 60, startBeat: 0, durationBeats: 4, velocity: 90 },
+    { id: 'outside', midi: 64, startBeat: 5, durationBeats: 1, velocity: 90 },
+  ]);
+  ui.selectedTrackId.set(bass.id);
+  workspace.editor = () => ({ editedTracks: () => [bass] });
+  assert.deepEqual(workspace.ghostNotes(), [], 'overview has no ghosts');
+  workspace.editing.set(true);
+  workspace.editStartBeat.set(1); workspace.editPhraseLength.set(2);
+  const ghosts = workspace.ghostNotes();
+  assert.ok(ghosts.length > 0);
+  assert.ok(ghosts.every(note => note.part !== bass.id && note.startBeat >= 1 && note.startBeat + note.durationBeats <= 3));
+  const chordGhost = ghosts.find(note => note.part === chords.id);
+  assert.equal(chordGhost.midi, 60);
+  assert.equal(chordGhost.startBeat, 1);
+  assert.equal(chordGhost.durationBeats, 2);
+  uiPreferences.toggleScoreGhostNotes();
+  assert.deepEqual(workspace.ghostNotes(), []);
+});
+
 test('drum mapping preferences persist and transfer without editing project notes or history', () => {
   const { service, load } = fixture();
   const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');

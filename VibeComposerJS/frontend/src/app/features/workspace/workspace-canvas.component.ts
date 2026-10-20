@@ -376,6 +376,19 @@ export class WorkspaceCanvasComponent {
         color: track.role, topPercent: 0, opacity: 0.5 + note.velocity / 127 * 0.5 };
     });
   });
+  readonly ghostNotes = computed<ScoreNote[]>(() => {
+    const editor = this.editor();
+    if (!this.editing() || !editor || !this.preferences.scoreGhostNotes()) return [];
+    const editedIds = new Set(editor.editedTracks().map(track => track.id));
+    const start = this.editStartBeat();
+    const end = start + this.editPhraseLength();
+    return this.scoreNotes().filter(note => !editedIds.has(note.part)
+      && note.startBeat < end && note.startBeat + note.durationBeats > start)
+      .map(note => {
+        const startBeat = Math.max(start, note.startBeat);
+        return { ...note, startBeat, durationBeats: Math.min(end, note.startBeat + note.durationBeats) - startBeat };
+      });
+  });
   applyOnEmptyMiddleClick(event: MouseEvent): void {
     if (event.button !== 1 || !this.editing()) return;
     const press = this.emptyMiddlePress;

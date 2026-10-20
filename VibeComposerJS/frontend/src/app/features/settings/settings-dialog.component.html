@@ -132,6 +132,12 @@
               <span>Chord-based grid subdivisions</span>
             </label>
             <p id="score-chord-grid-description">Show faint lines in each chord's color at its ending beat. Saved in your UI preferences.</p>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Ghost notes from other tracks" [checked]="preferences.scoreGhostNotes()"
+                (change)="preferences.toggleScoreGhostNotes()" aria-describedby="score-ghost-notes-description" />
+              <span>Ghost notes from other tracks</span>
+            </label>
+            <p id="score-ghost-notes-description">Show other tracks in the phrase editor as outlines at half opacity. Ghost notes are informational only. Saved in your UI preferences.</p>
           </section>
         }
         @case ('midi') {

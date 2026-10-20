@@ -84,6 +84,7 @@ const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; gl
 export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly tracks = input.required<readonly ScoreCanvasTrack[]>();
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
+  readonly ghostNotes = input<readonly ScoreCanvasNote[]>([]);
   readonly notesReady = input(true);
   readonly sections = input.required<readonly ScoreCanvasSection[]>();
   readonly chordBoundaries = input<readonly { beat: number; hue: number }[]>([]);
@@ -170,6 +171,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.snapToScale();
     this.scalePitchClasses();
     this.notesReady();
+    this.ghostNotes();
     this.chordBoundaries();
     this.preferences.scoreChordGrid();
     this.model = {
@@ -799,6 +801,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     };
 
     graphics.rect(0, 0, this.width, this.height).fill({ color: color('--surface-score').value });
+    const ghosts = this.editable() ? this.ghostNotes() : [];
     const visibleNotes = notes.filter(note => !hiddenTrackIds.has(note.part));
     const harmonic = visibleNotes.filter(note => note.color !== 'drums');
     const notePitchMin = harmonic.length ? harmonic.reduce((min, note) => Math.min(min, note.midi), 127) : 48;
@@ -807,8 +810,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const phrasePitchMax = Math.min(127, notePitchMax + 2);
     this.pitchMin = this.editable() ? 0 : phrasePitchMin;
     this.pitchMax = this.editable() ? 127 : phrasePitchMax;
-    this.drumPitches = [...new Set([...visibleNotes.filter(note => note.color === 'drums').map(note => note.midi), ...tracks.filter(track => track.color === 'drums' && !hiddenTrackIds.has(track.id)).map(track => track.drumPitch ?? 36)])].sort((a, b) => b - a);
-    const hasDrums = tracks.some(track => track.color === 'drums' && !(track.trackIds ?? [track.id]).every(id => hiddenTrackIds.has(id)));
+    this.drumPitches = [...new Set([...visibleNotes, ...ghosts].filter(note => note.color === 'drums').map(note => note.midi)
+      .concat(tracks.filter(track => track.color === 'drums' && !hiddenTrackIds.has(track.id)).map(track => track.drumPitch ?? 36)))].sort((a, b) => b - a);
+    const hasDrums = ghosts.some(note => note.color === 'drums')
+      || tracks.some(track => track.color === 'drums' && !(track.trackIds ?? [track.id]).every(id => hiddenTrackIds.has(id)));
     this.drumHeight = hasDrums ? Math.min(scoreHeight * 0.27, Math.max(36, this.drumPitches.length * 14)) : 0;
     this.harmonicHeight = scoreHeight - this.drumHeight;
     if (this.pendingEditPitchFocus && this.notesReady()) {
@@ -902,10 +907,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     line(this.width - 0.5, 0, this.width - 0.5, this.height, '--border-default');
 
     const trackIndexes = new Map(tracks.flatMap((track, index) => (track.trackIds ?? [track.id]).map(id => [id, index] as const)));
-    for (const note of notes) {
+    // Ghosts paint first and never enter the hit areas used by any interaction.
+    for (const { note, ghost } of [
+      ...ghosts.map(note => ({ note, ghost: true })),
+      ...notes.map(note => ({ note, ghost: false })),
+    ]) {
       const sourceIndex = trackIndexes.get(note.part);
       const trackIndex = note.color === 'drums' ? 1 : 0;
-      if (sourceIndex === undefined || hiddenTrackIds.has(note.part)) continue;
+      if (!ghost && (sourceIndex === undefined || hiddenTrackIds.has(note.part))) continue;
+      if (note.color === 'drums' && (!this.drumHeight || !this.drumPitches.includes(note.midi))) continue;
       const x = this.scoreX(note.startBeat);
       const noteWidth = Math.max(3, note.durationBeats * beatWidth);
       if (x + noteWidth < 0 || x > this.width) continue;
@@ -921,6 +931,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const selectionOpacity = selectedTrackId === note.part ? 1 : 0.8;
       const opacity = selectedTrackId === note.part ? note.opacity : this.editable() ? 0.3 : 0.3 + note.velocity / 127 * 0.5;
       const noteColors = COLORS[note.color];
+      if (ghost) {
+        const parsed = color(noteColors.note);
+        if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
+          .stroke({ color: parsed.value, alpha: note.opacity * parsed.alpha * 0.5, width: 1 });
+        continue;
+      }
       if (noteHeight > 0 && selectedTrackId === note.part && (!this.editable() || note.color === 'drums')) {
         for (let radius = 6; radius >= 1; radius--) {
           fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2,

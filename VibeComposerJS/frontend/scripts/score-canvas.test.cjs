@@ -142,6 +142,42 @@ function fixture() {
   return { component, canvas, strokes, fills };
 }
 
+test('ghost outlines paint behind draft notes at half opacity without hit areas or velocity bars', () => {
+  const { component: c } = fixture();
+  c.horizontalOffset = 0; c.horizontalScale = 1;
+  c.editable = () => true; c.velocityVisible = () => true;
+  const note = { id: 'draft', part: 'bass', color: 'bass', midi: 60, velocity: 90,
+    startBeat: 1, durationBeats: 1, opacity: .8 };
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }], notes: [note], sections: [],
+    totalBeats: 8, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
+  c.ghostNotes = () => [{ ...note, id: 'ghost', part: 'chords', color: 'chords' },
+    { ...note, id: 'drum-ghost', part: 'drums', color: 'drums', midi: 36 }];
+  const capsules = [], velocityBars = [];
+  let shape;
+  c.staticGraphics = {
+    clear() { capsules.length = 0; velocityBars.length = 0; },
+    rect(x, y, width, height) { shape = { type: 'rect', x, y, width, height }; return this; },
+    roundRect(x, y, width, height) { shape = { type: 'capsule', x, y, width, height }; return this; },
+    moveTo() { shape = null; return this; }, lineTo() { return this; },
+    stroke(style) { if (shape?.type === 'capsule') capsules.push({ method: 'stroke', ...style }); return this; },
+    fill(style) {
+      if (shape?.type === 'capsule') capsules.push({ method: 'fill', ...style });
+      if (shape?.type === 'rect' && shape.width === 2 && shape.y > c.scoreHeight) velocityBars.push(shape);
+      return this;
+    },
+  };
+  c.drawStatic();
+  assert.deepEqual(capsules.map(({ method, alpha }) => [method, alpha]), [['stroke', .4], ['stroke', .4], ['fill', .8]]);
+  assert.deepEqual(c.hitAreas.map(area => area.note.id), ['draft']);
+  assert.equal(velocityBars.length, 1);
+  assert.ok(c.drumPitches.includes(36), 'drum ghosts have a visible drum row');
+  c.ghostNotes = () => []; c.drawStatic();
+  assert.equal(capsules.length, 1);
+  c.editable = () => false;
+  c.ghostNotes = () => [{ ...note, part: 'chords' }]; c.drawStatic();
+  assert.equal(capsules.length, 1, 'overview never renders ghost inputs');
+});
+
 test('optional chord grid draws chord colors at half the previous opacity only when enabled', () => {
   const { component: c } = fixture();
   c.horizontalOffset = 0; c.horizontalScale = 1;
