@@ -31,6 +31,7 @@ function fixture() {
     } }).outputText;
     const module = { exports: {} };
     const defaults = {
+      'core/music/phrase-edit': require('./music-loader.cjs').loadMusic('phrase-edit.ts'),
       'core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
       '@angular/core': angular, 'core/project/project.service': { ProjectService: 'project' },
       'core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
@@ -43,7 +44,8 @@ function fixture() {
       'core/music/harmony': { KEYS: [] },
     };
     new Function('require', 'module', 'exports', compiled)(
-      (name) => dependencies[name] ?? defaults[name.startsWith('.')
+      (name) => name.startsWith('./score-') ? load(path.posix.join(path.posix.dirname(file), name + '.ts'))
+        : dependencies[name] ?? defaults[name.startsWith('.')
         ? path.posix.normalize(path.posix.join(path.posix.dirname(file), name)) : name] ?? {}, module, module.exports);
     return module.exports;
   };

@@ -59,12 +59,16 @@ Follow-up 2026-10-19: fixed the three browser failures. Chord dragging now appli
 
 `src/app/features/score/score-canvas.component.ts` has 1,086 lines combining viewport calculations, hit testing, gestures, drawing, and Pixi lifecycle management.
 
-- [ ] Extract viewport geometry and coordinate transformations into focused, testable helpers.
-- [ ] Extract hit testing using explicit geometry inputs.
-- [ ] Define an explicit interface between editing gestures and rendering as interaction code is changed.
-- [ ] Keep rendering lifecycle management cohesive and preserve viewport, selection, gesture cancellation, and one-commit-per-gesture behavior.
+- [x] Extract viewport geometry and coordinate transformations into focused, testable helpers.
+- [x] Extract hit testing using explicit geometry inputs.
+- [x] Define an explicit interface between editing gestures and rendering as interaction code is changed.
+- [x] Keep rendering lifecycle management cohesive and preserve viewport, selection, gesture cancellation, and one-commit-per-gesture behavior.
 
 Prefer these concrete boundaries over splitting methods merely to meet a line limit.
+
+Delivered 2026-10-20: extracted plain TypeScript viewport/coordinate helpers into `score-geometry.ts`, bucket indexing and targeting into `score-hit-testing.ts`, and drag preview calculation/state into `score-interaction.ts`. `ScoreInteractionPreview` defines the notes, selection box and active-gesture snapshot consumed by dynamic drawing. The component retains viewport state, pointer capture/cancellation, selection and release-time outputs, plus cohesive Pixi initialization, drawing, resize and destruction. Musical editing still uses the existing framework-independent phrase helpers. Ownership and verification paths are documented in [the score guide](src/app/features/score/README.md); component fixtures load the extracted helpers.
+
+Validation: all 82 focused checks passed across score, section selection and manual phrases, including six new helper/interaction checks and a repeated-release assertion. Coverage includes scaled bounds, fractional zoom, section fitting, pitch caps, drum/velocity targeting, bucket boundaries, immutable previews, paint cancellation and second-touch cancellation. Production build passed with the existing Pixi/xmldom CommonJS warning. All three production browser suites passed: unified score editing/layout, phrase import/transpose/draft undo and manual Mode preferences. Browser checks required execution outside the sandbox after sandboxed Chromium targets crashed before workflows ran. `git diff --check` passed.
 
 ### 5. Make tests discoverable and reuse browser infrastructure
 

@@ -4,6 +4,104 @@ const path = require('node:path');
 const test = require('node:test');
 const ts = require('typescript');
 
+// Plain score helpers are evaluated without Angular, Pixi, or browser globals.
+function scoreHelper(name) {
+  const filename = path.resolve(__dirname, '../src/app/features/score', name + '.ts');
+  return loadHelper(filename);
+}
+
+function loadHelper(filename) {
+  const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: {
+    target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
+  } }).outputText;
+  const module = { exports: {} };
+  new Function('require', 'module', 'exports', compiled)(name => {
+    assert.ok(name.startsWith('.'), `Unexpected helper dependency: ${name}`);
+    return loadHelper(path.resolve(path.dirname(filename), name + '.ts'));
+  }, module, module.exports);
+  return module.exports;
+}
+
+test('score coordinates round trip across scaled bounds, pan and fractional zoom', () => {
+  const { canvasPoint, scoreX, scoreBeat } = scoreHelper('score-geometry');
+  for (const width of [700, 937.5, 1501]) {
+    for (const horizontalScale of [1, 2.75, 128]) {
+      const geometry = { width, horizontalScale, horizontalOffset: .125, totalBeats: 73.5 };
+      const bounds = { left: 35, top: 17, width: width / 1.5, height: 200 };
+      for (const beat of [0, 9.1875, 32.25, 73.5]) {
+        const x = scoreX(beat, geometry);
+        const point = canvasPoint(bounds.left + x / 1.5, 117, bounds, { width, height: 300 });
+        assert.ok(Math.abs(scoreBeat(point.x, geometry) - beat) < 1e-10);
+        assert.equal(point.y, 150);
+      }
+    }
+  }
+});
+
+test('viewport helpers preserve pitch caps, drum rows, velocity clearance and section focus', () => {
+  const g = scoreHelper('score-geometry');
+  const pitch = { height: 300, velocityVisible: true, harmonicHeight: 210, drumHeight: 56,
+    pitchMin: 0, pitchMax: 127, verticalScale: 128, verticalOffset: 9999 };
+  assert.equal(g.scoreHeight(pitch), 266);
+  assert.equal(g.laneHeight(pitch), 30);
+  assert.equal(g.maxVerticalScale(pitch, false), 8);
+  assert.equal(g.maxVerticalScale(pitch, true), 3840 / 210);
+  assert.equal(g.contentHeight(pitch), 3896);
+  const time = { width: 800, horizontalScale: 4, horizontalOffset: 2, totalBeats: 64 };
+  assert.deepEqual(g.clampViewport(time, pitch), { horizontalOffset: .75, verticalOffset: 3630 });
+  assert.deepEqual(g.clampViewport({ ...time, horizontalOffset: -1 }, { ...pitch, verticalOffset: -5 }),
+    { horizontalOffset: 0, verticalOffset: 0 });
+  const focus = { ...time, ...g.sectionViewport(16, 24, 64) };
+  assert.equal(g.scoreX(16, focus), 0);
+  assert.equal(g.scoreX(24, focus), 800);
+  assert.equal(g.pitchAt(210, pitch, [42, 36]), 42);
+  assert.equal(g.pitchAt(265, pitch, [42, 36]), 36);
+  assert.equal(g.pitchAt(15, { ...pitch, verticalOffset: 60 }, []), 125);
+});
+
+test('hit buckets cover column boundaries while separating drums, edges and velocity handles', () => {
+  const { addHitArea, hitAreaAt, boxNoteIds, noteDragZone } = scoreHelper('score-hit-testing');
+  const harmonic = { note: { id: 'h' }, trackIndex: 0, x: 90, y: 20, width: 110, height: 20 };
+  const drum = { note: { id: 'd' }, trackIndex: 1, x: 90, y: 210, width: 110, height: 20 };
+  const buckets = new Map();
+  for (const area of [harmonic, drum]) addHitArea(area, 4, buckets);
+  const geometry = { width: 350, height: 300, scoreHeight: 266, harmonicHeight: 210, drumHeight: 56,
+    trackCount: 2, editable: true, velocityVisible: true, selectedIds: ['d'], areas: [harmonic, drum], columnCount: 4, buckets };
+  for (const x of [95, 96, 192, 200]) {
+    assert.equal(hitAreaAt({ x, y: 20 }, geometry), harmonic);
+    assert.equal(hitAreaAt({ x, y: 210 }, geometry), drum);
+  }
+  for (const point of [{ x: -1, y: 20 }, { x: 350, y: 20 }, { x: 100, y: -1 }, { x: 100, y: 300 }]) {
+    assert.equal(hitAreaAt(point, geometry), undefined);
+  }
+  assert.equal(hitAreaAt({ x: 90, y: 280 }, geometry), drum);
+  assert.equal(hitAreaAt({ x: 90, y: 280 }, { ...geometry, editable: false }), undefined);
+  assert.equal(hitAreaAt({ x: 90, y: 280 }, { ...geometry, velocityVisible: false }), undefined);
+  assert.equal(hitAreaAt({ x: 100, y: 20 }, { ...geometry, trackCount: 0 }), undefined);
+  assert.deepEqual(boxNoteIds([harmonic, drum], { x: 200, y: 230 }, { x: 100, y: 30 }), ['h', 'd']);
+  assert.equal(noteDragZone(harmonic, 95), 'start');
+  assert.equal(noteDragZone(harmonic, 193), 'duration');
+  assert.equal(noteDragZone(harmonic, 150), 'move');
+  assert.equal(noteDragZone(harmonic, 150, true), 'start');
+});
+
+test('drag helper returns musical previews without mutating the gesture or originals', () => {
+  const { previewScoreDrag, scoreDragChanged } = scoreHelper('score-interaction');
+  const note = Object.freeze({ id: 'a', midi: 60, startBeat: 4, durationBeats: 1, velocity: 100 });
+  const drag = Object.freeze({ note, originals: Object.freeze([note]), current: note, preview: [note],
+    mode: 'move', duplicate: false, lockPitch: false, x: 0, y: 0, pointerId: 1 });
+  const context = { time: { width: 800, horizontalScale: 2, horizontalOffset: .25, totalBeats: 32 },
+    laneHeight: 10, snapBeats: .25, shiftKey: false, scalePitchClasses: [], startBeat: 0, endBeat: 8 };
+  const preview = previewScoreDrag(drag, { x: 100, y: -20 }, context);
+  assert.deepEqual(preview.map(n => [n.startBeat, n.midi]), [[6, 62]]);
+  assert.equal(drag.current, note);
+  assert.equal(drag.preview[0], note);
+  assert.equal(scoreDragChanged(drag), false);
+  assert.equal(scoreDragChanged({ ...drag, current: preview[0] }), true);
+  assert.equal(scoreDragChanged({ ...drag, duplicate: true }), true);
+  assert.equal(previewScoreDrag({ ...drag, lockPitch: true }, { x: 1000, y: -20 }, context)[0].midi, 60);
+});
+
 function fixture() {
   const input = value => () => value;
   input.required = () => () => undefined;
@@ -21,7 +119,8 @@ function fixture() {
   const helperSource = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-edit.ts'), 'utf8'),
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   new Function('module', 'exports', helperSource)(helperModule, helperModule.exports);
-  new Function('require', 'module', 'exports', compiled)(name => name.includes('phrase-edit') ? helperModule.exports
+  new Function('require', 'module', 'exports', compiled)(name => name.startsWith('./score-') ? scoreHelper(name.slice(2))
+    : name.includes('phrase-edit') ? helperModule.exports
     : name.includes('drum-instruments') ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports);
   const component = new module.exports.ScoreCanvasComponent();
   component.width = 800;
@@ -343,6 +442,46 @@ test('group moves preserve spacing at the phrase boundary and commit once', () =
   assert.equal(result.duplicate, false);
   assert.deepEqual(result.notes.map(n => n.startBeat), [24, 26]);
   assert.deepEqual(result.notes.map(n => n.durationBeats), [1, 2]);
+  c.onPointerUp(pointer(700, 20));
+  assert.equal(c.notesChanged.values.length, 1, 'a repeated release cannot commit again');
+});
+
+test('pitch and velocity painting expose previews, commit once and discard cancellation', () => {
+  for (const button of [0, 1]) {
+    const { component: c } = editFixture();
+    const start = pointer(212.5, 20, { button, ctrlKey: true });
+    c.onPointerDown(start);
+    assert.equal(c.interactionPreview.active, true);
+    assert.equal(c.interactionPreview.notes.length, 1);
+    assert.equal(c.notesChanged.values.length, 0);
+    c.onPointerCancel(start);
+    assert.equal(c.interactionPreview.active, false);
+    assert.deepEqual(c.interactionPreview.notes, []);
+    c.onPointerUp(start);
+    assert.equal(c.notesChanged.values.length, 0);
+    c.onPointerDown(start);
+    c.onPointerUp(start);
+    c.onPointerUp(start);
+    assert.equal(c.notesChanged.values.length, 1);
+    assert.equal(c.interactionPreview.active, false);
+  }
+});
+
+test('a second touch cancels an active note preview without committing or adding a note', () => {
+  const { component: c } = editFixture();
+  const first = pointer(300, 20, { pointerType: 'touch' });
+  const second = pointer(350, 20, { pointerType: 'touch', pointerId: 2 });
+  c.onPointerDown(first);
+  c.onPointerMove(pointer(325, 20, { pointerType: 'touch' }));
+  assert.equal(c.interactionPreview.active, true);
+  c.onPointerDown(second);
+  assert.equal(c.interactionPreview.active, false);
+  assert.deepEqual(c.interactionPreview.notes, []);
+  c.onPointerUp(second);
+  c.onPointerUp(first);
+  assert.deepEqual(c.notesChanged.values, []);
+  assert.deepEqual(c.noteChanged.values, []);
+  assert.deepEqual(c.noteAdded.values, []);
 });
 
 test('Ctrl drag duplicates selected notes without altering the originals', () => {

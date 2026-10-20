@@ -5,8 +5,17 @@ import {
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import type { PhraseSource } from '../../core/music/phrase';
-import { dragPhraseNotes, snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
+import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
 import type { ArrangedPart, PhraseNote } from '../../core/project/project.model';
+import {
+  canvasPoint, clampViewport, contentHeight, laneHeight, maxVerticalScale, pitchAt,
+  scoreBeat, scoreHeight, scoreX, sectionViewport, VELOCITY_HEIGHT,
+  type ScorePitchGeometry, type ScoreTimeGeometry,
+} from './score-geometry';
+import {
+  addHitArea, boxNoteIds, HIT_BUCKET_WIDTH, hitAreaAt, noteDragZone, type NoteHitArea as HitArea,
+} from './score-hit-testing';
+import { previewScoreDrag, scoreDragChanged, type ScoreDrag, type ScoreInteractionPreview } from './score-interaction';
 
 export interface ScoreCanvasTrack {
   readonly id: string;
@@ -45,15 +54,7 @@ export interface ScoreViewport {
   readonly scoreHeight: number;
 }
 
-interface NoteHitArea {
-  readonly note: ScoreCanvasNote;
-  readonly trackIndex: number;
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-  readonly visualBounds?: { x: number; y: number; width: number; height: number };
-}
+type NoteHitArea = HitArea<ScoreCanvasNote>;
 
 interface ScoreCanvasModel {
   readonly tracks: readonly ScoreCanvasTrack[];
@@ -64,10 +65,7 @@ interface ScoreCanvasModel {
   readonly hiddenTrackIds: ReadonlySet<string>;
 }
 
-const VELOCITY_HEIGHT = 34;
-const HIT_BUCKET_WIDTH = 96;
 const MIN_TIME_GRID_SPACING = 8;
-const MAX_PITCH_ROW_HEIGHT = 30;
 const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; glow: string }>> = {
   melody: { note: '--role-melody-strong', velocity: '--role-melody-strong', glow: '--role-melody-glow' },
   bass: { note: '--role-bass-strong', velocity: '--role-bass-strong', glow: '--role-bass-glow' },
@@ -117,8 +115,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private drumPitches: number[] = [];
   private harmonicHeight = 0;
   private drumHeight = 0;
-  private drag: { note: ScoreCanvasNote; x: number; y: number; pointerId: number; mode: PhraseDragMode; current: PhraseNote;
-    originals: readonly ScoreCanvasNote[]; preview: readonly PhraseNote[]; duplicate: boolean; lockPitch: boolean } | null = null;
+  private drag: ScoreDrag<ScoreCanvasNote> | null = null;
   private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[] } | null = null;
   private shape: { mode: 'pitch' | 'velocity'; pointerId: number; notes: Map<string, PhraseNote> } | null = null;
   private readonly touches = new Map<number, { x: number; y: number }>();
@@ -333,8 +330,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   };
 
   private updateViewport(): void {
-    this.horizontalOffset = Math.min(1 - 1 / this.horizontalScale, Math.max(0, this.horizontalOffset));
-    this.verticalOffset = Math.min(Math.max(0, this.contentHeight - this.scoreHeight), Math.max(0, this.verticalOffset));
+    Object.assign(this, clampViewport(this.timeGeometry, this.pitchGeometry));
     const horizontalScroll = this.horizontalScroll()?.nativeElement;
     const horizontalContent = this.horizontalContent()?.nativeElement;
     const verticalScroll = this.verticalScroll()?.nativeElement;
@@ -351,14 +347,28 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       width: this.width, laneHeight: this.laneHeight, verticalOffset: this.verticalOffset, scoreHeight: this.scoreHeight });
   }
 
-  private get scoreHeight(): number { return Math.max(1, this.height - (this.velocityVisible() ? VELOCITY_HEIGHT : 0)); }
-  private get maxVerticalScale(): number {
-    return Math.min(this.editable() ? 128 : 8,
-      Math.max(1, MAX_PITCH_ROW_HEIGHT * (this.pitchMax - this.pitchMin + 1) / Math.max(1, this.harmonicHeight)));
+  private get timeGeometry(): ScoreTimeGeometry {
+    return { width: this.width, horizontalScale: this.horizontalScale, horizontalOffset: this.horizontalOffset,
+      totalBeats: this.model?.totalBeats ?? 1 };
   }
-  private get contentHeight(): number { return this.laneHeight * (this.pitchMax - this.pitchMin + 1) + this.drumHeight; }
-  private get laneHeight(): number {
-    return Math.min(MAX_PITCH_ROW_HEIGHT, Math.max(1, this.harmonicHeight) * this.verticalScale / (this.pitchMax - this.pitchMin + 1));
+
+  private get pitchGeometry(): ScorePitchGeometry {
+    return { height: this.height, velocityVisible: this.velocityVisible(), harmonicHeight: this.harmonicHeight,
+      drumHeight: this.drumHeight, pitchMin: this.pitchMin, pitchMax: this.pitchMax,
+      verticalScale: this.verticalScale, verticalOffset: this.verticalOffset };
+  }
+
+  private get scoreHeight(): number { return scoreHeight(this.pitchGeometry); }
+  private get maxVerticalScale(): number { return maxVerticalScale(this.pitchGeometry, this.editable()); }
+  private get contentHeight(): number { return contentHeight(this.pitchGeometry); }
+  private get laneHeight(): number { return laneHeight(this.pitchGeometry); }
+
+  private get interactionPreview(): ScoreInteractionPreview {
+    return {
+      notes: this.drag?.preview ?? (this.shape ? [...this.shape.notes.values()] : []),
+      selectionBox: this.box,
+      active: !!(this.drag || this.box || this.shape),
+    };
   }
 
   onHorizontalScroll(): void {
@@ -376,7 +386,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private scoreX(beat: number): number {
-    return (beat / Math.max(1, this.model?.totalBeats ?? 1) - this.horizontalOffset) * this.width * this.horizontalScale;
+    return scoreX(beat, this.timeGeometry);
   }
 
   private readonly onCanvasClick = (event: MouseEvent): void => {
@@ -435,17 +445,13 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const drag = this.drag;
       const dx = (event.clientX - drag.x) * this.width / Math.max(1, bounds.width);
       const dy = (event.clientY - drag.y) * this.height / Math.max(1, bounds.height);
-      const rawDelta = dx / (this.width * this.horizontalScale) * (this.model?.totalBeats ?? 1);
-      const grid = event.shiftKey ? 0 : this.snapBeats();
-      const anchor = drag.mode === 'duration' ? drag.note.durationBeats : drag.note.startBeat;
-      const beatDelta = grid ? Math.round((anchor + rawDelta) / grid) * grid - anchor : rawDelta;
-      const pitchDelta = drag.lockPitch || (event.shiftKey && drag.mode === 'move') ? 0 : -Math.round(dy / this.laneHeight);
       const previousPreview = drag.preview;
-      drag.preview = dragPhraseNotes(drag.originals, drag.mode, beatDelta, pitchDelta, -Math.round(dy),
-        this.editBounds()?.startBeat ?? 0, this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1);
-      if ((drag.mode === 'pitch' || drag.mode === 'move') && pitchDelta !== 0 && !drag.lockPitch) {
-        drag.preview = drag.preview.map(note => ({ ...note, midi: this.snapPitch(note.midi) }));
-      }
+      drag.preview = previewScoreDrag(drag, { x: dx, y: dy }, {
+        time: this.timeGeometry, laneHeight: this.laneHeight, snapBeats: this.snapBeats(), shiftKey: event.shiftKey,
+        scalePitchClasses: this.snapToScale() ? this.scalePitchClasses() : [],
+        startBeat: this.editBounds()?.startBeat ?? 0,
+        endBeat: this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1,
+      });
       drag.current = drag.preview.find(note => note.id === drag.note.id) ?? drag.note;
       const pitchChanged = drag.preview.some((note, index) => note.midi !== previousPreview[index]?.midi);
       if (pitchChanged || (drag.mode === 'velocity' && performance.now() - this.lastAudition > 300)) {
@@ -550,37 +556,19 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const canvas = this.app?.canvas;
     if (!canvas) return undefined;
     const bounds = canvas.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width);
-    const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
-    const trackCount = this.model?.tracks.length ?? 0;
-    if (trackCount === 0 || y < 0 || x < 0 || x >= this.width) return undefined;
-    const selectedIds = this.editable() ? this.selectedNoteIds() : [];
-    if (y >= this.scoreHeight) {
-      if (this.editable() && this.velocityVisible() && y < this.height) {
-        const matches = (area: NoteHitArea): boolean => Math.abs(x - area.x) <= 5;
-        return this.hitAreas.find(area => selectedIds.includes(area.note.id) && matches(area))
-          ?? this.hitAreas.find(matches);
-      }
-      return undefined;
-    }
-    const trackIndex = y >= this.harmonicHeight && this.drumHeight > 0 ? 1 : 0;
-    const column = Math.min(this.hitColumnCount - 1, Math.floor(x / HIT_BUCKET_WIDTH));
-    const candidates = this.hitAreaBuckets.get(trackIndex * this.hitColumnCount + column) ?? [];
-    let fallback: NoteHitArea | undefined;
-    for (let index = candidates.length - 1; index >= 0; index--) {
-      const area = candidates[index];
-      if (x >= area.x && x <= area.x + area.width && y >= area.y && y <= area.y + area.height) {
-        if (selectedIds.includes(area.note.id)) return area;
-        fallback ??= area;
-      }
-    }
-    return fallback;
+    return hitAreaAt(canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height }), {
+      width: this.width, height: this.height, scoreHeight: this.scoreHeight, harmonicHeight: this.harmonicHeight,
+      drumHeight: this.drumHeight, trackCount: this.model?.tracks.length ?? 0,
+      editable: this.editable(), velocityVisible: this.velocityVisible(), selectedIds: this.selectedNoteIds(),
+      areas: this.hitAreas, columnCount: this.hitColumnCount, buckets: this.hitAreaBuckets,
+    });
   }
 
   private beatAt(event: MouseEvent): number {
     const bounds = this.app!.canvas.getBoundingClientRect();
-    return (this.horizontalOffset + (event.clientX - bounds.left) / Math.max(1, bounds.width) / this.horizontalScale) * (this.model?.totalBeats ?? 1);
+    return scoreBeat(canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height }).x, this.timeGeometry);
   }
+
   private snapPitch(midi: number): number {
     return snapMidiToScale(midi, this.snapToScale() ? this.scalePitchClasses() : []);
   }
@@ -634,8 +622,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const area = this.hitAreaAt(event);
     if (event.button === 1) this.middlePress = { pointerId: event.pointerId, startedEmpty: this.emptyCanvasPoint(event), canApply: false };
     const bounds = this.app.canvas.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width);
-    const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+    const { x, y } = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
     if (event.button === 2) {
       this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: event.ctrlKey || event.metaKey ? this.selectedNoteIds() : [] };
     } else if ((event.ctrlKey || event.metaKey) && (!area || !this.selectedNoteIds().includes(area.note.id) || event.button === 1)) {
@@ -687,8 +674,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
           this.splitRequested.emit({ id: area.note.id, beat: grid ? Math.round(beat / grid) * grid : beat });
         } else this.deleteRequested.emit(area.note.id);
       } else {
-        const ids = this.hitAreas.filter(area => area.x + area.width >= Math.min(box.x, box.endX) && area.x <= Math.max(box.x, box.endX)
-          && area.y + area.height >= Math.min(box.y, box.endY) && area.y <= Math.max(box.y, box.endY)).map(area => area.note.id);
+        const ids = boxNoteIds(this.hitAreas, box, { x: box.endX, y: box.endY });
         this.selectionChanged.emit([...new Set([...box.previous, ...ids])]);
       }
     }
@@ -697,9 +683,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.shape = null;
     }
     if (this.drag?.pointerId === event.pointerId) {
-      const { note, current, preview, duplicate } = this.drag;
+      const changed = scoreDragChanged(this.drag);
+      const { current, preview, duplicate } = this.drag;
       this.drag = null;
-      if (duplicate || current.startBeat !== note.startBeat || current.durationBeats !== note.durationBeats || current.midi !== note.midi || current.velocity !== note.velocity) {
+      if (changed) {
         if (preview.length === 1 && !duplicate) this.noteChanged.emit(current);
         else this.notesChanged.emit({ notes: preview, duplicate });
       }
@@ -734,14 +721,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (event.detail > 1) return;
     if (!this.editable() || this.hitAreaAt(event) || !this.app || !this.model) return;
     const bounds = this.app.canvas.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) * this.width / bounds.width;
-    const y = (event.clientY - bounds.top) * this.height / bounds.height;
+    const { x, y } = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
     if (y >= this.scoreHeight) return;
-    const midi = y >= this.harmonicHeight && this.drumPitches.length
-      ? this.drumPitches[Math.min(this.drumPitches.length - 1, Math.floor((y - this.harmonicHeight) / this.drumHeight * this.drumPitches.length))]
-      : this.pitchMax - Math.floor((y + this.verticalOffset) / this.laneHeight);
+    const midi = pitchAt(y, this.pitchGeometry, this.drumPitches);
     const grid = event.shiftKey ? 0 : this.snapBeats();
-    const rawBeat = (this.horizontalOffset + x / this.width / this.horizontalScale) * this.model.totalBeats;
+    const rawBeat = scoreBeat(x, this.timeGeometry);
     const startBeat = grid ? Math.round(rawBeat / grid) * grid : rawBeat;
     const range = this.editBounds();
     if (range && (startBeat < range.startBeat || startBeat >= range.endBeat)) return;
@@ -765,8 +749,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private noteDragZone(area: NoteHitArea, x: number, altKey = false): 'start' | 'move' | 'duration' {
-    if (altKey || x <= area.x + Math.min(5, area.width / 3)) return 'start';
-    return x >= area.x + area.width - Math.min(7, area.width / 3) ? 'duration' : 'move';
+    return noteDragZone(area, x, altKey);
   }
 
   private drawStatic(preservePitchPosition = false): void {
@@ -786,9 +769,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const focus = this.pendingSectionFocus;
     if (focus) {
       this.pendingSectionFocus = null;
-      const length = Math.max(0.001, focus.endBeat - focus.startBeat);
-      this.horizontalScale = Math.max(1, totalBeats / length);
-      this.horizontalOffset = (focus.startBeat + length / 2) / totalBeats - 0.5 / this.horizontalScale;
+      Object.assign(this, sectionViewport(focus.startBeat, focus.endBeat, totalBeats));
     }
     const scoreHeight = this.scoreHeight;
     const previousLaneHeight = this.laneHeight;
@@ -966,14 +947,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         height: Math.min(bottom, centerY + hitHalfHeight) - hitY,
       };
       this.hitAreas.push(hitArea);
-      const firstColumn = Math.floor(hitArea.x / HIT_BUCKET_WIDTH);
-      const lastColumn = Math.min(this.hitColumnCount - 1, Math.floor((hitArea.x + hitArea.width) / HIT_BUCKET_WIDTH));
-      for (let column = firstColumn; column <= lastColumn; column++) {
-        const bucketId = trackIndex * this.hitColumnCount + column;
-        const bucket = this.hitAreaBuckets.get(bucketId);
-        if (bucket) bucket.push(hitArea);
-        else this.hitAreaBuckets.set(bucketId, [hitArea]);
-      }
+      addHitArea(hitArea, this.hitColumnCount, this.hitAreaBuckets);
     }
 
     this.focusedNoteIndex = focusedNote ? this.hitAreas.findIndex((area) => area.note.id === focusedNote.id && area.note.part === focusedNote.part && area.note.startBeat === focusedNote.startBeat) : -1;
@@ -1017,8 +991,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       graphics.roundRect(area.x, area.y + area.height / 4, area.width, area.height / 2, 2)
         .fill({ color: glow.toNumber(), alpha: 0.4 * glowStrength });
     }
-    const preview = this.drag?.preview ?? (this.shape ? [...this.shape.notes.values()] : []);
-    for (const note of preview) {
+    const interaction = this.interactionPreview;
+    for (const note of interaction.notes) {
       const area = this.hitAreas.find(area => area.note.id === note.id);
       if (area) {
         const rowHeight = area.note.color === 'drums' ? this.drumHeight / Math.max(1, this.drumPitches.length) : this.laneHeight;
@@ -1039,13 +1013,13 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       if (this.selectedNoteIds().includes(area.note.id)) graphics.roundRect(area.x - 1, area.y - 1, area.width + 2, area.height + 2, 3)
         .stroke({ color: accent.toNumber(), alpha: 1, width: 2 });
     }
-    if (this.box) {
-      const b = this.box;
+    if (interaction.selectionBox) {
+      const b = interaction.selectionBox;
       graphics.rect(Math.min(b.x, b.endX), Math.min(b.y, b.endY), Math.abs(b.endX - b.x), Math.abs(b.endY - b.y))
         .fill({ color: accent.toNumber(), alpha: 0.12 }).stroke({ color: accent.toNumber(), alpha: 0.8, width: 1 });
     }
     const hover = this.hoveredNote;
-    if (hover && this.editable() && !this.drag && !this.box && !this.shape) {
+    if (hover && this.editable() && !interaction.active) {
       const bounds = hover.area.visualBounds ?? hover.area;
       const leftWidth = Math.min(5, hover.area.width / 3);
       const rightWidth = Math.min(7, hover.area.width / 3);
