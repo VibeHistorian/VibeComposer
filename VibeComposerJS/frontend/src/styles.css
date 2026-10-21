@@ -83,9 +83,9 @@
 
   /* Playback loop markers */
   --loop-accent: #ffe16a;
-  --loop-line: rgb(255 225 106 / 40%);
-  --loop-surface: rgb(255 225 106 / 12%);
-  --loop-outline: rgb(255 225 106 / 20%);
+  --loop-line: color-mix(in srgb, var(--loop-accent) 80%, var(--surface-base));
+  --loop-surface: color-mix(in srgb, var(--loop-accent) 12%, transparent);
+  --loop-outline: color-mix(in srgb, var(--loop-accent) 20%, transparent);
 
   /* Text and borders */
   --text-primary: #f2f7ff;

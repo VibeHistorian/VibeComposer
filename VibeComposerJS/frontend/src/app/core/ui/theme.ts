@@ -25,6 +25,26 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
   const raised = (amount: number) => mix(surface, border, amount);
   const tinted = (amount: number) => mix(surface, accent, amount);
   const muted = (amount: number) => mix(text, surface, amount);
+  const luminance = (color: string): number => {
+    const channels = [1, 3, 5].map(offset => parseInt(color.slice(offset, offset + 2), 16) / 255)
+      .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+    return channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+  };
+  const loopBackgrounds = [background, surface, raised(.18)].map(luminance);
+  const loopContrast = (color: string): number => {
+    const light = luminance(color);
+    return Math.min(...loopBackgrounds.map(other => (Math.max(light, other) + .05) / (Math.min(light, other) + .05)));
+  };
+  const inverseBackground = '#' + [1, 3, 5].map(offset =>
+    (255 - parseInt(background.slice(offset, offset + 2), 16)).toString(16).padStart(2, '0')).join('');
+  // Retain yellow wherever readable; move toward the inverse background only as far as needed.
+  let loopAccent = '#ffe16a';
+  for (const target of [inverseBackground, text]) {
+    for (let step = 1; step <= 100 && loopContrast(loopAccent) < 4.5; step++) {
+      const candidate = mix('#ffe16a', target, step / 100);
+      if (loopContrast(candidate) > loopContrast(loopAccent)) loopAccent = candidate;
+    }
+  }
   return {
     '--surface-canvas': background,
     '--surface-inspector': inspector, '--surface-role-group': roleGroups,
@@ -52,5 +72,7 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
     '--accent-primary': accent, '--accent-hover': mix(accent, text, .4),
     '--accent-shadow': accent + '26', '--accent-glow': accent + '80', '--accent-outline': accent + '2e',
     '--ambient-glow': accent + '0a',
+    '--loop-accent': loopAccent, '--loop-line': mix(loopAccent, surface, .2),
+    '--loop-surface': loopAccent + '1f', '--loop-outline': loopAccent + '33',
   };
 }

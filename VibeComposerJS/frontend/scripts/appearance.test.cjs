@@ -41,6 +41,9 @@ test('random palettes vary modes, preserve fonts and remain readable with distin
       assert.ok(contrast(theme.text, surface) >= 4.5, `text ${index} ${key}`);
       assert.ok(contrast(theme.accent, surface) >= 3, `accent ${index} ${key}`);
     }
+    const loop = themeColorTokens(theme)['--loop-accent'];
+    assert.ok(contrast(loop, theme.background) >= 4.5, `loop background ${index}`);
+    assert.ok(contrast(loop, theme.surface) >= 4.5, `loop surface ${index}`);
     const roles = Object.values(appearance.roleColors);
     for (const key of ['background', 'surface', 'inspector', 'roleGroups']) {
       assert.ok(contrast(theme.accent, theme[key]) >= 4.5, `accent ${index} ${key}`);
@@ -71,6 +74,20 @@ test('selection and score shading follow light and dark theme backgrounds', () =
   assert.equal(light['--surface-role-group-selected'], '#a2a2a2');
   assert.equal(dark['--score-out-of-scale'], '#1a1a1a');
   assert.equal(light['--score-out-of-scale'], '#e6e6e6');
+});
+
+test('loop yellow adapts to light surfaces and stays bright on dark surfaces', () => {
+  const base = defaultAppearance().themeColors;
+  assert.equal(themeColorTokens(base)['--loop-accent'], '#ffe16a');
+  for (const background of ['#ffffff', '#e6e8eb', '#080e16', '#173344']) {
+    const colors = { ...base, background, surface: background, border: background };
+    const tokens = themeColorTokens(colors);
+    assert.ok(contrast(tokens['--loop-accent'], background) >= 4.5, background);
+    assert.ok(contrast(tokens['--loop-line'], background) < contrast(tokens['--loop-accent'], background), 'markers are softer than the toggle');
+    assert.ok(contrast(tokens['--loop-line'], background) >= 3, 'markers remain visible');
+    assert.equal(tokens['--loop-surface'], tokens['--loop-accent'] + '1f');
+    assert.equal(tokens['--loop-outline'], tokens['--loop-accent'] + '33');
+  }
 });
 
 test('neutral adjustments preserve every chosen color exactly', () => {
