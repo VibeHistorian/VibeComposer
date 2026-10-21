@@ -262,7 +262,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(style().getPropertyValue('--surface-canvas').trim()==='#100818','live background');
         ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','live inspector background');
         ensure(getComputedStyle(document.querySelector('.track-group')).backgroundColor==='rgb(80, 64, 96)','live role group background');
-        ensure(style().getPropertyValue('--surface-role-group-selected').trim()==='#382d43','selected role settings darken the group background');
+        ensure(style().getPropertyValue('--surface-role-group-selected').trim()==='#3d2f4a','selected role settings blend toward the page background');
         ensure(/^#[0-9a-f]{6}$/i.test(style().getPropertyValue('--grid-measure').trim()),'concrete canvas palette');
         const previousBassSurface=style().getPropertyValue('--role-bass-surface');
         const previousDrumSurface=style().getPropertyValue('--role-drum-surface');

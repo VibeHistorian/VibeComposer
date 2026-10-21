@@ -103,7 +103,7 @@ export function roleColorTokens(role: ArrangedPart, base: string, theme: ThemeCo
   const prefix = `--role-${role}`;
   const tokens: Record<string, string> = {
     [prefix]: base, [`${prefix}-glow`]: base + '50', [`${prefix}-strong`]: mix(theme.text, .22),
-    [`${prefix}-dark`]: mix('#000000', .4), [`${prefix}-surface`]: mix(theme.surface, .72),
+    [`${prefix}-dark`]: mix(theme.surface, .4), [`${prefix}-surface`]: mix(theme.surface, .72),
     [`${prefix}-border`]: mix(theme.surface, .32), [`${prefix}-text`]: mix(theme.text, .78),
     [`${prefix}-header`]: mix(theme.surface, .55), [`${prefix}-cell-surface`]: mix(theme.surface, .79),
   };

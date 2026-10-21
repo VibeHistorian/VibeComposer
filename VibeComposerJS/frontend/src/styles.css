@@ -45,15 +45,15 @@
   --surface-low: #142a3e;
   --surface-inspector: #0b1e30;
   --surface-role-group: #112d45;
-  --surface-role-group-selected: #0c1f30;
+  --surface-role-group-selected: #0e2437;
   --surface-card: #1c354b;
   --surface-button: #14495d;
   --surface-button-hover: #195f75;
   --surface-hover: #134357;
   --surface-accent: #113a4d;
   --surface-accent-hover: #154c61;
-  --surface-toggle-active: color-mix(in srgb, var(--surface-accent-hover) 50%, black);
-  --toggle-off-shade: rgb(0 0 0 / 25%);
+  --surface-toggle-active: color-mix(in srgb, var(--surface-accent-hover) 50%, var(--surface-base));
+  --toggle-off-shade: color-mix(in srgb, var(--surface-base) 25%, transparent);
   --surface-score: #0a1826;
   --surface-blue: #103448;
   --surface-violet: #27344c;
@@ -63,13 +63,13 @@
 
   /* Theme background gradients */
   --background-page: linear-gradient(to bottom, var(--surface-canvas), color-mix(in srgb, var(--surface-canvas), white 5%));
-  --background-role-group: linear-gradient(to bottom, var(--surface-role-group), color-mix(in srgb, var(--surface-role-group), black 35%));
+  --background-role-group: linear-gradient(to bottom, var(--surface-role-group), color-mix(in srgb, var(--surface-role-group), var(--surface-base) 35%));
 
   /* Mixer status, distinct from role colors */
   --mix-mute-active: #ffff32;
   --mix-solo-active: #91ff28;
-  --mix-track-mute-active: color-mix(in srgb, var(--mix-mute-active) 75%, black);
-  --mix-track-solo-active: color-mix(in srgb, var(--mix-solo-active) 75%, black);
+  --mix-track-mute-active: color-mix(in srgb, var(--mix-mute-active) 75%, var(--surface-base));
+  --mix-track-solo-active: color-mix(in srgb, var(--mix-solo-active) 75%, var(--surface-base));
 
   /* Chordlet palette shared by editors and harmony headers */
   --chordlet-border-tone: 45% 38%;
@@ -117,7 +117,7 @@
   --score-pitch-b: #0b1c2d;
   --score-pitch-band: #3b607d0d;
   --score-octave-line: #aaaaaa;
-  --score-out-of-scale: #030609;
+  --score-out-of-scale: #0a1826;
   --score-scale-note: rgb(140 235 194 / 22%);
 
   /* Accent and arrangement roles */
@@ -129,7 +129,7 @@
   --role-melody: #d44040;
   --role-melody-glow: color-mix(in srgb, var(--role-melody), transparent 69%);
   --role-melody-strong: color-mix(in srgb, var(--role-melody), var(--text-primary) 22%);
-  --role-melody-dark: color-mix(in srgb, var(--role-melody), black 40%);
+  --role-melody-dark: color-mix(in srgb, var(--role-melody), var(--surface-base) 40%);
   --role-melody-surface: color-mix(in srgb, var(--role-melody), var(--surface-base) 72%);
   --role-melody-border: color-mix(in srgb, var(--role-melody), var(--surface-base) 32%);
   --role-melody-text: color-mix(in srgb, var(--role-melody), var(--text-primary) 78%);
@@ -137,21 +137,21 @@
   --role-bass: #8ca9ba;
   --role-bass-glow: color-mix(in srgb, var(--role-bass), transparent 69%);
   --role-bass-strong: color-mix(in srgb, var(--role-bass), var(--text-primary) 22%);
-  --role-bass-dark: color-mix(in srgb, var(--role-bass), black 40%);
+  --role-bass-dark: color-mix(in srgb, var(--role-bass), var(--surface-base) 40%);
   --role-bass-surface: color-mix(in srgb, var(--role-bass), var(--surface-base) 72%);
   --role-bass-border: color-mix(in srgb, var(--role-bass), var(--surface-base) 32%);
   --role-bass-text: color-mix(in srgb, var(--role-bass), var(--text-primary) 78%);
   --role-chords: #28b82b;
   --role-chords-glow: color-mix(in srgb, var(--role-chords), transparent 69%);
   --role-chords-strong: color-mix(in srgb, var(--role-chords), var(--text-primary) 22%);
-  --role-chords-dark: color-mix(in srgb, var(--role-chords), black 40%);
+  --role-chords-dark: color-mix(in srgb, var(--role-chords), var(--surface-base) 40%);
   --role-chords-surface: color-mix(in srgb, var(--role-chords), var(--surface-base) 72%);
   --role-chords-border: color-mix(in srgb, var(--role-chords), var(--surface-base) 32%);
   --role-chords-text: color-mix(in srgb, var(--role-chords), var(--text-primary) 78%);
   --role-arpeggio: #ed55bf;
   --role-arpeggio-glow: color-mix(in srgb, var(--role-arpeggio), transparent 69%);
   --role-arpeggio-strong: color-mix(in srgb, var(--role-arpeggio), var(--text-primary) 22%);
-  --role-arpeggio-dark: color-mix(in srgb, var(--role-arpeggio), black 40%);
+  --role-arpeggio-dark: color-mix(in srgb, var(--role-arpeggio), var(--surface-base) 40%);
   --role-arpeggio-surface: color-mix(in srgb, var(--role-arpeggio), var(--surface-base) 72%);
   --role-arpeggio-border: color-mix(in srgb, var(--role-arpeggio), var(--surface-base) 32%);
   --role-arpeggio-text: color-mix(in srgb, var(--role-arpeggio), var(--text-primary) 78%);
@@ -162,7 +162,7 @@
   --role-drums: #e4b74e;
   --role-drums-glow: color-mix(in srgb, var(--role-drums), transparent 69%);
   --role-drums-strong: color-mix(in srgb, var(--role-drums), var(--text-primary) 22%);
-  --role-drums-dark: color-mix(in srgb, var(--role-drums), black 40%);
+  --role-drums-dark: color-mix(in srgb, var(--role-drums), var(--surface-base) 40%);
   --role-drums-surface: color-mix(in srgb, var(--role-drums), var(--surface-base) 72%);
   --role-drums-border: color-mix(in srgb, var(--role-drums), var(--surface-base) 32%);
   --role-kick: var(--role-drums);

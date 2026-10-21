@@ -28,7 +28,7 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
   return {
     '--surface-canvas': background,
     '--surface-inspector': inspector, '--surface-role-group': roleGroups,
-    '--surface-role-group-selected': mix(roleGroups, '#000000', .3),
+    '--surface-role-group-selected': mix(roleGroups, background, .3),
     '--surface-input': mix(background, surface, .65), '--surface-base': surface,
     '--surface-low': raised(.18), '--surface-card': raised(.35),
     '--surface-button': tinted(.23), '--surface-button-hover': tinted(.35),
@@ -48,7 +48,7 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
     '--grid-beat': raised(.8), '--grid-measure': mix(border, text, .2),
     '--score-row-odd': mix(background, surface, .8), '--score-row-even': surface,
     '--score-pitch-a': mix(background, surface, .75), '--score-pitch-b': mix(background, surface, .9),
-    '--score-pitch-band': border + '0d', '--score-out-of-scale': mix(background, '#000000', .6),
+    '--score-pitch-band': border + '0d', '--score-out-of-scale': mix(background, surface, .6),
     '--accent-primary': accent, '--accent-hover': mix(accent, text, .4),
     '--accent-shadow': accent + '26', '--accent-glow': accent + '80', '--accent-outline': accent + '2e',
     '--ambient-glow': accent + '0a',

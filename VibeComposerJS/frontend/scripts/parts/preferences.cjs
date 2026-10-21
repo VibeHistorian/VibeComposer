@@ -204,7 +204,7 @@ test('main theme preferences derive concrete canvas colors and preserve project 
   assert.deepEqual(preferences.appearance().themeColors, DEFAULT_THEME_COLORS);
 });
 
-test('panel background preferences persist and derive a darker selection independently of other surfaces', () => {
+test('panel background preferences persist and blend selection toward the page background', () => {
   const { uiPreferences: preferences, load } = fixture();
   const { themeColorTokens, DEFAULT_THEME_COLORS } = load('core/ui/theme.ts');
   preferences.setThemeColor('inspector', '#211831');
@@ -212,7 +212,7 @@ test('panel background preferences persist and derive a darker selection indepen
   const tokens = themeColorTokens(preferences.appearance().themeColors);
   assert.equal(tokens['--surface-inspector'], '#211831');
   assert.equal(tokens['--surface-role-group'], '#504060');
-  assert.equal(tokens['--surface-role-group-selected'], '#382d43');
+  assert.equal(tokens['--surface-role-group-selected'], '#3a314a');
   assert.equal(tokens['--surface-base'], DEFAULT_THEME_COLORS.surface);
   const saved = preferences.exportJson();
   const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
