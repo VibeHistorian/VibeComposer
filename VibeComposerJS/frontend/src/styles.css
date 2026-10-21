@@ -308,8 +308,7 @@ button[aria-pressed="false"]:not(.group-select, .track-select, .score-ruler-sect
 .project-tools .icon-button { width: 31px; padding: 0; font-size: 16px; }
 .project-device-tools, .project-file-tools { grid-template-columns: minmax(0, 1fr); }
 .project-history-group { grid-template-columns: repeat(2, 31px); }
-.project-device-tools .icon-button, .project-history-group .icon-button:last-child { width: 100%; }
-.project-history-group .icon-button:last-child { grid-column: 1 / -1; }
+.project-history-group button:last-child { grid-column: 1 / -1; width: 100%; }
 .project-tools button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .project-tools button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 .project-tools button:disabled { opacity: .35; cursor: default; }

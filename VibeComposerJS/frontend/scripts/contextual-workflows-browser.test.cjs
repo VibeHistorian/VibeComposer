@@ -198,7 +198,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => !document.querySelector('.placement-target'), 'quick customization saved');
       document.querySelector('.track-group.chords .group-select').click();
       await wait(() => document.querySelector('#part-inspector [data-control-role="chords"]'), 'chord inspector');
-      const join = await wait(() => document.querySelector('#part-inspector [aria-label="Join"]'), 'chord join');
+      const join = await wait(() => document.querySelector('#part-inspector [aria-label="JOIN"]'), 'chord join');
       change(join, 'EXPAND');
       await wait(() => read().tracks.find(track => track.role === 'chords').generatorSettings.patternJoinMode === 'EXPAND', 'chord join commit');
       const strum = await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]'), 'chord strum');
@@ -227,7 +227,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         track.generatorSettings.strumType.startsWith('ARP') && track.generatorSettings.transitionChance === 0
         && track.generatorSettings.strumPauseChance === 0 && track.generatorSettings.patternJoinMode === 'EXPAND');
       document.querySelector('.track-group.arpeggio .group-select').click();
-      const direction = await wait(() => document.querySelector('.part-settings-panel [aria-label="Pitch direction"]'), 'arp direction');
+      const direction = await wait(() => document.querySelector('.part-settings-panel [aria-label="DIRECTION"]'), 'arp direction');
       change(direction, 'custom');
       const customDirection = await wait(() => document.querySelector('#part-inspector [aria-label="Custom direction"]'), 'custom direction editor');
       change(customDirection, '-1, 0, 3, 1');
@@ -244,12 +244,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         && document.querySelector('.part-settings-panel [aria-label="Rotate"]').value === '3';
       change(document.querySelector('#part-inspector [aria-label="Contour"]'), '');
       await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.arpContour.length === 0, 'clear contour');
-      change(document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]'), 'melody');
+      change(document.querySelector('.part-settings-panel [aria-label="PATTERN"]'), 'melody');
       await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.rhythm === 'melody', 'arp melody rhythm');
       await wait(() => !document.querySelector('.part-settings-panel [aria-label="Hits"]')
-        && document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]').value === 'melody', 'arp melody editors synchronized');
+        && document.querySelector('.part-settings-panel [aria-label="PATTERN"]').value === 'melody', 'arp melody editors synchronized');
       result.arpMelody = !document.querySelector('.part-settings-panel [aria-label="Hits"]')
-        && document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]').value === 'melody';
+        && document.querySelector('.part-settings-panel [aria-label="PATTERN"]').value === 'melody';
       document.querySelector('.track-group.drums .group-select').click();
       const ghosts = await wait(() => document.querySelector('.part-settings-panel [aria-label="Ghosts"]'), 'drum ghosts');
       ghosts.click();
@@ -273,7 +273,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => read().tracks.find(track => track.role === 'drums').generatorSettings.hitsPerPattern === 4, 'multiply undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'multiply redo enabled')).click();
       await wait(() => read().tracks.find(track => track.role === 'drums').generatorSettings.hitsPerPattern === 8, 'multiply redo');
-      change(document.querySelector('.part-settings-panel [aria-label="Rhythm pattern"]'), 'melody');
+      change(document.querySelector('.part-settings-panel [aria-label="PATTERN"]'), 'melody');
       document.querySelector('.part-settings-panel [aria-label="Edit rhythm pattern"]').click();
       await wait(() => document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]')?.disabled, 'melody hit action disabled');
       result.drumMelody = document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]').disabled
@@ -378,8 +378,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'emphasis redo enabled')).click();
       await wait(() => read().melodyGlobal?.emphasizeKey === true, 'key emphasis redo');
       const chordTargetTracks = JSON.stringify(read().tracks);
-      const chordTargetControl = globals.querySelector('[aria-label="Chord note target"]');
-      const avoidControl = globals.querySelector('[aria-label="Replace avoid notes"]');
+      const chordTargetControl = globals.querySelector('[aria-label="CHRD%"]');
+      const avoidControl = globals.querySelector('[aria-label="AVOID"]');
       await wait(() => chordTargetControl.value === '0' && avoidControl.value === '0', 'chord repair defaults');
       change(chordTargetControl, '70');
       await wait(() => read().melodyGlobal?.chordNoteTarget === 70, 'chord target commit');
@@ -398,8 +398,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => read().melodyGlobal?.replaceAvoidNotes === 0, 'avoid default reset');
       result.chordRepairs = JSON.stringify(read().tracks) === chordTargetTracks;
       const tonalTracks = JSON.stringify(read().tracks);
-      const tonicControl = globals.querySelector('[aria-label="Tonic note target"]');
-      const modeControl = globals.querySelector('[aria-label="Mode note target"]');
+      const tonicControl = globals.querySelector('[aria-label="TON%"]');
+      const modeControl = globals.querySelector('[aria-label="MODE%"]');
       await wait(() => tonicControl.value === '0' && modeControl.value === '0', 'tonal target defaults');
       change(tonicControl, '70');
       await wait(() => read().melodyGlobal?.tonicNoteTarget === 70, 'tonic target commit');

@@ -30,14 +30,14 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       document.querySelector('.track-group.melody .group-select').click();
       let globals=await wait(()=>document.querySelector('vc-melody-global-settings'),'global melody controls');
       ensure(!globals.querySelector('[aria-label="Melody Low MIDI"]'),'hide contextual fields by default');
-      ensure(globals.querySelector('[aria-label="Tonic note target"]'),'show block controls');
+      ensure(globals.querySelector('[aria-label="TON%"]'),'show block controls');
       dialog=await settings('Melody');
       let toggle=await wait(()=>dialog.querySelector('[aria-label="Contextual Melody"]'),'contextual toggle');
       ensure(!toggle.checked,'contextual default off');toggle.click();
       await wait(()=>read().melodyGlobal?.contextualMelody===true,'save contextual toggle');
       dialog.querySelector('[aria-label="Close settings"]').click();
       globals=await wait(()=>document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]')?.closest('vc-melody-global-settings'),'contextual fields');
-      ensure(!globals.querySelector('[aria-label="Tonic note target"]')&&!globals.querySelector('[aria-label="Block target mode"]'),'hide obsolete globals');
+      ensure(!globals.querySelector('[aria-label="TON%"]')&&!globals.querySelector('[aria-label="Block target mode"]'),'hide obsolete globals');
       ensure(!document.querySelector('vc-part-settings-editor [data-control-key="patternFlexible"]'),'hide Flex');
       for(const [label,value] of [['Melody Low MIDI','62'],['Melody High MIDI','81'],['Melody Tension','50'],['Phrase Bars','3'],['Beats per Bar','3'],['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {
         change(globals.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
@@ -51,7 +51,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       toggle=await wait(()=>dialog.querySelector('[aria-label="Contextual Melody"]'),'disable contextual');toggle.click();
       await wait(()=>read().melodyGlobal?.contextualMelody===false,'save disabled contextual');
       dialog.querySelector('[aria-label="Close settings"]').click();
-      await wait(()=>document.querySelector('vc-melody-global-settings [aria-label="Tonic note target"]'),'restore block controls');
+      await wait(()=>document.querySelector('vc-melody-global-settings [aria-label="TON%"]'),'restore block controls');
       ensure(!document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]'),'hide contextual controls');
       dialog=await settings('Behavior');
       generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'Random selector');change(generation,'RANDOM');

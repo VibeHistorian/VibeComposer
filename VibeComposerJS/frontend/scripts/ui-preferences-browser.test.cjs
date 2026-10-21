@@ -103,6 +103,10 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(summary.textContent.trim()==='ID '+generatedProject.seed,'ID hint shows actual generation seed');
         ensure(summary.title.endsWith(generatedProject.tempoBpm+' BPM | SEED '+generatedProject.seed),'seed hint retains full song tooltip');
         const box = label => button(label).getBoundingClientRect();
+        for (const label of ['History', 'Settings']) {
+          ensure(button(label).textContent.trim()===label, label+' uses a text label');
+          ensure(button(label).scrollWidth<=button(label).clientWidth, label+' text fits');
+        }
         const midi = document.querySelector('.midi-port-button').getBoundingClientRect();
         ensure(box('Settings').top > midi.top && box('Settings').width===midi.width,'MIDI and settings stack with matching widths');
         ensure(box('Undo').top===box('Redo').top && box('History').top>box('Undo').top,'history below undo and redo');
