@@ -939,11 +939,24 @@ export class ProjectService {
     this.commit({ ...current, tracks, editedPhrases });
   }
 
+  private trackMoveTargetIndex(trackId: string, offset: -1 | 1): number {
+    const tracks = this.state().tracks;
+    const track = tracks.find(candidate => candidate.id === trackId);
+    if (!track) return -1;
+    const members = tracks.filter(candidate => candidate.role === track.role);
+    const target = members[members.indexOf(track) + offset];
+    return target ? tracks.indexOf(target) : -1;
+  }
+
+  canMoveTrack(trackId: string, offset: -1 | 1): boolean {
+    return this.trackMoveTargetIndex(trackId, offset) >= 0;
+  }
+
   reorderTrack(trackId: string, offset: -1 | 1): void {
     const current = this.state();
     const index = current.tracks.findIndex((track) => track.id === trackId);
-    const target = index + offset;
-    if (index < 0 || target < 0 || target >= current.tracks.length) return;
+    const target = this.trackMoveTargetIndex(trackId, offset);
+    if (target < 0) return;
     const tracks = [...current.tracks];
     [tracks[index], tracks[target]] = [tracks[target], tracks[index]];
     this.commit({ ...current, tracks });

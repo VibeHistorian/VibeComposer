@@ -782,8 +782,7 @@ export class WorkspaceCanvasComponent {
   }
 
   canMoveTrack(trackId: string, offset: -1 | 1): boolean {
-    const index = this.project().tracks.findIndex((track) => track.id === trackId);
-    return index + offset >= 0 && index + offset < this.project().tracks.length;
+    return this.projects.canMoveTrack(trackId, offset);
   }
 
   instrumentName(track: TrackRow): string {

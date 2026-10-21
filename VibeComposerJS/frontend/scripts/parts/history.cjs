@@ -253,6 +253,44 @@ test('middle-click solos only the selected track/group, unmutes it, and ignores 
   assert.strictEqual(service.project(), unchanged);
 });
 
+test('track movement stays within its role and ignores unavailable moves without consuming history', () => {
+  const { service, workspace } = fixture();
+  const original = service.project();
+  for (const track of original.tracks) {
+    for (const offset of [-1, 1]) {
+      assert.equal(workspace.canMoveTrack(track.id, offset), false);
+      service.reorderTrack(track.id, offset);
+      assert.strictEqual(service.project(), original);
+    }
+  }
+  for (const offset of [-1, 1]) assert.equal(workspace.canMoveTrack('missing', offset), false);
+
+  // New tracks are appended, so other roles separate these two Bass tracks.
+  const first = 'track-bass-1', second = service.addTrack('bass');
+  const before = service.exportProjectJson(), position = service.historyPosition();
+  const otherTracks = service.project().tracks.filter(track => track.role !== 'bass');
+  assert.equal(workspace.canMoveTrack(first, -1), false);
+  assert.equal(workspace.canMoveTrack(first, 1), true);
+  assert.equal(workspace.canMoveTrack(second, -1), true);
+  assert.equal(workspace.canMoveTrack(second, 1), false);
+  service.reorderTrack(second, -1);
+  assert.deepEqual(service.project().tracks.filter(track => track.role === 'bass').map(track => track.id), [second, first]);
+  assert.deepEqual(service.project().tracks.filter(track => track.role !== 'bass'), otherTracks);
+  assert.equal(service.historyPosition(), position + 1);
+  assert.equal(workspace.canMoveTrack(second, -1), false);
+  assert.equal(workspace.canMoveTrack(first, 1), false);
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.reorderTrack(first, -1);
+  service.reorderTrack(second, 1);
+  service.reorderTrack('missing', 1);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canRedo(), true);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.reorderTrack(second, 1);
+  assert.equal(service.exportProjectJson(), before);
+});
+
 test('role totals shrink highest numbers first, preserve locks and references, and undo atomically', () => {
   const { service } = fixture();
   service.setRoleTrackCount('chords', 5);
