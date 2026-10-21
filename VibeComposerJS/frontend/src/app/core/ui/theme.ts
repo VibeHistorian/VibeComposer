@@ -68,7 +68,7 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
     '--grid-beat': raised(.8), '--grid-measure': mix(border, text, .2),
     '--score-row-odd': mix(background, surface, .8), '--score-row-even': surface,
     '--score-pitch-a': mix(background, surface, .75), '--score-pitch-b': mix(background, surface, .9),
-    '--score-pitch-band': border + '0d', '--score-out-of-scale': mix(background, surface, .6),
+    '--score-pitch-band': border + '0d', '--score-out-of-scale': mix(background, surface, .15),
     '--accent-primary': accent, '--accent-hover': mix(accent, text, .4),
     '--accent-shadow': accent + '26', '--accent-glow': accent + '80', '--accent-outline': accent + '2e',
     '--ambient-glow': accent + '0a',
