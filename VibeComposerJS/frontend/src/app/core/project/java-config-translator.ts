@@ -49,7 +49,7 @@ const MELODY_GLOBAL: Readonly<Record<string, keyof MelodyGlobalSettings>> = {
   melodyChromaticApproaches: 'chromaticApproaches', melodyPhraseBars: 'phraseBars', melodyBeatsPerBar: 'beatsPerBar',
   melodyBlockTargetMode: 'blockTargetMode', melodyTonicNoteTarget: 'tonicNoteTarget', melodyModeNoteTarget: 'modeNoteTarget',
   melodyChordNoteTarget: 'chordNoteTarget', melodyReplaceAvoidNotes: 'replaceAvoidNotes', melodyEmphasizeKey: 'emphasizeKey',
-  melodyPatternFlip: 'patternFlip', melodySingleNoteExceptions: 'singleNoteExceptions', melodyMaxDirChanges: 'maxDirectionChanges',
+  melodyPatternFlip: 'patternFlip', melodyMaxDirChanges: 'maxDirectionChanges',
   melodyFillPausesPerChord: 'fillPausesPerChord', melodyPatternEffect: 'patternEffect', melodyArpySurprises: 'arpySurprises',
   melodyTargetNoteVariation: 'targetNoteVariation', noteTargetDirectionChoice: 'targetDirection',
   melodyUseDirectionsFromProgression: 'useDirectionsFromProgression', melody1ForcePatterns: 'forceFirstOutline',

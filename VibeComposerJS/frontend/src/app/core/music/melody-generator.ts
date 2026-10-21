@@ -65,8 +65,7 @@ function rhythmicImportance(notes: Note[]): Note[] {
 /**
  * Current MelodyBlockSkeletonGenerator → MelodyExpansion → phrase preparation.
  * P1b supports generated shapes, tonic-relative targets, reusable/inverted blocks,
- * speed, Flex/Max Block Change/Block Jump, pitch exceptions,
- * split/start behavior, pauses/fill, accents and shared dynamics.
+ * speed, Flex/Max Block Change/Block Jump, split/start behavior, pauses/fill, accents and shared dynamics.
  * Global inputs share the project-level Melody musical settings.
  */
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
@@ -165,10 +164,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
       if (flexible && existing && globals.patternEffect > 0) blocks = [...existing.blocks.slice(0, -1), blocks[blocks.length - 1]];
     }
     const notes: Note[] = [];
-    const exceptionRandom = new JavaRandom(int(baseSeed + 2 + notesSeedOffset + offset));
-    let exceptions = settings.maxNoteExceptions ?? 0;
     let adjustment = 0;
-    const blockCount = blocks.length;
     blocks.forEach((block, index) => {
       if (index > 0) adjustment += changes[index - 1] * (originalOffset < 0 ? -1 : 1);
       const pitches = block.notes.map(note => degreePitch(first + note * (originalOffset < 0 ? -1 : 1) + adjustment));
@@ -189,20 +185,9 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
           ? { ...stored, durations: blockDurations } : stored);
       } else if (existing && globals.patternEffect === 0) blockDurations = [...existing.blocks[index].durations];
       const blockStart = notes.length;
-      const customNoteIndices = customBlocks?.[index].flatMap((value, slot) => value > 0 ? [slot] : []);
       block.notes.forEach((note, noteIndex) => {
         const rhythm = blockDurations[noteIndex];
-        let pitch = pitches[noteIndex];
-        const slotIndex = customNoteIndices?.[noteIndex] ?? noteIndex;
-        const exceptionIndexValid = globals.singleNoteExceptions
-          ? slotIndex === (customBlocks?.[index].length ?? block.notes.length) - 1 && index === blockCount - 1 : slotIndex > 0;
-        if (exceptionIndexValid && exceptions > 0 && exceptionRandom.nextInt(100) < (settings.noteExceptionChance ?? 0)) {
-          pitch += (exceptionRandom.nextBoolean() ? 1 : -1) * MAJOR[exceptionRandom.nextInt(globals.singleNoteExceptions ? 7 : 4)];
-          const semitone = pitch % 12;
-          const closest = MAJOR.reduce((best, value) => Math.abs(semitone - value) < Math.abs(semitone - best) ? value : best, MAJOR[0]);
-          pitch += closest - semitone;
-          exceptions--;
-        }
+        const pitch = pitches[noteIndex];
         notes.push({ midi: pitch + (settings.transpose ?? 0),
           rhythm, duration: customBlocks ? rhythm : rhythm * (0.75 + durationRandom.nextDouble() / 4) * DURATION_MULTIPLIER,
           velocity: 0, offset: 0 });

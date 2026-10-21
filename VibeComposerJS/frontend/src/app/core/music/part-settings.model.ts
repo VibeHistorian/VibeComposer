@@ -53,8 +53,6 @@ export interface MelodySettings extends CommonPartSettings {
   readonly maxBlockChange?: number;
   readonly blockJump?: number;
   readonly patternFlexible?: boolean;
-  readonly maxNoteExceptions?: number;
-  readonly noteExceptionChance?: number;
   readonly splitChance?: number;
   readonly startNoteChance?: number;
   readonly pauseChance?: number;
@@ -89,7 +87,6 @@ export interface MelodyGlobalSettings {
   readonly emphasizeKey?: boolean;
   /** Invert the first Melody's published onset grid for dependent parts; Melody notes stay unchanged. */
   readonly patternFlip?: boolean;
-  readonly singleNoteExceptions?: boolean;
   readonly maxDirectionChanges?: number;
   readonly fillPausesPerChord?: boolean;
   /** 0 repeats rhythm, 1 repeats notes, 2 repeats rhythm and notes. */

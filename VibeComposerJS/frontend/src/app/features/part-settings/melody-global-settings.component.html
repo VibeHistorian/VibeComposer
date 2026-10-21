@@ -59,7 +59,7 @@
       }
       @if (showAlgorithm(false)) {
         <vc-compact-toggle label="Force first outline" [active]="values().forceFirstOutline ?? false"
-        description="During preparation, copy the first stored Melody track's targets, structure, speed, block limits, exceptions and split chance to unlocked Melody tracks. Section overrides remain explicit."
+        description="During preparation, copy the first stored Melody track's targets, structure, speed, block limits and split chance to unlocked Melody tracks. Section overrides remain explicit."
         (toggled)="settingsChanged.emit({ forceFirstOutline: !(values().forceFirstOutline ?? false) })" />
       }
     </fieldset>
@@ -90,11 +90,6 @@
         <vc-compact-toggle label="Emphasize key" [active]="values().emphasizeKey ?? false"
         description="Give tonic and mode-important pitches longer durations inside new block identities. Repeated identities follow Pattern effect's stored rhythm behavior."
         (toggled)="settingsChanged.emit({ emphasizeKey: !(values().emphasizeKey ?? false) })" />
-      }
-      @if (showAlgorithm(false)) {
-        <vc-compact-toggle label="Single note exceptions" [active]="values().singleNoteExceptions ?? false"
-        description="Apply pitch exceptions only to the last note of the last block in each chord, using the full major-scale interval range. Requires Max exceptions and Note exceptions."
-        (toggled)="settingsChanged.emit({ singleNoteExceptions: !(values().singleNoteExceptions ?? false) })" />
       }
     </fieldset>
     }

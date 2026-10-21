@@ -389,9 +389,11 @@ function overrandomizeDrums(random: JavaRandom, policy: TrackGenerationPolicies[
 
 function rerollMelody(random: JavaRandom, seed: bigint, policy: TrackGenerationPolicies['melody'], source: MelodySettings, order: number, sharedSeed?: number): MelodySettings {
   const speed = random.nextInt(25), maxBlockChange = 3 + random.nextInt(5);
-  const noteExceptionChance = 10 + random.nextInt(15), maxNoteExceptions = random.nextInt(2);
+  // Retain the removed exception controls' draws to preserve the Java creation stream.
+  random.nextInt(15);
+  random.nextInt(2);
   random.nextInt(50); // Preserve the Java creation stream after the removed Lead control's draw.
-  const next = { ...source, speed, maxBlockChange, noteExceptionChance, maxNoteExceptions,
+  const next = { ...source, speed, maxBlockChange,
     chordSpanFill: SECONDARY_FILLS[random.nextInt(6)], fillFlip: false };
   if (order === 1) next.chordSpanFill = 'ALL';
   if (order > 1) Object.assign(next, { fillPauses: true, pauseChance: 50 + random.nextInt(40),

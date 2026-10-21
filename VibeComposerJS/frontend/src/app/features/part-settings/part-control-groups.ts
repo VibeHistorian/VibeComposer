@@ -11,7 +11,6 @@ export const PART_CONTROL_GROUPS = [
 
 export function partControlGroup(key: string): string {
   if (['splitChance', 'startNoteChance'].includes(key)) return 'rhythm';
-  if (['maxNoteExceptions', 'noteExceptionChance'].includes(key)) return 'pitch';
   if (['arpPatternRotate', 'arpPatternCustom', 'arpContour', 'arpContourChordMode'].includes(key)) return 'shape';
   if (['useOctaveAdjustments', 'correctMelodyNotes'].includes(key)) return 'pitch';
   if (key === 'ghosts') return 'dynamics';

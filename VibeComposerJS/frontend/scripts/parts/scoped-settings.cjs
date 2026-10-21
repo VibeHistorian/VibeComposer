@@ -1035,7 +1035,7 @@ test('P5e pattern effects and arpy surprises update section dependencies and MID
   const sample = cases[8], project = JSON.parse(service.exportProjectJson());
   project.seed = sample.seed; project.progression = [1, 1, 1]; delete project.progressionChords;
   project.tracks.find(track => track.role === 'melody').generatorSettings = Object.fromEntries(Object.entries(sample.settings)
-    .filter(([key]) => !['doubledRhythmChance', 'leadChordsChance'].includes(key)));
+    .filter(([key]) => !['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance'].includes(key)));
   project.arrangement = [{ ...project.arrangement[0], measures: 3, trackPresence: {
     'track-melody-1': true, 'track-drums-1': true, 'track-arpeggio-1': true,
   } }];
@@ -1082,13 +1082,13 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
   service.setSectionTrackPresence(0, id, true);
   service.setSectionTrackPresence(0, duplicate, true);
   service.updatePartSettings({ kind: 'global-role', role: 'melody' }, {
-    maxNoteExceptions: 4, noteExceptionChance: 100, fillPauses: true, pauseChance: 100,
+    fillPauses: true, pauseChance: 100,
   });
   service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 100 });
   const before = service.exportProjectJson(), patches = service.project().arrangement;
   const track = () => service.project().tracks.find(track => track.id === id);
   const original = phrase.layOutTrackPhrase(service.project(), track());
-  const global = { singleNoteExceptions: true, maxDirectionChanges: 6, fillPausesPerChord: true,
+  const global = { maxDirectionChanges: 6, fillPausesPerChord: true,
     patternEffect: 0, arpySurprises: true, targetNoteVariation: 6, targetDirection: 'DESC',
     useDirectionsFromProgression: true, forceFirstOutline: true };
   assert.equal(service.updateMelodyGlobal(global), 'changed');
@@ -1113,7 +1113,7 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true);
   saved = service.exportProjectJson();
-  for (const malformed of [null, [], true, { unknown: true }, { singleNoteExceptions: 1 },
+  for (const malformed of [null, [], true, { unknown: true }, { singleNoteExceptions: true }, { singleNoteExceptions: false },
     { fillPausesPerChord: 'true' }, { maxDirectionChanges: 0 }, { maxDirectionChanges: 2.5 }, { maxDirectionChanges: 7 },
     { patternEffect: -1 }, { patternEffect: 3 }, { patternEffect: 1.5 }, { patternEffect: '0' }, { arpySurprises: 1 },
     { targetNoteVariation: 0 }, { targetNoteVariation: 7 }, { targetNoteVariation: 1.5 }, { targetNoteVariation: '3' },
@@ -1132,7 +1132,7 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
   }
   const manual = [{ id: 'manual-global', midi: 72, startBeat: 1, durationBeats: 1, velocity: 95 }];
   service.updateTrackPhrase(id, manual);
-  service.updateMelodyGlobal({ singleNoteExceptions: false, fillPausesPerChord: false, patternEffect: 1, arpySurprises: false });
+  service.updateMelodyGlobal({ fillPausesPerChord: false, patternEffect: 1, arpySurprises: false });
   assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
   service.clearTrackPhrase(id);
   const source = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
@@ -1150,7 +1150,7 @@ test('melody scope resolution reaches parsed MIDI, isolates sections and survive
   const before = phrase.layOutTrackPhrase(service.project(), track());
   const savedBefore = service.exportProjectJson();
   service.updatePartSettings(scope, { speed: 100, chordNoteChoices: [0, 4, 1, 3], melodyPatternOffsets: [1, -1, 2, 1],
-    maxNoteExceptions: 4, noteExceptionChance: 100, splitChance: 100,
+    splitChance: 100,
     startNoteChance: 0,
     velocityMin: 100, velocityMax: 100, accents: 0, noteLengthMultiplier: 50, transpose: 12 });
   const after = phrase.layOutTrackPhrase(service.project(), track());
@@ -1217,8 +1217,7 @@ test('P5e part controls resolve every scope, mixed values, copy/freeze and inher
   const sectionId = service.project().arrangement[1].id, destinationId = service.project().arrangement[2].id;
   const role = { kind: 'global-role', role: 'melody' }, global = { kind: 'global-track', trackId };
   const cell = { kind: 'section-role', sectionId, role: 'melody' }, local = { kind: 'section-track', sectionId, trackId };
-  const patch = { maxNoteExceptions: 3, noteExceptionChance: 60,
-    splitChance: 70, startNoteChance: 20 };
+  const patch = { splitChance: 70, startNoteChance: 20 };
   const resolve = (id, section = sectionId) => settings.settingsValues(settings.resolvePartTrack(
     service.project().tracks.find(track => track.id === id), service.project().arrangement.find(item => item.id === section)).generatorSettings, 'melody');
   for (const scope of [role, global, cell, local]) {
@@ -1246,7 +1245,7 @@ test('P5e part controls resolve every scope, mixed values, copy/freeze and inher
   assert.equal(service.importProjectJson(service.exportProjectJson()), true);
   for (const role of ['bass', 'chords', 'arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, patch), undefined);
   const controls = settings.PART_CONTROLS.melody.filter(control => Object.hasOwn(patch, control.key));
-  assert.equal(controls.length, 4); assert.ok(controls.every(control => control.advanced));
+  assert.equal(controls.length, 2); assert.ok(controls.every(control => control.advanced));
 });
 
 test('melody integer-list editors commit once and reject invalid or stale drafts', () => {

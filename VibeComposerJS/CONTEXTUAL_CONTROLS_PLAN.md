@@ -98,7 +98,7 @@ Knobs and native comboboxes reset to their default value on right-click through 
 
 ## Delivery stages still open
 
-P6g/P6h are complete in the audited supported scope. Drums has Dynamic/Ghosts, Overrandomize and Follow Melody policies; Arpeggio has GUI pause baking/growth, later-track pattern/fill weighting and weighted directions/rotation; Melody creation writes its extended exception values. The Bass source audit found no GUI baking/growth calls and no production Pause consumer, so no ineffective Bass control was added. See [the P6 completion record](__work_history/p6-creation-record.md) for deterministic streams, Java evidence and intentional differences. Existing automatic target preparation remains intact.
+P6g/P6h are complete in the audited supported scope. Drums has Dynamic/Ghosts, Overrandomize and Follow Melody policies; Arpeggio has GUI pause baking/growth, later-track pattern/fill weighting and weighted directions/rotation; Melody creation retains the Java random stream without writing the removed pitch-exception settings. The Bass source audit found no GUI baking/growth calls and no production Pause consumer, so no ineffective Bass control was added. See [the P6 completion record](__work_history/p6-creation-record.md) for deterministic streams, Java evidence and intentional differences. Existing automatic target preparation remains intact.
 
 ### P7 — Remaining workspace acceptance
 

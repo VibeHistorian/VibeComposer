@@ -316,8 +316,10 @@ test('P6 Arpeggio later weighting handles 64 tracks, retains shared counts and p
   const [next]=core.rerollRoleSettings(42n,'melody',core.DEFAULT_TRACK_POLICIES.melody,[melodic],[1]);
   const {JavaRandom}=load('core/music/java-random.ts'), random=new JavaRandom(42);
   random.nextInt(25);random.nextInt(5);
-  assert.equal(next.noteExceptionChance,10+random.nextInt(15));
-  assert.equal(next.maxNoteExceptions,random.nextInt(2));
+  random.nextInt(15);
+  random.nextInt(2);
+  assert.equal(Object.hasOwn(next, 'maxNoteExceptions'), false);
+  assert.equal(Object.hasOwn(next, 'noteExceptionChance'), false);
   random.nextInt(50); // Keep the following Java creation draws aligned.
   random.nextInt(6); // Primary fill is forced to ALL after this draw.
   assert.equal(next.fillPauses, random.nextBoolean());
@@ -575,7 +577,7 @@ test('P5e forced outline follows the first stored Melody and only copies the pro
   service.updateSettings({ randomizeTransposeOnCompose: false, randomizeTempoOnCompose: false });
   const primary = 'track-melody-1', second = service.duplicateTrack(primary), third = service.duplicateTrack(second);
   const sourceFields = { chordNoteChoices: [1, -2, 4], melodyPatternOffsets: [1, -1, 2], speed: 0,
-    maxBlockChange: 2, blockJump: 3, maxNoteExceptions: 4, splitChance: 40, noteExceptionChance: 70 };
+    maxBlockChange: 2, blockJump: 3, splitChance: 40 };
   service.updatePartSettings({ kind: 'global-track', trackId: primary }, sourceFields);
   service.updatePartSettings({ kind: 'global-track', trackId: second }, { speed: 100, startNoteChance: 0,
     transpose: 7, patternSeed: 456, patternFlexible: false, pauseChance: 40, noteLengthMultiplier: 75 });

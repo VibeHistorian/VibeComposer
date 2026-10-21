@@ -281,11 +281,10 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       document.querySelector('[aria-label="Close pattern sequencer"]').click();
       document.querySelector('.track-group.melody .group-select').click();
       await wait(() => document.querySelector('#part-inspector [data-control-role="melody"]'), 'melody inspector');
-      for (const key of ['doubledRhythmChance', 'leadChordsChance']) {
+      for (const key of ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance']) {
         if (document.querySelector('[data-control-key="' + key + '"]')) throw new Error('Removed melody control remains: ' + key);
       }
-      const extended = [ ['Max exceptions', 'maxNoteExceptions', 4],
-        ['Note exceptions', 'noteExceptionChance', 70], ['Split long', 'splitChance', 60],
+      const extended = [ ['Split long', 'splitChance', 60],
         ['Start note', 'startNoteChance', 0] ];
       for (const [label, key, value] of extended) {
         change(await wait(() => document.querySelector('#part-inspector [aria-label="' + label + '"]'), label), String(value));
@@ -298,8 +297,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'Start note redo enabled')).click();
       await wait(() => read().tracks.find(track => track.role === 'melody').generatorSettings.startNoteChance === 0, 'Start note redo');
       const globals = document.querySelector('vc-melody-global-settings');
-      globals.querySelector('[aria-label="Single note exceptions"]').click();
-      await wait(() => read().melodyGlobal?.singleNoteExceptions === true, 'single exceptions commit');
+      if (globals.querySelector('[aria-label="Single note exceptions"]')) throw new Error('Removed single exception toggle remains');
       globals.querySelector('[aria-label="Fill pauses per chord"]').click();
       await wait(() => read().melodyGlobal?.fillPausesPerChord === true, 'per chord fill commit');
       change(globals.querySelector('[aria-label="Max direction changes"]'), '6');
@@ -455,9 +453,9 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => JSON.stringify(read().tracks) !== targetsBefore, 'prepared outline Compose');
       const melodyMembers = read().tracks.filter(track => track.role === 'melody');
       const outlineFields = ['chordNoteChoices', 'melodyPatternOffsets', 'speed', 'maxBlockChange', 'blockJump',
-        'maxNoteExceptions', 'splitChance', 'noteExceptionChance'];
+        'splitChance'];
       const outlineDefaults = { chordNoteChoices: [0,2,2,4], melodyPatternOffsets: [1,2,1,3], speed: 50,
-        maxBlockChange: 7, blockJump: 1, maxNoteExceptions: 0, splitChance: 0, noteExceptionChance: 0 };
+        maxBlockChange: 7, blockJump: 1, splitChance: 0 };
       result.targetPreparation &&= melodyMembers.every(track => track.rerollLocked || outlineFields.every(key =>
         JSON.stringify(track.generatorSettings[key] ?? outlineDefaults[key]) === JSON.stringify(melodyMembers[0].generatorSettings[key] ?? outlineDefaults[key])));
       document.querySelector('[aria-label="Undo"]').click();

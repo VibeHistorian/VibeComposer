@@ -47,8 +47,7 @@ export function forceMelodyOutline(first: MelodySettings, target: MelodySettings
     chordNoteChoices: [...(first.chordNoteChoices ?? [0, 2, 2, 4])],
     melodyPatternOffsets: [...(first.melodyPatternOffsets ?? [1, 2, 1, 3])],
     maxBlockChange: first.maxBlockChange ?? 7, blockJump: first.blockJump ?? 1,
-    maxNoteExceptions: first.maxNoteExceptions ?? 0,
-    splitChance: first.splitChance ?? 0, noteExceptionChance: first.noteExceptionChance ?? 0,
+    splitChance: first.splitChance ?? 0,
     speed: first.speed ?? 50,
   };
 }

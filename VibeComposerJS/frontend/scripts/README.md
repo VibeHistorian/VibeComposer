@@ -61,7 +61,7 @@ finally { Remove-Item Env:OVERVIEW_TEST_FULL_MATRIX }
 
 Measured on 2026-10-16: the focused matrix passed in 44.9 seconds; the preceding full-matrix run took 102.6 seconds. Real animation-frame waits dominate this suite, so reducing only the failure timeout would not improve successful runs.
 
-Historical Melody Java oracle cases with nonzero Doubled rhythm or Lead chords probabilities are excluded from current parity checks because those controls and consumers were removed. Disabled fields are stripped from the remaining oracle inputs; fixture files retain the original Java evidence.
+Historical Melody Java oracle cases with nonzero Doubled rhythm or Lead chords probabilities, or enabled pitch exceptions are excluded from current parity checks because those controls and consumers were removed. Removed part fields and the dependent Single note exceptions global flag are stripped from the remaining oracle inputs; fixture files retain the original Java evidence.
 
 ## Project behavior tests and fixture support
 
