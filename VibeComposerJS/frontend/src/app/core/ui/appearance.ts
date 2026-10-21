@@ -95,16 +95,17 @@ export function adjustColor(base: string, adjustments: ColorAdjustments): string
 }
 
 /** Concrete hex values also work in the canvas and Pixi color parsers. */
-export function roleColorTokens(role: ArrangedPart, base: string): Readonly<Record<string, string>> {
-  const mix = (target: number, amount: number): string => '#' + [1, 3, 5].map(offset =>
-    Math.round(parseInt(base.slice(offset, offset + 2), 16) * (1 - amount) + target * amount)
+export function roleColorTokens(role: ArrangedPart, base: string, theme: ThemeColors = DEFAULT_THEME_COLORS): Readonly<Record<string, string>> {
+  const mix = (target: string, amount: number): string => '#' + [1, 3, 5].map(offset =>
+    Math.round(parseInt(base.slice(offset, offset + 2), 16) * (1 - amount)
+      + parseInt(target.slice(offset, offset + 2), 16) * amount)
       .toString(16).padStart(2, '0')).join('');
   const prefix = `--role-${role}`;
   const tokens: Record<string, string> = {
-    [prefix]: base, [`${prefix}-glow`]: base + '50', [`${prefix}-strong`]: mix(255, .22),
-    [`${prefix}-dark`]: mix(0, .4), [`${prefix}-surface`]: mix(0, .72),
-    [`${prefix}-border`]: mix(0, .32), [`${prefix}-text`]: mix(255, .78),
-    [`${prefix}-header`]: mix(0, .55), [`${prefix}-cell-surface`]: mix(0, .79),
+    [prefix]: base, [`${prefix}-glow`]: base + '50', [`${prefix}-strong`]: mix(theme.text, .22),
+    [`${prefix}-dark`]: mix('#000000', .4), [`${prefix}-surface`]: mix(theme.surface, .72),
+    [`${prefix}-border`]: mix(theme.surface, .32), [`${prefix}-text`]: mix(theme.text, .78),
+    [`${prefix}-header`]: mix(theme.surface, .55), [`${prefix}-cell-surface`]: mix(theme.surface, .79),
   };
   if (role === 'drums') {
     for (const suffix of ['surface', 'border', 'cell-surface']) tokens[`--role-drum-${suffix}`] = tokens[`${prefix}-${suffix}`];
@@ -113,7 +114,7 @@ export function roleColorTokens(role: ArrangedPart, base: string): Readonly<Reco
     tokens['--role-kick-dark'] = tokens[`${prefix}-dark`];
     tokens['--role-snare'] = tokens[`${prefix}-strong`];
     tokens['--role-snare-glow'] = base + '50';
-    tokens['--role-hat'] = mix(255, .65);
+    tokens['--role-hat'] = mix(theme.text, .65);
   }
   return tokens;
 }

@@ -1,13 +1,88 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 const { loadMusic } = require('./music-loader.cjs');
-const { adjustColor, decodeAppearance, defaultAppearance } = loadMusic('../ui/appearance.ts');
+const { adjustColor, decodeAppearance, defaultAppearance, roleColorTokens } = loadMusic('../ui/appearance.ts');
+const { randomAppearance } = loadMusic('../ui/random-appearance.ts');
+const { themeColorTokens } = loadMusic('../ui/theme.ts');
 const adjustments = (overrides = {}) => ({ brightness: 0, hueShift: 0, saturation: 0, ...overrides });
+
+const luminance = color => {
+  const rgb = [1, 3, 5].map(offset => parseInt(color.slice(offset, offset + 2), 16) / 255)
+    .map(c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4);
+  return rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722;
+};
+const contrast = (a, b) => (Math.max(luminance(a), luminance(b)) + .05) / (Math.min(luminance(a), luminance(b)) + .05);
+const hue = color => {
+  const [r, g, b] = [1, 3, 5].map(offset => parseInt(color.slice(offset, offset + 2), 16) / 255);
+  const max = Math.max(r, g, b), delta = max - Math.min(r, g, b);
+  return delta === 0 ? 0 : (((max === r ? (g - b) / delta : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4) * 60) + 360) % 360;
+};
+const hueDistance = (a, b) => Math.min(Math.abs(hue(a) - hue(b)), 360 - Math.abs(hue(a) - hue(b)));
+
+test('random palettes vary modes, preserve fonts and remain readable with distinct track hues', () => {
+  const original = { ...defaultAppearance(), colorAdjustments: adjustments({ brightness: -50, hueShift: 50 }),
+    fonts: { ui: 'Verdana, sans-serif', heading: 'Georgia, serif', mono: 'monospace' } };
+  const modes = new Set(), palettes = new Set();
+  for (let index = 0; index < 1000; index++) {
+    const seed = BigInt(index) * 0x9e3779b97f4a7c15n;
+    const appearance = randomAppearance(original, seed);
+    const theme = appearance.themeColors;
+    modes.add(luminance(theme.background) > .5);
+    palettes.add(JSON.stringify(theme));
+    assert.deepEqual(decodeAppearance(appearance), appearance);
+    assert.deepEqual(appearance.fonts, original.fonts);
+    assert.deepEqual(appearance.colorAdjustments, adjustments());
+    for (const color of Object.values(theme)) {
+      const rgb = [1, 3, 5].map(offset => parseInt(color.slice(offset, offset + 2), 16));
+      assert.ok(Math.max(...rgb) - Math.min(...rgb) <= 3 || hue(color) >= 140 && hue(color) <= 240, color);
+    }
+    for (const [key, surface] of Object.entries(themeColorTokens(theme))) {
+      if (!key.startsWith('--surface-') || surface.length !== 7) continue;
+      assert.ok(contrast(theme.text, surface) >= 4.5, `text ${index} ${key}`);
+      assert.ok(contrast(theme.accent, surface) >= 3, `accent ${index} ${key}`);
+    }
+    const roles = Object.values(appearance.roleColors);
+    for (const key of ['background', 'surface', 'inspector', 'roleGroups']) {
+      assert.ok(contrast(theme.accent, theme[key]) >= 4.5, `accent ${index} ${key}`);
+    }
+    assert.equal(new Set(roles).size, 5);
+    for (const color of roles) {
+      assert.ok(contrast(color, theme.surface) >= 3, `track ${index}`);
+      for (const other of roles) if (other !== color) assert.ok(hueDistance(color, other) > 40);
+      assert.ok(hueDistance(color, theme.accent) > 35);
+      for (const themeColor of Object.values(theme)) {
+        const distance = Math.hypot(...[1, 3, 5].map(offset =>
+          (parseInt(color.slice(offset, offset + 2), 16) - parseInt(themeColor.slice(offset, offset + 2), 16)) / 255));
+        assert.ok(distance > .2, `track avoids theme ${index}`);
+      }
+    }
+  }
+  assert.equal(modes.size, 2);
+  assert.equal(palettes.size, 1000);
+  assert.deepEqual(randomAppearance(original, 123n), randomAppearance(original, 123n));
+  assert.equal(original.colorAdjustments.hueShift, 50);
+});
 
 test('neutral adjustments preserve every chosen color exactly', () => {
   const appearance = defaultAppearance();
   for (const color of [...Object.values(appearance.themeColors), ...Object.values(appearance.roleColors)]) {
     assert.equal(adjustColor(color, adjustments()), color);
+  }
+});
+
+test('role backgrounds follow the theme surface and role foregrounds follow its text', () => {
+  const theme = { ...defaultAppearance().themeColors, surface: '#ffffff', text: '#000000' };
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const tokens = roleColorTokens(role, '#804020', theme);
+    assert.equal(tokens[`--role-${role}-surface`], '#dbcac1');
+    assert.equal(tokens[`--role-${role}-header`], '#c6a99b');
+    assert.equal(tokens[`--role-${role}-cell-surface`], '#e4d7d0');
+    assert.equal(tokens[`--role-${role}-text`], '#1c0e07');
+    assert.ok(contrast(theme.text, tokens[`--role-${role}-header`]) > 4.5);
+    assert.ok(contrast(tokens[`--role-${role}-text`], tokens[`--role-${role}-surface`]) > 4.5);
+    if (role === 'drums') assert.equal(tokens['--role-drum-cell-surface'], tokens['--role-drums-cell-surface']);
+    const dark = roleColorTokens(role, '#804020', defaultAppearance().themeColors);
+    assert.ok(luminance(dark[`--role-${role}-cell-surface`]) < .1);
   }
 });
 

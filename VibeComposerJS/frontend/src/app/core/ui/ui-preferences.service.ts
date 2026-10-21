@@ -5,6 +5,7 @@ import { adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRole
 import { PART_CONTROLS } from '../music/part-settings';
 import type { DrumMappingPreference } from '../music/drum-instruments';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
+import { randomAppearance } from './random-appearance';
 import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
 const STORAGE_KEY = 'vibecomposer.ui-preferences.v1';
@@ -57,6 +58,12 @@ export class UiPreferencesService {
   }
   resetAppearance(): void { this.commit({ ...this.state(), appearance: defaultAppearance() }); }
 
+  randomizeAppearance(): void {
+    const entropy = globalThis.crypto.getRandomValues(new Uint32Array(2));
+    const seed = (BigInt(entropy[0]) << 32n) | BigInt(entropy[1]);
+    this.commit({ ...this.state(), appearance: randomAppearance(this.appearance(), seed) });
+  }
+
   toggleHueShiftRoles(): void {
     const appearance = this.appearance();
     this.commit({ ...this.state(), appearance: { ...appearance, hueShiftRoles: !appearance.hueShiftRoles } });
@@ -86,7 +93,7 @@ export class UiPreferencesService {
       hueShift: preferences.appearance.hueShiftRoles ? preferences.appearance.colorAdjustments.hueShift : 0 };
     for (const role of ARRANGED_PARTS) {
       const color = adjustColor(preferences.appearance.roleColors[role], roleAdjustments);
-      for (const [name, value] of Object.entries(roleColorTokens(role, color))) style.setProperty(name, value);
+      for (const [name, value] of Object.entries(roleColorTokens(role, color, colors))) style.setProperty(name, value);
     }
   }
 

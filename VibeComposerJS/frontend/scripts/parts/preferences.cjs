@@ -151,6 +151,27 @@ test('Highlight audible filters score tracks and notes from Solo/Mute without ch
   assert.deepEqual(workspace.scoreTracks().map(track => track.id), [bass.id], 'muted tracks remain editable');
 });
 
+test('randomize colors persists a complete palette without changing fonts, project or history', () => {
+  const { service, uiPreferences: preferences, load } = fixture();
+  const before = service.exportProjectJson(), position = service.historyPosition();
+  preferences.setFont('ui', 'Verdana, sans-serif');
+  preferences.setColorAdjustment('hueShift', 50);
+  preferences.setColorAdjustment('brightness', -50);
+  preferences.randomizeAppearance();
+  const appearance = preferences.appearance();
+  assert.equal(appearance.fonts.ui, 'Verdana, sans-serif');
+  assert.deepEqual(appearance.colorAdjustments, { brightness: 0, hueShift: 0, saturation: 0 });
+  assert.equal(new Set(Object.values(appearance.roleColors)).size, 5);
+  const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  assert.deepEqual(restored.appearance(), appearance);
+  const saved = preferences.exportJson();
+  preferences.resetAppearance();
+  assert.equal(preferences.importJson(saved), true);
+  assert.deepEqual(preferences.appearance(), appearance);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), position);
+});
+
 test('main theme preferences derive concrete canvas colors and preserve project state', () => {
   const { service, uiPreferences: preferences, load } = fixture();
   const { themeColorTokens, DEFAULT_THEME_COLORS } = load('core/ui/theme.ts');

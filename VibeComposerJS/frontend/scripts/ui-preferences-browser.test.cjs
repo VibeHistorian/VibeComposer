@@ -145,6 +145,26 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
         await wait(()=>dialog.querySelector('#appearance-title'),'Appearance opens by default');
         ensure(dialog.querySelector('#appearance-title'),'Appearance opens by default');
+        const beforeRandomize = JSON.parse(localStorage.getItem(key));
+        const projectBeforeRandomize = sessionStorage.getItem('vibecomposer.project.v12');
+        button('Randomize colors').click();
+        const randomized = await wait(()=>{
+          const appearance = JSON.parse(localStorage.getItem(key)).appearance;
+          return appearance.themeColors.background !== '#080e16' && appearance;
+        },'random palette saved');
+        ensure(new Set(Object.values(randomized.roleColors)).size===5,'five randomized track colors');
+        ensure(JSON.stringify(randomized.fonts)===JSON.stringify(beforeRandomize.appearance.fonts),'randomizer preserves fonts');
+        ensure(Object.values(randomized.colorAdjustments).every(value=>value===0),'randomizer neutralizes adjustments');
+        const randomStyle = getComputedStyle(document.documentElement);
+        ensure(randomStyle.getPropertyValue('--accent-primary').trim()===randomized.themeColors.accent,'random theme applied immediately');
+        for (const [role,color] of Object.entries(randomized.roleColors)) {
+          ensure(randomStyle.getPropertyValue('--role-'+role).trim()===color,'random track color applied: '+role);
+        }
+        button('Randomize colors').click();
+        await wait(()=>JSON.stringify(JSON.parse(localStorage.getItem(key)).appearance.themeColors)!==JSON.stringify(randomized.themeColors),'reroll creates another palette');
+        ensure(sessionStorage.getItem('vibecomposer.project.v12')===projectBeforeRandomize,'randomizer preserves musical project');
+        button('Reset appearance to defaults').click();
+        await wait(()=>getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#32d7f4','reset randomized palette');
         button('Appearance Score').click();
         const ghostToggle = await wait(()=>document.querySelector('[aria-label="Ghost notes from other tracks"]'),'ghost preference');
         ensure(ghostToggle.checked, 'ghost notes default on');
@@ -190,6 +210,16 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(dialog.querySelectorAll('input[type="color"]').length===12,'seven theme and five role colors');
         const style=()=>getComputedStyle(document.documentElement);
         const originalSurface=style().getPropertyValue('--surface-base');
+        const surfaceInput=dialog.querySelector('[aria-label="Surface theme color"]');
+        const textInput=dialog.querySelector('[aria-label="Text theme color"]');
+        surfaceInput.value='#ffffff'; surfaceInput.dispatchEvent(new Event('input',{bubbles:true}));
+        textInput.value='#000000'; textInput.dispatchEvent(new Event('input',{bubbles:true}));
+        await wait(()=>style().getPropertyValue('--role-bass-header').trim()==='#cbd8e0','role header follows light surface');
+        ensure(getComputedStyle(document.querySelector('.track-group.bass .group-heading')).backgroundColor==='rgb(203, 216, 224)','light role header rendered');
+        ensure(style().getPropertyValue('--role-bass-cell-surface').trim()==='#e7edf1','arrangement cell follows light surface');
+        ensure(style().getPropertyValue('--role-bass-text').trim()==='#1f2529','role text follows dark theme text');
+        button('Reset appearance to defaults').click();
+        await wait(()=>style().getPropertyValue('--surface-base')===originalSurface,'restore dark surface');
         const changeAdjustment=(label,value)=>{
           const knob=dialog.querySelector('vc-compact-knob input[aria-label="'+label+'"]');
           ensure(knob && knob.min==='-50' && knob.max==='50','adjustment knob range');
