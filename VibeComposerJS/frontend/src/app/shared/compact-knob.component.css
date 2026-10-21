@@ -1,18 +1,18 @@
 :host { display: block; min-width: 0; }
 
 /* Knob layout */
-.compact-knob { position: relative; display: grid; align-content: start; gap: 4px; color: var(--text-secondary); }
-.knob-face { justify-self: center; width: 42px; height: 42px; padding: 3px; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: 50%; background: conic-gradient(from -135deg, var(--knob-accent, var(--accent-primary)) 0deg var(--knob-progress), var(--border-subtle) var(--knob-progress) 270deg, transparent 270deg 360deg), var(--parameter-surface, var(--surface-base)); box-shadow: inset 0 0 0 2px var(--parameter-surface, var(--surface-base)); transition: border-color .12s ease, box-shadow .12s ease; }
+.compact-knob { position: var(--quick-knob-position, relative); display: grid; align-content: start; gap: 4px; color: var(--text-secondary); }
+.knob-face { grid-area: var(--quick-knob-overlay-area, auto); justify-self: center; width: 42px; height: 42px; padding: 3px; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: 50%; background: conic-gradient(from -135deg, var(--knob-accent, var(--accent-primary)) 0deg var(--knob-progress), var(--border-subtle) var(--knob-progress) 270deg, transparent 270deg 360deg), var(--parameter-surface, var(--surface-base)); box-shadow: inset 0 0 0 2px var(--parameter-surface, var(--surface-base)); transition: border-color .12s ease, box-shadow .12s ease; }
 .knob-face > span { width: 30px; height: 30px; padding: 0 2px; overflow: hidden; align-content: center; border: 1px solid var(--border-subtle); border-radius: 50%; background: var(--surface-low); color: var(--text-primary); font: 10px var(--font-mono); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .knob-value { justify-self: center; color: var(--text-primary); font: 10px var(--font-mono); }
 
 /* Compact parameter titles and embedded inheritance */
 .coded { width: 58px; }
 .coded > vc-control-heading:first-child { justify-content: center; }
-.coded .knob-status { position: absolute; z-index: 2; top: 50px; left: 22px; width: 14px; height: 14px; }
+.coded .knob-status { position: var(--quick-knob-overlay-position, absolute); z-index: 2; grid-area: var(--quick-knob-overlay-area, auto); align-self: end; justify-self: center; top: var(--quick-knob-overlay-top, 50px); left: var(--quick-knob-overlay-left, 50%); transform: var(--quick-knob-overlay-transform, translateX(-50%)); width: 14px; height: 14px; }
 
 /* Native keyboard and pointer control */
-.compact-knob input { position: absolute; top: 22px; left: 50%; width: 42px; height: 42px; margin: 0; transform: translateX(-50%); opacity: 0; cursor: ns-resize; touch-action: none; }
+.compact-knob input { position: var(--quick-knob-overlay-position, absolute); grid-area: var(--quick-knob-overlay-area, auto); justify-self: center; top: var(--quick-knob-overlay-top, 22px); left: var(--quick-knob-overlay-left, 50%); width: 42px; height: 42px; margin: 0; transform: var(--quick-knob-overlay-transform, translateX(-50%)); opacity: 0; cursor: ns-resize; touch-action: none; }
 .compact-knob:has(input:focus-visible) .knob-face { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-outline), inset 0 0 0 2px var(--parameter-surface, var(--surface-base)); }
 
 /* Track mixer mini knobs */

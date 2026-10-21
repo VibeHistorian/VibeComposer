@@ -54,13 +54,25 @@
 .common-grid-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 .common-grid-button:disabled { opacity: .4; cursor: default; }
 
+/* Native legend gaps leave the label and panel backgrounds untouched */
+.quick-control-border { display: none; }
+:host(.quick-layout) .quick-control-border { display: block; position: absolute; inset: -1px; min-width: 0; margin: 0; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-control); pointer-events: none; }
+:host(.quick-layout) .quick-control-border:has(legend) { top: -10px; }
+.quick-control-border legend { max-width: calc(100% - 8px); height: 18px; margin-inline: auto; padding: 0 3px; overflow: hidden; color: transparent; font: 10px var(--font-ui); white-space: nowrap; }
+.border-status { display: inline-block; width: 18px; margin-left: 5px; }
+
 /* Flowing quick settings */
+.quick-title-sizing { display: none; }
+:host(.quick-layout) .quick-title-sizing { display: block; grid-area: 1 / 1; width: max-content; height: 0; padding-inline: 3px; visibility: hidden; font: 10px var(--font-ui); white-space: nowrap; }
+:host(.quick-layout) .control-content { grid-area: 1 / 1; }
+:host(.quick-layout) .part-control:has(.quick-title-sizing) { min-width: max-content; max-width: none; }
 :host(.quick-layout) .part-controls { align-items: stretch; gap: 6px; }
 :host(.quick-layout) .part-control-area, :host(.quick-layout) .part-area-controls { display: contents; }
-:host(.quick-layout) .part-control { padding: 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--parameter-surface); }
+:host(.quick-layout) .part-control { --quick-heading-position: absolute; --quick-heading-top: -1px; --quick-heading-left: 50%; --quick-heading-transform: translate(-50%, -50%); --quick-heading-width: max-content; --quick-heading-max-width: calc(100% - 8px); --quick-heading-padding: 0 3px; --quick-heading-background: transparent; --quick-heading-color: var(--accent-primary); --quick-knob-position: static; --quick-knob-overlay-position: relative; --quick-knob-overlay-top: auto; --quick-knob-overlay-left: auto; --quick-knob-overlay-transform: none; --quick-knob-overlay-area: 1 / 1; margin-top: 9px; padding: 9px 7px; border: 1px solid transparent; border-radius: var(--radius-control); background: var(--parameter-surface); align-content: center; }
 :host(.quick-layout) .part-control.compact-control { min-width: 74px; width: 74px; }
 :host(.quick-layout) .part-control.knob-control { min-width: 0; width: auto; padding-inline: 2px; }
 :host(.quick-layout) .part-control.pattern-control { width: 112px; }
+:host(.quick-layout) .rhythm-control .control-content { min-height: 0; align-content: center; }
 :host(.quick-layout) .seed-control { flex: 0 1 auto; }
 
 /* Placement targets replace parameter interactions */

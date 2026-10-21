@@ -382,19 +382,19 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('button[aria-label="Unlock reroll for A1"]').click();
         await waitFor(() => !document.querySelector('button[aria-label="Reroll A1"]').disabled, 'reroll unlock');
         document.querySelector('.track-group.bass .group-select').click();
-        const bassJoin = await waitFor(() => document.querySelector('select[aria-label="Pattern join"]'), 'bass advanced join');
+        const bassJoin = await waitFor(() => document.querySelector('select[aria-label="Join"]'), 'bass advanced join');
         result.bassJoinInitial = bassJoin.value;
         result.bassJoinOptions = [...bassJoin.options].map(option => option.value);
-        result.bassJoinInspectorOnly = document.querySelectorAll('select[aria-label="Pattern join"]').length === 1
+        result.bassJoinInspectorOnly = document.querySelectorAll('select[aria-label="Join"]').length === 1
           && !!bassJoin.closest('#part-inspector');
         bassJoin.value = 'JOIN'; bassJoin.dispatchEvent(new Event('change', { bubbles: true }));
         await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'bass').generatorSettings.patternJoinMode === 'JOIN', 'persisted bass join');
         result.bassJoinSaved = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'bass').generatorSettings.patternJoinMode;
         const bassRhythm = document.querySelector('select[aria-label="Rhythm pattern"]');
         bassRhythm.value = 'bass1'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
-        await waitFor(() => !document.querySelector('select[aria-label="Pattern join"]'), 'bass1 hides join');
+        await waitFor(() => !document.querySelector('select[aria-label="Join"]'), 'bass1 hides join');
         bassRhythm.value = 'custom'; bassRhythm.dispatchEvent(new Event('change', { bubbles: true }));
-        result.bassJoinRetained = (await waitFor(() => document.querySelector('select[aria-label="Pattern join"]'), 'grid restores join')).value;
+        result.bassJoinRetained = (await waitFor(() => document.querySelector('select[aria-label="Join"]'), 'grid restores join')).value;
         document.querySelector('.track-group.drums .track-select').click();
         await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="drums"]'), 'drum musical context');
         const drumPitch = await waitFor(() => document.querySelector('.track-group.drums .track-instrument'), 'drum pitch picker');
@@ -463,6 +463,20 @@ test('production Angular controls initialize selects from settings and support r
           document.querySelector('.track-group.' + role + ' .group-select').click();
           await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="' + role + '"]'), role + ' categories');
           const editors = [...document.querySelectorAll('vc-part-settings-editor')];
+          for (const editor of editors.filter(editor => editor.classList.contains('quick-layout'))) {
+            await document.fonts.ready;
+            for (const label of editor.querySelectorAll('.control-name')) {
+              const bounds = label.getBoundingClientRect();
+              const card = label.closest('.part-control').getBoundingClientRect();
+              if (label.scrollWidth > label.clientWidth + 1 || bounds.left < card.left || bounds.right > card.right) {
+                throw new Error(role + ' quick title clipped: ' + label.textContent);
+              }
+            }
+            for (const [key, title] of [['strumType', 'S.ARC'], ['patternJoinMode', 'Join']]) {
+              const label = editor.querySelector('[data-control-key="' + key + '"] .control-name');
+              if (label && label.textContent.trim() !== title) throw new Error(key + ' quick title should be ' + title);
+            }
+          }
           const pitch = editors.map(editor => editor.querySelector('[data-control-category="pitch"]'));
           const rhythm = editors.map(editor => editor.querySelector('[data-control-category="rhythm"]'));
           result.generationMiniKnobs.push(...[...document.querySelectorAll('.track-group.' + role + ' .named-mini')].map(knob => ({

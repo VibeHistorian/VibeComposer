@@ -1,6 +1,10 @@
 <div class="part-controls">
   @if (seedControl(); as control) {
     <div class="part-control seed-control" data-control-key="patternSeed" [title]="control.description ?? ''">
+      <span class="quick-title-sizing" aria-hidden="true">{{ control.label }}@if (inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</span>
+      <fieldset class="quick-control-border" aria-hidden="true">
+        <legend>{{ control.label }}@if (inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</legend>
+      </fieldset>
       @if (preferences.editingQuickSettings()) {
         <button type="button" class="placement-target" (click)="preferences.moveControl(role(), control.key)"
           [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>
@@ -23,6 +27,14 @@
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
           <div class="part-control" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+            @if (control.kind !== 'boolean') {
+              <span class="quick-title-sizing" aria-hidden="true">{{ control.kind === 'number' ? code(control) : control.label }}@if (control.kind !== 'number' && inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</span>
+            }
+            <fieldset class="quick-control-border" [class.with-heading]="control.kind !== 'boolean'" aria-hidden="true">
+              @if (control.kind !== 'boolean') {
+                <legend>{{ control.kind === 'number' ? code(control) : control.label }}@if (control.kind !== 'number' && inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</legend>
+              }
+            </fieldset>
             @if (preferences.editingQuickSettings()) {
               <button type="button" class="placement-target" (click)="preferences.moveControl(role(), control.key)"
                 [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"
