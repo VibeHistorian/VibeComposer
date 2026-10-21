@@ -34,7 +34,7 @@ const number = (key: string, label: string, minimum: number, maximum: number, de
     advanced: ['noteLengthMultiplier', 'noteLengthPercent', 'exceptionChance', 'offset'].includes(key) });
 const choice = (key: string, label: string, options: readonly (string | number)[]): PartControl => ({ key, label, kind: 'choice', options });
 const fill: readonly PartControl[] = [
-  { ...choice('chordSpanFill', 'Fill', CHORD_SPAN_FILLS), defaultValue: 'ALL',
+  { ...choice('chordSpanFill', 'FILL', CHORD_SPAN_FILLS), defaultValue: 'ALL',
     description: 'Choose active progression chords. Java ODD plays slots 2, 4, …; EVEN plays 1, 3, …. HALF1 uses the first floor(n/2) chords; HALF2 uses the rest.' },
   { key: 'fillFlip', label: 'Fill flip', kind: 'boolean', defaultValue: false,
     description: 'Invert which progression chords play. ALL + Fill flip produces silence.' },
@@ -46,7 +46,7 @@ export const MELODY_TRANSPOSES: readonly number[] = Object.freeze(Array.from({ l
   .flatMap((octave) => [octave, octave + 5, octave + 7]).filter((value) => value <= 36));
 
 const rhythmControls: readonly PartControl[] = [
-  { ...choice('rhythm', 'Rhythm pattern', RHYTHM_PATTERNS),
+  { ...choice('rhythm', 'PATTERN', RHYTHM_PATTERNS),
     description: 'Choose a rhythm within each chord. Euclid distributes Pulses across Hits; Fill independently selects which chords play.' },
     { ...number('hitsPerPattern', 'Hits', 1, 32, 8, ''),
       description: 'Grid subdivisions per four-beat chord. Pattern rests mean fewer sounded notes than the Hits value.' },
@@ -88,7 +88,7 @@ const durationControls: readonly PartControl[] = [
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [...fill,
-    { ...choice('rhythm', 'Rhythm pattern', ['melody1', 'durations']), defaultValue: 'melody1',
+    { ...choice('rhythm', 'PATTERN', ['melody1', 'durations']), defaultValue: 'melody1',
       description: 'melody1 uses the generated melody rhythm. Durations supplies note lengths and pauses from the duration editor.' },
     { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,
       description: 'Swap notes and pauses in custom durations.' },
@@ -96,9 +96,9 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     number('speed', 'Speed', -100, 100, 50, ''),
     { key: 'fillPauses', label: 'Fill pauses', kind: 'boolean', defaultValue: false,
       description: 'Extend preceding notes through generated pauses. Fill determines which pauses add note duration.' },
-    { key: 'chordNoteChoices', label: 'Note targets', kind: 'integers', minimum: -24, maximum: 24, defaultValue: [0, 2, 2, 4],
+    { key: 'chordNoteChoices', label: 'TARGETS', kind: 'integers', minimum: -24, maximum: 24, defaultValue: [0, 2, 2, 4],
       description: 'Comma-separated targets interpreted by global Target mode: chord-note indices, scale-degree offsets from chord roots, or offsets from MIDI 60. The list repeats across progression chords.' },
-    { key: 'melodyPatternOffsets', label: 'Block structure', kind: 'integers', minimum: -16, maximum: 16, defaultValue: [1, 2, 1, 3],
+    { key: 'melodyPatternOffsets', label: 'WORDS', kind: 'integers', minimum: -16, maximum: 16, defaultValue: [1, 2, 1, 3],
       description: 'Comma-separated block identities. Repeated numbers reuse a pattern; negative numbers invert it. This is separate from a rhythm grid.' },
     number('maxBlockChange', 'Max block change', 0, 7, 7, ''), number('blockJump', 'Block jump', 0, 4, 1, ''),
     { key: 'patternFlexible', label: 'Flex', kind: 'boolean', defaultValue: true,
@@ -123,7 +123,7 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     ...common],
   bass: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: BASS_RHYTHMS, defaultValue: 'bass1' } : control), ...durationControls, span,
     number('noteVariation', 'Note variance', 0, 100, 20), { key: 'octaveInterval', label: 'Octave interval', kind: 'boolean' },
-    { ...choice('patternJoinMode', 'Join', ['NOJOIN', 'EXPAND', 'JOIN']), defaultValue: 'NOJOIN', advanced: true,
+    { ...choice('patternJoinMode', 'JOIN', ['NOJOIN', 'EXPAND', 'JOIN']), defaultValue: 'NOJOIN', advanced: true,
       description: 'Grid rhythms only. NOJOIN keeps subdivisions; EXPAND sustains through rests; JOIN sustains through consecutive hits and suppresses their retriggers. Java also looks into the next chord within a Span group, before its flip/fill. Omission retains NOJOIN in this translation.' },
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
   chords: [...fill, ...rhythmControls, span, pause, swing, ...voices,
@@ -133,15 +133,15 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
       description: 'ARP rolls evenly; RAND spreads or shuffles tone onsets; HUMAN adds small offsets. U/D determines pitch direction; one tone anchors the hit.' },
     { ...number('strumPauseChance', 'Strum pause', 0, 100, 0), advanced: true,
       description: 'Chance to omit each individual chord tone, independently of the whole-hit Pause setting.' },
-    { ...choice('patternJoinMode', 'Join', ['NOJOIN', 'EXPAND', 'JOIN']), defaultValue: 'NOJOIN', advanced: true,
+    { ...choice('patternJoinMode', 'JOIN', ['NOJOIN', 'EXPAND', 'JOIN']), defaultValue: 'NOJOIN', advanced: true,
       description: 'NOJOIN keeps subdivisions; EXPAND sustains through rests; JOIN sustains through consecutive hits and suppresses retriggers. Lookahead crosses into the next chord within a Span group, before its flip/fill. Long strums cap spillover at 15%.' },
     { ...number('transitionChance', 'Transition chance', 0, 100, 0), advanced: true,
       description: 'Chance to switch later rhythm hits to the next progression chord. Java draws activation and next-chord selection independently; transitions do not create extra rhythm hits.' },
     { ...number('transitionSplit', 'Transition split', 0, 1000, 625, ' /1000 chord'), advanced: true,
       description: 'Position within the current chord at which an activated transition can switch pitch. 625 means 62.5%; 0 starts immediately and 1000 leaves the chord unchanged.' },
-    choice('voicing', 'Voicing', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 200), ...pitched, ...common],
+    choice('voicing', 'VOICING', ['close', 'open']), number('noteLengthPercent', 'Note length', 25, 200), ...pitched, ...common],
   arpeggio: [...fill, ...rhythmControls.map(control => control.key === 'rhythm' ? { ...control, options: ARPEGGIO_RHYTHMS, defaultValue: 'full' } : control), ...durationControls, span,
-    number('patternRepeat', 'Repeat', 1, 4, 1, ''), pause, split, swing, ...voices, choice('pattern', 'Pitch direction', ARPEGGIO_PATTERNS),
+    number('patternRepeat', 'Repeat', 1, 4, 1, ''), pause, split, swing, ...voices, choice('pattern', 'DIRECTION', ARPEGGIO_PATTERNS),
     number('arpPatternRotate', 'Rotate', 0, 8, 0, ''),
     { key: 'arpPatternCustom', label: 'Custom direction', kind: 'integers', minimum: -12, maximum: 12, defaultValue: [0, 1, 2], advanced: true,
       description: 'Chord-tone indices; negative values descend below the chord and larger values extend above it. Rotation applies before Hits and Repeat.' },

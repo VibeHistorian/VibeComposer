@@ -67,22 +67,22 @@
     <fieldset class="parameter-area" data-control-category="pitch">
       <legend>Pitch</legend>
       @if (showAlgorithm(false)) {
-        <vc-compact-knob label="Chord note target" [defaultValue]="0" [value]="values().chordNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
+        <vc-compact-knob label="CHRD%" [defaultValue]="0" [value]="values().chordNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
         description="Requested chord-tone share before pauses. Correct notes in phrase order with a limited budget per chord, using the effective progression and Chordlets. Best effort; chord starts are restored later."
         (valueCommit)="settingsChanged.emit({ chordNoteTarget: $event })" />
       }
       @if (showAlgorithm(false)) {
-        <vc-compact-knob label="Replace avoid notes" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
+        <vc-compact-knob label="AVOID" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
         description="0: Off. 1: Correct notes a semitone above chord tones. 2: Also correct notes a semitone below or two semitones above. Tonic, fifth and chord tones stay safe. Move one seeded scale step after interval repair, before pauses."
         (valueCommit)="settingsChanged.emit({ replaceAvoidNotes: $event })" />
       }
       @if (showAlgorithm(false)) {
-        <vc-compact-knob label="Tonic note target" [defaultValue]="0" [value]="values().tonicNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
+        <vc-compact-knob label="TON%" [defaultValue]="0" [value]="values().tonicNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
         description="Requested tonic share before pauses. Adjust at most one nearby noninitial note per chord, working backward through alternating chords. Applies to the main seed pass; the target is best effort."
         (valueCommit)="settingsChanged.emit({ tonicNoteTarget: $event })" />
       }
       @if (showAlgorithm(false)) {
-        <vc-compact-knob label="Mode note target" [defaultValue]="0" [value]="values().modeNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
+        <vc-compact-knob label="MODE%" [defaultValue]="0" [value]="values().modeNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
         description="Requested mode-note share before pauses. Protect each chord's first note and repair nearest pitches first. Major targets the tonic; natural minor targets its sixth degree. Existing mode notes remain eligible, following the generator's best-effort correction."
         (valueCommit)="settingsChanged.emit({ modeNoteTarget: $event })" />
       }
