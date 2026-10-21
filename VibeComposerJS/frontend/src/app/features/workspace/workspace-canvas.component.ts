@@ -221,6 +221,21 @@ export class WorkspaceCanvasComponent {
     return Object.keys(target.kind === 'section-role' ? section.rolePartOverrides?.[target.role] ?? {}
       : section.trackPartOverrides?.[target.trackId] ?? {});
   });
+  readonly partResetChangesValues = computed(() => {
+    const target = this.localPartTarget();
+    const section = this.contextSection();
+    if (!target || !section || !this.overriddenKeys().length) return false;
+    const rolePartOverrides = { ...section.rolePartOverrides };
+    const trackPartOverrides = { ...section.trackPartOverrides };
+    if (target.kind === 'section-role') delete rolePartOverrides[target.role];
+    else delete trackPartOverrides[target.trackId];
+    const inheritedSection = { ...section, rolePartOverrides, trackPartOverrides };
+    return this.contextTracks().some(track => {
+      const current = settingsValues(resolvePartTrack(track, section).generatorSettings, track.role);
+      const inherited = settingsValues(resolvePartTrack(track, inheritedSection).generatorSettings, track.role);
+      return Object.keys(current).some(key => !partValuesEqual(current[key], inherited[key]));
+    });
+  });
   readonly partPanelLabel = computed(() => {
     const scope = this.partScope();
     if (!scope || !this.contextTracks().length) return 'Quick access settings';

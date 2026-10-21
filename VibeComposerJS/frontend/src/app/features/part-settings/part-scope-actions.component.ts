@@ -10,6 +10,7 @@ export class PartScopeActionsComponent {
   readonly layout = input<'full' | 'header'>('full');
   readonly group = input(false);
   readonly hasOverrides = input(false);
+  readonly resetChangesValues = input(false);
   readonly hasExceptions = input(false);
   readonly destinationCount = input(0);
   readonly canCopyOverrides = input(false);

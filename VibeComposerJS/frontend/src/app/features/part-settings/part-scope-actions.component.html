@@ -1,7 +1,9 @@
 <div class="scope-actions" [class.header-actions]="layout() === 'header'">
   @if (layout() === 'header') {
-    <button type="button" class="reset-icon" [disabled]="!hasOverrides()" (click)="inheritRequested.emit()"
-      title="Reset to inherited" aria-label="Reset to inherited"><span aria-hidden="true">↺</span></button>
+    <button type="button" class="reset-icon" [class.values-match]="!resetChangesValues()"
+      [disabled]="!hasOverrides()" (click)="inheritRequested.emit()"
+      [title]="hasOverrides() && !resetChangesValues() ? 'Values already match inherited settings. Remove stored overrides to follow future inherited changes.' : 'Reset to inherited'"
+      aria-label="Reset to inherited"><span aria-hidden="true">↺</span></button>
   }
   <button type="button" [class.freeze-icon]="layout() === 'header'" (click)="freezeRequested.emit()"
     [attr.aria-label]="group() ? 'Freeze current tracks' : 'Freeze effective settings'"

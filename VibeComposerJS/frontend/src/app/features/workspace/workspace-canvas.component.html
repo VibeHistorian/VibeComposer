@@ -140,6 +140,7 @@
             @if (editableScopes().length) {
               <vc-part-scope-actions layout="header" [group]="target.kind === 'section-role'"
                 [hasOverrides]="!!overriddenKeys().length" [hasExceptions]="!!trackExceptionCount()"
+                [resetChangesValues]="partResetChangesValues()"
                 [destinationCount]="partDestinations().length" [message]="partWorkflowMessage()"
                 [canCopyOverrides]="partCopyAvailability().overrides" [canCopyEffective]="partCopyAvailability().effective"
                 [canCopyGlobals]="canCopyPartGlobals()" (globalsRequested)="runPartWorkflow('globals')"

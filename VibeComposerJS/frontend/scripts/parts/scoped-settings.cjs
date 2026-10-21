@@ -1848,6 +1848,40 @@ test('fill values survive copy/freeze, one-entry history, duplication and sessio
   assert.deepEqual(phrase.phraseForTrack(service.project(), service.project().tracks.find((track) => track.id === trackId)), manual);
 });
 
+test('reset emphasis follows effective differences after global copy, freeze and history', () => {
+  const { service, ui, workspace } = fixture();
+  const sectionId = service.project().arrangement[0].id;
+  const trackId = 'track-bass-1';
+  const second = service.duplicateTrack(trackId);
+  const cell = { kind: 'section-role', sectionId, role: 'bass' };
+  const part = { kind: 'section-track', sectionId, trackId: second };
+  ui.selectCell(sectionId, 'bass');
+  assert.equal(workspace.partResetChangesValues(), false);
+  service.updatePartSettings(cell, { noteVariation: 35, customPattern: Array(32).fill(0) });
+  service.updatePartSettings(part, { noteVariation: 45 });
+  assert.equal(workspace.partResetChangesValues(), true);
+  service.copyPartSettingsToGlobals(cell);
+  assert.equal(workspace.partResetChangesValues(), false, 'track exceptions mask cell differences after copy');
+  assert.ok(workspace.overriddenKeys().length, 'copy retains explicit inheritance boundaries');
+  service.undo();
+  assert.equal(workspace.partResetChangesValues(), true);
+  service.redo();
+  assert.equal(workspace.partResetChangesValues(), false);
+  ui.selectSectionTrack(sectionId, second);
+  assert.equal(workspace.partResetChangesValues(), true, 'track reset still inherits its cell, not globals');
+  ui.selectSectionTrack(sectionId, trackId);
+  service.freezePartSettings(workspace.partScope());
+  assert.ok(workspace.overriddenKeys().length);
+  assert.equal(workspace.partResetChangesValues(), false, 'equal frozen arrays do not emphasize reset');
+  workspace.resetPartSettings(workspace.partScope());
+  assert.deepEqual(workspace.overriddenKeys(), [], 'matching snapshots can still be cleared');
+  ui.selectCell(sectionId, 'bass');
+  workspace.resetPartSettings(cell);
+  assert.equal(workspace.partResetChangesValues(), false);
+  ui.selectSectionTrack(sectionId, second);
+  assert.equal(workspace.partResetChangesValues(), false, 'track patch now matches its inherited global base');
+});
+
 test('manually restoring numeric, choice and checkbox defaults removes local overrides and customized UI', () => {
   const { service, ui, workspace, phrase } = fixture();
   const sectionId = service.project().arrangement[1].id;
