@@ -96,6 +96,13 @@ All musical commands pass through ProjectService and commit immutable historical
 
 Knobs and native comboboxes reset to their default value on right-click through the normal scoped validation/history commands. Removing a sparse override is a separate inheritance action. Melody New blocks defaults to **25%**. Target mode defaults to **2**; all three modes are supported, and targets accept **-24..24**. Mode edits immediately reinterpret stored target lists; permitted Compose/Regenerate events prepare new lists. Basic chords only is omitted because its pitch consumers are legacy-only and it has no musical effect in the current block path. Java null chord-index pitches recover deterministically toward zero; fixture parity claims remain bounded as documented in the archive.
 
+### P9 — Custom duration editors and behavior
+
+The Melody Rhythm pattern control now selects `melody1` or `durations`. Durations exposes Flip and a popup for ten duration lanes, note/rest drawing, signed beat entry and seeded lane weighting. Both block and contextual generation consume the templates, with fixed note/rest boundaries corresponding to Java's default strict timing. Global, track and section settings retain their ownership; the combined control shares inheritance and quick-settings placement. Drafts stay outside history until one validated save. Validation checks every selectable lane and the actual lane combination against the selected tracks and effective harmony. Java's optional non-strict duration reassignment and the popup's MIDI file transfer remain separate follow-ups. Templates remain distinct from manual-note replacements and generic rhythm masks; P5f supplies section timing and export mapping.
+
+Exit: deterministic Java comparisons, independent template arrays, applicable scope ownership, atomic gestures/history, persistence, manual masking, shared dependency/playback/MIDI behavior and responsive editor/browser validation.
+
+
 ## Delivery stages still open
 
 P6g/P6h are complete in the audited supported scope. Drums has Dynamic/Ghosts, Overrandomize and Follow Melody policies; Arpeggio has GUI pause baking/growth, later-track pattern/fill weighting and weighted directions/rotation; Melody creation retains the Java random stream without writing the removed pitch-exception settings. The Bass source audit found no GUI baking/growth calls and no production Pause consumer, so no ineffective Bass control was added. See [the P6 completion record](__work_history/p6-creation-record.md) for deterministic streams, Java evidence and intentional differences. Existing automatic target preparation remains intact.
@@ -109,12 +116,6 @@ Remaining: repeat the many-track/narrow-window usability and production browser 
 ### P8 — Deferred global behavior and ExtraSettingsGUI
 
 Port remaining app/playback/device/export preferences separately. Musical settings from ExtraSettingsGUI remain in a later global musical-settings inspector, not automatically in a reroll header. See the deferred inventory. Java-specific soundbanks and device behavior require deliberate Web Audio/Web MIDI equivalents; Wails remains thin.
-
-### P9 — Custom duration editors and behavior
-
-The Melody Rhythm pattern control now selects `melody1` or `custom`. Custom exposes Flip and a popup for ten duration lanes, note/rest drawing, signed beat entry and seeded lane weighting. Both block and contextual generation consume the templates, with fixed note/rest boundaries corresponding to Java's default strict timing. Global, track and section settings retain their ownership; the combined control shares inheritance and quick-settings placement. Drafts stay outside history until one validated save. Validation checks every selectable lane and the actual lane combination against the selected tracks and effective harmony. Java's optional non-strict duration reassignment and the popup's MIDI file transfer remain separate follow-ups. Templates remain distinct from manual-note replacements and generic rhythm masks; P5f supplies section timing and export mapping.
-
-Exit: deterministic Java comparisons, independent template arrays, applicable scope ownership, atomic gestures/history, persistence, manual masking, shared dependency/playback/MIDI behavior and responsive editor/browser validation.
 
 ### P10 — Drum-driven Melody rhythm accents
 

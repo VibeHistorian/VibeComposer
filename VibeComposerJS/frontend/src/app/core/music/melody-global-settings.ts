@@ -6,7 +6,7 @@ export const DEFAULT_MELODY_GLOBAL = Object.freeze({
   tension: 35, ending: 'LOOP' as const, form: 'STATEMENT_VARIATION' as const,
   style: 'TONAL' as const, chromaticApproaches: false, phraseBars: 2, beatsPerBar: 4,
   maxDirectionChanges: 2, fillPausesPerChord: false,
-  patternEffect: 2, arpySurprises: false, patternFlip: false, emphasizeKey: false,
+  patternEffect: 2, patternFlip: false, emphasizeKey: false,
   tonicNoteTarget: 0, modeNoteTarget: 0, chordNoteTarget: 0, replaceAvoidNotes: 0, blockTargetMode: 2,
   targetNoteVariation: 3, targetDirection: 'ASC' as const,
   useDirectionsFromProgression: false, forceFirstOutline: false,
@@ -45,7 +45,7 @@ export function decodeMelodyGlobal(value: unknown, partial = false): MelodyGloba
       if (!Array.isArray(field) || !(field.length === 0 || field.length === 8 && new Set(field).size === 8
         && Array.from(field).every(change => Number.isInteger(change) && change >= 0 && change <= 7))) return undefined;
       decoded[key] = [...field]; continue;
-    } else if (!['fillPausesPerChord', 'arpySurprises', 'patternFlip', 'emphasizeKey',
+    } else if (!['fillPausesPerChord', 'patternFlip', 'emphasizeKey',
       'useDirectionsFromProgression', 'forceFirstOutline'].includes(key) || typeof field !== 'boolean') return undefined;
     decoded[key] = field;
   }

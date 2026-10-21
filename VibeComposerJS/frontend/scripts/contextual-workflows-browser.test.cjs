@@ -312,13 +312,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         change(effect, String(value));
         await wait(() => read().melodyGlobal?.patternEffect === value, 'pattern effect commit');
       }
-      globals.querySelector('[aria-label="Arpy surprises"]').click();
-      await wait(() => read().melodyGlobal?.arpySurprises === true, 'arpy surprises commit');
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.arpySurprises === undefined
-        && globals.querySelector('[aria-label="Arpy surprises"]').getAttribute('aria-pressed') === 'false', 'arpy surprises undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'arpy redo enabled')).click();
-      await wait(() => read().melodyGlobal?.arpySurprises === true, 'arpy surprises redo');
+      if (globals.querySelector('[aria-label="Arpy surprises"]')) throw new Error('Removed Arpy surprises control remains');
       const catalogueTracks = JSON.stringify(read().tracks);
       await wait(() => globals.querySelector('[aria-label="New blocks"]').value === '25', 'new blocks default');
       change(globals.querySelector('[aria-label="New blocks"]'), '0');

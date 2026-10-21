@@ -91,7 +91,6 @@ export interface MelodyGlobalSettings {
   readonly fillPausesPerChord?: boolean;
   /** 0 repeats rhythm, 1 repeats notes, 2 repeats rhythm and notes. */
   readonly patternEffect?: 0 | 1 | 2;
-  readonly arpySurprises?: boolean;
   readonly targetNoteVariation?: number;
   readonly targetDirection?: 'ANY' | 'ASC' | 'DESC';
   readonly useDirectionsFromProgression?: boolean;

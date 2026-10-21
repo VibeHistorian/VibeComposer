@@ -153,12 +153,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
         previousType = shape.type;
         variance = Math.max(0, variance - blockVariance(notes));
         directions = Math.max(0, directions - directionChanges(notes));
-        let noteDurations = customBlocks ? customBlocks[index].filter(value => value > 0) : noteRhythm(shapeSeed, duration, notes.length, speed);
-        if (!customBlocks && globals.arpySurprises && notes.length === 4 && (speed < 20 || speed > 80)) {
-          const low = speed < 20 ? 0.25 * 0.99 : 1.5 * 0.99;
-          const high = speed < 20 ? 0.25 * 1.01 : 4 * 1.01;
-          if (noteDurations.some(value => value > low && value < high)) noteDurations = notes.map(() => duration / notes.length);
-        }
+        const noteDurations = customBlocks ? customBlocks[index].filter(value => value > 0) : noteRhythm(shapeSeed, duration, notes.length, speed);
         return { notes, durations: noteDurations };
       });
       if (flexible && existing && globals.patternEffect > 0) blocks = [...existing.blocks.slice(0, -1), blocks[blocks.length - 1]];

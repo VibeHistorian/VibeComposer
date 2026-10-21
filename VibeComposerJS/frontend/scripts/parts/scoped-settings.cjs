@@ -1029,7 +1029,7 @@ test('P5e catalogue preference editor rejects partial or duplicate lists without
   editor.changeBlockPreference({ target: { value: '   ' } }); assert.deepEqual(commits.at(-1), { blockChangePreference: [] });
 });
 
-test('P5e pattern effects and arpy surprises update section dependencies and MIDI independently', () => {
+test('P5e pattern effects update section dependencies and MIDI', () => {
   const { service, phrase, midi, load } = fixture();
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/melody-effects.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   const sample = cases[8], project = JSON.parse(service.exportProjectJson());
@@ -1052,9 +1052,6 @@ test('P5e pattern effects and arpy surprises update section dependencies and MID
   assert.notDeepEqual(context(), originalContext);
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.deepEqual(phrase.generateTrackPhrase(service.project(), track('melody')), rhythm);
-  const rhythmContext = context();
-  assert.equal(service.updateMelodyGlobal({ arpySurprises: true }), 'changed');
-  assert.notDeepEqual(context(), rhythmContext);
   for (const role of ['melody', 'arpeggio', 'drums']) {
     const expected = phrase.layOutTrackPhrase(service.project(), track(role));
     const exported = new Midi(midi.generateCompositionMidi(service.project()));
@@ -1068,9 +1065,9 @@ test('P5e pattern effects and arpy surprises update section dependencies and MID
   }
   const saved = service.exportProjectJson(), { generateMelody } = load('core/music/melody-generator.ts');
   service.updateSettings({ name: 'redo' }); service.undo();
-  for (const patch of [{ patternEffect: 3 }, { patternEffect: null }, { arpySurprises: 'true' }]) {
+  for (const patch of [{ patternEffect: 3 }, { patternEffect: null }, { arpySurprises: true }, { arpySurprises: false }]) {
     assert.equal(service.updateMelodyGlobal(patch), 'invalid');
-    assert.throws(() => generateMelody(42n, 'C', 'major', [1], sample.settings, 0, undefined, patch), RangeError);
+    assert.throws(() => generateMelody(42n, 'C', 'major', [1], track('melody').generatorSettings, 0, undefined, patch), RangeError);
     assert.equal(service.exportProjectJson(), saved); assert.equal(service.canRedo(), true);
   }
 });
@@ -1089,7 +1086,7 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
   const track = () => service.project().tracks.find(track => track.id === id);
   const original = phrase.layOutTrackPhrase(service.project(), track());
   const global = { maxDirectionChanges: 6, fillPausesPerChord: true,
-    patternEffect: 0, arpySurprises: true, targetNoteVariation: 6, targetDirection: 'DESC',
+    patternEffect: 0, targetNoteVariation: 6, targetDirection: 'DESC',
     useDirectionsFromProgression: true, forceFirstOutline: true };
   assert.equal(service.updateMelodyGlobal(global), 'changed');
   assert.deepEqual(service.project().arrangement, patches);
@@ -1115,7 +1112,7 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
   saved = service.exportProjectJson();
   for (const malformed of [null, [], true, { unknown: true }, { singleNoteExceptions: true }, { singleNoteExceptions: false },
     { fillPausesPerChord: 'true' }, { maxDirectionChanges: 0 }, { maxDirectionChanges: 2.5 }, { maxDirectionChanges: 7 },
-    { patternEffect: -1 }, { patternEffect: 3 }, { patternEffect: 1.5 }, { patternEffect: '0' }, { arpySurprises: 1 },
+    { patternEffect: -1 }, { patternEffect: 3 }, { patternEffect: 1.5 }, { patternEffect: '0' }, { arpySurprises: true }, { arpySurprises: false },
     { targetNoteVariation: 0 }, { targetNoteVariation: 7 }, { targetNoteVariation: 1.5 }, { targetNoteVariation: '3' },
     { targetDirection: 'up' }, { targetDirection: 1 }, { useDirectionsFromProgression: 1 }, { forceFirstOutline: 'true' }]) {
     const project = JSON.parse(saved); project.melodyGlobal = malformed;
@@ -1132,7 +1129,7 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
   }
   const manual = [{ id: 'manual-global', midi: 72, startBeat: 1, durationBeats: 1, velocity: 95 }];
   service.updateTrackPhrase(id, manual);
-  service.updateMelodyGlobal({ fillPausesPerChord: false, patternEffect: 1, arpySurprises: false });
+  service.updateMelodyGlobal({ fillPausesPerChord: false, patternEffect: 1 });
   assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
   service.clearTrackPhrase(id);
   const source = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);

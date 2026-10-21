@@ -140,11 +140,6 @@
         description="Invert the first Melody's onset grid used by Melody-following parts. Melody notes remain unchanged; individual parts can also flip their own rhythms."
         (toggled)="settingsChanged.emit({ patternFlip: !(values().patternFlip ?? false) })" />
       @if (showAlgorithm(false)) {
-        <vc-compact-toggle label="Arpy surprises" [active]="values().arpySurprises ?? false"
-        description="At Speed below 20 or above 80, replace certain four-note block rhythms with evenly spaced notes."
-        (toggled)="settingsChanged.emit({ arpySurprises: !(values().arpySurprises ?? false) })" />
-      }
-      @if (showAlgorithm(false)) {
         <vc-compact-toggle label="Fill pauses per chord" [active]="values().fillPausesPerChord ?? false"
         description="With Fill pauses enabled, protect each chord's first note and keep rest filling within its chord. Repair included chord starts even if paused."
         (toggled)="settingsChanged.emit({ fillPausesPerChord: !(values().fillPausesPerChord ?? false) })" />

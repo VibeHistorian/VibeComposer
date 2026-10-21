@@ -50,7 +50,7 @@ const MELODY_GLOBAL: Readonly<Record<string, keyof MelodyGlobalSettings>> = {
   melodyBlockTargetMode: 'blockTargetMode', melodyTonicNoteTarget: 'tonicNoteTarget', melodyModeNoteTarget: 'modeNoteTarget',
   melodyChordNoteTarget: 'chordNoteTarget', melodyReplaceAvoidNotes: 'replaceAvoidNotes', melodyEmphasizeKey: 'emphasizeKey',
   melodyPatternFlip: 'patternFlip', melodyMaxDirChanges: 'maxDirectionChanges',
-  melodyFillPausesPerChord: 'fillPausesPerChord', melodyPatternEffect: 'patternEffect', melodyArpySurprises: 'arpySurprises',
+  melodyFillPausesPerChord: 'fillPausesPerChord', melodyPatternEffect: 'patternEffect',
   melodyTargetNoteVariation: 'targetNoteVariation', noteTargetDirectionChoice: 'targetDirection',
   melodyUseDirectionsFromProgression: 'useDirectionsFromProgression', melody1ForcePatterns: 'forceFirstOutline',
   melodyNewBlocksChance: 'newBlocksChance', melodyBlockTypePreference: 'blockTypeWeights', melodyBlockChoicePreference: 'blockChangePreference',
