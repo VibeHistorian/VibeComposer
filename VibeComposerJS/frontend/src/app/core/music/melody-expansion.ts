@@ -28,7 +28,6 @@ export function expandMelody(skeleton: readonly MelodyNote[][], settings: Melody
   const splitRandom = new JavaRandom(int(orderSeed + 4));
   let pitchRandom = new JavaRandom(int(seed + 8));
   let exceptionRandom = new JavaRandom(int(seed + 9));
-  const leadingRandom = new JavaRandom(int(orderSeed + notesSeedOffset + 15));
   const velocityRandom = new JavaRandom(int(orderSeed + 1 + notesSeedOffset));
   const accentRandom = new JavaRandom(int(orderSeed + 20));
   const all = skeleton.flat(), result = skeleton.map(() => [] as MelodyNote[]);
@@ -46,13 +45,10 @@ export function expandMelody(skeleton: readonly MelodyNote[][], settings: Melody
       note.velocity = velocity;
       time += duration;
       const next = all[(index + 1) % all.length];
-      // The leading draw occurs even when disabled; split draws short-circuit on duration.
-      const leading = leadingRandom.nextInt(100) < (settings.leadChordsChance ?? 0)
-        && duration > 0.375 * 1.1 && index < all.length - 1 && time + next.rhythm > 4;
-      const split = (duration > 0.5 * 1.4 && splitRandom.nextInt(100) < (settings.splitChance ?? 0)) || leading;
+      const split = duration > 0.5 * 1.4 && splitRandom.nextInt(100) < (settings.splitChance ?? 0);
       if (split) {
         let low = Math.min(note.midi, next.midi), high = Math.max(note.midi, next.midi);
-        if (exceptionRandom.nextInt(100) < 33 && !leading) {
+        if (exceptionRandom.nextInt(100) < 33) {
           if (note.midi >= next.midi) high += 4; else low -= 4;
         }
         const pitch = allowedPitch(low, high, position, pitchRandom);

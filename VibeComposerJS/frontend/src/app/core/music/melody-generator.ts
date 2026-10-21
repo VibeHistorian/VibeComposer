@@ -65,8 +65,8 @@ function rhythmicImportance(notes: Note[]): Note[] {
 /**
  * Current MelodyBlockSkeletonGenerator → MelodyExpansion → phrase preparation.
  * P1b supports generated shapes, tonic-relative targets, reusable/inverted blocks,
- * speed, Flex/Max Block Change/Block Jump, doubled rhythm, pitch exceptions,
- * split/lead/start behavior, pauses/fill, accents and shared dynamics.
+ * speed, Flex/Max Block Change/Block Jump, pitch exceptions,
+ * split/start behavior, pauses/fill, accents and shared dynamics.
  * Global inputs share the project-level Melody musical settings.
  */
 export function generateMelody(seed: bigint | number, key: string, scale: ScaleMode,
@@ -101,7 +101,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
     const error = durationError(settings);
     if (error) throw new RangeError(error);
     // Supplied durations own their note/rest boundaries, including the first and last pauses.
-    settings = { ...settings, splitChance: 0, leadChordsChance: 0, startNoteChance: 100, pauseChance: 0, fillPauses: false };
+    settings = { ...settings, splitChance: 0, startNoteChance: 100, pauseChance: 0, fillPauses: false };
   }
   const baseSeed = settings.patternSeed ? int(settings.patternSeed) : Number(BigInt.asIntN(32, BigInt(seed)));
   const blockSeed = int(baseSeed + notesSeedOffset);
@@ -118,12 +118,10 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   for (let chord = 0; chord < progression.length; chord++) {
     const originalOffset = structure[chord], offset = Math.max(0, Math.abs(originalOffset) - 1);
     const customBlocks = usesDurations ? durationBlocks(settings, blockSeed, chord, globals.patternEffect !== 1 ? offset : -1) : undefined;
-    const doubled = new JavaRandom(int(baseSeed + 3 + offset)).nextInt(100) < (settings.doubledRhythmChance ?? 0);
     let durations = customBlocks?.map(block => block.reduce((sum, value) => sum + Math.abs(value), 0))
       ?? (globals.patternEffect !== 1 ? rhythms.get(offset) : undefined);
     if (!durations) {
-      durations = blockRhythm(int(blockSeed + offset), doubled ? 2 : 4, outerWeights);
-      if (doubled) durations = [...durations, ...durations];
+      durations = blockRhythm(int(blockSeed + offset), 4, outerWeights);
       rhythms.set(offset, durations);
     }
     const first = starting(chord), next = starting(chord + 1), existing = usesDurations ? undefined : cache.get(offset);

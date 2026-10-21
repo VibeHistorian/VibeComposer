@@ -41,13 +41,13 @@ const DIRECTIONS = [
   [0,0,-1,1], [1,-1,1,2], [1,-1,0,1], [2,0,1,2], [2,0,-1,1],
 ];
 
-/** Current MelodyPanel.overridePatterns fields; do not copy lead/start or identity. */
+/** Supported MelodyPanel.overridePatterns fields; do not copy start or identity. */
 export function forceMelodyOutline(first: MelodySettings, target: MelodySettings): MelodySettings {
   return { ...target,
     chordNoteChoices: [...(first.chordNoteChoices ?? [0, 2, 2, 4])],
     melodyPatternOffsets: [...(first.melodyPatternOffsets ?? [1, 2, 1, 3])],
     maxBlockChange: first.maxBlockChange ?? 7, blockJump: first.blockJump ?? 1,
-    maxNoteExceptions: first.maxNoteExceptions ?? 0, doubledRhythmChance: first.doubledRhythmChance ?? 0,
+    maxNoteExceptions: first.maxNoteExceptions ?? 0,
     splitChance: first.splitChance ?? 0, noteExceptionChance: first.noteExceptionChance ?? 0,
     speed: first.speed ?? 50,
   };

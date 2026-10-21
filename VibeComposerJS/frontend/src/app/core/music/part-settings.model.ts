@@ -53,11 +53,9 @@ export interface MelodySettings extends CommonPartSettings {
   readonly maxBlockChange?: number;
   readonly blockJump?: number;
   readonly patternFlexible?: boolean;
-  readonly doubledRhythmChance?: number;
   readonly maxNoteExceptions?: number;
   readonly noteExceptionChance?: number;
   readonly splitChance?: number;
-  readonly leadChordsChance?: number;
   readonly startNoteChance?: number;
   readonly pauseChance?: number;
   readonly swingPercent?: number;

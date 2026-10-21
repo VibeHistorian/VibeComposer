@@ -390,8 +390,8 @@ test('melody imports and every scope reject malformed core inputs without losing
   const invalid = [{ speed: 101 }, { speed: -101 }, { chordNoteChoices: [] }, { chordNoteChoices: [25] },
     { melodyPatternOffsets: Array(33).fill(1) }, { melodyPatternOffsets: [1.5] }, { patternSeed: 2147483648 },
     { patternFlexible: 1 }, { velocityMin: 106 }, { splitChance: 101 }, { accents: -1 },
-    { doubledRhythmChance: -1 }, { doubledRhythmChance: '50' }, { maxNoteExceptions: 5 }, { maxNoteExceptions: 0.5 },
-    { noteExceptionChance: 101 }, { leadChordsChance: null }, { startNoteChance: false }];
+    { doubledRhythmChance: 0 }, { doubledRhythmChance: 100 }, { maxNoteExceptions: 5 }, { maxNoteExceptions: 0.5 },
+    { noteExceptionChance: 101 }, { leadChordsChance: 0 }, { leadChordsChance: 100 }, { startNoteChance: false }];
   for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: 'track-melody-1' },
     { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: 'track-melody-1' }]) {
     for (const patch of [...invalid, { transpose: 4 }]) {

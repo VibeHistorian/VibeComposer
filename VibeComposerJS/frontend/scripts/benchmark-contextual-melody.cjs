@@ -5,7 +5,7 @@ const { SCALE_MODES } = loadMusic('scales.ts');
 
 function contextualCase(index) {
   const settings = { algorithm: 'block', speed: [-20, 30, 80][index % 3], pauseChance: index % 4 * 10,
-    splitChance: index % 3 * 20, leadChordsChance: index % 2 * 100,
+    splitChance: index % 3 * 20,
     melodyPatternOffsets: [1, -1, 2, 1], swingPercent: index % 2 ? 66 : 50 };
   if (index % 7 === 0) Object.assign(settings, { rhythm: 'durations',
     customDurations: [[1, -0.5, 0.5, 1, -1], ...Array.from({ length: 9 }, () => [])] });

@@ -281,9 +281,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       document.querySelector('[aria-label="Close pattern sequencer"]').click();
       document.querySelector('.track-group.melody .group-select').click();
       await wait(() => document.querySelector('#part-inspector [data-control-role="melody"]'), 'melody inspector');
-      const extended = [ ['Doubled rhythm', 'doubledRhythmChance', 100], ['Max exceptions', 'maxNoteExceptions', 4],
+      for (const key of ['doubledRhythmChance', 'leadChordsChance']) {
+        if (document.querySelector('[data-control-key="' + key + '"]')) throw new Error('Removed melody control remains: ' + key);
+      }
+      const extended = [ ['Max exceptions', 'maxNoteExceptions', 4],
         ['Note exceptions', 'noteExceptionChance', 70], ['Split long', 'splitChance', 60],
-        ['Lead chords', 'leadChordsChance', 80], ['Start note', 'startNoteChance', 0] ];
+        ['Start note', 'startNoteChance', 0] ];
       for (const [label, key, value] of extended) {
         change(await wait(() => document.querySelector('#part-inspector [aria-label="' + label + '"]'), label), String(value));
         await wait(() => read().tracks.find(track => track.role === 'melody').generatorSettings[key] === value, label + ' commit');
@@ -452,9 +455,9 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => JSON.stringify(read().tracks) !== targetsBefore, 'prepared outline Compose');
       const melodyMembers = read().tracks.filter(track => track.role === 'melody');
       const outlineFields = ['chordNoteChoices', 'melodyPatternOffsets', 'speed', 'maxBlockChange', 'blockJump',
-        'maxNoteExceptions', 'doubledRhythmChance', 'splitChance', 'noteExceptionChance'];
+        'maxNoteExceptions', 'splitChance', 'noteExceptionChance'];
       const outlineDefaults = { chordNoteChoices: [0,2,2,4], melodyPatternOffsets: [1,2,1,3], speed: 50,
-        maxBlockChange: 7, blockJump: 1, maxNoteExceptions: 0, doubledRhythmChance: 0, splitChance: 0, noteExceptionChance: 0 };
+        maxBlockChange: 7, blockJump: 1, maxNoteExceptions: 0, splitChance: 0, noteExceptionChance: 0 };
       result.targetPreparation &&= melodyMembers.every(track => track.rerollLocked || outlineFields.every(key =>
         JSON.stringify(track.generatorSettings[key] ?? outlineDefaults[key]) === JSON.stringify(melodyMembers[0].generatorSettings[key] ?? outlineDefaults[key])));
       document.querySelector('[aria-label="Undo"]').click();

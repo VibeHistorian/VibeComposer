@@ -78,7 +78,7 @@ test('section presence toggles reuse contextual search for melody and dependent 
 test('contextual search preserves exact notes, patterns and skeletons across the optimization corpus', () => {
   const { contextualDigest } = require('./benchmark-contextual-melody.cjs');
   assert.deepEqual(contextualDigest(), {
-    sha256: 'c56b72fa80f8ad10d54defe44e6bf986d7e6978ca3e5c5e58fdc0a64b8b54498', failures: 0,
+    sha256: '6fa4da08bbc5cb81c7b2a139396b6def7bc773d7246d28b098fc34c22ee453f1', failures: 0,
   });
 });
 

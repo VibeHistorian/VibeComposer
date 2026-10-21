@@ -59,7 +59,7 @@
       }
       @if (showAlgorithm(false)) {
         <vc-compact-toggle label="Force first outline" [active]="values().forceFirstOutline ?? false"
-        description="During preparation, copy the first stored Melody track's targets, structure, speed, block limits, exceptions, doubled rhythm and split chance to unlocked Melody tracks. Section overrides remain explicit."
+        description="During preparation, copy the first stored Melody track's targets, structure, speed, block limits, exceptions and split chance to unlocked Melody tracks. Section overrides remain explicit."
         (toggled)="settingsChanged.emit({ forceFirstOutline: !(values().forceFirstOutline ?? false) })" />
       }
     </fieldset>

@@ -77,9 +77,9 @@ export class PartSettingsEditorComponent {
       : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
     (this.preferences.editingQuickSettings() || (
     (!this.usesDurations() || this.role() !== 'melody'
-      || !['speed', 'doubledRhythmChance', 'pauseChance', 'fillPauses', 'splitChance', 'leadChordsChance', 'startNoteChance'].includes(control.key)) &&
+      || !['speed', 'pauseChance', 'fillPauses', 'splitChance', 'startNoteChance'].includes(control.key)) &&
     (this.role() !== 'melody' || !this.projects.project().melodyGlobal?.contextualMelody
-      || !['fillPauses', 'patternFlexible', 'doubledRhythmChance', 'maxNoteExceptions', 'noteExceptionChance'].includes(control.key)) &&
+      || !['fillPauses', 'patternFlexible', 'maxNoteExceptions', 'noteExceptionChance'].includes(control.key)) &&
     (!this.usesDurations() || this.role() === 'melody' || !['patternShift', 'chordSpan', 'patternRepeat', 'patternJoinMode', 'euclideanPulses', 'useCustomVelocities', 'customVelocities', 'pauseChance', 'exceptionChance', ...(this.role() === 'bass' ? ['hitsPerPattern'] : [])].includes(control.key)) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&

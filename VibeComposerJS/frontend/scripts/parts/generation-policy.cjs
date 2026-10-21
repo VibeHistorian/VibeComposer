@@ -317,7 +317,12 @@ test('P6 Arpeggio later weighting handles 64 tracks, retains shared counts and p
   const {JavaRandom}=load('core/music/java-random.ts'), random=new JavaRandom(42);
   random.nextInt(25);random.nextInt(5);
   assert.equal(next.noteExceptionChance,10+random.nextInt(15));
-  assert.equal(next.maxNoteExceptions,random.nextInt(2));assert.equal(next.leadChordsChance,random.nextInt(50));
+  assert.equal(next.maxNoteExceptions,random.nextInt(2));
+  random.nextInt(50); // Keep the following Java creation draws aligned.
+  random.nextInt(6); // Primary fill is forced to ALL after this draw.
+  assert.equal(next.fillPauses, random.nextBoolean());
+  assert.equal(Object.hasOwn(next, 'leadChordsChance'), false);
+  assert.equal(Object.hasOwn(next, 'doubledRhythmChance'), false);
 });
 
 test('chord policies bias strums, bound transitions/pauses, enforce Expand and retain reroll ownership', () => {
@@ -384,6 +389,7 @@ test('automatic events are atomic, replayable and preserve locks, local settings
   service.addTrack('drums');
   service.setTrackRerollLock('track-melody-2', true);
   service.updateTrackPhrase('track-melody-1', [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  service.setSectionTrackPresence(0, 'track-melody-1', true);
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: 'track-arpeggio-1' };
   service.freezePartSettings(scope);
   for (const role of ['melody', 'chords', 'arpeggio', 'drums']) service.updateTrackGenerationPolicy(role, { onCompose: true });
@@ -569,9 +575,9 @@ test('P5e forced outline follows the first stored Melody and only copies the pro
   service.updateSettings({ randomizeTransposeOnCompose: false, randomizeTempoOnCompose: false });
   const primary = 'track-melody-1', second = service.duplicateTrack(primary), third = service.duplicateTrack(second);
   const sourceFields = { chordNoteChoices: [1, -2, 4], melodyPatternOffsets: [1, -1, 2], speed: 0,
-    maxBlockChange: 2, blockJump: 3, maxNoteExceptions: 4, doubledRhythmChance: 100, splitChance: 40, noteExceptionChance: 70 };
+    maxBlockChange: 2, blockJump: 3, maxNoteExceptions: 4, splitChance: 40, noteExceptionChance: 70 };
   service.updatePartSettings({ kind: 'global-track', trackId: primary }, sourceFields);
-  service.updatePartSettings({ kind: 'global-track', trackId: second }, { speed: 100, leadChordsChance: 80, startNoteChance: 0,
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { speed: 100, startNoteChance: 0,
     transpose: 7, patternSeed: 456, patternFlexible: false, pauseChance: 40, noteLengthMultiplier: 75 });
   service.setTrackRerollLock(primary, true); service.setTrackRerollLock(third, true);
   service.updateTrackPhrase(second, [{ id: 'manual-force', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }]);

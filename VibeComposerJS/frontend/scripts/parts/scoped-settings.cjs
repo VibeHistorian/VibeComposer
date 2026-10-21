@@ -1032,9 +1032,10 @@ test('P5e catalogue preference editor rejects partial or duplicate lists without
 test('P5e pattern effects and arpy surprises update section dependencies and MIDI independently', () => {
   const { service, phrase, midi, load } = fixture();
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/melody-effects.java.json'), 'utf8').replace(/^\uFEFF/, ''));
-  const sample = cases[1], project = JSON.parse(service.exportProjectJson());
+  const sample = cases[8], project = JSON.parse(service.exportProjectJson());
   project.seed = sample.seed; project.progression = [1, 1, 1]; delete project.progressionChords;
-  project.tracks.find(track => track.role === 'melody').generatorSettings = sample.settings;
+  project.tracks.find(track => track.role === 'melody').generatorSettings = Object.fromEntries(Object.entries(sample.settings)
+    .filter(([key]) => !['doubledRhythmChance', 'leadChordsChance'].includes(key)));
   project.arrangement = [{ ...project.arrangement[0], measures: 3, trackPresence: {
     'track-melody-1': true, 'track-drums-1': true, 'track-arpeggio-1': true,
   } }];
@@ -1149,8 +1150,8 @@ test('melody scope resolution reaches parsed MIDI, isolates sections and survive
   const before = phrase.layOutTrackPhrase(service.project(), track());
   const savedBefore = service.exportProjectJson();
   service.updatePartSettings(scope, { speed: 100, chordNoteChoices: [0, 4, 1, 3], melodyPatternOffsets: [1, -1, 2, 1],
-    doubledRhythmChance: 100, maxNoteExceptions: 4, noteExceptionChance: 100, splitChance: 100,
-    leadChordsChance: 100, startNoteChance: 0,
+    maxNoteExceptions: 4, noteExceptionChance: 100, splitChance: 100,
+    startNoteChance: 0,
     velocityMin: 100, velocityMax: 100, accents: 0, noteLengthMultiplier: 50, transpose: 12 });
   const after = phrase.layOutTrackPhrase(service.project(), track());
   const start = service.project().arrangement[0].measures * 4, end = start + service.project().arrangement[1].measures * 4;
@@ -1216,8 +1217,8 @@ test('P5e part controls resolve every scope, mixed values, copy/freeze and inher
   const sectionId = service.project().arrangement[1].id, destinationId = service.project().arrangement[2].id;
   const role = { kind: 'global-role', role: 'melody' }, global = { kind: 'global-track', trackId };
   const cell = { kind: 'section-role', sectionId, role: 'melody' }, local = { kind: 'section-track', sectionId, trackId };
-  const patch = { doubledRhythmChance: 80, maxNoteExceptions: 3, noteExceptionChance: 60,
-    splitChance: 70, leadChordsChance: 50, startNoteChance: 20 };
+  const patch = { maxNoteExceptions: 3, noteExceptionChance: 60,
+    splitChance: 70, startNoteChance: 20 };
   const resolve = (id, section = sectionId) => settings.settingsValues(settings.resolvePartTrack(
     service.project().tracks.find(track => track.id === id), service.project().arrangement.find(item => item.id === section)).generatorSettings, 'melody');
   for (const scope of [role, global, cell, local]) {
@@ -1245,7 +1246,7 @@ test('P5e part controls resolve every scope, mixed values, copy/freeze and inher
   assert.equal(service.importProjectJson(service.exportProjectJson()), true);
   for (const role of ['bass', 'chords', 'arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, patch), undefined);
   const controls = settings.PART_CONTROLS.melody.filter(control => Object.hasOwn(patch, control.key));
-  assert.equal(controls.length, 6); assert.ok(controls.every(control => control.advanced));
+  assert.equal(controls.length, 4); assert.ok(controls.every(control => control.advanced));
 });
 
 test('melody integer-list editors commit once and reject invalid or stale drafts', () => {

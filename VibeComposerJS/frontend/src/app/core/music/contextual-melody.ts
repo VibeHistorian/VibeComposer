@@ -19,7 +19,7 @@ const mod = (n: number, d = 12) => (n % d + d) % d;
 type Purpose = 'STATEMENT' | 'CONTINUATION' | 'QUESTION' | 'ANSWER' | 'CLOSING';
 interface Phrase { start: number; end: number; motif: number; purpose: Purpose }
 interface Slot { start: number; duration: number; rest: boolean; phrase: Phrase; arrival: boolean; appoggiatura: boolean }
-type Role = 'CHORD' | 'EXTENSION' | 'PASSING' | 'CHROMATIC' | 'ANTICIPATION' | 'APPOGGIATURA' | 'SUSPENSION';
+type Role = 'CHORD' | 'EXTENSION' | 'PASSING' | 'CHROMATIC' | 'APPOGGIATURA' | 'SUSPENSION';
 interface Planned { slot: Slot; pitch: number; role: Role }
 interface State { path: Planned[]; score: number; last: number; previous: number; first: number; phraseFirst: number;
   phraseStart: number; run: number; serial: number }
@@ -194,9 +194,6 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         else if (overlaps.some(chord => !chord.classes.has(mod(pitch)))) role = 'EXTENSION';
         stableRoles[pitch] = role;
       }
-      const anticipates = !accented && slot.duration <= 480 && slot.start + slot.duration === event.end && event.end < total
-        && new JavaRandom(baseSeed ^ BigInt(slot.start) ^ 0x6c656164n).nextInt(100) < (settings.leadChordsChance ?? 0);
-      const nextEvent = anticipates ? at(event.end) : undefined;
       const kind = contour(slot.phrase), position = (slot.start - slot.phrase.start) / (slot.phrase.end - slot.phrase.start);
       const width = Math.min(5,(options.rangeMax - options.rangeMin) / 4), center = (options.rangeMin + options.rangeMax) / 2;
       const arc = kind <= 1 ? position * 2 * width * (kind === 0 ? 1 : -1) : Math.sin(position * Math.PI) * width * (kind === 2 ? 1 : -1);
@@ -233,7 +230,6 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
             if (options.tension === 0 || index === finalIndex) continue;
             if (overlaps.length === 2 && event.classes.has(mod(pitch)) && !overlaps[1].classes.has(mod(pitch))
               && event.end - slot.start >= 240 && slot.start + slot.duration - event.end <= BEAT) role = 'SUSPENSION';
-            else if (nextEvent?.classes.has(mod(pitch))) role = 'ANTICIPATION';
             else if (slot.appoggiatura && slot.duration <= BEAT && state.last >= 0 && Math.abs(pitch - state.last) > 2 && scaleClasses.has(mod(pitch))) role = 'APPOGGIATURA';
             else if (!accented && state.last >= 0 && prior?.role === 'CHORD' && Math.abs(pitch - state.last) <= 2 && slot.start + slot.duration < event.end) {
               role = scaleClasses.has(mod(pitch)) ? 'PASSING' : options.chromaticApproaches ? 'CHROMATIC' : undefined;
@@ -249,7 +245,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
             if (distance > soundsRemaining[index] * leap) continue;
           }
           if (prior && prior.pitch >= 0 && pending(prior.role) && (pending(role)
-            || (prior.role === 'ANTICIPATION' ? movement !== 0 : prior.role === 'SUSPENSION' ? movement >= 0 || movement < -2
+            || (prior.role === 'SUSPENSION' ? movement >= 0 || movement < -2
               : movement === 0 || Math.abs(movement) > (prior.role === 'CHROMATIC' ? 1 : 2)))) continue;
           if (index === finalIndex && options.ending === 'CLOSED' && event.classes.has(0) && mod(pitch) !== 0) continue;
           if (index === finalIndex && options.ending === 'LOOP' && state.first >= 0 && Math.abs(pitch - state.first) > leap) continue;
