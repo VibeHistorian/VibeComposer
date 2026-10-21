@@ -1,3 +1,4 @@
+const { splitMelodyInputs } = require('./support/melody-inputs.cjs');
 const { createHash } = require('node:crypto');
 const { loadMusic } = require('./music-loader.cjs');
 const { generateMelody } = loadMusic('melody-generator.ts');
@@ -17,10 +18,12 @@ function contextualCase(index) {
     phraseBars: index % 2 + 1, beatsPerBar: index % 5 === 0 ? 3 : 4,
     rangeMin: index % 11 === 0 ? 60 : 48, rangeMax: index % 11 === 0 ? 64 : 72,
     blockTypeWeights: index % 13 === 0 ? [0, 0, 0, 0, 0, 0, 0] : [100, 70, 40, 60, 80, 30, 20] };
+  const inputs = splitMelodyInputs(global);
+  Object.assign(settings, inputs.track);
   let pattern, skeleton;
   try {
     const notes = generateMelody(BigInt(index + 1), index % 2 ? 'F♯' : 'C', SCALE_MODES[index % SCALE_MODES.length],
-      [1, 5, 6, 4], settings, index % 3, value => { pattern = value; }, global, undefined,
+      [1, 5, 6, 4], settings, index % 3, value => { pattern = value; }, inputs.global, undefined,
       index % 5 === 0 ? { roots: [], voicings: [], durations: [2, 3, 0.5, 5] } : undefined,
       value => { skeleton = value; });
     return { notes, pattern, skeleton };

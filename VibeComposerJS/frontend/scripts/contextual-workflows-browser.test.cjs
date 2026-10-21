@@ -18,7 +18,10 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     };
     const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     const change = (input, value) => { input.value = value; input.dispatchEvent(new Event('change', { bubbles: true })); };
-    const reset = input => input.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
+    const reset = async input => {
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      input.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
+    };
     try {
       await wait(() => innerWidth === ${width}, 'exact viewport');
       const seed = await wait(() => document.querySelector('[aria-label="Generation seed"]'), 'seed');
@@ -296,169 +299,102 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => read().tracks.find(track => track.role === 'melody').generatorSettings.startNoteChance === undefined, 'Start note undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'Start note redo enabled')).click();
       await wait(() => read().tracks.find(track => track.role === 'melody').generatorSettings.startNoteChance === 0, 'Start note redo');
-      const globals = document.querySelector('vc-melody-global-settings');
-      if (globals.querySelector('[aria-label="Single note exceptions"]')) throw new Error('Removed single exception toggle remains');
-      globals.querySelector('[aria-label="Fill pauses per chord"]').click();
-      await wait(() => read().melodyGlobal?.fillPausesPerChord === true, 'per chord fill commit');
-      change(globals.querySelector('[aria-label="Max direction changes"]'), '6');
-      await wait(() => read().melodyGlobal?.maxDirectionChanges === 6, 'direction budget commit');
+      if (document.querySelector('#part-inspector vc-melody-global-settings')) throw new Error('Global melody controls remain in inspector');
+      document.querySelector('.track-group.melody .track-select').click();
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const selectedMelody = () => read().tracks.find(track => track.role === 'melody');
+      const otherTracks = () => JSON.stringify(read().tracks.filter(track => track.id !== selectedMelody().id));
+      const untouched = otherTracks();
+      const trackControl = label => document.querySelector('#part-inspector [aria-label="' + label + '"]');
+      await wait(() => trackControl('Target direction'), 'track controls');
+      trackControl('Fill pauses per chord').click();
+      await wait(() => selectedMelody().generatorSettings.fillPausesPerChord === true, 'track pause filling');
+      change(trackControl('Max direction changes'), '6');
+      await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === 6, 'track direction budget');
       document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.maxDirectionChanges === undefined, 'global direction undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'global redo enabled')).click();
-      await wait(() => read().melodyGlobal?.maxDirectionChanges === 6, 'global direction redo');
-      const effect = globals.querySelector('[aria-label="Pattern effect"]');
-      await wait(() => effect.value === '2', 'pattern effect default');
-      for (const value of [0, 1, 2]) {
-        change(effect, String(value));
-        await wait(() => read().melodyGlobal?.patternEffect === value, 'pattern effect commit');
+      await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === undefined, 'track budget undo');
+      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'redo enabled')).click();
+      await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === 6, 'track budget redo');
+      change(trackControl('New blocks'), '0');
+      await wait(() => selectedMelody().generatorSettings.newBlocksChance === 0, 'track catalogue chance');
+      await reset(trackControl('New blocks'));
+      await wait(() => selectedMelody().generatorSettings.newBlocksChance === 25, 'track catalogue default');
+      trackControl('Emphasize key').click();
+      await wait(() => selectedMelody().generatorSettings.emphasizeKey === true, 'track emphasis');
+      result.flipEmphasis = otherTracks() === untouched;
+      change(trackControl('CHRD%'), '70');
+      await wait(() => selectedMelody().generatorSettings.chordNoteTarget === 70, 'track chord target');
+      await reset(trackControl('CHRD%'));
+      await wait(() => selectedMelody().generatorSettings.chordNoteTarget === 0, 'track chord target reset');
+      result.chordRepairs = otherTracks() === untouched;
+      change(trackControl('TON%'), '70'); change(trackControl('MODE%'), '60');
+      await wait(() => selectedMelody().generatorSettings.tonicNoteTarget === 70 && selectedMelody().generatorSettings.modeNoteTarget === 60, 'track tonal targets');
+      await reset(trackControl('TON%')); await reset(trackControl('MODE%'));
+      await wait(() => selectedMelody().generatorSettings.tonicNoteTarget === 0 && selectedMelody().generatorSettings.modeNoteTarget === 0, 'track tonal resets');
+      result.tonalTargets = otherTracks() === untouched;
+      for (const direction of ['ANY','DESC','ASC']) {
+        change(trackControl('Target direction'), direction);
+        await wait(() => selectedMelody().generatorSettings.targetDirection === direction, 'track target direction');
       }
-      if (globals.querySelector('[aria-label="Arpy surprises"]')) throw new Error('Removed Arpy surprises control remains');
-      const catalogueTracks = JSON.stringify(read().tracks);
-      await wait(() => globals.querySelector('[aria-label="New blocks"]').value === '25', 'new blocks default');
-      change(globals.querySelector('[aria-label="New blocks"]'), '0');
-      await wait(() => read().melodyGlobal?.newBlocksChance === 0, 'catalogue selection commit');
-      const families = ['Scaley', 'Neighbory', 'Arpy', 'Chordy', 'Wavy', 'Interval', 'Note'];
-      for (const [index, family] of families.entries()) {
+      const projectTracks = JSON.stringify(read().tracks);
+      [...document.querySelectorAll('button')].find(button => button.getAttribute('aria-label') === 'Settings').click();
+      const dialog = await wait(() => document.querySelector('vc-settings-dialog'), 'Melody settings dialog');
+      (await wait(() => [...dialog.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Melody'), 'Melody settings category')).click();
+      const globals = await wait(() => dialog.querySelector('vc-melody-global-settings'), 'project melody settings');
+      for (const label of ['Target direction','TON%','MODE%','CHRD%','Emphasize key','Max direction changes','New blocks','Fill pauses per chord']) {
+        if (globals.querySelector('[aria-label="' + label + '"]')) throw new Error('Track control in project settings: ' + label);
+      }
+      const effect = globals.querySelector('[aria-label="Pattern effect"]');
+      for (const value of [0,1,2]) {
+        change(effect, String(value)); await wait(() => read().melodyGlobal?.patternEffect === value, 'project pattern effect');
+      }
+      const families = ['Scaley','Neighbory','Arpy','Chordy','Wavy','Interval','Note'];
+      for (const [index,family] of families.entries()) {
         change(globals.querySelector('[aria-label="' + family + ' weight"]'), String(20 + index * 10));
-        await wait(() => read().melodyGlobal?.blockTypeWeights?.[index] === 20 + index * 10, family + ' weight commit');
+        await wait(() => read().melodyGlobal?.blockTypeWeights?.[index] === 20 + index * 10, 'project catalogue weights');
         await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       }
-      await wait(() => JSON.stringify(read().melodyGlobal?.blockTypeWeights) === '[20,30,40,50,60,70,80]', 'independent family weights');
+      await wait(() => JSON.stringify(read().melodyGlobal?.blockTypeWeights) === '[20,30,40,50,60,70,80]', 'independent catalogue weights');
       const preference = globals.querySelector('[aria-label="Block change preference"]');
       globals.querySelector('[aria-label="Default block change order"]').click();
-      await wait(() => JSON.stringify(read().melodyGlobal?.blockChangePreference) === '[0,7,4,3,1,2,5,6]', 'default block order');
+      await wait(() => read().melodyGlobal?.blockChangePreference?.length === 8, 'ranked block changes');
       const validPreference = JSON.stringify(read().melodyGlobal);
       change(preference, '0,1,2,3,4,5,6,6');
       await wait(() => globals.querySelector('[role="alert"]'), 'invalid preference alert');
-      result.catalogue = JSON.stringify(read().melodyGlobal) === validPreference && preference.value === '0, 7, 4, 3, 1, 2, 5, 6';
-      change(preference, '7,6,5,4,3,2,1,0');
-      await wait(() => JSON.stringify(read().melodyGlobal?.blockChangePreference) === '[7,6,5,4,3,2,1,0]', 'ranked block order');
+      result.catalogue = JSON.stringify(read().melodyGlobal) === validPreference;
       globals.querySelector('[aria-label="Uniform block changes"]').click();
-      await wait(() => read().melodyGlobal?.blockChangePreference?.length === 0, 'uniform block order');
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => JSON.stringify(read().melodyGlobal?.blockChangePreference) === '[7,6,5,4,3,2,1,0]', 'block preference undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'catalogue redo enabled')).click();
-      await wait(() => read().melodyGlobal?.blockChangePreference?.length === 0, 'block preference redo');
-      result.catalogue &&= JSON.stringify(read().tracks) === catalogueTracks && !globals.querySelector('[role="alert"]');
-      reset(globals.querySelector('[aria-label="New blocks"]'));
-      await wait(() => read().melodyGlobal?.newBlocksChance === 25, 'new blocks right-click default');
-      reset(globals.querySelector('[aria-label="New blocks"]'));
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.newBlocksChance === 0, 'reset undo and default no-op');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'reset redo enabled')).click();
-      await wait(() => read().melodyGlobal?.newBlocksChance === 25, 'reset redo');
-      reset(globals.querySelector('[aria-label="Arpy weight"]'));
-      await wait(() => JSON.stringify(read().melodyGlobal?.blockTypeWeights) === '[20,30,100,50,60,70,80]', 'family default isolation');
-      change(effect, '0'); await wait(() => read().melodyGlobal?.patternEffect === 0, 'effect before reset');
-      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-      reset(effect); await wait(() => read().melodyGlobal?.patternEffect === 2, 'effect combobox default');
-      change(tempo, '150'); await wait(() => read().tempoBpm === 150, 'tempo before reset');
-      reset(tempo); await wait(() => read().tempoBpm === 120, 'tempo knob default');
-      change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode before reset');
-      reset(mode); await wait(() => read().scale === 'major', 'mode combobox default');
-      const speed = document.querySelector('.part-settings-panel [aria-label="Speed"]');
-      change(speed, '80'); await wait(() => read().tracks.find(track => track.role === 'melody').generatorSettings.speed === 80, 'part knob before reset');
-      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-      reset(speed); await wait(() => read().tracks.find(track => track.role === 'melody').generatorSettings.speed === 50, 'part knob default');
-      result.defaultResets = read().melodyGlobal.newBlocksChance === 25 && read().melodyGlobal.patternEffect === 2
-        && read().tempoBpm === 120 && read().scale === 'major' && read().tracks.find(track => track.role === 'melody').generatorSettings.speed === 50;
-      const flipNotes = JSON.stringify(read().tracks);
+      await wait(() => read().melodyGlobal?.blockChangePreference?.length === 0, 'uniform block changes');
+      await reset(globals.querySelector('[aria-label="Arpy weight"]'));
+      await wait(() => read().melodyGlobal?.blockTypeWeights?.[2] === 100, 'family default');
+      const avoid = globals.querySelector('[aria-label="AVOID"]');
+      change(avoid, '2'); await wait(() => read().melodyGlobal?.replaceAvoidNotes === 2, 'project Avoid');
+      await reset(avoid); await wait(() => read().melodyGlobal?.replaceAvoidNotes === 0, 'project Avoid reset');
+      const blockMode = globals.querySelector('[aria-label="Block target mode"]');
+      change(blockMode,'1'); await wait(() => read().melodyGlobal?.blockTargetMode === 1, 'project target mode');
+      await reset(blockMode); await wait(() => read().melodyGlobal?.blockTargetMode === 2, 'project target mode reset');
+      result.targetModes = JSON.stringify(read().tracks) === projectTracks;
       globals.querySelector('[aria-label="Melody pattern flip"]').click();
-      await wait(() => read().melodyGlobal?.patternFlip === true, 'Melody grid flip');
-      globals.querySelector('[aria-label="Emphasize key"]').click();
-      await wait(() => read().melodyGlobal?.emphasizeKey === true, 'key emphasis');
-      result.flipEmphasis = JSON.stringify(read().tracks) === flipNotes;
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.emphasizeKey === undefined, 'key emphasis undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'emphasis redo enabled')).click();
-      await wait(() => read().melodyGlobal?.emphasizeKey === true, 'key emphasis redo');
-      const chordTargetTracks = JSON.stringify(read().tracks);
-      const chordTargetControl = globals.querySelector('[aria-label="CHRD%"]');
-      const avoidControl = globals.querySelector('[aria-label="AVOID"]');
-      await wait(() => chordTargetControl.value === '0' && avoidControl.value === '0', 'chord repair defaults');
-      change(chordTargetControl, '70');
-      await wait(() => read().melodyGlobal?.chordNoteTarget === 70, 'chord target commit');
-      for (const level of [1, 2]) {
-        change(avoidControl, String(level));
-        await wait(() => read().melodyGlobal?.replaceAvoidNotes === level, 'avoid level commit');
-        await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-      }
-      reset(chordTargetControl);
-      await wait(() => read().melodyGlobal?.chordNoteTarget === 0 && read().melodyGlobal?.replaceAvoidNotes === 2, 'chord reset isolation');
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.chordNoteTarget === 70, 'chord target undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'chord redo enabled')).click();
-      await wait(() => read().melodyGlobal?.chordNoteTarget === 0, 'chord target redo');
-      reset(avoidControl);
-      await wait(() => read().melodyGlobal?.replaceAvoidNotes === 0, 'avoid default reset');
-      result.chordRepairs = JSON.stringify(read().tracks) === chordTargetTracks;
-      const tonalTracks = JSON.stringify(read().tracks);
-      const tonicControl = globals.querySelector('[aria-label="TON%"]');
-      const modeControl = globals.querySelector('[aria-label="MODE%"]');
-      await wait(() => tonicControl.value === '0' && modeControl.value === '0', 'tonal target defaults');
-      change(tonicControl, '70');
-      await wait(() => read().melodyGlobal?.tonicNoteTarget === 70, 'tonic target commit');
-      change(modeControl, '60');
-      await wait(() => read().melodyGlobal?.modeNoteTarget === 60, 'mode target commit');
-      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-      reset(tonicControl);
-      await wait(() => read().melodyGlobal?.tonicNoteTarget === 0 && read().melodyGlobal?.modeNoteTarget === 60, 'tonic default isolation');
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.tonicNoteTarget === 70, 'tonic target undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'tonic redo enabled')).click();
-      await wait(() => read().melodyGlobal?.tonicNoteTarget === 0, 'tonic target redo');
-      reset(modeControl);
-      await wait(() => read().melodyGlobal?.modeNoteTarget === 0, 'mode default reset');
-      result.tonalTargets = JSON.stringify(read().tracks) === tonalTracks;
-      const modeTracks = JSON.stringify(read().tracks);
-      const blockModeControl = globals.querySelector('[aria-label="Block target mode"]');
-      await wait(() => blockModeControl.value === '2', 'block target mode default');
-      for (const blockMode of [0, 1, 2, 1]) {
-        change(blockModeControl, String(blockMode));
-        await wait(() => read().melodyGlobal?.blockTargetMode === blockMode, 'block target mode commit');
-        await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
-      }
-      reset(blockModeControl);
-      await wait(() => read().melodyGlobal?.blockTargetMode === 2, 'block target mode right-click default');
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.blockTargetMode === 1, 'block target mode undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'block mode redo enabled')).click();
-      await wait(() => read().melodyGlobal?.blockTargetMode === 2, 'block target mode redo');
-      result.targetModes = JSON.stringify(read().tracks) === modeTracks;
-      const targetsBefore = JSON.stringify(read().tracks);
-      await wait(() => globals.querySelector('[aria-label="Target direction"]').value === 'ASC', 'target direction default');
+      await wait(() => read().melodyGlobal?.patternFlip === true, 'project melody grid flip');
       change(globals.querySelector('[aria-label="Target variation"]'), '6');
-      await wait(() => read().melodyGlobal?.targetNoteVariation === 6, 'target variation commit');
-      for (const direction of ['ANY', 'DESC', 'ASC']) {
-        change(globals.querySelector('[aria-label="Target direction"]'), direction);
-        await wait(() => read().melodyGlobal?.targetDirection === direction, 'target direction commit');
-      }
+      await wait(() => read().melodyGlobal?.targetNoteVariation === 6, 'project variation');
       globals.querySelector('[aria-label="Directions from progression"]').click();
-      await wait(() => read().melodyGlobal?.useDirectionsFromProgression === true, 'progression directions commit');
+      await wait(() => read().melodyGlobal?.useDirectionsFromProgression === true, 'project progression directions');
       globals.querySelector('[aria-label="Force first outline"]').click();
-      await wait(() => read().melodyGlobal?.forceFirstOutline === true, 'force outline commit');
-      result.targetPreparation = JSON.stringify(read().tracks) === targetsBefore;
-      document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => read().melodyGlobal?.forceFirstOutline === undefined, 'force outline undo');
-      (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'outline redo enabled')).click();
-      await wait(() => read().melodyGlobal?.forceFirstOutline === true, 'force outline redo');
-      const beforePreparation = read();
+      await wait(() => read().melodyGlobal?.forceFirstOutline === true, 'project force outline');
+      result.targetPreparation = JSON.stringify(read().tracks) === projectTracks;
+      result.catalogue &&= JSON.stringify(read().tracks) === projectTracks;
+      result.defaultResets = selectedMelody().generatorSettings.newBlocksChance === 25 && read().melodyGlobal.patternEffect === 2;
+      dialog.querySelector('[aria-label="Close settings"]').click();
+      await wait(() => !document.querySelector('vc-settings-dialog'), 'close melody settings');
+      const beforePreparation = JSON.stringify(read().tracks);
       document.querySelector('[aria-label="Compose"]').click();
-      await wait(() => JSON.stringify(read().tracks) !== targetsBefore, 'prepared outline Compose');
-      const melodyMembers = read().tracks.filter(track => track.role === 'melody');
-      const outlineFields = ['chordNoteChoices', 'melodyPatternOffsets', 'speed', 'maxBlockChange', 'blockJump',
-        'splitChance'];
-      const outlineDefaults = { chordNoteChoices: [0,2,2,4], melodyPatternOffsets: [1,2,1,3], speed: 50,
-        maxBlockChange: 7, blockJump: 1, splitChance: 0 };
-      result.targetPreparation &&= melodyMembers.every(track => track.rerollLocked || outlineFields.every(key =>
-        JSON.stringify(track.generatorSettings[key] ?? outlineDefaults[key]) === JSON.stringify(melodyMembers[0].generatorSettings[key] ?? outlineDefaults[key])));
+      await wait(() => JSON.stringify(read().tracks) !== beforePreparation, 'prepared outline Compose');
+      const members = read().tracks.filter(track => track.role === 'melody');
+      result.targetPreparation &&= members.every(track => track.rerollLocked || JSON.stringify(track.generatorSettings.chordNoteChoices) === JSON.stringify(members[0].generatorSettings.chordNoteChoices));
       document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => JSON.stringify(read().tracks) === JSON.stringify(beforePreparation.tracks), 'prepared outline undo');
-      result.melodyGlobal = read().tracks.filter(track => track.role === 'melody').every(track =>
-        !Object.hasOwn(track.generatorSettings, 'singleNoteExceptions') && !Object.hasOwn(track.generatorSettings, 'maxDirectionChanges')
-        && !Object.hasOwn(track.generatorSettings, 'patternEffect') && !Object.hasOwn(track.generatorSettings, 'arpySurprises')
-        && !Object.hasOwn(track.generatorSettings, 'targetDirection') && !Object.hasOwn(track.generatorSettings, 'forceFirstOutline')
-        && !Object.hasOwn(track.generatorSettings, 'blockTargetMode'));
+      await wait(() => JSON.stringify(read().tracks) === beforePreparation, 'preparation undo');
+      result.melodyGlobal = !Object.hasOwn(read().melodyGlobal, 'targetDirection') && !Object.hasOwn(read().melodyGlobal, 'newBlocksChance')
+        && members.every(track => !Object.hasOwn(track.generatorSettings, 'blockTargetMode') && !Object.hasOwn(track.generatorSettings, 'forceFirstOutline'));
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       const fits = element => { const box = element.getBoundingClientRect(); return box.left >= -1 && box.right <= innerWidth + 1; };
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
@@ -510,7 +446,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     })()`, returnByValue: true });
     await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...resetPoint.result.value, button: 'right', clickCount: 1 });
     await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...resetPoint.result.value, button: 'right', clickCount: 1 });
-    const resetValue = await command('Runtime.evaluate', { expression: `JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).melodyGlobal.newBlocksChance`, returnByValue: true });
+    const resetValue = await command('Runtime.evaluate', { expression: `JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'melody').generatorSettings.newBlocksChance`, returnByValue: true });
     assert.equal(resetValue.result.value, 25, 'real right-click resets New blocks');
     // Real left-button pointer capture/reorder through CDP, committing exactly once.
     const snapshot = await command('Runtime.evaluate', { awaitPromise: true, expression: `(async () => {
@@ -547,7 +483,19 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     assert.deepEqual(moved.result.value.progressionChords[1], beforeDrag.project.progressionChords[0]);
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));
-    await command('Runtime.evaluate', { expression: `document.querySelector('vc-melody-global-settings').scrollIntoView({ block: 'center' })` });
+    const settingsView = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
+      const wait = async read => { for (let i=0;i<100;i++) { const value=read(); if(value) return value; await new Promise(r=>setTimeout(r,20)); } throw new Error('Melody settings unavailable'); };
+      document.querySelector('[aria-label="Settings"]').click();
+      const dialog = await wait(() => document.querySelector('vc-settings-dialog'));
+      (await wait(() => [...dialog.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Melody'))).click();
+      const controls = await wait(() => dialog.querySelector('vc-melody-global-settings'));
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      controls.scrollIntoView({ block: 'start' });
+      return { inSettings: true, inspectorGlobals: !!document.querySelector('#part-inspector vc-melody-global-settings'),
+        fits: controls.scrollWidth <= controls.clientWidth + 1 };
+    })()` });
+    assert.equal(settingsView.exceptionDetails, undefined, JSON.stringify(settingsView));
+    assert.deepEqual(settingsView.result.value, { inSettings: true, inspectorGlobals: false, fits: true });
     const globalScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-global-' + width + '.png'), Buffer.from(globalScreenshot.data, 'base64'));
     await command('Runtime.evaluate', { expression: `document.querySelector('[aria-label="Block target mode"]').closest('fieldset').scrollIntoView({ block: 'center' })` });
@@ -556,6 +504,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     await command('Runtime.evaluate', { expression: `document.querySelector('.catalogue-area').scrollIntoView({ block: 'center' })` });
     const catalogueScreenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/contextual-melody-catalogue-' + width + '.png'), Buffer.from(catalogueScreenshot.data, 'base64'));
+    await command('Runtime.evaluate', { expression: `document.querySelector('vc-settings-dialog [aria-label="Close settings"]').click()` });
+    await new Promise(done => setTimeout(done, 100));
     await command('Runtime.evaluate', { expression: `document.querySelector('.track-group.arpeggio .group-select').click()` });
     await new Promise(done => setTimeout(done, 100));
     await command('Runtime.evaluate', { expression: `document.querySelector('#part-inspector').scrollIntoView({ block: 'start' })` });

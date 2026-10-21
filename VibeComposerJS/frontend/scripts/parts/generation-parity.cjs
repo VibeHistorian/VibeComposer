@@ -1,3 +1,4 @@
+const { splitMelodyInputs, rescopeMelodyProject } = require('../support/melody-inputs.cjs');
 const assert = require('node:assert/strict');
 const test = require('node:test');
 const fs = require('node:fs');
@@ -9,7 +10,7 @@ const { assertRejectedProjectImport } = require('../support/project-import-asser
 test('arpeggio register matches all production Java pitches in the saved bug configuration and exported MIDI', () => {
   const { service, phrase, midi } = fixture();
   const reference = JSON.parse(fs.readFileSync(path.join(__dirname, '..','fixtures/arpeggio-saved-config.java.json'),'utf8'));
-  assert.equal(service.importProjectJson(JSON.stringify(reference.project, (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises'].includes(key) ? undefined : value)),true);
+  assert.equal(service.importProjectJson(JSON.stringify(rescopeMelodyProject(reference.project), (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises'].includes(key) ? undefined : value)),true);
   const project = service.project(), exported = new Midi(midi.generateCompositionMidi(project));
   let compared = 0;
   for (const track of project.tracks.filter(track => track.role === 'arpeggio')) {
@@ -23,7 +24,7 @@ test('arpeggio register matches all production Java pitches in the saved bug con
 test('contextual melodies without removed controls match exported MIDI in the saved configuration', () => {
   const { service, phrase, midi } = fixture();
   const reference = JSON.parse(fs.readFileSync(path.join(__dirname, '..','fixtures/arpeggio-saved-config.java.json'),'utf8'));
-  assert.equal(service.importProjectJson(JSON.stringify(reference.project, (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises'].includes(key) ? undefined : value)),true);
+  assert.equal(service.importProjectJson(JSON.stringify(rescopeMelodyProject(reference.project), (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises'].includes(key) ? undefined : value)),true);
   const project = service.project(), exported = new Midi(midi.generateCompositionMidi(project));
   for (const track of project.tracks.filter(track => track.role === 'melody')) {
     const expected = phrase.layOutTrackPhrase(project,track).map(note => note.midi);
@@ -100,8 +101,8 @@ test('contextual melody respects sounding harmony, range, ending, and ignores ob
       assert.ok(classes.includes(n.midi % 12));
       if (i) assert.ok(Math.abs(n.midi - notes[i-1].midi) <= 10);
     });
-    const ignored = { ...globals, tonicNoteTarget: 100, chordNoteTarget: 100, modeNoteTarget: 100, replaceAvoidNotes: 2 };
-    assert.deepEqual(notes,generateMelody(123n,key,scale,progression,{ ...settings, fillPauses: true },0,undefined,ignored));
+    const ignored = { ...globals, replaceAvoidNotes: 2 };
+    assert.deepEqual(notes,generateMelody(123n,key,scale,progression,{ ...settings, fillPauses: true, tonicNoteTarget: 100, chordNoteTarget: 100, modeNoteTarget: 100 },0,undefined,ignored));
   }
 });
 
@@ -200,7 +201,8 @@ test('P5e inference retains Java helper parity and supported melody generation f
       patternFlexible: true, maxBlockChange: 7, blockJump: 1,
       transpose: [0,5,7,-12][entry.sample % 4], splitChance: 0, startNoteChance: 100,
       pauseChance: 0, fillPauses: false, velocityMin: 80, velocityMax: 105, swingPercent: 50 };
-    const globalSettings = { patternEffect: entry.sample % 3, newBlocksChance: entry.sample % 2 === 0 ? 25 : 100 };
+    settings.newBlocksChance = entry.sample % 2 === 0 ? 25 : 100;
+    const globalSettings = { patternEffect: entry.sample % 3 };
     const project = { ...DEFAULT_PROJECT, key: 'C', scale: 'major', seed: entry.seed, progression: [1,5,6,4], progressionChords: undefined,
       melodyGlobal: globalSettings, tracks: [{ ...DEFAULT_PROJECT.tracks.find(track => track.role === 'melody'), generatorSettings: settings }] };
     const base = baseGenerationHarmony(project);
@@ -420,7 +422,7 @@ test('P5e all target modes match 20736 production Java preparation and starting-
   assert.equal(cases.length, 20736);
   let recovered = 0;
   for (const [index, entry] of cases.entries()) {
-    const targets = chooseMelodyTargets(entry.seed, entry.progression, entry.globalSettings, entry.key, entry.scale, entry.customChords);
+    const targets = chooseMelodyTargets(entry.seed, entry.progression, splitMelodyInputs(entry.globalSettings).global, entry.key, entry.scale, entry.customChords, splitMelodyInputs(entry.globalSettings).track);
     assert.deepEqual(targets, entry.targets, `target case ${index}`);
     const roots = melodyRootChords(entry.key, entry.scale, entry.progression, entry.customChords);
     entry.starting.forEach((expected, chord) => {
@@ -455,7 +457,7 @@ test('P5e extended target directions and variation match 4608 production Java ca
   const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
   const oracle = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/melody-targets-extended.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   assert.equal(oracle.length, 4608);
-  for (const [index, sample] of oracle.entries()) assert.deepEqual(chooseMelodyTargets(sample.seed, sample.progression, sample.globalSettings), sample.targets, `case ${index}`);
+  for (const [index, sample] of oracle.entries()) assert.deepEqual(chooseMelodyTargets(sample.seed, sample.progression, splitMelodyInputs(sample.globalSettings).global, 'C', 'major', undefined, splitMelodyInputs(sample.globalSettings).track), sample.targets, `case ${index}`);
 });
 
 test('P5e catalogue selection matches 4500 production Java shapes and subsequent random draws', () => {
@@ -763,15 +765,16 @@ for (const [name, count] of [['core', 80], ['extended', 192], ['global', 192], [
   assert.ok(supported.length > 0, 'oracle must include cases without removed controls');
   for (const [caseIndex, sample] of supported.entries()) {
     const { doubledRhythmChance, leadChordsChance, maxNoteExceptions, noteExceptionChance, ...supportedSettings } = sample.settings;
-    const { singleNoteExceptions, arpySurprises, ...supportedGlobals } = sample.globalSettings ?? {};
+    const { singleNoteExceptions, arpySurprises, ...historicalGlobals } = sample.globalSettings ?? {};
+    const { global: supportedGlobals, track: trackInputs } = splitMelodyInputs({ newBlocksChance: 100, ...historicalGlobals });
     if (name === 'prepared-targets') {
       const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
-      assert.deepEqual(chooseMelodyTargets(sample.targetSeed, sample.targetProgression, supportedGlobals), sample.settings.chordNoteChoices, `case ${caseIndex} prepared targets`);
+      assert.deepEqual(chooseMelodyTargets(sample.targetSeed, sample.targetProgression, supportedGlobals, 'C', 'major', undefined, trackInputs), sample.settings.chordNoteChoices, `case ${caseIndex} prepared targets`);
     }
     const progression = ['harmony', 'modes'].includes(name) ? sample.targetProgression : Array(sample.chordCount).fill(1);
     if (name === 'modes' && sample.prepared) assert.deepEqual(load('core/music/melody-targets.ts').chooseMelodyTargets(
-      sample.targetSeed, progression, supportedGlobals, sample.key, sample.scale, sample.customChords), sample.settings.chordNoteChoices);
-    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, supportedSettings, sample.notesSeedOffset, undefined, { newBlocksChance: 100, ...supportedGlobals }, sample.customChords);
+      sample.targetSeed, progression, supportedGlobals, sample.key, sample.scale, sample.customChords, trackInputs), sample.settings.chordNoteChoices);
+    const actual = generateMelody(BigInt(sample.seed), sample.key, sample.scale, progression, { ...trackInputs, ...supportedSettings }, sample.notesSeedOffset, undefined, supportedGlobals, sample.customChords);
     assert.equal(actual.length, sample.notes.length, `case ${caseIndex} note count`);
     actual.forEach((note, index) => {
       const expected = sample.notes[index], label = `case ${caseIndex}, note ${index}`;

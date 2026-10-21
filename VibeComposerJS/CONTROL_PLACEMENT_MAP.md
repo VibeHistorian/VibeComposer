@@ -16,6 +16,20 @@ All Java paths in this document are relative to [the Java package](../midimaster
 
 Preserve old parameter semantics, not old widget positions. The model/control reference distinguishes a selected value from the policy that chooses it.
 
+## Melody setting scopes
+
+Project-wide melody controls live in **Settings → Behavior → Melody** and are saved in the project's `melodyGlobal`, alongside Contextual Melody. They do not belong to UI preferences or the inspector.
+
+| Project-wide settings | Melody track settings in the inspector |
+| --- | --- |
+| Target mode, Target variation, Directions from progression, Force first outline | Target direction |
+| Avoid | Chord, Tonic and Mode target percentages; Emphasize key |
+| Pattern effect | Max direction changes |
+| Seven catalogue block-type weights; Change preference | New blocks |
+| Melody pattern flip | Fill pauses per chord |
+
+Track settings use the normal track base → section role → section track resolution, mixed selection, inherited reset, copy/freeze, history and project persistence. Automatic target preparation reads each track's base Target direction on Compose and enabled Regenerate, retaining explicit section target arrays. Contextual Melody reads the resolved direction for each phrase. The project-wide Melody pattern flip remains distinct from a track's custom-duration/grid Pattern flip.
+
 ## Remaining musical and creation families
 
 | Phase | Java lookup / exact symbols | Destination / remaining work |

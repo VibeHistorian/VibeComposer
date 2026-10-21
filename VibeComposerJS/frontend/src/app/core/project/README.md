@@ -4,6 +4,8 @@
 
 Independent tracks own generator settings and mix values. Global role edits update their member tracks; there is no duplicated project-level generator settings or role mix layer. Adding a track to an empty role uses the corresponding `DEFAULT_TRACKS` entry. Imports read track values and omit obsolete top-level role settings and mix when constructing project state.
 
+Melody's project-wide inputs remain in `melodyGlobal` and are edited in Settings → Behavior → Melody. Target direction, target percentages, key emphasis, direction-change budget, new-block chance and per-chord pause filling belong to each Melody track's generator settings, with ordinary section inheritance. Java XML imports copy the corresponding saved GUIConfig values into each Melody track, keeping only project-wide fields in `melodyGlobal`.
+
 Exported files and session storage use `trackPresence: { melody: [...], bass: [...], chords: [...], arpeggio: [...], drums: [...] }`. Each boolean array follows the order of tracks with that role in `tracks`, with exactly one value per member. Empty roles export as `[]`. Import expands these arrays to ID-keyed app maps and also accepts existing ID-map files. Mixed forms, unknown roles, non-booleans, and incorrect array lengths are rejected.
 
 ## Domain contracts

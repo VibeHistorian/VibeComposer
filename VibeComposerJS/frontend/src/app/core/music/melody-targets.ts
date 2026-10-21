@@ -2,7 +2,7 @@ import { isScaleMode } from './scales';
 import { JavaRandom } from './java-random';
 import { contextualTargets } from './contextual-randomizer';
 import type { MelodyGlobalSettings, MelodySettings } from './part-settings.model';
-import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
+import { resolveMelodyInputs, decodeMelodyGlobal } from './melody-global-settings';
 import { melodyRootChords } from './melody-chord-targets';
 import { getPitchClass, validProgressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 
@@ -56,14 +56,14 @@ export function forceMelodyOutline(first: MelodySettings, target: MelodySettings
  * Keep Java's directional closest-note search and root-insertion indexing.
  */
 export function chooseMelodyTargets(seed: number, progression: readonly number[], globalSettings: MelodyGlobalSettings = {},
-  key = 'C', scale: ScaleMode = 'major', customChords?: readonly (ProgressionChord | null)[]): number[] {
+  key = 'C', scale: ScaleMode = 'major', customChords?: readonly (ProgressionChord | null)[], track: Partial<MelodySettings> = {}): number[] {
   if (!Number.isInteger(seed) || seed < -2147483648 || seed > 2147483647
     || !progression.length || progression.length > 32
     || progression.some(degree => !Number.isInteger(degree) || degree < 1 || degree > 7)
     || getPitchClass(key) === undefined || !isScaleMode(scale)
-    || !decodeMelodyGlobal(globalSettings) || !validProgressionChords(customChords, progression.length)) throw new RangeError('Invalid Melody target inputs.');
-  const globals = { ...DEFAULT_MELODY_GLOBAL, ...globalSettings };
-  if (globals.contextualMelody) return contextualTargets(seed, progression, key, scale, globals, customChords);
+    || !decodeMelodyGlobal(globalSettings) || !['ANY', 'ASC', 'DESC'].includes(track.targetDirection ?? 'ASC') || !validProgressionChords(customChords, progression.length)) throw new RangeError('Invalid Melody target inputs.');
+  const globals = resolveMelodyInputs(track, globalSettings);
+  if (globals.contextualMelody) return contextualTargets(seed, progression, key, scale, globalSettings, customChords, track);
   const mode = globals.blockTargetMode, roots = melodyRootChords(key, scale, progression, customChords);
   const rootOffsets = roots.map(chord => -MAJOR.indexOf(MAJOR.includes(chord[0] % 12) ? chord[0] % 12 : nearestPitch(chord[0] % 12)));
   const direction = globals.targetDirection === 'ASC' ? 1 : globals.targetDirection === 'DESC' ? -1 : 0;

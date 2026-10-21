@@ -2,7 +2,7 @@ import { isScaleMode } from './scales';
 import { convertScalePitch, modeTargetPitch, scaleNotes } from './scales';
 import type { MelodySettings, MelodyGlobalSettings } from './part-settings.model';
 import type { PhraseNote } from './phrase-note';
-import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from './melody-global-settings';
+import { resolveMelodyInputs, decodeMelodyGlobal } from './melody-global-settings';
 import { getPitchClass, validProgressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { swingNotes } from './phrase-swing';
@@ -74,7 +74,7 @@ export function generateMelody(seed: bigint | number, key: string, scale: ScaleM
   globalSettings: MelodyGlobalSettings = {}, customChords?: readonly (ProgressionChord | null)[],
   harmony?: GenerationHarmony, publishSkeleton?: (notes: MelodySkeleton) => void): PhraseNote[] {
   if (!decodeMelodyGlobal(globalSettings)) throw new RangeError('Invalid global Melody inputs.');
-  const globals = { ...DEFAULT_MELODY_GLOBAL, ...globalSettings };
+  const globals = resolveMelodyInputs(settings, globalSettings);
   if (!validProgressionChords(customChords, progression.length)) throw new RangeError('Invalid Melody harmony.');
   if (typeof seed === 'number' && !Number.isSafeInteger(seed)) throw new RangeError('Use bigint for 64-bit melody seeds.');
   const { algorithm, ...fields } = settings;

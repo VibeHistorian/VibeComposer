@@ -25,13 +25,13 @@ Paths below are relative to `src/app/`. Feature folders group embedded interacti
 | `features/arrangement/` | `arrangement-overview.component.*`, `section-context-editor.component.*`: section selection, presence and musical context |
 | `features/score/` | `score-canvas.component.*`, `score-chord-labels.directive.ts` and plain geometry/hit-testing/interaction helpers; see [score ownership](score/README.md) |
 | `features/edit/` | `edit-workspace.component.*`: phrase drafts, note properties, Apply/Local Apply/Cancel and phrase import/export |
-| `features/part-settings/` | Part editor, scope actions, control groups, pattern sequencer, global Melody settings and shared Melody/Bass/Arpeggio duration dialog |
+| `features/part-settings/` | Part editor, scope actions, control groups, pattern sequencer and shared Melody/Bass/Arpeggio duration dialog |
 | `features/harmony/` | Chordlet editor and harmony settings, reused by transport and section/workspace editors |
 | `features/tracks/` | Mix buttons and track generation policies embedded in Tracks and transport |
 | `features/transport/` | `transport-dock.component.*`: playback and global musical controls |
 | `features/history/` | `history-dialog.component.*`: project history navigation |
 | `features/midi-import/` | `midi-import-dialog.component.*`: import choices; file/worker orchestration remains in `core/ui/` |
-| `features/settings/`, `features/section-types/` | Preferences dialog and section-type chance settings |
+| `features/settings/`, `features/section-types/` | Preferences dialog, project-wide Melody settings (Behavior → Melody) and section-type chance settings |
 | `core/ui/workspace-ui.service.ts` | App-wide selection, settings targets and section ranges shared by workspace, editors, history and transport |
 | `core/project/`, `core/music/`, `core/audio/` | Historical commands/persistence, framework-independent music and asynchronous playback/MIDI; see the [project-state guide](../core/project/README.md) |
 

@@ -1,5 +1,5 @@
 <section aria-label="Global Melody musical settings">
-  <p class="eyebrow">GLOBAL MELODY · ALL TRACKS AND SECTIONS</p>
+  <p class="eyebrow">PROJECT SETTINGS · ALL MELODY TRACKS AND SECTIONS</p>
   <div class="global-controls">
     @if (showAlgorithm(true)) {
       <fieldset class="parameter-area" data-control-category="pitch">
@@ -26,6 +26,7 @@
           (toggled)="changeContextual('rangeRandomizeOnCompose', !(values().rangeRandomizeOnCompose ?? false))" />
       </fieldset>
     }
+    @if (showAlgorithm(false)) {
     <fieldset class="parameter-area" data-control-category="structure">
       <legend>Target preparation</legend>
       @if (showAlgorithm(false)) {
@@ -39,14 +40,6 @@
       </label>
       }
       @if (showAlgorithm(false)) { <p class="preparation-note">Mode reinterprets existing targets immediately. Other inputs prepare targets on Compose and enabled Regenerate; choices remain editable.</p> }
-      <label class="pattern-effect" title="Direction of prepared note targets, separate from block direction changes.">
-        Target direction
-        <select selectDefault="ASC" aria-label="Target direction" [value]="values().targetDirection ?? 'ASC'" (change)="changeTargetDirection($event)">
-          <option value="ANY">Any</option>
-          <option value="ASC">Ascending</option>
-          <option value="DESC">Descending</option>
-        </select>
-      </label>
       @if (showAlgorithm(false)) {
         <vc-compact-knob label="Target variation" [defaultValue]="3" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
         description="Magnitude of prepared target directions before chord-note correction. Ascending and Descending double the draw range. Requires Automatic targets."
@@ -63,36 +56,18 @@
         (toggled)="settingsChanged.emit({ forceFirstOutline: !(values().forceFirstOutline ?? false) })" />
       }
     </fieldset>
+    }
     @if (showAlgorithm(false)) {
     <fieldset class="parameter-area" data-control-category="pitch">
       <legend>Pitch</legend>
-      @if (showAlgorithm(false)) {
-        <vc-compact-knob label="CHRD%" [defaultValue]="0" [value]="values().chordNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
-        description="Requested chord-tone share before pauses. Correct notes in phrase order with a limited budget per chord, using the effective progression and Chordlets. Best effort; chord starts are restored later."
-        (valueCommit)="settingsChanged.emit({ chordNoteTarget: $event })" />
-      }
       @if (showAlgorithm(false)) {
         <vc-compact-knob label="AVOID" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
         description="0: Off. 1: Correct notes a semitone above chord tones. 2: Also correct notes a semitone below or two semitones above. Tonic, fifth and chord tones stay safe. Move one seeded scale step after interval repair, before pauses."
         (valueCommit)="settingsChanged.emit({ replaceAvoidNotes: $event })" />
       }
-      @if (showAlgorithm(false)) {
-        <vc-compact-knob label="TON%" [defaultValue]="0" [value]="values().tonicNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
-        description="Requested tonic share before pauses. Adjust at most one nearby noninitial note per chord, working backward through alternating chords. Applies to the main seed pass; the target is best effort."
-        (valueCommit)="settingsChanged.emit({ tonicNoteTarget: $event })" />
-      }
-      @if (showAlgorithm(false)) {
-        <vc-compact-knob label="MODE%" [defaultValue]="0" [value]="values().modeNoteTarget ?? 0" [minimum]="0" [maximum]="100" unit="%"
-        description="Requested mode-note share before pauses. Protect each chord's first note and repair nearest pitches first. Major targets the tonic; natural minor targets its sixth degree. Existing mode notes remain eligible, following the generator's best-effort correction."
-        (valueCommit)="settingsChanged.emit({ modeNoteTarget: $event })" />
-      }
-      @if (showAlgorithm(false)) {
-        <vc-compact-toggle label="Emphasize key" [active]="values().emphasizeKey ?? false"
-        description="Give tonic and mode-important pitches longer durations inside new block identities. Repeated identities follow Pattern effect's stored rhythm behavior."
-        (toggled)="settingsChanged.emit({ emphasizeKey: !(values().emphasizeKey ?? false) })" />
-      }
     </fieldset>
     }
+    @if (showAlgorithm(false)) {
     <fieldset class="parameter-area" data-control-category="shape">
       <legend>Shape</legend>
       @if (showAlgorithm(false)) {
@@ -105,15 +80,10 @@
         </select>
       </label>
       }
-      <vc-compact-knob label="Max direction changes" [defaultValue]="2" [value]="values().maxDirectionChanges ?? 2" [minimum]="1" [maximum]="6" unit=""
-        description="Direction-change budget for block targets and generated shapes. Reused patterns retain Java's cached budget before Flex changes their target."
-        (valueCommit)="settingsChanged.emit({ maxDirectionChanges: $event })" />
     </fieldset>
+    }
     <fieldset class="parameter-area catalogue-area" data-control-category="shape">
       <legend>Block catalogue</legend>
-      <vc-compact-knob label="New blocks" [defaultValue]="25" [value]="values().newBlocksChance ?? 25" [minimum]="0" [maximum]="100" unit="%"
-        description="Chance of generating a new block shape rather than choosing a catalogue shape. Uses the same block identities and Flex behavior."
-        (valueCommit)="settingsChanged.emit({ newBlocksChance: $event })" />
       <div class="block-weights" aria-label="Block family preferences">
         @for (family of blockFamilies; track family; let index = $index) {
           <vc-compact-knob [label]="family + ' weight'" [defaultValue]="100" [shortLabel]="family" [value]="(values().blockTypeWeights ?? defaultWeights)[index]" [minimum]="0" [maximum]="100" unit="%"
@@ -139,11 +109,6 @@
       <vc-compact-toggle label="Melody pattern flip" [active]="values().patternFlip ?? false"
         description="Invert the first Melody's onset grid used by Melody-following parts. Melody notes remain unchanged; individual parts can also flip their own rhythms."
         (toggled)="settingsChanged.emit({ patternFlip: !(values().patternFlip ?? false) })" />
-      @if (showAlgorithm(false)) {
-        <vc-compact-toggle label="Fill pauses per chord" [active]="values().fillPausesPerChord ?? false"
-        description="With Fill pauses enabled, protect each chord's first note and keep rest filling within its chord. Repair included chord starts even if paused."
-        (toggled)="settingsChanged.emit({ fillPausesPerChord: !(values().fillPausesPerChord ?? false) })" />
-      }
     </fieldset>
   </div>
 </section>

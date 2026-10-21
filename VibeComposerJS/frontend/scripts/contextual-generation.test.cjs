@@ -14,7 +14,7 @@ test('contextual results reuse musical inputs and isolate callers while invalida
   JavaRandom.prototype.next = function (...args) { draws++; return next.apply(this, args); };
   try {
     const args = [9876543210101n, 'C', 'major', [1, 5, 6, 4], { algorithm: 'block' }, 0,
-      { contextualMelody: true, targetDirection: 'ANY' }];
+      { contextualMelody: true }];
     const first = generateContextualMelody(...args);
     const expected = structuredClone(first);
     assert.ok(draws > 0);

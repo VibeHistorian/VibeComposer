@@ -1,7 +1,7 @@
 import { JavaRandom } from './java-random';
 import { chordPitches, getPitchClass, progressionChords, scaleNotes, type ProgressionChord, type ScaleMode } from './harmony';
-import type { MelodyGlobalSettings } from './part-settings.model';
-import { DEFAULT_MELODY_GLOBAL } from './melody-global-settings';
+import type { MelodyGlobalSettings, MelodySettings } from './part-settings.model';
+import { resolveMelodyInputs } from './melody-global-settings';
 
 export function contextualRange(seed: bigint): { rangeMin: number; rangeMax: number } {
   const random = new JavaRandom(seed ^ 0x72616e67654cn), span = [12,14,16,19,24][random.nextInt(5)];
@@ -11,8 +11,8 @@ export function contextualRange(seed: bigint): { rangeMin: number; rangeMax: num
 
 /** ContextualMelodyRandomizer.targets, in normalized pre-transposition coordinates. */
 export function contextualTargets(seed: number, degrees: readonly number[], key: string, scale: ScaleMode,
-  settings: MelodyGlobalSettings, custom?: readonly (ProgressionChord | null)[]): number[] {
-  const options = { ...DEFAULT_MELODY_GLOBAL, ...settings }, tonic = getPitchClass(key)!;
+  settings: MelodyGlobalSettings, custom?: readonly (ProgressionChord | null)[], track: Partial<MelodySettings> = {}): number[] {
+  const options = resolveMelodyInputs(track, settings), tonic = getPitchClass(key)!;
   const random = new JavaRandom(BigInt(seed) ^ 0x746172676574n), kind = random.nextInt(4), notes = scaleNotes(scale);
   const center = (options.rangeMin + options.rangeMax) / 2, width = (options.rangeMax - options.rangeMin) / 3;
   const direction = options.targetDirection === 'ASC' ? 1 : options.targetDirection === 'DESC' ? -1 : 0;

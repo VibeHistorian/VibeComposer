@@ -382,10 +382,6 @@
         </section>
 
       }
-      @if (partRole() === 'melody' && !localPartTarget() && partScope()) {
-        <vc-melody-global-settings [values]="project().melodyGlobal ?? {}"
-          (settingsChanged)="projects.updateMelodyGlobal($event)" />
-      }
       @if (settingsTarget().kind === 'section') {
         <vc-harmony-settings [section]="selectedSection() ?? undefined" />
       } @else {

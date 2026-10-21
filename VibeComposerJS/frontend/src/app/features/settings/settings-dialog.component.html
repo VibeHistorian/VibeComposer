@@ -172,7 +172,9 @@
                 (change)="projects.updateMelodyGlobal({ contextualMelody: $any($event.target).checked })" />
               <span>Contextual Melody</span>
             </label>
-            <p>Plan melody phrases against the current harmony. Algorithm-specific controls appear in the global Melody controls and track inspector.</p>
+            <p>Project musical settings are saved with the project. Track-specific melody controls are in the inspector.</p>
+            <vc-melody-global-settings [values]="projects.project().melodyGlobal ?? {}"
+              (settingsChanged)="projects.updateMelodyGlobal($event)" />
           </section>
         }
         @case ('section-types') { <vc-section-type-settings /> }

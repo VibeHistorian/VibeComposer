@@ -1,16 +1,15 @@
-import type { MelodyGlobalSettings } from './part-settings.model';
+import type { MelodyGlobalSettings, MelodySettings } from './part-settings.model';
 import { DEFAULT_BLOCK_TYPE_WEIGHTS } from './melody-catalogue';
 
 export const DEFAULT_MELODY_GLOBAL = Object.freeze({
   contextualMelody: false, rangeMin: 48, rangeMax: 72, rangeRandomizeOnCompose: false,
   tension: 35, ending: 'LOOP' as const, form: 'STATEMENT_VARIATION' as const,
   style: 'TONAL' as const, chromaticApproaches: false, phraseBars: 2, beatsPerBar: 4,
-  maxDirectionChanges: 2, fillPausesPerChord: false,
-  patternEffect: 2, patternFlip: false, emphasizeKey: false,
-  tonicNoteTarget: 0, modeNoteTarget: 0, chordNoteTarget: 0, replaceAvoidNotes: 0, blockTargetMode: 2,
-  targetNoteVariation: 3, targetDirection: 'ASC' as const,
+  patternEffect: 2, patternFlip: false,
+  replaceAvoidNotes: 0, blockTargetMode: 2,
+  targetNoteVariation: 3,
   useDirectionsFromProgression: false, forceFirstOutline: false,
-  newBlocksChance: 25, blockTypeWeights: DEFAULT_BLOCK_TYPE_WEIGHTS, blockChangePreference: Object.freeze([] as number[]),
+  blockTypeWeights: DEFAULT_BLOCK_TYPE_WEIGHTS, blockChangePreference: Object.freeze([] as number[]),
 });
 
 export function decodeMelodyGlobal(value: unknown, partial = false): MelodyGlobalSettings | undefined {
@@ -26,16 +25,10 @@ export function decodeMelodyGlobal(value: unknown, partial = false): MelodyGloba
       const choices = key === 'ending' ? ['OPEN', 'CLOSED', 'LOOP'] : key === 'style' ? ['TONAL', 'MODAL', 'JAZZ']
         : ['STATEMENT_VARIATION', 'QUESTION_ANSWER', 'SENTENCE', 'CONTINUOUS'];
       if (!choices.includes(field as string)) return undefined;
-    } else if (key === 'maxDirectionChanges') {
-      if (!Number.isInteger(field) || field < 1 || field > 6) return undefined;
     } else if (key === 'patternEffect' || key === 'blockTargetMode') {
       if (!Number.isInteger(field) || field < 0 || field > 2) return undefined;
     } else if (key === 'targetNoteVariation') {
       if (!Number.isInteger(field) || field < 1 || field > 6) return undefined;
-    } else if (key === 'targetDirection') {
-      if (!['ANY', 'ASC', 'DESC'].includes(field as string)) return undefined;
-    } else if (['newBlocksChance', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget'].includes(key)) {
-      if (!Number.isInteger(field) || field < 0 || field > 100) return undefined;
     } else if (key === 'replaceAvoidNotes') {
       if (!Number.isInteger(field) || field < 0 || field > 2) return undefined;
     } else if (key === 'blockTypeWeights') {
@@ -45,11 +38,30 @@ export function decodeMelodyGlobal(value: unknown, partial = false): MelodyGloba
       if (!Array.isArray(field) || !(field.length === 0 || field.length === 8 && new Set(field).size === 8
         && Array.from(field).every(change => Number.isInteger(change) && change >= 0 && change <= 7))) return undefined;
       decoded[key] = [...field]; continue;
-    } else if (!['fillPausesPerChord', 'patternFlip', 'emphasizeKey',
+    } else if (!['patternFlip',
       'useDirectionsFromProgression', 'forceFirstOutline'].includes(key) || typeof field !== 'boolean') return undefined;
     decoded[key] = field;
   }
   if ((!partial || decoded['rangeMin'] !== undefined && decoded['rangeMax'] !== undefined)
     && Number(decoded['rangeMin'] ?? DEFAULT_MELODY_GLOBAL.rangeMin) > Number(decoded['rangeMax'] ?? DEFAULT_MELODY_GLOBAL.rangeMax)) return undefined;
   return decoded;
+}
+
+/** Track defaults are applied after scope resolution, independently of project-wide inputs. */
+export const DEFAULT_MELODY_TRACK = Object.freeze({
+  targetDirection: 'ASC' as const, tonicNoteTarget: 0, modeNoteTarget: 0, chordNoteTarget: 0,
+  emphasizeKey: false, maxDirectionChanges: 2, newBlocksChance: 25, fillPausesPerChord: false,
+});
+
+export function resolveMelodyInputs(track: Partial<MelodySettings>, global: MelodyGlobalSettings = {}) {
+  return { ...DEFAULT_MELODY_GLOBAL, ...global,
+    targetDirection: track.targetDirection ?? DEFAULT_MELODY_TRACK.targetDirection,
+    tonicNoteTarget: track.tonicNoteTarget ?? DEFAULT_MELODY_TRACK.tonicNoteTarget,
+    modeNoteTarget: track.modeNoteTarget ?? DEFAULT_MELODY_TRACK.modeNoteTarget,
+    chordNoteTarget: track.chordNoteTarget ?? DEFAULT_MELODY_TRACK.chordNoteTarget,
+    emphasizeKey: track.emphasizeKey ?? DEFAULT_MELODY_TRACK.emphasizeKey,
+    maxDirectionChanges: track.maxDirectionChanges ?? DEFAULT_MELODY_TRACK.maxDirectionChanges,
+    newBlocksChance: track.newBlocksChance ?? DEFAULT_MELODY_TRACK.newBlocksChance,
+    fillPausesPerChord: track.fillPausesPerChord ?? DEFAULT_MELODY_TRACK.fillPausesPerChord,
+  };
 }

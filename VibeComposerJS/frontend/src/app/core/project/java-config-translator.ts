@@ -3,7 +3,7 @@ import { DEFAULT_PROJECT, DEFAULT_TRACKS } from './project-defaults';
 import { SECTION_TYPES, type ArrangementSection, type SectionMusicalContext, type SectionType } from './arrangement.model';
 import type { CompositionProject } from './project.model';
 import type { CompositionTrack } from './track.model';
-import type { MelodyGlobalSettings, PartSettingsPatch } from '../music/part-settings.model';
+import type { MelodyGlobalSettings, MelodySettings, PartSettingsPatch } from '../music/part-settings.model';
 import type { PhraseNote } from '../music/phrase-note';
 import { PART_CONTROLS, decodePartPatch, partValuesEqual, settingsValues, validVelocityRange } from '../music/part-settings';
 import { CHORD_SPICES, chordPitches, getPitchClass, type ProgressionChord } from '../music/harmony';
@@ -42,7 +42,7 @@ const JAVA_RHYTHMS: Readonly<Record<string, string>> = Object.fromEntries([
 const JAVA_ARPS: Readonly<Record<string, string>> = {
   UP: 'up', DOWN: 'down', UPDOWN: 'up-down', DOWNUP: 'down-up', FROG_U: 'frog-up', FROG_D: 'frog-down', RANDOM: 'random', CUSTOM: 'custom',
 };
-const MELODY_GLOBAL: Readonly<Record<string, keyof MelodyGlobalSettings>> = {
+const MELODY_INPUTS: Readonly<Record<string, keyof MelodyGlobalSettings | keyof MelodySettings>> = {
   contextualMelody: 'contextualMelody', melodyRangeMin: 'rangeMin', melodyRangeMax: 'rangeMax',
   melodyRangeRandomizeOnCompose: 'rangeRandomizeOnCompose', melodyTension: 'tension',
   melodyEnding: 'ending', melodyForm: 'form', melodyStyle: 'style',
@@ -147,13 +147,19 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   const globalDurations = progression.map((_, index) => globalDurationsEnabled && globalDurationText.length
     ? globalDurationText[index % globalDurationText.length] : numeric(root, 'fixedDuration', 4)!);
   const globals: Record<string, unknown> = {};
-  for (const [source, target] of Object.entries(MELODY_GLOBAL)) {
+  for (const [source, target] of Object.entries(MELODY_INPUTS)) {
     if (!one(root, source)) continue;
     const array = target === 'blockTypeWeights' || target === 'blockChangePreference';
     const value = array ? numbers(root, source) : text(root, source)!;
     globals[target] = array ? value : value === 'true' || value === 'false' ? value === 'true'
       : /^-?\d+$/.test(value as string) ? Number(value) : value;
   }
+  const melodyTrackInputs: Record<string, unknown> = {};
+  for (const key of ['targetDirection', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey', 'maxDirectionChanges', 'newBlocksChance', 'fillPausesPerChord']) {
+    if (Object.hasOwn(globals, key)) { melodyTrackInputs[key] = globals[key]; delete globals[key]; }
+  }
+  const melodyTrackSettings = decodePartPatch('melody', melodyTrackInputs);
+  if (!melodyTrackSettings) throw new Error('Java melody track inputs are outside the current supported ranges.');
   const melodyGlobal = decodeMelodyGlobal(globals);
   if (!melodyGlobal) throw new Error('Java melody globals are outside the current supported ranges.');
 
@@ -213,7 +219,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
     for (const [order, node] of [...orders].sort(([left], [right]) => left - right)) {
       const id = `track-${role}-${order}`, path = `GUIConfig.${PART_TAGS[role]}[${order}]`;
       const defaults = DEFAULT_TRACKS.find(track => track.role === role)!;
-      const settings = { ...defaults.generatorSettings, ...readPart(node, role, path) };
+      const settings = { ...defaults.generatorSettings, ...(role === 'melody' ? melodyTrackSettings : {}), ...readPart(node, role, path) };
       const orderOffset = numeric(node, 'orderOffset', order)!;
       if (!Number.isInteger(orderOffset) || orderOffset < -2147483648 || orderOffset > 2147483647) throw new Error(`${path}.orderOffset: expected a Java int.`);
       const instrument = numeric(node, 'instrument', role === 'drums' ? 36 : defaults.mix.program)!;

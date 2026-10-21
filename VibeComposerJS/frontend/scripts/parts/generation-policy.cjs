@@ -533,14 +533,15 @@ test('P5e target preparation preserves current notes until events, locks, local 
   const local = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId: primary };
   service.freezePartSettings(local);
   const initial = service.project(), original = phrase.generateTrackPhrase(initial, track(primary));
-  const inputs = { targetNoteVariation: 6, targetDirection: 'DESC', useDirectionsFromProgression: true };
+  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { targetDirection: 'DESC' });
+  const inputs = { targetNoteVariation: 6, useDirectionsFromProgression: true };
   assert.equal(service.updateMelodyGlobal(inputs), 'changed');
-  assert.strictEqual(service.project().tracks, initial.tracks);
+  assert.deepEqual(service.project().tracks.filter(track => track.role !== 'melody'), initial.tracks.filter(track => track.role !== 'melody'));
   assert.deepEqual(phrase.generateTrackPhrase(service.project(), track(primary)), original);
   const before = service.exportProjectJson(), arrangement = service.project().arrangement;
   const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
   const targetSeed = ((track(primary).generatorSettings.patternSeed || Number(BigInt.asIntN(32, BigInt(service.project().seed)))) + 1) | 0;
-  const expected = chooseMelodyTargets(targetSeed, service.project().progression, inputs);
+  const expected = chooseMelodyTargets(targetSeed, service.project().progression, inputs, 'C', 'major', undefined, track(primary).generatorSettings);
   const locked = track(duplicate);
   assert.equal(service.generateComposition('compose'), 'changed');
   assert.deepEqual(track(primary).generatorSettings.chordNoteChoices, expected);
@@ -565,10 +566,11 @@ test('P5e target preparation preserves current notes until events, locks, local 
   assert.equal(service.generateComposition('regenerate'), 'unchanged');
   assert.equal(service.exportProjectJson(), disabled);
   service.updateTrackGenerationPolicy('melody', { targetsOnCompose: true });
-  service.updateMelodyGlobal({ targetDirection: 'ANY', targetNoteVariation: 1, useDirectionsFromProgression: false });
+  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { targetDirection: 'ANY' });
+  service.updateMelodyGlobal({ targetNoteVariation: 1, useDirectionsFromProgression: false });
   assert.equal(service.generateComposition('regenerate'), 'changed');
   assert.deepEqual(track(primary).generatorSettings.chordNoteChoices,
-    chooseMelodyTargets(targetSeed, service.project().progression, service.project().melodyGlobal));
+    chooseMelodyTargets(targetSeed, service.project().progression, service.project().melodyGlobal, 'C', 'major', undefined, track(primary).generatorSettings));
 });
 
 test('P5e forced outline follows the first stored Melody and only copies the production outline fields', () => {

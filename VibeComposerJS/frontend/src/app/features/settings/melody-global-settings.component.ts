@@ -1,11 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import type { MelodyGlobalSettings } from '../../core/music/part-settings.model';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
 import { DEFAULT_BLOCK_CHANGE_PREFERENCE, DEFAULT_BLOCK_TYPE_WEIGHTS, MELODY_BLOCK_FAMILIES } from '../../core/music/melody-catalogue';
 import { WheelSelectDirective } from '../../shared/wheel-select.directive';
 import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from '../../core/music/melody-global-settings';
-import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 
 @Component({
   selector: 'vc-melody-global-settings',
@@ -15,7 +14,6 @@ import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
   styleUrl: './melody-global-settings.component.css',
 })
 export class MelodyGlobalSettingsComponent {
-  readonly preferences = inject(UiPreferencesService);
   readonly contextualNumbers = [
     { key: 'rangeMin', label: 'Melody Low MIDI', min: 0, max: 127, fallback: 48 },
     { key: 'rangeMax', label: 'Melody High MIDI', min: 0, max: 127, fallback: 72 },
@@ -29,7 +27,7 @@ export class MelodyGlobalSettingsComponent {
     { key: 'form', label: 'Form', choices: ['STATEMENT_VARIATION', 'QUESTION_ANSWER', 'SENTENCE', 'CONTINUOUS'] },
   ] as const;
   showAlgorithm(contextual: boolean): boolean {
-    return this.preferences.editingQuickSettings() || !!this.values().contextualMelody === contextual;
+    return !!this.values().contextualMelody === contextual;
   }
   numeric(key: 'rangeMin' | 'rangeMax' | 'tension' | 'phraseBars' | 'beatsPerBar'): number {
     return this.values()[key] ?? DEFAULT_MELODY_GLOBAL[key];
@@ -71,11 +69,6 @@ export class MelodyGlobalSettingsComponent {
   changePatternEffect(event: Event): void {
     const value = Number((event.target as HTMLSelectElement).value);
     if (value === 0 || value === 1 || value === 2) this.settingsChanged.emit({ patternEffect: value });
-  }
-
-  changeTargetDirection(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    if (value === 'ANY' || value === 'ASC' || value === 'DESC') this.settingsChanged.emit({ targetDirection: value });
   }
 
   changeTargetMode(event: Event): void {

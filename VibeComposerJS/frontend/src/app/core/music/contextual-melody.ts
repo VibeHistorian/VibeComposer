@@ -4,16 +4,13 @@ import { chordPitches, getPitchClass, progressionChords, scaleNotes, type Progre
 import type { GenerationHarmony } from './harmony-voicing';
 import { JavaRandom } from './java-random';
 import { ContextualCatalogue } from './contextual-catalogue';
-import { DEFAULT_MELODY_GLOBAL } from './melody-global-settings';
+import { resolveMelodyInputs } from './melody-global-settings';
 import { partFillMask } from './chord-span-fill';
 import { velocityBounds } from './part-settings';
 import { mixContextualSeed } from './contextual-harmony';
 import { convertScalePitch } from './scales';
 import { durationBlocks } from './durations';
 
-// TODO: Move Blocks (the seven catalogue percentages), Phrase Bars, Beats per Bar,
-// Pattern Effect and MIDI/Chord Target Mode to Settings > Melody.
-// TODO: Move New Blocks%, Note Target Mode, Form and Purpose from global to track scope.
 const BEAT = 960;
 const mod = (n: number, d = 12) => (n % d + d) % d;
 type Purpose = 'STATEMENT' | 'CONTINUATION' | 'QUESTION' | 'ANSWER' | 'CLOSING';
@@ -55,7 +52,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   custom?: readonly (ProgressionChord | null)[], harmony?: GenerationHarmony & { durations?: readonly number[] }): {
     notes: PhraseNote[]; pattern: Pick<PhraseNote, 'midi' | 'startBeat'>[]; skeleton: { midi: number; rhythm: number }[][];
   } {
-  const options = { ...DEFAULT_MELODY_GLOBAL, ...global }, tonic = getPitchClass(key)!;
+  const options = resolveMelodyInputs(settings, global), tonic = getPitchClass(key)!;
   if (options.rangeMin > options.rangeMax) throw new RangeError('Melody Low MIDI must not exceed Melody High MIDI.');
   const notesInScale = scaleNotes(scale), scaleClasses = new Set(notesInScale.map(p => mod(p)));
   const definitions = progressionChords(key, scale, degrees, custom);

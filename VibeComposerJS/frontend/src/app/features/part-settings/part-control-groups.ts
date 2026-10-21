@@ -10,9 +10,11 @@ export const PART_CONTROL_GROUPS = [
 ] as const;
 
 export function partControlGroup(key: string): string {
-  if (['splitChance', 'startNoteChance'].includes(key)) return 'rhythm';
+  if (['fillPausesPerChord', 'splitChance', 'startNoteChance'].includes(key)) return 'rhythm';
   if (['arpPatternRotate', 'arpPatternCustom', 'arpContour', 'arpContourChordMode'].includes(key)) return 'shape';
   if (['useOctaveAdjustments', 'correctMelodyNotes'].includes(key)) return 'pitch';
+  if (['targetDirection', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey'].includes(key)) return 'pitch';
+  if (['maxDirectionChanges', 'newBlocksChance'].includes(key)) return 'shape';
   if (key === 'ghosts') return 'dynamics';
   return PART_CONTROL_GROUPS.find(group => (group.keys as readonly string[]).includes(key))?.id ?? 'other';
 }

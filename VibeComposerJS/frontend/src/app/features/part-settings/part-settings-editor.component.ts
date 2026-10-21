@@ -79,7 +79,7 @@ export class PartSettingsEditorComponent {
     (!this.usesDurations() || this.role() !== 'melody'
       || !['speed', 'pauseChance', 'fillPauses', 'splitChance', 'startNoteChance'].includes(control.key)) &&
     (this.role() !== 'melody' || !this.projects.project().melodyGlobal?.contextualMelody
-      || !['fillPauses', 'patternFlexible'].includes(control.key)) &&
+      || !['fillPauses', 'fillPausesPerChord', 'patternFlexible', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey'].includes(control.key)) &&
     (!this.usesDurations() || this.role() === 'melody' || !['patternShift', 'chordSpan', 'patternRepeat', 'patternJoinMode', 'euclideanPulses', 'useCustomVelocities', 'customVelocities', 'pauseChance', 'exceptionChance', ...(this.role() === 'bass' ? ['hitsPerPattern'] : [])].includes(control.key)) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&

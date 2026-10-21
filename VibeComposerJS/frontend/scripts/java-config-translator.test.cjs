@@ -51,7 +51,7 @@ test('real Java XML translates actual sections, supported settings, presence and
   assert.equal(project.tracks.find(track=>track.id==='track-bass-1').generatorSettings.rhythm,'bass1');
   assert.equal(project.tracks.find(track=>track.id==='track-chords-1').generatorSettings.noteLengthPercent,73);
   assert.equal(project.tracks.find(track=>track.id==='track-arpeggio-2').generatorSettings.pattern,'frog-down');
-  assert.equal(project.melodyGlobal.forceFirstOutline,true); assert.equal(project.melodyGlobal.targetDirection,'ANY');
+  assert.equal(project.melodyGlobal.forceFirstOutline,true); assert.equal(project.tracks.find(track => track.role === 'melody').generatorSettings.targetDirection,'ANY');
   assert.deepEqual(project.melodyGlobal.blockChangePreference,[0,7,4,3,1,2,5,6]);
   assert.equal(result.savedPhraseCount,9);
   assert.ok(project.arrangement[4].trackPhrases['track-melody-1'].length);

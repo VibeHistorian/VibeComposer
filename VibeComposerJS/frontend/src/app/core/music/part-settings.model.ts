@@ -42,8 +42,17 @@ export interface CommonPartSettings {
   readonly velocityMax?: number;
 }
 
-/** Current block-generation part inputs; Java GUIConfig options have a separate global scope. */
+/** Melody track inputs, inherited by section role/track overrides. */
 export interface MelodySettings extends CommonPartSettings {
+  readonly targetDirection?: 'ANY' | 'ASC' | 'DESC';
+  readonly tonicNoteTarget?: number;
+  readonly modeNoteTarget?: number;
+  readonly chordNoteTarget?: number;
+  readonly emphasizeKey?: boolean;
+  readonly maxDirectionChanges?: number;
+  readonly newBlocksChance?: number;
+  readonly fillPausesPerChord?: boolean;
+
   readonly algorithm: 'block';
   readonly rhythm?: 'melody1' | 'durations';
   readonly speed?: number;
@@ -62,7 +71,7 @@ export interface MelodySettings extends CommonPartSettings {
   readonly patternSeed?: number;
 }
 
-/** GUIConfig musical inputs shared by every Melody track and section. */
+/** Project musical settings shared by every Melody track and section. */
 export interface MelodyGlobalSettings {
   readonly contextualMelody?: boolean;
   readonly rangeMin?: number;
@@ -77,26 +86,16 @@ export interface MelodyGlobalSettings {
   readonly beatsPerBar?: number;
   /** 0 chord-note index, 1 chord root + scale-degree offset, 2 MIDI 60 + scale-degree offset. */
   readonly blockTargetMode?: number;
-  /** Requested tonic/mode note percentages before pauses; these are best-effort pitch repairs. */
-  readonly tonicNoteTarget?: number;
-  readonly modeNoteTarget?: number;
-  readonly chordNoteTarget?: number;
   /** 0 off, 1 semitone above chord tones, 2 also below and two semitones above. */
   readonly replaceAvoidNotes?: number;
-  /** Assign longer block durations to tonic/mode-important pitches before pitch exceptions. */
-  readonly emphasizeKey?: boolean;
   /** Invert the first Melody's published onset grid for dependent parts; Melody notes stay unchanged. */
   readonly patternFlip?: boolean;
-  readonly maxDirectionChanges?: number;
-  readonly fillPausesPerChord?: boolean;
   /** 0 repeats rhythm, 1 repeats notes, 2 repeats rhythm and notes. */
   readonly patternEffect?: 0 | 1 | 2;
   readonly targetNoteVariation?: number;
-  readonly targetDirection?: 'ANY' | 'ASC' | 'DESC';
   readonly useDirectionsFromProgression?: boolean;
   /** Copy the first stored Melody track's outline fields during preparation. */
   readonly forceFirstOutline?: boolean;
-  readonly newBlocksChance?: number;
   /** Weights in BlockType enum order: Scaley, Neighbory, Arpy, Chordy, Wavy, Interval, Note. */
   readonly blockTypeWeights?: readonly number[];
   /** Empty selects uniformly; otherwise a permutation of absolute changes 0–7. */

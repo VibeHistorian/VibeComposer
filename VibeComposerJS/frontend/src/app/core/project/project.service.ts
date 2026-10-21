@@ -451,7 +451,7 @@ export class ProjectService {
           const patternSeed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(next.seed)))) + order) | 0;
           if (policy.patternsOnCompose ?? true) settings.melodyPatternOffsets = chooseMelodyPattern(patternSeed);
           if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression, next.melodyGlobal,
-            next.key, next.scale, next.progressionChords);
+            next.key, next.scale, next.progressionChords, settings);
           if (partPatchesEqual(track.generatorSettings, settings)) return track;
           return { ...track, generatorSettings: settings };
         });
