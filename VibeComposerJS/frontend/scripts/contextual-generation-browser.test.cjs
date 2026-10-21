@@ -19,7 +19,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
     };
     try {
       await wait(()=>innerWidth===${width}&&button('Settings'),'workspace');
-      let dialog=await settings('Behavior');
+      let dialog=await settings('Harmony');
       let generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'harmony generation');
       ensure(generation.value==='CURRENT','Legacy default');
       ensure([...generation.options].map(o=>o.textContent.trim()).join(',')==='Legacy,Functional,Fifths,Pop loop,Modal,Random','harmony choices');
@@ -53,7 +53,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       dialog.querySelector('[aria-label="Close settings"]').click();
       await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="TON%"]'),'restore track block controls');
       ensure(!document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]'),'hide contextual controls');
-      dialog=await settings('Behavior');
+      dialog=await settings('Harmony');
       generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'Random selector');change(generation,'RANDOM');
       await wait(()=>read().harmonySettings?.generation==='RANDOM','save Random');
       dialog.querySelector('[aria-label="Close settings"]').click();button('Generate chord progression').click();

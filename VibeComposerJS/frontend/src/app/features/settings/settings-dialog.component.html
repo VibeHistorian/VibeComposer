@@ -103,15 +103,6 @@
               <span>Manual phrases follow global Mode</span>
             </label>
             <p id="manual-mode-description">When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.</p>
-            <label class="appearance-setting">
-              <span>Harmony generation</span>
-              <select aria-label="Harmony generation" [value]="projects.project().harmonySettings?.generation ?? 'CURRENT'" (change)="changeHarmony($event)">
-                @for (generation of harmonyGenerations; track generation.value) {
-                  <option [value]="generation.value">{{ generation.label }}</option>
-                }
-              </select>
-            </label>
-            <p>Used when generating a chord progression. Random makes a seeded choice among Legacy, Functional, Fifths, Pop loop and Modal.</p>
             <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.limitInstrumentsToPool()"
               aria-describedby="instrument-pool-description" (click)="preferences.toggleLimitInstrumentsToPool()">Limit instrument options to selected pool</button>
             <p id="instrument-pool-description">Show only instruments in each role's selected pool, plus each track's current instrument. Turn off to show all instruments. The automatic Chords pool includes both Chord and Pluck instruments. Saved in your UI preferences.</p>
@@ -162,6 +153,40 @@
             </label>
             <p id="drum-mapping-description">Applies to drum pitch labels, MIDI device playback, and MIDI file exports. Chromatic maps the 16 drum choices in order to notes 36–51. Auto uses General MIDI with the internal synth and Chromatic with a MIDI device.</p>
             <p>Currently using {{ midi.drumMapping() === 'chromatic' ? 'Chromatic (36–51)' : 'General MIDI' }}. The internal synth keeps its General MIDI drum sounds. Saved in your UI preferences.</p>
+          </section>
+        }
+        @case ('harmony') {
+          <section aria-labelledby="harmony-settings-title">
+            <h2 id="harmony-settings-title">Harmony</h2>
+            <p>Applies to all tracks and sections. Saved with the project.</p>
+            <label class="appearance-setting">
+              <span>Harmony generation</span>
+              <select aria-label="Harmony generation" [value]="harmonyValues().generation" (change)="changeHarmony($event)">
+                @for (generation of harmonyGenerations; track generation.value) {
+                  <option [value]="generation.value">{{ generation.label }}</option>
+                }
+              </select>
+            </label>
+            <p>Used when generating a chord progression. Random makes a seeded choice among Legacy, Functional, Fifths, Pop loop and Modal.</p>
+            <label class="appearance-setting">
+              <span>Flatten voicing (%)</span>
+              <input type="number" aria-label="Flatten voicing" aria-describedby="flatten-voicing-description" min="0" max="100" step="1"
+                [value]="harmonyValues().flattenVoicingChance"
+                (change)="projects.updateHarmonySettings({ flattenVoicingChance: +$any($event.target).value })" />
+            </label>
+            <p id="flatten-voicing-description">Chance to move outer chord tones toward the progression's average pitch. Uses the project seed; explicit nonzero inversions are preserved. Bass roots stay independent.</p>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Flatten large chords" aria-describedby="flatten-large-description" [checked]="harmonyValues().flattenLargeChords"
+                (change)="projects.updateHarmonySettings({ flattenLargeChords: $any($event.target).checked })" />
+              <span>Flatten large chords</span>
+            </label>
+            <p id="flatten-large-description">Also flatten chords with more than three tones.</p>
+            <label class="behavior-setting">
+              <input type="checkbox" aria-label="Progressive voicing" aria-describedby="progressive-voicing-description" [checked]="harmonyValues().progressiveVoicing"
+                (change)="projects.updateHarmonySettings({ progressiveVoicing: $any($event.target).checked })" />
+              <span>Progressive voicing</span>
+            </label>
+            <p id="progressive-voicing-description">Voice global and explicit section progressions toward the processed prefix. Inferred progressions use the ordinary whole-progression average.</p>
           </section>
         }
         @case ('melody') {

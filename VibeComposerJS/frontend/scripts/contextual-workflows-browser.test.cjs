@@ -515,9 +515,16 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const wait = async (read, label) => { for (let i = 0; i < 200; i++) { const value = read(); if (value) return value; await new Promise(r => setTimeout(r,20)); } throw new Error(label); };
       const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
       const change = (element,value) => { element.value=value; element.dispatchEvent(new Event('change',{bubbles:true})); };
-      const harmony = document.querySelector('vc-harmony-settings');
       await wait(()=>document.querySelector('.part-panel-toggle').getAttribute('aria-label').includes('Global Arps settings'),'global role panel title');
-      harmony.querySelector('details').open=true;
+      if (document.querySelector('#part-inspector [aria-label="Flatten voicing"]') || document.querySelector('#part-inspector details summary')?.textContent.includes('Global harmony')) throw new Error('global harmony still in inspector');
+      document.querySelector('.project-tools [aria-label="Settings"]').click();
+      const harmony = await wait(() => document.querySelector('vc-settings-dialog'),'harmony settings dialog');
+      (await wait(() => harmony.querySelector('[aria-label="Behavior General"]'),'settings categories rendered')).click();
+      await new Promise(r => requestAnimationFrame(r));
+      if (harmony.querySelector('[aria-label="Harmony generation"]')) throw new Error('harmony generation still in General');
+      harmony.querySelector('[aria-label="Behavior Harmony"]').click();
+      await wait(() => harmony.querySelector('[aria-label="Flatten voicing"]'),'harmony settings page');
+      if (harmony.querySelector('details, vc-compact-knob, vc-compact-toggle')) throw new Error('harmony should use standard settings fields');
       change(harmony.querySelector('[aria-label="Flatten voicing"]'),'37');
       await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten commit');
       document.querySelector('[aria-label="Undo"]').click();
@@ -525,11 +532,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       (await wait(() => { const button=document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'flatten redo enabled')).click();
       await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten redo');
       await wait(() => harmony.querySelector('[aria-label="Flatten voicing"]').value === '37','flatten redo rendered');
-      harmony.querySelector('[aria-label="Flatten voicing"]').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
+      change(harmony.querySelector('[aria-label="Flatten voicing"]'),'100');
       await wait(() => read().harmonySettings?.flattenVoicingChance === 100,'flatten reset');
       harmony.querySelector('[aria-label="Flatten large chords"]').click();
       harmony.querySelector('[aria-label="Progressive voicing"]').click();
       await wait(() => read().harmonySettings?.flattenLargeChords && read().harmonySettings?.progressiveVoicing,'global voicing toggles');
+      harmony.querySelector('[aria-label="Close settings"]').click();
       const canvas = document.querySelector('.arrangement-panel canvas[tabindex]');
       canvas.focus();
       // Walk real focus targets until a section header is reached.
@@ -552,7 +560,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => !read().arrangement.find(section => section.id === first.id).swapMelody,'swap undo');
       (await wait(() => { const button=document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'swap redo enabled')).click();
       await wait(() => read().arrangement.find(section => section.id === first.id).swapMelody,'swap redo');
-      const editor = document.querySelector('vc-harmony-settings'); editor.querySelector('details').open=true;
+      const editor = document.querySelector('vc-harmony-settings');
       editor.scrollIntoView({block:'center'});
       const section = read().arrangement.find(section => section.id === first.id);
       return { section: section.useMelodyHarmony && section.swapMelody, global: read().harmonySettings.flattenVoicingChance===100,

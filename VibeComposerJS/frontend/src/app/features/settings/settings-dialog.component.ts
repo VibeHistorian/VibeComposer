@@ -10,7 +10,7 @@ import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ARRANGED_PARTS, type ArrangedPart } from '../../core/music/part-role';
 import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
 import { HARMONY_GENERATIONS } from '../../core/music/contextual-harmony';
-import type { HarmonySettings } from '../../core/music/harmony-voicing';
+import { DEFAULT_HARMONY_SETTINGS, type HarmonySettings } from '../../core/music/harmony-voicing';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import type { DrumMappingPreference } from '../../core/music/drum-instruments';
 
@@ -39,6 +39,7 @@ export class SettingsDialogComponent {
   readonly themeColors = THEME_COLORS;
   readonly colorAdjustments = COLOR_ADJUSTMENTS;
   readonly harmonyGenerations = HARMONY_GENERATIONS;
+  readonly harmonyValues = computed(() => ({ ...DEFAULT_HARMONY_SETTINGS, ...this.projects.project().harmonySettings }));
   changeHarmony(event: Event): void {
     this.projects.updateHarmonySettings({ generation: (event.target as HTMLSelectElement).value as HarmonySettings['generation'] });
   }
@@ -72,6 +73,7 @@ export class SettingsDialogComponent {
     ] },
     { id: 'behavior', label: 'Behavior', children: [
       { id: 'behavior', label: 'General' },
+      { id: 'harmony', label: 'Harmony' },
       { id: 'melody', label: 'Melody' },
       { id: 'section-types', label: 'Section Types' },
     ] },

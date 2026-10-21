@@ -13,20 +13,6 @@
       @if (hasChordOverride() || current.context?.keyChangeType === 'two-five-one') { <p>Different section chords and cadence take precedence over inferred harmony.</p> }
     </fieldset>
   }
-  <details>
-    <summary>Global harmony · all tracks and sections</summary>
-    <div class="harmony-controls" data-control-category="pitch">
-      <vc-compact-knob label="Flatten voicing" [value]="values().flattenVoicingChance" [defaultValue]="100" [minimum]="0" [maximum]="100" unit="%"
-        description="Chance to move outer chord tones toward the progression's average pitch. Uses the project seed; explicit nonzero inversions are preserved. Bass roots stay independent."
-        (valueCommit)="projects.updateHarmonySettings({ flattenVoicingChance: $event })" />
-      <vc-compact-toggle label="Flatten large chords" [active]="values().flattenLargeChords"
-        description="Also flatten chords with more than three tones."
-        (toggled)="projects.updateHarmonySettings({ flattenLargeChords: !values().flattenLargeChords })" />
-      <vc-compact-toggle label="Progressive voicing" [active]="values().progressiveVoicing"
-        description="Voice global and explicit section progressions toward the processed prefix. Inferred progressions use the ordinary whole-progression average."
-        (toggled)="projects.updateHarmonySettings({ progressiveVoicing: !values().progressiveVoicing })" />
-    </div>
-  </details>
   <div class="inference-status" role="status">
     @if (inference().available) {
       <p>Inferred from {{ source()?.name }} · generated base Melody{{ inference().manualSource ? ' (manual notes remain active)' : '' }}</p>

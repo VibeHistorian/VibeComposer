@@ -31,7 +31,7 @@ Paths below are relative to `src/app/`. Feature folders group embedded interacti
 | `features/transport/` | `transport-dock.component.*`: playback and global musical controls |
 | `features/history/` | `history-dialog.component.*`: project history navigation |
 | `features/midi-import/` | `midi-import-dialog.component.*`: import choices; file/worker orchestration remains in `core/ui/` |
-| `features/settings/`, `features/section-types/` | Preferences dialog, project-wide Melody settings (Behavior → Melody) and section-type chance settings |
+| `features/settings/`, `features/section-types/` | Preferences dialog, project-wide Melody settings (Behavior → Melody), global harmony generation and voicing (Behavior → Harmony), and section-type chance settings |
 | `core/ui/workspace-ui.service.ts` | App-wide selection, settings targets and section ranges shared by workspace, editors, history and transport |
 | `core/project/`, `core/music/`, `core/audio/` | Historical commands/persistence, framework-independent music and asynchronous playback/MIDI; see the [project-state guide](../core/project/README.md) |
 
