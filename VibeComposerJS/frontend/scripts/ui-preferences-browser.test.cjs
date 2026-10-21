@@ -345,6 +345,13 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
   const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
   await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/ui-preferences-browser-'));
+  const downloadPath = path.join(profile, 'downloads');
+  fs.mkdirSync(downloadPath);
+  fs.mkdirSync(path.join(profile, 'Default'));
+  // Configure before launch so the injected workflow cannot export to the user's Downloads.
+  fs.writeFileSync(path.join(profile, 'Default/Preferences'), JSON.stringify({
+    download: { default_directory: downloadPath, prompt_for_download: false },
+  }));
   const child = launchBrowser(browser, ['--headless', '--remote-debugging-port=0', '--window-size='+width+',1100', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
     '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
@@ -358,6 +365,13 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
     assert.equal(actual.ok, true);
+    const exportedFile = path.join(downloadPath, 'vibecomposer-ui-preferences.json');
+    for (let i = 0; i < 100 && !fs.existsSync(exportedFile); i++) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    const exported = JSON.parse(fs.readFileSync(exportedFile, 'utf8'));
+    assert.equal(exported.kind, 'vibecomposer-ui-preferences');
+    assert.equal(exported.appearance.themeColors.accent, '#dd88ee');
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });
     fs.writeFileSync(path.resolve(__dirname, '../.angular/quick-settings-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));
     await command('Runtime.evaluate', { expression: "[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Edit quick settings').click()" });

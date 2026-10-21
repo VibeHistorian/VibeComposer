@@ -35,6 +35,8 @@ Score geometry, hit testing and gesture-preview helpers have direct checks along
 
 Suites retain their HTML/fixtures, injected workflows, browser flags, viewport sizes, assertions and screenshots. Result-posting suites choose their existing 25–45 second watchdogs; protocol commands have a 20 second deadline. Page startup and DOM polling remain suite-specific. Layout checks continue to wait for real animation frames and ResizeObserver work; do not replace these waits with virtual time or shorten the stability sequence.
 
+The UI preferences suite configures downloads before Chromium starts, saving exports inside each temporary profile's `downloads/` folder instead of the user's Downloads. It checks the saved JSON, and profile cleanup removes the exported files after each viewport case.
+
 Component fixtures and source-reading browser suites follow the [feature ownership map](../src/app/features/README.md). Domain components live under `src/app/features/`; workspace selection state lives in `src/app/core/ui/workspace-ui.service.ts`. Update fixture module paths and dependency stand-ins together when moving an owner. Templates and styles remain alongside their components; the old `shared/` paths have no forwarding modules.
 
 Browser aggregates first check Chromium startup, Canvas 2D and WebGL2 in a temporary profile. A blocked browser fails once before launching the suites. Debugging-protocol failures include recent browser stderr, including GPU startup errors that otherwise appear only as `Target crashed`.
