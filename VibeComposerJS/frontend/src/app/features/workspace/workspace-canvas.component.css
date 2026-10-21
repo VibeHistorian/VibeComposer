@@ -121,7 +121,6 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .inspector-heading { align-items: flex-start; }
 .inspector-selection { margin-top: 19px; display: grid; gap: 9px; }
 .selection-kicker { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
-.inspector-selection strong { color: var(--text-primary); font-size: 20px; font-weight: 500; letter-spacing: -.04em; }
 .track-name-field { display: grid; gap: 4px; color: var(--text-muted); font-size: 10px; }
 .track-name-field input { width: 100%; min-width: 0; height: 28px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
 .context-inspector input:focus-visible, .context-inspector select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }

@@ -355,7 +355,7 @@
           @if (selectedRole(); as role) {
             <span class="selection-kicker">{{ tracksFor(role).length }} {{ roleName(role) }} tracks · shared generation settings</span>
           } @else {
-            <span class="selection-kicker">{{ selectedTrack().role }} · CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }}</span>
+            <span class="selection-kicker">{{ selectedTrack().role }} · CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }} · {{ selectedTrack().noteCount }} notes</span>
             <label class="track-name-field"><span>Track name</span><input [value]="selectedTrack().name" maxlength="48" (change)="updateTrackName($event)" /></label>
             @if (hasChannelCollision()) { <span class="channel-warning" role="status">Another track also uses channel {{ selectedTrack().midiChannel }}.</span> }
             <div class="track-actions" aria-label="Track actions">
@@ -365,8 +365,6 @@
               <button type="button" [disabled]="!canMoveTrack(selectedTrack().id, 1)" (click)="reorderTrack(selectedTrack().id, 1)" aria-label="Move track down">↓</button>
               @if (canRemoveTrack(selectedTrack().id)) { <button type="button" class="remove-track" (click)="removeTrack(selectedTrack().id)">Remove</button> }
             </div>
-            <strong>{{ selectedTrack().noteCount }} notes</strong>
-            <span>{{ selectedTrack().mix.muted ? 'Muted' : selectedTrack().mix.solo ? 'Soloed' : 'Active in the mix' }} · {{ selectedTrack().mix.volumePercent }}% level</span>
             @if (selectedTrack().editedPhrase && partGenerationAvailable()) { <button type="button" class="restore-track-button" (click)="restoreTrackPhrase()">Restore generated notes</button> }
           }
         </div>
