@@ -57,7 +57,9 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
     }
     // Offline rendering has no progress event. Briefly suspend at known audio
     // positions, report completed work, then immediately resume off the UI thread.
-    const checkpoints = onProgress ? Array.from({ length: 19 }, (_, index) => {
+    // Firefox lacks these methods; render uninterrupted and report completion there.
+    const canReportProgress = onProgress && typeof context.suspend === 'function' && typeof context.resume === 'function';
+    const checkpoints = canReportProgress ? Array.from({ length: 19 }, (_, index) => {
       const percent = (index + 1) * 5;
       return context.suspend(context.length / context.sampleRate * percent / 100).then(async () => {
         onProgress(percent);

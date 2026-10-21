@@ -6,7 +6,11 @@ const test = require('node:test');
 const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
 const browser = findBrowser();
 
-for (const width of [1440, 780]) test(`production export menu and offline Opus download at ${width}px`, { skip: !browser }, async () => {
+for (const { width, missingMethod } of [
+  { width: 1440 }, { width: 780 },
+  { width: 1440, missingMethod: 'suspend' },
+  { width: 1440, missingMethod: 'resume' },
+]) test(`production export menu and offline Opus download at ${width}px${missingMethod ? ` without ${missingMethod}` : ''}`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
   const trackId = 'track-bass-1';
   const presence = Object.fromEntries(DEFAULT_PROJECT.tracks.map(track => [track.id, true]));
@@ -49,6 +53,9 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
         offlineResumes++;
         return nativeOfflineResume.apply(this, args);
       };
+      // Exercise Firefox's missing checkpoint APIs while retaining real audio rendering.
+      const missingMethod = ${JSON.stringify(missingMethod ?? null)};
+      if (missingMethod) Object.defineProperty(OfflineAudioContext.prototype, missingMethod, { value: undefined, configurable: true });
       HTMLAnchorElement.prototype.click = function() { downloads.push({ name: this.download, blob: fetch(this.href).then(r=>r.blob()) }); };
       const menu = () => document.querySelector('[role="menu"][aria-label="Export"]');
       const item = label => [...menu().querySelectorAll('button')].find(button=>button.textContent.trim()===label);
@@ -100,9 +107,9 @@ for (const width of [1440, 780]) test(`production export menu and offline Opus d
           ensure(rms(1,1,1.5)<.00001,'pan and solo exclude other tracks');
           ensure(rms(0,5,5.5)<.00001,'voice release ends and trailing section stays silent');
         } finally { await context.close(); }
-        ensure(offlineResumes===19,'render checkpoints resume after suspension');
+        ensure(offlineResumes===(missingMethod ? 0 : 19),'only supported render checkpoints suspend and resume');
         ensure(renderProgress[0]===0 && renderProgress.at(-1)===100,'render progress runs from 0 to 100: '+renderProgress);
-        ensure(renderProgress.some(percent=>percent>0 && percent<100),'intermediate render progress visible');
+        if (!missingMethod) ensure(renderProgress.some(percent=>percent>0 && percent<100),'intermediate render progress visible');
         ensure(renderProgress.every((percent,index)=>!index || percent>renderProgress[index-1]),'render progress increases');
         ensure(completionGlow,'100% render progress shows animated completion border');
         document.querySelector('[aria-label="Settings"]').click();
