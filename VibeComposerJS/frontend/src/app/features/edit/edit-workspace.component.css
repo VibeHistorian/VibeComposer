@@ -1,10 +1,10 @@
 /* Contextual editor host */
 :host { display: none; }
 /* Note inspector */
-.inspector-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.eyebrow { margin: 0; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .1em; }
-h2 { margin: 5px 0 0; color: var(--text-primary); font: 600 14px var(--font-ui); }
-.edit-mark { color: var(--accent-primary); }
+.inspector-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.eyebrow { margin: 0; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .1em; text-align: right; }
+h2 { min-width: 0; flex: 1; display: flex; align-items: center; gap: 7px; margin: 0; color: var(--text-primary); font: 600 14px var(--font-ui); }
+.edit-mark { flex: 0 0 auto; color: var(--accent-primary); }
 .selected-note-name { margin-top: 22px; color: var(--text-primary); font: 14px var(--font-mono); }
 .selected-note-name span { display: block; margin-top: 5px; color: var(--text-muted); font: 9px var(--font-mono); }
 .field-label { display: block; margin: 14px 0 6px; color: var(--text-secondary); font: 11px var(--font-ui); }

@@ -558,7 +558,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => [...document.querySelectorAll('.score-display-header button')].some(button => button.textContent.trim() === 'Cancel'), 'all-drum phrase editor');
         const drumLabels = [...document.querySelectorAll('.track-group.drums .track-instrument')]
           .map(select => select.selectedOptions[0].textContent);
-        result.allDrumsEditor = await waitFor(() => document.querySelector('#inspector-title')?.textContent === 'Drums notes'
+        result.allDrumsEditor = await waitFor(() => document.querySelector('#inspector-title')?.textContent.trim().endsWith('Drums notes')
           && drumLabels.every(label => [...document.querySelectorAll('vc-score-canvas .drum-label')].some(row => row.title === label.toUpperCase())), 'all drum pitches in the score editor');
         [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent.trim() === 'Cancel').click();
         await waitFor(() => !document.querySelector('.score-display-header')

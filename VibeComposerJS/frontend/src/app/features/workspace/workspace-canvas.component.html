@@ -278,8 +278,17 @@
         @if (editor(); as edit) { <ng-container [ngTemplateOutlet]="edit.inspectorTemplate()" /> }
       } @else {
       <header class="canvas-heading inspector-heading">
-        <div><h2>{{ localPartTarget() ? settingsTarget().kind === 'section-role' ? 'Section group' : 'Section part' : selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
-        <i class="role-dot" [class]="partRole()"></i>
+          <h2>
+            @if (partScope()) { <i class="role-dot" [class]="partRole()" aria-hidden="true"></i> }
+            @if (selectedSection(); as section) {
+              {{ sectionLabel(section.type) }}
+            } @else if (settingsTarget().kind === 'global-role' || settingsTarget().kind === 'section-role') {
+              {{ roleName(partRole()) }} group
+            } @else {
+              <span>{{ contextPartLabel() }}<span class="inspector-name-separator">·</span>{{ roleName(partRole()) }}</span>
+            }
+          </h2>
+        <p class="eyebrow">{{ localPartTarget() ? settingsTarget().kind === 'section-role' ? 'Section role group' : 'Section track' : selectedSection() ? 'Section' : selectedRole() ? 'Role Group' : 'Track' }}</p>
       </header>
 
       @if (partSettingsInInspector() && preferences.editingQuickSettings()) {
@@ -288,7 +297,7 @@
 
       @if (localPartTarget()) {
         <div class="inspector-selection">
-          <span class="selection-kicker">{{ contextLabel() }}</span>
+          <span class="selection-kicker">{{ contextLocationLabel() }}</span>
           <span>{{ inheritanceLabel() }}</span>
           @if (!partGenerationAvailable()) { <span>Automatic melody generation is not available yet. Use Edit notes on the global track.</span> }
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
@@ -311,7 +320,6 @@
           } @else {
             @for (track of contextTracks(); track track.id) {
               <section class="quick-settings-group">
-                <strong>{{ track.name }}</strong>
                 <vc-compact-toggle [attr.data-control-role]="track.role" label="Include in this section"
                   [description]="'Include ' + track.name + ' in the selected section.'"
                   [active]="contextTrackPresent(track)" (toggled)="toggleContextTrackPresence(track)" />
@@ -365,9 +373,9 @@
       } @else {
         <div class="inspector-selection">
           @if (selectedRole(); as role) {
-            <span class="selection-kicker">{{ tracksFor(role).length }} {{ roleName(role) }} tracks · shared generation settings</span>
+            <span class="selection-kicker">{{ tracksFor(role).length }} tracks · shared generation settings</span>
           } @else {
-            <span class="selection-kicker">{{ selectedTrack().role }} · CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }} · {{ selectedTrack().noteCount }} notes</span>
+            <span class="selection-kicker">CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }} · {{ selectedTrack().noteCount }} notes</span>
             <label class="track-name-field"><span>Track name</span><input [value]="selectedTrack().name" maxlength="48" (change)="updateTrackName($event)" /></label>
             @if (hasChannelCollision()) { <span class="channel-warning" role="status">Another track also uses channel {{ selectedTrack().midiChannel }}.</span> }
             <div class="track-actions" aria-label="Track actions">

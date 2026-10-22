@@ -118,7 +118,10 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .lane-hidden { position: absolute; right: 3px; z-index: 1; color: var(--text-faint); font: 9px var(--font-mono); pointer-events: none; }
 
 /* Selection inspector */
-.inspector-heading { align-items: flex-start; }
+.inspector-heading { min-height: 0; align-items: center; }
+.inspector-heading .eyebrow { text-align: right; text-transform: uppercase; }
+.inspector-heading h2 { min-width: 0; flex: 1; margin: 0; display: flex; align-items: center; gap: 7px; overflow-wrap: anywhere; }
+.inspector-name-separator { display: inline-block; margin: 0 7px; font-size: 18px; line-height: 0; vertical-align: middle; }
 .inspector-selection { margin-top: 19px; display: grid; gap: 9px; }
 .selection-kicker { color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
 .track-name-field { display: grid; gap: 4px; color: var(--text-muted); font-size: 10px; }

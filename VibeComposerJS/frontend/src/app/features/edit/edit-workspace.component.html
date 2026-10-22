@@ -1,11 +1,8 @@
 <ng-template #inspector>
   @if (applyError(); as error) { <p class="inspector-copy" role="alert">{{ error }}</p> }
       <div class="inspector-heading">
-        <div>
-          <p class="eyebrow">{{ isEdited() ? 'CUSTOM PHRASE' : 'SEEDED PHRASE' }}</p>
-          <h2 id="inspector-title">{{ selectedPart() | titlecase }} notes</h2>
-        </div>
-        <span class="edit-mark">{{ isEdited() ? '✎' : '♪' }}</span>
+        <h2 id="inspector-title"><span class="edit-mark" aria-hidden="true">{{ isEdited() ? '✎' : '♪' }}</span>{{ selectedPart() | titlecase }} notes</h2>
+        <p class="eyebrow">{{ isEdited() ? 'CUSTOM PHRASE' : 'SEEDED PHRASE' }}</p>
       </div>
 
       @if (selectedNote(); as note) {
