@@ -375,8 +375,7 @@
           @if (selectedRole(); as role) {
             <span class="selection-kicker">{{ tracksFor(role).length }} tracks · shared generation settings</span>
           } @else {
-            <span class="selection-kicker">CHANNEL {{ selectedTrack().midiChannel.toString().padStart(2, '0') }} · {{ selectedTrack().noteCount }} notes</span>
-            <label class="track-name-field"><span>Track name</span><input [value]="selectedTrack().name" maxlength="48" (change)="updateTrackName($event)" /></label>
+            <label class="track-name-field"><input aria-label="Track name" [value]="selectedTrack().name" maxlength="48" (change)="updateTrackName($event)" /></label>
             @if (hasChannelCollision()) { <span class="channel-warning" role="status">Another track also uses channel {{ selectedTrack().midiChannel }}.</span> }
             <div class="track-actions" aria-label="Track actions">
               <button type="button" (click)="openTrackEditor(selectedTrack().id)">Edit notes</button>
@@ -390,7 +389,6 @@
         </div>
 
         <section class="quick-settings-group" aria-label="Part settings">
-          <p class="eyebrow">PART SETTINGS</p>
           @if (!partGenerationAvailable()) { <span class="part-inheritance">Automatic melody generation is not available yet. Add notes with Edit notes.</span> }
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
           @for (item of editableScopes(); track item.key) {

@@ -120,7 +120,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => readTrack('melody').mix.program === 73 && readTrack('melody').midiChannel === 4, 'restored melody identity');
         const initialChords = [...document.querySelectorAll('.chordlet-label')].map(button => button.textContent.trim());
         document.querySelector('.track-group.melody .track-select').click();
-        await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 04'), 'melody inspector');
+        await waitFor(() => document.querySelector('.track-name-field input')?.value === readTrack('melody').name, 'melody inspector');
         const melodySelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.value);
         const group = await waitFor(() => document.querySelector('.track-group.chords .group-select'));
         group.click();
@@ -305,7 +305,7 @@ test('production Angular controls initialize selects from settings and support r
         result.melodyHasSpeed = document.querySelectorAll('input[aria-label="Speed"]').length;
         result.melodyHasAccent = document.querySelectorAll('input[aria-label="Accent"]').length;
         document.querySelector('.track-group.melody .track-select').click();
-        await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 04'), 'melody track context');
+        await waitFor(() => document.querySelector('.track-name-field input')?.value === readTrack('melody').name, 'melody track context');
         result.recreatedSelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.value);
         result.sharedRoles = [];
         for (const role of ['bass', 'arpeggio']) {
@@ -553,7 +553,7 @@ test('production Angular controls initialize selects from settings and support r
           === JSON.stringify(beforeInstrumentRoll.tracks.find(track => track.id === lastArp.id));
         result.instrumentButtonsRemoved = !document.querySelector('.instrument-reroll-button, button[aria-label^="Lock instrument for"], button[aria-label^="Unlock instrument for"], button[aria-label^="Reroll instrument for"]');
         document.querySelector('.track-group.drums .track-select').click();
-        await waitFor(() => document.querySelector('.selection-kicker')?.textContent.includes('CHANNEL 10'), 'original snare inspector');
+        await waitFor(() => document.querySelector('.track-name-field input')?.value === readTrack('drums').name, 'original snare inspector');
         [...document.querySelectorAll('.track-actions button')].find(button => button.textContent === 'Edit notes').click();
         await waitFor(() => [...document.querySelectorAll('.score-display-header button')].some(button => button.textContent.trim() === 'Cancel'), 'all-drum phrase editor');
         const drumLabels = [...document.querySelectorAll('.track-group.drums .track-instrument')]

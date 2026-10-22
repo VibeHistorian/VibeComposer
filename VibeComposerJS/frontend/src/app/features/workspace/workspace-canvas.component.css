@@ -140,8 +140,7 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 
 /* Inspector quick controls */
 .inspector-editors { margin-top: 17px; display: grid; gap: 14px; }
-.quick-settings-group { padding-top: 11px; display: grid; gap: 10px; border-top: 1px solid var(--border-subtle); }
-.quick-settings-group > .eyebrow { margin-bottom: 1px; }
+.quick-settings-group { margin-top: 12px; padding-top: 12px; display: grid; gap: 10px; border-top: 1px solid var(--border-default); }
 .quick-field { min-width: 0; display: grid; gap: 5px; color: var(--text-secondary); font-size: 10px; }
 .quick-field select { width: 100%; min-width: 0; height: 29px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
 .quick-field input[type="number"] { width: 100%; min-width: 0; height: 29px; padding: 0 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; }
