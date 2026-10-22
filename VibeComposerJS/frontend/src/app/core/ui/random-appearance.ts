@@ -3,6 +3,8 @@ import { ARRANGED_PARTS } from '../music/part-role';
 import { type AppearancePreferences } from './appearance';
 import { themeColorTokens, type ThemeColors } from './theme';
 
+export type AppearanceMode = 'dark' | 'light';
+
 function hsl(hue: number, saturation: number, lightness: number): string {
   const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
   const sector = ((hue % 360) + 360) % 360 / 60;
@@ -28,10 +30,10 @@ function contrast(first: string, second: string): number {
 }
 
 /** A separate seeded stream: appearance never consumes musical generation randomness. */
-export function randomAppearance(current: AppearancePreferences, seed: bigint): AppearancePreferences {
+export function randomAppearance(current: AppearancePreferences, seed: bigint, mode: AppearanceMode): AppearancePreferences {
   const random = new JavaRandom(seed);
   const between = (min: number, max: number) => min + random.nextDouble() * (max - min);
-  const light = random.nextDouble() < .3;
+  const light = mode === 'light';
   const hue = between(155, 225);
   const saturation = random.nextDouble() < .25 ? between(.01, .08) : between(.15, .48);
   const panel = () => hsl(hue + between(-8, 8), saturation, light ? between(.87, .95) : between(.07, .16));

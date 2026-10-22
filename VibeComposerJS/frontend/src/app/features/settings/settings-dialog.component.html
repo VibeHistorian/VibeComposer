@@ -35,9 +35,13 @@
                 title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
             </div>
             <p>Changes apply immediately and are saved in your UI preferences.</p>
-            <button type="button" class="appearance-reset" aria-describedby="randomize-appearance-description"
-              (click)="preferences.randomizeAppearance()">Randomize colors</button>
-            <p id="randomize-appearance-description">Try a light or dark cyan, blue, green or gray theme with five distinct track colors. Resets color adjustments and keeps your fonts.</p>
+            <div class="appearance-actions">
+              <button type="button" class="appearance-reset" aria-describedby="randomize-appearance-description"
+                (click)="preferences.randomizeAppearance('dark')">Random dark mode</button>
+              <button type="button" class="appearance-reset" aria-describedby="randomize-appearance-description"
+                (click)="preferences.randomizeAppearance('light')">Random light mode</button>
+            </div>
+            <p id="randomize-appearance-description">Try a cyan, blue, green or gray theme in your chosen mode with five distinct track colors. Resets color adjustments and keeps your fonts.</p>
             <fieldset class="appearance-fields">
               <legend>Color adjustments</legend>
               <p>Adjust chosen colors. Hue shift includes track role colors when All is enabled. Zero keeps the original colors.</p>

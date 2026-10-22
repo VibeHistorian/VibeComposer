@@ -151,11 +151,13 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(dialog.querySelector('#appearance-title'),'Appearance opens by default');
         const beforeRandomize = JSON.parse(localStorage.getItem(key));
         const projectBeforeRandomize = sessionStorage.getItem('vibecomposer.project.v12');
-        button('Randomize colors').click();
+        button('Random dark mode').click();
         const randomized = await wait(()=>{
           const appearance = JSON.parse(localStorage.getItem(key)).appearance;
           return appearance.themeColors.background !== '#080e16' && appearance;
         },'random palette saved');
+        const brightness = color => [1,3,5].reduce((sum,offset)=>sum+parseInt(color.slice(offset,offset+2),16),0)/3;
+        ensure(brightness(randomized.themeColors.background)<80,'dark button produces dark background');
         ensure(new Set(Object.values(randomized.roleColors)).size===5,'five randomized track colors');
         ensure(JSON.stringify(randomized.fonts)===JSON.stringify(beforeRandomize.appearance.fonts),'randomizer preserves fonts');
         ensure(Object.values(randomized.colorAdjustments).every(value=>value===0),'randomizer neutralizes adjustments');
@@ -164,8 +166,8 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         for (const [role,color] of Object.entries(randomized.roleColors)) {
           ensure(randomStyle.getPropertyValue('--role-'+role).trim()===color,'random track color applied: '+role);
         }
-        button('Randomize colors').click();
-        await wait(()=>JSON.stringify(JSON.parse(localStorage.getItem(key)).appearance.themeColors)!==JSON.stringify(randomized.themeColors),'reroll creates another palette');
+        button('Random light mode').click();
+        await wait(()=>brightness(JSON.parse(localStorage.getItem(key)).appearance.themeColors.background)>220,'light button produces light background');
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===projectBeforeRandomize,'randomizer preserves musical project');
         button('Reset appearance to defaults').click();
         await wait(()=>getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#32d7f4','reset randomized palette');

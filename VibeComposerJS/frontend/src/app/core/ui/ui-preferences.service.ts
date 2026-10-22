@@ -5,7 +5,7 @@ import { adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRole
 import { PART_CONTROLS } from '../music/part-settings';
 import type { DrumMappingPreference } from '../music/drum-instruments';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
-import { randomAppearance } from './random-appearance';
+import { randomAppearance, type AppearanceMode } from './random-appearance';
 import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
 const STORAGE_KEY = 'vibecomposer.ui-preferences.v1';
@@ -58,10 +58,10 @@ export class UiPreferencesService {
   }
   resetAppearance(): void { this.commit({ ...this.state(), appearance: defaultAppearance() }); }
 
-  randomizeAppearance(): void {
+  randomizeAppearance(mode: AppearanceMode): void {
     const entropy = globalThis.crypto.getRandomValues(new Uint32Array(2));
     const seed = (BigInt(entropy[0]) << 32n) | BigInt(entropy[1]);
-    this.commit({ ...this.state(), appearance: randomAppearance(this.appearance(), seed) });
+    this.commit({ ...this.state(), appearance: randomAppearance(this.appearance(), seed, mode) });
   }
 
   toggleHueShiftRoles(): void {

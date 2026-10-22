@@ -157,7 +157,7 @@ test('randomize colors persists a complete palette without changing fonts, proje
   preferences.setFont('ui', 'Verdana, sans-serif');
   preferences.setColorAdjustment('hueShift', 50);
   preferences.setColorAdjustment('brightness', -50);
-  preferences.randomizeAppearance();
+  preferences.randomizeAppearance('dark');
   const appearance = preferences.appearance();
   assert.equal(appearance.fonts.ui, 'Verdana, sans-serif');
   assert.deepEqual(appearance.colorAdjustments, { brightness: 0, hueShift: 0, saturation: 0 });

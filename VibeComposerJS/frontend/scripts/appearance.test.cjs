@@ -25,9 +25,11 @@ test('random palettes vary modes, preserve fonts and remain readable with distin
   const modes = new Set(), palettes = new Set();
   for (let index = 0; index < 1000; index++) {
     const seed = BigInt(index) * 0x9e3779b97f4a7c15n;
-    const appearance = randomAppearance(original, seed);
+    const mode = index % 2 ? 'light' : 'dark';
+    const appearance = randomAppearance(original, seed, mode);
     const theme = appearance.themeColors;
     modes.add(luminance(theme.background) > .5);
+    assert.equal(luminance(theme.background) > .5, mode === 'light');
     palettes.add(JSON.stringify(theme));
     assert.deepEqual(decodeAppearance(appearance), appearance);
     assert.deepEqual(appearance.fonts, original.fonts);
@@ -62,7 +64,9 @@ test('random palettes vary modes, preserve fonts and remain readable with distin
   }
   assert.equal(modes.size, 2);
   assert.equal(palettes.size, 1000);
-  assert.deepEqual(randomAppearance(original, 123n), randomAppearance(original, 123n));
+  for (const mode of ['dark', 'light']) {
+    assert.deepEqual(randomAppearance(original, 123n, mode), randomAppearance(original, 123n, mode));
+  }
   assert.equal(original.colorAdjustments.hueShift, 50);
 });
 
@@ -104,7 +108,7 @@ test('role backgrounds follow theme surfaces, cells follow background and foregr
     assert.equal(tokens[`--role-${role}-dark`], '#b38c79');
     assert.equal(tokens[`--role-${role}-surface`], '#dbcac1');
     assert.equal(tokens[`--role-${role}-header`], '#c6a99b');
-    assert.equal(tokens[`--role-${role}-cell-surface`], '#38221a');
+    assert.equal(tokens[`--role-${role}-cell-surface`], '#201818');
     assert.equal(tokens[`--role-${role}-text`], '#1c0e07');
     assert.ok(contrast(theme.text, tokens[`--role-${role}-header`]) > 4.5);
     assert.ok(contrast(tokens[`--role-${role}-text`], tokens[`--role-${role}-surface`]) > 4.5);

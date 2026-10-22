@@ -21,6 +21,7 @@ h1 { margin: 0; font-size: 20px; font-weight: 550; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
 /* Appearance preferences */
+.appearance-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .appearance-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 586px; margin-bottom: 20px; }
 .appearance-heading h2 { margin: 0; }
 .appearance-toggle { padding: 5px 9px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 12px var(--font-ui); cursor: pointer; }
