@@ -427,7 +427,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const x = this.beatX(item.startBeat);
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         if (x + width <= this.labelWidth || x >= this.width) continue;
-        const cellSurface = color(`--role-${role}-cell-surface`);
+        const hasActiveTracks = group.tracks.some(track => this.trackPresent(item.section, track));
+        const cellSurface = color(`--role-${role}-${hasActiveTracks ? 'cell-surface' : 'cell-empty'}`);
         context.fillStyle = this.hoveredKey === `cell:${item.section.id}:${group.role}`
           ? `color-mix(in srgb, ${cellSurface} 85%, ${color('--text-primary')})` : cellSurface;
         context.fillRect(x, y, width, this.rowHeight);

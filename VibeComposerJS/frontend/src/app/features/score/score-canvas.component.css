@@ -21,6 +21,7 @@
 .pitch-key { position: absolute; left: 0; right: 0; overflow: hidden; box-sizing: border-box; border-bottom: 1px solid var(--grid-subdivision); color: var(--text-secondary); font: 9px var(--font-mono); padding-left: 4px; }
 .pitch-key.black-key { right: 18px; background: var(--surface-score); }
 .pitch-key.out-of-scale { background: var(--score-out-of-scale); }
+.pitch-key.in-scale { background: var(--score-in-scale); }
 .drum-label { display: flex; align-items: center; text-overflow: ellipsis; white-space: nowrap; border-top: 1px solid var(--border-subtle); font-size: 8px; }
 
 /* Octave labels remain readable at condensed pitch heights */
@@ -28,6 +29,7 @@
 .pitch-key.octave-key { overflow: visible; z-index: 1; border-bottom: 0; }
 .octave-key i { position: absolute; top: -3px; padding-right: 2px; background: var(--surface-low); line-height: 10px; }
 .out-of-scale.octave-key i { background: var(--score-out-of-scale); }
+.in-scale.octave-key i { background: var(--score-in-scale); }
 
 /* Octave boundaries share canvas positions and brightness */
 .octave-boundary { position: absolute; z-index: 2; left: 0; right: 0; background: var(--score-octave-line); pointer-events: none; }

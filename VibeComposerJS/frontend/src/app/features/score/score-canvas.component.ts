@@ -840,6 +840,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       fill(0, y, this.width, h, black && !this.scaleColoringActive() ? '--score-pitch-band' : '--score-row-even');
       // Shade blocked pitches before drawing pitch and time grid subdivisions.
       if (this.scaleColoringActive() && !this.inScale(midi)) fill(0, Math.max(0, y), this.width, h, '--score-out-of-scale');
+      if (this.inScale(midi)) fill(0, Math.max(0, y), this.width, h, '--score-in-scale');
       if (midi % 12 !== 11) line(0, Math.max(0, y), this.width, Math.max(0, y), '--grid-subdivision');
       rows.push({ midi, label: midi % 12 === 0 ? `C${Math.floor(midi / 12) - 1}` : '', y: Math.max(0, y), height: h, drum: false, black, inScale: this.inScale(midi) });
     }
@@ -894,7 +895,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const top = Math.round(y * resolution) / resolution;
       const height = Math.min(octaveLineHeight, this.harmonicHeight - top);
       if (height <= 0) continue;
-      const opacity = 0.2 + 0.8 * midi / 120;
+      const opacity = 0.1 + 0.4 * midi / 120;
       fill(0, top, this.width, height, '--score-octave-line', opacity);
       octaveLines.push({ midi, y: top, height, opacity });
     }

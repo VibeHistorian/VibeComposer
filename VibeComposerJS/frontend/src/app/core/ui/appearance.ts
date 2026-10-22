@@ -105,10 +105,11 @@ export function roleColorTokens(role: ArrangedPart, base: string, theme: ThemeCo
     [prefix]: base, [`${prefix}-glow`]: base + '50', [`${prefix}-strong`]: mix(theme.text, .22),
     [`${prefix}-dark`]: mix(theme.surface, .4), [`${prefix}-surface`]: mix(theme.surface, .72),
     [`${prefix}-border`]: mix(theme.surface, .32), [`${prefix}-text`]: mix(theme.text, .78),
-    [`${prefix}-header`]: mix(theme.surface, .55), [`${prefix}-cell-surface`]: mix(theme.surface, .79),
+    [`${prefix}-header`]: mix(theme.surface, .55), [`${prefix}-cell-surface`]: mix(theme.background, .8),
+    [`${prefix}-cell-empty`]: mix(theme.background, .88),
   };
   if (role === 'drums') {
-    for (const suffix of ['surface', 'border', 'cell-surface']) tokens[`--role-drum-${suffix}`] = tokens[`${prefix}-${suffix}`];
+    for (const suffix of ['surface', 'border', 'cell-surface', 'cell-empty']) tokens[`--role-drum-${suffix}`] = tokens[`${prefix}-${suffix}`];
     tokens['--role-kick'] = base;
     tokens['--role-kick-glow'] = base + '50';
     tokens['--role-kick-dark'] = tokens[`${prefix}-dark`];

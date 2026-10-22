@@ -73,7 +73,8 @@
 
   /* Chordlet palette shared by editors and harmony headers */
   --chordlet-border-tone: 45% 38%;
-  --chordlet-background-tone: 30% 18%;
+  --chordlet-background-tone: 50% 28%;
+  --chordlet-background-mix: 60%;
   --chordlet-foreground-tone: 70% 84%;
 
   /* Main generation actions */
@@ -118,6 +119,7 @@
   --score-pitch-band: #3b607d0d;
   --score-octave-line: #aaaaaa;
   --score-out-of-scale: #0a1826;
+  --score-in-scale: #223445;
   --score-scale-note: rgb(140 235 194 / 22%);
 
   /* Accent and arrangement roles */
@@ -174,12 +176,17 @@
   --role-drum-surface: var(--role-drums-surface);
   --role-drum-border: var(--role-drums-border);
 
-  /* Quiet arrangement cell backgrounds */
-  --role-melody-cell-surface: color-mix(in srgb, var(--role-melody), var(--surface-base) 79%);
-  --role-bass-cell-surface: color-mix(in srgb, var(--role-bass), var(--surface-base) 79%);
-  --role-chords-cell-surface: color-mix(in srgb, var(--role-chords), var(--surface-base) 79%);
-  --role-arpeggio-cell-surface: color-mix(in srgb, var(--role-arpeggio), var(--surface-base) 79%);
-  --role-drum-cell-surface: color-mix(in srgb, var(--role-drums), var(--surface-base) 79%);
+  /* Arrangement presence backgrounds */
+  --role-melody-cell-surface: color-mix(in srgb, var(--role-melody), var(--surface-canvas) 80%);
+  --role-bass-cell-surface: color-mix(in srgb, var(--role-bass), var(--surface-canvas) 80%);
+  --role-chords-cell-surface: color-mix(in srgb, var(--role-chords), var(--surface-canvas) 80%);
+  --role-arpeggio-cell-surface: color-mix(in srgb, var(--role-arpeggio), var(--surface-canvas) 80%);
+  --role-drum-cell-surface: color-mix(in srgb, var(--role-drums), var(--surface-canvas) 80%);
+  --role-melody-cell-empty: color-mix(in srgb, var(--role-melody), var(--surface-canvas) 90%);
+  --role-bass-cell-empty: color-mix(in srgb, var(--role-bass), var(--surface-canvas) 90%);
+  --role-chords-cell-empty: color-mix(in srgb, var(--role-chords), var(--surface-canvas) 90%);
+  --role-arpeggio-cell-empty: color-mix(in srgb, var(--role-arpeggio), var(--surface-canvas) 90%);
+  --role-drum-cell-empty: color-mix(in srgb, var(--role-drums), var(--surface-canvas) 90%);
 
   /* Parameter impact palette, independent of instrument roles */
   --parameter-timing: #94a3b8;

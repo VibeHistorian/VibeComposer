@@ -214,13 +214,14 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(dialog.querySelectorAll('input[type="color"]').length===12,'seven theme and five role colors');
         const style=()=>getComputedStyle(document.documentElement);
         const originalSurface=style().getPropertyValue('--surface-base');
+        const originalCellSurface=style().getPropertyValue('--role-bass-cell-surface');
         const surfaceInput=dialog.querySelector('[aria-label="Surface theme color"]');
         const textInput=dialog.querySelector('[aria-label="Text theme color"]');
         surfaceInput.value='#ffffff'; surfaceInput.dispatchEvent(new Event('input',{bubbles:true}));
         textInput.value='#000000'; textInput.dispatchEvent(new Event('input',{bubbles:true}));
         await wait(()=>style().getPropertyValue('--role-bass-header').trim()==='#cbd8e0','role header follows light surface');
         ensure(getComputedStyle(document.querySelector('.track-group.bass .group-heading')).backgroundColor==='rgb(203, 216, 224)','light role header rendered');
-        ensure(style().getPropertyValue('--role-bass-cell-surface').trim()==='#e7edf1','arrangement cell follows light surface');
+        ensure(style().getPropertyValue('--role-bass-cell-surface')===originalCellSurface,'arrangement cell retains its background blend when surface changes');
         ensure(style().getPropertyValue('--role-bass-text').trim()==='#1f2529','role text follows dark theme text');
         button('Reset appearance to defaults').click();
         await wait(()=>style().getPropertyValue('--surface-base')===originalSurface,'restore dark surface');

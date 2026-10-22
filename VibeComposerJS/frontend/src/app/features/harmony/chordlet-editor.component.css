@@ -2,7 +2,7 @@
 :host { display: block; min-width: 0; }
 .chordlet-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .chordlet-list { min-width: 0; display: flex; gap: 4px; overflow-x: auto; padding: 4px 1px; scrollbar-width: thin; }
-.chordlet { display: flex; flex: 0 0 auto; align-items: center; border: 1px solid hsl(var(--chord-hue) var(--chordlet-border-tone)); border-radius: 5px; background: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-background-tone)), var(--surface-base) 72%); }
+.chordlet { display: flex; flex: 0 0 auto; align-items: center; border: 1px solid hsl(var(--chord-hue) var(--chordlet-border-tone)); border-radius: 5px; background: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-background-tone)), var(--surface-base) var(--chordlet-background-mix)); }
 .chordlet-label, .chordlet-remove { border: 0; background: transparent; color: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-foreground-tone)), var(--text-primary) 78%); font: 11px var(--font-mono); }
 .chordlet-label { padding: 5px 2px 5px 6px; cursor: grab; touch-action: none; white-space: nowrap; }
 .chordlet-remove { padding: 4px 5px 4px 2px; cursor: pointer; opacity: .65; }
