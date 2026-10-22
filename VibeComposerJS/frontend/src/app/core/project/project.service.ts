@@ -255,7 +255,8 @@ export class ProjectService {
     if (!ARRANGED_PARTS.includes(role) || !Number.isInteger(requested) || requested < 0 || requested > 64) return 'invalid';
     const current = this.state();
     const members = current.tracks.filter(track => track.role === role);
-    const target = Math.max(requested, members.filter(track => track.rerollLocked).length);
+    const minimum = current.tracks.some(track => track.role !== role) ? 0 : 1;
+    const target = Math.max(requested, minimum, members.filter(track => track.rerollLocked).length);
     if (target === members.length) return 'unchanged';
     if (target > members.length) return this.generateRoleTracks(role, target - members.length);
     const removable = members.filter(track => !track.rerollLocked)

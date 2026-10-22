@@ -132,6 +132,12 @@ export class WorkspaceCanvasComponent {
   readonly partPanelExpanded = signal(true);
   private readonly rerollFeedback = signal<{ project: CompositionProject; role: ArrangedPart; message: string } | null>(null);
   readonly rerollMessage = computed(() => this.rerollFeedback()?.project === this.project() ? this.rerollFeedback()?.message : null);
+  readonly minimumRoleCount = computed(() => {
+    const tracks = this.project().tracks;
+    return Object.fromEntries(ARRANGED_PARTS.map(role =>
+        [role, tracks.some(track => track.role !== role) ? 0 : 1],
+    )) as Record<ArrangedPart, number>;
+  });
 
   policyFor(role: ArrangedPart) { return { ...DEFAULT_TRACK_POLICIES[role], ...this.project().trackGenerationPolicies?.[role] }; }
   instrumentPolicyFor(role: ArrangedPart) { return this.project().instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role]; }

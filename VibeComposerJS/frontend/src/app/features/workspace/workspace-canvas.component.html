@@ -19,7 +19,7 @@
                 [class.active]="instrumentPolicyFor(group.role).randomize" [attr.aria-pressed]="instrumentPolicyFor(group.role).randomize"
                 [disabled]="editing()" (click)="updateInstrumentPolicy(group.role, { randomize: !instrumentPolicyFor(group.role).randomize })">♪</button>
             </div>
-            <input class="group-count" type="number" min="0" [max]="64 - project().tracks.length + tracksFor(group.role).length" step="1"
+            <input class="group-count" type="number" [min]="minimumRoleCount()[group.role]" [max]="64 - project().tracks.length + tracksFor(group.role).length" step="1"
               [attr.aria-label]="group.name + ' track count'" title="Change total tracks; locked tracks are kept"
               [value]="tracksFor(group.role).length" [disabled]="editing()" (focus)="$any($event.target).select()"
               (keydown.enter)="$any($event.target).blur()" (change)="changeRoleCount(group.role, $event)" />

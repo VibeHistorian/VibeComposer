@@ -321,21 +321,45 @@ test('role totals shrink highest numbers first, preserve locks and references, a
   assert.equal(service.project().tracks.at(-1).id, 'track-chords-5');
 });
 
-test('role totals support empty projects, large increases and strict capacity without consuming redo', () => {
+test('role totals preserve the final track and enforce capacity without consuming redo', () => {
   const { service, load } = fixture();
-  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) assert.equal(service.setRoleTrackCount(role, 0), 'changed');
-  assert.equal(service.project().tracks.length, 0);
-  const empty = service.exportProjectJson();
-  assert.equal(service.importProjectJson(empty), true);
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio']) assert.equal(service.setRoleTrackCount(role, 0), 'changed');
+  const before = service.exportProjectJson();
+  assert.equal(service.setRoleTrackCount('drums', 0), 'unchanged');
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.project().tracks.length, 1);
+  assert.equal(service.importProjectJson(before), true);
   const restored = new (load('core/project/project.service.ts').ProjectService)();
-  assert.equal(restored.project().tracks.length, 0);
+  assert.equal(restored.project().tracks.length, 1);
   assert.equal(service.setRoleTrackCount('drums', 64), 'changed');
   assert.equal(service.project().tracks.length, 64);
   assert.equal(service.setRoleTrackCount('bass', 1), 'invalid');
-  service.undo(); assert.equal(service.project().tracks.length, 0);
+  service.undo(); assert.equal(service.project().tracks.length, 1);
   for (const count of [-1, 65, 1.5, NaN]) assert.equal(service.setRoleTrackCount('drums', count), 'invalid');
   assert.equal(service.setRoleTrackCount('drums', 0), 'unchanged');
   assert.equal(service.canRedo(), true);
+});
+
+test('the only populated role clamps to one and can be cleared after another role gains tracks', () => {
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const { service } = fixture();
+    for (const other of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+      if (other !== role) service.setRoleTrackCount(other, 0);
+    }
+    service.setRoleTrackCount(role, 3);
+    const before = service.exportProjectJson();
+    assert.equal(service.setRoleTrackCount(role, 0), 'changed');
+    assert.equal(service.project().tracks.length, 1);
+    assert.equal(service.project().tracks[0].role, role);
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo();
+    assert.equal(service.setRoleTrackCount(role, 0), 'unchanged');
+    const other = role === 'bass' ? 'chords' : 'bass';
+    assert.equal(service.setRoleTrackCount(other, 1), 'changed');
+    assert.equal(service.setRoleTrackCount(role, 0), 'changed');
+    assert.equal(service.project().tracks.length, 1);
+    assert.equal(service.project().tracks[0].role, other);
+  }
 });
 
 test('generated tracks append atomically with one history entry for every role', () => {
