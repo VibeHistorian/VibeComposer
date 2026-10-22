@@ -278,7 +278,7 @@
         @if (editor(); as edit) { <ng-container [ngTemplateOutlet]="edit.inspectorTemplate()" /> }
       } @else {
       <header class="canvas-heading inspector-heading">
-        <div><p class="eyebrow">INSPECTOR</p><h2>{{ localPartTarget() ? 'Section part' : selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
+        <div><h2>{{ localPartTarget() ? settingsTarget().kind === 'section-role' ? 'Section group' : 'Section part' : selectedSection() ? 'Section' : selectedRole() ? roleName(selectedRole() ?? 'bass') + ' group' : 'Track' }}</h2></div>
         <i class="role-dot" [class]="partRole()"></i>
       </header>
 
