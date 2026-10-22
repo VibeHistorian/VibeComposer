@@ -457,6 +457,11 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => read().trackRerollCounts?.[role] === 1, role + ' rerolled');
           result.otherRoleRerolls.push({ role, unchanged, synced, changed: JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) !== before });
         }
+        const rhythmColorProbe = document.createElement('span');
+        rhythmColorProbe.style.color = 'color-mix(in srgb, #418c91 70%, #f2f7ff)';
+        document.body.append(rhythmColorProbe);
+        const expectedRhythmColor = getComputedStyle(rhythmColorProbe).color;
+        rhythmColorProbe.remove();
         result.parameterAreas = [];
         result.generationMiniKnobs = [];
         for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
@@ -489,7 +494,7 @@ test('production Angular controls initialize selects from settings and support r
             rhythm: rhythm.filter(Boolean).map(area => getComputedStyle(area).getPropertyValue('--accent-primary').trim()),
             backgrounds: rhythm.filter(Boolean).map(area => getComputedStyle(area).backgroundColor),
             knobs: rhythm.filter(Boolean).flatMap(area => [...area.querySelectorAll('.knob-face')])
-              .map(knob => getComputedStyle(knob).backgroundImage.includes('86, 182, 188')) });
+              .map(knob => getComputedStyle(knob).backgroundImage.includes(expectedRhythmColor)) });
         }
         result.inspectorPolicyRemoved = !document.querySelector('#part-inspector vc-track-generation-policy');
         result.bassColor = getComputedStyle(document.querySelector('.track-group.bass .role-dot')).backgroundColor;
@@ -669,10 +674,10 @@ test('production Angular controls initialize selects from settings and support r
       if (areas.role === 'drums') assert.deepEqual(pitchColors, []);
       else {
         assert.ok(pitchColors.length > 0, areas.role + ' has pitch controls');
-        assert.ok(pitchColors.every(color => color === '#a49ac9'), areas.role + ' pitch category color');
+        assert.ok(pitchColors.every(color => color === 'color-mix(in srgb, #7e70a6 70%, #f2f7ff)'), areas.role + ' pitch category color follows theme text');
       }
       assert.ok(areas.rhythm.length > 0);
-      assert.ok(areas.rhythm.every(color => color === '#56b6bc'));
+      assert.ok(areas.rhythm.every(color => color === 'color-mix(in srgb, #418c91 70%, #f2f7ff)'), areas.role + ' rhythm category color follows theme text');
       assert.equal(new Set(areas.backgrounds).size, 1);
       assert.ok(areas.knobs.length > 0 && areas.knobs.every(Boolean), areas.role + ' rhythm knob colors');
     }
