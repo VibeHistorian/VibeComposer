@@ -298,18 +298,30 @@
             <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!partSettingsInInspector()" [local]="true" [overriddenKeys]="overriddenKeys()"
               (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
           }
-          @for (track of contextTracks(); track track.id) {
-            <section class="quick-settings-group">
-              <strong>{{ track.name }}</strong>
-              <vc-compact-toggle [attr.data-control-role]="track.role" label="Include in this section"
-                [description]="'Include ' + track.name + ' in the selected section.'"
-                [active]="contextTrackPresent(track)" (toggled)="toggleContextTrackPresence(track)" />
-              <button type="button" class="restore-track-button" (click)="selectTrack(track.id)">Edit global track settings</button>
-              <button type="button" class="restore-track-button" (click)="openTrackEditor(track.id)">Edit notes for entire track</button>
-              @if (track.editedPhrase && generationAvailable[track.role]) {
-                <button type="button" class="restore-track-button" (click)="projects.clearTrackPhrase(track.id)">Restore generated notes for entire track</button>
-              }
-            </section>
+          @if (settingsTarget().kind === 'section-role') {
+            <div class="section-track-controls">
+              <p class="eyebrow">TRACKS IN SECTION</p>
+              <div class="section-presence-role" [attr.data-control-role]="partRole()" [attr.aria-label]="roleName(partRole()) + ' presence'">
+                @for (track of contextTracks(); track track.id) {
+                  <vc-compact-toggle [label]="track.name" [description]="'Include ' + track.name + ' in this section.'"
+                    [active]="contextTrackPresent(track)" (toggled)="toggleContextTrackPresence(track)" />
+                }
+              </div>
+            </div>
+          } @else {
+            @for (track of contextTracks(); track track.id) {
+              <section class="quick-settings-group">
+                <strong>{{ track.name }}</strong>
+                <vc-compact-toggle [attr.data-control-role]="track.role" label="Include in this section"
+                  [description]="'Include ' + track.name + ' in the selected section.'"
+                  [active]="contextTrackPresent(track)" (toggled)="toggleContextTrackPresence(track)" />
+                <button type="button" class="restore-track-button" (click)="selectTrack(track.id)">Edit global track settings</button>
+                <button type="button" class="restore-track-button" (click)="openTrackEditor(track.id)">Edit notes for entire track</button>
+                @if (track.editedPhrase && generationAvailable[track.role]) {
+                  <button type="button" class="restore-track-button" (click)="projects.clearTrackPhrase(track.id)">Restore generated notes for entire track</button>
+                }
+              </section>
+            }
           }
         </div>
       } @else if (selectedSection(); as section) {
