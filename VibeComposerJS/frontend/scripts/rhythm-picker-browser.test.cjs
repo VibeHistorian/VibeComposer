@@ -594,7 +594,7 @@ test('production Angular controls initialize selects from settings and support r
         result.initiallyCollapsed = initiallyCollapsed;
         result.compactControls = [...document.querySelectorAll('.part-control.compact-control')].map(control => {
           const code = control.querySelector('.control-name, .toggle-button');
-          const status = control.querySelector('.knob-status .inherit-snowflake, .toggle-status .inherit-snowflake');
+          const status = control.querySelector('.inherit-snowflake');
           return { code: code.textContent.trim(), width: control.getBoundingClientRect().width, joined: control.classList.contains('joined-control'),
             toggleHeight: control.querySelector('.toggle-button')?.getBoundingClientRect().height ?? null,
             tooltip: control.title, hasInheritanceStatus: !!status };

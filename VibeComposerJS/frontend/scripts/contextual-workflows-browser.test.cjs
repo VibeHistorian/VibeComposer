@@ -179,6 +179,21 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const resetButton = document.querySelector('vc-part-scope-actions [aria-label="Reset to inherited"]');
       if (resetButton.disabled || resetButton.classList.contains('values-match')) throw new Error('differing cell reset should be emphasized');
       const resetBackground = getComputedStyle(resetButton).backgroundColor;
+      // Quick inheritance interrupts the bottom border and leaves titles their full width.
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const quickMarkers = [...document.querySelectorAll('.part-settings-content vc-part-settings-editor .inherit-snowflake')];
+      if (!quickMarkers.length) throw new Error('local controls need inheritance markers');
+      for (const marker of quickMarkers) {
+        const control = marker.closest('.part-control');
+        const box = marker.getBoundingClientRect(), controlBox = control.getBoundingClientRect();
+        if (Math.abs((box.top + box.bottom) / 2 - controlBox.bottom) > 2) throw new Error('inheritance marker must sit on the bottom border: ' + control.dataset.controlKey);
+        if (Math.abs((box.left + box.right - controlBox.left - controlBox.right) / 2) > 1) throw new Error('quick inheritance marker must be centered: ' + control.dataset.controlKey);
+        const border = control.querySelector('.quick-inheritance-border');
+        if (!border || getComputedStyle(border).maskImage === 'none') throw new Error('quick inheritance needs a bottom border gap');
+        const label = control.querySelector('.control-name');
+        if (label && label.scrollWidth > label.clientWidth) throw new Error('quick title must fit in full: ' + control.dataset.controlKey);
+        if (control.querySelectorAll('.inherit-snowflake').length !== 1) throw new Error('joined controls need one shared inheritance marker');
+      }
       const previous = read(); copy.click();
       await wait(() => read().tracks.find(track => track.id === 'track-bass-1').generatorSettings.noteVariation === 35, 'global copy');
       const after = read();

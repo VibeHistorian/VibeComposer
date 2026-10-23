@@ -1,5 +1,5 @@
 <div class="compact-knob" [class.mini]="mini()" [class.at-default]="atDefault()" [class.named-mini]="mini() && shortLabel() !== null" [class.dense]="dense()" [class.coded]="compact()" [class.disabled]="disabled()" [title]="tooltip()" (wheel)="onWheel($event)" (contextmenu)="resetDefault($event)">
-  <vc-control-heading #heading [class.label-hidden]="!showLabel()" [label]="label()" [shortLabel]="shortLabel()" [showStatus]="!mini() && !dense() && !compact()" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
+  <vc-control-heading #heading [class.label-hidden]="!showLabel()" [label]="label()" [shortLabel]="shortLabel()" [showStatus]="showLabel() && (!mini() || shortLabel() !== null)" [inheritance]="inheritance()" (inheritRequested)="inheritRequested.emit()" />
   <span class="knob-face" [style.--knob-progress]="angle()" [style.--knob-accent]="mixAccent()" [class.mix-face]="mixAccent() !== null" aria-hidden="true"><span>{{ mini() && !hoverLabelOnly() && shortLabel() === null ? valueFormat() === 'decibels' ? 'dB' : label().slice(0, 1) : mixed() && preview() === null ? '—' : shownValue() }}</span></span>
   @if (showValueBelow()) {
     <output class="knob-value">{{ mixed() && preview() === null ? 'Mixed' : formattedValue() }}</output>
@@ -10,8 +10,8 @@
     (pointerdown)="startDrag($event)" (pointermove)="moveDrag($event)" (pointerup)="finishDrag($event)"
     (pointercancel)="cancelDrag()" (lostpointercapture)="cancelDrag()" (keydown.escape)="cancelDrag()"
     (input)="previewValue($event)" (change)="commitValue($event)" />
-  @if (compact() && inheritance() !== 'global') {
-    <vc-control-heading class="knob-status" [label]="label()" [statusOnly]="true" [inheritance]="inheritance()"
+  @if ((!showLabel() || (mini() && shortLabel() === null)) && inheritance() !== 'global') {
+    <vc-control-heading class="knob-heading-status" [label]="label()" [statusOnly]="true" [inheritance]="inheritance()"
       (inheritRequested)="inheritRequested.emit()" />
   }
   @if (composeEnabled() !== null) {

@@ -1,6 +1,6 @@
 /* Toggle surface */
 :host { display: inline-block; min-width: 0; }
-.toggle-control { position: relative; }
+.toggle-control { position: var(--quick-knob-position, relative); }
 .toggle-button { min-height: 25px; padding: 4px 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 10px var(--font-ui); cursor: pointer; }
 .toggle-button:hover:not(:disabled):not(.active) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .toggle-button.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
@@ -8,7 +8,12 @@
 .toggle-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 .toggle-button:disabled { opacity: .5; cursor: default; }
 
-/* Compact codes and independent inheritance target */
+/* Compact codes */
 .coded .toggle-button { width: 58px; min-height: 25px; padding: 4px; font: 9px var(--font-mono); }
+
+/* Unnamed controls center inheritance above the surface */
+.toggle-heading-status { position: absolute; top: var(--quick-heading-top, 0px); left: 50%; transform: var(--quick-heading-transform, translate(-50%, -100%)); width: 18px; height: 18px; z-index: 2; }
+
+/* Retain the button overlay position for future reroll locks */
 .coded.with-status .toggle-button { padding-right: 17px; }
 .toggle-status { position: absolute; top: 1px; right: 1px; width: 18px; height: 18px; }

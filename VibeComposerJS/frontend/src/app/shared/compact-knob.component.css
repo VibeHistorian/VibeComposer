@@ -6,9 +6,11 @@
 .knob-face > span { width: 30px; height: 30px; padding: 0 2px; overflow: hidden; align-content: center; border: 1px solid var(--border-subtle); border-radius: 50%; background: var(--surface-low); color: var(--text-primary); font: 10px var(--font-mono); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .knob-value { justify-self: center; color: var(--text-primary); font: 10px var(--font-mono); }
 
-/* Compact parameter titles and embedded inheritance */
+/* Compact parameter titles */
 .coded { width: 58px; }
 .coded > vc-control-heading:first-child { justify-content: center; }
+
+/* Retain the face overlay position for future reroll locks */
 .coded .knob-status { position: var(--quick-knob-overlay-position, absolute); z-index: 2; grid-area: var(--quick-knob-overlay-area, auto); align-self: end; justify-self: center; top: var(--quick-knob-overlay-top, 50px); left: var(--quick-knob-overlay-left, 50%); transform: var(--quick-knob-overlay-transform, translateX(-50%)); width: 14px; height: 14px; }
 
 /* Native keyboard and pointer control */
@@ -34,6 +36,7 @@
 .named-mini .knob-face > span { width: 20px; height: 20px; }
 .named-mini input { top: 20px; width: 28px; height: 28px; }
 .compact-knob > vc-control-heading.label-hidden { display: none; }
+.compact-knob > vc-control-heading.knob-heading-status { display: flex; position: absolute; top: var(--quick-heading-top, 0px); left: 50%; transform: var(--quick-heading-transform, translate(-50%, -100%)); width: 18px; height: 18px; z-index: 2; }
 .disabled { opacity: .5; }
 .disabled input { cursor: default; }
 

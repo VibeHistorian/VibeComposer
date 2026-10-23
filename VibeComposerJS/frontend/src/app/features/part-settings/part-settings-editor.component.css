@@ -1,7 +1,7 @@
 /* Part controls */
 :host { display: block; min-width: 0; }
 .part-list { field-sizing: content; max-width: 100%; box-sizing: border-box; }
-.part-controls { --knob-default-brightness: 1; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.part-controls { --knob-default-brightness: 1; --quick-inheritance-width: 18px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
 
 /* Shared musical impact areas */
 .part-control-area { display: flex; flex-direction: column; flex: 1 1 180px; min-width: 0; max-width: 100%; margin: 0; padding: 9px 10px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-section); background: var(--parameter-surface); }
@@ -83,7 +83,10 @@
 :host(.quick-layout) .quick-control-border { display: block; position: absolute; inset: -1px; min-width: 0; margin: 0; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-control); pointer-events: none; }
 :host(.quick-layout) .quick-control-border:has(legend) { top: -10px; }
 .quick-control-border legend { max-width: calc(100% - 8px); height: 18px; margin-inline: auto; padding: 0 3px; overflow: hidden; color: transparent; font: 10px var(--font-ui); white-space: nowrap; }
-.border-status { display: inline-block; width: 18px; margin-left: 5px; }
+
+/* Cut a marker-sized gap in the existing bottom edge, preserving its corners */
+:host(.quick-layout) .quick-control-border.quick-inheritance-border { mask-image: linear-gradient(#000, #000), linear-gradient(to right, #000 calc(50% - var(--quick-inheritance-width) / 2), transparent calc(50% - var(--quick-inheritance-width) / 2), transparent calc(50% + var(--quick-inheritance-width) / 2), #000 calc(50% + var(--quick-inheritance-width) / 2)); mask-size: 100% calc(100% - 1px), 100% 1px; mask-position: top, bottom; mask-repeat: no-repeat; }
+.quick-inheritance { position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); width: var(--quick-inheritance-width); height: 18px; z-index: 2; }
 
 /* Local overrides share the snowflake accent across their control borders */
 .part-control.custom { --border-default: var(--accent-primary); }
@@ -103,8 +106,10 @@
 :host(.quick-layout) .part-control.pattern-control { width: 112px; }
 :host(.quick-layout) .rhythm-control .control-content { min-height: 0; align-content: center; }
 :host(.quick-layout) .seed-control { flex: 0 1 auto; }
+:host(.quick-layout) .part-control:has(.quick-inheritance) { margin-bottom: 1px; }
 
 /* Placement targets replace parameter interactions */
 .placement-target { position: absolute; inset: 0; z-index: 1; border: 1px solid var(--border-accent); border-radius: var(--radius-control); background: transparent; cursor: pointer; }
 .placement-target:hover, .placement-target:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; background: color-mix(in srgb, var(--control-role-color) 18%, transparent); box-shadow: 0 0 16px color-mix(in srgb, var(--control-role-color) 55%, transparent); }
 :host(.placement-editing) .control-content { pointer-events: none; }
+:host(.placement-editing) .quick-inheritance { pointer-events: none; }
