@@ -238,8 +238,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       change(document.querySelector('#part-inspector [aria-label="Contour"]'), '0, 2, -1');
       document.querySelector('#part-inspector [aria-label="Chord-relative contour"]').click();
       document.querySelector('#part-inspector [aria-label="Octave adjustments"]').click();
-      document.querySelector('#part-inspector [aria-label="Correct by melody"]').click();
-      await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.arpPatternRotate === 3 && read().tracks.find(track => track.role === 'arpeggio').generatorSettings.correctMelodyNotes, 'arp musical settings');
+      if (document.querySelector('#part-inspector [aria-label="Correct by melody"]')) throw new Error('Removed arpeggio correction control is visible');
+      await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.arpPatternRotate === 3, 'arp musical settings');
       await wait(() => document.querySelector('.part-settings-panel [aria-label="Rotate"]').value === '3', 'arp editors synchronized');
       result.arpMusical = read().tracks.filter(track => track.role === 'arpeggio').every(track =>
         track.generatorSettings.pattern === 'custom' && track.generatorSettings.arpPatternCustom.join(',') === '-1,0,3,1'

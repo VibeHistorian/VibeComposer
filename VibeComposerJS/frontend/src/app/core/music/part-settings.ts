@@ -158,8 +158,6 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
     { key: 'arpContourChordMode', label: 'Chord-relative contour', kind: 'boolean', defaultValue: false, advanced: true },
     { key: 'useOctaveAdjustments', label: 'Octave adjustments', kind: 'boolean', defaultValue: false, advanced: true,
       description: 'Apply Java’s seeded octave pattern and chord-index octave adjustments.' },
-    { key: 'correctMelodyNotes', label: 'Correct by melody', kind: 'boolean', defaultValue: false, advanced: true,
-      description: 'Resolve semitone clashes using the first melody track’s onset grid in this section, even when its arrangement presence is off.' },
     choice('octaves', 'Octaves', [1, 2]),
     ...pitched, number('noteLengthMultiplier', 'Note length', 25, 200, 100), ...common],
   drums: [...fill, ...rhythmControls.map(control => control.key === 'hitsPerPattern' ? { ...control, defaultValue: 4 }

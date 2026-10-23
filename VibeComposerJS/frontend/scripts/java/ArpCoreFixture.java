@@ -84,7 +84,7 @@ public class ArpCoreFixture {
             part.setCustomPattern(grid); boolean customVelocity = sample >= 32;
             if (customVelocity) part.setCustomVelocities(velocities);
             GUIConfig config = new GUIConfig(); config.setScaleMidiVelocityInArrangement(false);
-            config.setUseOctaveAdjustments(sample % 3 == 0); config.setRandomArpCorrectMelodyNotes(sample % 3 == 1);
+            config.setUseOctaveAdjustments(sample % 3 == 0);
             Section section = new Section("CHORUS1", 1, 100, 100, 100, 100, 100);
             MidiGenerator midi = new MidiGenerator(config); midi.setProgressionDurations(Collections.nCopies(count, 4.0));
             Map<String, Object> settings = new LinkedHashMap<>();
@@ -92,7 +92,7 @@ public class ArpCoreFixture {
             settings.put("rhythm", follow ? "melody" : rhythms[(sample / 8) % 8]); settings.put("hitsPerPattern", hits);
             settings.put("arpPatternRotate", part.getArpPatternRotate()); settings.put("arpPatternCustom", part.getArpPatternCustom());
             settings.put("arpContour", part.getArpContour()); settings.put("arpContourChordMode", part.isArpContourChordMode());
-            settings.put("useOctaveAdjustments", config.isUseOctaveAdjustments()); settings.put("correctMelodyNotes", config.isRandomArpCorrectMelodyNotes());
+            settings.put("useOctaveAdjustments", config.isUseOctaveAdjustments());
             settings.put("chordSpan", part.getChordSpan()); settings.put("patternRepeat", part.getPatternRepeat());
             settings.put("patternShift", part.getPatternShift()); settings.put("patternFlip", part.isPatternFlip());
             settings.put("pauseChance", part.getPauseChance()); settings.put("exceptionChance", part.getExceptionChance());

@@ -151,7 +151,6 @@ export interface ArpeggioSettings extends CommonPartSettings {
   readonly arpContour?: readonly number[];
   readonly arpContourChordMode?: boolean;
   readonly useOctaveAdjustments?: boolean;
-  readonly correctMelodyNotes?: boolean;
 }
 
 export interface DrumSettings extends CommonPartSettings, RhythmSettings {

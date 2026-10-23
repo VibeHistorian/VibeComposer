@@ -41,7 +41,7 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
       break;
     case 'arpeggio':
       notes = generateArpeggio(seed, project.key, project.scale, project.progression, track.generatorSettings, project.progressionChords,
-        context ?? (track.generatorSettings.rhythm === 'melody' || track.generatorSettings.correctMelodyNotes ? sectionMelodyContext(project) : undefined), harmony,
+        context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined), harmony,
         track.orderOffset ?? Math.max(1, project.tracks.filter(candidate => candidate.role === track.role).findIndex(candidate => candidate.id === track.id) + 1))
         .map((note, index) => ({ id: `arpeggio-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
@@ -138,7 +138,7 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
     const progression = !manual ? harmony.degrees : project.progression;
     const generated = !manual
       ? generateTrackPhrase({ ...sectionProject(project, section), progression, progressionChords: harmony.customChords }, effectiveTrack, false,
-        (effectiveTrack.role === 'arpeggio' && (effectiveTrack.generatorSettings.rhythm === 'melody' || effectiveTrack.generatorSettings.correctMelodyNotes))
+        (effectiveTrack.role === 'arpeggio' && effectiveTrack.generatorSettings.rhythm === 'melody')
           || (effectiveTrack.role === 'drums' && effectiveTrack.generatorSettings.rhythm === 'melody') ? sectionMelodyContext(project, section) : undefined, harmony) : track.editedPhrase!;
     const expandedPhrase = effectiveTrack.role === 'bass' && !manual
       ? withBassOctaveInterval(generated, effectiveTrack.generatorSettings.octaveInterval) : generated;

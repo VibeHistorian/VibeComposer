@@ -63,6 +63,8 @@ Measured on 2026-10-16: the focused matrix passed in 44.9 seconds; the preceding
 
 Historical Melody Java oracle cases with nonzero Doubled rhythm or Lead chords probabilities, enabled pitch exceptions, or Arpy surprises are excluded from current parity checks because those controls and consumers were removed. Removed part fields and the Single note exceptions and Arpy surprises global flags are stripped from the remaining oracle inputs; fixture files retain the original Java evidence.
 
+Historical Arpeggio oracle cases enabling Correct by melody are also excluded after removal of that control and consumer. Its saved field is stripped from supported oracle inputs; new Arpeggio fixtures leave Java correction disabled and omit the field.
+
 ## Project behavior tests and fixture support
 
 `pnpm run test:parts` also runs `project-codec.test.cjs`, which exercises project decoding, validation, diagnostics, defaults, and arrangement candidates without Angular or browser storage. Module ownership is documented in [the project-state guide](../src/app/core/project/README.md).

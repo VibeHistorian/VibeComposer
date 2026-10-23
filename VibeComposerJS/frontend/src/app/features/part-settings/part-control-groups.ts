@@ -12,7 +12,7 @@ export const PART_CONTROL_GROUPS = [
 export function partControlGroup(key: string): string {
   if (['fillPausesPerChord', 'splitChance', 'startNoteChance'].includes(key)) return 'rhythm';
   if (['arpPatternRotate', 'arpPatternCustom', 'arpContour', 'arpContourChordMode'].includes(key)) return 'shape';
-  if (['useOctaveAdjustments', 'correctMelodyNotes'].includes(key)) return 'pitch';
+  if (key === 'useOctaveAdjustments') return 'pitch';
   if (['targetDirection', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey'].includes(key)) return 'pitch';
   if (['maxDirectionChanges', 'newBlocksChance'].includes(key)) return 'shape';
   if (key === 'ghosts') return 'dynamics';

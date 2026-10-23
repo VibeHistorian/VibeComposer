@@ -10,7 +10,7 @@ const { assertRejectedProjectImport } = require('../support/project-import-asser
 test('arpeggio register matches all production Java pitches in the saved bug configuration and exported MIDI', () => {
   const { service, phrase, midi } = fixture();
   const reference = JSON.parse(fs.readFileSync(path.join(__dirname, '..','fixtures/arpeggio-saved-config.java.json'),'utf8'));
-  assert.equal(service.importProjectJson(JSON.stringify(rescopeMelodyProject(reference.project), (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises'].includes(key) ? undefined : value)),true);
+  assert.equal(service.importProjectJson(JSON.stringify(rescopeMelodyProject(reference.project), (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises', 'correctMelodyNotes'].includes(key) ? undefined : value)),true);
   const project = service.project(), exported = new Midi(midi.generateCompositionMidi(project));
   let compared = 0;
   for (const track of project.tracks.filter(track => track.role === 'arpeggio')) {
@@ -24,7 +24,7 @@ test('arpeggio register matches all production Java pitches in the saved bug con
 test('contextual melodies without removed controls match exported MIDI in the saved configuration', () => {
   const { service, phrase, midi } = fixture();
   const reference = JSON.parse(fs.readFileSync(path.join(__dirname, '..','fixtures/arpeggio-saved-config.java.json'),'utf8'));
-  assert.equal(service.importProjectJson(JSON.stringify(rescopeMelodyProject(reference.project), (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises'].includes(key) ? undefined : value)),true);
+  assert.equal(service.importProjectJson(JSON.stringify(rescopeMelodyProject(reference.project), (key, value) => ['doubledRhythmChance', 'leadChordsChance', 'maxNoteExceptions', 'noteExceptionChance', 'singleNoteExceptions', 'arpySurprises', 'correctMelodyNotes'].includes(key) ? undefined : value)),true);
   const project = service.project(), exported = new Midi(midi.generateCompositionMidi(project));
   for (const track of project.tracks.filter(track => track.role === 'melody')) {
     const expected = phrase.layOutTrackPhrase(project,track).map(note => note.midi);
@@ -338,13 +338,17 @@ test('P5d Ghosts, melody rhythm and humanize match complete production Java drum
   }
 });
 
-test('P5c Arpeggio direction, rotation, contour, octave and melody consumers match complete Java phrases', () => {
+test('P5c Arpeggio direction, rotation, contour, octave and melody rhythm match supported complete Java phrases', () => {
   const { load } = fixture();
   const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/arpeggio-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   assert.equal(cases.length, 256);
-  for (const [index, entry] of cases.entries()) {
-    const actual = generateArpeggio(BigInt(entry.seed), entry.key, entry.scale, entry.progression, entry.settings, undefined, entry.melody);
+  // Keep historical oracle data; correction-enabled cases describe a removed consumer.
+  const supported = cases.filter(entry => !entry.settings.correctMelodyNotes);
+  assert.ok(supported.length > 0);
+  for (const [index, entry] of supported.entries()) {
+    const { correctMelodyNotes, ...settings } = entry.settings;
+    const actual = generateArpeggio(BigInt(entry.seed), entry.key, entry.scale, entry.progression, settings, undefined, entry.melody);
     assert.equal(actual.length, entry.notes.length, `case ${index} ${JSON.stringify(entry.settings)}`);
     actual.forEach((note, position) => {
       const expected = entry.notes[position];

@@ -78,8 +78,6 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     const custom = usesDurations || follows && hits > 32 ? undefined : spannedVelocities(rhythmSettings, chordIndex, true);
     const rate = follows ? 0.25 : 4 / (hits * repeat);
     const contour = settings.arpContour ?? [], interval = Math.max(Math.floor(hits * repeat / contour.length), 1);
-    const melodyPitches = melody?.pitches[chordIndex];
-    let lastMelodyIndex = 0;
     const durations = usesDurations ? durationBlocks(settings, Number(signedSeed), chordIndex).flat() : undefined;
     let time = 0;
     for (let step = 0; time + 1e-9 < 4; step++) {
@@ -93,15 +91,6 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
         if (settings.arpContourChordMode) pitch = closestMajorPitch(pitch + (customChords?.[chordIndex]?.root ?? root));
       }
       if (settings.useOctaveAdjustments && pitch >= 0) pitch += (index < 2 ? -12 : index < 6 ? 0 : 12) + octavePattern[pulse];
-      if (settings.correctMelodyNotes && melody?.available !== false && melodyPitches?.length && pitch >= 0) {
-        const melodyPitch = melodyPitches[lastMelodyIndex];
-        lastMelodyIndex = Math.round((time + stepDuration) / (4 / melodyPitches.length));
-        if (melodyPitch !== undefined) {
-          const distance = Math.abs(melodyPitch % 12 - pitch % 12);
-          if (Math.min(distance, 12 - distance) === 1) pitch = pitch - pitch % 12 + melodyPitch % 12
-            + (pitch % 12 >= 6 && melodyPitch % 12 < 6 ? 12 : 0);
-        }
-      }
       const velocity = custom ? custom[step % custom.length] : velocities.nextInt(maximum - minimum + 1) + minimum;
       const active = !!fill[chordIndex] && (durations ? durations[step] > 0 : pattern[step % pattern.length] > 0) && velocity > 0 && pitch >= 0;
       const split = exceptions.nextInt(100) < (usesDurations ? 0 : settings.exceptionChance ?? 0) && active;

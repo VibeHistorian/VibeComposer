@@ -111,7 +111,6 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   const chordGen = one(root, 'chordGenSettings');
   const chordTranspose = chordGen ? bool(chordGen, 'useTranspose', true) : true;
   const octaveAdjustments = bool(root, 'useOctaveAdjustments');
-  const correctMelodyNotes = bool(root, 'randomArpCorrectMelodyNotes');
   const globalSwing = numeric(root, 'globalSwingOverride');
   const volumeScaling = bool(root, 'scaleMidiVelocityInArrangement');
   const globalMultiplierIndex = numeric(root, 'beatDurationMultiplierIndex', 1)!;
@@ -186,7 +185,6 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
         result['pattern'] = JAVA_ARPS[name];
       }
       result['useOctaveAdjustments'] = octaveAdjustments;
-      result['correctMelodyNotes'] = correctMelodyNotes;
     }
     if (role === 'chords' && !chordTranspose) result['transpose'] = 0;
     if (globalSwing !== undefined && role !== 'bass') result['swingPercent'] = globalSwing;

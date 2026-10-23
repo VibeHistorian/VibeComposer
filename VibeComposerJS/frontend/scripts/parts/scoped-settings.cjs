@@ -672,10 +672,9 @@ test('P5 dependencies use section melody settings, manual ownership and absent s
   const arp = () => service.project().tracks.find(track => track.id === 'track-arpeggio-1');
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), drums()).map(note => note.startBeat), [0, 2, 16, 18]);
   service.updatePartSettings({ kind: 'global-track', trackId: arp().id }, { pattern: 'up', rhythm: 'full', hitsPerPattern: 4,
-    chordSpan: 1, patternRepeat: 1, exceptionChance: 0, useOctaveAdjustments: false, correctMelodyNotes: true });
-  // Isolate semitone collision correction from the new progression-wide voicing pass.
+    chordSpan: 1, patternRepeat: 1, exceptionChance: 0, useOctaveAdjustments: false });
   service.updateHarmonySettings({ flattenVoicingChance: 0 });
-  assert.equal(phrase.generateTrackPhrase(service.project(), arp())[0].midi, 37);
+  assert.equal(phrase.generateTrackPhrase(service.project(), arp())[0].midi, 36);
   service.updateTrackPhrase('track-melody-1', [{ id: 'replacement', midi: 62, startBeat: 1, durationBeats: 1, velocity: 90 }]);
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), drums()).map(note => note.startBeat), [1, 17]);
   service.clearTrackPhrase('track-melody-1');
@@ -701,9 +700,7 @@ test('P5 dependencies use section melody settings, manual ownership and absent s
   assert.equal(phrase.phraseForTrack(service.project(), drums())[0].id, 'manual-drum');
   assert.equal(service.importProjectJson(service.exportProjectJson()), true);
   service.removeTrack('track-melody-1');
-  const noSource = phrase.generateTrackPhrase(service.project(), arp());
-  service.updatePartSettings({ kind: 'global-track', trackId: arp().id }, { correctMelodyNotes: false });
-  assert.deepEqual(phrase.generateTrackPhrase(service.project(), arp()), noSource, 'missing melody does not correct pitches toward an invented tonic');
+  assert.equal(phrase.generateTrackPhrase(service.project(), arp())[0].midi, 36);
 });
 
 test('P5c/P5d controls resolve mixed scopes, snapshots, independent arrays, resets and strict imports', () => {
@@ -711,7 +708,7 @@ test('P5c/P5d controls resolve mixed scopes, snapshots, independent arrays, rese
   const first = service.project().arrangement[0], second = service.project().arrangement[1];
   for (const [role, patch] of [
     ['arpeggio', { pattern: 'custom', arpPatternRotate: 3, arpPatternCustom: [-1, 0, 4], arpContour: [0, 2, -1],
-      arpContourChordMode: true, useOctaveAdjustments: true, correctMelodyNotes: true }],
+      arpContourChordMode: true, useOctaveAdjustments: true }],
     ['drums', { ghosts: true, humanize: 100, rhythm: 'melody' }],
   ]) {
     const primary = `track-${role}-1`, duplicate = service.duplicateTrack(primary);
@@ -735,7 +732,7 @@ test('P5c/P5d controls resolve mixed scopes, snapshots, independent arrays, rese
   }
   const before = service.exportProjectJson();
   for (const [role, bad] of [['arpeggio', { arpContour: [1.5] }], ['arpeggio', { arpPatternCustom: [] }],
-    ['arpeggio', { arpPatternRotate: 9 }], ['arpeggio', { correctMelodyNotes: 1 }], ['drums', { humanize: 101 }],
+    ['arpeggio', { arpPatternRotate: 9 }], ['arpeggio', { correctMelodyNotes: true }], ['drums', { humanize: 101 }],
     ['drums', { ghosts: 1 }], ['bass', { rhythm: 'melody' }], ['chords', { rhythm: 'melody' }]]) {
     service.updatePartSettings({ kind: 'global-role', role }, bad);
     const project = JSON.parse(before); Object.assign(project.tracks.find(track => track.role === role).generatorSettings, bad);
