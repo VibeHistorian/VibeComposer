@@ -542,13 +542,19 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const headingFontStyle = `600 10px ${headingFont}`;
       context.font = headingFontStyle;
       const headingWidth = context.measureText(heading).width;
-      const headingSpace = compact ? Math.min(headingWidth, Math.max(0, (width - rangeWidth - 22) * 0.3)) : width - rangeWidth - 22;
+      const swing = item.section.context?.swingPercent;
+      context.font = `10px ${monoFont}`;
+      const swingLabel = swing === undefined ? '' : width - rangeWidth - 22 >= Math.min(headingWidth, 36)
+        + context.measureText(`S${swing}`).width + 8 + (compact ? 24 : 0) ? `S${swing}` : '∿';
+      const swingWidth = swingLabel ? context.measureText(swingLabel).width + 8 : 0;
+      const contentWidth = Math.max(0, width - rangeWidth - 22 - swingWidth);
+      const headingSpace = compact ? Math.min(headingWidth, contentWidth * 0.3) : contentWidth;
       context.save(); context.beginPath();
       context.rect(x + 7, 0, Math.max(0, headingSpace), RULER_HEIGHT); context.clip();
       text(heading, x + 7, 15, '--text-primary', headingFontStyle);
       context.restore();
       if (compact) {
-        const end = x + width - rangeWidth - 18;
+        const end = x + width - rangeWidth - 18 - swingWidth;
         let left = x + 7 + headingSpace + 8;
         context.font = `10px ${monoFont}`;
         const suffix = compact.durationsDiffer ? '*' : '';
@@ -568,12 +574,13 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         }
         if (suffix && left + suffixWidth <= end) text(suffix, left - 3, 15, '--text-secondary');
       }
+      if (swingLabel) text(swingLabel, x + width - rangeWidth - 7 - swingWidth, 15, '--accent-primary');
       context.textAlign = 'right';
       text(range, x + width - 7, 15, '--text-muted');
       context.textAlign = 'start';
       context.restore();
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
-        label: `${heading}, bars ${this.measureLabel(item)}${compact ? ', chords ' + compact.chords.map(chord => chord.label).join(' ') + (compact.durationsDiffer ? ' *, section beat durations' : '') : ''}`,
+        label: `${heading}, bars ${this.measureLabel(item)}${compact ? ', chords ' + compact.chords.map(chord => chord.label).join(' ') + (compact.durationsDiffer ? ' *, section beat durations' : '') : ''}${swing === undefined ? '' : `, section swing ${swing}% overrides part swing (except bass)`}`,
         activate: (event) => this.selectSection(item.section.id, event),
         reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reroll' }),
         reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reset' }),

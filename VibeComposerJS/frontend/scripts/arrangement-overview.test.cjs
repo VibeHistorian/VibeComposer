@@ -151,6 +151,30 @@ test('P5f variable chord slots align section hit areas, previews and loop marker
   assert.equal(marker.bounds[2],component.beatX(16)-component.beatX(0));
 });
 
+test('section swing reserves header space and falls back to a symbol in narrow sections', () => {
+  const { component, base, refs } = fixture();
+  const project = component.project();
+  component.project.set({ ...project, arrangement: project.arrangement.map((section, index) => index === 0
+    ? { ...section, context: { swingPercent: 54 } } : section) });
+  base.texts.length = 0;
+  component.drawOverview();
+  const heading = component.hits.find(hit => hit.key === 'heading:intro');
+  const badge = base.texts.find(text => text.value === 'S54');
+  assert.ok(badge);
+  const range = base.texts.find(text => text.y === 15 && text.x === heading.x + heading.width - 7);
+  assert.ok(badge.x + 18 < range.x - range.value.length * 6, 'badge leaves space for the bar range');
+  assert.match(heading.label, /section swing 54% overrides part swing \(except bass\)/);
+  assert.doesNotMatch(component.hits.find(hit => hit.key === 'heading:verse').label, /swing/);
+  component.onPointerMove({ clientX: heading.x + heading.width / 2, clientY: 10 });
+  assert.match(refs.get('scoreCanvas').title, /section swing 54%/);
+  component.project.set({ ...component.project(), arrangement: component.project().arrangement.map((section, index) => index === 0
+    ? { ...section, measures: 1, customDurations: [0.25] } : section) });
+  base.texts.length = 0;
+  component.drawOverview();
+  assert.ok(base.texts.some(text => text.value === '∿'));
+  assert.ok(!base.texts.some(text => text.value === 'S54'));
+});
+
 test('loop markers align with section beats and clip to the scrolled timeline', () => {
   const { component, refs, base } = fixture();
   component.loopRange.set({ startBeat: 8, endBeat: 24 });
