@@ -8,8 +8,8 @@ button { border: 1px solid var(--border-default); border-radius: var(--radius-ti
 header button[aria-pressed="true"] { color: var(--parameter-dynamics); border-color: var(--parameter-dynamics); }
 footer { padding: 9px 14px; border-top: 1px solid var(--border-default); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
-header select { max-width: 96px; padding: 5px; border-radius: var(--radius-tight); font: 11px var(--font-ui); }
-header select:disabled { opacity: .5; }
+header vc-select { max-width: 96px; padding: 5px; border-radius: var(--radius-tight); font: 11px var(--font-ui); }
+header vc-select[aria-disabled="true"] { opacity: .5; }
 
 /* Track grid */
 .sequencer-scroll { overflow: auto; max-height: min(65vh, 520px); padding: 8px 12px; }

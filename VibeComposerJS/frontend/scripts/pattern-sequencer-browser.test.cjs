@@ -22,8 +22,8 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       for (const role of ['bass', 'chords', 'arpeggio', 'drums']) {
         document.querySelector('.track-group.' + role + ' .track-select').click();
         const editor = await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="' + role + '"] [data-control-key="rhythm"]'), role + ' rhythm');
-        const selector = editor.querySelector('select');
-        selector.value='half'; selector.dispatchEvent(new Event('change', {bubbles:true}));
+        const selector = editor.querySelector('vc-select');
+        await changeControl(selector, 'half');
         const preview = await wait(()=>editor.querySelector('.rhythm-preview-grid'), role + ' preview');
         check(!document.querySelector('.part-control[data-control-key="customPattern"]'), role + ' has one combined control');
         check(editor.querySelectorAll(':scope > .control-content > vc-control-heading').length===1 && editor.querySelectorAll(':scope > .control-content > vc-control-heading .inherit-snowflake').length<=1, role + ' shared inheritance');
@@ -34,7 +34,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       }
       document.querySelector('.track-group.drums .group-select').click();
       const count = document.querySelector('input[aria-label="Drums track count"]');
-      count.value='3'; count.dispatchEvent(new Event('change',{bubbles:true}));
+      await changeControl(count, '3');
       await wait(()=>document.querySelectorAll('.track-group.drums .track-select').length===3,'three drums');
       const ids = read().tracks.filter(t=>t.role==='drums').map(t=>t.id);
       document.querySelector('.track-group.drums .track-select').click();
@@ -54,16 +54,16 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       check([...percussion].every(span=>!span.textContent.includes('NaN')), 'valid percussion names');
       check([...percussion].every(span=>span.textContent.trim().length>0), 'percussion names present');
       const multiply=popup.querySelector('[aria-label="Multiply Hits"]');
-      check(multiply && !multiply.disabled, 'popup multiplier enabled for active track');
+      check(multiply && multiply.getAttribute("aria-disabled") !== "true", 'popup multiplier enabled for active track');
       const oldHits=storedDrums[0].generatorSettings.hitsPerPattern ?? 4;
-      multiply.value='0.5'; multiply.dispatchEvent(new Event('change',{bubbles:true}));
+      await changeControl(multiply, '0.5');
       await wait(()=>read().tracks.find(t=>t.id===ids[0]).generatorSettings.hitsPerPattern===Math.max(1,Math.trunc(oldHits*0.5)),'multiply selected drum');
-      check(multiply.value==='', 'multiplier resets after action');
+      check(multiply.getAttribute("value")==='', 'multiplier resets after action');
       check(JSON.stringify(read().tracks.filter(t=>t.role==='drums').slice(1))===JSON.stringify(storedDrums.slice(1)), 'multiplier retains other drum tracks');
       const row=id=>popup.querySelector('[data-track-id="'+id+'"]');
       const setSteps = async (id, count) => {
         const input = row(id).querySelector('input[type="number"]');
-        input.value=String(count); input.dispatchEvent(new Event('change',{bubbles:true}));
+        await changeControl(input, String(count));
         await wait(()=>row(id).querySelectorAll('.step').length===count, 'set steps ' + count);
       };
       const checkPreview = async count => {
@@ -107,7 +107,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       check(JSON.stringify(read().tracks.find(t=>t.id===ids[0]))===before,'other track retained');
       const settings=read().tracks.find(t=>t.id===ids[1]).generatorSettings;
       check(settings.rhythm==='custom' && settings.customPattern.length===32,'bake rhythm');
-      popup.querySelector('header button').click();
+      popup.querySelector('header button[aria-pressed]').click();
       await wait(()=>popup.querySelectorAll('.velocity-pattern-grid').length===3,'velocity toggle');
       checkPositions('.velocity-slot', [0,8,16,24]);
       const velocity=row(ids[1]).querySelector('input[type="range"]');
@@ -129,11 +129,11 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       await wait(()=>read().tracks.find(t=>t.id===ids[1]).generatorSettings.customVelocities?.[0]!==22,'one undo velocity');
       document.querySelector('.track-group.melody .track-select').click();
       const melodyControl=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="melody"] [data-control-key="rhythm"]'),'melody rhythm selector');
-      check(melodyControl.querySelector('select').value==='melody1','normal melody rhythm default');
+      check(melodyControl.querySelector('vc-select').getAttribute("value")==='melody1','normal melody rhythm default');
       check(!melodyControl.querySelector('.flip-button, .mini-preview'),'normal melody hides flip and preview');
       const melodySettings=()=>read().tracks.find(t=>t.role==='melody').generatorSettings;
-      const rhythm=melodyControl.querySelector('select');
-      rhythm.value='durations'; rhythm.dispatchEvent(new Event('change',{bubbles:true}));
+      const rhythm=melodyControl.querySelector('vc-select');
+      await changeControl(rhythm, 'durations');
       const durationsPreview=await wait(()=>melodyControl.querySelector('[aria-label="Edit custom melody durations"]'),'custom melody preview');
       check(melodyControl.querySelector('.flip-button'),'custom melody flip');
       const beforeDraft=sessionStorage.getItem('vibecomposer.project.v12');
@@ -174,16 +174,16 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       melodyControl.querySelector('.flip-button').click();
       await wait(()=>melodySettings().patternFlip===true,'flip saved');
       await wait(()=>[...melodyControl.querySelectorAll('.duration-preview > span')].map(slot=>slot.classList.contains('active')).join(',')==='false,true,false,true','flip preview complements notes');
-      rhythm.value='melody1'; rhythm.dispatchEvent(new Event('change',{bubbles:true}));
+      await changeControl(rhythm, 'melody1');
       await wait(()=>!melodyControl.querySelector('.flip-button, .mini-preview'),'normal melody hides custom widgets again');
       check(melodySettings().customDurations[0][0]===1,'normal retains custom duration data');
-      check([...rhythm.options].find(option=>option.value==='durations').textContent.trim()==='durations','melody option renamed');
+      check((await selectOptions(rhythm)).find(option=>option.value==='durations').textContent.trim()==='durations','melody option renamed');
       for (const role of ['bass','arpeggio']) {
         document.querySelector('.track-group.'+role+' .track-select').click();
         const control=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="'+role+'"] [data-control-key="rhythm"]'),role+' rhythm');
-        const select=control.querySelector('select');
-        check([...select.options].some(option=>option.value==='custom'),'custom grid retained');
-        select.value='durations'; select.dispatchEvent(new Event('change',{bubbles:true}));
+        const select=control.querySelector('vc-select');
+        check((await selectOptions(select)).some(option=>option.value==='custom'),'custom grid retained');
+        await changeControl(select, 'durations');
         const preview=await wait(()=>control.querySelector('.duration-preview'),role+' compact durations');
         check(!control.querySelector('.rhythm-preview-grid'),role+' replaces grid');
         const settings=()=>read().tracks.find(track=>track.role===role).generatorSettings;

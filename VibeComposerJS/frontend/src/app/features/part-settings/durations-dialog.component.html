@@ -3,7 +3,7 @@
   <button type="button" [attr.aria-label]="'Close ' + role + ' durations'" (click)="dialog.close()">×</button>
 </header>
 <div class="duration-toolbar">
-  <label>Grid <select vcSelect [options]="[{ value: '0.5', label: '½ beat' }, { value: '0.25', label: '¼ beat' }, { value: '0.125', label: '⅛ beat' }, { value: 1 / 3, label: '⅓ beat' }, { value: 1 / 6, label: '⅙ beat' }]" aria-label="Duration grid" [value]="grid()" (change)="grid.set(+$any($event.target).value)"></select></label>
+  <label>Grid <vc-select [options]="[{ value: '0.5', label: '½ beat' }, { value: '0.25', label: '¼ beat' }, { value: '0.125', label: '⅛ beat' }, { value: 1 / 3, label: '⅓ beat' }, { value: 1 / 6, label: '⅙ beat' }]" aria-label="Duration grid" [value]="grid()" (valueChange)="grid.set(+$event)"></vc-select></label>
   <button type="button" [class.active]="tool() === 'note'" [attr.aria-pressed]="tool() === 'note'" (click)="tool.set('note')">Draw notes</button>
   <button type="button" [class.active]="tool() === 'rest'" [attr.aria-pressed]="tool() === 'rest'" (click)="tool.set('rest')">Draw pauses</button>
   <label><input type="checkbox" aria-label="Flip custom durations" [checked]="flipped()" (change)="flipped.set($any($event.target).checked)" /> Flip</label>

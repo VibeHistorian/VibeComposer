@@ -1,5 +1,7 @@
 /* Shared control surface; features own sizing and contextual variants */
 :where(:host) {
+  display: inline-flex;
+  align-items: center;
   box-sizing: border-box;
   min-width: 0;
   max-width: 100%;
@@ -10,16 +12,39 @@
   color: var(--text-primary);
   font: inherit;
   cursor: pointer;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
+
+/* Selected value alignment and truncation */
+.select-value { min-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; }
 
 /* Keyboard focus and disabled controls */
 :host(:focus-visible) { outline: 2px solid var(--border-focus); outline-offset: 1px; }
-:host(:disabled) { cursor: default; }
+:host([aria-disabled="true"]) { cursor: default; }
 
-/* Native popup typography and colors */
-option {
+/* Listbox surface and scrolling */
+.select-panel {
+  box-sizing: border-box;
+  min-width: 100%;
+  max-width: calc(100vw - 16px);
+  max-height: min(var(--select-available-height, 320px), calc(100dvh - 24px));
+  padding: 3px;
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
   background: var(--surface-input);
   color: var(--text-primary);
-  font-size: calc(1em + 2px);
+  font: 12px var(--font-ui);
+  box-shadow: 0 6px 20px var(--shadow-ink);
   text-transform: none;
 }
+
+/* Options and keyboard navigation */
+[ngOption] { padding: 5px 8px; border-radius: var(--radius-tight); cursor: pointer; white-space: nowrap; }
+[ngOption]:hover, [ngOption][data-active="true"] { background: var(--surface-hover); }
+[ngOption][aria-selected="true"] { background: var(--surface-accent); color: var(--accent-primary); }
+[ngOption][data-active="true"] { outline: 1px solid var(--border-focus); outline-offset: -1px; }
+[ngOption][aria-disabled="true"] { color: var(--text-muted); cursor: default; }

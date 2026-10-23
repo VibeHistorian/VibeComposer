@@ -20,14 +20,28 @@ function fixture({ compactHistory = false, dialogData = null, reactivity } = {})
   });
   const input = (value) => signal(value);
   input.required = () => signal(undefined);
+  const linkedSignal = definition => {
+    const source = typeof definition === 'function' ? definition : definition.source;
+    const compute = typeof definition === 'function' ? value => value : definition.computation;
+    let previous = source(), current = compute(previous);
+    const read = () => {
+      const next = source();
+      if (!Object.is(next, previous)) { previous = next; current = compute(next); }
+      return current;
+    };
+    read.set = next => { read(); current = next; };
+    return read;
+  };
   let service, ui, uiPreferences;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
-    signal, computed: reactivity?.computed ?? ((read) => read), effect: callback => { effects.push(callback); }, untracked: read => read(), input,
-    output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectionStrategy: { OnPush: 0 },
+    signal, linkedSignal, afterRenderEffect: () => {}, computed: reactivity?.computed ?? ((read) => read), effect: callback => { effects.push(callback); }, untracked: read => read(), input,
+    output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectorRef: class ChangeDetectorRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
       : type?.name === 'AudioPlaybackService' ? {} : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
+      : type?.name === 'ChangeDetectorRef' ? { detectChanges() {} }
+      : type?.name === 'Combobox' ? { expanded: signal(false), disabled: signal(false) }
       : type?.name === 'UiPreferencesService' ? uiPreferences : preferences,
   };
   const root = path.join(__dirname, '../../src/app');
@@ -49,6 +63,9 @@ function fixture({ compactHistory = false, dialogData = null, reactivity } = {})
     new Function('require', 'module', 'exports', compiled)((name) => name === '@angular/core' ? angular
       : name === '@angular/cdk/dialog' ? { Dialog: class Dialog {}, DialogModule: class {}, DialogRef: class {}, DIALOG_DATA: 'sequencer-data' }
       : name === '@angular/common' ? { TitleCasePipe: class {} }
+      : name === '@angular/aria/combobox' ? { Combobox: class Combobox {}, ComboboxPopup: class {}, ComboboxWidget: class {} }
+      : name === '@angular/aria/listbox' ? { Listbox: class {}, Option: class {} }
+      : name === '@angular/cdk/overlay' ? { CdkConnectedOverlay: class {} }
       : name.startsWith('.') ? load(path.resolve(path.dirname(absolute), name + '.ts')) : require(name), module, module.exports);
     return module.exports;
   }

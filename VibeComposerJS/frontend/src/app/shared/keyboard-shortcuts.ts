@@ -3,5 +3,5 @@
  */
 export function isEditingText(event: KeyboardEvent): boolean {
   return event.composedPath().some(target => target instanceof HTMLElement
-    && (target.isContentEditable || target.matches('input:not([type="range"]), textarea, select')));
+    && (target.isContentEditable || target.matches('input:not([type="range"]), textarea, select, [role="combobox"], [role="listbox"]')));
 }

@@ -90,7 +90,7 @@ export class WorkspaceCanvasComponent {
   private emptyMiddlePress: { pointerId: number; eligible: boolean; released: boolean } | null = null;
   private isEmptyMiddleTarget(event: MouseEvent): boolean {
     const target = event.target;
-    return target instanceof Element && !target.closest('button, input, select, textarea, a, canvas, vc-score-canvas, vc-compact-knob, vc-compact-toggle, vc-mix-buttons');
+    return target instanceof Element && !target.closest('button, input, select, vc-select, textarea, a, canvas, vc-score-canvas, vc-compact-knob, vc-compact-toggle, vc-mix-buttons');
   }
   beginEmptyMiddleClick(event: PointerEvent): void {
     if (event.button !== 1) return;
@@ -716,8 +716,8 @@ export class WorkspaceCanvasComponent {
     this.projects.moveSection(index, offset);
   }
 
-  updateSectionType(event: Event): void {
-    const type = this.inputValue(event) as SectionType;
+  updateSectionType(selection: string): void {
+    const type = selection as SectionType;
     if (SECTION_TYPES.includes(type) && this.selectedSectionIndex() >= 0) this.projects.updateSection(this.selectedSectionIndex(), { type });
   }
 
@@ -804,8 +804,8 @@ export class WorkspaceCanvasComponent {
     return track.role === 'drums' ? track.generatorSettings.pitch : undefined;
   }
 
-  updateDrumPitch(track: CompositionTrack, event: Event): void {
-    if (!this.editing() && track.role === 'drums') this.projects.updateTrackGeneratorSettings(track.id, { pitch: Number(this.inputValue(event)) });
+  updateDrumPitch(track: CompositionTrack, selection: string): void {
+    if (!this.editing() && track.role === 'drums') this.projects.updateTrackGeneratorSettings(track.id, { pitch: Number(selection) });
   }
 
   reorderTrack(trackId: string, offset: -1 | 1): void {
@@ -875,14 +875,14 @@ export class WorkspaceCanvasComponent {
     if (!this.generationAvailable[this.selectedTrack().role]) return;
     this.projects.clearTrackPhrase(this.selectedTrackId());
   }
-  updateChannel(track: CompositionTrack, event: Event): void {
+  updateChannel(track: CompositionTrack, selection: string): void {
     if (this.editing() || track.role === 'drums') return;
-    const channel = Number(this.inputValue(event));
+    const channel = Number(selection);
     if (Number.isInteger(channel)) this.projects.updateTrack(track.id, { midiChannel: channel });
   }
-  updateInstrument(track: CompositionTrack, event: Event): void {
+  updateInstrument(track: CompositionTrack, selection: string): void {
     if (this.editing() || track.role === 'drums') return;
-    const program = Number(this.inputValue(event));
+    const program = Number(selection);
     if (this.instruments.some((instrument) => instrument.program === program)) {
       this.projects.updateTrack(track.id, { mix: { program } });
       this.playback.updateMix(this.project());

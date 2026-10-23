@@ -34,7 +34,9 @@ export class SectionContextEditorComponent {
     return key === 'tempoBpm' ? String(this.projects.project().tempoBpm) : key === 'swingPercent' ? 'Part swing' : '0';
   }
   update(key: keyof SectionMusicalContext, event: Event, numeric = false): void {
-    const value = (event.target as HTMLInputElement).value;
+    this.choose(key, (event.target as HTMLInputElement).value, numeric);
+  }
+  choose(key: keyof SectionMusicalContext, value: string, numeric = false): void {
     this.projects.updateSectionContext(this.section().id, { [key]: value === '' ? null : numeric ? Number(value) : value });
   }
   reset(key: keyof SectionMusicalContext): void { this.projects.updateSectionContext(this.section().id, { [key]: null }); }

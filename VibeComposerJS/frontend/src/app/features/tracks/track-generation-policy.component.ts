@@ -74,22 +74,14 @@ export class TrackGenerationPolicyComponent {
       || (['voices', 'voicesChance'].includes(control.key) && this.values()['voicesMode'] === 'NONE');
   }
 
-  changeInstrument(key: keyof InstrumentGenerationPolicy, event: Event): void {
+  changeInstrument(key: 'pool', value: string): void {
     if (this.disabled()) return;
-    const element = event.target as HTMLInputElement;
-    const value = key === 'pool' ? element.value : key === 'sustainChance'
-      ? element.value.trim() === '' ? NaN : Number(element.value) : element.checked;
-    this.instrumentPolicyChanged.emit({ [key]: value });
-    element.value = String(this.instrumentPolicy()[key]);
-    if (element.type === 'checkbox') element.checked = this.instrumentPolicy()[key] === true;
+    const pool = this.instrumentPools().find(pool => pool === value);
+    if (pool) this.instrumentPolicyChanged.emit({ [key]: pool });
   }
 
-  change(control: PolicyControl, event: Event): void {
+  change(control: PolicyControl, value: string): void {
     if (this.inactive(control)) return;
-    const element = event.target as HTMLInputElement;
-    const value = control.options ? element.value : control.minimum !== undefined ? Number(element.value) : element.checked;
     this.policyChanged.emit({ [control.key]: value });
-    // Invalid commits may leave the parent value unchanged; restore the visible canonical value.
-    element.value = String(this.values()[control.key]);
   }
 }

@@ -9,12 +9,12 @@ footer { justify-content: flex-end; }
 
 /* Import controls and validation */
 button, input { min-width: 0; padding: 6px 9px; font: inherit; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); }
-select { padding: 6px 9px; width: 100%; }
+vc-select { padding: 6px 9px; width: 100%; }
 input { width: 100%; }
 button { cursor: pointer; background: var(--surface-button); }
 button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 button.apply { border-color: var(--accent-primary); }
 button:disabled { opacity: .45; cursor: default; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-select:focus-visible { outline-offset: 2px; }
+vc-select:focus-visible { outline-offset: 2px; }
 .error { color: var(--color-danger); }

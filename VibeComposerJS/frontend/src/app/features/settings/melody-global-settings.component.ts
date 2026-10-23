@@ -60,13 +60,13 @@ export class MelodyGlobalSettingsComponent {
     this.settingsChanged.emit({ blockChangePreference: preferred ? [...DEFAULT_BLOCK_CHANGE_PREFERENCE] : [] });
   }
 
-  changePatternEffect(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
+  changePatternEffect(selection: string): void {
+    const value = Number(selection);
     if (value === 0 || value === 1 || value === 2) this.settingsChanged.emit({ patternEffect: value });
   }
 
-  changeTargetMode(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
+  changeTargetMode(selection: string): void {
+    const value = Number(selection);
     if (value === 0 || value === 1 || value === 2) this.settingsChanged.emit({ blockTargetMode: value });
   }
 }

@@ -37,8 +37,8 @@
 .mode-seed label { min-width: 0; display: flex; align-items: center; gap: 5px; }
 .mode-seed label > span { flex: 0 0 4ch; color: var(--text-subtle); font: 9px var(--font-mono); }
 .mode-seed input { flex: 1; width: 0; min-width: 0; }
-.mode-seed select { flex: 1; width: 0; height: 24px; padding: 0 5px; color: var(--text-strong); font: 10px var(--font-mono); }
-.mode-control select { appearance: none; }
+.mode-seed vc-select { flex: 1; width: 0; height: 24px; padding: 0 5px; color: var(--text-strong); font: 10px var(--font-mono); }
+.mode-control vc-select { appearance: none; }
 
 .global-harmony { flex: 0 1 auto; width: max-content; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .global-harmony-label { color: var(--text-secondary); font-size: 10px; text-align: center; }
@@ -69,7 +69,7 @@
   .play-button { width: 34px; height: 34px; }
   .live-button { width: 39px; }
   .transport-globals { grid-column: 1 / -1; grid-row: 2; }
-  .mode-seed select { height: 24px; font-size: 10px; }
+  .mode-seed vc-select { height: 24px; font-size: 10px; }
   .position-line { font-size: 10px; }
 }
 

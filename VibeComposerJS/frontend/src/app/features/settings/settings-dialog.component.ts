@@ -25,8 +25,8 @@ import type { DrumMappingPreference } from '../../core/music/drum-instruments';
 export class SettingsDialogComponent {
   readonly preferences = inject(UiPreferencesService);
   readonly midi = inject(MidiOutputService);
-  changeDrumMapping(event: Event): void {
-    this.preferences.setDrumMapping((event.target as HTMLSelectElement).value as DrumMappingPreference);
+  changeDrumMapping(selection: string): void {
+    this.preferences.setDrumMapping(selection as DrumMappingPreference);
   }
   readonly transferMessage = signal('');
   readonly dialog = inject(DialogRef);
@@ -41,12 +41,12 @@ export class SettingsDialogComponent {
   readonly colorAdjustments = COLOR_ADJUSTMENTS;
   readonly harmonyGenerations = HARMONY_GENERATIONS;
   readonly harmonyValues = computed(() => ({ ...DEFAULT_HARMONY_SETTINGS, ...this.projects.project().harmonySettings }));
-  changeHarmony(event: Event): void {
-    this.projects.updateHarmonySettings({ generation: (event.target as HTMLSelectElement).value as HarmonySettings['generation'] });
+  changeHarmony(selection: string): void {
+    this.projects.updateHarmonySettings({ generation: selection as HarmonySettings['generation'] });
   }
   changeThemeColor(key: ThemeColor, event: Event): void { this.preferences.setThemeColor(key, (event.target as HTMLInputElement).value); }
   readonly roleNames: Record<ArrangedPart, string> = { melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arps', drums: 'Drums' };
-  changeFont(area: FontArea, event: Event): void { this.preferences.setFont(area, (event.target as HTMLSelectElement).value); }
+  changeFont(area: FontArea, selection: string): void { this.preferences.setFont(area, selection); }
   changeRoleColor(role: ArrangedPart, event: Event): void { this.preferences.setRoleColor(role, (event.target as HTMLInputElement).value); }
   exportPreferences(): void {
     const url = URL.createObjectURL(new Blob([this.preferences.exportJson()], { type: 'application/json' }));

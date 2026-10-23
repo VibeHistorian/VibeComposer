@@ -3,5 +3,5 @@
 .policy-controls:first-child { padding-top: 0; margin-top: 0; border-top: 0; }
 label { display: grid; gap: 3px; color: var(--text-muted); font: 9px var(--font-ui); }
 input { box-sizing: border-box; width: 58px; min-width: 0; padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-mono); }
-select { width: 87px; padding: 3px; border-radius: var(--radius-tight); background: var(--surface-base); font: 10px var(--font-mono); }
-input:disabled, select:disabled { opacity: .5; }
+vc-select { width: 87px; padding: 3px; border-radius: var(--radius-tight); background: var(--surface-base); font: 10px var(--font-mono); }
+input:disabled, vc-select[aria-disabled="true"] { opacity: .5; }

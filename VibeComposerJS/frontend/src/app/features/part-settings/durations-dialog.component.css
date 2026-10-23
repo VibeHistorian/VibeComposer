@@ -10,7 +10,7 @@ button:hover:not(:disabled) { border-color: var(--accent-primary); background: v
 button.active, button.save { border-color: var(--parameter-rhythm); background: var(--surface-toggle-active); }
 button:disabled { opacity: .45; cursor: default; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
-select:focus-visible { outline-offset: 2px; }
+vc-select:focus-visible { outline-offset: 2px; }
 
 /* Drawing tools */
 .duration-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }

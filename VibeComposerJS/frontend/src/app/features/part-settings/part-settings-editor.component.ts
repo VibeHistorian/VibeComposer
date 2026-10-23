@@ -45,8 +45,8 @@ export class PartSettingsEditorComponent {
     return control.key === 'velocityMin' ? 'VEL↓↑' : control.key === 'ending' ? 'SENTENCE'
       : control.kind === 'number' ? this.code(control) : control.label;
   }
-  chooseNumber(control: PartControl, event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  chooseNumber(control: PartControl, selection: string): void {
+    const value = selection;
     if (value !== '') this.settingsChanged.emit({ key: control.key, value: Number(value) });
   }
   code(control: PartControl): string {
@@ -203,12 +203,12 @@ export class PartSettingsEditorComponent {
       ? this.values()['velocityMax'] as number : control.maximum!;
   }
 
-  choose(control: PartControl, event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
+  choose(control: PartControl, selection: string, select?: SelectComponent): void {
+    const value = selection;
     if (value === '') return;
     if (control.key === 'rhythm' && value === 'durations'
       && validateDurationDraft(this.projects.project(), this.scope(), { rhythm: 'durations' })) {
-      (event.target as HTMLSelectElement).value = String(this.values()[control.key] ?? 'melody1');
+      select?.restoreValue();
       this.openDurations();
       return;
     }

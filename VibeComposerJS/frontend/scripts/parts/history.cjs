@@ -457,26 +457,50 @@ test('knobs drag vertically, commit once, cancel safely, and scroll with stepped
   assert.equal(commits.at(-1), 12, 'bound does not create another history entry');
 });
 
-test('wheel selects skip disabled options, wrap, emit existing change events, and preserve zoom', () => {
+test('wheel selects remember values without DOM writes or synthetic change events, wrap, and preserve zoom', () => {
   const { load } = fixture();
   const { SelectComponent } = load('shared/select.component.ts');
-  const directive = new SelectComponent();
-  const previous = global.HTMLOptGroupElement;
-  global.HTMLOptGroupElement = class {};
-  try {
-    const changes = [];
-    const select = { selectedIndex: 1, disabled: false,
-      options: [{ disabled: true }, { disabled: false }, { disabled: false }],
-      dispatchEvent: event => changes.push(event.type) };
-    directive.element = { nativeElement: select };
-    const event = (deltaY, extra = {}) => ({ deltaY, preventDefault() {}, stopPropagation() {}, ...extra });
-    directive.onWheel(event(1)); assert.equal(select.selectedIndex, 2);
-    directive.onWheel(event(1)); assert.equal(select.selectedIndex, 1);
-    directive.onWheel(event(-1)); assert.equal(select.selectedIndex, 2);
-    assert.deepEqual(changes, ['change', 'change', 'change']);
-    directive.onWheel(event(1, { ctrlKey: true })); assert.equal(changes.length, 3);
-    select.disabled = true; directive.onWheel(event(1)); assert.equal(changes.length, 3);
-  } finally { global.HTMLOptGroupElement = previous; }
+  const component = new SelectComponent(), changes = [];
+  const select = { disabled: false,
+    set selectedIndex(value) { assert.fail('wheel must not set selectedIndex'); },
+    set value(value) { assert.fail('wheel must not set DOM value'); },
+    dispatchEvent() { assert.fail('wheel must not dispatch a synthetic DOM event'); } };
+  component.element = { nativeElement: select };
+  component.options.set([{ value: '', label: 'Mixed', disabled: true }, 'A', 'B']);
+  component.value.set('A');
+  component.valueChange.emit = value => changes.push(value);
+  const event = (deltaY, extra = {}) => ({ deltaY, preventDefault() {}, stopPropagation() {}, ...extra });
+  component.onWheel(event(1)); assert.equal(component.selectedValue(), 'B');
+  component.onWheel(event(1)); assert.equal(component.selectedValue(), 'A');
+  component.onWheel(event(-1)); assert.equal(component.selectedValue(), 'B');
+  assert.deepEqual(changes, ['B', 'A', 'B']);
+  component.onWheel(event(1, { ctrlKey: true }));
+  component.onWheel(event(1, { metaKey: true }));
+  component.onWheel(event(0));
+  component.combobox.disabled.set(true); component.onWheel(event(1));
+  assert.equal(changes.length, 3);
+  component.value.set('A'); // Same bound value does not overwrite a remembered gesture.
+  assert.equal(component.selectedValue(), 'B');
+  component.value.set('B'); component.value.set('A');
+  component.restoreValue(); assert.equal(component.selectedValue(), 'A');
+});
+
+test('combobox selection commits a remembered draft once and restores one-shot values without DOM writes', () => {
+  const { load } = fixture();
+  const { SelectComponent } = load('shared/select.component.ts');
+  const component = new SelectComponent();
+  const select = { disabled: false };
+  component.element = { nativeElement: select };
+  component.options.set(['', 'A', 'B']); component.value.set('');
+  const changes = []; component.valueChange.emit = value => changes.push(value);
+  component.combobox.expanded.set(true);
+  component.draft.set(['B']);
+  assert.deepEqual(changes, [], 'browsing is not a project command');
+  component.commit({ type: 'keydown' });
+  assert.equal(component.selectedValue(), 'B'); assert.deepEqual(changes, ['B']);
+  assert.equal(component.combobox.expanded(), false);
+  component.restoreValue(); assert.equal(component.selectedValue(), '');
+  assert.deepEqual(changes, ['B'], 'restoring an action placeholder emits no command');
 });
 
 test('quick mixer knobs format linear gain and pan, audition without history, and commit one track only', () => {

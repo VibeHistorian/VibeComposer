@@ -17,7 +17,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       throw new Error('Timed out: ' + label);
     };
     const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-    const change = (input, value) => { input.value = value; input.dispatchEvent(new Event('change', { bubbles: true })); };
+    const change = changeControl;
     const reset = async input => {
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       input.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
@@ -41,7 +41,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       settings.querySelector('[aria-label="Close settings"]').click();
       await wait(() => !document.querySelector('vc-settings-dialog'), 'settings closed');
       if (!sessionStorage.getItem('contextual-fixture')) {
-        change(seed, '9007199254740993');
+        await change(seed, '9007199254740993');
         const project = await wait(read, 'saved project');
         // Keep the authored fixture stable until this workflow explicitly enables each reroll.
         // Fresh projects now enable On Compose, which would otherwise replace the drum grids.
@@ -63,24 +63,24 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       }
       await wait(() => document.querySelectorAll('.track-line').length === 30, '30 track rows');
       // Persist the decoded fixture before comparing a policy-only action.
-      change(seed, '9007199254740995');
+      await change(seed, '9007199254740995');
       await wait(() => read().seed === '9007199254740995', 'canonical project');
       const result = { width: innerWidth };
       result.createRemoved = !document.querySelector('.primary-harmony') && !document.querySelector('.track-browser [aria-label="Generation seed"]');
       result.seedInDock = !!seed.closest('.transport-dock');
-      result.noKeySelector = !document.querySelector('select[aria-label="Key"]');
+      result.noKeySelector = !document.querySelector('vc-select[aria-label="Key"]');
       const transpose = document.querySelector('.transport-dock [aria-label="Transpose in semitones"]');
-      change(transpose, '7');
+      await change(transpose, '7');
       await wait(() => read().transposeSemitones === 7 && document.querySelector('.transport-project span').title.includes('G MAJOR'), 'project key label');
-      result.transposeKey = transpose.type === 'range' && !transpose.closest('vc-compact-knob').querySelector('.knob-caption'); change(transpose, '0');
+      result.transposeKey = transpose.type === 'range' && !transpose.closest('vc-compact-knob').querySelector('.knob-caption'); await change(transpose, '0');
       if (innerWidth > 1050) {
         const dock = document.querySelector('.transport-dock').getBoundingClientRect();
         const score = document.querySelector('.score-panel').getBoundingClientRect();
         if (score.bottom > dock.top || dock.bottom > innerHeight) throw new Error('transport dock overlaps the score or extends outside the viewport');
       }
       const tempo = document.querySelector('.transport-dock [aria-label="Tempo in beats per minute"]');
-      change(tempo, '149'); await wait(() => read().tempoBpm === 149, 'tempo knob');
-      result.tempoKnob = tempo.type === 'range'; change(tempo, '128');
+      await change(tempo, '149'); await wait(() => read().tempoBpm === 149, 'tempo knob');
+      result.tempoKnob = tempo.type === 'range'; await change(tempo, '128');
       await wait(() => read().tempoBpm === 128, 'tempo reset');
       const historyButton = [...document.querySelectorAll('.project-tools button')].find(button => button.getAttribute('aria-label') === 'History');
       historyButton.focus();
@@ -106,11 +106,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         && Math.abs(modeBounds.left - labelBounds.right - modeGap) <= 1
         && Math.abs(modeBounds.right - rowBounds.right) <= 1
         && modeBounds.left >= groupBounds.left - 1 && modeBounds.right <= groupBounds.right + 1;
-      change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode change');
-      if(mode.options.length!==17) throw new Error('missing Java modes');
-      change(mode,'mixolydian'); await wait(()=>read().scale==='mixolydian'&&document.querySelector('.transport-project span').title.includes('MIXOLYDIAN'),'Mixolydian mode');
-      change(mode,'hungarian-minor'); await wait(()=>read().scale==='hungarian-minor','Hungarian minor mode');
-      change(mode, 'major'); await wait(() => read().scale === 'major' && read().transposeSemitones === 0, 'mode restore');
+      await change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode change');
+      if((await selectOptions(mode)).length!==17) throw new Error('missing Java modes');
+      await change(mode,'mixolydian'); await wait(()=>read().scale==='mixolydian'&&document.querySelector('.transport-project span').title.includes('MIXOLYDIAN'),'Mixolydian mode');
+      await change(mode,'hungarian-minor'); await wait(()=>read().scale==='hungarian-minor','Hungarian minor mode');
+      await change(mode, 'major'); await wait(() => read().scale === 'major' && read().transposeSemitones === 0, 'mode restore');
       const chordlet = () => document.querySelector('.chordlet-label');
       chordlet().dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
       const rootMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord root"]'), 'root menu');
@@ -202,26 +202,26 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       document.querySelector('.track-group.chords .group-select').click();
       await wait(() => document.querySelector('#part-inspector [data-control-role="chords"]'), 'chord inspector');
       const join = await wait(() => document.querySelector('#part-inspector [aria-label="JOIN"]'), 'chord join');
-      change(join, 'EXPAND');
+      await change(join, 'EXPAND');
       await wait(() => read().tracks.find(track => track.role === 'chords').generatorSettings.patternJoinMode === 'EXPAND', 'chord join commit');
       const strum = await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]'), 'chord strum');
-      change(strum, '333');
-      change(document.querySelector('.part-settings-panel [aria-label="S.ARC"]'), 'ARP_D');
-      change(document.querySelector('#part-inspector [aria-label="Transition chance"]'), '100');
-      change(document.querySelector('#part-inspector [aria-label="Transition split"]'), '750');
-      change(document.querySelector('.part-settings-panel [aria-label="Strum pause"]'), '20');
+      await change(strum, '333');
+      await change(document.querySelector('.part-settings-panel [aria-label="S.ARC"]'), 'ARP_D');
+      await change(document.querySelector('#part-inspector [aria-label="Transition chance"]'), '100');
+      await change(document.querySelector('#part-inspector [aria-label="Transition split"]'), '750');
+      await change(document.querySelector('.part-settings-panel [aria-label="Strum pause"]'), '20');
       await wait(() => read().tracks.find(track => track.role === 'chords').generatorSettings.strum === 333 && read().tracks.find(track => track.role === 'chords').generatorSettings.strumPauseChance === 20, 'chord articulation commit');
       await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]').value === '333'
-        && document.querySelector('.part-settings-panel [aria-label="S.ARC"]').value === 'ARP_D', 'chord editors synchronized');
+        && document.querySelector('.part-settings-panel [aria-label="S.ARC"]').getAttribute("value") === 'ARP_D', 'chord editors synchronized');
       result.chordEditors = document.querySelector('.part-settings-panel [aria-label="Strum"]').value === '333'
-        && document.querySelector('.part-settings-panel [aria-label="S.ARC"]').value === 'ARP_D'
+        && document.querySelector('.part-settings-panel [aria-label="S.ARC"]').getAttribute("value") === 'ARP_D'
         && read().tracks.find(track => track.role === 'chords').generatorSettings.patternJoinMode === 'EXPAND' && read().tracks.find(track => track.role === 'chords').generatorSettings.transitionChance === 100 && read().tracks.find(track => track.role === 'chords').generatorSettings.transitionSplit === 750;
       const chords = document.querySelector('.track-group.chords');
       const tracksBeforePolicy = JSON.stringify(read().tracks);
-      change(chords.querySelector('[aria-label="Reroll Struminess %"]'), '100');
-      change(chords.querySelector('[aria-label="Reroll Max transition %"]'), '0');
-      change(chords.querySelector('[aria-label="Reroll Max strum pause %"]'), '0');
-      change(chords.querySelector('[aria-label="Reroll Expand chance %"]'), '100');
+      await change(chords.querySelector('[aria-label="Reroll Struminess %"]'), '100');
+      await change(chords.querySelector('[aria-label="Reroll Max transition %"]'), '0');
+      await change(chords.querySelector('[aria-label="Reroll Max strum pause %"]'), '0');
+      await change(chords.querySelector('[aria-label="Reroll Expand chance %"]'), '100');
       result.chordPolicyOnly = JSON.stringify(read().tracks) === tracksBeforePolicy;
       chords.querySelector('[aria-label="On Compose"]').click();
       document.querySelector('[aria-label="Compose"]').click();
@@ -231,11 +231,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         && track.generatorSettings.strumPauseChance === 0 && track.generatorSettings.patternJoinMode === 'EXPAND');
       document.querySelector('.track-group.arpeggio .group-select').click();
       const direction = await wait(() => document.querySelector('.part-settings-panel [aria-label="DIRECTION"]'), 'arp direction');
-      change(direction, 'custom');
+      await change(direction, 'custom');
       const customDirection = await wait(() => document.querySelector('#part-inspector [aria-label="Custom direction"]'), 'custom direction editor');
-      change(customDirection, '-1, 0, 3, 1');
-      change(document.querySelector('.part-settings-panel [aria-label="Rotate"]'), '3');
-      change(document.querySelector('#part-inspector [aria-label="Contour"]'), '0, 2, -1');
+      await change(customDirection, '-1, 0, 3, 1');
+      await change(document.querySelector('.part-settings-panel [aria-label="Rotate"]'), '3');
+      await change(document.querySelector('#part-inspector [aria-label="Contour"]'), '0, 2, -1');
       document.querySelector('#part-inspector [aria-label="Chord-relative contour"]').click();
       document.querySelector('#part-inspector [aria-label="Octave adjustments"]').click();
       if (document.querySelector('#part-inspector [aria-label="Correct by melody"]')) throw new Error('Removed arpeggio correction control is visible');
@@ -245,41 +245,41 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         track.generatorSettings.pattern === 'custom' && track.generatorSettings.arpPatternCustom.join(',') === '-1,0,3,1'
         && track.generatorSettings.arpContour.join(',') === '0,2,-1' && track.generatorSettings.useOctaveAdjustments)
         && document.querySelector('.part-settings-panel [aria-label="Rotate"]').value === '3';
-      change(document.querySelector('#part-inspector [aria-label="Contour"]'), '');
+      await change(document.querySelector('#part-inspector [aria-label="Contour"]'), '');
       await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.arpContour.length === 0, 'clear contour');
-      change(document.querySelector('.part-settings-panel [aria-label="PATTERN"]'), 'melody');
+      await change(document.querySelector('.part-settings-panel [aria-label="PATTERN"]'), 'melody');
       await wait(() => read().tracks.find(track => track.role === 'arpeggio').generatorSettings.rhythm === 'melody', 'arp melody rhythm');
       await wait(() => !document.querySelector('.part-settings-panel [aria-label="Hits"]')
-        && document.querySelector('.part-settings-panel [aria-label="PATTERN"]').value === 'melody', 'arp melody editors synchronized');
+        && document.querySelector('.part-settings-panel [aria-label="PATTERN"]').getAttribute("value") === 'melody', 'arp melody editors synchronized');
       result.arpMelody = !document.querySelector('.part-settings-panel [aria-label="Hits"]')
-        && document.querySelector('.part-settings-panel [aria-label="PATTERN"]').value === 'melody';
+        && document.querySelector('.part-settings-panel [aria-label="PATTERN"]').getAttribute("value") === 'melody';
       document.querySelector('.track-group.drums .group-select').click();
       const ghosts = await wait(() => document.querySelector('.part-settings-panel [aria-label="Ghosts"]'), 'drum ghosts');
       ghosts.click();
-      change(document.querySelector('#part-inspector [aria-label="Humanize"]'), '100');
+      await change(document.querySelector('#part-inspector [aria-label="Humanize"]'), '100');
       await wait(() => read().tracks.find(track => track.role === 'drums').generatorSettings.ghosts && read().tracks.find(track => track.role === 'drums').generatorSettings.humanize === 100, 'drum musical settings');
       document.querySelector('.part-settings-panel [aria-label="Edit rhythm pattern"]').click();
       const multiply = await wait(() => {
         const select = document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]');
-        return select && !select.disabled ? select : null;
+        return select && select.getAttribute("aria-disabled") !== "true" ? select : null;
       }, 'enabled popup hit multiplier');
-      change(multiply, '2');
+      await change(multiply, '2');
       await wait(() => read().tracks.find(track => track.role === 'drums').generatorSettings.hitsPerPattern === 8, 'multiply hits');
       await wait(() => document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8'
         && document.querySelector('.part-settings-panel [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true', 'drum editors synchronized');
       result.drumMusical = read().tracks.filter(track => track.role === 'drums').every(track =>
         track.generatorSettings.hitsPerPattern === 8 && track.generatorSettings.ghosts && track.generatorSettings.humanize === 100)
         && document.querySelector('.part-settings-panel [aria-label="Ghosts"]').getAttribute('aria-pressed') === 'true'
-        && document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8' && multiply.value === '';
+        && document.querySelector('.part-settings-panel [aria-label="Hits"]').value === '8' && multiply.getAttribute("value") === '';
       document.querySelector('[aria-label="Close pattern sequencer"]').click();
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => read().tracks.find(track => track.role === 'drums').generatorSettings.hitsPerPattern === 4, 'multiply undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'multiply redo enabled')).click();
       await wait(() => read().tracks.find(track => track.role === 'drums').generatorSettings.hitsPerPattern === 8, 'multiply redo');
-      change(document.querySelector('.part-settings-panel [aria-label="PATTERN"]'), 'melody');
+      await change(document.querySelector('.part-settings-panel [aria-label="PATTERN"]'), 'melody');
       document.querySelector('.part-settings-panel [aria-label="Edit rhythm pattern"]').click();
-      await wait(() => document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]')?.disabled, 'melody hit action disabled');
-      result.drumMelody = document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]').disabled
+      await wait(() => document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]')?.getAttribute('aria-disabled') === 'true', 'melody hit action disabled');
+      result.drumMelody = document.querySelector('vc-pattern-sequencer [aria-label="Multiply Hits"]').getAttribute('aria-disabled') === 'true'
         && !document.querySelector('.part-settings-panel [aria-label="Hits"]');
       document.querySelector('[aria-label="Close pattern sequencer"]').click();
       document.querySelector('.track-group.melody .group-select').click();
@@ -290,7 +290,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const extended = [ ['Split long', 'splitChance', 60],
         ['Start note', 'startNoteChance', 0] ];
       for (const [label, key, value] of extended) {
-        change(await wait(() => document.querySelector('#part-inspector [aria-label="' + label + '"]'), label), String(value));
+        await change(await wait(() => document.querySelector('#part-inspector [aria-label="' + label + '"]'), label), String(value));
         await wait(() => read().tracks.find(track => track.role === 'melody').generatorSettings[key] === value, label + ' commit');
       }
       result.melodyExtended = read().tracks.filter(track => track.role === 'melody').every(track =>
@@ -309,31 +309,31 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => trackControl('Target direction'), 'track controls');
       trackControl('Fill pauses per chord').click();
       await wait(() => selectedMelody().generatorSettings.fillPausesPerChord === true, 'track pause filling');
-      change(trackControl('Max direction changes'), '6');
+      await change(trackControl('Max direction changes'), '6');
       await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === 6, 'track direction budget');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === undefined, 'track budget undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'redo enabled')).click();
       await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === 6, 'track budget redo');
-      change(trackControl('New blocks'), '0');
+      await change(trackControl('New blocks'), '0');
       await wait(() => selectedMelody().generatorSettings.newBlocksChance === 0, 'track catalogue chance');
       await reset(trackControl('New blocks'));
       await wait(() => selectedMelody().generatorSettings.newBlocksChance === 25, 'track catalogue default');
       trackControl('Emphasize key').click();
       await wait(() => selectedMelody().generatorSettings.emphasizeKey === true, 'track emphasis');
       result.flipEmphasis = otherTracks() === untouched;
-      change(trackControl('CHRD%'), '70');
+      await change(trackControl('CHRD%'), '70');
       await wait(() => selectedMelody().generatorSettings.chordNoteTarget === 70, 'track chord target');
       await reset(trackControl('CHRD%'));
       await wait(() => selectedMelody().generatorSettings.chordNoteTarget === 0, 'track chord target reset');
       result.chordRepairs = otherTracks() === untouched;
-      change(trackControl('TON%'), '70'); change(trackControl('MODE%'), '60');
+      await change(trackControl('TON%'), '70'); await change(trackControl('MODE%'), '60');
       await wait(() => selectedMelody().generatorSettings.tonicNoteTarget === 70 && selectedMelody().generatorSettings.modeNoteTarget === 60, 'track tonal targets');
       await reset(trackControl('TON%')); await reset(trackControl('MODE%'));
       await wait(() => selectedMelody().generatorSettings.tonicNoteTarget === 0 && selectedMelody().generatorSettings.modeNoteTarget === 0, 'track tonal resets');
       result.tonalTargets = otherTracks() === untouched;
       for (const direction of ['ANY','DESC','ASC']) {
-        change(trackControl('Target direction'), direction);
+        await change(trackControl('Target direction'), direction);
         await wait(() => selectedMelody().generatorSettings.targetDirection === direction, 'track target direction');
       }
       const projectTracks = JSON.stringify(read().tracks);
@@ -346,11 +346,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       }
       const effect = globals.querySelector('[aria-label="Pattern effect"]');
       for (const value of [0,1,2]) {
-        change(effect, String(value)); await wait(() => read().melodyGlobal?.patternEffect === value, 'project pattern effect');
+        await change(effect, String(value)); await wait(() => read().melodyGlobal?.patternEffect === value, 'project pattern effect');
       }
       const families = ['Scaley','Neighbory','Arpy','Chordy','Wavy','Interval','Note'];
       for (const [index,family] of families.entries()) {
-        change(globals.querySelector('[aria-label="' + family + ' weight"]'), String(20 + index * 10));
+        await change(globals.querySelector('[aria-label="' + family + ' weight"]'), String(20 + index * 10));
         await wait(() => read().melodyGlobal?.blockTypeWeights?.[index] === 20 + index * 10, 'project catalogue weights');
         await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
       }
@@ -359,7 +359,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       globals.querySelector('[aria-label="Default block change order"]').click();
       await wait(() => read().melodyGlobal?.blockChangePreference?.length === 8, 'ranked block changes');
       const validPreference = JSON.stringify(read().melodyGlobal);
-      change(preference, '0,1,2,3,4,5,6,6');
+      await change(preference, '0,1,2,3,4,5,6,6');
       await wait(() => globals.querySelector('[role="alert"]'), 'invalid preference alert');
       result.catalogue = JSON.stringify(read().melodyGlobal) === validPreference;
       globals.querySelector('[aria-label="Uniform block changes"]').click();
@@ -367,15 +367,15 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await reset(globals.querySelector('[aria-label="Arpy weight"]'));
       await wait(() => read().melodyGlobal?.blockTypeWeights?.[2] === 100, 'family default');
       const avoid = globals.querySelector('[aria-label="AVOID"]');
-      change(avoid, '2'); await wait(() => read().melodyGlobal?.replaceAvoidNotes === 2, 'project Avoid');
+      await change(avoid, '2'); await wait(() => read().melodyGlobal?.replaceAvoidNotes === 2, 'project Avoid');
       await reset(avoid); await wait(() => read().melodyGlobal?.replaceAvoidNotes === 0, 'project Avoid reset');
       const blockMode = globals.querySelector('[aria-label="Block target mode"]');
-      change(blockMode,'1'); await wait(() => read().melodyGlobal?.blockTargetMode === 1, 'project target mode');
+      await change(blockMode,'1'); await wait(() => read().melodyGlobal?.blockTargetMode === 1, 'project target mode');
       await reset(blockMode); await wait(() => read().melodyGlobal?.blockTargetMode === 2, 'project target mode reset');
       result.targetModes = JSON.stringify(read().tracks) === projectTracks;
       globals.querySelector('[aria-label="Melody pattern flip"]').click();
       await wait(() => read().melodyGlobal?.patternFlip === true, 'project melody grid flip');
-      change(globals.querySelector('[aria-label="Target variation"]'), '6');
+      await change(globals.querySelector('[aria-label="Target variation"]'), '6');
       await wait(() => read().melodyGlobal?.targetNoteVariation === 6, 'project variation');
       globals.querySelector('[aria-label="Directions from progression"]').click();
       await wait(() => read().melodyGlobal?.useDirectionsFromProgression === true, 'project progression directions');
@@ -436,8 +436,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     // Exercise an actual right-button contextmenu, not just the synthetic workflow events.
     await command('Runtime.evaluate', { expression: `(() => {
       const control = document.querySelector('[aria-label="New blocks"]');
-      control.scrollIntoView({ block: 'center' }); control.value = '90';
-      control.dispatchEvent(new Event('change', { bubbles: true }));
+      control.scrollIntoView({ block: 'center' }); await changeControl(control, '90');
     })()` });
     await new Promise(done => setTimeout(done, 100));
     const resetPoint = await command('Runtime.evaluate', { expression: `(() => {
@@ -514,7 +513,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     const harmonyResult = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
       const wait = async (read, label) => { for (let i = 0; i < 200; i++) { const value = read(); if (value) return value; await new Promise(r => setTimeout(r,20)); } throw new Error(label); };
       const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-      const change = (element,value) => { element.value=value; element.dispatchEvent(new Event('change',{bubbles:true})); };
+      const change = changeControl;
       await wait(()=>document.querySelector('.part-panel-toggle').getAttribute('aria-label').includes('Global Arps settings'),'global role panel title');
       if (document.querySelector('#part-inspector [aria-label="Flatten voicing"]') || document.querySelector('#part-inspector details summary')?.textContent.includes('Global harmony')) throw new Error('global harmony still in inspector');
       document.querySelector('.project-tools [aria-label="Settings"]').click();
@@ -525,14 +524,14 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       harmony.querySelector('[aria-label="Behavior Harmony"]').click();
       await wait(() => harmony.querySelector('[aria-label="Flatten voicing"]'),'harmony settings page');
       if (harmony.querySelector('details, vc-compact-knob, vc-compact-toggle')) throw new Error('harmony should use standard settings fields');
-      change(harmony.querySelector('[aria-label="Flatten voicing"]'),'37');
+      await change(harmony.querySelector('[aria-label="Flatten voicing"]'),'37');
       await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten commit');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => read().harmonySettings?.flattenVoicingChance !== 37,'flatten undo');
       (await wait(() => { const button=document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'flatten redo enabled')).click();
       await wait(() => read().harmonySettings?.flattenVoicingChance === 37,'flatten redo');
       await wait(() => harmony.querySelector('[aria-label="Flatten voicing"]').value === '37','flatten redo rendered');
-      change(harmony.querySelector('[aria-label="Flatten voicing"]'),'100');
+      await change(harmony.querySelector('[aria-label="Flatten voicing"]'),'100');
       await wait(() => read().harmonySettings?.flattenVoicingChance === 100,'flatten reset');
       harmony.querySelector('[aria-label="Flatten large chords"]').click();
       harmony.querySelector('[aria-label="Progressive voicing"]').click();
@@ -580,12 +579,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const primary=JSON.stringify([read().progression,read().progressionChords]);
       const other=JSON.stringify(read().arrangement.filter(section=>section.id!==id));
       const tracks=JSON.stringify(read().tracks);
-      const change=(input,value)=>{input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));};
-      change(editor.querySelector('input[min="30"]'),'87');
+      const change = changeControl;
+      await change(editor.querySelector('input[min="30"]'),'87');
       await wait(()=>section().context?.tempoBpm===87,'section BPM');
-      change(editor.querySelector('input[min="0"]'),'67');
+      await change(editor.querySelector('input[min="0"]'),'67');
       await wait(()=>section().context?.swingPercent===67,'section swing');
-      change(editor.querySelector('[aria-label="Chord 1 duration in beats"]'),'2');
+      await change(editor.querySelector('[aria-label="Chord 1 duration in beats"]'),'2');
       await wait(()=>section().customDurations?.[0]===2,'section duration');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(()=>!section().customDurations,'duration undo');
@@ -599,12 +598,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('D'),'section chord render');
       editor.querySelector('.chordlet-label').dispatchEvent(new WheelEvent('wheel',{deltaY:-1,bubbles:true,cancelable:true}));
       await wait(()=>section().customChords?.[0]?.inversion===1,'section inversion');
-      change(editor.querySelector('select'),'G');
-      if(editor.querySelectorAll('select')[1].options.length!==18) throw new Error('missing section modes');
-      change(editor.querySelectorAll('select')[1],'mixolydian');
+      await change(editor.querySelector('vc-select'),'G');
+      if((await selectOptions(editor.querySelectorAll('vc-select')[1])).length!==18) throw new Error('missing section modes');
+      await change(editor.querySelectorAll('vc-select')[1],'mixolydian');
       await wait(()=>section().context?.scale==='mixolydian'&&read().scale==='major','local Mixolydian override');
-      change(editor.querySelectorAll('select')[1],'natural-minor');
-      change(editor.querySelector('input[min="-24"]'),'2');
+      await change(editor.querySelectorAll('vc-select')[1],'natural-minor');
+      await change(editor.querySelector('input[min="-24"]'),'2');
       await wait(()=>section().context?.key==='G'&&section().context?.scale==='natural-minor'&&section().context?.keyChange===2,'section key context');
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('E'),'section key render');
       editor.querySelector('.chordlet-label').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
@@ -618,7 +617,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const sectionSpiceColors=Number(spiceChoice('m').dataset.keyOverlap)===1
         && Number(spiceChoice('maj7').dataset.keyOverlap)===.5 && spiceChoice('m').title.includes('A Natural minor');
       sectionSpices.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
-      change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'7');
+      await change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'7');
       await wait(()=>read().transposeSemitones===7,'global transpose with section key');
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('B'),'section transpose render');
       editor.querySelector('.chordlet-label').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1}));
@@ -626,14 +625,14 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const transposeColors=editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='210'
         && Number([...editor.querySelectorAll('.spice-choice')].find(button=>button.textContent==='m').dataset.keyOverlap)===1;
       transposed.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
-      change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'0');
+      await change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'0');
       await wait(()=>read().transposeSemitones===0,'restore global transpose');
       editor.scrollIntoView({block:'center'});
       return {sectionRootColors,sectionSpiceColors,transposeColors,tempo:section().context.tempoBpm===87, durations:section().customDurations[0]===2,
         primary:primary===JSON.stringify([read().progression,read().progressionChords]), tracks:tracks===JSON.stringify(read().tracks),
         others:other===JSON.stringify(read().arrangement.filter(section=>section.id!==id)),
         fits:editor.getBoundingClientRect().left>=0&&editor.getBoundingClientRect().right<=innerWidth&&document.documentElement.scrollWidth<=innerWidth+1
-          && [...editor.querySelectorAll('input,select,.context-field button')].every(control=>control.getBoundingClientRect().right<=editor.getBoundingClientRect().right+1)};
+          && [...editor.querySelectorAll('input,vc-select,.context-field button')].every(control=>control.getBoundingClientRect().right<=editor.getBoundingClientRect().right+1)};
     })()` });
     assert.equal(sectionResult.exceptionDetails,undefined,JSON.stringify(sectionResult));
     for(const [key,value] of Object.entries(sectionResult.result.value)) assert.equal(value,true,'P5f '+key);

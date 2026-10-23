@@ -5,10 +5,11 @@ const test = require('node:test');
 const ts = require('typescript');
 
 class Element {
-  constructor(tag, editable = false, type = 'text') { this.tag = tag; this.isContentEditable = editable; this.type = type; }
+  constructor(tag, editable = false, type = 'text', role = '') { this.tag = tag; this.isContentEditable = editable; this.type = type; this.role = role; }
   matches(selector) {
-    return ['input', 'textarea', 'select'].includes(this.tag)
-      && !(this.tag === 'input' && this.type === 'range' && selector.includes(':not([type="range"])'));
+    return (['input', 'textarea', 'select'].includes(this.tag)
+      && !(this.tag === 'input' && this.type === 'range' && selector.includes(':not([type="range"])')))
+      || (['combobox', 'listbox'].includes(this.role) && selector.includes('[role="' + this.role + '"]'));
   }
 }
 
@@ -72,11 +73,12 @@ test('focused knob range inputs route undo and redo to the active history', () =
     'phrase:undo', 'phrase:redo', 'phrase:redo', 'phrase:undo']);
 });
 
-test('preserves native shortcuts in text fields, selects and inherited or shadow contenteditable regions', () => {
+test('preserves editing shortcuts in text fields, comboboxes, listboxes and inherited or shadow contenteditable regions', () => {
   const f = fixture();
   for (const editing of [false, true]) {
     if (editing) f.edit();
-    for (const control of [new Element('input'), new Element('textarea'), new Element('select'), new Element('span', true)]) {
+    for (const control of [new Element('input'), new Element('textarea'), new Element('select'),
+      new Element('button', false, 'button', 'combobox'), new Element('div', false, '', 'listbox'), new Element('span', true)]) {
       for (const [key, shiftKey] of [['z', false], ['y', false], ['Z', true]]) {
         assert.equal(f.press(key, { shiftKey, composedPath: () => [control, new Element('div')] }).defaultPrevented, false);
       }

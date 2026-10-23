@@ -122,8 +122,8 @@ export class TransportDockComponent {
     input.value = this.project().name;
   }
 
-  updateScale(event: Event): void {
-    const scale = (event.target as HTMLSelectElement).value;
+  updateScale(selection: string): void {
+    const scale = selection;
     if (isScaleMode(scale)) this.projects.updateSettings({ scale });
   }
 

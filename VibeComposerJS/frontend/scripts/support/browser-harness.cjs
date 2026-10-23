@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { selectSupport } = require('./browser-select.cjs');
 
 const frontend = path.resolve(__dirname, '../..');
 const profileRoot = path.join(frontend, '.angular');
@@ -38,7 +39,7 @@ function createBrowserServer({ root, html, resolve, reject }) {
       }
       if (pathname === '/' && html !== undefined) {
         response.setHeader('Content-Type', 'text/html');
-        response.end(html);
+        response.end(root ? html.replace('</head>', selectSupport + '</head>') : html);
         return;
       }
       const file = root && path.resolve(root, '.' + decodeURIComponent(pathname === '/' ? '/index.html' : pathname));
@@ -51,6 +52,10 @@ function createBrowserServer({ root, html, resolve, reject }) {
         '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml',
         '.woff': 'font/woff', '.woff2': 'font/woff2' };
       response.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream');
+      if (path.extname(file) === '.html') {
+        response.end(fs.readFileSync(file, 'utf8').replace('</head>', selectSupport + '</head>'));
+        return;
+      }
       const stream = fs.createReadStream(file);
       stream.on('error', error => { response.destroy(error); reject?.(error); });
       stream.pipe(response);

@@ -56,13 +56,11 @@ export class PatternSequencerComponent {
     const rows = this.rows().filter(row => !('trackId' in scope) || row.id === scope.trackId);
     return this.data.role === 'drums' && rows.length > 0 && rows.every(row => row.supported);
   });
-  multiplyHits(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    if (select.value && this.canMultiplyHits()) {
+  multiplyHits(value: string): void {
+    if (value && this.canMultiplyHits()) {
       this.cancel();
-      this.projects.multiplyDrumHits(this.data.scope, Number(select.value));
+      this.projects.multiplyDrumHits(this.data.scope, Number(value));
     }
-    select.value = '';
   }
   readonly steps = computed(() => Array.from({ length: Math.max(0, ...this.rows().map(row => Math.min(32, row.hits))) }, (_, i) => i));
   readonly scopeLabel = computed(() => {

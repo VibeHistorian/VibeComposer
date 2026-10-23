@@ -48,14 +48,14 @@ for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard,
         ensure(files.left>=0 && files.right<=innerWidth,'project file actions remain inside viewport');
         const glowing=getComputedStyle(trigger).boxShadow;
         ensure(glowing!=='none','accent glow visible');
-        const drumOption=()=>[...document.querySelectorAll('option')].find(option=>option.textContent.includes('Kick ·'));
+        const drumOption=()=>[...document.querySelectorAll('.track-group.drums .track-instrument')].find(option=>option.textContent.includes('Kick ·'));
         ensure(drumOption()?.textContent.trim()==='Kick · 37','Auto displays chromatic drum pitch for external device');
         settings.click();
         const midiTab=await wait(()=>[...document.querySelectorAll('.settings-sidebar button')].find(button=>button.textContent.trim()==='MIDI'),'MIDI settings tab');
         midiTab.click();
         const mapping=await wait(()=>document.querySelector('[aria-label="Drum pitch mapping"]'),'drum mapping setting');
-        ensure(mapping.value==='auto','Auto is default');
-        const setMode=async(mode,label)=>{mapping.value=mode;mapping.dispatchEvent(new Event('change',{bubbles:true}));await wait(()=>drumOption()?.textContent.trim()===label,'mapping updates drum labels: '+mode);};
+        ensure(mapping.getAttribute("value")==='auto','Auto is default');
+        const setMode=async(mode,label)=>{await changeControl(mapping, mode);await wait(()=>drumOption()?.textContent.trim()===label,'mapping updates drum labels: '+mode);};
         await setMode('general-midi','Kick · 36');
         ensure(JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).drumMapping==='general-midi','mapping persisted');
         await setMode('chromatic','Kick · 37');

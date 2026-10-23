@@ -39,7 +39,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
   const inKeyBytes = JSON.stringify([...inKeyMidi.toArray()]);
   await evaluate(`(async()=>{${waitCode}
     const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'));
-    seed.value='43';seed.dispatchEvent(new Event('change',{bubbles:true}));
+    await changeControl(seed, '43');
     const project=await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')));
     project.transposeSemitones=7;
     const drum=project.tracks.find(track=>track.role==='drums');
@@ -53,7 +53,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
   const setup=`
     const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     const button=text=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
-    const change=(input,value)=>{input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));};
+    const change = changeControl;
     const settings=async()=>{(await wait(()=>document.querySelector('[aria-label="Settings"]'))).click();await wait(()=>document.querySelector('vc-settings-dialog'));(await wait(()=>button('MIDI'))).click();return await wait(()=>document.querySelector('[aria-label="Discard phrase notes on MIDI drop"]'));};
     const closeSettings=()=>document.querySelector('[aria-label="Close settings"]').click();
     const open=async role=>{const row=await wait(()=>document.querySelector('.track-group.'+role+' .track-line'));row.querySelector('.track-select').click();(await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')))).click();await wait(()=>document.querySelector('#phrase-grid'));};
@@ -74,7 +74,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     await drop();
     const noGlow=!panel.classList.contains('midi-drag-over');
     const freePitch=document.querySelector('#note-pitch').value==='61';
-    change(knob(),'5');await wait(()=>document.querySelector('#note-pitch').value==='66');
+    await change(knob(),'5');await wait(()=>document.querySelector('#note-pitch').value==='66');
     const savedBeforeExport=sessionStorage.getItem('vibecomposer.project.v12');
     const exportButton=button('Export Phrase');
     const originalClick=HTMLAnchorElement.prototype.click;
@@ -125,12 +125,12 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     startDrop();const popup=await wait(()=>document.querySelector('vc-midi-import-dialog #midi-import-duration'));
     const dialog=popup.closest('vc-midi-import-dialog'),apply=dialog.querySelector('button[type="submit"]');
     const combined=!!dialog.querySelector('#midi-import-scale')&&dialog.textContent.includes('21 beats')&&dialog.textContent.includes('16 beats');
-    const emptyDefault=popup.value===''&&dialog.querySelector('#midi-import-scale').value==='';
+    const emptyDefault=popup.value===''&&dialog.querySelector('#midi-import-scale').getAttribute("value")==='';
     popup.value='16';popup.dispatchEvent(new Event('input',{bubbles:true}));await wait(()=>apply.disabled);
     const rejectsEqual=dialog.querySelector('[role="alert"]').textContent.includes('less than 16');
     popup.value='0';popup.dispatchEvent(new Event('input',{bubbles:true}));await new Promise(r=>setTimeout(r,30));const rejectsZero=apply.disabled;
     popup.value='12';popup.dispatchEvent(new Event('input',{bubbles:true}));await wait(()=>!apply.disabled);
-    const select=dialog.querySelector('#midi-import-scale');const choice=select.options[1];change(select,choice.value);
+    const select=dialog.querySelector('#midi-import-scale');const choice=(await selectOptions(select))[1];await change(select,choice.value);
     apply.click();await wait(()=>!document.querySelector('vc-midi-import-dialog'));
     await wait(()=>document.querySelector('.score-display-header button.active'));
     button('Undo phrase').click();await wait(()=>document.querySelector('[aria-label="Transpose phrase"]').value==='0');

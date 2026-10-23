@@ -266,7 +266,7 @@ export class EditWorkspaceComponent {
     this.transposeOpen.set(false);
   }
   setTranspose(event: Event): void { this.transposeAmount.set(Number((event.target as HTMLInputElement).value)); }
-  setGrid(event: Event): void { this.snapBeats.set(Number((event.target as HTMLSelectElement).value)); }
+  setGrid(selection: string): void { this.snapBeats.set(Number(selection)); }
   splitNotes(position: { id: string; beat: number }): void {
     const ids = this.selectedNoteIds().includes(position.id) ? this.selectedNoteIds() : [position.id];
     const next = this.notes().flatMap(note => {

@@ -666,24 +666,24 @@ test('right-click knob resets use explicit defaults, cancel previews and respect
   assert.equal(service.exportProjectJson(), saved); assert.equal(prevented, 4);
 });
 
-test('right-click combobox resets find enabled defaults and dispatch one ordinary change', () => {
+test('right-click combobox resets remember enabled defaults and emit one value change', () => {
   const { load } = fixture(), { SelectComponent } = load('shared/select.component.ts');
-  const directive = new SelectComponent(), previous = global.HTMLOptGroupElement;
-  global.HTMLOptGroupElement = class {};
-  try {
-    const changes = [], select = { disabled: false, selectedIndex: 3, options: [
-      { value: '', disabled: true }, { value: 'ASC', disabled: false }, { value: 'DESC', disabled: false }, { value: 'ANY', disabled: false },
-    ], dispatchEvent(event) { changes.push(event.type); } };
-    directive.element = { nativeElement: select }; directive.defaultValue.set('ASC');
-    const event = { preventDefault() {}, stopPropagation() {} };
-    directive.resetDefault(event); assert.equal(select.selectedIndex, 1); assert.deepEqual(changes, ['change']);
-    directive.resetDefault(event); assert.deepEqual(changes, ['change']);
-    select.disabled = true; select.selectedIndex = 2; directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
-    select.disabled = false; select.options[1].disabled = true; directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
-    directive.defaultValue.set('missing'); directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
-    directive.defaultValue.set(undefined); select.selectedIndex = 3; directive.resetDefault(event); assert.equal(select.selectedIndex, 2);
-    assert.deepEqual(changes, ['change', 'change']);
-  } finally { global.HTMLOptGroupElement = previous; }
+  const component = new SelectComponent(), changes = [], select = { disabled: false };
+  component.element = { nativeElement: select };
+  component.options.set([{ value: '', label: 'Mixed', disabled: true }, 'ASC', 'DESC', 'ANY']);
+  component.value.set('ANY'); component.defaultValue.set('ASC');
+  component.valueChange.emit = value => changes.push(value);
+  const event = { preventDefault() {}, stopPropagation() {} };
+  component.resetDefault(event); assert.equal(component.selectedValue(), 'ASC');
+  component.resetDefault(event); assert.deepEqual(changes, ['ASC']);
+  component.combobox.disabled.set(true); component.value.set('DESC');
+  component.resetDefault(event); assert.equal(component.selectedValue(), 'DESC');
+  component.combobox.disabled.set(false); component.options.set([{ value: 'ASC', label: 'Ascending', disabled: true }, 'DESC', 'ANY']);
+  component.resetDefault(event); assert.equal(component.selectedValue(), 'DESC');
+  component.defaultValue.set('missing'); component.resetDefault(event); assert.equal(component.selectedValue(), 'DESC');
+  component.defaultValue.set(undefined); component.value.set('ANY');
+  component.resetDefault(event); assert.equal(component.selectedValue(), 'DESC');
+  assert.deepEqual(changes, ['ASC', 'DESC']);
 });
 
 test('P5 dependencies use section melody settings, manual ownership and absent source presence through MIDI', () => {
@@ -2496,10 +2496,8 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
   }
   const before = service.project().tracks;
   const position = service.historyPosition();
-  const select = { value: '2' };
   assert.equal(popup.canMultiplyHits(), true);
-  popup.multiplyHits({ target: select });
-  assert.equal(select.value, '');
+  popup.multiplyHits('2');
   assert.equal(popup.rows().find(row => row.id === first).hits, 8);
   assert.equal(popup.rows().find(row => row.id === second).hits, 4);
   assert.deepEqual(service.project().tracks, before, 'section action preserves global drums');

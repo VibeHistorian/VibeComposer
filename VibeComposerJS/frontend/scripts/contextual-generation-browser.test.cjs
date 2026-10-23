@@ -11,7 +11,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
     const wait = async (read,label) => { for(let i=0;i<200;i++){const value=read();if(value)return value;await new Promise(r=>setTimeout(r,30));}throw new Error(label); };
     const ensure=(value,label)=>{if(!value)throw new Error(label);};
     const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-    const change=(input,value)=>{input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));};
+    const change = changeControl;
     const button=label=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label||b.getAttribute('aria-label')===label);
     const settings=async tab=>{
       button('Settings').click(); const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
@@ -21,9 +21,9 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       await wait(()=>innerWidth===${width}&&button('Settings'),'workspace');
       let dialog=await settings('Harmony');
       let generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'harmony generation');
-      ensure(generation.value==='CURRENT','Legacy default');
-      ensure([...generation.options].map(o=>o.textContent.trim()).join(',')==='Legacy,Functional,Fifths,Pop loop,Modal,Random','harmony choices');
-      change(generation,'FUNCTIONAL');await wait(()=>read()?.harmonySettings?.generation==='FUNCTIONAL','save harmony algorithm');
+      ensure(generation.getAttribute("value")==='CURRENT','Legacy default');
+      ensure((await selectOptions(generation)).map(o=>o.textContent.trim()).join(',')==='Legacy,Functional,Fifths,Pop loop,Modal,Random','harmony choices');
+      await change(generation,'FUNCTIONAL');await wait(()=>read()?.harmonySettings?.generation==='FUNCTIONAL','save harmony algorithm');
       dialog.querySelector('[aria-label="Close settings"]').click();
       button('Generate chord progression').click();
       await wait(()=>read().progressionChords?.length===4,'functional generation');
@@ -40,18 +40,18 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       ensure(!document.querySelector('vc-part-settings-editor [data-control-key="patternFlexible"]'),'hide Flex');
       ensure(!globals.querySelector('[aria-label="Melody Ending"]')&&!globals.querySelector('[aria-label="Melody Style"]')&&!globals.querySelector('[aria-label="Melody Form"]'),'phrasing removed from global melody');
       for(const [label,value] of [['Melody Low MIDI','62'],['Melody High MIDI','81'],['Melody Tension','50'],['Phrase Bars','3'],['Beats per Bar','3']]) {
-        change(globals.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
+        await change(globals.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
       }
       await wait(()=>read().melodyGlobal?.rangeMin===62&&read().melodyGlobal?.beatsPerBar===3,'save contextual fields');
       dialog.querySelector('[aria-label="Close settings"]').click();
       const phrasing=await wait(()=>document.querySelector('.part-settings-content [data-control-key="ending"]'),'track phrasing stack');
-      const selects=[...phrasing.querySelectorAll('select')];
+      const selects=[...phrasing.querySelectorAll('vc-select')];
       ensure(selects.length===3,'three phrasing choices share one control');
       ensure(selects.every(s=>getComputedStyle(s).appearance==='none'),'phrasing choices are arrowless');
       ensure(phrasing.querySelector('.control-name')?.textContent==='SENTENCE','phrasing shares SENTENCE title');
       ensure(selects[0].getBoundingClientRect().top===selects[1].getBoundingClientRect().top&&selects[1].getBoundingClientRect().bottom<=selects[2].getBoundingClientRect().top,'ending and style share the first row with form below');
       for(const [label,value] of [['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {
-        change(phrasing.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
+        await change(phrasing.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
       }
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.style==='JAZZ'&&t.generatorSettings.form==='QUESTION_ANSWER'&&t.generatorSettings.ending==='CLOSED'),'save track phrasing');
       ensure(!read().melodyGlobal.style&&!read().melodyGlobal.ending&&!read().melodyGlobal.form,'track phrasing does not write globals');
@@ -66,7 +66,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="TON%"]'),'restore track block controls');
       ensure(!document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]'),'hide contextual controls');
       dialog=await settings('Harmony');
-      generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'Random selector');change(generation,'RANDOM');
+      generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'Random selector');await change(generation,'RANDOM');
       await wait(()=>read().harmonySettings?.generation==='RANDOM','save Random');
       dialog.querySelector('[aria-label="Close settings"]').click();button('Generate chord progression').click();
       await wait(()=>read().progression.length===4,'Random generation');

@@ -1,7 +1,7 @@
 <header>
   <div><h2>{{ data.role === 'drums' ? 'Drum sequencer' : 'Pattern sequencer' }}</h2><span>{{ scopeLabel() }}</span></div>
   @if (data.role === 'drums') {
-    <select vcSelect [options]="[{ value: '', label: '× Hits…' }, { value: '0.5', label: '× ½' }, { value: '0.75', label: '× ¾' }, { value: '1.5', label: '× 1½' }, { value: '2', label: '× 2' }]" aria-label="Multiply Hits" title="Multiply hits for the selected drum track or group" [disabled]="!canMultiplyHits()" (change)="multiplyHits($event)"></select>
+    <vc-select #multiplier="vcSelect" [options]="[{ value: '', label: '× Hits…' }, { value: '0.5', label: '× ½' }, { value: '0.75', label: '× ¾' }, { value: '1.5', label: '× 1½' }, { value: '2', label: '× 2' }]" aria-label="Multiply Hits" title="Multiply hits for the selected drum track or group" [disabled]="!canMultiplyHits()" (valueChange)="multiplyHits($event); multiplier.restoreValue()"></vc-select>
   }
   <button type="button" [attr.aria-pressed]="showVelocities()" (click)="cancel(); showVelocities.set(!showVelocities())">Velocities</button>
   <button type="button" aria-label="Close pattern sequencer" (click)="dialog.close()">×</button>
