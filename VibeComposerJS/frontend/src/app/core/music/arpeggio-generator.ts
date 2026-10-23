@@ -37,7 +37,9 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
   const span = rhythmSettings.chordSpan, hits = rhythmSettings.hitsPerPattern, repeat = rhythmSettings.patternRepeat;
   const signedSeed = effectivePartSeed(seed, settings);
   const random = (offset: number) => new JavaRandom(BigInt.asIntN(32, signedSeed + BigInt(orderOffset - 1) + BigInt(offset)));
-  const pauses = follows ? melodyRhythm(melody, progression.length) : partRhythmMask({ ...rhythmSettings, patternFlip: false });
+  const pauses = follows ? melodyRhythm(melody, progression.length)
+    .map(value => settings.patternFlip ? value > 0 ? 0 : 1 : value)
+    : partRhythmMask({ ...rhythmSettings, patternFlip: false });
   const pauseRandom = random(30_004);
   for (let index = 0; index < pauses.length; index++) if (pauseRandom.nextInt(100) < (settings.pauseChance ?? 0)) pauses[index] = 0;
   const octaves = javaShuffle(Array.from({ length: hits * 2 }, (_, index) => index % 2 * 12), random(30_003)).slice(0, hits);
@@ -71,9 +73,8 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
       : expand(arpeggioPattern(settings.pattern, hits, pitches.length, 1,
         settings.arpPatternRotate ?? 0, settings.arpPatternCustom));
     const pitchPattern = slice(pitchMap, chordIndex), octavePattern = slice(octaveMap, chordIndex);
-    // Java melody rhythm bypasses span/repeat slicing and per-pattern pauses.
-    const pattern = follows ? (melody?.pitches[chordIndex] ?? Array<number>(16).fill(0))
-      .map(value => settings.patternFlip ? value > 0 ? 0 : 1 : value)
+    // Melody rhythm uses its own chord grid, with seeded pauses applied after inversion.
+    const pattern = follows ? pauses.slice(chordIndex * 16, (chordIndex + 1) * 16)
       : spannedPattern(rhythmSettings, chordIndex, true, pauses);
     const custom = usesDurations || follows && hits > 32 ? undefined : spannedVelocities(rhythmSettings, chordIndex, true);
     const rate = follows ? 0.25 : 4 / (hits * repeat);

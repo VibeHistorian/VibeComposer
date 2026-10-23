@@ -84,6 +84,18 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
 		List<Integer> arpPattern = arpMap.get(ARP_PATTERN_KEY);
 		List<Integer> arpOctavePattern = arpMap.get(ARP_OCTAVE_KEY);
 		List<Integer> arpPausesPattern = arpMap.get(ARP_PAUSES_KEY);
+		// Keep a seeded removal mask for each local melody grid. Apply it after inversion
+		// so Pause never creates hits, and never mutate the shared melody source.
+		Map<Integer, List<Integer>> melodyPauseMasks = new HashMap<>();
+		if (ip.getPattern() == RhythmPattern.MELODY1 && melodyPatternMap != null) {
+			Random melodyPauseGenerator = new Random(seed + 3);
+			for (int chordIndex = 0; chordIndex < actualProgression.size(); chordIndex++) {
+				List<Integer> melody = melodyPatternMap.get(chordIndex);
+				List<Integer> mask = new ArrayList<>(Collections.nCopies(melody != null ? melody.size() : 16, 1));
+				processPausePattern(ip, mask, melodyPauseGenerator);
+				melodyPauseMasks.put(chordIndex, mask);
+			}
+		}
 
 		List<Integer> arpVelocityPattern = new ArrayList<>();
 		if (ip.getCustomVelocities() != null
@@ -305,6 +317,11 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
 					if (ip.isPatternFlip()) {
 						isPause = !isPause;
 					}
+					List<Integer> melodyPauseMask = melodyPauseMasks.get(chordIndex);
+					if (melodyPauseMask != null && !melodyPauseMask.isEmpty()
+							&& melodyPauseMask.get(pulse % melodyPauseMask.size()) == 0) {
+						isPause = true;
+					}
 
 					pitch += extraTranspose;
 					if (!fillLastBeat || chordIndex < actualProgression.size() - 1) {
@@ -366,7 +383,7 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
     }
 	private void processPausePattern(ArpPart ap, List<Integer> arpPausesPattern,
 			Random pauseGenerator) {
-		for (int i = 0; i < ap.getHitsPerPattern(); i++) {
+		for (int i = 0; i < arpPausesPattern.size(); i++) {
 			if (pauseGenerator.nextInt(100) < ap.getPauseChance()) {
 				arpPausesPattern.set(i, 0);
 			}
@@ -388,7 +405,7 @@ final class ArpPhraseGenerator extends InstPhraseGenerator<ArpPart> {
 		} else if (ap.getPattern() == RhythmPattern.MELODY1 && baseMelodyPattern != null) {
 			// TODO: already set from melodyPatternMap in later processing, remove?
 			//LG.d("Setting note pattern!");
-			arpPausesPattern = baseMelodyPattern;
+			arpPausesPattern = new ArrayList<>(baseMelodyPattern);
 			ap.setPatternShift(0);
 			//dp.setVelocityPattern(false);
 			ap.setChordSpan(chordCount);

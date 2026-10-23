@@ -343,12 +343,8 @@ test('P5c Arpeggio direction, rotation, contour, octave and melody rhythm match 
   const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/arpeggio-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   assert.equal(cases.length, 256);
-  // Keep historical oracle data; correction-enabled cases describe a removed consumer.
-  const supported = cases.filter(entry => !entry.settings.correctMelodyNotes);
-  assert.ok(supported.length > 0);
-  for (const [index, entry] of supported.entries()) {
-    const { correctMelodyNotes, ...settings } = entry.settings;
-    const actual = generateArpeggio(BigInt(entry.seed), entry.key, entry.scale, entry.progression, settings, undefined, entry.melody);
+  for (const [index, entry] of cases.entries()) {
+    const actual = generateArpeggio(BigInt(entry.seed), entry.key, entry.scale, entry.progression, entry.settings, undefined, entry.melody);
     assert.equal(actual.length, entry.notes.length, `case ${index} ${JSON.stringify(entry.settings)}`);
     actual.forEach((note, position) => {
       const expected = entry.notes[position];
@@ -357,6 +353,24 @@ test('P5c Arpeggio direction, rotation, contour, octave and melody rhythm match 
       assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-9, `case ${index} note ${position} onset ${note.startBeat} vs ${expected[1]}`);
       assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-9, `case ${index} note ${position} duration ${note.durationBeats} vs ${expected[2]}`);
     });
+  }
+});
+
+test('melody-following arpeggio pauses remove seeded hits after inversion without changing the melody source', () => {
+  const { load } = fixture();
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const melody = { pitches: Array.from({ length: 3 }, () => Array.from({ length: 16 }, (_, step) => step % 3 === 0 ? 72 : 0)) };
+  const original = structuredClone(melody);
+  for (const patternFlip of [false, true]) {
+    const settings = { pattern: 'up', rate: 'eighth', octaves: 1, rhythm: 'melody', swingPercent: 50, patternFlip };
+    const generate = pauseChance => generateArpeggio(42n, 'C', 'major', [1, 4, 5], { ...settings, pauseChance }, undefined, melody);
+    const baseline = generate(0), paused = generate(50);
+    assert.ok(paused.length > 0 && paused.length < baseline.length);
+    const starts = new Set(baseline.map(note => note.startBeat));
+    assert.ok(paused.every(note => starts.has(note.startBeat)), 'Pause only removes hits from the selected melody grid');
+    assert.deepEqual(generate(50), paused, 'pause placement is reproducible');
+    assert.deepEqual(generate(100), [], '100% pauses silence both normal and inverted melody rhythm');
+    assert.deepEqual(melody, original, 'shared melody grids remain untouched');
   }
 });
 

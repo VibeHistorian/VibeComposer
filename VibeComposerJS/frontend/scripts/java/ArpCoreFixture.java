@@ -73,7 +73,8 @@ public class ArpCoreFixture {
             part.setPattern(follow ? RhythmPattern.MELODY1 : patterns[(sample / 8) % 8]);
             part.setChordSpan(1 + (sample / 16) % 4); part.setPatternRepeat(1 + sample % 4);
             part.setPatternShift(sample % 9); part.setPatternFlip(sample % 3 == 1);
-            part.setPauseChance(sample % 3 == 2 ? 35 : 0); part.setExceptionChance(new int[] {0, 35, 100}[sample % 3]);
+            part.setPauseChance(follow && sample >= 60 ? 100 : sample % 3 == 2 ? 35 : 0);
+            part.setExceptionChance(new int[] {0, 35, 100}[sample % 3]);
             part.setVelocityMin(69); part.setVelocityMax(90);
             part.setStretchEnabled(sample % 5 == 1); part.setChordNotesStretch(2 + sample % 5);
             part.setSwingPercent(new int[] {50, 66, 25}[sample % 3]);
