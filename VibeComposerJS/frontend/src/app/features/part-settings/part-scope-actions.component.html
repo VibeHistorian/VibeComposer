@@ -8,7 +8,7 @@
   <button type="button" [class.freeze-icon]="layout() === 'header'" (click)="freezeRequested.emit()"
     [attr.aria-label]="group() ? 'Freeze current tracks' : 'Freeze effective settings'"
     title="Store all supported effective musical settings as individual track overrides in this section.">
-    @if (layout() === 'header') { <span aria-hidden="true">*</span> }
+    @if (layout() === 'header') { <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" /></svg> }
     @else { {{ group() ? 'Freeze current tracks' : 'Freeze effective settings' }} }
   </button>
   @if (group() && (hasOverrides() || hasExceptions())) {

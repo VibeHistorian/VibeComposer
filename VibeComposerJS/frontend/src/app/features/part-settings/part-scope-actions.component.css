@@ -11,7 +11,8 @@ button:disabled { opacity: .38; cursor: default; }
 .header-actions { align-items: center; justify-content: center; }
 .reset-icon { width: 28px; padding: 0; font-size: 18px; }
 .reset-icon.values-match:not(:hover) { background: var(--surface-base); border-color: var(--border-default); color: var(--text-muted); }
-.freeze-icon { width: 34px; height: 26px; padding: 0; font: bold 24px var(--font-mono); line-height: 1; }
+.freeze-icon { width: 34px; height: 26px; padding: 0; display: inline-grid; place-items: center; }
+.freeze-icon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
 
 /* Copy actions */
 .action-separator { padding: 0 4px; color: var(--text-muted); }
