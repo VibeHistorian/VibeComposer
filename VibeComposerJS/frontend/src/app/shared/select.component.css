@@ -1,0 +1,25 @@
+/* Shared control surface; features own sizing and contextual variants */
+:where(:host) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Keyboard focus and disabled controls */
+:host(:focus-visible) { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+:host(:disabled) { cursor: default; }
+
+/* Native popup typography and colors */
+option {
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font-size: calc(1em + 2px);
+  text-transform: none;
+}

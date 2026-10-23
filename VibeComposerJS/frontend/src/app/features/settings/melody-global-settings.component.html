@@ -24,11 +24,7 @@
       @if (showAlgorithm(false)) {
         <label class="pattern-effect" title="Reinterpret existing note targets immediately. Automatic targets prepares new choices on Compose and enabled Regenerate.">
         Target mode
-        <select selectDefault="2" aria-label="Block target mode" [value]="values().blockTargetMode ?? 2" (change)="changeTargetMode($event)">
-          <option value="0">Chord note index</option>
-          <option value="1">Chord root + offset</option>
-          <option value="2">MIDI 60 + offset</option>
-        </select>
+        <select vcSelect [options]="[{ value: '0', label: 'Chord note index' }, { value: '1', label: 'Chord root + offset' }, { value: '2', label: 'MIDI 60 + offset' }]" selectDefault="2" aria-label="Block target mode" [value]="values().blockTargetMode ?? 2" (change)="changeTargetMode($event)"></select>
       </label>
       }
       @if (showAlgorithm(false)) { <p class="preparation-note">Mode reinterprets existing targets immediately. Other inputs prepare targets on Compose and enabled Regenerate; choices remain editable.</p> }
@@ -65,11 +61,7 @@
       @if (showAlgorithm(false)) {
         <label class="pattern-effect" title="Choose what repeated block identities preserve. Flex can regenerate their final block to approach the next target.">
         Pattern effect
-        <select [selectDefault]="2" aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (change)="changePatternEffect($event)">
-          <option value="0">Rhythm</option>
-          <option value="1">Notes</option>
-          <option value="2">Rhythm + Notes</option>
-        </select>
+        <select vcSelect [options]="[{ value: '0', label: 'Rhythm' }, { value: '1', label: 'Notes' }, { value: '2', label: 'Rhythm + Notes' }]" [selectDefault]="2" aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (change)="changePatternEffect($event)"></select>
       </label>
       }
     </fieldset>

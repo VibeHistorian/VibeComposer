@@ -667,8 +667,8 @@ test('right-click knob resets use explicit defaults, cancel previews and respect
 });
 
 test('right-click combobox resets find enabled defaults and dispatch one ordinary change', () => {
-  const { load } = fixture(), { WheelSelectDirective } = load('shared/wheel-select.directive.ts');
-  const directive = new WheelSelectDirective(), previous = global.HTMLOptGroupElement;
+  const { load } = fixture(), { SelectComponent } = load('shared/select.component.ts');
+  const directive = new SelectComponent(), previous = global.HTMLOptGroupElement;
   global.HTMLOptGroupElement = class {};
   try {
     const changes = [], select = { disabled: false, selectedIndex: 3, options: [

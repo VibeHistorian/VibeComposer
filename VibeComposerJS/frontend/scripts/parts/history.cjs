@@ -459,8 +459,8 @@ test('knobs drag vertically, commit once, cancel safely, and scroll with stepped
 
 test('wheel selects skip disabled options, wrap, emit existing change events, and preserve zoom', () => {
   const { load } = fixture();
-  const { WheelSelectDirective } = load('shared/wheel-select.directive.ts');
-  const directive = new WheelSelectDirective();
+  const { SelectComponent } = load('shared/select.component.ts');
+  const directive = new SelectComponent();
   const previous = global.HTMLOptGroupElement;
   global.HTMLOptGroupElement = class {};
   try {

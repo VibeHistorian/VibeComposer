@@ -14,8 +14,8 @@
 .control-content { display: grid; gap: 4px; min-width: 0; }
 .part-control.compact-control { min-width: 58px; width: 58px; }
 .seed-control { flex: 1 1 100%; max-width: 100%; justify-items: start; }
-.part-control select { appearance: none; field-sizing: content; min-width: 0; max-width: 140px; height: 29px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font-size: 10px; cursor: pointer; }
-.part-control select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.part-control select { appearance: none; field-sizing: content; max-width: 140px; height: 29px; padding: 0 5px; font-size: 10px; }
+
 
 /* Combined selector and flip */
 .choice-controls { display: flex; align-items: center; gap: 4px; min-width: 0; }
@@ -47,7 +47,7 @@
 .rhythm-members { grid-column: 2; grid-row: 2 / span 3; }
 .part-control.melody-choices .control-content { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
 .melody-choices .control-content > vc-control-heading { grid-column: 1 / -1; }
-.melody-choices select { box-sizing: border-box; width: 100%; height: 22px; max-width: 160px; }
+.melody-choices select { width: 100%; height: 22px; max-width: 160px; }
 .melody-choices select[data-control-key="form"] { grid-column: 1 / -1; }
 :host(.quick-layout) .joined-control > .control-content { --quick-heading-position: static; --quick-heading-transform: none; --quick-heading-max-width: 100%; }
 :host(.quick-layout) .joined-control > .control-content > vc-control-heading { --quick-heading-position: absolute; --quick-heading-transform: translate(-50%, -50%); grid-area: auto; }

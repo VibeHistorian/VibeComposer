@@ -15,14 +15,14 @@ import { chordRhythmMask } from '../../core/music/rhythm-pattern';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
-import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { SelectComponent } from '../../shared/select.component';
 import { ControlHeadingComponent, type ControlInheritance } from '../../shared/control-heading.component';
 import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
 import { ProjectService } from '../../core/project/project.service';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, WheelSelectDirective],
+  imports: [NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',

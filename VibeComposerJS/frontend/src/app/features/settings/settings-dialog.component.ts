@@ -1,3 +1,4 @@
+import { SelectComponent } from '../../shared/select.component';
 import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
@@ -16,7 +17,7 @@ import type { DrumMappingPreference } from '../../core/music/drum-instruments';
 
 @Component({
   selector: 'vc-settings-dialog',
-  imports: [SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
+  imports: [SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.css',

@@ -339,7 +339,7 @@ test('transport watches project changes and enabling LIVE without subscribing to
     '../../core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
     '../../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
     '../../core/ui/workspace-ui.service': { WorkspaceUiService: 'ui' },
-    '../../shared/wheel-select.directive': { WheelSelectDirective: class {} },
+    '../../shared/select.component': { SelectComponent: class {} },
     '../tracks/mix-buttons.component': { MixButtonsComponent: class {} },
     '../../shared/compact-knob.component': { CompactKnobComponent: class {} },
     '../harmony/chordlet-editor.component': { ChordletEditorComponent: class {} },

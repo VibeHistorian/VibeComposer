@@ -44,10 +44,7 @@
             @if (control.key === 'ending') {
               <vc-control-heading label="SENTENCE" [inheritance]="inheritanceFor(control)" (inheritRequested)="resetControl(control)" />
               @for (member of members(control); track member.key) {
-                <select [attr.data-control-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (change)="choose(member, $event)">
-                  @if (values()[member.key] === null) { <option value="" disabled selected>Mixed</option> }
-                  @for (option of member.options; track option) { <option [value]="option" [selected]="values()[member.key] === option">{{ option }}</option> }
-                </select>
+                <select vcSelect [options]="member.options" [attr.data-control-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (change)="choose(member, $event)" [mixed]="values()[member.key] === null"></select>
               }
             } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin') {
               <vc-control-heading [label]="title(control)" [inheritance]="inheritanceFor(control)" (inheritRequested)="resetControl(control)" />
@@ -81,12 +78,7 @@
                   (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
               } @else if (control.kind === 'choice') {
                 <div class="choice-controls">
-                <select [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (change)="choose(control, $event)">
-                  @if (values()[control.key] === null) { <option value="" disabled [selected]="true">Mixed</option> }
-                  @for (option of control.options; track option) {
-                    <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option>
-                  }
-                </select>
+                <select vcSelect [options]="control.options" [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (change)="choose(control, $event)" [mixed]="values()[control.key] === null"></select>
                 @if (flipControl(control); as flip) {
                   <button type="button" class="flip-button" [attr.data-control-key]="flip.key"
                     [class.active]="values()[flip.key] === true" [class.mixed]="values()[flip.key] === null"
@@ -140,10 +132,7 @@
   <div class="joined-member" [attr.data-control-key]="member.key">
     @if (member.key === 'feedbackCount' || member.key === 'patternShift') {
       <label class="member-title">{{ member.key === 'feedbackCount' ? '#' : '→' }}
-        <select [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (change)="chooseNumber(member, $event)">
-          @if (values()[member.key] === null) { <option value="" disabled selected>Mixed</option> }
-          @for (option of member.key === 'feedbackCount' ? delayOptions : shiftOptions; track option) { <option [value]="option" [selected]="values()[member.key] === option">{{ option }}</option> }
-        </select>
+        <select vcSelect [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (change)="chooseNumber(member, $event)" [mixed]="values()[member.key] === null"></select>
       </label>
       @if (local()) { <vc-control-heading [label]="member.label" [statusOnly]="true" [inheritance]="inheritanceFor(member)" (inheritRequested)="resetControl(member)" /> }
     } @else {

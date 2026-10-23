@@ -38,9 +38,7 @@
 
   <div class="phrase-tools">
     <label class="field-label" for="phrase-grid">Time grid (beats)</label>
-    <select id="phrase-grid" [value]="snapBeats()" (change)="setGrid($event)">
-      @for (grid of gridChoices; track grid) { <option [value]="grid" [selected]="grid === snapBeats()">{{ grid === 1 / 6 ? '1/6' : grid === 1 / 3 ? '1/3' : grid === 2 / 3 ? '2/3' : grid === 4 / 3 ? '4/3' : grid }}</option> }
-    </select>
+    <select vcSelect [options]="gridSelectOptions()" id="phrase-grid" [value]="snapBeats()" (change)="setGrid($event)"></select>
     <div class="phrase-actions">
       <button type="button" title="Ctrl+A" (click)="selectAll()">Select all</button>
       <button type="button" title="Shift+T" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>

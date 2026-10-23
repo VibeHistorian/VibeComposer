@@ -5,14 +5,17 @@ import { KEYS } from '../../core/music/harmony';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
 import { sectionChordDurations, sectionDurationBeats, sectionHasChordOverride } from '../../core/music/section-context';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
-import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { SelectComponent } from '../../shared/select.component';
 
 @Component({
-  selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, WheelSelectDirective],
+  selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './section-context-editor.component.html', styleUrl: './section-context-editor.component.css',
 })
 export class SectionContextEditorComponent {
+  readonly keyOptions = computed(() => [{ value: '', label: 'Project key' }, ...this.keys.map(key => ({ value: key, label: key }))]);
+  readonly scaleOptions = computed(() => [{ value: '', label: 'Project scale' }, ...this.scales.map(scale => ({ value: scale, label: this.scaleDefinitions[scale].label }))]);
+
   readonly scales = SCALE_MODES;
   readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly projects = inject(ProjectService);

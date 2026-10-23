@@ -7,7 +7,6 @@ legend { color: var(--accent-primary); font: 600 10px var(--font-ui); }
 
 /* Pattern effect picker */
 .pattern-effect { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--text-secondary); font: 600 10px var(--font-ui); margin-bottom: 8px; }
-select { min-width: 0; max-width: 100%; color: var(--text-primary); background: var(--surface-input); border: 1px solid var(--border-default); border-radius: var(--radius-control); font: inherit; padding: 4px; }
 select:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 
 /* Target preparation context */

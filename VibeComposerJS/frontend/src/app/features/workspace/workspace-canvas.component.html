@@ -58,30 +58,18 @@
                     (click)="rerollRole(track.role, track.id)">↻</button>
                 </div>
                 @if (track.role === 'drums') {
-                  <select class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
+                  <select vcSelect [options]="drumSelectOptions()" class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
                     [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
-                    (click)="$event.stopPropagation()" (change)="updateDrumPitch(track, $event)">
-                    @for (instrument of drumInstruments; track instrument.midi) {
-                      <option [value]="instrument.midi" [selected]="instrument.midi === drumPitch(track)">{{ midi.drumLabel(instrument.midi) }}</option>
-                    }
-                  </select>
+                    (click)="$event.stopPropagation()" (change)="updateDrumPitch(track, $event)"></select>
                 } @else {
-                  <select class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
+                  <select vcSelect [options]="instrumentSelectOptions()[track.id]" class="track-inline-select track-instrument" [attr.aria-label]="'Instrument ' + track.name"
                     [selectDefault]="defaultMix[track.role].program" [value]="track.mix.program" [title]="'Instrument: ' + instrumentName(track)" [disabled]="editing()"
-                    (click)="$event.stopPropagation()" (change)="updateInstrument(track, $event)">
-                    @for (instrument of trackInstrumentOptions()[track.id]; track instrument.program) {
-                      <option [value]="instrument.program" [selected]="instrument.program === track.mix.program">{{ instrument.name }}</option>
-                    }
-                  </select>
+                    (click)="$event.stopPropagation()" (change)="updateInstrument(track, $event)"></select>
                 }
-                <select class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
+                <select vcSelect [options]="channelSelectOptions()" class="track-inline-select track-channel" [attr.aria-label]="'MIDI channel ' + track.name"
                   [selectDefault]="defaultChannel(track)" [value]="track.midiChannel" [disabled]="editing() || track.role === 'drums'"
                   [title]="track.role === 'drums' ? 'Percussion uses MIDI channel 10' : 'MIDI channel ' + track.midiChannel"
-                  (click)="$event.stopPropagation()" (change)="updateChannel(track, $event)">
-                  @for (channel of midiChannels; track channel) {
-                    <option [value]="channel" [selected]="channel === track.midiChannel">CH {{ channel.toString().padStart(2, '0') }}</option>
-                  }
-                </select>
+                  (click)="$event.stopPropagation()" (change)="updateChannel(track, $event)"></select>
                 <div class="track-mix-controls" (click)="$event.stopPropagation()">
                   <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name" [defaultValue]="0"
                     [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
@@ -339,9 +327,7 @@
             <span class="selection-kicker">{{ selectedSectionIds().length }} sections selected · editing {{ sectionLabel(section.type) }}</span>
           }
           <label class="quick-field">Section type
-            <select selectDefault="VERSE1" [value]="section.type" (change)="updateSectionType($event)">
-              @for (type of sectionTypes; track type) { <option [value]="type" [selected]="type === section.type">{{ sectionLabel(type) }}</option> }
-            </select>
+            <select vcSelect [options]="sectionSelectOptions()" selectDefault="VERSE1" [value]="section.type" (change)="updateSectionType($event)"></select>
           </label>
           <label class="quick-field">Length in bars
             <input type="number" min="1" [max]="maxSectionMeasures()" [value]="section.measures" (change)="updateSectionMeasures($event)" />

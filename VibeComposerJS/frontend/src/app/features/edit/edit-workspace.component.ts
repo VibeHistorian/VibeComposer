@@ -1,3 +1,4 @@
+import { SelectComponent } from '../../shared/select.component';
 import { afterNextRender, Injector, ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
 import { DOCUMENT, TitleCasePipe } from '@angular/common';
 import { type ArrangedPart, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
@@ -22,12 +23,14 @@ export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; 
 
 @Component({
   selector: 'vc-edit-workspace',
-  imports: [TitleCasePipe],
+  imports: [SelectComponent, TitleCasePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-workspace.component.html',
   styleUrl: './edit-workspace.component.css',
 })
 export class EditWorkspaceComponent {
+  readonly gridSelectOptions = computed(() => this.gridChoices.map(grid => ({ value: grid, label: String(grid === 1 / 6 ? '1/6' : grid === 1 / 3 ? '1/3' : grid === 2 / 3 ? '2/3' : grid === 4 / 3 ? '4/3' : grid) })));
+
   readonly projects = inject(ProjectService);
   private readonly preferences = inject(UiPreferencesService);
   private readonly midi = inject(MidiOutputService);

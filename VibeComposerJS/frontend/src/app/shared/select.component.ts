@@ -1,8 +1,27 @@
-import { Directive, ElementRef, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input } from '@angular/core';
 
-/** Native selects share the same wheel behavior and existing change handlers. */
-@Directive({ selector: 'select', host: { '(wheel)': 'onWheel($event)', '(contextmenu)': 'resetDefault($event)' } })
-export class WheelSelectDirective {
+export interface SelectOption {
+  readonly value: string | number;
+  readonly label: string;
+  readonly disabled?: boolean;
+}
+
+/** A native select host preserves labels, focus, keyboard input and ordinary change events. */
+@Component({
+  selector: 'select[vcSelect]',
+  templateUrl: './select.component.html',
+  styleUrl: './select.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(wheel)': 'onWheel($event)', '(contextmenu)': 'resetDefault($event)' },
+})
+export class SelectComponent {
+  readonly options = input<readonly (string | number | SelectOption)[] | undefined>([]);
+  // Match native value coercion, including values read from heterogeneous settings records.
+  readonly value = input<unknown>();
+  readonly mixed = input(false);
+  readonly choices = computed(() => (this.options() ?? []).map(option => typeof option === 'object'
+    ? { ...option, value: String(option.value) } : { value: String(option), label: String(option), disabled: false }));
+  readonly selectedValue = computed(() => this.value() === undefined ? undefined : String(this.value()));
   private readonly element = inject<ElementRef<HTMLSelectElement>>(ElementRef);
   readonly defaultValue = input<string | number | undefined>(undefined, { alias: 'selectDefault' });
 
@@ -35,3 +54,4 @@ export class WheelSelectDirective {
     select.dispatchEvent(new Event('change', { bubbles: true }));
   }
 }
+

@@ -19,7 +19,7 @@ button { padding: 6px 9px; border: 1px solid var(--border-default); border-radiu
 .restore-panel { padding-top: 12px; border-top: 1px solid var(--border-subtle); }
 /* Phrase tools and help */
 .phrase-tools { margin-top: 16px; border-top: 1px solid var(--border-subtle); }
-.phrase-tools select { width: 100%; padding: 7px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font: 11px var(--font-mono); }
+.phrase-tools select { width: 100%; padding: 7px; font: 11px var(--font-mono); }
 .phrase-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .phrase-help { margin-top: 20px; color: var(--text-secondary); font: 11px/1.6 var(--font-ui); }
 .phrase-help summary { cursor: pointer; color: var(--text-primary); }

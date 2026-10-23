@@ -1,3 +1,4 @@
+import { SelectComponent } from '../../shared/select.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import type { CommonPartSettings, PartSettingsPatch } from '../../core/music/part-settings.model';
@@ -8,6 +9,7 @@ import { DEFAULT_DURATION_CHANCES, DEFAULT_DURATIONS, durationError, paddedDurat
 import { validateDurationDraft } from '../../core/music/duration-validation';
 
 @Component({
+  imports: [SelectComponent],
   selector: 'vc-durations-dialog',
   templateUrl: './durations-dialog.component.html',
   styleUrl: './durations-dialog.component.css',

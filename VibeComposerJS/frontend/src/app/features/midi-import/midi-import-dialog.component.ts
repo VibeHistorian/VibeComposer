@@ -1,3 +1,4 @@
+import { SelectComponent } from '../../shared/select.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { fitImportedMidi, midiDurationError, type ImportedMidiTrack, type MidiScaleChoice } from '../../core/music/midi-import-options';
@@ -9,12 +10,15 @@ export interface MidiImportDialogData {
 }
 
 @Component({
+  imports: [SelectComponent],
   selector: 'vc-midi-import-dialog',
   templateUrl: './midi-import-dialog.component.html',
   styleUrl: './midi-import-dialog.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MidiImportDialogComponent {
+  readonly scaleOptions = computed(() => [{ value: '', label: 'Keep imported pitches (default)' }, ...this.data.choices.map(item => ({ value: item.id, label: item.label }))]);
+
   readonly data = inject<MidiImportDialogData>(DIALOG_DATA);
   readonly dialog = inject(DialogRef);
   readonly duration = signal('');

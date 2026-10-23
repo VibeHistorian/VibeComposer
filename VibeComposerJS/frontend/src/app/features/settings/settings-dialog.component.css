@@ -18,7 +18,8 @@ h1 { margin: 0; font-size: 20px; font-weight: 550; }
 .settings-category-heading span { color: var(--text-muted); }
 .settings-subcategories { margin-left: 19px; padding-left: 8px; border-left: 1px solid var(--border-default); }
 .settings-sidebar .settings-main-category { font-weight: 600; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+select:focus-visible { outline-offset: 2px; }
 
 /* Appearance preferences */
 .appearance-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -32,7 +33,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .appearance-fields { max-width: 560px; margin: 20px 0; padding: 12px; border: 1px solid var(--border-default); border-radius: var(--radius-card); }
 .appearance-fields legend { padding: 0 6px; color: var(--text-strong); font: 13px var(--font-heading); }
 .appearance-setting { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 6px 0; font-size: 12px; }
-.appearance-setting select, .appearance-setting input[type="number"] { max-width: 100%; padding: 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
+.appearance-setting input[type="number"] { max-width: 100%; padding: 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
+.appearance-setting select { padding: 6px; border: 1px solid var(--border-strong); }
 .appearance-setting input[type="number"] { width: 80px; }
 .appearance-setting input[type="color"] { width: 52px; height: 30px; padding: 2px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); cursor: pointer; }
 .appearance-reset { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; }

@@ -38,7 +38,7 @@ import { PartScopeActionsComponent } from '../part-settings/part-scope-actions.c
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
 import { MixButtonsComponent } from '../tracks/mix-buttons.component';
-import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { SelectComponent } from '../../shared/select.component';
 import { TrackGenerationPolicyComponent } from '../tracks/track-generation-policy.component';
 import { DEFAULT_TRACK_POLICIES } from '../../core/music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, INSTRUMENT_POOLS } from '../../core/music/instrument-generation';
@@ -65,13 +65,18 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, WheelSelectDirective, TrackGenerationPolicyComponent],
+  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  readonly drumSelectOptions = computed(() => this.drumInstruments.map(instrument => ({ value: instrument.midi, label: this.midi.drumLabel(instrument.midi) })));
+  readonly instrumentSelectOptions = computed(() => Object.fromEntries(Object.entries(this.trackInstrumentOptions()).map(([id, options]) => [id, options.map(instrument => ({ value: instrument.program, label: instrument.name }))])));
+  readonly channelSelectOptions = computed(() => this.midiChannels.map(channel => ({ value: channel, label: 'CH ' + channel.toString().padStart(2, '0') })));
+  readonly sectionSelectOptions = computed(() => this.sectionTypes.map(type => ({ value: type, label: this.sectionLabel(type) })));
+
   readonly partSettingsInInspector = signal(this.isPartSettingsHeightLimited());
   updatePartSettingsLayout(): void {
     this.partSettingsInInspector.set(this.isPartSettingsHeightLimited());

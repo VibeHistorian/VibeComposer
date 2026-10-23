@@ -4,17 +4,17 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 h2 { margin: 0 0 4px; font: 600 16px var(--font-ui); }
 header span, .instructions { color: var(--text-secondary); }
 p { margin: 0; line-height: 1.5; }
-button, select, input { font: inherit; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); }
+button, input { font: inherit; color: var(--text-primary); border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); }
 button { padding: 5px 9px; background: var(--surface-button); cursor: pointer; }
 button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 button.active, button.save { border-color: var(--parameter-rhythm); background: var(--surface-toggle-active); }
 button:disabled { opacity: .45; cursor: default; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+select:focus-visible { outline-offset: 2px; }
 
 /* Drawing tools */
 .duration-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .duration-toolbar label { display: flex; align-items: center; gap: 5px; }
-.duration-toolbar select { padding: 4px; }
 input[type="checkbox"] { accent-color: var(--parameter-rhythm); }
 
 /* Rhythm lanes and beat ruler */

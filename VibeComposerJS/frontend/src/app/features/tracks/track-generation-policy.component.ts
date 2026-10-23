@@ -4,18 +4,20 @@ import type { InstrumentGenerationPolicy, TrackGenerationPolicy, TrackGeneration
 import { DEFAULT_INSTRUMENT_POLICIES, instrumentPoolOptions } from '../../core/music/instrument-generation';
 import { TRACK_POLICY_CONTROLS, DEFAULT_TRACK_POLICIES, automaticPolicyDefault, type PolicyControl } from '../../core/music/track-generation';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
-import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { SelectComponent } from '../../shared/select.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 
 @Component({
   selector: 'vc-track-generation-policy',
-  imports: [CompactToggleComponent, CompactKnobComponent, WheelSelectDirective],
+  imports: [CompactToggleComponent, CompactKnobComponent, SelectComponent],
   host: { '[attr.data-control-role]': 'role()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './track-generation-policy.component.html',
   styleUrl: './track-generation-policy.component.css',
 })
 export class TrackGenerationPolicyComponent {
+  readonly poolSelectOptions = computed(() => this.instrumentPools().map(pool => ({ value: pool, label: this.poolLabels[pool] })));
+
   readonly role = input<ArrangedPart>('arpeggio');
   readonly policy = input.required<TrackGenerationPolicy>();
   readonly values = computed(() => ({ onCompose: true, onRegenerate: false,

@@ -51,11 +51,7 @@
 
   <div class="transport-tools project-tools" role="group" aria-label="Project actions">
     <div class="mode-seed">
-    <label class="mode-control"><span>MODE</span><select selectDefault="major" aria-label="Mode" [value]="project().scale" (change)="updateScale($event)">
-      @for (scale of scales; track scale) {
-        <option [value]="scale" [selected]="project().scale === scale">{{ scaleDefinitions[scale].label }}</option>
-      }
-    </select></label>
+    <label class="mode-control"><span>MODE</span><select vcSelect [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (change)="updateScale($event)"></select></label>
     <label class="seed-control"><span>SEED</span><input aria-label="Generation seed" inputmode="numeric" [value]="seedInput()"
       title="Generation seed (0 chooses a random seed on Compose). Right-click: reset to 0. Middle-click: randomize."
       (contextmenu)="resetSeed($event)" (mousedown)="seedMouseDown($event)" (auxclick)="randomizeSeed($event)"

@@ -15,10 +15,7 @@
     <section aria-label="Fit MIDI key and mode">
       <p>Some imported notes fall outside the current key and mode after global transpose correction. Scale snapping is on.</p>
       <label for="midi-import-scale">Key/mode translation</label>
-      <select id="midi-import-scale" [value]="choice()" (change)="choice.set($any($event.target).value)" aria-describedby="midi-import-scale-help">
-        <option value="">Keep imported pitches (default)</option>
-        @for (item of data.choices; track item.id) { <option [value]="item.id">{{ item.label }}</option> }
-      </select>
+      <select vcSelect [options]="scaleOptions()" id="midi-import-scale" [value]="choice()" (change)="choice.set($any($event.target).value)" aria-describedby="midi-import-scale-help"></select>
       <p id="midi-import-scale-help">Choose an inferred source key/mode to translate its scale degrees into the current key/mode. Source matches are estimates.</p>
     </section>
   }

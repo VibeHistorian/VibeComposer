@@ -1,3 +1,4 @@
+import { SelectComponent } from '../../shared/select.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
@@ -13,6 +14,7 @@ import { MidiOutputService } from '../../core/audio/midi-output.service';
 export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; velocities: boolean; melodyHits: number }
 
 @Component({
+  imports: [SelectComponent],
   selector: 'vc-pattern-sequencer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pattern-sequencer.component.html',

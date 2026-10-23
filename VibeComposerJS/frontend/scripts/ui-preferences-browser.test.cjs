@@ -23,6 +23,16 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     try {
       await wait(()=>innerWidth===${width},'viewport');
       await wait(()=>button('Edit quick settings'),'workspace');
+      const focusedSelect = document.querySelector('select.track-instrument');
+      focusedSelect.focus();
+      ensure(focusedSelect.matches(':focus-visible'),'instrument select shows keyboard focus');
+      const focusProbe = document.createElement('span');
+      focusProbe.style.color='var(--border-focus)';
+      focusedSelect.parentElement.append(focusProbe);
+      ensure(getComputedStyle(focusedSelect).outlineColor===getComputedStyle(focusProbe).color,'select focus outline follows the active theme');
+      ensure(getComputedStyle(focusedSelect).outlineStyle==='solid' && getComputedStyle(focusedSelect).outlineWidth==='2px','select uses the shared focus outline');
+      focusProbe.remove();
+      focusedSelect.blur();
       for (const [family, weights] of [['DM Sans', [400, 500, 600, 700]], ['DM Mono', [400, 500]]]) {
         for (const weight of weights) {
           const faces = await document.fonts.load(weight + ' 12px "' + family + '"', 'Árvíztűrő tükörfúrógép');
@@ -157,6 +167,10 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(getComputedStyle(control(quick(),'velocityMin')).getPropertyValue('--knob-default-brightness').trim()==='1','parameter mini knobs retain full default brightness');
         const delay=control(quick(),'feedbackCount');
         const delaySelect=delay.querySelector('select');
+        ensure(delaySelect.matches('select[vcSelect]'),'shared select retains the native host');
+        ensure(getComputedStyle(delaySelect.options[0]).textTransform==='none','shared popup labels retain normal casing');
+        let delayChanges=0;
+        delaySelect.addEventListener('change',()=>delayChanges++);
         ensure([...delaySelect.options].map(o=>o.value).join(',')==='0,1,2,3,4,5','delay count choices');
         ensure(getComputedStyle(delaySelect).appearance==='none','delay count is arrowless');
         ensure(delay.querySelector('[aria-label="FB duration"]'),'delay time shares count panel');
@@ -165,6 +179,11 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await wait(()=>delaySelect.value==='1','scroll delay count');
         delaySelect.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}));
         await wait(()=>delaySelect.value==='0','reset delay count');
+        ensure(delayChanges===2,'wheel and reset dispatch one change each');
+        delaySelect.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}));
+        const selectZoom=new WheelEvent('wheel',{deltaY:1,ctrlKey:true,bubbles:true,cancelable:true});
+        delaySelect.dispatchEvent(selectZoom);
+        ensure(delayChanges===2 && !selectZoom.defaultPrevented && delaySelect.value==='0','default reset is a no-op and modified wheel preserves zoom');
         const rhythm=control(quick(),'rhythm'), rhythmSelect=rhythm.querySelector('select');
         rhythmSelect.value='full';rhythmSelect.dispatchEvent(new Event('change',{bubbles:true}));
         const shift=await wait(()=>rhythm.querySelector('[aria-label="Shift"]'),'combined pattern shift');

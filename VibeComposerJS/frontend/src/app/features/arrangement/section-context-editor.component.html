@@ -26,21 +26,12 @@
       <button type="button" [disabled]="section().context?.[field.key] === undefined" (click)="reset(field.key)">Inherit</button>
     </div>
   }
-  <label>Key<select [selectDefault]="projects.project().key" [value]="section().context?.key ?? ''" (change)="update('key', $event)">
-    <option value="">Project key</option>@for (key of keys; track key) { <option [value]="key">{{ key }}</option> }
-  </select></label>
-  <label>Scale<select [selectDefault]="projects.project().scale" [value]="section().context?.scale ?? ''" (change)="update('scale', $event)">
-    <option value="">Project scale</option>
-    @for (scale of scales; track scale) { <option [value]="scale">{{ scaleDefinitions[scale].label }}</option> }
-  </select></label>
-  <label>Key change type<select selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
-    [value]="section().context?.keyChangeType ?? 'direct'" (change)="update('keyChangeType', $event)">
-    <option value="direct">Direct</option><option value="two-five-one">Ending ii–V</option>
-  </select></label>
+  <label>Key<select vcSelect [options]="keyOptions()" [selectDefault]="projects.project().key" [value]="section().context?.key ?? ''" (change)="update('key', $event)"></select></label>
+  <label>Scale<select vcSelect [options]="scaleOptions()" [selectDefault]="projects.project().scale" [value]="section().context?.scale ?? ''" (change)="update('scale', $event)"></select></label>
+  <label>Key change type<select vcSelect [options]="[{ value: 'direct', label: 'Direct' }, { value: 'two-five-one', label: 'Ending ii–V' }]" selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
+    [value]="section().context?.keyChangeType ?? 'direct'" (change)="update('keyChangeType', $event)"></select></label>
   @if (section().customChords || section().chordDegrees) { <p>Explicit section chords take precedence over the ending cadence.</p> }
-  <label>Beat duration<select [selectDefault]="1" [value]="section().context?.beatDurationMultiplier ?? 1" (change)="update('beatDurationMultiplier', $event, true)">
-    <option value="0.5">Half</option><option value="1">Normal</option><option value="2">Double</option>
-  </select></label>
+  <label>Beat duration<select vcSelect [options]="[{ value: '0.5', label: 'Half' }, { value: '1', label: 'Normal' }, { value: '2', label: 'Double' }]" [selectDefault]="1" [value]="section().context?.beatDurationMultiplier ?? 1" (change)="update('beatDurationMultiplier', $event, true)"></select></label>
   <button type="button" (click)="projects.setSectionMusicalState(section().id, { context: undefined })" [disabled]="!section().context">Inherit all timing and key</button>
   <p>Section swing overrides part swing. Blank values inherit. Tempo changes are shared by playback and MIDI export.</p>
 </fieldset>

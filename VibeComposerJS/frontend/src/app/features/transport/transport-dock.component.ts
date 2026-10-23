@@ -6,19 +6,21 @@ import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
 import { effectiveKey } from '../../core/music/harmony';
-import { WheelSelectDirective } from '../../shared/wheel-select.directive';
+import { SelectComponent } from '../../shared/select.component';
 import { MixButtonsComponent } from '../tracks/mix-buttons.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 
 @Component({
   selector: 'vc-transport-dock',
-  imports: [WheelSelectDirective, MixButtonsComponent, CompactKnobComponent, ChordletEditorComponent],
+  imports: [SelectComponent, MixButtonsComponent, CompactKnobComponent, ChordletEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transport-dock.component.html',
   styleUrl: './transport-dock.component.css',
 })
 export class TransportDockComponent {
+  readonly scaleOptions = computed(() => this.scales.map(scale => ({ value: scale, label: this.scaleDefinitions[scale].label })));
+
   readonly scales = SCALE_MODES;
   readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly playback = inject(AudioPlaybackService);

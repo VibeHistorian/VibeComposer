@@ -1,11 +1,7 @@
 @if (expanded() && role() !== 'drums') {
   <div class="policy-controls instrument-policy" role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
     <label><span>Instrument pool</span>
-      <select [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)">
-        @for (pool of instrumentPools(); track pool) {
-          <option [value]="pool" [selected]="instrumentPolicy().pool === pool">{{ poolLabels[pool] }}</option>
-        }
-      </select>
+      <select vcSelect [options]="poolSelectOptions()" [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (change)="changeInstrument('pool', $event)"></select>
     </label>
     @if (role() === 'chords' && instrumentPolicy().pool === 'AUTO') {
       <vc-compact-knob [mini]="true" label="Instrument sustain chance %" [defaultValue]="50" shortLabel="SUST" unit="%"
@@ -34,9 +30,7 @@
       <label [attr.title]="control.label + (control.description ? ': ' + control.description : '')">
         <span>{{ control.label }}</span>
         @if (control.options) {
-          <select [selectDefault]="defaultValue(control)" [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)">
-            @for (option of control.options; track option) { <option [value]="option" [selected]="values()[control.key] === option">{{ option }}</option> }
-          </select>
+          <select vcSelect [options]="control.options" [selectDefault]="defaultValue(control)" [attr.aria-label]="'Reroll ' + control.label" [value]="values()[control.key]" [disabled]="inactive(control)" (change)="change(control, $event)"></select>
         }
       </label>
       }

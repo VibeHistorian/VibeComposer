@@ -1,0 +1,7 @@
+@if (mixed()) {
+  <option value="" disabled [selected]="true">Mixed</option>
+}
+@for (option of choices(); track option.value) {
+  <option [value]="option.value" [disabled]="option.disabled ?? false"
+    [selected]="!mixed() && option.value === selectedValue()">{{ option.label }}</option>
+}

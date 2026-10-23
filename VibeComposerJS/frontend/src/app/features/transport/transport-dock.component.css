@@ -36,10 +36,10 @@
 .mode-seed { width: 112px; flex: 0 0 auto; display: grid; gap: 5px; }
 .mode-seed label { min-width: 0; display: flex; align-items: center; gap: 5px; }
 .mode-seed label > span { flex: 0 0 4ch; color: var(--text-subtle); font: 9px var(--font-mono); }
-.mode-seed select, .mode-seed input { flex: 1; width: 0; min-width: 0; }
-.mode-seed select { min-width: 0; height: 24px; padding: 0 5px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-strong); font: 10px var(--font-mono); }
-.mode-control select { appearance: none; cursor: pointer; }
-.mode-control select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.mode-seed input { flex: 1; width: 0; min-width: 0; }
+.mode-seed select { flex: 1; width: 0; height: 24px; padding: 0 5px; color: var(--text-strong); font: 10px var(--font-mono); }
+.mode-control select { appearance: none; }
+
 .global-harmony { flex: 0 1 auto; width: max-content; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .global-harmony-label { color: var(--text-secondary); font-size: 10px; text-align: center; }
 .playback-error { position: absolute; right: 12px; bottom: calc(100% + 6px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); font-size: 10px; }

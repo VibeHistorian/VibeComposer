@@ -7,8 +7,8 @@ header span, footer { color: var(--text-muted); font-size: 10px; }
 button { border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-secondary); padding: 5px 8px; cursor: pointer; }
 header button[aria-pressed="true"] { color: var(--parameter-dynamics); border-color: var(--parameter-dynamics); }
 footer { padding: 9px 14px; border-top: 1px solid var(--border-default); }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
-header select { min-width: 0; max-width: 96px; padding: 5px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-input); color: var(--text-primary); font: 11px var(--font-ui); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+header select { max-width: 96px; padding: 5px; border-radius: var(--radius-tight); font: 11px var(--font-ui); }
 header select:disabled { opacity: .5; }
 
 /* Track grid */
