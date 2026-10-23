@@ -61,6 +61,11 @@
 .quick-control-border legend { max-width: calc(100% - 8px); height: 18px; margin-inline: auto; padding: 0 3px; overflow: hidden; color: transparent; font: 10px var(--font-ui); white-space: nowrap; }
 .border-status { display: inline-block; width: 18px; margin-left: 5px; }
 
+/* Local overrides share the snowflake accent across their control borders */
+.part-control.custom { --border-default: var(--accent-primary); }
+:host(.quick-layout) .part-control.custom .quick-control-border { box-shadow: 0 0 6px var(--accent-outline); }
+:host(:not(.quick-layout)) .part-control-area:has(.part-control.custom) { border-color: var(--accent-primary); box-shadow: 0 0 6px var(--accent-outline); }
+
 /* Flowing quick settings */
 .quick-title-sizing { display: none; }
 :host(.quick-layout) .quick-title-sizing { display: block; grid-area: 1 / 1; width: max-content; height: 0; padding-inline: 3px; visibility: hidden; font: 10px var(--font-ui); white-space: nowrap; }

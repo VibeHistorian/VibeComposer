@@ -1,6 +1,6 @@
 <div class="part-controls">
   @if (seedControl(); as control) {
-    <div class="part-control seed-control" data-control-key="patternSeed" [title]="control.description ?? ''">
+    <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" data-control-key="patternSeed" [title]="control.description ?? ''">
       <span class="quick-title-sizing" aria-hidden="true">{{ control.label }}@if (inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</span>
       <fieldset class="quick-control-border" aria-hidden="true">
         <legend>{{ control.label }}@if (inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</legend>
@@ -26,7 +26,7 @@
       @if (showGroupTitles()) { <h3>{{ group.label }}</h3> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind !== 'boolean') {
               <span class="quick-title-sizing" aria-hidden="true">{{ control.kind === 'number' ? code(control) : control.label }}@if (control.kind !== 'number' && inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</span>
             }
