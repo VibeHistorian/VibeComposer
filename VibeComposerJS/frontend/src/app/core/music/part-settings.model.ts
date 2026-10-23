@@ -44,6 +44,9 @@ export interface CommonPartSettings {
 
 /** Melody track inputs, inherited by section role/track overrides. */
 export interface MelodySettings extends CommonPartSettings {
+  readonly ending?: 'OPEN' | 'CLOSED' | 'LOOP';
+  readonly style?: 'TONAL' | 'MODAL' | 'JAZZ';
+  readonly form?: 'STATEMENT_VARIATION' | 'QUESTION_ANSWER' | 'SENTENCE' | 'CONTINUOUS';
   readonly targetDirection?: 'ANY' | 'ASC' | 'DESC';
   readonly tonicNoteTarget?: number;
   readonly modeNoteTarget?: number;

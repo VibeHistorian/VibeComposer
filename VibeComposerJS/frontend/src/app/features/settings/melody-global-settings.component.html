@@ -10,14 +10,6 @@
             [maximum]="field.key === 'rangeMin' ? numeric('rangeMax') : field.max"
             (valueCommit)="changeContextual(field.key, $event)" />
         }
-        @for (field of contextualChoices; track field.key) {
-          <label class="pattern-effect">{{ field.label }}
-            <select [attr.aria-label]="'Melody ' + field.label" [value]="choice(field.key)"
-              (change)="changeContextual(field.key, $any($event.target).value)">
-              @for (option of field.choices; track option) { <option [value]="option">{{ option }}</option> }
-            </select>
-          </label>
-        }
         <vc-compact-toggle label="Chromatic approaches" [active]="values().chromaticApproaches ?? false"
           description="Allow weak chromatic approach notes that resolve by semitone."
           (toggled)="changeContextual('chromaticApproaches', !(values().chromaticApproaches ?? false))" />

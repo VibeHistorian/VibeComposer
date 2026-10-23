@@ -33,6 +33,7 @@
 .named-mini .knob-face { width: 28px; height: 28px; }
 .named-mini .knob-face > span { width: 20px; height: 20px; }
 .named-mini input { top: 20px; width: 28px; height: 28px; }
+.compact-knob > vc-control-heading.label-hidden { display: none; }
 .disabled { opacity: .5; }
 .disabled input { cursor: default; }
 

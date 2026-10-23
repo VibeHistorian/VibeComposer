@@ -26,7 +26,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
         selector.value='half'; selector.dispatchEvent(new Event('change', {bubbles:true}));
         const preview = await wait(()=>editor.querySelector('.rhythm-preview-grid'), role + ' preview');
         check(!document.querySelector('.part-control[data-control-key="customPattern"]'), role + ' has one combined control');
-        check(editor.querySelectorAll('vc-control-heading').length===1 && editor.querySelectorAll('.inherit-snowflake').length<=1, role + ' shared inheritance');
+        check(editor.querySelectorAll(':scope > .control-content > vc-control-heading').length===1 && editor.querySelectorAll(':scope > .control-content > vc-control-heading .inherit-snowflake').length<=1, role + ' shared inheritance');
         const selectBox=selector.getBoundingClientRect(), gridBox=preview.getBoundingClientRect(), box=editor.getBoundingClientRect();
         check(selectBox.height<=22 && gridBox.height<=18 && gridBox.top>=selectBox.bottom && gridBox.right<=box.right && gridBox.bottom<=box.bottom, role + ' compact stacked layout');
         const flip=editor.querySelector('.flip-button');

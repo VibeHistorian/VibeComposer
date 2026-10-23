@@ -23,6 +23,7 @@ export class CompactKnobComponent {
   readonly showValueBelow = input(false);
   readonly mini = input(false);
   readonly hoverLabelOnly = input(false);
+  readonly showLabel = input(true);
   readonly dense = input(false);
   readonly composeEnabled = input<boolean | null>(null);
   readonly composeToggle = output<void>();

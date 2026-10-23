@@ -55,6 +55,9 @@ export const DEFAULT_MELODY_TRACK = Object.freeze({
 
 export function resolveMelodyInputs(track: Partial<MelodySettings>, global: MelodyGlobalSettings = {}) {
   return { ...DEFAULT_MELODY_GLOBAL, ...global,
+    ending: track.ending ?? global.ending ?? DEFAULT_MELODY_GLOBAL.ending,
+    style: track.style ?? global.style ?? DEFAULT_MELODY_GLOBAL.style,
+    form: track.form ?? global.form ?? DEFAULT_MELODY_GLOBAL.form,
     targetDirection: track.targetDirection ?? DEFAULT_MELODY_TRACK.targetDirection,
     tonicNoteTarget: track.tonicNoteTarget ?? DEFAULT_MELODY_TRACK.tonicNoteTarget,
     modeNoteTarget: track.modeNoteTarget ?? DEFAULT_MELODY_TRACK.modeNoteTarget,

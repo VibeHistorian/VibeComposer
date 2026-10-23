@@ -1,4 +1,5 @@
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { NgTemplateOutlet } from '@angular/common';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
@@ -21,13 +22,33 @@ import { ProjectService } from '../../core/project/project.service';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, WheelSelectDirective],
+  imports: [NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, WheelSelectDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',
   styleUrl: './part-settings-editor.component.css',
 })
 export class PartSettingsEditorComponent {
+  readonly delayOptions = [0, 1, 2, 3, 4, 5];
+  readonly shiftOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  isQuick(key: string): boolean {
+    return combinedControlKeys(key, this.role()).some(key => this.preferences.quickSettings()[this.role()].includes(key));
+  }
+  members(control: PartControl): readonly PartControl[] {
+    const keys = control.key === 'rhythm' ? ['hitsPerPattern', 'patternShift']
+      : control.key === 'feedbackCount' ? ['feedbackCount', 'feedbackDuration']
+      : control.key === 'velocityMin' ? ['velocityMin', 'velocityMax']
+      : control.key === 'ending' ? ['ending', 'style', 'form'] : [];
+    return keys.flatMap(key => this.controls().filter(control => control.key === key));
+  }
+  title(control: PartControl): string {
+    return control.key === 'velocityMin' ? 'VEL↓↑' : control.key === 'ending' ? 'SENTENCE'
+      : control.kind === 'number' ? this.code(control) : control.label;
+  }
+  chooseNumber(control: PartControl, event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (value !== '') this.settingsChanged.emit({ key: control.key, value: Number(value) });
+  }
   code(control: PartControl): string {
     const codes: Readonly<Record<string, string>> = {
       fillFlip: 'FILL↔', patternFlip: 'PAT↔', useCustomVelocities: 'VGRID',
@@ -73,9 +94,10 @@ export class PartSettingsEditorComponent {
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
     !['patternFlip', 'fillFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting'].includes(control.key) &&
-    (this.inspectorOnly() ? !this.preferences.quickSettings()[this.role()].includes(control.key)
-      : this.advanced() || this.preferences.quickSettings()[this.role()].includes(control.key)) &&
+    (this.inspectorOnly() ? !this.isQuick(control.key)
+      : this.advanced() || this.isQuick(control.key)) &&
     (this.preferences.editingQuickSettings() || (
+    (!['ending', 'style', 'form'].includes(control.key) || this.role() !== 'melody' || this.projects.project().melodyGlobal?.contextualMelody) &&
     (!this.usesDurations() || this.role() !== 'melody'
       || !['speed', 'pauseChance', 'fillPauses', 'splitChance', 'startNoteChance'].includes(control.key)) &&
     (this.role() !== 'melody' || !this.projects.project().melodyGlobal?.contextualMelody
@@ -95,7 +117,9 @@ export class PartSettingsEditorComponent {
       || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1'))))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
     id: group.id, label: group.label,
-    controls: this.controls().filter(control => control.key !== 'patternSeed' && partControlGroup(control.key) === group.id),
+    controls: this.controls().filter(control => !['patternSeed', 'feedbackDuration', 'velocityMax', 'style', 'form'].includes(control.key)
+      && (!['hitsPerPattern', 'patternShift'].includes(control.key) || !this.controls().some(control => control.key === 'rhythm'))
+      && partControlGroup(control.key) === group.id),
   })).filter(group => group.controls.length > 0));
   readonly seedControl = computed(() => this.controls().find(control => control.key === 'patternSeed'));
   readonly velocitySlots = computed(() => {
@@ -141,7 +165,7 @@ export class PartSettingsEditorComponent {
     if (control.key === 'rhythm' && this.role() === 'melody' && !this.usesDurations()) return undefined;
     if (control.key === 'rhythm' && this.role() === 'bass' && this.values()['rhythm'] === 'bass1'
         && !this.preferences.editingQuickSettings()) return undefined;
-    const key = combinedControlKeys(control.key)[1];
+    const key = control.key === 'rhythm' ? 'patternFlip' : control.key === 'chordSpanFill' ? 'fillFlip' : undefined;
     return key ? PART_CONTROLS[this.role()].find(control => control.key === key) : undefined;
   }
 

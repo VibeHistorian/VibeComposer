@@ -88,6 +88,9 @@ const durationControls: readonly PartControl[] = [
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [...fill,
+    { ...choice('ending', 'Ending', ['OPEN', 'CLOSED', 'LOOP']), defaultValue: 'LOOP' },
+    { ...choice('style', 'Style', ['TONAL', 'MODAL', 'JAZZ']), defaultValue: 'TONAL' },
+    { ...choice('form', 'Form', ['STATEMENT_VARIATION', 'QUESTION_ANSWER', 'SENTENCE', 'CONTINUOUS']), defaultValue: 'STATEMENT_VARIATION' },
     { ...choice('rhythm', 'PATTERN', ['melody1', 'durations']), defaultValue: 'melody1',
       description: 'melody1 uses the generated melody rhythm. Durations supplies note lengths and pauses from the duration editor.' },
     { key: 'patternFlip', label: 'Pattern flip', kind: 'boolean', defaultValue: false,

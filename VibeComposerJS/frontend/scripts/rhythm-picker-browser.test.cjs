@@ -322,7 +322,7 @@ test('production Angular controls initialize selects from settings and support r
             const select = document.querySelector('select[aria-label="' + selectorLabel + '"]');
             const control = select.closest('.part-control');
             const flip = control.querySelector('button[aria-label="' + flipLabel + '"]');
-            if (!flip || control.querySelectorAll('vc-control-heading').length !== 1) throw new Error(selectorLabel + ' and its flip must share one heading');
+            if (!flip || control.querySelectorAll(':scope > .control-content > vc-control-heading').length !== 1) throw new Error(selectorLabel + ' and its flip must share one heading');
             if (control.querySelector('.inherit-snowflake')) throw new Error(selectorLabel + ' global settings must not show section inheritance');
             if (flip.textContent.trim() !== '↔' || flip.getBoundingClientRect().left < select.getBoundingClientRect().right) throw new Error(flipLabel + ' must be an icon to the right');
             if (getComputedStyle(select).appearance !== 'none') throw new Error(selectorLabel + ' must be arrowless');
@@ -337,12 +337,13 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => [...document.querySelectorAll('.rhythm-preview-grid')].every(grid => grid.children.length === 5), role + ' Hits');
           const seeds = [...document.querySelectorAll('input[aria-label="Seed"]')];
           seeds[0].focus(); seeds[0].value = '-123'; seeds[0].dispatchEvent(new Event('change', { bubbles: true }));
-          await waitFor(() => seeds.every(seed => seed.value === '-123'), role + ' seed sync');
-          const delays = document.querySelector('input[aria-label="Delays"]');
+          await waitFor(() => readTrack(role).generatorSettings.patternSeed === -123 && seeds.every(seed => seed.value === '-123'), role + ' seed sync');
+          const delays = document.querySelector('select[aria-label="Delays"]');
           delays.value = '2'; delays.dispatchEvent(new Event('change', { bubbles: true }));
-          await waitFor(() => [...document.querySelectorAll('input[aria-label="Delays"]')].every(input => input.value === '2'), role + ' feedback sync');
+          await waitFor(() => readTrack(role).generatorSettings.feedbackCount === 2 && [...document.querySelectorAll('select[aria-label="Delays"]')].every(input => input.value === '2'), role + ' feedback sync');
           if (document.querySelector('button[aria-label="Generate notes"]')) throw new Error(role + ' still has a generation toggle');
-          [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Clear seed').click();
+          const clearSeed = await waitFor(() => [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Clear seed' && !button.disabled), role + ' clear seed enabled');
+          clearSeed.click();
           await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
           const state = readTrack(role).generatorSettings;
           result.sharedRoles.push({ role, hits: state.hitsPerPattern, seed: state.patternSeed, delays: state.feedbackCount,
@@ -596,7 +597,7 @@ test('production Angular controls initialize selects from settings and support r
         result.compactControls = [...document.querySelectorAll('.part-control.compact-control')].map(control => {
           const code = control.querySelector('.control-name, .toggle-button');
           const status = control.querySelector('.knob-status .inherit-snowflake, .toggle-status .inherit-snowflake');
-          return { code: code.textContent.trim(), width: control.getBoundingClientRect().width,
+          return { code: code.textContent.trim(), width: control.getBoundingClientRect().width, joined: control.classList.contains('joined-control'),
             toggleHeight: control.querySelector('.toggle-button')?.getBoundingClientRect().height ?? null,
             tooltip: control.title, hasInheritanceStatus: !!status };
         });
@@ -660,7 +661,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.initiallyCollapsed, true);
     assert.equal(actual.scoreCanvasPresent, true);
     assert.ok(actual.compactControls.length > 0);
-    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= 75 && control.tooltip && !control.hasInheritanceStatus), JSON.stringify(actual.compactControls));
+    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= (control.joined ? 100 : 75) && control.tooltip && !control.hasInheritanceStatus), JSON.stringify(actual.compactControls));
     assert.ok(actual.compactControls.filter(control => control.toggleHeight !== null).every(control => control.toggleHeight <= 26));
     assert.ok(actual.generationMiniKnobs.length > 10);
     assert.ok(actual.generationMiniKnobs.every(knob => knob.type === 'range' && knob.width <= 48 && knob.diameter <= 28

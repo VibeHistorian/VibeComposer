@@ -21,18 +21,12 @@ export class MelodyGlobalSettingsComponent {
     { key: 'phraseBars', label: 'Phrase Bars', min: 1, max: 16, fallback: 2 },
     { key: 'beatsPerBar', label: 'Beats per Bar', min: 1, max: 12, fallback: 4 },
   ] as const;
-  readonly contextualChoices = [
-    { key: 'ending', label: 'Ending', choices: ['OPEN', 'CLOSED', 'LOOP'] },
-    { key: 'style', label: 'Style', choices: ['TONAL', 'MODAL', 'JAZZ'] },
-    { key: 'form', label: 'Form', choices: ['STATEMENT_VARIATION', 'QUESTION_ANSWER', 'SENTENCE', 'CONTINUOUS'] },
-  ] as const;
   showAlgorithm(contextual: boolean): boolean {
     return !!this.values().contextualMelody === contextual;
   }
   numeric(key: 'rangeMin' | 'rangeMax' | 'tension' | 'phraseBars' | 'beatsPerBar'): number {
     return this.values()[key] ?? DEFAULT_MELODY_GLOBAL[key];
   }
-  choice(key: 'ending' | 'style' | 'form'): string { return this.values()[key] ?? DEFAULT_MELODY_GLOBAL[key]; }
   changeContextual(key: keyof MelodyGlobalSettings, value: unknown): void {
     const patch = { [key]: value };
     if (decodeMelodyGlobal({ ...DEFAULT_MELODY_GLOBAL, ...this.values(), ...patch })) this.settingsChanged.emit(patch);

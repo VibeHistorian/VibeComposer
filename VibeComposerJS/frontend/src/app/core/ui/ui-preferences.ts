@@ -8,10 +8,14 @@ export type QuickSettings = Readonly<Record<ArrangedPart, readonly string[]>>;
 
 /** Joined controls share placement and inheritance in the musical editor. */
 export function combinedControlKeys(key: string, role?: ArrangedPart): readonly string[] {
+  for (const keys of [['feedbackCount', 'feedbackDuration'], ['velocityMin', 'velocityMax'], ['ending', 'style', 'form']]) {
+    if (keys.includes(key)) return keys;
+  }
+  const gridKeys = role === 'melody' ? [] : ['hitsPerPattern', 'patternShift'];
   const durationKeys = ['rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting'];
   if (role === 'melody' && durationKeys.includes(key)) return durationKeys;
-  if ((role === 'bass' || role === 'arpeggio') && [...durationKeys, 'customPattern'].includes(key)) return [...durationKeys, 'customPattern'];
-  if (['rhythm', 'patternFlip', 'customPattern'].includes(key)) return ['rhythm', 'patternFlip', 'customPattern'];
+  if ((role === 'bass' || role === 'arpeggio') && [...durationKeys, 'customPattern', ...gridKeys].includes(key)) return [...durationKeys, 'customPattern', ...gridKeys];
+  if (['rhythm', 'patternFlip', 'customPattern', ...gridKeys].includes(key)) return ['rhythm', 'patternFlip', 'customPattern', ...gridKeys];
   if (key === 'chordSpanFill' || key === 'fillFlip') return ['chordSpanFill', 'fillFlip'];
   return [key];
 }
@@ -35,7 +39,7 @@ export interface UiPreferences {
 export function defaultQuickSettings(): QuickSettings {
   return {
     melody: [
-      'chordSpanFill', 'fillFlip', 'rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
+      'chordSpanFill', 'fillFlip', 'ending', 'style', 'form', 'rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
       'patternFlexible', 'pauseChance', 'swingPercent', 'transpose', 'velocityMin', 'velocityMax',
       'feedbackCount', 'feedbackDuration',
     ],
@@ -50,7 +54,7 @@ export function defaultQuickSettings(): QuickSettings {
       'strumPauseChance', 'voicing', 'noteLengthPercent', 'transpose',
     ],
     arpeggio: [
-      'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'patternFlip', 'customPattern',
+      'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip', 'customPattern',
       'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'chordSpan', 'patternRepeat', 'pauseChance', 'chordNotesStretch', 'stretchEnabled', 'pattern',
       'arpPatternRotate', 'transpose',
     ],

@@ -27,6 +27,7 @@ Project-wide melody controls live in **Settings → Behavior → Melody** and ar
 | Pattern effect | Max direction changes |
 | Seven catalogue block-type weights; Change preference | New blocks |
 | Melody pattern flip | Fill pauses per chord |
+| Contextual range, tension, phrase bars, beats per bar and chromatic approaches | Ending, Style and Form (one stack of three compact selectors) |
 
 Track settings use the normal track base → section role → section track resolution, mixed selection, inherited reset, copy/freeze, history and project persistence. Automatic target preparation reads each track's base Target direction on Compose and enabled Regenerate, retaining explicit section target arrays. Contextual Melody reads the resolved direction for each phrase. The project-wide Melody pattern flip remains distinct from a track's custom-duration/grid Pattern flip.
 

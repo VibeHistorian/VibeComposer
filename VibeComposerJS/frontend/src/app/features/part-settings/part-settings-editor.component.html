@@ -26,13 +26,13 @@
       @if (showGroupTitles()) { <h3>{{ group.label }}</h3> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind !== 'boolean') {
-              <span class="quick-title-sizing" aria-hidden="true">{{ control.kind === 'number' ? code(control) : control.label }}@if (control.kind !== 'number' && inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</span>
+              <span class="quick-title-sizing" aria-hidden="true">{{ title(control) }}@if (control.kind !== 'number' && inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</span>
             }
             <fieldset class="quick-control-border" [class.with-heading]="control.kind !== 'boolean'" aria-hidden="true">
               @if (control.kind !== 'boolean') {
-                <legend>{{ control.kind === 'number' ? code(control) : control.label }}@if (control.kind !== 'number' && inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</legend>
+                <legend>{{ title(control) }}@if (control.kind !== 'number' && inheritanceFor(control) !== 'global') { <span class="border-status">❄</span> }</legend>
               }
             </fieldset>
             @if (preferences.editingQuickSettings()) {
@@ -41,7 +41,22 @@
                 [title]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>
             }
             <div class="control-content" [inert]="preferences.editingQuickSettings()">
-            @if (control.kind === 'number') {
+            @if (control.key === 'ending') {
+              <vc-control-heading label="SENTENCE" [inheritance]="inheritanceFor(control)" (inheritRequested)="resetControl(control)" />
+              @for (member of members(control); track member.key) {
+                <select [attr.data-control-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (change)="choose(member, $event)">
+                  @if (values()[member.key] === null) { <option value="" disabled selected>Mixed</option> }
+                  @for (option of member.options; track option) { <option [value]="option" [selected]="values()[member.key] === option">{{ option }}</option> }
+                </select>
+              }
+            } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin') {
+              <vc-control-heading [label]="title(control)" [inheritance]="inheritanceFor(control)" (inheritRequested)="resetControl(control)" />
+              <div class="joined-members">
+                @for (member of members(control); track member.key) {
+                  <ng-container [ngTemplateOutlet]="compactMember" [ngTemplateOutletContext]="{ $implicit: member }" />
+                }
+              </div>
+            } @else if (control.kind === 'number') {
               <vc-compact-knob [defaultValue]="numericDefault(control)" [value]="numericValue(control)" [mixed]="values()[control.key] === null"
                 [minimum]="minimum(control)" [maximum]="maximum(control)"
                 [step]="control.step ?? 1"
@@ -105,6 +120,13 @@
                 </button>
               }
             }
+            @if (control.key === 'rhythm' && members(control).length > 0) {
+              <div class="joined-members rhythm-members">
+                @for (member of members(control); track member.key) {
+                  <ng-container [ngTemplateOutlet]="compactMember" [ngTemplateOutletContext]="{ $implicit: member }" />
+                }
+              </div>
+            }
             </div>
           </div>
         }
@@ -113,3 +135,23 @@
     </section>
   }
 </div>
+
+<ng-template #compactMember let-member>
+  <div class="joined-member" [attr.data-control-key]="member.key">
+    @if (member.key === 'feedbackCount' || member.key === 'patternShift') {
+      <label class="member-title">{{ member.key === 'feedbackCount' ? '#' : '→' }}
+        <select [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (change)="chooseNumber(member, $event)">
+          @if (values()[member.key] === null) { <option value="" disabled selected>Mixed</option> }
+          @for (option of member.key === 'feedbackCount' ? delayOptions : shiftOptions; track option) { <option [value]="option" [selected]="values()[member.key] === option">{{ option }}</option> }
+        </select>
+      </label>
+      @if (local()) { <vc-control-heading [label]="member.label" [statusOnly]="true" [inheritance]="inheritanceFor(member)" (inheritRequested)="resetControl(member)" /> }
+    } @else {
+      <vc-compact-knob [defaultValue]="numericDefault(member)" [value]="numericValue(member)" [mixed]="values()[member.key] === null"
+        [minimum]="minimum(member)" [maximum]="maximum(member)" [step]="member.step ?? 1" [label]="member.label"
+        [mini]="member.key !== 'feedbackDuration'" [compact]="true" [hoverLabelOnly]="true" [showLabel]="false"
+        [description]="member.description ?? ''" [unit]="member.unit ?? ''" [inheritance]="inheritanceFor(member)"
+        (inheritRequested)="resetControl(member)" (valueCommit)="settingsChanged.emit({ key: member.key, value: $event })" />
+    }
+  </div>
+</ng-template>

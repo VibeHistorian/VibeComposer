@@ -6,6 +6,19 @@ const { generateHarmony } = loadMusic('contextual-harmony.ts');
 const { SCALE_MODES } = loadMusic('scales.ts');
 const { mapChordNotes } = loadMusic('section-context.ts');
 
+test('contextual melody consumes independent track ending, style and form', () => {
+  const phrasing = { ending: 'CLOSED', style: 'JAZZ', form: 'SENTENCE' };
+  const global = { contextualMelody: true, tension: 50 };
+  const args = [42n, 'C', 'major', [1, 5, 6, 1]];
+  const track = generateMelody(...args, { algorithm: 'block', ...phrasing }, 0, undefined, global);
+  const equivalent = generateMelody(...args, { algorithm: 'block' }, 0, undefined, { ...global, ...phrasing });
+  assert.deepEqual(track, equivalent);
+  const overridden = generateMelody(...args, { algorithm: 'block', ...phrasing }, 0, undefined,
+    { ...global, ending: 'OPEN', style: 'MODAL', form: 'CONTINUOUS' });
+  assert.deepEqual(overridden, track, 'track choices take precedence over project defaults');
+  assert.equal(track.at(-1).midi % 12, 0, 'closed ending reaches tonic');
+});
+
 test('contextual results reuse musical inputs and isolate callers while invalidating changed settings', () => {
   const { JavaRandom } = loadMusic('java-random.ts');
   const { generateContextualMelody } = loadMusic('contextual-melody.ts');

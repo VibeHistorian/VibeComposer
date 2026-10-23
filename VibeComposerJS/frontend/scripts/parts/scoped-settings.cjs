@@ -6,6 +6,36 @@ const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('contextual phrasing resolves per melody track and section and persists with history', () => {
+  const { service, settings, load } = fixture();
+  const { resolveMelodyInputs } = load('core/music/melody-global-settings.ts');
+  const first = 'track-melody-1', second = service.duplicateTrack(first);
+  const sectionId = service.project().arrangement[0].id;
+  const trackScope = { kind: 'global-track', trackId: first };
+  const localScope = { kind: 'section-track', sectionId, trackId: first };
+  service.updatePartSettings(trackScope, { ending: 'CLOSED', style: 'JAZZ', form: 'SENTENCE' });
+  const base = service.exportProjectJson();
+  service.updatePartSettings(localScope, { ending: 'OPEN', style: 'MODAL', form: 'QUESTION_ANSWER' });
+  const project = service.project(), section = project.arrangement[0];
+  const resolved = id => resolveMelodyInputs(settings.resolvePartTrack(project.tracks.find(t => t.id === id), section).generatorSettings, project.melodyGlobal);
+  assert.equal(resolved(first).ending, 'OPEN');
+  assert.equal(resolved(first).style, 'MODAL');
+  assert.equal(resolved(first).form, 'QUESTION_ANSWER');
+  assert.equal(resolved(second).ending, 'LOOP');
+  assert.equal(resolved(second).style, 'TONAL');
+  const saved = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), base);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  service.resetPartSettings(localScope, ['ending', 'style', 'form']);
+  const reset = settings.resolvePartTrack(service.project().tracks.find(t => t.id === first), service.project().arrangement[0]).generatorSettings;
+  assert.equal(reset.ending, 'CLOSED'); assert.equal(reset.style, 'JAZZ'); assert.equal(reset.form, 'SENTENCE');
+  assert.equal(service.importProjectJson(saved), true);
+  assert.equal(service.project().tracks.find(t => t.id === first).generatorSettings.ending, 'CLOSED');
+  assert.deepEqual(service.project().arrangement[0].trackPartOverrides[first], { ending: 'OPEN', style: 'MODAL', form: 'QUESTION_ANSWER' });
+  for (const patch of [{ ending: 'INVALID' }, { style: 1 }, { form: 'OPEN' }]) assert.equal(settings.decodePartPatch('melody', patch), undefined);
+  assert.equal(settings.decodePartPatch('bass', { ending: 'OPEN' }), undefined);
+});
+
 test('melody input scopes keep project controls separate from independent track and section settings', () => {
   const { service, settings, load } = fixture();
   const { decodeMelodyGlobal } = load('core/music/melody-global-settings.ts');

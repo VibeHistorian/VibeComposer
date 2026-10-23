@@ -38,11 +38,23 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       globals=await wait(()=>document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]')?.closest('vc-melody-global-settings'),'contextual fields');
       ensure(!globals.querySelector('[aria-label="TON%"]')&&!globals.querySelector('[aria-label="Block target mode"]'),'hide obsolete globals');
       ensure(!document.querySelector('vc-part-settings-editor [data-control-key="patternFlexible"]'),'hide Flex');
-      for(const [label,value] of [['Melody Low MIDI','62'],['Melody High MIDI','81'],['Melody Tension','50'],['Phrase Bars','3'],['Beats per Bar','3'],['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {
+      ensure(!globals.querySelector('[aria-label="Melody Ending"]')&&!globals.querySelector('[aria-label="Melody Style"]')&&!globals.querySelector('[aria-label="Melody Form"]'),'phrasing removed from global melody');
+      for(const [label,value] of [['Melody Low MIDI','62'],['Melody High MIDI','81'],['Melody Tension','50'],['Phrase Bars','3'],['Beats per Bar','3']]) {
         change(globals.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
       }
-      await wait(()=>read().melodyGlobal?.style==='JAZZ'&&read().melodyGlobal?.rangeMin===62&&read().melodyGlobal?.beatsPerBar===3,'save contextual fields');
+      await wait(()=>read().melodyGlobal?.rangeMin===62&&read().melodyGlobal?.beatsPerBar===3,'save contextual fields');
       dialog.querySelector('[aria-label="Close settings"]').click();
+      const phrasing=await wait(()=>document.querySelector('.part-settings-content [data-control-key="ending"]'),'track phrasing stack');
+      const selects=[...phrasing.querySelectorAll('select')];
+      ensure(selects.length===3,'three phrasing choices share one control');
+      ensure(selects.every(s=>getComputedStyle(s).appearance==='none'),'phrasing choices are arrowless');
+      ensure(phrasing.querySelector('.control-name')?.textContent==='SENTENCE','phrasing shares SENTENCE title');
+      ensure(selects[0].getBoundingClientRect().top===selects[1].getBoundingClientRect().top&&selects[1].getBoundingClientRect().bottom<=selects[2].getBoundingClientRect().top,'ending and style share the first row with form below');
+      for(const [label,value] of [['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {
+        change(phrasing.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
+      }
+      await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.style==='JAZZ'&&t.generatorSettings.form==='QUESTION_ANSWER'&&t.generatorSettings.ending==='CLOSED'),'save track phrasing');
+      ensure(!read().melodyGlobal.style&&!read().melodyGlobal.ending&&!read().melodyGlobal.form,'track phrasing does not write globals');
       button('Edit quick settings').click();
       await wait(()=>document.querySelector('vc-part-settings-editor [data-control-key="patternFlexible"]'),'dormant controls while editing placement');
       button('Save quick settings').click();
