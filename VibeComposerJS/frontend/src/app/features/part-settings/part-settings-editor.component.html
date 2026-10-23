@@ -69,7 +69,7 @@
                 (inheritRequested)="inheritRequested.emit(control.key)"
                 (toggled)="settingsChanged.emit({ key: control.key, value: values()[control.key] !== true })" />
             } @else {
-              <vc-control-heading #heading [label]="control.label" [inheritance]="inheritanceFor(control)"
+              <vc-control-heading #heading [label]="title(control)" [inheritance]="inheritanceFor(control)"
                 (inheritRequested)="resetControl(control)" />
               @if (control.kind === 'integers' || control.kind === 'integer') {
                 <input [id]="heading.controlId" class="part-list" type="text" [value]="textValue(control)"
@@ -131,9 +131,7 @@
 <ng-template #compactMember let-member>
   <div class="joined-member" [attr.data-control-key]="member.key">
     @if (member.key === 'feedbackCount' || member.key === 'patternShift') {
-      <label class="member-title">{{ member.key === 'feedbackCount' ? '#' : '→' }}
-        <vc-select [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event)" [mixed]="values()[member.key] === null"></vc-select>
-      </label>
+      <vc-select [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event)" [mixed]="values()[member.key] === null"></vc-select>
       @if (local()) { <vc-control-heading [label]="member.label" [statusOnly]="true" [inheritance]="inheritanceFor(member)" (inheritRequested)="resetControl(member)" /> }
     } @else {
       <vc-compact-knob [defaultValue]="numericDefault(member)" [value]="numericValue(member)" [mixed]="values()[member.key] === null"

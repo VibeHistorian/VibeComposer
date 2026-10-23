@@ -42,6 +42,9 @@ export class PartSettingsEditorComponent {
     return keys.flatMap(key => this.controls().filter(control => control.key === key));
   }
   title(control: PartControl): string {
+    if (control.key === 'rhythm' && ['hitsPerPattern', 'patternShift'].every(key => this.members(control).some(member => member.key === key))) {
+      return 'PATTERN / # / SHIFT';
+    }
     return control.key === 'velocityMin' ? 'VEL↓↑' : control.key === 'ending' ? 'SENTENCE'
       : control.kind === 'number' ? this.code(control) : control.label;
   }

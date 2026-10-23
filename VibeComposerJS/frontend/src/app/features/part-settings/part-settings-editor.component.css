@@ -39,8 +39,7 @@
 .joined-members { display: flex; align-items: center; gap: 3px; }
 .joined-member { display: grid; justify-items: center; }
 .joined-member { --quick-knob-overlay-area: 2 / 1; --quick-heading-left: auto; --quick-heading-top: auto; }
-.member-title { display: grid; justify-items: center; gap: 3px; color: var(--accent-primary); font: 10px var(--font-ui); }
-.part-control .member-title vc-select { width: 30px; height: 24px; text-align: center; }
+.part-control .joined-member > vc-select { width: 30px; height: 24px; text-align: center; }
 .part-control.joined-control { width: auto; max-width: none; }
 .rhythm-control.joined-control .control-content { grid-template-columns: minmax(85px, 1fr) auto; }
 .rhythm-control .control-content > vc-control-heading { grid-column: 1 / -1; grid-row: 1; }
