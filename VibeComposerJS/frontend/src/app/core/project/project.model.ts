@@ -16,6 +16,7 @@ export interface CompositionProject {
   readonly transposeSemitones?: number;
   readonly tempoBpm: number;
   readonly randomizeTempoOnCompose?: boolean;
+  readonly randomizeHarmonyOnCompose?: boolean;
   readonly randomizeArrangementOnCompose?: boolean;
   readonly arrangementPreview?: boolean;
   readonly arrangementManual?: boolean;

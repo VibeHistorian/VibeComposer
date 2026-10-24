@@ -78,7 +78,7 @@ test('melody input scopes keep project controls separate from independent track 
 test('melody tracks prepare targets with independent directions and preserve local settings', () => {
   const { service, load } = fixture();
   const first = 'track-melody-1', second = service.duplicateTrack(first);
-  service.updateSettings({ seed: '9007199254740993', randomizeTempoOnCompose: false, randomizeTransposeOnCompose: false });
+  service.updateSettings({ seed: '9007199254740993', randomizeTempoOnCompose: false, randomizeTransposeOnCompose: false, randomizeHarmonyOnCompose: false });
   for (const role of ['melody','bass','chords','arpeggio','drums']) service.updateTrackGenerationPolicy(role, { onCompose: false });
   service.updateTrackGenerationPolicy('melody', { targetsOnCompose: true, patternsOnCompose: false });
   service.updatePartSettings({ kind: 'global-track', trackId: first }, { targetDirection: 'ASC' });

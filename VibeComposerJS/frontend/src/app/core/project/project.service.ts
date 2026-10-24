@@ -423,6 +423,12 @@ export class ProjectService {
       next = { ...current, seed,
         transposeSemitones: current.randomizeTransposeOnCompose === false ? current.transposeSemitones : transpose,
         tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
+      if (current.randomizeHarmonyOnCompose !== false) {
+        // Harmony owns its seeded stream; toggling it never shifts other random draws.
+        const generated = generateHarmony(BigInt(seed), current.progression.length, next.key, next.scale,
+          next.harmonySettings, next.melodyGlobal);
+        next = { ...next, progression: generated.degrees, progressionChords: generated.chords };
+      }
       if (next.melodyGlobal?.contextualMelody && next.melodyGlobal.rangeRandomizeOnCompose
         && next.tracks.some(track => track.role === 'melody' && !track.rerollLocked && !track.editedPhrase)) {
         next = { ...next, melodyGlobal: { ...next.melodyGlobal, ...contextualRange(BigInt(seed)) } };
@@ -720,7 +726,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;

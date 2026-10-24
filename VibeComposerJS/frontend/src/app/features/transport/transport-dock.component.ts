@@ -31,7 +31,7 @@ export class TransportDockComponent {
   private readonly preferences = inject(UiPreferencesService);
   private readonly injector = inject(Injector);
 
-  toggleComposeRandomization(field: 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose'): void {
+  toggleComposeRandomization(field: 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeHarmonyOnCompose'): void {
     this.projects.updateSettings({ [field]: this.project()[field] === false });
   }
   readonly key = computed(() => effectiveKey(this.project().key, this.project().transposeSemitones ?? 0));

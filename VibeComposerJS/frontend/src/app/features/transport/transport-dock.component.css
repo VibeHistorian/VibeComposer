@@ -42,6 +42,14 @@
 
 .global-harmony { flex: 0 1 auto; width: max-content; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .global-harmony-label { color: var(--text-secondary); font-size: 10px; text-align: center; }
+/* Global harmony Compose policy */
+.global-harmony-heading { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.harmony-compose-star { width: 16px; height: 16px; padding: 0; display: grid; place-items: center; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-muted); font-size: 12px; line-height: 1; cursor: pointer; }
+.harmony-compose-star.active { color: var(--accent-primary); border-color: var(--border-accent); }
+.harmony-compose-star:hover:not(:disabled), .harmony-compose-star:focus-visible { border-color: var(--border-focus); color: var(--accent-hover); }
+.harmony-compose-star:disabled { opacity: .5; cursor: default; }
+
+/* Playback errors */
 .playback-error { position: absolute; right: 12px; bottom: calc(100% + 6px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-danger); border-radius: var(--radius-button); background: var(--surface-danger); color: var(--color-danger); font-size: 10px; }
 
 /* Project actions at the right edge */

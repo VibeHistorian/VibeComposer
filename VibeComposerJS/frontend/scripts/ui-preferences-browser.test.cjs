@@ -40,6 +40,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         }
       }
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
+        ensure(button('Harmony On Compose').getAttribute('aria-pressed')==='false','harmony Compose toggle restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
         ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','inspector background restored after reload');
         ensure(getComputedStyle(document.querySelector('.track-group')).backgroundColor==='rgb(80, 64, 96)','role group background restored after reload');
@@ -90,6 +91,15 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure([...document.querySelectorAll('.group-policy-toggle')].every(b=>b.getAttribute('aria-pressed')==='true'), 'role Compose defaults on');
         const tempoStar = button('Randomize BPM on Compose');
         const transposeStar = button('Randomize Transpose on Compose');
+        const harmonyStar = button('Harmony On Compose');
+        ensure(harmonyStar?.getAttribute('aria-pressed')==='true','harmony Compose defaults on');
+        const harmony = () => {
+          const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+          return JSON.stringify([project.progression, project.progressionChords]);
+        };
+        harmonyStar.click();
+        await wait(()=>harmonyStar.getAttribute('aria-pressed')==='false','harmony Compose disabled');
+        const beforeHarmony = harmony();
         ensure(tempoStar?.getAttribute('aria-pressed')==='true' && transposeStar?.getAttribute('aria-pressed')==='true', 'global Compose stars default on');
         const tempo = document.querySelector('input[aria-label="Tempo in beats per minute"]').value;
         const transpose = document.querySelector('input[aria-label="Transpose in semitones"]').value;
@@ -103,6 +113,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           return generated?.seed!=='0' && document.querySelector('.transport-project span').textContent.trim()==='ID '+generated?.seed;
         },'generated ID summary');
         ensure(seedInput.value==='0','automatic seed input remains zero');
+        ensure(harmony()===beforeHarmony,'disabled harmony star preserves chords on Compose');
         ensure(document.querySelector('input[aria-label="Tempo in beats per minute"]').value===tempo,'disabled BPM star preserves tempo');
         ensure(document.querySelector('input[aria-label="Transpose in semitones"]').value===transpose,'disabled transpose star preserves transpose');
         const name = document.querySelector('textarea[aria-label="Project name"]');

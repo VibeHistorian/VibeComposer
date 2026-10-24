@@ -24,6 +24,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     && (isScaleMode(project.scale))
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
+    && (project.randomizeHarmonyOnCompose === undefined || typeof project.randomizeHarmonyOnCompose === 'boolean')
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')
@@ -58,6 +59,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     transposeSemitones: project.transposeSemitones ?? 0,
     tempoBpm: project.tempoBpm!,
     ...(project.randomizeTempoOnCompose !== undefined ? { randomizeTempoOnCompose: project.randomizeTempoOnCompose } : {}),
+    ...(project.randomizeHarmonyOnCompose !== undefined ? { randomizeHarmonyOnCompose: project.randomizeHarmonyOnCompose } : {}),
     ...(project.randomizeTransposeOnCompose !== undefined ? { randomizeTransposeOnCompose: project.randomizeTransposeOnCompose } : {}),
     seed: project.seed!,
     ...(project.randomizeArrangementOnCompose !== undefined ? { randomizeArrangementOnCompose: project.randomizeArrangementOnCompose } : {}),
@@ -92,6 +94,7 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && (isScaleMode(project.scale))
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
+    && (project.randomizeHarmonyOnCompose === undefined || typeof project.randomizeHarmonyOnCompose === 'boolean')
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')

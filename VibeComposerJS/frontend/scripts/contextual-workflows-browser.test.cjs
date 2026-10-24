@@ -49,6 +49,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         for (const role of ['bass', 'chords', 'arpeggio', 'drums']) project.trackGenerationPolicies[role].onCompose = false;
         project.randomizeTransposeOnCompose = false;
         project.randomizeTempoOnCompose = false;
+        project.randomizeHarmonyOnCompose = false;
         for (const role of ['melody','bass','chords','arpeggio','drums']) {
           const base = project.tracks.find(track => track.role === role);
           for (let i = 2; i <= 6; i++) project.tracks.push({ ...base, id: 'track-' + role + '-' + i, name: base.name[0] + i,

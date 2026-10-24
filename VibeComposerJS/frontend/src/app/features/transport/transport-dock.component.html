@@ -44,7 +44,15 @@
         [composeEnabled]="project().randomizeTempoOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTempoOnCompose')" />
     </div>
     <div class="global-harmony" role="group" aria-labelledby="global-harmony-label">
-      <span id="global-harmony-label" class="global-harmony-label">Global Harmony</span>
+      <div class="global-harmony-heading">
+        <span id="global-harmony-label" class="global-harmony-label">Global Harmony</span>
+        <button type="button" class="harmony-compose-star" aria-label="Harmony On Compose"
+          title="On Compose: reroll global harmony when global Compose runs"
+          [class.active]="project().randomizeHarmonyOnCompose !== false"
+          [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
+          [disabled]="workspaceUi.editingNoteId() !== null"
+          (click)="toggleComposeRandomization('randomizeHarmonyOnCompose')">✦</button>
+      </div>
       <vc-chordlet-editor />
     </div>
   </div>

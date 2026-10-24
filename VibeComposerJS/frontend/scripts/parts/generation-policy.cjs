@@ -6,6 +6,46 @@ const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('Global Harmony On Compose defaults on, uses the composition seed, and commits atomically', () => {
+  const { service, load } = fixture();
+  service.updateSettings({ seed: '9223372036854775806' });
+  service.setProgression([2, 2, 2, 2, 2, 2]);
+  const before = service.exportProjectJson();
+  const project = service.project();
+  const expected = load('core/music/contextual-harmony.ts').generateHarmony(BigInt(project.seed), 6,
+    project.key, project.scale, project.harmonySettings, project.melodyGlobal);
+  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.deepEqual(service.project().progression, expected.degrees);
+  assert.deepEqual(service.project().progressionChords, expected.chords);
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before, 'one undo restores the whole Compose');
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.undo(); service.generateComposition('compose'); assert.equal(service.exportProjectJson(), after);
+});
+
+test('Global Harmony Compose toggle persists and preserves custom harmony while off and during Regenerate', () => {
+  const { service, load, stored } = fixture();
+  const { TransportDockComponent } = load('features/transport/transport-dock.component.ts');
+  const transport = new TransportDockComponent();
+  transport.toggleComposeRandomization('randomizeHarmonyOnCompose');
+  assert.equal(service.project().randomizeHarmonyOnCompose, false);
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).randomizeHarmonyOnCompose, false);
+  const saved = service.exportProjectJson();
+  transport.toggleComposeRandomization('randomizeHarmonyOnCompose');
+  assert.equal(service.project().randomizeHarmonyOnCompose, true);
+  service.undo(); assert.equal(service.project().randomizeHarmonyOnCompose, false);
+  assert.equal(service.importProjectJson(saved), true);
+  service.setProgression([2, 2, 2]);
+  service.setProgressionChord(0, { root: 1, spice: '7', inversion: 0 });
+  const harmony = () => [service.project().progression, service.project().progressionChords];
+  const expected = harmony();
+  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.deepEqual(harmony(), expected);
+  transport.toggleComposeRandomization('randomizeHarmonyOnCompose');
+  service.generateComposition('regenerate');
+  assert.deepEqual(harmony(), expected);
+});
+
 test('failed contextual Compose keeps the rendered project, storage, history and playback and reports its cause', () => {
   const { service, workspace, load, stored } = fixture();
   service.updateSettings({ seed: '42' });
@@ -524,6 +564,7 @@ test('P5e target mode edits reinterpret scoped notes and prepare Chordlet target
 
 test('P5e target preparation preserves current notes until events, locks, local ownership and MIDI replay', () => {
   const { service, phrase, midi, load } = fixture();
+  service.updateSettings({ randomizeHarmonyOnCompose: false });
   service.updateTrackGenerationPolicy('melody', { onCompose: false });
   const primary = 'track-melody-1', duplicate = service.duplicateTrack(primary);
   service.setTrackRerollLock(duplicate, true);
