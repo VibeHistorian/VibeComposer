@@ -51,6 +51,7 @@ function fixture({ loop = false } = {}) {
     return module.exports;
   };
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts', {
+    '../music/arrangement-generator': require('./music-loader.cjs').loadMusic('arrangement-generator.ts'),
     '../music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
@@ -562,4 +563,33 @@ test('Compose restart uses zero or selected loop origin and keeps paused/stopped
   playback.restartAfterCompose(project);
   assert.equal(playback.state(), 'stopped');
   assert.equal(playback.beat(), 4);
+});
+
+test('arrangement Preview seeks to the first densest section with resolved timing and preserves transport state', async () => {
+  const { playback, project } = fixture();
+  const arrangement = [
+    { measures: 2, trackPresence: {}, customDurations: [3, 2], context: { beatDurationMultiplier: 2 } },
+    { measures: 4, trackPresence: { bass: true } },
+    { measures: 4, trackPresence: { bass: true } },
+  ];
+  const preview = { ...project, arrangement };
+  playback.previewArrangement(preview);
+  assert.equal(playback.beat(), 10);
+  assert.equal(playback.state(), 'stopped');
+  playback.setLoopRange({ startBeat: 0, endBeat: 4 });
+  playback.toggleLoop();
+  await playback.start(preview);
+  playback.previewArrangement(preview);
+  await Promise.resolve();
+  assert.equal(playback.beat(), 10);
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.loopEnabled(), false);
+  playback.pause();
+  playback.previewArrangement(preview);
+  assert.equal(playback.state(), 'paused');
+  assert.equal(playback.beat(), 10);
+  playback.previewArrangement({ ...preview, tracks: [] });
+  assert.equal(playback.beat(), 0);
+  playback.previewArrangement({ ...preview, arrangement: [] });
+  assert.equal(playback.beat(), 0);
 });

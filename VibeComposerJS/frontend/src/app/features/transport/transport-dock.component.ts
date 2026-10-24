@@ -41,8 +41,9 @@ export class TransportDockComponent {
   generate(event: 'compose' | 'regenerate'): void {
     const started = event === 'compose' ? performance.now() : undefined;
     const result = this.projects.generateComposition(event);
-    if (event === 'compose' && result !== 'invalid' && this.preferences.restartPlaybackOnCompose()) {
-      this.playback.restartAfterCompose(this.project());
+    if (event === 'compose' && result !== 'invalid') {
+      if (this.project().arrangementPreview) this.playback.previewArrangement(this.project());
+      else if (this.preferences.restartPlaybackOnCompose()) this.playback.restartAfterCompose(this.project());
     }
     this.generationFeedback.set({ project: this.project(), message: result === 'invalid'
       ? `${event === 'compose' ? 'Compose' : 'Regenerate'} cancelled. ${this.projects.generationError() ?? 'Generation conflicts with local settings.'} Previous arrangement kept.`

@@ -16,6 +16,8 @@ export interface CompositionProject {
   readonly transposeSemitones?: number;
   readonly tempoBpm: number;
   readonly randomizeTempoOnCompose?: boolean;
+  readonly randomizeArrangementOnCompose?: boolean;
+  readonly arrangementPreview?: boolean;
   readonly randomizeTransposeOnCompose?: boolean;
   /** Decimal text preserves Java long seeds when JSON is exported or persisted. */
   readonly seed: string;

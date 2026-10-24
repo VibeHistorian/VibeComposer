@@ -603,6 +603,7 @@ export class WorkspaceCanvasComponent {
 
   randomizeArrangementPresence(): void {
     this.projects.randomizeArrangementPresence();
+    if (this.project().arrangementPreview) this.playback.previewArrangement(this.project());
   }
 
   readonly canCopyPartGlobals = computed(() => {

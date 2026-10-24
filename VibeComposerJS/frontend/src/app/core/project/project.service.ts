@@ -434,6 +434,12 @@ export class ProjectService {
         next = candidate;
       }
     }
+    if (event === 'compose' && next.randomizeArrangementOnCompose) {
+      // Independent stream preserves track and global-setting random draw order.
+      const random = new JavaRandom(BigInt(next.seed));
+      next = arrangementCommands.randomizeArrangementPresence(next, undefined,
+        this.sectionTypeSettings.chances(), () => random.nextDouble())!;
+    }
     const policy = current.trackGenerationPolicies?.melody ?? DEFAULT_TRACK_POLICIES.melody;
     if (event === 'compose' || policy.onRegenerate) {
       const count = current.trackRerollCounts?.melody ?? 0;
@@ -712,7 +718,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;

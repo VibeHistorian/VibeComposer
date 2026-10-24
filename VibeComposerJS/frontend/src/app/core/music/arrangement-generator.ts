@@ -2,6 +2,22 @@ import type { ArrangedPart } from './part-role';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import { JavaRandom } from './java-random';
+import type { CompositionProject } from '../project/project.model';
+import { sectionDurationBeats } from './section-context';
+
+/** First section with the most included tracks, using resolved section timing. */
+export function mostIntenseSectionStartBeat(project: CompositionProject): number {
+  let startBeat = 0, bestBeat = 0, mostTracks = -1;
+  for (const section of project.arrangement) {
+    const count = project.tracks.filter(track => shouldGenerateTrackInSection(section, track)).length;
+    if (count > mostTracks) {
+      mostTracks = count;
+      bestBeat = startBeat;
+    }
+    startBeat += sectionDurationBeats(project, section);
+  }
+  return bestBeat;
+}
 
 const ARRANGEMENT_PART_SEED_OFFSETS: Readonly<Record<ArrangedPart, number>> = {
   melody: 0,

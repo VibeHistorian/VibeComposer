@@ -701,6 +701,50 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     })()` });
     assert.equal(placementResult.exceptionDetails,undefined,JSON.stringify(placementResult));
     for(const [key,value] of Object.entries(placementResult.result.value)) assert.equal(value,true,'placement '+key);
+    const arrangementControls = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
+      const wait=async(read)=>{for(let i=0;i<200;i++){if(read())return;await new Promise(r=>setTimeout(r,20));}throw new Error('Arrangement control timed out');};
+      const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+      const panel=document.querySelector('vc-arrangement-overview');
+      const star=panel.querySelector('[aria-label="Arrangement On Compose"]');
+      const eye=panel.querySelector('[aria-label="Arrangement Preview"]');
+      const reroll=panel.querySelector('[aria-label="Reroll arrangement"]');
+      const noBars=!panel.querySelector('.measure-total');
+      const icons=star.textContent.trim()==='✦' && eye.textContent.trim()==='👁' && reroll.textContent.trim()==='↻'
+        && document.querySelector('[aria-label="Generate chord progression"]').textContent.trim()==='↻';
+      star.click(); eye.click();
+      await wait(()=>read().randomizeArrangementOnCompose && read().arrangementPreview && star.getAttribute('aria-pressed')==='true' && eye.getAttribute('aria-pressed')==='true');
+      const before=JSON.stringify(read().arrangement);
+      const structure=project=>JSON.stringify(project.arrangement.map(({trackPresence,...section})=>section));
+      const originalStructure=structure(read());
+      const position=document.querySelector('[aria-label="Song position"]');
+      const expectedPosition=project=>{
+        let beat=0,best=0,most=-1;
+        for(const section of project.arrangement){
+          const count=Object.values(section.trackPresence).flat().filter(Boolean).length;
+          if(count>most){most=count;best=beat;}
+          const durations=section.customDurations;
+          beat+=Array.from({length:section.measures},(_,i)=>durations?.[i%durations.length]??4).reduce((sum,value)=>sum+value,0)*(section.context?.beatDurationMultiplier??1);
+        }
+        const transportBeats=project.arrangement.reduce((sum,section)=>sum+section.measures*4,0);
+        return transportBeats>0 ? Math.min(100,best/transportBeats*100) : 0;
+      };
+      reroll.click();
+      await wait(()=>JSON.stringify(read().arrangement)!==before);
+      await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
+      const rerollPreview=structure(read())===originalStructure;
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true,cancelable:true}));
+      await wait(()=>JSON.stringify(read().arrangement)===before);
+      position.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true}));
+      const beforeCompose=JSON.stringify(read());
+      document.querySelector('[aria-label="Compose"]').click();
+      await wait(()=>JSON.stringify(read())!==beforeCompose);
+      await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
+      const composePreview=structure(read())===originalStructure;
+      const fits=[star,eye,reroll].every(button=>{const b=button.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth;});
+      return {noBars,icons,rerollPreview,composePreview,fits};
+    })()` });
+    assert.equal(arrangementControls.exceptionDetails,undefined,JSON.stringify(arrangementControls));
+    for (const [key,value] of Object.entries(arrangementControls.result.value)) assert.equal(value,true,'arrangement '+key);
     const javaXml = fs.readFileSync(path.resolve(__dirname, '../GENERATOR_REFACTOR_TEST_GUICONFIG.xml-config'), 'utf8');
     const xmlImport = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
       const wait = async read => { for(let i=0;i<150;i++){const value=read();if(value)return value;await new Promise(resolve=>setTimeout(resolve,20));} throw new Error('XML import timed out'); };

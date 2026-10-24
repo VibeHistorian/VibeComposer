@@ -72,7 +72,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly selectedSectionIds = input<readonly string[]>([]);
   readonly selectedTrackId = input('');
   readonly settingsTarget = input<SettingsTarget | null>(null);
-  readonly totalMeasures = input(0);
+  readonly arrangementOnComposeChanged = output<boolean>();
+  readonly arrangementPreviewChanged = output<boolean>();
   readonly playheadPercent = input(0);
   readonly loopRange = input<PlaybackRange | null>(null);
   readonly sectionAddRequested = output<SectionType>();

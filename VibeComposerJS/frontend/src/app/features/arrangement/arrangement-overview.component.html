@@ -5,15 +5,22 @@
       <span>vibe<span class="brand-light">composer</span></span>
     </h1>
     <div class="canvas-actions">
-      <span class="measure-total">{{ totalMeasures() }} BARS</span>
       <button type="button" class="add-section-button" [disabled]="!canAddSection()"
         [attr.aria-expanded]="!!sectionPicker()" aria-haspopup="menu" aria-label="Add arrangement section" title="Add section"
         (click)="toggleSectionPicker($event)">＋</button>
       @if (selectedSectionIds().length) {
         <button type="button" class="reroll-button" (click)="selectionCleared.emit()" title="Clear section selection (Escape)">CLEAR</button>
       }
-      <button type="button" class="reroll-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
-        title="Reroll track presence using section type chances">REROLL</button>
+      <button type="button" class="reroll-button icon-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
+        aria-label="Reroll arrangement" title="Reroll track presence using section type chances">↻</button>
+      <button type="button" class="arrangement-toggle" [class.active]="!!project().randomizeArrangementOnCompose"
+        [attr.aria-pressed]="!!project().randomizeArrangementOnCompose" aria-label="Arrangement On Compose"
+        title="On Compose: reroll arrangement when global Compose runs"
+        (click)="arrangementOnComposeChanged.emit(!project().randomizeArrangementOnCompose)">✦</button>
+      <button type="button" class="arrangement-toggle" [class.active]="!!project().arrangementPreview"
+        [attr.aria-pressed]="!!project().arrangementPreview" aria-label="Arrangement Preview"
+        title="Preview: jump to the section with the most tracks after Reroll or Compose"
+        (click)="arrangementPreviewChanged.emit(!project().arrangementPreview)">👁</button>
     </div>
   </header>
 

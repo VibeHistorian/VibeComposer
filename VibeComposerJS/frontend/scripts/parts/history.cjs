@@ -3,6 +3,82 @@ const test = require('node:test');
 const { Midi } = require('@tonejs/midi');
 const { fixture } = require('../support/project-fixture.cjs');
 
+test('arrangement toggles persist, validate and undo; Preview rerolls preserve sections', () => {
+  const { service } = fixture();
+  const initial = service.exportProjectJson();
+  service.updateSettings({ randomizeArrangementOnCompose: true, arrangementPreview: true });
+  const enabled = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), initial);
+  service.redo(); assert.equal(service.exportProjectJson(), enabled);
+  assert.equal(service.importProjectJson(enabled), true);
+  assert.equal(service.project().randomizeArrangementOnCompose, true);
+  assert.equal(service.project().arrangementPreview, true);
+  const restored = service.exportProjectJson();
+  service.randomizeArrangementPresence();
+  const preview = service.project();
+  const structure = project => project.arrangement.map(({ trackPresence, ...section }) => section);
+  assert.equal(JSON.stringify(structure(preview)), JSON.stringify(structure(JSON.parse(restored))));
+  service.undo(); assert.equal(service.exportProjectJson(), restored);
+  service.redo(); assert.deepEqual(service.project(), preview);
+  const { load } = fixture();
+  const { decodeProject, isProject } = load('core/project/project-codec.ts');
+  for (const field of ['randomizeArrangementOnCompose', 'arrangementPreview']) {
+    const malformed = { ...JSON.parse(enabled), [field]: 'true' };
+    assert.equal(decodeProject(malformed, {}, Math.random), undefined);
+    assert.equal(isProject(malformed, {}, Math.random), false);
+  }
+});
+
+test('arrangement On Compose gates rerolls, excludes Regenerate and commits with Compose once', () => {
+  const { service } = fixture();
+  service.updateSettings({ seed: '42', arrangementPreview: true });
+  const original = service.project().arrangement;
+  service.generateComposition('compose');
+  assert.deepEqual(service.project().arrangement, original, 'Preview alone does not reroll');
+  service.updateSettings({ randomizeArrangementOnCompose: true });
+  service.generateComposition('regenerate');
+  assert.deepEqual(service.project().arrangement, original, 'Regenerate does not reroll');
+  const before = service.exportProjectJson();
+  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.deepEqual(service.project().arrangement.map(section => [section.id, section.type, section.measures]),
+    original.map(section => [section.id, section.type, section.measures]));
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  service.updateSettings({ arrangementPreview: false });
+  service.generateComposition('compose');
+  const rolled = service.project().arrangement;
+  service.undo();
+  service.generateComposition('compose');
+  assert.deepEqual(service.project().arrangement, rolled, 'same seed reproduces presence');
+});
+
+test('Preview triggers after global Reroll and Compose even with restart disabled, but not local rerolls or failed generation', () => {
+  const { service, workspace, load } = fixture();
+  service.updateSettings({ arrangementPreview: true, seed: '42' });
+  const { TransportDockComponent } = load('features/transport/transport-dock.component.ts');
+  const transport = new TransportDockComponent();
+  transport.preferences.restartPlaybackOnCompose = () => false;
+  const previews = [];
+  transport.playback.previewArrangement = project => previews.push(project);
+  workspace.playback.previewArrangement = project => previews.push(project);
+  workspace.randomizeArrangementPresence();
+  assert.deepEqual(previews, [service.project()]);
+  service.randomizeArrangementPresence(service.project().arrangement[0].id);
+  assert.equal(previews.length, 1);
+  transport.generate('compose');
+  assert.equal(previews.length, 2);
+  assert.equal(previews[1], service.project(), 'seeks using the composed arrangement');
+  transport.generate('regenerate');
+  assert.equal(previews.length, 2);
+  service.generateComposition = () => 'invalid';
+  transport.generate('compose');
+  assert.equal(previews.length, 2);
+  service.updateSettings({ arrangementPreview: false });
+  workspace.randomizeArrangementPresence();
+  assert.equal(previews.length, 2);
+});
+
 test('overview role presence clears mixed or full groups and fills empty groups in one undo step', () => {
   const { service } = fixture();
   service.duplicateTrack('track-bass-1');

@@ -96,7 +96,7 @@
         [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     }
     }
-      <vc-arrangement-overview [project]="project()" [totalMeasures]="totalMeasures()"
+      <vc-arrangement-overview [project]="project()"
         [sectionHarmony]="sectionHarmony()"
         [loopRange]="loopRange()"
         [settingsTarget]="settingsTarget()"
@@ -107,6 +107,8 @@
         (sectionDuplicateRequested)="duplicateSection($event)"
         (sectionRemoveRequested)="removeSection($event)"
         (randomizeRequested)="randomizeArrangementPresence()"
+        (arrangementOnComposeChanged)="projects.updateSettings({ randomizeArrangementOnCompose: $event })"
+        (arrangementPreviewChanged)="projects.updateSettings({ arrangementPreview: $event })"
         (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId, $event)"
         (selectionCleared)="workspaceUi.clearSelection()"
         (cellSelected)="selectCell($event.sectionId, $event.role)"

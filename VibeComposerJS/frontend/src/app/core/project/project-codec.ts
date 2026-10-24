@@ -24,6 +24,8 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     && (isScaleMode(project.scale))
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
+    && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
+    && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
@@ -57,6 +59,8 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     ...(project.randomizeTempoOnCompose !== undefined ? { randomizeTempoOnCompose: project.randomizeTempoOnCompose } : {}),
     ...(project.randomizeTransposeOnCompose !== undefined ? { randomizeTransposeOnCompose: project.randomizeTransposeOnCompose } : {}),
     seed: project.seed!,
+    ...(project.randomizeArrangementOnCompose !== undefined ? { randomizeArrangementOnCompose: project.randomizeArrangementOnCompose } : {}),
+    ...(project.arrangementPreview !== undefined ? { arrangementPreview: project.arrangementPreview } : {}),
     progression: [...project.progression!],
     ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
     ...(project.harmonySettings !== undefined ? { harmonySettings: decodeHarmonySettings(project.harmonySettings)! } : {}),
@@ -86,6 +90,8 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && (isScaleMode(project.scale))
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
+    && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
+    && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)

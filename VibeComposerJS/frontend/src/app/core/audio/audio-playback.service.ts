@@ -6,6 +6,7 @@ import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from '../music/phrase-note';
 import { layOutTrackPhrase } from '../music/phrase';
 import { samePhraseInputs } from '../music/phrase-inputs';
+import { mostIntenseSectionStartBeat } from '../music/arrangement-generator';
 import { TinySynthEngine } from './tiny-synth-engine';
 import { beatToSeconds, secondsToBeat, projectTempoMap, sectionDurationBeats, type TempoPoint } from '../music/section-context';
 
@@ -195,11 +196,17 @@ export class AudioPlaybackService {
     this.liveState.set(!this.liveEnabled());
   }
 
-  /** Keep the transport state, but restart with the newly composed project and loop origin. */
-  restartAfterCompose(project: CompositionProject): void {
-    const startBeat = this.loopEnabled() ? this.loopBounds().startBeat : 0;
+  /** Keep the transport state and load the new project at the target or loop origin. */
+  restartAfterCompose(project: CompositionProject, targetBeat?: number): void {
+    const startBeat = targetBeat ?? (this.loopEnabled() ? this.loopBounds().startBeat : 0);
+    const range = this.loopBounds();
+    if (targetBeat !== undefined && this.loopEnabled() && (startBeat < range.startBeat || startBeat >= range.endBeat)) this.loopState.set(false);
     if (this.state() === 'playing') void this.start(project, startBeat);
     else this.seek(project, startBeat);
+  }
+
+  previewArrangement(project: CompositionProject): void {
+    this.restartAfterCompose(project, mostIntenseSectionStartBeat(project));
   }
 
   /** Replace queued audio at the current musical position without pausing the transport. */

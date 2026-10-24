@@ -13,7 +13,7 @@
     }
   </div>
   <button type="button" class="chordlet-action" (click)="add()" [disabled]="chords().length >= 32" aria-label="Add chord" title="Add chord">＋</button>
-  <button type="button" class="chordlet-action" (click)="generate()" aria-label="Generate chord progression" title="Generate a seeded progression">✦</button>
+  <button type="button" class="chordlet-action" (click)="generate()" aria-label="Generate chord progression" title="Generate a seeded progression">↻</button>
 </div>
 @if (menu(); as popup) {
   <div class="chordlet-menu" role="menu" [attr.aria-label]="popup.kind === 'root' ? 'Chord root' : 'Chord spice'"
