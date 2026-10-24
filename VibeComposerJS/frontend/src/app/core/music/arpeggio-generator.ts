@@ -1,5 +1,5 @@
 import type { ArpeggioSettings } from './part-settings.model';
-import { getDiatonicChords, getPitchClass, chordPitches, type ProgressionChord, type ScaleMode } from './harmony';
+import { getDiatonicChords, getPitchClass, chordPitches, scaleNotes, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import { durationBlocks } from './durations';
 import { decodePartPatch, velocityBounds } from './part-settings';
@@ -55,6 +55,12 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
   const velocities = random(30_001), exceptions = random(30_002);
   const [minimum, maximum] = velocityBounds(settings);
   const fill = partFillMask(progression.length, settings), diatonic = getDiatonicChords(key, scale);
+  const tonic = getPitchClass(key)!, scaleSteps = scaleNotes(scale);
+  const nearestScalePitch = (pitch: number): number => {
+    const offset = pitch - tonic, octave = Math.floor(offset / 12);
+    return [-1, 0, 1].flatMap(shift => scaleSteps.map(step => tonic + (octave + shift) * 12 + step))
+      .reduce((best, candidate) => Math.abs(candidate - pitch) < Math.abs(best - pitch) ? candidate : best);
+  };
   const timeline: Array<{ midi: number; rhythm: number; duration: number; velocity: number; chordIndex: number }> = [];
   // MidiGenerator.fillArpFromPart lowers canonical harmony by two octaves.
   // Chords use -12; Arpeggio has its own -24 role register, before track transpose.
@@ -65,6 +71,17 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     const chord = diatonic.find(candidate => candidate.degree === degree);
     if (!chord) throw new RangeError(`Invalid chord degree ${degree}.`);
     const root = getPitchClass(chord.root)!;
+    // Contour values count scale degrees, rather than semitones above a major-scale shape.
+    // Custom chromatic roots use the nearest degree of the current key for contour attacks.
+    const contourRoot = settings.arpContourChordMode ? customChords?.[chordIndex]?.root ?? root : tonic;
+    const relativeRoot = (contourRoot - tonic + 12) % 12;
+    const contourDegree = settings.arpContourChordMode && !customChords?.[chordIndex] ? degree - 1
+      : scaleSteps.reduce((best, pitch, index) => {
+        const distance = (value: number) => Math.min(Math.abs(value - relativeRoot), 12 - Math.abs(value - relativeRoot));
+        return distance(pitch) < distance(scaleSteps[best]) ? index : best;
+      }, 0);
+    const contourBase = 84 + (harmony ? harmonyTranspose : 0) + tonic
+      - Math.floor((tonic + scaleSteps[contourDegree]) / 12) * 12;
     const pitches = expandedVoices(Array.from({ length: settings.octaves }, (_, octave) => voiced?.[chordIndex]
       ? voiced[chordIndex].map(pitch => pitch + octave * 12) : customChords?.[chordIndex]
       ? chordPitches(customChords[chordIndex]!, 48 + octave * 12)
@@ -87,9 +104,9 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
       let pitch = chordNote(index, pitches);
       const spannedPulse = chordIndex % span * (follows ? 16 : hits * repeat) + step;
       if (contour.length && spannedPulse % interval === 0) {
-        pitch = 24 + (harmony ? harmonyTranspose : 0)
-          + chordNote(contour[Math.floor(spannedPulse / interval) % contour.length], [60, 62, 64, 65, 67, 69, 71]);
-        if (settings.arpContourChordMode) pitch = closestMajorPitch(pitch + (customChords?.[chordIndex]?.root ?? root));
+        const contourStep = contourDegree + contour[Math.floor(spannedPulse / interval) % contour.length];
+        pitch = contourBase + scaleSteps[(contourStep % scaleSteps.length + scaleSteps.length) % scaleSteps.length]
+          + Math.floor(contourStep / scaleSteps.length) * 12;
       }
       if (settings.useOctaveAdjustments && pitch >= 0) pitch += (index < 2 ? -12 : index < 6 ? 0 : 12) + octavePattern[pulse];
       const velocity = custom ? custom[step % custom.length] : velocities.nextInt(maximum - minimum + 1) + minimum;
@@ -99,7 +116,8 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
       timeline.push({ midi: active ? pitch : -1, rhythm: duration, duration: duration * (usesDurations ? 1 : span), velocity, chordIndex });
       if (split) {
         const next = chordNote(pitchPattern[(pulse + 1) % pitchPattern.length], pitches);
-        const second = next < 0 ? pitch : closestMajorPitch(Math.trunc((pitch + next) / 2));
+        const midpoint = Math.trunc((pitch + next) / 2);
+        const second = next < 0 ? pitch : contour.length ? nearestScalePitch(midpoint) : closestMajorPitch(midpoint);
         timeline.push({ midi: second, rhythm: duration, duration: duration * span, velocity: Math.max(0, velocity - 15), chordIndex });
       }
       time += stepDuration;

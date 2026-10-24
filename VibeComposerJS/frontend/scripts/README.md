@@ -67,6 +67,8 @@ Historical Melody Java oracle cases with nonzero Doubled rhythm or Lead chords p
 
 The 256 Arpeggio phrase fixtures leave Java's removed Correct by melody feature disabled and omit its field. They include melody-following rhythms with seeded Pause values, including 100% silence after inversion. The saved-configuration oracle still strips the obsolete correction field before import.
 
+Historical Arpeggio contour pitches use C-major intervals and snapping even in other keys and modes. Those cases retain timing, velocity and note-count checks; dedicated contour checks cover diatonic steps in every supported key and mode, chord-relative roots, negative steps, octave crossings and split-note exceptions.
+
 ## Project behavior tests and fixture support
 
 `pnpm run test:parts` also runs `project-codec.test.cjs`, which exercises project decoding, validation, diagnostics, defaults, and arrangement candidates without Angular or browser storage. Module ownership is documented in [the project-state guide](../src/app/core/project/README.md).

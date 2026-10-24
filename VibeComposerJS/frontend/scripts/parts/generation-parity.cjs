@@ -338,7 +338,7 @@ test('P5d Ghosts, melody rhythm and humanize match complete production Java drum
   }
 });
 
-test('P5c Arpeggio direction, rotation, contour, octave and melody rhythm match supported complete Java phrases', () => {
+test('P5c Arpeggio direction, rotation, octave and melody rhythm retain Java timing and non-contour pitches', () => {
   const { load } = fixture();
   const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/arpeggio-core.java.json'), 'utf8').replace(/^\uFEFF/, ''));
@@ -348,12 +348,62 @@ test('P5c Arpeggio direction, rotation, contour, octave and melody rhythm match 
     assert.equal(actual.length, entry.notes.length, `case ${index} ${JSON.stringify(entry.settings)}`);
     actual.forEach((note, position) => {
       const expected = entry.notes[position];
-      assert.equal(note.midi, expected[0], `case ${index} note ${position} pitch`);
+      // Historical contour pitches snap to C major, ignoring the requested key and mode.
+      // Corrected scale-relative contour pitches have dedicated coverage below.
+      if (!entry.settings.arpContour?.length) assert.equal(note.midi, expected[0], `case ${index} note ${position} pitch`);
       assert.equal(note.velocity, expected[3], `case ${index} note ${position} velocity`);
       assert.ok(Math.abs(note.startBeat - expected[1]) < 1e-9, `case ${index} note ${position} onset ${note.startBeat} vs ${expected[1]}`);
       assert.ok(Math.abs(note.durationBeats - expected[2]) < 1e-9, `case ${index} note ${position} duration ${note.durationBeats} vs ${expected[2]}`);
     });
   }
+});
+
+test('arpeggio contour counts diatonic steps from the chord root across key, mode and octave boundaries', () => {
+  const { load } = fixture();
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const settings = { pattern: 'up', rate: 'eighth', octaves: 1, rhythm: 'full', hitsPerPattern: 4,
+    arpContour: [0, 0, 1, 2], arpContourChordMode: true, exceptionChance: 0 };
+  const pitches = (key, scale, degree, patch = {}, custom) => generateArpeggio(42n, key, scale, [degree],
+    { ...settings, ...patch }, custom).map(note => note.midi);
+  assert.deepEqual(pitches('G', 'natural-minor', 1), [91,91,93,94], 'G G A Bb, rather than C-major snapping');
+  assert.deepEqual(pitches('G', 'natural-minor', 4), [84,84,86,87], 'C C D Eb follows the song mode');
+  assert.deepEqual(pitches('C', 'major', 7), [95,95,96,98], 'B C D crosses the octave');
+  assert.deepEqual(pitches('F♯', 'major', 5), [85,85,87,89], 'C# D# E# follows the key');
+  assert.deepEqual(pitches('D', 'natural-minor', 1, { arpContour: [-1, -7, 7, 8] }), [84,74,98,100]);
+  assert.deepEqual(pitches('G', 'natural-minor', 4, { arpContourChordMode: false }), [91,91,93,94], 'tonic-relative contour follows the selected scale too');
+  assert.deepEqual(pitches('G', 'natural-minor', 1, {}, [{ root: 0, spice: '', inversion: 0 }]), [84,84,86,87], 'custom chord root overrides the progression degree');
+  assert.deepEqual(pitches('C', 'major', 1, {}, [{ root: 1, spice: '', inversion: 0 }]), [84,84,86,88], 'chromatic custom root anchors to the nearest scale degree');
+});
+
+test('arpeggio contour attacks stay in every supported key and mode with CHORD enabled or disabled', () => {
+  const { load } = fixture();
+  const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
+  const { KEYS, getPitchClass, scaleNotes } = load('core/music/harmony.ts');
+  const { SCALE_MODES } = load('core/music/scales.ts');
+  for (const key of KEYS) for (const scale of SCALE_MODES) for (const arpContourChordMode of [false, true]) for (const exceptionChance of [0, 100]) {
+    const allowed = new Set(scaleNotes(scale).map(pitch => (pitch + getPitchClass(key)) % 12));
+    const notes = generateArpeggio(42n, key, scale, [1,2,3,4,5,6,7], {
+      pattern: 'up', rate: 'sixteenth', octaves: 1, rhythm: 'full', hitsPerPattern: 16,
+      arpContour: [-14,-8,-7,-1,0,1,2,6,7,8,14,0,0,1,2,3], arpContourChordMode, exceptionChance,
+    });
+    assert.equal(notes.length, exceptionChance ? 224 : 112);
+    assert.ok(notes.every(note => allowed.has(note.midi % 12)), `${key} ${scale} CHORD=${arpContourChordMode}`);
+  }
+});
+
+test('chord-relative contours use the same in-key pitches in production phrases and exported MIDI', () => {
+  const { service, phrase, midi } = fixture();
+  service.updateSettings({ key: 'G', scale: 'natural-minor', transposeSemitones: 0 });
+  service.setProgression([1]);
+  const id = 'track-arpeggio-1';
+  service.updateTrackGeneratorSettings(id, { rhythm: 'full', hitsPerPattern: 4, patternRepeat: 1, chordSpan: 1,
+    arpContour: [0,0,1,2], arpContourChordMode: true, exceptionChance: 0, pauseChance: 0,
+    useOctaveAdjustments: false, transpose: 0, swingPercent: 50 });
+  const project = service.project(), track = project.tracks.find(track => track.id === id);
+  assert.deepEqual(phrase.generateTrackPhrase(project, track).map(note => note.midi), [67,67,69,70]);
+  const expected = phrase.layOutTrackPhrase(project, track).map(note => note.midi);
+  assert.ok(expected.length > 0);
+  assert.deepEqual(new Midi(midi.generateCompositionMidi(project)).tracks.find(item => item.name === track.name).notes.map(note => note.midi), expected);
 });
 
 test('melody-following arpeggio pauses remove seeded hits after inversion without changing the melody source', () => {
