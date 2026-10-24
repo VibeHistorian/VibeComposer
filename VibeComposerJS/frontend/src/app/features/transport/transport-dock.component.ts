@@ -42,7 +42,10 @@ export class TransportDockComponent {
     const started = event === 'compose' ? performance.now() : undefined;
     const result = this.projects.generateComposition(event);
     if (event === 'compose' && result !== 'invalid') {
-      if (this.project().arrangementPreview) this.playback.previewArrangement(this.project());
+      if (this.project().arrangementPreview) {
+        const sectionId = this.playback.previewArrangement(this.project());
+        if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId);
+      }
       else if (this.preferences.restartPlaybackOnCompose()) this.playback.restartAfterCompose(this.project());
     }
     this.generationFeedback.set({ project: this.project(), message: result === 'invalid'

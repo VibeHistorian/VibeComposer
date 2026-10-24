@@ -568,14 +568,15 @@ test('Compose restart uses zero or selected loop origin and keeps paused/stopped
 test('arrangement Preview seeks to the first densest section with resolved timing and preserves transport state', async () => {
   const { playback, project } = fixture();
   const arrangement = [
-    { measures: 2, trackPresence: {}, customDurations: [3, 2], context: { beatDurationMultiplier: 2 } },
-    { measures: 4, trackPresence: { bass: true } },
-    { measures: 4, trackPresence: { bass: true } },
+    { id: 'intro', measures: 2, trackPresence: {}, customDurations: [3, 2], context: { beatDurationMultiplier: 2 } },
+    { id: 'preview', measures: 4, trackPresence: { bass: true } },
+    { id: 'tie', measures: 4, trackPresence: { bass: true } },
   ];
   const preview = { ...project, arrangement };
-  playback.previewArrangement(preview);
+  assert.equal(playback.previewArrangement(preview), 'preview');
   assert.equal(playback.beat(), 10);
   assert.equal(playback.state(), 'stopped');
+  assert.equal(playback.loopEnabled(), false, 'Preview does not enable looping');
   playback.setLoopRange({ startBeat: 0, endBeat: 4 });
   playback.toggleLoop();
   await playback.start(preview);
@@ -583,13 +584,35 @@ test('arrangement Preview seeks to the first densest section with resolved timin
   await Promise.resolve();
   assert.equal(playback.beat(), 10);
   assert.equal(playback.state(), 'playing');
-  assert.equal(playback.loopEnabled(), false);
+  assert.equal(playback.loopEnabled(), true);
+  assert.deepEqual(playback.selectedLoopRange, { startBeat: 10, endBeat: 26 });
   playback.pause();
   playback.previewArrangement(preview);
   assert.equal(playback.state(), 'paused');
   assert.equal(playback.beat(), 10);
   playback.previewArrangement({ ...preview, tracks: [] });
   assert.equal(playback.beat(), 0);
+  assert.equal(playback.loopEnabled(), true);
+  assert.deepEqual(playback.selectedLoopRange, { startBeat: 0, endBeat: 10 });
   playback.previewArrangement({ ...preview, arrangement: [] });
   assert.equal(playback.beat(), 0);
+});
+
+test('Preview moves an enabled loop beyond the old arrangement end when Compose lengthens the song', async () => {
+  for (const playing of [false, true]) {
+    const { playback, project } = fixture({ loop: true });
+    if (playing) await playback.start(project);
+    else playback.seek(project, 0);
+    playback.setLoopRange({ startBeat: 0, endBeat: 4 });
+    const longer = { ...project, arrangement: [
+      { id: 'intro', measures: 8, trackPresence: {} },
+      { id: 'preview', measures: 2, trackPresence: { bass: true } },
+    ] };
+    assert.equal(playback.previewArrangement(longer), 'preview');
+    await Promise.resolve();
+    assert.equal(playback.loopEnabled(), true);
+    assert.equal(playback.beat(), 32);
+    assert.deepEqual(playback.loopBounds(), { startBeat: 32, endBeat: 40 });
+    assert.equal(playback.state(), playing ? 'playing' : 'stopped');
+  }
 });

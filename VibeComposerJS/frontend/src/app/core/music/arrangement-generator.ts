@@ -6,17 +6,19 @@ import type { CompositionProject } from '../project/project.model';
 import { sectionDurationBeats } from './section-context';
 
 /** First section with the most included tracks, using resolved section timing. */
-export function mostIntenseSectionStartBeat(project: CompositionProject): number {
-  let startBeat = 0, bestBeat = 0, mostTracks = -1;
+export function mostIntenseSection(project: CompositionProject): { section: ArrangementSection; startBeat: number; endBeat: number } | undefined {
+  let startBeat = 0, mostTracks = -1;
+  let best: { section: ArrangementSection; startBeat: number; endBeat: number } | undefined;
   for (const section of project.arrangement) {
+    const endBeat = startBeat + sectionDurationBeats(project, section);
     const count = project.tracks.filter(track => shouldGenerateTrackInSection(section, track)).length;
     if (count > mostTracks) {
       mostTracks = count;
-      bestBeat = startBeat;
+      best = { section, startBeat, endBeat };
     }
-    startBeat += sectionDurationBeats(project, section);
+    startBeat = endBeat;
   }
-  return bestBeat;
+  return best;
 }
 
 const ARRANGEMENT_PART_SEED_OFFSETS: Readonly<Record<ArrangedPart, number>> = {

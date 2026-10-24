@@ -603,7 +603,10 @@ export class WorkspaceCanvasComponent {
 
   randomizeArrangementPresence(): void {
     this.projects.randomizeArrangementPresence();
-    if (this.project().arrangementPreview) this.playback.previewArrangement(this.project());
+    if (this.project().arrangementPreview) {
+      const sectionId = this.playback.previewArrangement(this.project());
+      if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId);
+    }
   }
 
   readonly canCopyPartGlobals = computed(() => {

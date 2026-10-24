@@ -730,17 +730,39 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         const transportBeats=project.arrangement.reduce((sum,section)=>sum+section.measures*4,0);
         return transportBeats>0 ? Math.min(100,best/transportBeats*100) : 0;
       };
+      const loop= document.querySelector('[aria-label="Toggle loop"]');
+      const enableLoop=()=>{if(loop.getAttribute('aria-pressed')!=='true')loop.click();};
+      const previewLoopMatches=()=>{
+        const project=read();
+        const best=project.arrangement.reduce((result,section,index)=>{
+          const count=Object.values(section.trackPresence).flat().filter(Boolean).length;
+          return count>result.count ? {count,index} : result;
+        },{count:-1,index:0}).index;
+        const section=project.arrangement[best];
+        const sectionBeats=Array.from({length:section.measures},(_,i)=>section.customDurations?.[i%section.customDurations.length]??4).reduce((sum,value)=>sum+value,0)*(section.context?.beatDurationMultiplier??1);
+        const duration=project.arrangement.reduce((sum,section)=>sum+section.measures*4,0);
+        const line=document.querySelector('.progress-loop-line');
+        return loop.getAttribute('aria-pressed')==='true' && line
+          && Math.abs(parseFloat(line.style.left)-expectedPosition(project))<0.001
+          && Math.abs(parseFloat(line.style.width)-sectionBeats/duration*100)<0.001;
+      };
+      enableLoop();
       reroll.click();
       await wait(()=>JSON.stringify(read().arrangement)!==before);
       await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
+      await wait(previewLoopMatches);
       const rerollPreview=structure(read())===originalStructure;
       document.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true,cancelable:true}));
       await wait(()=>JSON.stringify(read().arrangement)===before);
       position.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true}));
+      await wait(()=>loop.getAttribute('aria-pressed')==='false');
+      enableLoop();
+      await wait(()=>loop.getAttribute('aria-pressed')==='true');
       const beforeCompose=JSON.stringify(read());
       document.querySelector('[aria-label="Compose"]').click();
       await wait(()=>JSON.stringify(read())!==beforeCompose);
       await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
+      await wait(previewLoopMatches);
       const composePreview=structure(read())===originalStructure;
       const fits=[star,eye,manual,reroll].every(button=>{const b=button.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth;});
       manual.click();
@@ -748,6 +770,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const beforeAutoCompose=JSON.stringify(read());
       document.querySelector('[aria-label="Compose"]').click();
       await wait(()=>JSON.stringify(read())!==beforeAutoCompose && structure(read())!==originalStructure);
+      await wait(previewLoopMatches);
       const automaticStructure=structure(read())!==originalStructure;
       return {noBars,icons,rerollPreview,composePreview,fits,manualDefault,automaticStructure};
     })()` });

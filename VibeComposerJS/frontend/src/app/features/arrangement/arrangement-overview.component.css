@@ -1,9 +1,9 @@
 /* Panel and compact header */
 :host { min-width: 0; min-height: 0; display: block; }
 .arrangement-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-base); }
-.canvas-heading { min-height: 49px; padding: 6px 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.canvas-heading { min-height: 49px; padding: 6px 14px; flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .canvas-heading .brand { margin: 0; }
-.canvas-actions { display: flex; align-items: center; gap: 8px; }
+.canvas-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .reroll-button { height: 29px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: 9px var(--font-mono); letter-spacing: .06em; }
 .reroll-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .add-section-button { width: 29px; height: 29px; display: grid; place-items: center; padding: 0; line-height: 1; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 16px; }
