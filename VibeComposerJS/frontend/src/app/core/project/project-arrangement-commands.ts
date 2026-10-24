@@ -6,6 +6,23 @@ import { MAX_ARRANGEMENT_SECTIONS } from './project-arrangement-decoder';
 import { generateTrackPresence } from '../music/arrangement-generator';
 import { copyPartSettings } from '../music/part-settings';
 import { getDiatonicChords } from '../music/harmony';
+import { generateArrangementTemplate } from '../music/arrangement-template';
+import { JavaRandom } from '../music/java-random';
+
+/** Replace the arrangement with fresh template sections; manual mode uses presence-only instead. */
+export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings): CompositionProject {
+  const seed = BigInt(project.seed);
+  const random = new JavaRandom(seed);
+  const arrangement = generateArrangementTemplate(seed).map(({ type, chanceBoost }, index) => ({
+    id: `section-${index + 1}`,
+    type,
+    measures: 4,
+    trackPresence: generateTrackPresence(project.tracks,
+      Object.fromEntries(Object.entries(chances[type]).map(([role, chance]) => [role, Math.min(100, chance + chanceBoost)])) as Record<ArrangedPart, number>,
+      () => random.nextDouble()),
+  }));
+  return { ...project, arrangement };
+}
 
 // Build immutable candidates. ProjectService validates and commits each command once.
 export function addSection(project: CompositionProject, type: SectionType, afterIndex: number, chances: SectionTypeChanceSettings, random: () => number): CompositionProject | undefined {

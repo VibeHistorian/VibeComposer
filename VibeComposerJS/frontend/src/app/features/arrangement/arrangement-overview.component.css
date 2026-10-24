@@ -14,6 +14,7 @@
 .arrangement-toggle:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .arrangement-toggle.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
 .arrangement-toggle:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.manual-toggle { width: auto; padding: 0 7px; font-size: 11px; }
 /* Size the grid independently of its canvas; drawing adds any native scrollbar height. */
 .overview-scroll { min-width: 0; min-height: 0; height: 284px; flex: 0 0 auto; contain: size; overflow: hidden; }
 .overview-content { position: relative; }

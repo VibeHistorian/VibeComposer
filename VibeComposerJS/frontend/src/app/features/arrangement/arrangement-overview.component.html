@@ -21,6 +21,10 @@
         [attr.aria-pressed]="!!project().arrangementPreview" aria-label="Arrangement Preview"
         title="Preview: jump to the section with the most tracks after Reroll or Compose"
         (click)="arrangementPreviewChanged.emit(!project().arrangementPreview)">👁</button>
+      <button type="button" class="arrangement-toggle manual-toggle" [class.active]="!!project().arrangementManual"
+        [attr.aria-pressed]="!!project().arrangementManual" aria-label="Arrangement Manual"
+        title="Manual: preserve sections and reroll only track presence when On Compose is enabled"
+        (click)="arrangementManualChanged.emit(!project().arrangementManual)">Manual</button>
     </div>
   </header>
 

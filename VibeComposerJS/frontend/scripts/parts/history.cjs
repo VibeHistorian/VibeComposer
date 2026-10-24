@@ -6,7 +6,7 @@ const { fixture } = require('../support/project-fixture.cjs');
 test('arrangement toggles persist, validate and undo; Preview rerolls preserve sections', () => {
   const { service } = fixture();
   const initial = service.exportProjectJson();
-  service.updateSettings({ randomizeArrangementOnCompose: true, arrangementPreview: true });
+  service.updateSettings({ randomizeArrangementOnCompose: true, arrangementPreview: true, arrangementManual: true });
   const enabled = service.exportProjectJson();
   service.undo(); assert.equal(service.exportProjectJson(), initial);
   service.redo(); assert.equal(service.exportProjectJson(), enabled);
@@ -22,7 +22,7 @@ test('arrangement toggles persist, validate and undo; Preview rerolls preserve s
   service.redo(); assert.deepEqual(service.project(), preview);
   const { load } = fixture();
   const { decodeProject, isProject } = load('core/project/project-codec.ts');
-  for (const field of ['randomizeArrangementOnCompose', 'arrangementPreview']) {
+  for (const field of ['randomizeArrangementOnCompose', 'arrangementPreview', 'arrangementManual']) {
     const malformed = { ...JSON.parse(enabled), [field]: 'true' };
     assert.equal(decodeProject(malformed, {}, Math.random), undefined);
     assert.equal(isProject(malformed, {}, Math.random), false);
@@ -35,7 +35,7 @@ test('arrangement On Compose gates rerolls, excludes Regenerate and commits with
   const original = service.project().arrangement;
   service.generateComposition('compose');
   assert.deepEqual(service.project().arrangement, original, 'Preview alone does not reroll');
-  service.updateSettings({ randomizeArrangementOnCompose: true });
+  service.updateSettings({ randomizeArrangementOnCompose: true, arrangementManual: true });
   service.generateComposition('regenerate');
   assert.deepEqual(service.project().arrangement, original, 'Regenerate does not reroll');
   const before = service.exportProjectJson();
@@ -51,6 +51,34 @@ test('arrangement On Compose gates rerolls, excludes Regenerate and commits with
   service.undo();
   service.generateComposition('compose');
   assert.deepEqual(service.project().arrangement, rolled, 'same seed reproduces presence');
+});
+
+test('automatic arrangement Compose replaces sections deterministically and restores them in one undo', () => {
+  const { service } = fixture();
+  assert.equal(service.project().arrangementManual ?? false, false);
+  service.updateSettings({ seed: '9223372036854775807', randomizeArrangementOnCompose: true });
+  const original = service.project().arrangement;
+  const before = service.exportProjectJson();
+  assert.equal(service.generateComposition('compose'), 'changed');
+  const rolled = service.project().arrangement;
+  assert.notDeepEqual(rolled, original);
+  assert.ok(rolled.length > 1);
+  for (const section of rolled) {
+    assert.equal(section.measures, 4);
+    assert.deepEqual(Object.keys(section.trackPresence).sort(), service.project().tracks.map(track => track.id).sort());
+  }
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.generateComposition('compose');
+  assert.deepEqual(service.project().arrangement, rolled, 'exact long seed reproduces structure and presence');
+  service.updateSettings({ arrangementManual: true });
+  const structure = project => project.arrangement.map(({ trackPresence, ...section }) => section);
+  const manualStructure = structure(service.project());
+  service.generateComposition('compose');
+  assert.deepEqual(structure(service.project()), manualStructure);
+  service.updateSettings({ randomizeArrangementOnCompose: false, arrangementManual: false });
+  const unchanged = service.project().arrangement;
+  service.generateComposition('compose');
+  assert.deepEqual(service.project().arrangement, unchanged, 'On Compose off gates automatic structure');
 });
 
 test('Preview triggers after global Reroll and Compose even with restart disabled, but not local rerolls or failed generation', () => {

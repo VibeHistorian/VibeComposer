@@ -109,6 +109,7 @@
         (randomizeRequested)="randomizeArrangementPresence()"
         (arrangementOnComposeChanged)="projects.updateSettings({ randomizeArrangementOnCompose: $event })"
         (arrangementPreviewChanged)="projects.updateSettings({ arrangementPreview: $event })"
+        (arrangementManualChanged)="projects.updateSettings({ arrangementManual: $event })"
         (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId, $event)"
         (selectionCleared)="workspaceUi.clearSelection()"
         (cellSelected)="selectCell($event.sectionId, $event.role)"

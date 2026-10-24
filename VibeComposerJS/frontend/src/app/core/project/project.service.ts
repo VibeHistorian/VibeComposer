@@ -437,8 +437,10 @@ export class ProjectService {
     if (event === 'compose' && next.randomizeArrangementOnCompose) {
       // Independent stream preserves track and global-setting random draw order.
       const random = new JavaRandom(BigInt(next.seed));
-      next = arrangementCommands.randomizeArrangementPresence(next, undefined,
-        this.sectionTypeSettings.chances(), () => random.nextDouble())!;
+      next = next.arrangementManual
+        ? arrangementCommands.randomizeArrangementPresence(next, undefined,
+          this.sectionTypeSettings.chances(), () => random.nextDouble())!
+        : arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances());
     }
     const policy = current.trackGenerationPolicies?.melody ?? DEFAULT_TRACK_POLICIES.melody;
     if (event === 'compose' || policy.onRegenerate) {
@@ -718,7 +720,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;

@@ -26,6 +26,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
+    && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
@@ -61,6 +62,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     seed: project.seed!,
     ...(project.randomizeArrangementOnCompose !== undefined ? { randomizeArrangementOnCompose: project.randomizeArrangementOnCompose } : {}),
     ...(project.arrangementPreview !== undefined ? { arrangementPreview: project.arrangementPreview } : {}),
+    ...(project.arrangementManual !== undefined ? { arrangementManual: project.arrangementManual } : {}),
     progression: [...project.progression!],
     ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
     ...(project.harmonySettings !== undefined ? { harmonySettings: decodeHarmonySettings(project.harmonySettings)! } : {}),
@@ -92,6 +94,7 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
+    && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)

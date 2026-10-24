@@ -707,11 +707,13 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const panel=document.querySelector('vc-arrangement-overview');
       const star=panel.querySelector('[aria-label="Arrangement On Compose"]');
       const eye=panel.querySelector('[aria-label="Arrangement Preview"]');
+      const manual=panel.querySelector('[aria-label="Arrangement Manual"]');
+      const manualDefault=manual.getAttribute("aria-pressed")==="false" && eye.nextElementSibling===manual;
       const reroll=panel.querySelector('[aria-label="Reroll arrangement"]');
       const noBars=!panel.querySelector('.measure-total');
       const icons=star.textContent.trim()==='✦' && eye.textContent.trim()==='👁' && reroll.textContent.trim()==='↻'
         && document.querySelector('[aria-label="Generate chord progression"]').textContent.trim()==='↻';
-      star.click(); eye.click();
+      star.click(); eye.click(); manual.click();
       await wait(()=>read().randomizeArrangementOnCompose && read().arrangementPreview && star.getAttribute('aria-pressed')==='true' && eye.getAttribute('aria-pressed')==='true');
       const before=JSON.stringify(read().arrangement);
       const structure=project=>JSON.stringify(project.arrangement.map(({trackPresence,...section})=>section));
@@ -740,8 +742,14 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>JSON.stringify(read())!==beforeCompose);
       await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
       const composePreview=structure(read())===originalStructure;
-      const fits=[star,eye,reroll].every(button=>{const b=button.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth;});
-      return {noBars,icons,rerollPreview,composePreview,fits};
+      const fits=[star,eye,manual,reroll].every(button=>{const b=button.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth;});
+      manual.click();
+      await wait(()=>read().arrangementManual===false);
+      const beforeAutoCompose=JSON.stringify(read());
+      document.querySelector('[aria-label="Compose"]').click();
+      await wait(()=>JSON.stringify(read())!==beforeAutoCompose && structure(read())!==originalStructure);
+      const automaticStructure=structure(read())!==originalStructure;
+      return {noBars,icons,rerollPreview,composePreview,fits,manualDefault,automaticStructure};
     })()` });
     assert.equal(arrangementControls.exceptionDetails,undefined,JSON.stringify(arrangementControls));
     for (const [key,value] of Object.entries(arrangementControls.result.value)) assert.equal(value,true,'arrangement '+key);
