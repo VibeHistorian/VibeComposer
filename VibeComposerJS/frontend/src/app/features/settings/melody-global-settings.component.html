@@ -1,59 +1,82 @@
-<section aria-label="Global Melody musical settings">
-  <div class="global-controls">
-    @if (showAlgorithm(true)) {
-      @for (field of contextualNumbers; track field.key) {
+<section class="global-controls" aria-label="Global Melody musical settings">
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Contextual Melody</h3><p>Plan phrases around the harmony, melodic range and musical context.</p></div>
+      <div class="setting-controls"><input type="checkbox" aria-label="Contextual Melody" [checked]="values().contextualMelody ?? true"
+          (change)="settingsChanged.emit({ contextualMelody: $any($event.target).checked })" /></div>
+    </div>
+  @if (showAlgorithm(true)) {
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Phrase timing</h3><p>Set the phrase length and number of beats in each bar.</p></div>
+      <div class="setting-controls">@for (field of contextualNumbers; track field.key) {
           <vc-compact-knob [label]="field.label" [value]="numeric(field.key)" [defaultValue]="field.fallback"
-            [minimum]="field.min"
-            [maximum]="field.max"
+            [minimum]="field.min" [maximum]="field.max" unit=""
             (valueCommit)="changeContextual(field.key, $event)" />
-        }
-        <vc-compact-toggle label="Chromatic approaches" [active]="values().chromaticApproaches ?? false"
+        }</div>
+    </div>
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Chromatic approaches</h3><p>Allow weak chromatic approach notes that resolve by semitone.</p></div>
+      <div class="setting-controls"><vc-compact-toggle label="Chromatic approaches" [shortLabel]="(values().chromaticApproaches ?? false) ? 'On' : 'Off'" [active]="values().chromaticApproaches ?? false"
           description="Allow weak chromatic approach notes that resolve by semitone."
-          (toggled)="changeContextual('chromaticApproaches', !(values().chromaticApproaches ?? false))" />
-        <vc-compact-toggle label="Randomize range on Compose" [active]="values().rangeRandomizeOnCompose ?? false"
+          (toggled)="changeContextual('chromaticApproaches', !(values().chromaticApproaches ?? false))" /></div>
+    </div>
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Randomize range on Compose</h3><p>Choose a seeded register for each eligible Melody track on Compose. Regenerate retains the range.</p></div>
+      <div class="setting-controls"><vc-compact-toggle label="Randomize range on Compose" [shortLabel]="(values().rangeRandomizeOnCompose ?? false) ? 'On' : 'Off'" [active]="values().rangeRandomizeOnCompose ?? false"
           description="Choose a seeded melodic register on Compose. Regenerate retains the range."
-          (toggled)="changeContextual('rangeRandomizeOnCompose', !(values().rangeRandomizeOnCompose ?? false))" />
-    } @else {
-      <label class="pattern-effect" title="Reinterpret existing note targets immediately. Automatic targets prepares new choices on Compose and enabled Regenerate.">
-        Target mode
-        <vc-select [options]="[{ value: '0', label: 'Chord note index' }, { value: '1', label: 'Chord root + offset' }, { value: '2', label: 'MIDI 60 + offset' }]" selectDefault="2" aria-label="Block target mode" [value]="values().blockTargetMode ?? 2" (valueChange)="changeTargetMode($event)"></vc-select>
-      </label>
-      <p class="preparation-note">Mode reinterprets existing targets immediately. Other inputs prepare targets on Compose and enabled Regenerate; choices remain editable.</p>
-      <vc-compact-knob label="Target variation" [defaultValue]="3" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
+          (toggled)="changeContextual('rangeRandomizeOnCompose', !(values().rangeRandomizeOnCompose ?? false))" /></div>
+    </div>
+  } @else {
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Target mode</h3><p>Reinterpret existing targets immediately as chord-note indices or pitch offsets.</p></div>
+      <div class="setting-controls"><vc-select [options]="[{ value: '0', label: 'Chord note index' }, { value: '1', label: 'Chord root + offset' }, { value: '2', label: 'MIDI 60 + offset' }]" selectDefault="2" aria-label="Block target mode" [value]="values().blockTargetMode ?? 2" (valueChange)="changeTargetMode($event)"></vc-select></div>
+    </div>
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Target variation</h3><p>Set the range of prepared target directions. Requires Automatic targets on Compose or enabled Regenerate.</p></div>
+      <div class="setting-controls"><vc-compact-knob label="Target variation" [defaultValue]="3" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
         description="Magnitude of prepared target directions before chord-note correction. Ascending and Descending double the draw range. Requires Automatic targets."
-        (valueCommit)="settingsChanged.emit({ targetNoteVariation: $event })" />
-      <vc-compact-toggle label="Directions from progression" [active]="values().useDirectionsFromProgression ?? false"
+        (valueCommit)="settingsChanged.emit({ targetNoteVariation: $event })" /></div>
+    </div>
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Directions from progression</h3><p>Prepare target directions from successive chord roots, including Chordlets. Requires Automatic targets.</p></div>
+      <div class="setting-controls"><vc-compact-toggle label="Directions from progression" [shortLabel]="(values().useDirectionsFromProgression ?? false) ? 'On' : 'Off'" [active]="values().useDirectionsFromProgression ?? false"
         description="Prepare target directions from successive unsquished chord roots, including Chordlets, starting with zero, instead of a seeded direction pattern. Requires Automatic targets."
-        (toggled)="settingsChanged.emit({ useDirectionsFromProgression: !(values().useDirectionsFromProgression ?? false) })" />
-      <vc-compact-toggle label="Force first outline" [active]="values().forceFirstOutline ?? false"
+        (toggled)="settingsChanged.emit({ useDirectionsFromProgression: !(values().useDirectionsFromProgression ?? false) })" /></div>
+    </div>
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Force first outline</h3><p>Copy the first Melody track’s targets, structure, speed, block limits and split chance to unlocked tracks during preparation.</p></div>
+      <div class="setting-controls"><vc-compact-toggle label="Force first outline" [shortLabel]="(values().forceFirstOutline ?? false) ? 'On' : 'Off'" [active]="values().forceFirstOutline ?? false"
         description="During preparation, copy the first stored Melody track's targets, structure, speed, block limits and split chance to unlocked Melody tracks. Section overrides remain explicit."
-        (toggled)="settingsChanged.emit({ forceFirstOutline: !(values().forceFirstOutline ?? false) })" />
-      <vc-compact-knob label="AVOID" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
+        (toggled)="settingsChanged.emit({ forceFirstOutline: !(values().forceFirstOutline ?? false) })" /></div>
+    </div>
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Avoid notes</h3><p>0: Off. 1: Correct notes a semitone above chord tones. 2: Also correct notes a semitone below or two above.</p></div>
+      <div class="setting-controls"><vc-compact-knob label="AVOID" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
         description="0: Off. 1: Correct notes a semitone above chord tones. 2: Also correct notes a semitone below or two semitones above. Tonic, fifth and chord tones stay safe. Move one seeded scale step after interval repair, before pauses."
-        (valueCommit)="settingsChanged.emit({ replaceAvoidNotes: $event })" />
-      <label class="pattern-effect" title="Choose what repeated block identities preserve. Flex can regenerate their final block to approach the next target.">
-        Pattern effect
-        <vc-select [options]="[{ value: '0', label: 'Rhythm' }, { value: '1', label: 'Notes' }, { value: '2', label: 'Rhythm + Notes' }]" [selectDefault]="2" aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (valueChange)="changePatternEffect($event)"></vc-select>
-      </label>
-    }
-    <div class="block-weights" aria-label="Block family preferences">
+        (valueCommit)="settingsChanged.emit({ replaceAvoidNotes: $event })" /></div>
+    </div>
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Pattern effect</h3><p>Choose what repeated block identities preserve. Flex can adapt the final block toward the next target.</p></div>
+      <div class="setting-controls"><vc-select [options]="[{ value: '0', label: 'Rhythm' }, { value: '1', label: 'Notes' }, { value: '2', label: 'Rhythm + Notes' }]" [selectDefault]="2" aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (valueChange)="changePatternEffect($event)"></vc-select></div>
+    </div>
+  }
+    <div class="setting-row ">
+      <div class="setting-copy"><h3>Block catalogue</h3><p>Set the relative preference for each block family within the allowed changes, lengths and direction limits.</p></div>
+      <div class="setting-controls"><div class="block-weights" aria-label="Block family preferences">
         @for (family of blockFamilies; track family; let index = $index) {
           <vc-compact-knob [label]="family + ' weight'" [defaultValue]="100" [shortLabel]="family" [value]="(values().blockTypeWeights ?? defaultWeights)[index]" [minimum]="0" [maximum]="100" unit="%"
             description="Relative catalogue preference within allowed block changes, lengths and direction limits. Fallback and family replacement may use another family."
             (valueCommit)="changeBlockWeight(index, $event)" />
         }
-      </div>
-    @if (showAlgorithm(false)) {
-      <label class="block-preference" title="Order absolute block changes 0–7 from most preferred to least preferred. A ranked draw favors earlier entries; empty chooses uniformly.">
-        Change preference
-        <input aria-label="Block change preference" placeholder="Uniform (empty)" [value]="(values().blockChangePreference ?? []).join(', ')"
-          (change)="changeBlockPreference($event)" />
-      </label>
-      <div class="preference-actions">
+      </div></div>
+    </div>
+  @if (showAlgorithm(false)) {
+    <div class="setting-row preference-row">
+      <div class="setting-copy"><h3>Change preference</h3><p>Rank every block change from 0–7, most preferred first. Leave empty for uniform selection.</p></div>
+      <div class="setting-controls"><input aria-label="Block change preference" placeholder="Uniform (empty)" [value]="(values().blockChangePreference ?? []).join(', ')"
+          (change)="changeBlockPreference($event)" /><div class="preference-actions">
         <button type="button" aria-label="Default block change order" (click)="useBlockPreference(true)">Default order</button>
         <button type="button" aria-label="Uniform block changes" (click)="useBlockPreference(false)">Uniform</button>
-      </div>
-      @if (blockPreferenceError()) { <p class="preference-error" role="alert">{{ blockPreferenceError() }}</p> }
-    }
-  </div>
+      </div>@if (blockPreferenceError()) { <p class="preference-error" role="alert">{{ blockPreferenceError() }}</p> }</div>
+    </div>
+  }
 </section>

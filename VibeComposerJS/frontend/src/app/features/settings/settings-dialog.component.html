@@ -184,12 +184,6 @@
         @case ('melody') {
           <section aria-labelledby="melody-settings-title">
             <h2 id="melody-settings-title">Melody</h2>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Contextual Melody" [checked]="projects.project().melodyGlobal?.contextualMelody ?? true"
-                (change)="projects.updateMelodyGlobal({ contextualMelody: $any($event.target).checked })" />
-              <span>Contextual Melody</span>
-            </label>
-            <p>Project musical settings are saved with the project. Track-specific melody controls are in the inspector.</p>
             <vc-melody-global-settings [values]="projects.project().melodyGlobal ?? {}"
               (settingsChanged)="projects.updateMelodyGlobal($event)" />
           </section>

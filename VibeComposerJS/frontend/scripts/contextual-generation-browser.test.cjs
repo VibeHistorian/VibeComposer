@@ -46,6 +46,13 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
         const label=knob.querySelector('vc-control-heading').getBoundingClientRect(), face=knob.querySelector('.knob-face').getBoundingClientRect();
         ensure(Math.abs((label.left+label.right-face.left-face.right)/2)<1,'centered global knob label');
       }
+      for (const row of globals.querySelectorAll('.setting-row')) {
+        const copy=row.querySelector('.setting-copy').getBoundingClientRect(), controls=row.querySelector('.setting-controls').getBoundingClientRect();
+        ensure(copy.right<=controls.left,'descriptions stay left of controls');
+        ensure(controls.right<=globals.getBoundingClientRect().right+1,'controls fit settings width');
+      }
+      const weights=globals.querySelector('.block-weights');
+      ensure(getComputedStyle(weights).columnGap==='4px','compact catalogue spacing');
       ensure(!globals.querySelector('fieldset')&&!globals.textContent.includes('PROJECT SETTINGS'),'plain global layout');
       ensure(!globals.querySelector('[aria-label="Melody pattern flip"]'),'global flip removed');
       ensure(!globals.querySelector('[aria-label="Melody Low MIDI"]'),'range removed from globals');
