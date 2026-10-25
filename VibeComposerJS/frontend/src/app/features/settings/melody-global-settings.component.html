@@ -1,13 +1,10 @@
 <section aria-label="Global Melody musical settings">
-  <p class="eyebrow">PROJECT SETTINGS · ALL MELODY TRACKS AND SECTIONS</p>
   <div class="global-controls">
     @if (showAlgorithm(true)) {
-      <fieldset class="parameter-area" data-control-category="pitch">
-        <legend>Contextual Melody</legend>
-        @for (field of contextualNumbers; track field.key) {
+      @for (field of contextualNumbers; track field.key) {
           <vc-compact-knob [label]="field.label" [value]="numeric(field.key)" [defaultValue]="field.fallback"
-            [minimum]="field.key === 'rangeMax' ? numeric('rangeMin') : field.min"
-            [maximum]="field.key === 'rangeMin' ? numeric('rangeMax') : field.max"
+            [minimum]="field.min"
+            [maximum]="field.max"
             (valueCommit)="changeContextual(field.key, $event)" />
         }
         <vc-compact-toggle label="Chromatic approaches" [active]="values().chromaticApproaches ?? false"
@@ -16,66 +13,37 @@
         <vc-compact-toggle label="Randomize range on Compose" [active]="values().rangeRandomizeOnCompose ?? false"
           description="Choose a seeded melodic register on Compose. Regenerate retains the range."
           (toggled)="changeContextual('rangeRandomizeOnCompose', !(values().rangeRandomizeOnCompose ?? false))" />
-      </fieldset>
-    }
-    @if (showAlgorithm(false)) {
-    <fieldset class="parameter-area" data-control-category="structure">
-      <legend>Target preparation</legend>
-      @if (showAlgorithm(false)) {
-        <label class="pattern-effect" title="Reinterpret existing note targets immediately. Automatic targets prepares new choices on Compose and enabled Regenerate.">
+    } @else {
+      <label class="pattern-effect" title="Reinterpret existing note targets immediately. Automatic targets prepares new choices on Compose and enabled Regenerate.">
         Target mode
         <vc-select [options]="[{ value: '0', label: 'Chord note index' }, { value: '1', label: 'Chord root + offset' }, { value: '2', label: 'MIDI 60 + offset' }]" selectDefault="2" aria-label="Block target mode" [value]="values().blockTargetMode ?? 2" (valueChange)="changeTargetMode($event)"></vc-select>
       </label>
-      }
-      @if (showAlgorithm(false)) { <p class="preparation-note">Mode reinterprets existing targets immediately. Other inputs prepare targets on Compose and enabled Regenerate; choices remain editable.</p> }
-      @if (showAlgorithm(false)) {
-        <vc-compact-knob label="Target variation" [defaultValue]="3" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
+      <p class="preparation-note">Mode reinterprets existing targets immediately. Other inputs prepare targets on Compose and enabled Regenerate; choices remain editable.</p>
+      <vc-compact-knob label="Target variation" [defaultValue]="3" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
         description="Magnitude of prepared target directions before chord-note correction. Ascending and Descending double the draw range. Requires Automatic targets."
         (valueCommit)="settingsChanged.emit({ targetNoteVariation: $event })" />
-      }
-      @if (showAlgorithm(false)) {
-        <vc-compact-toggle label="Directions from progression" [active]="values().useDirectionsFromProgression ?? false"
+      <vc-compact-toggle label="Directions from progression" [active]="values().useDirectionsFromProgression ?? false"
         description="Prepare target directions from successive unsquished chord roots, including Chordlets, starting with zero, instead of a seeded direction pattern. Requires Automatic targets."
         (toggled)="settingsChanged.emit({ useDirectionsFromProgression: !(values().useDirectionsFromProgression ?? false) })" />
-      }
-      @if (showAlgorithm(false)) {
-        <vc-compact-toggle label="Force first outline" [active]="values().forceFirstOutline ?? false"
+      <vc-compact-toggle label="Force first outline" [active]="values().forceFirstOutline ?? false"
         description="During preparation, copy the first stored Melody track's targets, structure, speed, block limits and split chance to unlocked Melody tracks. Section overrides remain explicit."
         (toggled)="settingsChanged.emit({ forceFirstOutline: !(values().forceFirstOutline ?? false) })" />
-      }
-    </fieldset>
-    }
-    @if (showAlgorithm(false)) {
-    <fieldset class="parameter-area" data-control-category="pitch">
-      <legend>Pitch</legend>
-      @if (showAlgorithm(false)) {
-        <vc-compact-knob label="AVOID" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
+      <vc-compact-knob label="AVOID" [defaultValue]="0" [value]="values().replaceAvoidNotes ?? 0" [minimum]="0" [maximum]="2"
         description="0: Off. 1: Correct notes a semitone above chord tones. 2: Also correct notes a semitone below or two semitones above. Tonic, fifth and chord tones stay safe. Move one seeded scale step after interval repair, before pauses."
         (valueCommit)="settingsChanged.emit({ replaceAvoidNotes: $event })" />
-      }
-    </fieldset>
-    }
-    @if (showAlgorithm(false)) {
-    <fieldset class="parameter-area" data-control-category="shape">
-      <legend>Shape</legend>
-      @if (showAlgorithm(false)) {
-        <label class="pattern-effect" title="Choose what repeated block identities preserve. Flex can regenerate their final block to approach the next target.">
+      <label class="pattern-effect" title="Choose what repeated block identities preserve. Flex can regenerate their final block to approach the next target.">
         Pattern effect
         <vc-select [options]="[{ value: '0', label: 'Rhythm' }, { value: '1', label: 'Notes' }, { value: '2', label: 'Rhythm + Notes' }]" [selectDefault]="2" aria-label="Pattern effect" [value]="values().patternEffect ?? 2" (valueChange)="changePatternEffect($event)"></vc-select>
       </label>
-      }
-    </fieldset>
     }
-    <fieldset class="parameter-area catalogue-area" data-control-category="shape">
-      <legend>Block catalogue</legend>
-      <div class="block-weights" aria-label="Block family preferences">
+    <div class="block-weights" aria-label="Block family preferences">
         @for (family of blockFamilies; track family; let index = $index) {
           <vc-compact-knob [label]="family + ' weight'" [defaultValue]="100" [shortLabel]="family" [value]="(values().blockTypeWeights ?? defaultWeights)[index]" [minimum]="0" [maximum]="100" unit="%"
             description="Relative catalogue preference within allowed block changes, lengths and direction limits. Fallback and family replacement may use another family."
             (valueCommit)="changeBlockWeight(index, $event)" />
         }
       </div>
-      @if (showAlgorithm(false)) {
+    @if (showAlgorithm(false)) {
       <label class="block-preference" title="Order absolute block changes 0–7 from most preferred to least preferred. A ranked draw favors earlier entries; empty chooses uniformly.">
         Change preference
         <input aria-label="Block change preference" placeholder="Uniform (empty)" [value]="(values().blockChangePreference ?? []).join(', ')"
@@ -86,13 +54,6 @@
         <button type="button" aria-label="Uniform block changes" (click)="useBlockPreference(false)">Uniform</button>
       </div>
       @if (blockPreferenceError()) { <p class="preference-error" role="alert">{{ blockPreferenceError() }}</p> }
-      }
-    </fieldset>
-    <fieldset class="parameter-area" data-control-category="rhythm">
-      <legend>Rhythm</legend>
-      <vc-compact-toggle label="Melody pattern flip" [active]="values().patternFlip ?? false"
-        description="Invert the first Melody's onset grid used by Melody-following parts. Melody notes remain unchanged; individual parts can also flip their own rhythms."
-        (toggled)="settingsChanged.emit({ patternFlip: !(values().patternFlip ?? false) })" />
-    </fieldset>
+    }
   </div>
 </section>

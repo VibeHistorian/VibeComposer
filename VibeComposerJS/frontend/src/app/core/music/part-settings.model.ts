@@ -44,6 +44,9 @@ export interface CommonPartSettings {
 
 /** Melody track inputs, inherited by section role/track overrides. */
 export interface MelodySettings extends CommonPartSettings {
+  readonly rangeMin?: number;
+  readonly rangeMax?: number;
+  readonly tension?: number;
   readonly ending?: 'OPEN' | 'CLOSED' | 'LOOP';
   readonly style?: 'TONAL' | 'MODAL' | 'JAZZ';
   readonly form?: 'STATEMENT_VARIATION' | 'QUESTION_ANSWER' | 'SENTENCE' | 'CONTINUOUS';
@@ -77,10 +80,7 @@ export interface MelodySettings extends CommonPartSettings {
 /** Project musical settings shared by every Melody track and section. */
 export interface MelodyGlobalSettings {
   readonly contextualMelody?: boolean;
-  readonly rangeMin?: number;
-  readonly rangeMax?: number;
   readonly rangeRandomizeOnCompose?: boolean;
-  readonly tension?: number;
   readonly ending?: 'OPEN' | 'CLOSED' | 'LOOP';
   readonly form?: 'STATEMENT_VARIATION' | 'QUESTION_ANSWER' | 'SENTENCE' | 'CONTINUOUS';
   readonly style?: 'TONAL' | 'MODAL' | 'JAZZ';
@@ -91,8 +91,6 @@ export interface MelodyGlobalSettings {
   readonly blockTargetMode?: number;
   /** 0 off, 1 semitone above chord tones, 2 also below and two semitones above. */
   readonly replaceAvoidNotes?: number;
-  /** Invert the first Melody's published onset grid for dependent parts; Melody notes stay unchanged. */
-  readonly patternFlip?: boolean;
   /** 0 repeats rhythm, 1 repeats notes, 2 repeats rhythm and notes. */
   readonly patternEffect?: 0 | 1 | 2;
   readonly targetNoteVariation?: number;

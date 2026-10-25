@@ -42,7 +42,7 @@ export function generateHarmony(seed: bigint | number, length: number, key: stri
   const degreeOf = (chord: ProgressionChord | null | undefined) => chord ? vocabulary.findIndex(c => c.root === chord.root) : -1;
   const first = degreeOf(locks?.[0]), last = degreeOf(locks?.[length - 1]);
   let plans = CLOSED.filter(plan => plan[2] !== 6 || notes[6] === 11);
-  if (last === 4 || last === 5 || melody.contextualMelody && (melody.ending ?? 'LOOP') !== 'CLOSED') plans = [...plans, ...OPEN];
+  if (last === 4 || last === 5 || (melody.contextualMelody ?? true) && (melody.ending ?? 'LOOP') !== 'CLOSED') plans = [...plans, ...OPEN];
   if (plans.some(plan => plan[3] === last)) plans = plans.filter(plan => plan[3] === last);
   if (plans.some(plan => plan[0] === first)) plans = plans.filter(plan => plan[0] === first);
   const functional = plans[new JavaRandom(mixContextualSeed(baseSeed ^ 0x66756e6374696f6en)).nextInt(plans.length)];

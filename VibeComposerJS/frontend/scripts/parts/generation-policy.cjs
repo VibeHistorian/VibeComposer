@@ -7,7 +7,7 @@ const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
 test('Global Harmony On Compose defaults on, uses the composition seed, and commits atomically', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   service.updateSettings({ seed: '9223372036854775806' });
   service.setProgression([2, 2, 2, 2, 2, 2]);
   const before = service.exportProjectJson();
@@ -24,7 +24,7 @@ test('Global Harmony On Compose defaults on, uses the composition seed, and comm
 });
 
 test('Global Harmony Compose toggle persists and preserves custom harmony while off and during Regenerate', () => {
-  const { service, load, stored } = fixture();
+  const { service, load, stored } = fixture({ contextualMelody: false });
   const { TransportDockComponent } = load('features/transport/transport-dock.component.ts');
   const transport = new TransportDockComponent();
   transport.toggleComposeRandomization('randomizeHarmonyOnCompose');
@@ -47,9 +47,9 @@ test('Global Harmony Compose toggle persists and preserves custom harmony while 
 });
 
 test('failed contextual Compose keeps the rendered project, storage, history and playback and reports its cause', () => {
-  const { service, workspace, load, stored } = fixture();
+  const { service, workspace, load, stored } = fixture({ contextualMelody: false });
   service.updateSettings({ seed: '42' });
-  service.updateMelodyGlobal({ contextualMelody: true, rangeMin: 48, rangeMax: 72, rangeRandomizeOnCompose: true });
+  service.updateMelodyGlobal({ contextualMelody: true, rangeRandomizeOnCompose: true });
   service.updateSettings({ name: 'Redo still available' });
   service.undo();
   const previous = service.project(), notes = workspace.scoreNotes();
@@ -83,7 +83,7 @@ test('failed contextual Compose keeps the rendered project, storage, history and
 });
 
 test('section layout failures reject Compose and Regenerate before publishing a candidate', () => {
-  const { service, phrase } = fixture();
+  const { service, phrase } = fixture({ contextualMelody: false });
   service.updateTrackGenerationPolicy('melody', { onRegenerate: true, rerollSeeds: true });
   const previous = service.project();
   const layout = phrase.layOutTrackPhrase;
@@ -100,7 +100,7 @@ test('section layout failures reject Compose and Regenerate before publishing a 
 });
 
 test('track layouts share generation across consumers without sharing mutable note objects', () => {
-  const { service, phrase, load } = fixture();
+  const { service, phrase, load } = fixture({ contextualMelody: false });
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, 'track-melody-1', true));
   const generator = load('core/music/melody-generator.ts');
   const generate = generator.generateMelody;
@@ -158,7 +158,7 @@ test('mix edits reuse score phrases and note counts with real Angular signal equ
 });
 
 test('contextual range randomizes only on Compose and preserves disabled targets', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const { contextualRange } = load('core/music/contextual-randomizer.ts');
   service.updateSettings({ seed: '9223372036854775807' });
   service.updateMelodyGlobal({ contextualMelody: true, rangeRandomizeOnCompose: true });
@@ -166,16 +166,16 @@ test('contextual range randomizes only on Compose and preserves disabled targets
   const targets = service.project().tracks.find(t => t.role === 'melody').generatorSettings.chordNoteChoices;
   service.generateComposition('compose');
   const range = contextualRange(9223372036854775807n);
-  assert.equal(service.project().melodyGlobal.rangeMin,range.rangeMin);
-  assert.equal(service.project().melodyGlobal.rangeMax,range.rangeMax);
+  assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMin,range.rangeMin);
+  assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMax,range.rangeMax);
   assert.deepEqual(service.project().tracks.find(t => t.role === 'melody').generatorSettings.chordNoteChoices,targets);
   service.generateComposition('regenerate');
-  assert.equal(service.project().melodyGlobal.rangeMin,range.rangeMin);
-  assert.equal(service.project().melodyGlobal.rangeMax,range.rangeMax);
+  assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMin,range.rangeMin);
+  assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMax,range.rangeMax);
 });
 
 test('zero seed keeps automatic input, saves the generated seed and loads it as explicit input', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   service.updateSettings({ seed: '0' });
   assert.equal(service.seedInput(), '0');
   assert.equal(service.generateComposition('compose'), 'changed');
@@ -198,7 +198,7 @@ test('zero seed keeps automatic input, saves the generated seed and loads it as 
 });
 
 test('Compose stars default on, preserve disabled global values and round-trip independently', () => {
-  const { service, load, workspace } = fixture();
+  const { service, load, workspace } = fixture({ contextualMelody: false });
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) assert.equal(workspace.policyFor(role).onCompose, true);
   service.updateSettings({ seed: '123', tempoBpm: 200, transposeSemitones: 24 });
   const before = service.exportProjectJson();
@@ -233,7 +233,7 @@ test('Compose stars default on, preserve disabled global values and round-trip i
 });
 
 test('instrument dropdown pool filtering follows policy and preserves the current instrument without editing music', () => {
-  const { service, load, workspace } = fixture();
+  const { service, load, workspace } = fixture({ contextualMelody: false });
   const { INSTRUMENT_POOLS } = load('core/music/instrument-generation.ts');
   const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
   const preferences = workspace.preferences;
@@ -268,7 +268,7 @@ test('instrument dropdown pool filtering follows policy and preserves the curren
 });
 
 test('P6 drum policies choose Ghosts, melody dependencies and overrandomized phrase-time pauses safely', () => {
-  const { service, load } = fixture(), core = load('core/music/track-generation.ts');
+  const { service, load } = fixture({ contextualMelody: false }), core = load('core/music/track-generation.ts');
   const source = service.project().tracks.find(track=>track.role==='drums');
   const track = pitch => ({...source,generatorSettings:{...source.generatorSettings,pitch}});
   const reroll = (seed,pitch,patch,totalTracks=1) => core.rerollRoleSettings(seed,'drums',
@@ -304,7 +304,7 @@ test('P6 drum policies choose Ghosts, melody dependencies and overrandomized phr
 });
 
 test('P6 drum rule-only edits, rerolls, Compose and additions preserve ownership, atomic history and MIDI replay', () => {
-  const {service,load,phrase,midi}=fixture();
+  const {service,load,phrase,midi}=fixture({ contextualMelody: false });
   const id='track-drums-1', sectionId=service.project().arrangement[0].id;
   service.updateSettings({seed:'9007199254740993'});
   service.updateTrackGeneratorSettings(id,{pitch:42}); service.setTrackInstrumentLock(id,true);
@@ -338,7 +338,7 @@ test('P6 drum rule-only edits, rerolls, Compose and additions preserve ownership
 });
 
 test('P6 Arpeggio later weighting handles 64 tracks, retains shared counts and produces baked grids and melody rhythms', () => {
-  const {service,load}=fixture(), core=load('core/music/track-generation.ts');
+  const {service,load}=fixture({ contextualMelody: false }), core=load('core/music/track-generation.ts');
   const source=service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings; let custom=0,melody=0;
   for(let seed=0n;seed<64n;seed++) {
     const settings=core.rerollArpeggioSettings(seed,core.DEFAULT_ARPEGGIO_POLICY,Array(64).fill(source));
@@ -368,7 +368,7 @@ test('P6 Arpeggio later weighting handles 64 tracks, retains shared counts and p
 });
 
 test('chord policies bias strums, bound transitions/pauses, enforce Expand and retain reroll ownership', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts'), { JavaRandom } = load('core/music/java-random.ts');
   const legacy = { ...core.DEFAULT_TRACK_POLICIES.chords };
   for (const key of Object.keys(core.DEFAULT_CHORD_POLICY_EXTENSION)) delete legacy[key];
@@ -424,7 +424,7 @@ test('chord policies bias strums, bound transitions/pauses, enforce Expand and r
 });
 
 test('automatic events are atomic, replayable and preserve locks, local settings and manual notes', () => {
-  const { service, load, stored, midi } = fixture();
+  const { service, load, stored, midi } = fixture({ contextualMelody: false });
   service.updateSettings({ randomizeTransposeOnCompose: false });
   service.updateSettings({ seed: '9007199254740993' });
   service.addTrack('melody');
@@ -454,7 +454,7 @@ test('automatic events are atomic, replayable and preserve locks, local settings
 });
 
 test('Regenerate changes only enabled Melody seeds, patterns and targets, respecting shared seeds', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   service.addTrack('melody'); service.addTrack('melody');
   service.setTrackRerollLock('track-melody-3', true);
   service.updateTrackGenerationPolicy('melody', { onRegenerate: true, sameSeed: true });
@@ -478,7 +478,7 @@ test('Regenerate changes only enabled Melody seeds, patterns and targets, respec
 });
 
 test('automatic batch failures and no-ops preserve state, counters and redo', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   service.updateTrackGenerationPolicy('arpeggio', { onCompose: true, velocityMin: 65 });
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: 'track-arpeggio-1' };
   service.updateTrackGeneratorSettings('track-arpeggio-1', { velocityMin: 50 });
@@ -493,7 +493,7 @@ test('automatic batch failures and no-ops preserve state, counters and redo', ()
 });
 
 test('P5e target mode edits reinterpret scoped notes and prepare Chordlet targets only on permitted events', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const id = 'track-melody-1', duplicate = service.duplicateTrack(id);
   const sectionId = service.project().arrangement[0].id;
   const track = target => service.project().tracks.find(item => item.id === target);
@@ -563,7 +563,7 @@ test('P5e target mode edits reinterpret scoped notes and prepare Chordlet target
 });
 
 test('P5e target preparation preserves current notes until events, locks, local ownership and MIDI replay', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   service.updateSettings({ randomizeHarmonyOnCompose: false });
   service.updateTrackGenerationPolicy('melody', { onCompose: false });
   const primary = 'track-melody-1', duplicate = service.duplicateTrack(primary);
@@ -582,7 +582,7 @@ test('P5e target preparation preserves current notes until events, locks, local 
   const before = service.exportProjectJson(), arrangement = service.project().arrangement;
   const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
   const targetSeed = ((track(primary).generatorSettings.patternSeed || Number(BigInt.asIntN(32, BigInt(service.project().seed)))) + 1) | 0;
-  const expected = chooseMelodyTargets(targetSeed, service.project().progression, inputs, 'C', 'major', undefined, track(primary).generatorSettings);
+  const expected = chooseMelodyTargets(targetSeed, service.project().progression, { contextualMelody: false, ...inputs }, 'C', 'major', undefined, track(primary).generatorSettings);
   const locked = track(duplicate);
   assert.equal(service.generateComposition('compose'), 'changed');
   assert.deepEqual(track(primary).generatorSettings.chordNoteChoices, expected);
@@ -615,7 +615,7 @@ test('P5e target preparation preserves current notes until events, locks, local 
 });
 
 test('P5e forced outline follows the first stored Melody and only copies the production outline fields', () => {
-  const { service, phrase } = fixture();
+  const { service, phrase } = fixture({ contextualMelody: false });
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) service.updateTrackGenerationPolicy(role, { onCompose: false });
   service.updateSettings({ randomizeTransposeOnCompose: false, randomizeTempoOnCompose: false });
   const primary = 'track-melody-1', second = service.duplicateTrack(primary), third = service.duplicateTrack(second);
@@ -658,7 +658,7 @@ test('P5e forced outline follows the first stored Melody and only copies the pro
 });
 
 test('drum group rerolls reserve a core kit, respect remaining drums, and retain patches/manual notes through MIDI and replay', () => {
-  const { service, midi, load } = fixture();
+  const { service, midi, load } = fixture({ contextualMelody: false });
   service.setRoleTrackCount('drums', 6);
   const tracks = () => service.project().tracks.filter(track => track.role === 'drums');
   service.updateTrackGeneratorSettings(tracks()[0].id, { pitch: 35 });
@@ -697,7 +697,7 @@ test('drum group rerolls reserve a core kit, respect remaining drums, and retain
 });
 
 test('drum additions fill missing core voices without modifying existing tracks and reuse existing swing', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts');
   service.setRoleTrackCount('drums', 0);
   service.generateRoleTracks('drums', 1);
@@ -713,7 +713,7 @@ test('drum additions fill missing core voices without modifying existing tracks 
 });
 
 test('drum blueprint baking keeps one hit, stores growth as CUSTOM and applies family timing/dynamics', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts'), { bakeDrumPattern } = load('core/music/drum-reroll.ts');
   const { JavaRandom } = load('core/music/java-random.ts');
   const { partRhythmMask } = load('core/music/rhythm-pattern.ts');
@@ -743,7 +743,7 @@ test('drum blueprint baking keeps one hit, stores growth as CUSTOM and applies f
 
 test('main rerolls randomize instruments by default for every role and preserve explicit opt-outs', () => {
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
-    const { service, workspace, load } = fixture();
+    const { service, workspace, load } = fixture({ contextualMelody: false });
     const id = `track-${role}-1`;
     const track = () => service.project().tracks.find(item => item.id === id);
     assert.equal(workspace.instrumentPolicyFor(role).randomize, true);
@@ -768,7 +768,7 @@ test('main rerolls randomize instruments by default for every role and preserve 
 });
 
 test('Arp direction covers every selection and Bass randomized variance stays within 0–50 without limiting manual edits', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts');
   const arp = service.project().tracks.find(track => track.role === 'arpeggio');
   const bass = service.project().tracks.find(track => track.role === 'bass');
@@ -802,7 +802,7 @@ test('Arp direction covers every selection and Bass randomized variance stays wi
 });
 
 test('instrument permission is independent of parameter streams and shared instruments exclude locks', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/instrument-generation.ts');
   const first = 'track-arpeggio-1', second = service.addTrack('arpeggio'), locked = service.addTrack('arpeggio');
   service.setTrackInstrumentLock(locked, true);
@@ -838,7 +838,7 @@ test('instrument permission is independent of parameter streams and shared instr
 });
 
 test('combined instrument and parameter rerolls reject effective conflicts without consuming history or counters', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   service.updateInstrumentPolicy('chords', { randomize: true });
   service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { velocityMax: 127 });
   service.updatePartSettings({ kind: 'section-role', role: 'chords', sectionId: service.project().arrangement[0].id }, { velocityMin: 120 });
@@ -849,7 +849,7 @@ test('combined instrument and parameter rerolls reject effective conflicts witho
 });
 
 test('chord pool identity drives creation branches and manual instrument edits release it', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const instruments = load('core/music/instrument-generation.ts'), policies = load('core/music/track-generation.ts');
   const source = service.project().tracks.find(track => track.role === 'chords');
   const long = instruments.rerollInstruments(23n, 'chords', { ...instruments.DEFAULT_INSTRUMENT_POLICIES.chords, pool: 'LONG_PAD' }, [source], true)[0];
@@ -874,7 +874,7 @@ test('chord pool identity drives creation branches and manual instrument edits r
 });
 
 test('role rerolls match production melody patterns, drum blueprint data and audited seeded BassGUI branches', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts');
   const { STATIC_RHYTHM_DEFINITIONS } = load('core/music/rhythm-patterns.ts');
   const names = Object.fromEntries(Object.entries(STATIC_RHYTHM_DEFINITIONS).map(([key, value]) => [value.javaName, key]));
@@ -907,7 +907,7 @@ test('role rerolls match production melody patterns, drum blueprint data and aud
 });
 
 test('role-specific policies preserve opt-outs and share only eligible seeds and swing', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts');
   const tracks = role => service.project().tracks.filter(track => track.role === role);
   const source = { ...tracks('chords')[0], generatorSettings: { ...service.project().tracks.find(track => track.role === 'chords').generatorSettings,
@@ -933,7 +933,7 @@ test('role-specific policies preserve opt-outs and share only eligible seeds and
 });
 
 test('Arpeggio reroll policy edits leave part settings and notes untouched, with history and persistence', () => {
-  const { service, phrase, load } = fixture();
+  const { service, phrase, load } = fixture({ contextualMelody: false });
   const track = () => service.project().tracks.find(track => track.role === 'arpeggio');
   const before = phrase.layOutTrackPhrase(service.project(), track()), settings = track().generatorSettings;
   const policy = { randomHits: false, fixedHits: 16, maxSplit: 90, lengthMin: 150, lengthMax: 150 };
@@ -956,7 +956,7 @@ test('Arpeggio reroll policy edits leave part settings and notes untouched, with
 });
 
 test('Arpeggio group rerolls preserve ownership, locks, local overrides and manual replacements in one undo action', () => {
-  const { service, settings, phrase, midi, ui, workspace, load } = fixture();
+  const { service, settings, phrase, midi, ui, workspace, load } = fixture({ contextualMelody: false });
   service.updateInstrumentPolicy('arpeggio', { randomize: false });
   const id = 'track-arpeggio-1', secondId = service.addTrack('arpeggio'), lockedId = service.addTrack('arpeggio');
   const track = target => service.project().tracks.find(track => track.id === target);
@@ -1006,7 +1006,7 @@ test('Arpeggio group rerolls preserve ownership, locks, local overrides and manu
 });
 
 test('Arpeggio rerolls are deterministic across undo, exact long seeds and restored roll counts', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts');
   const source = service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings;
   for (const seed of [42n, -2147483648n, 9007199254740993n, 9223372036854775807n]) {
@@ -1026,7 +1026,7 @@ test('Arpeggio rerolls are deterministic across undo, exact long seeds and resto
 });
 
 test('Arpeggio policy preserves opted-out fields, shared counts and no-op history', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const core = load('core/music/track-generation.ts');
   const source = { ...service.project().tracks.find(track => track.role === 'arpeggio').generatorSettings, rhythm: 'custom', customPattern: Array(32).fill(1),
     useCustomVelocities: true, customVelocities: Array(32).fill(77), patternFlip: true, patternShift: 3,
@@ -1059,7 +1059,7 @@ test('Arpeggio policy preserves opted-out fields, shared counts and no-op histor
 });
 
 test('melody has explicit type zero and generated tracks, with stable existing role seeds and channels', () => {
-  const { service, ui, workspace, phrase, load } = fixture();
+  const { service, ui, workspace, phrase, load } = fixture({ contextualMelody: false });
   const { ARRANGED_PARTS, PART_TYPES } = load('core/music/part-role.ts');
   assert.deepEqual(ARRANGED_PARTS.map((role) => PART_TYPES[role]), [0, 1, 2, 3, 4]);
   assert.equal(workspace.arrangedTracks()[0].role, 'melody');
@@ -1088,7 +1088,7 @@ test('melody has explicit type zero and generated tracks, with stable existing r
 });
 
 test('empty roles can be recreated from their defaults, while the final project track is retained', () => {
-  const { service, workspace, load } = fixture();
+  const { service, workspace, load } = fixture({ contextualMelody: false });
   const { DEFAULT_TRACKS } = load('core/project/project-defaults.ts');
   const { ARRANGED_PARTS } = load('core/music/part-role.ts');
   for (const role of ARRANGED_PARTS) {
@@ -1116,7 +1116,7 @@ test('empty roles can be recreated from their defaults, while the final project 
 });
 
 test('Bass On Compose controls implicit rerolls, persists, and preserves locked tracks', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   service.updateTrackGenerationPolicy('bass', { onCompose: false });
   service.updateSettings({ seed: '123' });
   service.addTrack('bass');

@@ -1,8 +1,11 @@
 // Historical Java fixtures used GUIConfig for inputs that now belong to Melody tracks.
-const trackKeys = ['targetDirection', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey', 'maxDirectionChanges', 'newBlocksChance', 'fillPausesPerChord'];
+const trackKeys = ['rangeMin', 'rangeMax', 'tension', 'targetDirection', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey', 'maxDirectionChanges', 'newBlocksChance', 'fillPausesPerChord'];
 function splitMelodyInputs(values = {}) {
-  const global = {}, track = {};
-  for (const [key, value] of Object.entries(values)) (trackKeys.includes(key) ? track : global)[key] = value;
+  const global = { contextualMelody: false }, track = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (key === 'patternFlip') continue;
+    (trackKeys.includes(key) ? track : global)[key] = value;
+  }
   return { global, track };
 }
 function rescopeMelodyProject(project) {

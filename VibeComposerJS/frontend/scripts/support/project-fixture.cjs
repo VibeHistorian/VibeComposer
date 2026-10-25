@@ -6,7 +6,7 @@ const ts = require('typescript');
 // belong to each fixture, including modules monkey-patched by individual tests.
 const compiledModules = new Map();
 
-function fixture({ compactHistory = false, dialogData = null, reactivity } = {}) {
+function fixture({ compactHistory = false, dialogData = null, reactivity, contextualMelody } = {}) {
   const cache = new Map();
   const effects = [];
   // Tests that exercise effect-driven behavior flush callbacks after changing state.
@@ -78,6 +78,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity } = {})
   uiPreferences = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
   const { ProjectService } = load('core/project/project.service.ts');
   service = new ProjectService();
+  if (contextualMelody !== undefined) service.state.set({ ...service.project(), melodyGlobal: { contextualMelody } });
   // Most workflows assert one undo entry per edit; compact-history tests use the app default.
   if (!compactHistory) service.toggleCompactHistory();
   const { WorkspaceUiService } = load('core/ui/workspace-ui.service.ts');

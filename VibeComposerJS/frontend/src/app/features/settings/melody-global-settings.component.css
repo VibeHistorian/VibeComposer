@@ -1,9 +1,6 @@
 /* Global melody musical areas */
 :host { display: block; min-width: 0; margin-top: 12px; }
-.eyebrow { color: var(--text-secondary); font: 600 10px var(--font-ui); }
-.global-controls { display: flex; flex-wrap: wrap; gap: 8px; }
-.parameter-area { flex: 1 1 130px; min-width: 0; margin: 0; padding: 9px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-section); background: var(--parameter-surface); }
-legend { color: var(--accent-primary); font: 600 10px var(--font-ui); }
+.global-controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: start; }
 
 /* Pattern effect picker */
 .pattern-effect { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--text-secondary); font: 600 10px var(--font-ui); margin-bottom: 8px; }
@@ -13,8 +10,7 @@ vc-select:focus-visible { outline: 2px solid var(--accent-primary); outline-offs
 .preparation-note { margin: 0 0 8px; color: var(--text-secondary); font: 10px var(--font-ui); line-height: 1.4; }
 
 /* Block catalogue preferences */
-.catalogue-area { flex-basis: 100%; }
-.block-weights { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 4px; margin: 8px 0; }
+.block-weights { flex-basis: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 4px; margin: 8px 0; }
 .block-preference { display: grid; gap: 6px; color: var(--text-secondary); font: 600 10px var(--font-ui); }
 .block-preference input { width: 100%; }
 .preference-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }

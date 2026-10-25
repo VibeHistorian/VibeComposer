@@ -88,6 +88,9 @@ const durationControls: readonly PartControl[] = [
 /** Only expose settings with a working musical consumer in this buildout slice. */
 export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]>> = {
   melody: [...fill,
+    number('rangeMin', 'Melody Low MIDI', 0, 127, 48, ''),
+    number('rangeMax', 'Melody High MIDI', 0, 127, 72, ''),
+    number('tension', 'Melody Tension', 0, 100, 35),
     { ...choice('ending', 'Ending', ['OPEN', 'CLOSED', 'LOOP']), defaultValue: 'LOOP' },
     { ...choice('style', 'Style', ['TONAL', 'MODAL', 'JAZZ']), defaultValue: 'TONAL' },
     { ...choice('form', 'Form', ['STATEMENT_VARIATION', 'QUESTION_ANSWER', 'SENTENCE', 'CONTINUOUS']), defaultValue: 'STATEMENT_VARIATION' },
@@ -232,7 +235,8 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
 
 export function validVelocityRange(settings: PartSettingsPatch, role: ArrangedPart): boolean {
   const values = settingsValues(settings, role);
-  return (values['velocityMin'] as number) <= (values['velocityMax'] as number);
+  return (values['velocityMin'] as number) <= (values['velocityMax'] as number)
+    && (role !== 'melody' || (values['rangeMin'] as number) <= (values['rangeMax'] as number));
 }
 
 export function velocityBounds(settings: CommonPartSettings, defaults: readonly [number, number] = [69, 89]): readonly [number, number] {

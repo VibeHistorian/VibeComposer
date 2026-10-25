@@ -7,11 +7,12 @@ const { SCALE_MODES } = loadMusic('scales.ts');
 const { mapChordNotes } = loadMusic('section-context.ts');
 
 test('contextual melody consumes independent track ending, style and form', () => {
-  const phrasing = { ending: 'CLOSED', style: 'JAZZ', form: 'SENTENCE' };
-  const global = { contextualMelody: true, tension: 50 };
+  const phrasing = { tension: 50, ending: 'CLOSED', style: 'JAZZ', form: 'SENTENCE' };
+  const global = { contextualMelody: true };
   const args = [42n, 'C', 'major', [1, 5, 6, 1]];
   const track = generateMelody(...args, { algorithm: 'block', ...phrasing }, 0, undefined, global);
-  const equivalent = generateMelody(...args, { algorithm: 'block' }, 0, undefined, { ...global, ...phrasing });
+  const equivalent = generateMelody(...args, { algorithm: 'block', tension: 50 }, 0, undefined,
+    { ...global, ending: 'CLOSED', style: 'JAZZ', form: 'SENTENCE' });
   assert.deepEqual(track, equivalent);
   const overridden = generateMelody(...args, { algorithm: 'block', ...phrasing }, 0, undefined,
     { ...global, ending: 'OPEN', style: 'MODAL', form: 'CONTINUOUS' });
@@ -38,7 +39,7 @@ test('contextual results reuse musical inputs and isolate callers while invalida
     const equivalent = args.map((arg, index) => index === 0 ? arg : structuredClone(arg));
     assert.deepEqual(generateContextualMelody(...equivalent), expected);
     assert.equal(draws, 0, 'equal inputs in fresh project objects reuse the planned melody');
-    generateContextualMelody(...args.slice(0, 6), { ...args[6], rangeMax: 68 });
+    generateContextualMelody(...args.slice(0, 4), { ...args[4], rangeMax: 68 }, ...args.slice(5));
     assert.ok(draws > 0, 'changed musical inputs rerun search');
     // Eviction must bound retention without changing the result when an old input is reused.
     for (let offset = 1; offset <= 65; offset++) generateContextualMelody(...args.slice(0, 5), offset, args[6]);
@@ -96,10 +97,10 @@ test('contextual search preserves exact notes, patterns and skeletons across the
 });
 
 test('contextual defaults and seeded ranges use the lower octave', () => {
-  const { DEFAULT_MELODY_GLOBAL } = loadMusic('melody-global-settings.ts');
+  const { DEFAULT_MELODY_TRACK } = loadMusic('melody-global-settings.ts');
   const { contextualRange } = loadMusic('contextual-randomizer.ts');
-  assert.equal(DEFAULT_MELODY_GLOBAL.rangeMin, 48);
-  assert.equal(DEFAULT_MELODY_GLOBAL.rangeMax, 72);
+  assert.equal(DEFAULT_MELODY_TRACK.rangeMin, 48);
+  assert.equal(DEFAULT_MELODY_TRACK.rangeMax, 72);
   for (let seed = 0n; seed < 64n; seed++) {
     const range = contextualRange(seed);
     assert.ok(range.rangeMin >= 43 && range.rangeMax <= 76);
@@ -135,8 +136,8 @@ test('bounded contextual search retains reachable loop endings across modes and 
 
 test('contextual phrase timing maps variable harmonic durations exactly once', () => {
   const durations = [2,3,0.5,5], degrees = [1,4,5,1];
-  const notes = generateMelody(42n,'C','major',degrees,{ algorithm: 'block', speed: 30 },0,undefined,
-    { contextualMelody: true, tension: 0, ending: 'CLOSED', phraseBars: 1, beatsPerBar: 3 },undefined,
+  const notes = generateMelody(42n,'C','major',degrees,{ algorithm: 'block', speed: 30, tension: 0 },0,undefined,
+    { contextualMelody: true, ending: 'CLOSED', phraseBars: 1, beatsPerBar: 3 },undefined,
     { roots: [], voicings: [], durations });
   const mapped = mapChordNotes(notes,durations);
   assert.ok(mapped.length);

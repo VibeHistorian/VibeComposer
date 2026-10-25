@@ -59,6 +59,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         }
         project.arrangement[0].rolePartOverrides = { bass: { noteVariation: 35 } };
         project.arrangement[0].trackPartOverrides = { 'track-bass-2': { noteVariation: 45 } };
+        project.melodyGlobal = { ...project.melodyGlobal, contextualMelody: false };
         sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
         sessionStorage.setItem('contextual-fixture', 'ready'); location.reload(); return;
       }
@@ -389,8 +390,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await change(blockMode,'1'); await wait(() => read().melodyGlobal?.blockTargetMode === 1, 'project target mode');
       await reset(blockMode); await wait(() => read().melodyGlobal?.blockTargetMode === 2, 'project target mode reset');
       result.targetModes = JSON.stringify(read().tracks) === projectTracks;
-      globals.querySelector('[aria-label="Melody pattern flip"]').click();
-      await wait(() => read().melodyGlobal?.patternFlip === true, 'project melody grid flip');
+      if (globals.querySelector('[aria-label="Melody pattern flip"]')) throw new Error('Removed melody flip remains visible');
       await change(globals.querySelector('[aria-label="Target variation"]'), '6');
       await wait(() => read().melodyGlobal?.targetNoteVariation === 6, 'project variation');
       globals.querySelector('[aria-label="Directions from progression"]').click();

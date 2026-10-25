@@ -15,16 +15,13 @@ import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from '../../core/music/melo
 })
 export class MelodyGlobalSettingsComponent {
   readonly contextualNumbers = [
-    { key: 'rangeMin', label: 'Melody Low MIDI', min: 0, max: 127, fallback: 48 },
-    { key: 'rangeMax', label: 'Melody High MIDI', min: 0, max: 127, fallback: 72 },
-    { key: 'tension', label: 'Melody Tension', min: 0, max: 100, fallback: 35 },
     { key: 'phraseBars', label: 'Phrase Bars', min: 1, max: 16, fallback: 2 },
     { key: 'beatsPerBar', label: 'Beats per Bar', min: 1, max: 12, fallback: 4 },
   ] as const;
   showAlgorithm(contextual: boolean): boolean {
-    return !!this.values().contextualMelody === contextual;
+    return (this.values().contextualMelody ?? true) === contextual;
   }
-  numeric(key: 'rangeMin' | 'rangeMax' | 'tension' | 'phraseBars' | 'beatsPerBar'): number {
+  numeric(key: 'phraseBars' | 'beatsPerBar'): number {
     return this.values()[key] ?? DEFAULT_MELODY_GLOBAL[key];
   }
   changeContextual(key: keyof MelodyGlobalSettings, value: unknown): void {

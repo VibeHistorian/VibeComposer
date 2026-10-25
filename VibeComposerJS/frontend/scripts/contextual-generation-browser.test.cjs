@@ -29,21 +29,33 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       await wait(()=>read().progressionChords?.length===4,'functional generation');
       document.querySelector('.track-group.melody .group-select').click();
       ensure(!document.querySelector('#part-inspector vc-melody-global-settings'),'globals removed from inspector');
-      await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="TON%"]'),'track block controls');
+      ensure(!document.querySelector('vc-part-settings-editor [aria-label="TON%"]'),'contextual controls by default');
       let globals;
       dialog=await settings('Melody');
       let toggle=await wait(()=>dialog.querySelector('[aria-label="Contextual Melody"]'),'contextual toggle');
-      ensure(!toggle.checked,'contextual default off');toggle.click();
-      await wait(()=>read().melodyGlobal?.contextualMelody===true,'save contextual toggle');
-      globals=await wait(()=>document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]')?.closest('vc-melody-global-settings'),'contextual fields');
+      ensure(toggle.checked,'contextual default on');
+      globals=await wait(()=>document.querySelector('vc-melody-global-settings [aria-label="Phrase Bars"]')?.closest('vc-melody-global-settings'),'contextual fields');
       ensure(!globals.querySelector('[aria-label="TON%"]')&&!globals.querySelector('[aria-label="Block target mode"]'),'hide obsolete globals');
       ensure(!document.querySelector('vc-part-settings-editor [data-control-key="patternFlexible"]'),'hide Flex');
       ensure(!globals.querySelector('[aria-label="Melody Ending"]')&&!globals.querySelector('[aria-label="Melody Style"]')&&!globals.querySelector('[aria-label="Melody Form"]'),'phrasing removed from global melody');
-      for(const [label,value] of [['Melody Low MIDI','62'],['Melody High MIDI','81'],['Melody Tension','50'],['Phrase Bars','3'],['Beats per Bar','3']]) {
+      for(const [label,value] of [['Phrase Bars','3'],['Beats per Bar','3']]) {
         await change(globals.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
       }
-      await wait(()=>read().melodyGlobal?.rangeMin===62&&read().melodyGlobal?.beatsPerBar===3,'save contextual fields');
+      await wait(()=>read().melodyGlobal?.beatsPerBar===3,'save contextual fields');
+      for (const knob of globals.querySelectorAll('vc-compact-knob')) {
+        const label=knob.querySelector('vc-control-heading').getBoundingClientRect(), face=knob.querySelector('.knob-face').getBoundingClientRect();
+        ensure(Math.abs((label.left+label.right-face.left-face.right)/2)<1,'centered global knob label');
+      }
+      ensure(!globals.querySelector('fieldset')&&!globals.textContent.includes('PROJECT SETTINGS'),'plain global layout');
+      ensure(!globals.querySelector('[aria-label="Melody pattern flip"]'),'global flip removed');
+      ensure(!globals.querySelector('[aria-label="Melody Low MIDI"]'),'range removed from globals');
       dialog.querySelector('[aria-label="Close settings"]').click();
+      const inspectorButton=button('Open inspector'); if(inspectorButton) inspectorButton.click();
+      for(const [label,value] of [['Melody High MIDI','81'],['Melody Low MIDI','62'],['Melody Tension','50']]) {
+        const input=await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="'+label+'"]'),'track '+label);
+        await change(input,value); await new Promise(r=>requestAnimationFrame(r));
+      }
+      await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rangeMin===62&&t.generatorSettings.rangeMax===81&&t.generatorSettings.tension===50),'track fields saved');
       const phrasing=await wait(()=>document.querySelector('.part-settings-content [data-control-key="ending"]'),'track phrasing stack');
       const selects=[...phrasing.querySelectorAll('vc-select')];
       ensure(selects.length===3,'three phrasing choices share one control');
@@ -70,7 +82,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       await wait(()=>read().harmonySettings?.generation==='RANDOM','save Random');
       dialog.querySelector('[aria-label="Close settings"]').click();button('Generate chord progression').click();
       await wait(()=>read().progression.length===4,'Random generation');
-      ensure(read().melodyGlobal.rangeMin===62,'hidden settings retained');
+      ensure(read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rangeMin===62),'hidden track settings retained');
       await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
     } catch(error) {await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}
   })();</script>`;

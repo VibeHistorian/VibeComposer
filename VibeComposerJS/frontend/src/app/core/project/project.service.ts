@@ -91,7 +91,7 @@ export class ProjectService {
   }
 
   updateMelodyGlobal(patch: Partial<MelodyGlobalSettings>): PartWorkflowResult {
-    const decoded = decodeMelodyGlobal(patch, true);
+    const decoded = decodeMelodyGlobal(patch);
     if (!decoded) return 'invalid';
     const current = this.state(), melodyGlobal = { ...current.melodyGlobal, ...decoded };
     if (!decodeMelodyGlobal({ ...DEFAULT_MELODY_GLOBAL, ...melodyGlobal })) return 'invalid';
@@ -429,9 +429,10 @@ export class ProjectService {
           next.harmonySettings, next.melodyGlobal);
         next = { ...next, progression: generated.degrees, progressionChords: generated.chords };
       }
-      if (next.melodyGlobal?.contextualMelody && next.melodyGlobal.rangeRandomizeOnCompose
+      if ((next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.rangeRandomizeOnCompose
         && next.tracks.some(track => track.role === 'melody' && !track.rerollLocked && !track.editedPhrase)) {
-        next = { ...next, melodyGlobal: { ...next.melodyGlobal, ...contextualRange(BigInt(seed)) } };
+        next = { ...next, tracks: next.tracks.map((track, index) => track.role === 'melody' && !track.rerollLocked && !track.editedPhrase
+          ? { ...track, generatorSettings: { ...track.generatorSettings, ...contextualRange(BigInt(seed) + BigInt(index)) } } : track) };
       }
       for (const role of ARRANGED_PARTS) {
         if ((current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose === false) continue;
@@ -453,7 +454,7 @@ export class ProjectService {
       const count = current.trackRerollCounts?.melody ?? 0;
       const sources = next.tracks.filter(track => track.role === 'melody' && !track.rerollLocked);
       if (sources.length && ((policy.patternsOnCompose ?? true) || (policy.targetsOnCompose ?? true)
-        || event === 'regenerate' && policy.rerollSeeds || !next.melodyGlobal?.contextualMelody && next.melodyGlobal?.forceFirstOutline)) {
+        || event === 'regenerate' && policy.rerollSeeds || !(next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.forceFirstOutline)) {
         if (count >= 2147483647) return 'invalid';
         const seed = this.trackRerollSeed(next, 'melody', count);
         const random = new JavaRandom(seed);
@@ -470,7 +471,7 @@ export class ProjectService {
           if (partPatchesEqual(track.generatorSettings, settings)) return track;
           return { ...track, generatorSettings: settings };
         });
-        if (!next.melodyGlobal?.contextualMelody && next.melodyGlobal?.forceFirstOutline) {
+        if (!(next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.forceFirstOutline) {
           const first = tracks.find(track => track.role === 'melody');
           if (first?.role === 'melody') tracks = tracks.map(track => {
             if (track.role !== 'melody' || track === first || track.rerollLocked) return track;

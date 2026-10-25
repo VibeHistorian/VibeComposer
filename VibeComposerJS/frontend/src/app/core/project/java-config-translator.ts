@@ -49,7 +49,7 @@ const MELODY_INPUTS: Readonly<Record<string, keyof MelodyGlobalSettings | keyof 
   melodyChromaticApproaches: 'chromaticApproaches', melodyPhraseBars: 'phraseBars', melodyBeatsPerBar: 'beatsPerBar',
   melodyBlockTargetMode: 'blockTargetMode', melodyTonicNoteTarget: 'tonicNoteTarget', melodyModeNoteTarget: 'modeNoteTarget',
   melodyChordNoteTarget: 'chordNoteTarget', melodyReplaceAvoidNotes: 'replaceAvoidNotes', melodyEmphasizeKey: 'emphasizeKey',
-  melodyPatternFlip: 'patternFlip', melodyMaxDirChanges: 'maxDirectionChanges',
+  melodyMaxDirChanges: 'maxDirectionChanges',
   melodyFillPausesPerChord: 'fillPausesPerChord', melodyPatternEffect: 'patternEffect',
   melodyTargetNoteVariation: 'targetNoteVariation', noteTargetDirectionChoice: 'targetDirection',
   melodyUseDirectionsFromProgression: 'useDirectionsFromProgression', melody1ForcePatterns: 'forceFirstOutline',
@@ -154,7 +154,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
       : /^-?\d+$/.test(value as string) ? Number(value) : value;
   }
   const melodyTrackInputs: Record<string, unknown> = {};
-  for (const key of ['targetDirection', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey', 'maxDirectionChanges', 'newBlocksChance', 'fillPausesPerChord']) {
+  for (const key of ['rangeMin', 'rangeMax', 'tension', 'targetDirection', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey', 'maxDirectionChanges', 'newBlocksChance', 'fillPausesPerChord']) {
     if (Object.hasOwn(globals, key)) { melodyTrackInputs[key] = globals[key]; delete globals[key]; }
   }
   const melodyTrackSettings = decodePartPatch('melody', melodyTrackInputs);

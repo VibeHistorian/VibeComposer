@@ -196,7 +196,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   const progression = harmony.degrees;
   const source = project.tracks.find(track => track.role === 'melody');
   if (!source) return { ...melodyContext([], progression.length), available: false };
-  if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) return melodyContext(source.editedPhrase, progression.length, project.melodyGlobal?.patternFlip);
+  if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) return melodyContext(source.editedPhrase, progression.length);
   const effective = resolvePartTrack(source, section);
   if (effective.role !== 'melody') {
     return { ...melodyContext([], progression.length), available: false };
@@ -207,7 +207,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   generateMelody(BigInt(seeded.seed), contextual.key, contextual.scale, progression, effective.generatorSettings, harmony.melodySeedOffset ?? 0,
     notes => { result = melodyContext(notes.map(note => ({ ...note,
       midi: note.midi < 0 ? note.midi : Math.max(0, Math.min(127, note.midi + (section?.context?.keyChange ?? 0))) })),
-      progression.length, project.melodyGlobal?.patternFlip); }, project.melodyGlobal,
+      progression.length); }, project.melodyGlobal,
     harmony.customChords, harmony);
   return result;
 }

@@ -7,7 +7,7 @@ const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
 test('contextual phrasing resolves per melody track and section and persists with history', () => {
-  const { service, settings, load } = fixture();
+  const { service, settings, load } = fixture({ contextualMelody: false });
   const { resolveMelodyInputs } = load('core/music/melody-global-settings.ts');
   const first = 'track-melody-1', second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[0].id;
@@ -37,15 +37,15 @@ test('contextual phrasing resolves per melody track and section and persists wit
 });
 
 test('melody input scopes keep project controls separate from independent track and section settings', () => {
-  const { service, settings, load } = fixture();
+  const { service, settings, load } = fixture({ contextualMelody: false });
   const { decodeMelodyGlobal } = load('core/music/melody-global-settings.ts');
   const first = 'track-melody-1', second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[0].id;
-  const patch = { targetDirection: 'DESC', tonicNoteTarget: 70, modeNoteTarget: 60, chordNoteTarget: 80,
+  const patch = { rangeMin: 55, rangeMax: 79, tension: 65, targetDirection: 'DESC', tonicNoteTarget: 70, modeNoteTarget: 60, chordNoteTarget: 80,
     emphasizeKey: true, maxDirectionChanges: 6, newBlocksChance: 0, fillPausesPerChord: true };
   const globals = { blockTargetMode: 1, targetNoteVariation: 6, useDirectionsFromProgression: true,
     forceFirstOutline: true, replaceAvoidNotes: 2, patternEffect: 0, blockTypeWeights: [20,30,40,50,60,70,80],
-    blockChangePreference: [7,6,5,4,3,2,1,0], patternFlip: true };
+    blockChangePreference: [7,6,5,4,3,2,1,0] };
   assert.deepEqual(decodeMelodyGlobal(globals), globals);
   for (const [key, value] of Object.entries(patch)) {
     assert.equal(decodeMelodyGlobal({ [key]: value }), undefined, key + ' must belong to a track');
@@ -76,7 +76,7 @@ test('melody input scopes keep project controls separate from independent track 
 });
 
 test('melody tracks prepare targets with independent directions and preserve local settings', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const first = 'track-melody-1', second = service.duplicateTrack(first);
   service.updateSettings({ seed: '9007199254740993', randomizeTempoOnCompose: false, randomizeTransposeOnCompose: false, randomizeHarmonyOnCompose: false });
   for (const role of ['melody','bass','chords','arpeggio','drums']) service.updateTrackGenerationPolicy(role, { onCompose: false });
@@ -99,7 +99,7 @@ test('melody tracks prepare targets with independent directions and preserve loc
 });
 
 test('relocated melody inputs isolate track and section generation and agree with exported MIDI', () => {
-  const { service, phrase, midi } = fixture();
+  const { service, phrase, midi } = fixture({ contextualMelody: false });
   service.updateSettings({ seed: '42' });
   const first = 'track-melody-1', second = service.duplicateTrack(first);
   service.project().arrangement.forEach((_, index) => {
@@ -138,7 +138,7 @@ test('relocated melody inputs isolate track and section generation and agree wit
 });
 
 test('an active chord drag accepts a new target near its starting point and commits once', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const { ChordletEditorComponent } = load('features/harmony/chordlet-editor.component.ts');
   const editor = new ChordletEditorComponent();
   editor.focusChord = () => {};
@@ -173,7 +173,7 @@ test('an active chord drag accepts a new target near its starting point and comm
 });
 
 test('harmony headers compare effective chords and durations and reuse transposed chordlet labels', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   const { sectionHarmonyDisplay, trackHasSectionHarmony } = require('../music-loader.cjs').loadMusic('harmony-display.ts');
   const project = { ...service.project(), key: 'C', scale: 'major', transposeSemitones: 2, progression: [1, 4], progressionChords: undefined };
   const section = { ...project.arrangement[0], measures: 2 };
@@ -198,17 +198,17 @@ test('harmony headers compare effective chords and durations and reuse transpose
 });
 
 test('contextual Melody settings persist, undo, and filter controls by algorithm', () => {
-  const { service, load, uiPreferences } = fixture();
+  const { service, load, uiPreferences } = fixture({ contextualMelody: false });
   const { DEFAULT_MELODY_GLOBAL } = load('core/music/melody-global-settings.ts');
   const { DEFAULT_HARMONY_SETTINGS } = load('core/music/harmony-voicing.ts');
-  assert.equal(DEFAULT_MELODY_GLOBAL.contextualMelody, false);
+  assert.equal(DEFAULT_MELODY_GLOBAL.contextualMelody, true);
   assert.equal(DEFAULT_HARMONY_SETTINGS.generation, 'CURRENT');
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent();
   editor.role.set('melody'); editor.values.set({});
   assert.ok(editor.controls().some(c => c.key === 'patternFlexible'));
   const before = service.exportProjectJson();
-  assert.equal(service.updateMelodyGlobal({ contextualMelody: true, rangeMin: 62, rangeMax: 81, tension: 50,
+  assert.equal(service.updateMelodyGlobal({ contextualMelody: true,
     ending: 'CLOSED', style: 'JAZZ', form: 'QUESTION_ANSWER', phraseBars: 3, beatsPerBar: 3, chromaticApproaches: true }), 'changed');
   assert.ok(!editor.controls().some(c => c.key === 'patternFlexible'));
   assert.ok(editor.controls().some(c => c.key === 'speed'));
@@ -227,7 +227,7 @@ test('contextual Melody settings persist, undo, and filter controls by algorithm
 });
 
 test('P5f durations share chord boundaries across all roles, score ranges, tempo events and persisted history', () => {
-  const { service, load, phrase, midi, ui, workspace, stored } = fixture();
+  const { service, load, phrase, midi, ui, workspace, stored } = fixture({ contextualMelody: false });
   const timing = load('core/music/section-context.ts');
   const project = JSON.parse(service.exportProjectJson());
   project.tracks = project.tracks.map(track => track.role === 'arpeggio' || track.role === 'drums'
@@ -269,7 +269,7 @@ test('P5f durations share chord boundaries across all roles, score ranges, tempo
 });
 
 test('P5f section Chordlets, timing and key edits preserve scopes, manual ownership and exact transposition', () => {
-  const { service, load, phrase } = fixture();
+  const { service, load, phrase } = fixture({ contextualMelody: false });
   const project = JSON.parse(service.exportProjectJson());
   project.arrangement = project.arrangement.slice(0,2).map(section => ({ ...section, measures: 4,
     trackPresence: Object.fromEntries(project.tracks.map(track => [track.id,true])) }));
@@ -301,7 +301,7 @@ test('P5f section Chordlets, timing and key edits preserve scopes, manual owners
 });
 
 test('P5e section selections share harmony across roles, preserve sparse overrides and replay history/JSON/session/MIDI', () => {
-  const { service, load, phrase, midi, workspace } = fixture();
+  const { service, load, phrase, midi, workspace } = fixture({ contextualMelody: false });
   const { projectMelodyHarmony, sectionGenerationHarmony } = load('core/music/project-harmony.ts');
   service.updateSettings({ seed: '9007199254740993' }); service.setProgression([1,5,6,4]);
   const original = JSON.parse(service.exportProjectJson());
@@ -363,7 +363,7 @@ test('P5e section selections share harmony across roles, preserve sparse overrid
 });
 
 test('P5e inference keeps base source ownership and explicit section harmony ahead of alternate selections', () => {
-  const { service, load, phrase } = fixture();
+  const { service, load, phrase } = fixture({ contextualMelody: false });
   const { projectMelodyHarmony, sectionGenerationHarmony, baseGenerationHarmony } = load('core/music/project-harmony.ts');
   service.setProgression([1,5,6,4]); const sectionId = service.project().arrangement[0].id, id = 'track-melody-1';
   const track = () => service.project().tracks.find(track => track.id === id);
@@ -372,7 +372,7 @@ test('P5e inference keeps base source ownership and explicit section harmony ahe
   service.setSectionTrackPresence(0,id,false);
   assert.deepEqual(projectMelodyHarmony(service.project()).harmony,before, 'local patches and absent source do not re-infer base harmony');
   service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { tonicNoteTarget: 100, chordNoteTarget: 100 });
-  service.updateMelodyGlobal({ replaceAvoidNotes: 2, patternFlip: true });
+  service.updateMelodyGlobal({ replaceAvoidNotes: 2 });
   assert.deepEqual(projectMelodyHarmony(service.project()).harmony,before, 'later repairs/flip do not change skeleton inference');
   const manual = [{ id:'saved',midi:61,startBeat:0,durationBeats:3,velocity:95 }];
   service.updateTrackPhrase(id,manual);
@@ -402,7 +402,7 @@ test('P5e inference keeps base source ownership and explicit section harmony ahe
 });
 
 test('matching explicit section chords share primary harmony checks in both editors and generation', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const { sectionHasChordOverride } = load('core/music/section-context.ts');
   const { progressionChords } = load('core/music/harmony.ts');
   const { sectionGenerationHarmony } = load('core/music/project-harmony.ts');
@@ -440,7 +440,7 @@ test('matching explicit section chords share primary harmony checks in both edit
 });
 
 test('section chord comparison resolves custom primary chords, modes and duration-only repetition', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const { sectionHasChordOverride } = load('core/music/section-context.ts');
   const { progressionChords } = load('core/music/harmony.ts');
   const project = { ...service.project(), key: 'D', scale: 'dorian', progression: [1,4,5] };
@@ -459,70 +459,9 @@ test('section chord comparison resolves custom primary chords, modes and duratio
   assert.equal(sectionHasChordOverride(primary, { ...section, chordDegrees: undefined, customChords: primary.progressionChords }), false);
 });
 
-test('P5e Melody flip and key emphasis preserve ownership, update consumers and replay exported MIDI', () => {
-  const { service, phrase, midi, load } = fixture();
-  const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
-  const track = role => service.project().tracks.find(item => item.role === role);
-  service.setSectionTrackPresence(0, id, true);
-  for (const role of ['drums', 'arpeggio']) {
-    service.setSectionTrackPresence(0, track(role).id, true);
-    service.updatePartSettings({ kind: 'global-track', trackId: track(role).id }, { rhythm: 'melody', swingPercent: 50 });
-  }
-  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 50 });
-  const notes = phrase.layOutTrackPhrase(service.project(), track('melody'));
-  const context = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
-  const drums = phrase.layOutTrackPhrase(service.project(), track('drums')), arp = phrase.layOutTrackPhrase(service.project(), track('arpeggio'));
-  const before = service.exportProjectJson(), sections = service.project().arrangement;
-  assert.equal(service.updateMelodyGlobal({ patternFlip: true }), 'changed');
-  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track('melody')), notes);
-  assert.deepEqual(phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]).pitches,
-    context.pitches.map(grid => grid.map(pitch => pitch > 0 ? 0 : 1)));
-  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track('drums')), drums);
-  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track('arpeggio')), arp);
-  assert.deepEqual(service.project().arrangement, sections);
-  const flipped = service.exportProjectJson();
-  service.undo(); assert.equal(service.exportProjectJson(), before);
-  service.redo(); assert.equal(service.exportProjectJson(), flipped);
-  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { emphasizeKey: true });
-  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track('melody')), notes);
-  for (const role of ['melody', 'drums', 'arpeggio']) {
-    const expected = phrase.layOutTrackPhrase(service.project(), track(role));
-    const parsed = new Midi(midi.generateCompositionMidi(service.project()));
-    const exported = parsed.tracks.find(item => item.name === track(role).name).notes;
-    assert.equal(exported.length, expected.length);
-    exported.forEach((note, index) => {
-      assert.equal(note.midi, expected[index].midi);
-      assert.ok(Math.abs(note.ticks / parsed.header.ppq - expected[index].startBeat) < 0.003);
-    });
-  }
-  const saved = service.exportProjectJson(); service.updateSettings({ name: 'redo' }); service.undo();
-  for (const key of ['patternFlip', 'emphasizeKey']) {
-    assert.equal(service.updateMelodyGlobal({ [key]: 'true' }), 'invalid');
-    const imported = JSON.parse(saved); imported.melodyGlobal[key] = 1;
-    assertRejectedProjectImport(service, JSON.stringify(imported));
-    for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
-      { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
-      service.updatePartSettings(scope, { [key]: 'true' }); assert.equal(service.exportProjectJson(), saved);
-    }
-    assert.equal(service.canRedo(), true);
-  }
-  const { ProjectService } = load('core/project/project.service.ts');
-  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
-  assert.equal(service.importProjectJson(saved), true);
-  const manual = [{ id: 'flip-manual', midi: 62, startBeat: 1, durationBeats: 2, velocity: 90 }];
-  service.updateTrackPhrase(id, manual);
-  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { emphasizeKey: false });
-  assert.deepEqual(phrase.phraseForTrack(service.project(), track('melody')), manual);
-  assert.deepEqual(phrase.sectionMelodyContext(service.project()).pitches[0], Array.from({ length: 16 }, (_, slot) => slot === 4 ? 0 : 1));
-  service.updateTrackPhrase(id, []);
-  assert.deepEqual(phrase.sectionMelodyContext(service.project()).pitches.flat(), Array(service.project().progression.length * 16).fill(0));
-  service.clearTrackPhrase(id);
-  service.removeTrack(id);
-  assert.equal(phrase.sectionMelodyContext(service.project()).available, false);
-});
 
 test('P5e tonal targets preserve track ownership, history, restore and MIDI', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
   const track = () => service.project().tracks.find(item => item.id === id);
   service.setSectionTrackPresence(0, id, true);
@@ -579,7 +518,7 @@ test('P5e tonal targets preserve track ownership, history, restore and MIDI', ()
 });
 
 test('P5e chord targeting and avoid notes preserve scoped harmony, history, manual ownership and MIDI', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
   const track = () => service.project().tracks.find(item => item.id === id);
   service.setSectionTrackPresence(0, id, true);
@@ -649,7 +588,7 @@ test('P5e chord targeting and avoid notes preserve scoped harmony, history, manu
 });
 
 test('right-click knob resets use explicit defaults, cancel previews and respect disabled/no-op controls', () => {
-  const { load, service } = fixture(), { CompactKnobComponent } = load('shared/compact-knob.component.ts');
+  const { load, service } = fixture({ contextualMelody: false }), { CompactKnobComponent } = load('shared/compact-knob.component.ts');
   const knob = new CompactKnobComponent(); knob.minimum.set(0); knob.maximum.set(100); knob.defaultValue.set(25);
   knob.value.set(80); const commits = [], previews = [];
   knob.valueCommit.emit = value => { commits.push(value); service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { newBlocksChance: value }); knob.value.set(value); };
@@ -667,7 +606,7 @@ test('right-click knob resets use explicit defaults, cancel previews and respect
 });
 
 test('right-click combobox resets remember enabled defaults and emit one value change', () => {
-  const { load } = fixture(), { SelectComponent } = load('shared/select.component.ts');
+  const { load } = fixture({ contextualMelody: false }), { SelectComponent } = load('shared/select.component.ts');
   const component = new SelectComponent(), changes = [], select = { disabled: false };
   component.element = { nativeElement: select };
   component.options.set([{ value: '', label: 'Mixed', disabled: true }, 'ASC', 'DESC', 'ANY']);
@@ -687,7 +626,7 @@ test('right-click combobox resets remember enabled defaults and emit one value c
 });
 
 test('P5 dependencies use section melody settings, manual ownership and absent source presence through MIDI', () => {
-  const { service, phrase, midi } = fixture();
+  const { service, phrase, midi } = fixture({ contextualMelody: false });
   const project = JSON.parse(service.exportProjectJson());
   project.arrangement = project.arrangement.slice(0, 2).map(section => ({ ...section, measures: 4,
     trackPresence: { ...section.trackPresence, melody: [false], drums: [true], arpeggio: [true] } }));
@@ -734,7 +673,7 @@ test('P5 dependencies use section melody settings, manual ownership and absent s
 });
 
 test('P5c/P5d controls resolve mixed scopes, snapshots, independent arrays, resets and strict imports', () => {
-  const { service, settings, load, stored } = fixture();
+  const { service, settings, load, stored } = fixture({ contextualMelody: false });
   const first = service.project().arrangement[0], second = service.project().arrangement[1];
   for (const [role, patch] of [
     ['arpeggio', { pattern: 'custom', arpPatternRotate: 3, arpPatternCustom: [-1, 0, 4], arpContour: [0, 2, -1],
@@ -776,7 +715,7 @@ test('P5c/P5d controls resolve mixed scopes, snapshots, independent arrays, rese
 });
 
 test('P5d Multiply Hits transforms mixed drums atomically at global/local scopes and preserves ownership', () => {
-  const { service, phrase } = fixture();
+  const { service, phrase } = fixture({ contextualMelody: false });
   const first = service.project().arrangement[0];
   const id = service.duplicateTrack('track-drums-1');
   service.updatePartSettings({ kind: 'global-track', trackId: id }, { hitsPerPattern: 8, rhythm: 'custom', patternShift: 1,
@@ -811,7 +750,7 @@ test('P5d Multiply Hits transforms mixed drums atomically at global/local scopes
 });
 
 test('P5 editor supports empty contour and separates pitch direction from melody rhythm and hit actions', () => {
-  const { load } = fixture();
+  const { load } = fixture({ contextualMelody: false });
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent(); editor.role.set('arpeggio');
   editor.values.set({ pattern: 'custom', rhythm: 'melody', arpContour: [1] });
@@ -825,7 +764,7 @@ test('P5 editor supports empty contour and separates pitch direction from melody
 });
 
 test('chord articulation resolves scopes, mixed values, snapshots, manual ownership and MIDI', () => {
-  const { service, settings, phrase, midi, ui, workspace, load } = fixture();
+  const { service, settings, phrase, midi, ui, workspace, load } = fixture({ contextualMelody: false });
   const id = 'track-chords-1', track = () => service.project().tracks.find(track => track.id === id);
   const [first, second] = service.project().arrangement;
   const cell = { kind: 'section-role', sectionId: first.id, role: 'chords' };
@@ -868,7 +807,7 @@ test('chord articulation resolves scopes, mixed values, snapshots, manual owners
 });
 
 test('copy to globals preserves mixed cell members, track exceptions and local ownership with one history entry', () => {
-  const { service, settings, load } = fixture();
+  const { service, settings, load } = fixture({ contextualMelody: false });
   service.addTrack('bass');
   const sectionId = service.project().arrangement[0].id;
   const cell = { kind: 'section-role', sectionId, role: 'bass' };
@@ -900,7 +839,7 @@ test('copy to globals preserves mixed cell members, track exceptions and local o
 });
 
 test('copy to globals rejects cross-section velocity conflicts atomically and stale targets safely', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   const [source, destination] = service.project().arrangement;
   const scope = { kind: 'section-track', sectionId: source.id, trackId: 'track-bass-1' };
   service.updatePartSettings(scope, { velocityMin: 80, velocityMax: 100 });
@@ -914,7 +853,7 @@ test('copy to globals rejects cross-section velocity conflicts atomically and st
 });
 
 test('global copy ignores inherited defaults and a single-track copy leaves other mixed members intact', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   const sectionId = service.project().arrangement[0].id;
   for (const role of ['melody','bass','chords','arpeggio','drums']) {
     const cell = { kind: 'section-role', sectionId, role };
@@ -933,7 +872,7 @@ test('global copy ignores inherited defaults and a single-track copy leaves othe
 });
 
 test('bass join articulation resolves at all scopes, persists snapshots and exports sustained MIDI', () => {
-  const { service, settings, phrase, midi, ui, workspace, load } = fixture();
+  const { service, settings, phrase, midi, ui, workspace, load } = fixture({ contextualMelody: false });
   const id = 'track-bass-1', track = () => service.project().tracks.find(track => track.id === id);
   const [first, second] = service.project().arrangement;
   const global = { kind: 'global-track', trackId: id };
@@ -989,7 +928,7 @@ test('bass join articulation resolves at all scopes, persists snapshots and expo
 });
 
 test('all-role scoped timing, seeds and arrangement presence survive history, snapshots, JSON and manual replacements', () => {
-  const { service, settings, phrase, midi, ui, workspace } = fixture();
+  const { service, settings, phrase, midi, ui, workspace } = fixture({ contextualMelody: false });
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     const id = `track-${role}-1`, track = () => service.project().tracks.find(track => track.id === id);
     service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, id, true));
@@ -1042,7 +981,7 @@ test('all-role scoped timing, seeds and arrangement presence survive history, sn
 });
 
 test('drum rhythm and dynamics resolve all scopes, mixed values, frozen snapshots and parsed MIDI without changing identity', () => {
-  const { service, settings, ui, workspace, phrase, midi } = fixture();
+  const { service, settings, ui, workspace, phrase, midi } = fixture({ contextualMelody: false });
   const first = 'track-drums-1', second = service.duplicateTrack(first);
   service.updateTrackGeneratorSettings(second, { pitch: 38 });
   const sectionId = service.project().arrangement[1].id;
@@ -1088,7 +1027,7 @@ test('drum rhythm and dynamics resolve all scopes, mixed values, frozen snapshot
 });
 
 test('P5e catalogue inputs preserve independent arrays, atomic history, scopes and manual ownership', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
   service.setSectionTrackPresence(0, id, true);
   service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 100 });
@@ -1143,7 +1082,7 @@ test('P5e catalogue inputs preserve independent arrays, atomic history, scopes a
 });
 
 test('P5e catalogue preference editor rejects partial or duplicate lists without committing', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const { MelodyGlobalSettingsComponent } = load('features/settings/melody-global-settings.component.ts');
   const editor = new MelodyGlobalSettingsComponent(), commits = [];
   editor.settingsChanged.emit = patch => { commits.push(patch); service.updateMelodyGlobal(patch); editor.values.set(service.project().melodyGlobal ?? {}); };
@@ -1163,7 +1102,7 @@ test('P5e catalogue preference editor rejects partial or duplicate lists without
 });
 
 test('P5e pattern effects update section dependencies and MIDI', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures/melody-effects.java.json'), 'utf8').replace(/^\uFEFF/, ''));
   const sample = cases[8], project = JSON.parse(service.exportProjectJson());
   project.seed = sample.seed; project.progression = [1, 1, 1]; delete project.progressionChords;
@@ -1206,7 +1145,7 @@ test('P5e pattern effects update section dependencies and MIDI', () => {
 });
 
 test('P5e global Melody settings preserve scope ownership, replay, manual notes and exported output', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const id = 'track-melody-1', duplicate = service.duplicateTrack(id);
   const sectionId = service.project().arrangement[0].id;
   service.setSectionTrackPresence(0, id, true);
@@ -1270,7 +1209,7 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
 });
 
 test('melody scope resolution reaches parsed MIDI, isolates sections and survives history and restore', () => {
-  const { service, phrase, midi, load, settings } = fixture();
+  const { service, phrase, midi, load, settings } = fixture({ contextualMelody: false });
   const trackId = 'track-melody-1', second = service.duplicateTrack(trackId);
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
   const sectionId = service.project().arrangement[1].id;
@@ -1315,7 +1254,7 @@ test('melody scope resolution reaches parsed MIDI, isolates sections and survive
 });
 
 test('melody target/block arrays support mixed groups, snapshots, independent duplication and inherited reset', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const trackId = 'track-melody-1', second = service.duplicateTrack(trackId);
   const sectionId = service.project().arrangement[1].id;
   const cell = { kind: 'section-role', sectionId, role: 'melody' }, scope = { kind: 'section-track', sectionId, trackId: second };
@@ -1341,7 +1280,7 @@ test('melody target/block arrays support mixed groups, snapshots, independent du
 });
 
 test('P5e part controls resolve every scope, mixed values, copy/freeze and inherited resets', () => {
-  const { service, settings, ui, workspace } = fixture();
+  const { service, settings, ui, workspace } = fixture({ contextualMelody: false });
   const trackId = 'track-melody-1', second = service.duplicateTrack(trackId);
   const sectionId = service.project().arrangement[1].id, destinationId = service.project().arrangement[2].id;
   const role = { kind: 'global-role', role: 'melody' }, global = { kind: 'global-track', trackId };
@@ -1378,7 +1317,7 @@ test('P5e part controls resolve every scope, mixed values, copy/freeze and inher
 });
 
 test('melody integer-list editors commit once and reject invalid or stale drafts', () => {
-  const { service, settings, load } = fixture();
+  const { service, settings, load } = fixture({ contextualMelody: false });
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent();
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId: 'track-melody-1' };
@@ -1404,7 +1343,7 @@ test('melody integer-list editors commit once and reject invalid or stale drafts
 });
 
 test('melody transpose knobs use discrete 5/7 offsets for keyboard, wheel and drag', () => {
-  const { load, settings } = fixture();
+  const { load, settings } = fixture({ contextualMelody: false });
   const { CompactKnobComponent } = load('shared/compact-knob.component.ts');
   const knob = new CompactKnobComponent();
   knob.minimum.set(-36); knob.maximum.set(36); knob.value.set(0); knob.label.set('Transpose');
@@ -1425,7 +1364,7 @@ test('melody transpose knobs use discrete 5/7 offsets for keyboard, wheel and dr
 });
 
 test('custom melody durations copy nested lanes, persist every scope, group inheritance and reject malformed imports', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const sectionId = service.project().arrangement[0].id, trackId = 'track-melody-1';
   const rows = [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])];
   const scope = { kind: 'section-track', sectionId, trackId };
@@ -1455,19 +1394,19 @@ test('custom melody durations copy nested lanes, persist every scope, group inhe
 });
 
 test('duration popup dry runs all lanes against contextual range and harmony without changing project or history', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const { validateDurationDraft } = load('core/music/duration-validation.ts');
   const scope = { kind: 'global-track', trackId: 'track-melody-1' };
   const patch = { rhythm: 'durations', customDurations: [[1, -1, 1, -1], ...Array.from({ length: 9 }, () => [])] };
   const before = service.exportProjectJson(), history = service.historyPosition();
   assert.equal(validateDurationDraft(service.project(), scope, patch), null);
-  const project = { ...service.project(), melodyGlobal: { contextualMelody: true, rangeMin: 60, rangeMax: 60 } };
+  const project = { ...service.project(), melodyGlobal: { contextualMelody: true }, tracks: service.project().tracks.map(t => t.role === 'melody' ? { ...t, generatorSettings: { ...t.generatorSettings, rangeMin: 60, rangeMax: 60 } } : t) };
   assert.match(validateDurationDraft(project, scope, patch), /No contextual melody/);
   assert.equal(service.exportProjectJson(), before); assert.equal(service.historyPosition(), history);
 });
 
 test('group melody duration edits preserve independent pitch settings and section exceptions', () => {
-  const { service, load, uiPreferences: preferences } = fixture();
+  const { service, load, uiPreferences: preferences } = fixture({ contextualMelody: false });
   const first = 'track-melody-1', second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[0].id;
   service.updatePartSettings({ kind: 'global-track', trackId: second }, { transpose: 12, patternSeed: 123 });
@@ -1516,7 +1455,7 @@ test('melody duration drawing and validation stay in the draft, save once, and r
 });
 
 test('cell patches, individual exceptions, zero/false, and resets preserve inheritance', () => {
-  const { service, settings } = fixture();
+  const { service, settings } = fixture({ contextualMelody: false });
   const id = service.duplicateTrack('track-bass-1');
   const sectionId = service.project().arrangement[1].id;
   const cell = { kind: 'section-role', sectionId, role: 'bass' };
@@ -1536,7 +1475,7 @@ test('cell patches, individual exceptions, zero/false, and resets preserve inher
 });
 
 test('a patch affects only its section while MIDI export uses the same resolved notes', () => {
-  const { service, phrase, midi } = fixture();
+  const { service, phrase, midi } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
   const before = phrase.layOutTrackPhrase(service.project(), service.project().tracks.find((track) => track.id === trackId));
@@ -1564,7 +1503,7 @@ test('a patch affects only its section while MIDI export uses the same resolved 
 });
 
 test('mixed values are real aggregates and cell edits preserve track exceptions', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const id = service.duplicateTrack('track-chords-1');
   service.updatePartSettings({ kind: 'global-track', trackId: id }, { transpose: 12 });
   const sectionId = service.project().arrangement[1].id;
@@ -1581,7 +1520,7 @@ test('mixed values are real aggregates and cell edits preserve track exceptions'
 });
 
 test('patches persist through history, JSON, presence rerolls, duplication, and track deletion', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   const sectionId = service.project().arrangement[1].id;
   const scope = { kind: 'section-track', sectionId, trackId: 'track-arpeggio-1' };
   service.updatePartSettings(scope, { transpose: 12, rate: 'sixteenth' });
@@ -1603,7 +1542,7 @@ test('patches persist through history, JSON, presence rerolls, duplication, and 
 });
 
 test('invalid field resets preserve the valid patch and provide feedback', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   service.updatePartSettings({ kind: 'global-track', trackId }, { velocityMin: 100, velocityMax: 110 });
   const sectionId = service.project().arrangement[1].id;
@@ -1620,7 +1559,7 @@ test('invalid field resets preserve the valid patch and provide feedback', () =>
 });
 
 test('secondary track seeds are applied once and layout matches the editor phrase', () => {
-  const { service, phrase } = fixture();
+  const { service, phrase } = fixture({ contextualMelody: false });
   const id = service.duplicateTrack('track-bass-1');
   service.setSectionTrackPresence(0, id, true);
   const track = service.project().tracks.find((candidate) => candidate.id === id);
@@ -1630,7 +1569,7 @@ test('secondary track seeds are applied once and layout matches the editor phras
 });
 
 test('part transpose edits use octave steps at every scope and preserve readable saved values', () => {
-  const { service, settings } = fixture();
+  const { service, settings } = fixture({ contextualMelody: false });
   const sectionId = service.project().arrangement[1].id;
   for (const role of ['bass', 'chords', 'arpeggio']) {
     assert.equal(settings.PART_CONTROLS[role].find((control) => control.key === 'transpose').step, 12);
@@ -1662,7 +1601,7 @@ test('part transpose edits use octave steps at every scope and preserve readable
 });
 
 test('freezing mixed cells preserves each effective track, including omitted defaults, with one undo step', () => {
-  const { service, settings, phrase } = fixture();
+  const { service, settings, phrase } = fixture({ contextualMelody: false });
   const first = 'track-bass-1';
   const second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[1].id;
@@ -1702,7 +1641,7 @@ test('freezing mixed cells preserves each effective track, including omitted def
 });
 
 test('range override copying merges only its layer, preserves exceptions and presence, and is one undo step', () => {
-  const { service, settings } = fixture();
+  const { service, settings } = fixture({ contextualMelody: false });
   const first = 'track-bass-1';
   const second = service.duplicateTrack(first);
   const [source, destination, another] = service.project().arrangement;
@@ -1735,7 +1674,7 @@ test('range override copying merges only its layer, preserves exceptions and pre
 });
 
 test('track copying distinguishes explicit overrides from effective snapshots and shares parsed MIDI output', () => {
-  const { service, settings, phrase, midi, load } = fixture();
+  const { service, settings, phrase, midi, load } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   const sections = service.project().arrangement;
   const source = { kind: 'section-track', sectionId: sections[0].id, trackId };
@@ -1762,7 +1701,7 @@ test('track copying distinguishes explicit overrides from effective snapshots an
 });
 
 test('range conflicts and stale targets reject atomically without losing history or manual phrases', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   const trackId = 'track-bass-1';
   const sections = service.project().arrangement;
   const cell = { kind: 'section-role', sectionId: sections[0].id, role: 'bass' };
@@ -1786,7 +1725,7 @@ test('range conflicts and stale targets reject atomically without losing history
 });
 
 test('freezing imported semitone values retains their exact settings; empty and inherited scopes do not fabricate overrides', () => {
-  const { service } = fixture();
+  const { service } = fixture({ contextualMelody: false });
   const saved = JSON.parse(service.exportProjectJson());
   const trackId = 'track-arpeggio-1';
   saved.tracks.find((track) => track.id === trackId).generatorSettings.transpose = 5;
@@ -1805,7 +1744,7 @@ test('freezing imported semitone values retains their exact settings; empty and 
 });
 
 test('workspace applies only to retained header destinations and reports the shared workflow result', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const sections = service.project().arrangement;
   ui.selectSection(sections[1].id);
   ui.selectSection(sections[2].id, { shiftKey: true });
@@ -1833,7 +1772,7 @@ test('workspace applies only to retained header destinations and reports the sha
 });
 
 test('copy previews follow stored patch changes without generation, history or property-order false positives', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const [source, destination, other] = service.project().arrangement;
   const scope = { kind: 'section-role', sectionId: source.id, role: 'bass' };
   ui.selectSection(destination.id);
@@ -1865,7 +1804,7 @@ test('copy previews follow stored patch changes without generation, history or p
 });
 
 test('copy feedback is dismissible, clears for different destinations, and never displays a no-op checkmark', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const [source, destination, other] = service.project().arrangement;
   ui.selectSection(destination.id);
   ui.selectSectionTrack(source.id, 'track-chords-1');
@@ -1888,7 +1827,7 @@ test('copy feedback is dismissible, clears for different destinations, and never
 });
 
 test('fill controls respect mixed scopes, track exceptions, flips and per-field inheritance', () => {
-  const { service, ui, workspace, settings } = fixture();
+  const { service, ui, workspace, settings } = fixture({ contextualMelody: false });
   const first = 'track-arpeggio-1';
   const second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[1].id;
@@ -1913,7 +1852,7 @@ test('fill controls respect mixed scopes, track exceptions, flips and per-field 
 });
 
 test('section fills repeat over the effective progression and reach score/preview/editor and MIDI without changing presence', () => {
-  const { service, ui, workspace, phrase, midi } = fixture();
+  const { service, ui, workspace, phrase, midi } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   const sectionId = service.project().arrangement[1].id;
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
@@ -1951,7 +1890,7 @@ test('section fills repeat over the effective progression and reach score/previe
 });
 
 test('fill values survive copy/freeze, one-entry history, duplication and session/JSON; manual notes keep masking them', () => {
-  const { service, phrase, load } = fixture();
+  const { service, phrase, load } = fixture({ contextualMelody: false });
   const trackId = 'track-drums-1';
   const [first, second] = service.project().arrangement;
   const source = { kind: 'section-track', sectionId: first.id, trackId };
@@ -1978,7 +1917,7 @@ test('fill values survive copy/freeze, one-entry history, duplication and sessio
 });
 
 test('reset emphasis follows effective differences after global copy, freeze and history', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const sectionId = service.project().arrangement[0].id;
   const trackId = 'track-bass-1';
   const second = service.duplicateTrack(trackId);
@@ -2012,7 +1951,7 @@ test('reset emphasis follows effective differences after global copy, freeze and
 });
 
 test('manually restoring numeric, choice and checkbox defaults removes local overrides and customized UI', () => {
-  const { service, ui, workspace, phrase } = fixture();
+  const { service, ui, workspace, phrase } = fixture({ contextualMelody: false });
   const sectionId = service.project().arrangement[1].id;
   const trackId = 'track-chords-1';
   ui.selectSectionTrack(sectionId, trackId);
@@ -2041,7 +1980,7 @@ test('manually restoring numeric, choice and checkbox defaults removes local ove
 });
 
 test('cell cleanup compares all bases while track cleanup inherits its cell, preserving unrelated exceptions', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const first = 'track-bass-1';
   const second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[1].id;
@@ -2074,7 +2013,7 @@ test('cell cleanup compares all bases while track cleanup inherits its cell, pre
 });
 
 test('manual cleanup does not normalize untouched frozen or copied snapshot fields', () => {
-  const { service, settings } = fixture();
+  const { service, settings } = fixture({ contextualMelody: false });
   const trackId = 'track-arpeggio-1';
   const [first, second] = service.project().arrangement;
   const scope = { kind: 'section-track', sectionId: first.id, trackId };
@@ -2096,7 +2035,7 @@ test('manual cleanup does not normalize untouched frozen or copied snapshot fiel
 });
 
 test('chord rhythm controls resolve mixed groups and scoped exceptions, including manual return to inherited defaults', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const first = 'track-chords-1';
   const second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[1].id;
@@ -2120,7 +2059,7 @@ test('chord rhythm controls resolve mixed groups and scoped exceptions, includin
 });
 
 test('chord rhythm controls share resolved score/MIDI notes and survive history, copy/freeze and session reload', () => {
-  const { service, ui, workspace, phrase, midi, load } = fixture();
+  const { service, ui, workspace, phrase, midi, load } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   const sectionId = service.project().arrangement[1].id;
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
@@ -2165,7 +2104,7 @@ test('chord rhythm controls share resolved score/MIDI notes and survive history,
 });
 
 test('Euclidean pulse edits retain mixed values and requested counts across scope inheritance and hit reductions', () => {
-  const { service, ui, workspace } = fixture();
+  const { service, ui, workspace } = fixture({ contextualMelody: false });
   const first = 'track-chords-1';
   const second = service.duplicateTrack(first);
   service.updatePartSettings({ kind: 'global-role', role: 'chords' }, { rhythm: 'euclid' });
@@ -2189,7 +2128,7 @@ test('Euclidean pulse edits retain mixed values and requested counts across scop
 });
 
 test('quick access and inspector partition musical controls across roles and rhythm modes', () => {
-  const { service, load, settings } = fixture();
+  const { service, load, settings } = fixture({ contextualMelody: false });
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const { partControlGroup } = load('features/part-settings/part-control-groups.ts');
   const quick = new PartSettingsEditorComponent(), inspector = new PartSettingsEditorComponent();
@@ -2229,7 +2168,7 @@ test('quick access and inspector partition musical controls across roles and rhy
 });
 
 test('the chord rhythm preview shares generation masks and shows mixed values only for active rhythm inputs', () => {
-  const { service, load, settings } = fixture();
+  const { service, load, settings } = fixture({ contextualMelody: false });
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
   const editor = new PartSettingsEditorComponent();
@@ -2254,7 +2193,7 @@ test('the chord rhythm preview shares generation masks and shows mixed values on
 });
 
 test('Euclidean settings survive local generation, parsed MIDI, snapshots, duplication, undo and session restore', () => {
-  const { service, phrase, midi, settings, load } = fixture();
+  const { service, phrase, midi, settings, load } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
   const sectionId = service.project().arrangement[1].id;
@@ -2301,7 +2240,7 @@ test('Euclidean settings survive local generation, parsed MIDI, snapshots, dupli
 });
 
 test('velocity enable and arrays preserve mixed scopes, inherited resets, snapshots and hidden subdivisions', () => {
-  const { service, ui, workspace, settings } = fixture();
+  const { service, ui, workspace, settings } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   const second = service.duplicateTrack(trackId);
   const sectionId = service.project().arrangement[1].id;
@@ -2340,7 +2279,7 @@ test('velocity enable and arrays preserve mixed scopes, inherited resets, snapsh
 });
 
 test('custom velocities survive section MIDI, history, session and JSON while manual notes keep masking them', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId };
@@ -2375,7 +2314,7 @@ test('custom velocities survive section MIDI, history, session and JSON while ma
 });
 
 test('custom grid arrays resolve by content, replace whole values, and restore inheritance without losing exceptions', () => {
-  const { service, ui, workspace, settings } = fixture();
+  const { service, ui, workspace, settings } = fixture({ contextualMelody: false });
   const trackId = 'track-chords-1';
   const second = service.duplicateTrack(trackId);
   const sectionId = service.project().arrangement[1].id;
@@ -2415,7 +2354,7 @@ test('custom grid arrays resolve by content, replace whole values, and restore i
 });
 
 test('custom chord grids retain seeded dynamics, hidden cells, section isolation and parsed MIDI across reload', () => {
-  const { service, phrase, midi, load } = fixture();
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
   const { generateChordPart } = load('core/music/chord-generator.ts');
   const trackId = 'track-chords-1';
   service.project().arrangement.forEach((_, index) => service.setSectionTrackPresence(index, trackId, true));
@@ -2459,7 +2398,7 @@ test('custom chord grids retain seeded dynamics, hidden cells, section isolation
 });
 
 test('drum pattern popup resolves every row in the selected section and edits only its track layer', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   service.setRoleTrackCount('drums', 3);
   const tracks = service.project().tracks.filter(track => track.role === 'drums');
   const sectionId = service.project().arrangement[1].id;
@@ -2482,7 +2421,7 @@ test('drum pattern popup resolves every row in the selected section and edits on
 });
 
 test('drum sequencer resolves percussion names and multiplies only its selected scope', () => {
-  const { service, load } = fixture();
+  const { service, load } = fixture({ contextualMelody: false });
   const first = 'track-drums-1', second = service.duplicateTrack(first);
   const sectionId = service.project().arrangement[0].id;
   const { PatternSequencerComponent } = load('features/part-settings/pattern-sequencer.component.ts');
@@ -2510,7 +2449,7 @@ test('drum sequencer resolves percussion names and multiplies only its selected 
 
 for (const role of ['bass', 'arpeggio']) {
   test(role + ' durations preserve signed timing, lanes, scoped inheritance, undo and JSON restoration', () => {
-    const { service, load, phrase } = fixture();
+    const { service, load, phrase } = fixture({ contextualMelody: false });
     const track = service.project().tracks.find(track => track.role === role);
     const scope = { kind: 'global-track', trackId: track.id };
     const rows = [[0.5, -0.5, 1, -2], [2, -1, 1], ...Array.from({length: 8}, () => [])];
@@ -2541,7 +2480,7 @@ for (const role of ['bass', 'arpeggio']) {
 }
 
 test('bass and arp duration selection honors weights and flip while ignoring stored grid shaping', () => {
-  const { load } = fixture();
+  const { load } = fixture({ contextualMelody: false });
   const { generateBassline } = load('core/music/bass-generator.ts');
   const { generateArpeggio } = load('core/music/arpeggio-generator.ts');
   const common = { rhythm: 'durations', customDurations: [[1, -1, 1, -1], [0.5, -0.5, 1, -2], ...Array.from({length:8},()=>[])],
@@ -2556,4 +2495,82 @@ test('bass and arp duration selection honors weights and flip while ignoring sto
     assert.deepEqual(notes.map(note=>[note.startBeat,note.durationBeats]),[[0.5,0.5],[2,2],[4.5,0.5],[6,2]]);
     assert.ok(notes.every(note=>note.velocity===80));
   }
+});
+
+test('P5e Melody key emphasis preserve ownership, update consumers and replay exported MIDI', () => {
+  const { service, phrase, midi, load } = fixture({ contextualMelody: false });
+  const id = 'track-melody-1', sectionId = service.project().arrangement[0].id;
+  const track = role => service.project().tracks.find(item => item.role === role);
+  service.setSectionTrackPresence(0, id, true);
+  for (const role of ['drums', 'arpeggio']) {
+    service.setSectionTrackPresence(0, track(role).id, true);
+    service.updatePartSettings({ kind: 'global-track', trackId: track(role).id }, { rhythm: 'melody', swingPercent: 50 });
+  }
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { speed: 50 });
+  const notes = phrase.layOutTrackPhrase(service.project(), track('melody'));
+  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { emphasizeKey: true });
+  assert.notDeepEqual(phrase.layOutTrackPhrase(service.project(), track('melody')), notes);
+  for (const role of ['melody', 'drums', 'arpeggio']) {
+    const expected = phrase.layOutTrackPhrase(service.project(), track(role));
+    const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+    const exported = parsed.tracks.find(item => item.name === track(role).name).notes;
+    assert.equal(exported.length, expected.length);
+    exported.forEach((note, index) => {
+      assert.equal(note.midi, expected[index].midi);
+      assert.ok(Math.abs(note.ticks / parsed.header.ppq - expected[index].startBeat) < 0.003);
+    });
+  }
+  const saved = service.exportProjectJson(); service.updateSettings({ name: 'redo' }); service.undo();
+  for (const key of ['patternFlip', 'emphasizeKey']) {
+    assert.equal(service.updateMelodyGlobal({ [key]: 'true' }), 'invalid');
+    const imported = JSON.parse(saved); imported.melodyGlobal[key] = 1;
+    assertRejectedProjectImport(service, JSON.stringify(imported));
+    for (const scope of [{ kind: 'global-role', role: 'melody' }, { kind: 'global-track', trackId: id },
+      { kind: 'section-role', sectionId, role: 'melody' }, { kind: 'section-track', sectionId, trackId: id }]) {
+      service.updatePartSettings(scope, { [key]: 'true' }); assert.equal(service.exportProjectJson(), saved);
+    }
+    assert.equal(service.canRedo(), true);
+  }
+  const { ProjectService } = load('core/project/project.service.ts');
+  assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
+  assert.equal(service.importProjectJson(saved), true);
+  const manual = [{ id: 'flip-manual', midi: 62, startBeat: 1, durationBeats: 2, velocity: 90 }];
+  service.updateTrackPhrase(id, manual);
+  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { emphasizeKey: false });
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track('melody')), manual);
+  assert.deepEqual(phrase.sectionMelodyContext(service.project()).pitches[0], Array.from({ length: 16 }, (_, slot) => slot === 4 ? 62 : 0));
+  service.updateTrackPhrase(id, []);
+  assert.deepEqual(phrase.sectionMelodyContext(service.project()).pitches.flat(), Array(service.project().progression.length * 16).fill(0));
+  service.clearTrackPhrase(id);
+  service.removeTrack(id);
+  assert.equal(phrase.sectionMelodyContext(service.project()).available, false);
+});
+
+
+test('contextual range and tension are independent track settings with section history and persistence', () => {
+  const { service, phrase, settings, load } = fixture();
+  const { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } = load('core/music/melody-global-settings.ts');
+  assert.equal(DEFAULT_MELODY_GLOBAL.contextualMelody, true);
+  assert.equal(decodeMelodyGlobal({ patternFlip: true }), undefined);
+  const first = 'track-melody-1', second = service.duplicateTrack(first);
+  const sectionId = service.project().arrangement[0].id;
+  service.updatePartSettings({ kind: 'global-track', trackId: first }, { rangeMin: 60, rangeMax: 72, tension: 0 });
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { rangeMin: 48, rangeMax: 59, tension: 100 });
+  const track = id => service.project().tracks.find(t => t.id === id);
+  for (const [id, low, high] of [[first,60,72],[second,48,59]]) {
+    const notes = phrase.generateTrackPhrase(service.project(),track(id));
+    assert.ok(notes.length && notes.every(n => n.midi >= low && n.midi <= high));
+  }
+  const before = service.exportProjectJson();
+  service.updatePartSettings({ kind: 'section-track', sectionId, trackId: second }, { rangeMin: 60, rangeMax: 72, tension: 35 });
+  const resolved = settings.resolvePartTrack(track(second), service.project().arrangement[0]);
+  assert.equal(resolved.generatorSettings.rangeMin, 60);
+  assert.equal(track(second).generatorSettings.rangeMin, 48);
+  const saved = service.exportProjectJson(); service.undo(); assert.equal(service.exportProjectJson(),before);
+  service.redo(); assert.equal(service.exportProjectJson(),saved);
+  assert.equal(service.importProjectJson(saved),true);
+  const position = service.historyPosition();
+  service.updatePartSettings({ kind: 'global-track', trackId: first }, { rangeMin: 80 });
+  assert.equal(service.historyPosition(),position,'reject inverted effective range');
+  for (const key of ['rangeMin','rangeMax','tension']) assert.equal(decodeMelodyGlobal({ [key]: 60 }),undefined);
 });

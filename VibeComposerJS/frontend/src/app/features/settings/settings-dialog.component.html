@@ -185,7 +185,7 @@
           <section aria-labelledby="melody-settings-title">
             <h2 id="melody-settings-title">Melody</h2>
             <label class="behavior-setting">
-              <input type="checkbox" aria-label="Contextual Melody" [checked]="projects.project().melodyGlobal?.contextualMelody ?? false"
+              <input type="checkbox" aria-label="Contextual Melody" [checked]="projects.project().melodyGlobal?.contextualMelody ?? true"
                 (change)="projects.updateMelodyGlobal({ contextualMelody: $any($event.target).checked })" />
               <span>Contextual Melody</span>
             </label>

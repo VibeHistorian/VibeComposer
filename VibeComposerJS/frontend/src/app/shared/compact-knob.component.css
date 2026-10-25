@@ -35,6 +35,8 @@
 .named-mini .knob-face { width: 28px; height: 28px; }
 .named-mini .knob-face > span { width: 20px; height: 20px; }
 .named-mini input { top: 20px; width: 28px; height: 28px; }
+/* Global settings knob labels */
+:host-context(vc-melody-global-settings) .compact-knob > vc-control-heading { justify-content: center; text-align: center; }
 .compact-knob > vc-control-heading.label-hidden { display: none; }
 .compact-knob > vc-control-heading.knob-heading-status { display: flex; position: absolute; top: var(--quick-heading-top, 0px); left: 50%; transform: var(--quick-heading-transform, translate(-50%, -100%)); width: 18px; height: 18px; z-index: 2; }
 .disabled { opacity: .5; }

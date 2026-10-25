@@ -18,18 +18,20 @@ Preserve old parameter semantics, not old widget positions. The model/control re
 
 ## Melody setting scopes
 
-Project-wide melody controls live in **Settings → Behavior → Melody** and are saved in the project's `melodyGlobal`, alongside Contextual Melody. They do not belong to UI preferences or the inspector.
+Project-wide melody controls live in **Settings → Behavior → Melody** and are saved in the project's `melodyGlobal`, alongside Contextual Melody (enabled by default). They do not belong to UI preferences or the inspector.
 
 | Project-wide settings | Melody track settings in the inspector |
 | --- | --- |
-| Target mode, Target variation, Directions from progression, Force first outline | Target direction |
+| Target mode, Target variation, Directions from progression, Force first outline | Target direction; Melody Low MIDI, Melody High MIDI, Melody Tension |
 | Avoid | Chord, Tonic and Mode target percentages; Emphasize key |
 | Pattern effect | Max direction changes |
 | Seven catalogue block-type weights; Change preference | New blocks |
-| Melody pattern flip | Fill pauses per chord |
-| Contextual range, tension, phrase bars, beats per bar and chromatic approaches | Ending, Style and Form (one stack of three compact selectors) |
+| — | Fill pauses per chord |
+| Phrase bars, beats per bar, chromatic approaches and Compose range randomization | Ending, Style and Form (one stack of three compact selectors) |
 
-Track settings use the normal track base → section role → section track resolution, mixed selection, inherited reset, copy/freeze, history and project persistence. Automatic target preparation reads each track's base Target direction on Compose and enabled Regenerate, retaining explicit section target arrays. Contextual Melody reads the resolved direction for each phrase. The project-wide Melody pattern flip remains distinct from a track's custom-duration/grid Pattern flip.
+Track settings use the normal track base → section role → section track resolution, mixed selection, inherited reset, copy/freeze, history and project persistence. Automatic target preparation reads each track's base Target direction on Compose and enabled Regenerate, retaining explicit section target arrays. Contextual Melody reads the resolved direction for each phrase. The removed project-wide Melody pattern flip does not affect a track's custom-duration/grid Pattern flip.
+
+Global Melody controls use a plain settings layout with centered knob labels. Melody pattern flip and its published-onset inversion are removed. Compose range randomization writes eligible Melody track ranges; Regenerate retains them.
 
 ## Remaining musical and creation families
 
