@@ -8,7 +8,7 @@ export type QuickSettings = Readonly<Record<ArrangedPart, readonly string[]>>;
 
 /** Joined controls share placement and inheritance in the musical editor. */
 export function combinedControlKeys(key: string, role?: ArrangedPart): readonly string[] {
-  for (const keys of [['feedbackCount', 'feedbackDuration'], ['velocityMin', 'velocityMax'], ['ending', 'style', 'form']]) {
+  for (const keys of [['feedbackCount', 'feedbackDuration'], ['velocityMin', 'velocityMax'], ['rangeMin', 'rangeMax'], ['ending', 'style', 'form']]) {
     if (keys.includes(key)) return keys;
   }
   const gridKeys = role === 'melody' ? [] : ['hitsPerPattern', 'patternShift'];

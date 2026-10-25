@@ -38,6 +38,7 @@ export class PartSettingsEditorComponent {
     const keys = control.key === 'rhythm' ? ['hitsPerPattern', 'patternShift']
       : control.key === 'feedbackCount' ? ['feedbackCount', 'feedbackDuration']
       : control.key === 'velocityMin' ? ['velocityMin', 'velocityMax']
+      : control.key === 'rangeMin' ? ['rangeMin', 'rangeMax']
       : control.key === 'ending' ? ['ending', 'style', 'form'] : [];
     return keys.flatMap(key => this.controls().filter(control => control.key === key));
   }
@@ -45,7 +46,7 @@ export class PartSettingsEditorComponent {
     if (control.key === 'rhythm' && ['hitsPerPattern', 'patternShift'].every(key => this.members(control).some(member => member.key === key))) {
       return 'PATTERN / # / SHIFT';
     }
-    return control.key === 'velocityMin' ? 'VEL↓↑' : control.key === 'ending' ? 'SENTENCE'
+    return control.key === 'velocityMin' ? 'VEL↓↑' : control.key === 'rangeMin' ? 'MIDI↓↑' : control.key === 'ending' ? 'SENTENCE'
       : control.kind === 'number' ? this.code(control) : control.label;
   }
   chooseNumber(control: PartControl, selection: string): void {
@@ -57,6 +58,7 @@ export class PartSettingsEditorComponent {
       fillFlip: 'FILL↔', patternFlip: 'PAT↔', useCustomVelocities: 'VGRID',
       stretchEnabled: 'VOICE', fillPauses: 'HOLD', patternFlexible: 'FLEX', octaveInterval: 'OCT±',
       transpose: 'TRANS', velocityMin: 'VEL↓', velocityMax: 'VEL↑', noteLengthMultiplier: 'LEN', noteLengthPercent: 'LEN',
+      rangeMin: 'MIDI↓', rangeMax: 'MIDI↑', tension: 'TENSE',
       feedbackDuration: 'D.TIM', feedbackVol: 'D.VEL', feedbackCount: 'DELAY',
       maxBlockChange: 'B.MAX', blockJump: 'B.JMP', hitsPerPattern: 'HITS', euclideanPulses: 'PULSE',
       patternShift: 'SHIFT', chordSpan: 'SPAN', chordNotesStretch: 'VOICE', patternRepeat: 'REPT',
@@ -120,7 +122,7 @@ export class PartSettingsEditorComponent {
       || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1'))))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
     id: group.id, label: group.label,
-    controls: this.controls().filter(control => !['patternSeed', 'feedbackDuration', 'velocityMax', 'style', 'form'].includes(control.key)
+    controls: this.controls().filter(control => !['patternSeed', 'feedbackDuration', 'velocityMax', 'rangeMax', 'style', 'form'].includes(control.key)
       && (!['hitsPerPattern', 'patternShift'].includes(control.key) || !this.controls().some(control => control.key === 'rhythm'))
       && partControlGroup(control.key) === group.id),
   })).filter(group => group.controls.length > 0));

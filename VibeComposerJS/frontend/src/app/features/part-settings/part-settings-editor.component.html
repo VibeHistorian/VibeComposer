@@ -47,7 +47,7 @@
               @for (member of members(control); track member.key) {
                 <vc-select #choice="vcSelect" [options]="member.options" [attr.data-control-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="choose(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
               }
-            } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin') {
+            } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin' || control.key === 'rangeMin') {
               <vc-control-heading [label]="title(control)" [inheritance]="showGroupTitles() ? inheritanceFor(control) : 'global'" (inheritRequested)="resetControl(control)" />
               <div class="joined-members">
                 @for (member of members(control); track member.key) {
