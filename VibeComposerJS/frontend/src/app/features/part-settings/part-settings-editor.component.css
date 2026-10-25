@@ -14,13 +14,13 @@
 .control-content { display: grid; gap: 4px; min-width: 0; }
 .part-control.compact-control { min-width: 58px; width: 58px; }
 .seed-control { flex: 1 1 100%; max-width: 100%; justify-items: start; }
-.part-control vc-select { appearance: none; field-sizing: content; max-width: 140px; height: 29px; padding: 0 5px; font-size: 10px; }
+.part-control vc-select { appearance: none; width: max-content; min-width: max-content; max-width: 140px; height: 29px; padding: 0 5px; font-size: 10px; }
 
 
 /* Combined selector and flip */
-.choice-controls { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.choice-controls { display: flex; align-items: center; gap: 4px; min-width: max-content; }
 .choice-controls vc-select { flex: 1 1 auto; max-width: 100%; }
-.flip-button { flex: 0 0 25px; height: 29px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 14px var(--font-ui); cursor: pointer; }
+.flip-button { flex: 0 0 auto; width: 25px; height: 29px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 14px var(--font-ui); cursor: pointer; }
 .flip-button:hover:not(.active) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .flip-button.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
 .flip-button.mixed { border-style: dashed; }
@@ -32,7 +32,7 @@
 .rhythm-control .choice-controls { grid-column: 1; grid-row: 2; }
 .rhythm-control .mini-preview { grid-column: 1; grid-row: 3; }
 .rhythm-control vc-select { height: 22px; }
-.rhythm-control .flip-button { flex-basis: 21px; height: 22px; font-size: 12px; }
+.rhythm-control .flip-button { width: 21px; height: 22px; font-size: 12px; }
 .rhythm-control .mini-preview { max-width: none; height: 18px; }
 
 /* Combined musical controls */
@@ -102,7 +102,8 @@
 :host(.quick-layout) .part-control-area, :host(.quick-layout) .part-area-controls { display: contents; }
 :host(.quick-layout) .part-control { --quick-heading-position: absolute; --quick-heading-top: -1px; --quick-heading-left: 50%; --quick-heading-transform: translate(-50%, -50%); --quick-heading-width: max-content; --quick-heading-max-width: calc(100% - 8px); --quick-heading-padding: 0 3px; --quick-heading-background: transparent; --quick-heading-color: var(--accent-primary); --quick-knob-position: static; --quick-knob-overlay-position: relative; --quick-knob-overlay-top: auto; --quick-knob-overlay-left: auto; --quick-knob-overlay-transform: none; --quick-knob-overlay-area: 1 / 1; margin-top: 9px; padding: 9px 7px; border: 1px solid transparent; border-radius: var(--radius-control); background: var(--parameter-surface); align-content: center; }
 :host(.quick-layout) .part-control.compact-control { min-width: 74px; width: 74px; }
-:host(.quick-layout) .part-control.knob-control { min-width: 0; width: auto; padding-inline: 2px; }
+:host(.quick-layout) .part-control.knob-control { min-width: 0; width: auto; }
+:host(.quick-layout) .part-control.knob-control:not(.joined-control) { padding-inline: 2px; }
 :host(.quick-layout) .part-control.pattern-control { width: 112px; }
 :host(.quick-layout) .rhythm-control .control-content { min-height: 0; align-content: center; }
 :host(.quick-layout) .seed-control { flex: 0 1 auto; }

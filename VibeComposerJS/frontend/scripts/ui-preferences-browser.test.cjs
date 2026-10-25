@@ -183,6 +183,18 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         delaySelect.addEventListener('change',()=>delayChanges++);
         ensure((await selectOptions(delaySelect)).map(o=>o.value).join(',')==='0,1,2,3,4,5','delay count choices');
         ensure(getComputedStyle(delaySelect).appearance==='none','delay count is arrowless');
+        ensure(delaySelect.getBoundingClientRect().left-delay.getBoundingClientRect().left>=5,'delay count keeps left padding inside the joined control');
+        for (const select of quick().querySelectorAll('vc-select')) {
+          const value=select.querySelector('.select-value');
+          ensure(value.scrollWidth<=value.clientWidth,'quick combobox shows its full text: '+value.textContent);
+        }
+        for (const choices of quick().querySelectorAll('.choice-controls')) {
+          const panel=choices.closest('.part-control').getBoundingClientRect();
+          for (const child of choices.children) {
+            const bounds=child.getBoundingClientRect();
+            ensure(bounds.left>=panel.left+4 && bounds.right<=panel.right-4,'selector and flip button fit inside the control padding');
+          }
+        }
         ensure(delay.querySelector('[aria-label="FB duration"]'),'delay time shares count panel');
         ensure(getComputedStyle(delay.querySelector('vc-compact-knob > .compact-knob > vc-control-heading')).display==='none','delay time has no title');
         delaySelect.dispatchEvent(new WheelEvent('wheel',{deltaY:1,bubbles:true,cancelable:true}));
