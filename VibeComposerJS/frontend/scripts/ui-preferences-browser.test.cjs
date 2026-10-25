@@ -235,10 +235,48 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             ensure(dialog.querySelector('[aria-label="Randomize range on Compose"]').closest('.setting-row').querySelector('[data-scope="compose"]'),'range randomization applies on Compose');
           }
           if (category.getAttribute('aria-label')==='Behavior Section Types') {
+            const setChance=(input,value)=>{input.value=String(value);input.dispatchEvent(new Event('input',{bubbles:true}));};
             const chance=dialog.querySelector('[aria-label="INTRO Melody chance"]');
-            ensure(chance,'section chance knob');
-            await changeControl(chance,'37');
-            await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1')).INTRO.melody===37,'section chance persists');
+            ensure(chance?.type==='range','section chance slider');
+            await setChance(chance,'37');
+            await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1'))?.INTRO.melody===37,'section chance persists');
+            const roles=['melody','bass','chords','arpeggio','drums'];
+            const row=dialog.querySelector('[data-section-type="INTRO"]');
+            const sliders=[...row.querySelectorAll('input[type="range"]')];
+            const distribution=row.querySelector('.chance-distribution');
+            const segment=part=>row.querySelector('.share-segment[data-role="'+part+'"]');
+            for (const [index,value] of [0,1,50,100,25].entries()) await setChance(sliders[index],String(value));
+            await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+            const name=row.querySelector('.setting-copy').getBoundingClientRect(), bar=distribution.getBoundingClientRect(), controls=row.querySelector('.chance-sliders').getBoundingClientRect();
+            ensure(name.right<=bar.left&&bar.right<=controls.left,'proportional bar sits between section name and sliders');
+            const values=[0,1,50,100,25], brightness=[0.25,0.5,0.5+49/99*0.5,1,0.5+24/99*0.5];
+            const shares=[0.1,0.1,80*50/175/100,80*100/175/100,80*25/175/100];
+            for (const [index,part] of roles.entries()) {
+              ensure(Math.abs(segment(part).getBoundingClientRect().width/bar.width-shares[index])<0.001,'bar width respects minimum and remaining proportions for '+part);
+              const fill=segment(part).querySelector('.share-color').getBoundingClientRect();
+              ensure(Math.abs(fill.height/bar.height-values[index]/100)<0.001,'fill height follows '+part+' chance');
+              ensure(Math.abs(fill.bottom-bar.bottom)<1,'fill anchored to bar bottom');
+              const label=segment(part).querySelector('.share-value').getBoundingClientRect();
+              ensure(Math.abs((label.top+label.bottom-bar.top-bar.bottom)/2)<1,'graph label centered in full height');
+              const sliderBox=sliders[index].getBoundingClientRect(), percent=sliders[index].closest('label').querySelector('output').getBoundingClientRect();
+              ensure(percent.bottom<=sliderBox.top,'slider percent above control');
+              ensure(!row.querySelector('.role-label'),'no visible role name labels');
+              const filter=getComputedStyle(segment(part).querySelector('.share-color')).filter;
+              ensure(Math.abs(Number(filter.match(/[0-9.]+/)[0])-brightness[index])<0.00001,'exact brightness curve for '+part);
+              ensure(getComputedStyle(sliders[index]).getPropertyValue('--role-color').trim()===getComputedStyle(document.documentElement).getPropertyValue('--role-'+part).trim(),'slider uses themed role color');
+              ensure(sliders[index].getAttribute('aria-valuetext')===values[index]+' percent','accessible slider percent');
+            }
+            for (const slider of sliders) await setChance(slider,'0');
+            await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+            ensure(distribution.classList.contains('empty'),'all-zero distribution');
+            for (const part of roles) {
+              ensure(Math.abs(segment(part).getBoundingClientRect().width/distribution.getBoundingClientRect().width-0.2)<0.001,'all-zero shares have equal widths');
+              ensure(getComputedStyle(segment(part).querySelector('.share-color')).filter==='brightness(0.25)','zero brightness');
+              ensure(segment(part).querySelector('.share-color').getBoundingClientRect().height===0,'zero chance has no filled height');
+            }
+            await setChance(sliders[0],'100');
+            await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+            ensure(Math.abs(segment('melody').getBoundingClientRect().width/distribution.getBoundingClientRect().width-0.6)<0.001,'single active role leaves 10% for each other role');
             button('Reset defaults').click();
             await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1')).INTRO.melody===20,'section chances reset');
           }

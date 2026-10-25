@@ -4,14 +4,27 @@
     <div class="setting-copy"><h3>Track presence defaults</h3><p>Choose each role’s chance of being included when a section is generated or rerolled. Existing sections retain their tracks.</p></div>
     <div class="setting-controls"><button type="button" class="reset-button" (click)="settings.reset()">Reset defaults</button></div>
   </div>
-  @for (type of sectionTypes; track type) {
-    <div class="setting-row">
-      <div class="setting-copy"><h3>{{ sectionLabel(type) }}</h3></div>
-      <div class="setting-controls chance-controls">
-        @for (part of parts; track part) {
-          <vc-compact-knob [label]="sectionLabel(type) + ' ' + partName(part) + ' chance'" [shortLabel]="partName(part)"
-            [minimum]="0" [maximum]="100" [defaultValue]="defaultChance(type, part)" [value]="chance(type, part)" unit="%"
-            (valueCommit)="settings.setChance(type, part, $event)" />
+  <p class="distribution-description">Each role keeps at least 10% of the bar width. Fill height and color strength show its chance.</p>
+  @for (row of rows(); track row.type) {
+    <div class="setting-row section-chance-row" [attr.data-section-type]="row.type">
+      <div class="setting-copy"><h3>{{ sectionLabel(row.type) }}</h3></div>
+      <div class="chance-distribution" role="img" [attr.aria-label]="row.description" [class.empty]="row.empty">
+        @for (role of row.roles; track role.part) {
+          <span class="share-segment" [attr.data-role]="role.part" [style.width.%]="role.share"
+            [style.--role-color]="'var(--role-' + role.part + ')'" [style.--chance-brightness]="role.brightness"
+            [title]="partName(role.part) + ': ' + role.chance + '% chance'">
+            <span class="share-color" [style.height.%]="role.chance"></span><span class="share-value">{{ role.chance }}%</span>
+          </span>
+        }
+      </div>
+      <div class="setting-controls chance-sliders">
+        @for (role of row.roles; track role.part) {
+          <label class="chance-control" [title]="partName(role.part) + ' chance'" [style.--role-color]="'var(--role-' + role.part + ')'" [style.--chance]="role.chance + '%'">
+            <output>{{ role.chance }}%</output>
+            <input type="range" min="0" max="100" step="1" [value]="role.chance"
+              [attr.aria-label]="sectionLabel(row.type) + ' ' + partName(role.part) + ' chance'"
+              [attr.aria-valuetext]="role.chance + ' percent'" (input)="updateChance(row.type, role.part, $event)" />
+          </label>
         }
       </div>
     </div>

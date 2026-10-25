@@ -1,6 +1,30 @@
 /* Section chances */
+:host { container-type: inline-size; }
 h2 { margin: 0 0 20px; color: var(--text-primary); font-size: 18px; font-weight: 550; }
-.chance-controls > vc-compact-knob { flex-basis: 58px; }
+.distribution-description { margin: 12px 0 4px; color: var(--text-muted); font: 11px var(--font-ui); line-height: 1.5; }
+.setting-row.section-chance-row { grid-template-columns: 94px minmax(0, .85fr) minmax(0, 1.8fr); gap: 16px; padding: 16px 0; }
+.section-chance-row .setting-copy h3 { margin: 0; font-size: 12px; }
 .reset-button { max-width: 100%; padding: 6px 9px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); cursor: pointer; }
 .reset-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .reset-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+/* Relative role distribution */
+.chance-distribution { display: flex; min-width: 0; height: 36px; overflow: hidden; border-radius: var(--radius-control); background: var(--surface-low); }
+.share-segment { position: relative; display: grid; place-items: center; flex: 0 0 auto; min-width: 0; overflow: hidden; container-type: inline-size; }
+.share-color { position: absolute; inset: auto 0 0; background: var(--role-color); filter: brightness(var(--chance-brightness)); }
+.share-value { position: relative; color: var(--text-primary); font: clamp(7px, 28cqi, 10px) var(--font-mono); white-space: nowrap; text-shadow: 0 1px 3px var(--shadow-ink); }
+
+/* Role-colored sliders */
+.setting-controls.chance-sliders { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.chance-control { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 6px; min-width: 0; color: var(--role-color); }
+.chance-control input { appearance: none; min-width: 0; width: 100%; height: 12px; margin: 0; border-radius: var(--radius-control); background: linear-gradient(to right, var(--role-color) 0 var(--chance), color-mix(in srgb, var(--role-color) 22%, var(--surface-base)) var(--chance) 100%); cursor: pointer; }
+.chance-control input::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border: 1px solid var(--role-color); border-radius: 50%; background: var(--role-color); }
+.chance-control input::-moz-range-thumb { width: 14px; height: 14px; border: 1px solid var(--role-color); border-radius: 50%; background: var(--role-color); }
+.chance-control input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 3px; }
+.chance-control output { justify-self: center; padding: 3px 5px; border-radius: var(--radius-tight); background: color-mix(in srgb, var(--role-color) 12%, var(--surface-base)); color: var(--role-color); text-align: center; font: 10px var(--font-mono); }
+
+/* Keep all three columns on narrower settings panels */
+@container (max-width: 760px) {
+  .setting-row.section-chance-row { grid-template-columns: 78px minmax(0, .85fr) minmax(0, 1.25fr); gap: 12px; }
+  .setting-controls.chance-sliders { gap: 6px; }
+}
