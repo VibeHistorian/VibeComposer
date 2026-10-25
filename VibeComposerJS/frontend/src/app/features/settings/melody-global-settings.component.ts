@@ -1,3 +1,4 @@
+import { SettingsScopeIndicatorComponent } from './settings-scope-indicator.component';
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import type { MelodyGlobalSettings } from '../../core/music/part-settings.model';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
@@ -8,10 +9,10 @@ import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from '../../core/music/melo
 
 @Component({
   selector: 'vc-melody-global-settings',
-  imports: [CompactKnobComponent, CompactToggleComponent, SelectComponent],
+  imports: [SettingsScopeIndicatorComponent, CompactKnobComponent, CompactToggleComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './melody-global-settings.component.html',
-  styleUrl: './melody-global-settings.component.css',
+  styleUrls: ['./melody-global-settings.component.css', './settings-rows.css'],
 })
 export class MelodyGlobalSettingsComponent {
   readonly contextualNumbers = [

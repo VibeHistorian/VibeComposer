@@ -1,0 +1,6 @@
+/* Setting scope symbols */
+:host { display: inline-flex; flex: 0 0 auto; align-items: center; vertical-align: middle; color: var(--settings-ui-indicator); }
+:host([data-scope="compose"]) { color: var(--settings-compose-indicator); }
+:host([data-scope="sound"]) { color: var(--settings-sound-indicator); }
+span { display: inline-grid; place-items: center; width: 18px; height: 18px; font: 16px var(--font-ui); }
+span::before { content: attr(data-symbol); }

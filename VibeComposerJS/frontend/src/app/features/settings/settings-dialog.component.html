@@ -14,14 +14,14 @@
                 <button type="button" [class.selected]="selectedCategory() === child.id"
                   [attr.aria-label]="category.label + ' ' + child.label"
                   [attr.aria-current]="selectedCategory() === child.id ? 'page' : null"
-                  (click)="selectedCategory.set(child.id)">{{ child.label }}</button>
+                  (click)="selectedCategory.set(child.id)"><span>{{ child.label }}</span><span class="category-scopes">@for (scope of categoryScopes[child.id]; track scope) { <vc-settings-scope-indicator [scope]="scope" /> }</span></button>
               }
             </div>
           </section>
         } @else {
           <button type="button" class="settings-main-category" [class.selected]="selectedCategory() === category.id"
             [attr.aria-current]="selectedCategory() === category.id ? 'page' : null"
-            (click)="selectedCategory.set(category.id)">{{ category.label }}</button>
+            (click)="selectedCategory.set(category.id)"><span>{{ category.label }}</span><span class="category-scopes">@for (scope of categoryScopes[category.id]; track scope) { <vc-settings-scope-indicator [scope]="scope" /> }</span></button>
         }
       }
     </nav>
@@ -29,156 +29,128 @@
       @switch (selectedCategory()) {
         @case ('appearance') {
           <section aria-labelledby="appearance-title">
-            <div class="appearance-heading">
-              <h2 id="appearance-title">Appearance</h2>
-              <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()"
-                title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
+            <div class="appearance-heading"><h2 id="appearance-title">Appearance</h2>
+              <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()" title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
             </div>
-            <p>Changes apply immediately and are saved in your UI preferences.</p>
-            <div class="appearance-actions">
-              <button type="button" class="appearance-reset" aria-describedby="randomize-appearance-description"
-                (click)="preferences.randomizeAppearance('dark')">Random dark mode</button>
-              <button type="button" class="appearance-reset" aria-describedby="randomize-appearance-description"
-                (click)="preferences.randomizeAppearance('light')">Random light mode</button>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Random theme</h3><p>Try a cyan, blue, green or gray theme with five distinct track colors. Resets color adjustments and keeps your fonts.</p></div>
+              <div class="setting-controls"><div class="appearance-actions"><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('dark')">Random dark mode</button><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('light')">Random light mode</button></div></div>
             </div>
-            <p id="randomize-appearance-description">Try a cyan, blue, green or gray theme in your chosen mode with five distinct track colors. Resets color adjustments and keeps your fonts.</p>
-            <fieldset class="appearance-fields">
-              <legend>Color adjustments</legend>
-              <p>Adjust chosen colors. Hue shift includes track role colors when All is enabled. Zero keeps the original colors.</p>
-              <div class="color-adjustments">
-                @for (adjustment of colorAdjustments; track adjustment.key) {
-                  <div class="color-adjustment">
-                  <vc-compact-knob [label]="adjustment.label" [description]="adjustment.description"
-                    [value]="preferences.appearance().colorAdjustments[adjustment.key]"
-                    [minimum]="-50" [maximum]="50" [defaultValue]="0" [dense]="true" [showValueBelow]="true"
-                    (valueCommit)="preferences.setColorAdjustment(adjustment.key, $event)" />
-                  @if (adjustment.key === 'hueShift') {
-                    <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.appearance().hueShiftRoles"
-                      title="Include all five track role colors in hue shift" (click)="preferences.toggleHueShiftRoles()">All</button>
-                  }
-                  </div>
-                }
-              </div>
-            </fieldset>
-            <fieldset class="appearance-fields">
-              <legend>Main theme colors</legend>
-              <p>Set the backgrounds, panels, text, borders and highlights throughout the app. Selected tracks and role settings use a darker shade of the role groups background.</p>
-              @for (color of themeColors; track color.key) {
-                <label class="appearance-setting">
-                  <span>{{ color.label }}</span>
-                  <input type="color" [attr.aria-label]="color.label + ' theme color'"
-                    [value]="preferences.appearance().themeColors[color.key]" (input)="changeThemeColor(color.key, $event)" />
-                </label>
-              }
-            </fieldset>
-            <fieldset class="appearance-fields">
-              <legend>Fonts</legend>
-              @for (area of fontAreas; track area.key) {
-                <label class="appearance-setting">
-                  <span>{{ area.label }}</span>
-                  <vc-select [options]="fontChoices" [attr.aria-label]="area.label + ' font'"
-                    (valueChange)="changeFont(area.key, $event)" [value]="preferences.appearance().fonts[area.key]"></vc-select>
-                </label>
-              }
-            </fieldset>
-            <fieldset class="appearance-fields">
-              <legend>Track role colors</legend>
-              @for (role of roles; track role) {
-                <label class="appearance-setting">
-                  <span>{{ roleNames[role] }}</span>
-                  <input type="color" [attr.aria-label]="roleNames[role] + ' color'"
-                    [value]="preferences.appearance().roleColors[role]" (input)="changeRoleColor(role, $event)" />
-                </label>
-              }
-            </fieldset>
-            <button type="button" class="appearance-reset" (click)="preferences.resetAppearance()">Reset appearance to defaults</button>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Color adjustments</h3><p>Adjust brightness, hue and saturation. Zero keeps the chosen colors. Enable All to include track role colors in the hue shift.</p></div>
+              <div class="setting-controls"><div class="color-adjustments">@for (adjustment of colorAdjustments; track adjustment.key) {
+                <div class="color-adjustment"><vc-compact-knob [label]="adjustment.label" [description]="adjustment.description" [value]="preferences.appearance().colorAdjustments[adjustment.key]" [minimum]="-50" [maximum]="50" [defaultValue]="0" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setColorAdjustment(adjustment.key, $event)" />
+                  @if (adjustment.key === 'hueShift') { <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.appearance().hueShiftRoles" title="Include all five track role colors in hue shift" (click)="preferences.toggleHueShiftRoles()">All</button> }
+                </div>
+              }</div></div>
+            </div>
+            <h3 class="settings-section-heading">Main theme colors</h3>
+            @for (color of themeColors; track color.key) {
+            <div class="setting-row">
+              <div class="setting-copy"><h3>{{ color.label }}</h3></div>
+              <div class="setting-controls"><input type="color" [attr.aria-label]="color.label + ' theme color'"
+                    [value]="preferences.appearance().themeColors[color.key]" (input)="changeThemeColor(color.key, $event)" /></div>
+            </div>
+            }
+            <h3 class="settings-section-heading">Fonts</h3>
+            @for (area of fontAreas; track area.key) {
+            <div class="setting-row">
+              <div class="setting-copy"><h3>{{ area.label }}</h3></div>
+              <div class="setting-controls"><vc-select [options]="fontChoices" [attr.aria-label]="area.label + ' font'"
+                    (valueChange)="changeFont(area.key, $event)" [value]="preferences.appearance().fonts[area.key]"></vc-select></div>
+            </div>
+            }
+            <h3 class="settings-section-heading">Track role colors</h3>
+            @for (role of roles; track role) {
+            <div class="setting-row">
+              <div class="setting-copy"><h3>{{ roleNames[role] }}</h3></div>
+              <div class="setting-controls"><input type="color" [attr.aria-label]="roleNames[role] + ' color'"
+                    [value]="preferences.appearance().roleColors[role]" (input)="changeRoleColor(role, $event)" /></div>
+            </div>
+            }
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Reset appearance</h3><p>Restore the default theme, fonts and track role colors.</p></div>
+              <div class="setting-controls"><button type="button" class="appearance-reset" (click)="preferences.resetAppearance()">Reset appearance to defaults</button></div>
+            </div>
           </section>
         }
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Manual phrases follow global Mode" [checked]="preferences.manualPhrasesFollowMode()"
-                (change)="preferences.toggleManualPhrasesFollowMode()" aria-describedby="manual-mode-description" />
-              <span>Manual phrases follow global Mode</span>
-            </label>
-            <p id="manual-mode-description">When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.</p>
-            <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.limitInstrumentsToPool()"
-              aria-describedby="instrument-pool-description" (click)="preferences.toggleLimitInstrumentsToPool()">Limit instrument options to selected pool</button>
-            <p id="instrument-pool-description">Show only instruments in each role's selected pool, plus each track's current instrument. Turn off to show all instruments. The automatic Chords pool includes both Chord and Pluck instruments. Saved in your UI preferences.</p>
-            <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.restartPlaybackOnCompose()"
-              aria-describedby="restart-compose-description" (click)="preferences.toggleRestartPlaybackOnCompose()">Restart playback on Compose</button>
-            <p id="restart-compose-description">Return to the beginning when composing, or to the loop start when looping. Playback continues if already playing.</p>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Manual phrases follow global Mode</h3><p id="manual-mode-description">When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Manual phrases follow global Mode" [checked]="preferences.manualPhrasesFollowMode()"
+                (change)="preferences.toggleManualPhrasesFollowMode()" aria-describedby="manual-mode-description" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />Limit instrument options to selected pool</h3><p id="instrument-pool-description">Show only instruments in each role's selected pool, plus each track's current instrument. Turn off to show all instruments. The automatic Chords pool includes both Chord and Pluck instruments. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><button type="button" aria-label="Limit instrument options to selected pool" class="appearance-toggle" [attr.aria-pressed]="preferences.limitInstrumentsToPool()"
+              aria-describedby="instrument-pool-description" (click)="preferences.toggleLimitInstrumentsToPool()">{{ preferences.limitInstrumentsToPool() ? 'On' : 'Off' }}</button></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Restart playback on Compose</h3><p id="restart-compose-description">Return to the beginning when composing, or to the loop start when looping. Playback continues if already playing.</p></div>
+              <div class="setting-controls"><button type="button" aria-label="Restart playback on Compose" class="appearance-toggle" [attr.aria-pressed]="preferences.restartPlaybackOnCompose()"
+              aria-describedby="restart-compose-description" (click)="preferences.toggleRestartPlaybackOnCompose()">{{ preferences.restartPlaybackOnCompose() ? 'On' : 'Off' }}</button></div>
+            </div>
           </section>
         }
         @case ('score') {
           <section aria-labelledby="score-settings-title">
             <h2 id="score-settings-title">Score</h2>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Highlight audible" [checked]="preferences.syncScoreMix()"
-                (change)="preferences.toggleScoreMixSync()" aria-describedby="highlight-audible-description" />
-              <span>Highlight audible</span>
-            </label>
-            <p id="highlight-audible-description">Show only tracks audible under the current Solo/Mute settings. Score role filters still apply. Saved in your UI preferences.</p>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Chord-based grid subdivisions" [checked]="preferences.scoreChordGrid()"
-                (change)="preferences.toggleScoreChordGrid()" aria-describedby="score-chord-grid-description" />
-              <span>Chord-based grid subdivisions</span>
-            </label>
-            <p id="score-chord-grid-description">Show faint lines in each chord's color at its ending beat. Saved in your UI preferences.</p>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Ghost notes from other tracks" [checked]="preferences.scoreGhostNotes()"
-                (change)="preferences.toggleScoreGhostNotes()" aria-describedby="score-ghost-notes-description" />
-              <span>Ghost notes from other tracks</span>
-            </label>
-            <p id="score-ghost-notes-description">Show other tracks in the phrase editor as outlines at half opacity. Ghost notes are informational only. Saved in your UI preferences.</p>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Highlight audible</h3><p id="highlight-audible-description">Show only tracks audible under the current Solo/Mute settings. Score role filters still apply. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Highlight audible" [checked]="preferences.syncScoreMix()"
+                (change)="preferences.toggleScoreMixSync()" aria-describedby="highlight-audible-description" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Chord-based grid subdivisions</h3><p id="score-chord-grid-description">Show faint lines in each chord's color at its ending beat. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Chord-based grid subdivisions" [checked]="preferences.scoreChordGrid()"
+                (change)="preferences.toggleScoreChordGrid()" aria-describedby="score-chord-grid-description" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Ghost notes from other tracks</h3><p id="score-ghost-notes-description">Show other tracks in the phrase editor as outlines at half opacity. Ghost notes are informational only. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Ghost notes from other tracks" [checked]="preferences.scoreGhostNotes()"
+                (change)="preferences.toggleScoreGhostNotes()" aria-describedby="score-ghost-notes-description" /></div>
+            </div>
           </section>
         }
         @case ('midi') {
           <section aria-labelledby="midi-settings-title">
             <h2 id="midi-settings-title">MIDI</h2>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Discard phrase notes on MIDI drop" [checked]="preferences.discardPhraseNotesOnMidiDrop()" (change)="preferences.toggleDiscardPhraseNotesOnMidiDrop()" />
-              <span>Discard old phrase editor notes when MIDI is dropped</span>
-            </label>
-            <p>When off, dropped MIDI is added to the existing phrase. Saved in your UI preferences.</p>
-            <label class="appearance-setting">
-              <span>Drum pitch mapping</span>
-              <vc-select [options]="[{ value: 'auto', label: 'Auto' }, { value: 'general-midi', label: 'General MIDI' }, { value: 'chromatic', label: 'Chromatic (starting at note 36)' }]" aria-label="Drum pitch mapping" aria-describedby="drum-mapping-description"
-                [value]="preferences.drumMapping()" (valueChange)="changeDrumMapping($event)"></vc-select>
-            </label>
-            <p id="drum-mapping-description">Applies to drum pitch labels, MIDI device playback, and MIDI file exports. Chromatic maps the 16 drum choices in order to notes 36–51. Auto uses General MIDI with the internal synth and Chromatic with a MIDI device.</p>
-            <p>Currently using {{ midi.drumMapping() === 'chromatic' ? 'Chromatic (36–51)' : 'General MIDI' }}. The internal synth keeps its General MIDI drum sounds. Saved in your UI preferences.</p>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />Discard old phrase editor notes when MIDI is dropped</h3><p>When off, dropped MIDI is added to the existing phrase.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Discard phrase notes on MIDI drop" [checked]="preferences.discardPhraseNotesOnMidiDrop()" (change)="preferences.toggleDiscardPhraseNotesOnMidiDrop()" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Drum pitch mapping</h3><p id="drum-mapping-description">Applies to drum pitch labels, MIDI device playback, and MIDI file exports. Chromatic maps the 16 drum choices in order to notes 36–51. Auto uses General MIDI with the internal synth and Chromatic with a MIDI device. Currently using {{ midi.drumMapping() === 'chromatic' ? 'Chromatic (36–51)' : 'General MIDI' }}. The internal synth keeps its General MIDI drum sounds.</p></div>
+              <div class="setting-controls"><vc-select [options]="[{ value: 'auto', label: 'Auto' }, { value: 'general-midi', label: 'General MIDI' }, { value: 'chromatic', label: 'Chromatic (starting at note 36)' }]" aria-label="Drum pitch mapping" aria-describedby="drum-mapping-description"
+                [value]="preferences.drumMapping()" (valueChange)="changeDrumMapping($event)"></vc-select></div>
+            </div>
           </section>
         }
         @case ('harmony') {
           <section aria-labelledby="harmony-settings-title">
             <h2 id="harmony-settings-title">Harmony</h2>
-            <p>Applies to all tracks and sections. Saved with the project.</p>
-            <label class="appearance-setting">
-              <span>Harmony generation</span>
-              <vc-select [options]="harmonyGenerations" aria-label="Harmony generation" [value]="harmonyValues().generation" (valueChange)="changeHarmony($event)"></vc-select>
-            </label>
-            <p>Used when generating a chord progression. Random makes a seeded choice among Legacy, Functional, Fifths, Pop loop and Modal.</p>
-            <label class="appearance-setting">
-              <span>Flatten voicing (%)</span>
-              <input type="number" aria-label="Flatten voicing" aria-describedby="flatten-voicing-description" min="0" max="100" step="1"
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Harmony generation</h3><p>Used when generating a chord progression. Random makes a seeded choice among Legacy, Functional, Fifths, Pop loop and Modal.</p></div>
+              <div class="setting-controls"><vc-select [options]="harmonyGenerations" aria-label="Harmony generation" [value]="harmonyValues().generation" (valueChange)="changeHarmony($event)"></vc-select></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Flatten voicing (%)</h3><p id="flatten-voicing-description">Chance to move outer chord tones toward the progression's average pitch. Uses the project seed; explicit nonzero inversions are preserved. Bass roots stay independent.</p></div>
+              <div class="setting-controls"><input type="number" aria-label="Flatten voicing" aria-describedby="flatten-voicing-description" min="0" max="100" step="1"
                 [value]="harmonyValues().flattenVoicingChance"
-                (change)="projects.updateHarmonySettings({ flattenVoicingChance: +$any($event.target).value })" />
-            </label>
-            <p id="flatten-voicing-description">Chance to move outer chord tones toward the progression's average pitch. Uses the project seed; explicit nonzero inversions are preserved. Bass roots stay independent.</p>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Flatten large chords" aria-describedby="flatten-large-description" [checked]="harmonyValues().flattenLargeChords"
-                (change)="projects.updateHarmonySettings({ flattenLargeChords: $any($event.target).checked })" />
-              <span>Flatten large chords</span>
-            </label>
-            <p id="flatten-large-description">Also flatten chords with more than three tones.</p>
-            <label class="behavior-setting">
-              <input type="checkbox" aria-label="Progressive voicing" aria-describedby="progressive-voicing-description" [checked]="harmonyValues().progressiveVoicing"
-                (change)="projects.updateHarmonySettings({ progressiveVoicing: $any($event.target).checked })" />
-              <span>Progressive voicing</span>
-            </label>
-            <p id="progressive-voicing-description">Voice global and explicit section progressions toward the processed prefix. Inferred progressions use the ordinary whole-progression average.</p>
+                (change)="projects.updateHarmonySettings({ flattenVoicingChance: +$any($event.target).value })" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Flatten large chords</h3><p id="flatten-large-description">Also flatten chords with more than three tones.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Flatten large chords" aria-describedby="flatten-large-description" [checked]="harmonyValues().flattenLargeChords"
+                (change)="projects.updateHarmonySettings({ flattenLargeChords: $any($event.target).checked })" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Progressive voicing</h3><p id="progressive-voicing-description">Voice global and explicit section progressions toward the processed prefix. Inferred progressions use the ordinary whole-progression average.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Progressive voicing" aria-describedby="progressive-voicing-description" [checked]="harmonyValues().progressiveVoicing"
+                (change)="projects.updateHarmonySettings({ progressiveVoicing: $any($event.target).checked })" /></div>
+            </div>
           </section>
         }
         @case ('melody') {
@@ -192,32 +164,34 @@
         @case ('project') {
           <section aria-labelledby="project-title">
             <h2 id="project-title">Project</h2>
-            <h3>Export filenames</h3>
-            <p>Include these fields before the project name, separated by underscores. Time uses HH-mm; sharp keys use s and flat keys use b.</p>
-            <div class="export-name-fields" role="group" aria-label="Export filename fields">
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Export filenames</h3><p>Include these fields before the project name, separated by underscores. Time uses HH-mm; sharp keys use s and flat keys use b.</p></div>
+              <div class="setting-controls"><div class="export-name-fields" role="group" aria-label="Export filename fields">
               @for (field of exportNameFields; track field.id) {
                 <button type="button" class="appearance-toggle" [class.active]="preferences.exportNameFields().includes(field.id)"
                   [attr.aria-pressed]="preferences.exportNameFields().includes(field.id)"
                   (click)="preferences.toggleExportNameField(field.id)">{{ field.label }}</button>
               }
+            </div></div>
             </div>
-            <p>Preview</p>
-            <output class="export-name-preview" aria-label="Export filename preview" aria-live="polite">{{ exportNamePreview() }}.vibe.json</output>
-            <p>The same name is used for MIDI (.mid) and audio (.opus) exports.</p>
-            <h3>Project history</h3>
-            <label class="history-setting">
-              <input type="checkbox" [checked]="projects.compactHistory()"
-                (change)="projects.toggleCompactHistory()" aria-describedby="compact-history-description" />
-              <span>Compact History</span>
-            </label>
-            <p id="compact-history-description">Group repeated changes to the same control less than one second apart into one undo step.</p>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Filename preview</h3><p>The same name is used for project (.vibe.json), MIDI (.mid) and audio (.opus) exports.</p></div>
+              <div class="setting-controls"><output class="export-name-preview" aria-label="Export filename preview" aria-live="polite">{{ exportNamePreview() }}.vibe.json</output></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Compact History</h3><p id="compact-history-description">Group repeated changes to the same control less than one second apart into one undo step.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Compact History" [checked]="projects.compactHistory()"
+                (change)="projects.toggleCompactHistory()" aria-describedby="compact-history-description" /></div>
+            </div>
           </section>
         }
+
       }
     </div>
   </div>
   <footer class="preferences-transfer">
-    <span role="status">{{ transferMessage() || 'UI preferences only · projects and music are saved separately.' }}</span>
+    <div class="scope-legend" aria-label="Setting scope legend"><span><vc-settings-scope-indicator scope="ui" />UI</span><span><vc-settings-scope-indicator scope="compose" />Compose / reroll</span><span><vc-settings-scope-indicator scope="sound" />Track sound</span></div>
+    <span role="status">{{ transferMessage() }}</span>
     <input #preferencesFile type="file" accept=".json,application/json" hidden (change)="importPreferences($event)" />
     <button type="button" (click)="preferencesFile.click()">Import UI preferences</button>
     <button type="button" (click)="exportPreferences()">Export UI preferences</button>

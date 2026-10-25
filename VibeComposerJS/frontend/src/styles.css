@@ -82,6 +82,11 @@
   --regenerate-accent: #3fc6a4;
   --generation-symbol-color: #102a2a;
 
+  /* Settings scope indicators */
+  --settings-ui-indicator: var(--text-muted);
+  --settings-compose-indicator: var(--compose-accent);
+  --settings-sound-indicator: var(--accent-primary);
+
   /* Playback loop markers */
   --loop-accent: #ffe16a;
   --loop-line: color-mix(in srgb, var(--loop-accent) 80%, var(--surface-base));

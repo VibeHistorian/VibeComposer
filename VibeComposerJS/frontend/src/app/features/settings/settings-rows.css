@@ -1,0 +1,24 @@
+/* Settings rows */
+:host { display: block; min-width: 0; }
+.settings-section-heading { margin: 22px 0 6px; color: var(--text-secondary); font: 550 12px var(--font-ui); }
+.global-controls { display: grid; gap: 0; }
+.setting-row { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(0, 1.4fr); align-items: center; gap: 12px 24px; padding: 14px 0; border-bottom: 1px solid var(--border-subtle); }
+.setting-row:first-child { padding-top: 0; }
+.setting-row:last-child { border-bottom: 0; }
+.setting-copy { min-width: 0; }
+.setting-copy h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; color: var(--text-primary); font: 550 13px var(--font-ui); }
+.setting-copy p { margin: 0; color: var(--text-muted); font: 12px var(--font-ui); line-height: 1.5; }
+
+/* Compact right column */
+.setting-controls { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 4px; }
+.setting-controls > vc-compact-knob { flex: 0 0 74px; }
+.setting-controls input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-primary); cursor: pointer; }
+.block-weights { min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 4px; }
+.block-weights vc-compact-knob { flex: 0 0 60px; }
+vc-select { max-width: 100%; }
+vc-select:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+/* Settings input surfaces */
+.setting-controls > input[type="number"] { width: 80px; max-width: 100%; padding: 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
+.setting-controls > input[type="color"] { width: 52px; height: 30px; padding: 2px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); cursor: pointer; }
+.setting-controls > vc-select { min-width: 0; max-width: 100%; }

@@ -213,6 +213,39 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const dialog=await wait(()=>document.querySelector('vc-settings-dialog'),'settings dialog');
         await wait(()=>dialog.querySelector('#appearance-title'),'Appearance opens by default');
         ensure(dialog.querySelector('#appearance-title'),'Appearance opens by default');
+        ensure(!dialog.textContent.includes('UI preferences only · projects and music are saved separately.'),'removed storage disclaimer');
+        ensure(dialog.querySelectorAll('.scope-legend vc-settings-scope-indicator').length===3,'scope legend');
+        const scopeColors=['ui','compose','sound'].map(scope=>getComputedStyle(dialog.querySelector('.scope-legend [data-scope="'+scope+'"]')).color);
+        ensure(new Set(scopeColors).size===3,'distinct muted UI and musical scope colors');
+        const beforeLayoutCheck=sessionStorage.getItem('vibecomposer.project.v12');
+        for (const category of [...dialog.querySelectorAll('.settings-sidebar button')]) {
+          ensure(category.querySelector('vc-settings-scope-indicator'),'category scope indicator');
+          category.click(); await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+          const rows=[...dialog.querySelectorAll('.settings-content .setting-row')];
+          ensure(rows.length>0,'every category has settings rows: '+category.textContent.trim());
+          for (const row of rows) {
+            const copy=row.querySelector('.setting-copy').getBoundingClientRect(), controls=row.querySelector('.setting-controls').getBoundingClientRect();
+            ensure(copy.right<=controls.left,'labels left of controls: '+category.textContent.trim());
+            ensure(controls.right<=dialog.querySelector('.settings-content').getBoundingClientRect().right,'controls inside settings');
+          }
+          const content=dialog.querySelector('.settings-content');
+          ensure(content.scrollWidth<=content.clientWidth+1,'settings fit without horizontal overflow: '+category.textContent.trim());
+          if (category.getAttribute('aria-label')==='Behavior Melody') {
+            ensure(dialog.querySelector('[aria-label="Contextual Melody"]').closest('.setting-row').querySelector('[data-scope="sound"]'),'algorithm affects track sound');
+            ensure(dialog.querySelector('[aria-label="Randomize range on Compose"]').closest('.setting-row').querySelector('[data-scope="compose"]'),'range randomization applies on Compose');
+          }
+          if (category.getAttribute('aria-label')==='Behavior Section Types') {
+            const chance=dialog.querySelector('[aria-label="INTRO Melody chance"]');
+            ensure(chance,'section chance knob');
+            await changeControl(chance,'37');
+            await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1')).INTRO.melody===37,'section chance persists');
+            button('Reset defaults').click();
+            await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1')).INTRO.melody===20,'section chances reset');
+          }
+        }
+        ensure(sessionStorage.getItem('vibecomposer.project.v12')===beforeLayoutCheck,'browsing categories and section defaults preserves project');
+        button('Appearance General').click();
+        await wait(()=>dialog.querySelector('#appearance-title'),'return from layout checks');
         const beforeRandomize = JSON.parse(localStorage.getItem(key));
         const projectBeforeRandomize = sessionStorage.getItem('vibecomposer.project.v12');
         button('Random dark mode').click();

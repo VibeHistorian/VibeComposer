@@ -1,3 +1,4 @@
+import { SettingsScopeIndicatorComponent, type SettingScope } from './settings-scope-indicator.component';
 import { SelectComponent } from '../../shared/select.component';
 import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
@@ -17,10 +18,10 @@ import type { DrumMappingPreference } from '../../core/music/drum-instruments';
 
 @Component({
   selector: 'vc-settings-dialog',
-  imports: [SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
+  imports: [SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-dialog.component.html',
-  styleUrl: './settings-dialog.component.css',
+  styleUrls: ['./settings-dialog.component.css', './settings-rows.css'],
 })
 export class SettingsDialogComponent {
   readonly preferences = inject(UiPreferencesService);
@@ -81,6 +82,11 @@ export class SettingsDialogComponent {
     { id: 'midi', label: 'MIDI', children: [] },
     { id: 'project', label: 'Project', children: [] },
   ] as const;
+  readonly categoryScopes: Readonly<Record<string, readonly SettingScope[]>> = {
+    appearance: ['ui'], score: ['ui'], behavior: ['ui', 'compose', 'sound'],
+    harmony: ['compose', 'sound'], melody: ['compose', 'sound'], 'section-types': ['compose'],
+    midi: ['ui', 'sound'], project: ['ui'],
+  };
   readonly selectedCategory = signal<typeof this.categories[number]['id'] | typeof this.categories[number]['children'][number]['id']>('appearance');
   readonly preview = signal(false);
 
