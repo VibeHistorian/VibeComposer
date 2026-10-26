@@ -1,4 +1,5 @@
 import type { CompositionProject } from '../project/project.model';
+import { mixEnabled } from './mix-values';
 import { layOutTrackPhrase } from '../music/phrase';
 import { beatToSeconds, projectTempoMap, sectionDurationBeats } from '../music/section-context';
 import { TinySynthEngine } from './tiny-synth-engine';
@@ -13,7 +14,7 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
   const tempo = projectTempoMap(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
-  const tracks = project.tracks.filter(track => !track.mix.muted && track.mix.volumePercent > 0 && (!anySolo || track.mix.solo))
+  const tracks = project.tracks.filter(track => mixEnabled(track.mix, anySolo) && track.mix.volumePercent > 0)
     .map(track => ({ track, notes: layOutTrackPhrase(project, track) }));
   if (!tracks.some(({ notes }) => notes.some(note => note.velocity > 0))) {
     throw new Error('There are no audible notes to export.');

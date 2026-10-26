@@ -51,6 +51,7 @@ function fixture({ loop = false } = {}) {
     return module.exports;
   };
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts', {
+    './mix-values': require('./music-loader.cjs').loadMusic('../audio/mix-values.ts'),
     '../music/arrangement-generator': require('./music-loader.cjs').loadMusic('arrangement-generator.ts'),
     '../music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),

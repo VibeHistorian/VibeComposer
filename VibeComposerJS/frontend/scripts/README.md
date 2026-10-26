@@ -27,6 +27,8 @@ Run the relevant functional commands, then the browser commands for affected int
 
 Score geometry, hit testing and gesture-preview helpers have direct checks alongside the component interaction cases in `score-canvas.test.cjs`. See [score ownership](../src/app/features/score/README.md) for the rendering/interaction boundary and draft-history checks.
 
+Prefer behavior over cosmetic snapshots: exercise settings changes, history, persistence, keyboard access, musical output and usable layout. Avoid pinning display labels, exact palette shades, decorative gaps, control variants or fixed pixel dimensions. Keep geometry checks that establish beat alignment, hit testing, viewport fit, clipping and layout stability; derive expected sizes from the viewport or musical coordinates where possible. Use option values when verifying available musical choices; labels may still locate controls during interactions.
+
 `test:unit` discovers top-level `*.test.cjs` files, excluding browser suites and `parts-generation.test.cjs`: the latter already runs through `part-settings.test.cjs`. Parts stay in one process with the transpilation cache intact. Files run sequentially to limit compiler/browser contention. Keep new standalone suites at this level (or add them to an existing aggregate), and add focused commands as needed. `browser-harness.test.cjs` verifies aggregate coverage without running the suites twice.
 
 ## Shared browser infrastructure

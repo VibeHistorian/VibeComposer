@@ -22,7 +22,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       let dialog=await settings('Harmony');
       let generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'harmony generation');
       ensure(generation.getAttribute("value")==='CURRENT','Legacy default');
-      ensure((await selectOptions(generation)).map(o=>o.textContent.trim()).join(',')==='Legacy,Functional,Fifths,Pop loop,Modal,Random','harmony choices');
+      ensure((await selectOptions(generation)).map(o=>o.value).join(',')==='CURRENT,FUNCTIONAL,FIFTHS,POP_LOOP,MODAL,RANDOM','harmony choices');
       await change(generation,'FUNCTIONAL');await wait(()=>read()?.harmonySettings?.generation==='FUNCTIONAL','save harmony algorithm');
       dialog.querySelector('[aria-label="Close settings"]').click();
       button('Generate chord progression').click();
@@ -42,18 +42,11 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
         await change(globals.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
       }
       await wait(()=>read().melodyGlobal?.beatsPerBar===3,'save contextual fields');
-      for (const knob of globals.querySelectorAll('vc-compact-knob')) {
-        const label=knob.querySelector('vc-control-heading').getBoundingClientRect(), face=knob.querySelector('.knob-face').getBoundingClientRect();
-        ensure(Math.abs((label.left+label.right-face.left-face.right)/2)<1,'centered global knob label');
-      }
       for (const row of globals.querySelectorAll('.setting-row')) {
         const copy=row.querySelector('.setting-copy').getBoundingClientRect(), controls=row.querySelector('.setting-controls').getBoundingClientRect();
         ensure(copy.right<=controls.left,'descriptions stay left of controls');
         ensure(controls.right<=globals.getBoundingClientRect().right+1,'controls fit settings width');
       }
-      const weights=globals.querySelector('.block-weights');
-      ensure(getComputedStyle(weights).columnGap==='4px','compact catalogue spacing');
-      ensure(!globals.querySelector('fieldset')&&!globals.textContent.includes('PROJECT SETTINGS'),'plain global layout');
       ensure(!globals.querySelector('[aria-label="Melody pattern flip"]'),'global flip removed');
       ensure(!globals.querySelector('[aria-label="Melody Low MIDI"]'),'range removed from globals');
       dialog.querySelector('[aria-label="Close settings"]').click();
@@ -64,11 +57,6 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       }
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rangeMin===62&&t.generatorSettings.rangeMax===81&&t.generatorSettings.tension===50),'track fields saved');
       const phrasing=await wait(()=>document.querySelector('.part-settings-content [data-control-key="ending"]'),'track phrasing stack');
-      const selects=[...phrasing.querySelectorAll('vc-select')];
-      ensure(selects.length===3,'three phrasing choices share one control');
-      ensure(selects.every(s=>getComputedStyle(s).appearance==='none'),'phrasing choices are arrowless');
-      ensure(phrasing.querySelector('.control-name')?.textContent==='SENTENCE','phrasing shares SENTENCE title');
-      ensure(selects[0].getBoundingClientRect().top===selects[1].getBoundingClientRect().top&&selects[1].getBoundingClientRect().bottom<=selects[2].getBoundingClientRect().top,'ending and style share the first row with form below');
       for(const [label,value] of [['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {
         await change(phrasing.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
       }

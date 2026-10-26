@@ -1,4 +1,5 @@
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { mixEnabled } from './mix-values';
 import { MidiOutputService } from './midi-output.service';
 import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from '../project/project.model';
@@ -256,7 +257,7 @@ export class AudioPlaybackService {
     for (const track of project.tracks) {
       const settings = track.mix;
       this.programs.set(track.id, settings.program);
-      const audible = !settings.muted && (!anySolo || settings.solo);
+      const audible = mixEnabled(settings, anySolo);
       this.midi.configure(track, audible);
       const bus = this.buses.get(track.id);
       if (!bus) continue;
@@ -305,7 +306,7 @@ export class AudioPlaybackService {
     for (const track of project.tracks) {
       const settings = track.mix;
       this.programs.set(track.id, settings.program);
-      const audible = !settings.muted && (!anySolo || settings.solo);
+      const audible = mixEnabled(settings, anySolo);
       const gain = context.createGain();
       gain.gain.value = audible ? settings.volumePercent / 100 : 0;
       const pan = context.createStereoPanner();
@@ -395,7 +396,7 @@ export class AudioPlaybackService {
     if (this.midi.selectedOutput()) {
       const project = this.mixProject;
       const track = project?.tracks.find(track => track.id === note.trackId);
-      if (track && !track.mix.muted && (!project!.tracks.some(track => track.mix.solo) || track.mix.solo)) {
+      if (track && mixEnabled(track.mix, project!.tracks.some(track => track.mix.solo))) {
         this.midi.schedule(track, note.midi, note.velocity,
           performance.now() + (startTime - context.currentTime) * 1000, duration);
       }

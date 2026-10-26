@@ -4,6 +4,7 @@ import { MelodyGlobalSettingsComponent } from './melody-global-settings.componen
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, exportFilename } from '../../core/project/export-filename';
+import { downloadProjectFile } from '../../core/project/download-file';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
@@ -50,12 +51,8 @@ export class SettingsDialogComponent {
   changeFont(area: FontArea, selection: string): void { this.preferences.setFont(area, selection); }
   changeRoleColor(role: ArrangedPart, event: Event): void { this.preferences.setRoleColor(role, (event.target as HTMLInputElement).value); }
   exportPreferences(): void {
-    const url = URL.createObjectURL(new Blob([this.preferences.exportJson()], { type: 'application/json' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'vibecomposer-ui-preferences.json';
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadProjectFile(new Blob([this.preferences.exportJson()], { type: 'application/json' }),
+      'vibecomposer-ui-preferences', 'json');
     this.transferMessage.set('UI preferences exported.');
   }
   async importPreferences(event: Event): Promise<void> {

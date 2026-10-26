@@ -322,35 +322,36 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const selectedMelody = () => read().tracks.find(track => track.role === 'melody');
       const otherTracks = () => JSON.stringify(read().tracks.filter(track => track.id !== selectedMelody().id));
       const untouched = otherTracks();
-      const trackControl = label => document.querySelector('#part-inspector [aria-label="' + label + '"]');
-      await wait(() => trackControl('Target direction'), 'track controls');
-      trackControl('Fill pauses per chord').click();
+      const trackControl = key => document.querySelector('vc-part-settings-editor [data-control-key="' + key + '"]')
+        ?.querySelector('input[type="range"], vc-select, vc-compact-toggle .toggle-button');
+      await wait(() => trackControl('targetDirection'), 'track controls');
+      trackControl('fillPausesPerChord').click();
       await wait(() => selectedMelody().generatorSettings.fillPausesPerChord === true, 'track pause filling');
-      await change(trackControl('Max direction changes'), '6');
+      await change(trackControl('maxDirectionChanges'), '6');
       await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === 6, 'track direction budget');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === undefined, 'track budget undo');
       (await wait(() => { const button = document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; }, 'redo enabled')).click();
       await wait(() => selectedMelody().generatorSettings.maxDirectionChanges === 6, 'track budget redo');
-      await change(trackControl('New blocks'), '0');
+      await change(trackControl('newBlocksChance'), '0');
       await wait(() => selectedMelody().generatorSettings.newBlocksChance === 0, 'track catalogue chance');
-      await reset(trackControl('New blocks'));
+      await reset(trackControl('newBlocksChance'));
       await wait(() => selectedMelody().generatorSettings.newBlocksChance === 25, 'track catalogue default');
-      trackControl('Emphasize key').click();
+      trackControl('emphasizeKey').click();
       await wait(() => selectedMelody().generatorSettings.emphasizeKey === true, 'track emphasis');
       result.flipEmphasis = otherTracks() === untouched;
-      await change(trackControl('CHRD%'), '70');
+      await change(trackControl('chordNoteTarget'), '70');
       await wait(() => selectedMelody().generatorSettings.chordNoteTarget === 70, 'track chord target');
-      await reset(trackControl('CHRD%'));
+      await reset(trackControl('chordNoteTarget'));
       await wait(() => selectedMelody().generatorSettings.chordNoteTarget === 0, 'track chord target reset');
       result.chordRepairs = otherTracks() === untouched;
-      await change(trackControl('TON%'), '70'); await change(trackControl('MODE%'), '60');
+      await change(trackControl('tonicNoteTarget'), '70'); await change(trackControl('modeNoteTarget'), '60');
       await wait(() => selectedMelody().generatorSettings.tonicNoteTarget === 70 && selectedMelody().generatorSettings.modeNoteTarget === 60, 'track tonal targets');
-      await reset(trackControl('TON%')); await reset(trackControl('MODE%'));
+      await reset(trackControl('tonicNoteTarget')); await reset(trackControl('modeNoteTarget'));
       await wait(() => selectedMelody().generatorSettings.tonicNoteTarget === 0 && selectedMelody().generatorSettings.modeNoteTarget === 0, 'track tonal resets');
       result.tonalTargets = otherTracks() === untouched;
       for (const direction of ['ANY','DESC','ASC']) {
-        await change(trackControl('Target direction'), direction);
+        await change(trackControl('targetDirection'), direction);
         await wait(() => selectedMelody().generatorSettings.targetDirection === direction, 'track target direction');
       }
       const projectTracks = JSON.stringify(read().tracks);

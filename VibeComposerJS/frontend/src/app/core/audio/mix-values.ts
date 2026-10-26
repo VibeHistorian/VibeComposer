@@ -1,3 +1,5 @@
+import type { MixChannelSettings } from '../project/track.model';
+
 /** Playback uses a linear gain of volumePercent / 100. */
 export const MAX_VOLUME_PERCENT = 100 * 10 ** (6 / 20);
 
@@ -19,4 +21,14 @@ export function volumeDecibels(value: number): string {
 
 export function panLabel(value: number): string {
   return value === 0 ? 'C' : `${Math.abs(value)}% ${value < 0 ? 'L' : 'R'}`;
+}
+
+/** Mute takes precedence over solo. Gain remains a separate consumer decision. */
+export function mixEnabled(mix: Pick<MixChannelSettings, 'muted' | 'solo'>, anySolo: boolean): boolean {
+  return !mix.muted && (!anySolo || mix.solo);
+}
+
+/** MIDI pan is a seven-bit controller with center at 64. */
+export function midiPanValue(panPercent: number): number {
+  return Math.round((panPercent + 100) * 127 / 200);
 }

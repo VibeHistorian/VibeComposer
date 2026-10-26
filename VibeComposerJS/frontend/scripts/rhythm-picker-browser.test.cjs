@@ -456,13 +456,6 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => read().trackRerollCounts?.[role] === 1, role + ' rerolled');
           result.otherRoleRerolls.push({ role, unchanged, synced, changed: JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) !== before });
         }
-        const rhythmColorProbe = document.createElement('span');
-        rhythmColorProbe.style.color = 'color-mix(in srgb, #418c91 70%, #f2f7ff)';
-        document.body.append(rhythmColorProbe);
-        const expectedRhythmColor = getComputedStyle(rhythmColorProbe).color;
-        rhythmColorProbe.remove();
-        result.parameterAreas = [];
-        result.generationMiniKnobs = [];
         for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
           document.querySelector('.track-group.' + role + ' .group-select').click();
           await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="' + role + '"]'), role + ' categories');
@@ -476,30 +469,9 @@ test('production Angular controls initialize selects from settings and support r
                 throw new Error(role + ' quick title clipped: ' + label.textContent);
               }
             }
-            for (const [key, title] of [['strumType', 'S.ARC'], ['patternJoinMode', 'JOIN']]) {
-              const label = editor.querySelector('[data-control-key="' + key + '"] .control-name');
-              if (label && label.textContent.trim() !== title) throw new Error(key + ' quick title should be ' + title);
-            }
           }
-          const pitch = editors.map(editor => editor.querySelector('[data-control-category="pitch"]'));
-          const rhythm = editors.map(editor => editor.querySelector('[data-control-category="rhythm"]'));
-          result.generationMiniKnobs.push(...[...document.querySelectorAll('.track-group.' + role + ' .named-mini')].map(knob => ({
-            role, type: knob.querySelector('input').type, width: knob.getBoundingClientRect().width,
-            diameter: knob.querySelector('.knob-face').getBoundingClientRect().width,
-            code: knob.querySelector('.control-name').textContent.trim(),
-            value: knob.querySelector('.knob-face > span').textContent.trim(), tooltip: knob.title,
-          })));
-          result.parameterAreas.push({ role, pitch: pitch.map(area => area ? getComputedStyle(area).getPropertyValue('--accent-primary').trim() : null),
-            rhythm: rhythm.filter(Boolean).map(area => getComputedStyle(area).getPropertyValue('--accent-primary').trim()),
-            backgrounds: rhythm.filter(Boolean).map(area => getComputedStyle(area).backgroundColor),
-            knobs: rhythm.filter(Boolean).flatMap(area => [...area.querySelectorAll('.knob-face')])
-              .map(knob => getComputedStyle(knob).backgroundImage.includes(expectedRhythmColor)) });
         }
         result.inspectorPolicyRemoved = !document.querySelector('#part-inspector vc-track-generation-policy');
-        result.bassColor = getComputedStyle(document.querySelector('.track-group.bass .role-dot')).backgroundColor;
-        const countBox = document.querySelector('.track-group.bass .group-count');
-        result.countNearName = countBox.getBoundingClientRect().left - countBox.previousElementSibling.getBoundingClientRect().right < 10;
-        result.countBox = getComputedStyle(countBox).borderTopStyle;
         const generateGroup = document.querySelector('.track-group.chords');
         generateGroup.querySelector('.group-select').click();
         await waitFor(() => generateGroup.querySelector('.policy-controls'), 'chords expanded by selection');
@@ -592,13 +564,6 @@ test('production Angular controls initialize selects from settings and support r
           channels: kit.every(track => track.midiChannel === 10),
           pickersSynced: [...drumGroup.querySelectorAll('.track-instrument')].every((picker, index) => Number(picker.getAttribute("value")) === kit[index].generatorSettings.pitch) };
         result.initiallyCollapsed = initiallyCollapsed;
-        result.compactControls = [...document.querySelectorAll('.part-control.compact-control')].map(control => {
-          const code = control.querySelector('.control-name, .toggle-button');
-          const status = control.querySelector('.inherit-snowflake');
-          return { code: code.textContent.trim(), width: control.getBoundingClientRect().width, joined: control.classList.contains('joined-control'),
-            toggleHeight: control.querySelector('.toggle-button')?.getBoundingClientRect().height ?? null,
-            tooltip: control.title, hasInheritanceStatus: !!status };
-        });
         result.scoreCanvasPresent = !!document.querySelector('vc-score-canvas canvas');
         await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
       } catch (error) {
@@ -658,29 +623,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.countAfterExpand, '3');
     assert.equal(actual.initiallyCollapsed, true);
     assert.equal(actual.scoreCanvasPresent, true);
-    assert.ok(actual.compactControls.length > 0);
-    assert.ok(actual.compactControls.every(control => [...control.code].length <= 5 && control.width <= (control.joined ? 100 : 75) && control.tooltip && !control.hasInheritanceStatus), JSON.stringify(actual.compactControls));
-    assert.ok(actual.compactControls.filter(control => control.toggleHeight !== null).every(control => control.toggleHeight <= 26));
-    assert.ok(actual.generationMiniKnobs.length > 10);
-    assert.ok(actual.generationMiniKnobs.every(knob => knob.type === 'range' && knob.width <= 48 && knob.diameter <= 28
-      && [...knob.code].length <= 5 && Number.isFinite(Number(knob.value)) && knob.tooltip), JSON.stringify(actual.generationMiniKnobs));
     assert.equal(actual.inspectorPolicyRemoved, true);
-    assert.equal(actual.bassColor, 'rgb(140, 169, 186)');
-    assert.equal(actual.countNearName, true);
-    assert.equal(actual.countBox, 'solid');
-    for (const areas of actual.parameterAreas) {
-      const pitchColors = areas.pitch.filter(Boolean);
-      if (areas.role === 'drums') assert.deepEqual(pitchColors, []);
-      else {
-        assert.ok(pitchColors.length > 0, areas.role + ' has pitch controls');
-        assert.ok(pitchColors.every(color => color === 'color-mix(in srgb, #7e70a6 70%, #f2f7ff)'), areas.role + ' pitch category color follows theme text');
-      }
-      assert.ok(areas.rhythm.length > 0);
-      assert.ok(areas.rhythm.every(color => color === 'color-mix(in srgb, #418c91 70%, #f2f7ff)'), areas.role + ' rhythm category color follows theme text');
-      assert.equal(new Set(areas.backgrounds).size, 1);
-      assert.ok(areas.knobs.length > 0 && areas.knobs.every(Boolean), areas.role + ' rhythm knob colors');
-    }
-    assert.equal(new Set(actual.parameterAreas.map(areas => areas.backgrounds[0])).size, 1);
     assert.deepEqual(actual.sharedRoles, [
       { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 1, pause: 0, split: 0, repeat: 0 },
       { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 1, pause: 1, split: 1, repeat: 1 },

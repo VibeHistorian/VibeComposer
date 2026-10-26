@@ -4,7 +4,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
 import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
-import { MAX_VOLUME_PERCENT, validVolumePercent } from '../../core/audio/mix-values';
+import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
 import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { type ArrangedPart, ARRANGED_PARTS, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
@@ -382,7 +382,7 @@ export class WorkspaceCanvasComponent {
     const highlightAudible = this.preferences.syncScoreMix();
     const anySolo = tracks.some(track => track.mix.solo);
     return new Set(tracks.filter(track => this.displayedRoles().has(track.role)
-      && (!highlightAudible || !track.mix.muted && (!anySolo || track.mix.solo))).map(track => track.id));
+      && (!highlightAudible || mixEnabled(track.mix, anySolo))).map(track => track.id));
   });
   readonly scoreTracks = computed(() => this.arrangedTracks().filter(track => this.editing()
     ? this.selectedPart() === 'drums' ? track.role === 'drums' : track.id === this.selectedTrackId() : this.scoreVisibleTrackIds().has(track.id))

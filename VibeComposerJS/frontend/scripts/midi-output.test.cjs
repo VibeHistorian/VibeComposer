@@ -18,7 +18,8 @@ function fixture(request, preferences = { drumMapping: () => 'auto' }) {
   } }).outputText;
   const module = { exports: {} };
   new Function('require', 'module', 'exports', 'navigator', compiled)(name => name.includes('drum-instruments')
-    ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports,
+    ? require('./music-loader.cjs').loadMusic('drum-instruments.ts')
+    : name === './mix-values' ? require('./music-loader.cjs').loadMusic('../audio/mix-values.ts') : angular, module, module.exports,
     request ? { requestMIDIAccess: request } : {});
   return new module.exports.MidiOutputService();
 }

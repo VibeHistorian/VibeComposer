@@ -1,4 +1,5 @@
 import { Midi } from '@tonejs/midi';
+import { midiPanValue, mixEnabled } from '../audio/mix-values';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from './phrase-note';
@@ -65,6 +66,6 @@ function configureMix(track: ReturnType<Midi['addTrack']>, compositionTrack: Com
   const { mix } = compositionTrack;
   if (compositionTrack.role !== 'drums') track.instrument.number = mix.program;
   track.addCC({ number: 7, time: 0, value: Math.max(0, Math.min(1, mix.volumePercent / 100)) });
-  track.addCC({ number: 10, time: 0, value: Math.round((mix.panPercent + 100) * 127 / 200) / 127 });
-  return !mix.muted && (!anySolo || mix.solo);
+  track.addCC({ number: 10, time: 0, value: midiPanValue(mix.panPercent) / 127 });
+  return mixEnabled(mix, anySolo);
 }

@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { midiPanValue } from './mix-values';
 import type { CompositionTrack } from '../project/track.model';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
 import { drumInstrumentLabel, mapDrumPitch, resolveDrumMapping } from '../music/drum-instruments';
@@ -88,7 +89,7 @@ export class MidiOutputService {
     if (!this.output()) return;
     const channel = track.midiChannel - 1;
     const volume = audible ? Math.max(0, Math.min(127, Math.round(track.mix.volumePercent * 127 / 100))) : 0;
-    const pan = Math.round((track.mix.panPercent + 100) * 127 / 200);
+    const pan = midiPanValue(track.mix.panPercent);
     const key = `${track.mix.program}:${volume}:${pan}`;
     if (this.configurations.get(channel) === key) return;
     this.channels.add(channel);
