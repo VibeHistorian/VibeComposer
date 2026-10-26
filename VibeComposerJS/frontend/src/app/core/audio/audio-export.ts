@@ -1,6 +1,7 @@
 import type { CompositionProject } from '../project/project.model';
 import { mixEnabled } from './mix-values';
 import { layOutTrackPhrase } from '../music/phrase';
+import { noteTimelineBounds } from '../music/phrase-bounds';
 import { beatToSeconds, projectTempoMap, sectionDurationBeats } from '../music/section-context';
 import { TinySynthEngine } from './tiny-synth-engine';
 
@@ -14,14 +15,15 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
   const tempo = projectTempoMap(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
-  const tracks = project.tracks.filter(track => mixEnabled(track.mix, anySolo) && track.mix.volumePercent > 0)
-    .map(track => ({ track, notes: layOutTrackPhrase(project, track) }));
+  const phrases = project.tracks.map(track => ({ track, notes: layOutTrackPhrase(project, track) }));
+  const tracks = phrases.filter(({ track }) => mixEnabled(track.mix, anySolo) && track.mix.volumePercent > 0);
   if (!tracks.some(({ notes }) => notes.some(note => note.velocity > 0))) {
     throw new Error('There are no audible notes to export.');
   }
-  const endBeat = Math.max(project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0),
-    ...tracks.map(({ notes }) => notes.reduce((end, note) => Math.max(end, note.startBeat + note.durationBeats), 0)));
-  const songSeconds = beatToSeconds(tempo, endBeat);
+  const { startBeat, endBeat } = noteTimelineBounds(phrases.flatMap(({ notes }) => notes),
+    project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
+  const offsetSeconds = -beatToSeconds(tempo, startBeat);
+  const songSeconds = beatToSeconds(tempo, endBeat) + offsetSeconds;
   const length = Math.ceil((songSeconds + MAX_RELEASE_TAIL_SECONDS) * SAMPLE_RATE);
   const context = new OfflineAudioContext(2, length, SAMPLE_RATE);
   const synth = new TinySynthEngine(context);
@@ -40,8 +42,8 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       pan.connect(master);
       nodes.push(gain, pan);
       for (const note of notes) {
-        const start = beatToSeconds(tempo, note.startBeat);
-        const duration = Math.max(0.035, beatToSeconds(tempo, note.startBeat + note.durationBeats) - start);
+        const start = beatToSeconds(tempo, note.startBeat) + offsetSeconds;
+        const duration = Math.max(0.035, beatToSeconds(tempo, note.startBeat + note.durationBeats) + offsetSeconds - start);
         for (const voice of synth.schedule(gain, track.mix.program, track.role === 'drums',
           note.midi, note.velocity, start, duration)) {
           voice.source.onended = () => {

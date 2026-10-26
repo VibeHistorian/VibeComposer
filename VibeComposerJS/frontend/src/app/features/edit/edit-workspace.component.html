@@ -14,9 +14,9 @@
           <output>{{ noteName(note.midi) }}</output>
         </div>
         <label class="field-label" for="note-start">Start beat</label>
-        <input id="note-start" class="number-input" type="number" min="1" [max]="phraseBeats() - note.durationBeats + 1" step="0.25" [value]="note.startBeat + 1" (change)="updateSelected('startBeat', $event)" />
+        <input id="note-start" class="number-input" type="number" [min]="editBounds().startBeat + 1" [max]="editBounds().endBeat - note.durationBeats + 1" step="0.25" [value]="note.startBeat + 1" (change)="updateSelected('startBeat', $event)" />
         <label class="field-label" for="note-length">Length in beats</label>
-        <input id="note-length" class="number-input" type="number" min="0.05" [max]="phraseBeats() - note.startBeat" step="0.25" [value]="note.durationBeats" (change)="updateSelected('durationBeats', $event)" />
+        <input id="note-length" class="number-input" type="number" min="0.05" [max]="editBounds().endBeat - note.startBeat" step="0.25" [value]="note.durationBeats" (change)="updateSelected('durationBeats', $event)" />
         <label class="field-label" for="note-velocity">Velocity</label>
         <div class="velocity-control">
           <input id="note-velocity" type="range" min="1" max="127" step="1" [value]="note.velocity" (change)="updateSelected('velocity', $event)" />

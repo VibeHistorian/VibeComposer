@@ -9,11 +9,12 @@ import { projectTempoMap } from './section-context';
 import { mapDrumPitch, type DrumMapping } from './drum-instruments';
 
 /** Export the current editor draft in phrase-relative beats, regardless of mute/solo state.
- * Notes already contain their sounding pitches; do not transpose them a second time. */
+ * Prepend pickup time and preserve tails. Notes already contain their sounding pitches. */
 export function generatePhraseMidi(name: string, tempoBpm: number,
   tracks: readonly { track: CompositionTrack; notes: readonly PhraseNote[] }[],
-  phraseBeats: number, drumMapping: DrumMapping = 'general-midi'): Uint8Array {
+  _phraseBeats: number, drumMapping: DrumMapping = 'general-midi'): Uint8Array {
   const midi = new Midi();
+  const offset = -tracks.reduce((start, { notes }) => notes.reduce((minimum, note) => Math.min(minimum, note.startBeat), start), 0);
   midi.name = name;
   midi.header.setTempo(tempoBpm);
   for (const { track: source, notes } of tracks) {
@@ -22,8 +23,8 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
     track.channel = source.midiChannel - 1;
     configureMix(track, source, false);
     for (const note of notes) {
-      const start = Math.max(0, note.startBeat);
-      const end = Math.min(phraseBeats, note.startBeat + note.durationBeats);
+      const start = note.startBeat + offset;
+      const end = start + note.durationBeats;
       if (end <= start) continue;
       track.addNote({
         midi: source.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
@@ -40,7 +41,10 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
 export function generateCompositionMidi(project: CompositionProject, drumMapping: DrumMapping = 'general-midi'): Uint8Array {
   const midi = new Midi();
   midi.name = project.name;
-  midi.header.tempos = projectTempoMap(project).map(point => ({ ticks: point.beat * midi.header.ppq, bpm: point.bpm }));
+  const phrases = new Map(project.tracks.map(track => [track.id, layOutTrackPhrase(project, track)]));
+  const offset = -[...phrases.values()].reduce((start, notes) => notes.reduce((minimum, note) => Math.min(minimum, note.startBeat), start), 0);
+  midi.header.tempos = projectTempoMap(project).map(point => ({ ticks: (point.beat + offset) * midi.header.ppq, bpm: point.bpm }));
+  if (offset > 0) midi.header.tempos.unshift({ ticks: 0, bpm: midi.header.tempos[0].bpm });
   midi.header.update();
   const anySolo = project.tracks.some((track) => track.mix.solo);
 
@@ -50,10 +54,10 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
     track.channel = compositionTrack.midiChannel - 1;
     const included = configureMix(track, compositionTrack, anySolo);
     if (!included) continue;
-    for (const note of layOutTrackPhrase(project, compositionTrack)) {
+    for (const note of phrases.get(compositionTrack.id)!) {
       track.addNote({
         midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
-        ticks: Math.round(note.startBeat * midi.header.ppq),
+        ticks: Math.round((note.startBeat + offset) * midi.header.ppq),
         durationTicks: Math.max(1, Math.round(note.durationBeats * midi.header.ppq)),
         velocity: note.velocity / 127,
       });

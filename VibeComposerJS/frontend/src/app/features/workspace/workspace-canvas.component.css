@@ -93,6 +93,7 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .score-ruler-viewport { min-width: 0; overflow: hidden; margin-left: 1px; }
 .score-ruler-sections { position: relative; min-width: 0; height: 20px; }
 .score-loop-line { position: absolute; bottom: 0; height: 2px; background: var(--loop-line); pointer-events: none; }
+.score-ruler-overflow { position: absolute; top: 0; height: 20px; padding: 3px 4px; box-sizing: border-box; color: var(--text-muted); border-right: 1px solid var(--border-subtle); }
 .score-ruler-section { position: absolute; top: 0; min-width: 0; height: 20px; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .score-ruler-section.selected { background: var(--surface-accent); }
 .score-ruler-section:hover { background: var(--surface-hover); }

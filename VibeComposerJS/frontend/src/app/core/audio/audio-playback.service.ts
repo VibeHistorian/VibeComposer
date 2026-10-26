@@ -5,6 +5,7 @@ import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from '../music/phrase-note';
+import { noteTimelineBounds } from '../music/phrase-bounds';
 import { layOutTrackPhrase } from '../music/phrase';
 import { samePhraseInputs } from '../music/phrase-inputs';
 import { mostIntenseSection } from '../music/arrangement-generator';
@@ -26,6 +27,7 @@ export class AudioPlaybackService {
   private readonly playbackState = signal<PlaybackState>('stopped');
   private readonly position = signal(0);
   private readonly duration = signal(0);
+  private readonly timelineStart = signal(0);
   private readonly loopState = signal(true);
   private readonly liveState = signal(true);
   private readonly playbackError = signal('');
@@ -116,10 +118,10 @@ export class AudioPlaybackService {
       return;
     }
     const resumeAt = this.state() === 'paused' || this.beat() < this.duration() ? this.beat() : 0;
-    await this.start(project, resumeAt);
+    await this.start(project, this.state() === 'stopped' && resumeAt === 0 ? undefined : resumeAt);
   }
 
-  async start(project: CompositionProject, startBeat = 0): Promise<void> {
+  async start(project: CompositionProject, startBeat?: number): Promise<void> {
     this.playbackError.set('');
     try {
       const context = this.getContext();
@@ -129,11 +131,11 @@ export class AudioPlaybackService {
       this.prepareMix(project, context);
 
       this.tempoMap = projectTempoMap(project);
-      this.duration.set(project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
       this.notes = this.createSchedule(project);
+      this.setTimelineBounds(project, this.notes);
       this.scheduledProject = project;
       this.scheduleSignature = this.signature(project, this.notes);
-      const safeStart = this.safeStartBeat(startBeat);
+      const safeStart = this.safeStartBeat(startBeat ?? this.timelineStart());
       this.position.set(safeStart);
       this.originTime = context.currentTime - this.absoluteSeconds(safeStart);
       this.resetQueue(safeStart);
@@ -161,7 +163,7 @@ export class AudioPlaybackService {
   stop(): void {
     this.clearScheduler();
     this.stopSources();
-    this.position.set(0);
+    this.position.set(this.timelineStart());
     this.playbackState.set('stopped');
   }
 
@@ -176,8 +178,8 @@ export class AudioPlaybackService {
   seek(project: CompositionProject, targetBeat: number): void {
     if (!Number.isFinite(targetBeat)) return;
     const playing = this.state() === 'playing';
-    if (!playing) this.duration.set(project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
-    const beat = Math.min(this.duration(), Math.max(0, targetBeat));
+    if (!playing) this.setTimelineBounds(project, this.createSchedule(project));
+    const beat = Math.min(this.duration(), Math.max(this.timelineStart(), targetBeat));
     const { startBeat, endBeat } = this.loopBounds();
     if (this.loopEnabled() && (beat < startBeat || beat >= endBeat)) this.loopState.set(false);
     if (playing) this.restartAt(beat);
@@ -235,7 +237,8 @@ export class AudioPlaybackService {
     if (signature === this.scheduleSignature) return;
 
     const beat = this.currentSongBeat();
-    const duration = project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0);
+    this.setTimelineBounds(project, notes);
+    const duration = this.duration();
     if (duration <= 0 || (!this.loopEnabled() && beat >= duration)) {
       this.stop();
       this.duration.set(duration);
@@ -246,7 +249,8 @@ export class AudioPlaybackService {
     this.duration.set(duration);
     this.notes = notes;
     this.scheduleSignature = signature;
-    this.restartAt(this.safeStartBeat(beat % duration));
+    const start = this.timelineStart();
+    this.restartAt(this.safeStartBeat(this.loopEnabled() ? start + (beat - start) % (duration - start) : beat));
   }
 
   updateMix(project: CompositionProject): void {
@@ -315,6 +319,12 @@ export class AudioPlaybackService {
       pan.connect(this.master);
       this.buses.set(track.id, { gain, pan });
     }
+  }
+
+  private setTimelineBounds(project: CompositionProject, notes: readonly PhraseNote[]): void {
+    const bounds = noteTimelineBounds(notes, project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
+    this.timelineStart.set(bounds.startBeat);
+    this.duration.set(bounds.endBeat);
   }
 
   private createSchedule(project: CompositionProject): ScheduledNote[] {
@@ -419,7 +429,7 @@ export class AudioPlaybackService {
 
   private currentAbsoluteBeat(): number {
     if (!this.context) return 0;
-    const seconds = Math.max(0, this.context.currentTime - this.originTime);
+    const seconds = this.context.currentTime - this.originTime;
     const { startBeat, endBeat } = this.loopBounds();
     const endSeconds = beatToSeconds(this.tempoMap, endBeat);
     if (!this.loopEnabled() || seconds < endSeconds) return secondsToBeat(this.tempoMap, seconds);
@@ -439,9 +449,9 @@ export class AudioPlaybackService {
 
   private loopBounds(): PlaybackRange {
     const duration = this.duration();
-    const startBeat = Math.max(0, this.selectedLoopRange?.startBeat ?? 0);
+    const startBeat = Math.max(this.timelineStart(), this.selectedLoopRange?.startBeat ?? this.timelineStart());
     const endBeat = Math.min(duration, this.selectedLoopRange?.endBeat ?? duration);
-    return endBeat > startBeat ? { startBeat, endBeat } : { startBeat: 0, endBeat: duration };
+    return endBeat > startBeat ? { startBeat, endBeat } : { startBeat: this.timelineStart(), endBeat: duration };
   }
 
   private currentSongBeat(): number {
@@ -457,7 +467,7 @@ export class AudioPlaybackService {
       const { startBeat, endBeat } = this.loopBounds();
       return beat >= startBeat && beat < endBeat ? beat : startBeat;
     }
-    return beat >= this.duration() ? 0 : Math.max(0, beat);
+    return beat >= this.duration() ? this.timelineStart() : Math.max(this.timelineStart(), beat);
   }
 
   private resetQueue(beat: number): void {

@@ -389,6 +389,7 @@ test('chord-relative contours use the same in-key pitches in production phrases 
   service.updateSettings({ key: 'G', scale: 'natural-minor', transposeSemitones: 0 });
   service.setProgression([1]);
   const id = 'track-arpeggio-1';
+  service.setSectionTrackPresence(0, id, true);
   service.updateTrackGeneratorSettings(id, { rhythm: 'full', hitsPerPattern: 4, patternRepeat: 1, chordSpan: 1,
     arpContour: [0,0,1,2], arpContourChordMode: true, exceptionChance: 0, pauseChance: 0,
     useOctaveAdjustments: false, transpose: 0, swingPercent: 50 });

@@ -94,7 +94,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     const notes=read().tracks.find(t=>t.role==='bass').editedPhrase;
     const compensation=notes.some(n=>n.midi===54&&n.startBeat===0);
     const preserved=notes.some(n=>n.id.endsWith('-old'));
-    const clipped=notes.some(n=>n.startBeat===15&&n.durationBeats===1)&&notes.length===3;
+    const preservedTail=notes.some(n=>n.startBeat===15&&n.durationBeats===3)&&notes.length===3;
     await open('bass');const reopenedZero=knob().value==='0';button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'));
     const checkbox=await settings();checkbox.click();closeSettings();
     await open('bass');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
@@ -102,7 +102,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     await open('drums');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
     const drumsUntransposed=read().tracks.find(t=>t.role==='drums').editedPhrase.some(n=>n.midi===61);
     const oldDrumsCleared=read().tracks.find(t=>t.id==='track-drums-extra').editedPhrase.length===0;
-    return {defaultOff,initialZero,noAddNote,glow,noGlow,freePitch,compensation,preserved,clipped,reopenedZero,replaced,drumsUntransposed,oldDrumsCleared};
+    return {defaultOff,initialZero,noAddNote,glow,noGlow,freePitch,compensation,preserved,preservedTail,reopenedZero,replaced,drumsUntransposed,oldDrumsCleared};
   })()`);
   for(const [key,value] of Object.entries(result))assert.equal(value,true,key);
   const exported=await evaluate('window.phraseExport');
@@ -116,7 +116,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
   const phrase=new Midi(Buffer.from(exported.bytes));
   assert.equal(phrase.tracks.length,1,'only edited instrument exported');
   assert.ok(phrase.tracks[0].notes.some(n=>n.midi===66&&n.ticks===0),'unapplied pitch edits exported in sounding pitch');
-  assert.ok(phrase.tracks[0].notes.some(n=>n.ticks/phrase.header.ppq===15&&n.durationTicks/phrase.header.ppq===1),'phrase-relative timing and clipped duration');
+  assert.ok(phrase.tracks[0].notes.some(n=>n.ticks/phrase.header.ppq===15&&n.durationTicks/phrase.header.ppq===3),'phrase-relative timing and preserved spillover duration');
   await reload();
   assert.equal(await evaluate(`(async()=>{${waitCode}${setup}return (await settings()).checked;})()`),true,'discard preference survives reload');
   const options=await evaluate(`(async()=>{${waitCode}${setup}
@@ -124,10 +124,10 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     const before=read().tracks.find(t=>t.role==='bass').editedPhrase;
     startDrop();const popup=await wait(()=>document.querySelector('vc-midi-import-dialog #midi-import-duration'));
     const dialog=popup.closest('vc-midi-import-dialog'),apply=dialog.querySelector('button[type="submit"]');
-    const combined=!!dialog.querySelector('#midi-import-scale')&&dialog.textContent.includes('21 beats')&&dialog.textContent.includes('16 beats');
+    const combined=!!dialog.querySelector('#midi-import-scale')&&dialog.textContent.includes('21 beats')&&dialog.textContent.includes('20 beats');
     const emptyDefault=popup.value===''&&dialog.querySelector('#midi-import-scale').getAttribute("value")==='';
-    popup.value='16';popup.dispatchEvent(new Event('input',{bubbles:true}));await wait(()=>apply.disabled);
-    const rejectsEqual=dialog.querySelector('[role="alert"]').textContent.includes('less than 16');
+    popup.value='20';popup.dispatchEvent(new Event('input',{bubbles:true}));await wait(()=>apply.disabled);
+    const rejectsEqual=dialog.querySelector('[role="alert"]').textContent.includes('less than 20');
     popup.value='0';popup.dispatchEvent(new Event('input',{bubbles:true}));await new Promise(r=>setTimeout(r,30));const rejectsZero=apply.disabled;
     popup.value='12';popup.dispatchEvent(new Event('input',{bubbles:true}));await wait(()=>!apply.disabled);
     const select=dialog.querySelector('#midi-import-scale');const choice=(await selectOptions(select))[1];await change(select,choice.value);

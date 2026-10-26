@@ -54,12 +54,13 @@ function fixture({ loop = false } = {}) {
     './mix-values': require('./music-loader.cjs').loadMusic('../audio/mix-values.ts'),
     '../music/arrangement-generator': require('./music-loader.cjs').loadMusic('arrangement-generator.ts'),
     '../music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
+    '../music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     './tiny-synth-engine': { TinySynthEngine: class {} },
     './midi-output.service': { MidiOutputService: class {} },
     '../music/phrase': { layOutTrackPhrase: (project, track) =>
-      project.arrangement[0].trackPresence[track.id] === false ? [] : track.notes },
+      !project.arrangement.length || project.arrangement[0].trackPresence[track.id] === false ? [] : track.notes },
   });
   const playback = new AudioPlaybackService();
   // Existing scenarios explicitly start without looping; the default is tested separately.
@@ -81,6 +82,30 @@ function fixture({ loop = false } = {}) {
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
   return { playback, context, sources, project, angular, load, midi };
 }
+
+test('playback includes pickups and post-end notes without shifting the song origin', async () => {
+  const { playback, project, context, sources } = fixture();
+  project.arrangement = [{ measures: 1, trackPresence: {} }];
+  project.tracks[0].notes = [
+    { id: 'pickup', midi: 48, startBeat: -2, durationBeats: 1, velocity: 100 },
+    { id: 'late', midi: 50, startBeat: 5, durationBeats: 2, velocity: 100 },
+  ];
+  await playback.start(project);
+  assert.equal(playback.beat(), -2);
+  assert.equal(playback.durationBeats(), 7);
+  assert.equal(sources.length, 1);
+  context.currentTime = 1;
+  playback.tick();
+  assert.equal(playback.beat(), 0);
+  context.currentTime = 3.5;
+  playback.tick();
+  assert.equal(playback.beat(), 5);
+  assert.equal(sources.length, 2);
+  context.currentTime = 4.6;
+  playback.tick();
+  assert.equal(playback.state(), 'stopped');
+  assert.equal(playback.beat(), 7);
+});
 
 test('MIDI playback uses assigned tracks and timestamps, respects mute, and clears notes on pause and routing changes', async () => {
   const { playback, context, sources, project, midi } = fixture();

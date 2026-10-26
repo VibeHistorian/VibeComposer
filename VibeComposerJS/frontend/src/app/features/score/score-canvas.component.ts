@@ -32,6 +32,7 @@ export interface ScoreCanvasNote extends PhraseNote {
   readonly trackName?: string;
   readonly trackOrder?: number;
   readonly phraseSource?: PhraseSource;
+  readonly sectionId?: string;
   readonly color: ArrangedPart;
   readonly topPercent: number;
   readonly opacity: number;
@@ -62,6 +63,7 @@ interface ScoreCanvasModel {
   readonly notes: readonly ScoreCanvasNote[];
   readonly sections: readonly ScoreCanvasSection[];
   readonly totalBeats: number;
+  readonly timelineStartBeat?: number;
   readonly selectedTrackId: string;
   readonly hiddenTrackIds: ReadonlySet<string>;
 }
@@ -89,6 +91,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly sections = input.required<readonly ScoreCanvasSection[]>();
   readonly chordBoundaries = input<readonly { beat: number; hue: number }[]>([]);
   readonly totalBeats = input.required<number>();
+  readonly timelineStartBeat = input(0);
   readonly playheadPercent = input.required<number>();
   readonly selectedTrackId = input.required<string>();
   readonly hiddenTrackIds = input.required<ReadonlySet<string>>();
@@ -179,6 +182,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       notes: this.notes(),
       sections: this.sections(),
       totalBeats: this.totalBeats(),
+      timelineStartBeat: this.timelineStartBeat(),
       selectedTrackId: this.selectedTrackId(),
       hiddenTrackIds: this.hiddenTrackIds(),
     };
@@ -352,7 +356,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
 
   private get timeGeometry(): ScoreTimeGeometry {
     return { width: this.width, horizontalScale: this.horizontalScale, horizontalOffset: this.horizontalOffset,
-      totalBeats: this.model?.totalBeats ?? 1 };
+      totalBeats: this.model?.totalBeats ?? 1, startBeat: this.model?.timelineStartBeat ?? 0 };
   }
 
   private get pitchGeometry(): ScorePitchGeometry {
@@ -410,7 +414,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
       const fraction = (event.clientX - bounds.left) / Math.max(1, bounds.width);
       const beat = (this.horizontalOffset + fraction / this.horizontalScale) * this.model.totalBeats;
-      this.seekRequested.emit(Math.max(0, Math.min(this.model.totalBeats, beat)));
+      this.seekRequested.emit(beat + (this.model.timelineStartBeat ?? 0));
     }
   };
 
@@ -772,7 +776,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const focus = this.pendingSectionFocus;
     if (focus) {
       this.pendingSectionFocus = null;
-      Object.assign(this, sectionViewport(focus.startBeat, focus.endBeat, totalBeats));
+      Object.assign(this, sectionViewport(focus.startBeat - (model.timelineStartBeat ?? 0), focus.endBeat - (model.timelineStartBeat ?? 0), totalBeats));
     }
     const scoreHeight = this.scoreHeight;
     const previousLaneHeight = this.laneHeight;
@@ -861,8 +865,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     // Fade smoothly with zoom rather than jumping in brightness at each
     // subdivision threshold. Keep a faint floor for orientation at song scale.
     const timeGridAlpha = Math.max(0.22, Math.min(1, Math.sqrt(beatWidth / (MIN_TIME_GRID_SPACING * 4))));
-    const firstStep = Math.max(0, Math.ceil(this.horizontalOffset * totalBeats * 4 / gridStep) * gridStep);
-    const lastStep = Math.min(totalBeats * 4, Math.ceil((this.horizontalOffset + 1 / this.horizontalScale) * totalBeats * 4));
+    const origin = model.timelineStartBeat ?? 0;
+    const firstStep = Math.ceil((origin + this.horizontalOffset * totalBeats) * 4 / gridStep) * gridStep;
+    const lastStep = Math.min((origin + totalBeats) * 4, Math.ceil((origin + (this.horizontalOffset + 1 / this.horizontalScale) * totalBeats) * 4));
     for (let sixteenth = firstStep; sixteenth <= lastStep; sixteenth += gridStep) {
       const x = Math.floor(this.scoreX(sixteenth / 4)) + 0.5;
       const beat = sixteenth / 4;
@@ -870,7 +875,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         : sixteenth % 4 === 0 ? '--grid-beat'
           : sixteenth % 2 === 0 ? '--grid-eighth' : '--grid-step';
       line(x, 0, x, this.height, gridColor, timeGridAlpha * (sixteenth % 16 === 0 ? 1 : 0.92));
-      if (beat === totalBeats) break;
+      if (beat === origin + totalBeats) break;
     }
     for (const section of sections) {
       const x = Math.floor(this.scoreX(section.startBeat)) + 0.5;
@@ -997,7 +1002,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
     const style = getComputedStyle(document.documentElement);
-    const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1);
+    const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1) + (this.model?.timelineStartBeat ?? 0);
     for (const area of this.hitAreas) {
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
       const glowStrength = 1 - (beat - area.note.startBeat) / area.note.durationBeats;

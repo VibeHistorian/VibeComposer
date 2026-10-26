@@ -31,6 +31,8 @@ function fixture() {
     } }).outputText;
     const module = { exports: {} };
     const defaults = {
+      'core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
+      'core/music/phrase': { phraseForTrack: () => [], layOutTrackPhrase: () => [] },
       'core/music/phrase-edit': require('./music-loader.cjs').loadMusic('phrase-edit.ts'),
       'core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
       '@angular/core': angular, 'core/project/project.service': { ProjectService: 'project' },

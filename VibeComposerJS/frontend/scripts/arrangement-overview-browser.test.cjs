@@ -63,6 +63,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
     } }).outputText;
     const css = fs.readFileSync(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.css'), 'utf8');
+    const boundsCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-bounds.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const contextCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/section-context.ts'), 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
@@ -97,6 +98,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const dependencies = { '@angular/core': angular,
       '../../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
       '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
+      '../../core/music/phrase-bounds': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${boundsCode}; return module.exports; })(),
       '../../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),
       '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
       '../../core/project/arrangement.model': { SECTION_TYPES: [] },

@@ -2,6 +2,7 @@ import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
+import { noteTimelineBounds } from '../../core/music/phrase-bounds';
 import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
@@ -332,23 +333,35 @@ export class WorkspaceCanvasComponent {
     this.collapsedGroups.set(new Set(ARRANGED_PARTS.filter(role => role !== selected)));
   });
   readonly scoreSectionFocus = computed<ScoreSectionFocus>(() => {
-    if (this.editing()) return { startBeat: this.editStartBeat(), endBeat: this.editStartBeat() + this.editPhraseLength() };
+    if (this.editing()) return this.scoreEditBounds();
     this.selectedSectionIds();
     // A changed selection must refit even when its bounds equal the full arrangement.
-    return { ...(this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: this.totalBeats() }) };
+    return { ...(this.workspaceUi.sectionRange() ?? this.scoreTimelineBounds()) };
   });
   readonly scoreViewport = signal<ScoreViewport>({ scale: 1, offsetPercent: 0, width: 0, laneHeight: 40, verticalOffset: 0, scoreHeight: 0 });
 
+  readonly scoreEditBounds = computed(() => {
+    const bounds = this.editor()?.editBounds() ?? { startBeat: 0, endBeat: this.editPhraseLength() };
+    return { startBeat: this.editStartBeat() + bounds.startBeat, endBeat: this.editStartBeat() + bounds.endBeat };
+  });
+  readonly scoreTimelineBounds = computed(() => {
+    const bounds = noteTimelineBounds(this.scoreNotes(), this.totalBeats());
+    if (!this.editing()) return bounds;
+    const edit = this.scoreEditBounds();
+    return { startBeat: Math.min(bounds.startBeat, edit.startBeat), endBeat: Math.max(bounds.endBeat, edit.endBeat) };
+  });
+  readonly scoreTimelineBeats = computed(() => this.scoreTimelineBounds().endBeat - this.scoreTimelineBounds().startBeat);
+  readonly scorePlayheadPercent = computed(() => (this.playback.beat() - this.scoreTimelineBounds().startBeat) / Math.max(1, this.scoreTimelineBeats()) * 100);
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly totalBeats = computed(() => this.project().arrangement.reduce((sum, section) => sum + sectionDurationBeats(this.project(), section), 0));
   readonly loopRange = computed(() => this.playback.loopEnabled()
-    ? this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: this.totalBeats() } : null);
+    ? this.workspaceUi.sectionRange() ?? noteTimelineBounds(this.scoreNotes(), this.totalBeats()) : null);
 
   seek(beat: number): void {
     this.playback.seek(this.project(), beat);
   }
   readonly playheadPercent = computed(() => this.totalBeats() > 0
-    ? Math.min(100, Math.max(0, this.playback.beat() / this.totalBeats() * 100)) : 0);
+    ? this.playback.beat() / this.totalBeats() * 100 : 0);
   readonly timelineSections = computed<TimelineSection[]>(() => {
     let beat = 0;
     let measure = 1;
@@ -383,7 +396,7 @@ export class WorkspaceCanvasComponent {
   scoreHeaderX(beat: number): number {
     const viewport = this.scoreViewport();
     // Match the canvas's floor(x) + 0.5 stroke center with a one-pixel DOM strip.
-    return Math.floor((beat / Math.max(1, this.totalBeats()) - viewport.offsetPercent / 100) * viewport.width * viewport.scale);
+    return Math.floor(((beat - this.scoreTimelineBounds().startBeat) / Math.max(1, this.scoreTimelineBeats()) - viewport.offsetPercent / 100) * viewport.width * viewport.scale);
   }
   readonly scoreHeaderSections = computed(() => this.scoreRulerSections().map(section => {
     const left = this.scoreHeaderX(section.startBeat);
@@ -431,14 +444,9 @@ export class WorkspaceCanvasComponent {
     const editor = this.editor();
     if (!this.editing() || !editor || !this.preferences.scoreGhostNotes()) return [];
     const editedIds = new Set(editor.editedTracks().map(track => track.id));
-    const start = this.editStartBeat();
-    const end = start + this.editPhraseLength();
+    const { startBeat: start, endBeat: end } = this.scoreEditBounds();
     return this.scoreNotes().filter(note => !editedIds.has(note.part)
-      && note.startBeat < end && note.startBeat + note.durationBeats > start)
-      .map(note => {
-        const startBeat = Math.max(start, note.startBeat);
-        return { ...note, startBeat, durationBeats: Math.min(end, note.startBeat + note.durationBeats) - startBeat };
-      });
+      && note.startBeat < end && note.startBeat + note.durationBeats > start);
   });
   applyOnEmptyMiddleClick(event: MouseEvent): void {
     if (event.button !== 1 || !this.editing()) return;
@@ -483,8 +491,8 @@ export class WorkspaceCanvasComponent {
     if (this.editing()) return;
     const track = this.project().tracks.find(track => track.id === note.part);
     if (!track) return;
-    const section = this.timelineSections().find((item, index, all) => note.startBeat >= item.startBeat
-      && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()))?.section;
+    const section = this.timelineSections().find((item, index, all) => note.sectionId ? item.section.id === note.sectionId
+      : note.startBeat >= item.startBeat && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()))?.section;
     if (section && (section.trackPhrases?.[track.id] !== undefined
         || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id))) {
       this.openNoteEditor(note);
@@ -512,7 +520,7 @@ export class WorkspaceCanvasComponent {
   });
   private readonly trackPhrases = computed(() => {
     const project = this.phraseProject();
-    return new Map(project.tracks.map(track => [track.id, layOutTrackPhrase(project, track, true)]));
+    return new Map(project.tracks.map(track => [track.id, layOutTrackPhrase(project, track, true, true)]));
   });
   readonly scoreNotes = computed<ScoreNote[]>(() => {
     const phrases = this.tracks().map(track => ({ track, notes: this.trackPhrases().get(track.id) ?? [] }));
@@ -682,12 +690,13 @@ export class WorkspaceCanvasComponent {
 
   openNoteEditor(note: ScoreNote): void {
     if (this.editing() || !this.project().tracks.some((track) => track.id === note.part)) return;
-    const item = this.timelineSections().find((item, index, all) => note.startBeat >= item.startBeat
-      && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()));
+    const item = this.timelineSections().find((item, index, all) => note.sectionId ? item.section.id === note.sectionId
+      : note.startBeat >= item.startBeat && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()));
     this.openTrackEditor(note.part);
     if (item) {
       const length = this.project().progression.length * 4;
-      const offset = Math.floor((note.startBeat - item.startBeat) / length) * length;
+      const offset = Math.max(0, Math.min(Math.ceil(sectionDurationBeats(this.project(), item.section) / length) - 1,
+        Math.floor((note.startBeat - item.startBeat) / length))) * length;
       this.editSectionId.set(item.section.id);
       this.editPhraseOffset.set(offset);
       this.editStartBeat.set(item.startBeat + offset);

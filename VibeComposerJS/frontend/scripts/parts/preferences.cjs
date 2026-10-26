@@ -21,7 +21,7 @@ test('ghost note preference defaults on, persists, transfers and rejects invalid
   assert.equal(service.historyPosition(), history);
 });
 
-test('phrase ghosts use arranged notes from other tracks, clipped to the edited phrase', () => {
+test('phrase ghosts preserve crossing note durations from other tracks', () => {
   const { service, workspace, ui, uiPreferences } = fixture();
   const [section] = service.project().arrangement;
   const bass = service.project().tracks.find(track => track.role === 'bass');
@@ -32,17 +32,17 @@ test('phrase ghosts use arranged notes from other tracks, clipped to the edited 
     { id: 'outside', midi: 64, startBeat: 5, durationBeats: 1, velocity: 90 },
   ]);
   ui.selectedTrackId.set(bass.id);
-  workspace.editor = () => ({ editedTracks: () => [bass] });
+  workspace.editor = () => ({ editedTracks: () => [bass], editBounds: () => ({ startBeat: 0, endBeat: 2 }) });
   assert.deepEqual(workspace.ghostNotes(), [], 'overview has no ghosts');
   workspace.editing.set(true);
   workspace.editStartBeat.set(1); workspace.editPhraseLength.set(2);
   const ghosts = workspace.ghostNotes();
   assert.ok(ghosts.length > 0);
-  assert.ok(ghosts.every(note => note.part !== bass.id && note.startBeat >= 1 && note.startBeat + note.durationBeats <= 3));
+  assert.ok(ghosts.every(note => note.part !== bass.id && note.startBeat < 3 && note.startBeat + note.durationBeats > 1));
   const chordGhost = ghosts.find(note => note.part === chords.id);
   assert.equal(chordGhost.midi, 60);
-  assert.equal(chordGhost.startBeat, 1);
-  assert.equal(chordGhost.durationBeats, 2);
+  assert.equal(chordGhost.startBeat, 0);
+  assert.equal(chordGhost.durationBeats, 4);
   uiPreferences.toggleScoreGhostNotes();
   assert.deepEqual(workspace.ghostNotes(), []);
 });

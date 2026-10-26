@@ -208,6 +208,12 @@
               </div>
               <div class="score-ruler-viewport" [style.width.px]="scoreViewport().width">
                 <div class="score-ruler-sections">
+                  @if (scoreTimelineBounds().startBeat < 0) {
+                    <span class="score-ruler-overflow" [style.left.px]="scoreHeaderX(scoreTimelineBounds().startBeat)" [style.width.px]="scoreHeaderX(0) - scoreHeaderX(scoreTimelineBounds().startBeat)">00</span>
+                  }
+                  @if (scoreTimelineBounds().endBeat > totalBeats()) {
+                    <span class="score-ruler-overflow" [style.left.px]="scoreHeaderX(totalBeats())" [style.width.px]="scoreHeaderX(scoreTimelineBounds().endBeat) - scoreHeaderX(totalBeats())">END</span>
+                  }
                   @for (section of scoreHeaderSections(); track section.section.id) {
                     <button type="button" class="score-ruler-section" vcScoreChordLabels
                       [style.left.px]="section.left" [style.width.px]="section.width"
@@ -242,7 +248,7 @@
                   [ghostNotes]="ghostNotes()"
                   [chordBoundaries]="scoreChordBoundaries()"
                   [notesReady]="!editing() || (editor()?.draftReady() ?? false)"
-                  [totalBeats]="totalBeats()" [playheadPercent]="playheadPercent()" [selectedTrackId]="selectedTrackId()"
+                  [totalBeats]="scoreTimelineBeats()" [timelineStartBeat]="scoreTimelineBounds().startBeat" [playheadPercent]="scorePlayheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   (seekRequested)="seek($event)"
                   (trackSelected)="selectScoreTrack($event)"

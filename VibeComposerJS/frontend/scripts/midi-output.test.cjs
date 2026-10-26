@@ -161,7 +161,7 @@ test('denial and unsupported browsers report actionable status; retry works and 
   assert.match(unsupported.error(), /unavailable|HTTPS/);
   unsupported.ngOnDestroy();
 });
-test('phrase MIDI exports draft tracks despite mute/solo and clips phrase bounds', () => {
+test('phrase MIDI exports draft tracks despite mute/solo and preserves notes beyond phrase bounds', () => {
   const { Midi } = require('@tonejs/midi');
   const { loadMusic } = require('./music-loader.cjs');
   const { generatePhraseMidi } = loadMusic('midi-export.ts');
@@ -180,7 +180,7 @@ test('phrase MIDI exports draft tracks despite mute/solo and clips phrase bounds
   assert.equal(midi.tracks.length,3);
   assert.equal(midi.tracks[0].channel,bass.midiChannel-1);
   assert.equal(midi.tracks[0].instrument.number,bass.mix.program);
-  assert.deepEqual(midi.tracks[0].notes.map(n=>[n.midi,n.ticks/midi.header.ppq,n.durationTicks/midi.header.ppq]),[[66,1,2],[67,7,1]]);
+  assert.deepEqual(midi.tracks[0].notes.map(n=>[n.midi,n.ticks/midi.header.ppq,n.durationTicks/midi.header.ppq]),[[66,1,2],[67,7,4],[68,9,1]]);
   assert.ok(Math.abs(midi.tracks[0].notes[0].velocity-93/127)<.01);
   assert.equal(midi.tracks[1].channel,drum.midiChannel-1);
   assert.equal(midi.tracks[1].notes[0].midi,39);

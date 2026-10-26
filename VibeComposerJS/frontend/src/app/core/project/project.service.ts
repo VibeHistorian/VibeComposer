@@ -891,7 +891,7 @@ export class ProjectService {
 
   updateSectionTrackPhrase(sectionId: string, trackId: string, notes: readonly PhraseNote[]): boolean {
     const current = this.state();
-    if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId) || !isPhrase(notes, 2048)) return false;
+    if (!current.tracks.some(track => track.id === trackId) || !current.arrangement.some(section => section.id === sectionId) || !isPhrase(notes, 2112, -64)) return false;
     this.commit({ ...current, arrangement: current.arrangement.map(section => section.id === sectionId
       ? { ...section, trackPhrases: { ...section.trackPhrases, [trackId]: notes.map(note => ({ ...note })) } } : section) });
     return true;
@@ -902,7 +902,7 @@ export class ProjectService {
     const current = this.state();
     if (!edits.length || edits.some(edit => !current.tracks.some(track => track.id === edit.trackId)
       || edit.sectionId !== undefined && !current.arrangement.some(section => section.id === edit.sectionId)
-      || edit.notes !== null && !isPhrase(edit.notes, edit.sectionId ? 2048 : undefined))) return false;
+      || edit.notes !== null && !isPhrase(edit.notes, edit.sectionId ? 2112 : undefined, edit.sectionId ? -64 : undefined))) return false;
     let tracks = [...current.tracks];
     let arrangement = [...current.arrangement];
     const editedPhrases = { ...current.editedPhrases };

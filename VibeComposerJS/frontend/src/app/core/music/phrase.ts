@@ -93,13 +93,13 @@ export function trackPhraseSource(track: CompositionTrack, section?: Arrangement
   return section && project && trackHasSectionHarmony(project, track, section) ? 'global-section-harmony' : 'global-generated';
 }
 
-type ArrangedNote = PhraseNote & { readonly phraseSource?: PhraseSource };
+type ArrangedNote = PhraseNote & { readonly phraseSource?: PhraseSource; readonly sectionId?: string };
 const trackLayouts = new WeakMap<CompositionProject, WeakMap<CompositionTrack, readonly ArrangedNote[]>>();
 
 /** Share generated layouts across score, overview and playback for an immutable project.
  * Return copies so callers cannot change another consumer's cached note data.
  */
-export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack, includeSource = false): (PhraseNote & { readonly phraseSource?: PhraseSource })[] {
+export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack, includeSource = false, includeOwnership = false): (PhraseNote & { readonly phraseSource?: PhraseSource; readonly sectionId?: string })[] {
   let cache = trackLayouts.get(project);
   if (!cache) { cache = new WeakMap(); trackLayouts.set(project, cache); }
   let notes = cache.get(track);
@@ -108,9 +108,8 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
     cache.set(track, notes);
   }
   return notes.map(note => {
-    if (includeSource) return { ...note };
-    const { phraseSource, ...plain } = note;
-    return plain;
+    const { phraseSource, sectionId, ...plain } = note;
+    return { ...plain, ...(includeSource ? { phraseSource } : {}), ...(includeOwnership ? { sectionId } : {}) };
   });
 }
 
@@ -124,8 +123,8 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
     if (localPhrase !== undefined) {
       const length = sectionGenerationHarmony(project, section, track.role).durations;
       const sectionLength = Array.from({ length: section.measures }, (_, index) => length[index % length.length]).reduce((sum, value) => sum + value, 0);
-      if (partEnters) result.push(...localPhrase.filter(note => note.startBeat < sectionLength).map(note => ({ ...note,
-        ...(includeSource ? { phraseSource } : {}), startBeat: arrangementBeat + note.startBeat })));
+      if (partEnters) result.push(...localPhrase.map(note => ({ ...note,
+        ...(includeSource ? { phraseSource, sectionId: section.id } : {}), startBeat: arrangementBeat + note.startBeat })));
       arrangementBeat += sectionLength;
       continue;
     }
@@ -156,7 +155,10 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
         const sourceStartBeat = !manual ? durations.slice(0, sourceMeasure).reduce((sum, value) => sum + value, 0) : sourceMeasure * 4;
         const sourceEndBeat = sourceStartBeat + (!manual ? durations[sourceMeasure] : 4);
         for (const note of sectionPhrase) {
-          if (note.startBeat >= sourceStartBeat && note.startBeat < sourceEndBeat) {
+          if (note.startBeat >= sourceStartBeat && note.startBeat < sourceEndBeat
+            || manual && sourceMeasure === 0 && note.startBeat < 0
+            || manual && measure === section.measures - 1 && note.startBeat >= sourceEndBeat && note.startBeat < sourceEndBeat + 4
+            || manual && sourceMeasure === progression.length - 1 && note.startBeat >= progression.length * 4) {
             sectionNotes.push({ ...note, startBeat: arrangementBeat + note.startBeat - sourceStartBeat });
           }
         }
@@ -164,7 +166,7 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
       arrangementBeat += durations[measure % durations.length];
     }
     const timedNotes = !manual ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes;
-    result.push(...(includeSource ? timedNotes.map(note => ({ ...note, phraseSource })) : timedNotes));
+    result.push(...(includeSource ? timedNotes.map(note => ({ ...note, phraseSource, sectionId: section.id })) : timedNotes));
   }
   const notes = result;
   if (track.role === 'drums') return notes;

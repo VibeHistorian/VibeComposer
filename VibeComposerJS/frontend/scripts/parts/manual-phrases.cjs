@@ -4,6 +4,88 @@ const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('section pickups and late notes survive editing, local apply, history, reload and MIDI export', () => {
+  const { service, phrase, midi, ui, workspace, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateSection(0, { measures: 1 });
+  const section = service.project().arrangement[0];
+  service.setSectionTrackPresence(0, id, true);
+  const original = [
+    { id: 'pickup', midi: 48, startBeat: -4, durationBeats: 1, velocity: 90 },
+    { id: 'crossing', midi: 50, startBeat: 3, durationBeats: 3, velocity: 90 },
+    { id: 'late', midi: 52, startBeat: 7, durationBeats: 1, velocity: 90 },
+  ];
+  assert.equal(service.updateSectionTrackPhrase(section.id, id, original), true);
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId = section.id; editor.phraseLength = 4; editor.ngOnInit();
+  assert.deepEqual(editor.editBounds(), { startBeat: -4, endBeat: 8 });
+  assert.deepEqual(editor.draftNotes().map(({ trackId, ...note }) => note), original);
+  editor.selectNote('pickup');
+  editor.updateSelected('startBeat', { target: { value: '-4' } });
+  assert.equal(editor.selectedNote().startBeat, -4, 'reject a start earlier than the extra measure');
+  editor.updateSelected('velocity', { target: { value: '111' } });
+  const before = service.exportProjectJson();
+  editor.applyLocalChanges();
+  assert.equal(editor.applyError(), null);
+  const saved = service.project().arrangement[0].trackPhrases[id];
+  assert.equal(saved.length, 3, 'saving does not duplicate pickups or late notes');
+  assert.equal(saved.find(note => note.id === 'pickup').velocity, 111);
+  assert.equal(saved.find(note => note.id === 'crossing').durationBeats, 3);
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  assert.equal(service.importProjectJson(after), true);
+  const track = service.project().tracks.find(track => track.id === id);
+  const owned = phrase.layOutTrackPhrase(service.project(), track, true, true).find(note => note.id === 'late');
+  assert.equal(owned.sectionId, section.id);
+  workspace.openNoteEditor({ ...owned, part: id, color: 'bass', opacity: 1, topPercent: 0 });
+  assert.equal(workspace.editSectionId(), section.id, 'late onset still opens its owning section');
+  assert.equal(workspace.editPhraseOffset(), 0);
+  const parsed = new Midi(midi.generateCompositionMidi(service.project()));
+  const exported = parsed.tracks.find(t => t.name === track.name).notes;
+  assert.ok(exported.some(note => note.midi === 48 && note.ticks === 0));
+  assert.ok(exported.some(note => note.midi === 52 && note.ticks / parsed.header.ppq === 11));
+});
+
+test('section allowance follows the first and last custom measure durations', () => {
+  const { service, ui, load } = fixture();
+  service.updateSection(0, { measures: 2 });
+  const section = service.project().arrangement[0];
+  service.setSectionMusicalState(section.id, { customDurations: [2, 6] });
+  ui.selectedTrackId.set('track-bass-1');
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId = section.id; editor.phraseLength = 8; editor.ngOnInit();
+  assert.deepEqual(editor.editBounds(), { startBeat: -2, endBeat: 14 });
+  editor.addNoteAt({ midi: 48, startBeat: -2, durationBeats: 1 });
+  editor.addNoteAt({ midi: 48, startBeat: 13, durationBeats: 2 });
+  assert.equal(editor.selectedNote().durationBeats, 1);
+  const count = editor.notes().length;
+  editor.addNoteAt({ midi: 48, startBeat: -2.25 });
+  editor.addNoteAt({ midi: 48, startBeat: 14 });
+  assert.equal(editor.notes().length, count);
+});
+
+test('global Apply retains pickups and the extra measure when a section is shorter than the global phrase', () => {
+  const { service, ui, phrase, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateSection(0, { measures: 1 });
+  const section = service.project().arrangement[0];
+  service.setSectionTrackPresence(0, id, true);
+  service.updateTrackPhrase(id, []);
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId = section.id; editor.phraseLength = 4; editor.ngOnInit();
+  editor.addNoteAt({ midi: 48, startBeat: -4, durationBeats: 1 });
+  editor.addNoteAt({ midi: 50, startBeat: 7, durationBeats: 1 });
+  editor.applyChanges();
+  assert.equal(editor.applyError(), null);
+  const track = service.project().tracks.find(track => track.id === id);
+  assert.deepEqual(track.editedPhrase.map(note => note.startBeat), [-4, 7]);
+  const arranged = phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[0]] }, track);
+  assert.deepEqual(arranged.map(note => note.startBeat), [-4, 7]);
+});
+
 test('global generated notes mark differing section harmony without claiming section track settings', () => {
   const { service, phrase } = fixture();
   const project = service.project(), track = project.tracks.find(track => track.role === 'bass');

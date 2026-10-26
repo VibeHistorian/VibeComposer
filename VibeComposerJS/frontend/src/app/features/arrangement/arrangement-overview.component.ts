@@ -7,6 +7,7 @@ import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../
 import type { CompositionProject } from '../../core/project/project.model';
 import type { CompositionTrack } from '../../core/project/track.model';
 import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
+import { noteTimelineBounds } from '../../core/music/phrase-bounds';
 import { layOutTrackPhrase } from '../../core/music/phrase';
 import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import type { SettingsTarget } from '../../core/ui/workspace-ui.service';
@@ -29,6 +30,7 @@ interface PreviewNote {
   readonly widthPercent: number;
   readonly topPercent: number;
   readonly opacity: number;
+  readonly overflow: boolean;
 }
 
 interface OverviewHitArea {
@@ -148,8 +150,11 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private readonly phraseProject = computed(() => this.project(), { equal: samePhraseInputs });
   private readonly trackNotes = computed(() => {
     const project = this.phraseProject();
-    return new Map(project.tracks.map((track) => [track.id, layOutTrackPhrase(project, track)]));
+    return new Map(project.tracks.map((track) => [track.id, layOutTrackPhrase(project, track, false, true)]));
   });
+
+  readonly timelineBounds = computed(() => noteTimelineBounds([...this.trackNotes().values()].flat(),
+    this.sections().reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0)));
 
   private readonly cellNotes = computed(() => {
     const trackNotes = this.trackNotes();
@@ -158,7 +163,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const sectionEndBeat = section.startBeat + sectionDurationBeats(this.project(), section.section);
       for (const group of this.groups()) {
         const notes = this.overviewTracks(section.section, group).flatMap((track) => (trackNotes.get(track.id) ?? [])
-          .filter((note) => note.startBeat >= section.startBeat && note.startBeat < sectionEndBeat));
+          .filter((note) => note.sectionId === section.section.id));
         if (notes.length === 0) {
           previews.set(this.cellKey(section.section.id, group.role), []);
           continue;
@@ -172,6 +177,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           widthPercent: Math.max(0.45, note.durationBeats / sectionBeats * 100),
           topPercent: (maxPitch - note.midi) / pitchSpan * 78 + 8,
           opacity: 0.48 + note.velocity / 127 * 0.48,
+          overflow: note.startBeat < section.startBeat || note.startBeat + note.durationBeats > sectionEndBeat,
         })));
       }
     }
@@ -288,7 +294,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const cursorX = Math.min(timelineWidth, Math.max(0,
       (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width) - this.labelWidth));
     this.pendingZoomAnchor = {
-      beat: (this.scrollHost().nativeElement.scrollLeft + cursorX) / this.pixelsPerBeat,
+      beat: (this.scrollHost().nativeElement.scrollLeft + cursorX) / this.pixelsPerBeat + this.timelineBounds().startBeat,
       cursorFraction: cursorX / timelineWidth,
     };
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? timelineWidth : 1;
@@ -306,7 +312,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private beatX(beat: number): number { return this.labelWidth + beat * this.pixelsPerBeat - this.offsetX; }
+  private beatX(beat: number): number { return this.labelWidth + (beat - this.timelineBounds().startBeat) * this.pixelsPerBeat - this.offsetX; }
 
   private drawOverview(): void {
     const host = this.scrollHost().nativeElement;
@@ -314,7 +320,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     if (!size) return;
     const sections = this.sections();
     const groups = this.groups();
-    const totalBeats = sections.reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0);
+    const totalBeats = this.timelineBounds().endBeat - this.timelineBounds().startBeat;
     const minimumHeight = RULER_HEIGHT + groups.length * MIN_ROW_HEIGHT;
     const trackCount = Math.max(0, ...groups.map((group) => group.tracks.length));
     const minimumCellWidth = trackCount > 0
@@ -369,7 +375,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     viewport.style.height = `${this.height}px`;
     const anchor = this.pendingZoomAnchor;
     this.pendingZoomAnchor = null;
-    const offset = anchor ? anchor.beat * this.pixelsPerBeat - anchor.cursorFraction * timelineWidth : host.scrollLeft;
+    const offset = anchor ? (anchor.beat - this.timelineBounds().startBeat) * this.pixelsPerBeat - anchor.cursorFraction * timelineWidth : host.scrollLeft;
     host.scrollLeft = Math.min(Math.max(0, totalBeats * this.pixelsPerBeat - timelineWidth), Math.max(0, offset));
     this.offsetX = host.scrollLeft;
     this.offsetY = host.scrollTop;
@@ -520,6 +526,29 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         context.restore();
       }
     }
+    // Paint spillovers after cell backgrounds so neighbouring cells cannot erase them.
+    for (let row = 0; row < groups.length; row++) {
+      const group = groups[row];
+      const y = RULER_HEIGHT + row * this.rowHeight - this.offsetY;
+      context.save();
+      context.beginPath(); context.rect(this.labelWidth, y + 5, this.width - this.labelWidth, Math.max(4, this.rowHeight - 10 - TRACK_BUTTON_PITCH)); context.clip();
+      context.fillStyle = color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}-strong`);
+      context.shadowColor = context.fillStyle;
+      context.shadowBlur = 6;
+      for (const item of sections) {
+        const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
+        const tracks = this.overviewTracks(item.section, group);
+        const perRow = Math.max(1, Math.floor((width - CELL_HORIZONTAL_PADDING + 1e-7) / TRACK_BUTTON_PITCH));
+        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, Math.ceil(tracks.length / perRow)) * TRACK_BUTTON_PITCH);
+        for (const note of this.previewNotes(item.section.id, group.role)) {
+          if (!note.overflow) continue;
+          context.globalAlpha = note.opacity;
+          context.fillRect(this.beatX(item.startBeat) + note.leftPercent / 100 * width,
+            y + 5 + note.topPercent / 100 * previewHeight, Math.max(1, note.widthPercent / 100 * width), 2);
+        }
+      }
+      context.restore();
+    }
     context.restore();
 
     context.save();
@@ -635,7 +664,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, this.width, this.height);
     const totalBeats = this.sections().reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0);
-    const x = this.beatX(Math.min(100, Math.max(0, percent)) / 100 * totalBeats);
+    const x = this.beatX(percent / 100 * totalBeats);
     if (x < this.labelWidth || x > this.width) return;
     context.fillStyle = this.accent;
     const position = Math.min(this.width - 1, x);

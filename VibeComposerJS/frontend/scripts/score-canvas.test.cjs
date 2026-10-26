@@ -2,6 +2,15 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+
+test('score geometry round-trips negative pickup and post-end beats', () => {
+  const { scoreX, scoreBeat } = scoreHelper('score-geometry');
+  const geometry = { width: 800, horizontalScale: 1, horizontalOffset: 0, totalBeats: 16, startBeat: -4 };
+  assert.equal(scoreX(-4, geometry), 0);
+  assert.equal(scoreX(0, geometry), 200);
+  assert.equal(scoreX(12, geometry), 800);
+  for (const beat of [-4, -1, 0, 4, 12]) assert.equal(scoreBeat(scoreX(beat, geometry), geometry), beat);
+});
 const ts = require('typescript');
 
 // Plain score helpers are evaluated without Angular, Pixi, or browser globals.

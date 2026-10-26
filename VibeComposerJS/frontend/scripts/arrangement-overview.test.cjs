@@ -24,12 +24,14 @@ function fixture(reactivity) {
   const dependencies = {
     '../../core/music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
+    '../../core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
     '../../core/project/arrangement.model': { SECTION_TYPES: [] },
     '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
-    '../../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes },
+    '../../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes.map(note => ({ ...note, sectionId: note.sectionId ?? project.arrangement.find((section, index, all) => {
+      const start = all.slice(0, index).reduce((sum, s) => sum + s.measures * 4, 0); return note.startBeat >= start && note.startBeat < start + section.measures * 4; })?.id })) },
   };
   new Function('require', 'module', 'exports', compiled)((name) => dependencies[name], module, module.exports);
   const component = new module.exports.ArrangementOverviewComponent();
@@ -73,6 +75,31 @@ function fixture(reactivity) {
   component.drawOverview();
   return { component, refs, base, overlay };
 }
+
+test('spillovers reserve non-cell space, retain section ownership and align the playhead', () => {
+  const { component, overlay, base } = fixture();
+  const project = component.project();
+  const notes = [
+    { id: 'pickup', sectionId: 'intro', startBeat: -2, durationBeats: 1, midi: 48, velocity: 100 },
+    { id: 'cross', sectionId: 'intro', startBeat: 7, durationBeats: 3, midi: 50, velocity: 100 },
+    { id: 'tail', sectionId: 'outro', startBeat: 33, durationBeats: 2, midi: 52, velocity: 100 },
+  ];
+  component.project.set({ ...project, tracks: [{ ...project.tracks[0], notes }] });
+  component.drawOverview();
+  assert.deepEqual(component.timelineBounds(), { startBeat: -2, endBeat: 35 });
+  assert.equal(component.previewNotes('intro', 'bass').length, 2);
+  assert.equal(component.previewNotes('verse', 'bass').length, 0, 'a crossing tail does not become a neighbour-owned note');
+  assert.ok(component.previewNotes('intro', 'bass').every(note => note.overflow));
+  assert.ok(component.beatX(0) > component.labelWidth);
+  assert.ok(component.beatX(32) < component.width);
+  assert.ok(Math.abs(component.beatX(35) - component.width) < 1e-7);
+  for (const beat of [-2, 0, 32, 34]) {
+    overlay.rectangles.length = 0;
+    component.drawPlayhead(beat / 32 * 100);
+    assert.equal(overlay.rectangles[0].bounds[0], Math.floor(component.beatX(beat)));
+  }
+  assert.ok(base.rectangles.some(rect => rect.bounds[0] === component.beatX(-2) && rect.bounds[3] === 2));
+});
 
 test('overview note previews survive mix commits and refresh on musical changes', async () => {
   const { component } = fixture(await import('@angular/core'));

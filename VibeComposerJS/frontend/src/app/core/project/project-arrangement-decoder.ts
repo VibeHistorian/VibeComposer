@@ -83,7 +83,7 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
     if (section.trackPhrases !== undefined) {
       if (!section.trackPhrases || typeof section.trackPhrases !== 'object' || Array.isArray(section.trackPhrases)) return undefined;
       for (const [trackId, notes] of Object.entries(section.trackPhrases)) {
-        if (!trackIds.has(trackId) || !isPhrase(notes, 2048)) return undefined;
+        if (!trackIds.has(trackId) || !isPhrase(notes, 2112, -64)) return undefined;
         trackPhrases[trackId] = notes.map(note => ({ ...note }));
       }
     }

@@ -4,6 +4,7 @@ export interface ScoreTimeGeometry {
   readonly horizontalScale: number;
   readonly horizontalOffset: number;
   readonly totalBeats: number;
+  readonly startBeat?: number;
 }
 
 export interface ScorePitchGeometry {
@@ -30,11 +31,11 @@ export function canvasPoint(clientX: number, clientY: number, bounds: CanvasBoun
 }
 
 export function scoreX(beat: number, geometry: ScoreTimeGeometry): number {
-  return (beat / Math.max(1, geometry.totalBeats) - geometry.horizontalOffset) * geometry.width * geometry.horizontalScale;
+  return ((beat - (geometry.startBeat ?? 0)) / Math.max(1, geometry.totalBeats) - geometry.horizontalOffset) * geometry.width * geometry.horizontalScale;
 }
 
 export function scoreBeat(x: number, geometry: ScoreTimeGeometry): number {
-  return (geometry.horizontalOffset + x / geometry.width / geometry.horizontalScale) * geometry.totalBeats;
+  return (geometry.horizontalOffset + x / geometry.width / geometry.horizontalScale) * geometry.totalBeats + (geometry.startBeat ?? 0);
 }
 
 export function scoreHeight(geometry: Pick<ScorePitchGeometry, 'height' | 'velocityVisible'>): number {

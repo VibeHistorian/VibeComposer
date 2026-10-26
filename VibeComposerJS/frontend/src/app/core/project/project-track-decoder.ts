@@ -96,7 +96,7 @@ export function decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart
   return decoded;
 }
 
-export function isPhrase(value: unknown, maximumBeat = 128): value is readonly PhraseNote[] {
+export function isPhrase(value: unknown, maximumBeat = 132, minimumBeat = -4): value is readonly PhraseNote[] {
   if (!Array.isArray(value) || value.length > 2048) {
     return false;
   }
@@ -109,7 +109,7 @@ export function isPhrase(value: unknown, maximumBeat = 128): value is readonly P
     if (typeof note.id !== 'string' || note.id.length < 1 || note.id.length > 120 || ids.has(note.id)
         || !Number.isInteger(note.midi) || (note.midi ?? -1) < 0 || (note.midi ?? 128) > 127
         || typeof note.startBeat !== 'number' || !Number.isFinite(note.startBeat)
-        || note.startBeat < 0 || note.startBeat >= maximumBeat
+        || note.startBeat < minimumBeat || note.startBeat >= maximumBeat
         || typeof note.durationBeats !== 'number' || !Number.isFinite(note.durationBeats)
         || note.durationBeats <= 0 || note.durationBeats > maximumBeat - note.startBeat
         || !Number.isInteger(note.velocity) || (note.velocity ?? 0) < 1 || (note.velocity ?? 128) > 127) {
