@@ -94,6 +94,19 @@ test('aggregate discovery covers every top-level suite without duplicating gener
   assert.deepEqual(list('overview-full'), ['arrangement-overview-browser.test.cjs']);
 });
 
+test('a lost broker connection still closes the fixture server and removes local artifacts', async () => {
+  const parent = path.resolve(__dirname, '../.angular');
+  fs.mkdirSync(parent, { recursive: true });
+  const profile = fs.mkdtempSync(path.join(parent, 'broker-cleanup-'));
+  const server = createBrowserServer({ html: 'fixture' });
+  await listen(server);
+  const child = { testBroker: true, testProfile: profile,
+    closeBroker: async () => { throw new Error('broker unavailable'); } };
+  await assert.rejects(closeBrowser({ child, server }), /broker unavailable/);
+  assert.equal(server.listening, false);
+  assert.equal(fs.existsSync(profile), false);
+});
+
 test('debugging startup failures retain browser stderr and preflight cleans up a failed launch', async () => {
   await assert.rejects(connectToPage({ exitCode: 1, signalCode: null, testStderr: 'GPU exit code 0xC0000022' }),
     /Chromium exited before debugging connected\nGPU exit code 0xC0000022/);

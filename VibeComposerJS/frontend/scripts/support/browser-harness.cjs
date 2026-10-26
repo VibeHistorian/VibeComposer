@@ -3,11 +3,13 @@ const http = require('node:http');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { selectSupport } = require('./browser-select.cjs');
+const { brokerBrowser, launchBrokerBrowser, connectToBrokerPage, readBrowserDownload } = require('./browser-broker.cjs');
 
 const frontend = path.resolve(__dirname, '../..');
 const profileRoot = path.join(frontend, '.angular');
 
 function findBrowser() {
+  if (process.env.VIBE_BROWSER_BROKER === '1') return brokerBrowser;
   return process.env.OVERVIEW_TEST_BROWSER || [
     'C:/Program Files/Google/Chrome/Application/chrome.exe',
     'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -77,8 +79,9 @@ function launchBrowser(browser, args, options = {}) {
   const supplied = args.find(arg => arg.startsWith('--user-data-dir='));
   const profile = supplied ? supplied.slice('--user-data-dir='.length)
     : fs.mkdtempSync(path.join(profileRoot, 'browser-harness-'));
-  const child = spawn(browser, [...args, ...(!supplied ? ['--user-data-dir=' + profile] : [])],
-    { stdio: ['ignore', 'ignore', 'pipe'], ...options });
+  const child = browser === brokerBrowser ? launchBrokerBrowser(args)
+    : spawn(browser, [...args, ...(!supplied ? ['--user-data-dir=' + profile] : [])],
+      { stdio: ['ignore', 'ignore', 'pipe'], ...options });
   child.testProfile = profile;
   child.testStderr = '';
   child.stderr?.on('data', chunk => { child.testStderr = (child.testStderr + chunk).slice(-4000); });
@@ -87,6 +90,7 @@ function launchBrowser(browser, args, options = {}) {
 }
 
 async function connectToPage(child) {
+  if (child.testBroker) return connectToBrokerPage(child);
   const browserError = message => new Error(message + (child.testStderr ? '\n' + child.testStderr : ''));
   const deadline = Date.now() + 10000;
   let target;
@@ -160,11 +164,16 @@ async function closeBrowser({ child, server, socket, watchdog }) {
     server.close(error => error ? reject(error) : resolve());
     server.closeAllConnections();
   });
-  if (child.exitCode === null && child.signalCode === null && child.pid) {
-    const exited = new Promise(resolve => child.once('exit', resolve));
-    child.kill();
-    await exited;
-  }
+  let closeError;
+  try {
+    if (child.testBroker) {
+      await child.closeBroker();
+    } else if (child.exitCode === null && child.signalCode === null && child.pid) {
+      const exited = new Promise(resolve => child.once('exit', resolve));
+      child.kill();
+      await exited;
+    }
+  } catch (error) { closeError = error; }
   await closed;
   const profile = path.resolve(child.testProfile);
   const relative = path.relative(profileRoot, profile);
@@ -172,6 +181,7 @@ async function closeBrowser({ child, server, socket, watchdog }) {
     throw new Error('Browser profile outside test workspace: ' + profile);
   }
   await fs.promises.rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  if (closeError) throw closeError;
 }
 
 async function preflightBrowser(browser) {
@@ -189,8 +199,8 @@ async function preflightBrowser(browser) {
     });
     if (result.result?.value !== true) throw new Error('Canvas 2D or WebGL2 is unavailable; score browser tests require both.');
   } catch (error) {
-    throw new Error('Browser preflight failed before running suites. On Windows, Chromium child processes can be blocked by the agent sandbox (0xC0000022 / access denied). Run the browser command through the host\'s explicit approval flow when that restriction applies.\n' + error.message, { cause: error });
+    throw new Error('Browser preflight failed before running suites. On Windows, Chromium child processes can be blocked by the agent sandbox (0xC0000022 / access denied). Start the protected BrowserLauncher.exe serve outside the sandbox, then run the tests inside it with VIBE_BROWSER_BROKER=1.\n' + error.message, { cause: error });
   } finally { await closeBrowser({ child, server, socket }); }
 }
 
-module.exports = { findBrowser, requireProductionBuild, createBrowserServer, listen, launchBrowser, connectToPage, watchBrowser, closeBrowser, preflightBrowser };
+module.exports = { findBrowser, requireProductionBuild, createBrowserServer, listen, launchBrowser, connectToPage, watchBrowser, closeBrowser, preflightBrowser, readBrowserDownload };

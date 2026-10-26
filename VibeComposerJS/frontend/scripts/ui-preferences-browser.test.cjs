@@ -1,4 +1,4 @@
-const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
+const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild, readBrowserDownload } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -570,11 +570,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0 });
     const restoredTitle = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => resolve(document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])').title)))`, awaitPromise: true, returnByValue: true });
     assert.ok(restoredTitle.result.value.startsWith('Instrument:'), 'instrument tooltip remains available');
-    const exportedFile = path.join(downloadPath, 'vibecomposer-ui-preferences.json');
-    for (let i = 0; i < 100 && !fs.existsSync(exportedFile); i++) {
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-    const exported = JSON.parse(fs.readFileSync(exportedFile, 'utf8'));
+    const exported = JSON.parse(await readBrowserDownload(child, 'vibecomposer-ui-preferences.json'));
     assert.equal(exported.kind, 'vibecomposer-ui-preferences');
     assert.equal(exported.appearance.themeColors.accent, '#dd88ee');
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });

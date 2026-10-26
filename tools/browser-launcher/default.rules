@@ -1,0 +1,10 @@
+# Workspace reads, builds, and Node tests run inside the sandbox without rules.
+# Only the administrator-protected browser broker may run outside it unattended.
+# The executable rejects all commands/extra arguments except a single 'serve'.
+prefix_rule(
+    pattern = ["C:\\Program Files\\VibeComposerBrowserLauncher\\BrowserLauncher.exe", "serve"],
+    decision = "allow",
+    justification = "Launch only headless Chromium through the protected browser broker; repository tests remain sandboxed.",
+    match = ['"C:\Program Files\VibeComposerBrowserLauncher\BrowserLauncher.exe" serve'],
+    not_match = ['"C:\Program Files\VibeComposerBrowserLauncher\BrowserLauncher.exe" install'],
+)
