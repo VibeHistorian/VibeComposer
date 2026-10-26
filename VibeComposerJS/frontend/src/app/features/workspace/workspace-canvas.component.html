@@ -89,7 +89,7 @@
     </div>
   </aside>
 
-  <main class="song-canvas" [class.editing]="editing()" [class.settings-in-inspector]="partSettingsInInspector()">
+  <main class="song-canvas" [class.editing]="editing()" [class.settings-in-inspector]="usePartSettingsInspector()" [class.group-track-settings]="showGroupTrackSettings()">
     @defer (when editing()) {
     @if (editing()) {
       <vc-edit-workspace #phraseEditor [initialNoteId]="editingNoteId()" [sectionId]="editSectionId()" [phraseStartBeat]="editPhraseOffset()"
@@ -117,7 +117,7 @@
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)"
         (groupPresenceToggled)="projects.toggleSectionRolePresence($event.sectionId, $event.role)" />
 
-      @if (!partSettingsInInspector()) {
+      @if (!usePartSettingsInspector()) {
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
         <header class="part-settings-heading" [class.role-settings]="!!editableScopes().length">
           <div class="part-heading-context">
@@ -141,6 +141,9 @@
             }
           }
           <div class="quick-settings-actions">
+            @if (groupSettingsSelected()) {
+              <ng-container [ngTemplateOutlet]="groupTrackToggle" />
+            }
             @if (editableScopes().length || preferences.editingQuickSettings()) {
               @if (preferences.editingQuickSettings()) {
                 <button type="button" class="part-inspector-link" [disabled]="!editableScopes().length" (click)="preferences.resetQuickSettings(partRole())">Reset to default</button>
@@ -169,9 +172,20 @@
             @if (selectedSection()) {
               <span class="part-inheritance">Select a group cell or track button to view its part settings.</span>
             }
+            @if (showGroupTrackSettings()) {
+              @for (item of groupTrackSettings(); track item.key) {
+                <section class="group-track-settings-row" [attr.data-track-id]="item.track.id" [attr.aria-label]="item.track.name + ' quick settings'">
+                  <span class="group-track-settings-order">{{ $index + 1 }}</span>
+                  @if (partEditErrorFor(item.scope); as error) { <span class="channel-warning" role="status">{{ error }}</span> }
+                  <vc-part-settings-editor [scope]="item.scope" [role]="item.track.role" [values]="item.values" [melodyHits]="melodyRhythmHits(item.scope)" [advanced]="false" [showGroupTitles]="false" [local]="!!localPartTarget()" [overriddenKeys]="item.overriddenKeys"
+                    (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
+                </section>
+              }
+            } @else {
             @for (item of editableScopes(); track item.key) {
               <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [advanced]="false" [showGroupTitles]="false" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
                 (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
+            }
             }
           </div>
         }
@@ -282,7 +296,10 @@
         <p class="eyebrow">{{ localPartTarget() ? settingsTarget().kind === 'section-role' ? 'Section role group' : 'Section track' : selectedSection() ? 'Section' : selectedRole() ? 'Role Group' : 'Track' }}</p>
       </header>
 
-      @if (partSettingsInInspector() && preferences.editingQuickSettings()) {
+      @if (usePartSettingsInspector() && groupSettingsSelected()) {
+        <ng-container [ngTemplateOutlet]="groupTrackToggle" />
+      }
+      @if (usePartSettingsInspector() && preferences.editingQuickSettings()) {
         <button type="button" class="part-inspector-link" (click)="toggleQuickSettingsEdit()">Save quick settings</button>
       }
 
@@ -295,7 +312,7 @@
           @if (trackExceptionCount()) { <span>{{ trackExceptionCount() }} track exception(s) remain active.</span> }
           @if (manualTrackNames() && partGenerationAvailable()) { <span>Saved manual notes replace generated notes for {{ manualTrackNames() }}.</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!partSettingsInInspector()" [local]="true" [overriddenKeys]="overriddenKeys()"
+            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!usePartSettingsInspector()" [local]="true" [overriddenKeys]="overriddenKeys()"
               (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
           }
           @if (settingsTarget().kind === 'section-role') {
@@ -381,7 +398,7 @@
           @if (!partGenerationAvailable()) { <span class="part-inheritance">Automatic melody generation is not available yet. Add notes with Edit notes.</span> }
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!partSettingsInInspector()"
+            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!usePartSettingsInspector()"
               (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
@@ -395,3 +412,9 @@
       }
     </aside>
 </section>
+
+<ng-template #groupTrackToggle>
+  <button type="button" class="group-track-toggle" [attr.aria-pressed]="showGroupTrackSettings()"
+    aria-label="Show individual track quick settings" title="Toggle individual track quick settings"
+    aria-controls="part-settings-content" (click)="toggleGroupTrackSettings()">?</button>
+</ng-template>

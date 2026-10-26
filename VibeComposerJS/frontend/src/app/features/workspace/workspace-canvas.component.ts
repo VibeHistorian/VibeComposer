@@ -135,6 +135,17 @@ export class WorkspaceCanvasComponent {
   readonly selectedSectionIds = this.workspaceUi.selectedSectionIds;
   readonly settingsTarget = this.workspaceUi.settingsTarget;
   readonly partPanelExpanded = signal(true);
+  readonly individualGroupSettings = signal(false);
+  readonly groupSettingsSelected = computed(() => {
+    const kind = this.settingsTarget().kind;
+    return kind === 'global-role' || kind === 'section-role';
+  });
+  readonly showGroupTrackSettings = computed(() => this.groupSettingsSelected() && this.individualGroupSettings());
+  readonly usePartSettingsInspector = computed(() => this.partSettingsInInspector() && !this.showGroupTrackSettings());
+  toggleGroupTrackSettings(): void {
+    this.individualGroupSettings.update(value => !value);
+    this.partPanelExpanded.set(true);
+  }
   private readonly rerollFeedback = signal<{ project: CompositionProject; role: ArrangedPart; message: string } | null>(null);
   readonly rerollMessage = computed(() => this.rerollFeedback()?.project === this.project() ? this.rerollFeedback()?.message : null);
   readonly minimumRoleCount = computed(() => {
@@ -219,6 +230,18 @@ export class WorkspaceCanvasComponent {
     return target ? this.project().arrangement.find((section) => section.id === target.sectionId) : undefined;
   });
   readonly effectiveContextTracks = computed(() => this.contextTracks().map((track) => resolvePartTrack(track, this.contextSection())));
+  readonly groupTrackSettings = computed(() => {
+    if (!this.showGroupTrackSettings() || !this.partGenerationAvailable()) return [];
+    const section = this.contextSection();
+    return this.effectiveContextTracks().map(track => {
+      const scope: PartSettingsScope = section
+        ? { kind: 'section-track', sectionId: section.id, trackId: track.id }
+        : { kind: 'global-track', trackId: track.id };
+      return { track, scope, key: JSON.stringify(scope),
+        values: settingsValues(track.generatorSettings, track.role),
+        overriddenKeys: Object.keys(section?.trackPartOverrides?.[track.id] ?? {}) };
+    });
+  });
   readonly partValues = computed(() => {
     const values = this.effectiveContextTracks().map((track) => settingsValues(track.generatorSettings, track.role));
     return Object.fromEntries(Object.keys(values[0] ?? {}).map((key) => [key,
@@ -286,6 +309,9 @@ export class WorkspaceCanvasComponent {
   });
   private readonly editFailure = signal<{ scope: string; message: string } | null>(null);
   readonly partEditError = computed(() => this.editFailure()?.scope === JSON.stringify(this.partScope()) ? this.editFailure()?.message : null);
+  partEditErrorFor(scope: PartSettingsScope): string | null {
+    return this.editFailure()?.scope === JSON.stringify(scope) ? this.editFailure()!.message : null;
+  }
   readonly editor = viewChild<EditWorkspaceComponent>('phraseEditor');
   readonly editSectionId = signal<string | null>(null);
   readonly editStartBeat = signal(0);
@@ -583,7 +609,8 @@ export class WorkspaceCanvasComponent {
     // The emitted scope belongs to this editor instance; never redirect a delayed gesture into a new selection.
     const before = this.project();
     this.projects.updatePartSettings(scope, { [change.key]: change.value });
-    this.editFailure.set(this.project() === before && !partValuesEqual(this.partValues()[change.key], change.value)
+    const row = this.groupTrackSettings().find(item => item.key === JSON.stringify(scope));
+    this.editFailure.set(this.project() === before && !partValuesEqual((row?.values ?? this.partValues())[change.key], change.value)
       ? { scope: JSON.stringify(scope), message: 'This value conflicts with another track or cell setting. Keep each velocity minimum at or below its maximum.' } : null);
   }
 
@@ -595,7 +622,8 @@ export class WorkspaceCanvasComponent {
 
   resetPartSettings(scope: PartSettingsScope, field?: string | readonly string[]): void {
     const before = this.project();
-    const hadOverride = field ? (typeof field === 'string' ? [field] : field).some(key => this.overriddenKeys().includes(key)) : this.overriddenKeys().length > 0;
+    const keys = this.groupTrackSettings().find(item => item.key === JSON.stringify(scope))?.overriddenKeys ?? this.overriddenKeys();
+    const hadOverride = field ? (typeof field === 'string' ? [field] : field).some(key => keys.includes(key)) : keys.length > 0;
     this.projects.resetPartSettings(scope, field);
     this.editFailure.set(this.project() === before && hadOverride ? { scope: JSON.stringify(scope),
       message: 'Reset would conflict with another velocity setting. Reset both bounds together or adjust the other bound first.' } : null);

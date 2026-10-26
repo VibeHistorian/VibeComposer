@@ -182,8 +182,8 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .part-settings-heading.role-settings:has(+ .part-settings-content) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .part-heading-context { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .quick-settings-actions { grid-column: 3; justify-self: end; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-.part-panel-toggle, .part-inspector-link { min-height: 26px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
-.part-panel-toggle:hover, .part-inspector-link:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+.part-panel-toggle, .part-inspector-link, .group-track-toggle { min-height: 26px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
+.part-panel-toggle:hover, .part-inspector-link:hover, .group-track-toggle:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .part-inspector-link { flex-shrink: 0; }
 .part-panel-toggle { flex: 0 0 26px; width: 26px; padding: 0; font-size: 14px; }
 .part-panel-toggle:disabled { color: var(--text-muted); cursor: default; }
@@ -192,6 +192,19 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .part-location-label.global-location { --location-accent: var(--control-role-color, var(--accent-primary)); text-transform: uppercase; }
 .part-settings-content { max-height: 190px; overflow-y: auto; padding: 8px 12px; border-top: 1px solid var(--border-subtle); display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .part-settings-content vc-part-settings-editor { flex: 1 1 100%; }
+/* Individual quick settings for role group members */
+.song-canvas.group-track-settings { grid-template-rows: auto minmax(0, auto) minmax(120px, 1fr); }
+.group-track-settings .part-settings-panel { min-height: 0; display: flex; flex-direction: column; }
+.group-track-settings .part-settings-heading { flex-shrink: 0; }
+.group-track-settings .part-settings-content { min-height: 0; max-height: 50svh; }
+.group-track-settings-row { flex: 1 1 100%; min-width: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; column-gap: 8px; }
+.group-track-settings-row + .group-track-settings-row { padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+.group-track-settings-order { grid-column: 1; grid-row: 1; width: 1ch; max-width: 1ch; overflow-wrap: anywhere; text-align: center; color: var(--text-secondary); font: 10px/1 var(--font-mono); }
+.group-track-settings-row vc-part-settings-editor { grid-column: 2; grid-row: 1; }
+.group-track-settings-row > .channel-warning { grid-column: 2; grid-row: 2; }
+.group-track-toggle { width: 26px; padding: 0; font-size: 14px; }
+.group-track-toggle[aria-pressed="true"] { border-color: var(--accent-primary); background: var(--surface-accent); }
+/* Part settings summaries */
 .part-inspector-link:disabled { color: var(--text-muted); cursor: default; }
 .part-inheritance { color: var(--text-secondary); font-size: 10px; line-height: 1.5; }
 .part-settings-content > .part-inheritance { flex-basis: 100%; }
