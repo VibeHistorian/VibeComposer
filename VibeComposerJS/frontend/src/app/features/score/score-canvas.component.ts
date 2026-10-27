@@ -630,6 +630,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (event.button === 1) this.middlePress = { pointerId: event.pointerId, startedEmpty: this.emptyCanvasPoint(event), canApply: false };
     const bounds = this.app.canvas.getBoundingClientRect();
     const { x, y } = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
+    if (event.button === 0 && event.shiftKey && !area && x >= 0 && x < this.width && y >= 0 && y < this.scoreHeight) {
+      this.seekRequested.emit(this.beatAt(event));
+      return;
+    }
     if (event.button === 2) {
       this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: event.ctrlKey || event.metaKey ? this.selectedNoteIds() : [] };
     } else if ((event.ctrlKey || event.metaKey) && (!area || !this.selectedNoteIds().includes(area.note.id) || event.button === 1)) {

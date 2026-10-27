@@ -131,6 +131,21 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       && style.getPropertyValue('--accent-primary').trim() === style.getPropertyValue('--role-bass').trim()
       && getComputedStyle(document.querySelector('#note-velocity')).accentColor === getComputedStyle(inspector.querySelector('.edit-mark')).color;
   })()`), true, 'phrase inspector colors follow the edited bass track rather than the remembered arpeggio');
+  assert.equal(await evaluate(`(async()=>{${waitCode}
+    const canvas=document.querySelector('vc-score-canvas canvas'), bounds=canvas.getBoundingClientRect();
+    const row=document.querySelector('.pitch-key[title="MIDI 60"]').getBoundingClientRect();
+    const position=document.querySelector('[aria-label="Song position"]');
+    const before=Number(position.getAttribute('aria-valuenow'));
+    const saved=sessionStorage.getItem('vibecomposer.project.v12');
+    const point={bubbles:true,cancelable:true,button:0,shiftKey:true,pointerId:1,clientX:bounds.left+bounds.width*.63,clientY:row.top+row.height/2};
+    canvas.dispatchEvent(new PointerEvent('pointerdown',point));
+    canvas.dispatchEvent(new PointerEvent('pointerup',point));
+    canvas.dispatchEvent(new MouseEvent('click',point));
+    await wait(()=>Number(position.getAttribute('aria-valuenow'))!==before);
+    return !!document.querySelector('#note-velocity')
+      && [...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply').disabled
+      && sessionStorage.getItem('vibecomposer.project.v12')===saved;
+  })()`),true,'Shift left click on empty phrase grid seeks the global transport without changing the draft or selection');
   const shortcuts = await evaluate(`(async()=>{${waitCode}
     if (document.querySelector('#phrase-grid').getAttribute("value") !== '0.25') throw Error('Initial grid does not match snapping');
     const key=(key,extra={})=>document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...extra}));

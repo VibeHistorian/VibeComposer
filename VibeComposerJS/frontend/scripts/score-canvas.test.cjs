@@ -220,6 +220,28 @@ test('empty score clicks seek through the zoomed and panned viewport, including 
   assert.equal(component.seekRequested.values.length, 1);
 });
 
+test('Shift left click on empty phrase grid seeks globally without editing or clearing selection', () => {
+  const { component: c } = fixture();
+  c.editable = () => true;
+  c.velocityVisible = () => true;
+  c.model.timelineStartBeat = -4;
+  const event = { button: 0, shiftKey: true, clientX: 303, clientY: 20, pointerId: 1, preventDefault() {} };
+  c.onPointerDown(event);
+  c.onPointerUp(event);
+  c.onCanvasClick(event);
+  assert.ok(Math.abs(c.seekRequested.values[0] - 20.12) < 1e-10, 'seek respects pan, zoom, scaled bounds and timeline origin without snapping');
+  assert.equal(c.seekRequested.values.length, 1);
+  assert.deepEqual(c.noteAdded.values, []);
+  assert.deepEqual(c.selectionChanged.values, []);
+  assert.deepEqual(c.noteChanged.values, []);
+  assert.deepEqual(c.notesChanged.values, []);
+  assert.equal(c.drag, null);
+  c.onPointerDown({ ...event, clientY: 159 });
+  assert.equal(c.seekRequested.values.length, 1, 'velocity lane is outside the grid');
+  c.onPointerDown({ ...event, shiftKey: false });
+  assert.equal(c.noteAdded.values.length, 1, 'plain left click still creates immediately on press');
+});
+
 test('clicking a note emits only note selection even in a zoomed viewport', () => {
   const { component } = fixture();
   const note = { id: 'note', part: 'bass', color: 'bass', midi: 48, velocity: 100 };
@@ -540,7 +562,8 @@ test('Ctrl drag duplicates selected notes without altering the originals', () =>
 
 test('Shift move bypasses the grid and locks pitch; cancellation publishes no edit', () => {
   const { component: c } = editFixture();
-  c.onPointerDown(pointer(300, 20));
+  c.onPointerDown(pointer(300, 20, { shiftKey: true }));
+  assert.deepEqual(c.seekRequested.values, [], 'Shift press on a note starts its existing edit gesture');
   c.onPointerMove(pointer(303, 40, { shiftKey: true }));
   assert.ok(Math.abs(c.drag.current.startBeat - 20.12) < 1e-10);
   assert.equal(c.drag.current.midi, 48);
