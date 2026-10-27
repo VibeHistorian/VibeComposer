@@ -146,6 +146,22 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       && [...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply').disabled
       && sessionStorage.getItem('vibecomposer.project.v12')===saved;
   })()`),true,'Shift left click on empty phrase grid seeks the global transport without changing the draft or selection');
+  assert.equal(await evaluate(`(async()=>{${waitCode}
+    const canvas=document.querySelector('vc-score-canvas canvas');
+    const press=(target,extra={})=>{const e=new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true,cancelable:true,...extra});target.dispatchEvent(e);return e.defaultPrevented;};
+    if(!press(canvas))throw Error('Space must prevent scrolling');
+    await wait(()=>document.querySelector('.transport-dock button[aria-label="Pause"]'));
+    press(canvas,{repeat:true});
+    if(!document.querySelector('.transport-dock button[aria-label="Pause"]'))throw Error('Held Space must not toggle again');
+    if(press(document.querySelector('#note-pitch')))throw Error('Field must keep Space');
+    const pauseButton=document.querySelector('.transport-dock button[aria-label="Pause"]');
+    if(press(pauseButton))throw Error('Button must keep Space activation: '+pauseButton.outerHTML);
+    press(canvas);await wait(()=>document.querySelector('.transport-dock button[aria-label="Resume"]'));
+    press(canvas);await wait(()=>document.querySelector('.transport-dock button[aria-label="Pause"]'));
+    press(canvas);await wait(()=>document.querySelector('.transport-dock button[aria-label="Resume"]'));
+    document.querySelector('[aria-label="Stop"]').click();
+    return !!document.querySelector('#note-velocity');
+  })()`),true,'Space starts, pauses and resumes from the phrase grid while fields and buttons retain their Space behavior');
   const shortcuts = await evaluate(`(async()=>{${waitCode}
     if (document.querySelector('#phrase-grid').getAttribute("value") !== '0.25') throw Error('Initial grid does not match snapping');
     const key=(key,extra={})=>document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...extra}));

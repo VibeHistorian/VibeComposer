@@ -4,6 +4,30 @@ const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('workspace publishes sounding draft notes at song positions and clears them when editing ends', () => {
+  const { service, workspace, ui, load, flushEffects } = fixture();
+  const previews = [];
+  workspace.playback = { setPhrasePreview: (project, preview) => previews.push(preview) };
+  ui.selectedTrackId.set('track-bass-1');
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.ngOnInit();
+  workspace.editor = () => editor;
+  workspace.editing.set(true);
+  workspace.editStartBeat.set(16);
+  const before = service.exportProjectJson();
+  flushEffects();
+  assert.deepEqual(previews.at(-1).notes, editor.notes().map(note => ({ ...note, startBeat: note.startBeat + 16 })));
+  assert.deepEqual(previews.at(-1).trackIds, ['track-bass-1']);
+  const first = editor.notes()[0]; editor.selectNote(first.id);
+  editor.updateSelected('velocity', { target: { value: '117' } }); flushEffects();
+  assert.equal(previews.at(-1).notes.find(n => n.id === first.id).velocity, 117);
+  editor.undo(); flushEffects();
+  assert.equal(previews.at(-1).notes.find(n => n.id === first.id).velocity, first.velocity);
+  workspace.editing.set(false); flushEffects();
+  assert.equal(previews.at(-1), null);
+  assert.equal(service.exportProjectJson(), before);
+});
+
 test('global range Apply from a short section preserves each longer section continuation through history, reload and MIDI', () => {
   const { service, ui, phrase, midi, load } = fixture();
   const id = 'track-bass-1';

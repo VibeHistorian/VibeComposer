@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { AudioExportService } from './core/audio/audio-export.service';
+import { AudioPlaybackService } from './core/audio/audio-playback.service';
 import { MidiOutputService } from './core/audio/midi-output.service';
 import { generateCompositionMidi } from './core/music/midi-export';
 import { downloadProjectFile } from './core/project/download-file';
@@ -14,7 +15,7 @@ import { TransportDockComponent } from './features/transport/transport-dock.comp
 import { WorkspaceCanvasComponent } from './features/workspace/workspace-canvas.component';
 import { WorkspaceUiService } from './core/ui/workspace-ui.service';
 import { translateJavaConfig } from './core/project/java-config-translator';
-import { isEditingText } from './shared/keyboard-shortcuts';
+import { isEditingText, usesSpaceKey } from './shared/keyboard-shortcuts';
 
 @Component({
   selector: 'vc-root',
@@ -27,6 +28,7 @@ import { isEditingText } from './shared/keyboard-shortcuts';
 export class AppComponent {
   readonly projectMessage = signal('');
   readonly audioExport = inject(AudioExportService);
+  readonly playback = inject(AudioPlaybackService);
   readonly preferences = inject(UiPreferencesService);
   readonly midi = inject(MidiOutputService);
   readonly exportMenuPositions = [
@@ -40,6 +42,13 @@ export class AppComponent {
   private readonly workspace = viewChild(WorkspaceCanvasComponent);
 
   historyKeydown(event: KeyboardEvent): void {
+    if (event.key === ' ' && !event.defaultPrevented && !event.isComposing
+      && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !usesSpaceKey(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) void this.playback.toggle(this.project());
+      return;
+    }
     if (event.defaultPrevented || event.isComposing || event.altKey || !(event.ctrlKey || event.metaKey)
       || isEditingText(event)) return;
     const key = event.key.toLowerCase();

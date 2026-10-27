@@ -83,6 +83,37 @@ function fixture({ loop = false } = {}) {
   return { playback, context, sources, project, angular, load, midi };
 }
 
+test('phrase drafts replace only their track and absolute window on start, seek, live editing and cancel', async () => {
+  const { playback, project, context, sources } = fixture();
+  const saved = JSON.stringify(project);
+  project.tracks.push({ ...project.tracks[0], id: 'other' });
+  const draft = { startBeat: 0, endBeat: 4, trackIds: ['bass'], notes: [
+    { id: 'draft', trackId: 'bass', midi: 60, startBeat: 0, durationBeats: 8, velocity: 87 },
+  ] };
+  playback.setPhrasePreview(project, draft);
+  await playback.start(project);
+  assert.deepEqual(playback.notes.filter(note => note.trackId === 'bass').map(n => n.midi), [60, 50]);
+  assert.deepEqual(playback.notes.filter(note => note.trackId === 'other').map(n => n.midi), [48, 50]);
+  assert.ok(sources.some(source => source.frequency.value === 440 * 2 ** ((60 - 69) / 12)), 'synth receives the sounding draft pitch');
+  context.currentTime = 1;
+  playback.toggleLive();
+  playback.setPhrasePreview(project, { ...draft, notes: [{ ...draft.notes[0], midi: 62 }] });
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.beat(), 2);
+  assert.equal(playback.notes.find(n => n.id === 'draft').midi, 62, 'draft updates remain audible with LIVE disabled');
+  playback.seek(project, 1);
+  assert.equal(playback.notes.find(n => n.id === 'draft').midi, 62);
+  playback.pause();
+  playback.setPhrasePreview(project, { ...draft, notes: [] });
+  assert.equal(playback.state(), 'paused');
+  await playback.toggle(project);
+  assert.deepEqual(playback.notes.filter(n => n.trackId === 'bass').map(n => n.midi), [50], 'deleting all draft notes means silence inside the window');
+  playback.setPhrasePreview(project, null);
+  assert.deepEqual(playback.notes.filter(n => n.trackId === 'bass').map(n => n.midi), [48, 50], 'cancel restores saved notes even with LIVE off');
+  playback.stop();
+  assert.equal(JSON.stringify({ ...project, tracks: project.tracks.slice(0, 1) }), saved, 'preview does not mutate the project');
+});
+
 test('playback includes pickups and post-end notes without shifting the song origin', async () => {
   const { playback, project, context, sources } = fixture();
   project.arrangement = [{ measures: 1, trackPresence: {} }];

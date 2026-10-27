@@ -16,14 +16,14 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = () => () => undefined;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
-    signal, computed: (read) => read, effect: callback => { effects.push(callback); }, input, viewChild,
+    signal, computed: (read) => read, effect: callback => { effects.push(callback); }, untracked: read => read(), input, viewChild,
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     ChangeDetectionStrategy: { OnPush: 0 },
   };
   const projects = { project };
   const preferences = { syncScoreMix: signal(false), scoreChordGrid: signal(false) };
   let ui;
-  angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? {} : projects;
+  angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? { setPhrasePreview() {} } : projects;
   const load = (file, dependencies = {}) => {
     const source = fs.readFileSync(path.join(__dirname, '../src/app', file), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {

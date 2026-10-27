@@ -9,7 +9,7 @@ import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
 import { samePhraseInputs } from '../../core/music/phrase-inputs';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { type ArrangedPart, ARRANGED_PARTS, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
 import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
 import type { CompositionTrack } from '../../core/project/track.model';
@@ -350,6 +350,16 @@ export class WorkspaceCanvasComponent {
   readonly scoreEditBounds = computed(() => {
     const bounds = this.editor()?.editBounds() ?? { startBeat: 0, endBeat: this.editPhraseLength() };
     return { startBeat: this.editStartBeat() + bounds.startBeat, endBeat: this.editStartBeat() + bounds.endBeat };
+  });
+  private readonly phrasePlaybackEffect = effect(() => {
+    const project = this.project();
+    const editor = this.editing() ? this.editor() : undefined;
+    const preview = editor?.draftReady() ? {
+      ...this.scoreEditBounds(),
+      trackIds: editor.editedTracks().map(track => track.id),
+      notes: editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat() })),
+    } : null;
+    untracked(() => this.playback.setPhrasePreview(project, preview));
   });
   readonly scoreTimelineBounds = computed(() => {
     const bounds = noteTimelineBounds(this.scoreNotes(), this.totalBeats());

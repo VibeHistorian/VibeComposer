@@ -9,7 +9,9 @@ class Element {
   matches(selector) {
     return (['input', 'textarea', 'select'].includes(this.tag)
       && !(this.tag === 'input' && this.type === 'range' && selector.includes(':not([type="range"])')))
-      || (['combobox', 'listbox'].includes(this.role) && selector.includes('[role="' + this.role + '"]'));
+      || (this.tag === 'button' && selector.split(', ').includes('button'))
+      || (this.tag === 'summary' && selector.includes('summary'))
+      || (this.role && selector.includes('[role="' + this.role + '"]'));
   }
 }
 
@@ -34,6 +36,8 @@ function fixture() {
   const app = Object.create(AppComponent.prototype);
   const history = name => ({ undo: () => calls.push(name + ':undo'), redo: () => calls.push(name + ':redo') });
   app.projects = history('project');
+  app.project = () => ({ name: 'Song' });
+  app.playback = { toggle: project => calls.push('playback:' + project.name) };
   let editing = false;
   let editor = history('phrase');
   app.workspace = () => ({ editing: () => editing, editor: () => editor });
@@ -94,4 +98,27 @@ test('ignores unrelated, handled, composing, and Alt shortcuts; supports Command
   assert.deepEqual(f.calls, []);
   f.press('z', { ctrlKey: false, metaKey: true });
   assert.deepEqual(f.calls, ['project:undo']);
+});
+
+test('Space toggles global playback in either workspace and prevents scrolling and repeat toggles', () => {
+  const f = fixture();
+  for (const editing of [false, true]) {
+    if (editing) f.edit();
+    assert.equal(f.press(' ', { ctrlKey: false }).defaultPrevented, true);
+    assert.equal(f.press(' ', { ctrlKey: false, repeat: true }).defaultPrevented, true);
+  }
+  assert.deepEqual(f.calls, ['playback:Song', 'playback:Song']);
+});
+
+test('Space preserves text entry, native control activation, composition and modified shortcuts', () => {
+  const f = fixture();
+  for (const control of [new Element('input'), new Element('textarea'), new Element('select'),
+    new Element('button'), new Element('summary'), new Element('span', true),
+    ...['combobox', 'listbox', 'button', 'checkbox', 'radio', 'switch', 'menuitem', 'tab', 'treeitem'].map(role => new Element('div', false, '', role))]) {
+    assert.equal(f.press(' ', { ctrlKey: false, composedPath: () => [new Element('span'), control] }).defaultPrevented, false);
+  }
+  for (const options of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { shiftKey: true }, { isComposing: true }, { defaultPrevented: true }]) {
+    f.press(' ', { ctrlKey: false, ...options });
+  }
+  assert.deepEqual(f.calls, []);
 });

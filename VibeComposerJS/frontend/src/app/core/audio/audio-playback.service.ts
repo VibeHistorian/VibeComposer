@@ -16,6 +16,11 @@ type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
 interface PartBus { readonly gain: GainNode; readonly pan: StereoPannerNode; }
 export interface PlaybackRange { readonly startBeat: number; readonly endBeat: number; }
+export interface PlaybackPhrasePreview extends PlaybackRange {
+  readonly trackIds: readonly string[];
+  /** Absolute song beats and sounding pitches, matching the editor canvas. */
+  readonly notes: readonly (PhraseNote & { readonly trackId: string })[];
+}
 
 const SCHEDULER_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_SECONDS = 0.18;
@@ -48,6 +53,7 @@ export class AudioPlaybackService {
   private selectedLoopRange: PlaybackRange | null = null;
   private mixProject?: CompositionProject;
   private scheduledProject?: CompositionProject;
+  private phrasePreview: PlaybackPhrasePreview | null = null;
   private notes: ScheduledNote[] = [];
   private queuedNotes: ScheduledNote[] = [];
   private nextNote = 0;
@@ -220,11 +226,18 @@ export class AudioPlaybackService {
     return target?.section.id;
   }
 
+  /** Drafts affect playback only; cancelling or applying clears this temporary window. */
+  setPhrasePreview(project: CompositionProject, preview: PlaybackPhrasePreview | null): void {
+    if (this.phrasePreview === preview) return;
+    this.phrasePreview = preview;
+    this.reload(project, true);
+  }
+
   /** Replace queued audio at the current musical position without pausing the transport. */
-  reload(project: CompositionProject): void {
-    if (!this.liveEnabled() || this.state() !== 'playing' || !this.context) return;
+  reload(project: CompositionProject, phrasePreviewChanged = false): void {
+    if ((!this.liveEnabled() && !phrasePreviewChanged) || this.state() !== 'playing' || !this.context) return;
     const previous = this.scheduledProject;
-    if (previous && samePhraseInputs(previous, project)
+    if (!phrasePreviewChanged && previous && samePhraseInputs(previous, project)
       && previous.tracks.every((track, index) => track.mix.program === project.tracks[index].mix.program)) {
       this.updateMix(project);
       return;
@@ -328,8 +341,14 @@ export class AudioPlaybackService {
   }
 
   private createSchedule(project: CompositionProject): ScheduledNote[] {
-    return project.tracks.flatMap((track) => layOutTrackPhrase(project, track)
-      .map((note) => ({ ...note, trackId: track.id, role: track.role })))
+    const preview = this.phrasePreview;
+    return project.tracks.flatMap((track) => {
+      const notes = layOutTrackPhrase(project, track);
+      const audible = preview?.trackIds.includes(track.id)
+        ? [...notes.filter(note => note.startBeat < preview.startBeat || note.startBeat >= preview.endBeat),
+          ...preview.notes.filter(note => note.trackId === track.id)] : notes;
+      return audible.map(note => ({ ...note, trackId: track.id, role: track.role }));
+    })
       .sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
   }
 

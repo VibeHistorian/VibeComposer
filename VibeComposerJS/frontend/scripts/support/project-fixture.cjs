@@ -39,7 +39,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
     output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectorRef: class ChangeDetectorRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
-      : type?.name === 'AudioPlaybackService' ? {} : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
+      : type?.name === 'AudioPlaybackService' ? { setPhrasePreview() {} } : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
       : type?.name === 'ChangeDetectorRef' ? { detectChanges() {} }
       : type?.name === 'Combobox' ? { expanded: signal(false), disabled: signal(false) }
       : type?.name === 'UiPreferencesService' ? uiPreferences : preferences,
