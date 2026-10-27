@@ -4,10 +4,11 @@
 
 /* Immediate note details */
 .note-tooltip { position: absolute; z-index: 3; pointer-events: none; box-sizing: border-box; width: 240px; max-width: calc(100% - 16px); padding: 8px 10px; display: grid; gap: 4px; border: 1px solid var(--border-strong); border-radius: var(--radius-small); background: var(--surface-base); color: var(--text-primary); box-shadow: 0 3px 10px var(--shadow-ink); font: 11px var(--font-mono); }
-.note-tooltip strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.note-tooltip strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .note-tooltip-values { display: flex; justify-content: space-between; gap: 12px; }
 .note-tooltip-source { display: flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 9px; }
-.note-tooltip-source i { width: 5px; height: 5px; border-radius: 50%; }
+.note-tooltip-source > span { flex-shrink: 0; }
+.note-tooltip-source i { flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; }
 
 /* Native scroll controls */
 .horizontal-scroll { grid-column: 2; grid-row: 2; min-width: 0; overflow-x: auto; overflow-y: hidden; }

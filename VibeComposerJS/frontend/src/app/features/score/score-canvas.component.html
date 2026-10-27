@@ -12,9 +12,8 @@
 <div class="score-canvas-host" #rendererHost>
   @if (noteTooltip(); as tooltip) {
     <div class="note-tooltip" role="tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
-      <strong [style.color]="tooltip.color">{{ tooltip.track }}</strong>
       <span class="note-tooltip-values"><span>{{ tooltip.pitch }}</span><span>V{{ tooltip.velocity }}</span></span>
-      <small class="note-tooltip-source"><i [style.background]="tooltip.color" aria-hidden="true"></i>{{ tooltip.source }}</small>
+      <small class="note-tooltip-source"><i [style.background]="tooltip.color" aria-hidden="true"></i><span>{{ tooltip.source }} --</span><strong [style.color]="tooltip.color">{{ tooltip.track }}</strong></small>
     </div>
   }
 </div>
