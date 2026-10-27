@@ -23,8 +23,11 @@ function convertPhrase(notes: readonly PhraseNote[] | undefined, key: string, fr
 export function followManualPhraseMode(previous: CompositionProject, next: CompositionProject): CompositionProject {
   if (previous.scale === next.scale) return next;
   return { ...next,
-    tracks: next.tracks.map(track => track.role === 'drums' || track.editedPhrase === undefined ? track : {
+    tracks: next.tracks.map(track => track.role === 'drums' || track.editedPhrase === undefined && !track.phraseEdits?.length ? track : {
       ...track, editedPhrase: convertPhrase(track.editedPhrase, previous.key, previous.scale, next.scale),
+      ...(track.phraseEdits ? { phraseEdits: track.phraseEdits.map(edit => ({ ...edit,
+        notes: convertPhrase(edit.notes, previous.key, previous.scale, next.scale)!,
+      })) } : {}),
     }),
     editedPhrases: Object.fromEntries(Object.entries(next.editedPhrases).map(([role, notes]) => [role,
       role === 'drums' ? notes : convertPhrase(notes, previous.key, previous.scale, next.scale)])),

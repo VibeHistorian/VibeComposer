@@ -1,4 +1,5 @@
 import type { PhraseNote } from '../music/phrase-note';
+import type { PhraseRangeEdit } from '../music/phrase-range-edit';
 import type { InstrumentPool } from '../music/generation-policy.model';
 import type { MelodySettings, BassSettings, ChordSettings, ArpeggioSettings, DrumSettings } from '../music/part-settings.model';
 
@@ -22,6 +23,8 @@ interface TrackBase {
   readonly midiChannel: number;
   readonly mix: MixChannelSettings;
   readonly editedPhrase?: readonly PhraseNote[];
+  /** Track-owned replacements layered over each section's resolved phrase. */
+  readonly phraseEdits?: readonly PhraseRangeEdit[];
   readonly rerollLocked?: boolean;
   readonly instrumentLocked?: boolean;
   readonly instrumentPool?: Exclude<InstrumentPool, 'AUTO'>;

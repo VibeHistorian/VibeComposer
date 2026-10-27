@@ -13,8 +13,10 @@ import { applyPartTiming } from './part-processing';
 import { melodyContext, type MelodyContext } from './melody-context';
 import { baseGenerationHarmony, sectionGenerationHarmony, withTrackSeed } from './project-harmony';
 import type { GenerationHarmony } from './harmony-voicing';
-import { mapChordNotes, sectionProject } from './section-context';
+import { chordGridBeat, mapChordBeat, mapChordNotes, sectionDurationBeats, sectionProject } from './section-context';
 import { trackHasSectionHarmony } from './harmony-display';
+import { applyPhraseRangeEdits, hasManualPhrase } from './phrase-range-edit';
+import { sectionPhraseBounds } from './phrase-bounds';
 
 /** Generate a phrase using the independent track's settings. */
 export function generateTrackPhrase(project: CompositionProject, track: CompositionTrack, includeTiming = true, context?: MelodyContext,
@@ -63,7 +65,7 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
 }
 
 export function phraseForTrack(project: CompositionProject, track: CompositionTrack): readonly PhraseNote[] {
-  return track.editedPhrase ?? generateTrackPhrase(project, track);
+  return applyPhraseRangeEdits(track.editedPhrase ?? generateTrackPhrase(project, track), track.phraseEdits, project.progression.length * 4);
 }
 
 /** Add the legacy BassPart octave interval as a quieter upper octave. */
@@ -84,7 +86,7 @@ export type PhraseSource = 'global-generated' | 'global-edited' | 'section-gener
 
 export function trackPhraseSource(track: CompositionTrack, section?: ArrangementSection, project?: CompositionProject): PhraseSource {
   if (section?.trackPhrases?.[track.id] !== undefined) return 'section-edited';
-  if (track.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(track.id)) return 'global-edited';
+  if (hasManualPhrase(track) && !section?.generatedTrackIds?.includes(track.id)) return 'global-edited';
   // Phrase ownership follows the arrangement indicator and note-track selection.
   // Section harmony/context still uses global track settings unless part overrides exist.
   const local = section && (Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
@@ -117,6 +119,7 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
   const result: (PhraseNote & { readonly phraseSource?: PhraseSource })[] = [];
   let arrangementBeat = 0;
   for (const section of project.arrangement) {
+    const sectionStart = arrangementBeat;
     const phraseSource = includeSource ? trackPhraseSource(track, section, project) : 'global-generated';
     const partEnters = shouldGenerateTrackInSection(section, track);
     const localPhrase = section.trackPhrases?.[track.id];
@@ -165,7 +168,12 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
       }
       arrangementBeat += durations[measure % durations.length];
     }
-    const timedNotes = !manual ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes;
+    const timed = !manual ? applyPartTiming(sectionNotes, effectiveTrack.generatorSettings) : sectionNotes;
+    const edits = partEnters && !section.generatedTrackIds?.includes(track.id) ? track.phraseEdits : undefined;
+    const timedNotes = edits?.length
+      ? applyPhraseRangeEdits(timed.map(note => ({ ...note, startBeat: note.startBeat - sectionStart })),
+        edits, arrangementBeat - sectionStart, sectionPhraseBounds(project, section))
+        .map(note => ({ ...note, startBeat: note.startBeat + sectionStart })) : timed;
     result.push(...(includeSource ? timedNotes.map(note => ({ ...note, phraseSource, sectionId: section.id })) : timedNotes));
   }
   const notes = result;
@@ -198,7 +206,15 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   const progression = harmony.degrees;
   const source = project.tracks.find(track => track.role === 'melody');
   if (!source) return { ...melodyContext([], progression.length), available: false };
-  if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) return melodyContext(source.editedPhrase, progression.length);
+  const edits = !section?.generatedTrackIds?.includes(source.id) ? source.phraseEdits : undefined;
+  const sectionEnd = section ? sectionDurationBeats(project, section) : progression.length * 4;
+  const bounds = section ? sectionPhraseBounds(project, section) : undefined;
+  const local = section?.trackPhrases?.[source.id];
+  if (local !== undefined) return melodyContext(local.map(note => ({ ...note,
+    startBeat: chordGridBeat(note.startBeat, harmony.durations) })), progression.length);
+  if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) {
+    return melodyContext(applyPhraseRangeEdits(source.editedPhrase, edits, sectionEnd, bounds), progression.length);
+  }
   const effective = resolvePartTrack(source, section);
   if (effective.role !== 'melody') {
     return { ...melodyContext([], progression.length), available: false };
@@ -207,9 +223,15 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   const contextual = sectionProject(project, section);
   const seeded = withTrackSeed(contextual, source);
   generateMelody(BigInt(seeded.seed), contextual.key, contextual.scale, progression, effective.generatorSettings, harmony.melodySeedOffset ?? 0,
-    notes => { result = melodyContext(notes.map(note => ({ ...note,
-      midi: note.midi < 0 ? note.midi : Math.max(0, Math.min(127, note.midi + (section?.context?.keyChange ?? 0))) })),
-      progression.length); }, project.melodyGlobal,
+    notes => {
+      const generated = notes.map((note, index) => ({ ...note, id: `context-${index}`, durationBeats: .25, velocity: 90,
+        midi: note.midi < 0 ? note.midi : Math.max(0, Math.min(127, note.midi + (section?.context?.keyChange ?? 0))) }));
+      // Keep the generated pre-swing/pre-feedback grid outside edited windows.
+      const resolved = edits?.length ? applyPhraseRangeEdits(generated.map(note => ({ ...note,
+        startBeat: mapChordBeat(note.startBeat, harmony.durations) })), edits, sectionEnd, bounds)
+        .map(note => ({ ...note, startBeat: chordGridBeat(note.startBeat, harmony.durations) })) : generated;
+      result = melodyContext(resolved, progression.length);
+    }, project.melodyGlobal,
     harmony.customChords, harmony);
   return result;
 }

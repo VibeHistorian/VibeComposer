@@ -29,7 +29,7 @@
 
       @if (isEdited()) {
         <div class="restore-panel">
-          <p>{{ generationAvailable() ? 'Generated notes for this part have been replaced with your edited phrase.' : 'This track uses your saved melody notes.' }}</p>
+          <p>{{ generationAvailable() ? 'This part includes your saved note edits.' : 'This track uses your saved melody notes.' }}</p>
           @if (generationAvailable()) { <button type="button" class="secondary-button" (click)="restoreGenerated()">Restore generated phrase</button> }
         </div>
       } @else {
@@ -51,6 +51,7 @@
   </div>
   <details class="phrase-help">
     <summary>Editing gestures and shortcuts</summary>
+    <p>Apply replaces this beat range globally. Each section keeps its notes outside the range; shorter sections use only the overlap. Local Apply saves to this section only.</p>
     <p>Click empty space to add a note. Drag notes to move; drag either edge to trim. Alt+left drag trims the start. Shift bypasses the time grid and keeps move drags at the same pitch.</p>
     <p>Right drag selects a box. Ctrl+right drag extends selection. Right-click deletes; Alt+right-click splits at the pointer. Ctrl+left drag on selected notes duplicates; elsewhere it shapes pitch.</p>
     <p>Middle drag edits velocity; Alt+middle drag changes length; Shift+middle drag changes pitch. Ctrl+middle drag shapes velocities. Middle-click empty space exits: unchanged drafts cancel; edits to section overrides save locally; other edits save globally.</p>

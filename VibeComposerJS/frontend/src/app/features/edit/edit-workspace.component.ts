@@ -5,6 +5,7 @@ import { type ArrangedPart, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from 
 import type { CompositionTrack } from '../../core/project/track.model';
 import type { PhraseNote } from '../../core/music/phrase-note';
 import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../core/music/phrase';
+import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
 import { getDiatonicChords, getPitchClass } from '../../core/music/harmony';
@@ -207,7 +208,7 @@ export class EditWorkspaceComponent {
   })).sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi));
   readonly displayNotes = this.notes;
   readonly selectedNote = computed(() => this.displayNotes().find((note) => note.id === this.selectedNoteId()) ?? null);
-  readonly isEdited = computed(() => this.selectedTrack().editedPhrase !== undefined
+  readonly isEdited = computed(() => hasManualPhrase(this.selectedTrack())
     || this.project().arrangement.find(section => section.id === this.sectionId)?.trackPhrases?.[this.selectedTrack().id] !== undefined);
   readonly noteCount = computed(() => this.notes().length);
   private newNoteId = 0;
@@ -396,14 +397,20 @@ export class EditWorkspaceComponent {
       const start = this.phraseStartBeat + this.editBounds().startBeat;
       const end = this.phraseStartBeat + this.editBounds().endBeat;
       const preserved = source.filter(note => note.startBeat < start || note.startBeat >= end);
-      const changed = draft.map(note => ({ ...note, startBeat: note.startBeat + (local ? this.phraseStartBeat : 0) }));
+      const changed = draft.map(note => ({ ...note, startBeat: note.startBeat + (section ? this.phraseStartBeat : 0) }));
       const ids = new Set<string>();
       const notes = [...preserved, ...changed].map(note => {
         const id = ids.has(note.id) ? this.makeNoteId() : note.id; ids.add(id);
         return { id, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity };
       });
-      return { trackId: track.id, ...(local && section ? { sectionId: section.id } : {}), notes };
+      return { trackId: track.id, ...(local && section ? { sectionId: section.id } : {}), notes,
+        ...(!local ? { range: {
+          startBeat: section ? this.phraseStartBeat : 0,
+          endBeat: (section ? this.phraseStartBeat : 0) + this.phraseBeats(),
+          ...(this.editBounds().startBeat < 0 ? { pickupBeats: -this.editBounds().startBeat } : {}),
+          ...(this.editBounds().endBeat > this.phraseBeats() ? { tailBeats: this.editBounds().endBeat - this.phraseBeats() } : {}),
+        } } : {}) };
     });
     if (!this.projects.applyPhraseEdits(edits)) {
       this.applyError.set('Cannot save these phrases. Check note timings and the 2048-note limit per track.');

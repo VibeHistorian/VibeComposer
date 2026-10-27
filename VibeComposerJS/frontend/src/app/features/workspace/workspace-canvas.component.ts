@@ -21,6 +21,7 @@ import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
 import { layOutTrackPhrase, phraseForTrack, trackPhraseSource } from '../../core/music/phrase';
+import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import { getDiatonicChords } from '../../core/music/harmony';
 import { sectionGenerationHarmony } from '../../core/music/project-harmony';
 
@@ -292,7 +293,7 @@ export class WorkspaceCanvasComponent {
   readonly manualTrackNames = computed(() => {
     const section = this.contextSection();
     return this.contextTracks().filter(track => section?.trackPhrases?.[track.id] !== undefined
-      || track.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(track.id)).map(track => track.name).join(', ');
+      || hasManualPhrase(track) && !section?.generatedTrackIds?.includes(track.id)).map(track => track.name).join(', ');
   });
   readonly partDestinations = computed(() => this.project().arrangement.filter((section) =>
     this.selectedSectionIds().includes(section.id) && section.id !== this.localPartTarget()?.sectionId));
@@ -494,7 +495,7 @@ export class WorkspaceCanvasComponent {
     const section = this.timelineSections().find((item, index, all) => note.sectionId ? item.section.id === note.sectionId
       : note.startBeat >= item.startBeat && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()))?.section;
     if (section && (section.trackPhrases?.[track.id] !== undefined
-        || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id))) {
+        || hasManualPhrase(track) && !section.generatedTrackIds?.includes(track.id))) {
       this.openNoteEditor(note);
     } else if (section && (Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
         || Object.keys(section.rolePartOverrides?.[track.role] ?? {}).length > 0)) {

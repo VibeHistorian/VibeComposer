@@ -64,6 +64,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     } }).outputText;
     const css = fs.readFileSync(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.css'), 'utf8');
     const boundsCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-bounds.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+    const rangeCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-range-edit.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const contextCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/section-context.ts'), 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     }).outputText;
@@ -96,6 +97,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       computed: read => read, effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }), output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
+      '../../core/music/phrase-range-edit': (() => { const module={exports:{}}; const exports=module.exports; ${rangeCode}; return module.exports; })(),
       '../../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
       '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
       '../../core/music/phrase-bounds': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${boundsCode}; return module.exports; })(),

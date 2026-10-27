@@ -4,6 +4,177 @@ const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('global range Apply from a short section preserves each longer section continuation through history, reload and MIDI', () => {
+  const { service, ui, phrase, midi, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateSection(0, { measures: 1 });
+  service.updateSection(1, { measures: 8 });
+  service.setSectionTrackPresence(0, id, true);
+  service.setSectionTrackPresence(1, id, true);
+  const sectionId = service.project().arrangement[0].id;
+  const track = () => service.project().tracks.find(track => track.id === id);
+  const layout = index => phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[index]] }, track());
+  const continuation = layout(1).filter(note => note.startBeat >= 4 && note.startBeat < 32);
+  assert.ok(continuation.length > 0);
+  const before = service.exportProjectJson();
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId = sectionId; editor.phraseLength = 4; editor.ngOnInit();
+  const first = editor.notes().find(note => note.startBeat >= 0);
+  editor.selectNote(first.id); editor.updateSelected('velocity', { target: { value: '117' } });
+  editor.applyChanges();
+  assert.equal(editor.applyError(), null);
+  assert.equal(layout(0).find(note => note.id === first.id).velocity, 117);
+  assert.equal(layout(1).find(note => note.startBeat === first.startBeat).velocity, 117);
+  assert.deepEqual(layout(1).filter(note => note.startBeat >= 4 && note.startBeat < 32), continuation,
+    'later notes preserve pitches, timing, velocity and duration, including later phrase cycles');
+  const after = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+  assert.equal(service.importProjectJson(after), true);
+  assert.deepEqual(layout(1).filter(note => note.startBeat >= 4 && note.startBeat < 32), continuation);
+  const isolated = { ...service.project(), arrangement: [service.project().arrangement[1]] };
+  const parsed = new Midi(midi.generateCompositionMidi(isolated));
+  const exported = parsed.tracks.find(t => t.name === track().name);
+  assert.ok(exported.notes.some(note => note.ticks / parsed.header.ppq >= 16), 'export retains the continuation too');
+});
+
+test('global range Apply from a long section excludes later body notes from short sections but retains explicit tails and sustains', () => {
+  const { service, ui, phrase, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateSection(0, { measures: 4 });
+  service.updateSection(1, { measures: 1 });
+  service.setSectionTrackPresence(0, id, true); service.setSectionTrackPresence(1, id, true);
+  service.updateTrackPhrase(id, [
+    { id: 'first', midi: 48, startBeat: 0, durationBeats: 1, velocity: 90 },
+    { id: 'sustain', midi: 50, startBeat: 3, durationBeats: 3, velocity: 90 },
+    { id: 'later-bar', midi: 52, startBeat: 4, durationBeats: 1, velocity: 90 },
+    { id: 'later-still', midi: 53, startBeat: 7, durationBeats: 1, velocity: 90 },
+  ]);
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId = service.project().arrangement[0].id; editor.phraseLength = 16; editor.ngOnInit();
+  editor.selectNote('first'); editor.updateSelected('velocity', { target: { value: '111' } });
+  editor.addNoteAt({ midi: 55, startBeat: 17, durationBeats: 1 });
+  editor.applyChanges(); assert.equal(editor.applyError(), null);
+  const track = service.project().tracks.find(track => track.id === id);
+  const short = phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[1]] }, track);
+  assert.deepEqual(short.map(note => [note.midi, note.startBeat, note.durationBeats]), [[48, 0, 1], [50, 3, 3], [55, 5, 1]]);
+  assert.equal(short[0].velocity, 111);
+});
+
+test('empty global ranges suppress notes and later windows preserve previous edits without implicit repetition', () => {
+  const { service, ui, phrase, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateSection(0, { measures: 8 }); service.setSectionTrackPresence(0, id, true);
+  const sectionId = service.project().arrangement[0].id;
+  const track = () => service.project().tracks.find(track => track.id === id);
+  const layout = () => phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[0]] }, track());
+  const continuation = layout().filter(note => note.startBeat >= 4);
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const first = new Editor(); first.sectionId = sectionId; first.phraseLength = 4; first.ngOnInit();
+  first.selectAll(); first.deleteSelected(); first.applyChanges();
+  assert.equal(first.applyError(), null);
+  assert.equal(layout().some(note => note.startBeat < 4), false);
+  assert.deepEqual(layout(), continuation);
+  const later = new Editor(); later.sectionId = sectionId; later.phraseStartBeat = 16; later.phraseLength = 4; later.ngOnInit();
+  later.selectAll(); later.deleteSelected(); later.addNoteAt({ midi: 72, startBeat: 1, durationBeats: 1 });
+  later.applyChanges(); assert.equal(later.applyError(), null);
+  assert.equal(layout().some(note => note.startBeat < 4), false, 'earlier silence remains owned');
+  assert.ok(layout().some(note => note.midi === 72 && note.startBeat === 17));
+  assert.deepEqual(layout().filter(note => note.startBeat >= 4 && note.startBeat < 16), continuation.filter(note => note.startBeat < 16));
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  assert.equal(layout().some(note => note.startBeat < 4), false, 'empty replacement survives reload');
+});
+
+test('range edits respect local and generated ownership, absence, duplication, restore and Mode conversion', () => {
+  const { service, phrase, uiPreferences } = fixture();
+  const id = 'track-bass-1';
+  const notes = [{ id: 'range', midi: 64, startBeat: 0, durationBeats: 1, velocity: 111 }];
+  const sectionId = service.project().arrangement[0].id;
+  assert.equal(service.applyPhraseEdits([{ trackId: id, notes, range: { startBeat: 0, endBeat: 4 } }]), true);
+  const track = () => service.project().tracks.find(track => track.id === id);
+  const section = { ...service.project().arrangement[0], measures: 1, trackPresence: { [id]: true } };
+  const layout = overrides => phrase.layOutTrackPhrase({ ...service.project(), arrangement: [{ ...section, ...overrides }] }, track());
+  assert.deepEqual(layout({}), notes);
+  assert.deepEqual(layout({ trackPresence: { [id]: false } }), []);
+  assert.deepEqual(layout({ trackPhrases: { [id]: [] } }), []);
+  assert.equal(layout({ generatedTrackIds: [id] }).some(note => note.id === 'range'), false);
+  const copy = service.duplicateTrack(id);
+  assert.deepEqual(service.project().tracks.find(track => track.id === copy).phraseEdits, track().phraseEdits);
+  assert.notStrictEqual(service.project().tracks.find(track => track.id === copy).phraseEdits[0].notes, track().phraseEdits[0].notes);
+  assert.equal(uiPreferences.manualPhrasesFollowMode(), true);
+  service.updateSettings({ scale: 'natural-minor' });
+  assert.equal(track().phraseEdits[0].notes[0].midi, 63);
+  service.clearTrackPhrase(id);
+  assert.equal(track().phraseEdits, undefined);
+  service.undo(); assert.equal(track().phraseEdits[0].notes[0].midi, 63);
+  service.clearEditedPhrase('bass'); assert.equal(track().phraseEdits, undefined);
+  assert.equal(service.project().arrangement[0].id, sectionId);
+});
+
+test('range windows validate atomically and preserve notes sustaining past an interior edit boundary', () => {
+  const { service, phrase } = fixture();
+  const id = 'track-bass-1';
+  const note = { id: 'crossing', midi: 50, startBeat: 3, durationBeats: 5, velocity: 90 };
+  assert.equal(service.applyPhraseEdits([{ trackId: id, notes: [note], range: { startBeat: 0, endBeat: 4 } }]), true);
+  const track = () => service.project().tracks.find(track => track.id === id);
+  assert.equal(phrase.phraseForTrack(service.project(), track()).find(n => n.id === note.id).durationBeats, 5);
+  const saved = service.exportProjectJson();
+  for (const range of [{ startBeat: 4, endBeat: 4 }, { startBeat: -1, endBeat: 4 }, { startBeat: 0, endBeat: Infinity },
+    { startBeat: 1, endBeat: 4, pickupBeats: 4 }, { startBeat: 0, endBeat: 4, tailBeats: -1 }]) {
+    assert.equal(service.applyPhraseEdits([{ trackId: id, notes: [], range }]), false);
+    assert.equal(service.exportProjectJson(), saved);
+  }
+  const invalid = JSON.parse(saved); invalid.tracks.find(track => track.id === id).phraseEdits[0].endBeat = 0;
+  assertRejectedProjectImport(service, JSON.stringify(invalid));
+  assert.equal(service.applyPhraseEdits([{ trackId: id, notes: [], range: { startBeat: 0, endBeat: 4 } }]), true);
+  assert.equal(track().phraseEdits.length, 1, 'resaving the same window replaces its old data');
+});
+
+test('custom-duration range edits use actual beats and anchor explicit margins to each destination boundary', () => {
+  const { service, ui, phrase, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateSection(0, { measures: 1 }); service.updateSection(1, { measures: 4 });
+  service.setSectionMusicalState(service.project().arrangement[0].id, { customDurations: [2] });
+  service.setSectionTrackPresence(0, id, true); service.setSectionTrackPresence(1, id, true);
+  const track = () => service.project().tracks.find(track => track.id === id);
+  const layout = index => phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[index]] }, track());
+  const continuation = layout(1).filter(note => note.startBeat >= 2 && note.startBeat < 16);
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId = service.project().arrangement[0].id; editor.phraseLength = 2; editor.ngOnInit();
+  editor.selectAll(); editor.deleteSelected();
+  for (const startBeat of [-1, 1, 3]) editor.addNoteAt({ midi: 60, startBeat, durationBeats: .5 });
+  editor.applyChanges(); assert.equal(editor.applyError(), null);
+  assert.deepEqual(layout(0).map(note => note.startBeat), [-1, 1, 3]);
+  assert.deepEqual(layout(1).filter(note => note.startBeat >= 2 && note.startBeat < 16), continuation);
+  assert.deepEqual(layout(1).filter(note => note.midi === 60).map(note => note.startBeat), [-1, 1, 17]);
+});
+
+test('melody consumers resolve global replacement windows even when the melody track is absent', () => {
+  const { service, phrase } = fixture();
+  const id = 'track-melody-1';
+  const original = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
+  const notes = [{ id: 'lead-edit', midi: 79, startBeat: 0, durationBeats: 1, velocity: 111 }];
+  assert.equal(service.applyPhraseEdits([{ trackId: id, notes, range: { startBeat: 0, endBeat: 4 } }]), true);
+  service.setSectionTrackPresence(0, id, false);
+  const project = service.project(), section = project.arrangement[0];
+  const context = phrase.sectionMelodyContext(project, section);
+  assert.equal(context.pitches[0][0], 79);
+  assert.deepEqual(context.pitches.slice(1), original.pitches.slice(1), 'outside the window the dependency keeps generated notes');
+  const forced = phrase.sectionMelodyContext(project, { ...section, generatedTrackIds: [id] });
+  assert.deepEqual(forced, original);
+  const local = phrase.sectionMelodyContext(project, { ...section, trackPhrases: { [id]: [{ ...notes[0], midi: 57 }] } });
+  assert.equal(local.pitches[0][0], 57, 'local replacement takes precedence over track-owned ranges');
+  service.setSectionMusicalState(section.id, { customDurations: [2, 6, 3, 5] });
+  assert.equal(service.applyPhraseEdits([{ trackId: id, notes: [{ ...notes[0], startBeat: 3 }],
+    range: { startBeat: 2, endBeat: 8 } }]), true);
+  const custom = phrase.sectionMelodyContext(service.project(), service.project().arrangement[0]);
+  assert.equal(custom.pitches[1][2], 79, 'actual section beats map back to the dependent part chord grid');
+});
+
 test('section pickups and late notes survive editing, local apply, history, reload and MIDI export', () => {
   const { service, phrase, midi, ui, workspace, load } = fixture();
   const id = 'track-bass-1';
@@ -81,7 +252,7 @@ test('global Apply retains pickups and the extra measure when a section is short
   editor.applyChanges();
   assert.equal(editor.applyError(), null);
   const track = service.project().tracks.find(track => track.id === id);
-  assert.deepEqual(track.editedPhrase.map(note => note.startBeat), [-4, 7]);
+  assert.deepEqual(track.phraseEdits[0].notes.map(note => note.startBeat), [-4, 7]);
   const arranged = phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[0]] }, track);
   assert.deepEqual(arranged.map(note => note.startBeat), [-4, 7]);
 });
@@ -346,7 +517,7 @@ test('manual melody notes work through the editor, scoped presence, history, per
   editor.applyChanges();
   workspace.closeEditor();
   const track = () => service.project().tracks.find((candidate) => candidate.id === id);
-  assert.deepEqual(track().editedPhrase, draft);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), draft);
   const laidOut = phrase.layOutTrackPhrase(service.project(), track());
   assert.ok(laidOut.length > 0);
   const exported = new Midi(midi.generateCompositionMidi(service.project()));
@@ -358,7 +529,7 @@ test('manual melody notes work through the editor, scoped presence, history, per
   service.undo();
   assert.equal(service.exportProjectJson(), before, 'Apply writes exactly one history entry');
   service.redo();
-  assert.deepEqual(track().editedPhrase, draft);
+  assert.deepEqual(phrase.phraseForTrack(service.project(), track()), draft);
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
@@ -471,9 +642,9 @@ test('multi-drum drafts keep ownership, smart-exit destinations and one atomic u
   editor.undo(); assert.equal(editor.hasChanges(), false);
   editor.redo(); assert.equal(editor.hasChanges(), true);
   editor.smartExit(); assert.equal(editor.applied.values.length, 1);
-  assert.equal(service.project().tracks.find(track => track.id === tracks[0].id).editedPhrase[0].velocity, 95);
+  assert.equal(service.project().tracks.find(track => track.id === tracks[0].id).phraseEdits[0].notes[0].velocity, 95);
   assert.equal(service.project().tracks.find(track => track.id === tracks[1].id).editedPhrase[0].velocity, 90);
-  assert.equal(service.project().tracks.find(track => track.id === tracks[2].id).editedPhrase[0].velocity, 95);
+  assert.equal(service.project().tracks.find(track => track.id === tracks[2].id).phraseEdits[0].notes[0].velocity, 95);
   assert.equal(service.project().arrangement[0].trackPhrases[tracks[1].id][0].velocity, 105);
   service.undo(); assert.equal(service.exportProjectJson(), before, 'one project undo restores all drum phrases');
   const invalidBefore = service.exportProjectJson();

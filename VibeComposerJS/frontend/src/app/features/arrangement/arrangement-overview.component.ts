@@ -9,6 +9,7 @@ import type { CompositionTrack } from '../../core/project/track.model';
 import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
 import { noteTimelineBounds } from '../../core/music/phrase-bounds';
 import { layOutTrackPhrase } from '../../core/music/phrase';
+import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import type { SettingsTarget } from '../../core/ui/workspace-ui.service';
 import type { PlaybackRange } from '../../core/audio/audio-playback.service';
@@ -504,7 +505,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0
             || Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0;
           const manualNotes = item.section.trackPhrases?.[track.id] !== undefined
-            || track.editedPhrase !== undefined && !item.section.generatedTrackIds?.includes(track.id);
+            || hasManualPhrase(track) && !item.section.generatedTrackIds?.includes(track.id);
           if (manualNotes) {
             context.fillStyle = item.section.trackPhrases?.[track.id] !== undefined ? this.accent : noteColor;
             context.beginPath(); context.arc(centerX + 6, centerY - 6, 2.5, 0, Math.PI * 2); context.fill();

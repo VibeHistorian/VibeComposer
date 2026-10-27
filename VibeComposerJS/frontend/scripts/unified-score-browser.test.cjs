@@ -238,7 +238,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'middle',clickCount:1});
   const empty=await evaluate(`(()=>{const c=document.querySelector('vc-score-canvas canvas').getBoundingClientRect();return {x:c.left+c.width*.7,y:c.top+20};})()`);
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...empty,button:'middle',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...empty,button:'middle',clickCount:1});
-  const globalDrum=await evaluate(`(async()=>{${waitCode}return await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.tracks.filter(t=>t.role==='drums').every(t=>t.editedPhrase[0].velocity===101);});})()`);assert.equal(globalDrum,true);
+  const globalDrum=await evaluate(`(async()=>{${waitCode}return await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.tracks.filter(t=>t.role==='drums').every(t=>t.phraseEdits?.at(-1).notes[0].velocity===101);});})()`);assert.equal(globalDrum,true);
   for (const width of [1024,780]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
     const layout=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const score=document.querySelector('vc-score-canvas canvas');score.scrollIntoView({block:'center'});const box=score.getBoundingClientRect();return {width:box.width,height:box.height,fits:document.documentElement.scrollWidth<=innerWidth+1};})()`);

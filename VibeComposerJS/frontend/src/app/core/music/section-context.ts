@@ -99,6 +99,17 @@ export function mapChordNotes(notes: readonly PhraseNote[], durations: readonly 
     durationBeats: mapChordBeat(note.startBeat + note.durationBeats, durations) - mapChordBeat(note.startBeat, durations) }));
 }
 
+/** Convert section beats back to the generator's four-beat chord grid. */
+export function chordGridBeat(beat: number, durations: readonly number[]): number {
+  if (beat < 0) return beat * 4 / durations[0];
+  const cycleLength = durations.reduce((sum, duration) => sum + duration, 0);
+  const cycle = Math.floor(beat / cycleLength);
+  let remaining = beat - cycle * cycleLength;
+  let slot = 0;
+  while (slot < durations.length - 1 && remaining >= durations[slot]) remaining -= durations[slot++];
+  return (cycle * durations.length + slot) * 4 + remaining * 4 / durations[slot];
+}
+
 export interface TempoPoint { readonly beat: number; readonly bpm: number; readonly seconds: number; }
 export function projectTempoMap(project: CompositionProject): TempoPoint[] {
   const result: TempoPoint[] = [];

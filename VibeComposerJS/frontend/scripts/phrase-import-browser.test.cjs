@@ -91,17 +91,17 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     button('Redo phrase').click();await wait(()=>knob().value==='5'&&document.querySelector('#note-pitch').value==='66');
     button('Undo phrase').click();await wait(()=>knob().value==='0');
     button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
-    const notes=read().tracks.find(t=>t.role==='bass').editedPhrase;
+    const notes=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes;
     const compensation=notes.some(n=>n.midi===54&&n.startBeat===0);
     const preserved=notes.some(n=>n.id.endsWith('-old'));
     const preservedTail=notes.some(n=>n.startBeat===15&&n.durationBeats===3)&&notes.length===3;
     await open('bass');const reopenedZero=knob().value==='0';button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'));
     const checkbox=await settings();checkbox.click();closeSettings();
     await open('bass');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
-    const replaced=read().tracks.find(t=>t.role==='bass').editedPhrase.length===2;
+    const replaced=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes.length===2;
     await open('drums');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
-    const drumsUntransposed=read().tracks.find(t=>t.role==='drums').editedPhrase.some(n=>n.midi===61);
-    const oldDrumsCleared=read().tracks.find(t=>t.id==='track-drums-extra').editedPhrase.length===0;
+    const drumsUntransposed=read().tracks.find(t=>t.role==='drums').phraseEdits.at(-1).notes.some(n=>n.midi===61);
+    const oldDrumsCleared=read().tracks.find(t=>t.id==='track-drums-extra').phraseEdits.at(-1).notes.length===0;
     return {defaultOff,initialZero,noAddNote,glow,noGlow,freePitch,compensation,preserved,preservedTail,reopenedZero,replaced,drumsUntransposed,oldDrumsCleared};
   })()`);
   for(const [key,value] of Object.entries(result))assert.equal(value,true,key);
@@ -121,7 +121,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
   assert.equal(await evaluate(`(async()=>{${waitCode}${setup}return (await settings()).checked;})()`),true,'discard preference survives reload');
   const options=await evaluate(`(async()=>{${waitCode}${setup}
     closeSettings();await open('bass');
-    const before=read().tracks.find(t=>t.role==='bass').editedPhrase;
+    const before=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes;
     startDrop();const popup=await wait(()=>document.querySelector('vc-midi-import-dialog #midi-import-duration'));
     const dialog=popup.closest('vc-midi-import-dialog'),apply=dialog.querySelector('button[type="submit"]');
     const combined=!!dialog.querySelector('#midi-import-scale')&&dialog.textContent.includes('21 beats')&&dialog.textContent.includes('20 beats');
@@ -137,7 +137,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     const singleUndo=button('Undo phrase').disabled;
     button('Redo phrase').click();await wait(()=>!button('Undo phrase').disabled);
     button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
-    const notes=read().tracks.find(t=>t.role==='bass').editedPhrase;
+    const notes=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes;
     const scaled=notes.length===3&&Math.abs(Math.max(...notes.map(n=>n.startBeat+n.durationBeats))-12)<1e-8;
     const translated=notes.every(n=>[0,2,4,5,7,9,11].includes(n.midi%12));
     await open('bass');startDrop();await wait(()=>document.querySelector('vc-midi-import-dialog button[type="submit"]'));

@@ -77,7 +77,7 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (Array.isArray(tracks)) tracks.forEach((raw, index) => {
       const path = `project.tracks[${index}]`;
       const keys = ['id', 'role', 'name', 'midiChannel', 'mix', 'generatorSettings'];
-      const track = object(raw, path, keys, [...keys, 'editedPhrase', 'rerollLocked', 'instrumentLocked', 'instrumentPool', 'orderOffset']);
+      const track = object(raw, path, keys, [...keys, 'editedPhrase', 'phraseEdits', 'rerollLocked', 'instrumentLocked', 'instrumentPool', 'orderOffset']);
       if (!track) return;
       mix(track['mix'], `${path}.mix`);
       const role = track['role'] as ArrangedPart;

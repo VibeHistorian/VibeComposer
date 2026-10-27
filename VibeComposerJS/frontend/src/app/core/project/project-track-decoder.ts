@@ -1,6 +1,7 @@
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
 import type { CompositionTrack, MixChannelSettings } from './track.model';
 import type { PhraseNote } from '../music/phrase-note';
+import type { PhraseRangeEdit } from '../music/phrase-range-edit';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { INSTRUMENT_POOLS } from '../music/instrument-generation';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
@@ -22,6 +23,7 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       : isPhrase(track.editedPhrase) ? track.editedPhrase.map((note) => ({ ...note })) : null;
     if (!mix || editedPhrase === null || (track.rerollLocked !== undefined && typeof track.rerollLocked !== 'boolean')
       || (track.instrumentLocked !== undefined && typeof track.instrumentLocked !== 'boolean')) return undefined;
+    if (track.phraseEdits !== undefined && !isPhraseRangeEdits(track.phraseEdits)) return undefined;
     if (track.instrumentPool !== undefined && (typeof track.instrumentPool !== 'string' || track.role === 'drums' || track.instrumentPool === 'DRUM'
       || !Object.hasOwn(INSTRUMENT_POOLS, track.instrumentPool)
       || !INSTRUMENT_POOLS[track.instrumentPool]?.includes(mix.program))) return undefined;
@@ -54,6 +56,9 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       }
     }
     if (!decoded) return undefined;
+    if (track.phraseEdits !== undefined) decoded = { ...decoded, phraseEdits: track.phraseEdits.map(edit => ({
+      ...edit, notes: edit.notes.map(note => ({ ...note })),
+    })) };
     if (track.orderOffset !== undefined) decoded = { ...decoded, orderOffset: track.orderOffset };
     if (track.rerollLocked !== undefined) decoded = { ...decoded, rerollLocked: track.rerollLocked };
     if (track.instrumentLocked !== undefined) decoded = { ...decoded, instrumentLocked: track.instrumentLocked };
@@ -94,6 +99,23 @@ export function decodeEditedPhrases(value: unknown): Partial<Record<ArrangedPart
     decoded[part] = notes.map((note) => ({ ...note }));
   }
   return decoded;
+}
+
+export function isPhraseRangeEdits(value: unknown): value is readonly PhraseRangeEdit[] {
+  if (!Array.isArray(value) || value.length > 2048) return false;
+  let count = 0;
+  return value.every(raw => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+    const edit = raw as PhraseRangeEdit;
+    if (!Number.isFinite(edit.startBeat) || !Number.isFinite(edit.endBeat)
+      || edit.startBeat < 0 || edit.endBeat <= edit.startBeat || edit.endBeat > 2048
+      || edit.pickupBeats !== undefined && (edit.startBeat !== 0 || !Number.isFinite(edit.pickupBeats) || edit.pickupBeats <= 0 || edit.pickupBeats > 64)
+      || edit.tailBeats !== undefined && (!Number.isFinite(edit.tailBeats) || edit.tailBeats <= 0 || edit.tailBeats > 64)
+      || !isPhrase(edit.notes, 2112, -(edit.pickupBeats ?? 0))) return false;
+    count += edit.notes.length;
+    return count <= 2048 && edit.notes.every(note => note.startBeat < edit.endBeat + (edit.tailBeats ?? 0)
+      && (note.startBeat >= edit.startBeat || edit.pickupBeats !== undefined && note.startBeat < 0));
+  });
 }
 
 export function isPhrase(value: unknown, maximumBeat = 132, minimumBeat = -4): value is readonly PhraseNote[] {

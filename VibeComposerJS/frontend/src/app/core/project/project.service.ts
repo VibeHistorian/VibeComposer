@@ -1,6 +1,7 @@
 import * as arrangementCommands from './project-arrangement-commands';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
-import { isPhrase } from './project-track-decoder';
+import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
+import { appendPhraseRangeEdit, hasManualPhrase, type PhraseRangeEdit } from '../music/phrase-range-edit';
 import { decodeProject, isProject } from './project-codec';
 import { formatProjectJson } from './project-json';
 import { encodeProjectStorage } from './project-storage';
@@ -290,7 +291,7 @@ export class ProjectService {
       const track = { ...source, id, name: `${role[0].toUpperCase()}${number}`,
         midiChannel: role === 'drums' ? 10 : this.nextAvailableChannel(tracks),
         generatorSettings: copyPartSettings(source.generatorSettings),
-        mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined } as CompositionTrack;
+        mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack;
       created.push(track); tracks.push(track);
     }
     const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
@@ -346,7 +347,7 @@ export class ProjectService {
         for (const track of selected) {
           delete trackPartOverrides[track.id];
           delete trackPhrases[track.id];
-          if (track.editedPhrase !== undefined) generatedTrackIds.add(track.id);
+          if (hasManualPhrase(track)) generatedTrackIds.add(track.id);
           else generatedTrackIds.delete(track.id);
         }
       } else {
@@ -430,8 +431,8 @@ export class ProjectService {
         next = { ...next, progression: generated.degrees, progressionChords: generated.chords };
       }
       if ((next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.rangeRandomizeOnCompose
-        && next.tracks.some(track => track.role === 'melody' && !track.rerollLocked && !track.editedPhrase)) {
-        next = { ...next, tracks: next.tracks.map((track, index) => track.role === 'melody' && !track.rerollLocked && !track.editedPhrase
+        && next.tracks.some(track => track.role === 'melody' && !track.rerollLocked && !hasManualPhrase(track))) {
+        next = { ...next, tracks: next.tracks.map((track, index) => track.role === 'melody' && !track.rerollLocked && !hasManualPhrase(track)
           ? { ...track, generatorSettings: { ...track.generatorSettings, ...contextualRange(BigInt(seed) + BigInt(index)) } } : track) };
       }
       for (const role of ARRANGED_PARTS) {
@@ -784,18 +785,18 @@ export class ProjectService {
     this.commit({
       ...current,
       editedPhrases: { ...current.editedPhrases, [part]: editedPhrase },
-      tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase }),
+      tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase, phraseEdits: undefined }),
     });
   }
 
   clearEditedPhrase(part: ArrangedPart): void {
-    if (!this.state().editedPhrases[part]) {
+    if (!this.state().tracks.some(track => track.role === part && hasManualPhrase(track))) {
       return;
     }
     const current = this.state();
     const editedPhrases = { ...current.editedPhrases };
     delete editedPhrases[part];
-    this.commit({ ...current, editedPhrases, tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase: undefined }) });
+    this.commit({ ...current, editedPhrases, tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase: undefined, phraseEdits: undefined }) });
   }
 
   addTrack(role: ArrangedPart): string | undefined {
@@ -813,7 +814,8 @@ export class ProjectService {
       generatorSettings: copyPartSettings(role === 'drums' ? DEFAULT_DRUM_SETTINGS : source.generatorSettings),
       rerollLocked: false,
       instrumentLocked: false,
-      editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
+      editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })),
+      phraseEdits: role === 'drums' ? undefined : source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) } as CompositionTrack;
     const arrangement = current.arrangement.map((section) => ({
       ...section,
       trackPresence: { ...section.trackPresence, ...generateTrackPresence([track], this.sectionTypeSettings.chances()[section.type]) },
@@ -833,7 +835,8 @@ export class ProjectService {
     const duplicate = { ...source, id, name: `${source.name} copy`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(source.generatorSettings),
-      editedPhrase: source.editedPhrase?.map((note) => ({ ...note })) } as CompositionTrack;
+      editedPhrase: source.editedPhrase?.map((note) => ({ ...note })),
+      phraseEdits: source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) } as CompositionTrack;
     const tracks = [...current.tracks];
     tracks.splice(sourceIndex + 1, 0, duplicate);
     this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
@@ -898,11 +901,14 @@ export class ProjectService {
   }
 
   /** Apply a multi-track phrase draft atomically, including mixed global and section destinations. */
-  applyPhraseEdits(edits: readonly { trackId: string; sectionId?: string; notes: readonly PhraseNote[] | null }[]): boolean {
+  applyPhraseEdits(edits: readonly { trackId: string; sectionId?: string; notes: readonly PhraseNote[] | null;
+    range?: Omit<PhraseRangeEdit, 'notes'> }[]): boolean {
     const current = this.state();
     if (!edits.length || edits.some(edit => !current.tracks.some(track => track.id === edit.trackId)
       || edit.sectionId !== undefined && !current.arrangement.some(section => section.id === edit.sectionId)
-      || edit.notes !== null && !isPhrase(edit.notes, edit.sectionId ? 2112 : undefined, edit.sectionId ? -64 : undefined))) return false;
+      || edit.range !== undefined && (edit.sectionId !== undefined || edit.notes === null
+        || !isPhraseRangeEdits([{ ...edit.range, notes: edit.notes }]))
+      || edit.notes !== null && !edit.range && !isPhrase(edit.notes, edit.sectionId ? 2112 : undefined, edit.sectionId ? -64 : undefined))) return false;
     let tracks = [...current.tracks];
     let arrangement = [...current.arrangement];
     const editedPhrases = { ...current.editedPhrases };
@@ -916,11 +922,12 @@ export class ProjectService {
           return { ...section, trackPhrases };
         });
       } else {
-        tracks = tracks.map(track => track.id === edit.trackId
-          ? { ...track, editedPhrase: edit.notes?.map(note => ({ ...note })) } as CompositionTrack : track);
+        tracks = tracks.map(track => track.id !== edit.trackId ? track : edit.range && edit.notes !== null
+          ? { ...track, phraseEdits: appendPhraseRangeEdit(track.phraseEdits, { ...edit.range, notes: edit.notes }) } as CompositionTrack
+          : { ...track, editedPhrase: edit.notes?.map(note => ({ ...note })), phraseEdits: undefined } as CompositionTrack);
         const track = tracks.find(track => track.id === edit.trackId)!;
         if (tracks.find(candidate => candidate.role === track.role)?.id === track.id) {
-          if (edit.notes === null) delete editedPhrases[track.role];
+          if (track.editedPhrase === undefined) delete editedPhrases[track.role];
           else editedPhrases[track.role] = track.editedPhrase;
         }
       }
@@ -936,7 +943,7 @@ export class ProjectService {
     const index = current.tracks.findIndex((track) => track.id === trackId);
     if (index < 0 || !isPhrase(notes)) return false;
     const tracks = [...current.tracks];
-    tracks[index] = { ...tracks[index], editedPhrase: notes.map((note) => ({ ...note })) } as CompositionTrack;
+    tracks[index] = { ...tracks[index], editedPhrase: notes.map((note) => ({ ...note })), phraseEdits: undefined } as CompositionTrack;
     const isPrimary = current.tracks.find((candidate) => candidate.role === tracks[index].role)?.id === trackId;
     const editedPhrases = isPrimary ? { ...current.editedPhrases, [tracks[index].role]: tracks[index].editedPhrase } : current.editedPhrases;
     this.commit({ ...current, tracks, editedPhrases });
@@ -946,9 +953,9 @@ export class ProjectService {
   clearTrackPhrase(trackId: string): void {
     const current = this.state();
     const track = current.tracks.find((candidate) => candidate.id === trackId);
-    if (!track?.editedPhrase) return;
+    if (!track || !hasManualPhrase(track)) return;
     const tracks = current.tracks.map((candidate) => candidate.id === trackId
-      ? { ...candidate, editedPhrase: undefined } as CompositionTrack : candidate);
+      ? { ...candidate, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack : candidate);
     const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === trackId;
     const editedPhrases = { ...current.editedPhrases };
     if (isPrimary) delete editedPhrases[track.role];
@@ -1177,7 +1184,7 @@ export class ProjectService {
     tracks: readonly CompositionTrack[],
     role: ArrangedPart,
     patch: { generatorSettings?: MelodySettings | BassSettings | ChordSettings | ArpeggioSettings | DrumSettings;
-      mix?: MixChannelSettings; editedPhrase?: readonly PhraseNote[] },
+      mix?: MixChannelSettings; editedPhrase?: readonly PhraseNote[]; phraseEdits?: readonly PhraseRangeEdit[] },
   ): CompositionTrack[] {
     let updated = false;
     return tracks.map((track) => {

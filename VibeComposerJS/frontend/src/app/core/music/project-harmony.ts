@@ -8,6 +8,7 @@ import { sectionChordDurations, sectionDegrees, sectionHasChordOverride, section
 import { melodyRepairChords, melodyRootChords } from './melody-chord-targets';
 import { generateMelody } from './melody-generator';
 import { inferMelodyChordDegrees, type MelodySkeleton } from './melody-chord-inference';
+import { hasManualPhrase } from './phrase-range-edit';
 
 export interface ResolvedHarmony extends GenerationHarmony {
   readonly durations: readonly number[];
@@ -72,7 +73,7 @@ export function projectMelodyHarmony(project: CompositionProject): MelodyHarmony
   if (cached) return cached;
   const base = baseGenerationHarmony(project), source = project.tracks.find(track => track.role === 'melody');
   let result: MelodyHarmonyInference = { available: false, sourceTrackId: source?.id,
-    manualSource: source?.editedPhrase !== undefined, harmony: base };
+    manualSource: source !== undefined && hasManualPhrase(source), harmony: base };
   if (source?.role === 'melody') {
     let skeleton: MelodySkeleton | undefined;
     generateMelody(BigInt(withTrackSeed(project, source).seed), project.key, project.scale, base.degrees,

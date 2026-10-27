@@ -31,6 +31,7 @@ function fixture() {
     } }).outputText;
     const module = { exports: {} };
     const defaults = {
+      'core/music/phrase-range-edit': require('./music-loader.cjs').loadMusic('phrase-range-edit.ts'),
       'core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
       'core/music/phrase': { phraseForTrack: () => [], layOutTrackPhrase: () => [] },
       'core/music/phrase-edit': require('./music-loader.cjs').loadMusic('phrase-edit.ts'),
