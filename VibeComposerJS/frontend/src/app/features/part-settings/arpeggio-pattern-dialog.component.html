@@ -1,0 +1,29 @@
+<header><h2>Arpeggio pattern</h2><button type="button" aria-label="Close arpeggio pattern" (click)="dialog.close()">×</button></header>
+<p>Chord-tone indices: 0 is the lowest chord tone; negative values go below the chord. This cycle includes Rotate, before Span and Repeat. Contour and octave adjustments can change the resulting notes.</p>
+@if (mixed) { <p>Patterns differ. Choose a track as the starting pattern.</p> }
+<div class="tools">
+  <label>Starting track <vc-select aria-label="Arpeggio starting track" [options]="tracks" [value]="selectedTrack()" [mixed]="!selectedTrack()" (valueChange)="selectTrack($event)" /></label>
+  <label>Load direction <vc-select aria-label="Load arpeggio direction" [options]="patterns" [value]="sourcePattern()" [disabled]="!selectedTrack()" (valueChange)="choosePattern($event)" /></label>
+  <label>Steps <input class="step-count" type="number" min="1" [max]="maximumSteps" step="1" aria-label="Arpeggio pattern step count" [value]="values().length" [disabled]="!selectedTrack()" (change)="resize($any($event.target).value)" /></label>
+</div>
+<p>Draw on the graph or edit the values below.</p>
+<div class="direction-graph" role="img" aria-label="Arpeggio direction preview"
+  (pointerdown)="start($event)" (pointermove)="move($event)" (pointerup)="finish()" (pointercancel)="cancelGesture()" (lostpointercapture)="finish()">
+  <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="points()" /></svg>
+  @if (drawable()) {
+    @for (value of values(); track $index) {
+      <span class="graph-point" [style.left.%]="($index + .5) / values().length * 100" [style.top.%]="pointY(value)"><span class="point-label">{{ value }}</span></span>
+    }
+  }
+</div>
+<div class="steps">
+  @for (value of values(); track $index) {
+    <label>{{ $index + 1 }}<input type="number" min="-12" max="12" step="1" [attr.aria-label]="'Arpeggio step ' + ($index + 1)" [value]="value" (input)="editStep($index, $any($event.target).value)" /></label>
+  }
+</div>
+<footer>
+  @if (stale()) { <p role="alert">Project changed. Reopen the editor before saving.</p> }
+  @else if (error()) { <p role="status">{{ error() }}</p> }
+  @else { <p>Save as Custom for {{ previews.length }} track{{ previews.length === 1 ? '' : 's' }} in this scope. Rotate resets to zero because it is included above.</p> }
+  <div><button type="button" (click)="dialog.close()">Cancel</button><button type="button" class="save" [disabled]="!!error() || stale() || !selectedTrack()" (click)="save()">Save pattern</button></div>
+</footer>

@@ -58,7 +58,10 @@ test('real Java XML translates actual sections, supported settings, presence and
   assert.notDeepEqual(project.arrangement[1].trackPhrases['track-melody-1'],project.arrangement[4].trackPhrases['track-melody-1']);
   assert.equal(project.arrangement[2].trackPhrases,undefined);
   assert.ok(result.diagnostics.some(item=>item.code==='missing-pattern'));
-  assert.ok(result.diagnostics.some(item=>item.code==='unsupported-value' && item.path.endsWith('arpPatternCustom')));
+  assert.ok(!result.diagnostics.some(item=>item.code==='unsupported-value' && item.path.endsWith('arpPatternCustom')));
+  const arpSettings = [...project.tracks.filter(track=>track.role==='arpeggio').map(track=>track.generatorSettings),
+    ...project.arrangement.flatMap(section=>Object.values(section.trackPartOverrides ?? {}))];
+  assert.ok(arpSettings.some(settings=>settings.arpPatternCustom?.length > 32), 'long Java arp cycles are preserved');
   assert.ok(!result.diagnostics.some(item=>/^GUIConfig\.arrangement\[/.test(item.path)));
   assert.ok(loadMusic('midi-export.ts').generateCompositionMidi(project).length>100);
 });

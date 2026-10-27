@@ -6,6 +6,81 @@ const { Midi } = require('@tonejs/midi');
 const { fixture, projectData } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
+test('arp editor freezes the seeded direction without changing generated notes', () => {
+  const { service, phrase, load } = fixture();
+  const { arpeggioPreviews } = load('core/music/arpeggio-preview.ts');
+  const { arpeggioPattern } = load('core/music/arpeggio-pattern.ts');
+  const { JavaRandom } = load('core/music/java-random.ts');
+  const scope = { kind: 'global-track', trackId: 'track-arpeggio-1' };
+  service.updateSettings({ seed: '9223372036854775807' });
+  const settings = { pattern: 'random', hitsPerPattern: 8, patternSeed: -2147483648, arpPatternRotate: 3,
+    pauseChance: 0, exceptionChance: 0, arpContour: [], useOctaveAdjustments: false };
+  service.updatePartSettings(scope, settings);
+  const track = () => service.project().tracks.find(track => track.id === scope.trackId);
+  const before = phrase.generateTrackPhrase(service.project(), track());
+  const values = arpeggioPreviews(service.project(), scope)[0].values;
+  assert.deepEqual(values, arpeggioPattern('random', 8, 3, 1, 3, undefined, new JavaRandom(-2147453646n)));
+  service.updatePartSettings(scope, { pattern: 'custom', arpPatternCustom: values, arpPatternRotate: 0 });
+  assert.deepEqual(phrase.generateTrackPhrase(service.project(), track()), before);
+});
+
+test('arp popup drafts cancel, validate, commit once in every scope and reject stale saves', () => {
+  const first = 'track-arpeggio-1';
+  for (const kind of ['global-track', 'global-role', 'section-track', 'section-role']) {
+    const scope = kind.endsWith('track') ? { kind, trackId: first } : { kind, role: 'arpeggio' };
+    const { service, settings, load } = fixture({ dialogData: { scope } });
+    if (kind.startsWith('section')) scope.sectionId = service.project().arrangement[0].id;
+    const second = service.duplicateTrack(first);
+    const { ArpeggioPatternDialogComponent } = load('features/part-settings/arpeggio-pattern-dialog.component.ts');
+    const before = service.exportProjectJson(), position = service.historyPosition();
+    const popup = new ArpeggioPatternDialogComponent(); popup.dialog.close = () => {};
+    popup.selectTrack(first); popup.choosePattern('down');
+    const source = popup.text();
+    const drawing = { button: 0, pointerId: 1, clientX: 0, clientY: 56, preventDefault() {},
+      currentTarget: { setPointerCapture() {}, getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }) } };
+    popup.start(drawing); assert.equal(popup.values()[0], 0);
+    popup.cancelGesture(); assert.equal(popup.text(), source, 'pointer cancellation restores the draft');
+    assert.equal(service.exportProjectJson(), before, 'choosing another source stays a draft');
+    for (const text of ['', '1,', '1.5', '13', '-13', Array(513).fill(0).join(',')]) {
+      popup.text.set(text); popup.save(); assert.ok(popup.error());
+      assert.equal(service.exportProjectJson(), before);
+    }
+    popup.text.set('-2, 0, 4, 7'); popup.save();
+    assert.equal(service.historyPosition(), position + 1);
+    const project = service.project(), section = kind.startsWith('section') ? project.arrangement[0] : undefined;
+    const resolved = id => settings.resolvePartTrack(project.tracks.find(track => track.id === id), section).generatorSettings;
+    assert.equal(resolved(first).pattern, 'custom'); assert.deepEqual(resolved(first).arpPatternCustom, [-2, 0, 4, 7]);
+    assert.equal(resolved(first).arpPatternRotate ?? 0, 0);
+    if (kind.endsWith('role')) assert.deepEqual(resolved(second).arpPatternCustom, [-2, 0, 4, 7]);
+    else assert.notDeepEqual(resolved(second).arpPatternCustom, [-2, 0, 4, 7]);
+    const saved = service.exportProjectJson();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), saved);
+    assert.equal(service.importProjectJson(saved), true);
+    const stale = new ArpeggioPatternDialogComponent();
+    stale.selectTrack(first); stale.text.set('1, 2');
+    service.removeTrack(first); const deleted = service.exportProjectJson();
+    stale.save(); assert.equal(service.exportProjectJson(), deleted);
+  }
+});
+
+test('arp editor retains the complete melody-following cycle beyond 32 steps', () => {
+  const scope = { kind: 'global-track', trackId: 'track-arpeggio-1' };
+  const { service, phrase, settings, load } = fixture({ dialogData: { scope } });
+  service.updatePartSettings(scope, { pattern: 'random', rhythm: 'melody', arpPatternRotate: 4 });
+  const track = () => service.project().tracks.find(track => track.id === scope.trackId);
+  const original = phrase.generateTrackPhrase(service.project(), track());
+  const { ArpeggioPatternDialogComponent } = load('features/part-settings/arpeggio-pattern-dialog.component.ts');
+  const popup = new ArpeggioPatternDialogComponent(); popup.dialog.close = () => {};
+  assert.equal(popup.values().length, service.project().progression.length * 16);
+  assert.ok(popup.values().length > 32); assert.equal(popup.error(), null);
+  popup.save();
+  assert.deepEqual(phrase.generateTrackPhrase(service.project(), track()), original);
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  assert.ok(settings.decodePartPatch('arpeggio', { arpPatternCustom: Array(512).fill(0) }));
+  assert.equal(settings.decodePartPatch('arpeggio', { arpPatternCustom: Array(513).fill(0) }), undefined);
+});
+
 test('contextual phrasing resolves per melody track and section and persists with history', () => {
   const { service, settings, load } = fixture({ contextualMelody: false });
   const { resolveMelodyInputs } = load('core/music/melody-global-settings.ts');
@@ -754,7 +829,8 @@ test('P5 editor supports empty contour and separates pitch direction from melody
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent(); editor.role.set('arpeggio');
   editor.values.set({ pattern: 'custom', rhythm: 'melody', arpContour: [1] });
-  assert.ok(editor.controls().some(control => control.key === 'arpPatternCustom'));
+  assert.ok(editor.controls().some(control => control.key === 'pattern'));
+  assert.equal(editor.controls().some(control => control.key === 'arpPatternCustom'), false, 'custom directions use the combined popup');
   assert.equal(editor.controls().some(control => control.key === 'hitsPerPattern'), false);
   assert.equal(editor.rhythmPreview(), undefined);
   let change; editor.settingsChanged.emit = value => change = value;

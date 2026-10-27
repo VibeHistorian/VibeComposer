@@ -7,7 +7,7 @@ import { partFillMask } from './chord-span-fill';
 import { effectivePartSeed, spannedPattern, spannedVelocities, expandedVoices } from './part-processing';
 import { partRhythmMask } from './rhythm-pattern';
 import { swingNotes } from './phrase-swing';
-import { ARPEGGIO_PATTERNS, arpeggioPattern, chordNote, closestMajorPitch, javaShuffle } from './arpeggio-pattern';
+import { ARPEGGIO_PATTERNS, arpeggioDirection, chordNote, closestMajorPitch, javaShuffle } from './arpeggio-pattern';
 import { melodyRhythm, type MelodyContext } from './melody-context';
 import { soundingHarmony, type GenerationHarmony } from './harmony-voicing';
 
@@ -47,7 +47,7 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     values.flatMap(value => [value, ...Array(span - 1).fill(0)])).flat();
   const octaveMap = expand(octaves);
   const randomMap = settings.pattern === 'random'
-    ? expand(arpeggioPattern('random', hits, 3, 1, settings.arpPatternRotate ?? 0, undefined, random(30_002))) : [];
+    ? expand(arpeggioDirection(seed, settings, hits, 3, orderOffset)) : [];
   const slice = (values: readonly number[], chord: number) => {
     const size = values.length / span;
     return values.slice(Math.round(chord % span * size), Math.round((chord % span + 1) * size));
@@ -87,8 +87,7 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
       ? chordPitches(customChords[chordIndex]!, 48 + octave * 12)
       : chord.pitches.map(pitch => pitch - 12 + octave * 12)).flat(), settings);
     const pitchMap = settings.pattern === 'random' ? randomMap
-      : expand(arpeggioPattern(settings.pattern, hits, pitches.length, 1,
-        settings.arpPatternRotate ?? 0, settings.arpPatternCustom));
+      : expand(arpeggioDirection(seed, settings, hits, pitches.length, orderOffset));
     const pitchPattern = slice(pitchMap, chordIndex), octavePattern = slice(octaveMap, chordIndex);
     // Melody rhythm uses its own chord grid, with seeded pauses applied after inversion.
     const pattern = follows ? pauses.slice(chordIndex * 16, (chordIndex + 1) * 16)

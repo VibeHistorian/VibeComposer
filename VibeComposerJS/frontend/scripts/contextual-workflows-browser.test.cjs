@@ -301,8 +301,16 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       document.querySelector('.track-group.arpeggio .group-select').click();
       const direction = await wait(() => document.querySelector('.part-settings-panel [aria-label="DIRECTION"]'), 'arp direction');
       await change(direction, 'custom');
-      const customDirection = await wait(() => document.querySelector('#part-inspector [aria-label="Custom direction"]'), 'custom direction editor');
-      await change(customDirection, '-1, 0, 3, 1');
+      document.querySelector('.part-settings-panel [aria-label="Edit arpeggio pattern"]').click();
+      const customDirection = await wait(() => document.querySelector('vc-arpeggio-pattern-dialog [aria-label="Arpeggio pattern step count"]'), 'custom direction editor');
+      const startingTrack = document.querySelector('vc-arpeggio-pattern-dialog [aria-label="Arpeggio starting track"]');
+      await change(startingTrack, read().tracks.find(track => track.role === 'arpeggio').id);
+      await change(customDirection, '4');
+      await wait(() => document.querySelectorAll('vc-arpeggio-pattern-dialog .steps input').length === 4, 'four arp steps');
+      [-1,0,3,1].forEach((value,index) => { const input=document.querySelectorAll('vc-arpeggio-pattern-dialog .steps input')[index]; input.value=String(value); input.dispatchEvent(new Event('input', { bubbles: true })); });
+      const saveDirection = await wait(() => [...document.querySelectorAll('vc-arpeggio-pattern-dialog button')].find(button => button.textContent.trim() === 'Save pattern' && !button.disabled), 'save direction enabled');
+      saveDirection.click();
+      await wait(() => !document.querySelector('vc-arpeggio-pattern-dialog'), 'direction saved');
       await change(document.querySelector('.part-settings-panel [aria-label="Rotate"]'), '3');
       await change(document.querySelector('#part-inspector [aria-label="Contour"]'), '0, 2, -1');
       document.querySelector('#part-inspector [aria-label="Chord-relative contour"]').click();

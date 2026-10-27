@@ -4,6 +4,8 @@ import { combinedControlKeys } from '../../core/ui/ui-preferences';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { DurationsDialogComponent } from './durations-dialog.component';
+import { ArpeggioPatternDialogComponent } from './arpeggio-pattern-dialog.component';
+import { arpeggioPreviews } from '../../core/music/arpeggio-preview';
 import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
 import type { CommonPartSettings, ChordRhythm } from '../../core/music/part-settings.model';
@@ -72,6 +74,17 @@ export class PartSettingsEditorComponent {
   readonly projects = inject(ProjectService);
   private readonly dialogs = inject(Dialog);
   readonly scope = input.required<PartSettingsScope>();
+  openArpeggioPattern(): void {
+    this.dialogs.open(ArpeggioPatternDialogComponent, { ariaLabel: 'Arpeggio pattern', data: { scope: this.scope() } });
+  }
+  readonly arpeggioPreview = computed(() => {
+    if (this.role() !== 'arpeggio') return null;
+    const rows = arpeggioPreviews(this.projects.project(), this.scope());
+    if (!rows.length || rows.some(row => JSON.stringify(row.values) !== JSON.stringify(rows[0].values))) return null;
+    return rows[0].values;
+  });
+  readonly arpeggioPoints = computed(() => this.arpeggioPreview()?.map((value, index, values) =>
+    `${(index + .5) / values.length * 100},${(12 - value) / 24 * 100}`).join(' ') ?? '');
   openSequencer(velocities = false): void {
     if (!velocities && (this.role() === 'melody' || this.usesDurations())) {
       this.openDurations();
@@ -98,7 +111,7 @@ export class PartSettingsEditorComponent {
   readonly inheritRequested = output<string | readonly string[]>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
-    !['patternFlip', 'fillFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting'].includes(control.key) &&
+    !['patternFlip', 'fillFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'arpPatternCustom'].includes(control.key) &&
     (this.inspectorOnly() ? !this.isQuick(control.key)
       : this.advanced() || this.isQuick(control.key)) &&
     (this.preferences.editingQuickSettings() || (
@@ -110,7 +123,6 @@ export class PartSettingsEditorComponent {
     (!this.usesDurations() || this.role() === 'melody' || !['patternShift', 'chordSpan', 'patternRepeat', 'patternJoinMode', 'euclideanPulses', 'useCustomVelocities', 'customVelocities', 'pauseChance', 'exceptionChance', ...(this.role() === 'bass' ? ['hitsPerPattern'] : [])].includes(control.key)) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&
-    (control.key !== 'arpPatternCustom' || this.values()['pattern'] === 'custom' || this.values()['pattern'] === null) &&
     (!(this.role() === 'bass' && this.values()['rhythm'] === 'bass1')
       || !['hitsPerPattern', 'chordSpan', 'patternShift', 'patternFlip', 'euclideanPulses', 'customPattern', 'useCustomVelocities', 'customVelocities', 'patternJoinMode'].includes(control.key))
     &&

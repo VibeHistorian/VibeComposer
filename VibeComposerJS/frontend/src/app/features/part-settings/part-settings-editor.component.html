@@ -88,6 +88,13 @@
                     (click)="toggleFlip(flip)"><span aria-hidden="true">↔</span></button>
                 }
                 </div>
+                @if (control.key === 'pattern' && role() === 'arpeggio') {
+                  <button type="button" class="mini-preview arp-preview" aria-label="Edit arpeggio pattern" aria-haspopup="dialog" title="View or edit the generated direction" (click)="openArpeggioPattern()">
+                    @if (arpeggioPreview()) {
+                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="arpeggioPoints()" /></svg>
+                    } @else { <span class="mixed">Mixed</span> }
+                  </button>
+                }
                 @if (control.key === 'rhythm' && usesDurations()) {
                   <button type="button" class="mini-preview duration-preview" [attr.aria-label]="'Edit custom ' + role() + ' durations'" aria-haspopup="dialog"
                     title="First active lane. Edit note lengths and pauses." (click)="openSequencer()">

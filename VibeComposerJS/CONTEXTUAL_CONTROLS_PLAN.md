@@ -34,6 +34,8 @@ The inspector remains the complete editor. A quick control and its inspector equ
 
 Preserve role exceptions: Chords/Arpeggio support voice expansion, and Melody's block structure remains distinct from generic rhythm grids.
 
+Arpeggio Direction includes a compact preview and popup editor in the quick panel and inspector. The popup resolves the selected scope, displays the seeded Random cycle or another direction, and supports drawing and numeric edits. Mixed scopes require choosing a starting track. Cancel discards drafts; Save stores Custom (Java's edited-pattern type) and its complete index array in one scoped command. The preview includes Rotate, so saving resets Rotate to zero; Span/Repeat, rhythm masks, Contour and octave adjustments remain subsequent musical processing.
+
 ## Interaction and context
 
 | Target | Primary action | Editing context |

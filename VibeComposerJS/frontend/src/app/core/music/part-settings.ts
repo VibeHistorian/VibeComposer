@@ -6,7 +6,7 @@ import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { BASS_RHYTHMS, ARPEGGIO_RHYTHMS, RHYTHM_PATTERNS, MELODY_RHYTHMS } from './rhythm-patterns';
 import { DEFAULT_CUSTOM_VELOCITIES, isVelocityPattern } from './velocity-pattern';
 import { STRUM_TYPES } from './chord-strum';
-import { ARPEGGIO_PATTERNS } from './arpeggio-pattern';
+import { ARPEGGIO_PATTERNS, MAX_ARPEGGIO_PATTERN_LENGTH } from './arpeggio-pattern';
 import { DEFAULT_DURATIONS, DEFAULT_DURATION_CHANCES, isDurations, type Durations } from './durations';
 
 export type PartSettingValue = string | number | boolean | readonly number[] | Durations;
@@ -226,7 +226,7 @@ export function decodePartPatch(role: ArrangedPart, value: unknown, enforceSteps
     if (control.kind === 'velocities' && !isVelocityPattern(field)) return undefined;
     if (control.kind === 'durations' && !isDurations(field)) return undefined;
     if (key === 'customDurationChances' && (!Array.isArray(field) || field.length !== 10)) return undefined;
-    if (control.kind === 'integers' && (!Array.isArray(field) || field.length < (control.allowEmpty ? 0 : 1) || field.length > 32
+    if (control.kind === 'integers' && (!Array.isArray(field) || field.length < (control.allowEmpty ? 0 : 1) || field.length > (key === 'arpPatternCustom' ? MAX_ARPEGGIO_PATTERN_LENGTH : 32)
       || Array.from(field).some((slot) => !Number.isInteger(slot) || slot < control.minimum! || slot > control.maximum!))) return undefined;
     result[key] = Array.isArray(field) ? field.map(item => Array.isArray(item) ? [...item] : item) : field as PartSettingValue;
   }

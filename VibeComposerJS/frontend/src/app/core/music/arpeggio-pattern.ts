@@ -1,7 +1,17 @@
 import { JavaRandom } from './java-random';
+import type { ArpeggioSettings } from './part-settings.model';
+import { effectivePartSeed } from './part-processing';
+
+/** The pitch direction before Span/Repeat placement, shared by generation and the editor. */
+export function arpeggioDirection(seed: bigint | number, settings: ArpeggioSettings, hits: number, voices: number, orderOffset = 1): number[] {
+  return arpeggioPattern(settings.pattern, hits, voices, 1, settings.arpPatternRotate ?? 0, settings.arpPatternCustom,
+    new JavaRandom(BigInt.asIntN(32, effectivePartSeed(seed, settings) + BigInt(orderOffset - 1) + 30_002n)));
+}
 
 export const ARPEGGIO_PATTERNS = ['up', 'down', 'up-down', 'down-up', 'frog-up', 'frog-down', 'random', 'custom'] as const;
 export type ArpeggioPattern = typeof ARPEGGIO_PATTERNS[number];
+/** Melody-following arps can have 16 steps for each of 32 progression chords. */
+export const MAX_ARPEGGIO_PATTERN_LENGTH = 512;
 
 /** Collections.shuffle's backwards Fisher-Yates loop, including its draw order. */
 export function javaShuffle<T>(values: T[], random: JavaRandom): T[] {
