@@ -5,8 +5,13 @@ type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string
 
 /** Keep settings structured, numeric/boolean arrays inline, and manual phrases one note per line. */
 export function formatProjectJson(project: CompositionProject): string {
+  return formatCompactJson(encodeProjectStorage(project));
+}
+
+/** Shared export layout for projects and preset libraries. */
+export function formatCompactJson(data: unknown): string {
   // Preserve JSON.stringify's handling of optional undefined fields and string escaping.
-  const value: JsonValue = JSON.parse(JSON.stringify(encodeProjectStorage(project)));
+  const value: JsonValue = JSON.parse(JSON.stringify(data));
   return formatValue(value, 0);
 }
 

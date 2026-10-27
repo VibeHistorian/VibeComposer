@@ -1,4 +1,4 @@
-const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
+const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild, readBrowserDownload } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -68,6 +68,76 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await change(seed, '9007199254740995');
       await wait(() => read().seed === '9007199254740995', 'canonical project');
       const result = { width: innerWidth };
+      const beforeDrumPreset = JSON.stringify(read());
+      document.querySelector('[aria-label="Drums preset manager"]').click();
+      const drumManager = await wait(() => document.querySelector('vc-track-preset-dialog'), 'drum preset manager');
+      const drumButton = text => [...drumManager.querySelectorAll('button')].find(button => button.textContent.trim() === text);
+      const drumName = drumManager.querySelector('input[type="text"]');
+      drumName.value = 'Six drums';
+      drumName.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(() => !drumButton('Save preset').disabled, 'drum preset name');
+      drumButton('Save preset').click();
+      await wait(() => !drumButton('Load preset').disabled, 'saved drum preset');
+      drumButton('Load preset').click();
+      await wait(() => drumManager.querySelector('[role="status"]').textContent.includes('Preset loaded'), 'replace six drums');
+      if (JSON.stringify(read()) !== beforeDrumPreset) throw new Error('replacing saved drums changed project state or section presence');
+      drumButton('Delete preset').click();
+      drumManager.querySelector('[aria-label="Close preset manager"]').click();
+      await wait(() => !document.querySelector('vc-track-preset-dialog'), 'drum manager closed');
+      const presetButton = document.querySelector('[aria-label="Bass preset manager"]');
+      if (presetButton.previousElementSibling.textContent.trim() !== '↻' || !presetButton.nextElementSibling.classList.contains('collapse-group-button')) throw new Error('preset button placement');
+      const bassRows = () => read().tracks.filter(track => track.role === 'bass');
+      const originalBass = JSON.stringify(bassRows());
+      const lock = document.querySelector('.track-group.bass .track-reroll-actions > button[aria-pressed]');
+      lock.click();
+      await wait(() => bassRows()[0].rerollLocked, 'lock preset survivor');
+      const beforePreset = JSON.stringify(read());
+      presetButton.click();
+      const manager = await wait(() => document.querySelector('vc-track-preset-dialog'), 'preset manager');
+      await wait(() => manager.contains(document.activeElement), 'preset dialog focus');
+      const managerBounds = manager.getBoundingClientRect();
+      if (managerBounds.left < 0 || managerBounds.right > innerWidth || managerBounds.top < 0 || managerBounds.bottom > innerHeight) throw new Error('preset manager outside viewport');
+      const managerButton = text => [...manager.querySelectorAll('button')].find(button => button.textContent.trim() === text);
+      const selection = [...manager.querySelectorAll('.track-list input')];
+      selection.slice(1).forEach(input => input.click());
+      const presetNameInput = manager.querySelector('input[type="text"]');
+      presetNameInput.value = 'Browser bass';
+      presetNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(() => !managerButton('Save preset').disabled, 'preset name ready');
+      managerButton('Save preset').click();
+      await wait(() => JSON.parse(localStorage.getItem('vibecomposer.track-presets'))?.[0]?.tracks.length === 1, 'save selected preset tracks');
+      await wait(() => !managerButton('Load preset').disabled, 'saved preset ready');
+      if (JSON.stringify(read()) !== beforePreset) throw new Error('saving preset edited the project');
+      manager.querySelector('.replace input').click();
+      managerButton('Load preset').click();
+      await wait(() => bassRows().length === 7, 'append preset');
+      manager.querySelector('[aria-label="Close preset manager"]').click();
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read()) === beforePreset, 'undo appended preset');
+      presetButton.click();
+      const reopened = await wait(() => document.querySelector('vc-track-preset-dialog'), 'reopen stored library');
+      await change(reopened.querySelector('vc-select[aria-label="Track preset"]'), 'Browser bass');
+      [...reopened.querySelectorAll('button')].find(button => button.textContent.trim() === 'Load preset').click();
+      await wait(() => bassRows().length === 2, 'replace unlocked tracks');
+      if (JSON.stringify(bassRows()[0]) !== JSON.stringify(JSON.parse(beforePreset).tracks.find(track => track.id === bassRows()[0].id))) throw new Error('locked preset survivor changed');
+      const storedLibrary = localStorage.getItem('vibecomposer.track-presets');
+      const importedLibrary = JSON.parse(storedLibrary).map(preset => ({ ...preset, name: 'Imported bass' }));
+      const presetInput = reopened.querySelector('input[type="file"]');
+      const importPresets = text => { const files = new DataTransfer(); files.items.add(new File([text], 'presets.json', { type: 'application/json' })); presetInput.files = files.files; presetInput.dispatchEvent(new Event('change', { bubbles: true })); };
+      importPresets(JSON.stringify(importedLibrary));
+      await wait(() => JSON.parse(localStorage.getItem('vibecomposer.track-presets')).length === 2, 'import preset library');
+      const afterImport = localStorage.getItem('vibecomposer.track-presets');
+      importPresets('[{}]');
+      await wait(() => reopened.querySelector('[role="status"]').textContent.includes('Invalid preset JSON'), 'invalid preset error');
+      if (localStorage.getItem('vibecomposer.track-presets') !== afterImport) throw new Error('invalid import changed library');
+      [...reopened.querySelectorAll('button')].find(button => button.textContent.trim() === 'Export all presets').click();
+      result.presetExport = JSON.parse(afterImport);
+      reopened.querySelector('[aria-label="Close preset manager"]').click();
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read()) === beforePreset, 'undo replaced preset');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(bassRows()) === originalBass, 'restore preset fixture');
+      localStorage.removeItem('vibecomposer.track-presets');
       const groupToggle = () => document.querySelector('.group-track-toggle');
       const trackRows = () => [...document.querySelectorAll('.group-track-settings-row')];
       const rowControl = (id, key) => document.querySelector('.group-track-settings-row[data-track-id="' + id + '"] [data-control-key="' + key + '"] input');
@@ -498,6 +568,12 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
   const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
   await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/contextual-browser-'));
+  const downloadPath = path.join(profile, 'downloads');
+  fs.mkdirSync(downloadPath);
+  fs.mkdirSync(path.join(profile, 'Default'));
+  fs.writeFileSync(path.join(profile, 'Default/Preferences'), JSON.stringify({
+    download: { default_directory: downloadPath, prompt_for_download: false },
+  }));
   const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
     '--remote-debugging-port=0', '--window-size=' + width + ',1100', '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
@@ -510,6 +586,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     await command('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
     const actual = await result;
     assert.equal(actual.error, undefined, JSON.stringify(actual));
+    assert.deepEqual(JSON.parse(await readBrowserDownload(child, 'vibecomposer-track-presets.json')), actual.presetExport);
     // Exercise an actual right-button contextmenu, not just the synthetic workflow events.
     await command('Runtime.evaluate', { expression: `(() => {
       const control = document.querySelector('[aria-label="New blocks"]');

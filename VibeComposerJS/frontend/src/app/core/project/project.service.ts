@@ -1,4 +1,5 @@
 import * as arrangementCommands from './project-arrangement-commands';
+import { loadTrackPreset } from './track-presets';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
 import { appendPhraseRangeEdit, hasManualPhrase, type PhraseRangeEdit } from '../music/phrase-range-edit';
@@ -797,6 +798,12 @@ export class ProjectService {
     const editedPhrases = { ...current.editedPhrases };
     delete editedPhrases[part];
     this.commit({ ...current, editedPhrases, tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase: undefined, phraseEdits: undefined }) });
+  }
+
+  loadTrackPreset(role: ArrangedPart, tracks: unknown, replace: boolean): PartWorkflowResult {
+    const candidate = loadTrackPreset(this.state(), role, tracks, replace,
+      (added, section) => generateTrackPresence(added, this.sectionTypeSettings.chances()[section.type]));
+    return candidate ? this.commitPartWorkflow(candidate) : 'invalid';
   }
 
   addTrack(role: ArrangedPart): string | undefined {

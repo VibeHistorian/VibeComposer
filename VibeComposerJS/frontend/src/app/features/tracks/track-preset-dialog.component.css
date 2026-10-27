@@ -1,0 +1,18 @@
+/* Dialog layout */
+:host { display: block; box-sizing: border-box; width: min(560px, 94vw); max-height: 90vh; overflow: auto; padding: 20px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); color: var(--text-primary); box-shadow: 0 24px 80px var(--shadow-ink); }
+header, footer, .actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h2 { margin: 0; font-size: 20px; }
+h3 { font-size: 14px; }
+section { border-top: 1px solid var(--border-subtle); margin-top: 16px; padding-bottom: 16px; }
+p { font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+/* Track selection and controls */
+.track-list { display: grid; gap: 8px; max-height: 160px; overflow: auto; margin-bottom: 16px; }
+label { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.replace { margin-top: 16px; }
+vc-select { flex: 1; min-width: 0; }
+input[type="text"] { min-width: 0; width: 160px; }
+button, input[type="text"] { padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: inherit; }
+button { cursor: pointer; }
+button:hover:not(:disabled) { background: var(--surface-button-hover); }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }

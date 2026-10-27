@@ -1,4 +1,6 @@
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { Dialog } from '@angular/cdk/dialog';
+import { TrackPresetDialogComponent } from '../tracks/track-preset-dialog.component';
 import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
@@ -74,6 +76,10 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  private readonly presetDialogs = inject(Dialog);
+  openTrackPresets(role: ArrangedPart): void {
+    this.presetDialogs.open(TrackPresetDialogComponent, { ariaLabel: `${ROLE_NAMES[role]} preset manager`, data: { role, name: ROLE_NAMES[role] } });
+  }
   readonly drumSelectOptions = computed(() => this.drumInstruments.map(instrument => ({ value: instrument.midi, label: this.midi.drumLabel(instrument.midi) })));
   readonly instrumentSelectOptions = computed(() => Object.fromEntries(Object.entries(this.trackInstrumentOptions()).map(([id, options]) => [id, options.map(instrument => ({ value: instrument.program, label: instrument.name }))])));
   readonly channelSelectOptions = computed(() => this.midiChannels.map(channel => ({ value: channel, label: 'CH ' + channel.toString().padStart(2, '0') })));
