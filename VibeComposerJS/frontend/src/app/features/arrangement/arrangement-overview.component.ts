@@ -114,7 +114,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
   readonly randomizeRequested = output<void>();
   readonly sectionSelected = output<{ readonly sectionId: string; readonly trackId: string;
-    readonly ctrlKey?: boolean; readonly metaKey?: boolean; readonly shiftKey?: boolean }>();
+    readonly ctrlKey?: boolean; readonly metaKey?: boolean; readonly shiftKey?: boolean; readonly altKey?: boolean }>();
   readonly selectionCleared = output<void>();
   readonly groupSelected = output<ArrangedPart>();
   readonly cellSelected = output<{ readonly sectionId: string; readonly role: ArrangedPart }>();
@@ -213,7 +213,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
   selectSection(sectionId: string, event?: MouseEvent | KeyboardEvent): void {
     this.sectionSelected.emit({ sectionId, trackId: this.selectedTrackId(),
-      ...(event ? { ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey } : {}) });
+      ...(event ? { ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey } : {}) });
   }
 
   private cellKey(sectionId: string, role: ArrangedPart): string { return `${sectionId}:${role}`; }
@@ -286,7 +286,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   onScroll(): void { this.scheduleDraw(); }
 
   private readonly onCanvasWheel = (event: WheelEvent): void => {
-    if (!event.ctrlKey) return;
+    if (!this.preferences.matchesShortcut('overviewZoom', event)) return;
     event.preventDefault();
     event.stopPropagation();
     if (!this.ready || this.width <= this.labelWidth) return;
@@ -452,7 +452,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.strokeRect(x + 0.5, y + 0.5, width - 1, this.rowHeight - 1);
         }
         hit({ key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
-          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Middle-click or press I to clear all tracks if any are present, otherwise include all tracks.`,
+          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Presence controls: Settings > Shortcuts.`,
           activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }),
           togglePresence: () => this.groupPresenceToggled.emit({ sectionId: item.section.id, role: group.role }),
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
@@ -518,7 +518,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const buttonLeft = Math.max(x, centerX - hitRadius), buttonRight = Math.min(x + width, centerX + hitRadius);
           hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: centerY - hitRadius,
             width: buttonRight - buttonLeft, height: TRACK_BUTTON_PITCH,
-            label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Middle-click or press I to toggle presence.`,
+            label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Presence controls: Settings > Shortcuts.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
             reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reset' }),
@@ -702,7 +702,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.focusedKey = area.key;
-    area.activate(event);
+    if (!this.runShortcut(area, event)) area.activate(event);
     this.scheduleDraw();
   }
 
@@ -710,22 +710,31 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     if (event.button === 1) event.preventDefault();
   }
 
+  private runShortcut(area: OverviewHitArea, event: KeyboardEvent | MouseEvent): boolean {
+    const actions = [
+      ['reroll', area.reroll], ['reset', area.reset], ['duplicateSection', area.duplicate],
+      ['removeSection', area.remove], ['presence', area.togglePresence],
+    ] as const;
+    for (const [id, action] of actions) {
+      if (action && this.preferences.matchesShortcut(id, event)) {
+        event.preventDefault();
+        event.stopPropagation?.();
+        action();
+        this.scheduleDraw();
+        return true;
+      }
+    }
+    return false;
+  }
+
   onCanvasAuxclick(event: MouseEvent): void {
-    if (event.button !== 1 && event.button !== 2) return;
-    event.preventDefault();
     const area = this.hitAt(event);
-    if (event.shiftKey) {
-      if (event.button === 1) area?.reroll?.();
-      else area?.reset?.();
-    } else if (event.button === 1) {
-      if (area?.duplicate) area.duplicate();
-      else area?.togglePresence?.();
-    } else area?.remove?.();
+    if (area) this.runShortcut(area, event);
   }
 
   onCanvasContextmenu(event: MouseEvent): void {
-    const area = this.hitAt(event);
-    if (area && (event.shiftKey ? area.reset : area.remove)) event.preventDefault();
+    // Actions run on auxclick, once per gesture.
+    if (this.hitAt(event)) event.preventDefault();
   }
 
   onPointerMove(event: PointerEvent): void {
@@ -738,8 +747,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     }
     const canvas = this.scoreCanvas().nativeElement;
     canvas.style.cursor = area ? 'pointer' : 'default';
-    canvas.title = area ? area.label + (area.reroll ? ' Shift+middle-click rerolls settings; Shift+right-click resets settings and manual notes.' : '')
-      + (area.duplicate ? ' Middle-click duplicates; right-click removes this section.' : '') : '';
+    canvas.title = area ? area.label + ' Interactions: Settings > Shortcuts.' : '';
   }
 
   onPointerLeave(): void {
@@ -752,19 +760,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
+    if (this.preferences.matchesShortcut('clearSections', event)) {
       event.preventDefault();
       this.selectionCleared.emit();
       return;
     }
     if (!this.hits.length) return;
     const index = this.hits.findIndex((area) => area.key === this.focusedKey);
-    if (event.key.toLowerCase() === 'i') {
-      const area = this.hits[Math.max(0, index)];
-      if (!area.togglePresence) return;
-      event.preventDefault();
-      area.togglePresence();
-    } else if (event.key === 'Enter' || event.key === ' ') {
+    if (this.runShortcut(this.hits[Math.max(0, index)], event)) return;
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       this.hits[Math.max(0, index)].activate(event);
     } else if (event.key.startsWith('Arrow')) {

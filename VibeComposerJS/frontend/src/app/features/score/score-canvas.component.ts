@@ -121,7 +121,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private harmonicHeight = 0;
   private drumHeight = 0;
   private drag: ScoreDrag<ScoreCanvasNote> | null = null;
-  private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[] } | null = null;
+  private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[]; split?: boolean } | null = null;
   private shape: { mode: 'pitch' | 'velocity'; pointerId: number; notes: Map<string, PhraseNote> } | null = null;
   private readonly touches = new Map<number, { x: number; y: number }>();
   private pinch: { distance: number; x: number; y: number } | null = null;
@@ -283,7 +283,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       canvas.style.outline = 'none';
       canvas.setAttribute('role', 'application');
       canvas.setAttribute('tabindex', '0');
-      canvas.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown Enter Control+A Control+Z Control+Y Shift+T Delete');
+      canvas.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp ArrowDown Enter');
       host.appendChild(canvas);
       canvas.addEventListener('click', this.onCanvasClick);
       canvas.addEventListener('contextmenu', this.onContextMenu);
@@ -310,23 +310,27 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     if (!this.app || this.width <= 0) return;
-    const horizontal = event.ctrlKey || event.shiftKey;
+    const zoomTime = this.preferences.matchesShortcut('zoomTime', event);
+    const zoomPitch = this.preferences.matchesShortcut('zoomPitch', event);
+    const panTime = this.preferences.matchesShortcut('panTime', event);
+    if (!zoomTime && !zoomPitch && !panTime && !this.preferences.matchesShortcut('panPitch', event)) return;
+    const horizontal = zoomTime || panTime;
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? (horizontal ? this.width : this.scoreHeight) : 1;
     const delta = (event.deltaY || event.deltaX) * unit;
-    if (event.ctrlKey) {
+    if (zoomTime) {
       const bounds = this.app.canvas.getBoundingClientRect();
       const cursor = Math.min(1, Math.max(0, (event.clientX - bounds.left) / Math.max(1, bounds.width)));
       const anchor = this.horizontalOffset + cursor / this.horizontalScale;
       this.horizontalScale = Math.min(128, Math.max(1, this.horizontalScale * Math.exp(-delta * 0.002)));
       this.horizontalOffset = anchor - cursor / this.horizontalScale;
-    } else if (event.altKey) {
+    } else if (zoomPitch) {
       if (this.harmonicHeight <= 0) return;
       const bounds = this.app.canvas.getBoundingClientRect();
       const cursorY = Math.min(this.harmonicHeight, Math.max(0, (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height)));
       const anchor = (this.verticalOffset + cursorY) / this.laneHeight;
       this.verticalScale = Math.min(this.maxVerticalScale, Math.max(1, this.verticalScale * Math.exp(-delta * 0.002)));
       this.verticalOffset = anchor * this.laneHeight - cursorY;
-    } else if (event.shiftKey) {
+    } else if (panTime) {
       this.horizontalOffset += delta / (this.width * this.horizontalScale);
     } else {
       this.verticalOffset += event.deltaY * unit;
@@ -454,7 +458,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const dy = (event.clientY - drag.y) * this.height / Math.max(1, bounds.height);
       const previousPreview = drag.preview;
       drag.preview = previewScoreDrag(drag, { x: dx, y: dy }, {
-        time: this.timeGeometry, laneHeight: this.laneHeight, snapBeats: this.snapBeats(), shiftKey: event.shiftKey,
+        time: this.timeGeometry, laneHeight: this.laneHeight, snapBeats: this.snapBeats(), shiftKey: this.preferences.matchesModifiers('freeGrid', event),
         scalePitchClasses: this.snapToScale() ? this.scalePitchClasses() : [],
         startBeat: this.editBounds()?.startBeat ?? 0,
         endBeat: this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1,
@@ -486,7 +490,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
     this.hoveredNote = this.editable() && area && y < this.scoreHeight
       && !this.drag && !this.box && !this.shape && event.pointerType !== 'touch'
-      ? { area, zone: this.noteDragZone(area, this.hoverX, event.altKey) } : null;
+      ? { area, zone: this.noteDragZone(area, this.hoverX, this.preferences.matchesGestureHint('trimStart', event)) } : null;
     canvas.style.cursor = this.hoveredNote ? (this.hoveredNote.zone === 'move' ? 'grab' : 'ew-resize')
       : area ? 'pointer' : 'default';
     this.drawDynamic();
@@ -627,29 +631,30 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     event.preventDefault();
     this.app.canvas.focus?.();
     const area = this.hitAreaAt(event);
-    if (event.button === 1) this.middlePress = { pointerId: event.pointerId, startedEmpty: this.emptyCanvasPoint(event), canApply: false };
+    if (this.preferences.matchesShortcut('dragVelocity', event)) this.middlePress = { pointerId: event.pointerId, startedEmpty: this.emptyCanvasPoint(event), canApply: false };
     const bounds = this.app.canvas.getBoundingClientRect();
     const { x, y } = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
-    if (event.button === 0 && event.shiftKey && !area && x >= 0 && x < this.width && y >= 0 && y < this.scoreHeight) {
+    if (this.preferences.matchesShortcut('seek', event) && !area && x >= 0 && x < this.width && y >= 0 && y < this.scoreHeight) {
       this.seekRequested.emit(this.beatAt(event));
       return;
     }
-    if (event.button === 2) {
-      this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: event.ctrlKey || event.metaKey ? this.selectedNoteIds() : [] };
-    } else if ((event.ctrlKey || event.metaKey) && (!area || !this.selectedNoteIds().includes(area.note.id) || event.button === 1)) {
-      this.shape = { mode: event.button === 1 ? 'velocity' : 'pitch', pointerId: event.pointerId, notes: new Map() };
+    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => this.preferences.matchesGesture(id, event);
+    if (matches('boxSelect') || matches('boxExtend') || matches('splitNote')) {
+      this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: matches('boxExtend') ? this.selectedNoteIds() : [], split: matches('splitNote') };
+    } else if ((matches('shapePitch') || matches('shapeVelocity')) && (!area || !this.selectedNoteIds().includes(area.note.id) || matches('shapeVelocity'))) {
+      this.shape = { mode: matches('shapeVelocity') ? 'velocity' : 'pitch', pointerId: event.pointerId, notes: new Map() };
       this.onPointerMove(event);
-    } else if (area && (event.button === 0 || event.button === 1)) {
+    } else if (area && (matches('addNote') || matches('shapePitch') || matches('trimStart') || matches('dragVelocity') || matches('dragDuration') || matches('dragPitch'))) {
       const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
       this.selectionChanged.emit(ids);
-      const mode: PhraseDragMode = y >= this.scoreHeight ? 'velocity' : event.button === 1 ? (event.altKey ? 'duration' : event.shiftKey ? 'pitch' : 'velocity')
-        : this.noteDragZone(area, x, event.altKey);
+      const mode: PhraseDragMode = y >= this.scoreHeight ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch' : matches('dragVelocity') ? 'velocity'
+        : this.noteDragZone(area, x, matches('trimStart'));
       const originals = (this.model?.notes ?? []).filter(note => ids.includes(note.id));
       this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
-        current: area.note, mode, originals, preview: originals, duplicate: event.button === 0 && !!(event.ctrlKey || event.metaKey), lockPitch: area.note.color === 'drums' };
+        current: area.note, mode, originals, preview: originals, duplicate: matches('shapePitch'), lockPitch: area.note.color === 'drums' };
       this.auditionRequested.emit(originals);
       this.lastAudition = performance.now();
-    } else if (event.button === 0) {
+    } else if (matches('addNote')) {
       this.selectionChanged.emit([]);
       this.onDoubleClick(event);
     }
@@ -679,8 +684,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.box = null;
       const area = this.hitAreaAt(event);
       if (Math.abs(box.endX - box.x) + Math.abs(box.endY - box.y) < 3 && area) {
-        if (event.altKey) {
-          const grid = event.shiftKey ? 0 : this.snapBeats();
+        if (box.split) {
+          const grid = this.preferences.matchesModifiers('freeGrid', event) ? 0 : this.snapBeats();
           const beat = this.beatAt(event);
           this.splitRequested.emit({ id: area.note.id, beat: grid ? Math.round(beat / grid) * grid : beat });
         } else this.deleteRequested.emit(area.note.id);
@@ -703,6 +708,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
     if (this.app?.canvas.hasPointerCapture(event.pointerId)) this.app.canvas.releasePointerCapture(event.pointerId);
+    if (event.button === 0 && this.middlePress?.canApply) {
+      this.middlePress = null;
+      this.applyRequested.emit();
+    }
     this.drawDynamic();
   };
   private pinchPosition(): { distance: number; x: number; y: number } | null {
@@ -720,7 +729,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.drawDynamic();
   };
   private readonly onAuxClick = (event: MouseEvent): void => {
-    if (event.button !== 1) return;
+    if (!this.preferences.matchesShortcut('dragVelocity', event)) return;
     event.preventDefault();
     event.stopPropagation();
     if (!this.editable()) return;
@@ -735,7 +744,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const { x, y } = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
     if (y >= this.scoreHeight) return;
     const midi = pitchAt(y, this.pitchGeometry, this.drumPitches);
-    const grid = event.shiftKey ? 0 : this.snapBeats();
+    const grid = this.preferences.matchesModifiers('freeGrid', event) ? 0 : this.snapBeats();
     const rawBeat = scoreBeat(x, this.timeGeometry);
     const startBeat = grid ? Math.round(rawBeat / grid) * grid : rawBeat;
     const range = this.editBounds();

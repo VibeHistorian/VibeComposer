@@ -42,22 +42,21 @@ export class AppComponent {
   private readonly workspace = viewChild(WorkspaceCanvasComponent);
 
   historyKeydown(event: KeyboardEvent): void {
-    if (event.key === ' ' && !event.defaultPrevented && !event.isComposing
-      && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && !usesSpaceKey(event)) {
+    if (this.preferences.matchesShortcut('playback', event) && !event.defaultPrevented && !event.isComposing
+      && !isEditingText(event) && (event.key !== ' ' || !usesSpaceKey(event))) {
       event.preventDefault();
       event.stopPropagation();
       if (!event.repeat) void this.playback.toggle(this.project());
       return;
     }
-    if (event.defaultPrevented || event.isComposing || event.altKey || !(event.ctrlKey || event.metaKey)
-      || isEditingText(event)) return;
-    const key = event.key.toLowerCase();
-    if (key !== 'z' && key !== 'y') return;
+    if (event.defaultPrevented || event.isComposing || isEditingText(event)) return;
+    const redo = this.preferences.matchesShortcut('redo', event);
+    if (!redo && !this.preferences.matchesShortcut('undo', event)) return;
 
     // Phrase history owns the shortcut for the entire editing session, even when empty.
     const workspace = this.workspace();
     const history = workspace?.editing() ? workspace.editor() : this.projects;
-    if (key === 'y' || event.shiftKey) history?.redo();
+    if (redo) history?.redo();
     else history?.undo();
     event.preventDefault();
     event.stopPropagation();

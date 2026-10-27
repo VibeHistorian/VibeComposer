@@ -272,8 +272,8 @@
             <vc-compact-knob label="Transpose phrase" description="Transpose the whole phrase freely in semitones" unit=" st"
               [mini]="true" [hoverLabelOnly]="true" [minimum]="-36" [maximum]="36" [defaultValue]="0"
               [value]="editor()?.freeTranspose() ?? 0" (valueCommit)="editor()?.transposePhrase($event)" />
-            <button type="button" title="Ctrl+Z" [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
-            <button type="button" title="Ctrl+Y" [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
+            <button type="button" title="Undo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
+            <button type="button" title="Redo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
             <button type="button" (click)="editor()?.cancelChanges()">Cancel</button>
             @if (editor(); as edit) {
               <button type="button" [disabled]="selectedPart() === 'drums'" [class.active]="edit.snapToScale() && selectedPart() !== 'drums'" [attr.aria-pressed]="edit.snapToScale()" aria-label="Snap to scale/key" title="Snap pitch edits to the current key and scale" (click)="edit.snapToScale.update(toggleBoolean)">Snap to scale/key</button>

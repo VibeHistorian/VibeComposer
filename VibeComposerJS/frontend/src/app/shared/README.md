@@ -8,13 +8,13 @@ Keep reusable presentation controls and UI helpers here when multiple features h
 | `compact-toggle.component.*` | Part settings, harmony, track policies and workspace |
 | `control-heading.component.*` | Knobs, toggles and the part editor; shared labels, reset and inheritance presentation |
 | `select.component.*` | All select controls; shared option rendering, surface/popup styles, wheel stepping and right-click reset |
-| `keyboard-shortcuts.ts` | App shortcuts and phrase editing; shared text-input/event helpers |
+| `keyboard-shortcuts.ts` | Shared text-input/event helpers for global and phrase keyboard routing |
 
 Promote a new primitive here only after identifying real consumers across features. Keep music-specific settings descriptors, pattern controls, chord controls and score helpers in their owning features. Shared UI must not import feature components or own project commands.
 
 Use semantic tokens from `src/styles.css`, separate component templates/styles, and single-line CSS section comments as required by the [translation rules](../../../../TRANSLATION_RULES.md). Preserve existing accessibility, reset and gesture behavior when reusing controls.
 
-Use `<vc-select [options]="choices" [value]="value" (valueChange)="choose($event)"></vc-select>` for choices. Options may be strings, numbers, or `{ value, label, disabled? }` objects; `[mixed]` adds a disabled Mixed entry. `[selectDefault]` sets the right-click default; omitting it resets to the first enabled option. Wheel input wraps through enabled options and leaves Ctrl/Command zoom untouched. Each changed gesture emits one string value through `valueChange`; disabled controls and no-op resets emit none.
+Use `<vc-select [options]="choices" [value]="value" (valueChange)="choose($event)"></vc-select>` for choices. Options may be strings, numbers, or `{ value, label, disabled? }` objects; `[mixed]` adds a disabled Mixed entry. `[selectDefault]` sets the right-click default; omitting it resets to the first enabled option. Wheel input wraps through enabled options. The default binding leaves Ctrl/Command zoom untouched. Wheel, reset, fine adjustment and editing bindings are UI preferences in `core/ui/shortcuts.ts`, matched through `UiPreferencesService`; Settings > Shortcuts records and restores them. Keep shortcut metadata and defaults in that catalog when adding an interaction. Each changed gesture emits one string value through `valueChange`; disabled controls and no-op resets emit none.
 
 The custom element host uses Angular ARIA's `Combobox` directive and an explicit-selection `Listbox` in a CDK overlay. Arrow keys and typeahead browse; Enter, Space and option clicks commit; Escape cancels. Selection is remembered in a linked signal that follows bound input changes, with a separate popup draft so browsing never publishes project edits. Labels, IDs, ARIA attributes and disabled state stay on the host. Export the component as `#choice="vcSelect"` and call `choice.restoreValue()` when a choice opens an uncommitted draft or runs a one-shot action.
 

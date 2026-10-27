@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { UiPreferencesService } from '../core/ui/ui-preferences.service';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { ControlHeadingComponent, type ControlInheritance } from './control-heading.component';
 import { normalizeVolumePercent, panLabel, volumeDecibels } from '../core/audio/mix-values';
 
@@ -10,6 +11,7 @@ import { normalizeVolumePercent, panLabel, volumeDecibels } from '../core/audio/
   styleUrl: './compact-knob.component.css',
 })
 export class CompactKnobComponent {
+  private readonly preferences = inject(UiPreferencesService);
   readonly value = input.required<number>();
   readonly minimum = input.required<number>();
   readonly maximum = input.required<number>();
@@ -83,7 +85,12 @@ export class CompactKnobComponent {
     input.value = String(this.sliderValue());
   }
 
+  resetAux(event: MouseEvent): void {
+    if (event.button !== 2) this.resetDefault(event);
+  }
+
   resetDefault(event: MouseEvent): void {
+    if (!this.preferences.matchesShortcut('controlReset', event)) return;
     event.preventDefault(); event.stopPropagation();
     if (this.disabled()) return;
     this.cancelDrag(); this.preview.set(null);
@@ -93,7 +100,7 @@ export class CompactKnobComponent {
 
   tooltip(): string {
     if (this.mixed() && this.preview() === null) return `${this.label()}: mixed values. Adjust to choose a shared value.`;
-    return `${this.label()}: ${this.accessibleValue()}. ${this.description()} Drag up/down or scroll to adjust; Shift for finer changes. Arrow keys also work. Right-click to reset to ${this.defaultValue()}${this.unit()}.`;
+    return `${this.label()}: ${this.accessibleValue()}. ${this.description()} Interactions: Settings > Shortcuts.`;
   }
 
   private setPreview(value: number): void {
@@ -117,10 +124,10 @@ export class CompactKnobComponent {
   }
 
   onWheel(event: WheelEvent): void {
-    if (this.disabled() || event.ctrlKey || event.metaKey || event.deltaY === 0 || this.drag) return;
+    if (this.disabled() || (!this.preferences.matchesShortcut('controlWheel', event) && !this.preferences.matchesShortcut('controlFineWheel', event)) || event.deltaY === 0 || this.drag) return;
     event.preventDefault(); event.stopPropagation();
-    const increment = this.valueFormat() === 'decibels' ? event.shiftKey ? 1 : 10
-      : event.shiftKey ? this.step() : Math.max(this.step(), Math.floor((this.maximum() - this.minimum()) / 20 / this.step()) * this.step());
+    const increment = this.valueFormat() === 'decibels' ? this.preferences.matchesShortcut('controlFineWheel', event) ? 1 : 10
+      : this.preferences.matchesShortcut('controlFineWheel', event) ? this.step() : Math.max(this.step(), Math.floor((this.maximum() - this.minimum()) / 20 / this.step()) * this.step());
     const direction = event.deltaY < 0 ? 1 : -1;
     const allowed = this.allowedValues();
     const value = allowed.length ? allowed[Math.max(0, Math.min(allowed.length - 1,
@@ -131,6 +138,7 @@ export class CompactKnobComponent {
   }
 
   startDrag(event: PointerEvent): void {
+    if (event.button === 0 && this.preferences.matchesShortcut('controlReset', event)) { this.resetDefault(event); return; }
     if (this.disabled() || event.button !== 0 || this.drag) return;
     event.preventDefault(); event.stopPropagation();
     const control = event.currentTarget as HTMLInputElement;
@@ -142,7 +150,7 @@ export class CompactKnobComponent {
   moveDrag(event: PointerEvent): void {
     if (event.pointerId !== this.drag?.pointerId) return;
     if (!this.dragStillValid()) { this.cancelDrag(); return; }
-    const sensitivity = (this.maximum() - this.minimum()) / 150 / (event.shiftKey ? 5 : 1);
+    const sensitivity = (this.maximum() - this.minimum()) / 150 / (this.preferences.matchesModifiers('fineDrag', event) ? 5 : 1);
     this.setPreview(this.snap(this.drag.value + (this.drag.y - event.clientY) * sensitivity));
   }
 

@@ -40,8 +40,8 @@
     <label class="field-label" for="phrase-grid">Time grid (beats)</label>
     <vc-select [options]="gridSelectOptions()" id="phrase-grid" [value]="snapBeats()" (valueChange)="setGrid($event)"></vc-select>
     <div class="phrase-actions">
-      <button type="button" title="Ctrl+A" (click)="selectAll()">Select all</button>
-      <button type="button" title="Shift+T" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>
+      <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="selectAll()">Select all</button>
+      <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>
     </div>
     @if (transposeOpen()) {
       <label class="field-label" for="phrase-transpose">Transpose selected notes (semitones)</label>
@@ -52,10 +52,7 @@
   <details class="phrase-help">
     <summary>Editing gestures and shortcuts</summary>
     <p>Apply replaces this beat range globally. Each section keeps its notes outside the range; shorter sections use only the overlap. Local Apply saves to this section only.</p>
-    <p>Click empty space to add a note. Shift+left-click empty grid space sets the global playback position. Drag notes to move; drag either edge to trim. Alt+left drag trims the start. Shift bypasses the time grid and keeps move drags at the same pitch.</p>
-    <p>Right drag selects a box. Ctrl+right drag extends selection. Right-click deletes; Alt+right-click splits at the pointer. Ctrl+left drag on selected notes duplicates; elsewhere it shapes pitch.</p>
-    <p>Middle drag edits velocity; Alt+middle drag changes length; Shift+middle drag changes pitch. Ctrl+middle drag shapes velocities. Middle-click empty space exits: unchanged drafts cancel; edits to section overrides save locally; other edits save globally.</p>
-    <p>Space pauses or resumes playback, including your current draft. Ctrl/Cmd+A selects all, Delete removes selection, Shift+T opens transpose, Ctrl/Cmd+Z undoes, Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z redoes. Arrow keys focus notes; Enter selects.</p>
+    <p>View and customize editing gestures, playback and keyboard actions in Settings > Shortcuts. Drag note edges to trim; use the time-grid modifier to bypass snapping and keep move drags at the same pitch. Arrow keys focus notes; Enter selects.</p>
     <p>Snap to scale/key constrains pitch edits and highlights notes and rows in the current scale. Toggle it off for chromatic editing. Existing notes remain unchanged when toggling.</p>
   </details>
 </ng-template>

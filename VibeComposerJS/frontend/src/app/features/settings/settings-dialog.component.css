@@ -43,3 +43,11 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 .preferences-transfer > span:empty { display: none; }
 .preferences-transfer button { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); cursor: pointer; }
 .preferences-transfer button:hover { background: var(--surface-button-hover); }
+
+/* Shortcut preferences */
+.shortcut-intro { color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
+.shortcut-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.shortcut-controls > span { flex-basis: 100%; overflow-wrap: anywhere; color: var(--text-primary); font: 11px var(--font-mono); text-align: right; }
+
+.shortcut-status { position: sticky; top: 0; z-index: 1; background: var(--surface-base); color: var(--text-secondary); font-size: 12px; }
+.shortcut-status p:empty { margin: 0; }

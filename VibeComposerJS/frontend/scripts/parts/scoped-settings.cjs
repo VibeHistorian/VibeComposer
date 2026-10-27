@@ -668,7 +668,7 @@ test('right-click knob resets use explicit defaults, cancel previews and respect
   knob.value.set(80); const commits = [], previews = [];
   knob.valueCommit.emit = value => { commits.push(value); service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { newBlocksChance: value }); knob.value.set(value); };
   knob.valuePreview.emit = value => previews.push(value);
-  let prevented = 0; const event = { preventDefault() { prevented++; }, stopPropagation() {} };
+  let prevented = 0; const event = { button: 2, preventDefault() { prevented++; }, stopPropagation() {} };
   knob.startDrag({ button: 0, pointerId: 1, clientY: 100, preventDefault() {}, stopPropagation() {}, currentTarget: { focus() {}, setPointerCapture() {} } });
   knob.moveDrag({ pointerId: 1, clientY: 90 }); assert.notEqual(knob.preview(), null);
   knob.resetDefault(event); assert.equal(knob.preview(), null); assert.deepEqual(commits, [25]);
@@ -687,7 +687,7 @@ test('right-click combobox resets remember enabled defaults and emit one value c
   component.options.set([{ value: '', label: 'Mixed', disabled: true }, 'ASC', 'DESC', 'ANY']);
   component.value.set('ANY'); component.defaultValue.set('ASC');
   component.valueChange.emit = value => changes.push(value);
-  const event = { preventDefault() {}, stopPropagation() {} };
+  const event = { button: 2, preventDefault() {}, stopPropagation() {} };
   component.resetDefault(event); assert.equal(component.selectedValue(), 'ASC');
   component.resetDefault(event); assert.deepEqual(changes, ['ASC']);
   component.combobox.disabled.set(true); component.value.set('DESC');

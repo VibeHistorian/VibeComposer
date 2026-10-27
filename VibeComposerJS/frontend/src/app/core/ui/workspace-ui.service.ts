@@ -1,3 +1,4 @@
+import { UiPreferencesService } from './ui-preferences.service';
 import { sectionDurationBeats } from '../music/section-context';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import type { ArrangedPart } from '../music/part-role';
@@ -17,6 +18,7 @@ export interface SettingsSelection {
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceUiService {
+  private readonly preferences = inject(UiPreferencesService);
   private readonly projects = inject(ProjectService);
   readonly selectedTrackId = signal('track-bass-1');
   private readonly target = signal<SettingsTarget>({ kind: 'global-track', trackId: 'track-bass-1' });
@@ -128,17 +130,17 @@ export class WorkspaceUiService {
     else this.selectTrack(this.selectedTrackId());
   }
 
-  selectSection(sectionId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
+  selectSection(sectionId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean; altKey?: boolean } = {}): void {
     const sections = this.projects.project().arrangement;
     const index = sections.findIndex((section) => section.id === sectionId);
     if (index < 0) return;
     const selected = this.selectedSectionIds();
     let next: readonly string[];
-    if (modifiers.shiftKey && selected.length) {
+    if (this.preferences.matchesModifiers('rangeSections', modifiers) && selected.length) {
       const anchor = sections.findIndex((section) => section.id === this.sectionAnchor());
       const start = anchor >= 0 ? anchor : sections.findIndex((section) => section.id === selected[0]);
       next = sections.slice(Math.min(start, index), Math.max(start, index) + 1).map((section) => section.id);
-    } else if ((modifiers.ctrlKey || modifiers.metaKey) && selected.length) {
+    } else if (this.preferences.matchesModifiers('extendSections', modifiers) && selected.length) {
       const selectedIndex = selected.indexOf(sectionId);
       if (selectedIndex >= 0) {
         // Removing an interior section discards the entire right-hand remainder.

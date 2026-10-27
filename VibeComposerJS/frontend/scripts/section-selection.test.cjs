@@ -21,7 +21,7 @@ function fixture() {
     ChangeDetectionStrategy: { OnPush: 0 },
   };
   const projects = { project };
-  const preferences = { syncScoreMix: signal(false), scoreChordGrid: signal(false) };
+  const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false) });
   let ui;
   angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? { setPhrasePreview() {} } : projects;
   const load = (file, dependencies = {}) => {

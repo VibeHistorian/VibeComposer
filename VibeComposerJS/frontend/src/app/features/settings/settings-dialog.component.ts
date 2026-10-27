@@ -1,3 +1,4 @@
+import { acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, sameShortcut, type ShortcutId } from '../../core/ui/shortcuts';
 import { SettingsScopeIndicatorComponent, type SettingScope } from './settings-scope-indicator.component';
 import { SelectComponent } from '../../shared/select.component';
 import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
@@ -76,18 +77,82 @@ export class SettingsDialogComponent {
       { id: 'melody', label: 'Melody' },
       { id: 'section-types', label: 'Section Types' },
     ] },
+    { id: 'shortcuts', label: 'Shortcuts', children: SHORTCUT_PAGES.map(({ id, label }) => ({ id, label })) },
     { id: 'midi', label: 'MIDI', children: [] },
     { id: 'project', label: 'Project', children: [] },
   ] as const;
   readonly categoryScopes: Readonly<Record<string, readonly SettingScope[]>> = {
     appearance: ['ui'], score: ['ui'], behavior: ['ui', 'compose', 'sound'],
     harmony: ['compose', 'sound'], melody: ['compose', 'sound'], 'section-types': ['compose'],
-    midi: ['ui', 'sound'], project: ['ui'],
+    ...Object.fromEntries(SHORTCUT_PAGES.map(page => [page.id, ['ui'] as const])), midi: ['ui', 'sound'], project: ['ui'],
   };
   readonly selectedCategory = signal<typeof this.categories[number]['id'] | typeof this.categories[number]['children'][number]['id']>('appearance');
   readonly preview = signal(false);
 
+  private captureUntil = 0;
+  readonly shortcutPage = computed(() => {
+    const page = SHORTCUT_PAGES.find(page => page.id === this.selectedCategory());
+    return page ? { ...page, actions: page.groups.flatMap(group => SHORTCUTS.filter(action => action.group === group)) } : null;
+  });
+  readonly recording = signal<ShortcutId | null>(null);
+  readonly shortcutMessage = signal('');
+  shortcutText(id: ShortcutId): string { return this.preferences.shortcuts()[id].map(shortcutLabel).join(' or ') || 'Unassigned'; }
+  recordShortcut(id: ShortcutId): void {
+    this.recording.set(id);
+    this.preferences.capturingShortcut.set(true);
+    this.shortcutMessage.set(SHORTCUTS.find(action => action.id === id)!.defaults[0].kind === 'modifier'
+      ? 'Hold your desired modifiers, then release one to record. Escape cancels.' : 'Press a key, click a mouse button or scroll, with optional Ctrl, Shift and Alt. Escape cancels.');
+  }
+  cancelRecording(): void {
+    this.recording.set(null);
+    this.preferences.capturingShortcut.set(false);
+  }
+  resetShortcuts(): void { this.cancelRecording(); this.preferences.resetShortcuts(); this.shortcutMessage.set('App defaults restored.'); }
+  private captureShortcut = (event: KeyboardEvent | MouseEvent | WheelEvent): void => {
+    const id = this.recording();
+    if (!id) return;
+    if ((event.target as HTMLElement)?.closest?.('[data-cancel-recording]')) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    if ('key' in event && event.key === 'Escape') { this.cancelRecording(); return; }
+    const action = SHORTCUTS.find(action => action.id === id)!;
+    const modifierOnly = action.defaults[0].kind === 'modifier';
+    if (modifierOnly && event.type !== 'keyup') return;
+    if (!modifierOnly && event.type === 'keyup') return;
+    const binding = modifierOnly && 'key' in event && ['Control', 'Meta', 'Shift', 'Alt'].includes(event.key)
+      ? { kind: 'modifier' as const, input: 'held', ctrl: event.ctrlKey || event.metaKey || event.key === 'Control' || event.key === 'Meta',
+        shift: event.shiftKey || event.key === 'Shift', alt: event.altKey || event.key === 'Alt' } : shortcutFromEvent(event);
+    if (!binding) return;
+    if (!acceptsShortcut(action, binding)) {
+      this.shortcutMessage.set(action.defaults[0].kind === 'wheel' ? 'Scroll the wheel with your desired modifiers.'
+        : action.group === 'Phrase gestures' ? 'Click a mouse button with your desired modifiers.' : 'Use a key or mouse input supported by this action.');
+      return;
+    }
+    const conflict = SHORTCUTS.find(other => other.id !== id && (other.group === action.group
+      || (other.group === 'Section headers' && ['reroll', 'reset', 'clearSections'].includes(action.id))
+      || (action.group === 'Section headers' && ['reroll', 'reset', 'clearSections'].includes(other.id))
+      || (['Global', 'Phrase editor'].includes(other.group) && ['Global', 'Phrase editor'].includes(action.group)))
+      && this.preferences.shortcuts()[other.id].some(value => sameShortcut(value, binding)));
+    if (conflict) { this.shortcutMessage.set('Already used by ' + conflict.label + '. Clear or change that binding first.'); return; }
+    this.captureUntil = performance.now() + 500;
+    this.preferences.setShortcut(id, binding);
+    this.cancelRecording();
+    this.shortcutMessage.set(action.label + ': ' + shortcutLabel(binding));
+  };
+
   constructor() {
+    const document = globalThis.document;
+    const capture = this.captureShortcut as EventListener;
+    for (const type of ['keydown', 'keyup', 'pointerdown', 'wheel']) document.addEventListener(type, capture, { capture: true, passive: false });
+    const suppress = (event: Event) => {
+      if ((event.target as HTMLElement)?.closest?.('[data-cancel-recording]')) return;
+      if (this.recording() || performance.now() < this.captureUntil) { event.preventDefault(); event.stopImmediatePropagation(); }
+    };
+    for (const type of ['click', 'auxclick', 'contextmenu']) document.addEventListener(type, suppress, true);
+    inject(DestroyRef).onDestroy(() => {
+      this.cancelRecording();
+      for (const type of ['keydown', 'keyup', 'pointerdown', 'wheel']) document.removeEventListener(type, capture, true);
+      for (const type of ['click', 'auxclick', 'contextmenu']) document.removeEventListener(type, suppress, true);
+    });
     const timer = setInterval(() => this.previewTime.set(new Date()), 1000);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
     effect(onCleanup => {

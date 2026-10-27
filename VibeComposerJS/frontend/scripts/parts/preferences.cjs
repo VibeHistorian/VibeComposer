@@ -387,3 +387,25 @@ test('placement editing exposes dormant controls and partitions customized quick
   preferences.saveQuickSettings();
   assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
 });
+
+test('shortcut changes persist and transfer as UI preferences without changing project history', () => {
+  const { service, uiPreferences: preferences, load } = fixture();
+  const before = service.exportProjectJson(), undo = service.canUndo();
+  const binding = { kind: 'mouse', input: '0', ctrl: true, shift: true, alt: true };
+  preferences.setShortcut('reroll', binding);
+  assert.equal(preferences.matchesShortcut('reroll', { button: 0, ctrlKey: true, shiftKey: true, altKey: true }), true);
+  assert.equal(preferences.matchesShortcut('reroll', { button: 1, shiftKey: true }), false);
+  const saved = preferences.exportJson();
+  const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  assert.deepEqual(restored.shortcuts().reroll, [binding]);
+  preferences.resetShortcuts();
+  assert.equal(preferences.matchesShortcut('reroll', { button: 1, shiftKey: true }), true);
+  assert.equal(preferences.importJson(saved), true);
+  assert.deepEqual(preferences.shortcuts().reroll, [binding]);
+  assert.equal(preferences.importJson(JSON.stringify({ ...JSON.parse(saved), shortcuts: { reroll: [null] } })), false);
+  assert.equal(preferences.exportJson(), saved);
+  preferences.setShortcut('reroll', null);
+  assert.equal(preferences.shortcuts().reroll.length, 0);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.canUndo(), undo);
+});

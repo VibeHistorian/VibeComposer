@@ -117,7 +117,7 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect() {}, inject: () => ({ appearance: () => 'dark', scoreChordGrid: () => false,
+    effect() {}, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', scoreChordGrid: () => false,
       drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -910,4 +910,20 @@ test('pitch rows cap at 30px during fitting, repeated zooming and resizing in ov
     c.onCanvasWheel({ ...wheel, deltaY: 10000 });
     assert.equal(c.verticalScale, 1, 'zooming out still reaches the full pitch range');
   }
+});
+
+test('remapped phrase seek uses the configured mouse combination and leaves the draft untouched', () => {
+  const { component: c } = fixture();
+  c.editable = () => true;
+  c.model.notes = [];
+  c.preferences.setShortcut('seek', { kind: 'mouse', input: '1', ctrl: false, shift: true, alt: true });
+  const event = { button: 1, shiftKey: true, altKey: true, clientX: 300, clientY: 20, pointerId: 1,
+    preventDefault() {}, stopPropagation() {} };
+  c.onPointerDown(event);
+  assert.equal(c.seekRequested.values.length, 1);
+  assert.deepEqual(c.noteAdded.values, []);
+  assert.deepEqual(c.selectionChanged.values, []);
+  assert.equal(c.drag, null);
+  c.onPointerDown({ ...event, altKey: false });
+  assert.equal(c.seekRequested.values.length, 1, 'a partial modifier combination cannot seek');
 });

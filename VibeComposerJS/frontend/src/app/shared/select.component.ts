@@ -1,3 +1,4 @@
+import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import { afterRenderEffect, ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { Combobox, ComboboxPopup, ComboboxWidget } from '@angular/aria/combobox';
 import { Listbox, Option } from '@angular/aria/listbox';
@@ -21,10 +22,11 @@ export interface SelectOption {
   host: {
     '[attr.value]': 'selectedValue()',
     '(window:resize)': 'measurePopup()',
-    '(wheel)': 'onWheel($event)', '(contextmenu)': 'resetDefault($event)',
+    '(wheel)': 'onWheel($event)', '(contextmenu)': '$event.preventDefault(); resetDefault($event)', '(pointerdown)': 'resetPointer($event)',
   },
 })
 export class SelectComponent {
+  private readonly preferences = inject(UiPreferencesService);
   readonly options = input<readonly (string | number | SelectOption)[] | undefined>([]);
   // Match native value coercion, including values read from heterogeneous settings records.
   readonly value = input<unknown>();
@@ -112,7 +114,12 @@ export class SelectComponent {
     this.valueChange.emit(value);
   }
 
+  resetPointer(event: MouseEvent): void {
+    if (event.button !== 2) this.resetDefault(event);
+  }
+
   resetDefault(event: MouseEvent): void {
+    if (!this.preferences.matchesShortcut('controlReset', event)) return;
     event.preventDefault(); event.stopPropagation();
     if (this.combobox.disabled()) return;
     const option = this.choices().find(option => !option.disabled
@@ -121,7 +128,7 @@ export class SelectComponent {
   }
 
   onWheel(event: WheelEvent): void {
-    if (this.combobox.disabled() || event.ctrlKey || event.metaKey || event.deltaY === 0) return;
+    if (this.combobox.disabled() || !this.preferences.matchesShortcut('controlWheel', event) || event.deltaY === 0) return;
     const enabled = this.choices().filter(option => !option.disabled);
     if (!enabled.length) return;
     event.preventDefault();

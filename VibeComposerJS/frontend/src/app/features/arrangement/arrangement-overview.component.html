@@ -9,7 +9,7 @@
         [attr.aria-expanded]="!!sectionPicker()" aria-haspopup="menu" aria-label="Add arrangement section" title="Add section"
         (click)="toggleSectionPicker($event)">＋</button>
       @if (selectedSectionIds().length) {
-        <button type="button" class="reroll-button" (click)="selectionCleared.emit()" title="Clear section selection (Escape)">CLEAR</button>
+        <button type="button" class="reroll-button" (click)="selectionCleared.emit()" title="Clear section selection. Shortcuts: Settings > Shortcuts.">CLEAR</button>
       }
       <button type="button" class="reroll-button icon-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
         aria-label="Reroll arrangement" title="Reroll track presence using section type chances">↻</button>
@@ -32,8 +32,8 @@
     <div class="overview-content" #scrollContent>
       <div class="overview-viewport" #viewport>
         <canvas #scoreCanvas tabindex="0" role="application"
-          aria-label="Arrangement overview. Click section headers to select sections; Ctrl-click extends or trims and Shift-click selects a range. Click cells or track buttons to select part settings. Middle-click a role cell to clear all tracks if any are present, otherwise include all tracks. Middle-click a track button to toggle its presence. Press I on a cell or track button for the same action. Shift+middle-click a track, cell or header to reroll its track settings; Shift+right-click to reset settings and restore generated notes. Middle-click a header to duplicate its section; right-click to remove it. Escape clears selection. Use arrow keys and Enter to activate."
-          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space Escape I"
+          aria-label="Arrangement overview. Select sections, edit presence and reroll settings. View and customize interactions in Settings > Shortcuts. Arrow keys navigate; Enter activates."
+          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space"
           (click)="onCanvasClick($event)" (pointermove)="onPointerMove($event)" (pointerleave)="onPointerLeave()"
           (pointerdown)="onCanvasPointerdown($event)" (auxclick)="onCanvasAuxclick($event)"
           (contextmenu)="onCanvasContextmenu($event)"

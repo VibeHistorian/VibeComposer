@@ -587,11 +587,11 @@ export class WorkspaceCanvasComponent {
     this.workspaceUi.selectRole(role);
   }
 
-  selectSection(section: ArrangementSection, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
+  selectSection(section: ArrangementSection, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean; altKey?: boolean } = {}): void {
     this.workspaceUi.selectSection(section.id, modifiers);
   }
 
-  selectOverviewSection(sectionId: string, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean } = {}): void {
+  selectOverviewSection(sectionId: string, trackId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean; altKey?: boolean } = {}): void {
     const section = this.project().arrangement.find((item) => item.id === sectionId);
     if (section) this.selectSection(section, trackId, modifiers);
   }

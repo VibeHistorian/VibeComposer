@@ -177,10 +177,10 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(delay.querySelector('[aria-label="FB duration"]'),'delay time shares count panel');
         delaySelect.dispatchEvent(new WheelEvent('wheel',{deltaY:1,bubbles:true,cancelable:true}));
         await wait(()=>delaySelect.getAttribute("value")==='1','scroll delay count');
-        delaySelect.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}));
+        delaySelect.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
         await wait(()=>delaySelect.getAttribute("value")==='0','reset delay count');
         ensure(delayChanges===0,'wheel and reset update bindings without synthetic DOM change events');
-        delaySelect.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}));
+        delaySelect.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
         const selectZoom=new WheelEvent('wheel',{deltaY:1,ctrlKey:true,bubbles:true,cancelable:true});
         delaySelect.dispatchEvent(selectZoom);
         ensure(delayChanges===0 && !selectZoom.defaultPrevented && delaySelect.getAttribute("value")==='0','default reset is a no-op and modified wheel preserves zoom');
@@ -190,7 +190,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure((await selectOptions(shift)).map(o=>o.value).join(',')==='0,1,2,3,4,5,6,7,8','shift choices');
         shift.dispatchEvent(new WheelEvent('wheel',{deltaY:1,bubbles:true,cancelable:true}));
         await wait(()=>shift.getAttribute("value")==='1','scroll shift');
-        shift.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}));
+        shift.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
         await changeControl(rhythmSelect, 'bass1');
         await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='bass').generatorSettings.rhythm==='bass1','restore bass rhythm');
         before=sessionStorage.getItem('vibecomposer.project.v12');
@@ -216,6 +216,48 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           }
           const content=dialog.querySelector('.settings-content');
           ensure(content.scrollWidth<=content.clientWidth+1,'settings fit without horizontal overflow: '+category.textContent.trim());
+          if (category.getAttribute('aria-label')?.startsWith('Shortcuts ')) {
+            ensure(category.querySelectorAll('[data-scope="ui"]').length===1 && category.querySelectorAll('vc-settings-scope-indicator').length===1,'shortcuts are UI only');
+            ensure(!button('Record Undo') && !button('Record Play / pause') && !button('Record Extend / trim sections'),'universal shortcuts stay hidden');
+            const record = async (label, event, id) => {
+              button('Record '+label).click();
+              await wait(()=>button('Record '+label).getAttribute('aria-pressed')==='true','capture starts');
+              document.dispatchEvent(event);
+              await wait(()=>button('Record '+label).getAttribute('aria-pressed')==='false','capture ends');
+              await new Promise(resolve=>setTimeout(resolve,550));
+              return JSON.parse(localStorage.getItem(key)).shortcuts[id][0];
+            };
+            if (category.getAttribute('aria-label')==='Shortcuts General') {
+              ensure(button('Record Reset value') && button('Record Fine knob dragging'),'general includes controls and modifiers');
+              const fine=await record('Fine knob dragging',new KeyboardEvent('keyup',{key:'Alt',shiftKey:true,bubbles:true,cancelable:true}),'fineDrag');
+              ensure(fine.kind==='modifier' && fine.shift && fine.alt,'capture modifier combination');
+            }
+            if (category.getAttribute('aria-label')==='Shortcuts Arrangement') {
+              ensure(button('Record Duplicate section') && !button('Record Zoom time'),'arrangement includes section headers only');
+              const reroll=await record('Reroll settings',new PointerEvent('pointerdown',{button:0,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'reroll');
+              ensure(reroll.kind==='mouse' && reroll.input==='0' && reroll.ctrl && reroll.alt,'capture mouse combination');
+            }
+            if (category.getAttribute('aria-label')==='Shortcuts Score') {
+              const zoom=await record('Zoom time',new WheelEvent('wheel',{deltaY:-100,shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'zoomTime');
+              ensure(zoom.kind==='wheel' && zoom.shift && zoom.alt,'capture wheel combination');
+            }
+            if (category.getAttribute('aria-label')==='Shortcuts Phrase editor') {
+              ensure(button('Record Split note') && button('Record Bypass time grid'),'phrase editor includes gestures and modifiers');
+              const transpose=await record('Open transpose',new KeyboardEvent('keydown',{key:'u',ctrlKey:true,shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'transposeNotes');
+              ensure(transpose.kind==='key' && transpose.input==='u' && transpose.ctrl && transpose.shift && transpose.alt,'capture full key combination');
+              button('Record Delete selected notes').click();
+              await wait(()=>button('Record Delete selected notes').getAttribute('aria-pressed')==='true','record conflict');
+              document.dispatchEvent(new KeyboardEvent('keydown',{key:'u',ctrlKey:true,shiftKey:true,altKey:true,bubbles:true,cancelable:true}));
+              await wait(()=>dialog.textContent.includes('Already used by Open transpose'),'conflict explained');
+              document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+              await wait(()=>button('Record Delete selected notes').getAttribute('aria-pressed')==='false','escape cancels');
+              button('Clear Open transpose').click();
+              await wait(()=>JSON.parse(localStorage.getItem(key)).shortcuts.transposeNotes.length===0,'clear binding');
+            }
+            button('Reset to app defaults').click();
+            await wait(()=>JSON.parse(localStorage.getItem(key)).shortcuts.transposeNotes[0].input==='t','reset shortcuts');
+            ensure(JSON.parse(localStorage.getItem(key)).shortcuts.reroll[0].input==='1','mouse defaults restored');
+          }
           if (category.getAttribute('aria-label')==='Behavior Melody') {
             ensure(dialog.querySelector('[aria-label="Contextual Melody"]').closest('.setting-row').querySelector('[data-scope="sound"]'),'algorithm affects track sound');
             ensure(dialog.querySelector('[aria-label="Randomize range on Compose"]').closest('.setting-row').querySelector('[data-scope="compose"]'),'range randomization applies on Compose');

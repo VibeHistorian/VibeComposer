@@ -1,3 +1,4 @@
+import { decodeShortcuts, defaultShortcuts, type ShortcutBindings } from './shortcuts';
 import { PART_CONTROLS } from '../music/part-settings';
 import { decodeAppearance, defaultAppearance, type AppearancePreferences } from './appearance';
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
@@ -35,6 +36,7 @@ export interface UiPreferences {
   readonly exportNameFields: readonly ExportNameField[];
   readonly quickSettings: QuickSettings;
   readonly appearance: AppearancePreferences;
+  readonly shortcuts: ShortcutBindings;
 }
 
 export function defaultQuickSettings(): QuickSettings {
@@ -68,7 +70,7 @@ export function defaultQuickSettings(): QuickSettings {
 }
 
 export function defaultUiPreferences(): UiPreferences {
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, scoreGhostNotes: true, restartPlaybackOnCompose: true, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance() };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, scoreGhostNotes: true, restartPlaybackOnCompose: true, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance(), shortcuts: defaultShortcuts() };
 }
 
 /** Decode atomically, accepting only UI data and retaining the code's control order. */
@@ -92,11 +94,13 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
   if (data['manualPhrasesFollowMode'] !== undefined && typeof data['manualPhrasesFollowMode'] !== 'boolean') return null;
   const appearance = data['appearance'] === undefined ? defaultAppearance() : decodeAppearance(data['appearance']);
   if (!appearance) return null;
+  const shortcuts = decodeShortcuts(data['shortcuts']);
+  if (!shortcuts) return null;
   const quickSettings = { ...defaultQuickSettings() };
   for (const role of ARRANGED_PARTS) {
     const keys = settings[role];
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
     quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key, role).some(key => keys.includes(key))).map(control => control.key);
   }
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreGhostNotes: data['scoreGhostNotes'] !== false, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreGhostNotes: data['scoreGhostNotes'] !== false, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance, shortcuts };
 }

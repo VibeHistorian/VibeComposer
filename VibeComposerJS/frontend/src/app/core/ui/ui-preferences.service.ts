@@ -1,3 +1,4 @@
+import { defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type ShortcutId } from './shortcuts';
 import { computed, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
@@ -15,6 +16,35 @@ export class UiPreferencesService {
   private readonly state = signal(this.load());
   private readonly draft = signal<QuickSettings | null>(null);
   readonly preferences = this.state.asReadonly();
+  readonly shortcuts = computed(() => this.state().shortcuts);
+  readonly capturingShortcut = signal(false);
+  matchesShortcut(id: ShortcutId, event: KeyboardEvent | MouseEvent | WheelEvent): boolean {
+    if (this.capturingShortcut()) return false;
+    const binding = shortcutFromEvent(event);
+    return !!binding && this.shortcuts()[id].some(value => sameShortcut(value, binding));
+  }
+  matchesGestureHint(id: ShortcutId, event: MouseEvent): boolean {
+    return this.shortcuts()[id].some(binding => binding.kind === 'mouse' && this.matchesGesture(id, {
+      button: Number(binding.input), ctrlKey: event.ctrlKey, metaKey: event.metaKey,
+      shiftKey: event.shiftKey, altKey: event.altKey,
+    } as MouseEvent));
+  }
+  matchesGesture(id: ShortcutId, event: MouseEvent): boolean {
+    if (this.matchesShortcut(id, event)) return true;
+    if (!this.matchesModifiers('freeGrid', event)) return false;
+    return this.shortcuts().freeGrid.some(modifier => this.matchesShortcut(id, {
+      button: event.button, ctrlKey: modifier.ctrl ? false : event.ctrlKey, metaKey: modifier.ctrl ? false : event.metaKey,
+      shiftKey: modifier.shift ? false : event.shiftKey, altKey: modifier.alt ? false : event.altKey,
+    } as MouseEvent));
+  }
+  matchesModifiers(id: ShortcutId, event: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean; altKey?: boolean }): boolean {
+    return !this.capturingShortcut() && this.shortcuts()[id].some(binding => binding.kind === 'modifier'
+      && (!binding.ctrl || event.ctrlKey || event.metaKey) && (!binding.shift || event.shiftKey) && (!binding.alt || event.altKey));
+  }
+  setShortcut(id: ShortcutId, binding: Shortcut | null): void {
+    this.commit({ ...this.state(), shortcuts: { ...this.shortcuts(), [id]: binding ? [binding] : [] } });
+  }
+  resetShortcuts(): void { this.commit({ ...this.state(), shortcuts: defaultShortcuts() }); }
   readonly compactHistory = computed(() => this.state().compactHistory);
   readonly syncScoreMix = computed(() => this.state().syncScoreMix);
   readonly scoreChordGrid = computed(() => this.state().scoreChordGrid);

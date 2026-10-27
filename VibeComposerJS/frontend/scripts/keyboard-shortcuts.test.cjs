@@ -35,6 +35,7 @@ function fixture() {
   const calls = [];
   const app = Object.create(AppComponent.prototype);
   const history = name => ({ undo: () => calls.push(name + ':undo'), redo: () => calls.push(name + ':redo') });
+  app.preferences = require('./support/shortcut-preferences.cjs').shortcutPreferences();
   app.projects = history('project');
   app.project = () => ({ name: 'Song' });
   app.playback = { toggle: project => calls.push('playback:' + project.name) };
@@ -121,4 +122,34 @@ test('Space preserves text entry, native control activation, composition and mod
     f.press(' ', { ctrlKey: false, ...options });
   }
   assert.deepEqual(f.calls, []);
+});
+
+const shortcutSupport = require('./support/shortcut-preferences.cjs');
+test('custom shortcuts replace defaults, match exact modifiers and preserve active history ownership', () => {
+  const app = Object.create(AppComponent.prototype);
+  app.preferences = shortcutSupport.shortcutPreferences();
+  const calls = [];
+  app.projects = { undo: () => calls.push('undo'), redo: () => calls.push('redo') };
+  app.workspace = () => undefined;
+  app.project = () => ({});
+  app.playback = { toggle: () => calls.push('play') };
+  app.preferences.setShortcut('undo', { kind: 'key', input: 'u', ctrl: false, shift: true, alt: true });
+  const press = (key, extras = {}) => app.historyKeydown({ key, composedPath: () => [], preventDefault() {}, stopPropagation() {}, ...extras });
+  press('z', { ctrlKey: true });
+  press('u', { shiftKey: true });
+  assert.deepEqual(calls, []);
+  press('U', { shiftKey: true, altKey: true });
+  assert.deepEqual(calls, ['undo']);
+});
+test('capture normalization and preference decoding cover keys, mouse, wheel and malformed imports', () => {
+  const { shortcutFromEvent, decodeShortcuts, defaultShortcuts } = shortcutSupport;
+  assert.deepEqual(shortcutFromEvent({ button: 2, ctrlKey: true, shiftKey: true, altKey: true }),
+    { kind: 'mouse', input: '2', ctrl: true, shift: true, alt: true });
+  assert.equal(shortcutFromEvent({ key: 'Control', ctrlKey: true }), null);
+  assert.equal(shortcutFromEvent({ deltaY: -4, altKey: true }).kind, 'wheel');
+  assert.equal(shortcutFromEvent({ key: 'Z', metaKey: true }).ctrl, true);
+  assert.deepEqual(decodeShortcuts(undefined), defaultShortcuts());
+  assert.equal(decodeShortcuts({ zoomTime: [{ kind: 'key', input: 'x', ctrl: false, shift: false, alt: false }] }), null);
+  assert.equal(decodeShortcuts({ undo: [null] }), null);
+  assert.equal(decodeShortcuts({ freeGrid: [{ kind: 'modifier', input: 'held', ctrl: false, shift: false, alt: false }] }), null);
 });

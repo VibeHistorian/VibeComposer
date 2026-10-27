@@ -26,6 +26,26 @@
       }
     </nav>
     <div class="settings-content">
+      @if (shortcutPage(); as page) {
+          <section aria-labelledby="shortcuts-title">
+            <div class="appearance-heading"><h2 id="shortcuts-title">Shortcuts: {{ page.label }}</h2>
+              <button type="button" class="appearance-reset" (click)="resetShortcuts()">Reset to app defaults</button>
+            </div>
+            <p class="shortcut-intro">UI preferences only. Choose Record, then use your desired key, mouse button or wheel with Ctrl, Shift or Alt. Ctrl also accepts Cmd. Mouse gestures begin with the recorded button. For modifier actions, hold and release the desired modifiers. Recording replaces all alternatives for that action.</p>
+            <div class="shortcut-status"><p role="status" aria-live="polite">{{ shortcutMessage() }}</p>
+            @if (recording()) { <button type="button" class="appearance-reset" data-cancel-recording (keydown.escape)="cancelRecording()" (click)="cancelRecording()">Cancel recording (Escape)</button> }</div>
+            @for (action of page.actions; track action.id) {
+                <div class="setting-row shortcut-row">
+                  <div class="setting-copy"><h3>{{ action.label }}</h3><p>{{ action.description }}</p></div>
+                  <div class="setting-controls shortcut-controls">
+                    <span>{{ shortcutText(action.id) }}</span>
+                    <button type="button" class="appearance-toggle" [attr.aria-label]="'Record ' + action.label" [attr.aria-pressed]="recording() === action.id" (click)="recordShortcut(action.id)">{{ recording() === action.id ? 'Listening…' : 'Record' }}</button>
+                    <button type="button" class="appearance-reset" [attr.aria-label]="'Clear ' + action.label" (click)="preferences.setShortcut(action.id, null)">Clear</button>
+                  </div>
+                </div>
+            }
+          </section>
+      } @else {
       @switch (selectedCategory()) {
         @case ('appearance') {
           <section aria-labelledby="appearance-title">
@@ -186,6 +206,7 @@
           </section>
         }
 
+      }
       }
     </div>
   </div>

@@ -12,7 +12,7 @@ function fixture(reactivity) {
   input.required = () => signal(undefined);
   const angular = {
     Component: () => (component) => component, ChangeDetectionStrategy: { OnPush: 0 },
-    computed: reactivity?.computed ?? ((read) => read), effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }),
+    computed: reactivity?.computed ?? ((read) => read), effect: () => {}, input, signal, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => ({}) }),
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     viewChild: { required: (name) => () => ({ nativeElement: refs.get(name) }) },
   };
@@ -588,13 +588,13 @@ test('absent parts select without including them and keyboard presence toggle is
   assert.equal(component.trackSelected.values.length, 1);
 });
 
-test('section hit areas forward Ctrl/Shift modifiers and Escape clears selection', () => {
+test('section hit areas forward Ctrl/Shift/Alt modifiers and Escape clears selection', () => {
   const { component } = fixture();
   const heading = component.hits.find((area) => area.key === 'heading:verse');
   component.onCanvasClick({ clientX: heading.x + 8, clientY: heading.y + 8,
-    ctrlKey: true, metaKey: false, shiftKey: false });
+    ctrlKey: true, metaKey: false, shiftKey: false, altKey: false });
   assert.deepEqual(component.sectionSelected.values.at(-1), {
-    sectionId: 'verse', trackId: 'bass-1', ctrlKey: true, metaKey: false, shiftKey: false,
+    sectionId: 'verse', trackId: 'bass-1', ctrlKey: true, metaKey: false, shiftKey: false, altKey: false,
   });
   component.focusedKey = heading.key;
   component.onCanvasKeydown({ key: 'Enter', ctrlKey: false, metaKey: false, shiftKey: true, preventDefault() {} });
@@ -677,4 +677,21 @@ test('overview mouse shortcuts target tracks, cells and headers without toggling
   const track = component.hits.find(hit => hit.key === 'toggle:intro:bass-1');
   component.onCanvasAuxclick(mouse(track, 1));
   assert.equal(component.partToggled.values.length, 1);
+});
+
+test('custom arrangement mouse and keyboard bindings replace defaults and target the hovered or focused area', () => {
+  const { component: c } = fixture();
+  const area = c.hits.find(area => area.key === 'toggle:intro:bass-1');
+  c.preferences.setShortcut('reroll', { kind: 'mouse', input: '0', ctrl: true, shift: false, alt: true });
+  const event = { button: 0, ctrlKey: true, altKey: true, clientX: area.x + 8, clientY: area.y + 8, preventDefault() {}, stopPropagation() {} };
+  c.onCanvasClick(event);
+  assert.equal(c.tracksChangeRequested.values.at(-1).action, 'reroll');
+  assert.equal(c.trackSelected.values.length, 0);
+  c.onCanvasAuxclick({ ...event, button: 1, ctrlKey: false, altKey: false, shiftKey: true });
+  assert.equal(c.tracksChangeRequested.values.length, 1, 'previous reroll binding is inactive');
+  c.preferences.setShortcut('clearSections', { kind: 'key', input: 'c', ctrl: false, shift: true, alt: true });
+  c.onCanvasKeydown({ key: 'Escape', preventDefault() {} });
+  assert.equal(c.selectionCleared.values.length, 0);
+  c.onCanvasKeydown({ key: 'C', shiftKey: true, altKey: true, preventDefault() {} });
+  assert.equal(c.selectionCleared.values.length, 1);
 });

@@ -259,11 +259,9 @@ export class EditWorkspaceComponent {
   @HostListener('document:keydown', ['$event'])
   keydown(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || isEditingText(event)) return;
-    const command = event.ctrlKey || event.metaKey;
-    const key = event.key.toLowerCase();
-    if (command && key === 'a') this.selectAll();
-    else if (event.shiftKey && !command && !event.altKey && key === 't') this.openTranspose();
-    else if (event.key === 'Delete' || event.key === 'Backspace') this.deleteSelected();
+    if (this.preferences.matchesShortcut('selectAllNotes', event)) this.selectAll();
+    else if (this.preferences.matchesShortcut('transposeNotes', event)) this.openTranspose();
+    else if (this.preferences.matchesShortcut('deleteNotes', event)) this.deleteSelected();
     else return;
     event.preventDefault();
     event.stopPropagation();
