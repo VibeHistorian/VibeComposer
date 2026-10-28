@@ -15,9 +15,25 @@ The following groups describe scope, not a mandatory delivery order. Define inte
 - Store these as project harmony-generation settings, separate from track reroll policies. Explicit chord editing must remain an intentional user action.
 - Validate seeded generation, saved policy values, history and the resulting shared harmony used by dependent parts and exports.
 
-### Global swing and beat duration multiplier
+### Global custom chord durations
+
+- Add editable project-level durations alongside the primary Chordlets, with validated positive beat values and explicit reset to default timing.
+- Define how durations follow chord add/remove/reorder and progression generation, and how section duration overrides inherit or replace them.
+- Resolve chord boundaries once for all roles, phrase dependencies, score, playback, loops and MIDI/audio export. Persist durations with project history and JSON/session state.
+- Show a compact width-based display of the durations as a proportion of the total (i.e. 2 beats resulting in a 2x shorter line than a 4 beat chord) 
+
+### Scale and chord inference from an open phrase
+
+- Add actions in the phrase editor to infer candidate scales and chord progressions from the open phrase's current draft, regardless of its track role or whether notes were generated, edited or imported.
+- Show candidates for review and let the user explicitly apply the scale, chords or both to a clearly identified project or section context. Define inference windows, chord durations, ambiguous results and empty/percussion-only input behavior.
+- Inference must not alter notes or publish project edits. Applying results must preserve phrase ownership, use one historical command and define its interaction with unsaved phrase edits, Cancel and stale project state.
+- Use the phrase editor's MIDI import workflow as the entry point for imported material. This replaces the dedicated MIDI drop area and Melody-specific imported-source inference proposal; do not introduce a second import/source system.
+- Validate representative generated/manual/imported phrases, candidate stability, scoped application, persistence and shared harmony consumers.
+
+### Global swing, swing unit and beat duration multiplier
 
 - Add project musical settings for global swing and beat duration multiplier, with an explicit enable/inherit model where needed.
+- Add a swing unit multiplier choice to control the rhythmic subdivision swing acts on. Define supported choices, defaults and interaction with beat duration multiplication and section timing.
 - Define precedence against part swing and section timing overrides, including each role's musical exceptions. Specify whether any Apply action writes scoped values or changes a resolved project setting; do not mix those semantics.
 - Apply timing once through shared resolution. Score boundaries, dependent rhythms, playhead, loops, playback, tempo maps and MIDI/audio export must agree.
 
@@ -43,6 +59,19 @@ The following groups describe scope, not a mandatory delivery order. Define inte
 - Add configurable MIDI padding based on Java's output-track padding behavior. Define target role track counts, ordering and metadata; padding must not create project tracks or change audible arrangement content.
 - Place humanization with global musical settings and padding with MIDI export settings. Define their persistence ownership and defaults explicitly.
 - Verify matching humanized notes across score/playback/export, and inspect exported MIDI structure for padding, empty roles and projects exceeding the requested padding counts.
+
+### Arrangement and section MIDI velocity scaling
+
+- Add section-specific velocity scaling, represented by dB knobs with a neutral default of 0 dB. Define valid ranges and reset/inheritance behavior.
+- Specify the dB-to-MIDI-velocity mapping, rounding and clamping, including silent events and low velocities. Keep this separate from audio mixer gain and score shading.
+- Apply scaling once to resolved notes, with explicit handling of generated and manual phrases. Playback, score velocity displays and MIDI/audio exports must reflect the same result.
+- Persist musical scaling values with project history and JSON/session state; verify section isolation, overlapping notes and export bounds.
+
+### Compose BPM bounds as a UI preference
+
+- Add minimum and maximum Compose BPM settings to UI preferences, with validated ordered bounds inside the supported tempo range.
+- Use these bounds when Compose randomizes tempo; preserve the explicit project tempo when randomization is disabled. Define inclusive bounds, equal-bound behavior and deterministic random consumption.
+- Persist bounds in UI preference storage and preference import/export. Changing the preference must not change the current project's tempo or musical undo history; a subsequent Compose records its resulting tempo normally.
 
 ### Instrument pool presets
 
@@ -82,12 +111,12 @@ These are scope boundaries, not a deferred delivery queue. Existing exclusions a
 
 | Family | Difference remaining outside the planned scope |
 | --- | --- |
-| Harmony generation | Java repeat policy, chord formula and long-progression similarity controls; primary/global custom chord durations and Java N/S/Dd shortcuts; copy-generated-chords preference. |
+| Harmony generation | Java repeat policy, chord formula and long-progression similarity controls; Java N/S/Dd shortcuts; copy-generated-chords preference. |
 | Melody custom durations | Optional non-strict duration reassignment and MIDI transfer inside the duration popup. Dedicated Java duration-oracle evidence remains a validation gap, not a claim of full parity. |
 | Drum-driven Melody accents | `melodyRhythmAccents`, mode and pocket postprocessing. Do not fold these into part Accent or implicitly add them to sidechaining. |
-| Imported Melody source | Java's dedicated imported-Melody source/scale policy and imported-source chord inference. Any new use of imported/manual notes as a harmony source needs its own scope decision. |
-| Other global musical/output rules | Arpeggio-affects-BPM, global note-length and swing-unit multipliers, MIDI stretch, arrangement MIDI velocity scaling, and Java global force-scale rules. |
-| Automatic/batch behavior | Compose timing randomization, configurable Compose BPM bounds, ordered transpose generation, automatic sidechaining, pattern-pause policy, transpose batch actions and automatic reset of customized settings on Compose. Dedicated section recompose/replace actions are also outside scope. |
+| Imported Melody source | Java's dedicated imported-Melody source/scale policy and separate drop area stay excluded; use the planned phrase-editor inference and explicit Apply workflow. |
+| Other global musical/output rules | Arpeggio-affects-BPM, global note-length multiplier, MIDI stretch, and Java global force-scale rules. |
+| Automatic/batch behavior | Compose timing randomization, ordered transpose generation, automatic sidechaining, pattern-pause policy, transpose batch actions and automatic reset of customized settings on Compose. Dedicated section recompose/replace actions are also outside scope. |
 | Other preferences | Java playback-position/pause/start/snap/preview options, configurable MIDI CC/channel-copy behavior, external soundbank loading, velocity-value/pattern presentation options, regeneration-history policy, timestamp preference and permissive out-of-range values. |
 | Instrument policy beyond presets | Java-specific banned-instrument/all-instrument/reinitialization switches need not be reproduced as separate controls. Design preset membership and reset behavior directly. |
 

@@ -28,11 +28,15 @@ Global Melody controls use a plain settings layout with centered knob labels. Me
 | Work | Java reference | Angular destination / design boundary |
 | --- | --- | --- |
 | Spice policies, first/last chord | `gui/ChordGUI.java`: `spiceChance`, `spiceAllowDimAug`, `spiceAllow9th13th`, `spiceParallelChance`, `spiceForceScale`, `chordSlashChance`, `firstChordSelection`, `lastChordSelection` | Project harmony-generation settings and progression consumer. |
-| Global swing, beat duration | `gui/GenerationGUI.java`: `globalSwingOverride`, `globalSwingOverrideValue`, `globalSwingOverrideApplyButton`, `beatDurationMultiplier` | Global musical settings with explicit part/section precedence and shared timing. |
+| Global custom chord durations | `gui/ChordGUI.java`: `userDurationsEnabled`, `userChordsDurations` | Primary Chordlet durations with section inheritance and shared boundaries. |
+| Phrase scale/chord inference | `useUserMelody`, `dropPane`, `userMelodyScaleModeSelect` and imported-source inference as source context | Infer from the open phrase draft and explicitly apply to project/section; reuse phrase-editor MIDI import, without a dedicated Melody source/drop area. |
+| Global swing, swing unit, beat duration | `gui/GenerationGUI.java`: `globalSwingOverride`, `globalSwingOverrideValue`, `globalSwingOverrideApplyButton`, `beatDurationMultiplier`; `gui/ExtraSettingsGUI.java`: `swingUnitMultiplier` | Global musical settings with explicit part/section precedence and shared timing. |
 | Context-aware sidechaining | `gui/GenerationGUI.java`: `sidechainPatterns`, `sidechainPatternsTab`, `sidechainPatterns(...)` | Scoped source/destination workflow; redesign for Angular contexts. |
 | Arrangement variations | `gui/ArrangementGUI.java`: `arrangementVariationChance`, `arrangementPartVariationChance`; `Popups/ArrangementPartInclusionPopup.java`; `Section` variation data | Canvas indicators and variation popup; realized choices separate from chances and presence. |
 | Global humanization | `gui/ExtraSettingsGUI.java`: `humanizeNotes` and its generation consumer | Global musical settings; explicit deterministic interaction with other timing. |
 | MIDI padding | `gui/ExtraSettingsGUI.java`: `padGeneratedMidi`, `padGeneratedMidiValues`, `MidiGenerator.OutputOptions` | MIDI output-track padding and export preferences. |
+| Arrangement/section velocity scaling | `gui/ArrangementGUI.java`: `arrangementScaleMidiVelocity`; saved `scaleMidiVelocityInArrangement` | Arrangement and section dB knobs with explicit MIDI velocity mapping, separate from mixer gain. |
+| Compose BPM bounds | `gui/ExtraSettingsGUI.java`: `bpmLow`, `bpmHigh` | UI preferences used by tempo randomization on Compose; preference changes do not edit project tempo. |
 | Instrument pool presets | `InstUtils` pool catalogues; `gui/ExtraSettingsGUI.java`: `bannedInsts`, `useAllInsts`, `reinitInstPools` as source context | Configurable pool library with import/export/reset; genre collections later. No legacy-switch parity requirement. |
 | Section instrument identity | Section customized `InstPart` instruments and Java playback/export consumers | Sparse section/track identity override and explicit playback/MIDI routing. |
 | Per-control locks | Angular design | Per-parameter randomization permission; instrument lock uses the same system. |
