@@ -14,7 +14,7 @@ These rules define translation constraints and implementation conventions. Works
 
    Keep random streams and seed derivation explicit. Reproducibility depends on matching both the Java algorithm and the order in which each generator consumes random values.
 
-3. **Port generation behavior, not the legacy control layout.** Follow [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md) for workspace layout and interaction, [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md) for settings scopes, role exceptions, and reroll policy, and [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for control placement and Java lookups.
+3. **Port generation behavior, not the legacy control layout.** Follow [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md) for workspace layout and interaction, the [project ownership guide](frontend/src/app/core/project/README.md) for settings and state ownership, [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md) for future implementation scope, and [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for Melody scopes, role exceptions, exclusions and Java lookups.
 
 4. **Use historical project commands; commit each gesture once.**
 

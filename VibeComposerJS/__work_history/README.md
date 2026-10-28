@@ -18,6 +18,6 @@ Historical references to mobile layouts and 390px browser checks record past wor
 | [P5f section context](p5f-section-context-record.md) | Section Chordlets/durations, sparse timing/key context, shared boundaries/tempo maps, translation differences and browser evidence. |
 | [P6 creation completion](p6-creation-record.md) | Drum policies, Arpeggio advanced creation, Melody extended values, Bass consumer audit and validation. |
 
-P5e/P5f and P6g/P6h are complete in their documented supported scope. P7c, P8 and user-assigned P9–P11 remain in the active plan. Universal instrument links and per-control randomization locks remain separate deferred systems. Existing Java refactor histories in `midimasterpiece/refactors_history/` stay in their original archive.
+The active plan defines current scope independently of historical phase numbers. Do not infer commitments from old deferred-stage labels or instrument-only linking proposals. Existing Java refactor histories in `midimasterpiece/refactors_history/` stay in their original archive.
 
 When another slice finishes, move its detailed implementation/validation record here and remove it from the active backlog. Keep enduring rules, current ownership contracts and operational commands in live documents; archive test counts, dated warnings and superseded planning statements.
