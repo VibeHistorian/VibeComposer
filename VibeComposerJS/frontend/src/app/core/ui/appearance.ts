@@ -110,7 +110,7 @@ export function roleColorTokens(role: ArrangedPart, base: string, theme: ThemeCo
     [`${prefix}-dark`]: mix(theme.surface, .4), [`${prefix}-surface`]: mix(theme.surface, .72),
     [`${prefix}-border`]: mix(theme.surface, .32), [`${prefix}-text`]: mix(theme.text, .78),
     [`${prefix}-header`]: mix(theme.surface, .55), [`${prefix}-cell-surface`]: mix(theme.background, .8),
-    [`${prefix}-cell-empty`]: mix(theme.background, .88),
+    [`${prefix}-cell-empty`]: mix(theme.background, .92),
   };
   if (role === 'drums') {
     for (const suffix of ['surface', 'border', 'cell-surface', 'cell-empty']) tokens[`--role-drum-${suffix}`] = tokens[`${prefix}-${suffix}`];

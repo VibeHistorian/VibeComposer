@@ -436,8 +436,16 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const x = this.beatX(item.startBeat);
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         if (x + width <= this.labelWidth || x >= this.width) continue;
-        const hasActiveTracks = group.tracks.some(track => this.trackPresent(item.section, track));
-        const cellSurface = color(`--role-${role}-${hasActiveTracks ? 'cell-surface' : 'cell-empty'}`);
+        const activeTracks = group.tracks.filter(track => this.trackPresent(item.section, track)).length;
+        const emptySurface = color(`--role-${role}-cell-empty`);
+        const fullSurface = color(`--role-${role}-cell-surface`);
+        // The first active track gives a clear midpoint jump; remaining tracks
+        // brighten evenly toward the original fully active surface.
+        const activeWeight = group.tracks.length <= 1 ? 100
+          : 40 + 60 * (activeTracks - 1) / (group.tracks.length - 1);
+        const cellSurface = activeTracks === 0 ? emptySurface
+          : activeTracks === group.tracks.length ? fullSurface
+          : `color-mix(in srgb, ${fullSurface} ${activeWeight}%, ${emptySurface})`;
         context.fillStyle = this.hoveredKey === `cell:${item.section.id}:${group.role}`
           ? `color-mix(in srgb, ${cellSurface} 85%, ${color('--text-primary')})` : cellSurface;
         context.fillRect(x, y, width, this.rowHeight);
