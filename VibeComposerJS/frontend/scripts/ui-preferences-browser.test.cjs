@@ -264,7 +264,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           }
           if (category.getAttribute('aria-label')==='Behavior Section Types') {
             const setChance=(input,value)=>{input.value=String(value);input.dispatchEvent(new Event('input',{bubbles:true}));};
-            const chance=dialog.querySelector('[aria-label="INTRO Melody chance"]');
+            const chance=dialog.querySelector('[aria-label="INTRO Melody preference"]');
             ensure(chance?.type==='range','section chance slider');
             await setChance(chance,'37');
             await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1'))?.INTRO.melody===37,'section chance persists');

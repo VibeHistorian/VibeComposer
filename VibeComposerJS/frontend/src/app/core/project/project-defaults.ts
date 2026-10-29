@@ -3,7 +3,7 @@ import type { CompositionTrack, MixChannelSettings } from './track.model';
 import type { ArrangementSection, SectionType } from './arrangement.model';
 import type { ArrangedPart } from '../music/part-role';
 import type { MelodySettings, BassSettings, ChordSettings, ArpeggioSettings, DrumSettings } from '../music/part-settings.model';
-import { generateTrackPresence } from '../music/arrangement-generator';
+import { generateContextualPresence } from '../music/arrangement-intent';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 
 function defaultSection(id: string, type: SectionType, measures: number): ArrangementSection {
@@ -92,9 +92,10 @@ export function copyDefaultProject(chances: SectionTypeChanceSettings, random: (
 }
 
 function copyDefaultArrangement(tracks: readonly CompositionTrack[], chances: SectionTypeChanceSettings, random: () => number): ArrangementSection[] {
-  return DEFAULT_ARRANGEMENT.map((section) => ({
+  const presence = generateContextualPresence(tracks, DEFAULT_ARRANGEMENT, chances, random);
+  return DEFAULT_ARRANGEMENT.map((section, index) => ({
     ...section,
     chordDegrees: section.chordDegrees ? [...section.chordDegrees] : undefined,
-    trackPresence: generateTrackPresence(tracks, chances[section.type], random),
+    trackPresence: presence[index],
   }));
 }

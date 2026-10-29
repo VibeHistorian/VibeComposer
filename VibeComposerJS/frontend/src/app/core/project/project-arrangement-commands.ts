@@ -3,23 +3,20 @@ import { type ArrangementSection, type SectionType, SECTION_TYPES } from './arra
 import type { CompositionProject } from './project.model';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { MAX_ARRANGEMENT_SECTIONS } from './project-arrangement-decoder';
-import { generateTrackPresence } from '../music/arrangement-generator';
+import { generateContextualPresence } from '../music/arrangement-intent';
 import { copyPartSettings } from '../music/part-settings';
 import { getDiatonicChords } from '../music/harmony';
-import { generateArrangementTemplate } from '../music/arrangement-template';
+import { generateArrangementPlan } from '../music/arrangement-plan';
 import { JavaRandom } from '../music/java-random';
 
-/** Replace the arrangement with fresh template sections; manual mode uses presence-only instead. */
+/** Replace structure and orchestration using independent deterministic streams. */
 export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings): CompositionProject {
   const seed = BigInt(project.seed);
-  const random = new JavaRandom(seed);
-  const arrangement = generateArrangementTemplate(seed).map(({ type, chanceBoost }, index) => ({
-    id: `section-${index + 1}`,
-    type,
-    measures: 4,
-    trackPresence: generateTrackPresence(project.tracks,
-      Object.fromEntries(Object.entries(chances[type]).map(([role, chance]) => [role, Math.min(100, chance + chanceBoost)])) as Record<ArrangedPart, number>,
-      () => random.nextDouble()),
+  const random = new JavaRandom(BigInt.asIntN(64, seed ^ 0x415252414e4745n));
+  const plan = generateArrangementPlan(seed);
+  const presence = generateContextualPresence(project.tracks, plan, chances, () => random.nextDouble());
+  const arrangement = plan.map(({ type }, index) => ({
+    id: `section-${index + 1}`, type, measures: 4, trackPresence: presence[index],
   }));
   return { ...project, arrangement };
 }
@@ -40,8 +37,10 @@ export function addSection(project: CompositionProject, type: SectionType, after
     id: `section-${nextId}`,
     type,
     measures: 4,
-    trackPresence: generateTrackPresence(project.tracks, chances[type], random),
+    trackPresence: {},
   });
+  const presence = generateContextualPresence(project.tracks, next, chances, random, insertAt);
+  next[insertAt] = { ...next[insertAt], trackPresence: presence[insertAt] };
   return { ...project, arrangement: next };
 }
 
@@ -150,10 +149,12 @@ export function setSectionTrackPresence(project: CompositionProject, index: numb
 }
 
 export function randomizeArrangementPresence(project: CompositionProject, sectionId: string | undefined, chances: SectionTypeChanceSettings, random: () => number): CompositionProject | undefined {
-  const arrangement = project.arrangement.map((section) => sectionId === undefined || section.id === sectionId
-    ? { ...section, trackPresence: generateTrackPresence(project.tracks, chances[section.type], random) }
+  if (sectionId !== undefined && !project.arrangement.some(section => section.id === sectionId)) return;
+  const targetIndex = sectionId === undefined ? undefined : project.arrangement.findIndex(section => section.id === sectionId);
+  const presence = generateContextualPresence(project.tracks, project.arrangement, chances, random, targetIndex);
+  const arrangement = project.arrangement.map((section, index) => sectionId === undefined || section.id === sectionId
+    ? { ...section, trackPresence: presence[index] }
     : section);
-  if (sectionId !== undefined && !project.arrangement.some((section) => section.id === sectionId)) return;
   return { ...project, arrangement };
 }
 

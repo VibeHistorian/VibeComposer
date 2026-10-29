@@ -1,10 +1,10 @@
 <section aria-labelledby="section-types-title">
-  <h2 id="section-types-title">Section type chances</h2>
+  <h2 id="section-types-title">Section role preferences</h2>
   <div class="setting-row">
-    <div class="setting-copy"><h3>Track presence defaults</h3><p>Choose each role’s chance of being included when a section is generated or rerolled. Existing sections retain their tracks.</p></div>
+    <div class="setting-copy"><h3>Orchestration preferences</h3><p>Set role preferences for energy-aware generation and presence rerolls. Zero excludes a role; higher values favor it within the section’s layer budget. Rising sections retain layers and peaks favor bass and drums. Existing sections retain their tracks.</p></div>
     <div class="setting-controls"><button type="button" class="reset-button" (click)="settings.reset()">Reset defaults</button></div>
   </div>
-  <p class="distribution-description">Each role keeps at least 10% of the bar width. Fill height and color strength show its chance.</p>
+  <p class="distribution-description">Each role keeps at least 10% of the bar width. Fill height and color strength show its preference.</p>
   @for (row of rows(); track row.type) {
     <div class="setting-row section-chance-row" [attr.data-section-type]="row.type">
       <div class="setting-copy"><h3>{{ sectionLabel(row.type) }}</h3></div>
@@ -12,17 +12,17 @@
         @for (role of row.roles; track role.part) {
           <span class="share-segment" [attr.data-role]="role.part" [style.width.%]="role.share"
             [style.--role-color]="'var(--role-' + role.part + ')'" [style.--chance-brightness]="role.brightness"
-            [title]="partName(role.part) + ': ' + role.chance + '% chance'">
+            [title]="partName(role.part) + ': ' + role.chance + '% preference'">
             <span class="share-color" [style.height.%]="role.chance"></span><span class="share-value">{{ role.chance }}%</span>
           </span>
         }
       </div>
       <div class="setting-controls chance-sliders">
         @for (role of row.roles; track role.part) {
-          <label class="chance-control" [title]="partName(role.part) + ' chance'" [style.--role-color]="'var(--role-' + role.part + ')'" [style.--chance]="role.chance + '%'">
+          <label class="chance-control" [title]="partName(role.part) + ' preference'" [style.--role-color]="'var(--role-' + role.part + ')'" [style.--chance]="role.chance + '%'">
             <output>{{ role.chance }}%</output>
             <input type="range" min="0" max="100" step="1" [value]="role.chance"
-              [attr.aria-label]="sectionLabel(row.type) + ' ' + partName(role.part) + ' chance'"
+              [attr.aria-label]="sectionLabel(row.type) + ' ' + partName(role.part) + ' preference'"
               [attr.aria-valuetext]="role.chance + ' percent'" (input)="updateChance(row.type, role.part, $event)" />
           </label>
         }

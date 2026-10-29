@@ -44,7 +44,7 @@ export class SectionTypeSettingsComponent {
           brightness: chance === 0 ? 0.25 : 0.5 + (chance - 1) / 99 * 0.5 };
       });
       return { type, roles, empty: total === 0,
-        description: this.sectionLabel(type) + ': ' + roles.map(role => this.partName(role.part) + ' ' + role.chance + '% chance').join(', ') };
+        description: this.sectionLabel(type) + ': ' + roles.map(role => this.partName(role.part) + ' ' + role.chance + '% preference').join(', ') };
     });
   });
 

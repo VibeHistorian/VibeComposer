@@ -63,3 +63,13 @@ Section context owns an optional per-role velocityPercent map, inheriting neutra
 Project-owned MIDI padding defaults to zero per role, accepts integer minima 0–32 and only affects composition MIDI export. Export retains every independent track in role order and appends named empty fillers after each role, including empty roles. Fillers have no notes or mix CCs; channels are 1 for pitched roles and 10 for drums. Counts exceeding a requested minimum are never truncated. This follows Java's minimum output-track padding concept while including empty roles explicitly.
 
 Compose BPM bounds belong to UI preferences (default 60–100, supported 30–240, ordered inclusive integers). Equal bounds still consume nextInt(1). Compose draws tempo after transpose even when tempo randomization is disabled; disabled tempo preserves the explicit project value. Preference edits never commit musical history; Compose records the resulting tempo normally.
+
+## Arrangement intent and orchestration
+
+Angular arrangement generation intentionally replaces Java template parity. `arrangement-plan.ts` grows two or three anticipation/release cycles toward a final peak, followed by a reduced return and ending. Structure uses JavaRandom with the exact project seed; orchestration uses an independent salted stream. Phrase streams are unchanged.
+
+`arrangement-intent.ts` resolves normalized energy (layer density), tension (anticipation), and motion from the current section order. These are derived rather than saved snapshots: type edits, moves and duplication cannot leave stale intent. Future arrangement variations can consume this baseline; it does not yet alter phrase settings, harmony or notes.
+
+Section role preferences retain the serializable 0–100 map. For arrangement generation, insertion and presence rerolls, zero excludes a role; positive values rank eligible tracks rather than representing independent probabilities. Energy sets a layer budget with pitched anchors and bass/drum foundations where eligible. Rises retain eligible layers, which may exceed the nominal budget. Tension favors pulse in buildups. A shared randomized ranking preserves track identity across sections. Local rerolls and insertion use actual preceding presence and preserve other sections. Empty projects and all-zero preferences remain silent. Rerolls may reproduce existing presence without a history entry.
+
+Realized presence remains persisted in projects; preferences remain app-owned. Imports preserve explicit presence. Historical import recovery and adding individual tracks retain their chance-based fallback without rerolling existing tracks. Future variations should consume intent separately from presence and explicit musical/manual overrides.

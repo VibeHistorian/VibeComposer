@@ -131,3 +131,76 @@ test('arrangement candidates preserve immutable ownership and can be validated b
   assert.equal(isProject(invalid, DEFAULT_SECTION_TYPE_CHANCES, () => 0.5), false);
   assert.equal(commands.removeSection(input, -1), undefined);
 });
+
+test('energy-aware forms are seeded, bounded, resolve anticipation and retain layers on rises', () => {
+  const { generateArrangementPlan } = loadMusic('arrangement-plan.ts');
+  const { resolveArrangementIntent } = loadMusic('arrangement-intent.ts');
+  const forms = new Set();
+  for (let seed = 0n; seed < 80n; seed++) {
+    const project = copyDefaultProject(DEFAULT_SECTION_TYPE_CHANCES, () => .5);
+    project.seed = String(9223372036854775807n - seed);
+    const result = commands.randomizeArrangement(project, DEFAULT_SECTION_TYPE_CHANCES);
+    assert.deepEqual(result, commands.randomizeArrangement(project, DEFAULT_SECTION_TYPE_CHANCES));
+    assert.equal(result.arrangement[0].type, 'INTRO');
+    assert.equal(result.arrangement.at(-1).type, 'OUTRO');
+    assert.ok(result.arrangement.length <= 32);
+    assert.ok(result.arrangement.reduce((n, section) => n + section.measures, 0) <= 128);
+    assert.ok(result.arrangement.some(section => section.type === 'CLIMAX'));
+    forms.add(result.arrangement.map(section => section.type).join(','));
+    for (let index = 0; index < result.arrangement.length; index++) {
+      const section = result.arrangement[index];
+      const intent = resolveArrangementIntent(result.arrangement, index);
+      assert.ok(Object.values(section.trackPresence).some(Boolean));
+      if (section.type === 'BUILDUP2') {
+        assert.ok(intent.tension > intent.energy);
+        assert.equal(resolveArrangementIntent(result.arrangement, index + 1).motion, 'release');
+      }
+      if (intent.energy >= .65) {
+        for (const role of ['bass', 'drums']) {
+          assert.ok(project.tracks.some(track => track.role === role && section.trackPresence[track.id]));
+        }
+      }
+      if (index && intent.motion === 'rise') {
+        const previous = result.arrangement[index - 1];
+        for (const track of project.tracks) {
+          if (previous.trackPresence[track.id]) assert.ok(section.trackPresence[track.id]);
+        }
+      }
+    }
+    assert.ok(decodeProject(JSON.parse(formatProjectJson(result)), DEFAULT_SECTION_TYPE_CHANCES, () => .5));
+    assert.deepEqual(generateArrangementPlan(BigInt(project.seed)), generateArrangementPlan(BigInt(project.seed)));
+  }
+  assert.ok(forms.size > 10);
+});
+
+test('context orchestration handles exclusions, empty projects, and independent tracks', () => {
+  const { generateContextualPresence } = loadMusic('arrangement-intent.ts');
+  const project = copyDefaultProject(DEFAULT_SECTION_TYPE_CHANCES, () => .5);
+  const sections = ['INTRO', 'BUILDUP1', 'BUILDUP2', 'CLIMAX', 'OUTRO'].map(type => ({ type }));
+  assert.deepEqual(generateContextualPresence([], sections, DEFAULT_SECTION_TYPE_CHANCES, () => .5), sections.map(() => ({})));
+  const excluded = Object.fromEntries(Object.entries(DEFAULT_SECTION_TYPE_CHANCES).map(([type, weights]) =>
+    [type, Object.fromEntries(Object.keys(weights).map(role => [role, 0]))]));
+  assert.ok(generateContextualPresence(project.tracks, sections, excluded, () => .5)
+    .every(presence => Object.values(presence).every(value => !value)));
+  const tracks = Array.from({ length: 30 }, (_, i) => ({ ...project.tracks[i % 5], id: `independent-${i}` }));
+  const presence = generateContextualPresence(tracks, sections, DEFAULT_SECTION_TYPE_CHANCES, () => .5);
+  assert.ok(Object.values(presence[0]).filter(Boolean).length < Object.values(presence[3]).filter(Boolean).length);
+  assert.equal(Object.values(presence[3]).filter(Boolean).length, 30);
+  assert.ok(Object.values(presence[4]).filter(Boolean).length < Object.values(presence[3]).filter(Boolean).length);
+});
+
+test('local orchestration follows actual preceding presence and leaves other sections untouched', () => {
+  const { generateContextualPresence } = loadMusic('arrangement-intent.ts');
+  const project = copyDefaultProject(DEFAULT_SECTION_TYPE_CHANCES, () => .5);
+  const prior = Object.fromEntries(project.tracks.map(track => [track.id, track.role === 'arpeggio']));
+  const untouched = Object.fromEntries(project.tracks.map(track => [track.id, false]));
+  const sections = [
+    { type: 'VERSE1', trackPresence: prior },
+    { type: 'BUILDUP1', trackPresence: untouched },
+    { type: 'CLIMAX', trackPresence: untouched },
+  ];
+  const presence = generateContextualPresence(project.tracks, sections, DEFAULT_SECTION_TYPE_CHANCES, () => .5, 1);
+  assert.strictEqual(presence[0], prior);
+  assert.strictEqual(presence[2], untouched);
+  assert.equal(presence[1]['track-arpeggio-1'], true);
+});
