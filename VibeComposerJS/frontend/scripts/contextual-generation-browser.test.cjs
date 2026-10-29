@@ -102,3 +102,55 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
     await closeBrowser({ child, server, socket, watchdog });
   }
 });
+
+
+for (const width of [1440,780]) test(`whole arrangement toolbar reroll and undo at ${width}px`, { skip: !browser }, async () => {
+  const root = requireProductionBuild(), index = fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const script = `<script>(async () => {
+    const wait=async(read)=>{for(let i=0;i<200;i++){if(read())return;await new Promise(r=>setTimeout(r,30));}throw new Error('arrangement reroll timed out');};
+    const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    const button=label=>document.querySelector('[aria-label="'+label+'"]');
+    try {
+      await wait(()=>innerWidth===${width}&&button('Arrangement Manual'));
+      button('Arrangement Manual').click();
+      await wait(()=>read().arrangementManual===true);
+      const before=read();
+      const snapshot=project=>JSON.stringify(project.arrangement.map(({id,type,measures,trackPresence})=>({id,type,measures,trackPresence})));
+      const structure=project=>JSON.stringify(project.arrangement.map(({trackPresence,...section})=>section));
+      button('Reroll arrangement').click();
+      await wait(()=>structure(read())!==structure(before));
+      const rolled=read();
+      if(rolled.seed!==before.seed||JSON.stringify(rolled.tracks)!==JSON.stringify(before.tracks))throw new Error('reroll changed seed or tracks');
+      if(!rolled.arrangement.every(section=>Object.keys(section.trackPresence).length===rolled.tracks.length))throw new Error('incomplete presence');
+      await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+      await wait(()=>!button('Undo').disabled);
+      button('Undo').click();
+      await wait(()=>snapshot(read())===snapshot(before));
+      await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+      await wait(()=>!button('Redo').disabled);
+      button('Redo').click();
+      await wait(()=>snapshot(read())===snapshot(rolled));
+      await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
+    } catch(error) {await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}
+  })();</script>`;
+  let resolve, reject;
+  const result = new Promise((done,fail)=>{resolve=done;reject=fail;});
+  result.catch(() => {}); // CDP setup can fail before the result is awaited.
+  const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
+  await listen(server);
+  const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/arrangement-reroll-browser-'));
+  const child=launchBrowser(browser,['--headless','--disable-gpu','--no-first-run','--disable-background-networking','--no-default-browser-check',
+    '--disable-background-timer-throttling','--disable-renderer-backgrounding','--remote-debugging-port=0','--window-size='+width+',1100',
+    '--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port+'/'],{stdio:['ignore','ignore','pipe']});
+  const watchdog = watchBrowser(child, reject, 45000);
+  let socket;
+  try {
+    const connection = await connectToPage(child);
+    socket = connection.socket;
+    const command = connection.command;
+    await command('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
+    const actual=await result;assert.equal(actual.error,undefined,JSON.stringify(actual));assert.equal(actual.ok,true);
+  } finally {
+    await closeBrowser({ child, server, socket, watchdog });
+  }
+});

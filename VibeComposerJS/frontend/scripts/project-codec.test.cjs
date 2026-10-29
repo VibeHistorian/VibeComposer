@@ -141,7 +141,7 @@ test('energy-aware forms are seeded, bounded, resolve anticipation and retain la
     project.seed = String(9223372036854775807n - seed);
     const result = commands.randomizeArrangement(project, DEFAULT_SECTION_TYPE_CHANCES);
     assert.deepEqual(result, commands.randomizeArrangement(project, DEFAULT_SECTION_TYPE_CHANCES));
-    assert.equal(result.arrangement[0].type, 'INTRO');
+    assert.ok(['INTRO', 'HALF_CHORUS', 'CHORUS2'].includes(result.arrangement[0].type));
     assert.equal(result.arrangement.at(-1).type, 'OUTRO');
     assert.ok(result.arrangement.length <= 32);
     assert.ok(result.arrangement.reduce((n, section) => n + section.measures, 0) <= 128);
@@ -203,4 +203,17 @@ test('local orchestration follows actual preceding presence and leaves other sec
   assert.strictEqual(presence[0], prior);
   assert.strictEqual(presence[2], untouched);
   assert.equal(presence[1]['track-arpeggio-1'], true);
+});
+
+
+test('seeded openings include quiet introductions and high-energy hooks', () => {
+  const { generateArrangementPlan } = loadMusic('arrangement-plan.ts');
+  const openings = new Set();
+  for (let seed = 0n; seed < 200n; seed++) {
+    const plan = generateArrangementPlan(seed);
+    openings.add(plan[0].type);
+    assert.equal(plan[1].type, 'VERSE1', 'opening settles into the first cycle');
+    assert.deepEqual(plan, generateArrangementPlan(seed));
+  }
+  assert.deepEqual([...openings].sort(), ['CHORUS2', 'HALF_CHORUS', 'INTRO']);
 });

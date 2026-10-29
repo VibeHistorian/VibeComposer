@@ -66,7 +66,7 @@ Compose BPM bounds belong to UI preferences (default 60–100, supported 30–24
 
 ## Arrangement intent and orchestration
 
-Angular arrangement generation intentionally replaces Java template parity. `arrangement-plan.ts` grows two or three anticipation/release cycles toward a final peak, followed by a reduced return and ending. Structure uses JavaRandom with the exact project seed; orchestration uses an independent salted stream. Phrase streams are unchanged.
+Angular arrangement generation intentionally replaces Java template parity. `arrangement-plan.ts` grows two or three anticipation/release cycles toward a final peak, followed by a reduced return and ending. Compose structure uses JavaRandom with the exact project seed; orchestration uses an independent salted stream. The toolbar reroll uses the same generator with a fresh 48-bit arrangement seed, replaces the entire arrangement regardless of Compose switches, and preserves the project music seed and global tracks. One undo restores the previous arrangement. Openings are weighted 60% Intro, 20% Half Chorus and 20% Chorus 2; hook openings settle into the first verse. Phrase streams are unchanged.
 
 `arrangement-intent.ts` resolves normalized energy (layer density), tension (anticipation), and motion from the current section order. These are derived rather than saved snapshots: type edits, moves and duplication cannot leave stale intent. Future arrangement variations can consume this baseline; it does not yet alter phrase settings, harmony or notes.
 

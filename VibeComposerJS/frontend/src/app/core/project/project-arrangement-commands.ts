@@ -10,8 +10,7 @@ import { generateArrangementPlan } from '../music/arrangement-plan';
 import { JavaRandom } from '../music/java-random';
 
 /** Replace structure and orchestration using independent deterministic streams. */
-export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings): CompositionProject {
-  const seed = BigInt(project.seed);
+export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings, seed: bigint = BigInt(project.seed)): CompositionProject {
   const random = new JavaRandom(BigInt.asIntN(64, seed ^ 0x415252414e4745n));
   const plan = generateArrangementPlan(seed);
   const presence = generateContextualPresence(project.tracks, plan, chances, () => random.nextDouble());

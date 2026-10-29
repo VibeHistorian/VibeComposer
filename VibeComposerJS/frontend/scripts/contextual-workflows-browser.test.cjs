@@ -903,7 +903,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>JSON.stringify(read().arrangement)!==before);
       await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
       await wait(previewLoopMatches);
-      const rerollPreview=structure(read())===originalStructure;
+      const rerollPreview=structure(read())!==originalStructure;
       document.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true,cancelable:true}));
       await wait(()=>JSON.stringify(read().arrangement)===before);
       position.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true}));

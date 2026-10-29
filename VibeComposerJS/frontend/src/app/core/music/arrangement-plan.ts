@@ -6,7 +6,9 @@ import { JavaRandom } from './java-random';
  */
 export function generateArrangementPlan(seed: bigint): { type: SectionType }[] {
   const random = new JavaRandom(seed);
-  const types: SectionType[] = ['INTRO'];
+  // Most songs establish quietly; others open with a hook before settling into a verse.
+  const openings: readonly SectionType[] = ['INTRO', 'INTRO', 'INTRO', 'HALF_CHORUS', 'CHORUS2'];
+  const types: SectionType[] = [openings[random.nextInt(openings.length)]];
   const cycles = 2 + random.nextInt(2);
   for (let cycle = 0; cycle < cycles; cycle++) {
     types.push(cycle === 0 ? 'VERSE1' : random.nextBoolean() ? 'VERSE2' : 'CHILL');

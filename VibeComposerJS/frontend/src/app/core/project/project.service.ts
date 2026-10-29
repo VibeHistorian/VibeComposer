@@ -1056,6 +1056,12 @@ export class ProjectService {
     if (next) this.commit(next);
   }
 
+  /** Explicit toolbar action replaces the whole arrangement independently of Compose policy. */
+  randomizeArrangement(): void {
+    const seed = BigInt(Math.floor(Math.random() * 0x1000000000000));
+    this.commit(arrangementCommands.randomizeArrangement(this.state(), this.sectionTypeSettings.chances(), seed));
+  }
+
   randomizeArrangementPresence(sectionId?: string): void {
     const next = arrangementCommands.randomizeArrangementPresence(this.state(), sectionId, this.sectionTypeSettings.chances(), Math.random);
     if (next) this.commit(next);

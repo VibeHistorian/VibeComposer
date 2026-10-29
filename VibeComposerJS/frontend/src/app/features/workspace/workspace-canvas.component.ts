@@ -655,8 +655,8 @@ export class WorkspaceCanvasComponent {
       message: 'Reset would conflict with another velocity setting. Reset both bounds together or adjust the other bound first.' } : null);
   }
 
-  randomizeArrangementPresence(): void {
-    this.projects.randomizeArrangementPresence();
+  randomizeArrangement(): void {
+    this.projects.randomizeArrangement();
     if (this.project().arrangementPreview) {
       const sectionId = this.playback.previewArrangement(this.project());
       if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId);

@@ -12,7 +12,7 @@
         <button type="button" class="reroll-button" (click)="selectionCleared.emit()" title="Clear section selection. Shortcuts: Settings > Shortcuts.">CLEAR</button>
       }
       <button type="button" class="reroll-button icon-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
-        aria-label="Reroll arrangement" title="Reroll track presence using section type chances">↻</button>
+        aria-label="Reroll arrangement" title="Reroll the whole arrangement: section structure and track presence">↻</button>
       <button type="button" class="arrangement-toggle" [class.active]="!!project().randomizeArrangementOnCompose"
         [attr.aria-pressed]="!!project().randomizeArrangementOnCompose" aria-label="Arrangement On Compose"
         title="On Compose: reroll arrangement when global Compose runs"

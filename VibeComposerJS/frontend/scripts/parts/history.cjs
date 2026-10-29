@@ -96,7 +96,7 @@ test('Preview triggers after global Reroll and Compose even with restart disable
   const recordPreview = project => { previews.push(project); return project.arrangement[1].id; };
   transport.playback.previewArrangement = recordPreview;
   workspace.playback.previewArrangement = recordPreview;
-  workspace.randomizeArrangementPresence();
+  workspace.randomizeArrangement();
   assert.deepEqual(previews, [service.project()]);
   assert.deepEqual(workspace.workspaceUi.selectedSectionIds(), [service.project().arrangement[1].id]);
   service.randomizeArrangementPresence(service.project().arrangement[0].id);
@@ -111,7 +111,7 @@ test('Preview triggers after global Reroll and Compose even with restart disable
   transport.generate('compose');
   assert.equal(previews.length, 2);
   service.updateSettings({ arrangementPreview: false });
-  workspace.randomizeArrangementPresence();
+  workspace.randomizeArrangement();
   assert.equal(previews.length, 2);
 });
 
@@ -867,4 +867,27 @@ test('overview section reset clears every role and manual phrase; rerolls preser
   assert.deepEqual(service.project().arrangement[1].generatedTrackIds, section.generatedTrackIds);
   service.removeTrack('track-bass-1');
   assert.ok(service.project().arrangement.every(item => !item.generatedTrackIds?.includes('track-bass-1')));
+});
+
+test('toolbar reroll replaces structure and presence in one undo, independent of Compose switches', () => {
+  const { service, workspace, load } = fixture();
+  service.updateSettings({ arrangementManual: true, randomizeArrangementOnCompose: false, seed: '9223372036854775807' });
+  const before = service.exportProjectJson();
+  const project = service.project();
+  const { randomizeArrangement } = load('core/project/project-arrangement-commands.ts');
+  const { DEFAULT_SECTION_TYPE_CHANCES } = load('core/project/section-type-chances.ts');
+  const originalRandom = Math.random;
+  try {
+    Math.random = () => .25;
+    workspace.randomizeArrangement();
+  } finally { Math.random = originalRandom; }
+  const rolled = service.exportProjectJson();
+  assert.notEqual(rolled, before);
+  assert.deepEqual(service.project().arrangement,
+    randomizeArrangement(project, DEFAULT_SECTION_TYPE_CHANCES, BigInt(0x1000000000000 / 4)).arrangement);
+  assert.notEqual(service.project().arrangement.length, project.arrangement.length);
+  assert.deepEqual(service.project().tracks, project.tracks);
+  assert.equal(service.project().seed, project.seed);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), rolled);
 });
