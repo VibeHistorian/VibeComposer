@@ -53,3 +53,13 @@ Keep imported-data decoding distinct from complete-candidate validation: imports
 The service validates candidates before committing. It owns no-op detection, history compaction, redo invalidation, persistence, and atomic rejection of invalid batches. A command helper may return `undefined` for a rejected request; a returned candidate still passes through the service's validation boundary.
 
 Run `pnpm run test:parts` for project workflow coverage and the framework-independent codec/command checks in `scripts/project-codec.test.cjs`. Import, arrangement, and generation changes also use the relevant suites listed in `package.json`; production browser suites require a fresh `pnpm run build`. See [the test guide](../../../../scripts/README.md).
+
+## Global output processing
+
+Project-owned optional humanization defaults to zero timing and duration offsets. Each bound is 0–0.25 beats. A separate JavaRandom stream combines the exact project seed, a 31-based track-ID hash and salt 0x48554d414e; two uniform draws per arranged note supply independent signed offsets. Processing follows part timing/swing and manual replacements once in the shared cached layout. Durations floor at 1/960 beat. Pickups/tails may cross section edges and retain their source section; manual stored notes and dependency onset grids remain unchanged.
+
+Section context owns optional velocityDb (−60 to +12 dB), inheriting neutral 0 dB. Final arranged velocities use round(velocity × 10^(dB/20)), clamped to 1–127 for positive events; zero stays zero. This applies equally to manual and generated notes without changing mixer gain or score shading. Reset removes the field; ordinary section context copy/duplication and history preserve it.
+
+Project-owned MIDI padding defaults to zero per role, accepts integer minima 0–32 and only affects composition MIDI export. Export retains every independent track in role order and appends named empty fillers after each role, including empty roles. Fillers have no notes or mix CCs; channels are 1 for pitched roles and 10 for drums. Counts exceeding a requested minimum are never truncated. This follows Java's minimum output-track padding concept while including empty roles explicitly.
+
+Compose BPM bounds belong to UI preferences (default 60–100, supported 30–240, ordered inclusive integers). Equal bounds still consume nextInt(1). Compose draws tempo after transpose even when tempo randomization is disabled; disabled tempo preserves the explicit project value. Preference edits never commit musical history; Compose records the resulting tempo normally.

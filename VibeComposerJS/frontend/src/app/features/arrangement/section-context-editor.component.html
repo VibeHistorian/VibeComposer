@@ -1,3 +1,9 @@
+<fieldset>
+  <legend>Section MIDI velocity</legend>
+  <vc-compact-knob label="Velocity dB" [value]="section().context?.velocityDb ?? 0" [minimum]="-60" [maximum]="12" [defaultValue]="0" [dense]="true" (valueCommit)="projects.updateSectionContext(section().id, { velocityDb: $event })" />
+  <button type="button" (click)="reset('velocityDb')">Reset to 0 dB</button>
+  <p>Scales generated and manual note velocities; mixer gain is separate.</p>
+</fieldset>
 <fieldset data-control-category="pitch">
   <legend>Section chords</legend>
   <vc-chordlet-editor [section]="section()" />

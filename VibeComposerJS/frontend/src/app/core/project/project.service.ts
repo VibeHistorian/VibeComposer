@@ -127,7 +127,7 @@ export class ProjectService {
     const current = this.state(), section = current.arrangement.find(item => item.id === sectionId);
     if (!section || !patch || typeof patch !== 'object' || Array.isArray(patch)) return 'invalid';
     const context = { ...section.context } as Record<string, unknown>;
-    const keys = ['tempoBpm','swingPercent','key','scale','keyChange','keyChangeType','beatDurationMultiplier'];
+    const keys = ['velocityDb','tempoBpm','swingPercent','key','scale','keyChange','keyChangeType','beatDurationMultiplier'];
     for (const [key, value] of Object.entries(patch)) {
       if (!keys.includes(key)) return 'invalid';
       if (value === null) delete context[key]; else context[key] = value;
@@ -421,7 +421,8 @@ export class ProjectService {
       const random = new JavaRandom(BigInt(seed));
       // Separate stream from track rerolls; draw both values even when a star is disabled.
       const transpose = random.nextInt(12) - 6;
-      const tempo = random.nextInt(41) + 60;
+      const bounds = this.uiPreferences.preferences();
+      const tempo = random.nextInt(bounds.composeBpmMax - bounds.composeBpmMin + 1) + bounds.composeBpmMin;
       next = { ...current, seed,
         transposeSemitones: current.randomizeTransposeOnCompose === false ? current.transposeSemitones : transpose,
         tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
@@ -729,7 +730,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;

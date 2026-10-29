@@ -153,6 +153,10 @@ export class UiPreferencesService {
   toggleScoreGhostNotes(): void { this.commit({ ...this.state(), scoreGhostNotes: !this.scoreGhostNotes() }); }
   toggleRestartPlaybackOnCompose(): void { this.commit({ ...this.state(), restartPlaybackOnCompose: !this.restartPlaybackOnCompose() }); }
   toggleLimitInstrumentsToPool(): void { this.commit({ ...this.state(), limitInstrumentsToPool: !this.limitInstrumentsToPool() }); }
+  setComposeBpmBound(key: 'composeBpmMin' | 'composeBpmMax', value: number): void {
+    const candidate = decodeUiPreferences({ ...this.state(), [key]: value });
+    if (candidate) this.commit(candidate);
+  }
   exportJson(): string { return JSON.stringify(this.state(), null, 2); }
   importJson(json: string): boolean {
     try {

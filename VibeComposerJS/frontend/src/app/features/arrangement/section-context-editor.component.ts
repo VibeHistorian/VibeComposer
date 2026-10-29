@@ -5,10 +5,11 @@ import { KEYS } from '../../core/music/harmony';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
 import { sectionChordDurations, sectionDurationBeats, sectionHasChordOverride } from '../../core/music/section-context';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
+import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { SelectComponent } from '../../shared/select.component';
 
 @Component({
-  selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, SelectComponent],
+  selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, SelectComponent, CompactKnobComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './section-context-editor.component.html', styleUrl: './section-context-editor.component.css',
 })

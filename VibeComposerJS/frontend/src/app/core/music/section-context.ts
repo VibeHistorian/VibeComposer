@@ -8,6 +8,7 @@ export function validSectionContext(value: unknown): value is SectionMusicalCont
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return Object.entries(value).every(([key, field]) => {
     switch (key) {
+      case 'velocityDb': return typeof field === 'number' && Number.isFinite(field) && field >= -60 && field <= 12;
       case 'tempoBpm': return Number.isInteger(field) && field >= 30 && field <= 300;
       case 'swingPercent': return Number.isInteger(field) && field >= 0 && field <= 100;
       case 'key': return KEYS.includes(field);

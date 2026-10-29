@@ -19,6 +19,9 @@ vc-select { max-width: 100%; }
 vc-select:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
 /* Settings input surfaces */
-.setting-controls > input[type="number"] { width: 80px; max-width: 100%; padding: 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
+.setting-controls input[type="number"] { width: 80px; max-width: 100%; padding: 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
 .setting-controls > input[type="color"] { width: 52px; height: 30px; padding: 2px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); cursor: pointer; }
 .setting-controls > vc-select { min-width: 0; max-width: 100%; }
+
+/* Labeled musical and export inputs */
+.setting-controls > label { display: grid; gap: 4px; max-width: 100%; color: var(--text-secondary); font: 12px var(--font-ui); }

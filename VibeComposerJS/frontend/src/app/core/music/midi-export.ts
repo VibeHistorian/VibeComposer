@@ -3,7 +3,7 @@ import { midiPanValue, mixEnabled } from '../audio/mix-values';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from './phrase-note';
-import { tracksInRoleOrder } from './part-role';
+import { ARRANGED_PARTS, tracksInRoleOrder } from './part-role';
 import { layOutTrackPhrase } from './phrase';
 import { projectTempoMap } from './section-context';
 import { mapDrumPitch, type DrumMapping } from './drum-instruments';
@@ -48,19 +48,27 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
   midi.header.update();
   const anySolo = project.tracks.some((track) => track.mix.solo);
 
-  for (const compositionTrack of tracksInRoleOrder(project.tracks)) {
-    const track = midi.addTrack();
-    track.name = compositionTrack.name;
-    track.channel = compositionTrack.midiChannel - 1;
-    const included = configureMix(track, compositionTrack, anySolo);
-    if (!included) continue;
-    for (const note of phrases.get(compositionTrack.id)!) {
-      track.addNote({
-        midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
-        ticks: Math.round((note.startBeat + offset) * midi.header.ppq),
-        durationTicks: Math.max(1, Math.round(note.durationBeats * midi.header.ppq)),
-        velocity: note.velocity / 127,
-      });
+  for (const role of ARRANGED_PARTS) {
+    const members = tracksInRoleOrder(project.tracks).filter(track => track.role === role);
+    for (const compositionTrack of members) {
+      const track = midi.addTrack();
+      track.name = compositionTrack.name;
+      track.channel = compositionTrack.midiChannel - 1;
+      const included = configureMix(track, compositionTrack, anySolo);
+      if (!included) continue;
+      for (const note of phrases.get(compositionTrack.id)!) {
+        track.addNote({
+          midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
+          ticks: Math.round((note.startBeat + offset) * midi.header.ppq),
+          durationTicks: Math.max(1, Math.round(note.durationBeats * midi.header.ppq)),
+          velocity: note.velocity / 127,
+        });
+      }
+    }
+    for (let index = members.length; index < (project.midiPadding?.[role] ?? 0); index++) {
+      const filler = midi.addTrack();
+      filler.name = `${role} padding ${index + 1}`;
+      filler.channel = role === 'drums' ? 9 : 0;
     }
   }
   return midi.toArray();

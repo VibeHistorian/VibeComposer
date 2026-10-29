@@ -53,26 +53,6 @@ The following groups describe scope, not a mandatory delivery order. Define inte
 - Define precedence against explicit musical overrides and manual phrases, and the effect of Compose, Regenerate, presence rerolls, duplication and reset.
 - Persist realized choices and policies; use deterministic streams and shared resolved output for score, dependencies, playback and export. Popup Apply commits once; Cancel publishes nothing.
 
-### Global humanization and MIDI padding
-
-- Add global humanization with defined timing/duration bounds, deterministic seeding and explicit interaction with part humanization, swing, section boundaries and manual notes. Prevent repeated application across consumers.
-- Add configurable MIDI padding based on Java's output-track padding behavior. Define target role track counts, ordering and metadata; padding must not create project tracks or change audible arrangement content.
-- Place humanization with global musical settings and padding with MIDI export settings. Define their persistence ownership and defaults explicitly.
-- Verify matching humanized notes across score/playback/export, and inspect exported MIDI structure for padding, empty roles and projects exceeding the requested padding counts.
-
-### Arrangement and section MIDI velocity scaling
-
-- Add section-specific velocity scaling, represented by dB knobs with a neutral default of 0 dB. Define valid ranges and reset/inheritance behavior.
-- Specify the dB-to-MIDI-velocity mapping, rounding and clamping, including silent events and low velocities. Keep this separate from audio mixer gain and score shading.
-- Apply scaling once to resolved notes, with explicit handling of generated and manual phrases. Playback, score velocity displays and MIDI/audio exports must reflect the same result.
-- Persist musical scaling values with project history and JSON/session state; verify section isolation, overlapping notes and export bounds.
-
-### Compose BPM bounds as a UI preference
-
-- Add minimum and maximum Compose BPM settings to UI preferences, with validated ordered bounds inside the supported tempo range.
-- Use these bounds when Compose randomizes tempo; preserve the explicit project tempo when randomization is disabled. Define inclusive bounds, equal-bound behavior and deterministic random consumption.
-- Persist bounds in UI preference storage and preference import/export. Changing the preference must not change the current project's tempo or musical undo history; a subsequent Compose records its resulting tempo normally.
-
 ### Instrument pool presets
 
 - Add named, configurable instrument pools that users can select for instrument choices and rerolls. Pool presets contain instrument membership, not track settings or manual phrases.

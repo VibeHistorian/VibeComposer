@@ -26,6 +26,12 @@ import type { DrumMappingPreference } from '../../core/music/drum-instruments';
   styleUrls: ['./settings-dialog.component.css', './settings-rows.css'],
 })
 export class SettingsDialogComponent {
+  setHumanization(key: 'timingBeats' | 'durationBeats', value: number): void {
+    this.projects.updateSettings({ humanization: { timingBeats: 0, durationBeats: 0, ...this.projects.project().humanization, [key]: value } });
+  }
+  setPadding(role: ArrangedPart, value: number): void {
+    this.projects.updateSettings({ midiPadding: { ...this.projects.project().midiPadding, [role]: value } });
+  }
   readonly preferences = inject(UiPreferencesService);
   readonly midi = inject(MidiOutputService);
   changeDrumMapping(selection: string): void {

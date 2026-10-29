@@ -1,3 +1,4 @@
+import { validOutputSettings } from '../music/output-processing';
 import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from './project.model';
 import type { TrackGenerationPolicies } from '../music/generation-policy.model';
@@ -22,6 +23,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
   const validBase = typeof project.name === 'string'
     && typeof project.key === 'string' && KEYS.includes(project.key)
     && (isScaleMode(project.scale))
+    && validOutputSettings(project)
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
     && (project.randomizeHarmonyOnCompose === undefined || typeof project.randomizeHarmonyOnCompose === 'boolean')
@@ -58,6 +60,8 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     scale: project.scale!,
     transposeSemitones: project.transposeSemitones ?? 0,
     tempoBpm: project.tempoBpm!,
+    ...(project.humanization ? { humanization: { ...project.humanization } } : {}),
+    ...(project.midiPadding ? { midiPadding: { ...project.midiPadding } } : {}),
     ...(project.randomizeTempoOnCompose !== undefined ? { randomizeTempoOnCompose: project.randomizeTempoOnCompose } : {}),
     ...(project.randomizeHarmonyOnCompose !== undefined ? { randomizeHarmonyOnCompose: project.randomizeHarmonyOnCompose } : {}),
     ...(project.randomizeTransposeOnCompose !== undefined ? { randomizeTransposeOnCompose: project.randomizeTransposeOnCompose } : {}),
@@ -92,6 +96,7 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
   return typeof project.name === 'string'
     && typeof project.key === 'string' && KEYS.includes(project.key)
     && (isScaleMode(project.scale))
+    && validOutputSettings(project)
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
     && (project.randomizeHarmonyOnCompose === undefined || typeof project.randomizeHarmonyOnCompose === 'boolean')

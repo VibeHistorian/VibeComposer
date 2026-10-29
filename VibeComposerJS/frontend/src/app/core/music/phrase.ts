@@ -1,3 +1,4 @@
+import { processOutputNotes } from './output-processing';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
@@ -106,7 +107,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
   if (!cache) { cache = new WeakMap(); trackLayouts.set(project, cache); }
   let notes = cache.get(track);
   if (!notes) {
-    notes = buildTrackLayout(project, track, true);
+    notes = processOutputNotes(project, track.id, buildTrackLayout(project, track, true));
     cache.set(track, notes);
   }
   return notes.map(note => {
