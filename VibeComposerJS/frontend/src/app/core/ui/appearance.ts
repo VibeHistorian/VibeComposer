@@ -28,6 +28,7 @@ export type ColorAdjustments = Readonly<Record<ColorAdjustment, number>>;
 const DEFAULT_COLOR_ADJUSTMENTS: ColorAdjustments = { brightness: 0, hueShift: 0, saturation: 0 };
 
 export interface AppearancePreferences {
+  readonly preserveBrightnessSaturation: boolean;
   readonly hueShiftRoles: boolean;
   readonly colorAdjustments: ColorAdjustments;
   readonly themeColors: ThemeColors;
@@ -37,6 +38,7 @@ export interface AppearancePreferences {
 
 export function defaultAppearance(): AppearancePreferences {
   return {
+    preserveBrightnessSaturation: false,
     hueShiftRoles: false,
     colorAdjustments: { ...DEFAULT_COLOR_ADJUSTMENTS },
     themeColors: { ...DEFAULT_THEME_COLORS },
@@ -52,6 +54,7 @@ export function isRoleColor(value: unknown): value is string {
 export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const data = value as AppearancePreferences;
+  if (data.preserveBrightnessSaturation !== undefined && typeof data.preserveBrightnessSaturation !== 'boolean') return null;
   if (data.hueShiftRoles !== undefined && typeof data.hueShiftRoles !== 'boolean') return null;
   const colorAdjustments = data.colorAdjustments === undefined ? DEFAULT_COLOR_ADJUSTMENTS : data.colorAdjustments;
   if (!colorAdjustments || typeof colorAdjustments !== 'object' || Array.isArray(colorAdjustments)
@@ -69,6 +72,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   };
   if (!THEME_COLORS.every(color => isRoleColor(resolvedColors[color.key]))) return null;
   return {
+    preserveBrightnessSaturation: data.preserveBrightnessSaturation === true,
     hueShiftRoles: data.hueShiftRoles === true,
     colorAdjustments: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, colorAdjustments[key]])) as ColorAdjustments,
     themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, resolvedColors[color.key].toLowerCase()])) as ThemeColors,

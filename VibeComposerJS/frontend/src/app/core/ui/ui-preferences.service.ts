@@ -94,6 +94,11 @@ export class UiPreferencesService {
     this.commit({ ...this.state(), appearance: randomAppearance(this.appearance(), seed, mode) });
   }
 
+  togglePreserveBrightnessSaturation(): void {
+    const appearance = this.appearance();
+    this.commit({ ...this.state(), appearance: { ...appearance, preserveBrightnessSaturation: !appearance.preserveBrightnessSaturation } });
+  }
+
   toggleHueShiftRoles(): void {
     const appearance = this.appearance();
     this.commit({ ...this.state(), appearance: { ...appearance, hueShiftRoles: !appearance.hueShiftRoles } });

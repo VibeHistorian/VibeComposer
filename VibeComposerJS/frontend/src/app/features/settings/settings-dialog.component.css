@@ -26,6 +26,7 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 .appearance-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 .appearance-heading h2 { margin: 0; }
 .appearance-actions, .export-name-fields { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.setting-controls > label.preserve-color-adjustments { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); font: 12px var(--font-ui); }
 .appearance-toggle, .appearance-reset { max-width: 100%; padding: 6px 9px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 12px var(--font-ui); cursor: pointer; }
 .appearance-toggle:hover, .appearance-reset:hover { background: var(--surface-button-hover); }
 .appearance-toggle[aria-pressed="true"] { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }

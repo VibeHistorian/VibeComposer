@@ -75,7 +75,11 @@ export function randomAppearance(current: AppearancePreferences, seed: bigint, m
   }
   return {
     ...current, themeColors,
-    colorAdjustments: { brightness: 0, hueShift: 0, saturation: 0 },
+    colorAdjustments: {
+      brightness: current.preserveBrightnessSaturation ? current.colorAdjustments.brightness : 0,
+      hueShift: 0,
+      saturation: current.preserveBrightnessSaturation ? current.colorAdjustments.saturation : 0,
+    },
     roleColors: Object.fromEntries(ARRANGED_PARTS.map((role, index) => [role, rolePalette[index]])) as AppearancePreferences['roleColors'],
   };
 }

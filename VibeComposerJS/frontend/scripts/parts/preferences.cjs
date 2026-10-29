@@ -172,6 +172,28 @@ test('randomize colors persists a complete palette without changing fonts, proje
   assert.equal(service.historyPosition(), position);
 });
 
+test('theme randomization optionally preserves brightness and saturation in both modes', () => {
+  const { uiPreferences: preferences, load } = fixture();
+  preferences.togglePreserveBrightnessSaturation();
+  for (const mode of ['dark', 'light']) {
+    preferences.setColorAdjustment('brightness', -25);
+    preferences.setColorAdjustment('saturation', 30);
+    preferences.setColorAdjustment('hueShift', 20);
+    preferences.randomizeAppearance(mode);
+    assert.deepEqual(preferences.appearance().colorAdjustments, { brightness: -25, saturation: 30, hueShift: 0 });
+    const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+    assert.equal(restored.appearance().preserveBrightnessSaturation, true);
+    assert.deepEqual(restored.appearance(), preferences.appearance());
+  }
+  const saved = preferences.exportJson();
+  preferences.resetAppearance();
+  assert.equal(preferences.importJson(saved), true);
+  assert.equal(preferences.appearance().preserveBrightnessSaturation, true);
+  preferences.togglePreserveBrightnessSaturation();
+  preferences.randomizeAppearance('light');
+  assert.deepEqual(preferences.appearance().colorAdjustments, { brightness: 0, saturation: 0, hueShift: 0 });
+});
+
 test('main theme preferences derive concrete canvas colors and preserve project state', () => {
   const { service, uiPreferences: preferences, load } = fixture();
   const { themeColorTokens, DEFAULT_THEME_COLORS } = load('core/ui/theme.ts');
