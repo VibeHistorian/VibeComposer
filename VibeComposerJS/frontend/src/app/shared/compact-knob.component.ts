@@ -31,6 +31,7 @@ export class CompactKnobComponent {
   readonly composeToggle = output<void>();
   readonly shortLabel = input<string | null>(null);
   readonly compact = input(false);
+  readonly tooltipEnabled = input(true);
   readonly description = input('');
   readonly caption = input<string | null>(null);
   readonly valueFormat = input<'number' | 'pan' | 'decibels'>('number');

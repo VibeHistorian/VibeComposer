@@ -1,8 +1,14 @@
 <fieldset>
   <legend>Section MIDI velocity</legend>
-  <vc-compact-knob label="Velocity dB" [value]="section().context?.velocityDb ?? 0" [minimum]="-60" [maximum]="12" [defaultValue]="0" [dense]="true" (valueCommit)="projects.updateSectionContext(section().id, { velocityDb: $event })" />
-  <button type="button" (click)="reset('velocityDb')">Reset to 0 dB</button>
-  <p>Scales generated and manual note velocities; mixer gain is separate.</p>
+  <div class="velocity-knobs">
+    @for (role of roles; track role) {
+      <div class="role-velocity">
+        <span>{{ roleLabels[role] }}</span>
+        <vc-compact-knob [label]="roleLabels[role] + ' velocity'" [mini]="true" [showValueBelow]="true"
+          [value]="section().context?.velocityPercent?.[role] ?? 100" [minimum]="0" [maximum]="maximumVelocity" [step]="0.1" [defaultValue]="100" valueFormat="decibels" (valueCommit)="setVelocity(role, $event)" />
+      </div>
+    }
+  </div>
 </fieldset>
 <fieldset data-control-category="pitch">
   <legend>Section chords</legend>
@@ -20,7 +26,6 @@
     }
   </div>
   @if (section().customDurations) { <button type="button" (click)="clearDurations()">Use default durations</button> }
-  <p>{{ duration() }} beats in section. Length counts chord slots; the progression repeats as needed.</p>
 </fieldset>
 <fieldset data-control-category="timing">
   <legend>Section timing and key</legend>
@@ -38,6 +43,5 @@
     [value]="section().context?.keyChangeType ?? 'direct'" (valueChange)="choose('keyChangeType', $event)"></vc-select></label>
   @if (section().customChords || section().chordDegrees) { <p>Explicit section chords take precedence over the ending cadence.</p> }
   <label>Beat duration<vc-select [options]="[{ value: '0.5', label: 'Half' }, { value: '1', label: 'Normal' }, { value: '2', label: 'Double' }]" [selectDefault]="1" [value]="section().context?.beatDurationMultiplier ?? 1" (valueChange)="choose('beatDurationMultiplier', $event, true)"></vc-select></label>
-  <button type="button" (click)="projects.setSectionMusicalState(section().id, { context: undefined })" [disabled]="!section().context">Inherit all timing and key</button>
-  <p>Section swing overrides part swing. Blank values inherit. Tempo changes are shared by playback and MIDI export.</p>
+  <button type="button" (click)="projects.setSectionMusicalState(section().id, { context: section().context?.velocityPercent ? { velocityPercent: section().context?.velocityPercent } : undefined })" [disabled]="!section().context">Inherit all timing and key</button>
 </fieldset>

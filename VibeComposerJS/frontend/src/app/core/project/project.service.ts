@@ -127,7 +127,7 @@ export class ProjectService {
     const current = this.state(), section = current.arrangement.find(item => item.id === sectionId);
     if (!section || !patch || typeof patch !== 'object' || Array.isArray(patch)) return 'invalid';
     const context = { ...section.context } as Record<string, unknown>;
-    const keys = ['velocityDb','tempoBpm','swingPercent','key','scale','keyChange','keyChangeType','beatDurationMultiplier'];
+    const keys = ['velocityPercent','tempoBpm','swingPercent','key','scale','keyChange','keyChangeType','beatDurationMultiplier'];
     for (const [key, value] of Object.entries(patch)) {
       if (!keys.includes(key)) return 'invalid';
       if (value === null) delete context[key]; else context[key] = value;

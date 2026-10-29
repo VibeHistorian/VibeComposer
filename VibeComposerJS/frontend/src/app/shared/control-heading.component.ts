@@ -16,6 +16,7 @@ export class ControlHeadingComponent {
   readonly shortLabel = input<string | null>(null);
   readonly statusOnly = input(false);
   readonly inheritance = input<ControlInheritance>('global');
+  readonly tooltipEnabled = input(true);
   readonly showStatus = input(true);
   readonly inheritRequested = output<void>();
   readonly statusLabel = computed(() => this.inheritance() === 'custom'

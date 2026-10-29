@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import type { ArrangementSection, SectionMusicalContext } from '../../core/project/arrangement.model';
 import { ProjectService } from '../../core/project/project.service';
+import { ARRANGED_PARTS, type ArrangedPart } from '../../core/music/part-role';
+import { MAX_VOLUME_PERCENT } from '../../core/audio/mix-values';
 import { KEYS } from '../../core/music/harmony';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
-import { sectionChordDurations, sectionDurationBeats, sectionHasChordOverride } from '../../core/music/section-context';
+import { sectionChordDurations, sectionHasChordOverride } from '../../core/music/section-context';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { SelectComponent } from '../../shared/select.component';
@@ -23,7 +25,14 @@ export class SectionContextEditorComponent {
   readonly section = input.required<ArrangementSection>();
   readonly keys = KEYS;
   readonly hasChordOverride = computed(() => sectionHasChordOverride(this.projects.project(), this.section()));
-  readonly duration = computed(() => sectionDurationBeats(this.projects.project(), this.section()));
+  readonly maximumVelocity = MAX_VOLUME_PERCENT;
+  readonly roles = ARRANGED_PARTS;
+  readonly roleLabels: Record<ArrangedPart, string> = { melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arps', drums: 'Drums' };
+  setVelocity(role: ArrangedPart, value: number): void {
+    const velocityPercent = { ...this.section().context?.velocityPercent };
+    if (value === 100) delete velocityPercent[role]; else velocityPercent[role] = value;
+    this.projects.updateSectionContext(this.section().id, { velocityPercent: Object.keys(velocityPercent).length ? velocityPercent : null });
+  }
   readonly durations = computed(() => this.section().customDurations
     ?? sectionChordDurations(this.projects.project(), this.section()).map(value => value / (this.section().context?.beatDurationMultiplier ?? 1)));
   readonly numericFields = [

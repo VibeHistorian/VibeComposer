@@ -370,6 +370,7 @@ export class WorkspaceCanvasComponent {
   readonly scoreTimelineBeats = computed(() => this.scoreTimelineBounds().endBeat - this.scoreTimelineBounds().startBeat);
   readonly scorePlayheadPercent = computed(() => (this.playback.beat() - this.scoreTimelineBounds().startBeat) / Math.max(1, this.scoreTimelineBeats()) * 100);
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
+  readonly selectedSectionBeats = computed(() => { const section = this.selectedSection(); return section ? sectionDurationBeats(this.project(), section) : 0; });
   readonly totalBeats = computed(() => this.project().arrangement.reduce((sum, section) => sum + sectionDurationBeats(this.project(), section), 0));
   readonly loopRange = computed(() => this.playback.loopEnabled()
     ? this.workspaceUi.sectionRange() ?? noteTimelineBounds(this.scoreNotes(), this.totalBeats()) : null);

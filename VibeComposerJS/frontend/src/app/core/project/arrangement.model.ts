@@ -31,7 +31,7 @@ export interface ArrangementSection {
 }
 
 export interface SectionMusicalContext {
-  readonly velocityDb?: number;
+  readonly velocityPercent?: Readonly<Partial<Record<ArrangedPart, number>>>;
   readonly tempoBpm?: number;
   readonly swingPercent?: number;
   readonly key?: string;

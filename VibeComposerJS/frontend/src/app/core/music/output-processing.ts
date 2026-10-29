@@ -1,7 +1,7 @@
 import type { CompositionProject } from '../project/project.model';
 import type { PhraseNote } from './phrase-note';
 import { JavaRandom } from './java-random';
-import { ARRANGED_PARTS } from './part-role';
+import { type ArrangedPart, ARRANGED_PARTS } from './part-role';
 
 export function validOutputSettings(project: Partial<CompositionProject>): boolean {
   const h = project.humanization;
@@ -15,7 +15,7 @@ export function validOutputSettings(project: Partial<CompositionProject>): boole
 
 /** Final output after part timing and manual replacement. Independent stream preserves generator draws. */
 export function processOutputNotes<T extends PhraseNote & { readonly sectionId?: string }>(
-  project: CompositionProject, trackId: string, notes: readonly T[]): T[] {
+  project: CompositionProject, trackId: string, role: ArrangedPart, notes: readonly T[]): T[] {
   let identity = 0n;
   for (const char of trackId) identity = BigInt.asIntN(64, identity * 31n + BigInt(char.charCodeAt(0)));
   const random = new JavaRandom(BigInt(project.seed) ^ identity ^ 0x48554d414en);
@@ -23,8 +23,8 @@ export function processOutputNotes<T extends PhraseNote & { readonly sectionId?:
   return notes.map(note => {
     const timing = (random.nextDouble() * 2 - 1) * (h?.timingBeats ?? 0);
     const duration = (random.nextDouble() * 2 - 1) * (h?.durationBeats ?? 0);
-    const db = project.arrangement.find(section => section.id === note.sectionId)?.context?.velocityDb ?? 0;
+    const percent = project.arrangement.find(section => section.id === note.sectionId)?.context?.velocityPercent?.[role] ?? 100;
     return { ...note, startBeat: note.startBeat + timing, durationBeats: Math.max(1 / 960, note.durationBeats + duration),
-      velocity: note.velocity <= 0 ? 0 : Math.max(1, Math.min(127, Math.round(note.velocity * 10 ** (db / 20)))) };
+      velocity: note.velocity <= 0 || percent === 0 ? 0 : Math.max(1, Math.min(127, Math.round(note.velocity * percent / 100))) };
   });
 }

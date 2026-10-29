@@ -16,3 +16,7 @@ p { margin: 7px 0 0; color: var(--text-muted); font-size: 10px; line-height: 1.5
 .context-field label { flex: 1; min-width: 0; display: grid; gap: 3px; }
 .context-field input { width: 100%; }
 .context-field button { margin-bottom: 5px; }
+
+/* Section role velocity */
+.velocity-knobs { display: flex; flex-wrap: wrap; gap: 8px; }
+.role-velocity { display: grid; justify-items: center; gap: 5px; flex: 1 0 42px; color: var(--text-secondary); font: 10px var(--font-ui); }

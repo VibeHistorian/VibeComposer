@@ -1,3 +1,5 @@
+import { validVolumePercent } from '../audio/mix-values';
+import { ARRANGED_PARTS } from './part-role';
 import { isScaleMode } from './scales';
 import type { ArrangementSection, SectionMusicalContext } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
@@ -8,7 +10,9 @@ export function validSectionContext(value: unknown): value is SectionMusicalCont
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return Object.entries(value).every(([key, field]) => {
     switch (key) {
-      case 'velocityDb': return typeof field === 'number' && Number.isFinite(field) && field >= -60 && field <= 12;
+      case 'velocityPercent': return !!field && typeof field === 'object' && !Array.isArray(field)
+        && Object.entries(field).every(([role, db]) => ARRANGED_PARTS.includes(role as typeof ARRANGED_PARTS[number])
+          && validVolumePercent(db));
       case 'tempoBpm': return Number.isInteger(field) && field >= 30 && field <= 300;
       case 'swingPercent': return Number.isInteger(field) && field >= 0 && field <= 100;
       case 'key': return KEYS.includes(field);

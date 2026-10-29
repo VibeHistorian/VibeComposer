@@ -266,3 +266,7 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 /* MIDI drop feedback */
 .score-panel.midi-drag-over { outline: 2px solid var(--border-focus); outline-offset: -2px; box-shadow: inset 0 0 32px var(--accent-glow); }
 .score-panel.midi-drag-over .score-track-lanes { filter: brightness(1.2); }
+
+/* Section length and duration */
+.section-length-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 8px; }
+.section-beat-count { align-self: end; padding-bottom: 8px; color: var(--text-muted); font: 11px var(--font-mono); }

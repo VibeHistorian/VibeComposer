@@ -107,7 +107,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
   if (!cache) { cache = new WeakMap(); trackLayouts.set(project, cache); }
   let notes = cache.get(track);
   if (!notes) {
-    notes = processOutputNotes(project, track.id, buildTrackLayout(project, track, true));
+    notes = processOutputNotes(project, track.id, track.role, buildTrackLayout(project, track, true));
     cache.set(track, notes);
   }
   return notes.map(note => {

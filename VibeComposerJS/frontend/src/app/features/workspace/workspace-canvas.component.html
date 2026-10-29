@@ -356,9 +356,12 @@
           <label class="quick-field">Section type
             <vc-select [options]="sectionSelectOptions()" selectDefault="VERSE1" [value]="section.type" (valueChange)="updateSectionType($event)"></vc-select>
           </label>
-          <label class="quick-field">Length in bars
-            <input type="number" min="1" [max]="maxSectionMeasures()" [value]="section.measures" (change)="updateSectionMeasures($event)" />
-          </label>
+          <div class="section-length-row">
+            <label class="quick-field">Length in bars
+              <input type="number" min="1" [max]="maxSectionMeasures()" [value]="section.measures" (change)="updateSectionMeasures($event)" />
+            </label>
+            <span class="section-beat-count">{{ selectedSectionBeats() }} beats</span>
+          </div>
           <div class="section-actions">
             <button type="button" (click)="moveSection(-1)" [disabled]="selectedSectionIndex() <= 0" aria-label="Move section earlier">↑</button>
             <button type="button" (click)="moveSection(1)" [disabled]="selectedSectionIndex() >= project().arrangement.length - 1" aria-label="Move section later">↓</button>
