@@ -43,11 +43,12 @@
           }
           @for (track of tracksFor(group.role); track track.id) {
             <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
+              <span class="track-row-gradient" aria-hidden="true"></span>
               <div class="track-line" (click)="selectTrack(track.id)">
                 <button type="button" class="track-select" [disabled]="editing()"
                   title="Select track; middle-click to solo only this track" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, [track.id])"
                   [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
-                  <i class="role-dot" [class]="track.role"></i><span>{{ track.name }}</span>
+                  <span>{{ track.name }}</span>
                 </button>
                 <div class="track-reroll-actions" (click)="$event.stopPropagation()">
                   <vc-mix-buttons class="track-level" [trackIds]="[track.id]" [label]="track.name" />
