@@ -1,3 +1,4 @@
+import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { isScaleMode } from '../../core/music/scales';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
 import { afterNextRender, Injector, ChangeDetectionStrategy, Component, computed, effect, inject, untracked, signal } from '@angular/core';
@@ -23,6 +24,12 @@ export class TransportDockComponent {
 
   readonly scales = SCALE_MODES;
   readonly scaleDefinitions = SCALE_DEFINITIONS;
+  readonly instruments = inject(InstrumentSettingsService);
+  readonly instrumentOptions = this.instruments.options;
+  selectInstrument(value: string): void {
+    this.playback.stop();
+    this.instruments.select(value);
+  }
   readonly playback = inject(AudioPlaybackService);
   private readonly projects = inject(ProjectService);
   readonly workspaceUi = inject(WorkspaceUiService);

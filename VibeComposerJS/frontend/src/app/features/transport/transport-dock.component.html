@@ -71,6 +71,8 @@
       <span [title]="key() + ' ' + scaleDefinitions[project().scale].label.toUpperCase() + ' | ' + project().tempoBpm + ' BPM | SEED ' + project().seed">ID {{ project().seed }}</span>
     </div>
     <ng-content select="[transportHistory]" />
+    <vc-select aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()"
+      (valueChange)="selectInstrument($event)" />
     <ng-content select="[transportDevices]" />
     <ng-content select="[transportFiles]" />
   </div>

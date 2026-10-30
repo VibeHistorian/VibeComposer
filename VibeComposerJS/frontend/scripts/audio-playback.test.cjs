@@ -37,9 +37,10 @@ function fixture({ loop = false } = {}) {
     createGain: node, createStereoPanner: node,
     createOscillator() { const source = node(); sources.push(source); return source; },
   };
+  const instruments = { kind: signal('synth'), selectedBank: () => undefined };
   const midi = { selectedOutput: signal(null), drumMapping: signal('general-midi'), schedule() {}, configure() {}, silence() {} };
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
-    signal, effect, untracked, inject: () => midi, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
+    signal, effect, untracked, inject: (token) => token.name === 'InstrumentSettingsService' ? instruments : midi, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
   const load = (file, dependencies) => {
     const source = fs.readFileSync(path.join(__dirname, '../src/app', file), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -57,7 +58,8 @@ function fixture({ loop = false } = {}) {
     '../music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
-    './tiny-synth-engine': { TinySynthEngine: class {} },
+    './create-instrument-engine': {},
+    './instrument-settings.service': { InstrumentSettingsService: class InstrumentSettingsService {} },
     './midi-output.service': { MidiOutputService: class {} },
     '../music/phrase': { layOutTrackPhrase: (project, track) =>
       !project.arrangement.length || project.arrangement[0].trackPresence[track.id] === false ? [] : track.notes },
@@ -66,6 +68,7 @@ function fixture({ loop = false } = {}) {
   // Existing scenarios explicitly start without looping; the default is tested separately.
   if (!loop) playback.toggleLoop();
   playback.context = context;
+  playback.engineKind = 'synth';
   playback.synth = { schedule(destination, program, percussion, midi, velocity, start, duration) {
     const source = context.createOscillator();
     source.program = program;
@@ -73,14 +76,16 @@ function fixture({ loop = false } = {}) {
     source.destination = destination;
     source.frequency.value = 440 * 2 ** ((midi - 69) / 12);
     source.start(start);
-    return [{ source, envelope: node(), stopTime: start + duration + 0.02, disconnect() {} }];
+    source.stop(start + duration + 0.02);
+    return [{ stopTime: start + duration + 0.02, stop: time => source.stop(time),
+      onEnded: callback => { source.onended = callback; }, dispose() {} }];
   } };
   const project = { name: 'Song', progression: [1,5,6,4], tempoBpm: 120, arrangement: [{ measures: 4, trackPresence: {} }],
     tracks: [{ id: 'bass', role: 'bass', notes: [
       { id: 'sustain', midi: 48, startBeat: 0, durationBeats: 8, velocity: 100 },
       { id: 'next', midi: 50, startBeat: 4, durationBeats: 1, velocity: 100 },
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
-  return { playback, context, sources, project, angular, load, midi };
+  return { playback, context, sources, project, angular, load, midi, instruments };
 }
 
 test('phrase drafts replace only their track and absolute window on start, seek, live editing and cancel', async () => {
@@ -393,6 +398,7 @@ test('transport watches project changes and enabling LIVE without subscribing to
   angular.inject = (type) => type === 'audio' ? playback : type === 'ui' ? workspaceUi : projects;
   const { TransportDockComponent } = load('features/transport/transport-dock.component.ts', {
     '@angular/core': angular, '../../core/audio/audio-playback.service': { AudioPlaybackService: 'audio' },
+    '../../core/audio/instrument-settings.service': { InstrumentSettingsService: 'instruments' },
     '../../core/project/project.service': { ProjectService: 'projects' }, '../../core/music/harmony': { KEYS: [] },
     '../../core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
     '../../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
@@ -548,7 +554,7 @@ test('transport cancellation and source completion clean up every synth operator
   let disconnected = 0;
   playback.synth.schedule = (...args) => {
     const voices = [...schedule(...args), ...schedule(...args)];
-    return voices.map(voice => ({ ...voice, disconnect() { disconnected++; } }));
+    return voices.map(voice => ({ ...voice, dispose() { disconnected++; } }));
   };
   await playback.start(project);
   assert.equal(playback.activeSources.size, 2);
@@ -672,4 +678,18 @@ test('Preview moves an enabled loop beyond the old arrangement end when Compose 
     assert.deepEqual(playback.loopBounds(), { startBeat: 32, endBeat: 40 });
     assert.equal(playback.state(), playing ? 'playing' : 'stopped');
   }
+});
+
+
+test('changing the selected soundfont stops voices and disposes the old engine and decoded cache', async () => {
+  const {playback, project, sources, instruments} = fixture();
+  let disposed = 0;
+  playback.synth.dispose = () => { disposed++; };
+  await playback.start(project);
+  instruments.kind.set('sf2:1');
+  assert.equal(playback.state(), 'stopped');
+  assert.equal(playback.synth, undefined);
+  assert.equal(playback.activeSources.size, 0);
+  assert.equal(disposed, 1);
+  assert.ok(sources.every(s => s.stopTime === undefined));
 });

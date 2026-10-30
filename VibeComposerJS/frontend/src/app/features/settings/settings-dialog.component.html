@@ -145,6 +145,19 @@
         @case ('midi') {
           <section aria-labelledby="midi-settings-title">
             <h2 id="midi-settings-title">MIDI</h2>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Soundfonts</h3>
+                <p>Load an SF2 file up to 250 MiB, then choose it in the transport. Up to three banks stay loaded for this session; loading a fourth unloads the oldest. Loaded banks are cleared when the app closes.</p>
+              </div>
+              <div class="setting-controls"><label>Load soundfont<input type="file" accept=".sf2" aria-label="Load soundfont" [disabled]="instruments.busy()" (change)="loadSoundfont($event)" /></label></div>
+            </div>
+            @for (font of instruments.loaded(); track font.id) {
+              <div class="setting-row">
+                <div class="setting-copy"><h3>{{ font.name }}</h3><p>{{ (font.size / 1048576).toFixed(1) }} MiB · {{ font.bank.presets.length }} presets</p></div>
+                <div class="setting-controls"><button type="button" [attr.aria-label]="'Unload ' + font.name" (click)="instruments.unload(font.id)">Unload</button></div>
+              </div>
+            }
+            @if (instruments.message()) { <p role="status">{{ instruments.message() }}</p> }
             <div class="setting-row"><div class="setting-copy"><h3>MIDI export track padding</h3><p>Minimum track counts per role (0–32). Adds named empty tracks after each role, including empty roles. Existing tracks are retained. Saved with the project.</p></div><div class="setting-controls">@for (role of roles; track role) {
               <label>{{ roleNames[role] }}<input type="number" min="0" max="32" [attr.aria-label]="roleNames[role] + ' MIDI padding'" [value]="projects.project().midiPadding?.[role] ?? 0" (change)="setPadding(role, +$any($event.target).value)" /></label>
             }</div></div>

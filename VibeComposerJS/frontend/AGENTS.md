@@ -27,7 +27,7 @@ Paths below are relative to `src/app/`. See the [feature map](src/app/features/R
 
 From `frontend/`, use the pnpm version pinned in [package.json](package.json) and `pnpm install --frozen-lockfile`; [setup](../README.md#setup-and-builds) explains Node requirements, Wails and mixed-install recovery. The authoritative lockfile is `pnpm-lock.yaml`; preserve the [TinySynth patch contract](patches/README.md).
 
-Choose checks from the [change-area-to-checks table](scripts/README.md#change-area-to-checks). `pnpm test` runs functional checks. After application changes, run `pnpm run build` before the relevant production browser suites; use both test aggregates for changes across owners. Supported viewport widths start at 700 CSS pixels. Track cleanup completion in [CLEANUP.md](CLEANUP.md).
+Choose checks from the [change-area-to-checks table](scripts/README.md#change-area-to-checks). `pnpm test` runs functional checks. After application changes, run `pnpm run build` before the relevant production browser suites; use both test aggregates for changes across owners. Supported viewport widths start at 700 CSS pixels.
 
 ## Windows shell and sandbox recovery
 

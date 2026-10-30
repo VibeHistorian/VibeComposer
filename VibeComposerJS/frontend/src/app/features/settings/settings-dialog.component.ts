@@ -1,3 +1,4 @@
+import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, sameShortcut, type ShortcutId } from '../../core/ui/shortcuts';
 import { SettingsScopeIndicatorComponent, type SettingScope } from './settings-scope-indicator.component';
 import { SelectComponent } from '../../shared/select.component';
@@ -33,6 +34,13 @@ export class SettingsDialogComponent {
     this.projects.updateSettings({ midiPadding: { ...this.projects.project().midiPadding, [role]: value } });
   }
   readonly preferences = inject(UiPreferencesService);
+  readonly instruments = inject(InstrumentSettingsService);
+  async loadSoundfont(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) await this.instruments.load(file);
+  }
   readonly midi = inject(MidiOutputService);
   changeDrumMapping(selection: string): void {
     this.preferences.setDrumMapping(selection as DrumMappingPreference);

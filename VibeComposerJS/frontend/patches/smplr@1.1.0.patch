@@ -1,0 +1,184 @@
+diff --git a/dist/index.d.mts b/dist/index.d.mts
+index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..c62c75078cece394acf482014464aeef57e3c0f1 100644
+--- a/dist/index.d.mts
++++ b/dist/index.d.mts
+@@ -89,6 +89,12 @@ type PlaybackParams = {
+     detune?: number;
+     ampRelease?: number;
+     ampAttack?: number;
++    ampDelay?: number;
++    ampHold?: number;
++    ampDecay?: number;
++    ampSustain?: number;
++    pan?: number;
++    scaleTuning?: number;
+     lpfCutoffHz?: number;
+     offset?: number;
+     loop?: boolean;
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index e2a4bdb80c9d95dcb6f013f2490f01556d18ba37..c62c75078cece394acf482014464aeef57e3c0f1 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -89,6 +89,12 @@ type PlaybackParams = {
+     detune?: number;
+     ampRelease?: number;
+     ampAttack?: number;
++    ampDelay?: number;
++    ampHold?: number;
++    ampDecay?: number;
++    ampSustain?: number;
++    pan?: number;
++    scaleTuning?: number;
+     lpfCutoffHz?: number;
+     offset?: number;
+     loop?: boolean;
+diff --git a/dist/index.js b/dist/index.js
+index 289ff7081e053cddbede5286717afa5f4e494463..80c81550f8d80f79f31c595c04525e9a6e20f0ce 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -458,6 +458,7 @@ var PARAM_DEFAULTS = {
+   detune: 0,
+   ampRelease: 0.3,
+   ampAttack: 0,
++  ampDelay: 0, ampHold: 0, ampDecay: 0, ampSustain: 1, pan: 0, scaleTuning: 100,
+   lpfCutoffHz: 2e4,
+   offset: 0,
+   loop: false,
+@@ -476,9 +477,9 @@ function pickPlaybackParams(obj) {
+ }
+ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+   var _a, _b, _c, _d, _e, _f;
+-  const merged = __spreadValues(__spreadValues(__spreadValues(__spreadValues({}, PARAM_DEFAULTS), defaults), pickPlaybackParams(group)), pickPlaybackParams(region));
++  const merged = __spreadValues(__spreadValues(__spreadValues(__spreadValues({}, PARAM_DEFAULTS), pickPlaybackParams(defaults || {})), pickPlaybackParams(group)), pickPlaybackParams(region));
+   const pitch = (_b = (_a = region.pitch) != null ? _a : region.key) != null ? _b : midi;
+-  const semitones = midi - pitch;
++  const semitones = (midi - pitch) * merged.scaleTuning / 100;
+   let detune = (semitones + merged.tune) * 100 + merged.detune;
+   if ((overrides == null ? void 0 : overrides.detune) !== void 0) detune += overrides.detune;
+   return {
+@@ -487,6 +488,7 @@ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+     volume: merged.volume,
+     ampRelease: (_c = overrides == null ? void 0 : overrides.ampRelease) != null ? _c : merged.ampRelease,
+     ampAttack: merged.ampAttack,
++    ampDelay: merged.ampDelay, ampHold: merged.ampHold, ampDecay: merged.ampDecay, ampSustain: merged.ampSustain, pan: merged.pan,
+     lpfCutoffHz: (_d = overrides == null ? void 0 : overrides.lpfCutoffHz) != null ? _d : merged.lpfCutoffHz,
+     offset: merged.offset,
+     loop: (_e = overrides == null ? void 0 : overrides.loop) != null ? _e : merged.loop,
+@@ -901,9 +903,24 @@ var Voice = class {
+       source.connect(gain);
+     }
+     gain.connect(envelope);
+-    envelope.connect(destination);
++    const panner = context.createStereoPanner();
++    panner.pan.value = params.pan;
++    envelope.connect(panner);
++    panner.connect(destination);
+     const startAt = startTime != null ? startTime : context.currentTime;
+     __privateSet(this, _startAt, startAt);
++    const attackStart = startAt + params.ampDelay;
++    const attackEnd = attackStart + params.ampAttack;
++    const holdEnd = attackEnd + params.ampHold;
++    const decayEnd = holdEnd + params.ampDecay;
++    const sustain = params.ampSustain;
++    this.envelopeAt = t => t < attackStart ? 0 : t < attackEnd ? (t - attackStart) / Math.max(params.ampAttack, 1e-9)
++      : t < holdEnd ? 1 : t < decayEnd ? 1 + (sustain - 1) * (t - holdEnd) / Math.max(params.ampDecay, 1e-9) : sustain;
++    envelope.gain.setValueAtTime(0, startAt);
++    envelope.gain.setValueAtTime(0, attackStart);
++    envelope.gain.linearRampToValueAtTime(1, attackEnd);
++    envelope.gain.setValueAtTime(1, holdEnd);
++    envelope.gain.linearRampToValueAtTime(sustain, decayEnd);
+     let offsetSec = 0;
+     if (params.offset > 0) {
+       offsetSec = params.reverse ? buffer.duration - params.offset : params.offset;
+@@ -914,6 +931,7 @@ var Voice = class {
+     source.onended = () => {
+       __privateSet(this, _state, "stopped");
+       envelope.disconnect();
++      panner.disconnect();
+       gain.disconnect();
+       lpf == null ? void 0 : lpf.disconnect();
+       source.disconnect();
+@@ -938,7 +956,7 @@ var Voice = class {
+     } else {
+       const stopAt = t + __privateGet(this, _ampRelease);
+       __privateGet(this, _envelope).gain.cancelScheduledValues(t);
+-      __privateGet(this, _envelope).gain.setValueAtTime(1, t);
++      __privateGet(this, _envelope).gain.setValueAtTime(this.envelopeAt(t), t);
+       __privateGet(this, _envelope).gain.linearRampToValueAtTime(0, stopAt);
+       __privateGet(this, _source).stop(stopAt);
+     }
+diff --git a/dist/index.mjs b/dist/index.mjs
+index b77674141770395687e7222b3a6256221354ca0e..5e64eb58dffdf03d81672b287e54874d86a49077 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -390,6 +390,7 @@ var PARAM_DEFAULTS = {
+   detune: 0,
+   ampRelease: 0.3,
+   ampAttack: 0,
++  ampDelay: 0, ampHold: 0, ampDecay: 0, ampSustain: 1, pan: 0, scaleTuning: 100,
+   lpfCutoffHz: 2e4,
+   offset: 0,
+   loop: false,
+@@ -408,9 +409,9 @@ function pickPlaybackParams(obj) {
+ }
+ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+   var _a, _b, _c, _d, _e, _f;
+-  const merged = __spreadValues(__spreadValues(__spreadValues(__spreadValues({}, PARAM_DEFAULTS), defaults), pickPlaybackParams(group)), pickPlaybackParams(region));
++  const merged = __spreadValues(__spreadValues(__spreadValues(__spreadValues({}, PARAM_DEFAULTS), pickPlaybackParams(defaults || {})), pickPlaybackParams(group)), pickPlaybackParams(region));
+   const pitch = (_b = (_a = region.pitch) != null ? _a : region.key) != null ? _b : midi;
+-  const semitones = midi - pitch;
++  const semitones = (midi - pitch) * merged.scaleTuning / 100;
+   let detune = (semitones + merged.tune) * 100 + merged.detune;
+   if ((overrides == null ? void 0 : overrides.detune) !== void 0) detune += overrides.detune;
+   return {
+@@ -419,6 +420,7 @@ function resolveParams(defaults, group, region, midi, velocity, overrides) {
+     volume: merged.volume,
+     ampRelease: (_c = overrides == null ? void 0 : overrides.ampRelease) != null ? _c : merged.ampRelease,
+     ampAttack: merged.ampAttack,
++    ampDelay: merged.ampDelay, ampHold: merged.ampHold, ampDecay: merged.ampDecay, ampSustain: merged.ampSustain, pan: merged.pan,
+     lpfCutoffHz: (_d = overrides == null ? void 0 : overrides.lpfCutoffHz) != null ? _d : merged.lpfCutoffHz,
+     offset: merged.offset,
+     loop: (_e = overrides == null ? void 0 : overrides.loop) != null ? _e : merged.loop,
+@@ -833,9 +835,24 @@ var Voice = class {
+       source.connect(gain);
+     }
+     gain.connect(envelope);
+-    envelope.connect(destination);
++    const panner = context.createStereoPanner();
++    panner.pan.value = params.pan;
++    envelope.connect(panner);
++    panner.connect(destination);
+     const startAt = startTime != null ? startTime : context.currentTime;
+     __privateSet(this, _startAt, startAt);
++    const attackStart = startAt + params.ampDelay;
++    const attackEnd = attackStart + params.ampAttack;
++    const holdEnd = attackEnd + params.ampHold;
++    const decayEnd = holdEnd + params.ampDecay;
++    const sustain = params.ampSustain;
++    this.envelopeAt = t => t < attackStart ? 0 : t < attackEnd ? (t - attackStart) / Math.max(params.ampAttack, 1e-9)
++      : t < holdEnd ? 1 : t < decayEnd ? 1 + (sustain - 1) * (t - holdEnd) / Math.max(params.ampDecay, 1e-9) : sustain;
++    envelope.gain.setValueAtTime(0, startAt);
++    envelope.gain.setValueAtTime(0, attackStart);
++    envelope.gain.linearRampToValueAtTime(1, attackEnd);
++    envelope.gain.setValueAtTime(1, holdEnd);
++    envelope.gain.linearRampToValueAtTime(sustain, decayEnd);
+     let offsetSec = 0;
+     if (params.offset > 0) {
+       offsetSec = params.reverse ? buffer.duration - params.offset : params.offset;
+@@ -846,6 +863,7 @@ var Voice = class {
+     source.onended = () => {
+       __privateSet(this, _state, "stopped");
+       envelope.disconnect();
++      panner.disconnect();
+       gain.disconnect();
+       lpf == null ? void 0 : lpf.disconnect();
+       source.disconnect();
+@@ -870,7 +888,7 @@ var Voice = class {
+     } else {
+       const stopAt = t + __privateGet(this, _ampRelease);
+       __privateGet(this, _envelope).gain.cancelScheduledValues(t);
+-      __privateGet(this, _envelope).gain.setValueAtTime(1, t);
++      __privateGet(this, _envelope).gain.setValueAtTime(this.envelopeAt(t), t);
+       __privateGet(this, _envelope).gain.linearRampToValueAtTime(0, stopAt);
+       __privateGet(this, _source).stop(stopAt);
+     }

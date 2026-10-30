@@ -9,7 +9,9 @@ import { noteTimelineBounds } from '../music/phrase-bounds';
 import { layOutTrackPhrase } from '../music/phrase';
 import { samePhraseInputs } from '../music/phrase-inputs';
 import { mostIntenseSection } from '../music/arrangement-generator';
-import { TinySynthEngine } from './tiny-synth-engine';
+import type { InstrumentEngine, InstrumentVoice, InstrumentEngineKind } from './instrument-engine';
+import { createInstrumentEngine } from './create-instrument-engine';
+import { InstrumentSettingsService } from './instrument-settings.service';
 import { beatToSeconds, secondsToBeat, projectTempoMap, sectionDurationBeats, type TempoPoint } from '../music/section-context';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
@@ -46,7 +48,11 @@ export class AudioPlaybackService {
 
   private context?: AudioContext;
   private master?: GainNode;
-  private synth?: TinySynthEngine;
+  private synth?: InstrumentEngine;
+  private startRequest = 0;
+  private engineLoading?: Promise<void>;
+  private engineKind?: InstrumentEngineKind;
+  private readonly instruments = inject(InstrumentSettingsService);
   private scheduler?: ReturnType<typeof setInterval>;
   private originTime = 0;
   private tempoMap: readonly TempoPoint[] = [{ beat: 0, seconds: 0, bpm: 120 }];
@@ -61,10 +67,19 @@ export class AudioPlaybackService {
   private scheduleSignature = '';
   private readonly buses = new Map<string, PartBus>();
   private readonly programs = new Map<string, number>();
-  private readonly activeSources = new Set<AudioScheduledSourceNode>();
+  private readonly activeSources = new Set<InstrumentVoice>();
 
   constructor() {
     effect(() => {
+      this.instruments.kind();
+      untracked(() => {
+        if (this.synth && this.engineKind !== this.instruments.kind()) {
+          this.stop();
+          this.synth.dispose();
+          this.synth = undefined;
+          this.engineKind = undefined;
+        }
+      });
       this.midi.selectedOutput();
       this.midi.drumMapping();
       untracked(() => {
@@ -79,6 +94,7 @@ export class AudioPlaybackService {
     try {
       const context = this.getContext();
       if (context.state === 'suspended') await context.resume();
+      if (!this.midi.selectedOutput()) await this.prepareInstrument(context);
       if (this.midi.selectedOutput()) {
         const pitches = new Set<number>();
         for (const note of notes) {
@@ -105,13 +121,10 @@ export class AudioPlaybackService {
       const disconnect = () => { gain.disconnect(); pan.disconnect(); };
       if (!remaining) disconnect();
       for (const voice of voices) {
-        voice.source.onended = () => {
-          voice.disconnect();
-          voice.source.disconnect();
-          voice.envelope.disconnect();
+        voice.onEnded(() => {
+          voice.dispose();
           if (--remaining === 0) disconnect();
-        };
-        voice.source.stop(voice.stopTime);
+        });
       }
     } catch (error: unknown) {
       this.playbackError.set(error instanceof Error ? error.message : 'Note preview could not start.');
@@ -128,10 +141,13 @@ export class AudioPlaybackService {
   }
 
   async start(project: CompositionProject, startBeat?: number): Promise<void> {
+    const request = ++this.startRequest;
     this.playbackError.set('');
     try {
       const context = this.getContext();
       if (context.state === 'suspended') await context.resume();
+      if (!this.midi.selectedOutput()) await this.prepareInstrument(context);
+      if (request !== this.startRequest) return;
       this.clearScheduler();
       this.stopSources();
       this.prepareMix(project, context);
@@ -150,6 +166,7 @@ export class AudioPlaybackService {
       this.scheduleAhead();
       this.scheduler = setInterval(() => this.tick(), SCHEDULER_INTERVAL_MS);
     } catch (error: unknown) {
+      if (request !== this.startRequest) return;
       this.clearScheduler();
       this.stopSources();
       this.playbackState.set('stopped');
@@ -167,6 +184,7 @@ export class AudioPlaybackService {
   }
 
   stop(): void {
+    this.startRequest++;
     this.clearScheduler();
     this.stopSources();
     this.position.set(this.timelineStart());
@@ -283,13 +301,28 @@ export class AudioPlaybackService {
     }
   }
 
+  private async prepareInstrument(context: AudioContext): Promise<void> {
+    const kind = this.instruments.kind();
+    if (this.synth && this.engineKind === kind) return;
+    if (this.engineLoading) await this.engineLoading;
+    if (this.synth && this.engineKind === kind) return;
+    this.engineLoading = (async () => {
+      const engine = await createInstrumentEngine(context, kind, this.instruments.selectedBank());
+      if (kind !== this.instruments.kind()) { engine.dispose(); throw new Error('Instrument selection changed while loading.'); }
+      this.stopSources();
+      this.synth?.dispose();
+      this.synth = engine;
+      this.engineKind = kind;
+    })();
+    try { await this.engineLoading; } finally { this.engineLoading = undefined; }
+  }
+
   private getContext(): AudioContext {
     if (this.context) return this.context;
     if (!globalThis.AudioContext) {
       throw new Error('This browser does not support Web Audio playback.');
     }
     this.context = new AudioContext();
-    this.synth = new TinySynthEngine(this.context);
     return this.context;
   }
 
@@ -435,14 +468,11 @@ export class AudioPlaybackService {
     const voices = this.synth.schedule(bus.gain, this.programs.get(note.trackId) ?? 0,
       note.role === 'drums', note.midi, note.velocity, startTime, duration);
     for (const voice of voices) {
-      this.activeSources.add(voice.source);
-      voice.source.onended = () => {
-        this.activeSources.delete(voice.source);
-        voice.disconnect();
-        voice.source.disconnect();
-        voice.envelope.disconnect();
-      };
-      voice.source.stop(voice.stopTime);
+      this.activeSources.add(voice);
+      voice.onEnded(() => {
+        this.activeSources.delete(voice);
+        voice.dispose();
+      });
     }
   }
 

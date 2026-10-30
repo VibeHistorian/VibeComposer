@@ -1,4 +1,5 @@
 patchedDependencies:
+  smplr@1.1.0: patches/smplr@1.1.0.patch
   webaudio-tinysynth@1.1.3: patches/webaudio-tinysynth@1.1.3.patch
 
 engineStrict: true

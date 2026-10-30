@@ -3,7 +3,9 @@ import { mixEnabled } from './mix-values';
 import { layOutTrackPhrase } from '../music/phrase';
 import { noteTimelineBounds } from '../music/phrase-bounds';
 import { beatToSeconds, projectTempoMap, sectionDurationBeats } from '../music/section-context';
-import { TinySynthEngine } from './tiny-synth-engine';
+import { createInstrumentEngine } from './create-instrument-engine';
+import type { Sf2Bank } from './sf2-resolver';
+import type { InstrumentEngineKind } from './instrument-engine';
 
 const SAMPLE_RATE = 48000;
 // Pinned GM timbres include 11s releases, multiplied by TinySynth's 3.5 ratio.
@@ -11,7 +13,7 @@ const SAMPLE_RATE = 48000;
 const MAX_RELEASE_TAIL_SECONDS = 40;
 
 /** Render the full arrangement with the playback instruments, tempo map and mix. */
-export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void): Promise<AudioBuffer> {
+export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank): Promise<AudioBuffer> {
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
   const tempo = projectTempoMap(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
@@ -26,7 +28,7 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   const songSeconds = beatToSeconds(tempo, endBeat) + offsetSeconds;
   const length = Math.ceil((songSeconds + MAX_RELEASE_TAIL_SECONDS) * SAMPLE_RATE);
   const context = new OfflineAudioContext(2, length, SAMPLE_RATE);
-  const synth = new TinySynthEngine(context);
+  const synth = await createInstrumentEngine(context, kind, bank);
   const master = context.createGain();
   master.gain.value = 0.8;
   master.connect(context.destination);
@@ -46,18 +48,14 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
         const duration = Math.max(0.035, beatToSeconds(tempo, note.startBeat + note.durationBeats) + offsetSeconds - start);
         for (const voice of synth.schedule(gain, track.mix.program, track.role === 'drums',
           note.midi, note.velocity, start, duration)) {
-          voice.source.onended = () => {
-            voice.disconnect();
-            voice.source.disconnect();
-            voice.envelope.disconnect();
-          };
-          voice.source.stop(voice.stopTime);
+          voice.onEnded(() => voice.dispose());
           lastStop = Math.max(lastStop, voice.stopTime);
         }
         // Building large arrangements also yields to input and paint.
         if (++scheduled % 128 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
       }
     }
+    await synth.flush();
     // Offline rendering has no progress event. Briefly suspend at known audio
     // positions, report completed work, then immediately resume off the UI thread.
     // Firefox lacks these methods; render uninterrupted and report completion there.

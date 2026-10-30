@@ -163,6 +163,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
+  smplr@1.1.0: fda545c231b58d82eb4280d18afa962ea28ca1acc97788bd5147f2248cca393f
   webaudio-tinysynth@1.1.3: ef1ecdbe903265ead2f0d3eef8958d417cff79c143b8d41f2cfa6fa94737298a
 
 importers:
@@ -208,6 +209,9 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
+      smplr:
+        specifier: 1.1.0
+        version: 1.1.0(patch_hash=fda545c231b58d82eb4280d18afa962ea28ca1acc97788bd5147f2248cca393f)
       tslib:
         specifier: 2.8.1
         version: 2.8.1
@@ -1974,6 +1978,10 @@ packages:
     resolution: {integrity: sha512-aBY19bn/XA+hKOKX0qL7Z0UfdBsbQvc9hn993U8ALUjzxCvDcuZqLoRXjGJrUARWAlwMnsRVD9sw2AFNOYvalA==}
     engines: {node: '>=22'}
 
+  smplr@1.1.0:
+    resolution: {integrity: sha512-VW2FeDdSgBU3cg9pofUYvXB1Nb0iMXurbAnUlpgWfOklw/3JGP5vEjKdq7qGaEwL8rzQTMjdDu64AqpR2ul1bQ==}
+    engines: {node: '>=14.0.0'}
+
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
@@ -3576,6 +3584,8 @@ snapshots:
     dependencies:
       ansi-styles: 6.2.3
       is-fullwidth-code-point: 5.1.0
+
+  smplr@1.1.0(patch_hash=fda545c231b58d82eb4280d18afa962ea28ca1acc97788bd5147f2248cca393f): {}
 
   source-map-js@1.2.2: {}
 

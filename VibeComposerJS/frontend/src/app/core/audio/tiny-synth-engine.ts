@@ -1,3 +1,4 @@
+import type { InstrumentEngine, InstrumentVoice } from './instrument-engine';
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
 interface TimbreOperator { readonly d: number; }
@@ -22,19 +23,15 @@ interface TinySynthInternals extends WebAudioTinySynth {
   _releaseNote(voice: TinyVoice, time: number): void;
 }
 
-export interface SynthVoice {
-  readonly source: AudioScheduledSourceNode;
-  readonly envelope: GainNode;
-  readonly stopTime: number;
-  disconnect(): void;
-}
 
 /** Voice adapter for pinned TinySynth 1.1.3. Its public MIDI noteOff releases
  * every matching channel/pitch. Use its voice renderer to retain independent
  * durations and track routing, including when tracks share MIDI channels.
  * Detach rendered voices from its sequencer; our scheduler owns their lifetime.
  */
-export class TinySynthEngine {
+export class TinySynthEngine implements InstrumentEngine {
+  async prepare(): Promise<void> {}
+  async flush(): Promise<void> {}
   private readonly synth: TinySynthInternals;
   readonly context: BaseAudioContext;
 
@@ -57,7 +54,7 @@ export class TinySynthEngine {
   }
 
   schedule(destination: AudioNode, program: number, percussion: boolean,
-    midi: number, velocity: number, start: number, duration: number): SynthVoice[] {
+    midi: number, velocity: number, start: number, duration: number): InstrumentVoice[] {
     if (velocity <= 0) return [];
     const timbre = percussion ? this.synth.drummap[midi - 35]?.p : this.synth.program[program]?.p;
     if (!timbre) return [];
@@ -78,8 +75,13 @@ export class TinySynthEngine {
       this.synth._releaseNote(voice, start + duration);
       stopTime = start + duration + Math.max(...voice.r) * this.synth.releaseRatio;
     }
-    return voice.o.map((source, index) => ({ source, envelope: voice.g[index], stopTime,
-      disconnect: () => {
+    for (const source of voice.o) source.stop(stopTime);
+    return voice.o.map((source, index) => ({ stopTime,
+      stop: (time?: number) => source.stop(time),
+      onEnded: (callback: () => void) => { source.onended = callback; },
+      dispose: () => {
+        source.disconnect();
+        voice.g[index].disconnect();
         const detune = (source as OscillatorNode | AudioBufferSourceNode).detune;
         if (detune) {
           try { this.synth.chmod[0].disconnect(detune); } catch { /* Already detached. */ }

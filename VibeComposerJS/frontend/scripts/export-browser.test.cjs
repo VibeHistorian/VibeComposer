@@ -6,12 +6,13 @@ const test = require('node:test');
 const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
 const browser = findBrowser();
 
-for (const { width, missingMethod } of [
-  { width: 1440 }, { width: 780 },
+for (const { width, missingMethod, sampler } of [
+  { width: 1440 }, { width: 780 }, { width: 1440, sampler: true },
   { width: 1440, missingMethod: 'suspend' },
   { width: 1440, missingMethod: 'resume' },
-]) test(`production export menu and offline Opus download at ${width}px${missingMethod ? ` without ${missingMethod}` : ''}`, { skip: !browser }, async () => {
+]) test(`production export menu and offline Opus download at ${width}px${sampler ? ' with GM sampler' : ''}${missingMethod ? ` without ${missingMethod}` : ''}`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
+  const sf2Base64 = sampler ? fs.readFileSync(path.join(__dirname, '../../Super_Nintendo_Unofficial_update.sf2')).toString('base64') : '';
   const trackId = 'track-bass-1';
   const presence = Object.fromEntries(DEFAULT_PROJECT.tracks.map(track => [track.id, true]));
   const project = { ...DEFAULT_PROJECT, name: 'Export: test', tracks: DEFAULT_PROJECT.tracks.map(track => ({
@@ -66,6 +67,36 @@ for (const { width, missingMethod } of [
       let realtimeContexts = 0;
       window.AudioContext = class { constructor() { realtimeContexts++; throw Error('Export opened a realtime context'); } };
       try {
+        if (${Boolean(sampler)}) {
+          const engineSelect = await wait(() => document.querySelector('vc-select[aria-label="Audio instrument engine"]'), 'instrument selector');
+          document.querySelector('[aria-label="Settings"]').click();
+          const settings = await wait(() => document.querySelector('vc-settings-dialog'), 'soundfont settings');
+          (await wait(() => [...settings.querySelectorAll('.settings-sidebar button')].find(b => b.querySelector('span')?.textContent.trim() === 'MIDI'), 'MIDI category')).click();
+          const input = await wait(() => settings.querySelector('input[aria-label="Load soundfont"]'), 'soundfont picker');
+          const bytes = Uint8Array.from(atob('${sf2Base64}'), c => c.charCodeAt(0));
+          const transfer = new DataTransfer(); transfer.items.add(new File([bytes], 'SNES.sf2'));
+          input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true }));
+          await wait(() => !input.disabled && settings.textContent.includes('Loaded SNES.sf2.'), 'soundfont loaded');
+          const upload = async (name, oversized = false) => {
+            const selected = new File([bytes], name);
+            if (oversized) Object.defineProperty(selected, 'size', { value: 250 * 1048576 + 1 });
+            const items = new DataTransfer(); items.items.add(selected); input.files = items.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            await wait(() => !input.disabled && settings.textContent.includes(oversized ? '250 MiB or smaller' : 'Loaded ' + name + '.'), name);
+          };
+          await upload('oversized.sf2', true);
+          ensure(settings.querySelectorAll('[aria-label^="Unload "]').length === 1, 'oversized font does not evict');
+          for (const name of ['Second.sf2', 'Third.sf2', 'Fourth.sf2']) await upload(name);
+          const options = await selectOptions(engineSelect);
+          ensure(options.length === 4 && !options.some(o => o.textContent.includes('SNES.sf2')), 'fourth load evicts oldest; three fonts plus synth');
+          const second = options.find(o => o.textContent.includes('Second.sf2'));
+          await changeControl(engineSelect, second.value);
+          settings.querySelector('[aria-label="Unload Second.sf2"]').click();
+          await wait(() => engineSelect.textContent.includes('TinySynth'), 'unloading selected font chooses synth');
+          const fourth = (await selectOptions(engineSelect)).find(o => o.textContent.includes('Fourth.sf2'));
+          await changeControl(engineSelect, fourth.value);
+          settings.querySelector('[aria-label="Close settings"]').click();
+        }
         const trigger = await wait(()=>document.querySelector('[title="Export"]'), 'export trigger');
         trigger.focus(); key(trigger,'ArrowDown');
         await wait(()=>menu() && menu().contains(document.activeElement),'keyboard menu focus');
