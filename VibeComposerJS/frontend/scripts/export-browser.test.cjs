@@ -92,7 +92,7 @@ for (const { width, missingMethod, sampler } of [
           const second = options.find(o => o.textContent.includes('Second.sf2'));
           await changeControl(engineSelect, second.value);
           settings.querySelector('[aria-label="Unload Second.sf2"]').click();
-          await wait(() => engineSelect.textContent.includes('TinySynth'), 'unloading selected font chooses synth');
+          await wait(() => engineSelect.getAttribute('value') === 'synth', 'unloading selected font chooses synth');
           const fourth = (await selectOptions(engineSelect)).find(o => o.textContent.includes('Fourth.sf2'));
           await changeControl(engineSelect, fourth.value);
           settings.querySelector('[aria-label="Close settings"]').click();

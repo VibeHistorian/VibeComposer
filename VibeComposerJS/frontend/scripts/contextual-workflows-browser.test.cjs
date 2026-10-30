@@ -204,15 +204,15 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       history.querySelector('[aria-label="Close history"]').click();
       await wait(() => !document.querySelector('vc-history-dialog') && document.activeElement === historyButton, 'history closes and restores focus');
       const mode = document.querySelector('.transport-dock [aria-label="Mode"]');
-      const modeRow = mode.closest('.mode-control'), modeGroup = mode.closest('.mode-seed');
+      const modeRow = mode.closest('.mode-control'), modeGroup = mode.closest('.transport-globals');
       const modeBounds = mode.getBoundingClientRect(), rowBounds = modeRow.getBoundingClientRect();
-      const labelBounds = modeRow.querySelector('span').getBoundingClientRect(), groupBounds = modeGroup.getBoundingClientRect();
-      const modeGap = parseFloat(getComputedStyle(modeRow).columnGap);
-      // Mode flexes into the space left by its label inside the shared Mode/Seed column.
-      result.modeSizing = { width: modeBounds.width, available: rowBounds.right - labelBounds.right - modeGap };
-      result.modeFitsRow = getComputedStyle(mode).appearance === 'none' && modeBounds.width > 0
-        && Math.abs(modeBounds.left - labelBounds.right - modeGap) <= 1
+      const groupBounds = modeGroup.getBoundingClientRect();
+      // The Mode selector fills its own row in the global controls grid.
+      result.modeSizing = { width: modeBounds.width, available: rowBounds.width };
+      result.modeFitsRow = modeBounds.width > 0 && modeBounds.height > 0
+        && Math.abs(modeBounds.left - rowBounds.left) <= 1
         && Math.abs(modeBounds.right - rowBounds.right) <= 1
+        && modeBounds.top >= rowBounds.top - 1 && modeBounds.bottom <= rowBounds.bottom + 1
         && modeBounds.left >= groupBounds.left - 1 && modeBounds.right <= groupBounds.right + 1;
       await change(mode, 'natural-minor'); await wait(() => read().scale === 'natural-minor', 'mode change');
       if((await selectOptions(mode)).length!==17) throw new Error('missing Java modes');
@@ -743,7 +743,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const tracks=JSON.stringify(read().tracks);
       const change = changeControl;
       const knobs=[...editor.querySelectorAll('.velocity-knobs vc-compact-knob')];
-      if(knobs.length!==5||knobs.some(knob=>knob.querySelector('[title]')))throw new Error('role velocity knobs or tooltips');
+      if(knobs.length!==5||knobs.some(knob=>!knob.querySelector('input[type="range"][aria-label$=" velocity"]')))throw new Error('five accessible role velocity knobs');
       if(editor.querySelector('p'))throw new Error('section hints remain');
       const melody=knobs[0].querySelector('input');
       await change(melody,'50');

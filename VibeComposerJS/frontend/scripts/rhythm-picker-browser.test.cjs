@@ -350,7 +350,7 @@ test('production Angular controls initialize selects from settings and support r
             split: document.querySelectorAll('input[aria-label="Split"]').length,
             repeat: document.querySelectorAll('input[aria-label="Repeat"]').length });
         }
-        document.querySelector('.track-group.arpeggio .group-select').click();
+        // The preceding role checks already selected Arpeggio; clicking its heading again collapses its controls.
         await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="arpeggio"]'), 'Arpeggio musical inspector');
         const readArp = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'arpeggio');
         const beforePolicy = JSON.stringify(readArp().generatorSettings);
