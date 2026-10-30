@@ -31,6 +31,7 @@ export class SelectComponent {
   // Match native value coercion, including values read from heterogeneous settings records.
   readonly value = input<unknown>();
   readonly mixed = input(false);
+  readonly displayLabel = input<string>();
   readonly choices = computed(() => (this.options() ?? []).map(option => typeof option === 'object'
     ? { ...option, value: String(option.value) } : { value: String(option), label: String(option), disabled: false }));
   readonly valueChange = output<string>();

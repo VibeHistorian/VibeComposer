@@ -26,6 +26,7 @@ export class TransportDockComponent {
   readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly instruments = inject(InstrumentSettingsService);
   readonly instrumentOptions = this.instruments.options;
+  readonly instrumentLabel = computed(() => this.instrumentOptions().find(option => option.value === this.instruments.kind())?.label ?? 'Audio instrument engine');
   selectInstrument(value: string): void {
     this.playback.stop();
     this.instruments.select(value);
@@ -125,12 +126,6 @@ export class TransportDockComponent {
 
   toggleLive(): void {
     this.playback.toggleLive();
-  }
-
-  updateProjectName(event: Event): void {
-    const input = event.target as HTMLTextAreaElement;
-    this.projects.updateSettings({ name: input.value.trim() || 'Untitled composition' });
-    input.value = this.project().name;
   }
 
   updateScale(selection: string): void {

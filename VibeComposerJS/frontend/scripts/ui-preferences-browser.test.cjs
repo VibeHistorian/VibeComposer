@@ -89,7 +89,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
       } else {
         ensure([...document.querySelectorAll('.group-policy-toggle')].every(b=>b.getAttribute('aria-pressed')==='true'), 'role Compose defaults on');
         const tempoStar = button('Randomize BPM on Compose');
-        const transposeStar = button('Randomize Transpose on Compose');
+        const transposeStar = document.querySelector('input[aria-label="Transpose in semitones"]').closest('vc-compact-knob').querySelector('button[aria-pressed]');
         const harmonyStar = button('Harmony On Compose');
         ensure(harmonyStar?.getAttribute('aria-pressed')==='true','harmony Compose defaults on');
         const harmony = () => {
@@ -109,15 +109,15 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         button('Compose').click();
         await wait(()=>{
           const generated = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-          return generated?.seed!=='0' && document.querySelector('.transport-project span').textContent.trim()==='ID '+generated?.seed;
-        },'generated ID summary');
+          return generated?.seed!=='0' && document.querySelector('.transport-project > span').textContent.trim()==='SEED '+generated?.seed;
+        },'generated seed summary');
         ensure(seedInput.value==='0','automatic seed input remains zero');
         ensure(harmony()===beforeHarmony,'disabled harmony star preserves chords on Compose');
         ensure(document.querySelector('input[aria-label="Tempo in beats per minute"]').value===tempo,'disabled BPM star preserves tempo');
         ensure(document.querySelector('input[aria-label="Transpose in semitones"]').value===transpose,'disabled transpose star preserves transpose');
-        const summary = document.querySelector('.transport-project span');
+        const summary = document.querySelector('.transport-project > span');
         const generatedProject = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        ensure(summary.textContent.trim()==='ID '+generatedProject.seed,'ID hint shows actual generation seed');
+        ensure(summary.textContent.trim()==='SEED '+generatedProject.seed,'Seed hint shows actual generation seed');
         ensure(summary.title.endsWith(generatedProject.tempoBpm+' BPM | SEED '+generatedProject.seed),'seed hint retains full song tooltip');
         for (const label of ['History', 'Settings']) {
           ensure(button(label).scrollWidth<=button(label).clientWidth, label+' text fits');

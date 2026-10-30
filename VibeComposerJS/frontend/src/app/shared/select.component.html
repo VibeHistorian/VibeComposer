@@ -1,4 +1,4 @@
-<span class="select-value">{{ selectedLabel() }}</span>
+<span class="select-value">{{ displayLabel() ?? selectedLabel() }}</span>
 <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="element.nativeElement"
   [cdkConnectedOverlayOpen]="combobox.expanded()" [cdkConnectedOverlayPositions]="positions()"
   [cdkConnectedOverlayMinWidth]="panelMinWidth()" [cdkConnectedOverlayViewportMargin]="8"

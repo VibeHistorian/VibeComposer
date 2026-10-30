@@ -118,6 +118,12 @@ export class WorkspaceCanvasComponent {
   readonly playback = inject(AudioPlaybackService);
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
+
+  updateProjectName(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.projects.updateSettings({ name: input.value.trim() || 'Untitled vibe' });
+    input.value = this.project().name;
+  }
   private readonly phraseProject = computed(() => this.project(), { equal: samePhraseInputs });
   readonly instruments = GM_INSTRUMENTS;
   readonly trackInstrumentOptions = computed(() => {

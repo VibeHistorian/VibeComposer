@@ -280,3 +280,6 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 /* Section length and duration */
 .section-length-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 8px; }
 .section-beat-count { align-self: end; padding-bottom: 8px; color: var(--text-muted); font: 11px var(--font-mono); }
+
+/* Project identity in the arrangement header */
+.project-name { flex: 1 1 120px; width: 0; max-width: 360px; min-width: 80px; height: 24px; padding: 2px 5px; text-align: center; font: 600 10px / 13px var(--font-ui); }

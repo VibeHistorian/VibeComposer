@@ -69,7 +69,7 @@ export const DEFAULT_TRACKS: readonly CompositionTrack[] = [
 
 export const DEFAULT_PROJECT: CompositionProject = {
   schemaVersion: 12,
-  name: 'Untitled composition',
+  name: 'Untitled vibe',
   key: 'C',
   scale: 'major',
   transposeSemitones: 0,

@@ -117,7 +117,9 @@
         (cellSelected)="selectCell($event.sectionId, $event.role)"
         (trackSelected)="selectSectionTrack($event.sectionId, $event.trackId)"
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)"
-        (groupPresenceToggled)="projects.toggleSectionRolePresence($event.sectionId, $event.role)" />
+        (groupPresenceToggled)="projects.toggleSectionRolePresence($event.sectionId, $event.role)">
+      <input type="text" arrangementProjectName class="project-name" [value]="project().name" maxlength="80" aria-label="Project name" [title]="project().name" (change)="updateProjectName($event)" (keydown.enter)="$any($event.target).blur()" />
+      </vc-arrangement-overview>
 
       @if (!usePartSettingsInspector()) {
       <section class="part-settings-panel" [attr.data-control-role]="partScope() ? partRole() : null" aria-label="Part settings">
