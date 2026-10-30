@@ -188,7 +188,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
         assert.equal(last[7], Math.round(parseFloat(last[5]) * displayScale));
         assert.equal(last[8], last[6]); assert.equal(last[9], last[7]);
         assert.ok(item.buttonRows.every(rows => rows <= 2), 'Track buttons must fit within two rows');
-        assert.ok(Math.abs(item.gridHeight - 284) <= 1, 'Arrangement fits the ruler and five rows, including when zoomed');
+        assert.ok(Math.abs(item.gridHeight - 300) <= 1, 'Arrangement fits the ruler and five rows, including when zoomed');
         assert.equal(last[11], last[1], 'The last row fits without vertical scrolling or empty background');
         if (item.height >= 800) {
           assert.ok(Math.abs(item.scoreHeight - (item.height - item.arrangementHeight - item.settingsHeight - 24)) <= 2,

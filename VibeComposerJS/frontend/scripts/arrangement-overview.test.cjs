@@ -190,7 +190,9 @@ test('section swing reserves header space and falls back to a symbol in narrow s
   const heading = component.hits.find(hit => hit.key === 'heading:intro');
   const badge = base.texts.find(text => text.value === 'S54');
   assert.ok(badge);
-  const range = base.texts.find(text => text.y === 15 && text.x === heading.x + heading.width - 7);
+  const name = base.texts.find(text => text.value === 'INTRO');
+  assert.ok(name.y < badge.y && badge.y < heading.height, 'section name occupies the first row and metadata the second');
+  const range = base.texts.find(text => text.y === badge.y && text.x === heading.x + heading.width - 7);
   assert.ok(badge.x + 18 < range.x - range.value.length * 6, 'badge leaves space for the bar range');
   assert.match(heading.label, /section swing 54% overrides part swing \(except bass\)/);
   assert.doesNotMatch(component.hits.find(hit => hit.key === 'heading:verse').label, /swing/);
@@ -291,7 +293,7 @@ test('section-local redraws fit exactly without introducing scrollbar-sized over
       })) });
       component.drawOverview();
       assert.equal(content.style.width, `${width}px`);
-      assert.equal(content.style.height, `${Math.max(height, 284)}px`);
+      assert.equal(content.style.height, `${Math.max(height, 300)}px`);
       assert.equal(refs.get('viewport').style.width, `${width}px`);
       assert.equal(refs.get('viewport').style.height, `${height}px`);
     }

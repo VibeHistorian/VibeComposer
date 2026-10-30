@@ -51,7 +51,7 @@ interface OverviewHitArea {
   readonly remove?: () => void;
 }
 
-const RULER_HEIGHT = 24;
+const RULER_HEIGHT = 40;
 const MIN_ROW_HEIGHT = 52;
 const TRACK_BUTTON_PITCH = 19;
 const CELL_HORIZONTAL_PADDING = 10;
@@ -581,7 +581,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         : hovered ? '--surface-hover' : '--surface-base');
       fill(x, 0, 1, RULER_HEIGHT, '--border-subtle');
       context.save(); context.beginPath(); context.rect(x + 6, 0, Math.max(0, width - 12), RULER_HEIGHT); context.clip();
-      const range = this.measureLabel(item);
+      const range = (item.startMeasure + item.section.measures - 1).toString().padStart(2, '0');
       context.font = `10px ${monoFont}`;
       const rangeWidth = context.measureText(range).width;
       const harmony = this.sectionHarmony()[item.section.id];
@@ -589,21 +589,17 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const heading = this.sectionLabel(item.section.type);
       const headingFontStyle = `600 10px ${headingFont}`;
       context.font = headingFontStyle;
-      const headingWidth = context.measureText(heading).width;
       const swing = item.section.context?.swingPercent;
       context.font = `10px ${monoFont}`;
-      const swingLabel = swing === undefined ? '' : width - rangeWidth - 22 >= Math.min(headingWidth, 36)
-        + context.measureText(`S${swing}`).width + 8 + (compact ? 24 : 0) ? `S${swing}` : '∿';
+      const swingLabel = swing === undefined ? '' : width - rangeWidth - 22 >= context.measureText(`S${swing}`).width + 8 + (compact ? 24 : 0) ? `S${swing}` : '∿';
       const swingWidth = swingLabel ? context.measureText(swingLabel).width + 8 : 0;
-      const contentWidth = Math.max(0, width - rangeWidth - 22 - swingWidth);
-      const headingSpace = compact ? Math.min(headingWidth, contentWidth * 0.3) : contentWidth;
       context.save(); context.beginPath();
-      context.rect(x + 7, 0, Math.max(0, headingSpace), RULER_HEIGHT); context.clip();
-      text(heading, x + 7, 15, '--text-primary', headingFontStyle);
+      context.rect(x + 7, 0, Math.max(0, width - 14), RULER_HEIGHT / 2); context.clip();
+      text(heading, x + 7, 15, '--text-strong', headingFontStyle);
       context.restore();
       if (compact) {
         const end = x + width - rangeWidth - 18 - swingWidth;
-        let left = x + 7 + headingSpace + 8;
+        let left = x + 7;
         context.font = `10px ${monoFont}`;
         const suffix = compact.durationsDiffer ? '*' : '';
         const suffixWidth = context.measureText(suffix).width;
@@ -611,20 +607,20 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const chordWidth = context.measureText(chord.label).width;
           if (left + chordWidth + suffixWidth > end) {
             if (left + context.measureText('…' + suffix).width <= end) {
-              text('…' + suffix, left, 15, '--text-secondary');
+              text('…' + suffix, left, 31, '--text-secondary');
             }
             left = end;
             break;
           }
           context.fillStyle = `hsl(${chord.hue} ${color('--chordlet-foreground-tone')})`;
-          context.fillText(chord.label, left, 15);
+          context.fillText(chord.label, left, 31);
           left += chordWidth + 5;
         }
-        if (suffix && left + suffixWidth <= end) text(suffix, left - 3, 15, '--text-secondary');
+        if (suffix && left + suffixWidth <= end) text(suffix, left - 3, 31, '--text-secondary');
       }
-      if (swingLabel) text(swingLabel, x + width - rangeWidth - 7 - swingWidth, 15, '--accent-primary');
+      if (swingLabel) text(swingLabel, x + width - rangeWidth - 7 - swingWidth, 31, '--accent-primary');
       context.textAlign = 'right';
-      text(range, x + width - 7, 15, '--text-muted');
+      text(range, x + width - 7, 31, '--text-muted');
       context.textAlign = 'start';
       context.restore();
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
