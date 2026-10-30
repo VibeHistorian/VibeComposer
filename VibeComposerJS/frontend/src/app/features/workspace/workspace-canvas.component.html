@@ -5,8 +5,8 @@
         <section class="track-group" [class]="'track-group ' + group.role" [class.group-selected]="selectedRole() === group.role">
           <header class="group-heading">
             <button type="button" class="group-select" [disabled]="editing()" [attr.aria-pressed]="selectedRole() === group.role" (click)="selectRole(group.role)"
-              title="Select role; middle-click to solo only this role" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, roleTrackIds(group.role))">
-              <strong>{{ group.name }}</strong>
+              [attr.aria-label]="group.name" [title]="group.name + ' — Select role; middle-click to solo only this role'" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, roleTrackIds(group.role))">
+              <svg class="group-role-icon" viewBox="0 0 36 36" width="24" height="24" aria-hidden="true" focusable="false"><use [attr.href]="'role-icons.svg#' + group.role" /></svg>
             </button>
             <vc-mix-buttons class="group-mix-controls" [trackIds]="roleTrackIds(group.role)" [label]="group.name + ' tracks'" />
             <div class="group-policy-toggles">

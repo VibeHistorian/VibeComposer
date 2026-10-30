@@ -549,7 +549,15 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         const bounds = row.getBoundingClientRect();
         return [...row.children].every(child => { const box = child.getBoundingClientRect(); return box.left >= bounds.left - 1 && box.right <= bounds.right + 1 && box.width >= 8; });
       });
-      result.groupNamesVisible = [...document.querySelectorAll('.group-select strong')].every(label => label.clientWidth > 0 && label.scrollWidth <= label.clientWidth + 1);
+      const roleButtons = [...document.querySelectorAll('.group-select')];
+      result.groupIconsVisible = roleButtons.length === 5 && roleButtons.every(button => {
+        const icon = button.querySelector('.group-role-icon');
+        const bounds = button.getBoundingClientRect();
+        const box = icon?.getBoundingClientRect();
+        return !!button.getAttribute('aria-label') && !!icon?.querySelector('use')?.getAttribute('href')
+          && box.width > 0 && box.height > 0 && box.left >= bounds.left && box.right <= bounds.right
+          && box.top >= bounds.top && box.bottom <= bounds.bottom;
+      });
       result.pageFits = document.documentElement.scrollWidth <= innerWidth + 1;
       if (!result.pageFits) result.overflow = { width: document.documentElement.scrollWidth,
         elements: [...document.querySelectorAll('body *')].map(element => ({ tag: element.tagName, class: element.className,
@@ -967,7 +975,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
     for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','quickCustomization',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeFitsRow','rootMenuFits','rootColors','spiceColors','menuKeyboard','chordletGestures',
-      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupNamesVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
+      'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupIconsVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {
     await closeBrowser({ child, server, socket, watchdog });
   }
