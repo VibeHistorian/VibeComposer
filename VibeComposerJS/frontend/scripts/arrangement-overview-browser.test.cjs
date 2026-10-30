@@ -63,6 +63,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
     } }).outputText;
     const css = fs.readFileSync(path.join(__dirname, '../src/app/features/arrangement/arrangement-overview.component.css'), 'utf8');
+    const trackColorCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/ui/track-color.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const boundsCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-bounds.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const rangeCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/phrase-range-edit.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     const contextCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/app/core/music/section-context.ts'), 'utf8'), {
@@ -108,6 +109,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       '../../core/music/phrase': { layOutTrackPhrase: () => [] } };
     const module = { exports: {} }; const exports = module.exports;
     const require = name => dependencies[name];
+    dependencies['../../core/ui/track-color'] = (() => { const module = { exports: {} }; const exports = module.exports; const require = () => dependencies['../../core/music/part-role']; ${trackColorCode}; return module.exports; })();
     ${compiled}
     const component = new module.exports.ArrangementOverviewComponent();
     const project = { progression:[1,5,6,4], tracks: [{ id: 'bass-1', role: 'bass' }],

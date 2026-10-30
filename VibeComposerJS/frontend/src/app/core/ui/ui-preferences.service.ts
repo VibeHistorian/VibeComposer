@@ -99,6 +99,11 @@ export class UiPreferencesService {
     this.commit({ ...this.state(), appearance: { ...appearance, preserveBrightnessSaturation: !appearance.preserveBrightnessSaturation } });
   }
 
+  toggleProgressiveTrackColoring(): void {
+    const appearance = this.appearance();
+    this.commit({ ...this.state(), appearance: { ...appearance, progressiveTrackColoring: !appearance.progressiveTrackColoring } });
+  }
+
   toggleHueShiftRoles(): void {
     const appearance = this.appearance();
     this.commit({ ...this.state(), appearance: { ...appearance, hueShiftRoles: !appearance.hueShiftRoles } });

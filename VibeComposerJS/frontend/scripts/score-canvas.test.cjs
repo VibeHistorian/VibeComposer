@@ -129,6 +129,7 @@ function fixture() {
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   new Function('module', 'exports', helperSource)(helperModule, helperModule.exports);
   new Function('require', 'module', 'exports', compiled)(name => name.startsWith('./score-') ? scoreHelper(name.slice(2))
+    : name.includes('track-color') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/track-color.ts'))
     : name.includes('phrase-edit') ? helperModule.exports
     : name.includes('drum-instruments') ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports);
   const component = new module.exports.ScoreCanvasComponent();

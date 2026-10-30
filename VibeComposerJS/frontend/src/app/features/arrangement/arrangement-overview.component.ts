@@ -1,3 +1,4 @@
+import { trackColor } from '../../core/ui/track-color';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { sectionDurationBeats, sectionChordDurations } from '../../core/music/section-context';
 import type { SectionHarmonyDisplay } from '../../core/music/harmony-display';
@@ -27,6 +28,7 @@ interface InstrumentGroup {
 }
 
 interface PreviewNote {
+  readonly trackIndex: number;
   readonly leftPercent: number;
   readonly widthPercent: number;
   readonly topPercent: number;
@@ -164,7 +166,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const sectionEndBeat = section.startBeat + sectionDurationBeats(this.project(), section.section);
       for (const group of this.groups()) {
         const notes = this.overviewTracks(section.section, group).flatMap((track) => (trackNotes.get(track.id) ?? [])
-          .filter((note) => note.sectionId === section.section.id));
+          .filter((note) => note.sectionId === section.section.id).map(note => ({ ...note, trackIndex: group.tracks.indexOf(track) })));
         if (notes.length === 0) {
           previews.set(this.cellKey(section.section.id, group.role), []);
           continue;
@@ -174,6 +176,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const pitchSpan = Math.max(12, maxPitch - minPitch);
         const sectionBeats = sectionDurationBeats(this.project(), section.section);
         previews.set(this.cellKey(section.section.id, group.role), notes.map((note) => ({
+          trackIndex: note.trackIndex,
           leftPercent: (note.startBeat - section.startBeat) / sectionBeats * 100,
           widthPercent: Math.max(0.45, note.durationBeats / sectionBeats * 100),
           topPercent: (maxPitch - note.midi) / pitchSpan * 78 + 8,
@@ -479,6 +482,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         }
         context.fillStyle = noteColor;
         for (const note of this.previewNotes(item.section.id, group.role)) {
+          context.fillStyle = this.preferences.appearance().progressiveTrackColoring === false ? noteColor
+            : trackColor(group.role, note.trackIndex, group.tracks.length, color);
           const noteX = x + note.leftPercent / 100 * width;
           const noteWidth = Math.max(1, note.widthPercent / 100 * width);
           if (noteX + noteWidth <= this.labelWidth || noteX >= this.width) continue;
@@ -491,6 +496,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         for (let index = 0; index < visibleTracks.length; index++) {
           const track = visibleTracks[index];
           const trackNumber = group.tracks.indexOf(track) + 1;
+          const noteColor = this.preferences.appearance().progressiveTrackColoring === false
+            ? color(group.role === 'drums' ? '--role-drums' : `--role-${role}-strong`)
+            : trackColor(group.role, trackNumber - 1, group.tracks.length, color);
           const toggleRow = Math.floor(index / togglesPerRow);
           const rowCount = Math.min(togglesPerRow, visibleTracks.length - toggleRow * togglesPerRow);
           const centerX = x + (width - rowCount * TRACK_BUTTON_PITCH + 3) / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
@@ -499,7 +507,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const hovered = this.hoveredKey === `toggle:${item.section.id}:${track.id}`;
           context.globalAlpha = hovered ? 1 : present ? 0.6 : 0.48;
           context.beginPath(); context.arc(centerX, centerY, 8, 0, Math.PI * 2);
-          const buttonSurface = color(present ? `--role-${role}-surface` : '--surface-button');
+          const buttonSurface = present ? trackColor(group.role, this.preferences.appearance().progressiveTrackColoring === false ? 0 : trackNumber - 1, group.tracks.length, color, '-surface') : color('--surface-button');
           context.fillStyle = hovered ? `color-mix(in srgb, ${buttonSurface} 85%, ${color('--text-primary')})` : buttonSurface;
           context.fill();
           context.strokeStyle = present ? noteColor : color('--border-default'); context.stroke();

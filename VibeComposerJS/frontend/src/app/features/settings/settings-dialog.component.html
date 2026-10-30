@@ -89,6 +89,11 @@
             </div>
             }
             <div class="setting-row">
+              <div class="setting-copy"><h3>Progressive Track Coloring</h3><p>Blend successive tracks toward the next role color in the score and arrangement.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Progressive Track Coloring" [checked]="preferences.appearance().progressiveTrackColoring"
+                (change)="preferences.toggleProgressiveTrackColoring()" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3>Reset appearance</h3><p>Restore the default theme, fonts and track role colors.</p></div>
               <div class="setting-controls"><button type="button" class="appearance-reset" (click)="preferences.resetAppearance()">Reset appearance to defaults</button></div>
             </div>

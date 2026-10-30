@@ -30,6 +30,7 @@ const DEFAULT_COLOR_ADJUSTMENTS: ColorAdjustments = { brightness: 0, hueShift: 0
 export interface AppearancePreferences {
   readonly preserveBrightnessSaturation: boolean;
   readonly hueShiftRoles: boolean;
+  readonly progressiveTrackColoring: boolean;
   readonly colorAdjustments: ColorAdjustments;
   readonly themeColors: ThemeColors;
   readonly fonts: Readonly<Record<FontArea, string>>;
@@ -40,6 +41,7 @@ export function defaultAppearance(): AppearancePreferences {
   return {
     preserveBrightnessSaturation: false,
     hueShiftRoles: false,
+    progressiveTrackColoring: true,
     colorAdjustments: { ...DEFAULT_COLOR_ADJUSTMENTS },
     themeColors: { ...DEFAULT_THEME_COLORS },
     fonts: { ui: FONT_CHOICES[0].value, heading: FONT_CHOICES[0].value, mono: FONT_CHOICES[1].value },
@@ -56,6 +58,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   const data = value as AppearancePreferences;
   if (data.preserveBrightnessSaturation !== undefined && typeof data.preserveBrightnessSaturation !== 'boolean') return null;
   if (data.hueShiftRoles !== undefined && typeof data.hueShiftRoles !== 'boolean') return null;
+  if (data.progressiveTrackColoring !== undefined && typeof data.progressiveTrackColoring !== 'boolean') return null;
   const colorAdjustments = data.colorAdjustments === undefined ? DEFAULT_COLOR_ADJUSTMENTS : data.colorAdjustments;
   if (!colorAdjustments || typeof colorAdjustments !== 'object' || Array.isArray(colorAdjustments)
       || !COLOR_ADJUSTMENTS.every(({ key }) => Number.isFinite(colorAdjustments[key])
@@ -74,6 +77,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   return {
     preserveBrightnessSaturation: data.preserveBrightnessSaturation === true,
     hueShiftRoles: data.hueShiftRoles === true,
+    progressiveTrackColoring: data.progressiveTrackColoring !== false,
     colorAdjustments: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, colorAdjustments[key]])) as ColorAdjustments,
     themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, resolvedColors[color.key].toLowerCase()])) as ThemeColors,
     fonts: Object.fromEntries(FONT_AREAS.map(area => [area.key, data.fonts[area.key]])) as AppearancePreferences['fonts'],

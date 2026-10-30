@@ -431,3 +431,25 @@ test('shortcut changes persist and transfer as UI preferences without changing p
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.canUndo(), undo);
 });
+
+test('progressive track coloring defaults on, persists, transfers and resets independently of project history', () => {
+  const { service, uiPreferences, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  assert.equal(uiPreferences.appearance().progressiveTrackColoring, true);
+  uiPreferences.toggleProgressiveTrackColoring();
+  assert.equal(new UiPreferencesService().appearance().progressiveTrackColoring, false);
+  const saved = uiPreferences.exportJson();
+  uiPreferences.resetAppearance();
+  assert.equal(uiPreferences.appearance().progressiveTrackColoring, true);
+  assert.equal(uiPreferences.importJson(saved), true);
+  assert.equal(uiPreferences.appearance().progressiveTrackColoring, false);
+  const invalid = JSON.parse(saved); invalid.appearance.progressiveTrackColoring = 'false';
+  assert.equal(uiPreferences.importJson(JSON.stringify(invalid)), false);
+  assert.equal(uiPreferences.exportJson(), saved);
+  const older = JSON.parse(saved); delete older.appearance.progressiveTrackColoring;
+  assert.equal(uiPreferences.importJson(JSON.stringify(older)), true);
+  assert.equal(uiPreferences.appearance().progressiveTrackColoring, true);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), history);
+});

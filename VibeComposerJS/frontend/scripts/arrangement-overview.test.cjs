@@ -22,6 +22,7 @@ function fixture(reactivity) {
   }).outputText;
   const module = { exports: {} };
   const dependencies = {
+    '../../core/ui/track-color': require('./music-loader.cjs').loadMusic('../ui/track-color.ts'),
     '../../core/music/phrase-range-edit': require('./music-loader.cjs').loadMusic('phrase-range-edit.ts'),
     '../../core/music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },

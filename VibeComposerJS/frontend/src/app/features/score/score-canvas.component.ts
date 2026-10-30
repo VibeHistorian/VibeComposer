@@ -1,3 +1,4 @@
+import { trackColor } from '../../core/ui/track-color';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, viewChild,
@@ -31,6 +32,7 @@ export interface ScoreCanvasNote extends PhraseNote {
   readonly part: string;
   readonly trackName?: string;
   readonly trackOrder?: number;
+  readonly trackCount?: number;
   readonly phraseSource?: PhraseSource;
   readonly sectionId?: string;
   readonly color: ArrangedPart;
@@ -948,8 +950,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const selectionOpacity = selectedTrackId === note.part ? 1 : 0.8;
       const opacity = selectedTrackId === note.part ? note.opacity : this.editable() ? 0.3 : 0.3 + note.velocity / 127 * 0.5;
       const noteColors = COLORS[note.color];
+      const mixed = new Color(trackColor(note.color, this.preferences.appearance().progressiveTrackColoring === false ? 0 : (note.trackOrder ?? 1) - 1,
+        note.trackCount ?? 1, name => rootStyle.getPropertyValue(name).trim()));
+      const parsedNote = { value: mixed.toNumber(), alpha: mixed.alpha };
       if (ghost) {
-        const parsed = color(noteColors.note);
+        const parsed = parsedNote;
         if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
           .stroke({ color: parsed.value, alpha: note.opacity * parsed.alpha * 0.5, width: 1 });
         continue;
@@ -960,10 +965,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
             noteColors.glow, (7 - radius) / 15);
         }
       }
-      const parsed = color(noteColors.note);
+      const parsed = parsedNote;
       if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2)).fill({ color: parsed.value, alpha: opacity * parsed.alpha });
       if (this.velocityVisible()) {
-        const velocityColor = color(noteColors.velocity);
+        const velocityColor = parsedNote;
         const velocityHeight = Math.max(2, note.velocity / 127 * VELOCITY_HEIGHT);
         graphics.rect(x, this.height - velocityHeight, 2, velocityHeight)
           .fill({ color: velocityColor.value, alpha: (selectedTrackId === note.part ? 0.9 : 0.32) * velocityColor.alpha * selectionOpacity });
