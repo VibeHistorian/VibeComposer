@@ -78,6 +78,20 @@ test('role settings default collapsed, follow role selection and retain manual t
   assert.ok(roles.every(role => workspace.isGroupCollapsed(role)));
 });
 
+test('role heading selects a role, then toggles its settings without changing selection', () => {
+  const { workspace, flushEffects } = fixture();
+  workspace.selectRoleHeading('bass'); flushEffects();
+  assert.equal(workspace.isGroupCollapsed('bass'), false);
+  workspace.selectRoleHeading('bass');
+  assert.equal(workspace.isGroupCollapsed('bass'), true);
+  assert.equal(workspace.selectedRole(), 'bass');
+  workspace.selectRoleHeading('bass');
+  assert.equal(workspace.isGroupCollapsed('bass'), false);
+  workspace.editing.set(true);
+  workspace.selectRoleHeading('bass');
+  assert.equal(workspace.isGroupCollapsed('bass'), false);
+});
+
 test('score lane selection chooses global tracks and preserves the active member of combined drum lanes', () => {
   const { workspace, ui, project } = fixture();
   project.set({ ...project(), tracks: [...project().tracks,

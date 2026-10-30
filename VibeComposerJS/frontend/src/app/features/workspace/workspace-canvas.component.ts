@@ -583,6 +583,12 @@ export class WorkspaceCanvasComponent {
     this.selectTrack(ids.includes(this.selectedTrackId()) ? this.selectedTrackId() : ids[0]);
   }
 
+  selectRoleHeading(role: ArrangedPart): void {
+    if (this.editing()) return;
+    if (this.selectedRole() === role) this.toggleGroupCollapsed(role);
+    else this.selectRole(role);
+  }
+
   selectRole(role: ArrangedPart): void {
     if (this.editing()) return;
     this.workspaceUi.selectRole(role);

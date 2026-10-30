@@ -22,8 +22,11 @@
 .group-heading { min-height: 29px; margin: 0; padding: 2px 5px; display: flex; align-items: center; gap: 4px; border-radius: calc(var(--radius-control) - 1px) calc(var(--radius-control) - 1px) 0 0; }
 .track-group.bass .group-heading { background: var(--role-bass-header); }.track-group.chords .group-heading { background: var(--role-chords-header); }.track-group.arpeggio .group-heading { background: var(--role-arpeggio-header); }.track-group.drums .group-heading { background: var(--role-drums-header); }
 .group-select { flex: 0 0 calc(var(--track-name-column-width) - 6px); min-width: 0; padding: 2px 0; display: flex; align-items: center; border: 0; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; }
+.group-heading:has(> .group-select:not(:disabled):is(:hover, :focus-visible)) { box-shadow: inset 0 0 0 1px var(--track-group-color); filter: brightness(1.15); }
+.group-select:not(:disabled):is(:hover, :focus-visible) .group-role-icon { opacity: 1; }
 /* Role icons */
 .group-role-icon { display: block; flex: 0 0 18px; width: 18px; height: 18px; margin-left: 3px; opacity: .65; color: color-mix(in srgb, var(--text-primary) 80%, var(--track-group-color)); filter: drop-shadow(0 0 2px color-mix(in srgb, currentColor 45%, transparent)) drop-shadow(0 0 5px color-mix(in srgb, var(--track-group-color) 55%, transparent)); }
+.track-group.arpeggio .group-role-icon { margin-left: 1.5px; }
 
 /* Track count and actions */
 .group-count { box-sizing: border-box; width: 34px; min-width: 22px; height: 22px; margin-right: auto; padding: 0 3px; flex: 0 0 auto; text-align: center; appearance: textfield; border: 1px solid var(--border-strong); border-radius: var(--radius-tight); background: var(--shadow-highlight); color: var(--text-secondary); font: 10px var(--font-mono); }
