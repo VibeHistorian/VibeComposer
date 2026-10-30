@@ -179,6 +179,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.ghostNotes();
     this.chordBoundaries();
     this.preferences.scoreChordGrid();
+    this.preferences.scoreOutlineOtherTracks();
     this.model = {
       tracks: this.tracks(),
       notes: this.notes(),
@@ -966,7 +967,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         }
       }
       const parsed = parsedNote;
-      if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2)).fill({ color: parsed.value, alpha: opacity * parsed.alpha });
+      if (noteHeight > 0) {
+        const shape = graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2));
+        if (!this.editable() && this.preferences.scoreOutlineOtherTracks() && selectedTrackId !== note.part) {
+          shape.stroke({ color: parsed.value, alpha: opacity * parsed.alpha, width: 1 });
+        } else {
+          shape.fill({ color: parsed.value, alpha: opacity * parsed.alpha });
+        }
+      }
       if (this.velocityVisible()) {
         const velocityColor = parsedNote;
         const velocityHeight = Math.max(2, note.velocity / 127 * VELOCITY_HEIGHT);

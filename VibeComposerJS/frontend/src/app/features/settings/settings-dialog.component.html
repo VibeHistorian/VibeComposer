@@ -141,6 +141,11 @@
                 (change)="preferences.toggleScoreChordGrid()" aria-describedby="score-chord-grid-description" /></div>
             </div>
             <div class="setting-row">
+              <div class="setting-copy"><h3>Outline non-selected tracks</h3><p id="score-outline-tracks-description">Show notes from all non-selected tracks as outlines in the score canvas. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Outline non-selected tracks" [checked]="preferences.scoreOutlineOtherTracks()"
+                (change)="preferences.toggleScoreOutlineOtherTracks()" aria-describedby="score-outline-tracks-description" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3>Ghost notes from other tracks</h3><p id="score-ghost-notes-description">Show other tracks in the phrase editor as outlines at half opacity. Ghost notes are informational only. Saved in your UI preferences.</p></div>
               <div class="setting-controls"><input type="checkbox" aria-label="Ghost notes from other tracks" [checked]="preferences.scoreGhostNotes()"
                 (change)="preferences.toggleScoreGhostNotes()" aria-describedby="score-ghost-notes-description" /></div>

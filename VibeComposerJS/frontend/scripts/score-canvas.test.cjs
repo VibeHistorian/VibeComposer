@@ -117,7 +117,7 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect() {}, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', scoreChordGrid: () => false,
+    effect() {}, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false,
       drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -186,6 +186,15 @@ test('ghost outlines paint behind draft notes at half opacity without hit areas 
   c.editable = () => false;
   c.ghostNotes = () => [{ ...note, part: 'chords' }]; c.drawStatic();
   assert.equal(capsules.length, 1, 'overview never renders ghost inputs');
+  c.model.tracks.push({ id: 'chords', color: 'chords' });
+  c.model.notes.push({ ...note, id: 'other', part: 'chords', color: 'chords' });
+  c.preferences.scoreOutlineOtherTracks = () => true;
+  c.drawStatic();
+  assert.deepEqual(capsules.map(item => item.method), ['fill', 'stroke']);
+  assert.deepEqual(c.hitAreas.map(area => area.note.id), ['draft', 'other']);
+  c.preferences.scoreOutlineOtherTracks = () => false;
+  c.drawStatic();
+  assert.deepEqual(capsules.map(item => item.method), ['fill', 'fill']);
 });
 
 test('optional chord grid draws chord colors at half the previous opacity only when enabled', () => {

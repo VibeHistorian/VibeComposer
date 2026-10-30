@@ -48,6 +48,7 @@ export class UiPreferencesService {
   readonly compactHistory = computed(() => this.state().compactHistory);
   readonly syncScoreMix = computed(() => this.state().syncScoreMix);
   readonly scoreChordGrid = computed(() => this.state().scoreChordGrid);
+  readonly scoreOutlineOtherTracks = computed(() => this.state().scoreOutlineOtherTracks);
   readonly scoreGhostNotes = computed(() => this.state().scoreGhostNotes);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly manualPhrasesFollowMode = computed(() => this.state().manualPhrasesFollowMode);
@@ -160,6 +161,8 @@ export class UiPreferencesService {
   toggleCompactHistory(): void { this.commit({ ...this.state(), compactHistory: !this.compactHistory() }); }
   toggleScoreMixSync(): void { this.commit({ ...this.state(), syncScoreMix: !this.syncScoreMix() }); }
   toggleScoreChordGrid(): void { this.commit({ ...this.state(), scoreChordGrid: !this.scoreChordGrid() }); }
+  toggleScoreOutlineOtherTracks(): void { this.commit({ ...this.state(), scoreOutlineOtherTracks: !this.scoreOutlineOtherTracks() }); }
+
   toggleScoreGhostNotes(): void { this.commit({ ...this.state(), scoreGhostNotes: !this.scoreGhostNotes() }); }
   toggleRestartPlaybackOnCompose(): void { this.commit({ ...this.state(), restartPlaybackOnCompose: !this.restartPlaybackOnCompose() }); }
   toggleLimitInstrumentsToPool(): void { this.commit({ ...this.state(), limitInstrumentsToPool: !this.limitInstrumentsToPool() }); }

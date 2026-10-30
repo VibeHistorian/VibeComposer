@@ -21,6 +21,24 @@ test('ghost note preference defaults on, persists, transfers and rejects invalid
   assert.equal(service.historyPosition(), history);
 });
 
+test('score outlines persist independently of phrase ghosts', () => {
+  const { uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  assert.equal(prefs.scoreOutlineOtherTracks(), false);
+  prefs.toggleScoreOutlineOtherTracks();
+  assert.equal(new UiPreferencesService().scoreOutlineOtherTracks(), true);
+  assert.equal(prefs.scoreGhostNotes(), true);
+  const saved = prefs.exportJson();
+  assert.equal(prefs.importJson(JSON.stringify({ ...JSON.parse(saved), scoreOutlineOtherTracks: 'true' })), false);
+  assert.equal(prefs.exportJson(), saved);
+  prefs.toggleScoreOutlineOtherTracks();
+  assert.equal(prefs.importJson(saved), true);
+  assert.equal(prefs.scoreOutlineOtherTracks(), true);
+  const older = JSON.parse(saved); delete older.scoreOutlineOtherTracks;
+  assert.equal(prefs.importJson(JSON.stringify(older)), true);
+  assert.equal(prefs.scoreOutlineOtherTracks(), false);
+});
+
 test('phrase ghosts preserve crossing note durations from other tracks', () => {
   const { service, workspace, ui, uiPreferences } = fixture();
   const [section] = service.project().arrangement;
