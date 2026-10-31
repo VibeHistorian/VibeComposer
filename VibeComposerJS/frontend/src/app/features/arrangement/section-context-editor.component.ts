@@ -55,9 +55,16 @@ export class SectionContextEditorComponent {
   }
   durationMixed(index: number): boolean { return this.mixed(section => this.durationValues(section)[index]); }
   apply(change: (section: ArrangementSection) => ArrangementSection): void {
-    if (this.allSections()) this.projects.editAllSectionMusic(change);
-    else { const next = change(this.section()); this.projects.setSectionMusicalState(next.id, {
-      context: next.context, customChords: next.customChords, chordDegrees: next.chordDegrees, customDurations: next.customDurations }); }
+    if (this.allSections()) {
+      this.projects.editAllSectionMusic(change);
+      return;
+    }
+    // Consecutive events can arrive before Angular refreshes the section input.
+    const current = this.projects.project().arrangement.find(section => section.id === this.section().id);
+    if (!current) return;
+    const next = change(current);
+    this.projects.setSectionMusicalState(current.id, {
+      context: next.context, customChords: next.customChords, chordDegrees: next.chordDegrees, customDurations: next.customDurations });
   }
   resetTiming(): void { this.apply(section => ({ ...section, context: section.context?.velocityPercent ? { velocityPercent: section.context.velocityPercent } : undefined })); }
   readonly keys = KEYS;

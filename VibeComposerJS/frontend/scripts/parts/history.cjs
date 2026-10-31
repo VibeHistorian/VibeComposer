@@ -921,6 +921,49 @@ test('arrangement inspector shares values, preserves other section fields and co
 });
 
 
+test('consecutive section inspector edits preserve current state before its input refreshes', () => {
+  const { service, load } = fixture();
+  const editor = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
+  const rendered = service.project().arrangement[0];
+  editor.section.set(rendered);
+  const section = () => service.project().arrangement.find(s => s.id === rendered.id);
+  const otherSections = JSON.stringify(service.project().arrangement.slice(1));
+  const snapshots = [service.exportProjectJson()];
+  const edit = action => { action(); snapshots.push(service.exportProjectJson()); };
+  // Deliberately retain the original input for every event, as before Angular renders again.
+  edit(() => editor.setVelocity('melody', 50));
+  edit(() => editor.setVelocity('melody', 100));
+  edit(() => editor.choose('tempoBpm', '87', true));
+  edit(() => editor.choose('swingPercent', '67', true));
+  edit(() => editor.setDuration(0, { target: { value: '2' } }));
+  edit(() => service.setSectionChord(rendered.id, 0, { root: 2, spice: 'm', inversion: 1 }));
+  const chords = structuredClone(section().customChords);
+  edit(() => editor.choose('key', 'G'));
+  assert.deepEqual(section().context, { tempoBpm: 87, swingPercent: 67, key: 'G' });
+  assert.equal(section().customDurations[0], 2);
+  assert.deepEqual(section().customChords, chords, 'later inspector edits preserve external chord edits');
+  assert.equal(JSON.stringify(service.project().arrangement.slice(1)), otherSections);
+  assert.equal(editor.section(), rendered, 'the input was never refreshed');
+  for (let index = snapshots.length - 2; index >= 0; index--) {
+    service.undo(); assert.equal(service.exportProjectJson(), snapshots[index], 'one undo per edit');
+  }
+  for (let index = 1; index < snapshots.length; index++) {
+    service.redo(); assert.equal(service.exportProjectJson(), snapshots[index]);
+  }
+});
+
+test('section inspector ignores edits to a removed section while its input is stale', () => {
+  const { service, load } = fixture();
+  const editor = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
+  editor.section.set(service.project().arrangement[0]);
+  service.removeSection(0);
+  const before = service.exportProjectJson();
+  let transformed = false;
+  editor.apply(section => { transformed = true; return { ...section, context: { tempoBpm: 87 } }; });
+  assert.equal(transformed, false);
+  assert.equal(service.exportProjectJson(), before);
+});
+
 test('arrangement combined section controls and chord edits update all destinations atomically', () => {
   const { service, load } = fixture();
   const editor = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();

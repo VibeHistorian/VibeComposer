@@ -74,3 +74,9 @@ Run the relevant functional suites and production build for the engine slice. UI
 - TypeScript check and production build pass. The build reports the existing Pixi `@xmldom/xmldom` CommonJS optimization warning.
 - Production browser aggregate: 24 passed, two failed. Both 30-track contextual workflows (1440/780px) fail the `P5f tempo` assertion at `scripts/contextual-workflows-browser.test.cjs:813`; the same failure reproduced in a focused rerun after the final build. That workflow expects the earlier section BPM edit to remain 87 after subsequent harmony edits. No baseline run was performed, so this is not classified as a proven pre-existing failure. The variation popup/automatic policy is not present or exercised by this suite.
 - Local detailed logs: frontend `.angular/variation-unit-check.log`, `variation-browser-check.log`, `variation-contextual-recheck.log` and `variation-build-check.log` (generated validation artifacts, not source deliverables).
+
+### Section-state follow-up, 2026-10-31
+
+The two browser tempo failures were traced to consecutive section inspector events reading a stale Angular section input. Swing editing could replace the newly saved BPM with an older context before rendering refreshed that input. `SectionContextEditorComponent.apply` now resolves the current section by ID from project state before transforming it, and ignores deleted targets. No browser-test delays were added.
+
+Two regression tests retain a stale input deliberately and cover consecutive context/duration edits, external chord edits, undo/redo, scope isolation and deleted targets. All 533 unit tests and the production build pass. Both original 30-track contextual browser workflows now pass at 1440px and 780px. The full browser aggregate was not repeated for this focused fix. Logs: frontend `.angular/section-state-unit-check.log`, `section-state-build-check.log` and `section-state-browser-check.log`.
