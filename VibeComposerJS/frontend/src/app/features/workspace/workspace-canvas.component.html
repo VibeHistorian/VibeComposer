@@ -109,6 +109,7 @@
         (sectionDuplicateRequested)="duplicateSection($event)"
         (sectionRemoveRequested)="removeSection($event)"
         (randomizeRequested)="randomizeArrangement()"
+        (variationsRequested)="openArrangementVariations(true)"
         (arrangementOnComposeChanged)="projects.updateSettings({ randomizeArrangementOnCompose: $event })"
         (arrangementPreviewChanged)="projects.updateSettings({ arrangementPreview: $event })"
         (arrangementManualChanged)="projects.updateSettings({ arrangementManual: $event })"
@@ -310,6 +311,9 @@
 
       @if (usePartSettingsInspector() && groupSettingsSelected()) {
         <ng-container [ngTemplateOutlet]="groupTrackToggle" />
+      }
+      @if (settingsTarget().kind === 'arrangement' || 'sectionId' in settingsTarget()) {
+        <button type="button" class="restore-track-button" (click)="openArrangementVariations()" aria-label="Inspect selected arrangement variations">Variations…</button>
       }
       @if (usePartSettingsInspector() && preferences.editingQuickSettings()) {
         <button type="button" class="part-inspector-link" (click)="toggleQuickSettingsEdit()">Save quick settings</button>

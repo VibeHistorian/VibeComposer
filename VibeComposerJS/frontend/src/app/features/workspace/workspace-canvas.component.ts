@@ -1,6 +1,8 @@
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { Dialog } from '@angular/cdk/dialog';
 import { TrackPresetDialogComponent } from '../tracks/track-preset-dialog.component';
+import { ArrangementVariationsDialogComponent } from '../arrangement/arrangement-variations-dialog.component';
+import type { VariationScope } from '../../core/project/arrangement-variation-draft';
 import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
@@ -76,6 +78,14 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  openArrangementVariations(all = false): void {
+    const target = this.settingsTarget();
+    const scope: VariationScope = all || !('sectionId' in target) ? {} : {
+      sectionId: target.sectionId, ...('role' in target ? { role: target.role } : {}),
+      ...('trackId' in target ? { trackId: target.trackId } : {}),
+    };
+    this.presetDialogs.open(ArrangementVariationsDialogComponent, { ariaLabel: 'Arrangement variations', data: scope });
+  }
   private readonly presetDialogs = inject(Dialog);
   openTrackPresets(role: ArrangedPart): void {
     this.presetDialogs.open(TrackPresetDialogComponent, { ariaLabel: `${ROLE_NAMES[role]} preset manager`, data: { role, name: ROLE_NAMES[role] } });

@@ -22,7 +22,7 @@ Paths below are relative to `src/app/`. Feature folders group embedded interacti
 | Owner | Files and responsibility |
 | --- | --- |
 | `features/workspace/` | `workspace-canvas.component.*`: persistent shell, Tracks, contextual inspector and composition of the embedded editors |
-| `features/arrangement/` | `arrangement-overview.component.*`, `section-context-editor.component.*`: section selection, presence and musical context |
+| `features/arrangement/` | `arrangement-overview.component.*`, `section-context-editor.component.*`, `arrangement-variations-dialog.component.*`: section selection, presence, musical context and variation drafts |
 | `features/score/` | `score-canvas.component.*`, `score-chord-labels.directive.ts` and plain geometry/hit-testing/interaction helpers; see [score ownership](score/README.md) |
 | `features/edit/` | `edit-workspace.component.*`: phrase drafts, note properties, Apply/Local Apply/Cancel and phrase import/export |
 | `features/part-settings/` | Part editor, scope actions, control groups, pattern sequencer and shared Melody/Bass/Arpeggio duration dialog |

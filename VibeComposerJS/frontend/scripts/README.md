@@ -14,6 +14,7 @@ Run the relevant functional commands, then the browser commands for affected int
 | --- | --- | --- |
 | Project decoding, persistence, Java XML import | `test:parts:imports`, `test:java-import` | `test:preferences:browser` |
 | History, arrangement commands, selection | `test:parts:history`, `test:selection`, `test:overview` | `test:overview:browser`, `test:contextual:browser` |
+| Arrangement variation inspection, drafts and indicators | `node --test scripts/arrangement-variations.test.cjs`, `test:overview` | `node --test scripts/arrangement-variations-browser.test.cjs`, `test:overview:browser`, `test:contextual:browser` |
 | Settings inheritance, contextual generation, seeded parity | `test:parts:scopes`, `test:parts:generation`, `test:generation` | `test:generation:browser`, `test:contextual:browser` |
 | Manual phrases, draft history, manual Mode preference | `test:parts:phrases`, `test:parts:preferences` | `test:manual:browser`, `test:score:browser` |
 | MIDI import, phrase drop and transpose | `test:midi-import`, `test:parts:phrases` | `test:phrase-import:browser` |

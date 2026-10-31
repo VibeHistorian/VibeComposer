@@ -131,3 +131,95 @@ test('shared phrase output and melody dependency rhythm consume variations while
   assert.deepEqual(rangeNotes.filter(n => n.startBeat < 4),
     phrase.layOutTrackPhrase({ ...original, tracks: [ranged] }, ranged).filter(n => n.startBeat < 4));
 });
+
+test('inspection explains actual precedence, ownership, bounds and mode eligibility', () => {
+  const { project, load } = setup();
+  const { inspectArrangementVariation: inspect } = load('core/music/arrangement-variation-inspection.ts');
+  const track = project.tracks.find(t => t.role === 'melody');
+  const section = project.arrangement[1];
+  const choice = { trackId: track.id, kind: 'melody-speed', amount: 1, enabled: true };
+  assert.equal(inspect(track, section, choice).status, 'active');
+  assert.equal(inspect(track, section, { ...choice, enabled: false }).status, 'disabled');
+  assert.equal(inspect(track, { ...section, trackPresence: {} }, choice).status, 'absent');
+  assert.equal(inspect({ ...track, editedPhrase: [] }, section, choice).status, 'manual');
+  assert.equal(inspect(track, { ...section, trackPhrases: { [track.id]: [] } }, choice).status, 'manual');
+  assert.equal(inspect({ ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'durations' } }, section, choice).status, 'incompatible');
+  assert.equal(inspect({ ...track, generatorSettings: { ...track.generatorSettings, speed: 100 } }, section, choice).status, 'unchanged');
+  const overridden = inspect(track, { ...section, rolePartOverrides: { melody: { speed: 70 } }, trackPartOverrides: { [track.id]: { speed: 80 } } }, choice);
+  assert.equal(overridden.status, 'overridden');
+  assert.equal(overridden.changes[0].effective, 80);
+  assert.equal(overridden.changes[0].source, 'Section track override');
+});
+
+test('draft rerolls and resets preserve structure, presence and choices outside a role/track scope', () => {
+  const { project, load, engine } = setup();
+  const drafts = load('core/project/arrangement-variation-draft.ts');
+  const section = project.arrangement[1], melody = project.tracks.find(t => t.role === 'melody');
+  section.variations = engine.planSectionVariations(project.tracks, project.arrangement, 1, 1n, { chance: 100, maxChanges: 4 });
+  const before = structuredClone(project);
+  const scope = { sectionId: section.id, trackId: melody.id };
+  const initial = drafts.initialVariationDraft(project, scope);
+  const others = initial[section.id].choices.filter(c => c.trackId !== melody.id);
+  const draft = drafts.rerollVariationDraft(project, scope, initial, 2n);
+  assert.deepEqual(draft[section.id].choices.filter(c => c.trackId !== melody.id), others);
+  assert.ok(draft[section.id].choices.length <= 4);
+  assert.deepEqual(project, before, 'draft work never mutates the project');
+  const reset = drafts.resetVariationDraft(project, scope, draft);
+  assert.deepEqual(reset[section.id].choices, others);
+  const roleScope = { sectionId: section.id, role: 'bass' };
+  const bassIds = new Set(project.tracks.filter(track => track.role === 'bass').map(track => track.id));
+  const roleDraft = drafts.rerollVariationDraft(project, roleScope, initial, 4n);
+  assert.deepEqual(roleDraft[section.id].choices.filter(choice => !bassIds.has(choice.trackId)),
+    initial[section.id].choices.filter(choice => !bassIds.has(choice.trackId)));
+  const whole = drafts.rerollVariationDraft(project, {}, drafts.initialVariationDraft(project, {}), 3n);
+  assert.equal(Object.keys(whole).length, project.arrangement.length);
+  assert.deepEqual(project, before);
+});
+
+test('draft Apply commits once, preserves non-variation state, rejects stale drafts and restores history', () => {
+  const { project, service, load } = setup();
+  service.importProjectJson(JSON.stringify(project));
+  const expected = service.project(), before = service.exportProjectJson();
+  const drafts = load('core/project/arrangement-variation-draft.ts');
+  const draft = drafts.rerollVariationDraft(expected, {}, drafts.initialVariationDraft(expected, {}), 5n);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.applyArrangementVariationDraft(expected, draft), 'changed');
+  assert.deepEqual(service.project().arrangement.map(({ variations, ...rest }) => rest), expected.arrangement.map(({ variations, ...rest }) => rest));
+  const saved = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.applyArrangementVariationDraft(expected, draft), 'invalid');
+  assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.applyArrangementVariationDraft(service.project(), { missing: undefined }), 'invalid');
+  const invalid = structuredClone(draft);
+  invalid['section-2'].choices[0].amount = 99;
+  assert.equal(service.applyArrangementVariationDraft(service.project(), invalid), 'invalid');
+  assert.equal(service.exportProjectJson(), saved);
+});
+
+test('dialog keeps reroll, toggle and reset local until Apply, and rejects stale Apply', () => {
+  const { service, load } = fixture({ contextualMelody: false, dialogData: {} });
+  const { ArrangementVariationsDialogComponent: Dialog } = load('features/arrangement/arrangement-variations-dialog.component.ts');
+  const dialog = new Dialog();
+  let closed = false;
+  dialog.dialog = { close() { closed = true; } };
+  const before = service.exportProjectJson();
+  dialog.reroll();
+  assert.equal(service.exportProjectJson(), before);
+  const row = dialog.rows().find(row => row.choices.length);
+  assert.ok(row);
+  const choice = row.choices[0].inspection.choice;
+  dialog.toggle(row.section.id, choice.trackId, { target: { checked: false } });
+  assert.equal(dialog.draft()[row.section.id].choices.find(c => c.trackId === choice.trackId).enabled, false);
+  assert.equal(service.exportProjectJson(), before);
+  dialog.reset(); assert.ok(Object.values(dialog.draft()).every(value => value === undefined));
+  dialog.reroll(); dialog.apply();
+  assert.equal(closed, true);
+  assert.notEqual(service.exportProjectJson(), before);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  const staleDialog = new Dialog();
+  staleDialog.dialog = { close() { throw new Error('Stale dialog must remain open'); } };
+  staleDialog.reroll(); service.updateSettings({ name: 'Project changed' });
+  const changed = service.exportProjectJson();
+  staleDialog.apply(); assert.equal(service.exportProjectJson(), changed);
+});

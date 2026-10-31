@@ -1,6 +1,7 @@
 import * as arrangementCommands from './project-arrangement-commands';
 import { pruneVariations } from '../music/arrangement-variations';
 import type { VariationPolicy } from '../music/arrangement-variation.model';
+import type { VariationDraft } from './arrangement-variation-draft';
 import { loadTrackPreset } from './track-presets';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
@@ -1100,6 +1101,14 @@ export class ProjectService {
     if (sectionId !== undefined && !current.arrangement.some(s => s.id === sectionId)) return 'invalid';
     return this.commitPartWorkflow({ ...current, arrangement: current.arrangement.map(s => sectionId !== undefined && s.id !== sectionId
       ? s : { ...s, variations: undefined }) });
+  }
+
+  applyArrangementVariationDraft(expected: CompositionProject, draft: VariationDraft): PartWorkflowResult {
+    const current = this.state();
+    if (current !== expected || !draft || typeof draft !== 'object' || Array.isArray(draft)
+      || Object.keys(draft).some(id => !current.arrangement.some(section => section.id === id))) return 'invalid';
+    return this.commitPartWorkflow({ ...current, arrangement: current.arrangement.map(section => Object.hasOwn(draft, section.id)
+      ? { ...section, variations: draft[section.id] === undefined ? undefined : structuredClone(draft[section.id]) } : section) });
   }
 
   setChordDegree(index: number, degree: number): void {

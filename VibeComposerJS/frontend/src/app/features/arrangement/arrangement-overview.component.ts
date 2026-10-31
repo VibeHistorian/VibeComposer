@@ -115,6 +115,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + step + buttons.length) % buttons.length]?.focus();
   }
   readonly randomizeRequested = output<void>();
+  readonly variationsRequested = output<void>();
   readonly arrangementSelected = output<void>();
   readonly arrangementIndicators = computed(() => {
     const project = this.project(), sections = project.arrangement;
@@ -536,6 +537,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           }
           const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0
             || Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0;
+          const variation = item.section.variations?.choices.find(choice => choice.trackId === track.id);
+          if (variation) text(variation.enabled ? '◆' : '◇', centerX - 8, centerY + 9, '--text-secondary', `8px ${monoFont}`);
           const manualNotes = item.section.trackPhrases?.[track.id] !== undefined
             || hasManualPhrase(track) && !item.section.generatedTrackIds?.includes(track.id);
           if (manualNotes) {
@@ -550,7 +553,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           const buttonLeft = Math.max(x, centerX - hitRadius), buttonRight = Math.min(x + width, centerX + hitRadius);
           hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: centerY - hitRadius,
             width: buttonRight - buttonLeft, height: TRACK_BUTTON_PITCH,
-            label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} Presence controls: Settings > Shortcuts.`,
+            label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} ${variation ? `Saved variation ${variation.enabled ? 'enabled' : 'disabled'}; inspect Variations in the selection inspector.` : ''} Presence controls: Settings > Shortcuts.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
             reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reset' }),
@@ -602,7 +605,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const rangeWidth = context.measureText(range).width;
       const harmony = this.sectionHarmony()[item.section.id];
       const compact = harmony?.chordsDiffer ? harmony : undefined;
-      const heading = this.sectionLabel(item.section.type);
+      const variationCount = item.section.variations?.choices.length ?? 0;
+      const heading = this.sectionLabel(item.section.type) + (variationCount ? ` ◇${variationCount}` : '');
       const headingFontStyle = `600 10px ${headingFont}`;
       context.font = headingFontStyle;
       const swing = item.section.context?.swingPercent;
@@ -640,7 +644,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       context.textAlign = 'start';
       context.restore();
       hit({ key: `heading:${item.section.id}`, x, y: 0, width, height: RULER_HEIGHT,
-        label: `${heading}, bars ${this.measureLabel(item)}${compact ? ', chords ' + compact.chords.map(chord => chord.label).join(' ') + (compact.durationsDiffer ? ' *, section beat durations' : '') : ''}${swing === undefined ? '' : `, section swing ${swing}% overrides part swing (except bass)`}`,
+        label: `${heading}, bars ${this.measureLabel(item)}${variationCount ? `, ${variationCount} saved variations; inspect Variations in the selection inspector` : ''}${compact ? ', chords ' + compact.chords.map(chord => chord.label).join(' ') + (compact.durationsDiffer ? ' *, section beat durations' : '') : ''}${swing === undefined ? '' : `, section swing ${swing}% overrides part swing (except bass)`}`,
         activate: (event) => this.selectSection(item.section.id, event),
         reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reroll' }),
         reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, action: 'reset' }),

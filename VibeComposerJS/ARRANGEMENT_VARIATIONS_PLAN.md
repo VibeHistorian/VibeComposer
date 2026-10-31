@@ -31,11 +31,25 @@ Limitations of this slice: no audible preview UI, arrangement badges, semantic g
 
 ## Follow-up: reviewable variations workflow
 
-1. Add a shared inspection result explaining active, disabled, overridden, incompatible and manual-protected effects. Show effective changes and their sources without treating variation state as selection or customization.
-2. Build the arrangement popup and accessible canvas indicators. Inspect, toggle, reroll and reset in a local draft; Apply validates current project/target state and commits once; Cancel publishes nothing. Include keyboard/device alternatives and preserve cell/track selection behavior.
+1. Delivered: shared inspection explains active, disabled, absent, overridden, incompatible, unchanged and manual-protected choices, with effective values and explicit override sources. Range edits protect their regions.
+2. Delivered: the arrangement toolbar's ◇ button opens the whole-arrangement dialog; the selection inspector's Variations button opens section, section-role or section-track scope. Section headings count saved choices; track diamonds distinguish enabled/disabled saved choices from selection, presence, customization and manual markers. Accessible canvas labels explain the indicators; native inspector/dialog buttons and checkboxes provide keyboard/device alternatives. Reroll, toggle and Reset edit a detached draft; Apply validates the current project identity and all choices, then commits once; Cancel/Escape publishes nothing. No audible draft preview is provided.
 3. Introduce explicit Compose/new-arrangement variation policy only alongside these visible controls. Persist project policy separately from section realized choices; specify manual-arrangement Compose, inserted sections, regeneration, reset and whole-arrangement replacement. Presence rerolls preserve choices and inactive targets.
 4. After type/order changes, derive the new intent immediately but retain realized choices. Show context mismatch and offer explicit replan; do not silently rewrite music during a move. Avoid saving intent as an authoritative stale snapshot.
 5. Integrate future per-control locks and links. Manual edits remain possible. Links must use the shared resolver; clarify destination lock semantics and reject cycles before activation.
+
+### Reviewable workflow semantics
+
+`arrangement-variation-inspection.ts` owns effect explanations; `arrangement-variation-draft.ts` builds immutable drafts independently of Angular. `ProjectService.applyArrangementVariationDraft` is the single history/persistence boundary. Any intervening project edit makes the dialog stale; close and reopen rather than overwriting newer state. No generator settings or presence are changed by inspecting or preparing variations.
+
+Policy inputs are explicitly reroll inputs: editing them changes future draft rerolls, and their realized policy is stored when rerolled. For role/track scopes, existing out-of-scope choices survive reroll/reset and count toward the section budget. If they exhaust it, no new choice can be added. Resetting a whole section removes its variation state; scoped reset removes only selected targets. Whole-arrangement reroll visits existing sections without replacing their identities, order, lengths, presence or customizations. Type/order changes keep saved choices; the dialog derives current intent and warns when a choice's direction differs from it. This is a directional assessment, not a saved historical intent snapshot or a full musical-quality score.
+
+### Next controls: generation toggle and independent rerolls
+
+The requested future controls must preserve three independent operations: structure generation, presence orchestration and variation planning. The new whole-arrangement dialog already supplies variation-only reroll and preserves both order and presence.
+
+- Add a persisted, project-owned **Generate arrangement variations** toggle alongside automatic generation policy. Disabled generation produces new arrangements without variation state; it must not silently delete existing authored choices simply when the toggle changes. Define presence-only/manual-arrangement Compose separately from complete arrangement replacement. Existing projects and this UI slice remain opt-in with no automatic activation.
+- Expose a whole-arrangement **Reroll variations** action with an optional **Reroll presence too** toggle, default off. Section order/identity/length remain fixed in both cases. When enabled, generate draft presence first, then plan variations against that candidate presence; review and Apply both together in one historical command. Cancel discards both. An implementation must extend the current variation-only draft/commit contract explicitly rather than smuggling presence changes through it.
+- Keep the independent arrangement-structure reroll action and its Compose policy distinct. These controls must not consume phrase-generator random draws. Persist realized presence and choices, and make all output consumers resolve the same candidate state.
 
 ## Follow-up: musical coordination
 
@@ -80,3 +94,10 @@ Run the relevant functional suites and production build for the engine slice. UI
 The two browser tempo failures were traced to consecutive section inspector events reading a stale Angular section input. Swing editing could replace the newly saved BPM with an older context before rendering refreshed that input. `SectionContextEditorComponent.apply` now resolves the current section by ID from project state before transforming it, and ignores deleted targets. No browser-test delays were added.
 
 Two regression tests retain a stale input deliberately and cover consecutive context/duration edits, external chord edits, undo/redo, scope isolation and deleted targets. All 533 unit tests and the production build pass. Both original 30-track contextual browser workflows now pass at 1440px and 780px. The full browser aggregate was not repeated for this focused fix. Logs: frontend `.angular/section-state-unit-check.log`, `section-state-build-check.log` and `section-state-browser-check.log`.
+
+### Reviewable workflow verification, 2026-10-31
+
+- Full unit aggregate: 537 passed. After adding the canvas indicator regression and further scoped/malformed-draft assertions, the focused variation/overview suites passed all 45 checks.
+- Production build passed, with the existing Pixi `@xmldom/xmldom` CommonJS warning.
+- Full production browser aggregate: all 28 passed. New 30-track cases at 1440/780px cover draft reroll/toggle/reset, Cancel/Escape, focus return, section scope, one-step Apply/undo/redo, and unchanged order/presence. The existing arrangement matrix passed 45/32/32 cases at display scales 1/1.25/1.5; existing contextual workflows also passed.
+- Local logs: frontend `.angular/variation-ui-unit.log`, `variation-ui-focused-unit.log`, `variation-ui-build.log` and `variation-ui-browser.log`. The initial focused browser attempt exposed a synthetic Escape event missing CDK's keyCode; the test now supplies the normal Escape key fields. Application close behavior required no change.

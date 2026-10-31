@@ -47,7 +47,7 @@ The following groups describe scope, not a mandatory delivery order. Define inte
 
 ### Arrangement variations
 
-Implementation slices and musical design live in [the arrangement variations plan](ARRANGEMENT_VARIATIONS_PLAN.md). The opt-in engine foundation is implemented; the inspection UI, automatic Compose policy and richer musical gestures remain follow-up work there.
+Implementation slices and musical design live in [the arrangement variations plan](ARRANGEMENT_VARIATIONS_PLAN.md). The opt-in engine and reviewable inspection/draft workflow are implemented; automatic generation policy, optional presence rerolls and richer musical gestures remain follow-up work there.
 
 - Define supported section-wide and section-part variations and their actual musical consumers. Keep variation-generation chances separate from realized choices and track presence.
 - Add indicators in the arrangement canvas and a popup for inspecting, enabling, disabling and rerolling variations in the selected context.
@@ -108,4 +108,4 @@ For each slice, trace UI → saved model → effective resolver → musical/outp
 
 Run the relevant checks from the [frontend test guide](frontend/scripts/README.md). Build production assets before affected browser suites. Review both editors, expanded/collapsed headers, mixed scopes, section ranges, keyboard/device alternatives and history/persistence. Include 30-track layouts at 1440/780px and the arrangement zoom/device-scale matrix when changes affect workspace layout. Record fresh evidence for each delivered slice; do not treat old test counts as acceptance.
 
-Arrangement prerequisite delivered: Angular now uses procedural anticipation/release cycles and contextual orchestration instead of Java templates and independent presence rolls. See the project ownership guide's Arrangement intent and orchestration section for preference semantics, streams and derived intent. Variation consumers and controls remain planned work.
+Arrangement prerequisite delivered: Angular now uses procedural anticipation/release cycles and contextual orchestration instead of Java templates and independent presence rolls. See the project ownership guide's Arrangement intent and orchestration section for preference semantics, streams and derived intent. Static variations and their inspection/draft controls are implemented; remaining policy and musical slices are tracked in the arrangement variations plan.

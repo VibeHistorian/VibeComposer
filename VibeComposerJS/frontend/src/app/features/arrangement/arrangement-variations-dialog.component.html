@@ -1,0 +1,37 @@
+<section class="variations-dialog" aria-labelledby="variations-title">
+  <header>
+    <div><h1 id="variations-title">Arrangement variations</h1><p>{{ title }} · {{ targetLabel }}</p></div>
+    <button type="button" aria-label="Close variations" (click)="dialog.close()">×</button>
+  </header>
+  <p>Review changes before Apply. Section order and track presence stay as they are.</p>
+  <fieldset [disabled]="stale()">
+    <legend>Reroll policy</legend>
+    <label>Chance %<input type="number" min="0" max="100" step="1" aria-label="Variation chance" [value]="policy().chance" (change)="setPolicy('chance', $event)" /></label>
+    <label>Changes per section<input type="number" min="0" max="4" step="1" aria-label="Variation change budget" [value]="policy().maxChanges" (change)="setPolicy('maxChanges', $event)" /></label>
+    <button type="button" [disabled]="!policyValid()" (click)="reroll()">Reroll variations</button>
+    <button type="button" (click)="reset()">Reset variations</button>
+  </fieldset>
+  <p class="policy-hint">Policy changes take effect on Reroll. Choices outside this scope are preserved and count toward the section budget.</p>
+  <div class="variation-sections">
+    @for (row of rows(); track row.section.id) {
+      <section class="variation-section" [attr.aria-label]="row.section.type + ' variations'">
+        <h2>{{ row.section.type.replaceAll('_', ' ') }} <small>Energy {{ value(row.intent.energy * 100) }}% · Tension {{ value(row.intent.tension * 100) }}%</small></h2>
+        @for (item of row.choices; track item.track.id) {
+          <article [attr.data-variation-status]="item.inspection.status">
+            <label><input type="checkbox" [attr.aria-label]="item.track.name + ' ' + item.inspection.label" [disabled]="stale()"
+              [checked]="item.inspection.choice.enabled" (change)="toggle(row.section.id, item.track.id, $event)" />
+              <strong>{{ item.track.name }}</strong> · {{ item.inspection.label }}</label>
+            <span class="effect-status">{{ item.inspection.detail }}</span>
+            @for (change of item.inspection.changes; track change.parameter) {
+              <span class="effect-value">{{ change.label }}: {{ value(change.before) }} → {{ value(change.effective) }} · {{ change.source }}</span>
+            }
+            @if (item.mismatch) { <span class="context-warning">Direction differs from this section's current intent. Reroll to replan.</span> }
+          </article>
+        } @empty { <p>No variations in this scope. Reroll to choose eligible changes.</p> }
+      </section>
+    }
+  </div>
+  @if (stale()) { <p role="alert">The project changed while this dialog was open. Close and reopen to refresh.</p> }
+  @if (error()) { <p role="alert">{{ error() }}</p> }
+  <footer><button type="button" (click)="dialog.close()">Cancel</button><button type="button" [disabled]="stale()" (click)="apply()">Apply variations</button></footer>
+</section>

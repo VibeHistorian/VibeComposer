@@ -165,6 +165,31 @@ test('section headings show compact local chords with a duration star only for d
   assert.doesNotMatch(component.hits.find(hit => hit.key === 'heading:intro').label, /chords/);
 });
 
+test('variation indicators keep selection and presence hit areas independent', () => {
+  const { component, base } = fixture();
+  const geometry = () => component.hits.map(({ key, x, y, width, height }) => ({ key, x, y, width, height }));
+  const before = geometry(), project = component.project();
+  component.project.set({ ...project, arrangement: project.arrangement.map((section, index) => index ? section : {
+    ...section, variations: { seed: '1', policy: { chance: 100, maxChanges: 2 },
+      choices: [{ trackId: 'bass-1', kind: 'bass-weight', amount: 1, enabled: true }] },
+  }) });
+  component.drawOverview();
+  assert.deepEqual(geometry(), before);
+  assert.match(component.hits.find(hit => hit.key === 'heading:intro').label, /1 saved variations/);
+  assert.match(component.hits.find(hit => hit.key === 'toggle:intro:bass-1').label, /Saved variation enabled/);
+  assert.ok(base.texts.some(text => text.value === '◆'));
+  component.hits.find(hit => hit.key === 'toggle:intro:bass-1').activate();
+  assert.deepEqual(component.trackSelected.values, [{ sectionId: 'intro', trackId: 'bass-1' }]);
+  assert.equal(component.partToggled.values.length, 0);
+  const varied = component.project();
+  component.project.set({ ...varied, arrangement: varied.arrangement.map((section, index) => index ? section : {
+    ...section, variations: { ...section.variations, choices: section.variations.choices.map(choice => ({ ...choice, enabled: false })) },
+  }) });
+  component.drawOverview();
+  assert.match(component.hits.find(hit => hit.key === 'toggle:intro:bass-1').label, /Saved variation disabled/);
+  assert.deepEqual(geometry(), before);
+});
+
 test('P5f variable chord slots align section hit areas, previews and loop markers', () => {
   const { component, base } = fixture();
   const project = component.project();
