@@ -223,3 +223,102 @@ test('dialog keeps reroll, toggle and reset local until Apply, and rejects stale
   const changed = service.exportProjectJson();
   staleDialog.apply(); assert.equal(service.exportProjectJson(), changed);
 });
+
+test('automatic variation policy is optional, validated, detached and persisted without erasing choices', () => {
+  const { service, project, load } = setup();
+  service.importProjectJson(JSON.stringify(project));
+  service.randomizeArrangementVariations(undefined, undefined, 7n);
+  const choices = structuredClone(service.project().arrangement.map(s => s.variations));
+  service.updateSettings({ arrangementVariationGeneration: { enabled: true, policy: { chance: 65, maxChanges: 3 } } });
+  const saved = service.exportProjectJson();
+  service.updateSettings({ arrangementVariationGeneration: { enabled: false, policy: { chance: 65, maxChanges: 3 } } });
+  assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
+  service.undo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(service.project().arrangementVariationGeneration, { enabled: true, policy: { chance: 65, maxChanges: 3 } });
+  const codec = load('core/project/project-codec.ts'), chances = load('core/project/section-type-chances.ts').DEFAULT_SECTION_TYPE_CHANCES;
+  const input = JSON.parse(saved), decoded = codec.decodeProject(input, chances, () => .5);
+  input.arrangementVariationGeneration.policy.chance = 99;
+  assert.equal(decoded.arrangementVariationGeneration.policy.chance, 65);
+  for (const invalid of [null, [], { enabled: 'yes', policy: { chance: 100, maxChanges: 2 } },
+    { enabled: true, policy: { chance: 101, maxChanges: 2 } }, { enabled: true, policy: { chance: 100, maxChanges: 5 } },
+    { enabled: true, policy: { chance: 100, maxChanges: 2 }, unknown: true }]) {
+    assert.equal(codec.decodeProject({ ...project, arrangementVariationGeneration: invalid }, chances, () => .5), undefined);
+    assert.equal(codec.isProject({ ...project, arrangementVariationGeneration: invalid }, chances, () => .5), false);
+  }
+});
+
+test('new arrangement and insertion generate optional variations without shifting structure, presence or track streams', () => {
+  const { project, commands, load } = setup();
+  const chances = load('core/project/section-type-chances.ts').DEFAULT_SECTION_TYPE_CHANCES;
+  const enabled = { ...project, arrangementVariationGeneration: { enabled: true, policy: { chance: 100, maxChanges: 3 } } };
+  const plain = commands.randomizeArrangement(project, chances, 9223372036854775807n);
+  const varied = commands.randomizeArrangement(enabled, chances, 9223372036854775807n);
+  assert.deepEqual(varied.arrangement.map(({ variations, ...section }) => section), plain.arrangement);
+  assert.equal(varied.tracks, project.tracks);
+  assert.ok(varied.arrangement.every(s => s.variations && s.variations.policy.maxChanges === 3));
+  assert.ok(varied.arrangement.some(s => s.variations.choices.length));
+  assert.ok(plain.arrangement.every(s => s.variations === undefined));
+  const inserted = commands.addSection(enabled, 'BUILDUP2', 0, chances, () => .5);
+  assert.ok(inserted.arrangement[1].variations);
+  assert.deepEqual(inserted.arrangement.filter((_, i) => i !== 1), project.arrangement);
+  assert.equal(commands.addSection(project, 'BUILDUP2', 0, chances, () => .5).arrangement[1].variations, undefined);
+  const without = commands.randomizeArrangement({ ...varied, arrangementVariationGeneration: { ...enabled.arrangementVariationGeneration, enabled: false } }, chances, 9n);
+  assert.ok(without.arrangement.every(s => s.variations === undefined));
+});
+
+test('Compose respects automatic/manual arrangement policy while Regenerate and presence-only rerolls retain choices', () => {
+  const { service, project, load } = setup();
+  const defaults = load('core/music/track-generation.ts').DEFAULT_TRACK_POLICIES;
+  project.trackGenerationPolicies = Object.fromEntries(Object.entries(defaults).map(([role, policy]) => [role,
+    { ...policy, onCompose: false, ...(role === 'melody' ? { patternsOnCompose: false, targetsOnCompose: false, onRegenerate: false } : {}) }]));
+  project.randomizeHarmonyOnCompose = false; project.randomizeTempoOnCompose = false; project.randomizeTransposeOnCompose = false;
+  project.randomizeArrangementOnCompose = true; project.arrangementManual = true;
+  project.arrangementVariationGeneration = { enabled: true, policy: { chance: 100, maxChanges: 2 } };
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  const before = service.exportProjectJson();
+  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.deepEqual(service.project().arrangement.map(s => [s.id, s.type, s.measures]), project.arrangement.map(s => [s.id, s.type, s.measures]));
+  assert.ok(service.project().arrangement.every(s => s.variations));
+  const choices = structuredClone(service.project().arrangement.map(s => s.variations));
+  const composed = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), composed);
+  service.generateComposition('regenerate');
+  assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
+  service.randomizeArrangementPresence(); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
+  service.updateSettings({ arrangementVariationGeneration: { enabled: false, policy: { chance: 100, maxChanges: 2 } } });
+  service.generateComposition('compose'); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
+  service.updateSettings({ arrangementManual: false }); service.generateComposition('compose');
+  assert.ok(service.project().arrangement.every(s => s.variations === undefined));
+  service.updateSettings({ arrangementVariationGeneration: { enabled: true, policy: { chance: 100, maxChanges: 2 } } });
+  service.generateComposition('compose'); assert.ok(service.project().arrangement.every(s => s.variations));
+});
+
+test('presence and variations are planned together, committed atomically and reject incomplete presence drafts', () => {
+  const { project, service, load, phrase, midi } = setup();
+  service.importProjectJson(JSON.stringify(project));
+  const drafts = load('core/project/arrangement-variation-draft.ts');
+  const chances = load('core/project/section-type-chances.ts').DEFAULT_SECTION_TYPE_CHANCES;
+  const expected = service.project(), before = service.exportProjectJson();
+  const presence = drafts.rerollVariationPresence(expected, chances, 123n);
+  assert.deepEqual(presence, drafts.rerollVariationPresence(expected, chances, 123n));
+  const candidate = drafts.projectWithVariationPresence(expected, presence);
+  const variations = drafts.rerollVariationDraft(candidate, {}, drafts.initialVariationDraft(expected, {}), 123n);
+  assert.ok(candidate.arrangement.some(s => JSON.stringify(s.trackPresence) !== JSON.stringify(expected.arrangement.find(p => p.id === s.id).trackPresence)));
+  assert.ok(candidate.arrangement.every(s => variations[s.id].choices.every(c => s.trackPresence[c.trackId])));
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.applyArrangementVariationDraft(expected, variations, { presence }), 'changed');
+  const resolvedCandidate = { ...candidate, arrangement: candidate.arrangement.map(s => ({ ...s, variations: variations[s.id] })) };
+  for (const track of expected.tracks) assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track), phrase.layOutTrackPhrase(resolvedCandidate, track));
+  assert.deepEqual(midi.generateCompositionMidi(service.project()), midi.generateCompositionMidi(resolvedCandidate));
+  const after = service.exportProjectJson();
+  assert.deepEqual(service.project().arrangement.map(({ trackPresence, variations, ...rest }) => rest),
+    expected.arrangement.map(({ trackPresence, variations, ...rest }) => rest));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.applyArrangementVariationDraft(service.project(), variations, { presence: {} }), 'invalid');
+  const incomplete = structuredClone(presence); delete incomplete['section-1'][expected.tracks[0].id];
+  assert.equal(service.applyArrangementVariationDraft(service.project(), variations, { presence: incomplete }), 'invalid');
+  assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), after);
+});

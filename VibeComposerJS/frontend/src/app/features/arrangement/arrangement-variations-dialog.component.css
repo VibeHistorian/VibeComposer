@@ -16,6 +16,8 @@ legend, label { font-size: 12px; }
 fieldset label { display: grid; gap: 5px; }
 input[type="number"] { width: 90px; padding: 6px; }
 .policy-hint { margin-bottom: 16px; }
+.generation-toggle, .presence-toggle { display: flex; align-items: center; gap: 6px; }
+fieldset .presence-toggle { display: flex; }
 
 /* Variation effects */
 .variation-section { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
@@ -26,3 +28,4 @@ article label { display: flex; align-items: center; gap: 6px; }
 .effect-status, .effect-value, .context-warning { display: block; margin: 6px 0 0 24px; font-size: 12px; overflow-wrap: anywhere; }
 .effect-value { color: var(--text-secondary); }
 .context-warning, [role="alert"] { color: var(--accent-primary); }
+.presence-changes { margin-bottom: 10px; font-size: 12px; color: var(--text-secondary); }

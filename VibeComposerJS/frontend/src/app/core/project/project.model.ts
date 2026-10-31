@@ -22,6 +22,8 @@ export interface CompositionProject {
   readonly randomizeArrangementOnCompose?: boolean;
   readonly arrangementPreview?: boolean;
   readonly arrangementManual?: boolean;
+  /** Omission keeps automatic variation generation disabled; realized choices remain independent. */
+  readonly arrangementVariationGeneration?: import('../music/arrangement-variation.model').VariationGenerationSettings;
   readonly randomizeTransposeOnCompose?: boolean;
   /** Decimal text preserves Java long seeds when JSON is exported or persisted. */
   readonly seed: string;

@@ -4,6 +4,11 @@ export interface VariationPolicy {
   readonly maxChanges: number;
 }
 
+export interface VariationGenerationSettings {
+  readonly enabled: boolean;
+  readonly policy: VariationPolicy;
+}
+
 export type VariationKind = 'melody-speed' | 'melody-direction' | 'arp-activity' | 'bass-weight' | 'chord-space' | 'drum-activity';
 
 export interface ArrangementVariation {

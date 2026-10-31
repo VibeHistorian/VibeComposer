@@ -3,19 +3,35 @@
     <div><h1 id="variations-title">Arrangement variations</h1><p>{{ title }} · {{ targetLabel }}</p></div>
     <button type="button" aria-label="Close variations" (click)="dialog.close()">×</button>
   </header>
-  <p>Review changes before Apply. Section order and track presence stay as they are.</p>
+  <p>Review changes before Apply. Section order stays as it is. Presence is preserved unless you include it in a reroll.</p>
+  @if (wholeArrangement) {
+    <label class="generation-toggle"><input type="checkbox" aria-label="Generate arrangement variations" [checked]="generationEnabled()" [disabled]="stale()"
+      (change)="generationEnabled.set($any($event.target).checked)" /> Generate variations with arrangements</label>
+    <p>Use the policy below for new arrangements, inserted sections and Manual arrangement Compose. Turning this off keeps existing choices.</p>
+  }
   <fieldset [disabled]="stale()">
     <legend>Reroll policy</legend>
     <label>Chance %<input type="number" min="0" max="100" step="1" aria-label="Variation chance" [value]="policy().chance" (change)="setPolicy('chance', $event)" /></label>
     <label>Changes per section<input type="number" min="0" max="4" step="1" aria-label="Variation change budget" [value]="policy().maxChanges" (change)="setPolicy('maxChanges', $event)" /></label>
     <button type="button" [disabled]="!policyValid()" (click)="reroll()">Reroll variations</button>
     <button type="button" (click)="reset()">Reset variations</button>
+    @if (wholeArrangement) {
+      <label class="presence-toggle"><input type="checkbox" aria-label="Reroll presence too" [checked]="rerollPresence()"
+        (change)="rerollPresence.set($any($event.target).checked)" /> Reroll presence too</label>
+    }
   </fieldset>
-  <p class="policy-hint">Policy changes take effect on Reroll. Choices outside this scope are preserved and count toward the section budget.</p>
+  <p class="policy-hint">Reroll uses these options for the next draft. Choices outside this scope count toward the section budget.
+    @if (wholeArrangement) { Apply also saves the generation toggle and policy. Reset variations keeps any staged presence changes. }
+  </p>
   <div class="variation-sections">
     @for (row of rows(); track row.section.id) {
       <section class="variation-section" [attr.aria-label]="row.section.type + ' variations'">
         <h2>{{ row.section.type.replaceAll('_', ' ') }} <small>Energy {{ value(row.intent.energy * 100) }}% · Tension {{ value(row.intent.tension * 100) }}%</small></h2>
+        @if (row.presenceChanges.length) {
+          <details class="presence-changes"><summary>{{ row.presenceChanges.length }} track presence changes</summary>
+            <ul>@for (change of row.presenceChanges; track change.track.id) { <li>{{ change.track.name }}: {{ change.present ? 'Present' : 'Absent' }}</li> }</ul>
+          </details>
+        }
         @for (item of row.choices; track item.track.id) {
           <article [attr.data-variation-status]="item.inspection.status">
             <label><input type="checkbox" [attr.aria-label]="item.track.name + ' ' + item.inspection.label" [disabled]="stale()"
@@ -33,5 +49,5 @@
   </div>
   @if (stale()) { <p role="alert">The project changed while this dialog was open. Close and reopen to refresh.</p> }
   @if (error()) { <p role="alert">{{ error() }}</p> }
-  <footer><button type="button" (click)="dialog.close()">Cancel</button><button type="button" [disabled]="stale()" (click)="apply()">Apply variations</button></footer>
+  <footer><button type="button" (click)="dialog.close()">Cancel</button><button type="button" [disabled]="stale() || !policyValid()" (click)="apply()">Apply variations</button></footer>
 </section>

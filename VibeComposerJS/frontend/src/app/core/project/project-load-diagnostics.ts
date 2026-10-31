@@ -14,7 +14,7 @@ import { decodeTracks, isPhrase } from './project-track-decoder';
 import { decodeArrangement, MAX_ARRANGEMENT_SECTIONS, MAX_ARRANGEMENT_MEASURES } from './project-arrangement-decoder';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { decodeStoredArrangement, decodeStoredTrackPresence } from './project-storage';
-import { validSectionVariations } from '../music/arrangement-variations';
+import { validSectionVariations, validVariationGeneration } from '../music/arrangement-variations';
 
 /** Gather diagnostics only after rejection; these messages do not define acceptance rules. */
 export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSettings, random: () => number): readonly string[] {
@@ -61,8 +61,10 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
   };
   const required = ['name', 'key', 'scale', 'tempoBpm', 'seed', 'progression', 'editedPhrases', 'tracks', 'arrangement'];
   const project = object(value, 'project', required, [...required, 'schemaVersion', 'transposeSemitones', 'progressionChords',
-    'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies']);
+    'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies', 'arrangementVariationGeneration']);
   if (project) {
+    if (project['arrangementVariationGeneration'] !== undefined) check('project.arrangementVariationGeneration',
+      validVariationGeneration(project['arrangementVariationGeneration']), 'expected enabled boolean and a valid variation policy');
     check('project.name', typeof project['name'] === 'string', 'expected a string');
     check('project.key', KEYS.includes(project['key'] as string), `expected one of ${KEYS.join(', ')}`);
     check('project.scale', isScaleMode(project['scale']), 'expected a supported scale/mode');

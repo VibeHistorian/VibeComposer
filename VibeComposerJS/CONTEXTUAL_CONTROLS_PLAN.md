@@ -47,7 +47,7 @@ The following groups describe scope, not a mandatory delivery order. Define inte
 
 ### Arrangement variations
 
-Implementation slices and musical design live in [the arrangement variations plan](ARRANGEMENT_VARIATIONS_PLAN.md). The opt-in engine and reviewable inspection/draft workflow are implemented; automatic generation policy, optional presence rerolls and richer musical gestures remain follow-up work there.
+Implementation slices and musical design live in [the arrangement variations plan](ARRANGEMENT_VARIATIONS_PLAN.md). The opt-in engine, reviewable inspection/draft workflow, generation policy and optional presence rerolls are implemented; richer musical gestures and ramps remain follow-up work there.
 
 - Define supported section-wide and section-part variations and their actual musical consumers. Keep variation-generation chances separate from realized choices and track presence.
 - Add indicators in the arrangement canvas and a popup for inspecting, enabling, disabling and rerolling variations in the selected context.

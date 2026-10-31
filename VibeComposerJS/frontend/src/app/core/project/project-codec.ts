@@ -1,4 +1,5 @@
 import { validOutputSettings } from '../music/output-processing';
+import { validVariationGeneration } from '../music/arrangement-variations';
 import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from './project.model';
 import type { TrackGenerationPolicies } from '../music/generation-policy.model';
@@ -30,6 +31,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')
+    && (project.arrangementVariationGeneration === undefined || validVariationGeneration(project.arrangementVariationGeneration))
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
@@ -69,6 +71,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     ...(project.randomizeArrangementOnCompose !== undefined ? { randomizeArrangementOnCompose: project.randomizeArrangementOnCompose } : {}),
     ...(project.arrangementPreview !== undefined ? { arrangementPreview: project.arrangementPreview } : {}),
     ...(project.arrangementManual !== undefined ? { arrangementManual: project.arrangementManual } : {}),
+    ...(project.arrangementVariationGeneration !== undefined ? { arrangementVariationGeneration: structuredClone(project.arrangementVariationGeneration) } : {}),
     progression: [...project.progression!],
     ...(project.progressionChords ? { progressionChords: project.progressionChords.map(chord => chord ? { ...chord } : null) } : {}),
     ...(project.harmonySettings !== undefined ? { harmonySettings: decodeHarmonySettings(project.harmonySettings)! } : {}),
@@ -103,6 +106,7 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')
+    && (project.arrangementVariationGeneration === undefined || validVariationGeneration(project.arrangementVariationGeneration))
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)

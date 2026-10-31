@@ -18,7 +18,7 @@ export function randomizeArrangementVariations(project: CompositionProject, seed
     || sectionId !== undefined && !project.arrangement.some(s => s.id === sectionId)) return undefined;
   return { ...project, arrangement: project.arrangement.map((section, index) => sectionId !== undefined && section.id !== sectionId
     ? section : { ...section, variations: planSectionVariations(project.tracks, project.arrangement, index, seed,
-      policy ?? section.variations?.policy ?? DEFAULT_VARIATION_POLICY) }) };
+      policy ?? section.variations?.policy ?? project.arrangementVariationGeneration?.policy ?? DEFAULT_VARIATION_POLICY) }) };
 }
 
 /** Replace structure and orchestration using independent deterministic streams. */
@@ -29,7 +29,9 @@ export function randomizeArrangement(project: CompositionProject, chances: Secti
   const arrangement = plan.map(({ type }, index) => ({
     id: `section-${index + 1}`, type, measures: 4, trackPresence: presence[index],
   }));
-  return { ...project, arrangement };
+  const next = { ...project, arrangement };
+  return project.arrangementVariationGeneration?.enabled
+    ? randomizeArrangementVariations(next, seed, undefined, project.arrangementVariationGeneration.policy)! : next;
 }
 
 // Build immutable candidates. ProjectService validates and commits each command once.
@@ -52,6 +54,8 @@ export function addSection(project: CompositionProject, type: SectionType, after
   });
   const presence = generateContextualPresence(project.tracks, next, chances, random, insertAt);
   next[insertAt] = { ...next[insertAt], trackPresence: presence[insertAt] };
+  if (project.arrangementVariationGeneration?.enabled) next[insertAt] = { ...next[insertAt],
+    variations: planSectionVariations(project.tracks, next, insertAt, BigInt(project.seed), project.arrangementVariationGeneration.policy) };
   return { ...project, arrangement: next };
 }
 

@@ -1,11 +1,19 @@
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PartSettingsPatch } from './part-settings.model';
-import type { ArrangementVariation, SectionVariations, VariationKind, VariationPolicy } from './arrangement-variation.model';
+import type { ArrangementVariation, SectionVariations, VariationKind, VariationPolicy, VariationGenerationSettings } from './arrangement-variation.model';
 import { resolveArrangementIntent } from './arrangement-intent';
 import { JavaRandom } from './java-random';
 
 export const DEFAULT_VARIATION_POLICY: VariationPolicy = { chance: 100, maxChanges: 2 };
+export const DEFAULT_VARIATION_GENERATION: VariationGenerationSettings = { enabled: false, policy: DEFAULT_VARIATION_POLICY };
+
+export function validVariationGeneration(value: unknown): value is VariationGenerationSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const settings = value as VariationGenerationSettings;
+  return Object.keys(settings).every(key => key === 'enabled' || key === 'policy')
+    && typeof settings.enabled === 'boolean' && validVariationPolicy(settings.policy);
+}
 const KINDS: Record<CompositionTrack['role'], readonly VariationKind[]> = {
   melody: ['melody-speed', 'melody-direction'], arpeggio: ['arp-activity'], bass: ['bass-weight'],
   chords: ['chord-space'], drums: ['drum-activity'],

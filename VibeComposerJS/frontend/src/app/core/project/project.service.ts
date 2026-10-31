@@ -1,7 +1,7 @@
 import * as arrangementCommands from './project-arrangement-commands';
-import { pruneVariations } from '../music/arrangement-variations';
+import { pruneVariations, validVariationGeneration } from '../music/arrangement-variations';
 import type { VariationPolicy } from '../music/arrangement-variation.model';
-import type { VariationDraft } from './arrangement-variation-draft';
+import type { VariationDraft, VariationDraftOptions } from './arrangement-variation-draft';
 import { loadTrackPreset } from './track-presets';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
@@ -457,14 +457,6 @@ export class ProjectService {
         next = candidate;
       }
     }
-    if (event === 'compose' && next.randomizeArrangementOnCompose) {
-      // Independent stream preserves track and global-setting random draw order.
-      const random = new JavaRandom(BigInt(next.seed));
-      next = next.arrangementManual
-        ? arrangementCommands.randomizeArrangementPresence(next, undefined,
-          this.sectionTypeSettings.chances(), () => random.nextDouble())!
-        : arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances());
-    }
     const policy = current.trackGenerationPolicies?.melody ?? DEFAULT_TRACK_POLICIES.melody;
     if (event === 'compose' || policy.onRegenerate) {
       const count = current.trackRerollCounts?.melody ?? 0;
@@ -501,6 +493,16 @@ export class ProjectService {
         if (changed) next = { ...next, tracks,
           trackRerollCounts: { ...next.trackRerollCounts, melody: count + 1 } };
       }
+    }
+    if (event === 'compose' && next.randomizeArrangementOnCompose) {
+      // Plan after track preparation; orchestration and variations own independent streams.
+      const random = new JavaRandom(BigInt(next.seed));
+      if (next.arrangementManual) {
+        next = arrangementCommands.randomizeArrangementPresence(next, undefined,
+          this.sectionTypeSettings.chances(), () => random.nextDouble())!;
+        if (next.arrangementVariationGeneration?.enabled) next = arrangementCommands.randomizeArrangementVariations(next,
+          BigInt(next.seed), undefined, next.arrangementVariationGeneration.policy)!;
+      } else next = arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances());
     }
     if (next === current) return 'unchanged';
     // Rendering also asks for the global phrase (note counts) and for section
@@ -743,7 +745,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationGeneration'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;
@@ -1103,12 +1105,27 @@ export class ProjectService {
       ? s : { ...s, variations: undefined }) });
   }
 
-  applyArrangementVariationDraft(expected: CompositionProject, draft: VariationDraft): PartWorkflowResult {
+  applyArrangementVariationDraft(expected: CompositionProject, draft: VariationDraft, options: VariationDraftOptions = {}): PartWorkflowResult {
     const current = this.state();
     if (current !== expected || !draft || typeof draft !== 'object' || Array.isArray(draft)
       || Object.keys(draft).some(id => !current.arrangement.some(section => section.id === id))) return 'invalid';
-    return this.commitPartWorkflow({ ...current, arrangement: current.arrangement.map(section => Object.hasOwn(draft, section.id)
-      ? { ...section, variations: draft[section.id] === undefined ? undefined : structuredClone(draft[section.id]) } : section) });
+    if (!options || typeof options !== 'object' || Array.isArray(options)
+      || Object.keys(options).some(key => key !== 'presence' && key !== 'generation')
+      || options.generation !== undefined && !validVariationGeneration(options.generation)) return 'invalid';
+    const presence = options.presence;
+    if (presence !== undefined && (!presence || typeof presence !== 'object' || Array.isArray(presence)
+      || Object.keys(presence).length !== current.arrangement.length
+      || current.arrangement.some(section => {
+        const flags = presence[section.id];
+        return !flags || typeof flags !== 'object' || Array.isArray(flags)
+          || Object.keys(flags).length !== current.tracks.length || current.tracks.some(track => typeof flags[track.id] !== 'boolean');
+      }))) return 'invalid';
+    return this.commitPartWorkflow({ ...current,
+      ...(options.generation ? { arrangementVariationGeneration: structuredClone(options.generation) } : {}),
+      arrangement: current.arrangement.map(section => ({ ...section,
+        ...(Object.hasOwn(draft, section.id) ? { variations: draft[section.id] === undefined ? undefined : structuredClone(draft[section.id]) } : {}),
+        ...(presence ? { trackPresence: { ...presence[section.id] } } : {}),
+      })) });
   }
 
   setChordDegree(index: number, degree: number): void {
