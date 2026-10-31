@@ -39,6 +39,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
           const base=p.tracks.find(t=>t.role===role);
           for(let i=2;i<=6;i++)p.tracks.push({...base,id:'track-'+role+'-'+i,name:base.name[0]+i,generatorSettings:{...base.generatorSettings}});
         }
+        for(const track of p.tracks) if(track.role==='arpeggio')Object.assign(track.generatorSettings,{rhythm:'euclid',hitsPerPattern:8,euclideanPulses:4});
         p.arrangement=['BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role=>[role,Array(6).fill(true)]))}));
         sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
@@ -55,6 +56,8 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Release tension')),'release purpose');
       ensure(d.querySelector('.variation-return-lift'),'controlled return lift explanation');
+      ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Arp rhythm density')),'rhythm-aware density explanation');
+      ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Late chord anticipation')),'chord transition explanation');
       ensure(JSON.stringify(read())===original,'reroll stays local');
       const toggle=d.querySelector('article input[type="checkbox"]');toggle.focus();toggle.click();
       await wait(()=>d.querySelector('[data-variation-status="disabled"]'),'disabled status');

@@ -4,7 +4,8 @@ export interface VariationPolicy {
   readonly maxChanges: number;
 }
 
-export type VariationKind = 'melody-speed' | 'melody-direction' | 'melody-register' | 'arp-activity' | 'arp-contour' | 'arp-register' | 'bass-weight' | 'chord-space' | 'drum-activity';
+export type VariationKind = 'melody-speed' | 'melody-direction' | 'melody-register' | 'arp-activity' | 'arp-density' | 'arp-contour' | 'arp-register'
+  | 'bass-weight' | 'chord-space' | 'chord-transition' | 'drum-activity' | 'drum-density' | 'drum-ghosts';
 export type VariationGesture = 'establish' | 'thin' | 'build-pulse' | 'reinforce-foundation' | 'release-tension' | 'sustain' | 'resolve';
 
 export interface ArrangementVariation {

@@ -4,11 +4,12 @@ import type { PartSettingsPatch } from './part-settings.model';
 import type { ArrangementVariation, SectionVariations, VariationKind, VariationPolicy } from './arrangement-variation.model';
 import { resolveVariationContext, variationAmountForContext, variationPriority, isActivityVariation, isRegisterVariation, VARIATION_GESTURE_LABELS } from './arrangement-variation-context';
 import { JavaRandom } from './java-random';
+import { rhythmVariationPatch, rhythmVariationProtectedKeys } from './arrangement-rhythm-variations';
 
 export const DEFAULT_VARIATION_POLICY: VariationPolicy = { chance: 100, maxChanges: 2 };
 const KINDS: Record<CompositionTrack['role'], readonly VariationKind[]> = {
-  melody: ['melody-speed', 'melody-direction', 'melody-register'], arpeggio: ['arp-activity', 'arp-contour', 'arp-register'], bass: ['bass-weight'],
-  chords: ['chord-space'], drums: ['drum-activity'],
+  melody: ['melody-speed', 'melody-direction', 'melody-register'], arpeggio: ['arp-activity', 'arp-density', 'arp-contour', 'arp-register'], bass: ['bass-weight'],
+  chords: ['chord-space', 'chord-transition'], drums: ['drum-activity', 'drum-density', 'drum-ghosts'],
 };
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -17,7 +18,7 @@ export function variationProtectedKeys(kind: VariationKind): readonly string[] {
   if (kind === 'arp-contour') return ['arpContour', 'arpContourChordMode'];
   if (kind === 'melody-register') return ['transpose', 'rangeMin', 'rangeMax'];
   if (kind === 'arp-register') return ['transpose', 'arpContour', 'arpPatternCustom', 'useOctaveAdjustments', 'stretchEnabled'];
-  return [];
+  return rhythmVariationProtectedKeys(kind);
 }
 
 export function variationBlockedKeys(section: ArrangementSection, track: CompositionTrack, kind: VariationKind): readonly string[] {
@@ -60,6 +61,7 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
   if (!choice.enabled || choice.trackId !== track.id || !KINDS[track.role].includes(choice.kind)) return {};
   const s = track.generatorSettings, a = choice.amount;
   switch (choice.kind) {
+    case 'arp-density': case 'chord-transition': case 'drum-density': case 'drum-ghosts': return rhythmVariationPatch(track, choice);
     case 'melody-speed': return track.role === 'melody' && !s.customDurations?.length && track.generatorSettings.rhythm !== 'durations'
       ? { speed: clamp((track.generatorSettings.speed ?? 50) + a * 15, -100, 100) } : {};
     case 'melody-direction': return { targetDirection: a > 0 ? 'ASC' : 'DESC' };
@@ -106,7 +108,7 @@ function eligibleChoice(track: CompositionTrack, section: ArrangementSection, ch
   const effective = { ...track, generatorSettings: { ...track.generatorSettings,
     ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] } } as CompositionTrack;
   const defaults: Record<string, unknown> = { speed: 50, targetDirection: 'ASC', octaveInterval: false, pauseChance: 0,
-    transpose: 0, arpContour: [], arpContourChordMode: false,
+    transpose: 0, arpContour: [], arpContourChordMode: false, euclideanPulses: 4, transitionChance: 0, ghosts: false,
     hitsPerPattern: track.role === 'arpeggio' && track.generatorSettings.rate === 'sixteenth' ? 16 : 8 };
   const patch = variationPatch(effective, choice);
   return Object.entries(patch).every(([key]) => !Object.hasOwn(section.rolePartOverrides?.[track.role] ?? {}, key)

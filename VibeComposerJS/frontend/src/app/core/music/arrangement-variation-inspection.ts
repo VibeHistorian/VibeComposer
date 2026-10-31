@@ -8,7 +8,8 @@ export type VariationStatus = 'active' | 'disabled' | 'absent' | 'manual' | 'inc
 export const VARIATION_LABELS: Record<VariationKind, string> = {
   'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
   'arp-activity': 'Arp activity', 'arp-contour': 'Arp chord-relative contour', 'arp-register': 'Arp octave register',
-  'bass-weight': 'Bass octave weight', 'chord-space': 'Chord spacing', 'drum-activity': 'Cymbal activity',
+  'arp-density': 'Arp rhythm density', 'bass-weight': 'Bass octave weight', 'chord-space': 'Chord spacing',
+  'chord-transition': 'Late chord anticipation', 'drum-activity': 'Cymbal activity', 'drum-density': 'Hat / ride density', 'drum-ghosts': 'Snare ghost notes',
 };
 export interface VariationInspection {
   readonly choice: ArrangementVariation;

@@ -566,3 +566,158 @@ test('custom/locked/manual lift targets keep anchor capacity and new choices per
   assert.deepEqual(service.project().tracks.map(t => phrase.layOutTrackPhrase(service.project(), t)), notes);
   assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
 });
+
+test('builtin and Euclidean arp density changes reach the consumer while preserving the rhythm vocabulary', () => {
+  const { project, engine, phrase } = setup();
+  const arp = project.tracks.find(t => t.role === 'arpeggio');
+  for (const rhythm of ['half', 'tresillo', 'sparse', 'euclid']) {
+    const track = { ...arp, generatorSettings: { ...arp.generatorSettings, rhythm, hitsPerPattern: 8,
+      euclideanPulses: 4, patternShift: 1, pauseChance: 0, exceptionChance: 0 } };
+    const generate = amount => {
+      const patch = engine.variationPatch(track, { trackId: track.id, kind: 'arp-density', amount, enabled: true });
+      assert.ok(Object.keys(patch).length, rhythm);
+      assert.equal(Object.hasOwn(patch, 'rhythm'), false);
+      assert.equal(Object.hasOwn(patch, 'patternShift'), false);
+      if (rhythm === 'euclid') assert.equal(Object.hasOwn(patch, 'hitsPerPattern'), false, 'Euclid keeps the grid fixed');
+      return phrase.generateTrackPhrase(project, { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
+    };
+    const base = phrase.generateTrackPhrase(project, track), higher = generate(1), lower = generate(-1);
+    assert.ok(higher.length > base.length, rhythm);
+    assert.ok(lower.length < base.length && lower.length > 0, rhythm);
+    assert.equal(track.generatorSettings.hitsPerPattern, 8);
+  }
+  const single = { ...arp, generatorSettings: { ...arp.generatorSettings, rhythm: 'single', hitsPerPattern: 4 } };
+  assert.deepEqual(engine.variationPatch(single, { trackId: single.id, kind: 'arp-density', amount: -1, enabled: true }), {}, 'never reduce the last sounded pulse');
+  assert.equal(engine.variationPatch(single, { trackId: single.id, kind: 'arp-density', amount: 1, enabled: true }).hitsPerPattern, 16, 'skip grid sizes that add no sounded notes');
+});
+
+test('hat/ride density uses instrument bounds and never introduces kick rolls', () => {
+  const { project, engine, phrase } = setup();
+  const drums = project.tracks.find(t => t.role === 'drums');
+  const choice = { trackId: drums.id, kind: 'drum-density', amount: 1, enabled: true };
+  for (const pitch of [42, 44, 46, 53]) {
+    for (const rhythm of ['full', 'half', 'euclid']) {
+      const track = { ...drums, generatorSettings: { ...drums.generatorSettings, pitch, rhythm, hitsPerPattern: 4, euclideanPulses: 2 } };
+      const patch = engine.variationPatch(track, choice);
+      const base = phrase.generateTrackPhrase(project, track);
+      const varied = phrase.generateTrackPhrase(project, { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
+      assert.ok(varied.length > base.length, `${pitch}, ${rhythm}`);
+      assert.ok(varied.every(note => note.midi === pitch));
+    }
+  }
+  for (const pitch of [35, 36, 38, 40, 49, 51]) assert.deepEqual(engine.variationPatch({ ...drums, generatorSettings: { ...drums.generatorSettings, pitch } }, choice), {});
+  const capped = pitch => ({ ...drums, generatorSettings: { ...drums.generatorSettings, pitch, hitsPerPattern: pitch === 42 ? 16 : 8 } });
+  for (const pitch of [42, 46, 53]) assert.deepEqual(engine.variationPatch(capped(pitch), choice), {});
+});
+
+test('snare ghosts add quiet rest hits and retain the existing anchor notes exactly', () => {
+  const { project, engine, phrase } = setup();
+  const drums = project.tracks.find(t => t.role === 'drums');
+  const track = { ...drums, generatorSettings: { ...drums.generatorSettings, pitch: 38, rhythm: 'half', hitsPerPattern: 8, velocityMin: 80, velocityMax: 100 } };
+  const choice = { trackId: track.id, kind: 'drum-ghosts', amount: 1, enabled: true };
+  const patch = engine.variationPatch(track, choice);
+  const base = phrase.generateTrackPhrase(project, track);
+  const varied = phrase.generateTrackPhrase(project, { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
+  assert.ok(varied.length > base.length);
+  for (const note of base) assert.ok(varied.some(n => n.startBeat === note.startBeat && n.midi === note.midi
+    && n.durationBeats === note.durationBeats && n.velocity === note.velocity));
+  const ghosts = varied.filter(n => !base.some(note => note.startBeat === n.startBeat));
+  assert.ok(ghosts.length && ghosts.every(note => note.midi === 38 && note.velocity <= 50));
+  const removed = engine.variationPatch({ ...track, generatorSettings: { ...track.generatorSettings, ghosts: true } }, { ...choice, amount: -1 });
+  assert.equal(removed.ghosts, false);
+  assert.deepEqual(engine.variationPatch({ ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'full' } }, choice), {});
+});
+
+test('late chord anticipation changes pitches on existing late hits without changing timing, dynamics or opening harmony', () => {
+  const { project, engine, phrase } = setup();
+  const chords = project.tracks.find(t => t.role === 'chords');
+  const track = { ...chords, generatorSettings: { ...chords.generatorSettings, rhythm: 'full', hitsPerPattern: 8, transitionChance: 50 } };
+  const choice = { trackId: track.id, kind: 'chord-transition', amount: 1, enabled: true };
+  const patch = engine.variationPatch(track, choice);
+  assert.equal(patch.transitionChance, 75);
+  let changed = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const p = { ...project, seed: String(seed) };
+    const base = phrase.generateTrackPhrase(p, track);
+    const varied = phrase.generateTrackPhrase(p, { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
+    assert.deepEqual(varied.map(({ midi, ...note }) => note), base.map(({ midi, ...note }) => note));
+    assert.deepEqual(varied.filter(n => n.startBeat % 4 < 2.5), base.filter(n => n.startBeat % 4 < 2.5));
+    if (varied.some((note, i) => note.midi !== base[i].midi)) changed++;
+  }
+  assert.ok(changed > 0, 'the actual chord consumer anticipates harmony for representative seeds');
+  assert.equal(engine.variationPatch(track, { ...choice, amount: -1 }).transitionChance, 25);
+  assert.deepEqual(engine.variationPatch({ ...track, generatorSettings: { ...track.generatorSettings, transitionChance: 100 } }, choice), {}, 'positive variation never lowers an already high chance');
+});
+
+test('rhythmic operations protect authored/dependent grids and explicit interpretation controls', () => {
+  const { project, engine, settings, load } = setup();
+  const inspect = load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  const tracks = [
+    { ...project.tracks.find(t => t.role === 'arpeggio'), kind: 'arp-density' },
+    { ...project.tracks.find(t => t.role === 'chords'), kind: 'chord-transition' },
+    { ...project.tracks.find(t => t.role === 'drums'), kind: 'drum-density' },
+  ];
+  for (const original of tracks) {
+    const track = { ...original, generatorSettings: { ...original.generatorSettings,
+      rhythm: original.role === 'arpeggio' ? 'euclid' : 'full', hitsPerPattern: 8, euclideanPulses: 4,
+      ...(original.role === 'drums' ? { pitch: 42 } : {}) } };
+    const choice = { trackId: track.id, kind: track.kind, amount: 1, enabled: true };
+    for (const patch of [{ customPattern: Array(32).fill(1) }, { useCustomVelocities: true }, { patternFlip: true },
+      { chordSpan: 2 }, { pauseChance: 10 }, { exceptionChance: 10 }, { rhythm: 'melody' }, { rhythm: 'durations' }]) {
+      assert.deepEqual(engine.variationPatch({ ...track, generatorSettings: { ...track.generatorSettings, ...patch } }, choice), {});
+    }
+    const section = { ...project.arrangement[1], trackPartOverrides: { [track.id]: { hitsPerPattern: 8 } },
+      variations: { seed: '1', policy: { chance: 100, maxChanges: 2 }, choices: [choice] } };
+    assert.deepEqual(engine.resolveVariationPatch(track, section), {});
+    assert.equal(inspect(track, section, choice).status, 'overridden');
+    assert.equal(settings.resolvePartTrack(track, section).generatorSettings.hitsPerPattern, 8);
+  }
+});
+
+test('new rhythmic vocabulary coordinates one activity driver with a chord companion and respects retained drivers', () => {
+  const { project, engine, load } = setup();
+  const context = load('core/music/arrangement-variation-context.ts');
+  const tracks = project.tracks.map(track => track.role === 'arpeggio'
+    ? { ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'euclid', hitsPerPattern: 8, euclideanPulses: 4 } } : track);
+  for (let seed = 0n; seed < 30n; seed++) {
+    const plan = engine.planSectionVariations(tracks, project.arrangement, 1, seed, { chance: 100, maxChanges: 4 });
+    assert.ok(plan.choices.some(c => c.kind === 'arp-density'));
+    assert.ok(plan.choices.some(c => c.kind === 'chord-transition'));
+    assert.equal(plan.choices.filter(c => context.isActivityVariation(c.kind)).length, 1);
+  }
+  const snareTracks = tracks.map(track => track.role === 'arpeggio' ? { ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'custom', customPattern: Array(32).fill(1) } }
+    : track.role === 'drums' ? { ...track, generatorSettings: { ...track.generatorSettings, pitch: 38, rhythm: 'half', hitsPerPattern: 8 } } : track);
+  const fallback = engine.planSectionVariations(snareTracks, project.arrangement, 1, 1n, { chance: 100, maxChanges: 4 });
+  assert.equal(fallback.choices.find(c => context.isActivityVariation(c.kind)).kind, 'drum-ghosts');
+  const arp = tracks.find(t => t.role === 'arpeggio');
+  assert.deepEqual(engine.planSectionVariations([arp], project.arrangement, 1, 1n, { chance: 100, maxChanges: 3 }, {
+    allTracks: snareTracks, retainedChoices: [{ trackId: tracks.find(t => t.role === 'drums').id, kind: 'drum-ghosts', amount: 1, enabled: true }],
+  }).choices, []);
+});
+
+test('new rhythmic kinds validate, persist, undo and reproduce shared phrase/MIDI output', () => {
+  for (const kind of ['arp-density', 'chord-transition', 'drum-density', 'drum-ghosts']) {
+    const { project, service, phrase, midi, engine } = setup();
+    const role = kind === 'arp-density' ? 'arpeggio' : kind === 'chord-transition' ? 'chords' : 'drums';
+    const track = project.tracks.find(t => t.role === role);
+    Object.assign(track.generatorSettings, kind === 'arp-density' ? { rhythm: 'euclid', hitsPerPattern: 8, euclideanPulses: 4 }
+      : kind === 'chord-transition' ? { rhythm: 'full', hitsPerPattern: 8, transitionChance: 50 }
+      : kind === 'drum-density' ? { pitch: 42, rhythm: 'full', hitsPerPattern: 4 } : { pitch: 38, rhythm: 'half', hitsPerPattern: 8 });
+    assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+    const before = service.exportProjectJson();
+    const choice = { trackId: track.id, kind, amount: 1, enabled: true };
+    const variations = { seed: '9223372036854775807', policy: { chance: 100, maxChanges: 2 }, choices: [choice] };
+    assert.equal(engine.validSectionVariations(variations, project.tracks), true);
+    const wrongRole = project.tracks.find(t => t.role !== role);
+    assert.equal(engine.validSectionVariations({ ...variations, choices: [{ ...choice, trackId: wrongRole.id }] }, project.tracks), false);
+    assert.equal(service.applyArrangementVariationDraft(service.project(), { 'section-2': variations }), 'changed');
+    const saved = service.exportProjectJson();
+    const notes = service.project().tracks.map(t => phrase.layOutTrackPhrase(service.project(), t));
+    const bytes = midi.generateCompositionMidi(service.project());
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), saved);
+    assert.equal(service.importProjectJson(saved), true);
+    assert.deepEqual(service.project().tracks.map(t => phrase.layOutTrackPhrase(service.project(), t)), notes);
+    assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
+  }
+});

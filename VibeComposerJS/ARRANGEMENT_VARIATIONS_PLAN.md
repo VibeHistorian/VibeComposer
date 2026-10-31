@@ -84,11 +84,26 @@ When a compatible future lift exists, hook plans reserve one slot inside the exi
 
 The planner uses an independent `hook-lift` stream for selecting the accent, leaving foundation rankings and phrase streams alone. Scoped rerolls preserve an existing out-of-scope register operation and account for it in the budget. Lift eligibility is rechecked at resolution after later base/section edits. The popup describes the lift and shows its effective transpose, while the serialized choice kind/amount, existing history, JSON/session and output paths carry the realization. No new behavioral preference is introduced; variation generation remains opt-in through Settings → Behavior → Arrangement.
 
-## Follow-up: additional role vocabulary and audition
+## Additional role vocabulary: rhythm and anticipation (delivered)
 
-Extend rhythm-aware density beyond full arps, add chord transition gestures, richer instrument-aware drums and contextual melody range planning. Keep custom patterns, explicit settings and manual ownership protected. A wider register envelope, broader instrument coverage or default-on escalation should follow musical audition across instrument pools and short/long forms; this slice validates pitch/timing/output behavior and retains conservative guards. Do not treat automated checks as a subjective musical-quality score.
+`arrangement-rhythm-variations.ts` owns four further operations, using the existing rhythm masks and generation consumers rather than independent note postprocessing:
 
-Consider effect vectors and compatibility/exclusion groups only as the catalogue grows. The current duration heuristic and register lifts are static section operations; timed ramps, fills and boundary events remain the separate slice below.
+| Operation | Musical effect | Eligibility and bounds |
+| --- | --- | --- |
+| `arp-density` | Increase/decrease the sounded density of a built-in or Euclidean rhythm. | Non-full built-in grids select the nearest supported hit count that actually changes sounded-slot count; empty reductions are rejected. Euclid changes pulses by one on the existing grid, capped by Hits and never reducing below one. Existing full-Arp activity remains its own operation. |
+| `drum-density` | Increase/decrease pulse density for the supported closed/pedal/open hats and ride. | Pitches 42/44/46/53 only; positive density is capped at 16 grid hits/pulses for closed hats and 8 for the others. Negative changes may reduce an authored denser grid. Kick, snare, crash and unsupported pitches are excluded. |
+| `drum-ghosts` | Add quiet snare notes in grid rests for anticipation, or remove them while settling. | Pitches 38/40 only; at most eight grid slots with both sounded cells and rests. Existing anchor notes retain their timing, duration and velocity; the drum consumer supplies rest hits at half velocity. Full grids, minimum velocity below two and incompatible rhythms are excluded. |
+| `chord-transition` | Raise/lower the existing chance of anticipating the next progression chord on late hits. | Change chance by up to 25 percentage points; positive changes stop at 75 and never lower an already higher authored chance. Require ordinary unjoined/unstrummed grids with both early and late sounded slots, and split between 50–87.5% of the chord. It does not add rhythm hits or rewrite shared harmony; voice count follows the destination chord in the existing consumer. |
+
+These operations require span-one built-in/Euclidean grids without custom grids/durations, melody following, pattern inversion, active custom velocities, pauses or split exceptions. They leave rhythm identity, shift and seeds intact; density may change the subdivision count or Euclidean pulse count. All interpretation controls for each compound operation are protected as a unit against explicit section overrides, including explicit inherited-looking values. Authored/dependent material stays untouched. The actual application percussion catalogue determines supported instruments; this does not introduce another instrument pool or change track pitch.
+
+Density and ghost operations participate in the single anticipation activity-driver allocation; chord anticipation is a harmonic-motion companion rather than another rhythmic driver. Preferred existing Arp/cymbal drivers rank ahead of snare ghosts, with the latter available as a fallback. Chord transitions rise during build-pulse and fall during release/resolve. Saved choices are resolved through the common track/phrase path, with existing manual ownership, section presence, locks, bounds, history and import validation intact. Inspector labels and effective parameter/source descriptions cover all four kinds.
+
+## Follow-up: contextual range planning and audition
+
+Contextual melody range planning, more detailed instrument profiles and musical audition across instrument pools/short and long forms remain separate work. Keep the current conservative envelope and opt-in generation defaults until broader musical validation supports changing them. Automated pitch/timing/output checks do not replace subjective musical-quality review.
+
+Consider effect vectors and compatibility/exclusion groups only as the catalogue grows. The current operations remain static section settings; timed ramps, fills and boundary events are the next distinct consumer slice below.
 
 ## Later slice: ramps and boundary events
 
@@ -159,3 +174,10 @@ Validation: all 544 unit tests, the production build and all 28 browser tests pa
 - Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning.
 - Full production browser aggregate: all 28 passed. The expanded 30-track 1440/780px fixture includes an early chorus and later climax, verifies the lift explanation and saved operation, and confirms that the bass anchor is retained with exactly one register lift. Existing settings/preferences, arrangement/device-scale, contextual, synthesis and export checks also passed.
 - Local logs: frontend `.angular/variation-lifts-unit.log`, `variation-lifts-build.log`, `variation-lifts-browser.log`. This is automated behavioral/output evidence; subjective instrument-pool audition remains follow-up work.
+
+### Rhythmic vocabulary verification, 2026-10-31
+
+- Full unit aggregate: all 562 passed. New tests exercise built-in/Euclidean density against actual arp and drum output, instrument-specific limits and kick exclusions, exact snare-anchor retention with quiet ghosts, and late-only chord pitch changes across 30 seeds. They also cover authored/dependent-grid protection, explicit interpretation overrides, one activity driver plus a chord companion, retained-driver coordination, wrong-role rejection and history/import/shared phrase/MIDI round trips for each new kind.
+- Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning.
+- Full production browser aggregate: all 28 passed. The 30-track 1440/780px fixture uses Euclidean arps and verifies the rhythm-density and chord-anticipation explanations alongside controlled lifts, history, settings and presence behavior. Existing arrangement/device-scale, contextual, synthesis and export suites also passed.
+- Local logs: frontend `.angular/variation-rhythm-unit.log`, `variation-rhythm-build.log`, `variation-rhythm-browser.log`. These tests validate consumer behavior and persistence; subjective audition and timed events remain separate work.

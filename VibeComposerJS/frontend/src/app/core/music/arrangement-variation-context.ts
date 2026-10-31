@@ -70,13 +70,14 @@ export function resolveVariationContext(tracks: readonly CompositionTrack[], sec
   return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats, returnLift };
 }
 
-export const isActivityVariation = (kind: VariationKind): boolean => ['melody-speed', 'arp-activity', 'drum-activity'].includes(kind);
+export const isActivityVariation = (kind: VariationKind): boolean => ['melody-speed', 'arp-activity', 'arp-density', 'drum-activity', 'drum-density', 'drum-ghosts'].includes(kind);
 export const isRegisterVariation = (kind: VariationKind): boolean => kind === 'melody-register' || kind === 'arp-register';
 
 /** Undefined deliberately leaves a responsibility unchanged. Solo material keeps its pulse. */
 export function variationAmountForContext(context: VariationContext, kind: VariationKind): -1 | 1 | undefined {
   const { gesture, intent, presentCount } = context;
   if (isRegisterVariation(kind)) return context.returnLift ? 1 : undefined;
+  if (kind === 'chord-transition') return gesture === 'build-pulse' ? 1 : gesture === 'release-tension' || gesture === 'resolve' ? -1 : undefined;
   if (kind === 'arp-contour') return gesture === 'build-pulse' ? 1 : gesture === 'resolve' ? -1 : undefined;
   if (kind === 'bass-weight' || kind === 'chord-space') {
     if (gesture === 'build-pulse' || gesture === 'sustain') return undefined;
@@ -94,9 +95,11 @@ export function variationAmountForContext(context: VariationContext, kind: Varia
 
 export function variationPriority(context: VariationContext, kind: VariationKind): number {
   if (kind === 'arp-contour') return 2;
+  if (kind === 'chord-transition') return context.gesture === 'release-tension' ? 3 : 2;
   const activity = isActivityVariation(kind), foundation = kind === 'bass-weight' || kind === 'chord-space';
   switch (context.gesture) {
-    case 'build-pulse': return kind === 'arp-activity' || kind === 'drum-activity' ? 4 : kind === 'melody-direction' ? 2 : activity ? 1 : 0;
+    case 'build-pulse': return ['arp-activity', 'arp-density', 'drum-activity', 'drum-density'].includes(kind) ? 4
+      : kind === 'drum-ghosts' ? 3 : kind === 'melody-direction' ? 2 : activity ? 1 : 0;
     case 'release-tension': return kind === 'bass-weight' ? 4 : activity ? 3 : foundation ? 2 : 0;
     case 'reinforce-foundation': return foundation ? 4 : 0;
     case 'thin': return activity ? 3 : foundation ? 2 : 0;
