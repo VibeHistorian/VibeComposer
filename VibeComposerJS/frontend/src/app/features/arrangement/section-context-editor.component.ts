@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import type { ArrangementSection, SectionMusicalContext } from '../../core/project/arrangement.model';
+import { SECTION_TYPES, type ArrangementSection, type SectionMusicalContext } from '../../core/project/arrangement.model';
 import { ProjectService } from '../../core/project/project.service';
 import { ARRANGED_PARTS, type ArrangedPart } from '../../core/music/part-role';
 import { MAX_VOLUME_PERCENT } from '../../core/audio/mix-values';
@@ -23,18 +23,59 @@ export class SectionContextEditorComponent {
   readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly projects = inject(ProjectService);
   readonly section = input.required<ArrangementSection>();
+  readonly allSections = input(false);
+  readonly sectionTypes = SECTION_TYPES;
+  mixedType(): boolean { return this.mixed(section => section.type); }
+  mixedMeasures(): boolean { return this.mixed(section => section.measures); }
+  readonly arrangementFlags = ['useMelodyHarmony', 'swapMelody'] as const;
+  flagMixed(key: 'useMelodyHarmony' | 'swapMelody'): boolean { return this.mixed(section => section[key] ?? false); }
+  setFlag(key: 'useMelodyHarmony' | 'swapMelody', event: Event): void {
+    const value = (event.target as HTMLInputElement).checked;
+    this.apply(section => ({ ...section, [key]: value }));
+  }
+  setAllType(value: string): void {
+    this.projects.editAllSectionMusic(section => ({ ...section, type: value as ArrangementSection['type'] }));
+  }
+  setAllMeasures(event: Event): void {
+    const measures = Number((event.target as HTMLInputElement).value);
+    this.projects.editAllSectionMusic(section => ({ ...section, measures }));
+  }
+  presenceMixed(trackId: string): boolean { return this.mixed(section => section.trackPresence?.[trackId] ?? false); }
+  setPresence(trackId: string, event: Event): void {
+    const present = (event.target as HTMLInputElement).checked;
+    this.projects.editAllSectionMusic(section => ({ ...section, trackPresence: { ...section.trackPresence, [trackId]: present } }));
+  }
+  mixed(read: (section: ArrangementSection) => unknown): boolean {
+    return this.allSections() && this.projects.project().arrangement.some(section => JSON.stringify(read(section)) !== JSON.stringify(read(this.section())));
+  }
+  contextMixed(key: keyof SectionMusicalContext): boolean { return this.mixed(section => section.context?.[key]); }
+  velocityMixed(role: ArrangedPart): boolean { return this.mixed(section => section.context?.velocityPercent?.[role] ?? 100); }
+  durationValues(section: ArrangementSection): readonly number[] {
+    return section.customDurations ?? sectionChordDurations(this.projects.project(), section).map(value => value / (section.context?.beatDurationMultiplier ?? 1));
+  }
+  durationMixed(index: number): boolean { return this.mixed(section => this.durationValues(section)[index]); }
+  apply(change: (section: ArrangementSection) => ArrangementSection): void {
+    if (this.allSections()) this.projects.editAllSectionMusic(change);
+    else { const next = change(this.section()); this.projects.setSectionMusicalState(next.id, {
+      context: next.context, customChords: next.customChords, chordDegrees: next.chordDegrees, customDurations: next.customDurations }); }
+  }
+  resetTiming(): void { this.apply(section => ({ ...section, context: section.context?.velocityPercent ? { velocityPercent: section.context.velocityPercent } : undefined })); }
   readonly keys = KEYS;
   readonly hasChordOverride = computed(() => sectionHasChordOverride(this.projects.project(), this.section()));
   readonly maximumVelocity = MAX_VOLUME_PERCENT;
   readonly roles = ARRANGED_PARTS;
   readonly roleLabels: Record<ArrangedPart, string> = { melody: 'Melody', bass: 'Bass', chords: 'Chords', arpeggio: 'Arps', drums: 'Drums' };
   setVelocity(role: ArrangedPart, value: number): void {
-    const velocityPercent = { ...this.section().context?.velocityPercent };
-    if (value === 100) delete velocityPercent[role]; else velocityPercent[role] = value;
-    this.projects.updateSectionContext(this.section().id, { velocityPercent: Object.keys(velocityPercent).length ? velocityPercent : null });
+    this.apply(section => {
+      const velocityPercent = { ...section.context?.velocityPercent };
+      if (value === 100) delete velocityPercent[role]; else velocityPercent[role] = value;
+      const context = { ...section.context };
+      if (Object.keys(velocityPercent).length) context.velocityPercent = velocityPercent;
+      else delete context.velocityPercent;
+      return { ...section, context: Object.keys(context).length ? context : undefined };
+    });
   }
-  readonly durations = computed(() => this.section().customDurations
-    ?? sectionChordDurations(this.projects.project(), this.section()).map(value => value / (this.section().context?.beatDurationMultiplier ?? 1)));
+  readonly durations = computed(() => this.allSections() ? Array.from({ length: Math.max(...this.projects.project().arrangement.map(section => this.durationValues(section).length)) }, (_, index) => this.durationValues(this.section())[index] ?? 4) : this.durationValues(this.section()));
   readonly numericFields = [
     { key: 'tempoBpm', label: 'BPM', min: 30, max: 300, step: 1 },
     { key: 'swingPercent', label: 'Swing %', min: 0, max: 100, step: 1 },
@@ -47,13 +88,22 @@ export class SectionContextEditorComponent {
     this.choose(key, (event.target as HTMLInputElement).value, numeric);
   }
   choose(key: keyof SectionMusicalContext, value: string, numeric = false): void {
-    this.projects.updateSectionContext(this.section().id, { [key]: value === '' ? null : numeric ? Number(value) : value });
+    this.apply(section => {
+      const context = { ...section.context };
+      if (value === '') delete context[key]; else Object.assign(context, { [key]: numeric ? Number(value) : value });
+      return { ...section, context: Object.keys(context).length ? context : undefined };
+    });
   }
-  reset(key: keyof SectionMusicalContext): void { this.projects.updateSectionContext(this.section().id, { [key]: null }); }
+  reset(key: keyof SectionMusicalContext): void { this.choose(key, ''); }
   setDuration(index: number, event: Event): void {
-    const durations = [...this.durations()]; durations[index] = Number((event.target as HTMLInputElement).value);
-    this.projects.setSectionMusicalState(this.section().id, { customDurations: durations });
+    const value = Number((event.target as HTMLInputElement).value);
+    this.apply(section => {
+      const durations = [...this.durationValues(section)];
+      while (durations.length <= index) durations.push(4);
+      durations[index] = value;
+      return { ...section, customDurations: durations };
+    });
   }
-  clearDurations(): void { this.projects.setSectionMusicalState(this.section().id, { customDurations: undefined }); }
-  clearHarmony(): void { this.projects.setSectionMusicalState(this.section().id, { customChords: undefined, chordDegrees: undefined }); }
+  clearDurations(): void { this.apply(section => ({ ...section, customDurations: undefined })); }
+  clearHarmony(): void { this.apply(section => ({ ...section, customChords: undefined, chordDegrees: undefined })); }
 }

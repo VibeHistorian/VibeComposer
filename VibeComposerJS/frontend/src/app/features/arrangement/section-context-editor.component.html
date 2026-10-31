@@ -1,3 +1,17 @@
+@if (allSections()) {
+  <fieldset>
+    <legend>All sections</legend>
+    <label>Section type<vc-select [options]="sectionTypes" [value]="section().type"
+      [mixed]="mixedType()" (valueChange)="setAllType($event)" /></label>
+    <label>Length in bars<input type="number" min="1" max="128" [value]="mixedMeasures() ? '' : section().measures"
+      [placeholder]="mixedMeasures() ? 'Mixed' : ''" (change)="setAllMeasures($event)" /></label>
+    @for (flag of arrangementFlags; track flag) {
+      <label><input type="checkbox" [checked]="section()[flag] ?? false" [indeterminate]="flagMixed(flag)" (change)="setFlag(flag, $event)" />
+        {{ flag === 'useMelodyHarmony' ? 'Use Melody harmony' : 'Swap Melody' }} @if (flagMixed(flag)) { <span>Mixed</span> }
+      </label>
+    }
+  </fieldset>
+}
 <fieldset>
   <legend>Section MIDI velocity</legend>
   <div class="velocity-knobs">
@@ -5,15 +19,15 @@
       <div class="role-velocity">
         <span>{{ roleLabels[role] }}</span>
         <vc-compact-knob [label]="roleLabels[role] + ' velocity'" [mini]="true" [showValueBelow]="true"
-          [value]="section().context?.velocityPercent?.[role] ?? 100" [minimum]="0" [maximum]="maximumVelocity" [step]="0.1" [defaultValue]="100" valueFormat="decibels" (valueCommit)="setVelocity(role, $event)" />
+          [mixed]="velocityMixed(role)" [value]="section().context?.velocityPercent?.[role] ?? 100" [minimum]="0" [maximum]="maximumVelocity" [step]="0.1" [defaultValue]="100" valueFormat="decibels" (valueCommit)="setVelocity(role, $event)" />
       </div>
     }
   </div>
 </fieldset>
 <fieldset data-control-category="pitch">
   <legend>Section chords</legend>
-  <vc-chordlet-editor [section]="section()" />
-  @if (hasChordOverride()) {
+  <vc-chordlet-editor [section]="section()" [allSections]="allSections()" />
+  @if (allSections() || hasChordOverride()) {
     <button type="button" (click)="clearHarmony()">Use primary chords</button>
   }
 </fieldset>
@@ -21,27 +35,37 @@
   <legend>Chord durations · beats</legend>
   <div class="duration-list">
     @for (value of durations(); track $index; let index = $index) {
-      <label>{{ index + 1 }}<input type="number" min="0.25" max="32" step="0.25" [value]="value"
+      <label>{{ index + 1 }}<input type="number" min="0.25" max="32" step="0.25" [value]="durationMixed(index) ? '' : value" [placeholder]="durationMixed(index) ? 'Mixed' : ''"
         [attr.aria-label]="'Chord ' + (index + 1) + ' duration in beats'" (change)="setDuration(index, $event)" /></label>
     }
   </div>
-  @if (section().customDurations) { <button type="button" (click)="clearDurations()">Use default durations</button> }
+  @if (allSections() || section().customDurations) { <button type="button" (click)="clearDurations()">Use default durations</button> }
 </fieldset>
 <fieldset data-control-category="timing">
   <legend>Section timing and key</legend>
   @for (field of numericFields; track field.key) {
     <div class="context-field">
       <label>{{ field.label }}<input type="number" [min]="field.min" [max]="field.max" [step]="field.step"
-        [value]="section().context?.[field.key] ?? ''" [placeholder]="inherited(field.key)"
+        [value]="contextMixed(field.key) ? '' : section().context?.[field.key] ?? ''" [placeholder]="contextMixed(field.key) ? 'Mixed' : inherited(field.key)"
         (change)="update(field.key, $event, true)" /></label>
-      <button type="button" [disabled]="section().context?.[field.key] === undefined" (click)="reset(field.key)">Inherit</button>
+      <button type="button" [disabled]="!contextMixed(field.key) && section().context?.[field.key] === undefined" (click)="reset(field.key)">Inherit</button>
     </div>
   }
-  <label>Key<vc-select [options]="keyOptions()" [selectDefault]="projects.project().key" [value]="section().context?.key ?? ''" (valueChange)="choose('key', $event)"></vc-select></label>
-  <label>Scale<vc-select [options]="scaleOptions()" [selectDefault]="projects.project().scale" [value]="section().context?.scale ?? ''" (valueChange)="choose('scale', $event)"></vc-select></label>
+  <label>Key<vc-select [options]="keyOptions()" [selectDefault]="projects.project().key" [mixed]="contextMixed('key')" [value]="section().context?.key ?? ''" (valueChange)="choose('key', $event)"></vc-select></label>
+  <label>Scale<vc-select [options]="scaleOptions()" [selectDefault]="projects.project().scale" [mixed]="contextMixed('scale')" [value]="section().context?.scale ?? ''" (valueChange)="choose('scale', $event)"></vc-select></label>
   <label>Key change type<vc-select [options]="[{ value: 'direct', label: 'Direct' }, { value: 'two-five-one', label: 'Ending ii–V' }]" selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
-    [value]="section().context?.keyChangeType ?? 'direct'" (valueChange)="choose('keyChangeType', $event)"></vc-select></label>
+    [mixed]="contextMixed('keyChangeType')" [value]="section().context?.keyChangeType ?? 'direct'" (valueChange)="choose('keyChangeType', $event)"></vc-select></label>
   @if (section().customChords || section().chordDegrees) { <p>Explicit section chords take precedence over the ending cadence.</p> }
-  <label>Beat duration<vc-select [options]="[{ value: '0.5', label: 'Half' }, { value: '1', label: 'Normal' }, { value: '2', label: 'Double' }]" [selectDefault]="1" [value]="section().context?.beatDurationMultiplier ?? 1" (valueChange)="choose('beatDurationMultiplier', $event, true)"></vc-select></label>
-  <button type="button" (click)="projects.setSectionMusicalState(section().id, { context: section().context?.velocityPercent ? { velocityPercent: section().context?.velocityPercent } : undefined })" [disabled]="!section().context">Inherit all timing and key</button>
+  <label>Beat duration<vc-select [options]="[{ value: '0.5', label: 'Half' }, { value: '1', label: 'Normal' }, { value: '2', label: 'Double' }]" [selectDefault]="1" [mixed]="contextMixed('beatDurationMultiplier')" [value]="section().context?.beatDurationMultiplier ?? 1" (valueChange)="choose('beatDurationMultiplier', $event, true)"></vc-select></label>
+  <button type="button" (click)="resetTiming()">Inherit all timing and key</button>
 </fieldset>
+
+@if (allSections()) {
+  <fieldset>
+    <legend>Tracks in all sections</legend>
+    @for (track of projects.project().tracks; track track.id) {
+      <label><input type="checkbox" [checked]="section().trackPresence[track.id]" [indeterminate]="presenceMixed(track.id)"
+        (change)="setPresence(track.id, $event)" />{{ track.name }} @if (presenceMixed(track.id)) { <span>Mixed</span> }</label>
+    }
+  </fieldset>
+}

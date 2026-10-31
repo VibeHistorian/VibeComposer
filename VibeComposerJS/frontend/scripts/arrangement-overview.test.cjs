@@ -698,3 +698,22 @@ test('custom arrangement mouse and keyboard bindings replace defaults and target
   c.onCanvasKeydown({ key: 'C', shiftKey: true, altKey: true, preventDefault() {} });
   assert.equal(c.selectionCleared.values.length, 1);
 });
+
+
+test('arrangement corner indicators require shared non-default swing and durations', () => {
+  const { component, base } = fixture();
+  const initial = component.project();
+  const set = change => { component.project.set({ ...initial, arrangement: initial.arrangement.map(change) }); component.drawOverview(); };
+  assert.equal(component.arrangementIndicators(), '');
+  set(section => ({ ...section, context: { swingPercent: 60 }, customDurations: [3, 4, 4, 4] }));
+  assert.equal(component.arrangementIndicators(), '∿*');
+  const corner = base.texts.findLast(text => text.value === '∿*');
+  assert.equal(corner.x, component.labelWidth - 4);
+  assert.ok(corner.y > base.texts.findLast(text => text.value === 'A').y);
+  set((section, index) => ({ ...section, context: { swingPercent: index ? 60 : 61 }, customDurations: [3, 4, 4, 4] }));
+  assert.equal(component.arrangementIndicators(), '*');
+  set((section, index) => ({ ...section, context: { swingPercent: 60 }, customDurations: index ? [3, 4, 4, 4] : [2, 4, 4, 4] }));
+  assert.equal(component.arrangementIndicators(), '∿');
+  set(section => ({ ...section, context: { swingPercent: 50 }, customDurations: [4, 4, 4, 4] }));
+  assert.equal(component.arrangementIndicators(), '');
+});

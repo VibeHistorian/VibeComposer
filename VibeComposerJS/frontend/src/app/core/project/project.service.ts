@@ -123,6 +123,15 @@ export class ProjectService {
     return 'changed';
   }
 
+  editAllSectionMusic(change: (section: ArrangementSection) => ArrangementSection): PartWorkflowResult {
+    const current = this.state();
+    const next = { ...current, arrangement: current.arrangement.map(change) };
+    if (!isProject(next, this.sectionTypeSettings.chances(), Math.random)) return 'invalid';
+    if (JSON.stringify(current) === JSON.stringify(next)) return 'unchanged';
+    this.commit(next);
+    return 'changed';
+  }
+
   updateSectionContext(sectionId: string, patch: Partial<{ [K in keyof SectionMusicalContext]: SectionMusicalContext[K] | null }>): PartWorkflowResult {
     const current = this.state(), section = current.arrangement.find(item => item.id === sectionId);
     if (!section || !patch || typeof patch !== 'object' || Array.isArray(patch)) return 'invalid';
@@ -1105,13 +1114,14 @@ export class ProjectService {
     this.commit({ ...this.state(), progression: [...progression], progressionChords: undefined });
   }
 
-  generateProgression(sectionId?: string): void {
+  generateProgression(sectionId?: string, allSections = false): void {
     const project = this.state(), section = sectionId ? project.arrangement.find(s => s.id === sectionId) : undefined;
     if (sectionId && !section) return;
     const context = sectionProject(project, section);
     const length = section?.customChords?.length ?? section?.chordDegrees?.length ?? project.progression.length;
     const generated = generateHarmony(BigInt(project.seed), length, context.key, context.scale, project.harmonySettings, project.melodyGlobal);
-    if (section) this.setSectionMusicalState(section.id, { chordDegrees: generated.degrees, customChords: generated.chords });
+    if (allSections) this.editAllSectionMusic(item => ({ ...item, chordDegrees: generated.degrees, customChords: generated.chords }));
+    else if (section) this.setSectionMusicalState(section.id, { chordDegrees: generated.degrees, customChords: generated.chords });
     else this.commit({ ...project, progression: generated.degrees, progressionChords: generated.chords });
   }
 

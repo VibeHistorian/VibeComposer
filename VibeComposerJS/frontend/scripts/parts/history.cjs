@@ -891,3 +891,73 @@ test('toolbar reroll replaces structure and presence in one undo, independent of
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), rolled);
 });
+
+
+test('arrangement inspector shares values, preserves other section fields and commits once', () => {
+  const { service, load, ui } = fixture();
+  const { SectionContextEditorComponent } = load('features/arrangement/section-context-editor.component.ts');
+  const editor = new SectionContextEditorComponent();
+  editor.allSections.set(true);
+  editor.section.set(service.project().arrangement[0]);
+  const sections = service.project().arrangement;
+  service.updateSectionContext(sections[1].id, { swingPercent: 31, keyChange: 2 });
+  editor.section.set(service.project().arrangement[0]);
+  assert.equal(editor.contextMixed('swingPercent'), true);
+  const before = service.exportProjectJson();
+  editor.choose('swingPercent', '58', true);
+  assert.ok(service.project().arrangement.every(section => section.context.swingPercent === 58));
+  assert.equal(service.project().arrangement[1].context.keyChange, 2);
+  editor.section.set(service.project().arrangement[0]);
+  assert.equal(editor.contextMixed('swingPercent'), false);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo();
+  const shared = service.exportProjectJson();
+  editor.section.set(service.project().arrangement[0]);
+  editor.setDuration(0, { target: { value: '3' } });
+  assert.ok(service.project().arrangement.every(section => section.customDurations[0] === 3));
+  service.undo(); assert.equal(service.exportProjectJson(), shared);
+  assert.equal(service.editAllSectionMusic(section => ({ ...section, context: { swingPercent: 999 } })), 'invalid');
+  assert.equal(service.exportProjectJson(), shared);
+});
+
+
+test('arrangement combined section controls and chord edits update all destinations atomically', () => {
+  const { service, load } = fixture();
+  const editor = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
+  editor.allSections.set(true); editor.section.set(service.project().arrangement[0]);
+  editor.setAllType('VERSE1');
+  assert.ok(service.project().arrangement.every(section => section.type === 'VERSE1'));
+  const before = service.exportProjectJson();
+  editor.setAllMeasures({ target: { value: '128' } });
+  assert.equal(service.exportProjectJson(), before);
+  editor.setPresence(service.project().tracks[0].id, { target: { checked: false } });
+  assert.ok(service.project().arrangement.every(section => section.trackPresence[service.project().tracks[0].id] === false));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  const chords = new (load('features/harmony/chordlet-editor.component.ts').ChordletEditorComponent)();
+  chords.allSections.set(true); chords.section.set(service.project().arrangement[0]);
+  chords.setChord(0, { root: 2, spice: 'm', inversion: 0 });
+  assert.ok(service.project().arrangement.every(section => section.customChords[0].root === 2));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+});
+
+
+test('section velocity knobs reset the last override to 0 dB with RMB in single and all-section scopes', () => {
+  for (const all of [false, true]) {
+    const { service, load } = fixture();
+    const editor = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
+    editor.allSections.set(all);
+    editor.section.set(service.project().arrangement[0]);
+    editor.setVelocity('melody', 140);
+    editor.section.set(service.project().arrangement[0]);
+    const before = service.exportProjectJson();
+    const knob = new (load('shared/compact-knob.component.ts').CompactKnobComponent)();
+    knob.value.set(140); knob.minimum.set(0); knob.maximum.set(editor.maximumVelocity);
+    knob.defaultValue.set(100); knob.step.set(0.1); knob.valueFormat.set('decibels');
+    knob.valueCommit.emit = value => editor.setVelocity('melody', value);
+    knob.resetDefault({ button: 2, ctrlKey: false, shiftKey: false, altKey: false, metaKey: false, preventDefault() {}, stopPropagation() {} });
+    const targets = all ? service.project().arrangement : [service.project().arrangement[0]];
+    assert.ok(targets.every(section => section.context?.velocityPercent === undefined));
+    assert.notEqual(service.exportProjectJson(), before);
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+  }
+});

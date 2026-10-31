@@ -227,7 +227,7 @@ export class WorkspaceCanvasComponent {
   readonly contextLabel = computed(() => [this.contextLocationLabel(), this.contextPartLabel()].filter(Boolean).join(' · '));
   readonly partScope = computed<PartSettingsScope | null>(() => {
     const target = this.settingsTarget();
-    return target.kind === 'section' ? null : target;
+    return target.kind === 'section' || target.kind === 'arrangement' ? null : target;
   });
   readonly editableScopes = computed(() => {
     const scope = this.partScope();

@@ -115,6 +115,22 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + step + buttons.length) % buttons.length]?.focus();
   }
   readonly randomizeRequested = output<void>();
+  readonly arrangementSelected = output<void>();
+  readonly arrangementIndicators = computed(() => {
+    const project = this.project(), sections = project.arrangement;
+    if (!sections.length) return '';
+    const swing = sections[0].context?.swingPercent;
+    const sharedSwing = swing !== undefined && swing !== 50
+      && sections.every(section => section.context?.swingPercent === swing);
+    const durations = (section: ArrangementSection) => sectionChordDurations(project, section)
+      .map(value => value / (section.context?.beatDurationMultiplier ?? 1));
+    const first = durations(sections[0]);
+    const sharedDurations = first.some(value => value !== 4) && sections.every(section => {
+      const values = durations(section);
+      return values.length === first.length && values.every((value, index) => value === first[index]);
+    });
+    return (sharedSwing ? '∿' : '') + (sharedDurations ? '*' : '');
+  });
   readonly sectionSelected = output<{ readonly sectionId: string; readonly trackId: string;
     readonly ctrlKey?: boolean; readonly metaKey?: boolean; readonly shiftKey?: boolean; readonly altKey?: boolean }>();
   readonly selectionCleared = output<void>();
@@ -649,7 +665,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         label: `Select ${group.name} group`, activate: () => this.groupSelected.emit(group.role) }, 0, RULER_HEIGHT);
     }
     context.restore();
-    fill(0, 0, this.labelWidth, RULER_HEIGHT, '--surface-base');
+    fill(0, 0, this.labelWidth, RULER_HEIGHT, this.settingsTarget()?.kind === 'arrangement' ? '--surface-toggle-active' : '--surface-base');
+    text('A', this.labelWidth / 2 - 5, this.arrangementIndicators() ? 17 : RULER_HEIGHT / 2 + 5, '--accent-primary', `bold 16px ${headingFont}`);
+    if (this.arrangementIndicators()) {
+      context.textAlign = 'right';
+      text(this.arrangementIndicators(), this.labelWidth - 4, RULER_HEIGHT - 4, '--accent-primary');
+      context.textAlign = 'start';
+    }
+    hit({ key: 'arrangement', x: 0, y: 0, width: this.labelWidth, height: RULER_HEIGHT,
+      label: 'All sections - arrangement settings', activate: () => this.arrangementSelected.emit() }, 0, 0);
     fill(0, RULER_HEIGHT - 1, this.width, 1, '--border-subtle');
     const loop = this.loopRange();
     if (loop) {

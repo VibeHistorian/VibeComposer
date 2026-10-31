@@ -112,7 +112,7 @@
         (arrangementOnComposeChanged)="projects.updateSettings({ randomizeArrangementOnCompose: $event })"
         (arrangementPreviewChanged)="projects.updateSettings({ arrangementPreview: $event })"
         (arrangementManualChanged)="projects.updateSettings({ arrangementManual: $event })"
-        (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId, $event)"
+        (arrangementSelected)="workspaceUi.selectArrangement()" (sectionSelected)="selectOverviewSection($event.sectionId, $event.trackId, $event)"
         (selectionCleared)="workspaceUi.clearSelection()"
         (cellSelected)="selectCell($event.sectionId, $event.role)"
         (trackSelected)="selectSectionTrack($event.sectionId, $event.trackId)"
@@ -295,7 +295,9 @@
       <header class="canvas-heading inspector-heading">
           <h2>
             @if (partScope()) { <i class="role-dot" [class]="partRole()" aria-hidden="true"></i> }
-            @if (selectedSection(); as section) {
+            @if (settingsTarget().kind === 'arrangement') {
+              Arrangement
+            } @else if (selectedSection(); as section) {
               {{ sectionLabel(section.type) }}
             } @else if (settingsTarget().kind === 'global-role' || settingsTarget().kind === 'section-role') {
               {{ roleName(partRole()) }} group
@@ -303,7 +305,7 @@
               <span>{{ contextPartLabel() }}<span class="inspector-name-separator">·</span>{{ roleName(partRole()) }}</span>
             }
           </h2>
-        <p class="eyebrow">{{ localPartTarget() ? settingsTarget().kind === 'section-role' ? 'Section role group' : 'Section track' : selectedSection() ? 'Section' : selectedRole() ? 'Role Group' : 'Track' }}</p>
+        <p class="eyebrow">{{ settingsTarget().kind === 'arrangement' ? 'ALL SECTIONS' : localPartTarget() ? settingsTarget().kind === 'section-role' ? 'Section role group' : 'Section track' : selectedSection() ? 'Section' : selectedRole() ? 'Role Group' : 'Track' }}</p>
       </header>
 
       @if (usePartSettingsInspector() && groupSettingsSelected()) {
@@ -349,6 +351,10 @@
               </section>
             }
           }
+        </div>
+      } @else if (settingsTarget().kind === 'arrangement') {
+        <div class="inspector-selection">
+          <vc-section-context-editor [section]="project().arrangement[0]" [allSections]="true" />
         </div>
       } @else if (selectedSection(); as section) {
         <div class="inspector-selection">
@@ -419,7 +425,7 @@
       }
       @if (settingsTarget().kind === 'section') {
         <vc-harmony-settings [section]="selectedSection() ?? undefined" />
-      } @else {
+      } @else if (settingsTarget().kind !== 'arrangement') {
         <vc-harmony-settings />
       }
       }

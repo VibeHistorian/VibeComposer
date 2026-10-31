@@ -5,6 +5,7 @@ import type { ArrangedPart } from '../music/part-role';
 import { ProjectService } from '../project/project.service';
 
 export type SettingsTarget =
+  | { readonly kind: 'arrangement' }
   | { readonly kind: 'global-role'; readonly role: ArrangedPart }
   | { readonly kind: 'global-track'; readonly trackId: string }
   | { readonly kind: 'section'; readonly sectionId: string }
@@ -72,6 +73,8 @@ export class WorkspaceUiService {
       }
     });
   }
+
+  selectArrangement(): void { this.target.set({ kind: 'arrangement' }); }
 
   selectTrack(trackId: string): void {
     if (!this.projects.project().tracks.some((track) => track.id === trackId)) return;

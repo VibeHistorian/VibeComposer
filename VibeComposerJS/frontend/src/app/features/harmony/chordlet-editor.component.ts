@@ -16,6 +16,17 @@ export class ChordletEditorComponent {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly project = this.projects.project;
   readonly section = input<ArrangementSection>();
+  readonly allSections = input(false);
+  readonly mixed = computed(() => this.allSections() && this.project().arrangement.some(section => {
+    const harmony = baseGenerationHarmony(this.project(), section);
+    const context = sectionProject(this.project(), section);
+    return JSON.stringify(progressionChords(context.key, context.scale, harmony.degrees, harmony.customChords)) !== JSON.stringify(this.chords());
+  }));
+  private applyAll(chords: (ProgressionChord | null)[]): void {
+    this.projects.editAllSectionMusic(section => ({ ...section, customChords: chords,
+      chordDegrees: chords.map(() => 1), customDurations: section.customDurations
+        ? chords.map((_, index) => section.customDurations?.[index] ?? 4) : undefined }));
+  }
   readonly chords = computed(() => {
     const project = sectionProject(this.project(), this.section()), harmony = baseGenerationHarmony(this.project(), this.section());
     return progressionChords(project.key, project.scale, harmony.degrees, harmony.customChords);
@@ -52,17 +63,27 @@ export class ChordletEditorComponent {
   chordHue(chord: ProgressionChord): number { return this.rootHue(this.displayedPitch(chord.root)); }
   symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root)
     + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + (chord.inversion ? '.' + chord.inversion : ''); }
-  add(): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
-  remove(index: number): void { this.closeMenu(); const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
+  add(): void { this.closeMenu(); if (this.allSections()) { if (this.chords().length < 32) this.applyAll([...this.chords(), null]); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
+  remove(index: number): void { this.closeMenu(); if (this.allSections()) { if (this.chords().length > 1) this.applyAll(this.chords().filter((_, i) => i !== index)); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
   generate(): void {
     this.closeMenu();
-    this.projects.generateProgression(this.section()?.id);
+    this.projects.generateProgression(this.section()?.id, this.allSections());
   }
   private setChord(index: number, chord: ProgressionChord): void {
+    if (this.allSections()) {
+      this.projects.editAllSectionMusic(section => {
+        const context = sectionProject(this.project(), section), harmony = baseGenerationHarmony(this.project(), section);
+        const chords = progressionChords(context.key, context.scale, harmony.degrees, harmony.customChords);
+        if (index >= chords.length) return section;
+        chords[index] = chord;
+        return { ...section, customChords: chords, chordDegrees: harmony.degrees };
+      }); return;
+    }
     const section = this.section(); if (section) this.projects.setSectionChord(section.id, index, chord);
     else this.projects.setProgressionChord(index, chord);
   }
   private moveChord(from: number, to: number): void {
+    if (this.allSections()) { const chords = [...this.chords()]; chords.splice(to, 0, chords.splice(from, 1)[0]); this.applyAll(chords); return; }
     const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'move', from, to);
     else this.projects.moveProgressionChord(from, to);
   }
