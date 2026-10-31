@@ -36,7 +36,7 @@ export class PatternSequencerComponent {
     const draft = this.draft();
     return project.tracks.filter(track => this.data.role === 'drums' ? track.role === 'drums'
       : 'trackId' in scope ? track.id === scope.trackId : track.role === this.data.role).map(track => {
-      const effective = resolvePartTrack(track, section);
+      const effective = resolvePartTrack(track, section, project.melodyGlobal);
       const values = settingsValues(effective.generatorSettings, effective.role);
       const supported = track.role !== 'melody' && values['rhythm'] !== 'melody' && !(track.role === 'bass' && values['rhythm'] === 'bass1');
       const hits = values['rhythm'] === 'melody' || track.role === 'melody' ? this.data.melodyHits : Number(values['hitsPerPattern'] ?? 8);

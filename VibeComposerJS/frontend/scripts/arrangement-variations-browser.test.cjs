@@ -52,6 +52,14 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(d.contains(document.activeElement),'dialog focus');
       ensure(!d.querySelector('[aria-label="Generate arrangement variations"]')&&!d.querySelector('[aria-label="Reroll presence too"]'),'behavior toggles removed from popup');
       let box=d.getBoundingClientRect();ensure(box.left>=0&&box.right<=innerWidth&&box.top>=0&&box.bottom<=innerHeight,'dialog fits');
+      const budget=d.querySelector('[aria-label="Variation change budget"]');
+      ensure(Number(budget.max)===15,'30-track capacity is fifteen');
+      await changeControl(budget,'16');
+      await wait(()=>button(d,'Reroll variations').disabled,'above-capacity budget rejected');
+      await changeControl(budget,'15');await wait(()=>!button(d,'Reroll variations').disabled,'valid capacity accepted');button(d,'Reroll variations').click();
+      await wait(()=>[...d.querySelectorAll('.variation-section')].some(s=>s.querySelectorAll('article').length>4),'larger section budget');
+      ensure(JSON.stringify(read())===original,'larger reroll stays local');
+      await changeControl(budget,'2');
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Release tension')),'release purpose');

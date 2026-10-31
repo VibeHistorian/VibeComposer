@@ -1,3 +1,4 @@
+import { fitVariationCapacity } from './arrangement-variation-capacity';
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
 import { pruneVariations } from '../music/arrangement-variations';
 import type { CompositionTrack } from './track.model';
@@ -57,5 +58,5 @@ export function loadTrackPreset(project: CompositionProject, role: ArrangedPart,
     ...(section.trackPhrases !== undefined ? { trackPhrases: prune(section.trackPhrases) } : {}),
     ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => !removed.has(id)) } : {}),
   }));
-  return { ...project, tracks, arrangement };
+  return fitVariationCapacity({ ...project, tracks, arrangement });
 }

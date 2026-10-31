@@ -20,7 +20,7 @@ export function validateDurationDraft(project: CompositionProject, scope: PartSe
   if (!sections.length) return 'The selected section no longer exists.';
   for (const track of tracks) for (const section of sections) {
     const base = scope.kind.startsWith('global') ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } } as CompositionTrack : track;
-    let effective = resolvePartTrack(base, section);
+    let effective = resolvePartTrack(base, section, project.melodyGlobal);
     if (scope.kind === 'section-track') effective = { ...effective, generatorSettings: { ...effective.generatorSettings, ...patch } } as CompositionTrack;
     if (scope.kind === 'section-role') effective = { ...effective, generatorSettings: {
       ...track.generatorSettings, ...section?.rolePartOverrides?.[track.role], ...patch, ...section?.trackPartOverrides?.[track.id],

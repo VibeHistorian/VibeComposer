@@ -254,7 +254,7 @@ test('musical variation policy is validated and detached while generation behavi
   input.arrangementVariationPolicy.chance = 99;
   assert.equal(decoded.arrangementVariationPolicy.chance, 65);
   assert.equal(Object.hasOwn(decoded, 'arrangementVariationGeneration'), false);
-  for (const invalid of [null, [], { chance: 101, maxChanges: 2 }, { chance: 100, maxChanges: 5 }, { chance: 100, maxChanges: 2, enabled: true }]) {
+  for (const invalid of [null, [], { chance: 101, maxChanges: 2 }, { chance: 100, maxChanges: 7 }, { chance: 100, maxChanges: 2, enabled: true }]) {
     assert.equal(codec.decodeProject({ ...project, arrangementVariationPolicy: invalid }, chances, () => .5), undefined);
     assert.equal(codec.isProject({ ...project, arrangementVariationPolicy: invalid }, chances, () => .5), false);
   }
@@ -720,4 +720,144 @@ test('new rhythmic kinds validate, persist, undo and reproduce shared phrase/MID
     assert.deepEqual(service.project().tracks.map(t => phrase.layOutTrackPhrase(service.project(), t)), notes);
     assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
   }
+});
+
+test('capacity follows all project tracks, validates imports and fills larger budgets after role diversity', () => {
+  const { project, engine, commands, service, load } = setup();
+  const base = project.tracks.find(t => t.role === 'bass');
+  project.tracks = Array.from({ length: 13 }, (_, i) => ({ ...base, id: `track-bass-${i + 1}` }));
+  project.arrangement = project.arrangement.map(s => ({ ...s, trackPresence: Object.fromEntries(project.tracks.map(t => [t.id, true])) }));
+  const policy = { chance: 100, maxChanges: 7 };
+  assert.deepEqual([0, 11, 12, 13, 30, 64].map(engine.maximumSectionVariations), [6, 6, 6, 7, 15, 32]);
+  const planned = commands.randomizeArrangementVariations(project, 1n, undefined, policy);
+  assert.equal(planned.arrangement[2].variations.choices.length, 7);
+  assert.deepEqual(engine.planSectionVariations([...project.tracks].reverse(), project.arrangement, 2, 1n, policy), planned.arrangement[2].variations);
+  assert.equal(service.importProjectJson(JSON.stringify(planned)), true);
+  assert.equal(service.randomizeArrangementVariations(undefined, { ...policy, maxChanges: 8 }), 'invalid');
+  const invalid = structuredClone(planned); invalid.arrangement[2].variations.choices.push({ ...invalid.arrangement[2].variations.choices[0], trackId: project.tracks.find(t => !invalid.arrangement[2].variations.choices.some(c => c.trackId === t.id)).id });
+  assert.equal(service.importProjectJson(JSON.stringify(invalid)), false);
+  const draft = load('core/project/arrangement-variation-draft.ts');
+  const scoped = draft.rerollVariationDraft(planned, { role: 'bass' }, draft.initialVariationDraft(planned, {}), 2n, policy);
+  assert.equal(scoped['section-3'].choices.length, 7);
+  const singleScope = { trackId: project.tracks.find(t => !planned.arrangement[2].variations.choices.some(c => c.trackId === t.id)).id };
+  const retainedDraft = draft.rerollVariationDraft(planned, singleScope, draft.initialVariationDraft(planned, {}), 2n, policy);
+  assert.equal(retainedDraft['section-3'].choices.length, 7, 'full capacity is retained across scoped rerolls');
+  const remainingTracks = project.tracks.filter(t => !planned.arrangement[2].variations.choices.slice(0, 4).some(c => c.trackId === t.id));
+  const selected = engine.planSectionVariations(remainingTracks, project.arrangement, 2, 2n, { chance: 100, maxChanges: 3 }, {
+    allTracks: project.tracks, retainedChoices: planned.arrangement[2].variations.choices.slice(0, 4),
+  });
+  assert.equal(selected.choices.length, 3, 'scoped capacity uses the full budget, including retained choices');
+  const Dialog = load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
+  const dialog = new Dialog();
+  assert.equal(dialog.maximumChanges, 7);
+  dialog.policy.set(policy); assert.equal(dialog.policyValid(), true);
+  dialog.policy.set({ ...policy, maxChanges: 8 }); assert.equal(dialog.policyValid(), false);
+});
+
+test('track removal, role reduction and preset replacement resize policies and choices atomically', () => {
+  const { project, service } = setup();
+  const bass = project.tracks.find(t => t.role === 'bass');
+  project.tracks = Array.from({ length: 13 }, (_, i) => ({ ...bass, id: `track-bass-${i + 1}` }));
+  project.arrangementVariationPolicy = { chance: 100, maxChanges: 7 };
+  project.arrangement = project.arrangement.map(s => ({ ...s, trackPresence: Object.fromEntries(project.tracks.map(t => [t.id, true])), variations: {
+    seed: '1', policy: { chance: 100, maxChanges: 7 }, choices: project.tracks.slice(0, 7).map(t => ({ trackId: t.id, kind: 'bass-weight', amount: 1, enabled: true })),
+  } }));
+  for (const remove of [() => service.removeTrack('track-bass-13'), () => service.setRoleTrackCount('bass', 11), () => service.loadTrackPreset('bass', [bass], true)]) {
+    assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+    const before = service.exportProjectJson();
+    remove();
+    const after = service.exportProjectJson(); assert.notEqual(after, before);
+    assert.equal(service.project().arrangementVariationPolicy.maxChanges, 6);
+    for (const s of service.project().arrangement) {
+      assert.equal(s.variations.policy.maxChanges, 6);
+      assert.ok(s.variations.choices.length <= 6);
+      assert.ok(s.variations.choices.every(c => service.project().tracks.some(t => t.id === c.trackId)));
+    }
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+  }
+});
+
+test('larger budgets retain one anticipation driver and at most one register lift', () => {
+  const { project, engine, load } = setup();
+  const context = load('core/music/arrangement-variation-context.ts');
+  const tracks = project.tracks.flatMap(t => Array.from({ length: 6 }, (_, i) => ({ ...t, id: `${t.id}-${i}` })));
+  const sections = ['BUILDUP2', 'CHORUS1', 'VERSE1', 'CLIMAX', 'OUTRO'].map((type, i) => ({ id: `large-${i}`, type, measures: 4, trackPresence: Object.fromEntries(tracks.map(t => [t.id, true])) }));
+  for (let seed = 0n; seed < 30n; seed++) {
+    const build = engine.planSectionVariations(tracks, sections, 0, seed, { chance: 100, maxChanges: 15 });
+    assert.equal(build.choices.filter(c => context.isActivityVariation(c.kind)).length, 1);
+    const peak = engine.planSectionVariations(tracks, sections, 3, seed, { chance: 100, maxChanges: 15 });
+    assert.ok(peak.choices.length > 4 && peak.choices.length <= 15);
+    assert.equal(peak.choices.filter(c => context.isRegisterVariation(c.kind)).length, 1);
+    assert.equal(new Set(peak.choices.map(c => c.trackId)).size, peak.choices.length);
+  }
+});
+
+test('contextual range is bounded, atomic and inactive in block melody mode', () => {
+  const { project, engine, settings, load } = setup();
+  const track = project.tracks.find(t => t.role === 'melody');
+  const choice = { trackId: track.id, kind: 'melody-range', amount: -1, enabled: true };
+  const section = { ...project.arrangement[1], variations: { seed: '1', policy: { chance: 100, maxChanges: 2 }, choices: [choice] } };
+  const inspect = load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  assert.deepEqual(engine.variationPatch(track, choice), { rangeMin: 50, rangeMax: 70 });
+  assert.deepEqual(engine.variationPatch(track, { ...choice, amount: 1 }), { rangeMin: 46, rangeMax: 74 });
+  assert.deepEqual(engine.variationPatch(track, choice, { contextualMelody: false }), {});
+  assert.equal(inspect(track, section, choice, { contextualMelody: false }).status, 'incompatible');
+  assert.equal(inspect(track, section, choice, { contextualMelody: true }).status, 'active');
+  for (const [rangeMin, rangeMax, transpose, amount] of [[48, 60, 0, -1], [36, 72, 0, 1], [36, 60, -12, 1], [60, 84, 12, 1]]) {
+    assert.deepEqual(engine.variationPatch({ ...track, generatorSettings: { ...track.generatorSettings, rangeMin, rangeMax, transpose } }, { ...choice, amount }), {});
+  }
+  for (const key of ['rangeMin', 'rangeMax', 'transpose']) {
+    const protectedSection = { ...section, rolePartOverrides: { melody: { [key]: key === 'rangeMin' ? 48 : key === 'rangeMax' ? 72 : 0 } } };
+    assert.deepEqual(settings.resolvePartTrack(track, protectedSection).generatorSettings, { ...track.generatorSettings, ...protectedSection.rolePartOverrides.melody });
+    assert.equal(inspect(track, protectedSection, choice).status, 'overridden');
+  }
+  const sections = ['INTRO', 'CHORUS3', 'CHILL'].map((type, i) => ({ ...section, id: `range-${i}`, type, variations: undefined }));
+  const positive = engine.planSectionVariations(project.tracks, sections, 1, 1n, { chance: 100, maxChanges: 6 });
+  assert.ok(positive.choices.some(c => c.kind === 'melody-range' && c.amount === 1));
+  const quiet = sections.map((s, i) => i === 2 ? { ...s, trackPartOverrides: { [track.id]: { speed: 50, targetDirection: 'ASC' } } } : s);
+  const contraction = engine.planSectionVariations(project.tracks, quiet, 2, 1n, { chance: 100, maxChanges: 6 });
+  assert.ok(contraction.choices.some(c => c.kind === 'melody-range' && c.amount === -1));
+  const block = engine.planSectionVariations(project.tracks, sections, 1, 1n, { chance: 100, maxChanges: 6 }, { melodyGlobal: { contextualMelody: false } });
+  assert.ok(!block.choices.some(c => c.kind === 'melody-range'));
+});
+
+test('contextual range reaches shared notes, melody dependencies and MIDI while preserving manual ownership', () => {
+  const { project, engine, phrase, midi, service } = setup();
+  const base = project.tracks.find(t => t.role === 'melody');
+  const choice = { trackId: base.id, kind: 'melody-range', amount: -1, enabled: true };
+  const section = { ...project.arrangement[1], variations: { seed: '1', policy: { chance: 100, maxChanges: 2 }, choices: [choice] } };
+  const patch = engine.variationPatch(base, choice);
+  let pitchChanges = 0;
+  for (const [key, scale, tonic] of [['C', 'major', 0], ['F♯', 'dorian', 6], ['B', 'natural-minor', 11]]) for (let seed = 1; seed <= 10; seed++) {
+    const p = { ...project, seed: String(seed), key, scale, melodyGlobal: { contextualMelody: true }, arrangement: [section] };
+    const explicit = { ...p, arrangement: [{ ...section, variations: undefined, trackPartOverrides: { [base.id]: patch } }] };
+    const bare = { ...p, arrangement: [{ ...section, variations: undefined }] };
+    const notes = phrase.layOutTrackPhrase(p, base);
+    assert.ok(notes.length && notes.every(n => n.midi >= patch.rangeMin + tonic && n.midi <= patch.rangeMax + tonic));
+    assert.deepEqual(notes, phrase.layOutTrackPhrase(explicit, base));
+    assert.deepEqual(phrase.sectionMelodyContext(p, section), phrase.sectionMelodyContext(explicit, explicit.arrangement[0]));
+    assert.deepEqual(midi.generateCompositionMidi(p), midi.generateCompositionMidi(explicit));
+    if (JSON.stringify(notes) !== JSON.stringify(phrase.layOutTrackPhrase(bare, base))) pitchChanges++;
+  }
+  assert.ok(pitchChanges > 0, 'range affects actual generated pitches');
+  const p = { ...project, melodyGlobal: { contextualMelody: true }, arrangement: [section] };
+  const manual = [{ id: 'owned', midi: 40, startBeat: 0, durationBeats: 1, velocity: 88 }];
+  for (const local of [false, true]) {
+    const track = local ? base : { ...base, editedPhrase: manual };
+    const s = local ? { ...section, trackPhrases: { [base.id]: manual } } : section;
+    assert.deepEqual(phrase.layOutTrackPhrase({ ...p, tracks: [track], arrangement: [s] }, track).map(n => n.midi), [40]);
+  }
+  const edited = { ...base, phraseEdits: [{ startBeat: 0, endBeat: 4, notes: manual }] };
+  const ranged = { ...p, tracks: [edited] };
+  assert.deepEqual(phrase.layOutTrackPhrase(ranged, edited).filter(n => n.startBeat < 4), phrase.layOutTrackPhrase({ ...ranged, arrangement: [{ ...section, variations: undefined }] }, edited).filter(n => n.startBeat < 4));
+  const blockProject = { ...p, melodyGlobal: { contextualMelody: false } };
+  assert.deepEqual(phrase.layOutTrackPhrase(blockProject, base), phrase.layOutTrackPhrase({ ...blockProject, arrangement: [{ ...section, variations: undefined }] }, base));
+  assert.deepEqual(phrase.sectionMelodyContext(blockProject, section), phrase.sectionMelodyContext({ ...blockProject, arrangement: [{ ...section, variations: undefined }] }, { ...section, variations: undefined }));
+  assert.equal(service.importProjectJson(JSON.stringify(p)), true);
+  const saved = service.exportProjectJson(), bytes = midi.generateCompositionMidi(service.project());
+  service.setArrangementVariationEnabled(section.id, base.id, false);
+  service.undo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
 });

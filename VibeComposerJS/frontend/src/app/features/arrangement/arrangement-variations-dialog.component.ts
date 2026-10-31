@@ -4,7 +4,7 @@ import { ProjectService } from '../../core/project/project.service';
 import { initialVariationDraft, rerollVariationDraft, resetVariationDraft, variationScopeSections, variationScopeTracks,
   projectWithVariationPresence, rerollVariationPresence, type VariationPresenceDraft, type VariationScope } from '../../core/project/arrangement-variation-draft';
 import { inspectArrangementVariation } from '../../core/music/arrangement-variation-inspection';
-import { DEFAULT_VARIATION_POLICY, validVariationPolicy } from '../../core/music/arrangement-variations';
+import { DEFAULT_VARIATION_POLICY, maximumSectionVariations, validVariationPolicy } from '../../core/music/arrangement-variations';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
 import { resolveVariationContext, variationAmountForContext, isRegisterVariation, VARIATION_GESTURE_LABELS } from '../../core/music/arrangement-variation-context';
@@ -30,7 +30,8 @@ export class ArrangementVariationsDialogComponent {
   readonly draft = signal(initialVariationDraft(this.initialProject, this.scope));
   readonly policy = signal<VariationPolicy>({ ...(this.wholeArrangement ? this.initialPolicy
     : this.sections[0]?.variations?.policy ?? this.initialPolicy) });
-  readonly policyValid = computed(() => validVariationPolicy(this.policy()));
+  readonly maximumChanges = maximumSectionVariations(this.initialProject.tracks.length);
+  readonly policyValid = computed(() => validVariationPolicy(this.policy(), this.initialProject.tracks.length));
   readonly stale = computed(() => this.projects.project() !== this.initialProject);
   readonly error = signal('');
   readonly title = this.scope.sectionId ? this.sections[0]?.type.replaceAll('_', ' ') ?? 'Section removed' : 'Whole arrangement';
@@ -41,7 +42,7 @@ export class ArrangementVariationsDialogComponent {
     const tracks = new Set(this.tracks.map(track => track.id));
     const choices = (current.variations?.choices ?? []).filter(choice => tracks.has(choice.trackId)).map(choice => {
       const track = this.initialProject.tracks.find(track => track.id === choice.trackId)!;
-      const inspection = inspectArrangementVariation(track, current, choice);
+      const inspection = inspectArrangementVariation(track, current, choice, this.initialProject.melodyGlobal);
       const expectedAmount = variationAmountForContext(context, choice.kind);
       return { track, inspection, mismatch: choice.amount !== expectedAmount };
     });

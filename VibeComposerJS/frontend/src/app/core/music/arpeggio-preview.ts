@@ -12,7 +12,7 @@ export function arpeggioPreviews(project: CompositionProject, scope: PartSetting
   if ('sectionId' in scope && !section) return [];
   return project.tracks.filter(track => track.role === 'arpeggio' && (!('role' in scope) || scope.role === 'arpeggio')
     && (!('trackId' in scope) || scope.trackId === track.id)).map(track => {
-    const effective = resolvePartTrack(track, section);
+    const effective = resolvePartTrack(track, section, project.melodyGlobal);
     const settings = { ...effective.generatorSettings, ...(pattern ? { pattern } : {}) } as ArpeggioSettings;
     const harmony = section ? sectionGenerationHarmony(project, section, 'arpeggio') : baseGenerationHarmony(project);
     const voices = settings.stretchEnabled ? settings.chordNotesStretch ?? 3 : harmony.voicings[0].length * settings.octaves;

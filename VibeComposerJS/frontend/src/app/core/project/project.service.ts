@@ -1,4 +1,5 @@
 import * as arrangementCommands from './project-arrangement-commands';
+import { fitVariationCapacity } from './arrangement-variation-capacity';
 import { DEFAULT_VARIATION_POLICY, pruneVariations, validVariationPolicy } from '../music/arrangement-variations';
 import type { VariationPolicy } from '../music/arrangement-variation.model';
 import type { VariationDraft, VariationDraftOptions } from './arrangement-variation-draft';
@@ -277,7 +278,7 @@ export class ProjectService {
       .sort((a, b) => Number(b.id.match(/(\d+)$/)?.[1] ?? members.indexOf(b) + 1)
         - Number(a.id.match(/(\d+)$/)?.[1] ?? members.indexOf(a) + 1));
     const removed = new Set(removable.slice(0, members.length - target).map(track => track.id));
-    return this.commitPartWorkflow({ ...current, tracks: current.tracks.filter(track => !removed.has(track.id)),
+    return this.commitPartWorkflow(fitVariationCapacity({ ...current, tracks: current.tracks.filter(track => !removed.has(track.id)),
       arrangement: current.arrangement.map(section => ({ ...section,
         ...(section.variations ? { variations: pruneVariations(section.variations, removed) } : {}),
         trackPresence: Object.fromEntries(Object.entries(section.trackPresence).filter(([id]) => !removed.has(id))),
@@ -285,7 +286,7 @@ export class ProjectService {
         ...(section.trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(section.trackPhrases).filter(([id]) => !removed.has(id))) } : {}),
         ...(section.trackPartOverrides !== undefined ? { trackPartOverrides: Object.fromEntries(
           Object.entries(section.trackPartOverrides).filter(([id]) => !removed.has(id))) } : {}),
-      })) });
+      })) }));
   }
 
   /** Append explicitly generated tracks in one transaction; never replace existing members. */
@@ -365,14 +366,14 @@ export class ProjectService {
           else generatedTrackIds.delete(track.id);
         }
       } else {
-        const sources = selected.filter(track => !track.rerollLocked).map(track => resolvePartTrack(track, section));
+        const sources = selected.filter(track => !track.rerollLocked).map(track => resolvePartTrack(track, section, current.melodyGlobal));
         if (!sources.length) continue;
         const count = counts[role] ?? 0;
         if (count >= 2147483647) return 'invalid';
         const roleTracks = current.tracks.filter(track => track.role === role);
         const drumContext = { totalTracks: roleTracks.length,
           remaining: roleTracks.filter(track => !sources.some(source => source.id === track.id))
-            .map(track => resolvePartTrack(track, section).generatorSettings as DrumSettings) };
+            .map(track => resolvePartTrack(track, section, current.melodyGlobal).generatorSettings as DrumSettings) };
         const settings = rerollRoleSettings(this.trackRerollSeed(current, role, count), role,
           current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role], sources,
           sources.map(track => roleTracks.findIndex(item => item.id === track.id) + 1), drumContext);
@@ -536,7 +537,7 @@ export class ProjectService {
       // Track inheritance includes the cell patch but excludes its own patch.
       const members = scope.kind === 'section-role' ? current.tracks.filter((item) => item.role === role) : track ? [track] : [];
       const inherited = members.map((item) => settingsValues(scope.kind === 'section-role' ? item.generatorSettings
-        : resolvePartTrack(item, { ...section, trackPartOverrides: undefined }).generatorSettings, role));
+        : resolvePartTrack(item, { ...section, trackPartOverrides: undefined }, current.melodyGlobal).generatorSettings, role));
       for (const [field, value] of Object.entries(decoded)) {
         if (inherited.length && inherited.every((settings) => partValuesEqual(settings[field], value))) delete values[field];
         else values[field] = value as PartSettingValue;
@@ -580,7 +581,7 @@ export class ProjectService {
     if (!members.length || members.some(track => track.role !== 'drums') || ('sectionId' in scope && !section)) return 'invalid';
     const patches = new Map<string, PartSettingsPatch>();
     for (const track of members) {
-      const effective = resolvePartTrack(track, section);
+      const effective = resolvePartTrack(track, section, current.melodyGlobal);
       if (effective.role !== 'drums' || effective.generatorSettings.rhythm === 'melody') return 'invalid';
       const patch = multiplyDrumHits(effective.generatorSettings, multiplier);
       if (Object.entries(patch).some(([key, value]) => !partValuesEqual(settingsValues(effective.generatorSettings, 'drums')[key], value))) {
@@ -620,7 +621,7 @@ export class ProjectService {
     const members = current.tracks.filter(track => scope.kind === 'section-role' ? track.role === scope.role : track.id === scope.trackId);
     if (!section || !members.length) return undefined;
     const replacements = new Map(members.map(track => {
-      const values = settingsValues(resolvePartTrack(track, section).generatorSettings, track.role);
+      const values = settingsValues(resolvePartTrack(track, section, current.melodyGlobal).generatorSettings, track.role);
       if (partPatchesEqual(settingsValues(track.generatorSettings, track.role), values)) return [track.id, track] as const;
       const settings = copyPartSettings({ ...track.generatorSettings, ...values });
       return [track.id, partPatchesEqual(track.generatorSettings, settings) ? track : { ...track, generatorSettings: settings } as CompositionTrack];
@@ -679,7 +680,7 @@ export class ProjectService {
     if (!destinations.size || (mode === 'overrides' && !Object.keys(sourcePatch ?? {}).length)) return current;
     // Copy existing validated values, including imported semitone values. This action doesn't select new knob values.
     const snapshots = mode === 'effective' ? tracks.map((track) => ({ id: track.id,
-      patch: settingsValues(resolvePartTrack(track, source).generatorSettings, track.role) as PartSettingsPatch })) : [];
+      patch: settingsValues(resolvePartTrack(track, source, current.melodyGlobal).generatorSettings, track.role) as PartSettingsPatch })) : [];
     let changed = false;
     const arrangement = current.arrangement.map((section) => {
       if (!destinations.has(section.id)) return section;
@@ -1025,7 +1026,7 @@ export class ProjectService {
         ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
         ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => id !== trackId) } : {}) };
     });
-    this.commit({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement });
+    this.commit(fitVariationCapacity({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement }));
   }
 
   addSection(type: SectionType = 'VERSE1', afterIndex = this.state().arrangement.length - 1): void {
@@ -1114,7 +1115,7 @@ export class ProjectService {
       || Object.keys(draft).some(id => !current.arrangement.some(section => section.id === id))) return 'invalid';
     if (!options || typeof options !== 'object' || Array.isArray(options)
       || Object.keys(options).some(key => key !== 'presence' && key !== 'policy')
-      || options.policy !== undefined && !validVariationPolicy(options.policy)) return 'invalid';
+      || options.policy !== undefined && !validVariationPolicy(options.policy, current.tracks.length)) return 'invalid';
     const presence = options.presence;
     if (presence !== undefined && (!presence || typeof presence !== 'object' || Array.isArray(presence)
       || Object.keys(presence).length !== current.arrangement.length

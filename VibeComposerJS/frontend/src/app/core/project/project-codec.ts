@@ -31,7 +31,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')
-    && (project.arrangementVariationPolicy === undefined || validVariationPolicy(project.arrangementVariationPolicy))
+    && (project.arrangementVariationPolicy === undefined || validVariationPolicy(project.arrangementVariationPolicy, Array.isArray(project.tracks) ? project.tracks.length : 0))
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)
@@ -106,7 +106,7 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && (project.randomizeArrangementOnCompose === undefined || typeof project.randomizeArrangementOnCompose === 'boolean')
     && (project.arrangementPreview === undefined || typeof project.arrangementPreview === 'boolean')
     && (project.arrangementManual === undefined || typeof project.arrangementManual === 'boolean')
-    && (project.arrangementVariationPolicy === undefined || validVariationPolicy(project.arrangementVariationPolicy))
+    && (project.arrangementVariationPolicy === undefined || validVariationPolicy(project.arrangementVariationPolicy, Array.isArray(project.tracks) ? project.tracks.length : 0))
     && (project.randomizeTransposeOnCompose === undefined || typeof project.randomizeTransposeOnCompose === 'boolean')
     && Number.isInteger(project.tempoBpm) && (project.tempoBpm ?? 0) >= 30 && (project.tempoBpm ?? 0) <= 240
     && typeof project.seed === 'string' && /^-?\d+$/.test(project.seed)

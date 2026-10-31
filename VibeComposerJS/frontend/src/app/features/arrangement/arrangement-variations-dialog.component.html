@@ -7,7 +7,7 @@
   <fieldset [disabled]="stale()">
     <legend>Reroll policy</legend>
     <label>Chance %<input type="number" min="0" max="100" step="1" aria-label="Variation chance" [value]="policy().chance" (change)="setPolicy('chance', $event)" /></label>
-    <label>Changes per section<input type="number" min="0" max="4" step="1" aria-label="Variation change budget" [value]="policy().maxChanges" (change)="setPolicy('maxChanges', $event)" /></label>
+    <label>Changes per section<input type="number" min="0" [max]="maximumChanges" step="1" aria-label="Variation change budget" [value]="policy().maxChanges" (change)="setPolicy('maxChanges', $event)" /></label>
     <button type="button" [disabled]="!policyValid()" (click)="reroll()">Reroll variations</button>
     <button type="button" (click)="reset()">Reset variations</button>
   </fieldset>

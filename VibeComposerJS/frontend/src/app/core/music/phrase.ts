@@ -133,7 +133,7 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
       continue;
     }
     const manual = track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id);
-    const resolved = resolvePartTrack(manual ? track : { ...track, editedPhrase: undefined } as CompositionTrack, section);
+    const resolved = resolvePartTrack(manual ? track : { ...track, editedPhrase: undefined } as CompositionTrack, section, project.melodyGlobal);
     const effectiveTrack = section.context?.swingPercent === undefined || resolved.role === 'bass' ? resolved : {
       ...resolved, generatorSettings: { ...resolved.generatorSettings, swingPercent: section.context.swingPercent },
     } as CompositionTrack;
@@ -216,7 +216,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) {
     return melodyContext(applyPhraseRangeEdits(source.editedPhrase, edits, sectionEnd, bounds), progression.length);
   }
-  const effective = resolvePartTrack(source, section);
+  const effective = resolvePartTrack(source, section, project.melodyGlobal);
   if (effective.role !== 'melody') {
     return { ...melodyContext([], progression.length), available: false };
   }

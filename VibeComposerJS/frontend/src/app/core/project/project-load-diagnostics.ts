@@ -64,7 +64,7 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies', 'arrangementVariationPolicy']);
   if (project) {
     if (project['arrangementVariationPolicy'] !== undefined) check('project.arrangementVariationPolicy',
-      validVariationPolicy(project['arrangementVariationPolicy']), 'expected a valid variation policy');
+      validVariationPolicy(project['arrangementVariationPolicy'], Array.isArray(project['tracks']) ? project['tracks'].length : 0), 'expected a valid variation policy');
     check('project.name', typeof project['name'] === 'string', 'expected a string');
     check('project.key', KEYS.includes(project['key'] as string), `expected one of ${KEYS.join(', ')}`);
     check('project.scale', isScaleMode(project['scale']), 'expected a supported scale/mode');

@@ -1,7 +1,7 @@
 import type { ArrangedPart } from './part-role';
 import { resolveVariationPatch } from './arrangement-variations';
 import type { ArrangementSection } from '../project/arrangement.model';
-import type { CommonPartSettings, PartSettingsPatch } from './part-settings.model';
+import type { CommonPartSettings, MelodyGlobalSettings, PartSettingsPatch } from './part-settings.model';
 import type { CompositionTrack } from '../project/track.model';
 import { CHORD_SPAN_FILLS } from './chord-span-fill';
 import { BASS_RHYTHMS, ARPEGGIO_RHYTHMS, RHYTHM_PATTERNS, MELODY_RHYTHMS } from './rhythm-patterns';
@@ -256,10 +256,10 @@ export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): Co
   return decoded && validVelocityRange(decoded, role) ? decoded : undefined;
 }
 
-export function resolvePartTrack(track: CompositionTrack, section?: ArrangementSection): CompositionTrack {
+export function resolvePartTrack(track: CompositionTrack, section?: ArrangementSection, globals: MelodyGlobalSettings = {}): CompositionTrack {
   if (!section) return track;
   return { ...track, generatorSettings: { ...track.generatorSettings,
-    ...resolveVariationPatch(track, section),
+    ...resolveVariationPatch(track, section, globals),
     ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] } } as CompositionTrack;
 }
 

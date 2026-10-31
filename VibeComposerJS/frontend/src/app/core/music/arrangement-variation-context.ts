@@ -77,6 +77,7 @@ export const isRegisterVariation = (kind: VariationKind): boolean => kind === 'm
 export function variationAmountForContext(context: VariationContext, kind: VariationKind): -1 | 1 | undefined {
   const { gesture, intent, presentCount } = context;
   if (isRegisterVariation(kind)) return context.returnLift ? 1 : undefined;
+  if (kind === 'melody-range') return presentCount <= 1 ? undefined : gesture === 'reinforce-foundation' ? 1 : gesture === 'thin' || gesture === 'resolve' ? -1 : undefined;
   if (kind === 'chord-transition') return gesture === 'build-pulse' ? 1 : gesture === 'release-tension' || gesture === 'resolve' ? -1 : undefined;
   if (kind === 'arp-contour') return gesture === 'build-pulse' ? 1 : gesture === 'resolve' ? -1 : undefined;
   if (kind === 'bass-weight' || kind === 'chord-space') {
@@ -95,6 +96,7 @@ export function variationAmountForContext(context: VariationContext, kind: Varia
 
 export function variationPriority(context: VariationContext, kind: VariationKind): number {
   if (kind === 'arp-contour') return 2;
+  if (kind === 'melody-range') return 2;
   if (kind === 'chord-transition') return context.gesture === 'release-tension' ? 3 : 2;
   const activity = isActivityVariation(kind), foundation = kind === 'bass-weight' || kind === 'chord-space';
   switch (context.gesture) {

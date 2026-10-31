@@ -970,6 +970,8 @@ test('arrangement combined section controls and chord edits update all destinati
   editor.allSections.set(true); editor.section.set(service.project().arrangement[0]);
   editor.setAllType('VERSE1');
   assert.ok(service.project().arrangement.every(section => section.type === 'VERSE1'));
+  // The following false gesture must change presence, regardless of initial orchestration.
+  editor.setPresence(service.project().tracks[0].id, { target: { checked: true } });
   const before = service.exportProjectJson();
   editor.setAllMeasures({ target: { value: '128' } });
   assert.equal(service.exportProjectJson(), before);

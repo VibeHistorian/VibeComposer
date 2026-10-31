@@ -23,7 +23,7 @@ export class DurationsDialogComponent {
   private readonly section = 'sectionId' in this.data.scope ? this.initialProject.arrangement.find(section => section.id === (this.data.scope as { sectionId: string }).sectionId) : undefined;
   readonly role = 'role' in this.data.scope ? this.data.scope.role : this.initialProject.tracks.find(track => track.id === (this.data.scope as { trackId: string }).trackId)!.role;
   private readonly tracks = this.initialProject.tracks.filter(track => track.role === this.role && (!('trackId' in this.data.scope) || track.id === this.data.scope.trackId));
-  private readonly initial = resolvePartTrack(this.tracks[0], this.section).generatorSettings as CommonPartSettings;
+  private readonly initial = resolvePartTrack(this.tracks[0], this.section, this.initialProject.melodyGlobal).generatorSettings as CommonPartSettings;
   readonly trackCount = this.tracks.length;
   readonly texts = signal((this.initial.customDurations ?? DEFAULT_DURATIONS).map(row => row.join(', ')));
   readonly chances = signal([...(this.initial.customDurationChances ?? DEFAULT_DURATION_CHANCES)]);

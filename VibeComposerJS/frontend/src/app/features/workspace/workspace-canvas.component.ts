@@ -253,7 +253,7 @@ export class WorkspaceCanvasComponent {
     const target = this.localPartTarget();
     return target ? this.project().arrangement.find((section) => section.id === target.sectionId) : undefined;
   });
-  readonly effectiveContextTracks = computed(() => this.contextTracks().map((track) => resolvePartTrack(track, this.contextSection())));
+  readonly effectiveContextTracks = computed(() => this.contextTracks().map((track) => resolvePartTrack(track, this.contextSection(), this.project().melodyGlobal)));
   readonly groupTrackSettings = computed(() => {
     if (!this.showGroupTrackSettings() || !this.partGenerationAvailable()) return [];
     const section = this.contextSection();
@@ -288,8 +288,8 @@ export class WorkspaceCanvasComponent {
     else delete trackPartOverrides[target.trackId];
     const inheritedSection = { ...section, rolePartOverrides, trackPartOverrides };
     return this.contextTracks().some(track => {
-      const current = settingsValues(resolvePartTrack(track, section).generatorSettings, track.role);
-      const inherited = settingsValues(resolvePartTrack(track, inheritedSection).generatorSettings, track.role);
+      const current = settingsValues(resolvePartTrack(track, section, this.project().melodyGlobal).generatorSettings, track.role);
+      const inherited = settingsValues(resolvePartTrack(track, inheritedSection, this.project().melodyGlobal).generatorSettings, track.role);
       return Object.keys(current).some(key => !partValuesEqual(current[key], inherited[key]));
     });
   });

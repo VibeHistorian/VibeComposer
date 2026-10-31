@@ -1,3 +1,4 @@
+import type { MelodyGlobalSettings } from './part-settings.model';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { ArrangementVariation, VariationKind } from './arrangement-variation.model';
@@ -6,7 +7,7 @@ import { PART_CONTROLS, settingsValues } from './part-settings';
 
 export type VariationStatus = 'active' | 'disabled' | 'absent' | 'manual' | 'incompatible' | 'overridden' | 'unchanged';
 export const VARIATION_LABELS: Record<VariationKind, string> = {
-  'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
+  'melody-range': 'Contextual melody range', 'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
   'arp-activity': 'Arp activity', 'arp-contour': 'Arp chord-relative contour', 'arp-register': 'Arp octave register',
   'arp-density': 'Arp rhythm density', 'bass-weight': 'Bass octave weight', 'chord-space': 'Chord spacing',
   'chord-transition': 'Late chord anticipation', 'drum-activity': 'Cymbal activity', 'drum-density': 'Hat / ride density', 'drum-ghosts': 'Snare ghost notes',
@@ -20,7 +21,7 @@ export interface VariationInspection {
 }
 
 /** Inspection shares the operation adapters and precedence used by musical resolution. */
-export function inspectArrangementVariation(track: CompositionTrack, section: ArrangementSection, choice: ArrangementVariation): VariationInspection {
+export function inspectArrangementVariation(track: CompositionTrack, section: ArrangementSection, choice: ArrangementVariation, globals: MelodyGlobalSettings = {}): VariationInspection {
   const base = { choice, label: VARIATION_LABELS[choice.kind] };
   const result = (status: VariationStatus, detail: string, changes: VariationInspection['changes'] = []): VariationInspection => ({ ...base, status, detail, changes });
   if (!choice.enabled) return result('disabled', 'Disabled');
@@ -37,7 +38,7 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
     before: values[parameter], after: values[parameter], effective: values[parameter],
     source: Object.hasOwn(trackPatch, parameter) ? 'Section track override' : 'Section role override',
   })));
-  const patch = variationPatch(effective, choice);
+  const patch = variationPatch(effective, choice, globals);
   if (!Object.keys(patch).length) return result('incompatible', 'Current settings, authored patterns or register bounds prevent this variation');
   const changes = Object.entries(patch).map(([parameter, after]) => {
     const source = Object.hasOwn(trackPatch, parameter) ? 'Section track override'

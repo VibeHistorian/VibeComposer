@@ -14,11 +14,11 @@ import type { VariationPolicy } from '../music/arrangement-variation.model';
 /** Explicit opt-in engine command; previews build candidates without publishing them. */
 export function randomizeArrangementVariations(project: CompositionProject, seed: bigint, sectionId?: string,
   policy?: VariationPolicy): CompositionProject | undefined {
-  if (policy !== undefined && !validVariationPolicy(policy)
+  if (policy !== undefined && !validVariationPolicy(policy, project.tracks.length)
     || sectionId !== undefined && !project.arrangement.some(s => s.id === sectionId)) return undefined;
   return { ...project, arrangement: project.arrangement.map((section, index) => sectionId !== undefined && section.id !== sectionId
     ? section : { ...section, variations: planSectionVariations(project.tracks, project.arrangement, index, seed,
-      policy ?? section.variations?.policy ?? project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY) }) };
+      policy ?? section.variations?.policy ?? project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, { melodyGlobal: project.melodyGlobal }) }) };
 }
 
 /** Replace structure and orchestration using independent deterministic streams. */
@@ -55,7 +55,7 @@ export function addSection(project: CompositionProject, type: SectionType, after
   const presence = generateContextualPresence(project.tracks, next, chances, random, insertAt);
   next[insertAt] = { ...next[insertAt], trackPresence: presence[insertAt] };
   if (generateVariations) next[insertAt] = { ...next[insertAt],
-    variations: planSectionVariations(project.tracks, next, insertAt, BigInt(project.seed), project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY) };
+    variations: planSectionVariations(project.tracks, next, insertAt, BigInt(project.seed), project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, { melodyGlobal: project.melodyGlobal }) };
   return { ...project, arrangement: next };
 }
 

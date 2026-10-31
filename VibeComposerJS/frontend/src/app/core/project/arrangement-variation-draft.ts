@@ -47,7 +47,7 @@ export function rerollVariationDraft(project: CompositionProject, scope: Variati
     const others = scoped ? previous?.choices.filter(choice => !ids.has(choice.trackId)) ?? [] : [];
     const available = Math.max(0, selectedPolicy.maxChanges - others.length);
     const planned = planSectionVariations(tracks, project.arrangement, project.arrangement.indexOf(section), seed,
-      { ...selectedPolicy, maxChanges: available }, { allTracks: project.tracks, retainedChoices: others });
+      { ...selectedPolicy, maxChanges: available }, { allTracks: project.tracks, retainedChoices: others, melodyGlobal: project.melodyGlobal });
     return [section.id, { ...planned, policy: { ...selectedPolicy }, choices: [...others, ...planned.choices] }];
   }));
 }
