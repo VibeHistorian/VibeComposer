@@ -4,24 +4,17 @@
     <button type="button" aria-label="Close variations" (click)="dialog.close()">×</button>
   </header>
   <p>Review changes before Apply. Section order stays as it is. Presence is preserved unless you include it in a reroll.</p>
-  @if (wholeArrangement) {
-    <label class="generation-toggle"><input type="checkbox" aria-label="Generate arrangement variations" [checked]="generationEnabled()" [disabled]="stale()"
-      (change)="generationEnabled.set($any($event.target).checked)" /> Generate variations with arrangements</label>
-    <p>Use the policy below for new arrangements, inserted sections and Manual arrangement Compose. Turning this off keeps existing choices.</p>
-  }
   <fieldset [disabled]="stale()">
     <legend>Reroll policy</legend>
     <label>Chance %<input type="number" min="0" max="100" step="1" aria-label="Variation chance" [value]="policy().chance" (change)="setPolicy('chance', $event)" /></label>
     <label>Changes per section<input type="number" min="0" max="4" step="1" aria-label="Variation change budget" [value]="policy().maxChanges" (change)="setPolicy('maxChanges', $event)" /></label>
     <button type="button" [disabled]="!policyValid()" (click)="reroll()">Reroll variations</button>
     <button type="button" (click)="reset()">Reset variations</button>
-    @if (wholeArrangement) {
-      <label class="presence-toggle"><input type="checkbox" aria-label="Reroll presence too" [checked]="rerollPresence()"
-        (change)="rerollPresence.set($any($event.target).checked)" /> Reroll presence too</label>
-    }
   </fieldset>
   <p class="policy-hint">Reroll uses these options for the next draft. Choices outside this scope count toward the section budget.
-    @if (wholeArrangement) { Apply also saves the generation toggle and policy. Reset variations keeps any staged presence changes. }
+    @if (wholeArrangement) { Apply also saves this musical policy. Reset variations keeps staged presence changes.
+      Presence reroll is {{ preferences.rerollPresenceWithVariations() ? 'on' : 'off' }} in Settings → Behavior → Arrangement.
+    }
   </p>
   <div class="variation-sections">
     @for (row of rows(); track row.section.id) {

@@ -10,6 +10,7 @@
 .add-section-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
 /* Arrangement actions and automatic generation toggles */
 .icon-button, .arrangement-toggle { width: 29px; height: 29px; padding: 0; font: 16px var(--font-ui); line-height: 1; }
+.variations-button { font-size: 24px; }
 .arrangement-toggle { border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); cursor: pointer; }
 .arrangement-toggle:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .arrangement-toggle.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }

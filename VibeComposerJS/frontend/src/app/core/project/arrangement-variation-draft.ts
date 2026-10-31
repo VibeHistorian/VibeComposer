@@ -4,7 +4,6 @@ import type { CompositionTrack } from './track.model';
 import type { ArrangedPart } from '../music/part-role';
 import type { SectionVariations, VariationPolicy } from '../music/arrangement-variation.model';
 import { DEFAULT_VARIATION_POLICY, planSectionVariations } from '../music/arrangement-variations';
-import type { VariationGenerationSettings } from '../music/arrangement-variation.model';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { generateContextualPresence } from '../music/arrangement-intent';
 import { JavaRandom } from '../music/java-random';
@@ -14,7 +13,7 @@ export type VariationDraft = Readonly<Record<string, SectionVariations | undefin
 export type VariationPresenceDraft = Readonly<Record<string, Readonly<Record<string, boolean>>>>;
 export interface VariationDraftOptions {
   readonly presence?: VariationPresenceDraft;
-  readonly generation?: VariationGenerationSettings;
+  readonly policy?: VariationPolicy;
 }
 
 /** Presence is staged separately, with its own stream, before planning against the candidate. */
@@ -44,7 +43,7 @@ export function rerollVariationDraft(project: CompositionProject, scope: Variati
   const tracks = variationScopeTracks(project, scope), ids = new Set(tracks.map(track => track.id));
   const scoped = !!scope.trackId || !!scope.role;
   return Object.fromEntries(variationScopeSections(project, scope).map(section => {
-    const previous = draft[section.id], selectedPolicy = policy ?? previous?.policy ?? project.arrangementVariationGeneration?.policy ?? DEFAULT_VARIATION_POLICY;
+    const previous = draft[section.id], selectedPolicy = policy ?? previous?.policy ?? project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY;
     const others = scoped ? previous?.choices.filter(choice => !ids.has(choice.trackId)) ?? [] : [];
     const available = Math.max(0, selectedPolicy.maxChanges - others.length);
     const planned = planSectionVariations(tracks, project.arrangement, project.arrangement.indexOf(section), seed,

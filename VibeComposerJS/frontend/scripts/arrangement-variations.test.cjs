@@ -224,75 +224,89 @@ test('dialog keeps reroll, toggle and reset local until Apply, and rejects stale
   staleDialog.apply(); assert.equal(service.exportProjectJson(), changed);
 });
 
-test('automatic variation policy is optional, validated, detached and persisted without erasing choices', () => {
-  const { service, project, load } = setup();
+test('open variation dialogs read presence behavior live without publishing preferences through Apply', () => {
+  const { service, load, uiPreferences } = fixture({ contextualMelody: false, dialogData: {} });
+  const Dialog = load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
+  const dialog = new Dialog(), before = service.exportProjectJson();
+  uiPreferences.setArrangementBehavior('rerollPresenceWithVariations', true);
+  assert.equal(dialog.stale(), false, 'UI preference changes do not invalidate project drafts');
+  dialog.reroll(); assert.ok(dialog.presenceDraft());
+  assert.equal(service.exportProjectJson(), before);
+  uiPreferences.setArrangementBehavior('rerollPresenceWithVariations', false);
+  dialog.reroll(); assert.equal(dialog.presenceDraft(), undefined);
+  assert.equal(service.exportProjectJson(), before);
+});
+
+test('musical variation policy is validated and detached while generation behavior stays in UI preferences', () => {
+  const { service, project, load, uiPreferences } = setup();
   service.importProjectJson(JSON.stringify(project));
+  service.updateSettings({ arrangementVariationPolicy: { chance: 65, maxChanges: 3 } });
   service.randomizeArrangementVariations(undefined, undefined, 7n);
-  const choices = structuredClone(service.project().arrangement.map(s => s.variations));
-  service.updateSettings({ arrangementVariationGeneration: { enabled: true, policy: { chance: 65, maxChanges: 3 } } });
-  const saved = service.exportProjectJson();
-  service.updateSettings({ arrangementVariationGeneration: { enabled: false, policy: { chance: 65, maxChanges: 3 } } });
-  assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
-  service.undo(); assert.equal(service.exportProjectJson(), saved);
+  const saved = service.exportProjectJson(), position = service.historyPosition();
+  uiPreferences.setArrangementBehavior('generateArrangementVariations', true);
+  uiPreferences.setArrangementBehavior('rerollPresenceWithVariations', true);
+  assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.historyPosition(), position);
   assert.equal(service.importProjectJson(saved), true);
-  assert.deepEqual(service.project().arrangementVariationGeneration, { enabled: true, policy: { chance: 65, maxChanges: 3 } });
+  assert.equal(uiPreferences.generateArrangementVariations(), true, 'project import never changes app behavior');
   const codec = load('core/project/project-codec.ts'), chances = load('core/project/section-type-chances.ts').DEFAULT_SECTION_TYPE_CHANCES;
   const input = JSON.parse(saved), decoded = codec.decodeProject(input, chances, () => .5);
-  input.arrangementVariationGeneration.policy.chance = 99;
-  assert.equal(decoded.arrangementVariationGeneration.policy.chance, 65);
-  for (const invalid of [null, [], { enabled: 'yes', policy: { chance: 100, maxChanges: 2 } },
-    { enabled: true, policy: { chance: 101, maxChanges: 2 } }, { enabled: true, policy: { chance: 100, maxChanges: 5 } },
-    { enabled: true, policy: { chance: 100, maxChanges: 2 }, unknown: true }]) {
-    assert.equal(codec.decodeProject({ ...project, arrangementVariationGeneration: invalid }, chances, () => .5), undefined);
-    assert.equal(codec.isProject({ ...project, arrangementVariationGeneration: invalid }, chances, () => .5), false);
+  input.arrangementVariationPolicy.chance = 99;
+  assert.equal(decoded.arrangementVariationPolicy.chance, 65);
+  assert.equal(Object.hasOwn(decoded, 'arrangementVariationGeneration'), false);
+  for (const invalid of [null, [], { chance: 101, maxChanges: 2 }, { chance: 100, maxChanges: 5 }, { chance: 100, maxChanges: 2, enabled: true }]) {
+    assert.equal(codec.decodeProject({ ...project, arrangementVariationPolicy: invalid }, chances, () => .5), undefined);
+    assert.equal(codec.isProject({ ...project, arrangementVariationPolicy: invalid }, chances, () => .5), false);
   }
 });
 
-test('new arrangement and insertion generate optional variations without shifting structure, presence or track streams', () => {
+test('new arrangement and insertion consume explicit behavior inputs without shifting structure, presence or track streams', () => {
   const { project, commands, load } = setup();
   const chances = load('core/project/section-type-chances.ts').DEFAULT_SECTION_TYPE_CHANCES;
-  const enabled = { ...project, arrangementVariationGeneration: { enabled: true, policy: { chance: 100, maxChanges: 3 } } };
-  const plain = commands.randomizeArrangement(project, chances, 9223372036854775807n);
-  const varied = commands.randomizeArrangement(enabled, chances, 9223372036854775807n);
+  const configured = { ...project, arrangementVariationPolicy: { chance: 100, maxChanges: 3 } };
+  const plain = commands.randomizeArrangement(configured, chances, 9223372036854775807n, false);
+  const varied = commands.randomizeArrangement(configured, chances, 9223372036854775807n, true);
   assert.deepEqual(varied.arrangement.map(({ variations, ...section }) => section), plain.arrangement);
   assert.equal(varied.tracks, project.tracks);
   assert.ok(varied.arrangement.every(s => s.variations && s.variations.policy.maxChanges === 3));
   assert.ok(varied.arrangement.some(s => s.variations.choices.length));
   assert.ok(plain.arrangement.every(s => s.variations === undefined));
-  const inserted = commands.addSection(enabled, 'BUILDUP2', 0, chances, () => .5);
+  const inserted = commands.addSection(configured, 'BUILDUP2', 0, chances, () => .5, true);
   assert.ok(inserted.arrangement[1].variations);
   assert.deepEqual(inserted.arrangement.filter((_, i) => i !== 1), project.arrangement);
-  assert.equal(commands.addSection(project, 'BUILDUP2', 0, chances, () => .5).arrangement[1].variations, undefined);
-  const without = commands.randomizeArrangement({ ...varied, arrangementVariationGeneration: { ...enabled.arrangementVariationGeneration, enabled: false } }, chances, 9n);
-  assert.ok(without.arrangement.every(s => s.variations === undefined));
+  assert.equal(commands.addSection(configured, 'BUILDUP2', 0, chances, () => .5, false).arrangement[1].variations, undefined);
 });
 
-test('Compose respects automatic/manual arrangement policy while Regenerate and presence-only rerolls retain choices', () => {
-  const { service, project, load } = setup();
+test('Compose, insertion and toolbar rerolls read UI behavior immediately while Regenerate retains choices', () => {
+  const { service, project, load, uiPreferences } = setup();
   const defaults = load('core/music/track-generation.ts').DEFAULT_TRACK_POLICIES;
   project.trackGenerationPolicies = Object.fromEntries(Object.entries(defaults).map(([role, policy]) => [role,
     { ...policy, onCompose: false, ...(role === 'melody' ? { patternsOnCompose: false, targetsOnCompose: false, onRegenerate: false } : {}) }]));
   project.randomizeHarmonyOnCompose = false; project.randomizeTempoOnCompose = false; project.randomizeTransposeOnCompose = false;
   project.randomizeArrangementOnCompose = true; project.arrangementManual = true;
-  project.arrangementVariationGeneration = { enabled: true, policy: { chance: 100, maxChanges: 2 } };
+  project.arrangementVariationPolicy = { chance: 100, maxChanges: 2 };
   assert.equal(service.importProjectJson(JSON.stringify(project)), true);
   const before = service.exportProjectJson();
+  uiPreferences.setArrangementBehavior('generateArrangementVariations', true);
+  assert.equal(service.exportProjectJson(), before, 'no popup Apply needed and no project edits');
   assert.equal(service.generateComposition('compose'), 'changed');
   assert.deepEqual(service.project().arrangement.map(s => [s.id, s.type, s.measures]), project.arrangement.map(s => [s.id, s.type, s.measures]));
   assert.ok(service.project().arrangement.every(s => s.variations));
   const choices = structuredClone(service.project().arrangement.map(s => s.variations));
   const composed = service.exportProjectJson();
   service.undo(); assert.equal(service.exportProjectJson(), before);
+  assert.equal(uiPreferences.generateArrangementVariations(), true, 'project undo preserves app behavior');
   service.redo(); assert.equal(service.exportProjectJson(), composed);
-  service.generateComposition('regenerate');
-  assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
+  service.generateComposition('regenerate'); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
   service.randomizeArrangementPresence(); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
-  service.updateSettings({ arrangementVariationGeneration: { enabled: false, policy: { chance: 100, maxChanges: 2 } } });
+  uiPreferences.setArrangementBehavior('generateArrangementVariations', false);
   service.generateComposition('compose'); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
   service.updateSettings({ arrangementManual: false }); service.generateComposition('compose');
   assert.ok(service.project().arrangement.every(s => s.variations === undefined));
-  service.updateSettings({ arrangementVariationGeneration: { enabled: true, policy: { chance: 100, maxChanges: 2 } } });
+  uiPreferences.setArrangementBehavior('generateArrangementVariations', true);
   service.generateComposition('compose'); assert.ok(service.project().arrangement.every(s => s.variations));
+  service.randomizeArrangement(); assert.ok(service.project().arrangement.every(s => s.variations));
+  service.addSection('BUILDUP2', 0); assert.ok(service.project().arrangement[1].variations);
 });
 
 test('presence and variations are planned together, committed atomically and reject incomplete presence drafts', () => {

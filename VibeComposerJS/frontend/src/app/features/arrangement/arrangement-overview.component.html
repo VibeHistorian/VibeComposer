@@ -14,7 +14,7 @@
       }
       <button type="button" class="reroll-button icon-button" (click)="$event.stopPropagation(); randomizeRequested.emit()"
         aria-label="Reroll arrangement" title="Reroll the whole arrangement: section structure and track presence">↻</button>
-      <button type="button" class="reroll-button" (click)="$event.stopPropagation(); variationsRequested.emit()"
+      <button type="button" class="reroll-button icon-button variations-button" (click)="$event.stopPropagation(); variationsRequested.emit()"
         aria-label="Inspect whole arrangement variations" title="Review or reroll variations, keeping section order and presence">◇</button>
       <button type="button" class="arrangement-toggle" [class.active]="!!project().randomizeArrangementOnCompose"
         [attr.aria-pressed]="!!project().randomizeArrangementOnCompose" aria-label="Arrangement On Compose"

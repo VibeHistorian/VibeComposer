@@ -14,6 +14,21 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
     const ensure=(value,label)=>{if(!value)throw new Error(label);};
     const button=(root,text)=>[...root.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
     const dialog=()=>document.querySelector('vc-arrangement-variations-dialog');
+    const prefs=()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1'));
+    const setBehavior=async(generate,presence)=>{
+      const before=JSON.stringify(read());
+      [...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Settings'||b.getAttribute('aria-label')==='Settings').click();
+      const settings=await wait(()=>document.querySelector('vc-settings-dialog'),'settings');
+      settings.querySelector('[aria-label="Behavior Arrangement"]').click();
+      const generation=await wait(()=>settings.querySelector('[aria-label="Generate arrangement variations"]'),'arrangement behavior');
+      const presenceControl=settings.querySelector('[aria-label="Reroll presence too"]');
+      if(generation.checked!==generate)generation.click();if(presenceControl.checked!==presence)presenceControl.click();
+      await wait(()=>prefs()?.generateArrangementVariations===generate&&prefs()?.rerollPresenceWithVariations===presence,'preferences saved immediately');
+      ensure(JSON.stringify(read())===before,'behavior settings never edit the project');
+      const bounds=settings.getBoundingClientRect();ensure(bounds.left>=0&&bounds.right<=innerWidth,'settings fit');
+      settings.querySelector('[aria-label="Close settings"]').click();await wait(()=>!document.querySelector('vc-settings-dialog'),'settings closed');
+    };
+
     try{
       await wait(()=>innerWidth===${width},'viewport');
       const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'),'app');
@@ -34,6 +49,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       opener.focus();opener.click();
       let d=await wait(dialog,'dialog');
       ensure(d.contains(document.activeElement),'dialog focus');
+      ensure(!d.querySelector('[aria-label="Generate arrangement variations"]')&&!d.querySelector('[aria-label="Reroll presence too"]'),'behavior toggles removed from popup');
       let box=d.getBoundingClientRect();ensure(box.left>=0&&box.right<=innerWidth&&box.top>=0&&box.bottom<=innerHeight,'dialog fits');
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure(JSON.stringify(read())===original,'reroll stays local');
@@ -64,32 +80,28 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       opener.click();d=await wait(dialog,'escape dialog');
       d.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',keyCode:27,bubbles:true,cancelable:true}));
       await wait(()=>!dialog(),'escape cancel');ensure(JSON.stringify(read())===saved,'escape preserves state');
+      await setBehavior(true,true);
       opener.click();d=await wait(dialog,'combined draft');
-      d.querySelector('[aria-label="Generate arrangement variations"]').click();
-      d.querySelector('[aria-label="Reroll presence too"]').click();
       button(d,'Reroll variations').click();await wait(()=>d.querySelector('.presence-changes'),'presence preview');
       ensure(!d.querySelector('[data-variation-status="absent"]'),'variations use draft presence');
       ensure(JSON.stringify(read())===saved,'combined draft stays local');
       button(d,'Cancel').click();await wait(()=>!dialog(),'combined cancel');ensure(JSON.stringify(read())===saved,'combined cancel restores both');
       opener.click();d=await wait(dialog,'combined apply');
-      ensure(!d.querySelector('[aria-label="Reroll presence too"]').checked,'presence reroll defaults off');
-      d.querySelector('[aria-label="Generate arrangement variations"]').click();
-      d.querySelector('[aria-label="Reroll presence too"]').click();
+      ensure(prefs().rerollPresenceWithVariations,'presence behavior survives Cancel and reopen');
       button(d,'Reroll variations').click();await wait(()=>d.querySelector('.presence-changes'),'combined presence');
       button(d,'Apply variations').click();await wait(()=>!dialog(),'combined saved');
-      const combined=JSON.stringify(read());ensure(read().arrangementVariationGeneration.enabled,'generation policy saved');
+      const combined=JSON.stringify(read());ensure(prefs().generateArrangementVariations,'generation preference saved');
+      ensure(!read().arrangementVariationGeneration,'project contains no generation switch');
       const structural=p=>p.arrangement.map(({trackPresence,variations,...rest})=>rest);
       ensure(JSON.stringify(structural(read()))===JSON.stringify(structural(JSON.parse(saved))),'combined keeps structure');
       ensure(JSON.stringify(read().arrangement.map(s=>s.trackPresence))!==JSON.stringify(JSON.parse(saved).arrangement.map(s=>s.trackPresence)),'combined updates presence');
       document.querySelector('[aria-label="Undo"]').click();await wait(()=>JSON.stringify(read())===saved,'combined single undo');
       document.querySelector('[aria-label="Redo"]').click();await wait(()=>JSON.stringify(read())===combined,'combined redo');
-      opener.click();d=await wait(dialog,'disable generation');d.querySelector('[aria-label="Generate arrangement variations"]').click();
-      button(d,'Apply variations').click();await wait(()=>!dialog(),'generation off');
+      await setBehavior(false,true);
       ensure(JSON.stringify(read().arrangement)===JSON.stringify(JSON.parse(combined).arrangement),'disabling keeps authored choices');
       document.querySelector('[aria-label="Reroll arrangement"]').click();
       await wait(()=>read().arrangement.every(s=>!s.variations),'generate bare arrangement');
-      opener.click();d=await wait(dialog,'enable generation');d.querySelector('[aria-label="Generate arrangement variations"]').click();
-      button(d,'Apply variations').click();await wait(()=>!dialog(),'generation enabled');
+      await setBehavior(true,false);
       document.querySelector('[aria-label="Reroll arrangement"]').click();
       await wait(()=>read().arrangement.every(s=>!!s.variations),'generate varied arrangement');
       await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});

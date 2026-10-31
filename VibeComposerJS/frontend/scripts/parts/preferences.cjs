@@ -2,6 +2,34 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('../support/project-fixture.cjs');
 
+test('arrangement behavior preferences persist immediately, transfer, and stay outside project history', () => {
+  const { service, uiPreferences: prefs, uiStored, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  assert.equal(prefs.generateArrangementVariations(), false);
+  assert.equal(prefs.rerollPresenceWithVariations(), false);
+  for (const key of ['generateArrangementVariations', 'rerollPresenceWithVariations']) {
+    prefs.setArrangementBehavior(key, true);
+    assert.equal(JSON.parse(uiStored.get('vibecomposer.ui-preferences.v1'))[key], true);
+  }
+  const saved = prefs.exportJson();
+  const reloaded = new UiPreferencesService();
+  assert.equal(reloaded.generateArrangementVariations(), true);
+  assert.equal(reloaded.rerollPresenceWithVariations(), true);
+  for (const key of ['generateArrangementVariations', 'rerollPresenceWithVariations']) {
+    assert.equal(prefs.importJson(JSON.stringify({ ...JSON.parse(saved), [key]: 'true' })), false);
+    prefs.setArrangementBehavior(key, 'true');
+    assert.equal(prefs.exportJson(), saved);
+  }
+  const older = JSON.parse(saved); delete older.generateArrangementVariations; delete older.rerollPresenceWithVariations;
+  assert.equal(prefs.importJson(JSON.stringify(older)), true);
+  assert.equal(prefs.generateArrangementVariations(), false);
+  assert.equal(prefs.rerollPresenceWithVariations(), false);
+  assert.equal(prefs.importJson(saved), true);
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), history);
+});
+
 test('ghost note preference defaults on, persists, transfers and rejects invalid values atomically', () => {
   const { service, uiPreferences, load } = fixture();
   const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');

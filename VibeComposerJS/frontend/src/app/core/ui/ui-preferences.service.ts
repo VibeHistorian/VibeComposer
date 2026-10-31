@@ -51,6 +51,12 @@ export class UiPreferencesService {
   readonly scoreOutlineOtherTracks = computed(() => this.state().scoreOutlineOtherTracks);
   readonly scoreGhostNotes = computed(() => this.state().scoreGhostNotes);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
+  readonly generateArrangementVariations = computed(() => this.state().generateArrangementVariations);
+  readonly rerollPresenceWithVariations = computed(() => this.state().rerollPresenceWithVariations);
+  setArrangementBehavior(key: 'generateArrangementVariations' | 'rerollPresenceWithVariations', enabled: boolean): void {
+    if (!['generateArrangementVariations', 'rerollPresenceWithVariations'].includes(key) || typeof enabled !== 'boolean') return;
+    this.commit({ ...this.state(), [key]: enabled });
+  }
   readonly manualPhrasesFollowMode = computed(() => this.state().manualPhrasesFollowMode);
   toggleManualPhrasesFollowMode(): void {
     this.commit({ ...this.state(), manualPhrasesFollowMode: !this.manualPhrasesFollowMode() });

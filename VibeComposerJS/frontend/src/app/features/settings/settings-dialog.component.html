@@ -127,6 +127,21 @@
             </div>
           </section>
         }
+        @case ('arrangement') {
+          <section aria-labelledby="arrangement-settings-title">
+            <h2 id="arrangement-settings-title">Arrangement</h2>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Generate variations with arrangements</h3><p id="arrangement-variations-description">Generate variations for new arrangements, inserted sections and Manual arrangement Compose. Turning this off keeps existing choices. Saved immediately in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Generate arrangement variations" aria-describedby="arrangement-variations-description"
+                [checked]="preferences.generateArrangementVariations()" (change)="preferences.setArrangementBehavior('generateArrangementVariations', $any($event.target).checked)" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Reroll presence too</h3><p id="variation-presence-description">Include track presence when rerolling whole-arrangement variations. Review both changes in the variations popup before Apply; section order stays fixed. Saved immediately in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Reroll presence too" aria-describedby="variation-presence-description"
+                [checked]="preferences.rerollPresenceWithVariations()" (change)="preferences.setArrangementBehavior('rerollPresenceWithVariations', $any($event.target).checked)" /></div>
+            </div>
+          </section>
+        }
         @case ('score') {
           <section aria-labelledby="score-settings-title">
             <h2 id="score-settings-title">Score</h2>

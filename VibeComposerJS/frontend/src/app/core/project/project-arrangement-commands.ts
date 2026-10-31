@@ -18,11 +18,11 @@ export function randomizeArrangementVariations(project: CompositionProject, seed
     || sectionId !== undefined && !project.arrangement.some(s => s.id === sectionId)) return undefined;
   return { ...project, arrangement: project.arrangement.map((section, index) => sectionId !== undefined && section.id !== sectionId
     ? section : { ...section, variations: planSectionVariations(project.tracks, project.arrangement, index, seed,
-      policy ?? section.variations?.policy ?? project.arrangementVariationGeneration?.policy ?? DEFAULT_VARIATION_POLICY) }) };
+      policy ?? section.variations?.policy ?? project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY) }) };
 }
 
 /** Replace structure and orchestration using independent deterministic streams. */
-export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings, seed: bigint = BigInt(project.seed)): CompositionProject {
+export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings, seed: bigint = BigInt(project.seed), generateVariations = false): CompositionProject {
   const random = new JavaRandom(BigInt.asIntN(64, seed ^ 0x415252414e4745n));
   const plan = generateArrangementPlan(seed);
   const presence = generateContextualPresence(project.tracks, plan, chances, () => random.nextDouble());
@@ -30,12 +30,12 @@ export function randomizeArrangement(project: CompositionProject, chances: Secti
     id: `section-${index + 1}`, type, measures: 4, trackPresence: presence[index],
   }));
   const next = { ...project, arrangement };
-  return project.arrangementVariationGeneration?.enabled
-    ? randomizeArrangementVariations(next, seed, undefined, project.arrangementVariationGeneration.policy)! : next;
+  return generateVariations
+    ? randomizeArrangementVariations(next, seed, undefined, project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY)! : next;
 }
 
 // Build immutable candidates. ProjectService validates and commits each command once.
-export function addSection(project: CompositionProject, type: SectionType, afterIndex: number, chances: SectionTypeChanceSettings, random: () => number): CompositionProject | undefined {
+export function addSection(project: CompositionProject, type: SectionType, afterIndex: number, chances: SectionTypeChanceSettings, random: () => number, generateVariations = false): CompositionProject | undefined {
   const sections = project.arrangement;
   if (sections.length >= MAX_ARRANGEMENT_SECTIONS || !SECTION_TYPES.includes(type)) {
     return;
@@ -54,8 +54,8 @@ export function addSection(project: CompositionProject, type: SectionType, after
   });
   const presence = generateContextualPresence(project.tracks, next, chances, random, insertAt);
   next[insertAt] = { ...next[insertAt], trackPresence: presence[insertAt] };
-  if (project.arrangementVariationGeneration?.enabled) next[insertAt] = { ...next[insertAt],
-    variations: planSectionVariations(project.tracks, next, insertAt, BigInt(project.seed), project.arrangementVariationGeneration.policy) };
+  if (generateVariations) next[insertAt] = { ...next[insertAt],
+    variations: planSectionVariations(project.tracks, next, insertAt, BigInt(project.seed), project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY) };
   return { ...project, arrangement: next };
 }
 

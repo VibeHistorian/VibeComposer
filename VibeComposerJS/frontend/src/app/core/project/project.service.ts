@@ -1,5 +1,5 @@
 import * as arrangementCommands from './project-arrangement-commands';
-import { pruneVariations, validVariationGeneration } from '../music/arrangement-variations';
+import { DEFAULT_VARIATION_POLICY, pruneVariations, validVariationPolicy } from '../music/arrangement-variations';
 import type { VariationPolicy } from '../music/arrangement-variation.model';
 import type { VariationDraft, VariationDraftOptions } from './arrangement-variation-draft';
 import { loadTrackPreset } from './track-presets';
@@ -500,9 +500,10 @@ export class ProjectService {
       if (next.arrangementManual) {
         next = arrangementCommands.randomizeArrangementPresence(next, undefined,
           this.sectionTypeSettings.chances(), () => random.nextDouble())!;
-        if (next.arrangementVariationGeneration?.enabled) next = arrangementCommands.randomizeArrangementVariations(next,
-          BigInt(next.seed), undefined, next.arrangementVariationGeneration.policy)!;
-      } else next = arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances());
+        if (this.uiPreferences.generateArrangementVariations()) next = arrangementCommands.randomizeArrangementVariations(next,
+          BigInt(next.seed), undefined, next.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY)!;
+      } else next = arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances(), BigInt(next.seed),
+        this.uiPreferences.generateArrangementVariations());
     }
     if (next === current) return 'unchanged';
     // Rendering also asks for the global phrase (note counts) and for section
@@ -745,7 +746,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationGeneration'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationPolicy'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;
@@ -1028,7 +1029,8 @@ export class ProjectService {
   }
 
   addSection(type: SectionType = 'VERSE1', afterIndex = this.state().arrangement.length - 1): void {
-    const next = arrangementCommands.addSection(this.state(), type, afterIndex, this.sectionTypeSettings.chances(), Math.random);
+    const next = arrangementCommands.addSection(this.state(), type, afterIndex, this.sectionTypeSettings.chances(), Math.random,
+      this.uiPreferences.generateArrangementVariations());
     if (next) this.commit(next);
   }
 
@@ -1076,7 +1078,8 @@ export class ProjectService {
   /** Explicit toolbar action replaces the whole arrangement independently of Compose policy. */
   randomizeArrangement(): void {
     const seed = BigInt(Math.floor(Math.random() * 0x1000000000000));
-    this.commit(arrangementCommands.randomizeArrangement(this.state(), this.sectionTypeSettings.chances(), seed));
+    this.commit(arrangementCommands.randomizeArrangement(this.state(), this.sectionTypeSettings.chances(), seed,
+      this.uiPreferences.generateArrangementVariations()));
   }
 
   randomizeArrangementPresence(sectionId?: string): void {
@@ -1110,8 +1113,8 @@ export class ProjectService {
     if (current !== expected || !draft || typeof draft !== 'object' || Array.isArray(draft)
       || Object.keys(draft).some(id => !current.arrangement.some(section => section.id === id))) return 'invalid';
     if (!options || typeof options !== 'object' || Array.isArray(options)
-      || Object.keys(options).some(key => key !== 'presence' && key !== 'generation')
-      || options.generation !== undefined && !validVariationGeneration(options.generation)) return 'invalid';
+      || Object.keys(options).some(key => key !== 'presence' && key !== 'policy')
+      || options.policy !== undefined && !validVariationPolicy(options.policy)) return 'invalid';
     const presence = options.presence;
     if (presence !== undefined && (!presence || typeof presence !== 'object' || Array.isArray(presence)
       || Object.keys(presence).length !== current.arrangement.length
@@ -1121,7 +1124,7 @@ export class ProjectService {
           || Object.keys(flags).length !== current.tracks.length || current.tracks.some(track => typeof flags[track.id] !== 'boolean');
       }))) return 'invalid';
     return this.commitPartWorkflow({ ...current,
-      ...(options.generation ? { arrangementVariationGeneration: structuredClone(options.generation) } : {}),
+      ...(options.policy ? { arrangementVariationPolicy: structuredClone(options.policy) } : {}),
       arrangement: current.arrangement.map(section => ({ ...section,
         ...(Object.hasOwn(draft, section.id) ? { variations: draft[section.id] === undefined ? undefined : structuredClone(draft[section.id]) } : {}),
         ...(presence ? { trackPresence: { ...presence[section.id] } } : {}),
