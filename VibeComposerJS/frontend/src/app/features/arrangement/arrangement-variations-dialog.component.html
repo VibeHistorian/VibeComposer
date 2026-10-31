@@ -24,6 +24,7 @@
           @if (row.context.occurrence) { Return {{ row.context.occurrence + 1 }}. }
         </p>
         @if (row.gestureMismatch) { <p class="context-warning">Saved plan: {{ row.savedGestureLabel }}. Reroll to replan for this position.</p> }
+        @if (row.returnLift) { <p class="variation-return-lift">One octave lift adds contrast while the established anchors remain.</p> }
         @if (row.presenceChanges.length) {
           <details class="presence-changes"><summary>{{ row.presenceChanges.length }} track presence changes</summary>
             <ul>@for (change of row.presenceChanges; track change.track.id) { <li>{{ change.track.name }}: {{ change.present ? 'Present' : 'Absent' }}</li> }</ul>

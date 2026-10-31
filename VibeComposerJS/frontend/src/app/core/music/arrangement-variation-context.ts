@@ -18,6 +18,7 @@ export interface VariationContext {
   readonly occurrence: number;
   readonly presentCount: number;
   readonly durationBeats: number;
+  readonly returnLift: boolean;
 }
 
 function family(type: SectionType): string {
@@ -59,14 +60,24 @@ export function resolveVariationContext(tracks: readonly CompositionTrack[], sec
   } else {
     gesture = 'sustain'; reason = 'Keep the current character recognizable';
   }
-  return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats };
+  const priorHookEnergy = Math.max(0, ...sections.slice(0, index).filter(s => family(s.type) === 'hook')
+    .map(s => resolveArrangementIntent([s], 0).energy));
+  const firstHook = sections.find(s => family(s.type) === 'hook');
+  const firstHookEnergy = firstHook ? resolveArrangementIntent([firstHook], 0).energy : 0;
+  const returnLift = currentFamily === 'hook' && occurrence > 0 && durationBeats > 4 && intent.energy >= .8
+    && intent.energy - firstHookEnergy >= .05 - EPSILON && intent.energy >= priorHookEnergy - EPSILON
+    && (gesture === 'reinforce-foundation' || gesture === 'release-tension');
+  return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats, returnLift };
 }
 
 export const isActivityVariation = (kind: VariationKind): boolean => ['melody-speed', 'arp-activity', 'drum-activity'].includes(kind);
+export const isRegisterVariation = (kind: VariationKind): boolean => kind === 'melody-register' || kind === 'arp-register';
 
 /** Undefined deliberately leaves a responsibility unchanged. Solo material keeps its pulse. */
 export function variationAmountForContext(context: VariationContext, kind: VariationKind): -1 | 1 | undefined {
   const { gesture, intent, presentCount } = context;
+  if (isRegisterVariation(kind)) return context.returnLift ? 1 : undefined;
+  if (kind === 'arp-contour') return gesture === 'build-pulse' ? 1 : gesture === 'resolve' ? -1 : undefined;
   if (kind === 'bass-weight' || kind === 'chord-space') {
     if (gesture === 'build-pulse' || gesture === 'sustain') return undefined;
     return intent.energy >= .65 && gesture !== 'thin' && gesture !== 'resolve' ? 1 : -1;
@@ -82,6 +93,7 @@ export function variationAmountForContext(context: VariationContext, kind: Varia
 }
 
 export function variationPriority(context: VariationContext, kind: VariationKind): number {
+  if (kind === 'arp-contour') return 2;
   const activity = isActivityVariation(kind), foundation = kind === 'bass-weight' || kind === 'chord-space';
   switch (context.gesture) {
     case 'build-pulse': return kind === 'arp-activity' || kind === 'drum-activity' ? 4 : kind === 'melody-direction' ? 2 : activity ? 1 : 0;

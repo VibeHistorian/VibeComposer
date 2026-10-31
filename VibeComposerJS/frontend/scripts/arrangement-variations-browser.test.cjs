@@ -39,7 +39,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
           const base=p.tracks.find(t=>t.role===role);
           for(let i=2;i<=6;i++)p.tracks.push({...base,id:'track-'+role+'-'+i,name:base.name[0]+i,generatorSettings:{...base.generatorSettings}});
         }
-        p.arrangement=['BUILDUP2','CLIMAX'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
+        p.arrangement=['BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role=>[role,Array(6).fill(true)]))}));
         sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
       }
@@ -54,6 +54,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Release tension')),'release purpose');
+      ensure(d.querySelector('.variation-return-lift'),'controlled return lift explanation');
       ensure(JSON.stringify(read())===original,'reroll stays local');
       const toggle=d.querySelector('article input[type="checkbox"]');toggle.focus();toggle.click();
       await wait(()=>d.querySelector('[data-variation-status="disabled"]'),'disabled status');
@@ -66,6 +67,10 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await wait(()=>!dialog(),'apply closes');
       const saved=JSON.stringify(read());ensure(saved!==original,'apply saves choices');
       ensure(read().arrangement[0].variations.gesture==='build-pulse'&&read().arrangement[1].variations.gesture==='release-tension','purpose persists');
+      const firstAnchor=read().arrangement[1].variations.choices.find(c=>c.kind==='bass-weight');
+      const later=read().arrangement[3].variations.choices;
+      ensure(firstAnchor&&later.some(c=>c.kind==='bass-weight'&&c.trackId===firstAnchor.trackId),'return keeps bass anchor');
+      ensure(later.filter(c=>c.kind.endsWith('-register')).length===1,'one register lift saved');
       const strip=p=>p.arrangement.map(({variations,...rest})=>rest);
       ensure(JSON.stringify(strip(read()))===JSON.stringify(strip(JSON.parse(original))),'order and presence intact');
       document.querySelector('[aria-label="Undo"]').click();await wait(()=>JSON.stringify(read())===original,'single undo');

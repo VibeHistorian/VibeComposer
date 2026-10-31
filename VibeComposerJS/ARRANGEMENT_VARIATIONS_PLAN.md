@@ -66,11 +66,29 @@ Role/track rerolls receive the full orchestration separately from their selected
 
 Realized plans optionally persist a validated `gesture`; imports without it remain valid and keep their choices. Moving, changing type or duplicating never silently replans notes. The popup shows current purpose, its reason, recurrence and any saved-purpose/direction mismatch. Reroll remains the explicit musical change boundary.
 
-## Follow-up: richer role adapters and controlled lifts
+## Richer adapters: register, contour and controlled lifts (delivered)
 
-Expand role adapters with bounded register/range changes, arp contours, rhythm-aware density, chord transitions and instrument-aware drum behavior. Protect recognizable hooks and custom patterns. Consider effect vectors and compatibility/exclusion groups only as the catalogue grows; do not build an optimizer before there are enough operations to justify it.
+Three additional operation kinds use existing shared musical consumers, preserving generator seeds and track identities:
 
-Add an explicit later-return lift using these adapters while retaining the established anchors. Occurrence is currently available for inspection and continuity; this slice does not automatically increase operation strength or add register shifts on each return. Audition across instruments and short/long sections before making such escalation automatic. The current duration heuristic limits the count of static changes; it does not create ramps, fills or timed events.
+| Operation | Effect and bounds | Protection |
+| --- | --- | --- |
+| `melody-register` | Shift track transpose by exactly ±12 semitones, never clamp into a partial octave. Resulting transpose must stay within ±24; declared range plus transpose must fit 24–96. Targets beyond ±7 are excluded. | Explicit section transpose/range fields block the operation. Manual phrases remain owned by their editors. |
+| `arp-register` | Shift transpose by one octave within ±24 for a single-octave arp. | Authored contour/custom direction, octave adjustment and stretch configurations are excluded. Explicit section interpretation/register controls block the operation. |
+| `arp-contour` | Chord-relative diatonic passing motion `[0,1,2,0]` for anticipation or `[2,1,0,0]` for resolution; rhythm, velocity and note-count paths remain unchanged. | Only ordinary full-grid, span-one arps without authored contour/direction, custom grid/durations or octave adjustments are eligible. Contour and chord-relative mode form one atomic operation: an explicit override of either blocks both. |
+
+Octave operations preserve pitch class and the phrase outline rather than rebuilding targets, rhythm or pattern seed. These bounds constrain adapter inputs; project/section transposition still belongs to the established output resolver. Array values are compared by content for no-op filtering. The inspector explains blocked controls and current bounds/settings; authored patterns remain stored intact.
+
+Stronger hook returns may add one positive register operation when their energy is at least .8, exceeds the first hook by at least .05, matches or exceeds the strongest preceding hook, and lasts more than four beats. Repeated returns at that established peak keep the same lift; lower returns do not continue climbing. The shift is always relative to the global track base, never accumulated from an earlier section.
+
+When a compatible future lift exists, hook plans reserve one slot inside the existing change budget. At the default budget of two this means one early anchor and one later accent, rather than replacing an anchor to make room. Larger budgets retain their eligible anchor set and add at most one accent. A bass-weight anchor gets preference while reserving contrast so a release-to-foundation transition retains the bass identity where eligible. Different gestures/presence/overrides may still change other responsibilities. A one-change budget never adds a lift. Reserved slots may remain unused when chance, constraints or role allocation prevent an accent.
+
+The planner uses an independent `hook-lift` stream for selecting the accent, leaving foundation rankings and phrase streams alone. Scoped rerolls preserve an existing out-of-scope register operation and account for it in the budget. Lift eligibility is rechecked at resolution after later base/section edits. The popup describes the lift and shows its effective transpose, while the serialized choice kind/amount, existing history, JSON/session and output paths carry the realization. No new behavioral preference is introduced; variation generation remains opt-in through Settings → Behavior → Arrangement.
+
+## Follow-up: additional role vocabulary and audition
+
+Extend rhythm-aware density beyond full arps, add chord transition gestures, richer instrument-aware drums and contextual melody range planning. Keep custom patterns, explicit settings and manual ownership protected. A wider register envelope, broader instrument coverage or default-on escalation should follow musical audition across instrument pools and short/long forms; this slice validates pitch/timing/output behavior and retains conservative guards. Do not treat automated checks as a subjective musical-quality score.
+
+Consider effect vectors and compatibility/exclusion groups only as the catalogue grows. The current duration heuristic and register lifts are static section operations; timed ramps, fills and boundary events remain the separate slice below.
 
 ## Later slice: ramps and boundary events
 
@@ -134,3 +152,10 @@ Validation: all 544 unit tests, the production build and all 28 browser tests pa
 - Production build and all 28 aggregate browser cases passed, including purpose display/persistence at 1440/780px, existing arrangement/device-scale coverage, history, preferences and output workflows.
 - Final review added tolerance at energy/tension delta thresholds so Verse 2 → Chorus 1 reliably counts as a quarter-scale rise. After that adjustment, all 21 focused variation tests, the fresh build and six affected production generation/variation browser cases passed. Full aggregates were not repeated for this isolated threshold correction.
 - Local logs: frontend `.angular/variation-coordination-unit.log`, `variation-coordination-build.log`, `variation-coordination-browser.log`, `variation-coordination-final-unit.log` and `variation-coordination-final-browser.log`. The build retains the existing Pixi `@xmldom/xmldom` CommonJS warning.
+
+### Register/contour adapters and controlled lifts verification, 2026-10-31
+
+- Full unit aggregate: all 555 passed. New tests verify exact octave equivalence for both Melody modes and Arp across C Major, F♯ Dorian and B Natural minor; diatonic contour attacks with unchanged rhythm/velocity; atomic override protection; authored-pattern/range guards; and stable anchors with one non-stacking lift over 40 seeds. Locked/manual/customized targets retain normal anchor capacity. New choice kinds survive history/import and produce identical shared phrase/MIDI output after reload.
+- Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning.
+- Full production browser aggregate: all 28 passed. The expanded 30-track 1440/780px fixture includes an early chorus and later climax, verifies the lift explanation and saved operation, and confirms that the bass anchor is retained with exactly one register lift. Existing settings/preferences, arrangement/device-scale, contextual, synthesis and export checks also passed.
+- Local logs: frontend `.angular/variation-lifts-unit.log`, `variation-lifts-build.log`, `variation-lifts-browser.log`. This is automated behavioral/output evidence; subjective instrument-pool audition remains follow-up work.

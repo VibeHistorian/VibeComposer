@@ -381,14 +381,16 @@ test('hook returns share eligible track and operation identities without section
     id: `return-${i}`, type, measures: 4, trackPresence: Object.fromEntries(tracks.map(t => [t.id, true])),
   }));
   assert.equal(resolveVariationContext(tracks, sections, 3).occurrence, 1);
+  const policy = { chance: 100, maxChanges: 3 };
+  const anchors = choices => choices.filter(c => !['melody-register', 'arp-register'].includes(c.kind));
   for (let seed = 0n; seed < 40n; seed++) {
-    const first = engine.planSectionVariations(tracks, sections, 1, seed).choices;
+    const first = engine.planSectionVariations(tracks, sections, 1, seed, policy).choices;
     assert.equal(first.length, 2);
-    assert.deepEqual(engine.planSectionVariations(tracks, sections, 3, seed).choices, first);
-    assert.deepEqual(engine.planSectionVariations(tracks, sections.map((s, i) => ({ ...s, id: `renamed-${i}` })), 5, seed).choices, first);
+    assert.deepEqual(anchors(engine.planSectionVariations(tracks, sections, 3, seed, policy).choices), first);
+    assert.deepEqual(anchors(engine.planSectionVariations(tracks, sections.map((s, i) => ({ ...s, id: `renamed-${i}` })), 5, seed, policy).choices), first);
     const missing = first.find(c => c.kind === 'bass-weight');
     const later = sections.map((s, i) => i === 3 ? { ...s, trackPresence: { ...s.trackPresence, [missing.trackId]: false } } : s);
-    const adapted = engine.planSectionVariations(tracks, later, 3, seed).choices;
+    const adapted = engine.planSectionVariations(tracks, later, 3, seed, policy).choices;
     assert.ok(!adapted.some(c => c.trackId === missing.trackId));
     assert.deepEqual(adapted.find(c => c.kind === 'chord-space'), first.find(c => c.kind === 'chord-space'));
   }
@@ -450,4 +452,117 @@ test('activity gestures reach the actual arp consumer without changing track ide
   assert.ok(generate(build).length > generate(thin).length);
   assert.equal(project.seed, '42');
   assert.equal(track.generatorSettings.hitsPerPattern, 8);
+});
+
+test('register operations preserve the audible phrase shape and rhythm while shifting one octave', () => {
+  const { project, engine, phrase } = setup();
+  for (const contextualMelody of [false, true]) for (const [key, scale] of [['C', 'major'], ['F♯', 'dorian'], ['B', 'natural-minor']]) {
+    const p = { ...project, key, scale, melodyGlobal: { contextualMelody } };
+    for (const role of ['melody', 'arpeggio']) {
+      const track = project.tracks.find(t => t.role === role);
+      const choice = { trackId: track.id, kind: role === 'melody' ? 'melody-register' : 'arp-register', amount: 1, enabled: true };
+      const patch = engine.variationPatch(track, choice);
+      assert.equal(patch.transpose, 12);
+      const base = phrase.generateTrackPhrase(p, track);
+      const lifted = phrase.generateTrackPhrase(p, { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
+      assert.ok(base.length);
+      assert.deepEqual(lifted, base.map(note => ({ ...note, midi: note.midi + 12 })), `${role}, ${key}, ${scale}, contextual=${contextualMelody}`);
+      assert.ok(lifted.every(note => note.midi >= 0 && note.midi <= 127));
+    }
+  }
+});
+
+test('arp contours change selected pitches diatonically without rewriting rhythm or velocities', () => {
+  const { project, engine, phrase, load } = setup();
+  const arp = project.tracks.find(t => t.role === 'arpeggio');
+  const track = { ...arp, generatorSettings: { ...arp.generatorSettings, rhythm: 'full', hitsPerPattern: 8, pauseChance: 0 } };
+  for (const scale of ['major', 'dorian', 'natural-minor']) for (const amount of [-1, 1]) {
+    const p = { ...project, scale };
+    const choice = { trackId: track.id, kind: 'arp-contour', amount, enabled: true };
+    const patch = engine.variationPatch(track, choice);
+    assert.equal(patch.arpContourChordMode, true);
+    const base = phrase.generateTrackPhrase(p, track);
+    const varied = phrase.generateTrackPhrase(p, { ...track, generatorSettings: { ...track.generatorSettings, ...patch } });
+    assert.deepEqual(varied.map(({ midi, ...note }) => note), base.map(({ midi, ...note }) => note));
+    assert.notDeepEqual(varied, base);
+    const attacks = varied.filter(note => note.startBeat < 4).filter((_, i) => i % 2 === 0).map(note => note.midi);
+    assert.ok(amount > 0 ? attacks[0] < attacks[1] && attacks[1] < attacks[2] : attacks[0] > attacks[1] && attacks[1] > attacks[2]);
+    const steps = load('core/music/scales.ts').scaleNotes(scale);
+    assert.ok(attacks.every(pitch => steps.includes(pitch % 12)));
+  }
+});
+
+test('new operations protect authored direction, explicit interpretation and declared register bounds', () => {
+  const { project, engine, settings, load } = setup();
+  const inspect = load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  const arp = project.tracks.find(t => t.role === 'arpeggio'), melody = project.tracks.find(t => t.role === 'melody');
+  const contour = { trackId: arp.id, kind: 'arp-contour', amount: 1, enabled: true };
+  for (const patch of [{ arpContour: [0, 4, 1] }, { pattern: 'custom' }, { arpPatternCustom: [0, 1] },
+    { rhythm: 'melody' }, { chordSpan: 2 }, { useOctaveAdjustments: true }, { rhythm: 'durations' }]) {
+    assert.deepEqual(engine.variationPatch({ ...arp, generatorSettings: { ...arp.generatorSettings, ...patch } }, contour), {});
+  }
+  const section = { ...project.arrangement[1], rolePartOverrides: { arpeggio: { arpContourChordMode: false } },
+    variations: { seed: '1', policy: { chance: 100, maxChanges: 2 }, choices: [contour] } };
+  assert.equal(settings.resolvePartTrack(arp, section).generatorSettings.arpContour, undefined, 'never apply half a contour operation');
+  assert.equal(inspect(arp, section, contour).status, 'overridden');
+  const register = { trackId: melody.id, kind: 'melody-register', amount: 1, enabled: true };
+  for (const patch of [{ transpose: 24 }, { rangeMax: 100 }, { chordNoteChoices: [24] }]) {
+    assert.deepEqual(engine.variationPatch({ ...melody, generatorSettings: { ...melody.generatorSettings, ...patch } }, register), {});
+  }
+  const ranged = { ...project.arrangement[2], trackPartOverrides: { [melody.id]: { rangeMin: 48 } },
+    variations: { seed: '1', policy: { chance: 100, maxChanges: 2 }, choices: [register] } };
+  assert.equal(settings.resolvePartTrack(melody, ranged).generatorSettings.transpose, undefined);
+  assert.equal(inspect(melody, ranged, register).status, 'overridden');
+});
+
+test('stronger hook returns reserve a lift without exceeding budgets or replacing anchor choices', () => {
+  const { project, engine } = setup();
+  const tracks = project.tracks.flatMap(track => Array.from({ length: 3 }, (_, i) => ({ ...track, id: `${track.id}-${i}` })));
+  const sections = ['INTRO', 'CHORUS1', 'VERSE1', 'CHORUS3', 'CHORUS3', 'VERSE2', 'CLIMAX', 'CHORUS1', 'OUTRO'].map((type, i) => ({
+    id: `lift-${i}`, type, measures: 4, trackPresence: Object.fromEntries(tracks.map(t => [t.id, true])),
+  }));
+  const isLift = c => ['melody-register', 'arp-register'].includes(c.kind);
+  for (let seed = 0n; seed < 40n; seed++) {
+    const first = engine.planSectionVariations(tracks, sections, 1, seed);
+    assert.equal(first.choices.length, 1);
+    assert.ok(!first.choices.some(isLift));
+    let lift;
+    for (const i of [3, 4, 6]) {
+      const plan = engine.planSectionVariations(tracks, sections, i, seed);
+      assert.equal(plan.choices.length, 2);
+      assert.deepEqual(plan.choices.filter(c => !isLift(c)), first.choices);
+      assert.equal(plan.choices.filter(isLift).length, 1);
+      const current = plan.choices.find(isLift);
+      if (lift) assert.deepEqual(current, lift); else lift = current;
+      assert.equal(current.amount, 1);
+      assert.equal(engine.variationPatch(tracks.find(t => t.id === current.trackId), current).transpose, 12, 'lift is relative to base, never stacked');
+    }
+    assert.ok(!engine.planSectionVariations(tracks, sections, 7, seed).choices.some(isLift), 'lower return does not keep climbing');
+    assert.equal(engine.planSectionVariations(tracks, sections, 3, seed, { chance: 100, maxChanges: 1 }).choices.length, 1);
+    assert.ok(!engine.planSectionVariations(tracks, sections, 3, seed, { chance: 100, maxChanges: 1 }).choices.some(isLift));
+  }
+});
+
+test('custom/locked/manual lift targets keep anchor capacity and new choices persist through history and export', () => {
+  const { project, service, engine, load, phrase, midi } = setup();
+  project.arrangement = ['INTRO', 'CHORUS1', 'VERSE1', 'CLIMAX', 'OUTRO'].map((type, i) => ({ ...project.arrangement[0], id: `section-${i + 1}`, type }));
+  const noLifts = project.tracks.map(track => ['melody', 'arpeggio'].includes(track.role) ? { ...track, rerollLocked: true } : track);
+  assert.equal(engine.planSectionVariations(noLifts, project.arrangement, 1, 1n).choices.length, 2);
+  assert.ok(!engine.planSectionVariations(noLifts, project.arrangement, 3, 1n).choices.some(c => c.kind.endsWith('-register')));
+  const manual = project.tracks.map(track => ['melody', 'arpeggio'].includes(track.role) ? { ...track, editedPhrase: [] } : track);
+  assert.equal(engine.planSectionVariations(manual, project.arrangement, 1, 1n).choices.length, 2);
+  const authored = project.tracks.map(track => track.role === 'melody' ? { ...track, generatorSettings: { ...track.generatorSettings, rangeMax: 100 } }
+    : track.role === 'arpeggio' ? { ...track, generatorSettings: { ...track.generatorSettings, arpContour: [0, 4] } } : track);
+  assert.equal(engine.planSectionVariations(authored, project.arrangement, 1, 1n).choices.length, 2);
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  const before = service.exportProjectJson();
+  service.randomizeArrangementVariations(undefined, undefined, 1n);
+  const saved = service.exportProjectJson(), notes = service.project().tracks.map(t => phrase.layOutTrackPhrase(service.project(), t));
+  const bytes = midi.generateCompositionMidi(service.project());
+  assert.ok(service.project().arrangement[3].variations.choices.some(c => c.kind.endsWith('-register')));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(service.project().tracks.map(t => phrase.layOutTrackPhrase(service.project(), t)), notes);
+  assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
 });

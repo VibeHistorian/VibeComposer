@@ -1,12 +1,13 @@
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { ArrangementVariation, VariationKind } from './arrangement-variation.model';
-import { variationPatch } from './arrangement-variations';
+import { variationBlockedKeys, variationPatch } from './arrangement-variations';
 import { PART_CONTROLS, settingsValues } from './part-settings';
 
 export type VariationStatus = 'active' | 'disabled' | 'absent' | 'manual' | 'incompatible' | 'overridden' | 'unchanged';
 export const VARIATION_LABELS: Record<VariationKind, string> = {
-  'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'arp-activity': 'Arp activity',
+  'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
+  'arp-activity': 'Arp activity', 'arp-contour': 'Arp chord-relative contour', 'arp-register': 'Arp octave register',
   'bass-weight': 'Bass octave weight', 'chord-space': 'Chord spacing', 'drum-activity': 'Cymbal activity',
 };
 export interface VariationInspection {
@@ -28,9 +29,15 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
   }
   const rolePatch = section.rolePartOverrides?.[track.role] ?? {}, trackPatch = section.trackPartOverrides?.[track.id] ?? {};
   const effective = { ...track, generatorSettings: { ...track.generatorSettings, ...rolePatch, ...trackPatch } } as CompositionTrack;
-  const patch = variationPatch(effective, choice);
-  if (!Object.keys(patch).length) return result('incompatible', 'Current generator mode does not support this variation');
   const values = settingsValues(effective.generatorSettings, track.role);
+  const blocked = variationBlockedKeys(section, track, choice.kind);
+  if (blocked.length) return result('overridden', 'Explicit section controls protect this operation', blocked.map(parameter => ({
+    parameter, label: PART_CONTROLS[track.role].find(control => control.key === parameter)?.label ?? parameter,
+    before: values[parameter], after: values[parameter], effective: values[parameter],
+    source: Object.hasOwn(trackPatch, parameter) ? 'Section track override' : 'Section role override',
+  })));
+  const patch = variationPatch(effective, choice);
+  if (!Object.keys(patch).length) return result('incompatible', 'Current settings, authored patterns or register bounds prevent this variation');
   const changes = Object.entries(patch).map(([parameter, after]) => {
     const source = Object.hasOwn(trackPatch, parameter) ? 'Section track override'
       : Object.hasOwn(rolePatch, parameter) ? 'Section role override' : 'Variation';
