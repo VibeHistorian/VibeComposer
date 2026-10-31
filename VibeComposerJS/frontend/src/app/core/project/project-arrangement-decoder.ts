@@ -9,6 +9,7 @@ import { generateTrackPresence, legacyTrackPresence } from '../music/arrangement
 import { decodePartPatch, resolvePartTrack, validVelocityRange } from '../music/part-settings';
 import { validSectionHarmony } from '../music/section-context';
 import { isPhrase } from './project-track-decoder';
+import { validSectionVariations } from '../music/arrangement-variations';
 
 export const MAX_ARRANGEMENT_SECTIONS = 32;
 export const MAX_ARRANGEMENT_MEASURES = 128;
@@ -38,6 +39,7 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
     const trackPartChances = section.trackPartChances;
     const trackPresence = section.trackPresence as Record<string, unknown> | undefined;
     const chordDegrees = section.chordDegrees;
+    if (section.variations !== undefined && !validSectionVariations(section.variations, tracks)) return undefined;
     if ((section.useMelodyHarmony !== undefined && typeof section.useMelodyHarmony !== 'boolean')
       || (section.swapMelody !== undefined && typeof section.swapMelody !== 'boolean')) return undefined;
     if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
@@ -122,6 +124,7 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
       ...(section.useMelodyHarmony !== undefined ? { useMelodyHarmony: section.useMelodyHarmony } : {}),
       ...(section.swapMelody !== undefined ? { swapMelody: section.swapMelody } : {}),
       trackPresence: presence,
+      ...(section.variations ? { variations: structuredClone(section.variations) } : {}),
       rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,
       trackPartOverrides,
       ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),

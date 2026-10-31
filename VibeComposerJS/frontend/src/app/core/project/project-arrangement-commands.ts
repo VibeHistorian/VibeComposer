@@ -8,6 +8,18 @@ import { copyPartSettings } from '../music/part-settings';
 import { getDiatonicChords } from '../music/harmony';
 import { generateArrangementPlan } from '../music/arrangement-plan';
 import { JavaRandom } from '../music/java-random';
+import { DEFAULT_VARIATION_POLICY, planSectionVariations, validVariationPolicy } from '../music/arrangement-variations';
+import type { VariationPolicy } from '../music/arrangement-variation.model';
+
+/** Explicit opt-in engine command; previews build candidates without publishing them. */
+export function randomizeArrangementVariations(project: CompositionProject, seed: bigint, sectionId?: string,
+  policy?: VariationPolicy): CompositionProject | undefined {
+  if (policy !== undefined && !validVariationPolicy(policy)
+    || sectionId !== undefined && !project.arrangement.some(s => s.id === sectionId)) return undefined;
+  return { ...project, arrangement: project.arrangement.map((section, index) => sectionId !== undefined && section.id !== sectionId
+    ? section : { ...section, variations: planSectionVariations(project.tracks, project.arrangement, index, seed,
+      policy ?? section.variations?.policy ?? DEFAULT_VARIATION_POLICY) }) };
+}
 
 /** Replace structure and orchestration using independent deterministic streams. */
 export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings, seed: bigint = BigInt(project.seed)): CompositionProject {
@@ -56,6 +68,7 @@ export function duplicateSection(project: CompositionProject, index: number): Co
   const next = [...sections];
   next.splice(index + 1, 0, {
     ...sections[index], id: `section-${nextId}`,
+    ...(sections[index].variations ? { variations: structuredClone(sections[index].variations) } : {}),
     context: sections[index].context ? { ...sections[index].context } : undefined,
     customChords: sections[index].customChords?.map(chord => chord ? { ...chord } : null),
     customDurations: sections[index].customDurations ? [...sections[index].customDurations] : undefined,

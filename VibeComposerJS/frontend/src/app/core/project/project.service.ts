@@ -1,4 +1,6 @@
 import * as arrangementCommands from './project-arrangement-commands';
+import { pruneVariations } from '../music/arrangement-variations';
+import type { VariationPolicy } from '../music/arrangement-variation.model';
 import { loadTrackPreset } from './track-presets';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
@@ -276,6 +278,7 @@ export class ProjectService {
     const removed = new Set(removable.slice(0, members.length - target).map(track => track.id));
     return this.commitPartWorkflow({ ...current, tracks: current.tracks.filter(track => !removed.has(track.id)),
       arrangement: current.arrangement.map(section => ({ ...section,
+        ...(section.variations ? { variations: pruneVariations(section.variations, removed) } : {}),
         trackPresence: Object.fromEntries(Object.entries(section.trackPresence).filter(([id]) => !removed.has(id))),
         ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => !removed.has(id)) } : {}),
         ...(section.trackPhrases !== undefined ? { trackPhrases: Object.fromEntries(Object.entries(section.trackPhrases).filter(([id]) => !removed.has(id))) } : {}),
@@ -1013,7 +1016,9 @@ export class ProjectService {
       delete trackPartOverrides[trackId];
       const trackPhrases = { ...section.trackPhrases };
       delete trackPhrases[trackId];
-      return { ...section, trackPresence, trackPartOverrides, ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
+      return { ...section, trackPresence, trackPartOverrides,
+        ...(section.variations ? { variations: pruneVariations(section.variations, new Set([trackId])) } : {}),
+        ...(section.trackPhrases !== undefined ? { trackPhrases } : {}),
         ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => id !== trackId) } : {}) };
     });
     this.commit({ ...current, tracks: current.tracks.filter((candidate) => candidate.id !== trackId), arrangement });
@@ -1074,6 +1079,27 @@ export class ProjectService {
   randomizeArrangementPresence(sectionId?: string): void {
     const next = arrangementCommands.randomizeArrangementPresence(this.state(), sectionId, this.sectionTypeSettings.chances(), Math.random);
     if (next) this.commit(next);
+  }
+
+  randomizeArrangementVariations(sectionId?: string, policy?: VariationPolicy, seed?: bigint): PartWorkflowResult {
+    const next = arrangementCommands.randomizeArrangementVariations(this.state(),
+      seed ?? BigInt(Math.floor(Math.random() * 0x1000000000000)), sectionId, policy);
+    return next ? this.commitPartWorkflow(next) : 'invalid';
+  }
+
+  setArrangementVariationEnabled(sectionId: string, trackId: string, enabled: boolean): PartWorkflowResult {
+    const current = this.state(), section = current.arrangement.find(s => s.id === sectionId);
+    if (typeof enabled !== 'boolean' || !section?.variations?.choices.some(c => c.trackId === trackId)) return 'invalid';
+    return this.commitPartWorkflow({ ...current, arrangement: current.arrangement.map(s => s !== section ? s : {
+      ...s, variations: { ...section.variations!, choices: section.variations!.choices.map(c => c.trackId === trackId ? { ...c, enabled } : c) },
+    }) });
+  }
+
+  resetArrangementVariations(sectionId?: string): PartWorkflowResult {
+    const current = this.state();
+    if (sectionId !== undefined && !current.arrangement.some(s => s.id === sectionId)) return 'invalid';
+    return this.commitPartWorkflow({ ...current, arrangement: current.arrangement.map(s => sectionId !== undefined && s.id !== sectionId
+      ? s : { ...s, variations: undefined }) });
   }
 
   setChordDegree(index: number, degree: number): void {

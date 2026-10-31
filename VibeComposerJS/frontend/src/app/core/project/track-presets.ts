@@ -1,4 +1,5 @@
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
+import { pruneVariations } from '../music/arrangement-variations';
 import type { CompositionTrack } from './track.model';
 import { decodeTracks } from './project-track-decoder';
 import type { CompositionProject } from './project.model';
@@ -52,6 +53,7 @@ export function loadTrackPreset(project: CompositionProject, role: ArrangedPart,
   const arrangement = !removed.size && !added.length ? project.arrangement : project.arrangement.map(section => ({ ...section,
     trackPresence: { ...prune(section.trackPresence), ...(added.length ? presence(added, section) : {}) },
     trackPartOverrides: prune(section.trackPartOverrides),
+    ...(section.variations ? { variations: pruneVariations(section.variations, removed) } : {}),
     ...(section.trackPhrases !== undefined ? { trackPhrases: prune(section.trackPhrases) } : {}),
     ...(section.generatedTrackIds ? { generatedTrackIds: section.generatedTrackIds.filter(id => !removed.has(id)) } : {}),
   }));

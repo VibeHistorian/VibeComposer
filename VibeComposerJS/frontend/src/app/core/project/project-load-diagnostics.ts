@@ -14,6 +14,7 @@ import { decodeTracks, isPhrase } from './project-track-decoder';
 import { decodeArrangement, MAX_ARRANGEMENT_SECTIONS, MAX_ARRANGEMENT_MEASURES } from './project-arrangement-decoder';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { decodeStoredArrangement, decodeStoredTrackPresence } from './project-storage';
+import { validSectionVariations } from '../music/arrangement-variations';
 
 /** Gather diagnostics only after rejection; these messages do not define acceptance rules. */
 export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSettings, random: () => number): readonly string[] {
@@ -122,13 +123,15 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (Array.isArray(arrangement)) arrangement.forEach((raw, index) => {
       const path = `project.arrangement[${index}]`;
       const section = object(raw, path, ['id', 'type', 'measures'], ['id', 'type', 'measures', 'context', 'customChords', 'customDurations', 'chordDegrees',
-        'useMelodyHarmony', 'swapMelody', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
+        'useMelodyHarmony', 'swapMelody', 'variations', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
       if (!section) return;
       check(`${path}.type`, SECTION_TYPES.includes(section['type'] as SectionType), `expected one of ${SECTION_TYPES.join(', ')}`);
       check(`${path}.measures`, Number.isInteger(section['measures']) && (section['measures'] as number) >= 1 && (section['measures'] as number) <= 32, 'expected an integer from 1 to 32');
       for (const [role, patch] of Object.entries(section['rolePartOverrides'] ?? {})) if (ARRANGED_PARTS.includes(role as ArrangedPart)) settings(role as ArrangedPart, patch, `${path}.rolePartOverrides.${role}`, true);
       const decodedTracks = decodeTracks(tracks);
       if (decodedTracks) {
+        if (section['variations'] !== undefined) check(`${path}.variations`, validSectionVariations(section['variations'], decodedTracks),
+          'expected an exact Java long seed, valid policy, and up to four unique role-compatible track choices');
         if (section['trackPresence'] !== undefined) check(`${path}.trackPresence`,
           decodeStoredTrackPresence(section['trackPresence'], decodedTracks) !== undefined,
           'expected an ID-to-boolean map or role arrays with one boolean per track, in track order');

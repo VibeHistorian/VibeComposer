@@ -8,6 +8,7 @@ export type SectionType =
   | 'BREAKDOWN' | 'CHILL' | 'BUILDUP1' | 'BUILDUP2' | 'CHORUS3' | 'CLIMAX' | 'OUTRO';
 
 export interface ArrangementSection {
+  readonly variations?: import('../music/arrangement-variation.model').SectionVariations;
   /** Sparse section context; omission inherits project/part values. */
   readonly context?: SectionMusicalContext;
   readonly customChords?: readonly (import('../music/harmony').ProgressionChord | null)[];

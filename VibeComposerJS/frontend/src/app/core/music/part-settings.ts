@@ -1,4 +1,5 @@
 import type { ArrangedPart } from './part-role';
+import { resolveVariationPatch } from './arrangement-variations';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CommonPartSettings, PartSettingsPatch } from './part-settings.model';
 import type { CompositionTrack } from '../project/track.model';
@@ -258,6 +259,7 @@ export function decodeCommonPartSettings(role: ArrangedPart, value: unknown): Co
 export function resolvePartTrack(track: CompositionTrack, section?: ArrangementSection): CompositionTrack {
   if (!section) return track;
   return { ...track, generatorSettings: { ...track.generatorSettings,
+    ...resolveVariationPatch(track, section),
     ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] } } as CompositionTrack;
 }
 
