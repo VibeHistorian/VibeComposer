@@ -679,6 +679,8 @@ test('new rhythmic vocabulary coordinates one activity driver with a chord compa
   const context = load('core/music/arrangement-variation-context.ts');
   const tracks = project.tracks.map(track => track.role === 'arpeggio'
     ? { ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'euclid', hitsPerPattern: 8, euclideanPulses: 4 } } : track);
+  // Keep this static-vocabulary check inside anticipation, without a boundary release.
+  project.arrangement[2] = { ...project.arrangement[2], type: 'BUILDUP2' };
   for (let seed = 0n; seed < 30n; seed++) {
     const plan = engine.planSectionVariations(tracks, project.arrangement, 1, seed, { chance: 100, maxChanges: 4 });
     assert.ok(plan.choices.some(c => c.kind === 'arp-density'));
@@ -860,4 +862,149 @@ test('contextual range reaches shared notes, melody dependencies and MIDI while 
   service.undo(); assert.equal(service.exportProjectJson(), saved);
   assert.equal(service.importProjectJson(saved), true);
   assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
+});
+
+test('pre-drop cut planning reserves one timed accent without consuming static streams or exceeding scoped budgets', () => {
+  const { project, engine, load } = setup();
+  const contexts = load('core/music/arrangement-variation-context.ts');
+  assert.equal(contexts.resolveVariationContext(project.tracks, project.arrangement, 1).preDrop, true);
+  for (let seed = 0n; seed < 40n; seed++) {
+    const plan = engine.planSectionVariations(project.tracks, project.arrangement, 1, seed, { chance: 100, maxChanges: 3 });
+    const cuts = plan.choices.filter(c => c.kind === 'pre-drop-cut');
+    assert.equal(cuts.length, 1); assert.equal(cuts[0].amount, -1);
+    assert.equal(project.tracks.find(t => t.id === cuts[0].trackId).role, 'chords');
+    assert.ok(plan.choices.length <= 3);
+    assert.equal(plan.choices.filter(c => contexts.isActivityVariation(c.kind)).length, 1);
+    assert.equal(new Set(plan.choices.map(c => c.trackId)).size, plan.choices.length);
+    assert.deepEqual(plan, engine.planSectionVariations([...project.tracks].reverse(), project.arrangement, 1, seed, { chance: 100, maxChanges: 3 }));
+    const staticPlan = engine.planSectionVariations(project.tracks, project.arrangement, 1, seed);
+    assert.ok(!staticPlan.choices.some(c => c.kind === 'pre-drop-cut'));
+    const activity = plan.choices.find(c => contexts.isActivityVariation(c.kind));
+    assert.deepEqual(activity, staticPlan.choices.find(c => c.trackId === activity.trackId));
+    const scoped = engine.planSectionVariations(project.tracks.filter(t => t.id !== cuts[0].trackId), project.arrangement, 1, seed,
+      { chance: 100, maxChanges: 2 }, { allTracks: project.tracks, retainedChoices: cuts });
+    assert.ok(!scoped.choices.some(c => c.kind === 'pre-drop-cut'));
+  }
+  assert.deepEqual(engine.planSectionVariations(project.tracks, project.arrangement, 1, 1n, { chance: 0, maxChanges: 3 }).choices, []);
+  for (const nextType of ['OUTRO', 'BUILDUP2', 'CHILL']) {
+    const sections = project.arrangement.map((s, i) => i === 2 ? { ...s, type: nextType } : s);
+    assert.ok(!engine.planSectionVariations(project.tracks, sections, 1, 1n, { chance: 100, maxChanges: 6 }).choices.some(c => c.kind === 'pre-drop-cut'));
+  }
+});
+
+test('section-end event windows use actual nonuniform durations, repeats and beat multipliers', () => {
+  const { project, load } = setup();
+  const events = load('core/music/arrangement-boundary-events.ts');
+  const { sectionDurationBeats } = load('core/music/section-context.ts');
+  const section = project.arrangement[1];
+  for (const [measures, customDurations, multiplier, expected] of [
+    [4, undefined, 1, { startBeat: 15, endBeat: 16 }],
+    [9, [3, 5, .5], 1, { startBeat: 25.25, endBeat: 25.5 }],
+    [4, [3, 2], .5, { startBeat: 4.5, endBeat: 5 }],
+    [3, [2, 3, 1], 2, { startBeat: 11, endBeat: 12 }],
+    [1, [8], 1, { startBeat: 7, endBeat: 8 }],
+  ]) {
+    const s = { ...section, measures, customDurations, context: { beatDurationMultiplier: multiplier } };
+    assert.deepEqual(events.preDropCutWindow(s), expected);
+    assert.equal(expected.endBeat, sectionDurationBeats(project, s));
+  }
+  assert.equal(events.preDropCutWindow({ ...section, measures: 1 }), undefined);
+  const note = (id, startBeat, durationBeats) => ({ id, midi: 60, startBeat, durationBeats, velocity: 80 });
+  const notes = [note('early', 2, 1), note('cross', 14, 4), note('at-start', 15, .25), note('late', 15.9, 1), note('at-end', 16, 1)];
+  assert.deepEqual(events.applySectionCut(notes, { startBeat: 15, endBeat: 16 }), [notes[0], { ...notes[1], durationBeats: 1 }, notes[4]]);
+  assert.equal(notes[1].durationBeats, 4, 'input notes remain immutable');
+});
+
+test('shared cut output preserves earlier notes, other sections and humanization draws exactly', () => {
+  const { project, phrase, load } = setup();
+  const events = load('core/music/arrangement-boundary-events.ts');
+  for (const role of ['chords', 'arpeggio']) for (const humanization of [undefined, { timingBeats: .25, durationBeats: .25 }]) {
+    const source = project.tracks.find(t => t.role === role);
+    const track = { ...source, generatorSettings: { ...source.generatorSettings, rhythm: 'full', hitsPerPattern: 8, ...(role === 'chords' ? { noteLengthPercent: 100 } : { noteLengthMultiplier: 150 }) } };
+    for (const [measures, customDurations, multiplier] of [[4, undefined, 1], [9, [3, 5, .5], 1], [4, [3, 2], .5]]) {
+      const section = { ...project.arrangement[1], measures, customDurations, context: { beatDurationMultiplier: multiplier } };
+      const p = { ...project, humanization, tracks: project.tracks.map(t => t.id === track.id ? track : t),
+        arrangement: project.arrangement.map((s, i) => i === 1 ? section : s) };
+      const choice = { trackId: track.id, kind: 'pre-drop-cut', amount: -1, enabled: true };
+      const varied = { ...p, arrangement: p.arrangement.map((s, i) => i === 1 ? { ...s, variations: { seed: '1', policy: { chance: 100, maxChanges: 3 }, choices: [choice] } } : s) };
+      const baseline = phrase.layOutTrackPhrase(p, track, true, true), actual = phrase.layOutTrackPhrase(varied, track, true, true);
+      const start = 16, window = events.preDropCutWindow(section);
+      const absolute = { startBeat: start + window.startBeat, endBeat: start + window.endBeat };
+      const expected = baseline.flatMap(n => n.sectionId === section.id ? events.applySectionCut([n], absolute) : [n]);
+      assert.deepEqual(actual, expected);
+      assert.notDeepEqual(actual, baseline, 'actual musical output changes');
+      assert.ok(actual.filter(n => n.sectionId === section.id).every(n => n.startBeat >= absolute.endBeat || n.startBeat + n.durationBeats <= absolute.startBeat));
+      assert.deepEqual(actual.filter(n => n.sectionId !== section.id), baseline.filter(n => n.sectionId !== section.id));
+      assert.deepEqual(phrase.sectionMelodyContext(varied, varied.arrangement[1]), phrase.sectionMelodyContext(p, section));
+      for (const other of p.tracks.filter(t => t.id !== track.id)) assert.deepEqual(phrase.layOutTrackPhrase(varied, other), phrase.layOutTrackPhrase(p, other));
+      const copy = phrase.layOutTrackPhrase(varied, track); copy[0].midi = 1;
+      assert.deepEqual(phrase.layOutTrackPhrase(varied, track, true, true), expected, 'cache returns detached notes');
+    }
+  }
+});
+
+test('cut eligibility protects authored timing, dependency rhythms and manual regions with humanization headroom', () => {
+  const { project, load, engine, phrase } = setup();
+  const events = load('core/music/arrangement-boundary-events.ts');
+  const inspect = load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  const track = project.tracks.find(t => t.role === 'chords');
+  const choice = { trackId: track.id, kind: 'pre-drop-cut', amount: -1, enabled: true };
+  const section = { ...project.arrangement[1], variations: { seed: '1', policy: { chance: 100, maxChanges: 3 }, choices: [choice] } };
+  assert.equal(inspect(track, section, choice).status, 'active');
+  assert.equal(events.resolvePreDropCut(track, { ...section, trackPresence: {} }), undefined);
+  assert.equal(events.resolvePreDropCut(track, { ...section, variations: { ...section.variations, choices: [{ ...choice, enabled: false }] } }), undefined);
+  for (const key of events.PRE_DROP_CUT_KEYS) {
+    const s = { ...section, trackPartOverrides: { [track.id]: { [key]: track.generatorSettings[key] ?? 0 } } };
+    assert.equal(events.resolvePreDropCut(track, s), undefined);
+    assert.equal(inspect(track, s, choice).status, 'overridden');
+  }
+  for (const generatorSettings of [{ rhythm: 'melody' }, { rhythm: 'custom' }, { customDurations: [[1]] }, { feedbackCount: 1 }, { offset: 100 }, { chordSpan: 2 }]) {
+    assert.equal(events.preDropCutEligibility({ ...track, generatorSettings: { ...track.generatorSettings, ...generatorSettings } }, section), 'incompatible');
+  }
+  const manual = [{ id: 'owned', midi: 60, startBeat: 14, durationBeats: 3, velocity: 80 }];
+  for (const t of [{ ...track, editedPhrase: manual }, { ...track, phraseEdits: [{ startBeat: 15, endBeat: 16, notes: [] }] },
+    { ...track, phraseEdits: [{ startBeat: 13, endBeat: 14.5, notes: manual }] },
+    { ...track, phraseEdits: [{ startBeat: 14, endBeat: 14.6, notes: [] }] }]) {
+    assert.equal(events.preDropCutEligibility(t, section), 'manual');
+    assert.equal(inspect(t, section, choice).status, 'manual');
+    const p = { ...project, tracks: [t], arrangement: [section], humanization: { timingBeats: .25, durationBeats: .25 } };
+    assert.deepEqual(phrase.layOutTrackPhrase(p, t), phrase.layOutTrackPhrase({ ...p, arrangement: [{ ...section, variations: undefined }] }, t));
+  }
+  assert.equal(events.preDropCutEligibility({ ...track, editedPhrase: manual, phraseEdits: [{ startBeat: 15, endBeat: 16, notes: [] }] },
+    { ...section, generatedTrackIds: [track.id] }), undefined);
+  assert.equal(events.preDropCutEligibility(track, { ...section, trackPhrases: { [track.id]: [] }, generatedTrackIds: [track.id] }), 'manual');
+  const earlyEdit = { ...track, phraseEdits: [{ startBeat: 0, endBeat: 4, notes: [{ ...manual[0], startBeat: 0, durationBeats: 1 }] }] };
+  assert.equal(events.preDropCutEligibility(earlyEdit, section), undefined);
+  const locked = project.tracks.map(t => ['chords', 'arpeggio'].includes(t.role) ? { ...t, rerollLocked: true } : t);
+  assert.ok(!engine.planSectionVariations(locked, project.arrangement, 1, 1n, { chance: 100, maxChanges: 3 }).choices.some(c => c.kind === 'pre-drop-cut'));
+});
+
+test('timed choices validate, persist and share note output with MIDI through history and moved sections', () => {
+  const { project, engine, service, phrase, midi, load, commands } = setup();
+  const { Midi } = require('@tonejs/midi');
+  const track = project.tracks.find(t => t.role === 'chords');
+  const choice = { trackId: track.id, kind: 'pre-drop-cut', amount: -1, enabled: true };
+  const variations = { seed: '9223372036854775807', policy: { chance: 100, maxChanges: 3 }, gesture: 'build-pulse', choices: [choice] };
+  assert.equal(engine.validSectionVariations(variations, project.tracks), true);
+  for (const invalid of [{ ...choice, amount: 1 }, { ...choice, trackId: project.tracks.find(t => t.role === 'melody').id }, { ...choice, window: [15, 16] }]) {
+    assert.equal(engine.validSectionVariations({ ...variations, choices: [invalid] }, project.tracks), false);
+  }
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  const before = service.exportProjectJson();
+  assert.equal(service.applyArrangementVariationDraft(service.project(), { 'section-2': variations }), 'changed');
+  const saved = service.exportProjectJson(), notes = phrase.layOutTrackPhrase(service.project(), track);
+  const bytes = midi.generateCompositionMidi(service.project());
+  const parsed = new Midi(bytes).tracks.find(t => t.name === track.name);
+  assert.deepEqual(parsed.notes.map(n => [n.midi, n.ticks, n.durationTicks]), notes.map(n => [n.midi, Math.round(n.startBeat * 480), Math.max(1, Math.round((n.startBeat + n.durationBeats) * 480) - Math.round(n.startBeat * 480))]));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), service.project().tracks.find(t => t.id === track.id)), notes);
+  assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
+  const changedType = { ...service.project(), arrangement: service.project().arrangement.map((s, i) => i === 1 ? { ...s, type: 'VERSE1' } : s) };
+  assert.deepEqual(phrase.layOutTrackPhrase(changedType, track), notes, 'saved choices survive context changes until explicitly rerolled');
+  const duplicate = commands.duplicateSection(service.project(), 1);
+  assert.deepEqual(duplicate.arrangement[2].variations, variations);
+  const context = load('core/music/arrangement-variation-context.ts').resolveVariationContext(changedType.tracks, changedType.arrangement, 1);
+  assert.equal(load('core/music/arrangement-variation-context.ts').variationAmountForContext(context, 'pre-drop-cut'), undefined);
 });

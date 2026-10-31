@@ -3,11 +3,12 @@ import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { ArrangementVariation, VariationKind } from './arrangement-variation.model';
 import { variationBlockedKeys, variationPatch } from './arrangement-variations';
+import { preDropCutEligibility, preDropCutWindow } from './arrangement-boundary-events';
 import { PART_CONTROLS, settingsValues } from './part-settings';
 
 export type VariationStatus = 'active' | 'disabled' | 'absent' | 'manual' | 'incompatible' | 'overridden' | 'unchanged';
 export const VARIATION_LABELS: Record<VariationKind, string> = {
-  'melody-range': 'Contextual melody range', 'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
+  'pre-drop-cut': 'Pre-drop accompaniment cut', 'melody-range': 'Contextual melody range', 'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
   'arp-activity': 'Arp activity', 'arp-contour': 'Arp chord-relative contour', 'arp-register': 'Arp octave register',
   'arp-density': 'Arp rhythm density', 'bass-weight': 'Bass octave weight', 'chord-space': 'Chord spacing',
   'chord-transition': 'Late chord anticipation', 'drum-activity': 'Cymbal activity', 'drum-density': 'Hat / ride density', 'drum-ghosts': 'Snare ghost notes',
@@ -38,6 +39,14 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
     before: values[parameter], after: values[parameter], effective: values[parameter],
     source: Object.hasOwn(trackPatch, parameter) ? 'Section track override' : 'Section role override',
   })));
+  if (choice.kind === 'pre-drop-cut') {
+    const status = preDropCutEligibility(track, section);
+    if (status) return result(status, status === 'manual' ? 'Manual region protects the cut window'
+      : 'Current rhythm, timing or section duration prevents this event');
+    const window = preDropCutWindow(section)!;
+    const beat = (n: number) => Number(n.toFixed(4));
+    return result('active', `Gate section beats ${beat(window.startBeat)}–${beat(window.endBeat)}: remove attacks and stop sustains; earlier material stays intact`);
+  }
   const patch = variationPatch(effective, choice, globals);
   if (!Object.keys(patch).length) return result('incompatible', 'Current settings, authored patterns or register bounds prevent this variation');
   const changes = Object.entries(patch).map(([parameter, after]) => {

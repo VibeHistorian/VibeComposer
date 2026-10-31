@@ -59,6 +59,11 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await changeControl(budget,'15');await wait(()=>!button(d,'Reroll variations').disabled,'valid capacity accepted');button(d,'Reroll variations').click();
       await wait(()=>[...d.querySelectorAll('.variation-section')].some(s=>s.querySelectorAll('article').length>4),'larger section budget');
       ensure(JSON.stringify(read())===original,'larger reroll stays local');
+      const cut=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Pre-drop accompaniment cut')),'timed cut explanation');
+      ensure(cut.textContent.includes('15–16')&&cut.textContent.includes('stop sustains'),'actual final-beat window');
+      const cutToggle=cut.querySelector('input[type="checkbox"]');cutToggle.click();
+      await wait(()=>cut.getAttribute('data-variation-status')==='disabled','timed event disabled in draft');
+      ensure(JSON.stringify(read())===original,'timed event toggle stays local');
       await changeControl(budget,'2');
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
@@ -73,10 +78,11 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       button(d,'Cancel').click();await wait(()=>!dialog(),'cancel closes');
       ensure(JSON.stringify(read())===original,'cancel preserves project');
       ensure(document.activeElement===opener,'restore opener focus');
-      opener.click();d=await wait(dialog,'reopen');button(d,'Reroll variations').click();
+      opener.click();d=await wait(dialog,'reopen');await changeControl(d.querySelector('[aria-label="Variation change budget"]'),'3');button(d,'Reroll variations').click();
       await wait(()=>d.querySelector('article'),'new choices');button(d,'Apply variations').click();
       await wait(()=>!dialog(),'apply closes');
       const saved=JSON.stringify(read());ensure(saved!==original,'apply saves choices');
+      ensure(read().arrangement[0].variations.choices.filter(c=>c.kind==='pre-drop-cut').length===1,'timed cut saved once');
       ensure(read().arrangement[0].variations.gesture==='build-pulse'&&read().arrangement[1].variations.gesture==='release-tension','purpose persists');
       const firstAnchor=read().arrangement[1].variations.choices.find(c=>c.kind==='bass-weight');
       const later=read().arrangement[3].variations.choices;

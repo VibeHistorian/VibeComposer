@@ -19,6 +19,7 @@ export interface VariationContext {
   readonly presentCount: number;
   readonly durationBeats: number;
   readonly returnLift: boolean;
+  readonly preDrop: boolean;
 }
 
 function family(type: SectionType): string {
@@ -67,7 +68,9 @@ export function resolveVariationContext(tracks: readonly CompositionTrack[], sec
   const returnLift = currentFamily === 'hook' && occurrence > 0 && durationBeats > 4 && intent.energy >= .8
     && intent.energy - firstHookEnergy >= .05 - EPSILON && intent.energy >= priorHookEnergy - EPSILON
     && (gesture === 'reinforce-foundation' || gesture === 'release-tension');
-  return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats, returnLift };
+  const preDrop = gesture === 'build-pulse' && durationBeats > 4 && presentCount > 1 && !!next
+    && next.energy >= .65 && next.energy >= intent.energy - EPSILON && intent.tension - next.tension >= .3 - EPSILON;
+  return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats, returnLift, preDrop };
 }
 
 export const isActivityVariation = (kind: VariationKind): boolean => ['melody-speed', 'arp-activity', 'arp-density', 'drum-activity', 'drum-density', 'drum-ghosts'].includes(kind);
@@ -76,6 +79,7 @@ export const isRegisterVariation = (kind: VariationKind): boolean => kind === 'm
 /** Undefined deliberately leaves a responsibility unchanged. Solo material keeps its pulse. */
 export function variationAmountForContext(context: VariationContext, kind: VariationKind): -1 | 1 | undefined {
   const { gesture, intent, presentCount } = context;
+  if (kind === 'pre-drop-cut') return context.preDrop ? -1 : undefined;
   if (isRegisterVariation(kind)) return context.returnLift ? 1 : undefined;
   if (kind === 'melody-range') return presentCount <= 1 ? undefined : gesture === 'reinforce-foundation' ? 1 : gesture === 'thin' || gesture === 'resolve' ? -1 : undefined;
   if (kind === 'chord-transition') return gesture === 'build-pulse' ? 1 : gesture === 'release-tension' || gesture === 'resolve' ? -1 : undefined;

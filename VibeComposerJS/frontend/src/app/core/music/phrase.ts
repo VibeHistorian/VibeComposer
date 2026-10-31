@@ -1,3 +1,4 @@
+import { applySectionCut, resolvePreDropCut } from './arrangement-boundary-events';
 import { processOutputNotes } from './output-processing';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
@@ -108,6 +109,16 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
   let notes = cache.get(track);
   if (!notes) {
     notes = processOutputNotes(project, track.id, track.role, buildTrackLayout(project, track, true));
+    // Preserve output-humanization draws outside the event; gate only this section's owned output.
+    let sectionStart = 0;
+    for (const section of project.arrangement) {
+      const window = resolvePreDropCut(track, section);
+      if (window) {
+        const absolute = { startBeat: sectionStart + window.startBeat, endBeat: sectionStart + window.endBeat };
+        notes = notes.flatMap(note => note.sectionId === section.id ? applySectionCut([note], absolute) : [note]);
+      }
+      sectionStart += sectionDurationBeats(project, section);
+    }
     cache.set(track, notes);
   }
   return notes.map(note => {

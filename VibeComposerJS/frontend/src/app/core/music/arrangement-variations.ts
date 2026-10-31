@@ -4,17 +4,19 @@ import type { MelodyGlobalSettings, PartSettingsPatch } from './part-settings.mo
 import type { ArrangementVariation, SectionVariations, VariationKind, VariationPolicy } from './arrangement-variation.model';
 import { resolveVariationContext, variationAmountForContext, variationPriority, isActivityVariation, isRegisterVariation, VARIATION_GESTURE_LABELS } from './arrangement-variation-context';
 import { JavaRandom } from './java-random';
+import { PRE_DROP_CUT_KEYS, preDropCutEligibility } from './arrangement-boundary-events';
 import { rhythmVariationPatch, rhythmVariationProtectedKeys } from './arrangement-rhythm-variations';
 
 export const DEFAULT_VARIATION_POLICY: VariationPolicy = { chance: 100, maxChanges: 2 };
 const KINDS: Record<CompositionTrack['role'], readonly VariationKind[]> = {
-  melody: ['melody-speed', 'melody-direction', 'melody-register', 'melody-range'], arpeggio: ['arp-activity', 'arp-density', 'arp-contour', 'arp-register'], bass: ['bass-weight'],
-  chords: ['chord-space', 'chord-transition'], drums: ['drum-activity', 'drum-density', 'drum-ghosts'],
+  melody: ['melody-speed', 'melody-direction', 'melody-register', 'melody-range'], arpeggio: ['arp-activity', 'arp-density', 'arp-contour', 'arp-register', 'pre-drop-cut'], bass: ['bass-weight'],
+  chords: ['chord-space', 'chord-transition', 'pre-drop-cut'], drums: ['drum-activity', 'drum-density', 'drum-ghosts'],
 };
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 /** These operations must remain atomic, including controls that define their interpretation. */
 export function variationProtectedKeys(kind: VariationKind): readonly string[] {
+  if (kind === 'pre-drop-cut') return PRE_DROP_CUT_KEYS;
   if (kind === 'arp-contour') return ['arpContour', 'arpContourChordMode'];
   if (kind === 'melody-register' || kind === 'melody-range') return ['transpose', 'rangeMin', 'rangeMax'];
   if (kind === 'arp-register') return ['transpose', 'arpContour', 'arpPatternCustom', 'useOctaveAdjustments', 'stretchEnabled'];
@@ -50,6 +52,7 @@ export function validSectionVariations(value: unknown, tracks: readonly Composit
     const track = tracks.find(t => t.id === choice.trackId);
     if (!track || !KINDS[track.role].includes(choice.kind) || targets.has(choice.trackId)
       || Object.keys(choice).some(key => !['trackId', 'kind', 'amount', 'enabled'].includes(key))
+      || choice.kind === 'pre-drop-cut' && choice.amount !== -1
       || (choice.amount !== -1 && choice.amount !== 1) || typeof choice.enabled !== 'boolean') return false;
     targets.add(choice.trackId);
     return true;
@@ -63,6 +66,7 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
   if (!choice.enabled || choice.trackId !== track.id || !KINDS[track.role].includes(choice.kind)) return {};
   const s = track.generatorSettings, a = choice.amount;
   switch (choice.kind) {
+    case 'pre-drop-cut': return {}; // Timed event; no static settings patch.
     case 'melody-range': {
       if (track.role !== 'melody' || globals.contextualMelody === false) return {};
       const low = track.generatorSettings.rangeMin ?? 48, high = track.generatorSettings.rangeMax ?? 72, transpose = s.transpose ?? 0;
@@ -158,13 +162,21 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   const reserveLift = context.family === 'hook' && context.durationBeats > 4 && policy.maxChanges + retained.length >= 2 && !retainedLift
     && sections.some((future, i) => resolveVariationContext(scope.allTracks ?? tracks, sections, i).returnLift
       && tracks.some(track => { const choice = registerChoice(track); return !!choice && eligibleChoice(track, future, choice); }));
+  // Dedicated stream; no static-adapter or phrase draws are consumed by event selection.
+  const cut = context.preDrop && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
+    && !retained.some(c => c.kind === 'pre-drop-cut') ? tracks.flatMap(track => {
+      if (!section.trackPresence[track.id] || track.rerollLocked || preDropCutEligibility(track, section) !== undefined) return [];
+      const random = new JavaRandom(identitySeed(seed, `boundary-cut/${context.family}/${track.id}`));
+      return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'pre-drop-cut' as const, amount: -1 as const,
+        enabled: true, priority: random.nextDouble() + (track.role === 'chords' ? 1 : 0) }] : [];
+    }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const candidates = tracks.flatMap(track => {
     if (!section.trackPresence[track.id] || track.rerollLocked || section.trackPhrases?.[track.id] !== undefined
       || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id)) return [];
     // Do not key this stream by occurrence or section ID: repeated families share anchors.
     const random = new JavaRandom(identitySeed(seed, `${context.family}/${track.id}`));
     const eligible = KINDS[track.role].flatMap(kind => {
-      if (isRegisterVariation(kind)) return [];
+      if (kind === 'pre-drop-cut' || isRegisterVariation(kind)) return [];
       const amount = variationAmountForContext(context, kind);
       return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true } as ArrangementVariation];
     }).filter(choice => eligibleChoice(track, section, choice, scope.melodyGlobal));
@@ -177,19 +189,23 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   });
   candidates.sort((a, b) => b.priority - a.priority || a.choice.trackId.localeCompare(b.choice.trackId));
   const budget = Math.min(policy.maxChanges, context.durationBeats <= 4 ? Math.max(0, 1 - (scope.retainedChoices?.length ?? 0)) : policy.maxChanges);
-  const anchorBudget = Math.max(0, budget - (reserveLift ? 1 : 0));
-  const roles = new Set<CompositionTrack['role']>();
+  const anchorBudget = Math.max(0, budget - (reserveLift ? 1 : 0) - (cut ? 1 : 0));
+  const roles = new Set<CompositionTrack['role']>(cut && !expandedBudget ? [tracks.find(t => t.id === cut.trackId)!.role] : []);
   let activityDriver = (scope.retainedChoices ?? []).some(choice => choice.enabled && section.trackPresence[choice.trackId] && isActivityVariation(choice.kind));
   const choices: ArrangementVariation[] = [];
   // Give each role a first opportunity, then use larger budgets for supporting tracks.
   for (const diverse of expandedBudget ? [true, false] : [true]) for (const candidate of candidates) {
     if (choices.length >= anchorBudget) break;
-    if (choices.some(choice => choice.trackId === candidate.choice.trackId)) continue;
+    if (candidate.choice.trackId === cut?.trackId || choices.some(choice => choice.trackId === candidate.choice.trackId)) continue;
     if (diverse && roles.has(candidate.role)) continue;
     const activity = isActivityVariation(candidate.choice.kind);
     if (context.gesture === 'build-pulse' && activity && activityDriver) continue;
     choices.push(candidate.choice); roles.add(candidate.role);
     if (activity) activityDriver = true;
+  }
+  if (cut && choices.length < budget) {
+    const { priority, ...choice } = cut;
+    choices.push(choice);
   }
   if (context.returnLift && reserveLift && choices.length < budget) {
     const lifts = tracks.flatMap(track => {
