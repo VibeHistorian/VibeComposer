@@ -3,13 +3,14 @@ import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { ArrangementVariation, VariationKind } from './arrangement-variation.model';
 import { variationBlockedKeys, variationPatch } from './arrangement-variations';
+import { velocityEnvelopeEligibility, velocityEnvelopeWindow } from './arrangement-velocity-envelope';
 import { arpEndFillEligibility, arpEndFillWindow } from './arrangement-end-fill';
 import { preDropCutEligibility, preDropCutWindow } from './arrangement-boundary-events';
 import { PART_CONTROLS, settingsValues } from './part-settings';
 
 export type VariationStatus = 'active' | 'disabled' | 'absent' | 'manual' | 'incompatible' | 'overridden' | 'unchanged';
 export const VARIATION_LABELS: Record<VariationKind, string> = {
-  'arp-end-fill': 'Arp section-end fill', 'pre-drop-cut': 'Pre-drop accompaniment cut', 'melody-range': 'Contextual melody range', 'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
+  'accompaniment-velocity-ramp': 'Accompaniment velocity ramp', 'arp-end-fill': 'Arp section-end fill', 'pre-drop-cut': 'Pre-drop accompaniment cut', 'melody-range': 'Contextual melody range', 'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
   'arp-activity': 'Arp activity', 'arp-contour': 'Arp chord-relative contour', 'arp-register': 'Arp octave register',
   'arp-density': 'Arp rhythm density', 'bass-weight': 'Bass octave weight', 'chord-space': 'Chord spacing',
   'chord-transition': 'Late chord anticipation', 'drum-activity': 'Cymbal activity', 'drum-density': 'Hat / ride density', 'drum-ghosts': 'Snare ghost notes',
@@ -40,6 +41,13 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
     before: values[parameter], after: values[parameter], effective: values[parameter],
     source: Object.hasOwn(trackPatch, parameter) ? 'Section track override' : 'Section role override',
   })));
+  if (choice.kind === 'accompaniment-velocity-ramp') {
+    const status = velocityEnvelopeEligibility(track, section, choice.amount);
+    if (status) return result(status, status === 'manual' ? 'Manual region protects the ramp window'
+      : status === 'overridden' ? 'Explicit section velocity controls protect this ramp' : 'Current settings or velocity bounds prevent this ramp');
+    const window = velocityEnvelopeWindow(section)!;
+    return result('active', `Velocity 100% → ${choice.amount > 0 ? 115 : 80}% over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; sampled at note attacks`);
+  }
   if (choice.kind === 'arp-end-fill') {
     const status = arpEndFillEligibility(track, section);
     if (status) return result(status, status === 'manual' ? 'Manual region protects the fill window'

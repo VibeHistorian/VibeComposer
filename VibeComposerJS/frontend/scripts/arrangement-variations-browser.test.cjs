@@ -67,6 +67,13 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await changeControl(budget,'15');await wait(()=>!button(d,'Reroll variations').disabled,'valid capacity accepted');button(d,'Reroll variations').click();
       await wait(()=>[...d.querySelectorAll('.variation-section')].some(s=>s.querySelectorAll('article').length>4),'larger section budget');
       ensure(JSON.stringify(read())===original,'larger reroll stays local');
+      const ending=await wait(()=>[...d.querySelectorAll('.variation-section')].find(s=>s.getAttribute('aria-label')==='OUTRO variations'),'ending variations');
+      const ramp=await wait(()=>[...ending.querySelectorAll('article')].find(a=>a.textContent.includes('Accompaniment velocity ramp')),'velocity envelope explanation');
+      ensure(ramp.textContent.includes('100% → 80%')&&ramp.textContent.includes('8–16'),'resolved envelope window and gain');
+      ramp.querySelector('input[type="checkbox"]').click();
+      await wait(()=>ramp.getAttribute('data-variation-status')==='disabled','ramp toggles in draft');
+      ensure(ramp.querySelector('.effect-values').textContent.includes('100% → 80%'),'disabled ramp keeps explanation');
+      ensure(JSON.stringify(read())===original,'ramp toggle stays local');
       const cut=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Pre-drop accompaniment cut')),'timed cut explanation');
       ensure(cut.textContent.includes('15–16')&&cut.textContent.includes('stop sustains'),'actual final-beat window');
       const cutToggle=cut.querySelector('input[type="checkbox"]');cutToggle.click();
@@ -95,12 +102,13 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       button(d,'Cancel').click();await wait(()=>!dialog(),'cancel closes');
       ensure(JSON.stringify(read())===original,'cancel preserves project');
       ensure(document.activeElement===opener,'restore opener focus');
-      opener.click();d=await wait(dialog,'reopen');await changeControl(d.querySelector('[aria-label="Variation change budget"]'),'3');button(d,'Reroll variations').click();
+      opener.click();d=await wait(dialog,'reopen');await changeControl(d.querySelector('[aria-label="Variation change budget"]'),'4');button(d,'Reroll variations').click();
       await wait(()=>d.querySelector('article'),'new choices');button(d,'Apply variations').click();
       await wait(()=>!dialog(),'apply closes');
       const saved=JSON.stringify(read());ensure(saved!==original,'apply saves choices');
       ensure(read().arrangement[1].variations.choices.filter(c=>c.kind==='pre-drop-cut').length===1,'timed cut saved once');
       ensure(read().arrangement[0].variations.choices.filter(c=>c.kind==='arp-end-fill').length===1,'fill saved once before rise');
+      ensure(read().arrangement[0].variations.choices.filter(c=>c.kind==='accompaniment-velocity-ramp').length===1,'one ramp saved with fill on another track');
       ensure(read().arrangement[0].variations.gesture==='build-pulse'&&read().arrangement[2].variations.gesture==='release-tension','purpose persists');
       const firstAnchor=read().arrangement[2].variations.choices.find(c=>c.kind==='bass-weight');
       const later=read().arrangement[4].variations.choices;

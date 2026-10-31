@@ -1,3 +1,4 @@
+import { applyVelocityEnvelope, resolveVelocityEnvelope } from './arrangement-velocity-envelope';
 import { applyArpEndFill, resolveArpEndFill } from './arrangement-end-fill';
 import { applySectionCut, resolvePreDropCut } from './arrangement-boundary-events';
 import { processOutputNotes } from './output-processing';
@@ -110,7 +111,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
   let notes = cache.get(track);
   if (!notes) {
     notes = processOutputNotes(project, track.id, track.role, buildTrackLayout(project, track, true));
-    // Preserve output-humanization draws outside the event; gate only this section's owned output.
+    // Preserve baseline output draws; apply events only to the owning section's notes.
     let sectionStart = 0;
     for (const section of project.arrangement) {
       const window = resolvePreDropCut(track, section);
@@ -125,6 +126,11 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
           BigInt(section.variations!.seed), track.id);
         const first = notes.findIndex(note => note.sectionId === section.id);
         notes = notes.flatMap((note, index): ArrangedNote[] => note.sectionId !== section.id ? [note] : index === first ? filled : []);
+      }
+      const ramp = resolveVelocityEnvelope(track, section);
+      if (ramp) {
+        const absolute = { startBeat: sectionStart + ramp.startBeat, endBeat: sectionStart + ramp.endBeat };
+        notes = notes.map(note => note.sectionId === section.id ? applyVelocityEnvelope([note], absolute, ramp.amount)[0] : note);
       }
       sectionStart += sectionDurationBeats(project, section);
     }

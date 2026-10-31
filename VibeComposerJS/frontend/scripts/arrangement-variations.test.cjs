@@ -1161,3 +1161,138 @@ test('saved fills validate and reproduce actual MIDI, history, duplication and c
   service.removeTrack(track.id);
   assert.ok(service.project().arrangement.every(s => !s.variations?.choices.some(c => c.trackId === track.id)));
 });
+
+test('velocity envelopes sample continuous section progress with bounded integer MIDI velocities', () => {
+  const { project, load } = setup();
+  const ramp = load('core/music/arrangement-velocity-envelope.ts');
+  for (const [measures, customDurations, multiplier, expected] of [[4, undefined, 1, { startBeat: 8, endBeat: 16 }],
+    [9, [3,5,2], 1, { startBeat: 22, endBeat: 30 }], [4, [3,2], .5, { startBeat: 2.5, endBeat: 5 }],
+    [4, [3,2], 2, { startBeat: 12, endBeat: 20 }]]) {
+    assert.deepEqual(ramp.velocityEnvelopeWindow({ ...project.arrangement[1], measures, customDurations, context: { beatDurationMultiplier: multiplier } }), expected);
+  }
+  assert.equal(ramp.velocityEnvelopeWindow({ ...project.arrangement[1], measures: 1 }), undefined);
+  const notes = [7,8,10,12,14,15,16,17].map((startBeat,i)=>({ id:`ramp-${i}`, midi:60, startBeat, durationBeats:1, velocity:80, sectionId:'own' }));
+  const before = structuredClone(notes), window = { startBeat:8,endBeat:16 };
+  assert.deepEqual(ramp.applyVelocityEnvelope(notes,window,1).map(n=>n.velocity), [80,80,83,86,89,91,80,80]);
+  assert.deepEqual(ramp.applyVelocityEnvelope(notes,window,-1).map(n=>n.velocity), [80,80,76,72,68,66,80,80]);
+  assert.deepEqual(notes,before);
+  for (const amount of [-1,1]) {
+    const applied=ramp.applyVelocityEnvelope(notes,window,amount);
+    assert.deepEqual(applied.map(({velocity,...n})=>n),notes.map(({velocity,...n})=>n));
+    assert.ok(applied.every(n=>Number.isInteger(n.velocity)&&n.velocity>=1&&n.velocity<=127));
+  }
+  const special=[0,1,127].map((velocity,i)=>({...notes[0],id:`edge-${i}`,startBeat:15.9,velocity}));
+  assert.deepEqual(ramp.applyVelocityEnvelope(special,window,1).map(n=>n.velocity),[0,1,127]);
+  assert.deepEqual(ramp.applyVelocityEnvelope(special,window,-1).map(n=>n.velocity),[0,1,102]);
+});
+
+test('ramp planning reserves one compatible companion while preserving activity and boundary responsibilities', () => {
+  const { project, engine, load } = endFillSetup();
+  const context=load('core/music/arrangement-variation-context.ts');
+  const kind='accompaniment-velocity-ramp';
+  for (let seed=0n;seed<40n;seed++) {
+    const low=engine.planSectionVariations(project.tracks,project.arrangement,1,seed,{chance:100,maxChanges:3});
+    const high=engine.planSectionVariations(project.tracks,project.arrangement,1,seed,{chance:100,maxChanges:4});
+    assert.equal(high.choices.filter(c=>c.kind===kind).length,1);
+    assert.equal(high.choices.find(c=>c.kind===kind).amount,1);
+    assert.equal(high.choices.filter(c=>context.isActivityVariation(c.kind)).length,1);
+    assert.deepEqual(high.choices.find(c=>context.isActivityVariation(c.kind)),low.choices.find(c=>context.isActivityVariation(c.kind)));
+    assert.equal(new Set(high.choices.map(c=>c.trackId)).size,high.choices.length);
+    assert.ok(high.choices.length<=4&&!low.choices.some(c=>c.kind===kind));
+    assert.deepEqual(high,engine.planSectionVariations([...project.tracks].reverse(),project.arrangement,1,seed,{chance:100,maxChanges:4}));
+    const ending=engine.planSectionVariations(project.tracks,project.arrangement,4,seed,{chance:100,maxChanges:4});
+    assert.equal(ending.choices.find(c=>c.kind===kind).amount,-1);
+    const retained=[{...high.choices.find(c=>c.kind===kind),enabled:false}];
+    const scoped=engine.planSectionVariations(project.tracks.filter(t=>t.id!==retained[0].trackId),project.arrangement,1,seed,
+      {chance:100,maxChanges:3},{allTracks:project.tracks,retainedChoices:retained});
+    assert.ok(!scoped.choices.some(c=>c.kind===kind));
+  }
+  assert.deepEqual(engine.planSectionVariations(project.tracks,project.arrangement,1,1n,{chance:0,maxChanges:4}).choices,[]);
+  assert.equal(context.variationAmountForContext(context.resolveVariationContext(project.tracks,project.arrangement,3),kind),undefined,'stable peak keeps its foundation');
+});
+
+test('shared ramps alter only target velocities across harmony, timing and maximum humanization', () => {
+  const { project, phrase, load }=endFillSetup();
+  const ramp=load('core/music/arrangement-velocity-envelope.ts');
+  for (const role of ['chords','arpeggio']) for (const amount of [-1,1])
+    for (const [key,scale] of [['C','major'],['F♯','dorian'],['B','natural-minor']])
+    for (const humanization of [undefined,{timingBeats:.25,durationBeats:.25}])
+    for (const timing of [{},{measures:9,customDurations:[3,5,2]},{measures:4,customDurations:[3,2],context:{beatDurationMultiplier:2}}]) {
+      const track=project.tracks.find(t=>t.role===role);
+      const section={...project.arrangement[1],...timing};
+      const p={...project,key,scale,humanization,arrangement:project.arrangement.map((s,i)=>i===1?section:s)};
+      const varied={...p,arrangement:p.arrangement.map((s,i)=>i===1?{...s,variations:{seed:'9223372036854775807',policy:{chance:100,maxChanges:4},
+        choices:[{trackId:track.id,kind:'accompaniment-velocity-ramp',amount,enabled:true}]}}:s)};
+      const baseline=phrase.layOutTrackPhrase(p,track,true,true),notes=phrase.layOutTrackPhrase(varied,track,true,true);
+      assert.equal(notes.length,baseline.length);
+      assert.deepEqual(notes.map(({velocity,...n})=>n),baseline.map(({velocity,...n})=>n));
+      const window=ramp.velocityEnvelopeWindow(section),absolute={startBeat:16+window.startBeat,endBeat:16+window.endBeat};
+      assert.deepEqual(notes,baseline.map(n=>n.sectionId===section.id?ramp.applyVelocityEnvelope([n],absolute,amount)[0]:n));
+      assert.ok(notes.some((n,i)=>n.velocity!==baseline[i].velocity));
+      assert.ok(notes.every((n,i)=>amount>0?n.velocity>=baseline[i].velocity:n.velocity<=baseline[i].velocity));
+      assert.deepEqual(phrase.sectionMelodyContext(varied,varied.arrangement[1]),phrase.sectionMelodyContext(p,section));
+      for (const other of p.tracks.filter(t=>t.id!==track.id)) assert.deepEqual(phrase.layOutTrackPhrase(varied,other),phrase.layOutTrackPhrase(p,other));
+    }
+});
+
+test('ramps protect explicit velocity controls, authored rhythms and manual regions', () => {
+  const { project, track, phrase, load }=endFillSetup();
+  const ramp=load('core/music/arrangement-velocity-envelope.ts');
+  const inspect=load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  const choice={trackId:track.id,kind:'accompaniment-velocity-ramp',amount:1,enabled:true};
+  const section={...project.arrangement[1],variations:{seed:'1',policy:{chance:100,maxChanges:4},choices:[choice]}};
+  assert.equal(inspect(track,section,choice).status,'active');
+  for (const key of ramp.VELOCITY_ENVELOPE_KEYS) {
+    const s={...section,trackPartOverrides:{[track.id]:{[key]:track.generatorSettings[key]??0}}};
+    assert.equal(ramp.resolveVelocityEnvelope(track,s),undefined);
+    assert.equal(inspect(track,s,choice).status,'overridden');
+  }
+  for (const percent of [0,100,150]) {
+    const s={...section,context:{velocityPercent:{arpeggio:percent}}};
+    assert.equal(ramp.resolveVelocityEnvelope(track,s),undefined);
+    assert.equal(inspect(track,s,choice).status,'overridden');
+    const p={...project,arrangement:[s]};
+    assert.deepEqual(phrase.layOutTrackPhrase(p,track),phrase.layOutTrackPhrase({...p,arrangement:[{...s,variations:undefined}]},track));
+  }
+  assert.ok(ramp.resolveVelocityEnvelope(track,{...section,context:{velocityPercent:{bass:100}}}));
+  for (const [velocityMin,velocityMax,amount] of [[127,127,1],[1,3,1],[1,2,-1]])
+    assert.equal(ramp.velocityEnvelopeEligibility({...track,generatorSettings:{...track.generatorSettings,velocityMin,velocityMax}},section,amount),'incompatible');
+  const manual=[{id:'owned',midi:60,startBeat:6,durationBeats:4,velocity:90}];
+  for (const t of [{...track,editedPhrase:manual},{...track,phraseEdits:[{startBeat:8,endBeat:16,notes:[]}]},
+    {...track,phraseEdits:[{startBeat:6,endBeat:7,notes:manual}]}]) {
+    assert.equal(ramp.velocityEnvelopeEligibility(t,section,1),'manual');
+    const p={...project,tracks:[t],arrangement:[section],humanization:{timingBeats:.25,durationBeats:.25}};
+    assert.deepEqual(phrase.layOutTrackPhrase(p,t),phrase.layOutTrackPhrase({...p,arrangement:[{...section,variations:undefined}]},t));
+  }
+  const early={...track,phraseEdits:[{startBeat:0,endBeat:4,notes:[{...manual[0],startBeat:0,durationBeats:1}]}]};
+  assert.equal(ramp.velocityEnvelopeEligibility(early,section,1),undefined);
+  assert.equal(ramp.velocityEnvelopeEligibility({...track,editedPhrase:manual},{...section,generatedTrackIds:[track.id]},1),undefined);
+  assert.equal(ramp.velocityEnvelopeEligibility(track,{...section,trackPhrases:{[track.id]:[]}},1),'manual');
+  assert.equal(ramp.resolveVelocityEnvelope(track,{...section,trackPresence:{}}),undefined);
+  assert.equal(ramp.resolveVelocityEnvelope(track,{...section,variations:{...section.variations,choices:[{...choice,enabled:false}]}}),undefined);
+});
+
+test('velocity ramps persist through history and expose the same velocities in parsed MIDI', () => {
+  const { project, engine, service, phrase, midi, commands }=endFillSetup();
+  const { Midi }=require('@tonejs/midi');
+  for (const role of ['chords','arpeggio']) for (const amount of [-1,1]) {
+    const track=project.tracks.find(t=>t.role===role),choice={trackId:track.id,kind:'accompaniment-velocity-ramp',amount,enabled:true};
+    const variations={seed:'9223372036854775807',policy:{chance:100,maxChanges:4},choices:[choice]};
+    assert.equal(engine.validSectionVariations(variations,project.tracks),true);
+    for (const invalid of [{...choice,amount:0},{...choice,trackId:project.tracks.find(t=>t.role==='melody').id},{...choice,gain:[1,1.15]}])
+      assert.equal(engine.validSectionVariations({...variations,choices:[invalid]},project.tracks),false);
+    assert.equal(service.importProjectJson(JSON.stringify(project)),true);
+    const before=service.exportProjectJson();
+    assert.equal(service.applyArrangementVariationDraft(service.project(),{[project.arrangement[1].id]:variations}),'changed');
+    const saved=service.exportProjectJson(),notes=phrase.layOutTrackPhrase(service.project(),track),bytes=midi.generateCompositionMidi(service.project());
+    const parsed=new Midi(bytes).tracks.find(t=>t.name===track.name);
+    const expected=notes.map(n=>[n.midi,Math.round(n.startBeat*480),Math.round(n.durationBeats*480),n.velocity]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,n.durationTicks,Math.round(n.velocity*127)]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]),expected);
+    service.undo();assert.equal(service.exportProjectJson(),before);
+    service.redo();assert.equal(service.exportProjectJson(),saved);
+    assert.equal(service.importProjectJson(saved),true);
+    assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
+    assert.deepEqual(commands.duplicateSection(service.project(),1).arrangement[2].variations,variations);
+    service.removeTrack(track.id);assert.ok(service.project().arrangement.every(s=>!s.variations?.choices.some(c=>c.trackId===track.id)));
+  }
+});

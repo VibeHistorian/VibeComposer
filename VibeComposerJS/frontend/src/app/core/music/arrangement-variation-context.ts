@@ -82,6 +82,8 @@ export const isRegisterVariation = (kind: VariationKind): boolean => kind === 'm
 /** Undefined deliberately leaves a responsibility unchanged. Solo material keeps its pulse. */
 export function variationAmountForContext(context: VariationContext, kind: VariationKind): -1 | 1 | undefined {
   const { gesture, intent, presentCount } = context;
+  if (kind === 'accompaniment-velocity-ramp') return context.durationBeats > 4 && presentCount > 1
+    ? context.preDrop || context.endFill ? 1 : gesture === 'resolve' ? -1 : undefined : undefined;
   if (kind === 'arp-end-fill') return context.endFill ? 1 : undefined;
   if (kind === 'pre-drop-cut') return context.preDrop ? -1 : undefined;
   if (isRegisterVariation(kind)) return context.returnLift ? 1 : undefined;
