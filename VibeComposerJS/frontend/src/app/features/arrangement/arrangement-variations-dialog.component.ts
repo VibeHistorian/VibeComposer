@@ -7,7 +7,7 @@ import { inspectArrangementVariation } from '../../core/music/arrangement-variat
 import { DEFAULT_VARIATION_POLICY, validVariationPolicy } from '../../core/music/arrangement-variations';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
-import { resolveArrangementIntent } from '../../core/music/arrangement-intent';
+import { resolveVariationContext, variationAmountForContext, VARIATION_GESTURE_LABELS } from '../../core/music/arrangement-variation-context';
 import type { VariationPolicy } from '../../core/music/arrangement-variation.model';
 
 @Component({
@@ -37,18 +37,19 @@ export class ArrangementVariationsDialogComponent {
   readonly targetLabel = this.scope.trackId ? this.tracks[0]?.name : this.scope.role ? this.scope.role : 'All tracks';
   readonly rows = computed(() => this.sections.map(section => {
     const current = { ...section, trackPresence: this.presenceDraft()?.[section.id] ?? section.trackPresence, variations: this.draft()[section.id] };
-    const intent = resolveArrangementIntent(this.initialProject.arrangement, this.initialProject.arrangement.indexOf(section));
+    const context = resolveVariationContext(this.initialProject.tracks, this.candidateProject().arrangement, this.initialProject.arrangement.indexOf(section));
     const tracks = new Set(this.tracks.map(track => track.id));
     const choices = (current.variations?.choices ?? []).filter(choice => tracks.has(choice.trackId)).map(choice => {
       const track = this.initialProject.tracks.find(track => track.id === choice.trackId)!;
       const inspection = inspectArrangementVariation(track, current, choice);
-      const expectedAmount = choice.kind === 'bass-weight' || choice.kind === 'chord-space'
-        ? intent.energy >= .65 ? 1 : -1 : intent.motion === 'release' ? -1 : intent.tension >= .7 || intent.energy >= .65 ? 1 : -1;
+      const expectedAmount = variationAmountForContext(context, choice.kind);
       return { track, inspection, mismatch: choice.amount !== expectedAmount };
     });
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));
-    return { section, intent, choices, presenceChanges };
+    return { section, intent: context.intent, context, gestureLabel: VARIATION_GESTURE_LABELS[context.gesture], choices, presenceChanges,
+      savedGestureLabel: current.variations?.gesture ? VARIATION_GESTURE_LABELS[current.variations.gesture] : undefined,
+      gestureMismatch: current.variations?.gesture !== undefined && current.variations.gesture !== context.gesture };
   }));
 
   setPolicy(key: keyof VariationPolicy, event: Event): void {

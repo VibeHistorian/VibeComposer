@@ -2,7 +2,7 @@ import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PartSettingsPatch } from './part-settings.model';
 import type { ArrangementVariation, SectionVariations, VariationKind, VariationPolicy } from './arrangement-variation.model';
-import { resolveArrangementIntent } from './arrangement-intent';
+import { resolveVariationContext, variationAmountForContext, variationPriority, isActivityVariation, VARIATION_GESTURE_LABELS } from './arrangement-variation-context';
 import { JavaRandom } from './java-random';
 
 export const DEFAULT_VARIATION_POLICY: VariationPolicy = { chance: 100, maxChanges: 2 };
@@ -23,7 +23,8 @@ export function validVariationPolicy(value: unknown): value is VariationPolicy {
 export function validSectionVariations(value: unknown, tracks: readonly CompositionTrack[]): value is SectionVariations {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const v = value as SectionVariations;
-  if (Object.keys(v).some(key => !['seed', 'policy', 'choices'].includes(key))
+  if (Object.keys(v).some(key => !['seed', 'policy', 'choices', 'gesture'].includes(key))
+    || v.gesture !== undefined && (typeof v.gesture !== 'string' || !Object.hasOwn(VARIATION_GESTURE_LABELS, v.gesture))
     || typeof v.seed !== 'string' || !/^-?\d{1,20}$/.test(v.seed)
     || BigInt.asIntN(64, BigInt(v.seed)) !== BigInt(v.seed)
     || !validVariationPolicy(v.policy) || !Array.isArray(v.choices) || v.choices.length > 4) return false;
@@ -71,25 +72,29 @@ function identitySeed(seed: bigint, id: string): bigint {
   return BigInt.asIntN(64, seed ^ hash ^ 0x564152494154n);
 }
 
-/** One choice per track and a shared budget coordinate activity instead of independent rolls.
- * Tension favors pulse; energy favors foundation/space; falling tension releases activity.
- */
+export interface VariationPlanningScope {
+  readonly allTracks?: readonly CompositionTrack[];
+  readonly retainedChoices?: readonly ArrangementVariation[];
+}
+
+/** Shared family rankings retain identity across returns; gestures allocate responsibilities. */
 export function planSectionVariations(tracks: readonly CompositionTrack[], sections: readonly ArrangementSection[], index: number,
-  seed: bigint, policy: VariationPolicy = DEFAULT_VARIATION_POLICY): SectionVariations {
+  seed: bigint, policy: VariationPolicy = DEFAULT_VARIATION_POLICY, scope: VariationPlanningScope = {}): SectionVariations {
   if (!sections[index] || !validVariationPolicy(policy)) throw new RangeError('Invalid variation context or policy.');
-  const section = sections[index], intent = resolveArrangementIntent(sections, index);
-  const amount = intent.motion === 'release' ? -1 : intent.tension >= .7 || intent.energy >= .65 ? 1 : -1;
+  const section = sections[index], context = resolveVariationContext(scope.allTracks ?? tracks, sections, index);
   const candidates = tracks.flatMap(track => {
     if (!section.trackPresence[track.id] || track.rerollLocked || section.trackPhrases?.[track.id] !== undefined
       || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id)) return [];
-    const random = new JavaRandom(identitySeed(seed, `${section.id}/${track.id}`));
+    // Do not key this stream by occurrence or section ID: repeated families share anchors.
+    const random = new JavaRandom(identitySeed(seed, `${context.family}/${track.id}`));
     const effective = { ...track, generatorSettings: { ...track.generatorSettings,
       ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] } } as CompositionTrack;
     const defaults: Record<string, unknown> = { speed: 50, targetDirection: 'ASC', octaveInterval: false, pauseChance: 0,
       hitsPerPattern: track.role === 'arpeggio' && track.generatorSettings.rate === 'sixteenth' ? 16 : 8 };
-    const eligible = KINDS[track.role].map(kind => ({ trackId: track.id, kind,
-      amount: kind === 'bass-weight' || kind === 'chord-space' ? intent.energy >= .65 ? 1 : -1 : amount,
-      enabled: true } as ArrangementVariation))
+    const eligible = KINDS[track.role].flatMap(kind => {
+      const amount = variationAmountForContext(context, kind);
+      return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true } as ArrangementVariation];
+    })
       .filter(choice => {
         const patch = variationPatch(effective, choice);
         return Object.entries(patch).some(([key, value]) => !Object.hasOwn(section.rolePartOverrides?.[track.role] ?? {}, key)
@@ -98,13 +103,23 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
       });
     if (!eligible.length || random.nextInt(100) >= policy.chance) return [];
     const choice = eligible[random.nextInt(eligible.length)];
-    const pulse = track.role === 'arpeggio' || track.role === 'drums' || choice.kind === 'melody-speed';
-    const priority = random.nextDouble() + (intent.tension >= .7 && pulse ? 2 : 0)
-      + (intent.energy >= .65 && intent.tension < .7 && (track.role === 'bass' || track.role === 'chords') ? 2 : 0);
-    return [{ choice, priority }];
+    const priority = random.nextDouble() + variationPriority(context, choice.kind);
+    return [{ choice, priority, role: track.role }];
   });
   candidates.sort((a, b) => b.priority - a.priority || a.choice.trackId.localeCompare(b.choice.trackId));
-  return { seed: BigInt.asIntN(64, seed).toString(), policy: { ...policy }, choices: candidates.slice(0, policy.maxChanges).map(c => c.choice) };
+  const budget = Math.min(policy.maxChanges, context.durationBeats <= 4 ? Math.max(0, 1 - (scope.retainedChoices?.length ?? 0)) : policy.maxChanges);
+  const roles = new Set<CompositionTrack['role']>();
+  let activityDriver = (scope.retainedChoices ?? []).some(choice => choice.enabled && section.trackPresence[choice.trackId] && isActivityVariation(choice.kind));
+  const choices: ArrangementVariation[] = [];
+  for (const candidate of candidates) {
+    if (choices.length >= budget) break;
+    if (roles.has(candidate.role)) continue;
+    const activity = isActivityVariation(candidate.choice.kind);
+    if (context.gesture === 'build-pulse' && activity && activityDriver) continue;
+    choices.push(candidate.choice); roles.add(candidate.role);
+    if (activity) activityDriver = true;
+  }
+  return { seed: BigInt.asIntN(64, seed).toString(), policy: { ...policy }, gesture: context.gesture, choices };
 }
 
 export function resolveVariationPatch(track: CompositionTrack, section: ArrangementSection): PartSettingsPatch {

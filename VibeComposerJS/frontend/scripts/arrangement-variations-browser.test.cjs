@@ -52,6 +52,8 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(!d.querySelector('[aria-label="Generate arrangement variations"]')&&!d.querySelector('[aria-label="Reroll presence too"]'),'behavior toggles removed from popup');
       let box=d.getBoundingClientRect();ensure(box.left>=0&&box.right<=innerWidth&&box.top>=0&&box.bottom<=innerHeight,'dialog fits');
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
+      ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
+      ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Release tension')),'release purpose');
       ensure(JSON.stringify(read())===original,'reroll stays local');
       const toggle=d.querySelector('article input[type="checkbox"]');toggle.focus();toggle.click();
       await wait(()=>d.querySelector('[data-variation-status="disabled"]'),'disabled status');
@@ -63,6 +65,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await wait(()=>d.querySelector('article'),'new choices');button(d,'Apply variations').click();
       await wait(()=>!dialog(),'apply closes');
       const saved=JSON.stringify(read());ensure(saved!==original,'apply saves choices');
+      ensure(read().arrangement[0].variations.gesture==='build-pulse'&&read().arrangement[1].variations.gesture==='release-tension','purpose persists');
       const strip=p=>p.arrangement.map(({variations,...rest})=>rest);
       ensure(JSON.stringify(strip(read()))===JSON.stringify(strip(JSON.parse(original))),'order and presence intact');
       document.querySelector('[aria-label="Undo"]').click();await wait(()=>JSON.stringify(read())===original,'single undo');

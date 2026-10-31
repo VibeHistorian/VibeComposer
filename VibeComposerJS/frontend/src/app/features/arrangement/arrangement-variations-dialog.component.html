@@ -20,6 +20,10 @@
     @for (row of rows(); track row.section.id) {
       <section class="variation-section" [attr.aria-label]="row.section.type + ' variations'">
         <h2>{{ row.section.type.replaceAll('_', ' ') }} <small>Energy {{ value(row.intent.energy * 100) }}% · Tension {{ value(row.intent.tension * 100) }}%</small></h2>
+        <p class="variation-purpose"><strong>{{ row.gestureLabel }}</strong> · {{ row.context.reason }}.
+          @if (row.context.occurrence) { Return {{ row.context.occurrence + 1 }}. }
+        </p>
+        @if (row.gestureMismatch) { <p class="context-warning">Saved plan: {{ row.savedGestureLabel }}. Reroll to replan for this position.</p> }
         @if (row.presenceChanges.length) {
           <details class="presence-changes"><summary>{{ row.presenceChanges.length }} track presence changes</summary>
             <ul>@for (change of row.presenceChanges; track change.track.id) { <li>{{ change.track.name }}: {{ change.present ? 'Present' : 'Absent' }}</li> }</ul>
@@ -34,7 +38,7 @@
             @for (change of item.inspection.changes; track change.parameter) {
               <span class="effect-value">{{ change.label }}: {{ value(change.before) }} → {{ value(change.effective) }} · {{ change.source }}</span>
             }
-            @if (item.mismatch) { <span class="context-warning">Direction differs from this section's current intent. Reroll to replan.</span> }
+            @if (item.mismatch) { <span class="context-warning">This choice differs from the current section purpose. Reroll to replan.</span> }
           </article>
         } @empty { <p>No variations in this scope. Reroll to choose eligible changes.</p> }
       </section>

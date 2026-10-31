@@ -336,3 +336,118 @@ test('presence and variations are planned together, committed atomically and rej
   assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), after);
 });
+
+test('neighbor context distinguishes recovery from anticipation at the same verse energy', () => {
+  const { project, load } = setup();
+  const { resolveVariationContext } = load('core/music/arrangement-variation-context.ts');
+  const sections = types => types.map((type, i) => ({ ...project.arrangement[0], id: `context-${i}`, type }));
+  const recovering = resolveVariationContext(project.tracks, sections(['CLIMAX', 'VERSE1', 'CHILL']), 1);
+  const anticipating = resolveVariationContext(project.tracks, sections(['INTRO', 'VERSE1', 'BUILDUP2']), 1);
+  assert.equal(recovering.intent.energy, anticipating.intent.energy);
+  assert.equal(recovering.gesture, 'thin');
+  assert.equal(anticipating.gesture, 'build-pulse');
+  assert.equal(resolveVariationContext(project.tracks, sections(['INTRO', 'VERSE2', 'CHORUS1']), 1).gesture, 'build-pulse',
+    'a quarter-scale rise is not lost to floating-point rounding');
+  assert.equal(resolveVariationContext(project.tracks, sections(['INTRO', 'VERSE1']), 0).gesture, 'establish');
+  assert.equal(resolveVariationContext(project.tracks, sections(['BUILDUP2', 'CHORUS2', 'OUTRO']), 1).gesture, 'release-tension');
+  assert.equal(resolveVariationContext(project.tracks, sections(['VERSE1', 'OUTRO']), 1).gesture, 'resolve');
+});
+
+test('anticipation uses one activity driver and leaves foundations stable over many seeds', () => {
+  const { project, engine, load } = setup();
+  const { isActivityVariation } = load('core/music/arrangement-variation-context.ts');
+  const tracks = project.tracks.flatMap(track => Array.from({ length: 4 }, (_, i) => ({ ...track, id: `${track.id}-${i}`,
+    generatorSettings: { ...track.generatorSettings, ...(track.role === 'melody' ? { targetDirection: 'ANY' }
+      : track.role === 'arpeggio' ? { rhythm: 'full', hitsPerPattern: 8 } : track.role === 'drums' ? { pitch: 42, rhythm: 'full', pauseChance: 30 } : {}) } })));
+  const sections = ['INTRO', 'VERSE1', 'BUILDUP2'].map((type, i) => ({ id: `driver-${i}`, type, measures: 4,
+    trackPresence: Object.fromEntries(tracks.map(t => [t.id, true])) }));
+  for (let seed = 0n; seed < 50n; seed++) {
+    const plan = engine.planSectionVariations(tracks, sections, 1, seed, { chance: 100, maxChanges: 4 });
+    assert.equal(plan.gesture, 'build-pulse');
+    const activity = plan.choices.filter(c => isActivityVariation(c.kind));
+    assert.equal(activity.length, 1);
+    assert.ok(['arp-activity', 'drum-activity'].includes(activity[0].kind));
+    assert.ok(plan.choices.every(c => c.kind !== 'bass-weight' && c.kind !== 'chord-space'));
+    const roles = plan.choices.map(c => tracks.find(t => t.id === c.trackId).role);
+    assert.equal(new Set(roles).size, roles.length);
+  }
+});
+
+test('hook returns share eligible track and operation identities without section-ID seed coupling', () => {
+  const { project, engine, load } = setup();
+  const { resolveVariationContext } = load('core/music/arrangement-variation-context.ts');
+  const tracks = project.tracks.flatMap(track => Array.from({ length: 3 }, (_, i) => ({ ...track, id: `${track.id}-${i}` })));
+  const sections = ['INTRO', 'CHORUS1', 'VERSE1', 'CHORUS3', 'VERSE2', 'CLIMAX', 'OUTRO'].map((type, i) => ({
+    id: `return-${i}`, type, measures: 4, trackPresence: Object.fromEntries(tracks.map(t => [t.id, true])),
+  }));
+  assert.equal(resolveVariationContext(tracks, sections, 3).occurrence, 1);
+  for (let seed = 0n; seed < 40n; seed++) {
+    const first = engine.planSectionVariations(tracks, sections, 1, seed).choices;
+    assert.equal(first.length, 2);
+    assert.deepEqual(engine.planSectionVariations(tracks, sections, 3, seed).choices, first);
+    assert.deepEqual(engine.planSectionVariations(tracks, sections.map((s, i) => ({ ...s, id: `renamed-${i}` })), 5, seed).choices, first);
+    const missing = first.find(c => c.kind === 'bass-weight');
+    const later = sections.map((s, i) => i === 3 ? { ...s, trackPresence: { ...s.trackPresence, [missing.trackId]: false } } : s);
+    const adapted = engine.planSectionVariations(tracks, later, 3, seed).choices;
+    assert.ok(!adapted.some(c => c.trackId === missing.trackId));
+    assert.deepEqual(adapted.find(c => c.kind === 'chord-space'), first.find(c => c.kind === 'chord-space'));
+  }
+});
+
+test('solo quiet material keeps its pulse, short sections limit changes, and scoped rerolls use the full orchestration', () => {
+  const { project, engine, load } = setup();
+  const melody = project.tracks.find(t => t.role === 'melody');
+  const sections = ['CLIMAX', 'VERSE1', 'CHILL'].map((type, i) => ({ id: `sparse-${i}`, type, measures: 4, trackPresence: { [melody.id]: true } }));
+  assert.deepEqual(engine.planSectionVariations([melody], sections, 1, 1n).choices, []);
+  const dense = sections.map(s => ({ ...s, trackPresence: Object.fromEntries(project.tracks.map(t => [t.id, true])) }));
+  const scoped = engine.planSectionVariations([melody], dense, 1, 1n, { chance: 100, maxChanges: 4 }, { allTracks: project.tracks });
+  assert.equal(scoped.choices[0].kind, 'melody-speed');
+  assert.equal(scoped.choices[0].amount, -1);
+  const short = dense.map((s, i) => i === 1 ? { ...s, customDurations: [1] } : s);
+  assert.ok(engine.planSectionVariations(project.tracks, short, 1, 1n, { chance: 100, maxChanges: 4 }).choices.length <= 1);
+  const long = short.map((s, i) => i === 1 ? { ...s, context: { beatDurationMultiplier: 2 } } : s);
+  assert.ok(engine.planSectionVariations(project.tracks, long, 1, 1n, { chance: 100, maxChanges: 4 }).choices.length > 1);
+  const anticipatory = dense.map((s, i) => ({ ...s, type: ['INTRO', 'VERSE1', 'BUILDUP2'][i] }));
+  const retained = [{ trackId: project.tracks.find(t => t.role === 'arpeggio').id, kind: 'arp-activity', amount: 1, enabled: true }];
+  assert.deepEqual(engine.planSectionVariations([melody], anticipatory, 1, 1n, { chance: 100, maxChanges: 4 },
+    { allTracks: project.tracks, retainedChoices: retained }).choices, []);
+});
+
+test('realized purpose survives move/import while the dialog derives a context mismatch', () => {
+  const { project, service, engine, load } = setup();
+  project.arrangement = ['INTRO', 'VERSE1', 'BUILDUP2', 'CHORUS2', 'OUTRO'].map((type, i) => ({
+    ...project.arrangement[0], id: `section-${i + 1}`, type,
+  }));
+  project.arrangement[1].variations = engine.planSectionVariations(project.tracks, project.arrangement, 1, 1n);
+  assert.equal(project.arrangement[1].variations.gesture, 'build-pulse');
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  const saved = structuredClone(service.project().arrangement[1].variations);
+  service.moveSection(1, 1);
+  assert.deepEqual(service.project().arrangement[2].variations, saved);
+  const Dialog = load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
+  const dialog = new Dialog();
+  const row = dialog.rows().find(r => r.section.id === 'section-2');
+  assert.equal(row.context.gesture, 'thin');
+  assert.equal(row.gestureMismatch, true);
+  assert.equal(engine.validSectionVariations({ ...saved, gesture: 'unknown' }, project.tracks), false);
+  assert.equal(engine.validSectionVariations({ ...saved, gesture: 5 }, project.tracks), false);
+  const legacy = structuredClone(saved); delete legacy.gesture;
+  assert.equal(engine.validSectionVariations(legacy, project.tracks), true);
+});
+
+test('activity gestures reach the actual arp consumer without changing track identity or seed', () => {
+  const { project, engine, phrase } = setup();
+  const arp = project.tracks.find(t => t.role === 'arpeggio');
+  const track = { ...arp, generatorSettings: { ...arp.generatorSettings, rhythm: 'full', hitsPerPattern: 8, pauseChance: 0 } };
+  const presence = Object.fromEntries(project.tracks.map(t => [t.id, true]));
+  const sections = types => types.map((type, i) => ({ ...project.arrangement[0], id: `consumer-${i}`, type, trackPresence: presence }));
+  const build = engine.planSectionVariations([track], sections(['INTRO', 'VERSE1', 'BUILDUP2']), 1, 99n,
+    { chance: 100, maxChanges: 2 }, { allTracks: project.tracks });
+  const thin = engine.planSectionVariations([track], sections(['CLIMAX', 'VERSE1', 'CHILL']), 1, 99n,
+    { chance: 100, maxChanges: 2 }, { allTracks: project.tracks });
+  const generate = plan => phrase.generateTrackPhrase(project, { ...track,
+    generatorSettings: { ...track.generatorSettings, ...engine.variationPatch(track, plan.choices[0]) } });
+  assert.ok(generate(build).length > generate(thin).length);
+  assert.equal(project.seed, '42');
+  assert.equal(track.generatorSettings.hitsPerPattern, 8);
+});

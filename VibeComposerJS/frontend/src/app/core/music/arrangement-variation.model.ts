@@ -5,6 +5,7 @@ export interface VariationPolicy {
 }
 
 export type VariationKind = 'melody-speed' | 'melody-direction' | 'arp-activity' | 'bass-weight' | 'chord-space' | 'drum-activity';
+export type VariationGesture = 'establish' | 'thin' | 'build-pulse' | 'reinforce-foundation' | 'release-tension' | 'sustain' | 'resolve';
 
 export interface ArrangementVariation {
   readonly trackId: string;
@@ -14,6 +15,8 @@ export interface ArrangementVariation {
 }
 
 export interface SectionVariations {
+  /** Realized musical purpose; current intent is still derived from the arrangement. */
+  readonly gesture?: VariationGesture;
   /** Exact signed Java long, independently salted from phrase generation. */
   readonly seed: string;
   readonly policy: VariationPolicy;
