@@ -29,9 +29,14 @@ export function preDropCutBlockedKeys(track: CompositionTrack, section: Arrangem
 
 /** Manual windows block the entire event, including silence and notes sustaining into its gate. */
 export function preDropCutEligibility(track: CompositionTrack, section: ArrangementSection): 'manual' | 'overridden' | 'incompatible' | undefined {
+  return accompanimentEventEligibility(track, section, preDropCutWindow(section));
+}
+
+/** Shared ownership checks for accompaniment events; dependency-source events need another consumer. */
+export function accompanimentEventEligibility(track: CompositionTrack, section: ArrangementSection,
+  window: SectionEventWindow | undefined): 'manual' | 'overridden' | 'incompatible' | undefined {
   if (section.trackPhrases?.[track.id] !== undefined || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id)) return 'manual';
   if (preDropCutBlockedKeys(track, section).length) return 'overridden';
-  const window = preDropCutWindow(section);
   if (!window || track.role !== 'chords' && track.role !== 'arpeggio') return 'incompatible';
   const s = { ...track.generatorSettings, ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] };
   if (![...STATIC_RHYTHMS, 'euclid'].includes(s.rhythm ?? 'full') || s.customPattern || s.customDurations?.length

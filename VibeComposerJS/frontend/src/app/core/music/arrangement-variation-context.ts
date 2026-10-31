@@ -20,6 +20,7 @@ export interface VariationContext {
   readonly durationBeats: number;
   readonly returnLift: boolean;
   readonly preDrop: boolean;
+  readonly endFill: boolean;
 }
 
 function family(type: SectionType): string {
@@ -70,15 +71,18 @@ export function resolveVariationContext(tracks: readonly CompositionTrack[], sec
     && (gesture === 'reinforce-foundation' || gesture === 'release-tension');
   const preDrop = gesture === 'build-pulse' && durationBeats > 4 && presentCount > 1 && !!next
     && next.energy >= .65 && next.energy >= intent.energy - EPSILON && intent.tension - next.tension >= .3 - EPSILON;
-  return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats, returnLift, preDrop };
+  const endFill = !preDrop && gesture === 'build-pulse' && durationBeats > 4 && presentCount > 1 && !!next
+    && (next.tension - intent.tension >= .2 - EPSILON || next.energy - intent.energy >= .2 - EPSILON);
+  return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats, returnLift, preDrop, endFill };
 }
 
-export const isActivityVariation = (kind: VariationKind): boolean => ['melody-speed', 'arp-activity', 'arp-density', 'drum-activity', 'drum-density', 'drum-ghosts'].includes(kind);
+export const isActivityVariation = (kind: VariationKind): boolean => ['arp-end-fill', 'melody-speed', 'arp-activity', 'arp-density', 'drum-activity', 'drum-density', 'drum-ghosts'].includes(kind);
 export const isRegisterVariation = (kind: VariationKind): boolean => kind === 'melody-register' || kind === 'arp-register';
 
 /** Undefined deliberately leaves a responsibility unchanged. Solo material keeps its pulse. */
 export function variationAmountForContext(context: VariationContext, kind: VariationKind): -1 | 1 | undefined {
   const { gesture, intent, presentCount } = context;
+  if (kind === 'arp-end-fill') return context.endFill ? 1 : undefined;
   if (kind === 'pre-drop-cut') return context.preDrop ? -1 : undefined;
   if (isRegisterVariation(kind)) return context.returnLift ? 1 : undefined;
   if (kind === 'melody-range') return presentCount <= 1 ? undefined : gesture === 'reinforce-foundation' ? 1 : gesture === 'thin' || gesture === 'resolve' ? -1 : undefined;

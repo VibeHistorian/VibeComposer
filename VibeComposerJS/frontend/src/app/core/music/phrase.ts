@@ -1,3 +1,4 @@
+import { applyArpEndFill, resolveArpEndFill } from './arrangement-end-fill';
 import { applySectionCut, resolvePreDropCut } from './arrangement-boundary-events';
 import { processOutputNotes } from './output-processing';
 import type { ArrangementSection } from '../project/arrangement.model';
@@ -116,6 +117,14 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       if (window) {
         const absolute = { startBeat: sectionStart + window.startBeat, endBeat: sectionStart + window.endBeat };
         notes = notes.flatMap(note => note.sectionId === section.id ? applySectionCut([note], absolute) : [note]);
+      }
+      const fill = resolveArpEndFill(track, section);
+      if (fill) {
+        const owned: readonly ArrangedNote[] = notes.filter(note => note.sectionId === section.id);
+        const filled: ArrangedNote[] = applyArpEndFill(owned, { startBeat: sectionStart + fill.startBeat, endBeat: sectionStart + fill.endBeat },
+          BigInt(section.variations!.seed), track.id);
+        const first = notes.findIndex(note => note.sectionId === section.id);
+        notes = notes.flatMap((note, index): ArrangedNote[] => note.sectionId !== section.id ? [note] : index === first ? filled : []);
       }
       sectionStart += sectionDurationBeats(project, section);
     }

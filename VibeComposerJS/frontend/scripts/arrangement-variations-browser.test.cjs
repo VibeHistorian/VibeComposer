@@ -40,7 +40,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
           for(let i=2;i<=6;i++)p.tracks.push({...base,id:'track-'+role+'-'+i,name:base.name[0]+i,generatorSettings:{...base.generatorSettings}});
         }
         for(const track of p.tracks) if(track.role==='arpeggio')Object.assign(track.generatorSettings,{rhythm:'euclid',hitsPerPattern:8,euclideanPulses:4});
-        p.arrangement=['BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
+        p.arrangement=['VERSE1','BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role=>[role,Array(6).fill(true)]))}));
         sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
       }
@@ -64,6 +64,11 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const cutToggle=cut.querySelector('input[type="checkbox"]');cutToggle.click();
       await wait(()=>cut.getAttribute('data-variation-status')==='disabled','timed event disabled in draft');
       ensure(JSON.stringify(read())===original,'timed event toggle stays local');
+      const fill=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Arp section-end fill')),'end-fill explanation');
+      ensure(fill.textContent.includes('14–16')&&fill.textContent.includes('four quiet retriggers'),'actual final-slot fill window');
+      fill.querySelector('input[type="checkbox"]').click();
+      await wait(()=>fill.getAttribute('data-variation-status')==='disabled','fill toggled in draft');
+      ensure(JSON.stringify(read())===original,'fill toggle stays local');
       await changeControl(budget,'2');
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
@@ -82,10 +87,11 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await wait(()=>d.querySelector('article'),'new choices');button(d,'Apply variations').click();
       await wait(()=>!dialog(),'apply closes');
       const saved=JSON.stringify(read());ensure(saved!==original,'apply saves choices');
-      ensure(read().arrangement[0].variations.choices.filter(c=>c.kind==='pre-drop-cut').length===1,'timed cut saved once');
-      ensure(read().arrangement[0].variations.gesture==='build-pulse'&&read().arrangement[1].variations.gesture==='release-tension','purpose persists');
-      const firstAnchor=read().arrangement[1].variations.choices.find(c=>c.kind==='bass-weight');
-      const later=read().arrangement[3].variations.choices;
+      ensure(read().arrangement[1].variations.choices.filter(c=>c.kind==='pre-drop-cut').length===1,'timed cut saved once');
+      ensure(read().arrangement[0].variations.choices.filter(c=>c.kind==='arp-end-fill').length===1,'fill saved once before rise');
+      ensure(read().arrangement[0].variations.gesture==='build-pulse'&&read().arrangement[2].variations.gesture==='release-tension','purpose persists');
+      const firstAnchor=read().arrangement[2].variations.choices.find(c=>c.kind==='bass-weight');
+      const later=read().arrangement[4].variations.choices;
       ensure(firstAnchor&&later.some(c=>c.kind==='bass-weight'&&c.trackId===firstAnchor.trackId),'return keeps bass anchor');
       ensure(later.filter(c=>c.kind.endsWith('-register')).length===1,'one register lift saved');
       const strip=p=>p.arrangement.map(({variations,...rest})=>rest);

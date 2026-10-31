@@ -5,7 +5,7 @@ export interface VariationPolicy {
 }
 
 export type VariationKind = 'melody-speed' | 'melody-direction' | 'melody-register' | 'melody-range' | 'arp-activity' | 'arp-density' | 'arp-contour' | 'arp-register'
-  | 'pre-drop-cut' | 'bass-weight' | 'chord-space' | 'chord-transition' | 'drum-activity' | 'drum-density' | 'drum-ghosts';
+  | 'arp-end-fill' | 'pre-drop-cut' | 'bass-weight' | 'chord-space' | 'chord-transition' | 'drum-activity' | 'drum-density' | 'drum-ghosts';
 export type VariationGesture = 'establish' | 'thin' | 'build-pulse' | 'reinforce-foundation' | 'release-tension' | 'sustain' | 'resolve';
 
 export interface ArrangementVariation {

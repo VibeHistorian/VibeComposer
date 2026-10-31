@@ -366,7 +366,7 @@ test('anticipation uses one activity driver and leaves foundations stable over m
     assert.equal(plan.gesture, 'build-pulse');
     const activity = plan.choices.filter(c => isActivityVariation(c.kind));
     assert.equal(activity.length, 1);
-    assert.ok(['arp-activity', 'drum-activity'].includes(activity[0].kind));
+    assert.ok(['arp-activity', 'drum-activity', 'arp-end-fill'].includes(activity[0].kind));
     assert.ok(plan.choices.every(c => c.kind !== 'bass-weight' && c.kind !== 'chord-space'));
     const roles = plan.choices.map(c => tracks.find(t => t.id === c.trackId).role);
     assert.equal(new Set(roles).size, roles.length);
@@ -1007,4 +1007,157 @@ test('timed choices validate, persist and share note output with MIDI through hi
   assert.deepEqual(duplicate.arrangement[2].variations, variations);
   const context = load('core/music/arrangement-variation-context.ts').resolveVariationContext(changedType.tracks, changedType.arrangement, 1);
   assert.equal(load('core/music/arrangement-variation-context.ts').variationAmountForContext(context, 'pre-drop-cut'), undefined);
+});
+
+function endFillSetup() {
+  const f = setup();
+  f.project.arrangement = ['INTRO', 'VERSE1', 'BUILDUP2', 'CLIMAX', 'OUTRO'].map((type, i) => ({ id: `fill-${i}`, type, measures: 4,
+    trackPresence: Object.fromEntries(f.project.tracks.map(t => [t.id, true])) }));
+  const track = f.project.tracks.find(t => t.role === 'arpeggio');
+  Object.assign(track.generatorSettings, { rhythm: 'full', hitsPerPattern: 8 });
+  const choice = { trackId: track.id, kind: 'arp-end-fill', amount: 1, enabled: true };
+  const section = { ...f.project.arrangement[1], variations: { seed: '9223372036854775807', policy: { chance: 100, maxChanges: 3 }, choices: [choice] } };
+  return { ...f, track, choice, section, fill: f.load('core/music/arrangement-end-fill.ts') };
+}
+
+test('end fills prepare rises as the sole activity driver with independent deterministic selection', () => {
+  const { project, track, engine, load } = endFillSetup();
+  const { resolveVariationContext, isActivityVariation } = load('core/music/arrangement-variation-context.ts');
+  assert.equal(resolveVariationContext(project.tracks, project.arrangement, 1).endFill, true);
+  assert.equal(resolveVariationContext(project.tracks, project.arrangement, 2).endFill, false);
+  for (let seed = 0n; seed < 40n; seed++) {
+    const policy = { chance: 100, maxChanges: 3 };
+    const plan = engine.planSectionVariations(project.tracks, project.arrangement, 1, seed, policy);
+    assert.equal(plan.choices.filter(c => c.kind === 'arp-end-fill').length, 1);
+    assert.equal(plan.choices.filter(c => isActivityVariation(c.kind)).length, 1);
+    assert.ok(plan.choices.length <= 3);
+    assert.equal(new Set(plan.choices.map(c => c.trackId)).size, plan.choices.length);
+    assert.deepEqual(plan, engine.planSectionVariations([...project.tracks].reverse(), project.arrangement, 1, seed, policy));
+    assert.ok(!engine.planSectionVariations(project.tracks, project.arrangement, 1, seed).choices.some(c => c.kind === 'arp-end-fill'));
+    const retained = [{ trackId: project.tracks.find(t => t.role === 'drums').id, kind: 'drum-density', amount: 1, enabled: true }];
+    const scoped = engine.planSectionVariations([track], project.arrangement, 1, seed, { chance: 100, maxChanges: 2 }, { allTracks: project.tracks, retainedChoices: retained });
+    assert.ok(!scoped.choices.some(c => isActivityVariation(c.kind)));
+    const savedFill = [{ trackId: track.id, kind: 'arp-end-fill', amount: 1, enabled: true }];
+    const remaining = engine.planSectionVariations(project.tracks.filter(t => t.id !== track.id), project.arrangement, 1, seed, policy,
+      { allTracks: project.tracks, retainedChoices: savedFill });
+    assert.ok(!remaining.choices.some(c => isActivityVariation(c.kind)));
+  }
+  const boundary = [{ trackId: project.tracks.find(t => t.role === 'chords').id, kind: 'pre-drop-cut', amount: -1, enabled: false }];
+  assert.ok(!engine.planSectionVariations([track], project.arrangement, 1, 1n, { chance: 100, maxChanges: 2 },
+    { allTracks: project.tracks, retainedChoices: boundary }).choices.some(c => c.kind === 'arp-end-fill'));
+  assert.ok(!engine.planSectionVariations(project.tracks.filter(t => t.id !== track.id), project.arrangement, 2, 1n, { chance: 100, maxChanges: 2 },
+    { allTracks: project.tracks, retainedChoices: [{ trackId: track.id, kind: 'arp-end-fill', amount: 1, enabled: false }] }).choices.some(c => c.kind === 'pre-drop-cut'));
+  assert.deepEqual(engine.planSectionVariations(project.tracks, project.arrangement, 1, 1n, { chance: 0, maxChanges: 3 }).choices, []);
+});
+
+test('end-fill windows and retriggers are bounded, collision-safe and immutable', () => {
+  const { section, fill } = endFillSetup();
+  for (const [measures, customDurations, multiplier, window] of [[4, undefined, 1, { startBeat: 14, endBeat: 16 }],
+    [9, [3, 5, .5], 1, { startBeat: 25, endBeat: 25.5 }], [4, [3, 2], .5, { startBeat: 4, endBeat: 5 }]]) {
+    assert.deepEqual(fill.arpEndFillWindow({ ...section, measures, customDurations, context: { beatDurationMultiplier: multiplier } }), window);
+  }
+  assert.equal(fill.arpEndFillWindow({ ...section, measures: 1 }), undefined);
+  const notes = Array.from({ length: 16 }, (_, i) => ({ id: `anchor-${i}`, midi: 60 + i % 3, startBeat: i * .25, durationBeats: .25, velocity: 90 }));
+  const original = structuredClone(notes), window = { startBeat: 2, endBeat: 4 };
+  const actual = fill.applyArpEndFill(notes, window, 123n, 'arp');
+  assert.deepEqual(notes, original);
+  assert.deepEqual(actual, fill.applyArpEndFill(notes, window, 123n, 'arp'));
+  const added = actual.filter(n => n.id.includes('-end-fill-'));
+  assert.equal(added.length, 4); assert.equal(new Set(added.map(n => n.id)).size, 4);
+  assert.deepEqual(actual.filter(n => n.startBeat < 2), notes.filter(n => n.startBeat < 2));
+  assert.ok(added.every(n => n.startBeat >= 2 && n.startBeat + n.durationBeats <= 4 && n.velocity >= 63 && n.velocity <= 81));
+  const sorted = [...actual].sort((a,b) => a.startBeat - b.startBeat);
+  assert.ok(sorted.every((n,i) => i === 0 || n.startBeat - sorted[i-1].startBeat >= .125 - 1e-9));
+  assert.ok(sorted.every((n,i) => !sorted.slice(0,i).some(p => p.midi === n.midi && p.startBeat + p.durationBeats > n.startBeat + 1e-9)));
+  const held = [{ id: 'held', midi: 60, startBeat: 0, durationBeats: 5, velocity: 90 }, { id: 'late', midi: 60, startBeat: 3, durationBeats: .25, velocity: 90 }];
+  assert.deepEqual(fill.applyArpEndFill(held, window, 1n, 'arp'), held, 'earlier ringing key blocks a colliding retrigger');
+  assert.deepEqual(fill.applyArpEndFill([], window, 1n, 'arp'), []);
+  const dense = notes.map(n => ({ ...n, startBeat: n.startBeat / 4 }));
+  assert.deepEqual(fill.applyArpEndFill(dense, { startBeat: 0, endBeat: 1 }, 1n, 'arp'), dense);
+});
+
+test('shared end-fill output keeps harmony, manual ownership and unrelated humanization intact', () => {
+  const { project, track, section, phrase, fill } = endFillSetup();
+  for (const [key, scale] of [['C', 'major'], ['F♯', 'dorian'], ['B', 'natural-minor']]) for (const humanization of [undefined, { timingBeats: .25, durationBeats: .25 }])
+    for (const timing of [{}, { measures: 9, customDurations: [3,5,2] }, { measures: 4, customDurations: [3,2], context: { beatDurationMultiplier: 2 } }]) {
+    const timedSection = { ...section, ...timing };
+    const p = { ...project, key, scale, humanization, arrangement: project.arrangement.map((s,i) => i === 1 ? { ...timedSection, variations: undefined } : s) };
+    const varied = { ...p, arrangement: p.arrangement.map((s,i) => i === 1 ? timedSection : s) };
+    const baseline = phrase.layOutTrackPhrase(p, track, true, true), notes = phrase.layOutTrackPhrase(varied, track, true, true);
+    const relative = fill.arpEndFillWindow(timedSection);
+    const window = { startBeat: 16 + relative.startBeat, endBeat: 16 + relative.endBeat }, added = notes.filter(n => n.id.includes('-end-fill-'));
+    assert.ok(added.length >= 1 && added.length <= 4);
+    assert.ok(added.every(n => n.startBeat >= window.startBeat && n.startBeat + n.durationBeats <= window.endBeat));
+    assert.deepEqual(notes.filter(n => n.startBeat < window.startBeat || n.sectionId !== section.id), baseline.filter(n => n.startBeat < window.startBeat || n.sectionId !== section.id));
+    assert.deepEqual(phrase.sectionMelodyContext(varied, timedSection), phrase.sectionMelodyContext(p, p.arrangement[1]));
+    for (const other of p.tracks.filter(t => t.id !== track.id)) assert.deepEqual(phrase.layOutTrackPhrase(varied, other), phrase.layOutTrackPhrase(p, other));
+    for (const n of added) {
+      const source = baseline.find(a => a.sectionId === section.id && a.startBeat >= window.startBeat && a.startBeat < n.startBeat && n.id.startsWith(a.id + '-end-fill-'));
+      assert.ok(source && source.midi === n.midi && n.velocity <= source.velocity);
+      assert.equal(n.phraseSource, source.phraseSource); assert.equal(n.sectionId, section.id);
+    }
+  }
+  const early = { ...track, phraseEdits: [{ startBeat: 0, endBeat: 4, notes: [{ id: 'owned', midi: 60, startBeat: 0, durationBeats: 1, velocity: 80 }] }] };
+  const p = { ...project, tracks: [early], arrangement: [section] };
+  const variedNotes = phrase.layOutTrackPhrase(p, early);
+  assert.deepEqual(variedNotes.filter(n => n.startBeat < 14), phrase.layOutTrackPhrase({ ...p, arrangement: [{ ...section, variations: undefined }] }, early).filter(n => n.startBeat < 14));
+  assert.ok(variedNotes.some(n => n.id.includes('-end-fill-')));
+  assert.equal(fill.arpEndFillEligibility(early, section), undefined);
+});
+
+test('end fills exclude authored grids, dense or empty endings, local replacements and protected manual windows', () => {
+  const { project, track, section, choice, fill, load, engine } = endFillSetup();
+  const inspect = load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  assert.equal(inspect(track, section, choice).status, 'active');
+  for (const change of [{ rhythm: 'melody' }, { rhythm: 'custom' }, { pattern: 'custom' }, { arpContour: [0,1] }, { hitsPerPattern: 32 },
+    { customDurations: [[1]] }, { feedbackCount: 1 }, { offset: 100 }, { chordSpan: 2 }, { patternRepeat: 2 }, { pauseChance: 10 },
+    { exceptionChance: 10 }, { chordSpanFill: 'HALF1' }, { rhythm: 'euclid', euclideanPulses: 0 }]) {
+    const t = { ...track, generatorSettings: { ...track.generatorSettings, ...change } };
+    assert.equal(fill.arpEndFillEligibility(t, section), 'incompatible', JSON.stringify(change));
+  }
+  assert.equal(fill.arpEndFillEligibility({ ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'euclid', euclideanPulses: 4 } }, section), undefined);
+  for (const key of load('core/music/arrangement-boundary-events.ts').PRE_DROP_CUT_KEYS) {
+    const s = { ...section, rolePartOverrides: { arpeggio: { [key]: track.generatorSettings[key] ?? 0 } } };
+    assert.equal(inspect(track, s, choice).status, 'overridden');
+    assert.equal(fill.resolveArpEndFill(track, s), undefined);
+  }
+  const manual = [{ id: 'owned', midi: 60, startBeat: 13, durationBeats: 3, velocity: 80 }];
+  for (const t of [{ ...track, editedPhrase: manual }, { ...track, phraseEdits: [{ startBeat: 14, endBeat: 16, notes: [] }] },
+    { ...track, phraseEdits: [{ startBeat: 13, endBeat: 13.6, notes: [] }] }, { ...track, phraseEdits: [{ startBeat: 12, endBeat: 13.5, notes: manual }] }]) {
+    assert.equal(fill.arpEndFillEligibility(t, section), 'manual');
+    assert.equal(inspect(t, section, choice).status, 'manual');
+  }
+  assert.equal(fill.arpEndFillEligibility({ ...track, editedPhrase: manual }, { ...section, generatedTrackIds: [track.id] }), undefined);
+  assert.equal(fill.arpEndFillEligibility(track, { ...section, trackPhrases: { [track.id]: [] } }), 'manual');
+  assert.equal(fill.resolveArpEndFill(track, { ...section, trackPresence: {} }), undefined);
+  assert.equal(fill.resolveArpEndFill(track, { ...section, variations: { ...section.variations, choices: [{ ...choice, enabled: false }] } }), undefined);
+  const locked = project.tracks.map(t => t.role === 'arpeggio' ? { ...t, rerollLocked: true } : t);
+  assert.ok(!engine.planSectionVariations(locked, project.arrangement, 1, 1n, { chance: 100, maxChanges: 3 }).choices.some(c => c.kind === 'arp-end-fill'));
+});
+
+test('saved fills validate and reproduce actual MIDI, history, duplication and context changes', () => {
+  const { project, track, section, choice, engine, service, phrase, midi, commands } = endFillSetup();
+  const { Midi } = require('@tonejs/midi');
+  assert.equal(engine.validSectionVariations(section.variations, project.tracks), true);
+  for (const invalid of [{ ...choice, amount: -1 }, { ...choice, trackId: project.tracks.find(t => t.role === 'chords').id }, { ...choice, window: [14,16] }])
+    assert.equal(engine.validSectionVariations({ ...section.variations, choices: [invalid] }, project.tracks), false);
+  assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+  const before = service.exportProjectJson();
+  assert.equal(service.applyArrangementVariationDraft(service.project(), { [section.id]: section.variations }), 'changed');
+  const saved = service.exportProjectJson(), notes = phrase.layOutTrackPhrase(service.project(), track);
+  const bytes = midi.generateCompositionMidi(service.project());
+  const parsed = new Midi(bytes).tracks.find(t => t.name === track.name), ppq = 480;
+  const expected = notes.map(n => [n.midi, Math.round(n.startBeat*ppq), Math.max(1,Math.round((n.startBeat+n.durationBeats)*ppq)-Math.round(n.startBeat*ppq))]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+  assert.deepEqual(parsed.notes.map(n => [n.midi,n.ticks,n.durationTicks]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]), expected);
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), saved);
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(phrase.layOutTrackPhrase(service.project(), service.project().tracks.find(t => t.id === track.id)), notes);
+  assert.deepEqual(midi.generateCompositionMidi(service.project()), bytes);
+  const duplicate = commands.duplicateSection(service.project(), 1);
+  assert.deepEqual(duplicate.arrangement[2].variations, section.variations);
+  const changed = { ...service.project(), arrangement: service.project().arrangement.map((s,i) => i === 1 ? { ...s, type: 'CHILL' } : s) };
+  assert.deepEqual(phrase.layOutTrackPhrase(changed, track), notes);
+  service.removeTrack(track.id);
+  assert.ok(service.project().arrangement.every(s => !s.variations?.choices.some(c => c.trackId === track.id)));
 });
