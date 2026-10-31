@@ -32,13 +32,15 @@
         }
         @for (item of row.choices; track item.track.id) {
           <article [attr.data-variation-status]="item.inspection.status">
-            <label><input type="checkbox" [attr.aria-label]="item.track.name + ' ' + item.inspection.label" [disabled]="stale()"
-              [checked]="item.inspection.choice.enabled" (change)="toggle(row.section.id, item.track.id, $event)" />
-              <strong>{{ item.track.name }}</strong> · {{ item.inspection.label }}</label>
-            <span class="effect-status">{{ item.inspection.detail }}</span>
-            @for (change of item.inspection.changes; track change.parameter) {
-              <span class="effect-value">{{ change.label }}: {{ value(change.before) }} → {{ value(change.effective) }} · {{ change.source }}</span>
-            }
+            <div class="variation-line">
+              <label><input type="checkbox" [attr.aria-label]="item.track.name + ' ' + item.inspection.label" [disabled]="stale()"
+                [checked]="item.inspection.choice.enabled" (change)="toggle(row.section.id, item.track.id, $event)" />
+                <span><strong>{{ item.track.name }}</strong> · {{ item.inspection.label }}</span></label>
+              <div class="effect-values">
+                @for (effect of item.effects; track $index) { <span class="effect-value">{{ effect }}</span> }
+              </div>
+            </div>
+            @if (item.detail) { <span class="effect-status">{{ item.detail }}</span> }
             @if (item.mismatch) { <span class="context-warning">This choice differs from the current section purpose. Reroll to replan.</span> }
           </article>
         } @empty { <p>No variations in this scope. Reroll to choose eligible changes.</p> }

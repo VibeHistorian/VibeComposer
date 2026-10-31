@@ -3,7 +3,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { initialVariationDraft, rerollVariationDraft, resetVariationDraft, variationScopeSections, variationScopeTracks,
   projectWithVariationPresence, rerollVariationPresence, type VariationPresenceDraft, type VariationScope } from '../../core/project/arrangement-variation-draft';
-import { inspectArrangementVariation } from '../../core/music/arrangement-variation-inspection';
+import { inspectArrangementVariation, type VariationInspection } from '../../core/music/arrangement-variation-inspection';
 import { DEFAULT_VARIATION_POLICY, maximumSectionVariations, validVariationPolicy } from '../../core/music/arrangement-variations';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
@@ -43,8 +43,16 @@ export class ArrangementVariationsDialogComponent {
     const choices = (current.variations?.choices ?? []).filter(choice => tracks.has(choice.trackId)).map(choice => {
       const track = this.initialProject.tracks.find(track => track.id === choice.trackId)!;
       const inspection = inspectArrangementVariation(track, current, choice, this.initialProject.melodyGlobal);
+      const explanation = choice.enabled ? inspection
+        : inspectArrangementVariation(track, current, { ...choice, enabled: true }, this.initialProject.melodyGlobal);
+      const effects = this.effectSummaries(explanation);
+      let detail = explanation.detail;
+      if (explanation.status === 'active') {
+        if (!effects.length) { effects.push(detail); detail = ''; }
+        else detail = detail === 'Active' ? '' : 'Manual edits are preserved';
+      }
       const expectedAmount = variationAmountForContext(context, choice.kind);
-      return { track, inspection, mismatch: choice.amount !== expectedAmount };
+      return { track, inspection, effects, detail, mismatch: choice.amount !== expectedAmount };
     });
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));
@@ -90,5 +98,15 @@ export class ArrangementVariationsDialogComponent {
     if (Array.isArray(value)) return value.length ? value.join(', ') : 'None';
     return typeof value === 'boolean' ? value ? 'On' : 'Off' : typeof value === 'number'
       ? String(Math.round(value * 100) / 100) : String(value ?? 'Inherited');
+  }
+  private effectSummaries(inspection: VariationInspection): string[] {
+    const low = inspection.changes.find(change => change.parameter === 'rangeMin');
+    const high = inspection.changes.find(change => change.parameter === 'rangeMax');
+    const range = low && high ? `Melody MIDI range: ${this.value(low.before)}–${this.value(high.before)} → ${this.value(low.effective)}–${this.value(high.effective)} · ${[...new Set([low.source, high.source])].join(' / ')}` : undefined;
+    return [
+      ...(range ? [range] : []),
+      ...inspection.changes.filter(change => !range || change.parameter !== 'rangeMin' && change.parameter !== 'rangeMax')
+        .map(change => `${change.label}: ${this.value(change.before)} → ${this.value(change.effective)} · ${change.source}`),
+    ];
   }
 }

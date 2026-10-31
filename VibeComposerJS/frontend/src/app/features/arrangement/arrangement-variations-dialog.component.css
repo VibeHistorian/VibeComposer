@@ -22,8 +22,11 @@ input[type="number"] { width: 90px; padding: 6px; }
 h2 { margin: 0 0 10px; font-size: 13px; }
 small { display: block; margin-top: 4px; color: var(--text-muted); font-weight: normal; }
 article { padding: 10px; margin-bottom: 8px; background: var(--surface-low); border: 1px solid var(--border-subtle); border-radius: var(--radius-control); }
-article label { display: flex; align-items: center; gap: 6px; }
-.effect-status, .effect-value, .context-warning { display: block; margin: 6px 0 0 24px; font-size: 12px; overflow-wrap: anywhere; }
-.effect-value { color: var(--text-secondary); }
+.variation-line { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: start; gap: 6px 16px; }
+article label { display: flex; align-items: baseline; gap: 6px; line-height: 1.5; overflow-wrap: anywhere; }
+article input[type="checkbox"] { flex: none; }
+.effect-values { display: grid; gap: 4px; text-align: right; }
+.effect-value { color: var(--text-secondary); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.effect-status, .context-warning { display: block; margin: 6px 0 0 24px; font-size: 12px; overflow-wrap: anywhere; }
 .context-warning, [role="alert"] { color: var(--accent-primary); }
 .presence-changes { margin-bottom: 10px; font-size: 12px; color: var(--text-secondary); }

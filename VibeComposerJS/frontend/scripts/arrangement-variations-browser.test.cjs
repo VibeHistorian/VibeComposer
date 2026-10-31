@@ -34,7 +34,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'),'app');
       if(!sessionStorage.getItem('variation-fixture')){
         await changeControl(seed,'42');const p=await wait(read,'project');
-        p.melodyGlobal={...p.melodyGlobal,contextualMelody:false};
+        p.melodyGlobal={...p.melodyGlobal,contextualMelody:true};
         for(const role of ['melody','bass','chords','arpeggio','drums']){
           const base=p.tracks.find(t=>t.role===role);
           for(let i=2;i<=6;i++)p.tracks.push({...base,id:'track-'+role+'-'+i,name:base.name[0]+i,generatorSettings:{...base.generatorSettings}});
@@ -42,6 +42,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
         for(const track of p.tracks) if(track.role==='arpeggio')Object.assign(track.generatorSettings,{rhythm:'euclid',hitsPerPattern:8,euclideanPulses:4});
         p.arrangement=['VERSE1','BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role=>[role,Array(6).fill(true)]))}));
+        p.arrangement[0].variations={seed:'1',policy:{chance:100,maxChanges:2},choices:[{trackId:p.tracks.find(t=>t.role==='melody').id,kind:'melody-range',amount:1,enabled:true}]};
         sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
       }
       await changeControl(seed,'43');await wait(()=>read()?.seed==='43','canonical project');
@@ -52,6 +53,13 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(d.contains(document.activeElement),'dialog focus');
       ensure(!d.querySelector('[aria-label="Generate arrangement variations"]')&&!d.querySelector('[aria-label="Reroll presence too"]'),'behavior toggles removed from popup');
       let box=d.getBoundingClientRect();ensure(box.left>=0&&box.right<=innerWidth&&box.top>=0&&box.bottom<=innerHeight,'dialog fits');
+      const range=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Contextual melody range')),'saved range row');
+      const summary=range.querySelectorAll('.effect-value');
+      ensure(summary.length===1&&summary[0].textContent.includes('48–72 → 46–74'),'combined MIDI range');
+      const labelBox=range.querySelector('label').getBoundingClientRect(), effectBox=summary[0].getBoundingClientRect();
+      ensure(Math.abs(labelBox.top-effectBox.top)<2&&effectBox.left>labelBox.right,'explanation beside track label');
+      ensure(![...d.querySelectorAll('.effect-status')].some(s=>['Active','Disabled'].includes(s.textContent.trim())),'checkbox supplies state');
+      ensure(range.scrollWidth<=range.clientWidth,'range row fits');
       const budget=d.querySelector('[aria-label="Variation change budget"]');
       ensure(Number(budget.max)===15,'30-track capacity is fifteen');
       await changeControl(budget,'16');
@@ -77,8 +85,12 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Arp rhythm density')),'rhythm-aware density explanation');
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Late chord anticipation')),'chord transition explanation');
       ensure(JSON.stringify(read())===original,'reroll stays local');
-      const toggle=d.querySelector('article input[type="checkbox"]');toggle.focus();toggle.click();
+      const toggle=d.querySelector('article input[type="checkbox"]');
+      const toggleRow=toggle.closest('article'), beforeEffect=toggleRow.querySelector('.effect-values').textContent;
+      toggle.focus();toggle.click();
       await wait(()=>d.querySelector('[data-variation-status="disabled"]'),'disabled status');
+      ensure(toggleRow.querySelector('.effect-values').textContent===beforeEffect,'disabled rows keep the parameter explanation');
+      ensure(![...toggleRow.querySelectorAll('.effect-status')].some(s=>s.textContent.trim()==='Disabled'),'no redundant disabled text');
       ensure(JSON.stringify(read())===original,'toggle stays local');
       button(d,'Cancel').click();await wait(()=>!dialog(),'cancel closes');
       ensure(JSON.stringify(read())===original,'cancel preserves project');
