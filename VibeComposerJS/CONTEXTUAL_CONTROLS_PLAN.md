@@ -47,7 +47,7 @@ The following groups describe scope, not a mandatory delivery order. Define inte
 
 ### Arrangement variations
 
-Implementation slices and musical design live in [the arrangement variations plan](ARRANGEMENT_VARIATIONS_PLAN.md). The opt-in engine, inspection/draft workflow, behavior preferences, optional presence rerolls, contextual gestures, repeated-family continuity, bounded register/contour adapters, controlled lifts, rhythm-aware density, chord anticipation and supported drum gestures, contextual melody range planning and track-count-based section capacity and a bounded pre-drop accompaniment cut and final-slot Arp retrigger fills and bounded accompaniment velocity envelopes are implemented; instrument profiles, audition, further fill vocabulary and density/register ramps remain follow-up work there.
+Implementation slices and musical design live in [the arrangement variations plan](ARRANGEMENT_VARIATIONS_PLAN.md). The engine, inspection/draft workflow, behavior preferences, contextual planning, static adapters, boundary cuts, Arp fills and velocity envelopes are implemented. Follow-ups include subdivision/register ramps and user controls for allowed generation kinds, per-kind strengths and explicit popup insertion/editing. Continue with automated output checks and musical principles; soundfont/synth audition is optional feedback. The plan defines future policy-versus-realization and authored-choice ownership contracts.
 
 - Define supported section-wide and section-part variations and their actual musical consumers. Keep variation-generation chances separate from realized choices and track presence.
 - Add indicators in the arrangement canvas and a popup for inspecting, enabling, disabling and rerolling variations in the selected context.

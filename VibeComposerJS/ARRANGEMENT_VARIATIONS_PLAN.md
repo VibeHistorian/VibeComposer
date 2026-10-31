@@ -113,9 +113,39 @@ Planning, inspection and effective settings resolution receive the project's glo
 
 The first discrete section-end event is delivered below. The final-slot accompaniment retrigger fill is delivered below. The bounded accompaniment velocity envelope is delivered below. Next design slice: an instrument-aware Arp subdivision ramp, with staged onset rates over actual section-relative windows, bounded extra attacks and explicit collision/ownership policy. Continuous register ramps and dependency-changing melody events require further consumers, not repeated static range patches.
 
-## Follow-up: instrument profiles and audition
+## Development direction and later user controls
 
-More detailed instrument profiles and musical audition across instrument pools/short and long forms remain separate work. Keep the current conservative envelope and opt-in generation defaults until broader musical validation supports changing them. Automated pitch/timing/output checks do not replace subjective musical-quality review.
+User direction, 2026-10-31: continue development using automated behavioral/output tests, music theory and established arrangement practices. Listening with a particular soundfont, synth or DAW instrument is optional feedback, not a prerequisite for implementation or a universal suitability verdict. General MIDI programs and pool names do not establish the behavior of the connected sound source. Do not exclude a useful variation because one tested renderer makes it sound unsuitable. This direction supersedes earlier audition prerequisites; historical verification entries remain records of their delivery checkpoints.
+
+Preserve technical correctness, deterministic streams, consumer compatibility, valid note/timing data and manual ownership. Distinguish those requirements from automatic-planner recommendations and provisional musical limits. Current density/register caps, minimum section sizes, budget thresholds and preferred roles include conservative choices; audit their purpose before exposing user controls. Optional renderer-specific profiles can suggest defaults later. Keep existing opt-in behavior as a user preference.
+
+### Shared definitions and configurable strength
+
+These controls are planned follow-ups, not implemented UI. Establish a small framework-independent operation catalogue shared by planning, popup authoring, inspection, validation and actual consumers: supported roles/modes, directions, parameter units/defaults/bounds, and allocation/conflict groups. Separate automatic suitability from functional compatibility. A general effect-vector framework is not a prerequisite.
+
+The existing `amount: -1 | 1` is direction. Configurable strength needs operation-specific typed parameters rather than arbitrary settings patches or one universal percentage. Examples include Melody speed delta in speed points (currently 15), range expansion in semitones, register movement in whole octaves, supported subdivision/pulse steps, fill attack cap/spacing/window, and envelope endpoint gain/window/curve. Presets can map to concrete parameters where useful.
+
+Resolve policy defaults into concrete parameters on each saved choice when generating or inserting it. Changing a generation strength later must not silently reinterpret saved variations. Choices may continue to resolve relative to current track bases; saving strength does not freeze the notes or track. Preserve exact seeds, independent streams and shared consumer validation. Follow the existing buildout rule against schema-version gates or compatibility migrations.
+
+### Allowed kinds for automatic generation
+
+Add an explicitly labeled allowed-for-generation selection and per-kind default strengths, initially at project musical-policy scope alongside chance/budget. Persist them in project history and JSON/session data. They are musical settings, separate from Settings → Behavior compose preferences. Role filtering follows the catalogue; narrower policy scopes can follow if needed with explicit inheritance.
+
+Allowlist/strength changes affect future Compose/reroll planning, not the enabled state or realization of existing choices. An automatically excluded operation can still be intentionally inserted if its consumer supports the target. Preserve unrelated identity streams when filtering kinds and test policy-versus-realization separation.
+
+### Explicit insertion and editing in the popup
+
+Add a detached Add variation action: choose section/track, compatible kind, direction and supported parameters, then inspect the effective result. Ramps and fills use their saved timed consumers. Preserve Apply/Cancel, stale-project rejection and one historical commit.
+
+Explicit authoring bypasses automatic chance, gesture/energy recommendations, role allocation and minimum automatic-budget heuristics. Technical incompatibility, valid MIDI/timing bounds, explicit override precedence and manual-note ownership remain enforced and explained. Never silently clear overrides or regenerate user phrases to make an insertion work. Separate conservative planner exclusions from actual consumer limitations before enabling a manual option.
+
+For the first authoring slice, retain one operation per track and offer explicit replacement when occupied. Distinguish the hard section capacity from the automatic change budget; manual choices must respect capacity but need not obey an automatic selection budget. Multiple operations on one track require a later compatibility/ordering design.
+
+Record authored ownership for inserted/edited choices. Recommended lifecycle: automatic Compose and ordinary rerolls retain authored choices and account for their occupied slots/responsibilities; an explicit include-authored/reset/replace action may change them. Regenerate continues to retain saved choices. Define and test this ownership before shipping insertion, so a manual fill or ramp is not unexpectedly lost at the next compose. Policy/scope edits must preserve unrelated choices.
+
+### Follow-up delivery order
+
+First establish shared definitions and concrete strength/ownership contracts. Then expose allowed-for-generation kinds and default strengths, followed by popup insertion/editing with authored-choice retention. Consumers added meanwhile, including the next Arp subdivision ramp, should fit this model. Preserve current defaults until corresponding controls are exposed. Validate deterministic filtering, bounds, ownership, explicit replacement, history/persistence and shared score/playback/MIDI/audio output. Optional listening is useful feedback, not a completion requirement.
 
 Consider effect vectors and compatibility/exclusion groups only as the catalogue grows. The static catalogue is complemented by the first accompaniment boundary event below; fills and continuous ramps remain separate consumers.
 
@@ -171,7 +201,7 @@ Static parameter patches cannot represent final-bar fills, progressive subdivisi
 - Respect manual whole phrases and range edits. Define whether a manual region blocks an event or splits its eligible window. Never rewrite user notes implicitly.
 - Share resolved events between score, dependent roles, loops, playback and MIDI/audio export; tempo/time mapping must agree. Cache against immutable project identity and avoid Angular scheduling dependencies.
 
-Further harmonic/contour/drum fills and ramps remain separate validated slices. Next, design a bounded Arp subdivision ramp: stage supported rates over actual beat windows, use instrument/rhythm-specific density limits, define new onset identity and collision rules, preserve material outside the window and validate the shared note/MIDI/audio result. Continuous register ramps and any Melody-source events still need their own onset/dependency policies before implementation. Instrument-pool audition remains necessary before changing opt-in defaults or widening these conservative envelopes.
+Further harmonic/contour/drum fills and ramps remain separate validated slices. Next, design a bounded Arp subdivision ramp: stage supported rates over actual beat windows, use instrument/rhythm-specific density limits, define new onset identity and collision rules, preserve material outside the window and validate the shared note/MIDI/audio result. Continuous register ramps and any Melody-source events still need their own onset/dependency policies before implementation. Instrument-pool audition is optional feedback; user controls should accommodate the actual sound source.
 
 ## Later slice: shared harmony and timing
 
@@ -179,7 +209,7 @@ Automatic key changes, chord substitutions and tempo changes affect shared music
 
 ## Validation
 
-Trace each feature from command/UI through saved state, effective resolution and actual musical consumers. Check exact-seed determinism and stream isolation, shared budgets, meaningful effect/eligibility, explicit override precedence, whole/range manual ownership, absent targets, import rejection, storage/history, duplication/deletion and dependent rhythms. Use multi-seed musical trend checks and audition fixtures for expanded catalogues; do not require every high-energy phrase to have more notes.
+Trace each feature from command/UI through saved state, effective resolution and actual musical consumers. Check exact-seed determinism and stream isolation, shared budgets, meaningful effect/eligibility, explicit override precedence, whole/range manual ownership, absent targets, import rejection, storage/history, duplication/deletion and dependent rhythms. Use multi-seed musical trend checks for expanded catalogues, with optional listening fixtures; do not require every high-energy phrase to have more notes.
 
 Run the relevant functional suites and production build for the engine slice. UI slices additionally require the relevant production browser suites, 30-track 1440/780px layouts, arrangement zoom/device-scale coverage and accessible interactions under the existing frontend test guide.
 
