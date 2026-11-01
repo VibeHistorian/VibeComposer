@@ -1,3 +1,4 @@
+import { VARIATION_DEFINITIONS } from './arrangement-variation-catalogue';
 import type { ArrangementSection, SectionType } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { VariationGesture, VariationKind } from './arrangement-variation.model';
@@ -76,8 +77,8 @@ export function resolveVariationContext(tracks: readonly CompositionTrack[], sec
   return { intent, gesture, reason, family: currentFamily, occurrence, presentCount, durationBeats, returnLift, preDrop, endFill };
 }
 
-export const isActivityVariation = (kind: VariationKind): boolean => ['arp-end-fill', 'melody-speed', 'arp-activity', 'arp-density', 'drum-activity', 'drum-density', 'drum-ghosts'].includes(kind);
-export const isRegisterVariation = (kind: VariationKind): boolean => kind === 'melody-register' || kind === 'arp-register';
+export const isActivityVariation = (kind: VariationKind): boolean => VARIATION_DEFINITIONS[kind].activity;
+export const isRegisterVariation = (kind: VariationKind): boolean => VARIATION_DEFINITIONS[kind].register;
 
 /** Undefined deliberately leaves a responsibility unchanged. Solo material keeps its pulse. */
 export function variationAmountForContext(context: VariationContext, kind: VariationKind): -1 | 1 | undefined {

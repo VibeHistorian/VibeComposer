@@ -1296,3 +1296,29 @@ test('velocity ramps persist through history and expose the same velocities in p
     service.removeTrack(track.id);assert.ok(service.project().arrangement.every(s=>!s.variations?.choices.some(c=>c.trackId===track.id)));
   }
 });
+
+test('shared variation catalogue agrees on role support, direction, labels and timed consumers', () => {
+  const { project, load, engine } = setup();
+  const { VARIATION_DEFINITIONS: definitions, VARIATION_KINDS_BY_ROLE: roles, supportsVariation } = load('core/music/arrangement-variation-catalogue.ts');
+  const { VARIATION_LABELS: labels } = load('core/music/arrangement-variation-inspection.ts');
+  const context = load('core/music/arrangement-variation-context.ts');
+  for (const [role, kinds] of Object.entries(roles)) {
+    assert.equal(new Set(kinds).size, kinds.length);
+    for (const [kind, definition] of Object.entries(definitions)) {
+      assert.equal(kinds.includes(kind), definition.roles.includes(role));
+      assert.equal(supportsVariation(role, kind), kinds.includes(kind));
+      for (const amount of [-1, 1]) assert.equal(supportsVariation(role, kind, amount), kinds.includes(kind) && definition.directions.includes(amount));
+    }
+  }
+  for (const [kind, definition] of Object.entries(definitions)) {
+    assert.equal(labels[kind], definition.label);
+    assert.equal(context.isActivityVariation(kind), definition.activity);
+    assert.equal(context.isRegisterVariation(kind), definition.register);
+    if (definition.consumer === 'timed') {
+      const track = project.tracks.find(t => definition.roles.includes(t.role));
+      assert.deepEqual(engine.variationPatch(track, { trackId: track.id, kind, amount: definition.directions[0], enabled: true }), {});
+    }
+  }
+  for (const unknown of ['missing', '__proto__', null, 3]) assert.equal(supportsVariation('melody', unknown), false);
+  assert.equal(supportsVariation('melody', 'melody-speed', 0), false);
+});

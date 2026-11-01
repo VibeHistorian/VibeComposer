@@ -119,6 +119,12 @@ User direction, 2026-10-31: continue development using automated behavioral/outp
 
 Preserve technical correctness, deterministic streams, consumer compatibility, valid note/timing data and manual ownership. Distinguish those requirements from automatic-planner recommendations and provisional musical limits. Current density/register caps, minimum section sizes, budget thresholds and preferred roles include conservative choices; audit their purpose before exposing user controls. Optional renderer-specific profiles can suggest defaults later. Keep existing opt-in behavior as a user preference.
 
+### Shared catalogue foundation (delivered, 2026-11-01)
+
+`arrangement-variation-catalogue.ts` now owns operation labels, supported roles/directions, activity/register classification and settings-versus-timed consumer classification. Planning, validation, inspection and adapter dispatch share those definitions. The ordered per-role lists retain their previous order so tied seeded selections do not change. Melody speed's existing 15-point delta is read from catalogue metadata; this is still a fixed default, not a user strength setting.
+
+This completes the catalogue foundation only. Concrete saved-strength parameters and authored-choice ownership/retention remain the next enabling work; allowed-kind controls and manual insertion are still future UI. Existing musical output, policy defaults, manual ownership and serialized choices retain their current behavior. Consumer-specific compatibility and protected-field checks remain with their adapters rather than being duplicated as catalogue promises.
+
 ### Shared definitions and configurable strength
 
 These controls are planned follow-ups, not implemented UI. Establish a small framework-independent operation catalogue shared by planning, popup authoring, inspection, validation and actual consumers: supported roles/modes, directions, parameter units/defaults/bounds, and allocation/conflict groups. Separate automatic suitability from functional compatibility. A general effect-vector framework is not a prerequisite.
@@ -298,3 +304,9 @@ Validation: all 544 unit tests, the production build and all 28 browser tests pa
 - Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS optimization warning.
 - Full production browser aggregate: all 28 passed. Expanded 30-track 1440/780px cases inspect the resolving 100% → 80% curve and its actual beat window, retain its explanation when unchecked, keep toggles detached, and save a four-change policy with one envelope and a fill on separate tracks. Existing Apply/Cancel/history/scope, inline range formatting, settings/presence, controlled lifts, arrangement/device-scale, contextual, synthesis and export checks passed.
 - Local logs: frontend `.angular/variation-ramp-focused.log`, `variation-ramp-unit.log`, `variation-ramp-build.log`, `variation-ramp-browser-focused.log` and `variation-ramp-browser.log`. This validates note-output behavior and shared consumer routing; subjective instrument-pool audition and the dedicated density/register/dependency-source consumers remain follow-up work.
+
+### Shared catalogue foundation verification, 2026-11-01
+
+- Full unit aggregate: all 583 passed. The added consistency check verifies role-list uniqueness, reverse agreement with declared roles, supported/unsupported directions and unknown kinds, inspection labels, activity/register allocation flags and timed consumers' empty static patches. Existing exact-seed, phrase/output, saved-state/history, ownership and arrangement checks pass with the original per-role candidate order preserved.
+- Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning. Full production browser aggregate: all 28 passed, including the 30-track variations popup, contextual generation, layout/device-scale, preferences, synthesis and export workflows.
+- Logs: frontend `.angular/variation-catalogue-unit.log`, `variation-catalogue-focused.log`, `variation-catalogue-build.log` and `variation-catalogue-browser.log`. This slice centralizes capabilities and the existing Melody speed default; editable saved strengths, authored-choice retention and authoring controls remain future implementation.

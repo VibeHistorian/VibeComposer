@@ -1,3 +1,4 @@
+import { VARIATION_DEFINITIONS } from './arrangement-variation-catalogue';
 import type { MelodyGlobalSettings } from './part-settings.model';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
@@ -9,12 +10,7 @@ import { preDropCutEligibility, preDropCutWindow } from './arrangement-boundary-
 import { PART_CONTROLS, settingsValues } from './part-settings';
 
 export type VariationStatus = 'active' | 'disabled' | 'absent' | 'manual' | 'incompatible' | 'overridden' | 'unchanged';
-export const VARIATION_LABELS: Record<VariationKind, string> = {
-  'accompaniment-velocity-ramp': 'Accompaniment velocity ramp', 'arp-end-fill': 'Arp section-end fill', 'pre-drop-cut': 'Pre-drop accompaniment cut', 'melody-range': 'Contextual melody range', 'melody-speed': 'Melody speed', 'melody-direction': 'Melody direction', 'melody-register': 'Melody octave register',
-  'arp-activity': 'Arp activity', 'arp-contour': 'Arp chord-relative contour', 'arp-register': 'Arp octave register',
-  'arp-density': 'Arp rhythm density', 'bass-weight': 'Bass octave weight', 'chord-space': 'Chord spacing',
-  'chord-transition': 'Late chord anticipation', 'drum-activity': 'Cymbal activity', 'drum-density': 'Hat / ride density', 'drum-ghosts': 'Snare ghost notes',
-};
+export const VARIATION_LABELS = Object.fromEntries(Object.entries(VARIATION_DEFINITIONS).map(([kind, definition]) => [kind, definition.label])) as Record<VariationKind, string>;
 export interface VariationInspection {
   readonly choice: ArrangementVariation;
   readonly label: string;

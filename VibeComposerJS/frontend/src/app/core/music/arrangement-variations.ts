@@ -1,3 +1,4 @@
+import { VARIATION_DEFINITIONS, VARIATION_KINDS_BY_ROLE, supportsVariation } from './arrangement-variation-catalogue';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { MelodyGlobalSettings, PartSettingsPatch } from './part-settings.model';
@@ -10,10 +11,7 @@ import { PRE_DROP_CUT_KEYS, preDropCutEligibility } from './arrangement-boundary
 import { rhythmVariationPatch, rhythmVariationProtectedKeys } from './arrangement-rhythm-variations';
 
 export const DEFAULT_VARIATION_POLICY: VariationPolicy = { chance: 100, maxChanges: 2 };
-const KINDS: Record<CompositionTrack['role'], readonly VariationKind[]> = {
-  melody: ['melody-speed', 'melody-direction', 'melody-register', 'melody-range'], arpeggio: ['arp-activity', 'arp-density', 'arp-contour', 'arp-register', 'pre-drop-cut', 'arp-end-fill', 'accompaniment-velocity-ramp'], bass: ['bass-weight'],
-  chords: ['chord-space', 'chord-transition', 'pre-drop-cut', 'accompaniment-velocity-ramp'], drums: ['drum-activity', 'drum-density', 'drum-ghosts'],
-};
+const KINDS = VARIATION_KINDS_BY_ROLE;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 /** These operations must remain atomic, including controls that define their interpretation. */
@@ -53,10 +51,10 @@ export function validSectionVariations(value: unknown, tracks: readonly Composit
   return v.choices.every(choice => {
     if (!choice || typeof choice !== 'object' || Array.isArray(choice)) return false;
     const track = tracks.find(t => t.id === choice.trackId);
-    if (!track || !KINDS[track.role].includes(choice.kind) || targets.has(choice.trackId)
+    if (!track || !supportsVariation(track.role, choice.kind, choice.amount) || targets.has(choice.trackId)
       || Object.keys(choice).some(key => !['trackId', 'kind', 'amount', 'enabled'].includes(key))
-      || choice.kind === 'arp-end-fill' && choice.amount !== 1
-      || choice.kind === 'pre-drop-cut' && choice.amount !== -1
+
+
       || (choice.amount !== -1 && choice.amount !== 1) || typeof choice.enabled !== 'boolean') return false;
     targets.add(choice.trackId);
     return true;
@@ -82,7 +80,7 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
     }
     case 'arp-density': case 'chord-transition': case 'drum-density': case 'drum-ghosts': return rhythmVariationPatch(track, choice);
     case 'melody-speed': return track.role === 'melody' && !s.customDurations?.length && track.generatorSettings.rhythm !== 'durations'
-      ? { speed: clamp((track.generatorSettings.speed ?? 50) + a * 15, -100, 100) } : {};
+      ? { speed: clamp((track.generatorSettings.speed ?? 50) + a * VARIATION_DEFINITIONS['melody-speed'].speedDelta, -100, 100) } : {};
     case 'melody-direction': return { targetDirection: a > 0 ? 'ASC' : 'DESC' };
     case 'melody-register': {
       if (track.role !== 'melody') return {};
