@@ -2,16 +2,16 @@ import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
 import type { CompositionProject } from './project.model';
 import type { CompositionTrack } from './track.model';
 
-/** Array positions follow tracks filtered by role, preserving their order in the file. */
+/** Included one-based track numbers follow each role's order in the file. */
 export function encodeProjectStorage(project: CompositionProject) {
   const groups = ARRANGED_PARTS.map(role => [role, project.tracks.filter(track => track.role === role)] as const);
   return { ...project, arrangement: project.arrangement.map(section => ({ ...section,
     trackPresence: Object.fromEntries(groups.map(([role, tracks]) =>
-      [role, tracks.map(track => section.trackPresence[track.id] ?? false)])) as Record<ArrangedPart, boolean[]>,
+      [role, tracks.flatMap((track, index) => section.trackPresence[track.id] ? [index + 1] : [])])) as Record<ArrangedPart, number[]>,
   })) };
 }
 
-/** Accept existing ID maps as well as complete role arrays at the storage boundary. */
+/** Expand included track numbers; also accept existing ID maps and boolean arrays. */
 export function decodeStoredTrackPresence(value: unknown, tracks: readonly CompositionTrack[]): Record<string, boolean> | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const fields = value as Record<string, unknown>;
@@ -22,13 +22,22 @@ export function decodeStoredTrackPresence(value: unknown, tracks: readonly Compo
       ? Object.fromEntries(entries) as Record<string, boolean> : undefined;
   }
   if (entries.some(([role]) => !ARRANGED_PARTS.includes(role as ArrangedPart))) return undefined;
+  const legacyFlags = entries.some(([, values]) => Array.isArray(values) && values.some(value => typeof value === 'boolean'));
   const presence: [string, boolean][] = [];
   for (const role of ARRANGED_PARTS) {
     const members = tracks.filter(track => track.role === role);
     const flags = fields[role];
     if (flags === undefined && members.length === 0) continue;
-    if (!Array.isArray(flags) || flags.length !== members.length || flags.some(flag => typeof flag !== 'boolean')) return undefined;
-    members.forEach((track, index) => presence.push([track.id, flags[index]]));
+    if (!Array.isArray(flags)) return undefined;
+    if (legacyFlags) {
+      if (flags.length !== members.length || flags.some(flag => typeof flag !== 'boolean')) return undefined;
+      members.forEach((track, index) => presence.push([track.id, flags[index]]));
+    } else {
+      if (flags.some(number => !Number.isInteger(number) || number < 1 || number > members.length)
+        || new Set(flags).size !== flags.length) return undefined;
+      const included = new Set(flags);
+      members.forEach((track, index) => presence.push([track.id, included.has(index + 1)]));
+    }
   }
   return Object.fromEntries(presence);
 }

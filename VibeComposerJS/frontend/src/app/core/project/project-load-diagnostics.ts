@@ -136,7 +136,7 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
           'expected an exact Java long seed, valid policy, and up to four unique role-compatible track choices');
         if (section['trackPresence'] !== undefined) check(`${path}.trackPresence`,
           decodeStoredTrackPresence(section['trackPresence'], decodedTracks) !== undefined,
-          'expected an ID-to-boolean map or role arrays with one boolean per track, in track order');
+          'expected role arrays of unique one-based included track numbers within each role (or an ID-to-boolean map / complete boolean arrays)');
         for (const [id, patch] of Object.entries(section['trackPartOverrides'] ?? {})) {
           const track = decodedTracks.find(track => track.id === id);
           if (track) settings(track.role, patch, `${path}.trackPartOverrides.${id}`, true);

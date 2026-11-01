@@ -10,7 +10,7 @@ Global note editing saves `phraseEdits` on the independent track: ordered sectio
 
 Melody's project-wide inputs remain in `melodyGlobal` and are edited in Settings → Behavior → Melody. Target direction, target percentages, key emphasis, direction-change budget, new-block chance and per-chord pause filling belong to each Melody track's generator settings, with ordinary section inheritance. Java XML imports copy the corresponding saved GUIConfig values into each Melody track, keeping only project-wide fields in `melodyGlobal`.
 
-Exported files and session storage use `trackPresence: { melody: [...], bass: [...], chords: [...], arpeggio: [...], drums: [...] }`. Each boolean array follows the order of tracks with that role in `tracks`, with exactly one value per member. Empty roles export as `[]`. Import expands these arrays to ID-keyed app maps and also accepts existing ID-map files. Mixed forms, unknown roles, non-booleans, and incorrect array lengths are rejected.
+Exported files and session storage use `trackPresence: { melody: [...], bass: [...], chords: [...], arpeggio: [...], drums: [...] }`. Each array lists only included one-based track numbers, following the order of tracks with that role in `tracks`. For example, `drums: [4, 5]` includes the fourth and fifth drum tracks. Empty roles and roles with no included tracks export as `[]`. Import expands these lists to ID-keyed app maps with explicit false entries for excluded tracks. Existing ID-map files and complete boolean arrays are also accepted. Mixed forms, unknown roles, duplicate numbers, non-integers and out-of-range numbers are rejected.
 
 ## Domain contracts
 

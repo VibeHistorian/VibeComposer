@@ -19,15 +19,15 @@ test('storage role arrays follow track order, including arbitrary IDs, empty rol
   const project = { ...base, tracks, arrangement: base.arrangement.map(section => ({ ...section, trackPresence: { ...presence } })) };
   const before = JSON.stringify(project), encoded = encodeProjectStorage(project);
   assert.deepEqual(encoded.arrangement[0].trackPresence, {
-    melody: [], bass: [false], chords: [], arpeggio: [], drums: [false, true],
+    melody: [], bass: [], chords: [], arpeggio: [], drums: [2],
   });
-  assert.ok(formatProjectJson(project).includes('"drums": [false, true]'));
+  assert.ok(formatProjectJson(project).includes('"drums": [2]'));
   assert.equal(JSON.stringify(project), before, 'serialization leaves app maps untouched');
   const decoded = decodeProject(encoded, chances, () => 0.5);
   assert.deepEqual(decoded.arrangement.map(section => section.trackPresence), project.arrangement.map(section => section.trackPresence));
   assert.deepEqual(generateCompositionMidi(decoded), generateCompositionMidi(project));
   assert.equal(isProject(encoded, chances, () => 0.5), false, 'app candidates must use ID maps');
-  // The presence decoder itself never fills short arrays or invents values.
+  // Excluded members expand to explicit false entries.
   const { decodeStoredTrackPresence } = load('core/project/project-storage.ts');
   assert.deepEqual(decodeStoredTrackPresence(encoded.arrangement[0].trackPresence, tracks), presence);
   assert.deepEqual(decodeProject(project, chances, () => 0.5).arrangement[0].trackPresence, presence, 'existing ID-map files still load');
@@ -42,8 +42,8 @@ test('malformed role arrays reject atomically with presence diagnostics and pres
   console.warn = (...args) => warnings.push(args);
   try {
     for (const presence of [
-      { ...flags, bass: [] }, { ...flags, bass: [true, false] }, { ...flags, bass: ['true'] },
-      { ...flags, bass: [1] }, { ...flags, bass: null }, { ...flags, bass: true },
+      { ...flags, bass: [0] }, { ...flags, bass: [true, false] }, { ...flags, bass: ['true'] },
+      { ...flags, bass: [2] }, { ...flags, bass: [1, 1] }, { ...flags, bass: [1.5] }, { ...flags, bass: null }, { ...flags, bass: true },
       { ...flags, bass: undefined }, { ...flags, extra: [] }, { ...flags, 'track-bass-1': true },
     ]) {
       const input = JSON.parse(saved); input.arrangement[0].trackPresence = presence;
@@ -63,12 +63,12 @@ test('reorder, duplicate, deletion, undo and session reload preserve track ident
   service.setSectionTrackPresence(0, second, false);
   service.reorderTrack(second, -1);
   let saved = JSON.parse(stored.get('vibecomposer.project.v12'));
-  assert.deepEqual(saved.arrangement[0].trackPresence.drums, [false, true]);
+  assert.deepEqual(saved.arrangement[0].trackPresence.drums, [2]);
   assert.equal(service.project().arrangement[0].trackPresence[first], true);
   const duplicate = service.duplicateTrack(second);
   assert.equal(service.project().arrangement[0].trackPresence[duplicate], false);
   service.removeTrack(first);
-  assert.deepEqual(JSON.parse(service.exportProjectJson()).arrangement[0].trackPresence.drums, [false, false]);
+  assert.deepEqual(JSON.parse(service.exportProjectJson()).arrangement[0].trackPresence.drums, []);
   service.undo();
   assert.equal(service.project().arrangement[0].trackPresence[first], true);
   const exported = service.exportProjectJson();
@@ -81,4 +81,25 @@ test('reorder, duplicate, deletion, undo and session reload preserve track ident
   assert.deepEqual(restored.project().arrangement.find(item => item.id === section.id).trackPresence, expected);
   saved = JSON.parse(stored.get('vibecomposer.project.v12'));
   assert.ok(Object.values(saved.arrangement[0].trackPresence).every(Array.isArray));
+});
+
+test('presence lists expand every excluded track to false and retain old complete boolean imports', () => {
+  const { service, load } = fixture();
+  const { decodeStoredTrackPresence, encodeProjectStorage } = load('core/project/project-storage.ts');
+  const project = service.project();
+  const roles = ['melody', 'bass', 'chords', 'arpeggio', 'drums'];
+  const tracks = roles.flatMap(role => {
+    const source = project.tracks.find(track => track.role === role);
+    return Array.from({ length: role === 'drums' ? 6 : 1 }, (_, index) => ({ ...source, id: role + '-' + (index + 1) }));
+  });
+  const lists = { melody: [], bass: [], chords: [1], arpeggio: [1], drums: [4, 5] };
+  const decoded = decodeStoredTrackPresence(lists, tracks);
+  const expected = Object.fromEntries(tracks.map(track => [track.id, ['chords-1', 'arpeggio-1', 'drums-4', 'drums-5'].includes(track.id)]));
+  assert.deepEqual(decoded, expected);
+  const booleans = Object.fromEntries(roles.map(role => [role, tracks.filter(track => track.role === role).map(track => expected[track.id])]));
+  assert.deepEqual(decodeStoredTrackPresence(booleans, tracks), expected);
+  assert.equal(decodeStoredTrackPresence({ ...lists, drums: [true, false, false, true, true, false] }, tracks), undefined, 'mixed numeric/boolean encodings reject');
+  assert.deepEqual(encodeProjectStorage({ ...project, tracks, arrangement: [{ ...project.arrangement[0], trackPresence: decoded }] }).arrangement[0].trackPresence, lists);
+  const none = Object.fromEntries(roles.map(role => [role, []]));
+  assert.deepEqual(decodeStoredTrackPresence(none, tracks), Object.fromEntries(tracks.map(track => [track.id, false])));
 });
