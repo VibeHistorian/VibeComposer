@@ -1,3 +1,4 @@
+import { initialVariationDraft, rerollVariationDraft } from './arrangement-variation-draft';
 import type { ArrangedPart } from '../music/part-role';
 import { type ArrangementSection, type SectionType, SECTION_TYPES } from './arrangement.model';
 import type { CompositionProject } from './project.model';
@@ -16,9 +17,10 @@ export function randomizeArrangementVariations(project: CompositionProject, seed
   policy?: VariationPolicy): CompositionProject | undefined {
   if (policy !== undefined && !validVariationPolicy(policy, project.tracks.length)
     || sectionId !== undefined && !project.arrangement.some(s => s.id === sectionId)) return undefined;
-  return { ...project, arrangement: project.arrangement.map((section, index) => sectionId !== undefined && section.id !== sectionId
-    ? section : { ...section, variations: planSectionVariations(project.tracks, project.arrangement, index, seed,
-      policy ?? section.variations?.policy ?? project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, { melodyGlobal: project.melodyGlobal }) }) };
+  const scope = { sectionId };
+  const draft = rerollVariationDraft(project, scope, initialVariationDraft(project, scope), seed, policy);
+  return { ...project, arrangement: project.arrangement.map(section => Object.hasOwn(draft, section.id)
+    ? { ...section, variations: draft[section.id] } : section) };
 }
 
 /** Replace structure and orchestration using independent deterministic streams. */

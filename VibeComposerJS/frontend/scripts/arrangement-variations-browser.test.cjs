@@ -88,6 +88,13 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       fill.querySelector('input[type="checkbox"]').click();
       await wait(()=>fill.getAttribute('data-variation-status')==='disabled','fill toggled in draft');
       ensure(JSON.stringify(read())===original,'fill toggle stays local');
+      const keep=fill.querySelector('.keep-choice input'),keepLabel=keep.getAttribute('aria-label');
+      keep.click();await wait(()=>keep.checked,'fill marked for retention');
+      button(d,'Reroll variations').click();
+      const retained=await wait(()=>[...d.querySelectorAll('.keep-choice input')].find(i=>i.getAttribute('aria-label')===keepLabel&&i.checked),'authored fill retained');
+      ensure(retained.closest('article').getAttribute('data-variation-status')==='disabled','authored enabled state retained');
+      retained.click();await wait(()=>!retained.checked,'ownership released explicitly');
+      ensure(JSON.stringify(read())===original,'ownership changes stay local');
       await changeControl(budget,'2');
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');

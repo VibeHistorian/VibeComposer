@@ -15,6 +15,9 @@ export interface ArrangementVariation {
   readonly kind: VariationKind;
   readonly amount: -1 | 1;
   readonly enabled: boolean;
+  readonly origin?: 'authored';
+  /** Exact realization seed pinned independently of later section rerolls. */
+  readonly seed?: string;
   /** Present only on Melody speed choices in this first strength slice. */
   readonly parameters?: { readonly speedDelta: number };
 }

@@ -85,6 +85,19 @@ export class ArrangementVariationsDialogComponent {
       return !value ? draft : { ...draft, [sectionId]: { ...value, choices: value.choices.map(choice => choice.trackId === trackId ? { ...choice, enabled } : choice) } };
     });
   }
+  keep(sectionId: string, trackId: string, event: Event): void {
+    if (this.stale()) return;
+    const keep = (event.target as HTMLInputElement).checked;
+    this.draft.update(draft => {
+      const section = draft[sectionId];
+      if (!section) return draft;
+      return { ...draft, [sectionId]: { ...section, choices: section.choices.map(choice => {
+        if (choice.trackId !== trackId) return choice;
+        const { origin, seed, ...base } = choice;
+        return keep ? { ...base, origin: 'authored' as const, seed: seed ?? section.seed } : { ...base, ...(seed !== undefined ? { seed } : {}) };
+      }) } };
+    });
+  }
   apply(): void {
     if (this.stale() || !this.policyValid()) return;
     const policy = this.policy();

@@ -1372,3 +1372,51 @@ test('saved speed strengths validate strictly, preserve overrides and reproduce 
   duplicate.arrangement[2].variations.choices[0].parameters.speedDelta=40;
   assert.equal(service.project().arrangement[1].variations.choices[0].parameters.speedDelta,30);
 });
+
+test('authored choices retain seed, strength and slots through rerolls and fixed-section Compose', () => {
+  const {project,track,section,choice,service,uiPreferences,phrase,midi,commands,engine,load}=endFillSetup();
+  const authored={...choice,origin:'authored',seed:section.variations.seed};
+  project.arrangement[1]={...section,variations:{...section.variations,choices:[authored]}};
+  const baseline=phrase.layOutTrackPhrase(project,track),bytes=midi.generateCompositionMidi(project);
+  for(const seed of [1n,2n,9223372036854775807n]) {
+    const next=commands.randomizeArrangementVariations(project,seed,undefined,{chance:100,maxChanges:1});
+    assert.deepEqual(next.arrangement[1].variations.choices,[authored]);
+    assert.deepEqual(phrase.layOutTrackPhrase({...next,arrangement:project.arrangement.map((s,i)=>i===1?next.arrangement[1]:s)},track),baseline);
+    assert.deepEqual(midi.generateCompositionMidi({...next,arrangement:project.arrangement.map((s,i)=>i===1?next.arrangement[1]:s)}),bytes);
+  }
+  const drafts=load('core/project/arrangement-variation-draft.ts');
+  const initial=drafts.initialVariationDraft(project,{});
+  const draft=drafts.rerollVariationDraft(project,{trackId:track.id},initial,10n,{chance:100,maxChanges:0});
+  assert.deepEqual(draft[section.id].choices,[authored],'authored ownership can exceed automatic budget');
+  assert.equal(engine.validSectionVariations(draft[section.id],project.tracks),true);
+  assert.equal(drafts.resetVariationDraft(project,{trackId:track.id},draft)[section.id].choices.length,0);
+  assert.equal(service.importProjectJson(JSON.stringify(project)),true);
+  service.updateSettings({arrangementManual:true,randomizeArrangementOnCompose:true});
+  uiPreferences.setArrangementBehavior('generateArrangementVariations',true);
+  service.generateComposition('compose');
+  assert.deepEqual(service.project().arrangement[1].variations.choices.find(c=>c.trackId===track.id),authored);
+  const saved=service.exportProjectJson();
+  service.randomizeArrangementVariations(undefined,undefined,30n);
+  assert.deepEqual(service.project().arrangement[1].variations.choices.find(c=>c.trackId===track.id),authored);
+  service.undo();assert.equal(service.exportProjectJson(),saved);
+  assert.equal(service.importProjectJson(saved),true);
+  assert.deepEqual(commands.duplicateSection(service.project(),1).arrangement[2].variations,service.project().arrangement[1].variations);
+  service.resetArrangementVariations(section.id);assert.equal(service.project().arrangement[1].variations,undefined);
+});
+
+test('authored metadata validates strictly and disabled authored drivers remain preserved', () => {
+  const {project,section,choice,engine,commands,load}=endFillSetup();
+  const authored={...choice,origin:'authored',seed:'-9223372036854775808',enabled:false};
+  for(const bad of [{...authored,origin:'unknown'},{...authored,seed:undefined},{...authored,seed:'9223372036854775808'},
+    {...authored,seed:1},{...authored,seed:'1.5'},{...authored,origin:null}])
+    assert.equal(engine.validSectionVariations({...section.variations,choices:[bad]},project.tracks),false);
+  project.arrangement[1]={...section,variations:{...section.variations,choices:[authored]}};
+  const next=commands.randomizeArrangementVariations(project,4n,undefined,{chance:100,maxChanges:4});
+  assert.deepEqual(next.arrangement[1].variations.choices.find(c=>c.trackId===choice.trackId),authored);
+  assert.equal(next.arrangement[1].variations.choices.filter(c=>c.kind==='arp-end-fill').length,1);
+  const fit=load('core/project/arrangement-variation-capacity.ts').fitVariationCapacity;
+  const choices=Array.from({length:7},(_,i)=>({trackId:`t-${i}`,kind:'bass-weight',amount:1,enabled:true,...(i===6?{origin:'authored',seed:'1'}:{})}));
+  const reduced=fit({...project,tracks:project.tracks.slice(0,1),arrangement:[{...section,variations:{...section.variations,choices}}]});
+  assert.equal(reduced.arrangement[0].variations.choices.length,6);
+  assert.equal(reduced.arrangement[0].variations.choices.at(-1).origin,'authored');
+});

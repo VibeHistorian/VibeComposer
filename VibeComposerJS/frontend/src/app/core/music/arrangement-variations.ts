@@ -53,7 +53,10 @@ export function validSectionVariations(value: unknown, tracks: readonly Composit
     if (!choice || typeof choice !== 'object' || Array.isArray(choice)) return false;
     const track = tracks.find(t => t.id === choice.trackId);
     if (!track || !supportsVariation(track.role, choice.kind, choice.amount) || targets.has(choice.trackId)
-      || Object.keys(choice).some(key => !['trackId', 'kind', 'amount', 'enabled', 'parameters'].includes(key))
+      || Object.keys(choice).some(key => !['trackId', 'kind', 'amount', 'enabled', 'parameters', 'origin', 'seed'].includes(key))
+      || (choice.origin !== undefined && choice.origin !== 'authored')
+      || (choice.seed !== undefined && !validChoiceSeed(choice.seed))
+      || (choice.origin === 'authored' && choice.seed === undefined)
       || !validVariationParameters(choice.kind, choice.parameters)
       || (choice.amount !== -1 && choice.amount !== 1) || typeof choice.enabled !== 'boolean') return false;
     targets.add(choice.trackId);
@@ -258,4 +261,8 @@ export function resolveVariationPatch(track: CompositionTrack, section: Arrangem
 
 export function pruneVariations(variations: SectionVariations | undefined, removed: ReadonlySet<string>): SectionVariations | undefined {
   return variations && { ...variations, choices: variations.choices.filter(c => !removed.has(c.trackId)) };
+}
+
+function validChoiceSeed(value: unknown): value is string {
+  return typeof value === 'string' && /^-?\d{1,20}$/.test(value) && BigInt.asIntN(64, BigInt(value)) === BigInt(value);
 }

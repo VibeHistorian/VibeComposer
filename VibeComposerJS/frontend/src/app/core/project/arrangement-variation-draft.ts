@@ -44,9 +44,10 @@ export function rerollVariationDraft(project: CompositionProject, scope: Variati
   const scoped = !!scope.trackId || !!scope.role;
   return Object.fromEntries(variationScopeSections(project, scope).map(section => {
     const previous = draft[section.id], selectedPolicy = policy ?? previous?.policy ?? project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY;
-    const others = scoped ? previous?.choices.filter(choice => !ids.has(choice.trackId)) ?? [] : [];
+    const others = previous?.choices.filter(choice => choice.origin === 'authored' || scoped && !ids.has(choice.trackId)) ?? [];
+    const retainedIds = new Set(others.map(choice => choice.trackId));
     const available = Math.max(0, selectedPolicy.maxChanges - others.length);
-    const planned = planSectionVariations(tracks, project.arrangement, project.arrangement.indexOf(section), seed,
+    const planned = planSectionVariations(tracks.filter(track => !retainedIds.has(track.id)), project.arrangement, project.arrangement.indexOf(section), seed,
       { ...selectedPolicy, maxChanges: available }, { allTracks: project.tracks, retainedChoices: others, melodyGlobal: project.melodyGlobal });
     return [section.id, { ...planned, policy: { ...selectedPolicy }, choices: [...others, ...planned.choices] }];
   }));

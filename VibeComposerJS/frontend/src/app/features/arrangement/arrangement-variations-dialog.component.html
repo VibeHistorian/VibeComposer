@@ -12,7 +12,7 @@
     <button type="button" [disabled]="!policyValid()" (click)="reroll()">Reroll variations</button>
     <button type="button" (click)="reset()">Reset variations</button>
   </fieldset>
-  <p class="policy-hint">Reroll uses these options for the next draft. Choices outside this scope count toward the section budget.
+  <p class="policy-hint">Reroll uses these options for the next draft. Kept choices remain; Reset removes them. Choices outside this scope count toward the section budget.
     @if (wholeArrangement) { Apply also saves this musical policy. Reset variations keeps staged presence changes.
       Presence reroll is {{ preferences.rerollPresenceWithVariations() ? 'on' : 'off' }} in Settings → Behavior → Arrangement.
     }
@@ -41,6 +41,8 @@
                 @for (effect of item.effects; track $index) { <span class="effect-value">{{ effect }}</span> }
               </div>
             </div>
+            <label class="keep-choice"><input type="checkbox" [attr.aria-label]="'Keep ' + item.track.name + ' variation on reroll'"
+              [checked]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (change)="keep(row.section.id, item.track.id, $event)" /> Keep on reroll</label>
             @if (item.detail) { <span class="effect-status">{{ item.detail }}</span> }
             @if (item.mismatch) { <span class="context-warning">This choice differs from the current section purpose. Reroll to replan.</span> }
           </article>

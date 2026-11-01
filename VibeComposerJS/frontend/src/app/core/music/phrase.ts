@@ -123,7 +123,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       if (fill) {
         const owned: readonly ArrangedNote[] = notes.filter(note => note.sectionId === section.id);
         const filled: ArrangedNote[] = applyArpEndFill(owned, { startBeat: sectionStart + fill.startBeat, endBeat: sectionStart + fill.endBeat },
-          BigInt(section.variations!.seed), track.id);
+          BigInt(section.variations!.choices.find(choice => choice.trackId === track.id)?.seed ?? section.variations!.seed), track.id);
         const first = notes.findIndex(note => note.sectionId === section.id);
         notes = notes.flatMap((note, index): ArrangedNote[] => note.sectionId !== section.id ? [note] : index === first ? filled : []);
       }
