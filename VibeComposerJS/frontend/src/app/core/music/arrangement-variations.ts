@@ -1,3 +1,4 @@
+import { drumEndFillEligibility, DRUM_FILL_KEYS } from './arrangement-drum-fill';
 import { arpSubdivisionEligibility } from './arrangement-subdivision-ramp';
 import { VARIATION_KINDS_BY_ROLE, supportsVariation, validMelodySpeedDelta, validVariationParameters, melodySpeedDelta, variationParameters } from './arrangement-variation-catalogue';
 import type { ArrangementSection } from '../project/arrangement.model';
@@ -17,6 +18,7 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
 
 /** These operations must remain atomic, including controls that define their interpretation. */
 export function variationProtectedKeys(kind: VariationKind): readonly string[] {
+  if (kind === 'drum-end-fill') return DRUM_FILL_KEYS;
   if (kind === 'arp-subdivision-ramp') return [...PRE_DROP_CUT_KEYS, 'rate'];
   if (kind === 'accompaniment-velocity-ramp') return VELOCITY_ENVELOPE_KEYS;
   if (kind === 'pre-drop-cut' || kind === 'arp-end-fill') return PRE_DROP_CUT_KEYS;
@@ -73,7 +75,7 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
   if (!validVariationParameters(choice.kind, choice.parameters) || !choice.enabled || choice.trackId !== track.id || !KINDS[track.role].includes(choice.kind)) return {};
   const s = track.generatorSettings, a = choice.amount;
   switch (choice.kind) {
-    case 'arp-subdivision-ramp': case 'accompaniment-velocity-ramp': case 'arp-end-fill': case 'pre-drop-cut': return {}; // Timed event; no static settings patch.
+    case 'drum-end-fill': case 'arp-subdivision-ramp': case 'accompaniment-velocity-ramp': case 'arp-end-fill': case 'pre-drop-cut': return {}; // Timed event; no static settings patch.
     case 'melody-range': {
       if (track.role !== 'melody' || globals.contextualMelody === false) return {};
       const low = track.generatorSettings.rangeMin ?? 48, high = track.generatorSettings.rangeMax ?? 72, transpose = s.transpose ?? 0;
@@ -184,14 +186,14 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
       && tracks.some(track => { const choice = registerChoice(track); return !!choice && allowed(choice.kind) && eligibleChoice(track, future, choice); }));
   // Dedicated stream; no static-adapter or phrase draws are consumed by event selection.
   const cut = allowed('pre-drop-cut') && context.preDrop && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
-    && !retained.some(c => c.kind === 'pre-drop-cut' || c.kind === 'arp-end-fill' || c.kind === 'arp-subdivision-ramp') ? tracks.flatMap(track => {
+    && !retained.some(c => c.kind === 'pre-drop-cut' || c.kind === 'drum-end-fill' || c.kind === 'arp-end-fill' || c.kind === 'arp-subdivision-ramp') ? tracks.flatMap(track => {
       if (!section.trackPresence[track.id] || track.rerollLocked || preDropCutEligibility(track, section, cutParameters?.cutQuarters) !== undefined) return [];
       const random = new JavaRandom(identitySeed(seed, `boundary-cut/${context.family}/${track.id}`));
       return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'pre-drop-cut' as const, amount: -1 as const, ...parametersFor('pre-drop-cut', -1),
         enabled: true, priority: random.nextDouble() + (track.role === 'chords' ? 1 : 0) }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const subdivision = allowed('arp-subdivision-ramp') && context.endFill && policy.maxChanges + retained.length >= 5 && policy.maxChanges > 0
-    && !retained.some(c => c.kind === 'arp-end-fill' || c.kind === 'pre-drop-cut' || c.kind === 'arp-subdivision-ramp'
+    && !retained.some(c => c.kind === 'drum-end-fill' || c.kind === 'arp-end-fill' || c.kind === 'pre-drop-cut' || c.kind === 'arp-subdivision-ramp'
       || c.enabled && section.trackPresence[c.trackId] && isActivityVariation(c.kind)) ? tracks.flatMap(track => {
       if (!section.trackPresence[track.id] || track.rerollLocked || arpSubdivisionEligibility(track, section) !== undefined) return [];
       const random = new JavaRandom(identitySeed(seed, `subdivision-ramp/${context.family}/${track.id}`));
@@ -199,21 +201,30 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
         amount: 1 as const, enabled: true, ...parametersFor('arp-subdivision-ramp', 1), priority: random.nextDouble() }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const fill = !subdivision && allowed('arp-end-fill') && context.endFill && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
-    && !retained.some(c => c.kind === 'arp-end-fill' || c.kind === 'pre-drop-cut' || c.kind === 'arp-subdivision-ramp' || c.enabled && section.trackPresence[c.trackId] && isActivityVariation(c.kind))
+    && !retained.some(c => c.kind === 'drum-end-fill' || c.kind === 'arp-end-fill' || c.kind === 'pre-drop-cut' || c.kind === 'arp-subdivision-ramp' || c.enabled && section.trackPresence[c.trackId] && isActivityVariation(c.kind))
     ? tracks.flatMap(track => {
       if (!section.trackPresence[track.id] || track.rerollLocked || arpEndFillEligibility(track, section) !== undefined) return [];
       const random = new JavaRandom(identitySeed(seed, `boundary-fill/${context.family}/${track.id}`));
       return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'arp-end-fill' as const, amount: 1 as const, ...parametersFor('arp-end-fill', 1),
         enabled: true, priority: random.nextDouble() }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
-  const boundary = cut ?? subdivision ?? fill;
+  const drumFill = !cut && !subdivision && !fill && allowed('drum-end-fill') && context.endFill
+    && policy.maxChanges + retained.length >= 6 && policy.maxChanges > 0
+    && !retained.some(c => ['pre-drop-cut','arp-end-fill','arp-subdivision-ramp','drum-end-fill'].includes(c.kind)
+      || c.enabled && section.trackPresence[c.trackId] && isActivityVariation(c.kind)) ? tracks.flatMap(track => {
+      if (!section.trackPresence[track.id] || track.rerollLocked || drumEndFillEligibility(track, section) !== undefined) return [];
+      const random = new JavaRandom(identitySeed(seed, `drum-boundary-fill/${context.family}/${track.id}`));
+      return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'drum-end-fill' as const, amount: 1 as const,
+        enabled: true, ...parametersFor('drum-end-fill', 1), priority: random.nextDouble() }] : [];
+    }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
+  const boundary = cut ?? subdivision ?? fill ?? drumFill;
   const candidates = tracks.flatMap(track => {
     if (!section.trackPresence[track.id] || track.rerollLocked || section.trackPhrases?.[track.id] !== undefined
       || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id)) return [];
     // Do not key this stream by occurrence or section ID: repeated families share anchors.
     const random = new JavaRandom(identitySeed(seed, `${context.family}/${track.id}`));
     const eligible = KINDS[track.role].flatMap(kind => {
-      if (!allowed(kind) || kind === 'arp-subdivision-ramp' || kind === 'accompaniment-velocity-ramp' || kind === 'arp-end-fill' || kind === 'pre-drop-cut' || isRegisterVariation(kind)) return [];
+      if (!allowed(kind) || kind === 'drum-end-fill' || kind === 'arp-subdivision-ramp' || kind === 'accompaniment-velocity-ramp' || kind === 'arp-end-fill' || kind === 'pre-drop-cut' || isRegisterVariation(kind)) return [];
       const amount = variationAmountForContext(context, kind);
       return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true, ...parametersFor(kind, amount) } as ArrangementVariation];
     }).filter(choice => eligibleChoice(track, section, choice, scope.melodyGlobal));
@@ -239,7 +250,7 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const anchorBudget = Math.max(0, budget - (reserveLift ? 1 : 0) - (boundary ? 1 : 0) - (ramp ? 1 : 0));
   const roles = new Set<CompositionTrack['role']>(!expandedBudget ? [boundary, ramp].flatMap(c => c ? [tracks.find(t => t.id === c.trackId)!.role] : []) : []);
-  let activityDriver = !!subdivision || !!fill || (scope.retainedChoices ?? []).some(choice => choice.enabled && section.trackPresence[choice.trackId] && isActivityVariation(choice.kind));
+  let activityDriver = !!drumFill || !!subdivision || !!fill || (scope.retainedChoices ?? []).some(choice => choice.enabled && section.trackPresence[choice.trackId] && isActivityVariation(choice.kind));
   const choices: ArrangementVariation[] = [];
   // Give each role a first opportunity, then use larger budgets for supporting tracks.
   for (const diverse of expandedBudget ? [true, false] : [true]) for (const candidate of candidates) {

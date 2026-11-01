@@ -1,3 +1,4 @@
+import { resolveDrumEndFill } from './arrangement-drum-fill';
 import { applyArpSubdivision, resolveArpSubdivision } from './arrangement-subdivision-ramp';
 import { applyVelocityEnvelope, resolveVelocityEnvelope } from './arrangement-velocity-envelope';
 import { applyArpEndFill, resolveArpEndFill } from './arrangement-end-fill';
@@ -120,11 +121,13 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
         const absolute = { startBeat: sectionStart + window.startBeat, endBeat: sectionStart + window.endBeat };
         notes = notes.flatMap(note => note.sectionId === section.id ? applySectionCut([note], absolute) : [note]);
       }
-      const fill = resolveArpEndFill(track, section);
+      const drumFill = resolveDrumEndFill(track, section);
+      const fill = drumFill ?? resolveArpEndFill(track, section);
       if (fill) {
         const owned: readonly ArrangedNote[] = notes.filter(note => note.sectionId === section.id);
         const filled: ArrangedNote[] = applyArpEndFill(owned, { startBeat: sectionStart + fill.startBeat, endBeat: sectionStart + fill.endBeat },
-          BigInt(section.variations!.choices.find(choice => choice.trackId === track.id)?.seed ?? section.variations!.seed), track.id, fill.limit);
+          BigInt(section.variations!.choices.find(choice => choice.trackId === track.id)?.seed ?? section.variations!.seed), drumFill ? track.id + '/drum' : track.id, fill.limit,
+          drumFill ? notes.filter(note => note.sectionId !== section.id) : []);
         const first = notes.findIndex(note => note.sectionId === section.id);
         notes = notes.flatMap((note, index): ArrangedNote[] => note.sectionId !== section.id ? [note] : index === first ? filled : []);
       }

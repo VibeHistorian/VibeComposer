@@ -46,7 +46,7 @@ function fillRandom(seed: bigint, identity: string): JavaRandom {
  * Onsets/metadata outside the window stay owned; skip collisions instead of shortening earlier notes.
  */
 export function applyArpEndFill<T extends PhraseNote>(notes: readonly T[], window: SectionEventWindow,
-  seed: bigint, identity: string, limit = 4): T[] {
+  seed: bigint, identity: string, limit = 4, neighbors: readonly T[] = []): T[] {
   const ordered = notes.map((note, index) => ({ note, index })).sort((a, b) => a.note.startBeat - b.note.startBeat || a.index - b.index);
   const candidates = ordered.flatMap(({ note, index }, position) => {
     if (note.startBeat < window.startBeat || note.startBeat >= window.endBeat || note.velocity <= 0) return [];
@@ -55,10 +55,13 @@ export function applyArpEndFill<T extends PhraseNote>(notes: readonly T[], windo
     const gap = Math.min(1, next - note.startBeat, window.endBeat - note.startBeat);
     if (gap < .25 - 1e-9) return [];
     const startBeat = note.startBeat + gap / 2;
+    const endBeat = Math.min(next, window.endBeat, startBeat + gap / 2);
+    if (neighbors.some(other => other.midi === note.midi && other.velocity > 0
+      && other.startBeat < endBeat && other.startBeat + other.durationBeats > startBeat)) return [];
     if (ordered.some(other => other.index !== index && other.note.midi === note.midi
       && other.note.startBeat < startBeat && other.note.startBeat + other.note.durationBeats > startBeat)) return [];
     const random = fillRandom(seed, `${identity}/${note.id}/${position}`);
-    return [{ index, note, startBeat, endBeat: Math.min(next, window.endBeat, startBeat + gap / 2),
+    return [{ index, note, startBeat, endBeat,
       priority: random.nextDouble(), velocity: Math.max(1, Math.floor(note.velocity * (.7 + random.nextDouble() * .2))) }];
   }).sort((a, b) => b.priority - a.priority || a.index - b.index).slice(0, limit);
   const selected = new Map(candidates.map(candidate => [candidate.index, candidate]));

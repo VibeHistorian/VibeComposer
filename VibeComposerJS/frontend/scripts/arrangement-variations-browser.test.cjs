@@ -41,6 +41,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
         }
         for(const track of p.tracks) if(track.role==='arpeggio')Object.assign(track.generatorSettings,{rhythm:'euclid',hitsPerPattern:8,euclideanPulses:4});
         p.tracks.find(t=>t.role==='arpeggio').generatorSettings.rhythm='full';
+        Object.assign(p.tracks.find(t=>t.role==='drums').generatorSettings,{pitch:38,rhythm:'full',hitsPerPattern:8,ghosts:false,pauseChance:0,exceptionChance:0,patternShift:0,swingPercent:50});
         p.arrangement=['VERSE1','BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role=>[role,Array(6).fill(true)]))}));
         p.arrangement[0].variations={seed:'1',policy:{chance:100,maxChanges:2},choices:[{trackId:p.tracks.find(t=>t.role==='melody').id,kind:'melody-range',amount:1,enabled:true}]};
@@ -64,7 +65,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       speedDelta.value='30';speedDelta.dispatchEvent(new Event('input',{bubbles:true}));
       await wait(()=>prefs().variationRerolls.melodySpeedDelta===30,'strength saved immediately');
       const defaults=[...variationSettings.querySelectorAll('.variation-default')];
-      ensure(defaults.length===13,'every configurable strength has a slider, including both velocity directions');
+      ensure(defaults.length===14,'every configurable strength has a slider, including both velocity directions');
       const sliderEnds=[];
       for(const label of defaults) {
         const slider=label.querySelector('input'),output=label.querySelector('output'),text=label.querySelector('span');
@@ -107,6 +108,12 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const labels=[heading.querySelector('h2'),heading.querySelector('.section-intent'),heading.querySelector('.variation-purpose')];
       const centers=labels.map(e=>{const r=e.getBoundingClientRect();return r.top+r.height/2});
       ensure(Math.max(...centers)-Math.min(...centers)<3,'section details share one row');
+      const snareOption=(await selectOptions(add)).find(o=>o.textContent.includes('Snare section-end fill'));
+      ensure(snareOption,'manual snare fill available');await changeControl(add,snareOption.value);
+      const snareRow=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Snare section-end fill')),'snare fill staged');
+      await changeControl(snareRow.querySelector('input[type="number"]'),'2');
+      await wait(()=>snareRow.textContent.includes('up to 2 quiet retriggers'),'snare fill limit explained');
+      ensure(snareRow.querySelector('.variation-replace').textContent.endsWith('↑'),'snare fill direction');
       const manualOption=(await selectOptions(add)).find(o=>o.textContent.includes('M2 · Melody speed'));
       ensure(manualOption,'manual speed choice offered');
       await changeControl(add,manualOption.value);
@@ -140,6 +147,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       button(d,'Apply variations').click();await wait(()=>!dialog(),'manual addition applied');
       const inserted=read().arrangement[0].variations.choices.find(c=>c.trackId==='track-melody-2');
       ensure(inserted?.origin==='authored'&&inserted.parameters.speedDelta===45,'manual strength and ownership saved');
+      ensure(read().arrangement[0].variations.choices.some(c=>c.kind==='drum-end-fill'&&c.parameters.fillLimit===2),'snare fill saved with strength');
       document.querySelector('[aria-label="Undo"]').click();await wait(()=>JSON.stringify(read())===original,'manual insertion single undo');
       opener.click();d=await wait(dialog,'reopen after insertion undo');
       ensure(!d.querySelector('[aria-label="Melody speed variation delta"]'),'strength moved out of popup');

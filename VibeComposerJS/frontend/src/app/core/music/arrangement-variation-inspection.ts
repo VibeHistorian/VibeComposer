@@ -1,3 +1,4 @@
+import { drumEndFillEligibility } from './arrangement-drum-fill';
 import { arpSubdivisionEligibility, arpSubdivisionWindow } from './arrangement-subdivision-ramp';
 import { VARIATION_DEFINITIONS, velocityDelta } from './arrangement-variation-catalogue';
 import type { MelodyGlobalSettings } from './part-settings.model';
@@ -53,8 +54,8 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
     const window = velocityEnvelopeWindow(section)!;
     return result('active', `Velocity 100% → ${100 + choice.amount * velocityDelta(choice)}% over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; sampled at note attacks`);
   }
-  if (choice.kind === 'arp-end-fill') {
-    const status = arpEndFillEligibility(track, section);
+  if (choice.kind === 'arp-end-fill' || choice.kind === 'drum-end-fill') {
+    const status = choice.kind === 'drum-end-fill' ? drumEndFillEligibility(track, section) : arpEndFillEligibility(track, section);
     if (status) return result(status, status === 'manual' ? 'Manual region protects the fill window'
       : 'Current rhythm, timing or section duration prevents this event');
     const window = arpEndFillWindow(section)!;

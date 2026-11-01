@@ -35,9 +35,15 @@ export function preDropCutEligibility(track: CompositionTrack, section: Arrangem
 /** Shared ownership checks for accompaniment events; dependency-source events need another consumer. */
 export function accompanimentEventEligibility(track: CompositionTrack, section: ArrangementSection,
   window: SectionEventWindow | undefined): 'manual' | 'overridden' | 'incompatible' | undefined {
+  return sectionEventEligibility(track, section, window, ['chords', 'arpeggio']);
+}
+
+/** Shared timing and manual ownership guard; each adapter declares supported roles. */
+export function sectionEventEligibility(track: CompositionTrack, section: ArrangementSection,
+  window: SectionEventWindow | undefined, roles: readonly CompositionTrack['role'][]): 'manual' | 'overridden' | 'incompatible' | undefined {
   if (section.trackPhrases?.[track.id] !== undefined || track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id)) return 'manual';
   if (preDropCutBlockedKeys(track, section).length) return 'overridden';
-  if (!window || track.role !== 'chords' && track.role !== 'arpeggio') return 'incompatible';
+  if (!window || !roles.includes(track.role)) return 'incompatible';
   const s = { ...track.generatorSettings, ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] };
   if (![...STATIC_RHYTHMS, 'euclid'].includes(s.rhythm ?? 'full') || s.customPattern || s.customDurations?.length
     || s.useCustomVelocities || (s.chordSpan ?? 1) !== 1 || (s.offset ?? 0) !== 0 || (s.feedbackCount ?? 0) !== 0

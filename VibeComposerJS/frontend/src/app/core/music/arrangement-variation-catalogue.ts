@@ -13,6 +13,7 @@ export interface VariationDefinition {
 
 /** Consumer capabilities only. Context recommendations and allocation budgets belong to the planner. */
 export const VARIATION_DEFINITIONS = {
+  'drum-end-fill': { label: 'Snare section-end fill', roles: ['drums'], directions: [1], activity: true, register: false, consumer: 'timed' },
   'arp-subdivision-ramp': { label: "Arp subdivision ramp", roles: ["arpeggio"], directions: [1], activity: true, register: false, consumer: 'timed' },
   'accompaniment-velocity-ramp': { label: "Accompaniment velocity ramp", roles: ["arpeggio","chords"], directions: [-1, 1], activity: false, register: false, consumer: 'timed' },
   'arp-end-fill': { label: "Arp section-end fill", roles: ["arpeggio"], directions: [1], activity: true, register: false, consumer: 'timed' },
@@ -36,7 +37,7 @@ export const VARIATION_DEFINITIONS = {
 /** Preserve historical per-role order: tied candidate selection consumes this ordering. */
 export const VARIATION_KINDS_BY_ROLE: Record<ArrangedPart, readonly VariationKind[]> = {
   melody: ['melody-speed', 'melody-direction', 'melody-register', 'melody-range'], arpeggio: ['arp-activity', 'arp-density', 'arp-contour', 'arp-register', 'pre-drop-cut', 'arp-end-fill', 'accompaniment-velocity-ramp', 'arp-subdivision-ramp'], bass: ['bass-weight'],
-  chords: ['chord-space', 'chord-transition', 'pre-drop-cut', 'accompaniment-velocity-ramp'], drums: ['drum-activity', 'drum-density', 'drum-ghosts'],
+  chords: ['chord-space', 'chord-transition', 'pre-drop-cut', 'accompaniment-velocity-ramp'], drums: ['drum-activity', 'drum-density', 'drum-ghosts', 'drum-end-fill'],
 };
 
 export function supportsVariation(role: ArrangedPart, kind: unknown, amount?: unknown): kind is VariationKind {
@@ -70,7 +71,7 @@ export interface VariationStrength {
 export function variationStrength(kind: VariationKind, amount: -1 | 1 = 1): VariationStrength | undefined {
   switch (kind) {
     case 'pre-drop-cut': return { key: 'cutQuarters', label: 'Cut length (quarter beats)', max: 8, defaultValue: 4 };
-    case 'arp-end-fill': return { key: 'fillLimit', label: 'Maximum fill retriggers', max: 8, defaultValue: 4 };
+    case 'arp-end-fill': case 'drum-end-fill': return { key: 'fillLimit', label: 'Maximum fill retriggers', max: 8, defaultValue: 4 };
     case 'arp-subdivision-ramp': return { key: 'subdivisionLimit', label: 'Maximum added attacks', max: 64, defaultValue: 64 };
     case 'melody-speed': return { key: 'speedDelta', label: 'Speed points', max: 200, defaultValue: 15 };
     case 'melody-range': return { key: 'rangeDelta', label: 'Semitones per boundary', max: 12, defaultValue: 2 };

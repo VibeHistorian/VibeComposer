@@ -2,6 +2,83 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+function drumFillSetup() {
+  const f=endFillSetup(), source=f.project.tracks.find(t=>t.role==='drums');
+  const track={...source,generatorSettings:{...source.generatorSettings,pitch:38,rhythm:'full',hitsPerPattern:8,ghosts:false,pauseChance:0,exceptionChance:0,patternShift:0,patternFlip:false,swingPercent:50}};
+  f.project.tracks=f.project.tracks.map(t=>t.id===track.id?track:t);
+  const choice={trackId:track.id,kind:'drum-end-fill',amount:1,enabled:true,parameters:{fillLimit:2}};
+  const section={...f.project.arrangement[1],variations:{seed:'9223372036854775807',policy:{chance:100,maxChanges:6},choices:[choice]}};
+  return {...f,track,choice,section,drum:f.load('core/music/arrangement-drum-fill.ts')};
+}
+
+test('snare fills share score and MIDI notes, preserve baseline draws and survive the complete choice lifecycle', () => {
+  const {project,track,section,choice,service,phrase,midi,load,commands}=drumFillSetup(),{Midi}=require('@tonejs/midi');
+  const fill=load('core/music/arrangement-end-fill.ts'),window={startBeat:30,endBeat:32};
+  for(const humanization of [undefined,{timingBeats:.25,durationBeats:.25}]) {
+    assert.equal(service.importProjectJson(JSON.stringify({...project,humanization})),true);
+    const before=service.exportProjectJson(),baseline=phrase.layOutTrackPhrase(service.project(),track,true,true);
+    assert.equal(service.applyArrangementVariationDraft(service.project(),{[section.id]:section.variations}),'changed');
+    const saved=service.exportProjectJson(),actual=phrase.layOutTrackPhrase(service.project(),track,true,true),owned=baseline.filter(n=>n.sectionId===section.id);
+    const expected=fill.applyArpEndFill(owned,window,BigInt(section.variations.seed),track.id+'/drum',2,baseline.filter(n=>n.sectionId!==section.id));
+    assert.deepEqual(actual.filter(n=>n.sectionId===section.id),expected);
+    const additions=actual.filter(n=>n.id.includes('-end-fill-'));
+    assert.ok(additions.length>0&&additions.length<=2);assert.ok(additions.every(n=>n.midi===38&&n.startBeat>=30&&n.startBeat+n.durationBeats<=32));
+    assert.deepEqual(actual.filter(n=>n.sectionId!==section.id),baseline.filter(n=>n.sectionId!==section.id));
+    assert.deepEqual(actual.filter(n=>n.sectionId===section.id&&n.startBeat<30),owned.filter(n=>n.startBeat<30));
+    const bytes=midi.generateCompositionMidi(service.project()),parsed=new Midi(bytes).tracks.find(t=>t.name===track.name),sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
+    const offset=-service.project().tracks.flatMap(t=>phrase.layOutTrackPhrase(service.project(),t)).reduce((minimum,n)=>Math.min(minimum,n.startBeat),0);
+    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,Math.round(n.velocity*127)]).sort(sort),actual.map(n=>[n.midi,Math.round((n.startBeat+offset)*480),n.velocity]).sort(sort));
+    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks+n.durationTicks]).sort(sort),actual.map(n=>[n.midi,Math.round((n.startBeat+offset)*480)+Math.round(n.durationBeats*480)]).sort(sort));
+    service.undo();assert.equal(service.exportProjectJson(),before);service.redo();assert.equal(service.exportProjectJson(),saved);
+    assert.equal(service.importProjectJson(saved),true);assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
+    assert.deepEqual(commands.duplicateSection(service.project(),1).arrangement[2].variations,section.variations);
+    service.removeTrack(track.id);assert.ok(service.project().arrangement.every(s=>!s.variations?.choices.some(c=>c.trackId===track.id)));
+  }
+  const source=[{id:'snare',midi:38,startBeat:14,durationBeats:.2,velocity:80}],neighbor=[{id:'next',midi:38,startBeat:14.4,durationBeats:1,velocity:80}];
+  assert.deepEqual(fill.applyArpEndFill(source,{startBeat:14,endBeat:16},1n,track.id+'/drum',4,neighbor),source,'neighboring ringing snare prevents a collision');
+});
+
+test('snare fill eligibility protects instruments, interpretation and all manual ownership', () => {
+  const {track,section,choice,drum,load,engine,project}=drumFillSetup(),inspect=load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  assert.equal(drum.drumEndFillEligibility(track,section),undefined);
+  for(const pitch of [38,40])assert.equal(drum.drumEndFillEligibility({...track,generatorSettings:{...track.generatorSettings,pitch}},section),undefined);
+  for(const patch of [{pitch:36},{pitch:42},{ghosts:true},{hitsPerPattern:16},{pauseChance:10},{exceptionChance:1},{swingPercent:60},{patternShift:1},{rhythm:'melody'},{rhythm:'custom'},{customPattern:[1,0]},{velocityMin:1},{feedbackCount:1},{offset:10}])
+    assert.equal(drum.drumEndFillEligibility({...track,generatorSettings:{...track.generatorSettings,...patch}},section),'incompatible',JSON.stringify(patch));
+  for(const key of drum.DRUM_FILL_KEYS) {
+    const s={...section,trackPartOverrides:{[track.id]:{[key]:track.generatorSettings[key]??0}}};
+    assert.equal(drum.resolveDrumEndFill(track,s),undefined);assert.equal(inspect(track,s,choice).status,'overridden');
+  }
+  for(const t of [{...track,editedPhrase:[]},{...track,phraseEdits:[{startBeat:14,endBeat:16,notes:[]}]},{...track,phraseEdits:[{startBeat:12,endBeat:13,notes:[{id:'sustain',midi:38,startBeat:12,durationBeats:4,velocity:80}]}]}])
+    assert.equal(drum.drumEndFillEligibility(t,section),'manual');
+  assert.equal(drum.drumEndFillEligibility({...track,phraseEdits:[{startBeat:1,endBeat:2,notes:[]}]},section),undefined);
+  assert.equal(drum.drumEndFillEligibility({...track,editedPhrase:[]},{...section,generatedTrackIds:[track.id]}),undefined);
+  assert.equal(drum.drumEndFillEligibility(track,{...section,trackPhrases:{[track.id]:[]},generatedTrackIds:[track.id]}),'manual');
+  assert.equal(drum.resolveDrumEndFill(track,{...section,trackPresence:{}}),undefined);
+  assert.equal(drum.resolveDrumEndFill(track,{...section,variations:{...section.variations,choices:[{...choice,enabled:false}]}}),undefined);
+  for(const invalid of [{...choice,amount:-1},{...choice,trackId:project.tracks.find(t=>t.role==='arpeggio').id},{...choice,parameters:{fillLimit:9}}])
+    assert.equal(engine.validSectionVariations({...section.variations,choices:[invalid]},project.tracks),false);
+});
+
+test('snare fill fallback is deterministic, budgeted, scoped and isolated from existing events', () => {
+  const {track,project,engine,load}=drumFillSetup(),context=load('core/music/arrangement-variation-context.ts');
+  const sections=project.arrangement,index=1;
+  assert.equal(context.resolveVariationContext(project.tracks,sections,index).endFill,true);
+  const plan=(tracks,seed,budget=6,extra={})=>engine.planSectionVariations(tracks,sections,index,seed,{chance:100,maxChanges:budget},{allTracks:project.tracks,...extra});
+  for(let seed=0n;seed<20n;seed++) {
+    const fallback=plan([track],seed);assert.ok(fallback.choices.some(c=>c.kind==='drum-end-fill'));
+    assert.deepEqual(fallback,plan([track],seed));
+    assert.ok(!plan([track],seed,5).choices.some(c=>c.kind==='drum-end-fill'));
+    assert.ok(!plan([track],seed,6,{generation:{allowedKinds:[]}}).choices.length);
+    const arp=project.tracks.find(t=>t.role==='arpeggio');
+    const full=plan([track,arp],seed);assert.ok(!full.choices.some(c=>c.kind==='drum-end-fill'));
+    assert.deepEqual(full,plan([arp,track],seed));
+    const retained=[{trackId:arp.id,kind:'arp-end-fill',amount:1,enabled:false}];
+    assert.ok(!plan([track],seed,6,{retainedChoices:retained}).choices.some(c=>c.kind==='drum-end-fill'));
+  }
+  assert.ok(!plan([{...track,rerollLocked:true}],1n).choices.length);
+  assert.deepEqual(engine.planSectionVariations([track],sections,index,1n,{chance:0,maxChanges:6}).choices,[]);
+});
+
 test('all strength preferences validate, persist and feed manual and automatic realization', () => {
   const {project,track,engine,load,uiPreferences,uiStored}=endFillSetup();
   const catalogue=load('core/music/arrangement-variation-catalogue.ts'),preferences=load('core/ui/variation-reroll-preferences.ts');
