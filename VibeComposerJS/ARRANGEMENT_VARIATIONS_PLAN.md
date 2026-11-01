@@ -282,6 +282,16 @@ Five additional adapters expose saved typed strengths through shared catalogue m
 
 All strengths share kind-specific validation, units, input bounds, invalid-input restoration, seed pinning and authored ownership. Saved choices without parameters retain their historical effects. Automatic planning defaults, streams and role budgets remain unchanged; binary octave/spacing/direction operations do not acquire artificial strength controls. Existing inspection reports effective settings and explicit blockers through the same adapters. Apply/Cancel, stale drafts, persistence and history use the established lifecycle.
 
+## Timed-event strengths (delivered, 2026-11-01)
+
+The shared strength editor now supports three event parameters, retaining historical defaults for choices without parameters:
+
+- Pre-drop cut length: `cutQuarters`, integer 1–8 quarter-beat units (requested .25–2 beats, default four units/one beat). Actual length remains capped to one eighth of the section and half the final chord slot. Eligibility, manual-region protection, inspection and output all use the requested window; extending a cut never bypasses protected material.
+- Arp end-fill retriggers: `fillLimit`, integer 1–8 (default four). This is a maximum, not a guaranteed note count. Existing gap/collision guards still apply. Each source retains its independent seeded ranking and velocity; increasing the limit retains the lower-limit selection and adds eligible candidates.
+- Arp subdivision additions: `subdivisionLimit`, integer 1–64 (default 64). Stage rates/window and collision/ownership protections remain unchanged. The limit caps new attacks in the existing chronological traversal; changing it preserves the identity and realization of the shared prefix.
+
+Parameters persist on the choice through the existing draft/history/JSON lifecycle. Inspection reports actual cut beats and addition limits, including disabled-draft explanations. Automatic planning defaults, chance, budgets and phrase/output streams remain unchanged. Shared layout carries the limits into score, playback and exports; functional tests compare parsed MIDI and preserve unrelated sections. Keyboard/device controls use the same numeric editor, invalid-input restoration and stale-draft protection as the other strengths.
+
 ## Follow-up: further fills, melody events and ramps
 
 Static parameter patches cannot represent final-bar fills, progressive subdivision, beat-window contour lifts, short pre-drop cuts or section-end resolutions. These need dedicated consumers:

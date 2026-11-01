@@ -44,7 +44,7 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
       : status === 'overridden' ? 'Explicit section controls protect this ramp' : 'Current rhythm, timing or section duration prevents this ramp');
     const window = arpSubdivisionWindow(section)!;
     const hits = track.generatorSettings.hitsPerPattern ?? 8;
-    return result('active', `Grid ${hits} → 8 → 16 over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; staged at the midpoint, sounding pitches retained`);
+    return result('active', `Grid ${hits} → 8 → 16 over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; staged at the midpoint, sounding pitches retained; up to ${choice.parameters?.subdivisionLimit ?? 64} added attacks`);
   }
   if (choice.kind === 'accompaniment-velocity-ramp') {
     const status = velocityEnvelopeEligibility(track, section, choice.amount, velocityDelta(choice));
@@ -58,13 +58,15 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
     if (status) return result(status, status === 'manual' ? 'Manual region protects the fill window'
       : 'Current rhythm, timing or section duration prevents this event');
     const window = arpEndFillWindow(section)!;
-    return result('active', `Fill section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}: up to four quiet retriggers; sounding pitches stay intact`);
+    const limit = choice.parameters?.fillLimit ?? 4;
+    return result('active', `Fill section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}: up to ${limit === 4 ? 'four' : limit} quiet retriggers; sounding pitches stay intact`);
   }
   if (choice.kind === 'pre-drop-cut') {
-    const status = preDropCutEligibility(track, section);
+    const quarters = choice.parameters?.cutQuarters ?? 4;
+    const status = preDropCutEligibility(track, section, quarters);
     if (status) return result(status, status === 'manual' ? 'Manual region protects the cut window'
       : 'Current rhythm, timing or section duration prevents this event');
-    const window = preDropCutWindow(section)!;
+    const window = preDropCutWindow(section, quarters)!;
     const beat = (n: number) => Number(n.toFixed(4));
     return result('active', `Gate section beats ${beat(window.startBeat)}–${beat(window.endBeat)}: remove attacks and stop sustains; earlier material stays intact`);
   }

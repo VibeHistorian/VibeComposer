@@ -13,13 +13,13 @@ export const PRE_DROP_CUT_KEYS = ['rhythm', 'hitsPerPattern', 'euclideanPulses',
   'arpContourChordMode', 'arpPatternCustom', 'useOctaveAdjustments', 'patternJoinMode', 'strum', 'strumType', 'strumPauseChance'] as const;
 
 /** A final-beat gate, reduced for short/nonuniform final slots. Never repeat per progression cycle. */
-export function preDropCutWindow(section: ArrangementSection): SectionEventWindow | undefined {
+export function preDropCutWindow(section: ArrangementSection, cutQuarters = 4): SectionEventWindow | undefined {
   const durations = section.customDurations ?? [4], multiplier = section.context?.beatDurationMultiplier ?? 1;
   const endBeat = Array.from({ length: section.measures }, (_, i) => durations[i % durations.length] * multiplier)
     .reduce((sum, value) => sum + value, 0);
   if (endBeat <= 4) return undefined;
   const lastSlot = durations[(section.measures - 1) % durations.length] * multiplier;
-  return { startBeat: endBeat - Math.min(1, endBeat / 8, lastSlot / 2), endBeat };
+  return { startBeat: endBeat - Math.min(cutQuarters / 4, endBeat / 8, lastSlot / 2), endBeat };
 }
 
 export function preDropCutBlockedKeys(track: CompositionTrack, section: ArrangementSection): readonly string[] {
@@ -28,8 +28,8 @@ export function preDropCutBlockedKeys(track: CompositionTrack, section: Arrangem
 }
 
 /** Manual windows block the entire event, including silence and notes sustaining into its gate. */
-export function preDropCutEligibility(track: CompositionTrack, section: ArrangementSection): 'manual' | 'overridden' | 'incompatible' | undefined {
-  return accompanimentEventEligibility(track, section, preDropCutWindow(section));
+export function preDropCutEligibility(track: CompositionTrack, section: ArrangementSection, cutQuarters = 4): 'manual' | 'overridden' | 'incompatible' | undefined {
+  return accompanimentEventEligibility(track, section, preDropCutWindow(section, cutQuarters));
 }
 
 /** Shared ownership checks for accompaniment events; dependency-source events need another consumer. */
@@ -56,8 +56,9 @@ const durationsLast = (section: ArrangementSection) => (section.customDurations?
 
 export function resolvePreDropCut(track: CompositionTrack, section: ArrangementSection): SectionEventWindow | undefined {
   const choice = section.variations?.choices.find(c => c.trackId === track.id);
+  const quarters = choice?.parameters?.cutQuarters ?? 4;
   return choice?.kind === 'pre-drop-cut' && choice.enabled && choice.amount === -1 && section.trackPresence[track.id]
-    && preDropCutEligibility(track, section) === undefined ? preDropCutWindow(section) : undefined;
+    && preDropCutEligibility(track, section, quarters) === undefined ? preDropCutWindow(section, quarters) : undefined;
 }
 
 /** Shared output gate. Keep onsets outside [start,end), stop crossing sustains without resuming them. */

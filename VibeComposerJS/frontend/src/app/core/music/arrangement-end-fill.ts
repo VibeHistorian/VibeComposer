@@ -29,10 +29,11 @@ export function arpEndFillEligibility(track: CompositionTrack, section: Arrangem
     && Math.min(starts[i + 1] ?? window!.endBeat, window!.endBeat) - start >= .25 - 1e-9) ? undefined : 'incompatible';
 }
 
-export function resolveArpEndFill(track: CompositionTrack, section: ArrangementSection): SectionEventWindow | undefined {
+export function resolveArpEndFill(track: CompositionTrack, section: ArrangementSection): (SectionEventWindow & { readonly limit: number }) | undefined {
   const choice = section.variations?.choices.find(c => c.trackId === track.id);
+  const window = arpEndFillWindow(section);
   return choice?.kind === 'arp-end-fill' && choice.enabled && choice.amount === 1 && section.trackPresence[track.id]
-    && arpEndFillEligibility(track, section) === undefined ? arpEndFillWindow(section) : undefined;
+    && window && arpEndFillEligibility(track, section) === undefined ? { ...window, limit: choice.parameters?.fillLimit ?? 4 } : undefined;
 }
 
 function fillRandom(seed: bigint, identity: string): JavaRandom {
@@ -45,7 +46,7 @@ function fillRandom(seed: bigint, identity: string): JavaRandom {
  * Onsets/metadata outside the window stay owned; skip collisions instead of shortening earlier notes.
  */
 export function applyArpEndFill<T extends PhraseNote>(notes: readonly T[], window: SectionEventWindow,
-  seed: bigint, identity: string): T[] {
+  seed: bigint, identity: string, limit = 4): T[] {
   const ordered = notes.map((note, index) => ({ note, index })).sort((a, b) => a.note.startBeat - b.note.startBeat || a.index - b.index);
   const candidates = ordered.flatMap(({ note, index }, position) => {
     if (note.startBeat < window.startBeat || note.startBeat >= window.endBeat || note.velocity <= 0) return [];
@@ -59,7 +60,7 @@ export function applyArpEndFill<T extends PhraseNote>(notes: readonly T[], windo
     const random = fillRandom(seed, `${identity}/${note.id}/${position}`);
     return [{ index, note, startBeat, endBeat: Math.min(next, window.endBeat, startBeat + gap / 2),
       priority: random.nextDouble(), velocity: Math.max(1, Math.floor(note.velocity * (.7 + random.nextDouble() * .2))) }];
-  }).sort((a, b) => b.priority - a.priority || a.index - b.index).slice(0, 4);
+  }).sort((a, b) => b.priority - a.priority || a.index - b.index).slice(0, limit);
   const selected = new Map(candidates.map(candidate => [candidate.index, candidate]));
   return notes.flatMap((note, index) => {
     const hit = selected.get(index);

@@ -2,6 +2,63 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('saved timed strengths reach shared layout and parsed MIDI with earlier sections intact', () => {
+  const {project,track,service,phrase,midi,load}=endFillSetup(),{Midi}=require('@tonejs/midi');
+  for(const [kind,parameters] of [['pre-drop-cut',{cutQuarters:8}],['arp-end-fill',{fillLimit:1}],['arp-subdivision-ramp',{subdivisionLimit:1}]]) {
+    assert.equal(service.importProjectJson(JSON.stringify(project)),true);
+    const initial=service.project(), baseline=phrase.layOutTrackPhrase(initial,track,true,true);
+    const section=initial.arrangement[1], choice={trackId:track.id,kind,amount:kind==='pre-drop-cut'?-1:1,enabled:true,parameters};
+    const variations={seed:'9223372036854775807',policy:{chance:100,maxChanges:5},choices:[choice]};
+    assert.equal(service.applyArrangementVariationDraft(initial,{[section.id]:variations}),'changed');
+    const actual=phrase.layOutTrackPhrase(service.project(),track,true,true);
+    assert.deepEqual(actual.filter(n=>n.sectionId!==section.id),baseline.filter(n=>n.sectionId!==section.id));
+    assert.notDeepEqual(actual,baseline);
+    if(kind==='pre-drop-cut') {
+      const cut=load('core/music/arrangement-boundary-events.ts');
+      assert.deepEqual(actual,baseline.flatMap(n=>n.sectionId===section.id?cut.applySectionCut([n],{startBeat:30,endBeat:32}):[n]));
+    } else assert.equal(actual.filter(n=>n.id.includes(kind==='arp-end-fill'?'-end-fill-':'-subdivision-')).length,1);
+    const bytes=midi.generateCompositionMidi(service.project()),parsed=new Midi(bytes).tracks.find(t=>t.name===track.name),sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
+    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,n.durationTicks,Math.round(n.velocity*127)]).sort(sort),actual.map(n=>[n.midi,Math.round(n.startBeat*480),Math.round(n.durationBeats*480),n.velocity]).sort(sort));
+    const saved=service.exportProjectJson();assert.equal(service.importProjectJson(saved),true);assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
+  }
+});
+
+test('timed strengths bound output without changing event identity outside their window', () => {
+  const {section,track,load,fill}=endFillSetup(), cut=load('core/music/arrangement-boundary-events.ts');
+  const ramp=load('core/music/arrangement-subdivision-ramp.ts'), catalogue=load('core/music/arrangement-variation-catalogue.ts');
+  assert.deepEqual(cut.preDropCutWindow(section,1),{startBeat:15.75,endBeat:16});
+  assert.deepEqual(cut.preDropCutWindow(section,8),{startBeat:14,endBeat:16});
+  assert.deepEqual(cut.preDropCutWindow({...section,customDurations:[4,4,4,.5]},8),{startBeat:12.25,endBeat:12.5});
+  const protectedTrack={...track,phraseEdits:[{startBeat:13.8,endBeat:14.2,notes:[]}]};
+  assert.equal(cut.preDropCutEligibility(protectedTrack,section,4),undefined);
+  assert.equal(cut.preDropCutEligibility(protectedTrack,section,8),'manual');
+  const longChoice={trackId:track.id,kind:'pre-drop-cut',amount:-1,enabled:true,parameters:{cutQuarters:8}};
+  const protectedSection={...section,variations:{...section.variations,choices:[longChoice]}};
+  assert.equal(cut.resolvePreDropCut(protectedTrack,protectedSection),undefined);
+  assert.equal(load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation(protectedTrack,protectedSection,longChoice).status,'manual');
+  const notes=Array.from({length:8},(_,i)=>({id:`source-${i}`,midi:60+i,startBeat:14+i*.25,durationBeats:.1,velocity:80}));
+  const before=structuredClone(notes),window={startBeat:14,endBeat:16};
+  const small=fill.applyArpEndFill(notes,window,9223372036854775807n,track.id,2);
+  const large=fill.applyArpEndFill(notes,window,9223372036854775807n,track.id,8);
+  const added=ns=>ns.filter(n=>n.id.includes('-end-fill-'));
+  assert.equal(added(small).length,2);assert.equal(added(large).length,8);
+  assert.ok(added(small).every(n=>added(large).some(other=>JSON.stringify(n)===JSON.stringify(other))),'same seeded ranking and realization');
+  assert.deepEqual(notes,before);
+  const source=Array.from({length:8},(_,i)=>({id:`ramp-${i}`,midi:60+i,startBeat:8+i,durationBeats:.8,velocity:80}));
+  const slots=[{startBeat:8,endBeat:12},{startBeat:12,endBeat:16}];
+  const limited=ramp.applyArpSubdivision(source,{startBeat:8,endBeat:16},slots,4,track.id,[],3);
+  const full=ramp.applyArpSubdivision(source,{startBeat:8,endBeat:16},slots,4,track.id);
+  const additions=ns=>ns.filter(n=>n.id.includes('-subdivision-'));
+  assert.equal(additions(limited).length,3);assert.ok(additions(full).length>3);
+  assert.deepEqual(additions(limited),additions(full).slice(0,3),'attack identity and ordering are stable across limits');
+  for(const kind of ['pre-drop-cut','arp-end-fill','arp-subdivision-ramp']) {
+    const spec=catalogue.variationStrength(kind);
+    for(const value of [1,spec.max]) assert.equal(catalogue.validVariationParameters(kind,{[spec.key]:value}),true);
+    for(const value of [0,spec.max+1,1.5,'2']) assert.equal(catalogue.validVariationParameters(kind,{[spec.key]:value}),false);
+    assert.equal(catalogue.validVariationParameters(kind,{[spec.key]:1,speedDelta:15}),false);
+  }
+});
+
 test('rhythmic and contour strengths preserve defaults, meaningful steps and instrument ceilings', () => {
   const {project,engine,load}=setup(), catalogue=load('core/music/arrangement-variation-catalogue.ts');
   const arp=project.tracks.find(t=>t.role==='arpeggio'), drums=project.tracks.find(t=>t.role==='drums');
@@ -62,10 +119,10 @@ test('typed strengths validate by kind and realize bounded range, chance and vel
 });
 
 test('strength edits for timed and settings choices remain detached, pin seeds and survive history', () => {
-  for(const [kind,key,value,method] of [['accompaniment-velocity-ramp','velocityDelta',35,'setStrength'],['chord-transition','transitionDelta',40,'setStrength'],['melody-range','rangeDelta',3,'setStrength'],['arp-density','densitySteps',3,'setStrength'],['drum-density','densitySteps',2,'setStrength'],['arp-activity','activitySteps',2,'setStrength'],['drum-activity','pauseDelta',30,'setStrength'],['arp-contour','contourSteps',5,'setStrength']]) {
+  for(const [kind,key,value,method] of [['accompaniment-velocity-ramp','velocityDelta',35,'setStrength'],['chord-transition','transitionDelta',40,'setStrength'],['melody-range','rangeDelta',3,'setStrength'],['arp-density','densitySteps',3,'setStrength'],['drum-density','densitySteps',2,'setStrength'],['arp-activity','activitySteps',2,'setStrength'],['drum-activity','pauseDelta',30,'setStrength'],['arp-contour','contourSteps',5,'setStrength'],['pre-drop-cut','cutQuarters',8,'setStrength'],['arp-end-fill','fillLimit',2,'setStrength'],['arp-subdivision-ramp','subdivisionLimit',3,'setStrength']]) {
     const f=fixture({dialogData:{}}), initial=f.service.project();
     const track=initial.tracks.find(t=>t.role===(kind==='melody-range'?'melody':kind.startsWith('arp-')?'arpeggio':kind.startsWith('drum-')?'drums':'chords'));
-    const section={...initial.arrangement[0],measures:4,trackPresence:{[track.id]:true},variations:{seed:'9223372036854775807',policy:{chance:100,maxChanges:4},choices:[{trackId:track.id,kind,amount:1,enabled:true}]}};
+    const section={...initial.arrangement[0],measures:4,trackPresence:{[track.id]:true},variations:{seed:'9223372036854775807',policy:{chance:100,maxChanges:4},choices:[{trackId:track.id,kind,amount:kind==='pre-drop-cut'?-1:1,enabled:true}]}};
     f.service.state.set({...initial,arrangement:[section]});
     const Dialog=f.load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
     const d=new Dialog();d.dialog={close(){}};const before=f.service.exportProjectJson();

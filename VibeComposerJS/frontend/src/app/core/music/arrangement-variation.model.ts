@@ -25,7 +25,8 @@ export interface ArrangementVariation {
   readonly seed?: string;
   /** Validated against the operation kind by the shared catalogue. */
   readonly parameters?: { readonly speedDelta?: number; readonly velocityDelta?: number; readonly transitionDelta?: number; readonly rangeDelta?: number;
-    readonly densitySteps?: number; readonly activitySteps?: number; readonly pauseDelta?: number; readonly contourSteps?: number };
+    readonly densitySteps?: number; readonly activitySteps?: number; readonly pauseDelta?: number; readonly contourSteps?: number;
+    readonly cutQuarters?: number; readonly fillLimit?: number; readonly subdivisionLimit?: number };
 }
 
 export interface SectionVariations {

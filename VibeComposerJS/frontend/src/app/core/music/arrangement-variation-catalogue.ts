@@ -69,6 +69,9 @@ export interface VariationStrength {
 /** Units and hard input bounds; musical adapters still enforce their own effective bounds. */
 export function variationStrength(kind: VariationKind, amount: -1 | 1 = 1): VariationStrength | undefined {
   switch (kind) {
+    case 'pre-drop-cut': return { key: 'cutQuarters', label: 'Cut length (quarter beats)', max: 8, defaultValue: 4 };
+    case 'arp-end-fill': return { key: 'fillLimit', label: 'Maximum fill retriggers', max: 8, defaultValue: 4 };
+    case 'arp-subdivision-ramp': return { key: 'subdivisionLimit', label: 'Maximum added attacks', max: 64, defaultValue: 64 };
     case 'melody-speed': return { key: 'speedDelta', label: 'Speed points', max: 200, defaultValue: 15 };
     case 'melody-range': return { key: 'rangeDelta', label: 'Semitones per boundary', max: 12, defaultValue: 2 };
     case 'chord-transition': return { key: 'transitionDelta', label: 'Chance percentage points', max: 75, defaultValue: 25 };

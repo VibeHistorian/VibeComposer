@@ -27,10 +27,11 @@ export function arpSubdivisionEligibility(track: CompositionTrack, section: Arra
   return durations.some(duration => duration * multiplier < 2) ? 'incompatible' : undefined;
 }
 
-export function resolveArpSubdivision(track: CompositionTrack, section: ArrangementSection): SectionEventWindow | undefined {
+export function resolveArpSubdivision(track: CompositionTrack, section: ArrangementSection): (SectionEventWindow & { readonly limit: number }) | undefined {
   const choice = section.variations?.choices.find(choice => choice.trackId === track.id);
+  const window = arpSubdivisionWindow(section);
   return choice?.kind === 'arp-subdivision-ramp' && choice.enabled && choice.amount === 1 && section.trackPresence[track.id]
-    && arpSubdivisionEligibility(track, section) === undefined ? arpSubdivisionWindow(section) : undefined;
+    && window && arpSubdivisionEligibility(track, section) === undefined ? { ...window, limit: choice.parameters?.subdivisionLimit ?? 64 } : undefined;
 }
 
 /** Subdivide actual sounding gaps using the source pitch. No phrase or output random draws.
@@ -38,13 +39,13 @@ export function resolveArpSubdivision(track: CompositionTrack, section: Arrangem
  * Existing attacks retain identity/timing/velocity; only their crossing sustain is shortened.
  */
 export function applyArpSubdivision<T extends PhraseNote>(notes: readonly T[], window: SectionEventWindow,
-  slots: readonly SectionEventWindow[], hits: number, identity: string, neighbors: readonly T[] = []): T[] {
+  slots: readonly SectionEventWindow[], hits: number, identity: string, neighbors: readonly T[] = [], limit = 64): T[] {
   const ordered = notes.map((note, index) => ({ note, index })).sort((a, b) => a.note.startBeat - b.note.startBeat || a.index - b.index);
   const midpoint = (window.startBeat + window.endBeat) / 2;
   const additions = new Map<number, T[]>();
   let count = 0;
   for (const { note, index } of ordered) {
-    if (count >= 64 || note.startBeat < window.startBeat || note.startBeat >= window.endBeat || note.velocity <= 0) continue;
+    if (count >= limit || note.startBeat < window.startBeat || note.startBeat >= window.endBeat || note.velocity <= 0) continue;
     if (ordered.some(other => other.index !== index && Math.abs(other.note.startBeat - note.startBeat) < 1e-9)) continue;
     const slot = slots.find(slot => note.startBeat >= slot.startBeat && note.startBeat < slot.endBeat);
     if (!slot) continue;
@@ -57,7 +58,7 @@ export function applyArpSubdivision<T extends PhraseNote>(notes: readonly T[], w
     const step = baseGap / factor;
     if (step < .125 - 1e-9) continue;
     const added: T[] = [];
-    for (let subdivision = 1; subdivision < factor && count < 64; subdivision++) {
+    for (let subdivision = 1; subdivision < factor && count < limit; subdivision++) {
       const startBeat = note.startBeat + subdivision * step;
       if (startBeat + .125 > end + 1e-9) break;
       if (ordered.some(other => other.index !== index && other.note.midi === note.midi
