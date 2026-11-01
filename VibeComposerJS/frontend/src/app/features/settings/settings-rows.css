@@ -2,7 +2,7 @@
 :host { display: block; min-width: 0; }
 .settings-section-heading { margin: 22px 0 6px; color: var(--text-secondary); font: 550 12px var(--font-ui); }
 .global-controls { display: grid; gap: 0; }
-.setting-row { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(0, 1.4fr); align-items: center; gap: 12px 24px; padding: 14px 0; border-bottom: 1px solid var(--border-subtle); }
+.setting-row { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(0, 1.4fr); align-items: center; gap: 12px 24px; padding: 9px 0; border-bottom: 1px solid var(--border-subtle); }
 .setting-row:first-child { padding-top: 0; }
 .setting-row:last-child { border-bottom: 0; }
 .setting-copy { min-width: 0; }
@@ -25,3 +25,14 @@ vc-select:focus-visible, input:focus-visible { outline: 2px solid var(--border-f
 
 /* Labeled musical and export inputs */
 .setting-controls > label { display: grid; gap: 4px; max-width: 100%; color: var(--text-secondary); font: 12px var(--font-ui); }
+
+/* Explainer tooltips */
+:host-context(.explainers-as-tooltips) .setting-row { position: relative; }
+:host-context(.explainers-as-tooltips) .setting-copy p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:host-context(.explainers-as-tooltips) .setting-row:hover .setting-copy p,
+:host-context(.explainers-as-tooltips) .setting-row:focus-within .setting-copy p {
+  top: 100%; left: 0; z-index: 10; width: min(460px, 100%); height: auto; padding: 10px;
+  overflow: visible; clip-path: none; white-space: normal;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-control);
+  background: var(--surface-base); color: var(--text-primary); box-shadow: 0 4px 16px var(--shadow-ink);
+}

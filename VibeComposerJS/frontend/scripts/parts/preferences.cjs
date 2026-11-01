@@ -499,3 +499,22 @@ test('progressive track coloring defaults on, persists, transfers and resets ind
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.historyPosition(), history);
 });
+
+test('theme import changes only appearance and validates atomically', () => {
+  const { uiPreferences: prefs } = fixture();
+  const before = JSON.parse(prefs.exportJson());
+  const imported = structuredClone(before);
+  imported.appearance.roleColors.melody = '#123456';
+  imported.compactHistory = !before.compactHistory;
+  imported.settingsExplainersAsTooltips = false;
+  assert.equal(prefs.importThemeJson(JSON.stringify(imported)), true);
+  assert.deepEqual(JSON.parse(prefs.exportJson()), { ...before, appearance: imported.appearance });
+  const saved = prefs.exportJson();
+  imported.appearance.roleColors.melody = 'invalid';
+  assert.equal(prefs.importThemeJson(JSON.stringify(imported)), false);
+  assert.equal(prefs.exportJson(), saved);
+  prefs.toggleSettingsExplainers();
+  assert.equal(prefs.preferences().settingsExplainersAsTooltips, false);
+  assert.equal(prefs.importJson(prefs.exportJson()), true);
+  assert.equal(prefs.preferences().settingsExplainersAsTooltips, false);
+});

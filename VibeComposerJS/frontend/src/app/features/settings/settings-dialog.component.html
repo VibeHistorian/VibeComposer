@@ -1,5 +1,5 @@
-<section class="settings-dialog">
-  <header class="settings-heading">
+<section class="settings-dialog" cdkDrag cdkDragBoundary="body" [class.explainers-as-tooltips]="preferences.preferences().settingsExplainersAsTooltips">
+  <header class="settings-heading" cdkDragHandle>
     <h1 id="settings-title">Settings</h1>
     <button type="button" class="close-button" (click)="dialog.close()" aria-label="Close settings">×</button>
   </header>
@@ -51,6 +51,10 @@
           <section aria-labelledby="appearance-title">
             <div class="appearance-heading"><h2 id="appearance-title">Appearance</h2>
               <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()" title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Settings explainers as tooltips</h3><p>Show explanations on hover or keyboard focus instead of below each setting.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Settings explainers as tooltips" [checked]="preferences.preferences().settingsExplainersAsTooltips" (change)="preferences.toggleSettingsExplainers()" /></div>
             </div>
             <div class="setting-row">
               <div class="setting-copy"><h3>Random theme</h3><p>Random theme with five distinct track colors. Keeps your fonts and resets hue shift.</p></div>
@@ -287,9 +291,14 @@
     </div>
   </div>
   <footer class="preferences-transfer">
-    <div class="scope-legend" aria-label="Setting scope legend"><span><vc-settings-scope-indicator scope="ui" />UI</span><span><vc-settings-scope-indicator scope="compose" />Compose / reroll</span><span><vc-settings-scope-indicator scope="sound" />Track sound</span></div>
+    <div class="scope-legend" aria-label="Setting scope legend">
+      <span><vc-settings-scope-indicator scope="ui" />UI</span>
+      <span><vc-settings-scope-indicator scope="compose" />Compose / reroll</span>
+      <span><vc-settings-scope-indicator scope="sound" />Track sound</span></div>
     <span role="status">{{ transferMessage() }}</span>
-    <input #preferencesFile type="file" accept=".json,application/json" hidden (change)="importPreferences($event)" />
+    <input #themeFile aria-label="Import theme file" type="file" accept=".json,application/json" hidden (change)="importPreferences($event, true)" />
+    <button type="button" (click)="themeFile.click()">Import Theme</button>
+    <input #preferencesFile aria-label="Import UI preferences file" type="file" accept=".json,application/json" hidden (change)="importPreferences($event)" />
     <button type="button" (click)="preferencesFile.click()">Import UI preferences</button>
     <button type="button" (click)="exportPreferences()">Export UI preferences</button>
   </footer>

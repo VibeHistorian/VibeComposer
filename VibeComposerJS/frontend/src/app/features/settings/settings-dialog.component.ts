@@ -1,3 +1,4 @@
+import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { VARIATION_DEFINITIONS, variationStrength } from '../../core/music/arrangement-variation-catalogue';
 import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
@@ -23,7 +24,8 @@ import type { DrumMappingPreference } from '../../core/music/drum-instruments';
 
 @Component({
   selector: 'vc-settings-dialog',
-  imports: [SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
+  host: { '[class.explainers-as-tooltips]': 'preferences.preferences().settingsExplainersAsTooltips' },
+  imports: [CdkDrag, CdkDragHandle, SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-dialog.component.html',
   styleUrls: ['./settings-dialog.component.css', './settings-rows.css'],
@@ -84,13 +86,13 @@ export class SettingsDialogComponent {
       'vibecomposer-ui-preferences', 'json');
     this.transferMessage.set('UI preferences exported.');
   }
-  async importPreferences(event: Event): Promise<void> {
+  async importPreferences(event: Event, themeOnly = false): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
     try {
-      this.transferMessage.set(this.preferences.importJson(await file.text())
-        ? 'UI preferences imported.' : 'Invalid UI preferences file. Choose an exported UI preferences JSON.');
+      this.transferMessage.set((themeOnly ? this.preferences.importThemeJson(await file.text()) : this.preferences.importJson(await file.text()))
+        ? (themeOnly ? 'Theme imported.' : 'UI preferences imported.') : 'Invalid UI preferences file. Choose an exported UI preferences JSON.');
     } catch { this.transferMessage.set('Could not read the UI preferences file.'); }
     input.value = '';
   }

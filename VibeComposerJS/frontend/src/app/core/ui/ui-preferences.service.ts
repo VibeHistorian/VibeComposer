@@ -4,7 +4,7 @@ import { defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type 
 import { computed, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
-import { adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type ColorAdjustment, type FontArea } from './appearance';
+import { decodeAppearance, adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, type ColorAdjustment, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
 import type { DrumMappingPreference } from '../music/drum-instruments';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
@@ -196,6 +196,19 @@ export class UiPreferencesService {
   setComposeBpmBound(key: 'composeBpmMin' | 'composeBpmMax', value: number): void {
     const candidate = decodeUiPreferences({ ...this.state(), [key]: value });
     if (candidate) this.commit(candidate);
+  }
+  toggleSettingsExplainers(): void {
+    this.commit({ ...this.state(), settingsExplainersAsTooltips: !this.state().settingsExplainersAsTooltips });
+  }
+  importThemeJson(json: string): boolean {
+    try {
+      const data = JSON.parse(json);
+      if (data?.kind !== 'vibecomposer-ui-preferences') return false;
+      const appearance = decodeAppearance(data.appearance);
+      if (!appearance) return false;
+      this.commit({ ...this.state(), appearance });
+      return true;
+    } catch { return false; }
   }
   exportJson(): string { return JSON.stringify(this.state(), null, 2); }
   importJson(json: string): boolean {

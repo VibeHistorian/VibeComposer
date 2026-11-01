@@ -459,7 +459,14 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await wait(()=>style().getPropertyValue('--font-mono').includes('Courier New'),'live numeric font');
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===before,'appearance changed musical project');
         const footer=dialog.querySelector('.preferences-transfer');
-        ensure(footer.querySelectorAll('button').length===2,'transfer buttons');
+        ensure(footer.querySelectorAll('button').length===3,'transfer buttons');
+        ensure(footer.querySelector('button').textContent.trim()==='Import Theme','theme import first');
+        const explainers=dialog.querySelector('[aria-label="Settings explainers as tooltips"]');
+        ensure(explainers.checked,'explainers default to tooltips');
+        explainers.click(); await new Promise(resolve=>setTimeout(resolve,30));
+        ensure(!dialog.classList.contains('explainers-as-tooltips'),'inline explainers toggle');
+        explainers.click(); await new Promise(resolve=>setTimeout(resolve,30));
+        ensure(dialog.classList.contains('explainers-as-tooltips'),'tooltip explainers toggle');
         let exported;
         const create=URL.createObjectURL;
         URL.createObjectURL=blob=>{exported=blob;return create(blob);};
@@ -471,7 +478,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(JSON.parse(json).appearance.roleColors.bass==='#8855cc','exported appearance');
         ensure(JSON.parse(json).kind==='vibecomposer-ui-preferences','UI export kind');
         ensure(!JSON.parse(json).tracks,'project excluded from UI export');
-        const fileInput=footer.querySelector('input');
+        const fileInput=footer.querySelector('[aria-label="Import UI preferences file"]');
         const upload=async text=>{
           const data=new DataTransfer(); data.items.add(new File([text],'preferences.json',{type:'application/json'}));
           fileInput.files=data.files; fileInput.dispatchEvent(new Event('change',{bubbles:true}));
