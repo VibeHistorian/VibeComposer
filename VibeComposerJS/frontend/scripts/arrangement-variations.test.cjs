@@ -1322,3 +1322,53 @@ test('shared variation catalogue agrees on role support, direction, labels and t
   for (const unknown of ['missing', '__proto__', null, 3]) assert.equal(supportsVariation('melody', unknown), false);
   assert.equal(supportsVariation('melody', 'melody-speed', 0), false);
 });
+
+test('Melody speed generation captures strength independently of later policy edits', () => {
+  const { project, engine }=setup();
+  const melody=project.tracks.find(t=>t.role==='melody');
+  const sections=[{...project.arrangement[1],trackPresence:{[melody.id]:true}}];
+  const plan=delta=>engine.planSectionVariations([melody],sections,0,1n,{chance:100,maxChanges:2,...(delta===undefined?{}:{melodySpeedDelta:delta})});
+  const initial=plan(undefined).choices.find(c=>c.kind==='melody-speed');
+  assert.equal(initial.parameters.speedDelta,15);
+  const saved=plan(30),choice=saved.choices.find(c=>c.kind==='melody-speed');
+  assert.equal(choice.parameters.speedDelta,30);
+  assert.equal(engine.variationPatch(melody,choice).speed,80);
+  saved.policy.melodySpeedDelta=60;
+  assert.equal(engine.variationPatch(melody,choice).speed,80);
+  assert.equal(engine.variationPatch(melody,plan(60).choices.find(c=>c.kind==='melody-speed')).speed,100);
+  assert.equal(engine.variationPatch(melody,{...choice,amount:-1}).speed,20);
+  assert.equal(engine.variationPatch(melody,{...choice,parameters:undefined}).speed,65);
+  assert.equal(engine.variationPatch({...melody,generatorSettings:{...melody.generatorSettings,rhythm:'durations',customDurations:[[1]]}},choice).speed,undefined);
+});
+
+test('saved speed strengths validate strictly, preserve overrides and reproduce phrase/dependency/MIDI output', () => {
+  const { project, service, engine, settings, phrase, midi, commands }=setup();
+  const melody=project.tracks.find(t=>t.role==='melody');
+  const choice={trackId:melody.id,kind:'melody-speed',amount:1,enabled:true,parameters:{speedDelta:30}};
+  const variations={seed:'9223372036854775807',policy:{chance:100,maxChanges:2,melodySpeedDelta:30},choices:[choice]};
+  assert.equal(engine.validSectionVariations(variations,project.tracks),true);
+  for (const bad of [null,[],{}, {speedDelta:0},{speedDelta:201},{speedDelta:1.5},{speedDelta:'30'},{speedDelta:30,extra:1}])
+    assert.equal(engine.validSectionVariations({...variations,choices:[{...choice,parameters:bad}]},project.tracks),false);
+  assert.equal(engine.validSectionVariations({...variations,choices:[{...choice,kind:'melody-direction'}]},project.tracks),false);
+  for (const bad of [0,201,1.5,'30',null]) assert.equal(engine.validVariationPolicy({chance:100,maxChanges:2,melodySpeedDelta:bad}),false);
+  const section={...project.arrangement[1],variations};
+  assert.equal(settings.resolvePartTrack(melody,{...section,rolePartOverrides:{melody:{speed:10}}}).generatorSettings.speed,10);
+  assert.equal(settings.resolvePartTrack(melody,{...section,trackPresence:{}}).generatorSettings.speed,undefined);
+  const p={...project,arrangement:[section]},explicit={...project,arrangement:[{...section,variations:undefined,trackPartOverrides:{[melody.id]:{speed:80}}}]};
+  assert.deepEqual(phrase.layOutTrackPhrase(p,melody),phrase.layOutTrackPhrase(explicit,melody));
+  assert.deepEqual(phrase.sectionMelodyContext(p,section),phrase.sectionMelodyContext(explicit,explicit.arrangement[0]));
+  assert.deepEqual(midi.generateCompositionMidi(p),midi.generateCompositionMidi(explicit));
+  assert.equal(service.importProjectJson(JSON.stringify(project)),true);
+  const before=service.exportProjectJson();
+  assert.equal(service.applyArrangementVariationDraft(service.project(),{[section.id]:variations},{policy:variations.policy}),'changed');
+  const saved=service.exportProjectJson(),bytes=midi.generateCompositionMidi(service.project());
+  variations.choices[0].parameters.speedDelta=90;
+  assert.equal(service.project().arrangement[1].variations.choices[0].parameters.speedDelta,30);
+  service.undo();assert.equal(service.exportProjectJson(),before);
+  service.redo();assert.equal(service.exportProjectJson(),saved);
+  assert.equal(service.importProjectJson(saved),true);
+  assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
+  const duplicate=commands.duplicateSection(service.project(),1);
+  duplicate.arrangement[2].variations.choices[0].parameters.speedDelta=40;
+  assert.equal(service.project().arrangement[1].variations.choices[0].parameters.speedDelta,30);
+});

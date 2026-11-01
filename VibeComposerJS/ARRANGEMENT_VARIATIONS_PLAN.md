@@ -121,9 +121,19 @@ Preserve technical correctness, deterministic streams, consumer compatibility, v
 
 ### Shared catalogue foundation (delivered, 2026-11-01)
 
-`arrangement-variation-catalogue.ts` now owns operation labels, supported roles/directions, activity/register classification and settings-versus-timed consumer classification. Planning, validation, inspection and adapter dispatch share those definitions. The ordered per-role lists retain their previous order so tied seeded selections do not change. Melody speed's existing 15-point delta is read from catalogue metadata; this is still a fixed default, not a user strength setting.
+`arrangement-variation-catalogue.ts` now owns operation labels, supported roles/directions, activity/register classification and settings-versus-timed consumer classification. Planning, validation, inspection and adapter dispatch share those definitions. The ordered per-role lists retain their previous order so tied seeded selections do not change. At this checkpoint, Melody speed's 15-point delta was centralized as fixed catalogue metadata; the following slice adds its saved-strength contract and policy control.
 
 This completes the catalogue foundation only. Concrete saved-strength parameters and authored-choice ownership/retention remain the next enabling work; allowed-kind controls and manual insertion are still future UI. Existing musical output, policy defaults, manual ownership and serialized choices retain their current behavior. Consumer-specific compatibility and protected-field checks remain with their adapters rather than being duplicated as catalogue promises.
+
+### Saved Melody speed strength (delivered, 2026-11-01)
+
+The first concrete strength contract is implemented for Melody speed. `VariationPolicy.melodySpeedDelta` is an optional musical generation default, with integer values 1–200 speed points. The popup exposes it under Reroll policy. Apply saves a changed default as project musical policy; Reroll stages choices using that default. Policy edits alone leave existing choices intact. Cancel discards the draft and policy edits, and scoped edits preserve unrelated choices. This setting is separate from UI behavior preferences.
+
+Newly planned Melody speed choices capture `parameters: { speedDelta }`, including the current default of 15. The signed `amount` remains direction. Resolution uses the saved delta, relative to the current track's base speed, clamping the effective speed to -100…100. Changing a generation default does not reinterpret these saved choices. Existing parameterless choices continue to use the catalogue's 15-point default; there is no schema-version gate or migration. Other operation kinds reject this parameter object.
+
+Catalogue-owned validation rejects missing/unknown parameter keys, arrays, null, fractional/out-of-range magnitudes and parameters on unsupported kinds. Planning eligibility, actual adapters, inspection, dependency contexts and shared phrase/MIDI/audio output use the same saved delta. Existing explicit speed overrides, custom-duration exclusions, manual ownership and presence semantics remain intact. No additional random draws are consumed, and default seeded musical results stay the same. JSON/session import, Apply, history and duplication detach nested parameter objects.
+
+Next enabling work: authored-choice ownership and retention, followed by allowed generation kinds and explicit popup insertion/editing. Extend concrete strength schemas to other operations using their own units; the Melody speed field is not a universal intensity percentage.
 
 ### Shared definitions and configurable strength
 
@@ -310,3 +320,9 @@ Validation: all 544 unit tests, the production build and all 28 browser tests pa
 - Full unit aggregate: all 583 passed. The added consistency check verifies role-list uniqueness, reverse agreement with declared roles, supported/unsupported directions and unknown kinds, inspection labels, activity/register allocation flags and timed consumers' empty static patches. Existing exact-seed, phrase/output, saved-state/history, ownership and arrangement checks pass with the original per-role candidate order preserved.
 - Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning. Full production browser aggregate: all 28 passed, including the 30-track variations popup, contextual generation, layout/device-scale, preferences, synthesis and export workflows.
 - Logs: frontend `.angular/variation-catalogue-unit.log`, `variation-catalogue-focused.log`, `variation-catalogue-build.log` and `variation-catalogue-browser.log`. This slice centralizes capabilities and the existing Melody speed default; editable saved strengths, authored-choice retention and authoring controls remain future implementation.
+
+### Saved Melody speed strength verification, 2026-11-01
+
+- Full unit aggregate: all 585 passed. Added tests cover captured default/custom deltas, independence from later policy changes, signed application and clamping, parameterless defaults, strict parameter/policy rejection, unsupported kinds, existing explicit/manual/presence protections and custom-duration exclusion. Actual phrase output, melody dependency context and MIDI agree with equivalent explicit speed settings; saved strengths survive history/import and nested parameter objects remain detached across Apply and duplication.
+- Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning. Full production browser aggregate: all 28 passed. The 30-track 1440/780px cases check the default delta, invalid/valid edits, detached policy drafts, saving a 30-point project default and captured generated deltas, alongside existing scope/history/settings/formatting/playback/export workflows.
+- Logs: frontend `.angular/variation-strength-focused.log`, `variation-strength-unit.log`, `variation-strength-build.log`, `variation-strength-browser-focused.log` and `variation-strength-browser.log`. Other kinds retain their existing fixed strengths; authored-choice ownership, allowed-kind controls and manual insertion remain subsequent work.

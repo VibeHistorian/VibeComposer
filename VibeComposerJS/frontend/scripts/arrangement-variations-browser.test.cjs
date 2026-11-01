@@ -60,6 +60,10 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(Math.abs(labelBox.top-effectBox.top)<2&&effectBox.left>labelBox.right,'explanation beside track label');
       ensure(![...d.querySelectorAll('.effect-status')].some(s=>['Active','Disabled'].includes(s.textContent.trim())),'checkbox supplies state');
       ensure(range.scrollWidth<=range.clientWidth,'range row fits');
+      const speedDelta=d.querySelector('[aria-label="Melody speed variation delta"]');
+      ensure(speedDelta.value==='15','default speed strength');
+      await changeControl(speedDelta,'201');await wait(()=>button(d,'Reroll variations').disabled,'invalid speed strength rejected');
+      await changeControl(speedDelta,'30');await wait(()=>!button(d,'Reroll variations').disabled,'valid speed strength');
       const budget=d.querySelector('[aria-label="Variation change budget"]');
       ensure(Number(budget.max)===15,'30-track capacity is fifteen');
       await changeControl(budget,'16');
@@ -102,10 +106,12 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       button(d,'Cancel').click();await wait(()=>!dialog(),'cancel closes');
       ensure(JSON.stringify(read())===original,'cancel preserves project');
       ensure(document.activeElement===opener,'restore opener focus');
-      opener.click();d=await wait(dialog,'reopen');await changeControl(d.querySelector('[aria-label="Variation change budget"]'),'4');button(d,'Reroll variations').click();
+      opener.click();d=await wait(dialog,'reopen');await changeControl(d.querySelector('[aria-label="Melody speed variation delta"]'),'30');await changeControl(d.querySelector('[aria-label="Variation change budget"]'),'4');button(d,'Reroll variations').click();
       await wait(()=>d.querySelector('article'),'new choices');button(d,'Apply variations').click();
       await wait(()=>!dialog(),'apply closes');
       const saved=JSON.stringify(read());ensure(saved!==original,'apply saves choices');
+      ensure(read().arrangementVariationPolicy.melodySpeedDelta===30,'generation strength saved with project policy');
+      ensure(read().arrangement.flatMap(s=>s.variations.choices).filter(c=>c.kind==='melody-speed').every(c=>c.parameters.speedDelta===30),'choices capture speed strength');
       ensure(read().arrangement[1].variations.choices.filter(c=>c.kind==='pre-drop-cut').length===1,'timed cut saved once');
       ensure(read().arrangement[0].variations.choices.filter(c=>c.kind==='arp-end-fill').length===1,'fill saved once before rise');
       ensure(read().arrangement[0].variations.choices.filter(c=>c.kind==='accompaniment-velocity-ramp').length===1,'one ramp saved with fill on another track');

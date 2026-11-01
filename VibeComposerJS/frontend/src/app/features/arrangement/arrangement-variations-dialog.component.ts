@@ -1,3 +1,4 @@
+import { VARIATION_DEFINITIONS } from '../../core/music/arrangement-variation-catalogue';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
@@ -30,6 +31,7 @@ export class ArrangementVariationsDialogComponent {
   readonly draft = signal(initialVariationDraft(this.initialProject, this.scope));
   readonly policy = signal<VariationPolicy>({ ...(this.wholeArrangement ? this.initialPolicy
     : this.sections[0]?.variations?.policy ?? this.initialPolicy) });
+  readonly defaultMelodySpeedDelta = VARIATION_DEFINITIONS['melody-speed'].speedDelta;
   readonly maximumChanges = maximumSectionVariations(this.initialProject.tracks.length);
   readonly policyValid = computed(() => validVariationPolicy(this.policy(), this.initialProject.tracks.length));
   readonly stale = computed(() => this.projects.project() !== this.initialProject);
@@ -86,7 +88,8 @@ export class ArrangementVariationsDialogComponent {
   apply(): void {
     if (this.stale() || !this.policyValid()) return;
     const policy = this.policy();
-    const policyChanged = this.wholeArrangement && (policy.chance !== this.initialPolicy.chance || policy.maxChanges !== this.initialPolicy.maxChanges);
+    const policyChanged = this.wholeArrangement && (policy.chance !== this.initialPolicy.chance || policy.maxChanges !== this.initialPolicy.maxChanges
+      || policy.melodySpeedDelta !== this.initialPolicy.melodySpeedDelta);
     const result = this.projects.applyArrangementVariationDraft(this.initialProject, this.draft(), {
       ...(this.presenceDraft() ? { presence: this.presenceDraft() } : {}),
       ...(policyChanged ? { policy } : {}),

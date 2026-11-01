@@ -1,4 +1,4 @@
-import type { VariationKind } from './arrangement-variation.model';
+import type { ArrangementVariation, VariationKind } from './arrangement-variation.model';
 import type { ArrangedPart } from './part-role';
 
 export interface VariationDefinition {
@@ -42,4 +42,20 @@ export function supportsVariation(role: ArrangedPart, kind: unknown, amount?: un
   if (typeof kind !== 'string' || !Object.hasOwn(VARIATION_DEFINITIONS, kind)) return false;
   const definition: VariationDefinition = VARIATION_DEFINITIONS[kind as VariationKind];
   return definition.roles.includes(role) && (amount === undefined || definition.directions.some(direction => direction === amount));
+}
+
+/** Strength uses speed points, independently of signed direction. */
+export function validMelodySpeedDelta(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 200;
+}
+
+export function validVariationParameters(kind: VariationKind, value: unknown): boolean {
+  if (value === undefined) return true;
+  if (kind !== 'melody-speed' || !value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const fields = value as Record<string, unknown>;
+  return Object.keys(fields).length === 1 && Object.hasOwn(fields, 'speedDelta') && validMelodySpeedDelta(fields['speedDelta']);
+}
+
+export function melodySpeedDelta(choice: ArrangementVariation): number {
+  return choice.parameters?.speedDelta ?? VARIATION_DEFINITIONS['melody-speed'].speedDelta;
 }

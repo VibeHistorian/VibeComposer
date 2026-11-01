@@ -1,4 +1,4 @@
-import { VARIATION_DEFINITIONS, VARIATION_KINDS_BY_ROLE, supportsVariation } from './arrangement-variation-catalogue';
+import { VARIATION_DEFINITIONS, VARIATION_KINDS_BY_ROLE, supportsVariation, validMelodySpeedDelta, validVariationParameters, melodySpeedDelta } from './arrangement-variation-catalogue';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { MelodyGlobalSettings, PartSettingsPatch } from './part-settings.model';
@@ -34,7 +34,8 @@ export const maximumSectionVariations = (trackCount: number): number => Math.max
 export function validVariationPolicy(value: unknown, trackCount = 0): value is VariationPolicy {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const p = value as VariationPolicy;
-  return Object.keys(p).every(key => key === 'chance' || key === 'maxChanges')
+  return Object.keys(p).every(key => key === 'chance' || key === 'maxChanges' || key === 'melodySpeedDelta')
+    && (p.melodySpeedDelta === undefined || validMelodySpeedDelta(p.melodySpeedDelta))
     && Number.isInteger(p.chance) && p.chance >= 0 && p.chance <= 100
     && Number.isInteger(p.maxChanges) && p.maxChanges >= 0 && p.maxChanges <= maximumSectionVariations(trackCount);
 }
@@ -52,9 +53,8 @@ export function validSectionVariations(value: unknown, tracks: readonly Composit
     if (!choice || typeof choice !== 'object' || Array.isArray(choice)) return false;
     const track = tracks.find(t => t.id === choice.trackId);
     if (!track || !supportsVariation(track.role, choice.kind, choice.amount) || targets.has(choice.trackId)
-      || Object.keys(choice).some(key => !['trackId', 'kind', 'amount', 'enabled'].includes(key))
-
-
+      || Object.keys(choice).some(key => !['trackId', 'kind', 'amount', 'enabled', 'parameters'].includes(key))
+      || !validVariationParameters(choice.kind, choice.parameters)
       || (choice.amount !== -1 && choice.amount !== 1) || typeof choice.enabled !== 'boolean') return false;
     targets.add(choice.trackId);
     return true;
@@ -65,7 +65,7 @@ export function validSectionVariations(value: unknown, tracks: readonly Composit
  * Custom and dependency-driven rhythms retain their timing and pitch vocabulary.
  */
 export function variationPatch(track: CompositionTrack, choice: ArrangementVariation, globals: MelodyGlobalSettings = {}): PartSettingsPatch {
-  if (!choice.enabled || choice.trackId !== track.id || !KINDS[track.role].includes(choice.kind)) return {};
+  if (!validVariationParameters(choice.kind, choice.parameters) || !choice.enabled || choice.trackId !== track.id || !KINDS[track.role].includes(choice.kind)) return {};
   const s = track.generatorSettings, a = choice.amount;
   switch (choice.kind) {
     case 'accompaniment-velocity-ramp': case 'arp-end-fill': case 'pre-drop-cut': return {}; // Timed event; no static settings patch.
@@ -80,7 +80,7 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
     }
     case 'arp-density': case 'chord-transition': case 'drum-density': case 'drum-ghosts': return rhythmVariationPatch(track, choice);
     case 'melody-speed': return track.role === 'melody' && !s.customDurations?.length && track.generatorSettings.rhythm !== 'durations'
-      ? { speed: clamp((track.generatorSettings.speed ?? 50) + a * VARIATION_DEFINITIONS['melody-speed'].speedDelta, -100, 100) } : {};
+      ? { speed: clamp((track.generatorSettings.speed ?? 50) + a * melodySpeedDelta(choice), -100, 100) } : {};
     case 'melody-direction': return { targetDirection: a > 0 ? 'ASC' : 'DESC' };
     case 'melody-register': {
       if (track.role !== 'melody') return {};
@@ -189,7 +189,8 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
     const eligible = KINDS[track.role].flatMap(kind => {
       if (kind === 'accompaniment-velocity-ramp' || kind === 'arp-end-fill' || kind === 'pre-drop-cut' || isRegisterVariation(kind)) return [];
       const amount = variationAmountForContext(context, kind);
-      return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true } as ArrangementVariation];
+      return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true, ...(kind === 'melody-speed'
+        ? { parameters: { speedDelta: policy.melodySpeedDelta ?? VARIATION_DEFINITIONS['melody-speed'].speedDelta } } : {}) } as ArrangementVariation];
     }).filter(choice => eligibleChoice(track, section, choice, scope.melodyGlobal));
     if (!eligible.length || random.nextInt(100) >= policy.chance) return [];
     const best = Math.max(...eligible.map(choice => variationPriority(context, choice.kind)));

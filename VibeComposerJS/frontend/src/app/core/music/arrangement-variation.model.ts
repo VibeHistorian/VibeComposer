@@ -2,6 +2,8 @@
 export interface VariationPolicy {
   readonly chance: number;
   readonly maxChanges: number;
+  /** Default for future Melody speed choices; saved choices retain their own delta. */
+  readonly melodySpeedDelta?: number;
 }
 
 export type VariationKind = 'melody-speed' | 'melody-direction' | 'melody-register' | 'melody-range' | 'arp-activity' | 'arp-density' | 'arp-contour' | 'arp-register'
@@ -13,6 +15,8 @@ export interface ArrangementVariation {
   readonly kind: VariationKind;
   readonly amount: -1 | 1;
   readonly enabled: boolean;
+  /** Present only on Melody speed choices in this first strength slice. */
+  readonly parameters?: { readonly speedDelta: number };
 }
 
 export interface SectionVariations {
