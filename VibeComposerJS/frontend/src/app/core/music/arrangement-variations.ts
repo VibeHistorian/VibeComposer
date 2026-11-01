@@ -2,7 +2,7 @@ import { VARIATION_DEFINITIONS, VARIATION_KINDS_BY_ROLE, supportsVariation, vali
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { MelodyGlobalSettings, PartSettingsPatch } from './part-settings.model';
-import type { ArrangementVariation, SectionVariations, VariationKind, VariationPolicy } from './arrangement-variation.model';
+import type { ArrangementVariation, SectionVariations, VariationKind, VariationPolicy, VariationGenerationOptions } from './arrangement-variation.model';
 import { resolveVariationContext, variationAmountForContext, variationPriority, isActivityVariation, isRegisterVariation, VARIATION_GESTURE_LABELS } from './arrangement-variation-context';
 import { JavaRandom } from './java-random';
 import { VELOCITY_ENVELOPE_KEYS, velocityEnvelopeEligibility } from './arrangement-velocity-envelope';
@@ -152,6 +152,7 @@ function identitySeed(seed: bigint, id: string): bigint {
 
 export interface VariationPlanningScope {
   readonly melodyGlobal?: MelodyGlobalSettings;
+  readonly generation?: VariationGenerationOptions;
   readonly allTracks?: readonly CompositionTrack[];
   readonly retainedChoices?: readonly ArrangementVariation[];
 }
@@ -162,20 +163,21 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   if (!sections[index] || !validVariationPolicy(policy, (scope.allTracks ?? tracks).length)) throw new RangeError('Invalid variation context or policy.');
   const section = sections[index], context = resolveVariationContext(scope.allTracks ?? tracks, sections, index);
   const retained = scope.retainedChoices ?? [];
+  const allowed = (kind: VariationKind) => scope.generation?.allowedKinds?.includes(kind) ?? true;
   const expandedBudget = policy.maxChanges + retained.length > 4;
   const retainedLift = retained.some(choice => isRegisterVariation(choice.kind));
   const reserveLift = context.family === 'hook' && context.durationBeats > 4 && policy.maxChanges + retained.length >= 2 && !retainedLift
     && sections.some((future, i) => resolveVariationContext(scope.allTracks ?? tracks, sections, i).returnLift
-      && tracks.some(track => { const choice = registerChoice(track); return !!choice && eligibleChoice(track, future, choice); }));
+      && tracks.some(track => { const choice = registerChoice(track); return !!choice && allowed(choice.kind) && eligibleChoice(track, future, choice); }));
   // Dedicated stream; no static-adapter or phrase draws are consumed by event selection.
-  const cut = context.preDrop && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
+  const cut = allowed('pre-drop-cut') && context.preDrop && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
     && !retained.some(c => c.kind === 'pre-drop-cut' || c.kind === 'arp-end-fill') ? tracks.flatMap(track => {
       if (!section.trackPresence[track.id] || track.rerollLocked || preDropCutEligibility(track, section) !== undefined) return [];
       const random = new JavaRandom(identitySeed(seed, `boundary-cut/${context.family}/${track.id}`));
       return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'pre-drop-cut' as const, amount: -1 as const,
         enabled: true, priority: random.nextDouble() + (track.role === 'chords' ? 1 : 0) }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
-  const fill = context.endFill && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
+  const fill = allowed('arp-end-fill') && context.endFill && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
     && !retained.some(c => c.kind === 'arp-end-fill' || c.kind === 'pre-drop-cut' || c.enabled && section.trackPresence[c.trackId] && isActivityVariation(c.kind))
     ? tracks.flatMap(track => {
       if (!section.trackPresence[track.id] || track.rerollLocked || arpEndFillEligibility(track, section) !== undefined) return [];
@@ -190,10 +192,10 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
     // Do not key this stream by occurrence or section ID: repeated families share anchors.
     const random = new JavaRandom(identitySeed(seed, `${context.family}/${track.id}`));
     const eligible = KINDS[track.role].flatMap(kind => {
-      if (kind === 'accompaniment-velocity-ramp' || kind === 'arp-end-fill' || kind === 'pre-drop-cut' || isRegisterVariation(kind)) return [];
+      if (!allowed(kind) || kind === 'accompaniment-velocity-ramp' || kind === 'arp-end-fill' || kind === 'pre-drop-cut' || isRegisterVariation(kind)) return [];
       const amount = variationAmountForContext(context, kind);
       return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true, ...(kind === 'melody-speed'
-        ? { parameters: { speedDelta: policy.melodySpeedDelta ?? VARIATION_DEFINITIONS['melody-speed'].speedDelta } } : {}) } as ArrangementVariation];
+        ? { parameters: { speedDelta: scope.generation?.melodySpeedDelta ?? VARIATION_DEFINITIONS['melody-speed'].speedDelta } } : {}) } as ArrangementVariation];
     }).filter(choice => eligibleChoice(track, section, choice, scope.melodyGlobal));
     if (!eligible.length || random.nextInt(100) >= policy.chance) return [];
     const best = Math.max(...eligible.map(choice => variationPriority(context, choice.kind)));
@@ -205,7 +207,7 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   candidates.sort((a, b) => b.priority - a.priority || a.choice.trackId.localeCompare(b.choice.trackId));
   const budget = Math.min(policy.maxChanges, context.durationBeats <= 4 ? Math.max(0, 1 - (scope.retainedChoices?.length ?? 0)) : policy.maxChanges);
   const rampAmount = variationAmountForContext(context, 'accompaniment-velocity-ramp');
-  const ramp = rampAmount !== undefined && policy.maxChanges + retained.length >= 4 && budget > (boundary ? 1 : 0)
+  const ramp = allowed('accompaniment-velocity-ramp') && rampAmount !== undefined && policy.maxChanges + retained.length >= 4 && budget > (boundary ? 1 : 0)
     && !retained.some(c => c.kind === 'accompaniment-velocity-ramp') ? tracks.flatMap(track => {
       if (track.id === boundary?.trackId || !section.trackPresence[track.id] || track.rerollLocked
         || velocityEnvelopeEligibility(track, section, rampAmount) !== undefined
@@ -240,7 +242,7 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   if (context.returnLift && reserveLift && choices.length < budget) {
     const lifts = tracks.flatMap(track => {
       const choice = registerChoice(track);
-      if (!choice || (!expandedBudget && roles.has(track.role)) || choices.some(c => c.trackId === track.id)
+      if (!choice || !allowed(choice.kind) || (!expandedBudget && roles.has(track.role)) || choices.some(c => c.trackId === track.id)
         || !eligibleChoice(track, section, choice)) return [];
       const random = new JavaRandom(identitySeed(seed, `hook-lift/${track.id}`));
       return random.nextInt(100) < policy.chance ? [{ choice, priority: random.nextDouble() }] : [];

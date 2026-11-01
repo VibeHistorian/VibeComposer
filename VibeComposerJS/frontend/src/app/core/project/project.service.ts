@@ -502,9 +502,9 @@ export class ProjectService {
         next = arrangementCommands.randomizeArrangementPresence(next, undefined,
           this.sectionTypeSettings.chances(), () => random.nextDouble())!;
         if (this.uiPreferences.generateArrangementVariations()) next = arrangementCommands.randomizeArrangementVariations(next,
-          BigInt(next.seed), undefined, next.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY)!;
+          BigInt(next.seed), undefined, next.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, this.uiPreferences.variationRerolls())!;
       } else next = arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances(), BigInt(next.seed),
-        this.uiPreferences.generateArrangementVariations());
+        this.uiPreferences.generateArrangementVariations(), this.uiPreferences.variationRerolls());
     }
     if (next === current) return 'unchanged';
     // Rendering also asks for the global phrase (note counts) and for section
@@ -1031,7 +1031,7 @@ export class ProjectService {
 
   addSection(type: SectionType = 'VERSE1', afterIndex = this.state().arrangement.length - 1): void {
     const next = arrangementCommands.addSection(this.state(), type, afterIndex, this.sectionTypeSettings.chances(), Math.random,
-      this.uiPreferences.generateArrangementVariations());
+      this.uiPreferences.generateArrangementVariations(), this.uiPreferences.variationRerolls());
     if (next) this.commit(next);
   }
 
@@ -1080,7 +1080,7 @@ export class ProjectService {
   randomizeArrangement(): void {
     const seed = BigInt(Math.floor(Math.random() * 0x1000000000000));
     this.commit(arrangementCommands.randomizeArrangement(this.state(), this.sectionTypeSettings.chances(), seed,
-      this.uiPreferences.generateArrangementVariations()));
+      this.uiPreferences.generateArrangementVariations(), this.uiPreferences.variationRerolls()));
   }
 
   randomizeArrangementPresence(sectionId?: string): void {
@@ -1090,7 +1090,7 @@ export class ProjectService {
 
   randomizeArrangementVariations(sectionId?: string, policy?: VariationPolicy, seed?: bigint): PartWorkflowResult {
     const next = arrangementCommands.randomizeArrangementVariations(this.state(),
-      seed ?? BigInt(Math.floor(Math.random() * 0x1000000000000)), sectionId, policy);
+      seed ?? BigInt(Math.floor(Math.random() * 0x1000000000000)), sectionId, policy, this.uiPreferences.variationRerolls());
     return next ? this.commitPartWorkflow(next) : 'invalid';
   }
 

@@ -10,21 +10,21 @@ import { getDiatonicChords } from '../music/harmony';
 import { generateArrangementPlan } from '../music/arrangement-plan';
 import { JavaRandom } from '../music/java-random';
 import { DEFAULT_VARIATION_POLICY, planSectionVariations, validVariationPolicy } from '../music/arrangement-variations';
-import type { VariationPolicy } from '../music/arrangement-variation.model';
+import type { VariationPolicy, VariationGenerationOptions } from '../music/arrangement-variation.model';
 
 /** Explicit opt-in engine command; previews build candidates without publishing them. */
 export function randomizeArrangementVariations(project: CompositionProject, seed: bigint, sectionId?: string,
-  policy?: VariationPolicy): CompositionProject | undefined {
+  policy?: VariationPolicy, generation?: VariationGenerationOptions): CompositionProject | undefined {
   if (policy !== undefined && !validVariationPolicy(policy, project.tracks.length)
     || sectionId !== undefined && !project.arrangement.some(s => s.id === sectionId)) return undefined;
   const scope = { sectionId };
-  const draft = rerollVariationDraft(project, scope, initialVariationDraft(project, scope), seed, policy);
+  const draft = rerollVariationDraft(project, scope, initialVariationDraft(project, scope), seed, policy, generation);
   return { ...project, arrangement: project.arrangement.map(section => Object.hasOwn(draft, section.id)
     ? { ...section, variations: draft[section.id] } : section) };
 }
 
 /** Replace structure and orchestration using independent deterministic streams. */
-export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings, seed: bigint = BigInt(project.seed), generateVariations = false): CompositionProject {
+export function randomizeArrangement(project: CompositionProject, chances: SectionTypeChanceSettings, seed: bigint = BigInt(project.seed), generateVariations = false, generation?: VariationGenerationOptions): CompositionProject {
   const random = new JavaRandom(BigInt.asIntN(64, seed ^ 0x415252414e4745n));
   const plan = generateArrangementPlan(seed);
   const presence = generateContextualPresence(project.tracks, plan, chances, () => random.nextDouble());
@@ -33,11 +33,11 @@ export function randomizeArrangement(project: CompositionProject, chances: Secti
   }));
   const next = { ...project, arrangement };
   return generateVariations
-    ? randomizeArrangementVariations(next, seed, undefined, project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY)! : next;
+    ? randomizeArrangementVariations(next, seed, undefined, project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, generation)! : next;
 }
 
 // Build immutable candidates. ProjectService validates and commits each command once.
-export function addSection(project: CompositionProject, type: SectionType, afterIndex: number, chances: SectionTypeChanceSettings, random: () => number, generateVariations = false): CompositionProject | undefined {
+export function addSection(project: CompositionProject, type: SectionType, afterIndex: number, chances: SectionTypeChanceSettings, random: () => number, generateVariations = false, generation?: VariationGenerationOptions): CompositionProject | undefined {
   const sections = project.arrangement;
   if (sections.length >= MAX_ARRANGEMENT_SECTIONS || !SECTION_TYPES.includes(type)) {
     return;
@@ -57,7 +57,7 @@ export function addSection(project: CompositionProject, type: SectionType, after
   const presence = generateContextualPresence(project.tracks, next, chances, random, insertAt);
   next[insertAt] = { ...next[insertAt], trackPresence: presence[insertAt] };
   if (generateVariations) next[insertAt] = { ...next[insertAt],
-    variations: planSectionVariations(project.tracks, next, insertAt, BigInt(project.seed), project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, { melodyGlobal: project.melodyGlobal }) };
+    variations: planSectionVariations(project.tracks, next, insertAt, BigInt(project.seed), project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, { melodyGlobal: project.melodyGlobal, generation }) };
   return { ...project, arrangement: next };
 }
 

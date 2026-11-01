@@ -1,8 +1,13 @@
+export interface VariationGenerationOptions {
+  readonly allowedKinds?: readonly VariationKind[];
+  readonly melodySpeedDelta?: number;
+}
+
 /** Policies select choices; persisted choices are never rerolled during phrase resolution. */
 export interface VariationPolicy {
   readonly chance: number;
   readonly maxChanges: number;
-  /** Default for future Melody speed choices; saved choices retain their own delta. */
+  /** Historical serialized policy metadata; generation defaults now come from separate UI preferences. */
   readonly melodySpeedDelta?: number;
 }
 

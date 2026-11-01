@@ -1,3 +1,4 @@
+import { defaultVariationRerolls, decodeVariationRerolls, type VariationRerollPreferences } from './variation-reroll-preferences';
 import { decodeShortcuts, defaultShortcuts, type ShortcutBindings } from './shortcuts';
 import { PART_CONTROLS } from '../music/part-settings';
 import { decodeAppearance, defaultAppearance, type AppearancePreferences } from './appearance';
@@ -33,6 +34,7 @@ export interface UiPreferences {
   readonly scoreOutlineOtherTracks: boolean;
   readonly restartPlaybackOnCompose: boolean;
   readonly generateArrangementVariations: boolean;
+  readonly variationRerolls: VariationRerollPreferences;
   readonly rerollPresenceWithVariations: boolean;
   readonly limitInstrumentsToPool: boolean;
   readonly drumMapping: DrumMappingPreference;
@@ -75,7 +77,7 @@ export function defaultQuickSettings(): QuickSettings {
 }
 
 export function defaultUiPreferences(): UiPreferences {
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin: 60, composeBpmMax: 100, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, scoreGhostNotes: true, scoreOutlineOtherTracks: false, restartPlaybackOnCompose: true, generateArrangementVariations: false, rerollPresenceWithVariations: false, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance(), shortcuts: defaultShortcuts() };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin: 60, composeBpmMax: 100, compactHistory: true, syncScoreMix: false, scoreChordGrid: false, scoreGhostNotes: true, scoreOutlineOtherTracks: false, restartPlaybackOnCompose: true, generateArrangementVariations: false, variationRerolls: defaultVariationRerolls(), rerollPresenceWithVariations: false, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance(), shortcuts: defaultShortcuts() };
 }
 
 /** Decode atomically, accepting only UI data and retaining the code's control order. */
@@ -86,6 +88,8 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
       || !data['quickSettings'] || typeof data['quickSettings'] !== 'object' || Array.isArray(data['quickSettings'])) return null;
   const composeBpmMin = data['composeBpmMin'] ?? 60, composeBpmMax = data['composeBpmMax'] ?? 100;
   if (typeof composeBpmMin !== 'number' || typeof composeBpmMax !== 'number' || !Number.isInteger(composeBpmMin) || !Number.isInteger(composeBpmMax) || composeBpmMin < 30 || composeBpmMax > 240 || composeBpmMin > composeBpmMax) return null;
+  const variationRerolls = decodeVariationRerolls(data['variationRerolls']);
+  if (!variationRerolls) return null;
   const settings = data['quickSettings'] as Record<string, unknown>;
   const fields = data['exportNameFields'];
   if (fields !== undefined && (!Array.isArray(fields) || fields.some(field => !EXPORT_NAME_FIELDS.some(choice => choice.id === field)))) return null;
@@ -112,5 +116,5 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
     quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key, role).some(key => keys.includes(key))).map(control => control.key);
   }
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin, composeBpmMax, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreGhostNotes: data['scoreGhostNotes'] !== false, scoreOutlineOtherTracks: data['scoreOutlineOtherTracks'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, generateArrangementVariations: data['generateArrangementVariations'] === true, rerollPresenceWithVariations: data['rerollPresenceWithVariations'] === true, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance, shortcuts };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin, composeBpmMax, compactHistory: data['compactHistory'], syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreGhostNotes: data['scoreGhostNotes'] !== false, scoreOutlineOtherTracks: data['scoreOutlineOtherTracks'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, generateArrangementVariations: data['generateArrangementVariations'] === true, variationRerolls, rerollPresenceWithVariations: data['rerollPresenceWithVariations'] === true, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance, shortcuts };
 }

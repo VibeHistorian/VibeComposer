@@ -127,6 +127,24 @@
             </div>
           </section>
         }
+        @case ('variations') {
+          <section aria-labelledby="variation-settings-title">
+            <h2 id="variation-settings-title">Variations</h2>
+            <p>These preferences apply to future randomized variations. Existing choices stay unchanged. Manual selection can use any compatible variation.</p>
+            @for (row of variationRows; track row.kind) {
+              <div class="setting-row">
+                <label class="setting-copy"><input type="checkbox" [attr.aria-label]="'Reroll ' + row.label"
+                  [checked]="preferences.variationRerolls().allowedKinds.includes(row.kind)" (change)="preferences.setVariationRerollEnabled(row.kind, $any($event.target).checked)" /> {{ row.label }}</label>
+                <div class="setting-controls">
+                @if (row.kind === 'melody-speed') {
+                  <label>Speed delta <input type="range" min="1" max="200" step="1" aria-label="Melody speed variation delta"
+                    [value]="preferences.variationRerolls().melodySpeedDelta" (input)="preferences.setVariationSpeedDelta(+$any($event.target).value)" /> {{ preferences.variationRerolls().melodySpeedDelta }}</label>
+                }
+                </div>
+              </div>
+            }
+          </section>
+        }
         @case ('arrangement') {
           <section aria-labelledby="arrangement-settings-title">
             <h2 id="arrangement-settings-title">Arrangement</h2>

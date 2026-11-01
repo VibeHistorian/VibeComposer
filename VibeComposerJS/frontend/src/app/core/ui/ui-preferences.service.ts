@@ -1,3 +1,5 @@
+import { decodeVariationRerolls, type VariationRerollPreferences } from './variation-reroll-preferences';
+import type { VariationKind } from '../music/arrangement-variation.model';
 import { defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type ShortcutId } from './shortcuts';
 import { computed, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
@@ -56,6 +58,18 @@ export class UiPreferencesService {
   setArrangementBehavior(key: 'generateArrangementVariations' | 'rerollPresenceWithVariations', enabled: boolean): void {
     if (!['generateArrangementVariations', 'rerollPresenceWithVariations'].includes(key) || typeof enabled !== 'boolean') return;
     this.commit({ ...this.state(), [key]: enabled });
+  }
+  readonly variationRerolls = computed(() => this.state().variationRerolls);
+  setVariationRerollEnabled(kind: VariationKind, enabled: boolean): void {
+    if (typeof enabled !== 'boolean') return;
+    const current = this.variationRerolls();
+    const allowedKinds = enabled ? [...new Set([...current.allowedKinds, kind])] : current.allowedKinds.filter(k => k !== kind);
+    this.setVariationRerolls({ ...current, allowedKinds });
+  }
+  setVariationSpeedDelta(melodySpeedDelta: number): void { this.setVariationRerolls({ ...this.variationRerolls(), melodySpeedDelta }); }
+  private setVariationRerolls(value: VariationRerollPreferences): void {
+    const variationRerolls = decodeVariationRerolls(value);
+    if (variationRerolls) this.commit({ ...this.state(), variationRerolls });
   }
   readonly manualPhrasesFollowMode = computed(() => this.state().manualPhrasesFollowMode);
   toggleManualPhrasesFollowMode(): void {

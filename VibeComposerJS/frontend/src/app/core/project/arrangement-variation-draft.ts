@@ -2,7 +2,7 @@ import type { CompositionProject } from './project.model';
 import type { ArrangementSection } from './arrangement.model';
 import type { CompositionTrack } from './track.model';
 import type { ArrangedPart } from '../music/part-role';
-import type { SectionVariations, VariationPolicy } from '../music/arrangement-variation.model';
+import type { SectionVariations, VariationPolicy, VariationGenerationOptions } from '../music/arrangement-variation.model';
 import { DEFAULT_VARIATION_POLICY, planSectionVariations } from '../music/arrangement-variations';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { generateContextualPresence } from '../music/arrangement-intent';
@@ -39,7 +39,7 @@ export function initialVariationDraft(project: CompositionProject, scope: Variat
 
 /** Replan only selected targets. Unrelated choices, order and presence remain intact. */
 export function rerollVariationDraft(project: CompositionProject, scope: VariationScope, draft: VariationDraft, seed: bigint,
-  policy?: VariationPolicy): VariationDraft {
+  policy?: VariationPolicy, generation?: VariationGenerationOptions): VariationDraft {
   const tracks = variationScopeTracks(project, scope), ids = new Set(tracks.map(track => track.id));
   const scoped = !!scope.trackId || !!scope.role;
   return Object.fromEntries(variationScopeSections(project, scope).map(section => {
@@ -48,7 +48,7 @@ export function rerollVariationDraft(project: CompositionProject, scope: Variati
     const retainedIds = new Set(others.map(choice => choice.trackId));
     const available = Math.max(0, selectedPolicy.maxChanges - others.length);
     const planned = planSectionVariations(tracks.filter(track => !retainedIds.has(track.id)), project.arrangement, project.arrangement.indexOf(section), seed,
-      { ...selectedPolicy, maxChanges: available }, { allTracks: project.tracks, retainedChoices: others, melodyGlobal: project.melodyGlobal });
+      { ...selectedPolicy, maxChanges: available }, { allTracks: project.tracks, retainedChoices: others, melodyGlobal: project.melodyGlobal, generation });
     return [section.id, { ...planned, policy: { ...selectedPolicy }, choices: [...others, ...planned.choices] }];
   }));
 }

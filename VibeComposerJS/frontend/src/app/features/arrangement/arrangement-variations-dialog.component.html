@@ -8,7 +8,6 @@
     <legend>Reroll policy</legend>
     <label>Chance %<input type="number" min="0" max="100" step="1" aria-label="Variation chance" [value]="policy().chance" (change)="setPolicy('chance', $event)" /></label>
     <label>Changes per section<input type="number" min="0" [max]="maximumChanges" step="1" aria-label="Variation change budget" [value]="policy().maxChanges" (change)="setPolicy('maxChanges', $event)" /></label>
-    <label>Melody speed delta<input type="number" min="1" max="200" step="1" aria-label="Melody speed variation delta" [value]="policy().melodySpeedDelta ?? defaultMelodySpeedDelta" (change)="setPolicy('melodySpeedDelta', $event)" /></label>
     <button type="button" [disabled]="!policyValid()" (click)="reroll()">Reroll variations</button>
     <button type="button" (click)="reset()">Reset variations</button>
   </fieldset>
@@ -34,15 +33,17 @@
         @for (item of row.choices; track item.track.id) {
           <article [attr.data-variation-status]="item.inspection.status">
             <div class="variation-line">
+              <div class="variation-target">
               <label><input type="checkbox" [attr.aria-label]="item.track.name + ' ' + item.inspection.label" [disabled]="stale()"
                 [checked]="item.inspection.choice.enabled" (change)="toggle(row.section.id, item.track.id, $event)" />
                 <span><strong>{{ item.track.name }}</strong> · {{ item.inspection.label }}</span></label>
+            <button type="button" class="variation-lock" [attr.aria-label]="'Lock ' + item.track.name + ' variation'" title="Lock variation against rerolls"
+              [attr.aria-pressed]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (click)="keep(row.section.id, item.track.id, item.inspection.choice.origin !== 'authored')">⍟</button>
+              </div>
               <div class="effect-values">
                 @for (effect of item.effects; track $index) { <span class="effect-value">{{ effect }}</span> }
               </div>
             </div>
-            <label class="keep-choice"><input type="checkbox" [attr.aria-label]="'Keep ' + item.track.name + ' variation on reroll'"
-              [checked]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (change)="keep(row.section.id, item.track.id, $event)" /> Keep on reroll</label>
             @if (item.detail) { <span class="effect-status">{{ item.detail }}</span> }
             @if (item.mismatch) { <span class="context-warning">This choice differs from the current section purpose. Reroll to replan.</span> }
           </article>

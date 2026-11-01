@@ -25,7 +25,10 @@ article { padding: 10px; margin-bottom: 8px; background: var(--surface-low); bor
 .variation-line { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: start; gap: 6px 16px; }
 article label { display: flex; align-items: baseline; gap: 6px; line-height: 1.5; overflow-wrap: anywhere; }
 article input[type="checkbox"] { flex: none; }
-.keep-choice { margin: 6px 0 0 24px; color: var(--text-secondary); }
+.variation-target { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
+.variation-lock { flex: none; width: 18px; height: 23px; padding: 0; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-button); color: var(--text-muted); font: 13px var(--font-ui); }
+.variation-lock[aria-pressed="true"] { border-color: var(--text-primary); color: var(--text-primary); }
+.variation-lock:hover:not(:disabled) { border-color: var(--border-strong); background: var(--surface-button-hover); color: var(--text-primary); }
 .effect-values { display: grid; gap: 4px; text-align: right; }
 .effect-value { color: var(--text-secondary); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .effect-status, .context-warning { display: block; margin: 6px 0 0 24px; font-size: 12px; overflow-wrap: anywhere; }

@@ -1327,7 +1327,7 @@ test('Melody speed generation captures strength independently of later policy ed
   const { project, engine }=setup();
   const melody=project.tracks.find(t=>t.role==='melody');
   const sections=[{...project.arrangement[1],trackPresence:{[melody.id]:true}}];
-  const plan=delta=>engine.planSectionVariations([melody],sections,0,1n,{chance:100,maxChanges:2,...(delta===undefined?{}:{melodySpeedDelta:delta})});
+  const plan=delta=>engine.planSectionVariations([melody],sections,0,1n,{chance:100,maxChanges:2},{generation:delta===undefined?undefined:{melodySpeedDelta:delta}});
   const initial=plan(undefined).choices.find(c=>c.kind==='melody-speed');
   assert.equal(initial.parameters.speedDelta,15);
   const saved=plan(30),choice=saved.choices.find(c=>c.kind==='melody-speed');
@@ -1419,4 +1419,37 @@ test('authored metadata validates strictly and disabled authored drivers remain 
   const reduced=fit({...project,tracks:project.tracks.slice(0,1),arrangement:[{...section,variations:{...section.variations,choices}}]});
   assert.equal(reduced.arrangement[0].variations.choices.length,6);
   assert.equal(reduced.arrangement[0].variations.choices.at(-1).origin,'authored');
+});
+
+test('variation reroll preferences persist independently and filter all generation entry points', () => {
+  const {project,service,uiPreferences,uiStored,engine,commands,load}=setup();
+  assert.equal(service.importProjectJson(JSON.stringify(project)),true);
+  const before=service.exportProjectJson();
+  const kinds=[...uiPreferences.variationRerolls().allowedKinds];
+  for(const kind of kinds)uiPreferences.setVariationRerollEnabled(kind,false);
+  uiPreferences.setVariationSpeedDelta(30);
+  assert.equal(service.exportProjectJson(),before);
+  assert.equal(JSON.parse(uiStored.get('vibecomposer.ui-preferences.v1')).variationRerolls.melodySpeedDelta,30);
+  assert.deepEqual(uiPreferences.variationRerolls().allowedKinds,[]);
+  service.randomizeArrangementVariations(undefined,undefined,1n);
+  assert.ok(service.project().arrangement.every(s=>s.variations.choices.length===0));
+  service.undo();assert.equal(service.exportProjectJson(),before);
+  assert.equal(uiPreferences.variationRerolls().melodySpeedDelta,30);
+  uiPreferences.setArrangementBehavior('generateArrangementVariations',true);
+  service.randomizeArrangement();assert.ok(service.project().arrangement.every(s=>s.variations.choices.length===0));
+  service.addSection();assert.equal(service.project().arrangement.at(-1).variations.choices.length,0);
+  service.updateSettings({arrangementManual:true,randomizeArrangementOnCompose:true});
+  service.generateComposition('compose');assert.ok(service.project().arrangement.every(s=>s.variations.choices.length===0));
+  const melody=project.tracks.find(t=>t.role==='melody');
+  const choice={trackId:melody.id,kind:'melody-speed',amount:1,enabled:true,parameters:{speedDelta:40},origin:'authored',seed:'1'};
+  const p={...project,arrangement:project.arrangement.map(s=>({...s,variations:{seed:'1',policy:{chance:100,maxChanges:2},choices:[choice]}}))};
+  const retained=commands.randomizeArrangementVariations(p,2n,undefined,undefined,uiPreferences.variationRerolls());
+  assert.ok(retained.arrangement.every(s=>s.variations.choices[0].parameters.speedDelta===40));
+  assert.equal(engine.variationPatch(melody,choice).speed,90,'eligibility preferences never affect resolution');
+  const decoder=load('core/ui/variation-reroll-preferences.ts').decodeVariationRerolls;
+  for(const bad of [null,[],{allowedKinds:['missing'],melodySpeedDelta:30},{allowedKinds:[{}],melodySpeedDelta:30},{allowedKinds:['melody-speed','melody-speed'],melodySpeedDelta:30},{allowedKinds:[],melodySpeedDelta:0}])assert.equal(decoder(bad),null);
+  const exported=uiPreferences.exportJson();
+  uiPreferences.setVariationSpeedDelta(15);
+  assert.equal(uiPreferences.importJson(exported),true);
+  assert.equal(uiPreferences.variationRerolls().melodySpeedDelta,30);
 });

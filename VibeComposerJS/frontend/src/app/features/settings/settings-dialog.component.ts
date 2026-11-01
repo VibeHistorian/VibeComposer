@@ -1,3 +1,4 @@
+import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, sameShortcut, type ShortcutId } from '../../core/ui/shortcuts';
 import { SettingsScopeIndicatorComponent, type SettingScope } from './settings-scope-indicator.component';
@@ -33,6 +34,7 @@ export class SettingsDialogComponent {
   setPadding(role: ArrangedPart, value: number): void {
     this.projects.updateSettings({ midiPadding: { ...this.projects.project().midiPadding, [role]: value } });
   }
+  readonly variationRows = VARIATION_ROWS;
   readonly preferences = inject(UiPreferencesService);
   readonly instruments = inject(InstrumentSettingsService);
   async loadSoundfont(event: Event): Promise<void> {
@@ -89,6 +91,7 @@ export class SettingsDialogComponent {
       { id: 'behavior', label: 'General' },
       { id: 'harmony', label: 'Harmony' },
       { id: 'arrangement', label: 'Arrangement' },
+      { id: 'variations', label: 'Variations' },
       { id: 'melody', label: 'Melody' },
       { id: 'section-types', label: 'Section Types' },
     ] },
@@ -98,7 +101,7 @@ export class SettingsDialogComponent {
   ] as const;
   readonly categoryScopes: Readonly<Record<string, readonly SettingScope[]>> = {
     appearance: ['ui'], score: ['ui'], behavior: ['ui', 'compose', 'sound'],
-    harmony: ['compose', 'sound'], arrangement: ['compose'], melody: ['compose', 'sound'], 'section-types': ['compose'],
+    variations: ['ui'], harmony: ['compose', 'sound'], arrangement: ['compose'], melody: ['compose', 'sound'], 'section-types': ['compose'],
     ...Object.fromEntries(SHORTCUT_PAGES.map(page => [page.id, ['ui'] as const])), midi: ['ui', 'sound'], project: ['ui'],
   };
   readonly selectedCategory = signal<typeof this.categories[number]['id'] | typeof this.categories[number]['children'][number]['id']>('appearance');

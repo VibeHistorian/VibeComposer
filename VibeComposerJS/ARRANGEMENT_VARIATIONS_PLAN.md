@@ -147,6 +147,18 @@ Reset remains an explicit removal action, including authored choices within its 
 
 Next: allowed-for-generation kinds, followed by explicit insertion/editing which should create authored choices automatically. Other operation-specific strength schemas remain incremental follow-ups.
 
+### UI-owned reroll preferences and Lock toggle (delivered, 2026-11-01)
+
+User direction supersedes the earlier project-owned allowlist/default-strength proposal: Settings → Behavior → Variations now owns future-reroll eligibility and strength defaults as UI preferences. Each catalogue operation has an enable checkbox; Melody speed additionally has a 1–200-point strength slider. Other operations gain strength controls in their own rows as their typed strength consumers are implemented. Changes save immediately through UI preference storage/import/export, without popup Apply or project history changes.
+
+`variation-reroll-preferences.ts` validates and supplies default settings (all kinds enabled, Melody speed delta 15). Framework-independent generation receives separate `VariationGenerationOptions`; it does not read UI services or local storage. ProjectService forwards current options to variation rerolls, fixed-section/automatic Compose, structure rerolls and section insertion. The popup reads the live preferences for each draft reroll. Filtering applies to static operations, boundary events, envelopes and register-lift reservation/selection. Retained authored/out-of-scope choices are unaffected. An empty allowlist generates no new choices.
+
+Saved choices continue to carry their own parameters and realization seeds. Eligibility preferences never participate in validation or resolution of an already saved operation; an excluded kind remains valid for explicit/manual selection. Historical project policy speed-delta metadata remains readable but no longer supplies generation defaults. New defaults come from UI preferences, and future generated Melody speed choices capture that value in their parameters. No legacy project data is migrated or rewritten merely by editing preferences.
+
+The popup no longer contains the Melody speed policy input. Keep on reroll is now one ⍟ Lock toggle beside the variation label, using the track-panel symbol, dimensions and pressed-state styling. Its authored ownership, seed pinning, explicit release and Reset behavior remain unchanged. The inline parameter/range formatting stays intact.
+
+Next: explicit popup insertion/editing, using the catalogue for compatibility rather than the random-generation allowlist. Initial selection defaults may read UI strengths, while the resulting authored choice must capture concrete values. Further operation-specific strength schemas remain incremental work.
+
 ### Shared definitions and configurable strength
 
 These controls are planned follow-ups, not implemented UI. Establish a small framework-independent operation catalogue shared by planning, popup authoring, inspection, validation and actual consumers: supported roles/modes, directions, parameter units/defaults/bounds, and allocation/conflict groups. Separate automatic suitability from functional compatibility. A general effect-vector framework is not a prerequisite.
@@ -157,7 +169,7 @@ Resolve policy defaults into concrete parameters on each saved choice when gener
 
 ### Allowed kinds for automatic generation
 
-Add an explicitly labeled allowed-for-generation selection and per-kind default strengths, initially at project musical-policy scope alongside chance/budget. Persist them in project history and JSON/session data. They are musical settings, separate from Settings → Behavior compose preferences. Role filtering follows the catalogue; narrower policy scopes can follow if needed with explicit inheritance.
+The allowed-for-generation selection and default strengths are UI preferences in Settings → Behavior → Variations, per the later user direction above. Chance/budget remain project musical policy; saved choices retain their own concrete parameters. Role filtering follows the catalogue without constraining explicit/manual selection.
 
 Allowlist/strength changes affect future Compose/reroll planning, not the enabled state or realization of existing choices. An automatically excluded operation can still be intentionally inserted if its consumer supports the target. Preserve unrelated identity streams when filtering kinds and test policy-versus-realization separation.
 
@@ -344,3 +356,10 @@ Validation: all 544 unit tests, the production build and all 28 browser tests pa
 - Full unit aggregate: all 587 passed. Added tests validate exact authored seeds and ownership metadata, retention of disabled choices, scope/budget behavior, explicit reset, fixed-section Compose, history/import/duplication and preferential capacity fitting. A kept randomized fill retains its actual note/MIDI realization across different section reroll seeds; unrelated sections remain free to reroll normally. Parameter and ownership data survive the existing persistence paths.
 - Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning. Full production browser aggregate: all 28 passed. Expanded 30-track 1440/780px workflows keep a disabled fill, reroll while preserving its identity/state, release ownership explicitly and verify that draft edits remain unpublished. Existing cancellation, Apply/history, scopes, strengths, inline explanations, preferences, arrangement/device-scale, synthesis and exports remain covered.
 - Logs: frontend `.angular/variation-authored-focused.log`, `variation-authored-unit.log`, `variation-authored-build.log`, `variation-authored-browser-focused.log` and `variation-authored-browser.log`. Whole structure replacement remains an explicit section replacement; automatic ownership transfer between different arrangements is not implemented.
+
+### Variations preference and Lock control verification, 2026-11-01
+
+- Full unit aggregate: all 588 passed. New coverage exercises immediate UI persistence and import/export, invalid preference rejection, empty allowed-kind generation across service rerolls/structure/insertion/fixed-section Compose, independent project undo, saved-strength resolution and authored retention despite automatic exclusions. Existing strength tests now supply generation options explicitly rather than using project policy defaults.
+- Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning. Focused 30-track variation browser cases passed at 1440/780px, covering the new settings page, immediate saved defaults without project edits, removed popup strength input, captured strengths and the lock control's retained state through reroll.
+- The full browser aggregate passed 25 of 28 cases; the three settings-layout cases exposed missing standard control-column elements on rows without a strength slider. Every variation row now uses the standard copy/control structure. After the fresh build, all three affected settings/layout/preference-transfer cases passed at 1440/1400/780px. The other 25 cases were not repeated for this settings-only markup correction.
+- Logs: frontend `.angular/variation-preferences-unit.log`, `variation-preferences-focused.log`, `variation-preferences-build.log`, `variation-preferences-browser-focused.log`, `variation-preferences-browser.log` and `variation-preferences-settings-browser.log`.

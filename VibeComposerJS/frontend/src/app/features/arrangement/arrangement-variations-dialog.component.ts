@@ -1,4 +1,3 @@
-import { VARIATION_DEFINITIONS } from '../../core/music/arrangement-variation-catalogue';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
@@ -31,7 +30,6 @@ export class ArrangementVariationsDialogComponent {
   readonly draft = signal(initialVariationDraft(this.initialProject, this.scope));
   readonly policy = signal<VariationPolicy>({ ...(this.wholeArrangement ? this.initialPolicy
     : this.sections[0]?.variations?.policy ?? this.initialPolicy) });
-  readonly defaultMelodySpeedDelta = VARIATION_DEFINITIONS['melody-speed'].speedDelta;
   readonly maximumChanges = maximumSectionVariations(this.initialProject.tracks.length);
   readonly policyValid = computed(() => validVariationPolicy(this.policy(), this.initialProject.tracks.length));
   readonly stale = computed(() => this.projects.project() !== this.initialProject);
@@ -72,7 +70,7 @@ export class ArrangementVariationsDialogComponent {
     const seed = BigInt(Math.floor(Math.random() * 0x1000000000000));
     this.presenceDraft.set(this.wholeArrangement && this.preferences.rerollPresenceWithVariations()
       ? rerollVariationPresence(this.initialProject, this.sectionTypes.chances(), seed) : undefined);
-    this.draft.set(rerollVariationDraft(this.candidateProject(), this.scope, this.draft(), seed, this.policy()));
+    this.draft.set(rerollVariationDraft(this.candidateProject(), this.scope, this.draft(), seed, this.policy(), this.preferences.variationRerolls()));
   }
   reset(): void {
     if (!this.stale()) this.draft.set(resetVariationDraft(this.candidateProject(), this.scope, this.draft()));
@@ -85,9 +83,8 @@ export class ArrangementVariationsDialogComponent {
       return !value ? draft : { ...draft, [sectionId]: { ...value, choices: value.choices.map(choice => choice.trackId === trackId ? { ...choice, enabled } : choice) } };
     });
   }
-  keep(sectionId: string, trackId: string, event: Event): void {
+  keep(sectionId: string, trackId: string, keep: boolean): void {
     if (this.stale()) return;
-    const keep = (event.target as HTMLInputElement).checked;
     this.draft.update(draft => {
       const section = draft[sectionId];
       if (!section) return draft;
@@ -101,8 +98,7 @@ export class ArrangementVariationsDialogComponent {
   apply(): void {
     if (this.stale() || !this.policyValid()) return;
     const policy = this.policy();
-    const policyChanged = this.wholeArrangement && (policy.chance !== this.initialPolicy.chance || policy.maxChanges !== this.initialPolicy.maxChanges
-      || policy.melodySpeedDelta !== this.initialPolicy.melodySpeedDelta);
+    const policyChanged = this.wholeArrangement && (policy.chance !== this.initialPolicy.chance || policy.maxChanges !== this.initialPolicy.maxChanges);
     const result = this.projects.applyArrangementVariationDraft(this.initialProject, this.draft(), {
       ...(this.presenceDraft() ? { presence: this.presenceDraft() } : {}),
       ...(policyChanged ? { policy } : {}),
