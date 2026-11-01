@@ -71,7 +71,7 @@ export class EditWorkspaceComponent {
     const name = `${exportFilename(context, this.preferences.exportNameFields())}_${safeExportName(label) || 'Phrase'}_phrase`;
     const notes = this.notes();
     const tracks = this.editedTracks().map(track => ({ track, notes: notes.filter(note => note.trackId === track.id) }));
-    return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(), this.midi.drumMapping())) };
+    return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(), this.midi.drumMapping(), this.preferences.midiPpq())) };
   }
 
   exportPhrase(): void {

@@ -1,3 +1,4 @@
+import { DEFAULT_MIDI_PPQ, validMidiPpq } from './midi-resolution';
 import { Midi } from '@tonejs/midi';
 import { midiPanValue, mixEnabled } from '../audio/mix-values';
 import type { CompositionProject } from '../project/project.model';
@@ -12,8 +13,10 @@ import { mapDrumPitch, type DrumMapping } from './drum-instruments';
  * Prepend pickup time and preserve tails. Notes already contain their sounding pitches. */
 export function generatePhraseMidi(name: string, tempoBpm: number,
   tracks: readonly { track: CompositionTrack; notes: readonly PhraseNote[] }[],
-  _phraseBeats: number, drumMapping: DrumMapping = 'general-midi'): Uint8Array {
+  _phraseBeats: number, drumMapping: DrumMapping = 'general-midi', ppq = DEFAULT_MIDI_PPQ): Uint8Array {
   const midi = new Midi();
+  if (!validMidiPpq(ppq)) throw new Error('Unsupported MIDI PPQ');
+  midi.header.fromJSON({ ...midi.header.toJSON(), ppq });
   const offset = -tracks.reduce((start, { notes }) => notes.reduce((minimum, note) => Math.min(minimum, note.startBeat), start), 0);
   midi.name = name;
   midi.header.setTempo(tempoBpm);
@@ -38,8 +41,10 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
 }
 
 /** Serialize every independent instrument track with its assigned channel and mix controls. */
-export function generateCompositionMidi(project: CompositionProject, drumMapping: DrumMapping = 'general-midi'): Uint8Array {
+export function generateCompositionMidi(project: CompositionProject, drumMapping: DrumMapping = 'general-midi', ppq = DEFAULT_MIDI_PPQ): Uint8Array {
   const midi = new Midi();
+  if (!validMidiPpq(ppq)) throw new Error('Unsupported MIDI PPQ');
+  midi.header.fromJSON({ ...midi.header.toJSON(), ppq });
   midi.name = project.name;
   const phrases = new Map(project.tracks.map(track => [track.id, layOutTrackPhrase(project, track)]));
   const offset = -[...phrases.values()].reduce((start, notes) => notes.reduce((minimum, note) => Math.min(minimum, note.startBeat), start), 0);

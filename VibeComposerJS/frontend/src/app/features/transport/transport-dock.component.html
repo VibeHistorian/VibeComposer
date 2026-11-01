@@ -22,7 +22,7 @@
 
   <div class="transport-progress">
     <div class="position-line">
-      <span class="musical-position">{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong></span>
+      <span>{{ currentTimeText() }}</span>
       <span>{{ durationText() }}</span>
     </div>
     <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"
@@ -32,6 +32,7 @@
         <i class="progress-loop-line" [style.left.%]="region.left" [style.width.%]="region.width" aria-hidden="true"></i>
       }
     </div>
+    <div class="position-line position-below"><span class="musical-position">{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong></span></div>
   </div>
 
   <div class="transport-tempo">

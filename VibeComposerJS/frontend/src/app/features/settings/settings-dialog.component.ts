@@ -1,3 +1,4 @@
+import { MIDI_PPQ_CHOICES } from '../../core/music/midi-resolution';
 import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { VARIATION_DEFINITIONS, variationStrength } from '../../core/music/arrangement-variation-catalogue';
 import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
@@ -57,6 +58,7 @@ export class SettingsDialogComponent {
     input.value = '';
     if (file) await this.instruments.load(file);
   }
+  readonly ppqOptions = MIDI_PPQ_CHOICES.map(value => ({ value: String(value), label: String(value) }));
   readonly midi = inject(MidiOutputService);
   changeDrumMapping(selection: string): void {
     this.preferences.setDrumMapping(selection as DrumMappingPreference);

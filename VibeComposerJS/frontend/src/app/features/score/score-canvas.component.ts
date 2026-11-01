@@ -506,9 +506,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const end = drag.mode === 'duration';
       const current = drag.current.startBeat + (end ? drag.current.durationBeats : 0);
       const original = drag.note.startBeat + (end ? drag.note.durationBeats : 0);
-      this.timeTooltip.set({ text: (end ? 'End ' : 'Start ') + musicalTime(current) + ' (' + musicalTime(current - original, true) + ')',
+      this.timeTooltip.set({ text: (end ? 'End ' : 'Start ') + musicalTime(current, false, this.preferences.midiPpq()) + ' (' + musicalTime(current - original, true, this.preferences.midiPpq()) + ')',
         x: Math.max(8, Math.min(this.hoverX + 14, this.width - 280)), y: Math.max(8, y > this.height - 60 ? y - 38 : y + 14) });
-    } else if (!area) this.timeTooltip.set({ text: musicalTime(this.beatAt(event)),
+    } else if (!area) this.timeTooltip.set({ text: musicalTime(this.beatAt(event), false, this.preferences.midiPpq()),
       x: Math.max(8, Math.min(this.hoverX + 14, this.width - 140)), y: Math.max(8, y > this.height - 60 ? y - 38 : y + 14) });
     else this.timeTooltip.set(null);
     this.showNoteTooltip(this.drag || this.box || this.shape || event.pointerType === 'touch' ? undefined : area,
@@ -527,7 +527,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       'global-section-harmony': 'Global track [Section harmony]',
     };
     this.noteTooltip.set({
-      time: musicalTime(note.startBeat),
+      time: musicalTime(note.startBeat, false, this.preferences.midiPpq()),
       track: order && name !== defaultName ? `${name} (#${order})` : name,
       color: `var(--role-${note.color})`,
       pitch: note.color === 'drums' ? this.midi.drumLabel(note.midi)

@@ -202,6 +202,10 @@
           <section aria-labelledby="midi-settings-title">
             <h2 id="midi-settings-title">MIDI</h2>
             <div class="setting-row">
+              <div class="setting-copy"><h3>MIDI PPQ</h3><p>Ticks per quarter note for exported MIDI and musical time displays.</p></div>
+              <div class="setting-controls"><vc-select aria-label="MIDI PPQ" [options]="ppqOptions" [value]="'' + preferences.midiPpq()" (valueChange)="preferences.setMidiPpq(+$event)" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Soundfonts</h3>
                 <p>Load an SF2 file up to 250 MiB, then choose it in the transport. Up to three banks stay loaded for this session; loading a fourth unloads the oldest. Loaded banks are cleared when the app closes.</p>
               </div>

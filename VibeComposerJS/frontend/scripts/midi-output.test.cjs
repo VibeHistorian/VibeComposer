@@ -185,3 +185,21 @@ test('phrase MIDI exports draft tracks despite mute/solo and preserves notes bey
   assert.equal(midi.tracks[1].channel,drum.midiChannel-1);
   assert.equal(midi.tracks[1].notes[0].midi,39);
 });
+
+test('song and phrase MIDI exports use the requested PPQ without changing musical positions', () => {
+  const { loadMusic } = require('./music-loader.cjs');
+  const { Midi } = require('@tonejs/midi');
+  const { generateCompositionMidi, generatePhraseMidi } = loadMusic('midi-export.ts');
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
+  for (const ppq of [96, 480, 960, 1920]) {
+    const song = new Midi(generateCompositionMidi(DEFAULT_PROJECT, 'general-midi', ppq));
+    assert.equal(song.header.ppq, ppq);
+    const phrase = new Midi(generatePhraseMidi('Test', 120, [{ track: DEFAULT_PROJECT.tracks[0], notes: [
+      { startBeat: 1.5, durationBeats: .25, midi: 60, velocity: 100 }
+    ] }], 4, 'general-midi', ppq));
+    assert.equal(phrase.header.ppq, ppq);
+    const note = phrase.tracks[0].notes[0];
+    assert.equal(note.ticks, 1.5 * ppq);
+    assert.equal(note.durationTicks, .25 * ppq);
+  }
+});

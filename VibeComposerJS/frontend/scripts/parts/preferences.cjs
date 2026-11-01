@@ -518,3 +518,18 @@ test('theme import changes only appearance and validates atomically', () => {
   assert.equal(prefs.importJson(prefs.exportJson()), true);
   assert.equal(prefs.preferences().settingsExplainersAsTooltips, false);
 });
+
+test('MIDI PPQ defaults to 960 and persists only supported resolutions', () => {
+  const { uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  assert.equal(prefs.midiPpq(), 960);
+  prefs.setMidiPpq(1920);
+  assert.equal(new UiPreferencesService().midiPpq(), 1920);
+  const saved = prefs.exportJson();
+  prefs.setMidiPpq(0);
+  assert.equal(prefs.exportJson(), saved);
+  assert.equal(prefs.importJson(JSON.stringify({ ...JSON.parse(saved), midiPpq: 123 })), false);
+  const old = JSON.parse(saved); delete old.midiPpq;
+  assert.equal(prefs.importJson(JSON.stringify(old)), true);
+  assert.equal(prefs.midiPpq(), 960);
+});

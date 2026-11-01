@@ -117,7 +117,7 @@ function fixture() {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect() {}, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false,
+    effect() {}, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false,
       drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -296,7 +296,7 @@ test('note hover immediately shows pitch, velocity, custom track order and sourc
   component.hitAreas = [hit]; component.hitColumnCount = 9; component.hitAreaBuckets.set(4, [hit]);
   component.onPointerMove({ clientX: 300, clientY: 20 });
   assert.deepEqual(component.noteTooltip(), { track: 'Deep bass (#2)', color: 'var(--role-bass)', pitch: 'C♯4 [61]', velocity: 103,
-    time: '02:1.240', source: 'Section edited phrase', x: 414, y: 34 });
+    time: '02:1.480', source: 'Section edited phrase', x: 414, y: 34 });
   assert.equal(canvas.title, undefined);
   component.onPointerMove({ clientX: 330, clientY: 20 });
   assert.equal(component.noteTooltip(), null);
@@ -594,7 +594,7 @@ test('middle drag adjusts selection velocity within MIDI bounds without changing
 test('left edge trims selection starts while retaining each note end', () => {
   const { component: c } = editFixture();
   c.onPointerDown(pointer(296, 20)); c.onPointerMove(pointer(308.5, 20));
-  assert.equal(c.timeTooltip().text, "Start 06:1.240 (+00:0.240)");
+  assert.equal(c.timeTooltip().text, "Start 06:1.480 (+00:0.480)");
   c.onPointerUp(pointer(308.5, 20));
   assert.deepEqual(c.notesChanged.values[0].notes.map(n => [n.startBeat, n.durationBeats]), [[20.5, .5], [22.5, 1.5]]);
 });
@@ -945,8 +945,8 @@ test('musical time carries ticks and formats signed differences', () => {
   const { musicalTime, elapsedTime } = loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'));
   assert.equal(musicalTime(0), '01:1.000');
   assert.equal(musicalTime(3.9999), '02:1.000');
-  assert.equal(musicalTime(1/3), '01:1.160');
-  assert.equal(musicalTime(-5.5, true), '-01:1.240');
+  assert.equal(musicalTime(1/3), '01:1.320');
+  assert.equal(musicalTime(-5.5, true), '-01:1.480');
   assert.equal(musicalTime(0, true), '+00:0.000');
   assert.equal(elapsedTime(59.9999), '01:00.000');
 });

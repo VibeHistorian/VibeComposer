@@ -1,3 +1,4 @@
+import { DEFAULT_MIDI_PPQ, validMidiPpq } from '../music/midi-resolution';
 import { decodeVariationRerolls, type VariationRerollPreferences } from './variation-reroll-preferences';
 import type { VariationKind } from '../music/arrangement-variation.model';
 import { defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type ShortcutId } from './shortcuts';
@@ -18,6 +19,10 @@ export class UiPreferencesService {
   private readonly state = signal(this.load());
   private readonly draft = signal<QuickSettings | null>(null);
   readonly preferences = this.state.asReadonly();
+  readonly midiPpq = computed(() => this.state().midiPpq ?? DEFAULT_MIDI_PPQ);
+  setMidiPpq(value: number): void {
+    if (validMidiPpq(value)) this.commit({ ...this.state(), midiPpq: value });
+  }
   readonly shortcuts = computed(() => this.state().shortcuts);
   readonly capturingShortcut = signal(false);
   matchesShortcut(id: ShortcutId, event: KeyboardEvent | MouseEvent | WheelEvent): boolean {

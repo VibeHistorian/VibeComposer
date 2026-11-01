@@ -114,6 +114,7 @@ export class TransportDockComponent {
     return `${String(measure).padStart(2, '0')}:${String(beatInMeasure).padStart(2, '0')}`;
   });
 
+  readonly currentTimeText = computed(() => elapsedTime(beatToSeconds(projectTempoMap(this.project()), this.playback.beat())));
   readonly durationText = computed(() => elapsedTime(beatToSeconds(projectTempoMap(this.project()), this.totalMeasures() * 4)));
 
   togglePlayback(): void {
