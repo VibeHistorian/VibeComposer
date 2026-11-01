@@ -153,3 +153,44 @@ test('capture normalization and preference decoding cover keys, mouse, wheel and
   assert.equal(decodeShortcuts({ undo: [null] }), null);
   assert.equal(decodeShortcuts({ freeGrid: [{ kind: 'modifier', input: 'held', ctrl: false, shift: false, alt: false }] }), null);
 });
+
+test('pointer actions release focus for global Space while keyboard and composite controls retain it', () => {
+  const { installPointerButtonFocus } = load('shared/pointer-button-focus.ts');
+  const listeners = new Map();
+  const document = { activeElement: null,
+    addEventListener: (name, callback) => listeners.set(name, callback),
+    removeEventListener: name => listeners.delete(name) };
+  const control = (tag, composite = false, type = 'button') => {
+    const element = new Element(tag, false, type);
+    element.closest = () => composite ? element : null;
+    element.blur = () => { document.activeElement = null; };
+    return element;
+  };
+  const cleanup = installPointerButtonFocus(document);
+  const button = control('button');
+  document.activeElement = button;
+  listeners.get('focusin')();
+  assert.equal(document.activeElement, button, 'initial keyboard focus stays');
+  listeners.get('pointerdown')();
+  listeners.get('click')();
+  assert.equal(document.activeElement, null, 'click releases already-focused action');
+  const f = fixture();
+  f.press(' ', { ctrlKey: false, composedPath: () => [] });
+  assert.deepEqual(f.calls, ['playback:Song']);
+  for (const element of [button, control('input', false, 'checkbox')]) {
+    document.activeElement = element;
+    listeners.get('focusin')();
+    assert.equal(document.activeElement, null, 'pointer-focused actions release');
+  }
+  listeners.get('keydown')();
+  document.activeElement = button;
+  listeners.get('focusin')();
+  assert.equal(document.activeElement, button, 'Tab focus stays');
+  listeners.get('pointerdown')();
+  const menuButton = control('button', true);
+  document.activeElement = menuButton;
+  listeners.get('focusin')();
+  assert.equal(document.activeElement, menuButton, 'composite widget focus stays');
+  cleanup();
+  assert.equal(listeners.size, 0);
+});

@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { installPointerButtonFocus } from './shared/pointer-button-focus';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal, viewChild } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { AudioExportService } from './core/audio/audio-export.service';
@@ -26,6 +28,9 @@ import { isEditingText, usesSpaceKey } from './shared/keyboard-shortcuts';
   host: { '(document:keydown)': 'historyKeydown($event)' },
 })
 export class AppComponent {
+  constructor() {
+    inject(DestroyRef).onDestroy(installPointerButtonFocus(inject(DOCUMENT)));
+  }
   readonly projectMessage = signal('');
   readonly audioExport = inject(AudioExportService);
   readonly playback = inject(AudioPlaybackService);
