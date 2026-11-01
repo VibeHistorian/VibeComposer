@@ -34,3 +34,7 @@
 
 /* Octave boundaries share canvas positions and brightness */
 .octave-boundary { position: absolute; z-index: 2; left: 0; right: 0; background: var(--score-octave-line); pointer-events: none; }
+
+/* Musical cursor position */
+.time-tooltip { position: absolute; z-index: 3; pointer-events: none; opacity: .5; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-small); background: var(--surface-base); color: var(--text-primary); font: 11px var(--font-mono); white-space: nowrap; }
+.note-tooltip-time { color: var(--text-secondary); }

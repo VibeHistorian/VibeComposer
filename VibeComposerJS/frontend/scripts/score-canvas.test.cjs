@@ -129,6 +129,7 @@ function fixture() {
     { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   new Function('module', 'exports', helperSource)(helperModule, helperModule.exports);
   new Function('require', 'module', 'exports', compiled)(name => name.startsWith('./score-') ? scoreHelper(name.slice(2))
+    : name.includes('musical-time') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'))
     : name.includes('track-color') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/track-color.ts'))
     : name.includes('phrase-edit') ? helperModule.exports
     : name.includes('drum-instruments') ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports);
@@ -290,15 +291,16 @@ test('middle press on an overview note requests its track context without openin
 
 test('note hover immediately shows pitch, velocity, custom track order and source, and clears on exit', () => {
   const { component, canvas } = fixture();
-  const note = { id: 'note', part: 'bass', trackName: 'Deep bass', trackOrder: 2, color: 'bass', midi: 61, velocity: 103, phraseSource: 'section-edited' };
+  const note = { id: 'note', startBeat: 4.5, part: 'bass', trackName: 'Deep bass', trackOrder: 2, color: 'bass', midi: 61, velocity: 103, phraseSource: 'section-edited' };
   const hit = { note, x: 390, y: 15, width: 20, height: 10 };
   component.hitAreas = [hit]; component.hitColumnCount = 9; component.hitAreaBuckets.set(4, [hit]);
   component.onPointerMove({ clientX: 300, clientY: 20 });
   assert.deepEqual(component.noteTooltip(), { track: 'Deep bass (#2)', color: 'var(--role-bass)', pitch: 'C♯4 [61]', velocity: 103,
-    source: 'Section edited phrase', x: 414, y: 34 });
+    time: '02:1.240', source: 'Section edited phrase', x: 414, y: 34 });
   assert.equal(canvas.title, undefined);
   component.onPointerMove({ clientX: 330, clientY: 20 });
   assert.equal(component.noteTooltip(), null);
+  assert.ok(component.timeTooltip().text.match(/^\d+:\d\.\d{3}$/));
   component.showNoteTooltip({ ...hit, note: { ...note, trackName: 'B2', midi: 0, phraseSource: 'global-generated' } }, 799, 299);
   assert.equal(component.noteTooltip().track, 'B2');
   assert.equal(component.noteTooltip().pitch, 'C-1 [0]');
@@ -592,6 +594,7 @@ test('middle drag adjusts selection velocity within MIDI bounds without changing
 test('left edge trims selection starts while retaining each note end', () => {
   const { component: c } = editFixture();
   c.onPointerDown(pointer(296, 20)); c.onPointerMove(pointer(308.5, 20));
+  assert.equal(c.timeTooltip().text, "Start 06:1.240 (+00:0.240)");
   c.onPointerUp(pointer(308.5, 20));
   assert.deepEqual(c.notesChanged.values[0].notes.map(n => [n.startBeat, n.durationBeats]), [[20.5, .5], [22.5, 1.5]]);
 });
@@ -936,4 +939,14 @@ test('remapped phrase seek uses the configured mouse combination and leaves the 
   assert.equal(c.drag, null);
   c.onPointerDown({ ...event, altKey: false });
   assert.equal(c.seekRequested.values.length, 1, 'a partial modifier combination cannot seek');
+});
+
+test('musical time carries ticks and formats signed differences', () => {
+  const { musicalTime, elapsedTime } = loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'));
+  assert.equal(musicalTime(0), '01:1.000');
+  assert.equal(musicalTime(3.9999), '02:1.000');
+  assert.equal(musicalTime(1/3), '01:1.160');
+  assert.equal(musicalTime(-5.5, true), '-01:1.240');
+  assert.equal(musicalTime(0, true), '+00:0.000');
+  assert.equal(elapsedTime(59.9999), '01:00.000');
 });

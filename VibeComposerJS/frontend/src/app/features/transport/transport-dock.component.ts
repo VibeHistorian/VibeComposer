@@ -1,3 +1,5 @@
+import { elapsedTime } from '../../core/ui/musical-time';
+import { beatToSeconds, projectTempoMap } from '../../core/music/section-context';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { isScaleMode } from '../../core/music/scales';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
@@ -106,11 +108,13 @@ export class TransportDockComponent {
   readonly positionText = computed(() => {
     const duration = this.playback.durationBeats();
     const beat = this.playback.beat();
-    if (duration > 0 && beat >= duration) return 'END';
+
     const measure = Math.floor(beat / 4) + 1;
     const beatInMeasure = Math.floor(beat % 4) + 1;
-    return `BAR ${String(measure).padStart(2, '0')} · BEAT ${beatInMeasure}`;
+    return `${String(measure).padStart(2, '0')}:${String(beatInMeasure).padStart(2, '0')}`;
   });
+
+  readonly durationText = computed(() => elapsedTime(beatToSeconds(projectTempoMap(this.project()), this.totalMeasures() * 4)));
 
   togglePlayback(): void {
     void this.playback.toggle(this.project());

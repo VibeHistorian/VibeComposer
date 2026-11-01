@@ -1,3 +1,4 @@
+import { musicalTime } from '../../core/ui/musical-time';
 import { trackColor } from '../../core/ui/track-color';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import {
@@ -116,7 +117,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly noteAdded = output<{ trackId?: string; midi: number; startBeat: number }>();
   readonly gutterRows = signal<readonly { midi: number; label: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[]>([]);
   readonly octaveLines = signal<readonly { midi: number; y: number; height: number; opacity: number }[]>([]);
-  readonly noteTooltip = signal<{ track: string; color: string; pitch: string; velocity: number; source: string; x: number; y: number } | null>(null);
+  readonly timeTooltip = signal<{ text: string; x: number; y: number } | null>(null);
+  readonly noteTooltip = signal<{ time: string; track: string; color: string; pitch: string; velocity: number; source: string; x: number; y: number } | null>(null);
   private pitchMin = 48;
   private pitchMax = 72;
   private drumPitches: number[] = [];
@@ -189,7 +191,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       selectedTrackId: this.selectedTrackId(),
       hiddenTrackIds: this.hiddenTrackIds(),
     };
-    this.noteTooltip.set(null);
+    this.noteTooltip.set(null); this.timeTooltip.set(null);
     this.drawStatic();
   });
   private readonly playheadEffect = effect(() => {
@@ -309,7 +311,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private readonly onCanvasWheel = (event: WheelEvent): void => {
-    this.noteTooltip.set(null);
+    this.noteTooltip.set(null); this.timeTooltip.set(null);
     event.preventDefault();
     event.stopPropagation();
     if (!this.app || this.width <= 0) return;
@@ -497,6 +499,18 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     canvas.style.cursor = this.hoveredNote ? (this.hoveredNote.zone === 'move' ? 'grab' : 'ew-resize')
       : area ? 'pointer' : 'default';
     this.drawDynamic();
+    const hidden = this.box || this.shape || event.pointerType === 'touch' || y >= this.scoreHeight;
+    if (hidden) this.timeTooltip.set(null);
+    else if (this.drag) {
+      const drag = this.drag;
+      const end = drag.mode === 'duration';
+      const current = drag.current.startBeat + (end ? drag.current.durationBeats : 0);
+      const original = drag.note.startBeat + (end ? drag.note.durationBeats : 0);
+      this.timeTooltip.set({ text: (end ? 'End ' : 'Start ') + musicalTime(current) + ' (' + musicalTime(current - original, true) + ')',
+        x: Math.max(8, Math.min(this.hoverX + 14, this.width - 280)), y: Math.max(8, y > this.height - 60 ? y - 38 : y + 14) });
+    } else if (!area) this.timeTooltip.set({ text: musicalTime(this.beatAt(event)),
+      x: Math.max(8, Math.min(this.hoverX + 14, this.width - 140)), y: Math.max(8, y > this.height - 60 ? y - 38 : y + 14) });
+    else this.timeTooltip.set(null);
     this.showNoteTooltip(this.drag || this.box || this.shape || event.pointerType === 'touch' ? undefined : area,
       this.hoverX, y);
   };
@@ -513,18 +527,19 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       'global-section-harmony': 'Global track [Section harmony]',
     };
     this.noteTooltip.set({
+      time: musicalTime(note.startBeat),
       track: order && name !== defaultName ? `${name} (#${order})` : name,
       color: `var(--role-${note.color})`,
       pitch: note.color === 'drums' ? this.midi.drumLabel(note.midi)
         : `${['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'][note.midi % 12]}${Math.floor(note.midi / 12) - 1} [${note.midi}]`,
       velocity: note.velocity, source: sources[note.phraseSource ?? 'global-generated'],
       x: Math.max(8, Math.min(x + 14, this.width - 248)),
-      y: y + 90 <= this.height ? y + 14 : Math.max(8, y - 82),
+      y: y + 110 <= this.height ? y + 14 : Math.max(8, y - 102),
     });
   }
 
   private readonly onPointerLeave = (): void => {
-    this.noteTooltip.set(null);
+    this.noteTooltip.set(null); this.timeTooltip.set(null);
     this.hoverX = null;
     this.hoveredNote = null;
     this.drawDynamic();
@@ -598,7 +613,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       && event.clientY >= bounds.top && event.clientY < bounds.top + bounds.height && !this.hitAreaAt(event);
   }
   private readonly onPointerDown = (event: PointerEvent): void => {
-    this.noteTooltip.set(null);
+    this.noteTooltip.set(null); this.timeTooltip.set(null);
     if (event.pointerType === 'touch' && this.app) {
       event.preventDefault();
       this.touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -776,7 +791,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private drawStatic(preservePitchPosition = false): void {
-    this.noteTooltip.set(null);
+    this.noteTooltip.set(null); this.timeTooltip.set(null);
     const model = this.model;
     if (!model || !this.app || this.width <= 0 || this.height <= 0) return;
     const graphics = this.staticGraphics;

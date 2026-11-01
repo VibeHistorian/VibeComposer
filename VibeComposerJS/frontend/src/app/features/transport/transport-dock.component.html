@@ -22,8 +22,8 @@
 
   <div class="transport-progress">
     <div class="position-line">
-      <span>{{ positionText() }}</span>
-      <span>{{ totalMeasures() }} BARS</span>
+      <span class="musical-position">{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong></span>
+      <span>{{ durationText() }}</span>
     </div>
     <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"
       [attr.aria-valuetext]="positionText()" (click)="seek($event)" (keydown)="seekKey($event)">
