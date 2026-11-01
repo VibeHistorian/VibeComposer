@@ -5,8 +5,10 @@ header, footer { display: flex; align-items: flex-start; justify-content: space-
 h1 { margin: 0; font-size: 20px; }
 p { color: var(--text-muted); font-size: 12px; line-height: 1.5; }
 footer { justify-content: flex-end; margin-top: 16px; }
-button, input { border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: inherit; }
+button, input { border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); }
 button { cursor: pointer; padding: 7px 10px; }
+button:hover:not(:disabled) { background: var(--surface-button-hover); }
+button:active:not(:disabled) { border-color: var(--border-accent); background: var(--surface-accent); }
 button:disabled { opacity: .5; cursor: default; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
