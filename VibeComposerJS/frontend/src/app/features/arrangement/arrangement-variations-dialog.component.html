@@ -36,7 +36,11 @@
           <article [attr.data-variation-status]="item.inspection.status">
             <div class="variation-line">
               <div class="variation-target">
-              <span class="variation-label"><strong>{{ item.track.name }}</strong> · {{ item.inspection.label }}</span>
+              <span class="variation-label"><strong>{{ item.track.name }}</strong> ·
+                <vc-select #replacer="vcSelect" class="variation-replace" [displayLabel]="item.inspection.label" [options]="item.replacements" value=""
+                  [attr.aria-label]="'Replace ' + item.track.name + ' variation'" [disabled]="stale() || !item.replacements.length"
+                  (valueChange)="replace(row.section.id, item.track.id, $event); replacer.restoreValue()" />
+              </span>
             <button type="button" class="variation-lock" [attr.aria-label]="'Lock ' + item.track.name + ' variation'" title="Lock variation against rerolls"
               [attr.aria-pressed]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (click)="keep(row.section.id, item.track.id, item.inspection.choice.origin !== 'authored')">⍟</button>
             <button type="button" class="variation-delete" [attr.aria-label]="'Delete ' + item.track.name + ' variation'" title="Delete variation" [disabled]="stale()" (click)="remove(row.section.id, item.track.id)">×</button>
@@ -45,6 +49,11 @@
                 @for (effect of item.effects; track $index) { <span class="effect-value">{{ effect }}</span> }
               </div>
             </div>
+            @if (item.inspection.choice.kind === 'melody-speed') {
+              <label class="variation-strength">Speed points <input type="number" min="1" max="200" step="1"
+                [attr.aria-label]="item.track.name + ' speed variation strength'" [disabled]="stale()"
+                [value]="item.inspection.choice.parameters?.speedDelta ?? 15" (change)="setSpeedStrength(row.section.id, item.track.id, $event)" /></label>
+            }
             @if (item.detail) { <span class="effect-status">{{ item.detail }}</span> }
           </article>
         }

@@ -40,3 +40,9 @@ article { padding: 10px; margin-bottom: 8px; background: var(--surface-low); bor
 .effect-status, .context-warning { display: block; margin: 6px 0 0 24px; font-size: 12px; overflow-wrap: anywhere; }
 .context-warning, [role="alert"] { color: var(--accent-primary); }
 .presence-changes { margin-bottom: 10px; font-size: 12px; color: var(--text-secondary); }
+
+/* Choice authoring */
+.variation-label { min-width: 0; }
+.variation-replace { display: inline-block; max-width: 100%; font: inherit; cursor: pointer; border-bottom: 1px dotted var(--border-strong); }
+.variation-strength { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px; color: var(--text-muted); }
+.variation-strength input { width: 60px; padding: 3px 5px; }

@@ -1,3 +1,4 @@
+import { arpSubdivisionEligibility, arpSubdivisionWindow } from './arrangement-subdivision-ramp';
 import { VARIATION_DEFINITIONS } from './arrangement-variation-catalogue';
 import type { MelodyGlobalSettings } from './part-settings.model';
 import type { ArrangementSection } from '../project/arrangement.model';
@@ -37,6 +38,14 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
     before: values[parameter], after: values[parameter], effective: values[parameter],
     source: Object.hasOwn(trackPatch, parameter) ? 'Section track override' : 'Section role override',
   })));
+  if (choice.kind === 'arp-subdivision-ramp') {
+    const status = arpSubdivisionEligibility(track, section);
+    if (status) return result(status, status === 'manual' ? 'Manual region protects the subdivision window'
+      : status === 'overridden' ? 'Explicit section controls protect this ramp' : 'Current rhythm, timing or section duration prevents this ramp');
+    const window = arpSubdivisionWindow(section)!;
+    const hits = track.generatorSettings.hitsPerPattern ?? 8;
+    return result('active', `Grid ${hits} → 8 → 16 over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; staged at the midpoint, sounding pitches retained`);
+  }
   if (choice.kind === 'accompaniment-velocity-ramp') {
     const status = velocityEnvelopeEligibility(track, section, choice.amount);
     if (status) return result(status, status === 'manual' ? 'Manual region protects the ramp window'

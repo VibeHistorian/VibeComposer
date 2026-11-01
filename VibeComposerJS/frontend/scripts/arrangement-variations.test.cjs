@@ -1487,3 +1487,146 @@ test('manual addition catalogue ignores random exclusions but enforces scope, oc
   assert.equal(dialogFixture.service.applyArrangementVariationDraft(dialog.initialProject,dialog.draft()),'changed');
   dialogFixture.service.undo();assert.equal(dialogFixture.service.exportProjectJson(),before);
 });
+
+
+test('Arp subdivision stages bounded rates while preserving original attacks, metadata and outside material', () => {
+  const { load } = setup(), ramp=load('core/music/arrangement-subdivision-ramp.ts');
+  const window={startBeat:8,endBeat:16}, slots=[{startBeat:8,endBeat:12},{startBeat:12,endBeat:16}];
+  for (const hits of [4,8]) {
+    const notes=Array.from({length:16*hits/4+1},(_,i)=>({id:'stage-'+i,midi:60+i%3,startBeat:i*4/hits,durationBeats:4/hits,velocity:80,sectionId:'own',phraseSource:'generated'}));
+    const copy=structuredClone(notes), applied=ramp.applyArpSubdivision(notes,window,slots,hits,'arp');
+    assert.deepEqual(notes,copy);
+    assert.deepEqual(applied.filter(n=>n.startBeat<8||n.startBeat>=16),notes.filter(n=>n.startBeat<8||n.startBeat>=16));
+    for (const original of notes) {
+      const actual=applied.find(n=>n.id===original.id);
+      assert.deepEqual({...actual,durationBeats:original.durationBeats},original);
+    }
+    assert.equal(applied.filter(n=>n.startBeat>=8&&n.startBeat<12).length,8);
+    assert.equal(applied.filter(n=>n.startBeat>=12&&n.startBeat<16).length,16);
+    const extra=applied.filter(n=>n.id.includes('-subdivision-'));
+    assert.ok(extra.every(n=>n.velocity===64&&n.sectionId==='own'&&n.phraseSource==='generated'&&n.startBeat+n.durationBeats<=16));
+    assert.equal(new Set(applied.map(n=>n.id)).size,applied.length);
+    assert.deepEqual(applied,ramp.applyArpSubdivision(notes,window,slots,hits,'arp'));
+  }
+  const source={id:'source',midi:60,startBeat:12,durationBeats:1,velocity:80};
+  const ringing={...source,id:'ringing',startBeat:7,durationBeats:9};
+  assert.deepEqual(ramp.applyArpSubdivision([ringing,source],window,slots,4,'arp'),[ringing,source]);
+  assert.deepEqual(ramp.applyArpSubdivision([],window,slots,4,'arp'),[]);
+  const simultaneous={...source,id:'double'};
+  assert.deepEqual(ramp.applyArpSubdivision([source,simultaneous],window,slots,4,'arp'),[source,simultaneous]);
+});
+
+test('Arp subdivision eligibility protects manual ownership, explicit settings, dense and dependent grids', () => {
+  const {track,section,load}=endFillSetup(), ramp=load('core/music/arrangement-subdivision-ramp.ts');
+  assert.equal(ramp.arpSubdivisionEligibility(track,section),undefined);
+  assert.deepEqual(ramp.arpSubdivisionWindow(section),{startBeat:8,endBeat:16});
+  assert.deepEqual(ramp.arpSubdivisionWindow({...section,measures:4,customDurations:[3,2],context:{beatDurationMultiplier:2}}),{startBeat:12,endBeat:20});
+  for (const patch of [{hitsPerPattern:16},{rhythm:'melody'},{rhythm:'euclid'},{patternRepeat:2},{patternShift:1},{swingPercent:60},{pauseChance:10},{arpContour:[0,1]},{useCustomVelocities:true}])
+    assert.equal(ramp.arpSubdivisionEligibility({...track,generatorSettings:{...track.generatorSettings,...patch}},section),'incompatible');
+  for (const key of ['hitsPerPattern','rate','swingPercent','arpContour'])
+    assert.equal(ramp.arpSubdivisionEligibility(track,{...section,trackPartOverrides:{[track.id]:{[key]:track.generatorSettings[key]??8}}}),'overridden');
+  assert.equal(ramp.arpSubdivisionEligibility(track,{...section,trackPhrases:{[track.id]:[]}}),'manual');
+  assert.equal(ramp.arpSubdivisionEligibility({...track,phraseEdits:[{startBeat:10,endBeat:11,notes:[]}]},section),'manual');
+  assert.equal(ramp.arpSubdivisionEligibility({...track,phraseEdits:[{startBeat:0,endBeat:2,notes:[]}]},section),undefined);
+  assert.equal(ramp.arpSubdivisionEligibility(track,{...section,measures:1}),'incompatible');
+  assert.equal(ramp.arpSubdivisionEligibility(track,{...section,customDurations:[1,4]}),'incompatible');
+});
+
+test('Arp subdivision planning reserves one activity event and keeps lower-budget streams stable', () => {
+  const {project,track,engine,load}=endFillSetup(), kind='arp-subdivision-ramp';
+  const context=load('core/music/arrangement-variation-context.ts');
+  for (let seed=0n;seed<30n;seed++) {
+    const plan=engine.planSectionVariations(project.tracks,project.arrangement,1,seed,{chance:100,maxChanges:5});
+    assert.equal(plan.choices.filter(c=>c.kind===kind).length,1);
+    assert.equal(plan.choices.filter(c=>context.isActivityVariation(c.kind)).length,1);
+    assert.ok(plan.choices.length<=5);
+    assert.deepEqual(plan,engine.planSectionVariations([...project.tracks].reverse(),project.arrangement,1,seed,{chance:100,maxChanges:5}));
+    const low=engine.planSectionVariations(project.tracks,project.arrangement,1,seed,{chance:100,maxChanges:4});
+    assert.ok(!low.choices.some(c=>c.kind===kind));
+    const retained=[{trackId:track.id,kind,amount:1,enabled:false}];
+    const scoped=engine.planSectionVariations(project.tracks.filter(t=>t.id!==track.id),project.arrangement,1,seed,{chance:100,maxChanges:4},{allTracks:project.tracks,retainedChoices:retained});
+    assert.ok(!scoped.choices.some(c=>[kind,'arp-end-fill','pre-drop-cut'].includes(c.kind)));
+  }
+});
+
+test('Arp subdivision shares section-owned output with parsed MIDI and survives Apply, history and import', () => {
+  const {project,track,service,phrase,midi,load}=endFillSetup(), {Midi}=require('@tonejs/midi');
+  const choice={trackId:track.id,kind:'arp-subdivision-ramp',amount:1,enabled:true};
+  const variations={seed:'9223372036854775807',policy:{chance:100,maxChanges:5},choices:[choice]};
+  assert.equal(service.importProjectJson(JSON.stringify(project)),true);
+  const before=service.exportProjectJson();
+  const baseline=phrase.layOutTrackPhrase(service.project(),track,true,true);
+  assert.equal(service.applyArrangementVariationDraft(service.project(),{[project.arrangement[1].id]:variations}),'changed');
+  const saved=service.exportProjectJson(), notes=phrase.layOutTrackPhrase(service.project(),track,true,true);
+  const added=notes.filter(n=>n.id.includes('-subdivision-'));
+  assert.ok(added.length>0);assert.ok(added.every(n=>n.sectionId===project.arrangement[1].id));
+  assert.deepEqual(notes.filter(n=>n.sectionId!==project.arrangement[1].id),baseline.filter(n=>n.sectionId!==project.arrangement[1].id));
+  const bytes=midi.generateCompositionMidi(service.project()), parsed=new Midi(bytes).tracks.find(t=>t.name===track.name);
+  const sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
+  assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,n.durationTicks,Math.round(n.velocity*127)]).sort(sort),
+    notes.map(n=>[n.midi,Math.round(n.startBeat*480),Math.round(n.durationBeats*480),n.velocity]).sort(sort));
+  service.undo();assert.equal(service.exportProjectJson(),before);service.redo();assert.equal(service.exportProjectJson(),saved);
+  assert.equal(service.importProjectJson(saved),true);assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
+  const inspect=load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
+  assert.equal(inspect(track,{...project.arrangement[1],variations},choice).status,'active');
+});
+
+
+test('choice replacement and speed editing retain authored ownership, exact seeds and detached history', () => {
+  const f=fixture({contextualMelody:false,dialogData:{}}), Dialog=f.load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
+  const initial=f.service.project();
+  f.service.state.set({...initial,arrangement:initial.arrangement.map(section=>({...section,trackPresence:Object.fromEntries(initial.tracks.map(t=>[t.id,true]))}))});
+  const d=new Dialog(), before=f.service.exportProjectJson();d.dialog={close(){}};
+  const row=d.rows().find(r=>r.additions.some(o=>o.choice.kind==='melody-speed'));
+  const option=row.additions.find(o=>o.choice.kind==='melody-speed');
+  d.add(row.section.id,option.value);
+  let item=d.rows().find(r=>r.section.id===row.section.id).choices.find(i=>i.track.id===option.choice.trackId);
+  const originalSeed=item.inspection.choice.seed;
+  d.setSpeedStrength(row.section.id,item.track.id,{target:{value:'45'}});
+  assert.equal(d.draft()[row.section.id].choices.find(c=>c.trackId===item.track.id).parameters.speedDelta,45);
+  for (const value of ['0','201','1.5','']) {
+    const target={value};d.setSpeedStrength(row.section.id,item.track.id,{target});assert.equal(target.value,'45');
+  }
+  const replacement=item.replacements.find(o=>o.choice.kind==='melody-direction');assert.ok(replacement);
+  d.replace(row.section.id,item.track.id,replacement.value);
+  const changed=d.draft()[row.section.id].choices.find(c=>c.trackId===item.track.id);
+  assert.equal(changed.kind,'melody-direction');assert.equal(changed.parameters,undefined);
+  assert.equal(changed.origin,'authored');assert.equal(changed.seed,originalSeed);
+  assert.equal(f.service.exportProjectJson(),before);
+  const snapshot=structuredClone(d.draft());d.replace(row.section.id,item.track.id,'invalid');assert.deepEqual(d.draft(),snapshot);
+  d.apply();const saved=f.service.exportProjectJson();assert.notEqual(saved,before);
+  f.service.undo();assert.equal(f.service.exportProjectJson(),before);f.service.redo();assert.equal(f.service.exportProjectJson(),saved);
+  d.replace(row.section.id,item.track.id,option.value);assert.deepEqual(d.draft(),snapshot,'stale edits rejected');
+});
+
+
+test('subdivision output preserves baseline draws across custom timing, harmony and maximum humanization', () => {
+  const {project,track,phrase,load,engine}=endFillSetup();
+  const ramp=load('core/music/arrangement-subdivision-ramp.ts');
+  for (const hits of [4,8]) for (const customDurations of [undefined,[3,5,2]]) for (const multiplier of [1,2])
+    for (const humanization of [undefined,{timingBeats:.25,durationBeats:.25}]) {
+    const t={...track,generatorSettings:{...track.generatorSettings,hitsPerPattern:hits}};
+    const section={...project.arrangement[1],measures:6,customDurations,context:{beatDurationMultiplier:multiplier}};
+    const arrangement=project.arrangement.map(s=>s.id===section.id?section:s);
+    const p={...project,key:'F♯',scale:'dorian',humanization,tracks:project.tracks.map(track=>track.id===t.id?t:track),arrangement};
+    const baseline=phrase.layOutTrackPhrase(p,t,true,true);
+    const choice={trackId:t.id,kind:'arp-subdivision-ramp',amount:1,enabled:true};
+    const variations={seed:'-9223372036854775808',policy:{chance:100,maxChanges:5},choices:[choice]};
+    assert.equal(engine.validSectionVariations(variations,p.tracks),true);
+    const applied=phrase.layOutTrackPhrase({...p,arrangement:arrangement.map(s=>s.id===section.id?{...s,variations}:s)},t,true,true);
+    assert.ok(applied.length>baseline.length);
+    const window=ramp.arpSubdivisionWindow(section), start=16;
+    const originals=new Map(applied.filter(n=>!n.id.includes('-subdivision-')).map(n=>[n.sectionId+'/'+n.id+'/'+n.startBeat,n]));
+    for(const note of baseline) {
+      const actual=originals.get(note.sectionId+'/'+note.id+'/'+note.startBeat);assert.ok(actual);
+      if(note.sectionId!==section.id||note.startBeat<start+window.startBeat||note.startBeat>=start+window.endBeat)assert.deepEqual(actual,note);
+      else assert.deepEqual({...actual,durationBeats:note.durationBeats},note);
+    }
+    const extra=applied.filter(n=>n.id.includes('-subdivision-'));
+    assert.ok(extra.length<=64&&extra.every(n=>n.startBeat>=start+window.startBeat&&n.startBeat+n.durationBeats<=start+window.endBeat));
+    for (const invalid of [{...choice,amount:-1},{...choice,parameters:{speedDelta:15}},{...choice,trackId:project.tracks.find(t=>t.role==='melody').id}])
+      assert.equal(engine.validSectionVariations({...variations,choices:[invalid]},p.tracks),false);
+  }
+  const note={id:'own',midi:60,startBeat:12,durationBeats:1,velocity:80}, neighbor={...note,id:'neighbor',startBeat:11,durationBeats:5};
+  assert.deepEqual(ramp.applyArpSubdivision([note],{startBeat:8,endBeat:16},[{startBeat:12,endBeat:16}],4,'arp',[neighbor]),[note]);
+});

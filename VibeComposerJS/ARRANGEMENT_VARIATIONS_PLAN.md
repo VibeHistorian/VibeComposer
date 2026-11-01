@@ -111,7 +111,7 @@ Recommend expansion for reinforce-foundation and contraction for thin/resolve wh
 
 Planning, inspection and effective settings resolution receive the project's global Melody mode. The operation is inactive when contextual Melody is disabled, including saved choices after switching mode. Generation, dependency contexts, scoped editing/copying and output share this resolution. The inspector shows both effective range endpoints and marks incompatible mode/bounds normally. No new preference or automatic activation is introduced.
 
-The first discrete section-end event is delivered below. The final-slot accompaniment retrigger fill is delivered below. The bounded accompaniment velocity envelope is delivered below. Next design slice: an instrument-aware Arp subdivision ramp, with staged onset rates over actual section-relative windows, bounded extra attacks and explicit collision/ownership policy. Continuous register ramps and dependency-changing melody events require further consumers, not repeated static range patches.
+The first discrete section-end event is delivered below. The final-slot accompaniment retrigger fill is delivered below. The bounded accompaniment velocity envelope is delivered below. The bounded full-grid Arp subdivision ramp is delivered below; additional rhythm/instrument adapters remain incremental work. Continuous register ramps and dependency-changing melody events require further consumers, not repeated static range patches.
 
 ## Development direction and later user controls
 
@@ -133,7 +133,7 @@ Newly planned Melody speed choices capture `parameters: { speedDelta }`, includi
 
 Catalogue-owned validation rejects missing/unknown parameter keys, arrays, null, fractional/out-of-range magnitudes and parameters on unsupported kinds. Planning eligibility, actual adapters, inspection, dependency contexts and shared phrase/MIDI/audio output use the same saved delta. Existing explicit speed overrides, custom-duration exclusions, manual ownership and presence semantics remain intact. No additional random draws are consumed, and default seeded musical results stay the same. JSON/session import, Apply, history and duplication detach nested parameter objects.
 
-Authored-choice ownership and retention are delivered below; allowed generation kinds and explicit popup insertion/editing follow. Extend concrete strength schemas to other operations using their own units; the Melody speed field is not a universal intensity percentage.
+Authored-choice ownership, retention, allowed generation kinds and explicit popup insertion/replacement/strength editing are delivered below. Extend concrete strength schemas to other operations using their own units; the Melody speed field is not a universal intensity percentage.
 
 ### Authored ownership and retention (delivered, 2026-11-01)
 
@@ -145,7 +145,7 @@ Compose that keeps the current sections preserves authored choices through the s
 
 Reset remains an explicit removal action, including authored choices within its scope. Releasing Keep then rerolling permits intentional replacement; the dedicated insertion/replacement UI remains future work. Existing enable/disable toggles preserve ownership. Ownership and realization fields validate on import, persist with history/session/JSON and remain independent of manual phrase ownership or explicit section setting precedence.
 
-Next: allowed-for-generation kinds, followed by explicit insertion/editing which should create authored choices automatically. Other operation-specific strength schemas remain incremental follow-ups.
+Allowed-for-generation kinds, explicit insertion, replacement and Melody speed editing are delivered below. Other operation-specific strength schemas remain incremental follow-ups.
 
 ### UI-owned reroll preferences and Lock toggle (delivered, 2026-11-01)
 
@@ -157,7 +157,7 @@ Saved choices continue to carry their own parameters and realization seeds. Elig
 
 The popup no longer contains the Melody speed policy input. Keep on reroll is now one ⍟ Lock toggle beside the variation label, using the track-panel symbol, dimensions and pressed-state styling. Its authored ownership, seed pinning, explicit release and Reset behavior remain unchanged. The inline parameter/range formatting stays intact.
 
-Next: explicit popup insertion/editing, using the catalogue for compatibility rather than the random-generation allowlist. Initial selection defaults may read UI strengths, while the resulting authored choice must capture concrete values. Further operation-specific strength schemas remain incremental work.
+Explicit popup insertion/replacement and Melody speed editing are delivered below, using consumer compatibility independently of the automatic allowlist. Initial speed defaults are captured on authored choices. Further operation-specific strength schemas remain incremental work.
 
 ### Compact section headers and explicit insertion (delivered, 2026-11-01)
 
@@ -167,11 +167,11 @@ The + action uses the shared accessible select/listbox control, offering track, 
 
 Selecting an entry stages an enabled authored choice, pins its realization seed and captures the current Melody speed default where applicable. Other strengths retain their existing operation defaults. Existing draft seed/policy are preserved; a section without variations gets a fresh exact 48-bit seed and the current draft policy. Apply commits once through ProjectService; Cancel and Undo preserve their usual ownership/history behavior. Adding does not reroll presence, other tracks or unrelated choices. The action selector resets its bound value after selection, allowing the same option again after a later Reset.
 
-Next authoring work: explicit removal/replacement and editing existing choices, then further typed strength controls. These are separate from this first insertion workflow.
+Removal, replacement and per-choice Melody speed editing are delivered below. Additional operation-specific strength controls remain incremental work.
 
 ### Shared definitions and configurable strength
 
-These controls are planned follow-ups, not implemented UI. Establish a small framework-independent operation catalogue shared by planning, popup authoring, inspection, validation and actual consumers: supported roles/modes, directions, parameter units/defaults/bounds, and allocation/conflict groups. Separate automatic suitability from functional compatibility. A general effect-vector framework is not a prerequisite.
+The shared catalogue and Melody speed strength controls are delivered; further typed strengths remain planned. The framework-independent catalogue is shared by planning, popup authoring, inspection, validation and actual consumers: supported roles/modes, directions, parameter units/defaults/bounds, and allocation/conflict groups. Separate automatic suitability from functional compatibility. A general effect-vector framework is not a prerequisite.
 
 The existing `amount: -1 | 1` is direction. Configurable strength needs operation-specific typed parameters rather than arbitrary settings patches or one universal percentage. Examples include Melody speed delta in speed points (currently 15), range expansion in semitones, register movement in whole octaves, supported subdivision/pulse steps, fill attack cap/spacing/window, and envelope endpoint gain/window/curve. Presets can map to concrete parameters where useful.
 
@@ -195,7 +195,7 @@ Record authored ownership for inserted/edited choices. Recommended lifecycle: au
 
 ### Follow-up delivery order
 
-First establish shared definitions and concrete strength/ownership contracts. Then expose allowed-for-generation kinds and default strengths, followed by popup insertion/editing with authored-choice retention. Consumers added meanwhile, including the next Arp subdivision ramp, should fit this model. Preserve current defaults until corresponding controls are exposed. Validate deterministic filtering, bounds, ownership, explicit replacement, history/persistence and shared score/playback/MIDI/audio output. Optional listening is useful feedback, not a completion requirement.
+Shared definitions, ownership contracts, allowed generation kinds, Melody speed default strength, popup insertion/replacement and per-choice speed editing are delivered. The initial Arp subdivision ramp also uses this model. Next extend operation-specific typed strengths and rhythm/instrument adapters before adding dependency-changing Melody events or shared harmony/timing. Preserve current defaults until corresponding controls are exposed. Validate deterministic filtering, bounds, ownership, explicit replacement, history/persistence and shared score/playback/MIDI/audio output. Optional listening is useful feedback, not a completion requirement.
 
 Consider effect vectors and compatibility/exclusion groups only as the catalogue grows. The static catalogue is complemented by the first accompaniment boundary event below; fills and continuous ramps remain separate consumers.
 
@@ -241,6 +241,26 @@ Explicit section velocityMin/velocityMax, protected grid/timing/interpretation f
 
 Apply the envelope to section-owned notes after baseline output humanization in `layOutTrackPhrase`, preserving earlier/later notes and their independent random draws. No further random values are needed to realize the curve. The immutable-project layout cache shares the resulting velocities among score, playback, loops and MIDI/audio export. Melody dependency contexts do not change. The inspector shows 100% → 115% or 100% → 80%, the resolved beat window and attack sampling in the existing inline explanation; disabled drafts retain that explanation. Saved choices use normal Apply/Cancel, history, JSON/session, duplication and track cleanup. Moving/changing section purpose retains the saved amount and reports a context mismatch until an explicit reroll.
 
+## Choice replacement and speed editing (delivered, 2026-11-01)
+
+The popup removes choices with the × button beside Lock. Eligible choices return immediately to the + pool. Selecting an existing operation label opens compatible replacements for that same track, evaluated after removing its current choice. This preserves one choice per track and respects hard section capacity even at capacity; automatic allowlists, chance and budget heuristics do not constrain replacement.
+
+Melody speed choices expose their saved strength in speed points (integer 1–200). Invalid inputs restore the current saved value. Replacing or editing records authored ownership and retains the exact per-choice seed (or captures the section seed); replacement captures current insertion defaults and discards parameters belonging to the old kind. Lock releases or retains the resulting choice as usual. All changes remain detached until Apply, with Cancel, stale-project rejection and single-commit history preserved.
+
+The octave-lift commentary was removed. Context-mismatched parameter explanations use the accent color with a hover explanation. Section controls changed only by an active settings variation use the track role color for their border, while their inheritance markers remain neutral; explicit overrides retain normal category styling.
+
+## Bounded Arp subdivision ramp (delivered, 2026-11-01)
+
+`arrangement-subdivision-ramp.ts` adds `arp-subdivision-ramp` (+1 only) for generated full-grid Arps. Its window is `[sectionEnd - min(8, sectionDuration / 2), sectionEnd)`, once per section, with a stage boundary at the window midpoint. Four-hit grids stage 8 then 16 subdivisions per chord slot; eight-hit grids keep 8 then stage 16. These are nominal rates: collision, ownership and source-note constraints may produce fewer attacks. Sections of at most four beats and slots shorter than two actual beats are excluded.
+
+The consumer retriggers the sounding source pitch rather than inventing a pitch contour. It subdivides the actual gap bounded by the nominal source grid, next actual onset, owning chord slot, stage boundary and section ending. New attacks are at least .125 beat apart from their following boundary, with at most 64 additions per section. Each uses 80% of the source velocity (floored, at least one) and 80% of its remaining subdivision duration. Simultaneous source attacks and collisions with another ringing note on the same key are skipped. Empty passages stay empty. Existing attacks retain identity, timing, pitch and velocity; only a source sustain crossing its retrigger shortens. Nothing before the window is shortened. Added IDs include source identity, track identity, source index and subdivision index; section/source metadata is copied.
+
+Eligibility protects manual whole/local replacements and intersecting range edits, silence and sustaining notes through the shared accompaniment event guard. Safely earlier manual regions remain intact. Explicit grid/timing/interpretation controls, including Rate, block the entire event. Custom/dependent rhythms, pauses/exceptions, active custom velocities, authored contours/direction, non-unit spans/repeats, shifted/inverted patterns, swing, octave adjustments, stretch, offset and feedback are excluded. Full grids at 16 or more hits are already at the supported ceiling. Other rhythm and instrument-specific adapters remain future work.
+
+Automatic planning uses its independent `subdivision-ramp/family/track` stream only in approaching-rise contexts and at total budgets of at least five. It replaces the fill responsibility for eligible targets, reserves the activity-driver and boundary-event slots, and respects locks, chance, retained choices and role allocation. Existing budgets through four retain their selection streams. Manual insertion/replacement ignores those automatic heuristics while keeping consumer protections.
+
+Realize after baseline output humanization in `layOutTrackPhrase`, consuming no extra phrase/output random draws. Earlier notes, neighboring sections and unrelated tracks retain their material and draws. Score, playback, audio and MIDI use the same cached shared note layout. Melody and melody-following source events remain excluded. Inspection, automatic allowlists, manual insertion/replacement, Apply/Cancel, history, imports and identity cleanup use the shared catalogue/lifecycle.
+
 ## Follow-up: further fills, melody events and ramps
 
 Static parameter patches cannot represent final-bar fills, progressive subdivision, beat-window contour lifts, short pre-drop cuts or section-end resolutions. These need dedicated consumers:
@@ -251,7 +271,7 @@ Static parameter patches cannot represent final-bar fills, progressive subdivisi
 - Respect manual whole phrases and range edits. Define whether a manual region blocks an event or splits its eligible window. Never rewrite user notes implicitly.
 - Share resolved events between score, dependent roles, loops, playback and MIDI/audio export; tempo/time mapping must agree. Cache against immutable project identity and avoid Angular scheduling dependencies.
 
-Further harmonic/contour/drum fills and ramps remain separate validated slices. Next, design a bounded Arp subdivision ramp: stage supported rates over actual beat windows, use instrument/rhythm-specific density limits, define new onset identity and collision rules, preserve material outside the window and validate the shared note/MIDI/audio result. Continuous register ramps and any Melody-source events still need their own onset/dependency policies before implementation. Instrument-pool audition is optional feedback; user controls should accommodate the actual sound source.
+Further harmonic/contour/drum fills and ramps remain separate validated slices. The initial full-grid Arp subdivision ramp is delivered above. Broader rhythm/instrument adapters, further typed strengths, harmonic/contour/drum fills, and per-control locks/links remain separate follow-ups. Continuous register ramps and any Melody-source events still need their own onset/dependency policies before implementation. Instrument-pool audition is optional feedback; user controls should accommodate the actual sound source.
 
 ## Later slice: shared harmony and timing
 

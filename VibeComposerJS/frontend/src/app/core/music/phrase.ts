@@ -1,3 +1,4 @@
+import { applyArpSubdivision, resolveArpSubdivision } from './arrangement-subdivision-ramp';
 import { applyVelocityEnvelope, resolveVelocityEnvelope } from './arrangement-velocity-envelope';
 import { applyArpEndFill, resolveArpEndFill } from './arrangement-end-fill';
 import { applySectionCut, resolvePreDropCut } from './arrangement-boundary-events';
@@ -126,6 +127,22 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
           BigInt(section.variations!.choices.find(choice => choice.trackId === track.id)?.seed ?? section.variations!.seed), track.id);
         const first = notes.findIndex(note => note.sectionId === section.id);
         notes = notes.flatMap((note, index): ArrangedNote[] => note.sectionId !== section.id ? [note] : index === first ? filled : []);
+      }
+      const subdivision = resolveArpSubdivision(track, section);
+      if (subdivision) {
+        let slotStart = sectionStart;
+        const slots = Array.from({ length: section.measures }, (_, i) => {
+          const startBeat = slotStart;
+          const durations = section.customDurations ?? [4];
+          slotStart += durations[i % durations.length] * (section.context?.beatDurationMultiplier ?? 1);
+          return { startBeat, endBeat: slotStart };
+        });
+        const owned = notes.filter(note => note.sectionId === section.id);
+        const staged: ArrangedNote[] = applyArpSubdivision(owned,
+          { startBeat: sectionStart + subdivision.startBeat, endBeat: sectionStart + subdivision.endBeat },
+          slots, track.generatorSettings.hitsPerPattern ?? 8, track.id, notes.filter(note => note.sectionId !== section.id));
+        const first = notes.findIndex(note => note.sectionId === section.id);
+        notes = notes.flatMap((note, index): ArrangedNote[] => note.sectionId !== section.id ? [note] : index === first ? staged : []);
       }
       const ramp = resolveVelocityEnvelope(track, section);
       if (ramp) {

@@ -13,6 +13,7 @@ export interface VariationDefinition {
 
 /** Consumer capabilities only. Context recommendations and allocation budgets belong to the planner. */
 export const VARIATION_DEFINITIONS = {
+  'arp-subdivision-ramp': { label: "Arp subdivision ramp", roles: ["arpeggio"], directions: [1], activity: true, register: false, consumer: 'timed' },
   'accompaniment-velocity-ramp': { label: "Accompaniment velocity ramp", roles: ["arpeggio","chords"], directions: [-1, 1], activity: false, register: false, consumer: 'timed' },
   'arp-end-fill': { label: "Arp section-end fill", roles: ["arpeggio"], directions: [1], activity: true, register: false, consumer: 'timed' },
   'pre-drop-cut': { label: "Pre-drop accompaniment cut", roles: ["arpeggio","chords"], directions: [-1], activity: false, register: false, consumer: 'timed' },
@@ -34,7 +35,7 @@ export const VARIATION_DEFINITIONS = {
 
 /** Preserve historical per-role order: tied candidate selection consumes this ordering. */
 export const VARIATION_KINDS_BY_ROLE: Record<ArrangedPart, readonly VariationKind[]> = {
-  melody: ['melody-speed', 'melody-direction', 'melody-register', 'melody-range'], arpeggio: ['arp-activity', 'arp-density', 'arp-contour', 'arp-register', 'pre-drop-cut', 'arp-end-fill', 'accompaniment-velocity-ramp'], bass: ['bass-weight'],
+  melody: ['melody-speed', 'melody-direction', 'melody-register', 'melody-range'], arpeggio: ['arp-activity', 'arp-density', 'arp-contour', 'arp-register', 'pre-drop-cut', 'arp-end-fill', 'accompaniment-velocity-ramp', 'arp-subdivision-ramp'], bass: ['bass-weight'],
   chords: ['chord-space', 'chord-transition', 'pre-drop-cut', 'accompaniment-velocity-ramp'], drums: ['drum-activity', 'drum-density', 'drum-ghosts'],
 };
 

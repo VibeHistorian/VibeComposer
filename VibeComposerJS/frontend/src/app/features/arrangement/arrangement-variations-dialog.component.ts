@@ -1,3 +1,4 @@
+import { validMelodySpeedDelta } from '../../core/music/arrangement-variation-catalogue';
 import { SelectComponent } from '../../shared/select.component';
 import { variationAdditions } from '../../core/project/arrangement-variation-additions';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -54,7 +55,10 @@ export class ArrangementVariationsDialogComponent {
         else detail = detail === 'Active' ? '' : 'Manual edits are preserved';
       }
       const expectedAmount = variationAmountForContext(context, choice.kind);
-      return { track, inspection, effects, detail, mismatch: choice.amount !== expectedAmount };
+      const withoutChoice = { ...current, variations: current.variations && { ...current.variations,
+        choices: current.variations.choices.filter(saved => saved.trackId !== choice.trackId) } };
+      const replacements = variationAdditions(this.candidateProject(), withoutChoice, [track], this.preferences.variationRerolls());
+      return { track, inspection, effects, detail, replacements, mismatch: choice.amount !== expectedAmount };
     });
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));
@@ -73,6 +77,34 @@ export class ArrangementVariationsDialogComponent {
       const seed = previous?.seed ?? String(Math.floor(Math.random() * 0x1000000000000));
       return { ...draft, [sectionId]: { ...(previous ?? { seed, policy: { ...this.policy() } }),
         choices: [...(previous?.choices ?? []), { ...selected.choice, origin: 'authored', seed }] } };
+    });
+  }
+  replace(sectionId: string, trackId: string, value: string): void {
+    if (this.stale()) return;
+    const item = this.rows().find(row => row.section.id === sectionId)?.choices.find(item => item.track.id === trackId);
+    const selected = item?.replacements.find(option => option.value === value);
+    if (!selected) return;
+    this.draft.update(draft => {
+      const section = draft[sectionId];
+      if (!section) return draft;
+      return { ...draft, [sectionId]: { ...section, choices: section.choices.map(choice => choice.trackId === trackId
+        ? { ...selected.choice, origin: 'authored' as const, seed: choice.seed ?? section.seed } : choice) } };
+    });
+  }
+  setSpeedStrength(sectionId: string, trackId: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = Number(input.value);
+    const item = this.rows().find(row => row.section.id === sectionId)?.choices.find(item => item.track.id === trackId);
+    if (!item || item.inspection.choice.kind !== 'melody-speed') return;
+    if (this.stale() || !validMelodySpeedDelta(value)) {
+      input.value = String(item.inspection.choice.parameters?.speedDelta ?? 15);
+      return;
+    }
+    this.draft.update(draft => {
+      const section = draft[sectionId];
+      if (!section) return draft;
+      return { ...draft, [sectionId]: { ...section, choices: section.choices.map(choice => choice.trackId === trackId
+        ? { ...choice, parameters: { speedDelta: value }, origin: 'authored' as const, seed: choice.seed ?? section.seed } : choice) } };
     });
   }
   setPolicy(key: keyof VariationPolicy, event: Event): void {

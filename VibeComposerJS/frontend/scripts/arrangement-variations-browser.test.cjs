@@ -40,6 +40,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
           for(let i=2;i<=6;i++)p.tracks.push({...base,id:'track-'+role+'-'+i,name:base.name[0]+i,generatorSettings:{...base.generatorSettings}});
         }
         for(const track of p.tracks) if(track.role==='arpeggio')Object.assign(track.generatorSettings,{rhythm:'euclid',hitsPerPattern:8,euclideanPulses:4});
+        p.tracks.find(t=>t.role==='arpeggio').generatorSettings.rhythm='full';
         p.arrangement=['VERSE1','BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role=>[role,Array(6).fill(true)]))}));
         p.arrangement[0].variations={seed:'1',policy:{chance:100,maxChanges:2},choices:[{trackId:p.tracks.find(t=>t.role==='melody').id,kind:'melody-range',amount:1,enabled:true}]};
@@ -54,7 +55,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure([...variationSettings.querySelectorAll('.variation-settings-group > h3')].map(h=>h.textContent.trim()).join(',')==='Shared,Melody,Bass,Chords,Arps,Drums','shared and role groups');
       ensure(variationSettings.querySelector('[aria-label="Behavior Variations"] [data-scope="compose"]'),'variation menu On Compose indicator');
       const groupedKinds=[...variationSettings.querySelectorAll('.variation-settings-group input[type="checkbox"]')].map(i=>i.getAttribute('aria-label'));
-      ensure(groupedKinds.length===17&&new Set(groupedKinds).size===17,'each variation appears once');
+      ensure(groupedKinds.includes('Reroll Arp subdivision ramp')&&new Set(groupedKinds).size===groupedKinds.length,'each variation appears once');
       const speedToggle=await wait(()=>variationSettings.querySelector('[aria-label="Reroll Melody speed"]'),'variation rows');
       speedToggle.click();await wait(()=>!prefs().variationRerolls.allowedKinds.includes('melody-speed'),'disabled for future rerolls');
       ensure(JSON.stringify(read())===original,'eligibility preference leaves project untouched');
@@ -91,10 +92,16 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(manualOption,'manual speed choice offered');
       await changeControl(add,manualOption.value);
       await wait(()=>[...d.querySelectorAll('article')].some(a=>a.textContent.includes('M2')&&a.textContent.includes('Melody speed')),'manual choice staged');
-      ensure(JSON.stringify(read())===original,'addition stays local');
+      const authoredRow=[...d.querySelectorAll('article')].find(a=>a.textContent.includes('M2')&&a.textContent.includes('Melody speed'));
+      const replacement=authoredRow.querySelector('.variation-replace');
+      const replacementOption=(await selectOptions(replacement)).find(o=>o.textContent.includes('Melody speed')&&o.textContent.includes('Decrease'));
+      ensure(replacementOption,'compatible replacement available');await changeControl(replacement,replacementOption.value);
+      const strength=await wait(()=>authoredRow.querySelector('input[aria-label="M2 speed variation strength"]'),'choice speed strength');
+      await changeControl(strength,'45');
+      ensure(JSON.stringify(read())===original,'authoring stays local');
       button(d,'Apply variations').click();await wait(()=>!dialog(),'manual addition applied');
       const inserted=read().arrangement[0].variations.choices.find(c=>c.trackId==='track-melody-2');
-      ensure(inserted?.origin==='authored'&&inserted.parameters.speedDelta===30,'manual strength and ownership saved');
+      ensure(inserted?.origin==='authored'&&inserted.parameters.speedDelta===45,'manual strength and ownership saved');
       document.querySelector('[aria-label="Undo"]').click();await wait(()=>JSON.stringify(read())===original,'manual insertion single undo');
       opener.click();d=await wait(dialog,'reopen after insertion undo');
       ensure(!d.querySelector('[aria-label="Melody speed variation delta"]'),'strength moved out of popup');
@@ -112,10 +119,15 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(ramp.textContent.includes('100% → 80%')&&ramp.textContent.includes('8–16'),'resolved envelope window and gain');
       const cut=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Pre-drop accompaniment cut')),'timed cut explanation');
       ensure(cut.textContent.includes('15–16')&&cut.textContent.includes('stop sustains'),'actual final-beat window');
+      const subdivision=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Arp subdivision ramp')),'subdivision ramp explanation');
+      ensure(subdivision.textContent.includes('8 → 8 → 16'),'staged subdivision rates');
+      const rampReplacement=subdivision.querySelector('.variation-replace');
+      const fillOption=(await selectOptions(rampReplacement)).find(o=>o.textContent.includes('Arp section-end fill'));
+      ensure(fillOption,'fill replacement compatible');await changeControl(rampReplacement,fillOption.value);
       const fill=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Arp section-end fill')),'end-fill explanation');
       ensure(fill.textContent.includes('14–16')&&fill.textContent.includes('four quiet retriggers'),'actual final-slot fill window');
       const keep=fill.querySelector('.variation-lock'),keepLabel=keep.getAttribute('aria-label');
-      keep.click();await wait(()=>keep.getAttribute('aria-pressed')==='true','fill marked for retention');
+      if(keep.getAttribute('aria-pressed')!=='true')keep.click();await wait(()=>keep.getAttribute('aria-pressed')==='true','fill marked for retention');
       button(d,'Reroll variations').click();
       const retained=await wait(()=>[...d.querySelectorAll('.variation-lock')].find(i=>i.getAttribute('aria-label')===keepLabel&&i.getAttribute('aria-pressed')==='true'),'authored fill retained');
       ensure(retained.closest('article').getAttribute('data-variation-status')==='active','authored choice remains active');

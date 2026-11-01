@@ -85,6 +85,7 @@ export function variationAmountForContext(context: VariationContext, kind: Varia
   const { gesture, intent, presentCount } = context;
   if (kind === 'accompaniment-velocity-ramp') return context.durationBeats > 4 && presentCount > 1
     ? context.preDrop || context.endFill ? 1 : gesture === 'resolve' ? -1 : undefined : undefined;
+  if (kind === 'arp-subdivision-ramp') return context.endFill ? 1 : undefined;
   if (kind === 'arp-end-fill') return context.endFill ? 1 : undefined;
   if (kind === 'pre-drop-cut') return context.preDrop ? -1 : undefined;
   if (isRegisterVariation(kind)) return context.returnLift ? 1 : undefined;
