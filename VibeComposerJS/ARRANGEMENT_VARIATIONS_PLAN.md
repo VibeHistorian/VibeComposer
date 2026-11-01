@@ -193,12 +193,6 @@ For the first authoring slice, retain one operation per track and offer explicit
 
 Record authored ownership for inserted/edited choices. Recommended lifecycle: automatic Compose and ordinary rerolls retain authored choices and account for their occupied slots/responsibilities; an explicit include-authored/reset/replace action may change them. Regenerate continues to retain saved choices. Define and test this ownership before shipping insertion, so a manual fill or ramp is not unexpectedly lost at the next compose. Policy/scope edits must preserve unrelated choices.
 
-### Follow-up delivery order
-
-Shared definitions, ownership contracts, allowed generation kinds, Melody speed default strength, popup insertion/replacement and per-choice speed editing are delivered. The initial Arp subdivision ramp also uses this model. Next extend operation-specific typed strengths and rhythm/instrument adapters before adding dependency-changing Melody events or shared harmony/timing. Preserve current defaults until corresponding controls are exposed. Validate deterministic filtering, bounds, ownership, explicit replacement, history/persistence and shared score/playback/MIDI/audio output. Optional listening is useful feedback, not a completion requirement.
-
-Consider effect vectors and compatibility/exclusion groups only as the catalogue grows. The static catalogue is complemented by the first accompaniment boundary event below; fills and continuous ramps remain separate consumers.
-
 ## First boundary event: pre-drop accompaniment cut (delivered)
 
 `arrangement-boundary-events.ts` owns the first discrete timing consumer. A saved `pre-drop-cut` choice (amount -1 only) gates one generated Chords or Arp track near the section end. It occupies one ordinary section-budget slot and the track's single operation slot. It is a layer cut, not a global silence or a tempo change. Melody, Bass, Drums and melody-following rhythms are excluded. Those exclusions keep the melody dependency source and its followers unchanged in this first slice.
@@ -308,7 +302,11 @@ The saved `fillLimit` is an integer 1–8, default four, and is a maximum rather
 
 Automatic plans use an independent `drum-boundary-fill/family/track` stream only in approaching-rise contexts with total budgets of at least six, as a fallback after an eligible Arp ramp/fill. The snare fill takes the same single boundary/activity-driver responsibility. Retained boundary choices (including disabled choices) reserve it; ordinary active retained activity choices also prevent an additional driver. Chance, presence, locks, scopes and shared capacity remain authoritative. Existing lower-budget and Arp event streams retain their behavior. Melody-source events, multi-instrument drum fills and harmonic/contour fills remain future slices.
 
-## Follow-up: further fills, melody events and ramps
+## Current task: shared harmony and timing
+
+Automatic key changes, chord substitutions and tempo changes affect shared musical context rather than just a track. Design their precedence, harmony dependencies, timing, channel/export consequences and explicit override behavior separately. Existing harmony selections must not become a second competing variation system. Coordinate with the global duration/swing work before exposing timing variations.
+
+## Future work: further fills, melody events and ramps
 
 Static parameter patches cannot represent final-bar fills, progressive subdivision, beat-window contour lifts, short pre-drop cuts or section-end resolutions. These need dedicated consumers:
 
@@ -320,9 +318,6 @@ Static parameter patches cannot represent final-bar fills, progressive subdivisi
 
 Further harmonic/contour/drum fills and ramps remain separate validated slices. The initial full-grid Arp subdivision ramp is delivered above. Broader rhythm/instrument adapters, further typed strengths, harmonic/contour/drum fills, and per-control locks/links remain separate follow-ups. Continuous register ramps and any Melody-source events still need their own onset/dependency policies before implementation. Instrument-pool audition is optional feedback; user controls should accommodate the actual sound source.
 
-## Later slice: shared harmony and timing
-
-Automatic key changes, chord substitutions and tempo changes affect shared musical context rather than just a track. Design their precedence, harmony dependencies, timing, channel/export consequences and explicit override behavior separately. Existing harmony selections must not become a second competing variation system. Coordinate with the global duration/swing work before exposing timing variations.
 
 ## Validation
 
