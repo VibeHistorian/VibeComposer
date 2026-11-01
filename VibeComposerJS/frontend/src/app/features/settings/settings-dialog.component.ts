@@ -1,3 +1,4 @@
+import { VARIATION_DEFINITIONS } from '../../core/music/arrangement-variation-catalogue';
 import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, sameShortcut, type ShortcutId } from '../../core/ui/shortcuts';
@@ -34,7 +35,13 @@ export class SettingsDialogComponent {
   setPadding(role: ArrangedPart, value: number): void {
     this.projects.updateSettings({ midiPadding: { ...this.projects.project().midiPadding, [role]: value } });
   }
-  readonly variationRows = VARIATION_ROWS;
+  readonly variationGroups = [
+    { id: 'shared', label: 'Shared' }, { id: 'melody', label: 'Melody' }, { id: 'bass', label: 'Bass' },
+    { id: 'chords', label: 'Chords' }, { id: 'arpeggio', label: 'Arps' }, { id: 'drums', label: 'Drums' },
+  ].map(group => ({ ...group, rows: VARIATION_ROWS.filter(row => {
+    const roles = VARIATION_DEFINITIONS[row.kind].roles;
+    return group.id === 'shared' ? roles.length > 1 : roles.length === 1 && roles[0] === group.id;
+  }) }));
   readonly preferences = inject(UiPreferencesService);
   readonly instruments = inject(InstrumentSettingsService);
   async loadSoundfont(event: Event): Promise<void> {
@@ -101,7 +108,7 @@ export class SettingsDialogComponent {
   ] as const;
   readonly categoryScopes: Readonly<Record<string, readonly SettingScope[]>> = {
     appearance: ['ui'], score: ['ui'], behavior: ['ui', 'compose', 'sound'],
-    variations: ['ui'], harmony: ['compose', 'sound'], arrangement: ['compose'], melody: ['compose', 'sound'], 'section-types': ['compose'],
+    variations: ['ui', 'compose'], harmony: ['compose', 'sound'], arrangement: ['compose'], melody: ['compose', 'sound'], 'section-types': ['compose'],
     ...Object.fromEntries(SHORTCUT_PAGES.map(page => [page.id, ['ui'] as const])), midi: ['ui', 'sound'], project: ['ui'],
   };
   readonly selectedCategory = signal<typeof this.categories[number]['id'] | typeof this.categories[number]['children'][number]['id']>('appearance');

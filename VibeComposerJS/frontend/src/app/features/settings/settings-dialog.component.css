@@ -52,3 +52,7 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 
 .shortcut-status { position: sticky; top: 0; z-index: 1; background: var(--surface-base); color: var(--text-secondary); font-size: 12px; }
 .shortcut-status p:empty { margin: 0; }
+
+/* Variation settings groups */
+.variation-settings-group { margin-top: 20px; border-top: 1px solid var(--border-subtle); padding-top: 12px; }
+.variation-settings-group > h3 { margin: 0 0 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }

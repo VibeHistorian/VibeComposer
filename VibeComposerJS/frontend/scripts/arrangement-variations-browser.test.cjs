@@ -50,6 +50,11 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       [...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Settings'||b.getAttribute('aria-label')==='Settings').click();
       const variationSettings=await wait(()=>document.querySelector('vc-settings-dialog'),'variation settings');
       variationSettings.querySelector('[aria-label="Behavior Variations"]').click();
+      await wait(()=>variationSettings.querySelectorAll('.variation-settings-group').length===6,'variation groups rendered');
+      ensure([...variationSettings.querySelectorAll('.variation-settings-group > h3')].map(h=>h.textContent.trim()).join(',')==='Shared,Melody,Bass,Chords,Arps,Drums','shared and role groups');
+      ensure(variationSettings.querySelector('[aria-label="Behavior Variations"] [data-scope="compose"]'),'variation menu On Compose indicator');
+      const groupedKinds=[...variationSettings.querySelectorAll('.variation-settings-group input[type="checkbox"]')].map(i=>i.getAttribute('aria-label'));
+      ensure(groupedKinds.length===17&&new Set(groupedKinds).size===17,'each variation appears once');
       const speedToggle=await wait(()=>variationSettings.querySelector('[aria-label="Reroll Melody speed"]'),'variation rows');
       speedToggle.click();await wait(()=>!prefs().variationRerolls.allowedKinds.includes('melody-speed'),'disabled for future rerolls');
       ensure(JSON.stringify(read())===original,'eligibility preference leaves project untouched');
