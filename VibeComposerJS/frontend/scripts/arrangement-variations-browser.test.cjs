@@ -123,7 +123,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await wait(()=>ramp.textContent.includes('100% → 65%'),'edited velocity strength explained');
       await changeControl(velocityStrength,'0');
       ensure(velocityStrength.value==='35','invalid velocity strength restored');
-      for(const kind of ['Late chord anticipation','Contextual melody range']) {
+      for(const kind of ['Late chord anticipation','Contextual melody range','Arp activity','Arp chord-relative contour','Hat / ride density','Cymbal activity']) {
         const section=d.querySelector('.variation-section'),adder=section.querySelector('.add-variation');
         const option=(await selectOptions(adder)).find(o=>o.textContent.includes(kind));
         if(option) {

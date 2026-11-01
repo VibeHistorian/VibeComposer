@@ -2,6 +2,39 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('rhythmic and contour strengths preserve defaults, meaningful steps and instrument ceilings', () => {
+  const {project,engine,load}=setup(), catalogue=load('core/music/arrangement-variation-catalogue.ts');
+  const arp=project.tracks.find(t=>t.role==='arpeggio'), drums=project.tracks.find(t=>t.role==='drums');
+  const make=(track,kind,amount,parameters)=>({trackId:track.id,kind,amount,enabled:true,parameters});
+  const full={...arp,generatorSettings:{rhythm:'full',hitsPerPattern:4}};
+  assert.equal(engine.variationPatch(full,make(full,'arp-activity',1,{activitySteps:3})).hitsPerPattern,32);
+  assert.equal(engine.variationPatch(full,make(full,'arp-activity',-1,{activitySteps:3})).hitsPerPattern,1);
+  assert.equal(engine.variationPatch(full,make(full,'arp-activity',1)).hitsPerPattern,8);
+  const euclid={...arp,generatorSettings:{rhythm:'euclid',hitsPerPattern:8,euclideanPulses:3}};
+  assert.deepEqual(engine.variationPatch(euclid,make(euclid,'arp-density',1,{densitySteps:3})),{euclideanPulses:6});
+  assert.deepEqual(engine.variationPatch(euclid,make(euclid,'arp-density',-1,{densitySteps:3})),{euclideanPulses:1});
+  for(const pitch of [42,44,46,53]) {
+    const hat={...drums,generatorSettings:{rhythm:'full',hitsPerPattern:4,pitch}};
+    assert.equal(engine.variationPatch(hat,make(hat,'drum-density',1,{densitySteps:3})).hitsPerPattern,pitch===42?16:8);
+    const authored={...hat,generatorSettings:{...hat.generatorSettings,hitsPerPattern:32}};
+    assert.deepEqual(engine.variationPatch(authored,make(authored,'drum-density',1,{densitySteps:3})),{});
+    assert.equal(engine.variationPatch(authored,make(authored,'drum-density',-1,{densitySteps:3})).hitsPerPattern,4);
+    const activity={...hat,generatorSettings:{...hat.generatorSettings,pauseChance:40}};
+    assert.equal(engine.variationPatch(activity,make(activity,'drum-activity',1,{pauseDelta:30})).pauseChance,10);
+    assert.equal(engine.variationPatch(activity,make(activity,'drum-activity',-1,{pauseDelta:100})).pauseChance,100);
+  }
+  for(const amount of [-1,1]) {
+    assert.deepEqual(engine.variationPatch(full,make(full,'arp-contour',amount,{contourSteps:5})).arpContour,amount>0?[0,3,5,0]:[5,3,0,0]);
+    assert.deepEqual(engine.variationPatch(full,make(full,'arp-contour',amount)).arpContour,amount>0?[0,1,2,0]:[2,1,0,0]);
+  }
+  for(const kind of ['arp-density','drum-density','arp-activity','drum-activity','arp-contour']) {
+    const spec=catalogue.variationStrength(kind);
+    for(const value of [1,spec.max]) assert.equal(catalogue.validVariationParameters(kind,{[spec.key]:value}),true);
+    for(const value of [0,spec.max+1,1.5,'2']) assert.equal(catalogue.validVariationParameters(kind,{[spec.key]:value}),false);
+    assert.equal(catalogue.validVariationParameters(kind,{[spec.key]:1,velocityDelta:15}),false);
+  }
+});
+
 test('typed strengths validate by kind and realize bounded range, chance and velocity changes', () => {
   const {project,engine,load}=setup();
   const catalogue=load('core/music/arrangement-variation-catalogue.ts');
@@ -29,9 +62,9 @@ test('typed strengths validate by kind and realize bounded range, chance and vel
 });
 
 test('strength edits for timed and settings choices remain detached, pin seeds and survive history', () => {
-  for(const [kind,key,value,method] of [['accompaniment-velocity-ramp','velocityDelta',35,'setVelocityStrength'],['chord-transition','transitionDelta',40,'setParameterStrength'],['melody-range','rangeDelta',3,'setParameterStrength']]) {
+  for(const [kind,key,value,method] of [['accompaniment-velocity-ramp','velocityDelta',35,'setStrength'],['chord-transition','transitionDelta',40,'setStrength'],['melody-range','rangeDelta',3,'setStrength'],['arp-density','densitySteps',3,'setStrength'],['drum-density','densitySteps',2,'setStrength'],['arp-activity','activitySteps',2,'setStrength'],['drum-activity','pauseDelta',30,'setStrength'],['arp-contour','contourSteps',5,'setStrength']]) {
     const f=fixture({dialogData:{}}), initial=f.service.project();
-    const track=initial.tracks.find(t=>t.role===(kind==='melody-range'?'melody':'chords'));
+    const track=initial.tracks.find(t=>t.role===(kind==='melody-range'?'melody':kind.startsWith('arp-')?'arpeggio':kind.startsWith('drum-')?'drums':'chords'));
     const section={...initial.arrangement[0],measures:4,trackPresence:{[track.id]:true},variations:{seed:'9223372036854775807',policy:{chance:100,maxChanges:4},choices:[{trackId:track.id,kind,amount:1,enabled:true}]}};
     f.service.state.set({...initial,arrangement:[section]});
     const Dialog=f.load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
@@ -1627,10 +1660,10 @@ test('choice replacement and speed editing retain authored ownership, exact seed
   d.add(row.section.id,option.value);
   let item=d.rows().find(r=>r.section.id===row.section.id).choices.find(i=>i.track.id===option.choice.trackId);
   const originalSeed=item.inspection.choice.seed;
-  d.setSpeedStrength(row.section.id,item.track.id,{target:{value:'45'}});
+  d.setStrength(row.section.id,item.track.id,{target:{value:'45'}});
   assert.equal(d.draft()[row.section.id].choices.find(c=>c.trackId===item.track.id).parameters.speedDelta,45);
   for (const value of ['0','201','1.5','']) {
-    const target={value};d.setSpeedStrength(row.section.id,item.track.id,{target});assert.equal(target.value,'45');
+    const target={value};d.setStrength(row.section.id,item.track.id,{target});assert.equal(target.value,'45');
   }
   const replacement=item.replacements.find(o=>o.choice.kind==='melody-direction');assert.ok(replacement);
   d.replace(row.section.id,item.track.id,replacement.value);

@@ -24,7 +24,8 @@ export interface ArrangementVariation {
   /** Exact realization seed pinned independently of later section rerolls. */
   readonly seed?: string;
   /** Validated against the operation kind by the shared catalogue. */
-  readonly parameters?: { readonly speedDelta?: number; readonly velocityDelta?: number; readonly transitionDelta?: number; readonly rangeDelta?: number };
+  readonly parameters?: { readonly speedDelta?: number; readonly velocityDelta?: number; readonly transitionDelta?: number; readonly rangeDelta?: number;
+    readonly densitySteps?: number; readonly activitySteps?: number; readonly pauseDelta?: number; readonly contourSteps?: number };
 }
 
 export interface SectionVariations {

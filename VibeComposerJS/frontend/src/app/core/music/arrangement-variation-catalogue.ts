@@ -54,15 +54,31 @@ export function validVariationParameters(kind: VariationKind, value: unknown): b
   if (value === undefined) return true;
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const fields = value as Record<string, unknown>;
-  if (kind === 'chord-transition' || kind === 'melody-range') {
-    const key = kind === 'chord-transition' ? 'transitionDelta' : 'rangeDelta';
-    return Object.keys(fields).length === 1 && Object.hasOwn(fields, key)
-      && Number.isInteger(fields[key]) && (fields[key] as number) >= 1 && (fields[key] as number) <= (kind === 'chord-transition' ? 75 : 12);
+  const strength = variationStrength(kind);
+  return !!strength && Object.keys(fields).length === 1 && Object.hasOwn(fields, strength.key)
+    && Number.isInteger(fields[strength.key]) && (fields[strength.key] as number) >= 1 && (fields[strength.key] as number) <= strength.max;
+}
+
+export interface VariationStrength {
+  readonly key: keyof NonNullable<ArrangementVariation['parameters']>;
+  readonly label: string;
+  readonly max: number;
+  readonly defaultValue: number;
+}
+
+/** Units and hard input bounds; musical adapters still enforce their own effective bounds. */
+export function variationStrength(kind: VariationKind, amount: -1 | 1 = 1): VariationStrength | undefined {
+  switch (kind) {
+    case 'melody-speed': return { key: 'speedDelta', label: 'Speed points', max: 200, defaultValue: 15 };
+    case 'melody-range': return { key: 'rangeDelta', label: 'Semitones per boundary', max: 12, defaultValue: 2 };
+    case 'chord-transition': return { key: 'transitionDelta', label: 'Chance percentage points', max: 75, defaultValue: 25 };
+    case 'accompaniment-velocity-ramp': return { key: 'velocityDelta', label: 'Velocity percentage points', max: 50, defaultValue: amount > 0 ? 15 : 20 };
+    case 'arp-density': case 'drum-density': return { key: 'densitySteps', label: 'Density steps', max: 3, defaultValue: 1 };
+    case 'arp-activity': return { key: 'activitySteps', label: 'Subdivision steps', max: 3, defaultValue: 1 };
+    case 'drum-activity': return { key: 'pauseDelta', label: 'Activity percentage points', max: 100, defaultValue: 15 };
+    case 'arp-contour': return { key: 'contourSteps', label: 'Contour height (diatonic steps)', max: 7, defaultValue: 2 };
+    default: return undefined;
   }
-  if (kind === 'accompaniment-velocity-ramp') return Object.keys(fields).length === 1
-    && Object.hasOwn(fields, 'velocityDelta') && validVelocityDelta(fields['velocityDelta']);
-  if (kind !== 'melody-speed') return false;
-  return Object.keys(fields).length === 1 && Object.hasOwn(fields, 'speedDelta') && validMelodySpeedDelta(fields['speedDelta']);
 }
 
 export function melodySpeedDelta(choice: ArrangementVariation): number {

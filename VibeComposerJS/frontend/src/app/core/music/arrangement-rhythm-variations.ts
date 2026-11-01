@@ -29,7 +29,7 @@ function simpleGrid(track: CompositionTrack): (RhythmSettings & CommonPartSettin
 function sounded(settings: RhythmSettings): number { return partRhythmMask(settings).filter(value => value > 0).length; }
 
 /** Euclid changes sounded pulses on the same grid; static patterns choose a meaningful adjacent density. */
-function densityPatch(grid: RhythmSettings, amount: -1 | 1, maximum: number): PartSettingsPatch {
+function densityStep(grid: RhythmSettings, amount: -1 | 1, maximum: number): PartSettingsPatch {
   const hits = grid.hitsPerPattern ?? 8;
   if (grid.rhythm === 'euclid') {
     const pulses = Math.min(grid.euclideanPulses ?? 4, hits), next = pulses + amount;
@@ -43,15 +43,26 @@ function densityPatch(grid: RhythmSettings, amount: -1 | 1, maximum: number): Pa
   return next === undefined ? {} : { hitsPerPattern: next };
 }
 
+function densityPatch(grid: RhythmSettings, amount: -1 | 1, maximum: number, steps: number): PartSettingsPatch {
+  let patch: PartSettingsPatch = {};
+  for (let i = 0; i < steps; i++) {
+    const next = densityStep({ ...grid, hitsPerPattern: patch.hitsPerPattern ?? grid.hitsPerPattern,
+      euclideanPulses: patch.euclideanPulses ?? grid.euclideanPulses }, amount, maximum);
+    if (!Object.keys(next).length) break;
+    patch = { ...patch, ...next };
+  }
+  return patch;
+}
+
 export function rhythmVariationPatch(track: CompositionTrack, choice: ArrangementVariation): PartSettingsPatch {
   const grid = simpleGrid(track);
   if (!grid) return {};
   const amount = choice.amount;
   switch (choice.kind) {
-    case 'arp-density': return track.role === 'arpeggio' && grid.rhythm !== 'full' ? densityPatch(grid, amount, 32) : {};
+    case 'arp-density': return track.role === 'arpeggio' && grid.rhythm !== 'full' ? densityPatch(grid, amount, 32, choice.parameters?.densitySteps ?? 1) : {};
     case 'drum-density': {
       if (track.role !== 'drums' || track.generatorSettings.ghosts || ![42, 44, 46, 53].includes(track.generatorSettings.pitch)) return {};
-      return densityPatch(grid, amount, track.generatorSettings.pitch === 42 ? 16 : 8);
+      return densityPatch(grid, amount, track.generatorSettings.pitch === 42 ? 16 : 8, choice.parameters?.densitySteps ?? 1);
     }
     case 'drum-ghosts': {
       if (track.role !== 'drums' || ![38, 40].includes(track.generatorSettings.pitch) || (grid.hitsPerPattern ?? 4) > 8

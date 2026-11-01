@@ -1,4 +1,4 @@
-import { validMelodySpeedDelta, validVelocityDelta, velocityDelta, validVariationParameters } from '../../core/music/arrangement-variation-catalogue';
+import { variationStrength, validVariationParameters } from '../../core/music/arrangement-variation-catalogue';
 import { SelectComponent } from '../../shared/select.component';
 import { variationAdditions } from '../../core/project/arrangement-variation-additions';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -58,7 +58,8 @@ export class ArrangementVariationsDialogComponent {
       const withoutChoice = { ...current, variations: current.variations && { ...current.variations,
         choices: current.variations.choices.filter(saved => saved.trackId !== choice.trackId) } };
       const replacements = variationAdditions(this.candidateProject(), withoutChoice, [track], this.preferences.variationRerolls());
-      return { track, inspection, effects, detail, replacements, mismatch: choice.amount !== expectedAmount };
+      const strength = variationStrength(choice.kind, choice.amount);
+      return { track, inspection, effects, detail, replacements, strength, strengthValue: strength ? choice.parameters?.[strength.key] ?? strength.defaultValue : undefined, mismatch: choice.amount !== expectedAmount };
     });
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));
@@ -91,57 +92,24 @@ export class ArrangementVariationsDialogComponent {
         ? { ...selected.choice, origin: 'authored' as const, seed: choice.seed ?? section.seed } : choice) } };
     });
   }
-  setSpeedStrength(sectionId: string, trackId: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const value = Number(input.value);
+  setStrength(sectionId: string, trackId: string, event: Event): void {
+    const input = event.target as HTMLInputElement, value = Number(input.value);
     const item = this.rows().find(row => row.section.id === sectionId)?.choices.find(item => item.track.id === trackId);
-    if (!item || item.inspection.choice.kind !== 'melody-speed') return;
-    if (this.stale() || !validMelodySpeedDelta(value)) {
-      input.value = String(item.inspection.choice.parameters?.speedDelta ?? 15);
+    if (!item?.strength) return;
+    const parameters = { [item.strength.key]: value };
+    if (this.stale() || !validVariationParameters(item.inspection.choice.kind, parameters)) {
+      input.value = String(item.strengthValue);
       return;
     }
     this.draft.update(draft => {
       const section = draft[sectionId];
       if (!section) return draft;
       return { ...draft, [sectionId]: { ...section, choices: section.choices.map(choice => choice.trackId === trackId
-        ? { ...choice, parameters: { speedDelta: value }, origin: 'authored' as const, seed: choice.seed ?? section.seed } : choice) } };
+        ? { ...choice, parameters, origin: 'authored' as const, seed: choice.seed ?? section.seed } : choice) } };
     });
   }
   setPolicy(key: keyof VariationPolicy, event: Event): void {
     this.policy.update(policy => ({ ...policy, [key]: Number((event.target as HTMLInputElement).value) }));
-  }
-  setVelocityStrength(sectionId: string, trackId: string, event: Event): void {
-    const input = event.target as HTMLInputElement, value = Number(input.value);
-    const item = this.rows().find(row => row.section.id === sectionId)?.choices.find(item => item.track.id === trackId);
-    if (!item || item.inspection.choice.kind !== 'accompaniment-velocity-ramp') return;
-    if (this.stale() || !validVelocityDelta(value)) {
-      input.value = String(velocityDelta(item.inspection.choice));
-      return;
-    }
-    this.draft.update(draft => {
-      const section = draft[sectionId];
-      if (!section) return draft;
-      return { ...draft, [sectionId]: { ...section, choices: section.choices.map(choice => choice.trackId === trackId
-        ? { ...choice, parameters: { velocityDelta: value }, origin: 'authored' as const, seed: choice.seed ?? section.seed } : choice) } };
-    });
-  }
-  setParameterStrength(sectionId: string, trackId: string, event: Event): void {
-    const input = event.target as HTMLInputElement, value = Number(input.value);
-    const item = this.rows().find(row => row.section.id === sectionId)?.choices.find(item => item.track.id === trackId);
-    const choice = item?.inspection.choice;
-    if (!choice || !['chord-transition', 'melody-range'].includes(choice.kind)) return;
-    const key = choice.kind === 'chord-transition' ? 'transitionDelta' : 'rangeDelta';
-    const parameters = { [key]: value };
-    if (this.stale() || !validVariationParameters(choice.kind, parameters)) {
-      input.value = String(choice.parameters?.[key] ?? (key === 'transitionDelta' ? 25 : 2));
-      return;
-    }
-    this.draft.update(draft => {
-      const section = draft[sectionId];
-      if (!section) return draft;
-      return { ...draft, [sectionId]: { ...section, choices: section.choices.map(saved => saved.trackId === trackId
-        ? { ...saved, parameters, origin: 'authored' as const, seed: saved.seed ?? section.seed } : saved) } };
-    });
   }
   reroll(): void {
     if (this.stale() || !this.policyValid()) return;

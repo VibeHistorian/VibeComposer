@@ -271,6 +271,17 @@ The detached variations popup now edits three further strengths in the same batc
 
 Kind-specific parameter validation rejects cross-operation fields, extra keys, fractions and out-of-bounds values. Edits retain the exact realization seed, mark authored ownership, and publish only on Apply. Invalid inputs restore the saved strength. Automatic defaults, selection streams and budgets remain unchanged. Replacement discards the previous kind's parameters as before. History, import/export, duplication and shared MIDI output carry saved strengths through the existing lifecycle.
 
+## Rhythmic and contour strengths (delivered, 2026-11-01)
+
+Five additional adapters expose saved typed strengths through shared catalogue metadata and a single detached-draft editor:
+
+- Arp density and hat/ride density accept 1–3 meaningful density steps (default one). Each step selects the next supported static grid with a changed sounded-slot count, or one Euclidean pulse. Stop at the existing instrument/grid ceiling or minimum one pulse; authored denser grids remain reducible. Preserve rhythm identity, shift and seed.
+- Full-grid Arp activity accepts 1–3 supported subdivision steps (default one), stopping at 1/32 hits. Custom/dependent rhythm protections remain unchanged.
+- Cymbal activity accepts 1–100 pause-chance percentage points (default 15), subtracting for increased activity and adding for decreased activity, bounded to 0–100.
+- Arp contour accepts 1–7 diatonic steps of height (default two). Ascending contour is `[0,ceil(height/2),height,0]`; descending is `[height,ceil(height/2),0,0]`. Chord-relative interpretation and authored-contour protections remain atomic.
+
+All strengths share kind-specific validation, units, input bounds, invalid-input restoration, seed pinning and authored ownership. Saved choices without parameters retain their historical effects. Automatic planning defaults, streams and role budgets remain unchanged; binary octave/spacing/direction operations do not acquire artificial strength controls. Existing inspection reports effective settings and explicit blockers through the same adapters. Apply/Cancel, stale drafts, persistence and history use the established lifecycle.
+
 ## Follow-up: further fills, melody events and ramps
 
 Static parameter patches cannot represent final-bar fills, progressive subdivision, beat-window contour lifts, short pre-drop cuts or section-end resolutions. These need dedicated consumers:

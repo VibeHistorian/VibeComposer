@@ -108,20 +108,25 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
         || track.generatorSettings.pattern === 'custom' || track.generatorSettings.arpContour?.length
         || track.generatorSettings.arpPatternCustom?.length || track.generatorSettings.useOctaveAdjustments
         || s.customPattern || s.customDurations?.length || (s.chordSpan ?? 1) !== 1) return {};
-      return { arpContour: a > 0 ? [0, 1, 2, 0] : [2, 1, 0, 0], arpContourChordMode: true };
+      const height = choice.parameters?.contourSteps ?? 2, middle = Math.ceil(height / 2);
+      return { arpContour: a > 0 ? [0, middle, height, 0] : [height, middle, 0, 0], arpContourChordMode: true };
     }
     case 'arp-activity': {
       if (track.role !== 'arpeggio' || (track.generatorSettings.rhythm ?? 'full') !== 'full'
         || s.customDurations?.length || s.customPattern || s.useCustomVelocities) return {};
       const hits = s.hitsPerPattern ?? (track.generatorSettings.rate === 'sixteenth' ? 16 : 8);
       const steps = [1, 2, 4, 8, 16, 32];
-      return { hitsPerPattern: a > 0 ? steps.find(n => n > hits) ?? hits : [...steps].reverse().find(n => n < hits) ?? hits };
+      let next = hits;
+      for (let i = 0; i < (choice.parameters?.activitySteps ?? 1); i++) {
+        next = a > 0 ? steps.find(n => n > next) ?? next : [...steps].reverse().find(n => n < next) ?? next;
+      }
+      return { hitsPerPattern: next };
     }
     case 'bass-weight': return { octaveInterval: a > 0 };
     case 'chord-space': return { voicing: a > 0 ? 'open' : 'close' };
     case 'drum-activity': return track.role === 'drums' && [42, 44, 46, 51, 53].includes(track.generatorSettings.pitch)
       && track.generatorSettings.rhythm === 'full' && !s.customPattern && !s.useCustomVelocities
-      ? { pauseChance: clamp((s.pauseChance ?? 0) + a * -15, 0, 100) } : {};
+      ? { pauseChance: clamp((s.pauseChance ?? 0) - a * (choice.parameters?.pauseDelta ?? 15), 0, 100) } : {};
   }
 }
 
