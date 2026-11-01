@@ -56,3 +56,11 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 /* Variation settings groups */
 .variation-settings-group { margin-top: 20px; border-top: 1px solid var(--border-subtle); padding-top: 12px; }
 .variation-settings-group > h3 { margin: 0 0 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+.variation-preference-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); font: 12px var(--font-ui); }
+.variation-enable { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.variation-enable input { margin: 0; accent-color: var(--accent-primary); }
+.variation-defaults { display: grid; gap: 6px; margin-left: auto; }
+.variation-default { display: grid; grid-template-columns: minmax(0, 1fr) 128px minmax(4ch, auto); align-items: center; gap: 8px; color: var(--text-secondary); }
+.variation-default > span { text-align: right; }
+.variation-default input { width: 128px; min-width: 0; margin: 0; accent-color: var(--accent-primary); }
+.variation-default output { min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; }

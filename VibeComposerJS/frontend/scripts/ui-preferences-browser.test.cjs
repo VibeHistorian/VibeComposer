@@ -207,9 +207,16 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         for (const category of [...dialog.querySelectorAll('.settings-sidebar button')]) {
           ensure(category.querySelector('vc-settings-scope-indicator'),'category scope indicator');
           category.click(); await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
-          const rows=[...dialog.querySelectorAll('.settings-content .setting-row')];
+          const rows=[...dialog.querySelectorAll('.settings-content .setting-row, .settings-content .variation-preference-row')];
           ensure(rows.length>0,'every category has settings rows: '+category.textContent.trim());
           for (const row of rows) {
+            if(row.matches('.variation-preference-row')) {
+              if(!row.querySelector('input[type="range"]'))continue;
+              const copy=row.querySelector('.variation-enable').getBoundingClientRect(),controls=row.querySelector('.variation-defaults').getBoundingClientRect();
+              ensure(copy.right<=controls.left||copy.bottom<=controls.top,'variation labels precede slider controls');
+              ensure(controls.right<=dialog.querySelector('.settings-content').getBoundingClientRect().right,'variation controls inside settings');
+              continue;
+            }
             const copy=row.querySelector('.setting-copy').getBoundingClientRect(), controls=row.querySelector('.setting-controls').getBoundingClientRect();
             ensure(copy.right<=controls.left,'labels left of controls: '+category.textContent.trim());
             ensure(controls.right<=dialog.querySelector('.settings-content').getBoundingClientRect().right,'controls inside settings');

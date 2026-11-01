@@ -1,6 +1,8 @@
 export interface VariationGenerationOptions {
   readonly allowedKinds?: readonly VariationKind[];
   readonly melodySpeedDelta?: number;
+  readonly strengths?: Partial<Record<VariationKind, number>>;
+  readonly velocityFallDelta?: number;
 }
 
 /** Policies select choices; persisted choices are never rerolled during phrase resolution. */

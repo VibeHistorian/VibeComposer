@@ -2,6 +2,52 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('all strength preferences validate, persist and feed manual and automatic realization', () => {
+  const {project,track,engine,load,uiPreferences,uiStored}=endFillSetup();
+  const catalogue=load('core/music/arrangement-variation-catalogue.ts'),preferences=load('core/ui/variation-reroll-preferences.ts');
+  const defaults=preferences.defaultVariationRerolls();
+  const old={allowedKinds:defaults.allowedKinds,melodySpeedDelta:30};
+  assert.deepEqual(preferences.decodeVariationRerolls(old),{...defaults,melodySpeedDelta:30});
+  for(const row of preferences.VARIATION_ROWS) {
+    const spec=catalogue.variationStrength(row.kind);if(!spec||row.kind==='melody-speed')continue;
+    const value=Math.min(spec.max,spec.defaultValue+1);
+    uiPreferences.setVariationStrength(row.kind,value);
+    assert.equal(uiPreferences.variationRerolls().strengths[row.kind],value);
+    for(const bad of [0,spec.max+1,1.5]) {
+      uiPreferences.setVariationStrength(row.kind,bad);assert.equal(uiPreferences.variationRerolls().strengths[row.kind],value);
+      assert.equal(preferences.decodeVariationRerolls({...defaults,strengths:{[row.kind]:bad}}),null);
+    }
+  }
+  uiPreferences.setVariationStrength('accompaniment-velocity-ramp',35,true);
+  assert.equal(uiPreferences.variationRerolls().velocityFallDelta,35);
+  assert.equal(catalogue.variationParameters('accompaniment-velocity-ramp',-1,uiPreferences.variationRerolls()).velocityDelta,35);
+  assert.equal(catalogue.variationParameters('accompaniment-velocity-ramp',1,uiPreferences.variationRerolls()).velocityDelta,16);
+  for(const strengths of [null,[],{missing:2},{'bass-weight':2},{'melody-speed':30}])
+    assert.equal(preferences.decodeVariationRerolls({...defaults,strengths}),null);
+  assert.equal(preferences.decodeVariationRerolls({...defaults,velocityFallDelta:51}),null);
+  const stored=JSON.parse(uiStored.get('vibecomposer.ui-preferences.v1')).variationRerolls;
+  assert.deepEqual(preferences.decodeVariationRerolls(stored),uiPreferences.variationRerolls());
+  stored.strengths['arp-contour']=7;assert.notEqual(uiPreferences.variationRerolls().strengths['arp-contour'],7);
+  const generation=uiPreferences.variationRerolls(), additions=load('core/project/arrangement-variation-additions.ts').variationAdditions;
+  for(const section of project.arrangement) {
+    for(const option of additions(project,section,project.tracks,generation)) {
+      const spec=catalogue.variationStrength(option.choice.kind,option.choice.amount);
+      if(spec)assert.deepEqual(option.choice.parameters,catalogue.variationParameters(option.choice.kind,option.choice.amount,generation));
+    }
+    const index=project.arrangement.indexOf(section);
+    for(let seed=0n;seed<15n;seed++) {
+      const plan=engine.planSectionVariations(project.tracks,project.arrangement,index,seed,{chance:100,maxChanges:6},{generation});
+      for(const choice of plan.choices) {
+        const spec=catalogue.variationStrength(choice.kind,choice.amount);
+        if(spec)assert.deepEqual(choice.parameters,catalogue.variationParameters(choice.kind,choice.amount,generation));
+      }
+    }
+  }
+  const guarded={...track,phraseEdits:[{startBeat:13.8,endBeat:14.2,notes:[]}]};
+  const generated=engine.planSectionVariations([guarded],project.arrangement,2,1n,{chance:100,maxChanges:6},{generation:{strengths:{'pre-drop-cut':8}}});
+  assert.ok(!generated.choices.some(c=>c.kind==='pre-drop-cut'),'requested cut window protects manual material during planning');
+});
+
 test('saved timed strengths reach shared layout and parsed MIDI with earlier sections intact', () => {
   const {project,track,service,phrase,midi,load}=endFillSetup(),{Midi}=require('@tonejs/midi');
   for(const [kind,parameters] of [['pre-drop-cut',{cutQuarters:8}],['arp-end-fill',{fillLimit:1}],['arp-subdivision-ramp',{subdivisionLimit:1}]]) {

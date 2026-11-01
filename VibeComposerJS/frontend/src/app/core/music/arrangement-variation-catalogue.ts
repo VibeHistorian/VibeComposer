@@ -1,4 +1,4 @@
-import type { ArrangementVariation, VariationKind } from './arrangement-variation.model';
+import type { ArrangementVariation, VariationKind, VariationGenerationOptions } from './arrangement-variation.model';
 import type { ArrangedPart } from './part-role';
 
 export interface VariationDefinition {
@@ -94,4 +94,14 @@ export function validVelocityDelta(value: unknown): value is number {
 
 export function velocityDelta(choice: ArrangementVariation): number {
   return choice.parameters?.velocityDelta ?? (choice.amount > 0 ? 15 : 20);
+}
+
+/** Capture insertion/reroll preferences before checking musical eligibility. */
+export function variationParameters(kind: VariationKind, amount: -1 | 1, options?: VariationGenerationOptions): ArrangementVariation['parameters'] {
+  const spec = variationStrength(kind, amount);
+  if (!spec) return undefined;
+  const value = kind === 'melody-speed' ? options?.melodySpeedDelta ?? spec.defaultValue
+    : kind === 'accompaniment-velocity-ramp' && amount < 0 ? options?.velocityFallDelta ?? spec.defaultValue
+    : options?.strengths?.[kind];
+  return value === undefined ? undefined : { [spec.key]: value };
 }

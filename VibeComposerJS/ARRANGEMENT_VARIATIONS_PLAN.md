@@ -292,6 +292,12 @@ The shared strength editor now supports three event parameters, retaining histor
 
 Parameters persist on the choice through the existing draft/history/JSON lifecycle. Inspection reports actual cut beats and addition limits, including disabled-draft explanations. Automatic planning defaults, chance, budgets and phrase/output streams remain unchanged. Shared layout carries the limits into score, playback and exports; functional tests compare parsed MIDI and preserve unrelated sections. Keyboard/device controls use the same numeric editor, invalid-input restoration and stale-draft protection as the other strengths.
 
+## Strength defaults in Behavior → Variations (delivered, 2026-11-01)
+
+All twelve strength-capable operations now expose their insertion/reroll defaults in Settings → Behavior → Variations. Velocity ramps have separate rise and fall defaults, for thirteen sliders total; binary operations retain only their eligibility checkbox. Each control places its units label before the slider and an aligned numeric value after it, reserving at least four digits of width. Rows fit on one line when space permits, with wrapping within supported narrower layouts.
+
+These immediately saved UI preferences remain outside project history and project JSON, and travel through UI preference import/export. Missing strength defaults decode to historical values. Kind-specific bounds reject malformed preferences. Planning and manual insertion/replacement capture selected defaults on realized choices before musical eligibility checks, including the cut's actual ownership window and velocity quantization checks. Existing saved/authored choices retain their strengths until explicitly edited/replaced/replanned. Default changes consume no phrase/random draws; normal chance, allocation and automatic allowlists remain authoritative.
+
 ## Follow-up: further fills, melody events and ramps
 
 Static parameter patches cannot represent final-bar fills, progressive subdivision, beat-window contour lifts, short pre-drop cuts or section-end resolutions. These need dedicated consumers:

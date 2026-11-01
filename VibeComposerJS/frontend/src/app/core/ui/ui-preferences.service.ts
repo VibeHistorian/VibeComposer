@@ -67,6 +67,13 @@ export class UiPreferencesService {
     this.setVariationRerolls({ ...current, allowedKinds });
   }
   setVariationSpeedDelta(melodySpeedDelta: number): void { this.setVariationRerolls({ ...this.variationRerolls(), melodySpeedDelta }); }
+  setVariationStrength(kind: VariationKind, value: number, falling = false): void {
+    if (kind === 'melody-speed') { this.setVariationSpeedDelta(value); return; }
+    const current = this.variationRerolls();
+    this.setVariationRerolls(kind === 'accompaniment-velocity-ramp' && falling
+      ? { ...current, velocityFallDelta: value }
+      : { ...current, strengths: { ...current.strengths, [kind]: value } });
+  }
   private setVariationRerolls(value: VariationRerollPreferences): void {
     const variationRerolls = decodeVariationRerolls(value);
     if (variationRerolls) this.commit({ ...this.state(), variationRerolls });

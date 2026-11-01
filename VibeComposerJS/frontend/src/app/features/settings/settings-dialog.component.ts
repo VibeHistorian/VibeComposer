@@ -1,4 +1,4 @@
-import { VARIATION_DEFINITIONS } from '../../core/music/arrangement-variation-catalogue';
+import { VARIATION_DEFINITIONS, variationStrength } from '../../core/music/arrangement-variation-catalogue';
 import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, sameShortcut, type ShortcutId } from '../../core/ui/shortcuts';
@@ -41,7 +41,12 @@ export class SettingsDialogComponent {
   ].map(group => ({ ...group, rows: VARIATION_ROWS.filter(row => {
     const roles = VARIATION_DEFINITIONS[row.kind].roles;
     return group.id === 'shared' ? roles.length > 1 : roles.length === 1 && roles[0] === group.id;
-  }) }));
+  }).map(row => ({ ...row, strengths: (row.kind === 'accompaniment-velocity-ramp' ? [1, -1] as const : [1] as const).flatMap(amount => {
+    const spec = variationStrength(row.kind, amount);
+    return spec ? [{ ...spec, falling: amount < 0,
+      label: row.kind === 'accompaniment-velocity-ramp' ? amount > 0 ? 'Rise points' : 'Fall points' : spec.label,
+      ariaLabel: row.kind === 'melody-speed' ? 'Melody speed variation delta' : `${row.label} ${amount < 0 ? 'fall ' : ''}strength` }] : [];
+  }) })) }));
   readonly preferences = inject(UiPreferencesService);
   readonly instruments = inject(InstrumentSettingsService);
   async loadSoundfont(event: Event): Promise<void> {

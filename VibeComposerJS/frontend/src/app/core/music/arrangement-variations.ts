@@ -1,5 +1,5 @@
 import { arpSubdivisionEligibility } from './arrangement-subdivision-ramp';
-import { VARIATION_DEFINITIONS, VARIATION_KINDS_BY_ROLE, supportsVariation, validMelodySpeedDelta, validVariationParameters, melodySpeedDelta } from './arrangement-variation-catalogue';
+import { VARIATION_KINDS_BY_ROLE, supportsVariation, validMelodySpeedDelta, validVariationParameters, melodySpeedDelta, variationParameters } from './arrangement-variation-catalogue';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { MelodyGlobalSettings, PartSettingsPatch } from './part-settings.model';
@@ -171,6 +171,11 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   if (!sections[index] || !validVariationPolicy(policy, (scope.allTracks ?? tracks).length)) throw new RangeError('Invalid variation context or policy.');
   const section = sections[index], context = resolveVariationContext(scope.allTracks ?? tracks, sections, index);
   const retained = scope.retainedChoices ?? [];
+  const parametersFor = (kind: VariationKind, amount: -1 | 1) => {
+    const parameters = variationParameters(kind, amount, scope.generation);
+    return parameters ? { parameters } : {};
+  };
+  const cutParameters = variationParameters('pre-drop-cut', -1, scope.generation);
   const allowed = (kind: VariationKind) => scope.generation?.allowedKinds?.includes(kind) ?? true;
   const expandedBudget = policy.maxChanges + retained.length > 4;
   const retainedLift = retained.some(choice => isRegisterVariation(choice.kind));
@@ -180,9 +185,9 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   // Dedicated stream; no static-adapter or phrase draws are consumed by event selection.
   const cut = allowed('pre-drop-cut') && context.preDrop && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
     && !retained.some(c => c.kind === 'pre-drop-cut' || c.kind === 'arp-end-fill' || c.kind === 'arp-subdivision-ramp') ? tracks.flatMap(track => {
-      if (!section.trackPresence[track.id] || track.rerollLocked || preDropCutEligibility(track, section) !== undefined) return [];
+      if (!section.trackPresence[track.id] || track.rerollLocked || preDropCutEligibility(track, section, cutParameters?.cutQuarters) !== undefined) return [];
       const random = new JavaRandom(identitySeed(seed, `boundary-cut/${context.family}/${track.id}`));
-      return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'pre-drop-cut' as const, amount: -1 as const,
+      return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'pre-drop-cut' as const, amount: -1 as const, ...parametersFor('pre-drop-cut', -1),
         enabled: true, priority: random.nextDouble() + (track.role === 'chords' ? 1 : 0) }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const subdivision = allowed('arp-subdivision-ramp') && context.endFill && policy.maxChanges + retained.length >= 5 && policy.maxChanges > 0
@@ -191,14 +196,14 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
       if (!section.trackPresence[track.id] || track.rerollLocked || arpSubdivisionEligibility(track, section) !== undefined) return [];
       const random = new JavaRandom(identitySeed(seed, `subdivision-ramp/${context.family}/${track.id}`));
       return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'arp-subdivision-ramp' as const,
-        amount: 1 as const, enabled: true, priority: random.nextDouble() }] : [];
+        amount: 1 as const, enabled: true, ...parametersFor('arp-subdivision-ramp', 1), priority: random.nextDouble() }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const fill = !subdivision && allowed('arp-end-fill') && context.endFill && policy.maxChanges + retained.length >= 3 && policy.maxChanges > 0
     && !retained.some(c => c.kind === 'arp-end-fill' || c.kind === 'pre-drop-cut' || c.kind === 'arp-subdivision-ramp' || c.enabled && section.trackPresence[c.trackId] && isActivityVariation(c.kind))
     ? tracks.flatMap(track => {
       if (!section.trackPresence[track.id] || track.rerollLocked || arpEndFillEligibility(track, section) !== undefined) return [];
       const random = new JavaRandom(identitySeed(seed, `boundary-fill/${context.family}/${track.id}`));
-      return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'arp-end-fill' as const, amount: 1 as const,
+      return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'arp-end-fill' as const, amount: 1 as const, ...parametersFor('arp-end-fill', 1),
         enabled: true, priority: random.nextDouble() }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const boundary = cut ?? subdivision ?? fill;
@@ -210,8 +215,7 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
     const eligible = KINDS[track.role].flatMap(kind => {
       if (!allowed(kind) || kind === 'arp-subdivision-ramp' || kind === 'accompaniment-velocity-ramp' || kind === 'arp-end-fill' || kind === 'pre-drop-cut' || isRegisterVariation(kind)) return [];
       const amount = variationAmountForContext(context, kind);
-      return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true, ...(kind === 'melody-speed'
-        ? { parameters: { speedDelta: scope.generation?.melodySpeedDelta ?? VARIATION_DEFINITIONS['melody-speed'].speedDelta } } : {}) } as ArrangementVariation];
+      return amount === undefined ? [] : [{ trackId: track.id, kind, amount, enabled: true, ...parametersFor(kind, amount) } as ArrangementVariation];
     }).filter(choice => eligibleChoice(track, section, choice, scope.melodyGlobal));
     if (!eligible.length || random.nextInt(100) >= policy.chance) return [];
     const best = Math.max(...eligible.map(choice => variationPriority(context, choice.kind)));
@@ -226,12 +230,12 @@ export function planSectionVariations(tracks: readonly CompositionTrack[], secti
   const ramp = allowed('accompaniment-velocity-ramp') && rampAmount !== undefined && policy.maxChanges + retained.length >= 4 && budget > (boundary ? 1 : 0)
     && !retained.some(c => c.kind === 'accompaniment-velocity-ramp') ? tracks.flatMap(track => {
       if (track.id === boundary?.trackId || !section.trackPresence[track.id] || track.rerollLocked
-        || velocityEnvelopeEligibility(track, section, rampAmount) !== undefined
+        || velocityEnvelopeEligibility(track, section, rampAmount, variationParameters('accompaniment-velocity-ramp', rampAmount, scope.generation)?.velocityDelta) !== undefined
         || candidates.some(c => c.choice.trackId === track.id && isActivityVariation(c.choice.kind))
         || !expandedBudget && boundary && tracks.find(t => t.id === boundary.trackId)?.role === track.role) return [];
       const random = new JavaRandom(identitySeed(seed, `velocity-envelope/${context.family}/${track.id}`));
       return random.nextInt(100) < policy.chance ? [{ trackId: track.id, kind: 'accompaniment-velocity-ramp' as const,
-        amount: rampAmount, enabled: true, priority: random.nextDouble() + (track.role === 'chords' ? 1 : 0) }] : [];
+        amount: rampAmount, enabled: true, ...parametersFor('accompaniment-velocity-ramp', rampAmount), priority: random.nextDouble() + (track.role === 'chords' ? 1 : 0) }] : [];
     }).sort((a, b) => b.priority - a.priority || a.trackId.localeCompare(b.trackId))[0] : undefined;
   const anchorBudget = Math.max(0, budget - (reserveLift ? 1 : 0) - (boundary ? 1 : 0) - (ramp ? 1 : 0));
   const roles = new Set<CompositionTrack['role']>(!expandedBudget ? [boundary, ramp].flatMap(c => c ? [tracks.find(t => t.id === c.trackId)!.role] : []) : []);

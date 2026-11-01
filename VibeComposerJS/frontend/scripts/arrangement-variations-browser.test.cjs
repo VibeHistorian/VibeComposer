@@ -63,6 +63,25 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const speedDelta=variationSettings.querySelector('[aria-label="Melody speed variation delta"]');
       speedDelta.value='30';speedDelta.dispatchEvent(new Event('input',{bubbles:true}));
       await wait(()=>prefs().variationRerolls.melodySpeedDelta===30,'strength saved immediately');
+      const defaults=[...variationSettings.querySelectorAll('.variation-default')];
+      ensure(defaults.length===13,'every configurable strength has a slider, including both velocity directions');
+      const sliderEnds=[];
+      for(const label of defaults) {
+        const slider=label.querySelector('input'),output=label.querySelector('output'),text=label.querySelector('span');
+        const originalValue=Number(slider.value),changed=Math.min(Number(slider.max),originalValue+1);
+        slider.value=String(changed);slider.dispatchEvent(new Event('input',{bubbles:true}));
+        await wait(()=>Number(output.textContent)===changed,'strength value updates immediately');
+        slider.value=String(originalValue);slider.dispatchEvent(new Event('input',{bubbles:true}));
+        await wait(()=>Number(output.textContent)===originalValue,'strength default restored');
+        const l=text.getBoundingClientRect(),s=slider.getBoundingClientRect(),v=output.getBoundingClientRect();
+        ensure(l.right<=s.left&&s.right<=v.left,'label, slider and value appear in order');
+        ensure(Math.abs(s.top+s.height/2-(v.top+v.height/2))<3,'slider and value share a row');
+        const canvas=document.createElement('canvas'),context=canvas.getContext('2d');context.font=getComputedStyle(output).font;
+        ensure(v.width>=context.measureText('0000').width-.5,'value reserves four digits');
+        sliderEnds.push(s.right);
+        ensure(label.scrollWidth<=label.clientWidth,'strength control fits supported layout');
+      }
+      ensure(Math.max(...sliderEnds)-Math.min(...sliderEnds)<2,'sliders align on the right');
       ensure(JSON.stringify(read())===original,'strength preference leaves project untouched');
       variationSettings.querySelector('[aria-label="Close settings"]').click();await wait(()=>!document.querySelector('vc-settings-dialog'),'settings closed');
       const opener=await wait(()=>document.querySelector('[aria-label="Inspect whole arrangement variations"]'),'variations button');

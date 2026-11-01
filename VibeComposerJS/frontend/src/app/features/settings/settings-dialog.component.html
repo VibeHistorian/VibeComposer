@@ -135,14 +135,18 @@
               <section class="variation-settings-group" [attr.aria-labelledby]="'variation-group-' + group.id">
                 <h3 [id]="'variation-group-' + group.id">{{ group.label }}</h3>
                 @for (row of group.rows; track row.kind) {
-                  <div class="setting-row">
-                    <label class="setting-copy"><input type="checkbox" [attr.aria-label]="'Reroll ' + row.label"
+                  <div class="variation-preference-row">
+                    <label class="variation-enable"><input type="checkbox" [attr.aria-label]="'Reroll ' + row.label"
                       [checked]="preferences.variationRerolls().allowedKinds.includes(row.kind)" (change)="preferences.setVariationRerollEnabled(row.kind, $any($event.target).checked)" /> {{ row.label }}</label>
-                    <div class="setting-controls">
-                    @if (row.kind === 'melody-speed') {
-                      <label>Speed delta <input type="range" min="1" max="200" step="1" aria-label="Melody speed variation delta"
-                        [value]="preferences.variationRerolls().melodySpeedDelta" (input)="preferences.setVariationSpeedDelta(+$any($event.target).value)" /> {{ preferences.variationRerolls().melodySpeedDelta }}</label>
-                    }
+                    <div class="variation-defaults">
+                      @for (strength of row.strengths; track strength.falling) {
+                        <label class="variation-default"><span>{{ strength.label }}</span>
+                          <input type="range" min="1" [max]="strength.max" step="1" [attr.aria-label]="strength.ariaLabel"
+                            [value]="row.kind === 'melody-speed' ? preferences.variationRerolls().melodySpeedDelta : strength.falling ? preferences.variationRerolls().velocityFallDelta : preferences.variationRerolls().strengths[row.kind]"
+                            (input)="preferences.setVariationStrength(row.kind, +$any($event.target).value, strength.falling)" />
+                          <output>{{ row.kind === 'melody-speed' ? preferences.variationRerolls().melodySpeedDelta : strength.falling ? preferences.variationRerolls().velocityFallDelta : preferences.variationRerolls().strengths[row.kind] }}</output>
+                        </label>
+                      }
                     </div>
                   </div>
                 }
