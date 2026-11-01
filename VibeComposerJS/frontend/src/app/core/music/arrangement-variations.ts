@@ -78,7 +78,8 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
       if (track.role !== 'melody' || globals.contextualMelody === false) return {};
       const low = track.generatorSettings.rangeMin ?? 48, high = track.generatorSettings.rangeMax ?? 72, transpose = s.transpose ?? 0;
       // Expand/contract around the authored centre, without silently moving a boundary.
-      const rangeMin = low - a * 2, rangeMax = high + a * 2;
+      const delta = choice.parameters?.rangeDelta ?? 2;
+      const rangeMin = low - a * delta, rangeMax = high + a * delta;
       return rangeMax - rangeMin >= 12 && rangeMax - rangeMin <= 36
         && rangeMin >= 36 && rangeMax <= 84 && rangeMin + transpose >= 24 && rangeMax + transpose <= 96
         ? { rangeMin, rangeMax } : {};

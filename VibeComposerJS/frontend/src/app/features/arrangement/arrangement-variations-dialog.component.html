@@ -54,6 +54,20 @@
                 [attr.aria-label]="item.track.name + ' speed variation strength'" [disabled]="stale()"
                 [value]="item.inspection.choice.parameters?.speedDelta ?? 15" (change)="setSpeedStrength(row.section.id, item.track.id, $event)" /></label>
             }
+            @if (item.inspection.choice.kind === 'accompaniment-velocity-ramp') {
+              <label class="variation-strength">Velocity percentage points <input type="number" min="1" max="50" step="1"
+                [attr.aria-label]="item.track.name + ' velocity variation strength'" [disabled]="stale()"
+                [value]="item.inspection.choice.parameters?.velocityDelta ?? (item.inspection.choice.amount > 0 ? 15 : 20)"
+                (change)="setVelocityStrength(row.section.id, item.track.id, $event)" /></label>
+            }
+            @if (item.inspection.choice.kind === 'chord-transition' || item.inspection.choice.kind === 'melody-range') {
+              <label class="variation-strength">{{ item.inspection.choice.kind === 'chord-transition' ? 'Chance percentage points' : 'Semitones per boundary' }}
+                <input type="number" min="1" [max]="item.inspection.choice.kind === 'chord-transition' ? 75 : 12" step="1"
+                  [attr.aria-label]="item.track.name + ' parameter variation strength'" [disabled]="stale()"
+                  [value]="item.inspection.choice.kind === 'chord-transition' ? (item.inspection.choice.parameters?.transitionDelta ?? 25) : (item.inspection.choice.parameters?.rangeDelta ?? 2)"
+                  (change)="setParameterStrength(row.section.id, item.track.id, $event)" />
+              </label>
+            }
             @if (item.detail) { <span class="effect-status">{{ item.detail }}</span> }
           </article>
         }

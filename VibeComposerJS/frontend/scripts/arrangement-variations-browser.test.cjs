@@ -117,6 +117,24 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const ending=await wait(()=>[...d.querySelectorAll('.variation-section')].find(s=>s.getAttribute('aria-label')==='OUTRO variations'),'ending variations');
       const ramp=await wait(()=>[...ending.querySelectorAll('article')].find(a=>a.textContent.includes('Accompaniment velocity ramp')),'velocity envelope explanation');
       ensure(ramp.textContent.includes('100% → 80%')&&ramp.textContent.includes('8–16'),'resolved envelope window and gain');
+      const velocityStrength=ramp.querySelector('input[type="number"]');
+      ensure(velocityStrength&&Number(velocityStrength.max)===50,'bounded velocity strength control');
+      await changeControl(velocityStrength,'35');
+      await wait(()=>ramp.textContent.includes('100% → 65%'),'edited velocity strength explained');
+      await changeControl(velocityStrength,'0');
+      ensure(velocityStrength.value==='35','invalid velocity strength restored');
+      for(const kind of ['Late chord anticipation','Contextual melody range']) {
+        const section=d.querySelector('.variation-section'),adder=section.querySelector('.add-variation');
+        const option=(await selectOptions(adder)).find(o=>o.textContent.includes(kind));
+        if(option) {
+          await changeControl(adder,option.value);
+          const article=await wait(()=>[...section.querySelectorAll('article')].find(a=>a.textContent.includes(kind)),'parameter choice added');
+          const input=article.querySelector('input[type="number"]');
+          ensure(input,'parameter strength control');await changeControl(input,kind==='Late chord anticipation'?'40':'3');
+          ensure(article.querySelector('.variation-lock').getAttribute('aria-pressed')==='true','strength edit locks choice');
+        }
+      }
+      ensure(JSON.stringify(read())===original,'strength edits remain detached');
       const cut=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Pre-drop accompaniment cut')),'timed cut explanation');
       ensure(cut.textContent.includes('15–16')&&cut.textContent.includes('stop sustains'),'actual final-beat window');
       const subdivision=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Arp subdivision ramp')),'subdivision ramp explanation');

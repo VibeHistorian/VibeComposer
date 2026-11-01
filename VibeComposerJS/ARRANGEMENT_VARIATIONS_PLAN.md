@@ -261,6 +261,16 @@ Automatic planning uses its independent `subdivision-ramp/family/track` stream o
 
 Realize after baseline output humanization in `layOutTrackPhrase`, consuming no extra phrase/output random draws. Earlier notes, neighboring sections and unrelated tracks retain their material and draws. Score, playback, audio and MIDI use the same cached shared note layout. Melody and melody-following source events remain excluded. Inspection, automatic allowlists, manual insertion/replacement, Apply/Cancel, history, imports and identity cleanup use the shared catalogue/lifecycle.
 
+## Additional typed strengths (delivered, 2026-11-01)
+
+The detached variations popup now edits three further strengths in the same batch as the existing Melody speed control:
+
+- Accompaniment velocity ramps: integer 1–50 percentage points, applied in the saved direction. Choices without parameters retain the 15-point rise or 20-point fall. Inspection and shared note layout use the saved strength; quantized no-op eligibility accounts for that strength.
+- Chord anticipation: integer 1–75 chance percentage points, default 25. The existing 75% positive ceiling and zero floor remain authoritative.
+- Contextual Melody range: integer 1–12 semitones per boundary, default two. Expansion/contraction stays centered; existing width, register and contextual-Melody protections reject incompatible results without clamping boundaries.
+
+Kind-specific parameter validation rejects cross-operation fields, extra keys, fractions and out-of-bounds values. Edits retain the exact realization seed, mark authored ownership, and publish only on Apply. Invalid inputs restore the saved strength. Automatic defaults, selection streams and budgets remain unchanged. Replacement discards the previous kind's parameters as before. History, import/export, duplication and shared MIDI output carry saved strengths through the existing lifecycle.
+
 ## Follow-up: further fills, melody events and ramps
 
 Static parameter patches cannot represent final-bar fills, progressive subdivision, beat-window contour lifts, short pre-drop cuts or section-end resolutions. These need dedicated consumers:

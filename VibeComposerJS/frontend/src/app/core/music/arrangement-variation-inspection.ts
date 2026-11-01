@@ -1,5 +1,5 @@
 import { arpSubdivisionEligibility, arpSubdivisionWindow } from './arrangement-subdivision-ramp';
-import { VARIATION_DEFINITIONS } from './arrangement-variation-catalogue';
+import { VARIATION_DEFINITIONS, velocityDelta } from './arrangement-variation-catalogue';
 import type { MelodyGlobalSettings } from './part-settings.model';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionTrack } from '../project/track.model';
@@ -47,11 +47,11 @@ export function inspectArrangementVariation(track: CompositionTrack, section: Ar
     return result('active', `Grid ${hits} → 8 → 16 over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; staged at the midpoint, sounding pitches retained`);
   }
   if (choice.kind === 'accompaniment-velocity-ramp') {
-    const status = velocityEnvelopeEligibility(track, section, choice.amount);
+    const status = velocityEnvelopeEligibility(track, section, choice.amount, velocityDelta(choice));
     if (status) return result(status, status === 'manual' ? 'Manual region protects the ramp window'
       : status === 'overridden' ? 'Explicit section velocity controls protect this ramp' : 'Current settings or velocity bounds prevent this ramp');
     const window = velocityEnvelopeWindow(section)!;
-    return result('active', `Velocity 100% → ${choice.amount > 0 ? 115 : 80}% over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; sampled at note attacks`);
+    return result('active', `Velocity 100% → ${100 + choice.amount * velocityDelta(choice)}% over section beats ${Number(window.startBeat.toFixed(4))}–${Number(window.endBeat.toFixed(4))}; sampled at note attacks`);
   }
   if (choice.kind === 'arp-end-fill') {
     const status = arpEndFillEligibility(track, section);

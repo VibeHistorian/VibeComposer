@@ -69,7 +69,8 @@ export function rhythmVariationPatch(track: CompositionTrack, choice: Arrangemen
         || !mask.some((value, i) => value > 0 && i / mask.length >= split / 1000)) return {};
       const current = track.generatorSettings.transitionChance ?? 0;
       if (amount > 0 && current >= 75 || amount < 0 && current <= 0) return {};
-      return { transitionChance: amount > 0 ? Math.min(75, current + 25) : Math.max(0, current - 25) };
+      const delta = choice.parameters?.transitionDelta ?? 25;
+      return { transitionChance: amount > 0 ? Math.min(75, current + delta) : Math.max(0, current - delta) };
     }
     default: return {};
   }

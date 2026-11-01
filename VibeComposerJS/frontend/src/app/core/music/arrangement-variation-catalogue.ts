@@ -52,11 +52,27 @@ export function validMelodySpeedDelta(value: unknown): value is number {
 
 export function validVariationParameters(kind: VariationKind, value: unknown): boolean {
   if (value === undefined) return true;
-  if (kind !== 'melody-speed' || !value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const fields = value as Record<string, unknown>;
+  if (kind === 'chord-transition' || kind === 'melody-range') {
+    const key = kind === 'chord-transition' ? 'transitionDelta' : 'rangeDelta';
+    return Object.keys(fields).length === 1 && Object.hasOwn(fields, key)
+      && Number.isInteger(fields[key]) && (fields[key] as number) >= 1 && (fields[key] as number) <= (kind === 'chord-transition' ? 75 : 12);
+  }
+  if (kind === 'accompaniment-velocity-ramp') return Object.keys(fields).length === 1
+    && Object.hasOwn(fields, 'velocityDelta') && validVelocityDelta(fields['velocityDelta']);
+  if (kind !== 'melody-speed') return false;
   return Object.keys(fields).length === 1 && Object.hasOwn(fields, 'speedDelta') && validMelodySpeedDelta(fields['speedDelta']);
 }
 
 export function melodySpeedDelta(choice: ArrangementVariation): number {
   return choice.parameters?.speedDelta ?? VARIATION_DEFINITIONS['melody-speed'].speedDelta;
+}
+
+export function validVelocityDelta(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 50;
+}
+
+export function velocityDelta(choice: ArrangementVariation): number {
+  return choice.parameters?.velocityDelta ?? (choice.amount > 0 ? 15 : 20);
 }

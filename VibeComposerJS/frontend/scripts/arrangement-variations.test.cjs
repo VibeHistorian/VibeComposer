@@ -2,6 +2,51 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('typed strengths validate by kind and realize bounded range, chance and velocity changes', () => {
+  const {project,engine,load}=setup();
+  const catalogue=load('core/music/arrangement-variation-catalogue.ts');
+  for(const [kind,key,max] of [['melody-range','rangeDelta',12],['chord-transition','transitionDelta',75],['accompaniment-velocity-ramp','velocityDelta',50]]) {
+    for(const value of [1,max]) assert.equal(catalogue.validVariationParameters(kind,{[key]:value}),true);
+    for(const value of [0,max+1,1.5,'2',null]) assert.equal(catalogue.validVariationParameters(kind,{[key]:value}),false);
+    assert.equal(catalogue.validVariationParameters(kind,{[key]:2,speedDelta:15}),false);
+    assert.equal(catalogue.validVariationParameters(kind,{speedDelta:15}),false);
+  }
+  const melody=project.tracks.find(t=>t.role==='melody');
+  const choice={trackId:melody.id,kind:'melody-range',amount:1,enabled:true,parameters:{rangeDelta:3}};
+  const track={...melody,generatorSettings:{...melody.generatorSettings,rangeMin:48,rangeMax:72,transpose:0}};
+  assert.deepEqual(engine.variationPatch(track,choice),{rangeMin:45,rangeMax:75});
+  assert.deepEqual(engine.variationPatch(track,{...choice,parameters:{rangeDelta:12}}),{},'never clamp authored range boundaries');
+  const chords=project.tracks.find(t=>t.role==='chords');
+  const chordTrack={...chords,generatorSettings:{rhythm:'full',hitsPerPattern:8,transitionChance:40}};
+  const transition={trackId:chords.id,kind:'chord-transition',amount:1,enabled:true,parameters:{transitionDelta:10}};
+  assert.equal(engine.variationPatch(chordTrack,transition).transitionChance,50);
+  assert.equal(engine.variationPatch(chordTrack,{...transition,parameters:{transitionDelta:75}}).transitionChance,75);
+  assert.equal(engine.variationPatch(chordTrack,{...transition,amount:-1}).transitionChance,30);
+  const ramp=load('core/music/arrangement-velocity-envelope.ts');
+  const notes=[0,4,7,8].map((startBeat,i)=>({id:String(i),midi:60,startBeat,durationBeats:1,velocity:80}));
+  assert.deepEqual(ramp.applyVelocityEnvelope(notes,{startBeat:0,endBeat:8},1,50).map(n=>n.velocity),[80,100,115,80]);
+  assert.deepEqual(ramp.applyVelocityEnvelope(notes,{startBeat:0,endBeat:8},-1,50).map(n=>n.velocity),[80,60,45,80]);
+});
+
+test('strength edits for timed and settings choices remain detached, pin seeds and survive history', () => {
+  for(const [kind,key,value,method] of [['accompaniment-velocity-ramp','velocityDelta',35,'setVelocityStrength'],['chord-transition','transitionDelta',40,'setParameterStrength'],['melody-range','rangeDelta',3,'setParameterStrength']]) {
+    const f=fixture({dialogData:{}}), initial=f.service.project();
+    const track=initial.tracks.find(t=>t.role===(kind==='melody-range'?'melody':'chords'));
+    const section={...initial.arrangement[0],measures:4,trackPresence:{[track.id]:true},variations:{seed:'9223372036854775807',policy:{chance:100,maxChanges:4},choices:[{trackId:track.id,kind,amount:1,enabled:true}]}};
+    f.service.state.set({...initial,arrangement:[section]});
+    const Dialog=f.load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
+    const d=new Dialog();d.dialog={close(){}};const before=f.service.exportProjectJson();
+    d[method](section.id,track.id,{target:{value:String(value)}});
+    const saved=d.draft()[section.id].choices[0];
+    assert.equal(saved.parameters[key],value);assert.equal(saved.origin,'authored');assert.equal(saved.seed,section.variations.seed);
+    for(const invalid of ['', '0','1000','1.5']) {const target={value:invalid};d[method](section.id,track.id,{target});assert.equal(target.value,String(value));}
+    assert.equal(f.service.exportProjectJson(),before);d.apply();
+    const after=f.service.exportProjectJson();assert.notEqual(after,before);
+    f.service.undo();assert.equal(f.service.exportProjectJson(),before);f.service.redo();assert.equal(f.service.exportProjectJson(),after);
+    assert.equal(f.service.importProjectJson(after),true);assert.equal(f.service.project().arrangement[0].variations.choices[0].parameters[key],value);
+  }
+});
+
 function setup() {
   const f = fixture({ contextualMelody: false });
   const project = structuredClone(f.service.project());
@@ -1276,8 +1321,8 @@ test('ramps protect explicit velocity controls, authored rhythms and manual regi
 test('velocity ramps persist through history and expose the same velocities in parsed MIDI', () => {
   const { project, engine, service, phrase, midi, commands }=endFillSetup();
   const { Midi }=require('@tonejs/midi');
-  for (const role of ['chords','arpeggio']) for (const amount of [-1,1]) {
-    const track=project.tracks.find(t=>t.role===role),choice={trackId:track.id,kind:'accompaniment-velocity-ramp',amount,enabled:true};
+  for (const role of ['chords','arpeggio']) for (const amount of [-1,1]) for (const parameters of [undefined,{velocityDelta:35}]) {
+    const track=project.tracks.find(t=>t.role===role),choice={trackId:track.id,kind:'accompaniment-velocity-ramp',amount,enabled:true,...(parameters?{parameters}:{})};
     const variations={seed:'9223372036854775807',policy:{chance:100,maxChanges:4},choices:[choice]};
     assert.equal(engine.validSectionVariations(variations,project.tracks),true);
     for (const invalid of [{...choice,amount:0},{...choice,trackId:project.tracks.find(t=>t.role==='melody').id},{...choice,gain:[1,1.15]}])

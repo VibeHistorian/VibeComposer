@@ -147,7 +147,7 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       const ramp = resolveVelocityEnvelope(track, section);
       if (ramp) {
         const absolute = { startBeat: sectionStart + ramp.startBeat, endBeat: sectionStart + ramp.endBeat };
-        notes = notes.map(note => note.sectionId === section.id ? applyVelocityEnvelope([note], absolute, ramp.amount)[0] : note);
+        notes = notes.map(note => note.sectionId === section.id ? applyVelocityEnvelope([note], absolute, ramp.amount, ramp.delta)[0] : note);
       }
       sectionStart += sectionDurationBeats(project, section);
     }

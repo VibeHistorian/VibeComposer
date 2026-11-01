@@ -23,8 +23,8 @@ export interface ArrangementVariation {
   readonly origin?: 'authored';
   /** Exact realization seed pinned independently of later section rerolls. */
   readonly seed?: string;
-  /** Present only on Melody speed choices in this first strength slice. */
-  readonly parameters?: { readonly speedDelta: number };
+  /** Validated against the operation kind by the shared catalogue. */
+  readonly parameters?: { readonly speedDelta?: number; readonly velocityDelta?: number; readonly transitionDelta?: number; readonly rangeDelta?: number };
 }
 
 export interface SectionVariations {
