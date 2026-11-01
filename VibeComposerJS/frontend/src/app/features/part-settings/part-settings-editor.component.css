@@ -121,3 +121,7 @@
 .placement-target:hover, .placement-target:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; background: color-mix(in srgb, var(--control-role-color) 18%, transparent); box-shadow: 0 0 16px color-mix(in srgb, var(--control-role-color) 55%, transparent); }
 :host(.placement-editing) .control-content { pointer-events: none; }
 :host(.placement-editing) .quick-inheritance { pointer-events: none; }
+
+/* Variation changes use the track role while inherited markers stay neutral */
+:host(.quick-layout) .part-control.variation-only .quick-control-border { border-color: var(--variation-role-color); box-shadow: 0 0 6px color-mix(in srgb, var(--variation-role-color) 18%, transparent); }
+:host(:not(.quick-layout)) .part-control.variation-only { outline: 1px solid var(--variation-role-color); outline-offset: 3px; border-radius: var(--radius-control); }

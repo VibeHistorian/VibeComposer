@@ -125,7 +125,6 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Release tension')),'release purpose');
-      ensure(d.querySelector('.variation-return-lift'),'controlled return lift explanation');
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Arp rhythm density')),'rhythm-aware density explanation');
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Late chord anticipation')),'chord transition explanation');
       ensure(JSON.stringify(read())===original,'reroll stays local');

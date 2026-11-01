@@ -9,7 +9,7 @@ import { inspectArrangementVariation, type VariationInspection } from '../../cor
 import { DEFAULT_VARIATION_POLICY, maximumSectionVariations, validVariationPolicy } from '../../core/music/arrangement-variations';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { SectionTypeSettingsService } from '../../core/project/section-type-settings.service';
-import { resolveVariationContext, variationAmountForContext, isRegisterVariation, VARIATION_GESTURE_LABELS } from '../../core/music/arrangement-variation-context';
+import { resolveVariationContext, variationAmountForContext, VARIATION_GESTURE_LABELS } from '../../core/music/arrangement-variation-context';
 import type { VariationPolicy } from '../../core/music/arrangement-variation.model';
 
 @Component({
@@ -59,7 +59,6 @@ export class ArrangementVariationsDialogComponent {
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));
     return { section, additions: variationAdditions(this.candidateProject(), current, this.tracks, this.preferences.variationRerolls()), intent: context.intent, context, gestureLabel: VARIATION_GESTURE_LABELS[context.gesture], choices, presenceChanges,
-      returnLift: choices.some(item => isRegisterVariation(item.inspection.choice.kind) && item.inspection.choice.amount > 0 && item.inspection.status === 'active'),
       savedGestureLabel: current.variations?.gesture ? VARIATION_GESTURE_LABELS[current.variations.gesture] : undefined,
       gestureMismatch: current.variations?.gesture !== undefined && current.variations.gesture !== context.gesture };
   }));

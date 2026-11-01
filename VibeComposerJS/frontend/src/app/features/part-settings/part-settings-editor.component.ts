@@ -1,3 +1,4 @@
+import { inspectArrangementVariation } from '../../core/music/arrangement-variation-inspection';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
@@ -12,7 +13,7 @@ import type { CommonPartSettings, ChordRhythm } from '../../core/music/part-sett
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
-import { PART_CONTROLS, type PartControl, type PartSettingValue } from '../../core/music/part-settings';
+import { PART_CONTROLS, type PartControl, type PartSettingValue, partValuesEqual } from '../../core/music/part-settings';
 import { chordRhythmMask } from '../../core/music/rhythm-pattern';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
@@ -26,7 +27,7 @@ import { ProjectService } from '../../core/project/project.service';
   selector: 'vc-part-settings-editor',
   imports: [NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[attr.data-control-role]': 'role()', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
+  host: { '[attr.data-control-role]': 'role()', '[style.--variation-role-color]': '"var(--role-" + role() + ")"', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',
   styleUrl: './part-settings-editor.component.css',
 })
@@ -170,6 +171,28 @@ export class PartSettingsEditorComponent {
       : 'Mixed rhythm settings. Select an individual track to see its rhythm.';
   });
 
+  readonly variationKeys = computed(() => {
+    const scope = this.scope();
+    if (!('sectionId' in scope)) return new Set<string>();
+    const project = this.projects.project();
+    const section = project.arrangement.find(section => section.id === scope.sectionId);
+    if (!section) return new Set<string>();
+    const keys = new Set<string>();
+    for (const track of project.tracks.filter(track => scope.kind === 'section-track' ? track.id === scope.trackId : track.role === scope.role)) {
+      const choice = section.variations?.choices.find(choice => choice.trackId === track.id);
+      if (!choice) continue;
+      const inspection = inspectArrangementVariation(track, section, choice, project.melodyGlobal);
+      if (inspection.status !== 'active') continue;
+      for (const change of inspection.changes) {
+        if (change.source === 'Variation' && !partValuesEqual(change.before, change.effective)) keys.add(change.parameter);
+      }
+    }
+    return keys;
+  });
+  variationOnly(control: PartControl): boolean {
+    return this.inheritanceFor(control) === 'inherited'
+      && combinedControlKeys(control.key, this.role()).some(key => this.variationKeys().has(key));
+  }
   inheritanceFor(control: PartControl): ControlInheritance {
     return this.local() ? combinedControlKeys(control.key, this.role()).some(key => this.overriddenKeys().includes(key)) ? 'custom' : 'inherited' : 'global';
   }
