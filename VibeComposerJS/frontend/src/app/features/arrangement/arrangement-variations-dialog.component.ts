@@ -1,3 +1,5 @@
+import { SelectComponent } from '../../shared/select.component';
+import { variationAdditions } from '../../core/project/arrangement-variation-additions';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
@@ -11,7 +13,7 @@ import { resolveVariationContext, variationAmountForContext, isRegisterVariation
 import type { VariationPolicy } from '../../core/music/arrangement-variation.model';
 
 @Component({
-  selector: 'vc-arrangement-variations-dialog', changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'vc-arrangement-variations-dialog', imports: [SelectComponent], changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './arrangement-variations-dialog.component.html', styleUrl: './arrangement-variations-dialog.component.css',
 })
 export class ArrangementVariationsDialogComponent {
@@ -56,12 +58,24 @@ export class ArrangementVariationsDialogComponent {
     });
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));
-    return { section, intent: context.intent, context, gestureLabel: VARIATION_GESTURE_LABELS[context.gesture], choices, presenceChanges,
+    return { section, additions: variationAdditions(this.candidateProject(), current, this.tracks, this.preferences.variationRerolls()), intent: context.intent, context, gestureLabel: VARIATION_GESTURE_LABELS[context.gesture], choices, presenceChanges,
       returnLift: choices.some(item => isRegisterVariation(item.inspection.choice.kind) && item.inspection.choice.amount > 0 && item.inspection.status === 'active'),
       savedGestureLabel: current.variations?.gesture ? VARIATION_GESTURE_LABELS[current.variations.gesture] : undefined,
       gestureMismatch: current.variations?.gesture !== undefined && current.variations.gesture !== context.gesture };
   }));
 
+  add(sectionId: string, value: string): void {
+    if (this.stale() || !this.policyValid()) return;
+    const row = this.rows().find(row => row.section.id === sectionId);
+    const selected = row?.additions.find(option => option.value === value);
+    if (!row || !selected) return;
+    this.draft.update(draft => {
+      const previous = draft[sectionId];
+      const seed = previous?.seed ?? String(Math.floor(Math.random() * 0x1000000000000));
+      return { ...draft, [sectionId]: { ...(previous ?? { seed, policy: { ...this.policy() } }),
+        choices: [...(previous?.choices ?? []), { ...selected.choice, origin: 'authored', seed }] } };
+    });
+  }
   setPolicy(key: keyof VariationPolicy, event: Event): void {
     this.policy.update(policy => ({ ...policy, [key]: Number((event.target as HTMLInputElement).value) }));
   }

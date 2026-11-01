@@ -1453,3 +1453,36 @@ test('variation reroll preferences persist independently and filter all generati
   assert.equal(uiPreferences.importJson(exported),true);
   assert.equal(uiPreferences.variationRerolls().melodySpeedDelta,30);
 });
+
+test('manual addition catalogue ignores random exclusions but enforces scope, occupancy and compatibility', () => {
+  const {project,load}=setup();
+  const additions=load('core/project/arrangement-variation-additions.ts').variationAdditions;
+  const melody=project.tracks.find(t=>t.role==='melody');
+  const section=project.arrangement[1];
+  const options=additions(project,section,[melody],{allowedKinds:[],melodySpeedDelta:30});
+  const speed=options.find(o=>o.choice.kind==='melody-speed');
+  assert.ok(speed);assert.equal(speed.choice.parameters.speedDelta,30);
+  assert.equal(new Set(options.map(o=>o.value)).size,options.length);
+  assert.ok(options.every(o=>o.choice.trackId===melody.id));
+  assert.deepEqual(additions(project,{...section,trackPresence:{}},[melody]),[]);
+  assert.deepEqual(additions(project,{...section,trackPhrases:{[melody.id]:[]}},[melody]),[]);
+  assert.deepEqual(additions(project,{...section,variations:{seed:'1',policy:{chance:100,maxChanges:2},choices:[{...speed.choice,enabled:false}]}},[melody]),[]);
+  const occupied=Array.from({length:6},(_,i)=>({...speed.choice,trackId:`occupied-${i}`}));
+  assert.deepEqual(additions(project,{...section,variations:{seed:'1',policy:{chance:100,maxChanges:2},choices:occupied}},[melody]),[]);
+  const dialogFixture=fixture({dialogData:{sectionId:section.id,trackId:melody.id},contextualMelody:false});
+  assert.equal(dialogFixture.service.importProjectJson(JSON.stringify(project)),true);
+  const Dialog=dialogFixture.load('features/arrangement/arrangement-variations-dialog.component.ts').ArrangementVariationsDialogComponent;
+  const dialog=new Dialog();dialog.preferences.setVariationRerollEnabled('melody-speed',false);dialog.preferences.setVariationSpeedDelta(30);
+  const before=dialogFixture.service.exportProjectJson();
+  const candidate=dialog.rows()[0].additions.find(o=>o.choice.kind==='melody-speed');
+  dialog.policy.set({chance:101,maxChanges:2});dialog.add(section.id,candidate.value);
+  assert.equal(dialog.draft()[section.id],undefined,'invalid policy cannot poison a new manual section draft');
+  dialog.policy.set({chance:100,maxChanges:2});
+  dialog.add(section.id,candidate.value);
+  const added=dialog.draft()[section.id].choices[0];
+  assert.equal(added.origin,'authored');assert.equal(added.parameters.speedDelta,30);
+  assert.equal(dialog.rows()[0].additions.length,0);
+  assert.equal(dialogFixture.service.exportProjectJson(),before);
+  assert.equal(dialogFixture.service.applyArrangementVariationDraft(dialog.initialProject,dialog.draft()),'changed');
+  dialogFixture.service.undo();assert.equal(dialogFixture.service.exportProjectJson(),before);
+});

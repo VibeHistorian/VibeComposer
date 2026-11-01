@@ -159,6 +159,16 @@ The popup no longer contains the Melody speed policy input. Keep on reroll is no
 
 Next: explicit popup insertion/editing, using the catalogue for compatibility rather than the random-generation allowlist. Initial selection defaults may read UI strengths, while the resulting authored choice must capture concrete values. Further operation-specific strength schemas remain incremental work.
 
+### Compact section headers and explicit insertion (delivered, 2026-11-01)
+
+The popup uses a single section heading row: bright bold section name, muted energy/tension, bold muted gesture and a right-aligned + picker. Divider rules, the gesture's short reason text and the empty-scope placeholder are removed. Context/override warnings and individual variation explanations remain available.
+
+The + action uses the shared accessible select/listbox control, offering track, operation and direction in the current section/role/track scope. `arrangement-variation-additions.ts` enumerates catalogue directions and uses the same inspection/consumer compatibility as resolution. Random allowlists, chance, section gesture and automatic budget thresholds do not constrain explicit additions. Existing track slots (including disabled choices), hard section capacity, absent/manual targets, explicit blocking overrides, incompatible consumers and no-op choices restrict availability. The picker is disabled when exhausted or stale. One operation per track remains the current rule; insertion does not silently replace existing choices.
+
+Selecting an entry stages an enabled authored choice, pins its realization seed and captures the current Melody speed default where applicable. Other strengths retain their existing operation defaults. Existing draft seed/policy are preserved; a section without variations gets a fresh exact 48-bit seed and the current draft policy. Apply commits once through ProjectService; Cancel and Undo preserve their usual ownership/history behavior. Adding does not reroll presence, other tracks or unrelated choices. The action selector resets its bound value after selection, allowing the same option again after a later Reset.
+
+Next authoring work: explicit removal/replacement and editing existing choices, then further typed strength controls. These are separate from this first insertion workflow.
+
 ### Shared definitions and configurable strength
 
 These controls are planned follow-ups, not implemented UI. Establish a small framework-independent operation catalogue shared by planning, popup authoring, inspection, validation and actual consumers: supported roles/modes, directions, parameter units/defaults/bounds, and allocation/conflict groups. Separate automatic suitability from functional compatibility. A general effect-vector framework is not a prerequisite.
@@ -363,3 +373,10 @@ Validation: all 544 unit tests, the production build and all 28 browser tests pa
 - Production build passed with the existing Pixi `@xmldom/xmldom` CommonJS warning. Focused 30-track variation browser cases passed at 1440/780px, covering the new settings page, immediate saved defaults without project edits, removed popup strength input, captured strengths and the lock control's retained state through reroll.
 - The full browser aggregate passed 25 of 28 cases; the three settings-layout cases exposed missing standard control-column elements on rows without a strength slider. Every variation row now uses the standard copy/control structure. After the fresh build, all three affected settings/layout/preference-transfer cases passed at 1440/1400/780px. The other 25 cases were not repeated for this settings-only markup correction.
 - Logs: frontend `.angular/variation-preferences-unit.log`, `variation-preferences-focused.log`, `variation-preferences-build.log`, `variation-preferences-browser-focused.log`, `variation-preferences-browser.log` and `variation-preferences-settings-browser.log`.
+
+### Compact popup and manual insertion verification, 2026-11-01
+
+- Full unit aggregate: all 589 passed. Added coverage checks scoped/manual availability independent of random exclusions, captured speed defaults, occupied/disabled targets, absence, manual ownership, hard capacity, detached authored insertion and one-step Apply/Undo.
+- Production build and all 28 full browser cases passed. The expanded 30-track 1440/780px cases check aligned header content, right-pinned +, no dividers/empty placeholder, real listbox selection, captured strength/ownership and insertion Undo, alongside existing draft, lock, scope, preferences and output workflows.
+- Final review added an invalid-policy guard to prevent manual insertion from storing an invalid policy in a newly created section draft. After the fresh build, all 60 focused variation tests and both affected production browser cases passed again. Full aggregates were not repeated for this guard.
+- Logs: frontend `.angular/variation-add-unit.log`, `variation-add-focused.log`, `variation-add-build.log`, `variation-add-browser.log` and `variation-add-browser-focused.log`.

@@ -18,9 +18,15 @@ input[type="number"] { width: 90px; padding: 6px; }
 .policy-hint { margin-bottom: 16px; }
 
 /* Variation effects */
-.variation-section { border-top: 1px solid var(--border-subtle); padding-top: 10px; }
-h2 { margin: 0 0 10px; font-size: 13px; }
-small { display: block; margin-top: 4px; color: var(--text-muted); font-weight: normal; }
+.variation-section { margin-top: 14px; }
+.variation-section-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+h2 { flex: none; margin: 0; font-size: 13px; color: var(--text-primary); }
+.section-intent, .variation-purpose { color: var(--text-muted); }
+.section-intent { flex: none; }
+.variation-purpose { min-width: 0; }
+.add-variation { display: grid; place-items: center; flex: none; margin-left: auto; width: 26px; height: 26px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font-size: 16px; line-height: 1; text-align: center; cursor: pointer; }
+.add-variation:hover:not([aria-disabled="true"]), .add-variation[aria-expanded="true"]:not([aria-disabled="true"]) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
+.add-variation[aria-disabled="true"] { opacity: .5; cursor: default; }
 article { padding: 10px; margin-bottom: 8px; background: var(--surface-low); border: 1px solid var(--border-subtle); border-radius: var(--radius-control); }
 .variation-line { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); align-items: start; gap: 6px 16px; }
 article label { display: flex; align-items: baseline; gap: 6px; line-height: 1.5; overflow-wrap: anywhere; }

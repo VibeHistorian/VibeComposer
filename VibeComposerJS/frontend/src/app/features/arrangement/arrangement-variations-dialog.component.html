@@ -19,10 +19,13 @@
   <div class="variation-sections">
     @for (row of rows(); track row.section.id) {
       <section class="variation-section" [attr.aria-label]="row.section.type + ' variations'">
-        <h2>{{ row.section.type.replaceAll('_', ' ') }} <small>Energy {{ value(row.intent.energy * 100) }}% · Tension {{ value(row.intent.tension * 100) }}%</small></h2>
-        <p class="variation-purpose"><strong>{{ row.gestureLabel }}</strong> · {{ row.context.reason }}.
-          @if (row.context.occurrence) { Return {{ row.context.occurrence + 1 }}. }
-        </p>
+        <div class="variation-section-heading">
+          <h2>{{ row.section.type.replaceAll('_', ' ') }}</h2>
+          <span class="section-intent">Energy {{ value(row.intent.energy * 100) }}% · Tension {{ value(row.intent.tension * 100) }}%</span>
+          <strong class="variation-purpose">{{ row.gestureLabel }}</strong>
+          <vc-select #adder="vcSelect" class="add-variation" displayLabel="+" [attr.aria-label]="'Add variation to ' + row.section.type"
+            [options]="row.additions" value="" [disabled]="stale() || !policyValid() || !row.additions.length" (valueChange)="add(row.section.id, $event); adder.restoreValue()" />
+        </div>
         @if (row.gestureMismatch) { <p class="context-warning">Saved plan: {{ row.savedGestureLabel }}. Reroll to replan for this position.</p> }
         @if (row.returnLift) { <p class="variation-return-lift">One octave lift adds contrast while the established anchors remain.</p> }
         @if (row.presenceChanges.length) {
@@ -45,9 +48,9 @@
               </div>
             </div>
             @if (item.detail) { <span class="effect-status">{{ item.detail }}</span> }
-            @if (item.mismatch) { <span class="context-warning">This choice differs from the current section purpose. Reroll to replan.</span> }
+            @if (item.mismatch) { <span class="context-warning">This choice differs from the current section purpose. {{ item.inspection.choice.origin === 'authored' ? 'Unlock to allow replanning.' : 'Reroll to replan.' }}</span> }
           </article>
-        } @empty { <p>No variations in this scope. Reroll to choose eligible changes.</p> }
+        }
       </section>
     }
   </div>
