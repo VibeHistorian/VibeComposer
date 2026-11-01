@@ -197,7 +197,7 @@ test('draft Apply commits once, preserves non-variation state, rejects stale dra
   assert.equal(service.exportProjectJson(), saved);
 });
 
-test('dialog keeps reroll, toggle and reset local until Apply, and rejects stale Apply', () => {
+test('dialog keeps reroll, delete and reset local until Apply, and rejects stale Apply', () => {
   const { service, load } = fixture({ contextualMelody: false, dialogData: {} });
   const { ArrangementVariationsDialogComponent: Dialog } = load('features/arrangement/arrangement-variations-dialog.component.ts');
   const dialog = new Dialog();
@@ -209,8 +209,9 @@ test('dialog keeps reroll, toggle and reset local until Apply, and rejects stale
   const row = dialog.rows().find(row => row.choices.length);
   assert.ok(row);
   const choice = row.choices[0].inspection.choice;
-  dialog.toggle(row.section.id, choice.trackId, { target: { checked: false } });
-  assert.equal(dialog.draft()[row.section.id].choices.find(c => c.trackId === choice.trackId).enabled, false);
+  dialog.remove(row.section.id, choice.trackId);
+  assert.ok(!dialog.draft()[row.section.id].choices.some(c => c.trackId === choice.trackId));
+  assert.ok(dialog.rows().find(r => r.section.id === row.section.id).additions.some(o => o.choice.trackId === choice.trackId));
   assert.equal(service.exportProjectJson(), before);
   dialog.reset(); assert.ok(Object.values(dialog.draft()).every(value => value === undefined));
   dialog.reroll(); dialog.apply();

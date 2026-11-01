@@ -73,9 +73,9 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const range=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Contextual melody range')),'saved range row');
       const summary=range.querySelectorAll('.effect-value');
       ensure(summary.length===1&&summary[0].textContent.includes('48–72 → 46–74'),'combined MIDI range');
-      const labelBox=range.querySelector('label').getBoundingClientRect(), effectBox=summary[0].getBoundingClientRect();
+      const labelBox=range.querySelector('.variation-label').getBoundingClientRect(), effectBox=summary[0].getBoundingClientRect();
       ensure(Math.abs(labelBox.top-effectBox.top)<2&&effectBox.left>labelBox.right,'explanation beside track label');
-      ensure(![...d.querySelectorAll('.effect-status')].some(s=>['Active','Disabled'].includes(s.textContent.trim())),'checkbox supplies state');
+      ensure(![...d.querySelectorAll('.effect-status')].some(s=>['Active','Disabled'].includes(s.textContent.trim())),'no redundant state text');
       ensure(range.scrollWidth<=range.clientWidth,'range row fits');
       ensure(!d.textContent.includes('No variations in this scope.'),'empty-state text removed');
       const heading=d.querySelector('.variation-section-heading'),add=heading.querySelector('vc-select');
@@ -110,25 +110,15 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const ending=await wait(()=>[...d.querySelectorAll('.variation-section')].find(s=>s.getAttribute('aria-label')==='OUTRO variations'),'ending variations');
       const ramp=await wait(()=>[...ending.querySelectorAll('article')].find(a=>a.textContent.includes('Accompaniment velocity ramp')),'velocity envelope explanation');
       ensure(ramp.textContent.includes('100% → 80%')&&ramp.textContent.includes('8–16'),'resolved envelope window and gain');
-      ramp.querySelector('input[type="checkbox"]').click();
-      await wait(()=>ramp.getAttribute('data-variation-status')==='disabled','ramp toggles in draft');
-      ensure(ramp.querySelector('.effect-values').textContent.includes('100% → 80%'),'disabled ramp keeps explanation');
-      ensure(JSON.stringify(read())===original,'ramp toggle stays local');
       const cut=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Pre-drop accompaniment cut')),'timed cut explanation');
       ensure(cut.textContent.includes('15–16')&&cut.textContent.includes('stop sustains'),'actual final-beat window');
-      const cutToggle=cut.querySelector('input[type="checkbox"]');cutToggle.click();
-      await wait(()=>cut.getAttribute('data-variation-status')==='disabled','timed event disabled in draft');
-      ensure(JSON.stringify(read())===original,'timed event toggle stays local');
       const fill=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Arp section-end fill')),'end-fill explanation');
       ensure(fill.textContent.includes('14–16')&&fill.textContent.includes('four quiet retriggers'),'actual final-slot fill window');
-      fill.querySelector('input[type="checkbox"]').click();
-      await wait(()=>fill.getAttribute('data-variation-status')==='disabled','fill toggled in draft');
-      ensure(JSON.stringify(read())===original,'fill toggle stays local');
       const keep=fill.querySelector('.variation-lock'),keepLabel=keep.getAttribute('aria-label');
       keep.click();await wait(()=>keep.getAttribute('aria-pressed')==='true','fill marked for retention');
       button(d,'Reroll variations').click();
       const retained=await wait(()=>[...d.querySelectorAll('.variation-lock')].find(i=>i.getAttribute('aria-label')===keepLabel&&i.getAttribute('aria-pressed')==='true'),'authored fill retained');
-      ensure(retained.closest('article').getAttribute('data-variation-status')==='disabled','authored enabled state retained');
+      ensure(retained.closest('article').getAttribute('data-variation-status')==='active','authored choice remains active');
       retained.click();await wait(()=>retained.getAttribute('aria-pressed')==='false','ownership released explicitly');
       ensure(JSON.stringify(read())===original,'ownership changes stay local');
       await changeControl(budget,'2');
@@ -139,13 +129,13 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Arp rhythm density')),'rhythm-aware density explanation');
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Late chord anticipation')),'chord transition explanation');
       ensure(JSON.stringify(read())===original,'reroll stays local');
-      const toggle=d.querySelector('article input[type="checkbox"]');
-      const toggleRow=toggle.closest('article'), beforeEffect=toggleRow.querySelector('.effect-values').textContent;
-      toggle.focus();toggle.click();
-      await wait(()=>d.querySelector('[data-variation-status="disabled"]'),'disabled status');
-      ensure(toggleRow.querySelector('.effect-values').textContent===beforeEffect,'disabled rows keep the parameter explanation');
-      ensure(![...toggleRow.querySelectorAll('.effect-status')].some(s=>s.textContent.trim()==='Disabled'),'no redundant disabled text');
-      ensure(JSON.stringify(read())===original,'toggle stays local');
+      ensure(!d.querySelector('article input[type="checkbox"]'),'enable checkboxes removed');
+      const remove=d.querySelector('.variation-delete'), removedRow=remove.closest('article');
+      const section=removedRow.closest('.variation-section'), count=section.querySelectorAll('article').length;
+      remove.focus();remove.click();
+      await wait(()=>section.querySelectorAll('article').length===count-1,'choice deleted from draft');
+      ensure(section.querySelector('.add-variation').getAttribute('aria-disabled')!=='true','addition pool available after deletion');
+      ensure(JSON.stringify(read())===original,'deletion stays local');
       button(d,'Cancel').click();await wait(()=>!dialog(),'cancel closes');
       ensure(JSON.stringify(read())===original,'cancel preserves project');
       ensure(document.activeElement===opener,'restore opener focus');
@@ -224,3 +214,4 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
     const actual = await result; assert.equal(actual.error, undefined, JSON.stringify(actual)); assert.equal(actual.ok, true);
   } finally { await closeBrowser({ child, server, socket, watchdog }); }
 });
+

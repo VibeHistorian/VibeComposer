@@ -89,12 +89,11 @@ export class ArrangementVariationsDialogComponent {
   reset(): void {
     if (!this.stale()) this.draft.set(resetVariationDraft(this.candidateProject(), this.scope, this.draft()));
   }
-  toggle(sectionId: string, trackId: string, event: Event): void {
+  remove(sectionId: string, trackId: string): void {
     if (this.stale()) return;
-    const enabled = (event.target as HTMLInputElement).checked;
     this.draft.update(draft => {
       const value = draft[sectionId];
-      return !value ? draft : { ...draft, [sectionId]: { ...value, choices: value.choices.map(choice => choice.trackId === trackId ? { ...choice, enabled } : choice) } };
+      return !value ? draft : { ...draft, [sectionId]: { ...value, choices: value.choices.filter(choice => choice.trackId !== trackId) } };
     });
   }
   keep(sectionId: string, trackId: string, keep: boolean): void {

@@ -37,18 +37,16 @@
           <article [attr.data-variation-status]="item.inspection.status">
             <div class="variation-line">
               <div class="variation-target">
-              <label><input type="checkbox" [attr.aria-label]="item.track.name + ' ' + item.inspection.label" [disabled]="stale()"
-                [checked]="item.inspection.choice.enabled" (change)="toggle(row.section.id, item.track.id, $event)" />
-                <span><strong>{{ item.track.name }}</strong> · {{ item.inspection.label }}</span></label>
+              <span class="variation-label"><strong>{{ item.track.name }}</strong> · {{ item.inspection.label }}</span>
             <button type="button" class="variation-lock" [attr.aria-label]="'Lock ' + item.track.name + ' variation'" title="Lock variation against rerolls"
               [attr.aria-pressed]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (click)="keep(row.section.id, item.track.id, item.inspection.choice.origin !== 'authored')">⍟</button>
+            <button type="button" class="variation-delete" [attr.aria-label]="'Delete ' + item.track.name + ' variation'" title="Delete variation" [disabled]="stale()" (click)="remove(row.section.id, item.track.id)">×</button>
               </div>
-              <div class="effect-values">
+              <div class="effect-values" [class.context-mismatch]="item.mismatch" [title]="item.mismatch ? 'This choice differs from the current section purpose. ' + (item.inspection.choice.origin === 'authored' ? 'Unlock to allow replanning.' : 'Reroll to replan.') : ''">
                 @for (effect of item.effects; track $index) { <span class="effect-value">{{ effect }}</span> }
               </div>
             </div>
             @if (item.detail) { <span class="effect-status">{{ item.detail }}</span> }
-            @if (item.mismatch) { <span class="context-warning">This choice differs from the current section purpose. {{ item.inspection.choice.origin === 'authored' ? 'Unlock to allow replanning.' : 'Reroll to replan.' }}</span> }
           </article>
         }
       </section>
