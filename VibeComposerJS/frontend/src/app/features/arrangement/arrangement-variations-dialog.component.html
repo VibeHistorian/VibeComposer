@@ -36,10 +36,10 @@
           <article [attr.data-variation-status]="item.inspection.status">
             <div class="variation-line">
               <div class="variation-target">
-              <span class="variation-label"><strong>{{ item.track.name }}</strong> ·
-                <vc-select #replacer="vcSelect" class="variation-replace" [displayLabel]="item.inspection.label" [options]="item.replacements" value=""
+              <span class="variation-label"><strong [title]="item.track.name">{{ item.track.name }}</strong><span aria-hidden="true">·</span>
+                <vc-select #replacer="vcSelect" class="variation-replace" [displayLabel]="item.displayLabel" [options]="item.replacements" [value]="item.replacementValue"
                   [attr.aria-label]="'Replace ' + item.track.name + ' variation'" [disabled]="stale() || !item.replacements.length"
-                  (valueChange)="replace(row.section.id, item.track.id, $event); replacer.restoreValue()" />
+                  (valueChange)="replace(row.section.id, item.track.id, $event)" />
               </span>
             <button type="button" class="variation-lock" [attr.aria-label]="'Lock ' + item.track.name + ' variation'" title="Lock variation against rerolls"
               [attr.aria-pressed]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (click)="keep(row.section.id, item.track.id, item.inspection.choice.origin !== 'authored')">⍟</button>

@@ -57,9 +57,13 @@ export class ArrangementVariationsDialogComponent {
       const expectedAmount = variationAmountForContext(context, choice.kind);
       const withoutChoice = { ...current, variations: current.variations && { ...current.variations,
         choices: current.variations.choices.filter(saved => saved.trackId !== choice.trackId) } };
-      const replacements = variationAdditions(this.candidateProject(), withoutChoice, [track], this.preferences.variationRerolls());
+      const replacementValue = JSON.stringify([track.id, choice.kind, choice.amount]);
+      const compatible = variationAdditions(this.candidateProject(), withoutChoice, [track], this.preferences.variationRerolls());
+      const replacements = compatible.some(option => option.value === replacementValue) ? compatible
+        : [...compatible, { value: replacementValue, label: `${track.name} · ${inspection.label} · ${choice.amount > 0 ? 'Increase' : 'Decrease'}`, choice, disabled: true }];
+      const displayLabel = `${inspection.label}${choice.amount > 0 ? '↑' : '↓'}`;
       const strength = variationStrength(choice.kind, choice.amount);
-      return { track, inspection, effects, detail, replacements, strength, strengthValue: strength ? choice.parameters?.[strength.key] ?? strength.defaultValue : undefined, mismatch: choice.amount !== expectedAmount };
+      return { track, inspection, effects, detail, replacements, replacementValue, displayLabel, strength, strengthValue: strength ? choice.parameters?.[strength.key] ?? strength.defaultValue : undefined, mismatch: choice.amount !== expectedAmount };
     });
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));

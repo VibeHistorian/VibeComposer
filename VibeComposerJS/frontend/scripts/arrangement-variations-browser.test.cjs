@@ -96,6 +96,25 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const replacement=authoredRow.querySelector('.variation-replace');
       const replacementOption=(await selectOptions(replacement)).find(o=>o.textContent.includes('Melody speed')&&o.textContent.includes('Decrease'));
       ensure(replacementOption,'compatible replacement available');await changeControl(replacement,replacementOption.value);
+      await wait(()=>replacement.textContent.trim().endsWith('↓'),'decrease shown on trigger');
+      const selectedPopup=await selectPopup(replacement);
+      const selectedOption=await wait(()=>selectedPopup.querySelector('[aria-selected="true"]'),'current replacement selected');
+      ensure(selectedOption.getAttribute('data-value')===replacementOption.value,'popup selects current kind and direction');
+      replacement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      const increase=(await selectOptions(replacement)).find(o=>o.textContent.includes('Melody speed')&&o.textContent.includes('Increase'));
+      await changeControl(replacement,increase.value);
+      await wait(()=>replacement.textContent.trim().endsWith('↑'),'increase shown on trigger');
+      const increasePopup=await selectPopup(replacement);
+      const increaseSelected=await wait(()=>increasePopup.querySelector('[aria-selected="true"]'),'increase selected');
+      ensure(increaseSelected.getAttribute('data-value')===increase.value&&increaseSelected!==increasePopup.querySelector('[role="option"]'),'non-first current option selected');
+      replacement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      await changeControl(replacement,replacementOption.value);
+      for(const article of d.querySelectorAll('article')) {
+        const name=article.querySelector('.variation-label strong').getBoundingClientRect(),combo=article.querySelector('.variation-replace').getBoundingClientRect();
+        ensure(Math.abs((name.top+name.height/2)-(combo.top+combo.height/2))<3,'track name and selector share one row');
+        const target=article.querySelector('.variation-target').getBoundingClientRect();
+        ensure(target.right<=article.getBoundingClientRect().right&&target.left>=article.getBoundingClientRect().left,'track controls fit card');
+      }
       const strength=await wait(()=>authoredRow.querySelector('input[aria-label="M2 speed variation strength"]'),'choice speed strength');
       await changeControl(strength,'45');
       ensure(JSON.stringify(read())===original,'authoring stays local');

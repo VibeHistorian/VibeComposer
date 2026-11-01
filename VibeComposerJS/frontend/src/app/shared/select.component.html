@@ -7,7 +7,7 @@
     <div class="select-panel" ngComboboxWidget ngListbox #listbox="ngListbox"
       [style.--select-available-height.px]="panelMaxHeight()"
       focusMode="activedescendant" selectionMode="explicit" [tabindex]="-1" [wrap]="true"
-      [value]="draft()" (valueChange)="draft.set($event)" [activeDescendant]="listbox.activeDescendant()"
+      [value]="draft()" [activeDescendant]="listbox.activeDescendant()"
       [attr.aria-label]="element.nativeElement.getAttribute('aria-label') || 'Choices'"
       (pointerdown)="$event.preventDefault()" (click)="commit($event)"
       (keydown.enter)="commit($event)" (keydown.space)="commit($event)">

@@ -63,6 +63,12 @@ export class SelectComponent {
     afterRenderEffect(() => {
       const listbox = this.listbox();
       if (!this.combobox.expanded() || !listbox) return;
+      // The deferred listbox can prune its initial value before its options mount.
+      // Reconcile after rendering; commits still use the activated option directly.
+      const value = this.draft();
+      if (listbox.value().length !== value.length || listbox.value().some((item, index) => item !== value[index])) {
+        listbox.value.set(value);
+      }
       this.panelMaxHeight();
       // ARIA defers the listbox until after the overlay attaches; position with its real size.
       this.overlay()?.overlayRef.updatePosition();
