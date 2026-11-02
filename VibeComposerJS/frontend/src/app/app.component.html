@@ -46,6 +46,10 @@
           <button type="button" cdkMenuItem (cdkMenuItemTriggered)="exportProject()">Export Project</button>
           <button type="button" cdkMenuItem [cdkMenuItemDisabled]="audioExport.busy()" [disabled]="audioExport.busy()"
             (cdkMenuItemTriggered)="exportAudio()" title="Export full song as stereo Opus audio">{{ audioExport.busy() ? 'Exporting Audio…' : 'Export Audio' }}</button>
+          @if (workspaceUi.sectionRange()) {
+            <button type="button" cdkMenuItem [cdkMenuItemDisabled]="audioExport.busy()" [disabled]="audioExport.busy()"
+              (cdkMenuItemTriggered)="exportAudio(true)" title="Export selected region as stereo Opus audio">Export Audio (region)</button>
+          }
         </div>
       </ng-template>
       <button type="button" (click)="projectFile.click()" title="Open project">Open...</button>

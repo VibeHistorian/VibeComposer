@@ -12,21 +12,33 @@ const SAMPLE_RATE = 48000;
 // Reserve enough render space, then trim to the actual scheduled voice endings.
 const MAX_RELEASE_TAIL_SECONDS = 40;
 
-/** Render the full arrangement with the playback instruments, tempo map and mix. */
-export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank): Promise<AudioBuffer> {
+export interface AudioExportRegion { readonly startBeat: number; readonly endBeat: number; }
+
+/** Render the arrangement or a bounded region with the playback instruments, tempo map and mix. */
+export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank, region?: AudioExportRegion): Promise<AudioBuffer> {
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
+  if (region && (!Number.isFinite(region.startBeat) || !Number.isFinite(region.endBeat) || region.endBeat <= region.startBeat)) {
+    throw new Error('The audio export region is invalid.');
+  }
   const tempo = projectTempoMap(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
-  const phrases = project.tracks.map(track => ({ track, notes: layOutTrackPhrase(project, track) }));
+  const phrases = project.tracks.map(track => {
+    const notes = layOutTrackPhrase(project, track);
+    return { track, notes: region ? notes.filter(note => note.startBeat < region.endBeat
+      && note.startBeat + note.durationBeats > region.startBeat).map(note => ({ ...note,
+        startBeat: Math.max(region.startBeat, note.startBeat),
+        durationBeats: Math.min(region.endBeat, note.startBeat + note.durationBeats) - Math.max(region.startBeat, note.startBeat),
+      })) : notes };
+  });
   const tracks = phrases.filter(({ track }) => mixEnabled(track.mix, anySolo) && track.mix.volumePercent > 0);
   if (!tracks.some(({ notes }) => notes.some(note => note.velocity > 0))) {
     throw new Error('There are no audible notes to export.');
   }
-  const { startBeat, endBeat } = noteTimelineBounds(phrases.flatMap(({ notes }) => notes),
+  const { startBeat, endBeat } = region ?? noteTimelineBounds(phrases.flatMap(({ notes }) => notes),
     project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
   const offsetSeconds = -beatToSeconds(tempo, startBeat);
   const songSeconds = beatToSeconds(tempo, endBeat) + offsetSeconds;
-  const length = Math.ceil((songSeconds + MAX_RELEASE_TAIL_SECONDS) * SAMPLE_RATE);
+  const length = Math.ceil((songSeconds + (region ? 0 : MAX_RELEASE_TAIL_SECONDS)) * SAMPLE_RATE);
   const context = new OfflineAudioContext(2, length, SAMPLE_RATE);
   const synth = await createInstrumentEngine(context, kind, bank);
   const master = context.createGain();

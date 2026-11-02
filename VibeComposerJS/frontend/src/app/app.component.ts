@@ -93,12 +93,14 @@ export class AppComponent {
     }
   }
 
-  async exportAudio(): Promise<void> {
+  async exportAudio(regionOnly = false): Promise<void> {
     if (this.audioExport.busy()) return;
+    const region = regionOnly ? this.workspaceUi.sectionRange() ?? undefined : undefined;
+    if (regionOnly && !region) return;
     const project = this.project();
     this.projectMessage.set('');
     try {
-      const blob = await this.audioExport.export(project);
+      const blob = await this.audioExport.export(project, region);
       downloadProjectFile(blob, exportFilename(project, this.preferences.exportNameFields()), 'opus');
       this.projectMessage.set('Audio exported.');
     } catch (error) {

@@ -1,7 +1,7 @@
 import { InstrumentSettingsService } from './instrument-settings.service';
 import { inject, Injectable, signal } from '@angular/core';
 import type { CompositionProject } from '../project/project.model';
-import { renderProjectAudio } from './audio-export';
+import { renderProjectAudio, type AudioExportRegion } from './audio-export';
 
 @Injectable({ providedIn: 'root' })
 export class AudioExportService {
@@ -10,7 +10,7 @@ export class AudioExportService {
   readonly status = signal('');
   readonly progress = signal(0);
 
-  async export(project: CompositionProject): Promise<Blob> {
+  async export(project: CompositionProject, region?: AudioExportRegion): Promise<Blob> {
     if (this.busy()) throw new Error('An audio export is already running.');
     const kind = this.instruments.kind(), bank = this.instruments.selectedBank();
     this.busy.set(true);
@@ -22,7 +22,7 @@ export class AudioExportService {
       const buffer = await renderProjectAudio(project, percent => {
         this.progress.set(percent);
         this.status.set(`Rendering audio: ${percent}%...`);
-      }, kind, bank);
+      }, kind, bank, region);
       return await this.encode(buffer);
     } finally {
       this.busy.set(false);

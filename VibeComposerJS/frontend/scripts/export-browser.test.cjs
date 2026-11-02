@@ -170,6 +170,22 @@ for (const { width, missingMethod, sampler } of [
         ensure(!document.querySelector('.export-finishing'),'failure clears animated border');
         ensure(downloads.length===4,'failed export does not download');
         trigger.click(); await wait(menu,'retry menu'); ensure(!item('Export Audio').disabled,'failure clears busy state');
+        ensure(!item('Export Audio (region)'), 'no region action without selection');
+        key(document.activeElement,'Escape');
+        document.querySelector('[aria-label="Unmute B1"]').click();
+        const overview = document.querySelector('vc-arrangement-overview canvas');
+        const bounds = overview.getBoundingClientRect();
+        overview.dispatchEvent(new MouseEvent('click', {bubbles:true, clientX:bounds.left+bounds.width*.8, clientY:bounds.top+15}));
+        trigger.click(); await wait(menu,'region menu');
+        await wait(()=>item('Export Audio (region)'), 'region export action');
+        item('Export Audio (region)').click();
+        await wait(()=>downloads.length===5, 'region download');
+        const regionContext = new NativeAudioContext({sampleRate:48000});
+        try {
+          const decoded = await regionContext.decodeAudioData(await (await downloads[4].blob).arrayBuffer());
+          ensure(Math.abs(decoded.duration-4)<.05, 'region uses second section tempo and exact bounds: '+decoded.duration);
+          ensure(decoded.getChannelData(0).some(value=>Math.abs(value)>.001), 'note crossing region start remains audible');
+        } finally { await regionContext.close(); }
         await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
       } catch(error) { await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack,
         notice:document.querySelector('.project-message')?.textContent,downloads:downloads.map(d=>d.name),
