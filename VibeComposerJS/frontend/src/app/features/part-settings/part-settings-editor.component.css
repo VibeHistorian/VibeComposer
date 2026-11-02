@@ -105,8 +105,10 @@
 :host(.quick-layout) .quick-title-sizing { display: block; grid-area: 1 / 1; width: max-content; height: 0; padding-inline: 3px; visibility: hidden; font: 10px var(--font-ui); white-space: nowrap; }
 :host(.quick-layout) .control-content { grid-area: 1 / 1; }
 :host(.quick-layout) .part-control:has(.quick-title-sizing) { min-width: max-content; max-width: none; }
-:host(.quick-layout) .part-controls { align-items: stretch; gap: 6px; }
+:host(.quick-layout) .part-controls { align-items: stretch; gap: 4px; }
 :host(.quick-layout) .part-control-area, :host(.quick-layout) .part-area-controls { display: contents; }
+/* Quick category spacing */
+:host(.quick-layout) .part-control-area:not(:first-child) .part-area-controls > .part-control:first-child { margin-inline-start: 8px; }
 :host(.quick-layout) .part-control { --quick-heading-position: absolute; --quick-heading-top: -1px; --quick-heading-left: 50%; --quick-heading-transform: translate(-50%, -50%); --quick-heading-width: max-content; --quick-heading-max-width: calc(100% - 8px); --quick-heading-padding: 0 3px; --quick-heading-background: transparent; --quick-heading-color: var(--accent-primary); --quick-knob-position: static; --quick-knob-overlay-position: relative; --quick-knob-overlay-top: auto; --quick-knob-overlay-left: auto; --quick-knob-overlay-transform: none; --quick-knob-overlay-area: 1 / 1; margin-top: 9px; padding: 9px 7px; border: 1px solid transparent; border-radius: var(--radius-control); background: var(--parameter-surface); align-content: center; }
 :host(.quick-layout) .part-control.compact-control { min-width: 74px; width: 74px; }
 :host(.quick-layout) .part-control.knob-control { min-width: 0; width: auto; }

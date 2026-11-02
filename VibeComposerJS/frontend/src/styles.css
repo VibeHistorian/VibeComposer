@@ -269,7 +269,8 @@
 *::-webkit-scrollbar-corner { background: var(--surface-canvas); }
 *::-webkit-scrollbar-button { width: 0; height: 0; display: none; }
 
-vc-root { min-height: 100vh; display: block; }
+/* Contain the frame's top margin instead of adding it outside the viewport-height root. */
+vc-root { min-height: 100vh; display: flow-root; }
 vc-workspace-canvas { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
 
 body {
@@ -333,12 +334,12 @@ button[aria-pressed="false"]:not(.group-select, .track-select, .score-ruler-sect
 
 /* Tablet layout */
 @media (max-width: 900px) {
-  .app-frame { width: min(100% - 40px, var(--workspace-max-width)); height: auto; min-height: 100vh; }
+  .app-frame { width: min(100% - 40px, var(--workspace-max-width)); height: auto; min-height: calc(100vh - 5px); }
   vc-workspace-canvas { flex: 0 0 auto; }
 }
 
 @media (max-width: 1050px) {
-  .app-frame { height: auto; min-height: 100vh; }
+  .app-frame { height: auto; min-height: calc(100vh - 5px); }
   vc-workspace-canvas { flex: 0 0 auto; }
 }
 

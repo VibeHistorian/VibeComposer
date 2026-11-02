@@ -20,7 +20,7 @@ Run the relevant functional commands, then the browser commands for affected int
 | MIDI import, phrase drop and transpose | `test:midi-import`, `test:parts:phrases` | `test:phrase-import:browser` |
 | Score geometry, notes, piano roll and drum editing | `test:score`, `test:selection` | `test:score:browser`, `test:phrase-import:browser` |
 | Rhythm controls and pattern sequencer | `test:parts:scopes`, `test:parts:phrases` | `test:rhythm:browser`, `test:patterns:browser` |
-| Theme, appearance, quick settings and responsive workspace | `test:appearance`, `test:parts:preferences` | `test:preferences:browser`, `test:rhythm:browser`, `test:overview:browser` |
+| Theme, appearance, quick settings and responsive workspace | `test:appearance`, `test:parts:preferences` | `test:preferences:browser`, `test:rhythm:browser`, `test:overview:browser`, `node --test scripts/workspace-layout-browser.test.cjs` |
 | Global harmony popup alignment | `test:harness` | `node --test scripts/chordlet-popup-browser.test.cjs`, `test:contextual:browser` |
 | Keyboard shortcuts | `test:keyboard` | `test:contextual:browser`, `test:export:browser` |
 | Playback, scheduling, SF2 resolution and audio patches | `test:playback`, `node --test scripts/sf2-resolver.test.cjs` | `test:synth:browser`, `test:export:browser` |
