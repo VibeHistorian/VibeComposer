@@ -42,6 +42,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
         ensure(button('Harmony On Compose').getAttribute('aria-pressed')==='false','harmony Compose toggle restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
+        ensure(getComputedStyle(document.querySelector('.arrangement-panel > .canvas-heading')).backgroundColor==='rgb(56, 40, 72)','app heading restored after reload');
         ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','inspector background restored after reload');
         ensure(getComputedStyle(document.querySelector('.track-group')).backgroundColor==='rgb(80, 64, 96)','role group background restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--role-bass').trim()==='#8855cc', 'role color restored after reload');
@@ -383,7 +384,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         button('Preview').click();
         await wait(()=>!backdrop().classList.contains('appearance-preview'),'preview can be disabled');
         const colorInput=await wait(()=>dialog.querySelector('[aria-label="Bass color"]'),'appearance colors');
-        ensure(dialog.querySelectorAll('input[type="color"]').length===12,'seven theme and five role colors');
+        ensure(dialog.querySelectorAll('input[type="color"]').length===13,'eight theme and five role colors');
         const style=()=>getComputedStyle(document.documentElement);
         const originalSurface=style().getPropertyValue('--surface-base');
         const originalCellSurface=style().getPropertyValue('--role-bass-cell-surface');
@@ -426,13 +427,15 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(JSON.parse(localStorage.getItem(key)).appearance.colorAdjustments.saturation===-50,'adjustment persisted');
         ensure(JSON.parse(localStorage.getItem(key)).appearance.roleColors.melody==='#d44040','chosen color retained');
         await changeAdjustment('Saturation',0);
-        for (const [label,value] of [['Background','#100818'],['Surface','#281838'],['Inspector background','#211831'],['Role groups background','#504060'],['Text','#e8dfef'],['Border','#78618a'],['Accent','#dd88ee']]) {
+        for (const [label,value] of [['Background','#100818'],['Surface','#281838'],['App Heading','#382848'],['Inspector background','#211831'],['Role groups background','#504060'],['Text','#e8dfef'],['Border','#78618a'],['Accent','#dd88ee']]) {
           const input=dialog.querySelector('[aria-label="'+label+' theme color"]');
           input.value=value; input.dispatchEvent(new Event('input',{bubbles:true}));
         }
         await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#dd88ee','live main accent');
         ensure(style().getPropertyValue('--surface-base')!==originalSurface,'live main surface');
         ensure(style().getPropertyValue('--surface-canvas').trim()==='#100818','live background');
+        ensure(getComputedStyle(document.querySelector('.arrangement-panel > .canvas-heading')).backgroundColor==='rgb(56, 40, 72)','live app heading background');
+        ensure(getComputedStyle(document.querySelector('.arrangement-panel')).backgroundColor==='rgb(40, 24, 56)','app heading leaves the arrangement surface independent');
         ensure(getComputedStyle(document.querySelector('.context-inspector')).backgroundColor==='rgb(33, 24, 49)','live inspector background');
         ensure(getComputedStyle(document.querySelector('.track-group')).backgroundColor==='rgb(80, 64, 96)','live role group background');
         ensure(style().getPropertyValue('--surface-role-group-selected').trim()==='#3d2f4a','selected role settings blend toward the page background');
@@ -473,6 +476,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         button('Export UI preferences').click();
         const json=await exported.text();
         ensure(JSON.parse(json).appearance.themeColors.accent==='#dd88ee','exported main theme');
+        ensure(JSON.parse(json).appearance.themeColors.appHeading==='#382848','exported app heading background');
         ensure(JSON.parse(json).appearance.themeColors.inspector==='#211831','exported inspector background');
         ensure(JSON.parse(json).appearance.themeColors.roleGroups==='#504060','exported role group background');
         ensure(JSON.parse(json).appearance.roleColors.bass==='#8855cc','exported appearance');

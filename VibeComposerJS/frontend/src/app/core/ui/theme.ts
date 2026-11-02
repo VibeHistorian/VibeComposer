@@ -1,6 +1,7 @@
 export const THEME_COLORS = [
   { key: 'background', label: 'Background' },
   { key: 'surface', label: 'Surface' },
+  { key: 'appHeading', label: 'App Heading' },
   { key: 'inspector', label: 'Inspector background' },
   { key: 'roleGroups', label: 'Role groups background' },
   { key: 'text', label: 'Text' },
@@ -10,8 +11,17 @@ export const THEME_COLORS = [
 export type ThemeColor = typeof THEME_COLORS[number]['key'];
 export type ThemeColors = Readonly<Record<ThemeColor, string>>;
 
+/** A subtle surface contrast, following the panel's dark or light palette. */
+export function appHeadingColor(surface: string): string {
+  const rgb = [1, 3, 5].map(offset => parseInt(surface.slice(offset, offset + 2), 16));
+  const linear = rgb.map(value => value / 255).map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+  const target = linear[0] * .2126 + linear[1] * .7152 + linear[2] * .0722 > .5 ? 0 : 255;
+  return '#' + rgb.map(value => Math.round(value * .94 + target * .06).toString(16).padStart(2, '0')).join('');
+}
+
 export const DEFAULT_THEME_COLORS: ThemeColors = {
   background: '#080e16', surface: '#0b1e30',
+  appHeading: appHeadingColor('#0b1e30'),
   inspector: '#0b1e30', roleGroups: '#112d45',
   text: '#f2f7ff', border: '#3b607d', accent: '#32d7f4',
 };
@@ -46,7 +56,7 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
     }
   }
   return {
-    '--surface-canvas': background,
+    '--surface-canvas': background, '--surface-app-heading': colors.appHeading,
     '--surface-inspector': inspector, '--surface-role-group': roleGroups,
     '--surface-role-group-selected': mix(roleGroups, background, .3),
     '--surface-input': mix(background, surface, .65), '--surface-base': surface,

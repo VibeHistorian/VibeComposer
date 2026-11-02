@@ -3,7 +3,7 @@ const test = require('node:test');
 const { loadMusic } = require('./music-loader.cjs');
 const { adjustColor, decodeAppearance, defaultAppearance, roleColorTokens } = loadMusic('../ui/appearance.ts');
 const { randomAppearance } = loadMusic('../ui/random-appearance.ts');
-const { themeColorTokens } = loadMusic('../ui/theme.ts');
+const { appHeadingColor, themeColorTokens } = loadMusic('../ui/theme.ts');
 const adjustments = (overrides = {}) => ({ brightness: 0, hueShift: 0, saturation: 0, ...overrides });
 
 const luminance = color => {
@@ -28,6 +28,8 @@ test('random palettes vary modes, preserve fonts and remain readable with distin
     const mode = index % 2 ? 'light' : 'dark';
     const appearance = randomAppearance(original, seed, mode);
     const theme = appearance.themeColors;
+    assert.equal(theme.appHeading, appHeadingColor(theme.surface));
+    assert.equal(luminance(theme.appHeading) < luminance(theme.surface), mode === 'light');
     modes.add(luminance(theme.background) > .5);
     assert.equal(luminance(theme.background) > .5, mode === 'light');
     palettes.add(JSON.stringify(theme));
@@ -85,8 +87,20 @@ test('loop yellow adapts to light surfaces and stays bright on dark surfaces', (
 
 test('neutral adjustments preserve every chosen color exactly', () => {
   const appearance = defaultAppearance();
+  assert.ok(luminance(appearance.themeColors.appHeading) > luminance(appearance.themeColors.surface));
   for (const color of [...Object.values(appearance.themeColors), ...Object.values(appearance.roleColors)]) {
     assert.equal(adjustColor(color, adjustments()), color);
+  }
+});
+
+test('omitted app heading colors derive from the saved panel surface', () => {
+  for (const surface of ['#102030', '#f0f4f8']) {
+    const appearance = defaultAppearance();
+    const themeColors = { ...appearance.themeColors, surface };
+    delete themeColors.appHeading;
+    const decoded = decodeAppearance({ ...appearance, themeColors });
+    assert.equal(decoded.themeColors.appHeading, appHeadingColor(surface));
+    assert.equal(themeColorTokens(decoded.themeColors)['--surface-app-heading'], appHeadingColor(surface));
   }
 });
 

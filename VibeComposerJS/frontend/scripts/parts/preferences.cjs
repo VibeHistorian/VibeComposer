@@ -277,15 +277,17 @@ test('panel background preferences persist and blend selection toward the page b
   const { themeColorTokens, DEFAULT_THEME_COLORS } = load('core/ui/theme.ts');
   preferences.setThemeColor('inspector', '#211831');
   preferences.setThemeColor('roleGroups', '#504060');
+  preferences.setThemeColor('appHeading', '#304050');
   const tokens = themeColorTokens(preferences.appearance().themeColors);
   assert.equal(tokens['--surface-inspector'], '#211831');
   assert.equal(tokens['--surface-role-group'], '#504060');
+  assert.equal(tokens['--surface-app-heading'], '#304050');
   assert.equal(tokens['--surface-role-group-selected'], '#3a314a');
   assert.equal(tokens['--surface-base'], DEFAULT_THEME_COLORS.surface);
   const saved = preferences.exportJson();
   const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
   assert.deepEqual(restored.appearance(), preferences.appearance());
-  for (const key of ['inspector', 'roleGroups']) {
+  for (const key of ['inspector', 'roleGroups', 'appHeading']) {
     const invalid = JSON.parse(saved);
     invalid.appearance.themeColors[key] = 'invalid';
     assert.equal(preferences.importJson(JSON.stringify(invalid)), false);
@@ -294,9 +296,11 @@ test('panel background preferences persist and blend selection toward the page b
   const omitted = JSON.parse(saved);
   delete omitted.appearance.themeColors.inspector;
   delete omitted.appearance.themeColors.roleGroups;
+  delete omitted.appearance.themeColors.appHeading;
   assert.equal(preferences.importJson(JSON.stringify(omitted)), true);
   assert.equal(preferences.appearance().themeColors.inspector, DEFAULT_THEME_COLORS.inspector);
   assert.equal(preferences.appearance().themeColors.roleGroups, DEFAULT_THEME_COLORS.roleGroups);
+  assert.equal(preferences.appearance().themeColors.appHeading, DEFAULT_THEME_COLORS.appHeading);
   preferences.resetAppearance();
   assert.deepEqual(preferences.appearance().themeColors, DEFAULT_THEME_COLORS);
 });

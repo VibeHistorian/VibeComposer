@@ -1,5 +1,5 @@
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
-import { DEFAULT_THEME_COLORS, THEME_COLORS, type ThemeColors } from './theme';
+import { appHeadingColor, DEFAULT_THEME_COLORS, THEME_COLORS, type ThemeColors } from './theme';
 
 export const WINDOW_WIDTH_OPTIONS = [
   { value: 'none', label: 'No limit' },
@@ -83,6 +83,9 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!themeColors || typeof themeColors !== 'object' || Array.isArray(themeColors)) return null;
   const resolvedColors = {
     ...themeColors,
+    appHeading: themeColors.appHeading === undefined
+      ? isRoleColor(themeColors.surface) ? appHeadingColor(themeColors.surface) : DEFAULT_THEME_COLORS.appHeading
+      : themeColors.appHeading,
     inspector: themeColors.inspector === undefined ? DEFAULT_THEME_COLORS.inspector : themeColors.inspector,
     roleGroups: themeColors.roleGroups === undefined ? DEFAULT_THEME_COLORS.roleGroups : themeColors.roleGroups,
   };

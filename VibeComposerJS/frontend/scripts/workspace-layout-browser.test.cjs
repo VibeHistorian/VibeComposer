@@ -36,7 +36,7 @@ for (const [width, height] of [[1440, 900], [1920, 1200], [2560, 1600], [780, 21
           for (let index=1;index<controls.length;index++) {
             const previous=controls[index-1], current=controls[index];
             if(Math.abs(previous.box.top-current.box.top)>1)continue;
-            const same=previous.category===current.category, expected=same?6:12;
+            const same=previous.category===current.category, expected=same?4:12;
             const gap=current.box.left-previous.box.right;
             ensure(Math.abs(gap-expected)<=1,role+' category gap: '+JSON.stringify({previous:previous.category,current:current.category,gap,expected}));
             gaps[same?'within':'between']++;

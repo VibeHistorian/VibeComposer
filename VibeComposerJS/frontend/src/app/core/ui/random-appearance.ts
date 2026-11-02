@@ -1,7 +1,7 @@
 import { JavaRandom } from '../music/java-random';
 import { ARRANGED_PARTS } from '../music/part-role';
 import { type AppearancePreferences } from './appearance';
-import { themeColorTokens, type ThemeColors } from './theme';
+import { appHeadingColor, themeColorTokens, type ThemeColors } from './theme';
 
 export type AppearanceMode = 'dark' | 'light';
 
@@ -37,13 +37,14 @@ export function randomAppearance(current: AppearancePreferences, seed: bigint, m
   const hue = between(155, 225);
   const saturation = random.nextDouble() < .25 ? between(.01, .08) : between(.15, .48);
   const panel = () => hsl(hue + between(-8, 8), saturation, light ? between(.87, .95) : between(.07, .16));
-  let themeColors: ThemeColors = {
+  const palette = {
     background: hsl(hue, saturation * .6, light ? between(.95, .99) : between(.025, .065)),
     surface: panel(), inspector: panel(), roleGroups: panel(),
     text: hsl(hue, between(.05, .2), light ? .045 : .975),
     border: hsl(hue, saturation, light ? between(.56, .66) : between(.24, .34)),
     accent: hsl(hue + between(-8, 8), between(.5, .85), light ? .2 : .72),
   };
+  let themeColors: ThemeColors = { ...palette, appHeading: appHeadingColor(palette.surface) };
   // Check actual derived button, selected-group and panel surfaces as well as the base colors.
   const surfaces = (colors: ThemeColors) => Object.entries(themeColorTokens(colors))
     .filter(([key, value]) => key.startsWith('--surface-') && value.length === 7).map(([, value]) => value);
