@@ -12,3 +12,6 @@
 /* Status without a displayed name */
 :host(.status-only) { justify-content: center; }
 :host(.status-only) .inherit-snowflake { flex-basis: 14px; width: 14px; height: 14px; font-size: 12px; }
+
+/* Keep vertical transport symbols bold and fully visible */
+:host-context(vc-transport-dock) .control-name { flex-shrink: 0; overflow: visible; font-weight: 700; font-size: 13px;}

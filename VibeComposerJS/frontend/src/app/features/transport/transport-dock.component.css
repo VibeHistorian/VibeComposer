@@ -21,12 +21,14 @@
 .loop-button.active { border-color: var(--loop-accent); background: var(--loop-surface); color: var(--loop-accent); box-shadow: 0 0 8px var(--loop-outline); }
 
 /* Main generation actions */
-.compose-button { --generation-accent: var(--compose-accent); }
+.compose-button { margin-right: 31px; --generation-accent: var(--compose-accent); }
 .generation-button { border-color: var(--generation-accent); background: var(--generation-accent); color: var(--generation-symbol-color); font-size: 22px; line-height: 1; }
 .generation-button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--generation-accent), white 40%); background: color-mix(in srgb, var(--generation-accent), white 40%); }
 
 /* Timeline and song position */
-.transport-progress { min-width: 0; }
+.transport-timeline { min-width: 0; display: flex; align-items: center; gap: 12px; }
+.transport-progress { min-width: 0; flex: 1; }
+.transport-timeline > vc-mix-buttons { flex: 0 0 auto; }
 .position-line { margin-bottom: 0; display: flex; justify-content: space-between; gap: 10px; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; }
 .progress-track { position: relative; height: 14px; cursor: pointer; }
 .progress-track:focus-visible { outline: 1px solid var(--border-focus); outline-offset: 2px; }
@@ -39,7 +41,7 @@
 .mode-control > span { visibility: hidden; }
 .mode-control vc-select { width: 100%; height: 24px; padding: 0 5px; font: 10px var(--font-mono); }
 
-.global-harmony { flex: 0 1 auto; width: max-content; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.global-harmony { transform: translateY(-5px); flex: 0 1 auto; width: max-content; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .global-harmony-label { color: var(--text-secondary); font-size: 10px; text-align: center; }
 /* Global harmony Compose policy */
 .global-harmony-heading { display: flex; align-items: center; justify-content: center; gap: 4px; }
@@ -84,7 +86,7 @@
 .transport-button:disabled { opacity: .35; cursor: default; }
 @media (max-width: 480px) {
   .transport-dock { grid-template-columns: minmax(0, 1fr); }
-  .transport-progress { grid-column: 1 / -1; }
+  .transport-timeline { grid-column: 1 / -1; }
   .transport-globals { grid-row: auto; }
 }
 
@@ -97,7 +99,7 @@
 /* Stacked audio engine and live reload controls */
 .transport-audio-tools { width: 56px; flex: 0 0 56px; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2, 22px); }
 .transport-audio-tools .instrument-selector, .transport-audio-tools .live-button { width: 100%; height: 22px; box-sizing: border-box; border-radius: var(--radius-control); }
-.instrument-selector { padding: 0 7px; background: var(--surface-button); border-color: var(--border-strong); font-size: 10px; }
+.instrument-selector { text-align: center; padding: 0 7px; background: var(--surface-button); border-color: var(--border-strong); font-size: 10px; }
 .instrument-selector:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .instrument-selector.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
 
@@ -105,3 +107,7 @@
 .transport-tempo, .global-knobs { transform: translateY(-10px); }
 .position-line { line-height: 12px; }
 .musical-position { font-weight: 400; }
+
+/* Vertical label placement beside the transport knobs */
+.transport-tempo { --transport-knob-label-left: 0px; }
+.global-knobs { --transport-knob-label-left: 0px; }
