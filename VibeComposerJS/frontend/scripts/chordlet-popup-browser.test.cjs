@@ -78,6 +78,22 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920]) {
             }
             throw new Error('${kind} menu did not open');
           })()`);
+          if (kind === 'root') {
+            const choices = await evaluate(`(() => [...document.querySelectorAll('.global-harmony .root-choice')].map(button => {
+              const marker = button.querySelector('.chordlet-function');
+              const box = button.getBoundingClientRect(), label = marker.getBoundingClientRect();
+              const menu = button.closest('[role="menu"]').getBoundingClientRect();
+              return { text: marker.textContent, accessible: button.getAttribute('aria-label').includes(marker.textContent),
+                crosses: label.top < box.bottom && label.bottom > box.bottom,
+                visible: label.bottom < menu.bottom, mask: getComputedStyle(button, '::before').maskImage };
+            }))()`);
+            assert.equal(choices.length, 12);
+            assert.deepEqual(choices.map(choice => choice.text), ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII']);
+            for (const choice of choices) {
+              assert.ok(choice.accessible && choice.crosses && choice.visible, JSON.stringify(choice));
+              assert.notEqual(choice.mask, 'none');
+            }
+          }
           const screenshot = await command('Page.captureScreenshot', { format: 'png' });
           fs.writeFileSync(path.resolve(__dirname, '../.angular/global-harmony-' + kind + '-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));
           const { menu, chord, viewport } = bounds;

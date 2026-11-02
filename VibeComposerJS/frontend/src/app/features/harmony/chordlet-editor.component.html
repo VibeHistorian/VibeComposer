@@ -27,7 +27,10 @@
       @if (popup.kind === 'root') {
         @for (root of roots; track root; let pitch = $index) {
           <button type="button" class="root-choice" role="menuitemradio" [style.--chord-hue]="rootHue(pitch)"
-            [attr.aria-checked]="menuSelected(pitch)" (click)="choose(pitch)">{{ root }}</button>
+            [attr.data-root]="root"
+            [style.--chord-function-width]="(rootFunction(pitch).length + 2) + 'ch'"
+            [attr.aria-label]="root + ', function ' + rootFunction(pitch)"
+            [attr.aria-checked]="menuSelected(pitch)" (click)="choose(pitch)">{{ root }}<span class="chordlet-function" aria-hidden="true">{{ rootFunction(pitch) }}</span></button>
         }
       } @else {
         @for (choice of spiceChoices(); track choice.spice) {

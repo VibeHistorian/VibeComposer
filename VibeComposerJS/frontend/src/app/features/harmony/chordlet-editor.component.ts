@@ -64,6 +64,10 @@ export class ChordletEditorComponent {
   private displayedPitch(root: number): number { return ((root + this.displayTranspose()) % 12 + 12) % 12; }
   displayedRoot(root: number): string { return KEYS[this.displayedPitch(root)]; }
   rootHue(pitch: number): number { return chordRootHue(pitch, this.colorContext().key); }
+  rootFunction(pitch: number): string {
+    const chord = this.chords()[this.menu()?.index ?? 0];
+    return chordRomanNumeral({ ...chord, root: pitch }, this.colorContext().key);
+  }
   chordHue(chord: ProgressionChord): number { return this.rootHue(this.displayedPitch(chord.root)); }
   chordFunction(chord: ProgressionChord): string {
     return chordRomanNumeral({ ...chord, root: this.displayedPitch(chord.root) }, this.colorContext().key);

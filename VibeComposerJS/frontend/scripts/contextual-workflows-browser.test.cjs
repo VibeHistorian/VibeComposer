@@ -228,7 +228,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const rootButtons=[...rootMenu.querySelectorAll('button')];
       result.rootColors=new Set(rootButtons.map(button=>getComputedStyle(button).backgroundColor)).size===12
         && rootButtons[0].style.getPropertyValue('--chord-hue')===chordlet().parentElement.style.getPropertyValue('--chord-hue');
-      [...rootMenu.querySelectorAll('button')].find(button => button.textContent === 'F♯').click();
+      rootMenu.querySelector('[data-root="F♯"]').click();
       await wait(() => read().progressionChords?.[0]?.root === 6, 'root selection');
       chordlet().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 1 }));
       const spiceMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord spice"]'), 'spice menu');
@@ -775,7 +775,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const chord=editor.querySelector('.chordlet-label');
       chord.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
       const menu=await wait(()=>editor.querySelector('[aria-label="Chord root"]'),'section chord menu');
-      [...menu.querySelectorAll('button')].find(button=>button.textContent==='D').click();
+      menu.querySelector('[data-root="D"]').click();
       await wait(()=>section().customChords?.[0]?.root===2,'section chord edit');
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('D'),'section chord render');
       editor.querySelector('.chordlet-label').dispatchEvent(new WheelEvent('wheel',{deltaY:-1,bubbles:true,cancelable:true}));
@@ -790,7 +790,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('E'),'section key render');
       editor.querySelector('.chordlet-label').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
       const sectionRoots=await wait(()=>editor.querySelector('[aria-label="Chord root"]'),'section root colors');
-      const tonic=[...sectionRoots.querySelectorAll('button')].find(button=>button.textContent==='A');
+      const tonic=sectionRoots.querySelector('[data-root="A"]');
       const sectionRootColors=tonic.style.getPropertyValue('--chord-hue')==='0'
         && editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='210';
       editor.querySelector('.chordlet-label').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1}));
