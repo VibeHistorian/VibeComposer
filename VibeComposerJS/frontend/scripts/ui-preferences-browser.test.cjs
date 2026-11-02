@@ -88,7 +88,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         document.querySelector('[aria-label="Close settings"]').click();
       } else {
         ensure([...document.querySelectorAll('.group-policy-toggle')].every(b=>b.getAttribute('aria-pressed')==='true'), 'role Compose defaults on');
-        const tempoStar = button('Randomize BPM on Compose');
+        const tempoStar = document.querySelector('input[aria-label="Tempo in beats per minute"]').closest('vc-compact-knob').querySelector('button.compose-star');
         const transposeStar = document.querySelector('input[aria-label="Transpose in semitones"]').closest('vc-compact-knob').querySelector('button[aria-pressed]');
         const harmonyStar = button('Harmony On Compose');
         ensure(harmonyStar?.getAttribute('aria-pressed')==='true','harmony Compose defaults on');

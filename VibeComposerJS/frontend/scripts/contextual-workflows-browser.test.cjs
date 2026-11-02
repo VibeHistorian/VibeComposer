@@ -54,8 +54,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
           const base = project.tracks.find(track => track.role === role);
           for (let i = 2; i <= 6; i++) project.tracks.push({ ...base, id: 'track-' + role + '-' + i, name: base.name[0] + i,
             generatorSettings: { ...base.generatorSettings, ...(role === 'bass' && i === 2 ? { transpose: 12 } : {}) } });
-          for (const section of project.arrangement) section.trackPresence[role] = project.tracks
-            .filter(track => track.role === role).map((_, index) => section.trackPresence[role][index] ?? false);
+          // Existing one-based presence lists leave appended tracks absent.
         }
         project.arrangement[0].rolePartOverrides = { bass: { noteVariation: 35 } };
         project.arrangement[0].trackPartOverrides = { 'track-bass-2': { noteVariation: 45 } };
@@ -222,6 +221,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const chordlet = () => document.querySelector('.chordlet-label');
       chordlet().dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 }));
       const rootMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord root"]'), 'root menu');
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      result.rootMenuBounds = rootMenu.getBoundingClientRect().toJSON();
       result.rootMenuFits = rootMenu.getBoundingClientRect().left >= 0 && rootMenu.getBoundingClientRect().right <= innerWidth
         && rootMenu.getBoundingClientRect().top >= 0 && rootMenu.getBoundingClientRect().bottom <= innerHeight;
       const rootButtons=[...rootMenu.querySelectorAll('button')];

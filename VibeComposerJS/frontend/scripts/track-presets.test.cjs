@@ -38,7 +38,7 @@ test('saving and replacing six drum tracks preserves the complete project and ne
   const project = JSON.parse(service.exportProjectJson());
   const drumIds = project.tracks.filter(track => track.role === 'drums').map(track => track.id);
   project.arrangement.forEach((section, index) => {
-    section.trackPresence.drums = drumIds.map((_, track) => (index + track) % 3 === 0);
+    section.trackPresence.drums = drumIds.flatMap((_, track) => (index + track) % 3 === 0 ? [track + 1] : []);
     section.trackPartOverrides = { ...section.trackPartOverrides, [drumIds[0]]: { hitsPerPattern: 8 } };
     section.trackPhrases = { ...section.trackPhrases, [drumIds[1]]: [] };
     section.generatedTrackIds = [drumIds[2]];

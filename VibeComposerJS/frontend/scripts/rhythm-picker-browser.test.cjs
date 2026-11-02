@@ -228,9 +228,11 @@ test('production Angular controls initialize selects from settings and support r
         result.mixColors = ['--mix-track-mute-active', '--mix-track-solo-active']
           .map(token => rgb(getComputedStyle(track).getPropertyValue(token)));
         const readMixProject = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        const globalMix = document.querySelector('.transport-actions vc-mix-buttons');
+        const globalMix = document.querySelector('.transport-dock vc-mix-buttons');
         await waitFor(() => globalMix.querySelector('.solo-toggle').getAttribute('aria-pressed') === 'mixed');
-        result.globalAfterLive = globalMix.previousElementSibling.classList.contains('live-button');
+        const globalMixBounds = globalMix.getBoundingClientRect();
+        result.globalMixVisible = globalMixBounds.width > 0 && globalMixBounds.height > 0
+          && globalMixBounds.left >= 0 && globalMixBounds.right <= innerWidth;
         result.groupAfterName = document.querySelector('.track-group.chords .group-mix-controls').previousElementSibling.classList.contains('group-select');
         globalMix.querySelector('.solo-toggle').click();
         await waitFor(() => readMixProject().tracks.every(item => !item.mix.solo));
@@ -659,7 +661,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.quickMix.panPercent, 1);
     assert.equal(actual.quickMix.muted, false);
     assert.equal(actual.quickMix.solo, true);
-    assert.equal(actual.globalAfterLive, true);
+    assert.equal(actual.globalMixVisible, true);
     assert.equal(actual.groupAfterName, true);
     assert.equal(actual.exclusiveMix, true);
     assert.equal(actual.panLabel, '1% R');

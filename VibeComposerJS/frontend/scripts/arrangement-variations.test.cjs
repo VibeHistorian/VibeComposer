@@ -25,10 +25,12 @@ test('snare fills share score and MIDI notes, preserve baseline draws and surviv
     assert.ok(additions.length>0&&additions.length<=2);assert.ok(additions.every(n=>n.midi===38&&n.startBeat>=30&&n.startBeat+n.durationBeats<=32));
     assert.deepEqual(actual.filter(n=>n.sectionId!==section.id),baseline.filter(n=>n.sectionId!==section.id));
     assert.deepEqual(actual.filter(n=>n.sectionId===section.id&&n.startBeat<30),owned.filter(n=>n.startBeat<30));
-    const bytes=midi.generateCompositionMidi(service.project()),parsed=new Midi(bytes).tracks.find(t=>t.name===track.name),sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
+    const bytes=midi.generateCompositionMidi(service.project());
+    const decodedMidi = new Midi(bytes);
+    const parsed=decodedMidi.tracks.find(t=>t.name===track.name),sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
     const offset=-service.project().tracks.flatMap(t=>phrase.layOutTrackPhrase(service.project(),t)).reduce((minimum,n)=>Math.min(minimum,n.startBeat),0);
-    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,Math.round(n.velocity*127)]).sort(sort),actual.map(n=>[n.midi,Math.round((n.startBeat+offset)*480),n.velocity]).sort(sort));
-    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks+n.durationTicks]).sort(sort),actual.map(n=>[n.midi,Math.round((n.startBeat+offset)*480)+Math.round(n.durationBeats*480)]).sort(sort));
+    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,Math.round(n.velocity*127)]).sort(sort),actual.map(n=>[n.midi,Math.round((n.startBeat+offset)*decodedMidi.header.ppq),n.velocity]).sort(sort));
+    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks+n.durationTicks]).sort(sort),actual.map(n=>[n.midi,Math.round((n.startBeat+offset)*decodedMidi.header.ppq)+Math.round(n.durationBeats*decodedMidi.header.ppq)]).sort(sort));
     service.undo();assert.equal(service.exportProjectJson(),before);service.redo();assert.equal(service.exportProjectJson(),saved);
     assert.equal(service.importProjectJson(saved),true);assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
     assert.deepEqual(commands.duplicateSection(service.project(),1).arrangement[2].variations,section.variations);
@@ -140,8 +142,10 @@ test('saved timed strengths reach shared layout and parsed MIDI with earlier sec
       const cut=load('core/music/arrangement-boundary-events.ts');
       assert.deepEqual(actual,baseline.flatMap(n=>n.sectionId===section.id?cut.applySectionCut([n],{startBeat:30,endBeat:32}):[n]));
     } else assert.equal(actual.filter(n=>n.id.includes(kind==='arp-end-fill'?'-end-fill-':'-subdivision-')).length,1);
-    const bytes=midi.generateCompositionMidi(service.project()),parsed=new Midi(bytes).tracks.find(t=>t.name===track.name),sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
-    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,n.durationTicks,Math.round(n.velocity*127)]).sort(sort),actual.map(n=>[n.midi,Math.round(n.startBeat*480),Math.round(n.durationBeats*480),n.velocity]).sort(sort));
+    const bytes=midi.generateCompositionMidi(service.project());
+    const decodedMidi = new Midi(bytes);
+    const parsed=decodedMidi.tracks.find(t=>t.name===track.name),sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
+    assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,n.durationTicks,Math.round(n.velocity*127)]).sort(sort),actual.map(n=>[n.midi,Math.round(n.startBeat*decodedMidi.header.ppq),Math.round(n.durationBeats*decodedMidi.header.ppq),n.velocity]).sort(sort));
     const saved=service.exportProjectJson();assert.equal(service.importProjectJson(saved),true);assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
   }
 });
@@ -1253,8 +1257,9 @@ test('timed choices validate, persist and share note output with MIDI through hi
   assert.equal(service.applyArrangementVariationDraft(service.project(), { 'section-2': variations }), 'changed');
   const saved = service.exportProjectJson(), notes = phrase.layOutTrackPhrase(service.project(), track);
   const bytes = midi.generateCompositionMidi(service.project());
-  const parsed = new Midi(bytes).tracks.find(t => t.name === track.name);
-  assert.deepEqual(parsed.notes.map(n => [n.midi, n.ticks, n.durationTicks]), notes.map(n => [n.midi, Math.round(n.startBeat * 480), Math.max(1, Math.round((n.startBeat + n.durationBeats) * 480) - Math.round(n.startBeat * 480))]));
+  const decodedMidi = new Midi(bytes);
+  const parsed = decodedMidi.tracks.find(t => t.name === track.name);
+  assert.deepEqual(parsed.notes.map(n => [n.midi, n.ticks, n.durationTicks]), notes.map(n => [n.midi, Math.round(n.startBeat * decodedMidi.header.ppq), Math.max(1, Math.round((n.startBeat + n.durationBeats) * decodedMidi.header.ppq) - Math.round(n.startBeat * decodedMidi.header.ppq))]));
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), saved);
   assert.equal(service.importProjectJson(saved), true);
@@ -1405,7 +1410,8 @@ test('saved fills validate and reproduce actual MIDI, history, duplication and c
   assert.equal(service.applyArrangementVariationDraft(service.project(), { [section.id]: section.variations }), 'changed');
   const saved = service.exportProjectJson(), notes = phrase.layOutTrackPhrase(service.project(), track);
   const bytes = midi.generateCompositionMidi(service.project());
-  const parsed = new Midi(bytes).tracks.find(t => t.name === track.name), ppq = 480;
+  const decodedMidi = new Midi(bytes);
+  const parsed = decodedMidi.tracks.find(t => t.name === track.name), ppq = decodedMidi.header.ppq;
   const expected = notes.map(n => [n.midi, Math.round(n.startBeat*ppq), Math.max(1,Math.round((n.startBeat+n.durationBeats)*ppq)-Math.round(n.startBeat*ppq))]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
   assert.deepEqual(parsed.notes.map(n => [n.midi,n.ticks,n.durationTicks]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]), expected);
   service.undo(); assert.equal(service.exportProjectJson(), before);
@@ -1544,8 +1550,9 @@ test('velocity ramps persist through history and expose the same velocities in p
     const before=service.exportProjectJson();
     assert.equal(service.applyArrangementVariationDraft(service.project(),{[project.arrangement[1].id]:variations}),'changed');
     const saved=service.exportProjectJson(),notes=phrase.layOutTrackPhrase(service.project(),track),bytes=midi.generateCompositionMidi(service.project());
-    const parsed=new Midi(bytes).tracks.find(t=>t.name===track.name);
-    const expected=notes.map(n=>[n.midi,Math.round(n.startBeat*480),Math.round(n.durationBeats*480),n.velocity]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+    const decodedMidi = new Midi(bytes);
+    const parsed=decodedMidi.tracks.find(t=>t.name===track.name);
+    const expected=notes.map(n=>[n.midi,Math.round(n.startBeat*decodedMidi.header.ppq),Math.round(n.durationBeats*decodedMidi.header.ppq),n.velocity]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
     assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,n.durationTicks,Math.round(n.velocity*127)]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]),expected);
     service.undo();assert.equal(service.exportProjectJson(),before);
     service.redo();assert.equal(service.exportProjectJson(),saved);
@@ -1819,10 +1826,12 @@ test('Arp subdivision shares section-owned output with parsed MIDI and survives 
   const added=notes.filter(n=>n.id.includes('-subdivision-'));
   assert.ok(added.length>0);assert.ok(added.every(n=>n.sectionId===project.arrangement[1].id));
   assert.deepEqual(notes.filter(n=>n.sectionId!==project.arrangement[1].id),baseline.filter(n=>n.sectionId!==project.arrangement[1].id));
-  const bytes=midi.generateCompositionMidi(service.project()), parsed=new Midi(bytes).tracks.find(t=>t.name===track.name);
+  const bytes=midi.generateCompositionMidi(service.project());
+  const decodedMidi = new Midi(bytes);
+  const parsed=decodedMidi.tracks.find(t=>t.name===track.name);
   const sort=(a,b)=>a[1]-b[1]||a[0]-b[0];
   assert.deepEqual(parsed.notes.map(n=>[n.midi,n.ticks,n.durationTicks,Math.round(n.velocity*127)]).sort(sort),
-    notes.map(n=>[n.midi,Math.round(n.startBeat*480),Math.round(n.durationBeats*480),n.velocity]).sort(sort));
+    notes.map(n=>[n.midi,Math.round(n.startBeat*decodedMidi.header.ppq),Math.round(n.durationBeats*decodedMidi.header.ppq),n.velocity]).sort(sort));
   service.undo();assert.equal(service.exportProjectJson(),before);service.redo();assert.equal(service.exportProjectJson(),saved);
   assert.equal(service.importProjectJson(saved),true);assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
   const inspect=load('core/music/arrangement-variation-inspection.ts').inspectArrangementVariation;
