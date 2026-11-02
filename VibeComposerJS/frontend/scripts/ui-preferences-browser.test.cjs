@@ -646,3 +646,95 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     await closeBrowser({ child, server, socket, watchdog });
   }
 });
+
+
+for (const width of [780, 1440, 2560, 3840]) test(`workspace width limits use available space and persist at ${width}px`, { skip: !browser }, async () => {
+  const root = requireProductionBuild();
+  const script = `<script>(async () => {
+    const wait = async (read, label) => {
+      for (let i=0;i<200;i++) { const value=read(); if(value)return value; await new Promise(r=>setTimeout(r,25)); }
+      throw new Error(label);
+    };
+    const ensure = (value, label) => { if(!value)throw new Error(label); };
+    const settle = () => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const read = () => JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1'));
+    const open = async () => {
+      document.querySelector('.project-tools [aria-label="Settings"]').click();
+      const tab = await wait(()=>document.querySelector('[aria-label="Appearance General"]'),'appearance tab');
+      tab.click();
+      return await wait(()=>document.querySelector('[aria-label="Window width limit"]'),'width preference');
+    };
+    try {
+      await wait(()=>innerWidth===${width} && document.querySelector('.project-tools [aria-label="Settings"]'),'workspace');
+      await document.fonts.ready;
+      const before = sessionStorage.getItem('vibecomposer.project.v12');
+      const restored = sessionStorage.getItem('width-limit-reloaded');
+      let control = await open();
+      const measure = async limit => {
+        await settle(); await settle();
+        const frame=document.querySelector('.app-frame').getBoundingClientRect();
+        const gutter=innerWidth<=900?40:48;
+        const expected=Math.min(document.documentElement.clientWidth-gutter,limit==='none'?Infinity:Number(limit));
+        ensure(Math.abs(frame.width-expected)<=1,'frame width: '+JSON.stringify({limit,frame:frame.toJSON(),expected}));
+        ensure(frame.left>=0 && frame.right<=innerWidth,'frame fits viewport');
+        ensure(document.documentElement.scrollWidth<=innerWidth,'no horizontal page overflow');
+        const middle=document.querySelector('.song-canvas').getBoundingClientRect();
+        if(innerWidth>1050) {
+          const tracks=document.querySelector('.track-browser').getBoundingClientRect();
+          const inspector=document.querySelector('#part-inspector').getBoundingClientRect();
+          const workspace=document.querySelector('.workspace-canvas');
+          const gap=parseFloat(getComputedStyle(workspace).columnGap);
+          ensure(Math.abs(middle.width-(workspace.clientWidth-tracks.width-inspector.width-2*gap))<=1,'middle fills remaining space');
+          const dock=document.querySelector('.transport-dock').getBoundingClientRect();
+          ensure(Math.abs(dock.width-frame.width)<=1,'dock follows workspace limit: '+JSON.stringify({frame:frame.toJSON(),dock:dock.toJSON()}));
+          for(const selector of ['vc-arrangement-overview','.part-settings-panel','.score-panel']) {
+            const panel=document.querySelector(selector);
+            if(panel)ensure(Math.abs(panel.getBoundingClientRect().width-middle.width)<=1,selector+' fills middle');
+          }
+        }
+        return {frame:frame.width,middle:middle.width};
+      };
+      if(restored) {
+        ensure(read().appearance.windowWidthLimit==='1600','stored width restored');
+        document.querySelector('[aria-label="Close settings"]').click();
+        await measure('1600');
+      } else {
+        ensure((read()?.appearance.windowWidthLimit??'none')==='none','default is unlimited');
+        ensure(JSON.stringify((await selectOptions(control)).map(option=>option.value))===JSON.stringify(['none','1440','1600','1920','2560','3840']),'width choices');
+        let unlimited;
+        for(const limit of ['none','1440','1600','1920','2560','3840']) {
+          await changeControl(control,limit);
+          if(limit!=='none')await wait(()=>read()?.appearance.windowWidthLimit===limit,'preference saved');
+          document.querySelector('[aria-label="Close settings"]').click();
+          const bounds=await measure(limit);
+          if(limit==='none')unlimited=bounds;
+          else ensure(bounds.frame<=unlimited.frame+1 && bounds.middle<=unlimited.middle+1,'limits cap available space');
+          if(limit==='none' && innerWidth>=2560)ensure(bounds.frame>1980,'unlimited exceeds previous cap');
+          control=await open();
+        }
+        await changeControl(control,'1600');
+        await wait(()=>read().appearance.windowWidthLimit==='1600','reload preference');
+        ensure(sessionStorage.getItem('vibecomposer.project.v12')===before,'layout leaves project unchanged');
+        sessionStorage.setItem('width-limit-reloaded','true');location.reload();return;
+      }
+      await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
+    } catch(error) { await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack})}); }
+  })();</script>`;
+  let resolve, reject;
+  const result = new Promise((done, fail) => { resolve=done;reject=fail; });
+  result.catch(()=>{});
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace('</body>',script+'</body>');
+  const server=createBrowserServer({root,html,resolve,reject});await listen(server);
+  const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/window-width-'));
+  const child=launchBrowser(browser,['--headless','--remote-debugging-port=0','--disable-gpu','--no-first-run',
+    '--disable-background-networking','--window-size='+width+',1100','--user-data-dir='+profile,
+    'http://127.0.0.1:'+server.address().port+'/'],{stdio:['ignore','ignore','pipe']});
+  const watchdog=watchBrowser(child,reject,45000);let socket;
+  try {
+    const connection=await connectToPage(child);socket=connection.socket;
+    await connection.command('Emulation.setDeviceMetricsOverride',{width,height:1100,deviceScaleFactor:1,mobile:false});
+    const actual=await result;assert.equal(actual.error,undefined,JSON.stringify(actual));assert.equal(actual.ok,true);
+    const screenshot=await connection.command('Page.captureScreenshot',{format:'png'});
+    fs.writeFileSync(path.resolve(__dirname,'../.angular/window-width-'+width+'.png'),Buffer.from(screenshot.data,'base64'));
+  } finally {await closeBrowser({child,server,socket,watchdog});}
+});

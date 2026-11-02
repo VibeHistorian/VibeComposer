@@ -53,6 +53,12 @@
               <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()" title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
             </div>
             <div class="setting-row">
+              <div class="setting-copy"><h3>Window width limit</h3><p id="window-width-description">Use the available window width up to this limit. The middle panels fill the space between the track panel and inspector.</p></div>
+              <div class="setting-controls"><vc-select aria-label="Window width limit" aria-describedby="window-width-description"
+                [options]="windowWidthOptions" [value]="preferences.appearance().windowWidthLimit"
+                (valueChange)="preferences.setWindowWidthLimit($event)" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3>Settings explainers as tooltips</h3><p>Show explanations on hover or keyboard focus instead of below each setting.</p></div>
               <div class="setting-controls"><input type="checkbox" aria-label="Settings explainers as tooltips" [checked]="preferences.preferences().settingsExplainersAsTooltips" (change)="preferences.toggleSettingsExplainers()" /></div>
             </div>

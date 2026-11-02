@@ -533,3 +533,36 @@ test('MIDI PPQ defaults to 960 and persists only supported resolutions', () => {
   assert.equal(prefs.importJson(JSON.stringify(old)), true);
   assert.equal(prefs.midiPpq(), 960);
 });
+
+
+test('window width limits default to unlimited, persist, transfer and reject unsupported values', () => {
+  const { service, uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  assert.equal(prefs.appearance().windowWidthLimit, 'none');
+  for (const width of ['1440', '1600', '1920', '2560', '3840', 'none']) {
+    prefs.setWindowWidthLimit(width);
+    assert.equal(prefs.appearance().windowWidthLimit, width);
+    assert.equal(new UiPreferencesService().appearance().windowWidthLimit, width);
+    const saved = prefs.exportJson();
+    assert.equal(prefs.importJson(saved), true);
+    assert.equal(prefs.appearance().windowWidthLimit, width);
+    for (const invalid of ['1280', '1920px', '', 1920, null]) {
+      prefs.setWindowWidthLimit(invalid);
+      assert.equal(prefs.exportJson(), saved);
+      const candidate = JSON.parse(saved); candidate.appearance.windowWidthLimit = invalid;
+      assert.equal(prefs.importJson(JSON.stringify(candidate)), false);
+      assert.equal(prefs.exportJson(), saved);
+    }
+  }
+  prefs.setWindowWidthLimit('2560');
+  prefs.randomizeAppearance('dark');
+  assert.equal(prefs.appearance().windowWidthLimit, '2560');
+  const older = JSON.parse(prefs.exportJson()); delete older.appearance.windowWidthLimit;
+  assert.equal(prefs.importJson(JSON.stringify(older)), true);
+  assert.equal(prefs.appearance().windowWidthLimit, 'none');
+  prefs.setWindowWidthLimit('1600'); prefs.resetAppearance();
+  assert.equal(prefs.appearance().windowWidthLimit, 'none');
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), history);
+});
