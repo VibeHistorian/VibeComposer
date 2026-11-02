@@ -29,8 +29,9 @@
           <button type="button" class="root-choice" role="menuitemradio" [style.--chord-hue]="rootHue(pitch)"
             [attr.data-root]="root"
             [style.--chord-function-width]="(rootFunction(pitch).length + 2) + 'ch'"
-            [attr.aria-label]="root + ', function ' + rootFunction(pitch)"
-            [attr.aria-checked]="menuSelected(pitch)" (click)="choose(pitch)">{{ root }}<span class="chordlet-function" aria-hidden="true">{{ rootFunction(pitch) }}</span></button>
+            [attr.aria-label]="root + ', function ' + rootFunction(pitch) + (rootsWithoutScaleSpice()[pitch] ? ', no spice fully in the current key/mode scale' : '')"
+            [title]="rootsWithoutScaleSpice()[pitch] ? 'No spice fully in the current key/mode scale' : ''"
+            [attr.aria-checked]="menuSelected(pitch)" (click)="choose(pitch)">{{ root }}<span class="chordlet-function" aria-hidden="true">{{ rootFunction(pitch) }}</span>@if (rootsWithoutScaleSpice()[pitch]) {<span class="root-scale-warning" aria-hidden="true">!</span>}</button>
         }
       } @else {
         @for (choice of spiceChoices(); track choice.spice) {

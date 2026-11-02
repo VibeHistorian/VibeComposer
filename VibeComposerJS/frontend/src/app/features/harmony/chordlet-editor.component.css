@@ -27,6 +27,8 @@ button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2
 .chordlet-menu .root-choice { position: relative; border-color: transparent; --chord-function-border: hsl(var(--chord-hue) 45% 38%); background: hsl(var(--chord-hue) 30% 18%); color: hsl(var(--chord-hue) 70% 84%); }
 .chordlet-menu > div:has(.root-choice) { row-gap: 10px; padding-bottom: 5px; }
 .root-choice .chordlet-function { font: 9px/1 var(--font-mono); color: inherit; }
+/* Scale warning interrupts the top border */
+.root-scale-warning { position: absolute; top: -1px; right: 4px; transform: translateY(-50%); padding: 0 2px; background: var(--surface-base); color: var(--color-warning); font: bold 11px/1 var(--font-mono); pointer-events: none; }
 .chordlet-menu .spice-choice { border-color: color-mix(in srgb, hsl(var(--chord-hue) 65% 60%) var(--spice-border), var(--border-subtle)); background: color-mix(in srgb, hsl(var(--chord-hue) 60% 42%) var(--spice-highlight), var(--surface-input)); }
 .chordlet-menu button[aria-checked="true"] { outline: 1px solid var(--text-primary); outline-offset: 1px; }
 .chordlet-menu button:hover { border-color: var(--text-primary); filter: brightness(1.2); }

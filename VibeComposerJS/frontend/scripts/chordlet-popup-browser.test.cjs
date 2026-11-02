@@ -83,14 +83,21 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920]) {
               const marker = button.querySelector('.chordlet-function');
               const box = button.getBoundingClientRect(), label = marker.getBoundingClientRect();
               const menu = button.closest('[role="menu"]').getBoundingClientRect();
+              const warning = button.querySelector('.root-scale-warning');
+              const warningBox = warning?.getBoundingClientRect();
               return { text: marker.textContent, accessible: button.getAttribute('aria-label').includes(marker.textContent),
+                root: button.dataset.root, warning: !!warning,
+                warningCrosses: !warningBox || warningBox.top < box.top && warningBox.bottom > box.top && warningBox.left > box.left + box.width / 2,
+                warningAccessible: !warning || button.getAttribute('aria-label').includes('no spice'),
                 crosses: label.top < box.bottom && label.bottom > box.bottom,
                 visible: label.bottom < menu.bottom, mask: getComputedStyle(button, '::before').maskImage };
             }))()`);
             assert.equal(choices.length, 12);
+            assert.deepEqual(choices.filter(choice => choice.warning).map(choice => choice.root), ['C♯', 'E♭', 'F♯', 'A♭', 'B♭']);
             assert.deepEqual(choices.map(choice => choice.text), ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII']);
             for (const choice of choices) {
               assert.ok(choice.accessible && choice.crosses && choice.visible, JSON.stringify(choice));
+              assert.ok(choice.warningCrosses && choice.warningAccessible, JSON.stringify(choice));
               assert.notEqual(choice.mask, 'none');
             }
           }

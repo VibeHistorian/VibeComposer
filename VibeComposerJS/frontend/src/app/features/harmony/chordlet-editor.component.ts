@@ -55,6 +55,13 @@ export class ChordletEditorComponent {
         title: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${SCALE_DEFINITIONS[context.scale].label}` };
     });
   });
+  readonly rootsWithoutScaleSpice = computed(() => {
+    const context = this.colorContext();
+    return this.roots.map((_, root) => !this.spices.some(spice => {
+      const overlap = chordKeyOverlap({ root, spice, inversion: 0 }, context.key, context.scale);
+      return overlap.matching === overlap.total;
+    }));
+  });
   readonly dragging = signal<number | null>(null);
   readonly dropIndex = signal<number | null>(null);
   private drag: { pointerId: number; x: number; y: number; index: number; project: unknown; sectionId?: string } | null = null;
