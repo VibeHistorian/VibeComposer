@@ -12,9 +12,6 @@
     <button type="button" class="transport-button loop-button" [class.active]="playback.loopEnabled()"
       [attr.aria-pressed]="playback.loopEnabled()" (click)="toggleLoop()" aria-label="Toggle loop"
       [title]="workspaceUi.selectedSectionIds().length ? 'Loop selected sections' : 'Loop full arrangement'">⟳</button>
-    <button type="button" class="transport-button live-button" [class.active]="playback.liveEnabled()"
-      [attr.aria-pressed]="playback.liveEnabled()" (click)="toggleLive()" aria-label="Toggle live reload"
-      title="Live reload: hear MIDI edits while playing">LIVE</button>
     <vc-mix-buttons [trackIds]="trackIds()" label="all tracks" [allowExclusive]="false" />
   </div>
 
@@ -73,8 +70,13 @@
       <span [title]="key() + ' ' + scaleDefinitions[project().scale].label.toUpperCase() + ' | ' + project().tempoBpm + ' BPM | SEED ' + project().seed">SEED {{ project().seed }}</span>
     </div>
     <ng-content select="[transportHistory]" />
-    <vc-select class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [title]="instrumentLabel()" aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()"
-      (valueChange)="selectInstrument($event)" />
+    <div class="project-tool-group transport-audio-tools" role="group" aria-label="Audio playback settings">
+      <vc-select class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [title]="instrumentLabel()" aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()"
+        (valueChange)="selectInstrument($event)" />
+      <button type="button" class="transport-button live-button" [class.active]="playback.liveEnabled()"
+        [attr.aria-pressed]="playback.liveEnabled()" (click)="toggleLive()" aria-label="Toggle live reload"
+        title="Live reload: hear MIDI edits while playing">LIVE</button>
+    </div>
     <ng-content select="[transportDevices]" />
     <ng-content select="[transportFiles]" />
   </div>
