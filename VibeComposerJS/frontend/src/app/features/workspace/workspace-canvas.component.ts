@@ -465,7 +465,7 @@ export class WorkspaceCanvasComponent {
   });
   readonly scoreTracks = computed(() => this.arrangedTracks().filter(track => this.editing()
     ? this.selectedPart() === 'drums' ? track.role === 'drums' : track.id === this.selectedTrackId() : this.scoreVisibleTrackIds().has(track.id))
-    .map(track => ({ ...track, drumPitch: track.role === 'drums' ? track.generatorSettings.pitch : undefined })));
+    .map(track => ({ ...track, trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1, drumPitch: track.role === 'drums' ? track.generatorSettings.pitch : undefined })));
   readonly canvasNotes = computed<ScoreNote[]>(() => {
     const editor = this.editor();
     if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.editing()

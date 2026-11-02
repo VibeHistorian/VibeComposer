@@ -36,6 +36,20 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.ok(initial.labels>=17);assert.equal(initial.drums,3);assert.equal(initial.arrangement,true);assert.equal(initial.velocity,false);
   const capture=async name=>{const png=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.resolve(__dirname,'../.angular/'+name+'.png'),Buffer.from(png.data,'base64'));};
   await capture('unified-score');
+  const fittedScroll = await evaluate(`(async()=>{
+    const host=document.querySelector('vc-score-canvas'),v=host.querySelector('.vertical-scroll');
+    const result=[];
+    for(const height of ['', '700px','700.6px','701.4px']){
+      host.style.height=height;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      result.push({height,overflow:getComputedStyle(v).overflowY,content:v.firstElementChild.getBoundingClientRect().height,viewport:v.getBoundingClientRect().height});
+    }
+    host.style.height='';await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    return result;
+  })()`);
+  for(const row of fittedScroll){
+    assert.equal(row.overflow,'hidden',JSON.stringify(row));
+    assert.ok(row.content<=row.viewport,JSON.stringify(row));
+  }
   const tooltip = await evaluate(`(async()=>{${waitCode}
     const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect();
     const row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();

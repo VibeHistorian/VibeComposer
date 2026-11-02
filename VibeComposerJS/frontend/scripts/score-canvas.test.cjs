@@ -950,3 +950,45 @@ test('musical time carries ticks and formats signed differences', () => {
   assert.equal(musicalTime(0, true), '+00:0.000');
   assert.equal(elapsedTime(59.9999), '01:00.000');
 });
+
+ test('duplicate drum instruments keep separate track rows in overview and phrase editing', () => {
+  const { component: c } = fixture();
+  c.horizontalOffset = 0; c.horizontalScale = 1;
+  c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; }, fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
+  const tracks = [2, 5, 8].map(trackOrder => ({ id: 'drum-' + trackOrder, color: 'drums', drumPitch: 54, trackOrder }));
+  const notes = tracks.map(track => ({ id: track.id, part: track.id, color: 'drums', midi: 54, velocity: 90, startBeat: 1, durationBeats: 1, opacity: 1 }));
+  c.model = { tracks, notes, sections: [], totalBeats: 8, selectedTrackId: tracks[0].id, hiddenTrackIds: new Set() };
+  for (const editable of [false, true]) {
+    c.editable = () => editable;
+    c.drawStatic();
+    assert.equal(c.gutterRows().filter(row => row.drum).length, 3);
+    assert.ok(c.gutterRows().filter(row => row.drum).every(row => row.tooltip.includes('54')));
+    assert.equal(new Set(c.hitAreas.map(area => area.y)).size, 3);
+    assert.deepEqual(c.gutterRows().filter(row => row.drum).map(row => row.label), ['TAMBOURINE[2]', 'TAMBOURINE[5]', 'TAMBOURINE[8]']);
+  }
+ });
+
+ test('native vertical scroll range matches canvas overflow at fractional heights with pinned drum and velocity rows', () => {
+  const { component: c } = fixture();
+  c.height = 300.6;
+  c.drumHeight = 70;
+  c.harmonicHeight = c.height - c.drumHeight;
+  c.pitchMin = 48; c.pitchMax = 72;
+  const scroll = { clientHeight: 301, scrollTop: 0, style: {}, getBoundingClientRect: () => ({ height: 300.6 }) }, content = { style: {} };
+  c.verticalScroll = () => ({ nativeElement: scroll });
+  c.verticalContent = () => ({ nativeElement: content });
+  for (const velocity of [false, true]) {
+    c.velocityVisible = () => velocity;
+    c.harmonicHeight = c.scoreHeight - c.drumHeight;
+    c.verticalScale = 1;
+    c.updateViewport();
+    assert.equal(Number.parseFloat(content.style.height), 300, 'fitted content stays within the fractional viewport');
+    assert.equal(scroll.style.overflowY, 'hidden');
+    c.verticalScale = 2;
+    c.verticalOffset = 10000;
+    c.updateViewport();
+    const nativeRange = Number.parseFloat(content.style.height) - scroll.getBoundingClientRect().height;
+    assert.ok(Math.abs(nativeRange - c.verticalOffset) < 1e-6, 'scrollbar reaches the same bottom as the canvas clamp');
+    assert.ok(nativeRange > 0, 'zoomed harmonic rows remain scrollable');
+  }
+ });
