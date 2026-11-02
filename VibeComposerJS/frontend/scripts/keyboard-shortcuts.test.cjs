@@ -199,3 +199,15 @@ test('pointer actions release focus for global Space while keyboard and composit
   cleanup();
   assert.equal(listeners.size, 0);
 });
+
+test('unchanged saved phrase defaults adopt the new gestures while custom mappings survive', () => {
+  const { defaultShortcuts, decodeShortcuts } = load('core/ui/shortcuts.ts');
+  const old = defaultShortcuts();
+  const mouse = (ctrl=false,shift=false) => ({ kind:'mouse', input:'0', ctrl, shift, alt:false });
+  old.addNote=[mouse()]; old.seek=[mouse(false,true)]; old.shapePitch=[mouse(true)];
+  const decoded=decodeShortcuts(old), defaults=defaultShortcuts();
+  for(const id of ['addNote','seek','shapePitch']) assert.deepEqual(decoded[id],defaults[id]);
+  old.seek=[{...mouse(),input:'1'}];
+  assert.deepEqual(decodeShortcuts(old).seek,old.seek);
+  assert.deepEqual(decodeShortcuts(old).addNote,old.addNote);
+});

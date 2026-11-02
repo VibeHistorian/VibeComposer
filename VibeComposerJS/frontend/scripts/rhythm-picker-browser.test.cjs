@@ -532,7 +532,7 @@ test('production Angular controls initialize selects from settings and support r
         const drumLabels = [...document.querySelectorAll('.track-group.drums .track-instrument')]
           .map(select => select.textContent.trim());
         result.allDrumsEditor = await waitFor(() => document.querySelector('#inspector-title')?.textContent.trim().endsWith('Drums notes')
-          && drumLabels.every(label => [...document.querySelectorAll('vc-score-canvas .drum-label')].some(row => row.title === label.toUpperCase())), 'all drum pitches in the score editor');
+          && drumLabels.every(label => [...document.querySelectorAll('vc-score-canvas .drum-label')].some(row => row.title.toUpperCase() === label.toUpperCase())), 'all drum pitches in the score editor');
         [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent.trim() === 'Cancel').click();
         await waitFor(() => !document.querySelector('.score-display-header')
           && !document.querySelector('.track-group.drums .group-select').disabled, 'close drum editor');

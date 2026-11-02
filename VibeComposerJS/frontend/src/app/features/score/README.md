@@ -10,3 +10,5 @@
 Pointer movement updates previews and auditions without emitting project edits. Release emits at most one note-change output; cancellation or a second touch discards previews. The enclosing [phrase editor](../edit/edit-workspace.component.ts) owns draft history and Apply/Local Apply/Cancel. Opening and closing it preserves the overview viewport; resizing preserves the top pitch.
 
 Run `pnpm run test:score`, `pnpm run test:selection` and `pnpm run test:parts:phrases` from `frontend/`. After application changes, build and run `test:score:browser`, `test:phrase-import:browser` and `test:manual:browser`. See the [test guide](../../../../scripts/README.md) and [workspace contracts](../../../../../DAW_REDESIGN_PLAN.md).
+
+Default phrase gestures: plain left click on empty grid seeks; Ctrl left click places a snapped note; Shift left click places a note without time snapping. Holding either placement modifier previews the same pitch, position and remembered duration without editing. Ctrl+Shift left drag duplicates selected notes or draws pitches elsewhere. Plain dragging on existing notes still moves or trims them.

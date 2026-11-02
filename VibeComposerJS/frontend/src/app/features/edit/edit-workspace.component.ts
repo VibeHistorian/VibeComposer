@@ -190,6 +190,7 @@ export class EditWorkspaceComponent {
   readonly canUndo = computed(() => { this.historyRevision(); return this.history.canUndo; });
   readonly canRedo = computed(() => { this.historyRevision(); return this.history.canRedo; });
   private lastDuration = 0.5;
+  get placementDuration(): number { return this.lastDuration; }
   readonly phraseBeats = computed(() => this.phraseLength ?? this.project().progression.length * 4);
   readonly editBounds = computed(() => {
     const section = this.project().arrangement.find(section => section.id === this.sectionId);

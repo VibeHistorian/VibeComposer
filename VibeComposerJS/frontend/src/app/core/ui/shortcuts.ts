@@ -15,7 +15,7 @@ export const SHORTCUTS = [
   { id: 'extendSections', group: 'Section selection', label: 'Extend / trim sections', description: 'Hold while selecting a section. Extends a contiguous selection or trims it at the chosen section.', defaults: [modifier(true)] },
   { id: 'rangeSections', group: 'Section selection', label: 'Select section range', description: 'Hold while selecting a section to select from the selection anchor.', defaults: [modifier(false, true)] },
   { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass time grid', description: 'Hold while moving, adding or splitting notes. Move drags also retain pitch.', defaults: [modifier(false, true)] },
-  { id: 'addNote', group: 'Phrase gestures', label: 'Add / move note', description: 'Click empty space to add a note; drag a note to move it or its edges to trim.', defaults: [mouse(0)] },
+  { id: 'addNote', group: 'Phrase gestures', label: 'Place note', description: 'Ctrl-click adds a snapped note; Shift-click adds a note without time snapping. Hold to preview placement.', defaults: [mouse(0, true), mouse(0, false, true)] },
   { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob or dropdown to change its value.', defaults: [wheel()] },
   { id: 'controlFineWheel', group: 'Controls', label: 'Fine adjustment', description: 'Scroll over a knob to change its value in smaller steps.', defaults: [wheel(false, true)] },
   { id: 'controlReset', group: 'Controls', label: 'Reset value', description: 'On a knob or dropdown, restore the default value.', defaults: [mouse(2)] },
@@ -37,11 +37,11 @@ export const SHORTCUTS = [
   { id: 'selectAllNotes', group: 'Phrase editor', label: 'Select all notes', description: 'Select all notes in the current draft.', defaults: [key('a', true)] },
   { id: 'transposeNotes', group: 'Phrase editor', label: 'Open transpose', description: 'Open transpose controls for selected notes.', defaults: [key('t', false, true)] },
   { id: 'deleteNotes', group: 'Phrase editor', label: 'Delete selected notes', description: 'Remove the current note selection.', defaults: [key('delete'), key('backspace')] },
-  { id: 'seek', group: 'Phrase gestures', label: 'Set playback position', description: 'Click empty grid space to seek.', defaults: [mouse(0, false, true)] },
+  { id: 'seek', group: 'Phrase gestures', label: 'Set playback position / move note', description: 'Click empty grid space to seek; drag an existing note to move or trim it.', defaults: [mouse(0)] },
   { id: 'boxSelect', group: 'Phrase gestures', label: 'Box select / delete note', description: 'Drag a selection box; click a note to delete it.', defaults: [mouse(2)] },
   { id: 'boxExtend', group: 'Phrase gestures', label: 'Extend box selection', description: 'Add a box selection to the current selection.', defaults: [mouse(2, true)] },
   { id: 'splitNote', group: 'Phrase gestures', label: 'Split note', description: 'Click a note to split it at the pointer.', defaults: [mouse(2, false, false, true)] },
-  { id: 'shapePitch', group: 'Phrase gestures', label: 'Duplicate / shape pitch', description: 'Drag selected notes to duplicate; elsewhere draw note pitches.', defaults: [mouse(0, true)] },
+  { id: 'shapePitch', group: 'Phrase gestures', label: 'Duplicate / shape pitch', description: 'Drag selected notes to duplicate; elsewhere draw note pitches.', defaults: [mouse(0, true, true)] },
   { id: 'shapeVelocity', group: 'Phrase gestures', label: 'Shape velocities', description: 'Draw velocities across notes.', defaults: [mouse(1, true)] },
   { id: 'dragVelocity', group: 'Phrase gestures', label: 'Drag velocity / apply phrase', description: 'Drag notes to change velocity. Click empty space to exit and apply edits, or cancel an unchanged draft.', defaults: [mouse(1)] },
   { id: 'dragDuration', group: 'Phrase gestures', label: 'Drag note length', description: 'Drag notes to change their length.', defaults: [mouse(1, false, false, true)] },
@@ -97,6 +97,14 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
       || (b.kind === 'modifier' && (b.input !== 'held' || !(b.ctrl || b.shift || b.alt)))
       || !acceptsShortcut(action, b))) return null;
     result[action.id] = bindings.map(({ kind, input, ctrl, shift, alt }) => ({ kind, input, ctrl, shift, alt }));
+  }
+  // Preferences save the full map, including defaults. Refresh the unchanged
+  // previous phrase gesture set while retaining explicitly customized bindings.
+  const previousPhraseDefaults = { addNote: mouse(0), seek: mouse(0, false, true), shapePitch: mouse(0, true) } as const;
+  const phraseIds = ['addNote', 'seek', 'shapePitch'] as const;
+  if (phraseIds.every(id => result[id].length === 1 && sameShortcut(result[id][0], previousPhraseDefaults[id]))) {
+    const defaults = defaultShortcuts();
+    for (const id of phraseIds) result[id] = defaults[id];
   }
   return result;
 }

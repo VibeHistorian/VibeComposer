@@ -151,7 +151,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const position=document.querySelector('[aria-label="Song position"]');
     const before=Number(position.getAttribute('aria-valuenow'));
     const saved=sessionStorage.getItem('vibecomposer.project.v12');
-    const point={bubbles:true,cancelable:true,button:0,shiftKey:true,pointerId:1,clientX:bounds.left+bounds.width*.63,clientY:row.top+row.height/2};
+    const point={bubbles:true,cancelable:true,button:0,pointerId:1,clientX:bounds.left+bounds.width*.63,clientY:row.top+row.height/2};
     canvas.dispatchEvent(new PointerEvent('pointerdown',point));
     canvas.dispatchEvent(new PointerEvent('pointerup',point));
     canvas.dispatchEvent(new MouseEvent('click',point));
@@ -159,7 +159,29 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return !!document.querySelector('#note-velocity')
       && [...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply').disabled
       && sessionStorage.getItem('vibecomposer.project.v12')===saved;
-  })()`),true,'Shift left click on empty phrase grid seeks the global transport without changing the draft or selection');
+  })()`),true,'Plain left click on empty phrase grid seeks the global transport without changing the draft or selection');
+  const placementStarts=await evaluate(`(async()=>{${waitCode}
+    const canvas=document.querySelector('vc-score-canvas canvas'),bounds=canvas.getBoundingClientRect();
+    const row=document.querySelector('.pitch-key[title="MIDI 60"]').getBoundingClientRect();
+    const starts=[];
+    const apply=()=>[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply');
+    const point={bubbles:true,cancelable:true,button:0,pointerId:1,clientX:bounds.left+bounds.width*.637,clientY:row.top+row.height/2};
+    for(const modifiers of [{ctrlKey:true},{shiftKey:true}]){
+      canvas.dispatchEvent(new PointerEvent('pointermove',{...point,...modifiers}));
+      await new Promise(r=>requestAnimationFrame(r));
+      if(!apply().disabled)throw Error('Hover must not edit the draft');
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{...point,...modifiers}));
+      canvas.dispatchEvent(new PointerEvent('pointerup',{...point,...modifiers}));
+      await wait(()=>!apply().disabled);
+      starts.push(Number(document.querySelector('#note-start').value)-1);
+      canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true,cancelable:true}));
+      await wait(()=>apply().disabled);
+    }
+    canvas.dispatchEvent(new PointerEvent('pointerleave'));
+    return starts;
+  })()`);
+  assert.ok(Math.abs(placementStarts[0]*4-Math.round(placementStarts[0]*4))<1e-8,'Ctrl placement snaps to the grid');
+  assert.ok(Math.abs(placementStarts[1]*4-Math.round(placementStarts[1]*4))>1e-3,'Shift placement bypasses the grid');
   assert.equal(await evaluate(`(async()=>{${waitCode}
     const canvas=document.querySelector('vc-score-canvas canvas');
     const press=(target,extra={})=>{const e=new KeyboardEvent('keydown',{key:' ',code:'Space',bubbles:true,cancelable:true,...extra});target.dispatchEvent(e);return e.defaultPrevented;};

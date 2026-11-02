@@ -231,12 +231,12 @@ test('empty score clicks seek through the zoomed and panned viewport, including 
   assert.equal(component.seekRequested.values.length, 1);
 });
 
-test('Shift left click on empty phrase grid seeks globally without editing or clearing selection', () => {
+test('Plain left click on empty phrase grid seeks globally without editing or clearing selection', () => {
   const { component: c } = fixture();
   c.editable = () => true;
   c.velocityVisible = () => true;
   c.model.timelineStartBeat = -4;
-  const event = { button: 0, shiftKey: true, clientX: 303, clientY: 20, pointerId: 1, preventDefault() {} };
+  const event = { button: 0, shiftKey: false, clientX: 303, clientY: 20, pointerId: 1, preventDefault() {} };
   c.onPointerDown(event);
   c.onPointerUp(event);
   c.onCanvasClick(event);
@@ -249,8 +249,8 @@ test('Shift left click on empty phrase grid seeks globally without editing or cl
   assert.equal(c.drag, null);
   c.onPointerDown({ ...event, clientY: 159 });
   assert.equal(c.seekRequested.values.length, 1, 'velocity lane is outside the grid');
-  c.onPointerDown({ ...event, shiftKey: false });
-  assert.equal(c.noteAdded.values.length, 1, 'plain left click still creates immediately on press');
+  c.onPointerDown({ ...event, ctrlKey: true });
+  assert.equal(c.noteAdded.values.length, 1, 'Ctrl click creates on press');
 });
 
 test('clicking a note emits only note selection even in a zoomed viewport', () => {
@@ -528,7 +528,7 @@ test('group moves preserve spacing at the phrase boundary and commit once', () =
 test('pitch and velocity painting expose previews, commit once and discard cancellation', () => {
   for (const button of [0, 1]) {
     const { component: c } = editFixture();
-    const start = pointer(212.5, 20, { button, ctrlKey: true });
+    const start = pointer(212.5, 20, { button, ctrlKey: true, shiftKey: button === 0 });
     c.onPointerDown(start);
     assert.equal(c.interactionPreview.active, true);
     assert.equal(c.interactionPreview.notes.length, 1);
@@ -563,9 +563,9 @@ test('a second touch cancels an active note preview without committing or adding
   assert.deepEqual(c.noteAdded.values, []);
 });
 
-test('Ctrl drag duplicates selected notes without altering the originals', () => {
+test('Ctrl Shift drag duplicates selected notes without altering the originals', () => {
   const { component: c, notes } = editFixture();
-  c.onPointerDown(pointer(300, 20, { ctrlKey: true }));
+  c.onPointerDown(pointer(300, 20, { ctrlKey: true, shiftKey: true }));
   c.onPointerMove(pointer(325, 20)); c.onPointerUp(pointer(325, 20));
   assert.equal(c.notesChanged.values[0].duplicate, true);
   assert.deepEqual(c.notesChanged.values[0].notes.map(n => n.startBeat), [21, 23]);
@@ -866,7 +866,7 @@ test('Alt-wheel reveals pitches outside the fitted phrase and allows adding note
   const higher = c.gutterRows().find(row => !row.drum && row.midi > 50);
   const lower = c.gutterRows().find(row => !row.drum && row.midi < 46);
   assert.ok(higher && lower, 'zooming out exposes pitches on both sides of the phrase');
-  c.onDoubleClick(pointer(300, 10 + (higher.y + higher.height / 2) / 2));
+  c.onDoubleClick(pointer(300, 10 + (higher.y + higher.height / 2) / 2, { ctrlKey: true }));
   assert.deepEqual(c.noteAdded.values, [{ midi: higher.midi, startBeat: 24 }]);
   c.drawStatic();
   assert.ok(c.gutterRows().some(row => row.midi === higher.midi), 'redrawing keeps the expanded pitch viewport');
@@ -992,3 +992,41 @@ test('musical time carries ticks and formats signed differences', () => {
     assert.ok(nativeRange > 0, 'zoomed harmonic rows remain scrollable');
   }
  });
+
+test('placement hover and click share snapped or free coordinates and never edit on hover', () => {
+  const { component: c } = fixture();
+  c.editable = () => true;
+  c.model.notes = [];
+  c.model.timelineStartBeat = -4;
+  const event = pointer(303, 20, { ctrlKey: true });
+  c.onPointerMove(event);
+  assert.equal(c.placementPreview.startBeat, 20);
+  assert.deepEqual(c.noteAdded.values, []);
+  const snapped = c.placementPreview;
+  c.onPointerDown(event);
+  assert.deepEqual(c.noteAdded.values, [snapped]);
+  c.onPointerMove(pointer(303, 20, { shiftKey: true }));
+  assert.ok(Math.abs(c.placementPreview.startBeat - 20.12) < 1e-10);
+  const free = c.placementPreview;
+  c.onPointerDown(pointer(303, 20, { shiftKey: true }));
+  assert.deepEqual(c.noteAdded.values, [snapped, free]);
+  c.onPlacementKey({ ctrlKey: false, shiftKey: false });
+  assert.equal(c.placementPreview, null);
+  c.onPlacementKey({ ctrlKey: true });
+  assert.deepEqual(c.placementPreview, snapped, 'modifier press updates a stationary pointer');
+  c.onPointerLeave();
+  assert.equal(c.placementPreview, null);
+  c.onPointerMove(pointer(303, 20, { ctrlKey: true, shiftKey: true }));
+  assert.equal(c.placementPreview, null, 'drawing gesture does not preview note insertion');
+  c.onPointerDown(pointer(303, 20, { ctrlKey: true, shiftKey: true }));
+  assert.equal(c.shape.mode, 'pitch');
+  assert.equal(c.noteAdded.values.length, 2);
+});
+
+test('Ctrl Shift duplicate drags retain snapping and pitch movement while Shift is part of the gesture', () => {
+  const { component: c } = editFixture();
+  c.onPointerDown(pointer(300, 20, { ctrlKey: true, shiftKey: true }));
+  c.onPointerMove(pointer(303, 40, { ctrlKey: true, shiftKey: true }));
+  assert.equal(c.drag.current.startBeat, 20);
+  assert.notEqual(c.drag.current.midi, 48);
+});
