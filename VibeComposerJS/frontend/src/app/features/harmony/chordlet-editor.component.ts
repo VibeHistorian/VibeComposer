@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { ProjectService } from '../../core/project/project.service';
-import { CHORD_SPICES, KEYS, chordKeyOverlap, chordRootHue, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
+import { CHORD_SPICES, KEYS, chordKeyOverlap, chordRootHue, chordRomanNumeral, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
 import type { ArrangementSection } from '../../core/project/arrangement.model';
 import { baseGenerationHarmony, sectionGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
@@ -65,6 +65,9 @@ export class ChordletEditorComponent {
   displayedRoot(root: number): string { return KEYS[this.displayedPitch(root)]; }
   rootHue(pitch: number): number { return chordRootHue(pitch, this.colorContext().key); }
   chordHue(chord: ProgressionChord): number { return this.rootHue(this.displayedPitch(chord.root)); }
+  chordFunction(chord: ProgressionChord): string {
+    return chordRomanNumeral({ ...chord, root: this.displayedPitch(chord.root) }, this.colorContext().key);
+  }
   symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root)
     + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + (chord.inversion ? '.' + chord.inversion : ''); }
   add(): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length < 32) this.applyAll([...this.chords(), null]); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }

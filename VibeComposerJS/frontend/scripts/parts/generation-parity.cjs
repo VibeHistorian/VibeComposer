@@ -431,6 +431,13 @@ test('Chordlet roots, spice and inversions match all 2244 production Java voicin
 test('Chordlet colors follow relative roots and spice overlap uses the actual notes in the active scale', () => {
   const { load } = fixture(), harmony = load('core/music/harmony.ts');
   const chord = (root, spice, inversion = 0) => ({ root, spice, inversion });
+  assert.equal(harmony.chordRomanNumeral(chord(0, ''), 'C'), 'I');
+  assert.equal(harmony.chordRomanNumeral(chord(2, 'm7'), 'C'), 'ii');
+  assert.equal(harmony.chordRomanNumeral(chord(11, 'dim'), 'C'), 'vii°');
+  assert.equal(harmony.chordRomanNumeral(chord(3, ''), 'C'), '♭III');
+  assert.equal(harmony.chordRomanNumeral(chord(9, '7', 2), 'D'), 'V');
+  assert.equal(harmony.chordRomanNumeral(chord(4, 'aug'), 'A'), 'V+');
+  assert.equal(harmony.chordRomanNumeral({ ...chord(2, ''), intervals: [0, 3, 6] }, 'C'), 'ii°');
   assert.equal(harmony.chordRootHue(7, 'C'), 210);
   assert.equal(harmony.chordRootHue(9, 'D'), 210);
   assert.equal(harmony.chordRootHue(1, 'F♯'), 210);

@@ -1,8 +1,12 @@
 /* Chord row */
 :host { display: block; min-width: 0; }
 .chordlet-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.chordlet-list { min-width: 0; display: flex; gap: 4px; overflow-x: auto; padding: 4px 1px; scrollbar-width: thin; }
-.chordlet { display: flex; flex: 0 0 auto; align-items: center; border: 1px solid hsl(var(--chord-hue) var(--chordlet-border-tone)); border-radius: 5px; background: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-background-tone)), var(--surface-base) var(--chordlet-background-mix)); }
+.chordlet-list { min-width: 0; display: flex; gap: 4px; overflow-x: auto; padding: 4px 1px 8px; scrollbar-width: thin; }
+.chordlet { position: relative; display: flex; flex: 0 0 auto; align-items: center; border: 1px solid transparent; border-radius: 5px; background: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-background-tone)), var(--surface-base) var(--chordlet-background-mix)); font: 9px var(--font-mono); min-width: calc(var(--chord-function-width) + 8px); }
+/* Function marker interrupts the bottom edge without covering the tinted surface */
+.chordlet::before { content: ''; position: absolute; inset: -1px; border: 1px solid hsl(var(--chord-hue) var(--chordlet-border-tone)); border-radius: inherit; pointer-events: none; mask-image: linear-gradient(#000, #000), linear-gradient(to right, #000 calc(50% - var(--chord-function-width) / 2), transparent calc(50% - var(--chord-function-width) / 2), transparent calc(50% + var(--chord-function-width) / 2), #000 calc(50% + var(--chord-function-width) / 2)); mask-size: 100% calc(100% - 1px), 100% 1px; mask-position: top, bottom; mask-repeat: no-repeat; }
+.chordlet-function { position: absolute; bottom: -1px; left: 50%; transform: translate(-50%, 50%); line-height: 1; white-space: nowrap; color: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-foreground-tone)), var(--text-primary) 78%); pointer-events: none; }
+/* Chord interaction */
 .chordlet-label, .chordlet-remove { border: 0; background: transparent; color: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-foreground-tone)), var(--text-primary) 78%); font: 11px var(--font-mono); }
 .chordlet-label { padding: 5px 2px 5px 6px; cursor: grab; touch-action: none; white-space: nowrap; }
 .chordlet-remove { padding: 4px 5px 4px 2px; cursor: pointer; opacity: .65; }

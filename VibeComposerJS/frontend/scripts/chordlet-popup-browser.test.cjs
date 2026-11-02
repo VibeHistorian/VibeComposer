@@ -43,6 +43,20 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920]) {
           }
           throw new Error('Global harmony did not render');
         })()`);
+        const markers = await evaluate(`(() => [...document.querySelectorAll('.global-harmony .chordlet')].map(chord => {
+          const marker = chord.querySelector('.chordlet-function');
+          const box = chord.getBoundingClientRect(), label = marker.getBoundingClientRect();
+          const list = chord.closest('.chordlet-list').getBoundingClientRect();
+          return { text: marker.textContent, crosses: label.top < box.bottom && label.bottom > box.bottom,
+            visible: label.bottom <= list.bottom, centered: Math.abs((label.left + label.right) / 2 - (box.left + box.right) / 2) < 1,
+            mask: getComputedStyle(chord, '::before').maskImage };
+        }))()`);
+        assert.ok(markers.length > 0);
+        for (const marker of markers) {
+          assert.match(marker.text, /[IViv]/);
+          assert.ok(marker.crosses && marker.visible && marker.centered, JSON.stringify(marker));
+          assert.notEqual(marker.mask, 'none');
+        }
         for (const kind of ['root', 'spice']) {
           const point = await evaluate(`(() => {
             const chord = document.querySelector('.global-harmony .chordlet-label').getBoundingClientRect();

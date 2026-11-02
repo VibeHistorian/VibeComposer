@@ -3,8 +3,10 @@
   <div class="chordlet-list">
     @for (chord of chords(); track $index; let index = $index) {
       <div class="chordlet" [attr.data-chord-index]="index" [style.--chord-hue]="chordHue(chord)"
+        [style.--chord-function-width]="(chordFunction(chord).length + 2) + 'ch'"
         [class.dragging]="dragging() === index" [class.drop-target]="dropIndex() === index">
-        <button type="button" class="chordlet-label" [disabled]="disabled()" [attr.aria-label]="'Chord ' + (index + 1) + ': ' + symbol(chord)" [title]="help"
+        <span class="chordlet-function" aria-hidden="true">{{ chordFunction(chord) }}</span>
+        <button type="button" class="chordlet-label" [disabled]="disabled()" [attr.aria-label]="'Chord ' + (index + 1) + ': ' + symbol(chord) + ', function ' + chordFunction(chord)" [title]="help"
           (pointerdown)="start(index, $event)" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()"
           (lostpointercapture)="cancel()" (contextmenu)="openMenu(index, 'root', $event)" (auxclick)="$event.preventDefault()"
           (wheel)="wheel(index, $event)" (keydown)="key(index, $event)" (dblclick)="reset(index)">{{ symbol(chord) }}</button>

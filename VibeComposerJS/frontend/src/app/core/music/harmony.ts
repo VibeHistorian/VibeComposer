@@ -55,6 +55,17 @@ export function chordRootHue(root: number, key: string): number {
   return ((root - (getPitchClass(key) ?? 0)) % 12 + 12) % 12 * 30;
 }
 
+/** Key-relative Roman function, with case and symbols taken from the actual triad. */
+export function chordRomanNumeral(chord: ProgressionChord, key: string): string {
+  const offset = ((chord.root - (getPitchClass(key) ?? 0)) % 12 + 12) % 12;
+  const numeral = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII'][offset];
+  const intervals = (chord.intervals ?? SPICE_INTERVALS[CHORD_SPICES.indexOf(chord.spice)]).map(note => note % 12);
+  const minor = intervals.includes(3) && !intervals.includes(4);
+  const diminished = minor && intervals.includes(6) && !intervals.includes(7);
+  const augmented = intervals.includes(4) && intervals.includes(8) && !intervals.includes(7);
+  return (minor ? numeral.toLowerCase() : numeral) + (diminished ? '°' : augmented ? '+' : '');
+}
+
 /** Use the actual voicing intervals, counting each pitch class once. */
 export function chordKeyOverlap(chord: ProgressionChord, key: string, scale: ScaleMode): { matching: number; total: number; ratio: number } {
   const tonic = getPitchClass(key)!;
