@@ -1,69 +1,72 @@
 <section class="transport-dock" aria-label="Playback controls">
-  <div class="transport-actions">
+  <div class="transport-left">
     <button type="button" class="transport-button generation-button compose-button" [disabled]="workspaceUi.editingNoteId() !== null"
       (click)="generate('compose')" aria-label="Compose" title="Compose using the current seed and enabled role rules">✦</button>
-    <button type="button" class="transport-button stop-button" (click)="stop()" aria-label="Stop" title="Stop">■</button>
-    <button type="button" class="transport-button play-button" (click)="togglePlayback()"
-      [attr.aria-label]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'"
-      [attr.title]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'">
-      @if (playback.state() === 'playing') { <span aria-hidden="true">Ⅱ</span> }
-      @else { <span aria-hidden="true">▶</span> }
-    </button>
-    <button type="button" class="transport-button loop-button" [class.active]="playback.loopEnabled()"
-      [attr.aria-pressed]="playback.loopEnabled()" (click)="toggleLoop()" aria-label="Toggle loop"
-      [title]="workspaceUi.selectedSectionIds().length ? 'Loop selected sections' : 'Loop full arrangement'">⟳</button>
-  </div>
-
-  <div class="transport-timeline">
-  <div class="transport-progress">
-    <div class="position-line">
-      <span>{{ currentTimeText() }}</span>
-      <span>{{ durationText() }}</span>
-    </div>
-    <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"
-      [attr.aria-valuetext]="positionText()" (click)="seek($event)" (keydown)="seekKey($event)">
-      <div class="progress-rail"><span [style.transform]="'scaleX(' + progressPercent() / 100 + ')'"></span></div>
-      @if (loopRegion(); as region) {
-        <i class="progress-loop-line" [style.left.%]="region.left" [style.width.%]="region.width" aria-hidden="true"></i>
-      }
-    </div>
-    <div class="position-line position-below"><span class="musical-position">{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong></span></div>
-  </div>
-
-    <vc-mix-buttons [trackIds]="trackIds()" label="all tracks" [allowExclusive]="false" />
-  </div>
-
-  <div class="transport-tempo">
-    <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="♩=" unit=""
-        [value]="project().tempoBpm" [minimum]="30" [maximum]="240" (valueCommit)="updateTempo($event)"
-        [composeEnabled]="project().randomizeTempoOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTempoOnCompose')" />
-  </div>
-
-  <div class="transport-globals" aria-label="Global song settings">
-    <div class="global-knobs">
-      <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="+-" unit=""
-        [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)"
-        [composeEnabled]="project().randomizeTransposeOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTransposeOnCompose')" />
-
-    </div>
-    <div class="global-harmony" role="group" aria-labelledby="global-harmony-label">
-      <div class="global-harmony-heading">
-        <span id="global-harmony-label" class="global-harmony-label">Global Harmony</span>
-        <button type="button" class="harmony-compose-star" aria-label="Harmony On Compose"
-          title="On Compose: reroll global harmony when global Compose runs"
-          [class.active]="project().randomizeHarmonyOnCompose !== false"
-          [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
-          [disabled]="workspaceUi.editingNoteId() !== null"
-          (click)="toggleComposeRandomization('randomizeHarmonyOnCompose')">✦</button>
+    <div class="transport-globals" aria-label="Global song settings">
+      <div class="global-harmony" role="group" aria-labelledby="global-harmony-label">
+        <div class="global-harmony-heading">
+          <span id="global-harmony-label" class="global-harmony-label">Global Harmony</span>
+          <button type="button" class="harmony-compose-star" aria-label="Harmony On Compose"
+            title="On Compose: reroll global harmony when global Compose runs"
+            [class.active]="project().randomizeHarmonyOnCompose !== false"
+            [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
+            [disabled]="workspaceUi.editingNoteId() !== null"
+            (click)="toggleComposeRandomization('randomizeHarmonyOnCompose')">✦</button>
+        </div>
+        <vc-chordlet-editor />
       </div>
-      <vc-chordlet-editor />
+      <div class="global-knobs">
+        <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="+-" unit=""
+          [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)"
+          [composeEnabled]="project().randomizeTransposeOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTransposeOnCompose')" />
+
+      </div>
+      <label class="mode-control"><span aria-hidden="true">MODE</span><vc-select [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-select></label>
     </div>
-    <label class="mode-control"><span aria-hidden="true">MODE</span><vc-select [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-select></label>
+  </div>
+
+  <div class="transport-playback">
+    <vc-mix-buttons [trackIds]="trackIds()" label="all tracks" [allowExclusive]="false" />
+    <div class="transport-actions">
+      <button type="button" class="transport-button stop-button" (click)="stop()" aria-label="Stop" title="Stop">■</button>
+      <button type="button" class="transport-button play-button" (click)="togglePlayback()"
+        [attr.aria-label]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'"
+        [attr.title]="playback.state() === 'playing' ? 'Pause' : playback.state() === 'paused' ? 'Resume' : 'Play'">
+        @if (playback.state() === 'playing') { <span aria-hidden="true">Ⅱ</span> }
+        @else { <span aria-hidden="true">▶</span> }
+      </button>
+      <button type="button" class="transport-button loop-button" [class.active]="playback.loopEnabled()"
+        [attr.aria-pressed]="playback.loopEnabled()" (click)="toggleLoop()" aria-label="Toggle loop"
+        [title]="workspaceUi.selectedSectionIds().length ? 'Loop selected sections' : 'Loop full arrangement'">⟳</button>
+    </div>
+
+    <div class="transport-timeline">
+    <div class="transport-progress">
+      <div class="position-line">
+        <span>{{ currentTimeText() }}</span>
+        <span>{{ durationText() }}</span>
+      </div>
+      <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"
+        [attr.aria-valuetext]="positionText()" (click)="seek($event)" (keydown)="seekKey($event)">
+        <div class="progress-rail"><span [style.transform]="'scaleX(' + progressPercent() / 100 + ')'"></span></div>
+        @if (loopRegion(); as region) {
+          <i class="progress-loop-line" [style.left.%]="region.left" [style.width.%]="region.width" aria-hidden="true"></i>
+        }
+      </div>
+      <div class="position-line position-below"><span class="musical-position">{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong></span></div>
+    </div>
+
+    </div>
+
+    <div class="transport-tempo">
+      <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="♩=" unit=""
+          [value]="project().tempoBpm" [minimum]="30" [maximum]="240" (valueCommit)="updateTempo($event)"
+          [composeEnabled]="project().randomizeTempoOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTempoOnCompose')" />
+    </div>
   </div>
 
   <div class="transport-tools project-tools" role="group" aria-label="Project actions">
     <div class="transport-project">
-
 
     <label class="seed-control"><input aria-label="Generation seed" inputmode="numeric" [value]="seedInput()"
       title="Generation seed (0 chooses a random seed on Compose). Right-click: reset to 0. Middle-click: randomize."

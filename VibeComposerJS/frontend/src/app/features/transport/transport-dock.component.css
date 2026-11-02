@@ -1,13 +1,18 @@
 :host { display: block; }
 
 /* Dock surface and fixed placement */
-.transport-dock { position: fixed; z-index: 50; right: 0; bottom: 14px; left: 0; width: min(calc(100% - 48px), var(--workspace-max-width)); min-height: 68px; margin: 0 auto; padding: 10px 15px; display: grid; grid-template-columns: auto minmax(85px, .7fr) auto minmax(350px, 3fr) auto; align-items: center; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); box-shadow: 0 10px 35px var(--shadow-ink), inset 0 1px var(--shadow-highlight);  }
+.transport-dock { position: fixed; z-index: 50; right: 0; bottom: 14px; left: 0; width: min(calc(100% - 48px), var(--workspace-max-width)); min-height: 68px; margin: 0 auto; padding: 10px 15px; display: grid; grid-template-columns: minmax(0, max-content) minmax(370px, 1fr) auto; align-items: center; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); box-shadow: 0 10px 35px var(--shadow-ink), inset 0 1px var(--shadow-highlight);  }
 /* Project identity and seed */
 .transport-project { width: max-content; flex: 0 0 auto; min-width: 90px; display: grid; grid-template-columns: minmax(90px, max-content); align-items: center; gap: 4px; }
 .transport-project > span { color: var(--text-muted); font: 10px var(--font-mono); text-align: center; white-space: nowrap; }
 .seed-control { min-width: 0; display: flex; align-items: center; gap: 5px; }
 .seed-control > span, .mode-control > span { color: var(--text-subtle); font: 9px var(--font-mono); }
 .seed-control input { flex: 1; width: 0; min-width: 0; }
+
+/* Left generation controls and centered playback group */
+.transport-left { min-width: 0; display: flex; align-items: center; gap: 31px; }
+.transport-playback { width: 100%; max-width: 100%; min-width: 0; display: flex; align-items: center; justify-content: center; justify-self: center; gap: 12px; }
+.transport-playback > vc-mix-buttons, .transport-tempo { flex: 0 0 auto; }
 
 /* Playback and loop buttons */
 .transport-actions { display: flex; align-items: center; gap: 7px; }
@@ -21,12 +26,12 @@
 .loop-button.active { border-color: var(--loop-accent); background: var(--loop-surface); color: var(--loop-accent); box-shadow: 0 0 8px var(--loop-outline); }
 
 /* Main generation actions */
-.compose-button { margin-right: 31px; --generation-accent: var(--compose-accent); }
+.compose-button { flex: 0 0 31px; --generation-accent: var(--compose-accent); }
 .generation-button { border-color: var(--generation-accent); background: var(--generation-accent); color: var(--generation-symbol-color); font-size: 22px; line-height: 1; }
 .generation-button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--generation-accent), white 40%); background: color-mix(in srgb, var(--generation-accent), white 40%); }
 
 /* Timeline and song position */
-.transport-timeline { min-width: 0; display: flex; align-items: center; gap: 12px; }
+.transport-timeline { flex: 1; min-width: 0; max-width: 750px; display: flex; align-items: center; gap: 12px; }
 .transport-progress { min-width: 0; flex: 1; }
 .transport-timeline > vc-mix-buttons { flex: 0 0 auto; }
 .position-line { margin-bottom: 0; display: flex; justify-content: space-between; gap: 10px; color: var(--text-muted); font: 10px var(--font-mono); letter-spacing: .06em; }
@@ -58,45 +63,19 @@
 .transport-tools { min-width: 0; max-width: 100%; justify-self: end; }
 
 /* Compact dock layout */
-@media (min-width: 1051px) and (max-width: 1400px) {
-  .transport-dock { grid-template-columns: auto minmax(85px, 1fr) auto; }
-  .transport-globals { grid-column: 1 / 3; }
-  .transport-tools { grid-column: 3; grid-row: 2; }
+@media (max-width: 1600px) {
+  .transport-dock { grid-template-columns: minmax(0, 1fr) auto; }
+  .transport-playback { width: 370px; grid-column: 1 / -1; grid-row: 2; }
+  .transport-tools { grid-column: 2; grid-row: 1; }
 }
 @media (max-width: 1050px) {
-  .transport-dock { grid-template-columns: auto minmax(120px, 1fr); }
-  .transport-tempo { grid-column: 1; grid-row: 2; }
-  .transport-globals { grid-column: 2; grid-row: 2; }
-  .transport-tools { grid-column: 1 / -1; flex-wrap: wrap; }
-}
-@media (max-width: 620px) {
-  .transport-dock { bottom: 8px; width: calc(100vw - 20px); min-height: 100px; padding: 8px 10px; grid-template-columns: auto minmax(60px, 1fr); grid-template-rows: auto auto; gap: 7px 9px; }
-  .transport-tools { width: 100%; flex-wrap: wrap; justify-content: flex-end; }
-  .transport-project span { font-size: 10px; }
-  .transport-actions { gap: 4px; }
-  .transport-button { width: 27px; height: 27px; }
-  .play-button { width: 34px; height: 34px; }
-  .live-button { width: 39px; }
-  .transport-globals { grid-column: 1 / -1; grid-row: 2; }
-  .mode-seed vc-select { height: 24px; font-size: 10px; }
-  .position-line { font-size: 10px; }
+  .transport-dock { grid-template-columns: minmax(0, 1fr); }
+  .transport-tools { grid-column: 1; grid-row: 3; flex-wrap: wrap; }
 }
 
 /* Generation feedback */
 .generation-message { position: absolute; left: 12px; bottom: calc(100% + 6px); max-width: calc(100% - 24px); margin: 0; padding: 7px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-button); background: var(--surface-base); color: var(--text-primary); font-size: 10px; }
 .transport-button:disabled { opacity: .35; cursor: default; }
-@media (max-width: 480px) {
-  .transport-dock { grid-template-columns: minmax(0, 1fr); }
-  .transport-timeline { grid-column: 1 / -1; }
-  .transport-globals { grid-row: auto; }
-}
-
-@media (max-width: 620px) {
-  .transport-globals { flex-wrap: wrap; gap: 5px 10px; }
-  .global-knobs { margin-right: auto; }
-  .mode-seed { width: 145px; }
-}
-
 /* Stacked audio engine and live reload controls */
 .transport-audio-tools { width: 56px; flex: 0 0 56px; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2, 22px); }
 .transport-audio-tools .instrument-selector, .transport-audio-tools .live-button { width: 100%; height: 22px; box-sizing: border-box; border-radius: var(--radius-control); }

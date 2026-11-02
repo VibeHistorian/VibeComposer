@@ -6,7 +6,7 @@ const { findBrowser, requireProductionBuild, createBrowserServer, listen, launch
   connectToPage, watchBrowser, closeBrowser } = require('./support/browser-harness.cjs');
 
 const browser = findBrowser();
-for (const width of [700, 780, 1050, 1400, 1440, 1920]) {
+for (const width of [700, 780, 1050, 1400, 1440, 1920, 2560]) {
   test(`global root and spice menus align with their chord at ${width}px`, { skip: !browser }, async () => {
     const root = requireProductionBuild();
     const server = createBrowserServer({ root, html: fs.readFileSync(path.join(root, 'index.html'), 'utf8') });
@@ -112,6 +112,31 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920]) {
             kind + ' opens immediately above its chord: ' + JSON.stringify(bounds));
           await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
           await command('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        }
+        const layout = await evaluate(`(async () => {
+          const dock = document.querySelector('.transport-dock');
+          const list = document.querySelector('.global-harmony .chordlet-list');
+          const progress = document.querySelector('.transport-progress');
+          const before = { height: dock.offsetHeight, progress: progress.offsetWidth, harmony: list.clientWidth };
+          for (let i = 0; i < 32; i++) {
+            const add = document.querySelector('.global-harmony [aria-label="Add chord"]');
+            if (add.disabled) break;
+            add.click();
+            await new Promise(resolve => requestAnimationFrame(resolve));
+          }
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          list.scrollLeft = list.scrollWidth;
+          return { before, height: dock.offsetHeight, progress: progress.offsetWidth, harmony: list.clientWidth,
+            scrolling: list.scrollWidth > list.clientWidth, reachable: list.scrollLeft > 0,
+            scrollbarInside: list.getBoundingClientRect().bottom <= dock.getBoundingClientRect().bottom,
+            noOverlap: innerWidth <= 1050 || document.querySelector('.score-panel').getBoundingClientRect().bottom <= dock.getBoundingClientRect().top };
+        })()`);
+        assert.equal(layout.height, layout.before.height, JSON.stringify(layout));
+        assert.ok((!layout.scrolling || layout.reachable) && layout.scrollbarInside && layout.noOverlap, JSON.stringify(layout));
+        if (width <= 1920) assert.ok(layout.scrolling, JSON.stringify(layout));
+        if (width >= 1920) {
+          assert.ok(layout.harmony > layout.before.harmony, JSON.stringify(layout));
+          assert.ok(layout.progress < layout.before.progress, JSON.stringify(layout));
         }
       })(), failure]);
     } finally {
