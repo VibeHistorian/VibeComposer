@@ -36,7 +36,7 @@
       <div class="overview-viewport" #viewport>
         <canvas #scoreCanvas tabindex="0" role="application"
           aria-label="Arrangement overview. Select sections, edit presence and reroll settings. View and customize interactions in Settings > Shortcuts. Arrow keys navigate; Enter activates."
-          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space"
+          aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter"
           (click)="onCanvasClick($event)" (pointermove)="onPointerMove($event)" (pointerleave)="onPointerLeave()"
           (pointerdown)="onCanvasPointerdown($event)" (auxclick)="onCanvasAuxclick($event)"
           (contextmenu)="onCanvasContextmenu($event)"
@@ -51,7 +51,7 @@
     (keydown)="sectionPickerKey($event)">
     <span>Add section</span>
     <div>@for (type of sectionTypes; track type) {
-      <button type="button" role="menuitem" (click)="chooseSection(type)">{{ sectionLabel(type) }}</button>
+      <button type="button" role="menuitem" (click)="chooseSection(type, $event)">{{ sectionLabel(type) }}</button>
     }</div>
   </div>
 }

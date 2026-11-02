@@ -78,6 +78,23 @@ function fixture(reactivity) {
   return { component, refs, base, overlay };
 }
 
+test('pointer Add section opens and commits without moving focus into the picker or back to its trigger', () => {
+  const { component } = fixture();
+  global.innerWidth = 1440;
+  global.innerHeight = 900;
+  document.querySelector = () => { assert.fail('pointer picker must not request keyboard focus'); };
+  let blurred = false;
+  const event = { detail: 1, stopPropagation() {}, currentTarget: {
+    blur() { blurred = true; }, getBoundingClientRect: () => ({ right: 500, bottom: 100 }),
+  } };
+  component.toggleSectionPicker(event);
+  assert.equal(blurred, true);
+  assert.ok(component.sectionPicker());
+  component.chooseSection('INTRO', event);
+  assert.equal(component.sectionPicker(), null);
+  assert.deepEqual(component.sectionAddRequested.values, ['INTRO']);
+});
+
 test('spillovers reserve non-cell space, retain section ownership and align the playhead', () => {
   const { component, overlay, base } = fixture();
   const project = component.project();
@@ -608,6 +625,8 @@ test('absent parts select without including them and keyboard presence toggle is
   const { component } = fixture();
   const area = component.hits.find((hit) => hit.key === 'toggle:verse:bass-1');
   component.focusedKey = area.key;
+  component.onCanvasKeydown({ key: ' ', preventDefault() { assert.fail('Space must reach global playback'); } });
+  assert.equal(component.trackSelected.values.length, 0, 'Space does not activate the selected area');
   component.onCanvasKeydown({ key: 'Enter', preventDefault() {} });
   assert.deepEqual(component.trackSelected.values, [{ sectionId: 'verse', trackId: 'bass-1' }]);
   assert.equal(component.partToggled.values.length, 0);

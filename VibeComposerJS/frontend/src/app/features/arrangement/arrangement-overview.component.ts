@@ -90,20 +90,22 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
 
   toggleSectionPicker(event: MouseEvent): void {
     event.stopPropagation();
+    const keyboard = event.detail === 0;
+    if (!keyboard) (event.currentTarget as HTMLElement).blur();
     if (this.sectionPicker()) { this.closeSectionPicker(); return; }
     const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
     this.sectionPicker.set({ x: Math.max(8, Math.min(innerWidth - 278, bounds.right - 270)),
       y: Math.max(8, Math.min(innerHeight - 220, bounds.bottom + 6)) });
-    setTimeout(() => document.querySelector<HTMLElement>('.section-picker button')?.focus(), 0);
+    if (keyboard) setTimeout(() => document.querySelector<HTMLElement>('.section-picker button')?.focus(), 0);
   }
   closeSectionPicker(): void { this.sectionPicker.set(null); }
   closePickerOutside(event: Event): void {
     if (!(event.target as HTMLElement).closest('.section-picker, .add-section-button')) this.closeSectionPicker();
   }
-  chooseSection(type: SectionType): void {
+  chooseSection(type: SectionType, event: MouseEvent): void {
     if (!this.canAddSection()) return;
     this.closeSectionPicker(); this.sectionAddRequested.emit(type);
-    document.querySelector<HTMLElement>('.add-section-button')?.focus();
+    if (event.detail === 0) document.querySelector<HTMLElement>('.add-section-button')?.focus();
   }
   sectionPickerKey(event: KeyboardEvent): void {
     const buttons = [...(event.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>('button')];
@@ -808,7 +810,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     if (!this.hits.length) return;
     const index = this.hits.findIndex((area) => area.key === this.focusedKey);
     if (this.runShortcut(this.hits[Math.max(0, index)], event)) return;
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === 'Enter') {
       event.preventDefault();
       this.hits[Math.max(0, index)].activate(event);
     } else if (event.key.startsWith('Arrow')) {

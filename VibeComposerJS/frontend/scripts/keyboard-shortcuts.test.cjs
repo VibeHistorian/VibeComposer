@@ -154,7 +154,7 @@ test('capture normalization and preference decoding cover keys, mouse, wheel and
   assert.equal(decodeShortcuts({ freeGrid: [{ kind: 'modifier', input: 'held', ctrl: false, shift: false, alt: false }] }), null);
 });
 
-test('pointer actions release focus for global Space while keyboard and composite controls retain it', () => {
+test('pointer actions release focus for global Space while keyboard and composite controls retain it', async () => {
   const { installPointerButtonFocus } = load('shared/pointer-button-focus.ts');
   const listeners = new Map();
   const document = { activeElement: null,
@@ -173,6 +173,7 @@ test('pointer actions release focus for global Space while keyboard and composit
   assert.equal(document.activeElement, button, 'initial keyboard focus stays');
   listeners.get('pointerdown')();
   listeners.get('click')();
+  await Promise.resolve();
   assert.equal(document.activeElement, null, 'click releases already-focused action');
   const f = fixture();
   f.press(' ', { ctrlKey: false, composedPath: () => [] });
@@ -191,6 +192,10 @@ test('pointer actions release focus for global Space while keyboard and composit
   document.activeElement = menuButton;
   listeners.get('focusin')();
   assert.equal(document.activeElement, menuButton, 'composite widget focus stays');
+  listeners.get('click')();
+  document.activeElement = button;
+  await Promise.resolve();
+  assert.equal(document.activeElement, null, 'focus restored by click handlers is released');
   cleanup();
   assert.equal(listeners.size, 0);
 });
