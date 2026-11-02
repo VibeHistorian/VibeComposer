@@ -234,7 +234,7 @@
                               <span class="measure-range">{{ slot.measureRange }}</span><span class="measure-end">{{ slot.endMeasure }}</span>
                             </span>
                           }
-                          <span class="score-chord-label" [title]="slot.chord.label">{{ slot.chord.label }}</span>
+                          <span class="score-chord-label" [title]="slot.chord.label" [attr.data-short]="slot.chord.label.slice(0, 1) + '...'"><span class="score-chord-name">{{ slot.chord.label }}</span></span>
                         </span>
                         <i class="score-header-separator" [class.section-end]="slot.sectionEnd" [style.left.px]="slot.endX"
                           [style.--chord-hue]="slot.chord.hue" [attr.data-beat]="slot.endBeat" aria-hidden="true"></i>

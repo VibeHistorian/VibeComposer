@@ -323,6 +323,18 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.deepEqual(harmonyHeader.measures,['01–02','03–04']);assert.ok(Math.abs(harmonyHeader.ratio-3)<.02);
   assert.equal(harmonyHeader.leftAligned,true);assert.equal(harmonyHeader.rightAligned,true);
   assert.notEqual(harmonyHeader.colors[0],harmonyHeader.colors[2]);
+  const independentLabels=await evaluate(`(async()=>{${waitCode}
+    const labels=[...document.querySelectorAll('.score-ruler-section:first-of-type .score-chord-label')];
+    const label=labels[0],name=label.querySelector('.score-chord-name'),original=name.textContent;
+    name.textContent='Dmaj13'.repeat(30);
+    await wait(()=>label.classList.contains('chord-clipped'));
+    const result={short:getComputedStyle(label,'::after').content,
+      neighborVisible:labels.slice(1).every(other=>!other.classList.contains('chord-clipped')&&getComputedStyle(other).visibility==='visible')};
+    name.textContent=original;
+    await wait(()=>!label.classList.contains('chord-clipped'));
+    return result;
+  })()`);
+  assert.equal(independentLabels.short,'"D..."');assert.equal(independentLabels.neighborVisible,true);
   const measureFallback=await evaluate(`(async()=>{${waitCode}
     const section=document.querySelector('.score-ruler-section'),slot=section.querySelector('.score-chord-slot:last-of-type');
     const label=slot.querySelector('.score-chord-label'),range=slot.querySelector('.measure-range'),end=slot.querySelector('.measure-end');
@@ -400,14 +412,14 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   })()`);
   await command('Page.reload');
   const shortSection=await evaluate(`(async()=>{${waitCode}
-    const section=await wait(()=>document.querySelector('.score-ruler-section.chords-hidden'));
+    const section=await wait(()=>document.querySelector('.score-ruler-section:has(.chord-clipped)'));
     const label=section.querySelector('.score-chord-label');
-    const initial={hidden:getComputedStyle(label).visibility==='hidden',measure:section.querySelector('.measure-end').textContent,
+    const initial={hidden:label.classList.contains('chord-clipped'),measure:section.querySelector('.measure-end').textContent,
       separator:getComputedStyle(section.querySelector('.score-header-separator')).backgroundColor,
       saved:JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid};
     const canvas=await wait(()=>document.querySelector('vc-score-canvas canvas')),c=canvas.getBoundingClientRect();
     canvas.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,deltaY:-1000,clientX:c.left,clientY:c.top}));
-    await wait(()=>!section.classList.contains('chords-hidden'));
+    await wait(()=>!label.classList.contains('chord-clipped'));
     return {...initial,reappeared:getComputedStyle(label).visibility==='visible'};
   })()`);
   assert.equal(shortSection.hidden,true);assert.equal(shortSection.measure,'01');assert.equal(shortSection.saved,true);

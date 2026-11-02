@@ -116,7 +116,11 @@ button.score-track-label:focus-visible { outline: 1px solid var(--border-focus);
 .measure-end, .measures-compact .measure-range { position: absolute; right: 0; visibility: hidden; }
 .measures-compact .measure-end { position: static; visibility: visible; }
 .score-chord-label { position: absolute; left: 4px; top: 2px; width: max-content; box-sizing: border-box; white-space: nowrap; padding: 1px 3px; border-radius: var(--radius-micro); background: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-background-tone)), var(--surface-base) var(--chordlet-background-mix)); color: color-mix(in srgb, hsl(var(--chord-hue) var(--chordlet-foreground-tone)), var(--text-primary) 78%); }
-.chords-hidden .score-chord-label { visibility: hidden; }
+/* Fit chord names independently within their timeline slots */
+.score-chord-label { overflow: hidden; }
+.score-chord-name { display: inline-block; width: max-content; }
+.chord-clipped .score-chord-name { position: absolute; visibility: hidden; }
+.chord-clipped::after { content: attr(data-short); }
 .score-track-lanes { position: relative; min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-score); }
 .score-track-labels { position: relative; grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
 .score-track-label { position: absolute; left: 0; width: 72px; box-sizing: border-box; z-index: 1; min-width: 0; min-height: 0; padding: 0 6px; display: flex; align-items: center; gap: 6px; overflow: hidden; border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font: 10px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
