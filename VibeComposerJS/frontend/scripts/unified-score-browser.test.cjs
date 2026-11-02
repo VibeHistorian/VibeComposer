@@ -301,7 +301,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const base={...p.arrangement[0],measures:2};
     delete base.trackPhrases;delete base.trackPartOverrides;delete base.rolePartOverrides;
     delete base.chordDegrees;delete base.customChords;delete base.customDurations;delete base.context;
-    delete base.useMelodyHarmony;delete base.swapMelody;delete base.generatedTrackIds;
+    delete base.useMelodyHarmony;delete base.generatedTrackIds;
     p.arrangement=[base,{...base,id:'section-harmony',chordDegrees:[2,5],customDurations:[2,6],generatedTrackIds:[bass.id]}];
     sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
   })()`);

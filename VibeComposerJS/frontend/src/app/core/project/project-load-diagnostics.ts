@@ -125,7 +125,7 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (Array.isArray(arrangement)) arrangement.forEach((raw, index) => {
       const path = `project.arrangement[${index}]`;
       const section = object(raw, path, ['id', 'type', 'measures'], ['id', 'type', 'measures', 'context', 'customChords', 'customDurations', 'chordDegrees',
-        'useMelodyHarmony', 'swapMelody', 'variations', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
+        'useMelodyHarmony', 'variations', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
       if (!section) return;
       check(`${path}.type`, SECTION_TYPES.includes(section['type'] as SectionType), `expected one of ${SECTION_TYPES.join(', ')}`);
       check(`${path}.measures`, Number.isInteger(section['measures']) && (section['measures'] as number) >= 1 && (section['measures'] as number) <= 32, 'expected an integer from 1 to 32');

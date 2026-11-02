@@ -39,7 +39,6 @@ import { ScoreChordLabelsDirective } from '../score/score-chord-labels.directive
 import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from '../score/score-canvas.component';
 import { EditWorkspaceComponent } from '../edit/edit-workspace.component';
 import { PartSettingsEditorComponent } from '../part-settings/part-settings-editor.component';
-import { HarmonySettingsComponent } from '../harmony/harmony-settings.component';
 import { PartScopeActionsComponent } from '../part-settings/part-scope-actions.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
@@ -71,7 +70,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, HarmonySettingsComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
+  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',

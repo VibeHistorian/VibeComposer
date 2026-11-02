@@ -40,8 +40,7 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
     const trackPresence = section.trackPresence as Record<string, unknown> | undefined;
     const chordDegrees = section.chordDegrees;
     if (section.variations !== undefined && !validSectionVariations(section.variations, tracks)) return undefined;
-    if ((section.useMelodyHarmony !== undefined && typeof section.useMelodyHarmony !== 'boolean')
-      || (section.swapMelody !== undefined && typeof section.swapMelody !== 'boolean')) return undefined;
+    if (section.useMelodyHarmony !== undefined && typeof section.useMelodyHarmony !== 'boolean') return undefined;
     if (typeof section.id !== 'string' || section.id.length === 0 || section.id.length > 80 || ids.has(section.id)
         || !SECTION_TYPES.includes(sectionType)
         || !Number.isInteger(section.measures) || (section.measures ?? 0) < 1 || (section.measures ?? 33) > 32
@@ -122,7 +121,6 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
       ...(section.customDurations ? { customDurations: [...section.customDurations] } : {}),
       chordDegrees: chordDegrees === undefined ? undefined : [...chordDegrees],
       ...(section.useMelodyHarmony !== undefined ? { useMelodyHarmony: section.useMelodyHarmony } : {}),
-      ...(section.swapMelody !== undefined ? { swapMelody: section.swapMelody } : {}),
       trackPresence: presence,
       ...(section.variations ? { variations: structuredClone(section.variations) } : {}),
       rolePartOverrides: rolePartOverrides as NonNullable<ArrangementSection['rolePartOverrides']>,

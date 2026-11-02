@@ -308,7 +308,7 @@ test('score phrase sources follow local edits, forced generation and inherited g
     trackPartOverrides: { [track.id]: { transpose: 12 } } }), 'section-generated');
   for (const context of [
     { context: { key: 'D', swingPercent: 60 } }, { chordDegrees: [1, 4] },
-    { customChords: [null] }, { customDurations: [2] }, { useMelodyHarmony: true }, { swapMelody: true },
+    { customChords: [null] }, { customDurations: [2] }, { useMelodyHarmony: true },
     { trackPartOverrides: { [track.id]: {} }, rolePartOverrides: { bass: {} } },
     { trackPartOverrides: { 'another-track': { transpose: 12 } }, rolePartOverrides: { melody: { transpose: 12 } } },
   ]) {

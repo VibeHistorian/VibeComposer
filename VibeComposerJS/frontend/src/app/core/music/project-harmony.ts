@@ -104,7 +104,7 @@ export function projectMelodyHarmony(project: CompositionProject): MelodyHarmony
 export function sectionGenerationHarmony(project: CompositionProject, section: ArrangementSection, role: ArrangedPart): ResolvedHarmony {
   const base = baseGenerationHarmony(project, section);
   if (sectionHasChordOverride(project, section) || section.context?.keyChangeType === 'two-five-one'
-    || !(section.useMelodyHarmony || role === 'melody' && section.swapMelody)) return base;
+    || !section.useMelodyHarmony) return base;
   const inference = projectMelodyHarmony(project);
   if (!inference.available) return base;
   if (section.context?.key !== undefined || section.context?.scale !== undefined || section.context?.keyChange !== undefined
@@ -116,8 +116,7 @@ export function sectionGenerationHarmony(project: CompositionProject, section: A
     const voicings = flattenProgression(raw, roots, BigInt(project.seed), { ...project.harmonySettings, progressiveVoicing: false });
     const soundingRoots = soundingHarmony(roots, contextual.key, contextual.scale);
     return { degrees, customChords: undefined, roots, durations: base.durations, voicings, soundingRoots,
-      soundingVoicings: soundingHarmony(voicings, contextual.key, contextual.scale), inferred: true,
-      melodySeedOffset: role === 'melody' && section.swapMelody ? 100 : 0 };
+      soundingVoicings: soundingHarmony(voicings, contextual.key, contextual.scale), inferred: true };
   }
-  return { ...inference.harmony, durations: base.durations, melodySeedOffset: role === 'melody' && section.swapMelody ? 100 : 0 };
+  return { ...inference.harmony, durations: base.durations };
 }

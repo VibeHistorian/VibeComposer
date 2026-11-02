@@ -397,7 +397,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
       chordDegrees: durations.map((_, slot) => progression[slot % progression.length]),
       ...(chords ? { customChords: chords } : {}), customDurations: durations,
       ...(Object.keys(context).length ? { context: context as SectionMusicalContext } : {}),
-      useMelodyHarmony: variations[1] > 0, swapMelody: variations[2] > 0 && variations[0] === 0,
+      useMelodyHarmony: variations[1] > 0,
       trackPartOverrides: overrides, ...(Object.keys(phrases).length ? { trackPhrases: phrases } : {}),
     };
   });

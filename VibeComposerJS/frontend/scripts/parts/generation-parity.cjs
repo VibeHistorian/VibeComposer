@@ -253,7 +253,7 @@ test('P5e sounding harmony preserves chromatic Chordlets across keys/modes while
     const inference = projectMelodyHarmony(service.project());
     assert.deepEqual(inference.harmony.soundingRoots[0],roots[0]);
     assert.deepEqual(inference.harmony.soundingRoots[3],roots[3]);
-    service.updateSectionHarmony(id,{ useMelodyHarmony:true,swapMelody:true });
+    service.updateSectionHarmony(id,{ useMelodyHarmony:true });
     const exported = new Midi(midi.generateCompositionMidi(service.project()));
     for (const track of service.project().tracks) {
       const expected = phrase.layOutTrackPhrase(service.project(),track);

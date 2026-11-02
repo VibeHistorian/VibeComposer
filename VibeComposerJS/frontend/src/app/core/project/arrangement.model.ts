@@ -15,7 +15,6 @@ export interface ArrangementSection {
   readonly customDurations?: readonly number[];
   /** Realized harmony selections; explicit section chords take precedence. */
   readonly useMelodyHarmony?: boolean;
-  readonly swapMelody?: boolean;
   readonly id: string;
   readonly type: SectionType;
   readonly measures: number;

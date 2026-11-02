@@ -144,11 +144,11 @@ test('P5e harmony commands validate atomically without losing redo and flattenin
     const imported = JSON.parse(saved); imported.harmonySettings=patch;
     assertRejectedProjectImport(service, JSON.stringify(imported));
   }
-  for (const patch of [{ useMelodyHarmony:1 },{ swapMelody:'true' },{ unknown:false },null,[]]) {
+  for (const patch of [{ useMelodyHarmony:1 },{ removedHarmonyFlag:true },{ unknown:false },null,[]]) {
     assert.equal(service.updateSectionHarmony(id,patch),'invalid');
   }
-  assert.equal(service.updateSectionHarmony('deleted',{ swapMelody:true }),'invalid');
-  for (const key of ['useMelodyHarmony','swapMelody']) {
+  assert.equal(service.updateSectionHarmony('deleted',{ useMelodyHarmony:true }),'invalid');
+  for (const key of ['useMelodyHarmony']) {
     const imported = JSON.parse(saved); imported.arrangement[0][key]='true';
     assertRejectedProjectImport(service, JSON.stringify(imported));
   }

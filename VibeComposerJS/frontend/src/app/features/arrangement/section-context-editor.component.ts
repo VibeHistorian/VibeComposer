@@ -8,10 +8,12 @@ import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
 import { sectionChordDurations, sectionHasChordOverride } from '../../core/music/section-context';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
+import { CompactToggleComponent } from '../../shared/compact-toggle.component';
+import { projectMelodyHarmony } from '../../core/music/project-harmony';
 import { SelectComponent } from '../../shared/select.component';
 
 @Component({
-  selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, SelectComponent, CompactKnobComponent],
+  selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, SelectComponent, CompactKnobComponent, CompactToggleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './section-context-editor.component.html', styleUrl: './section-context-editor.component.css',
 })
@@ -27,11 +29,12 @@ export class SectionContextEditorComponent {
   readonly sectionTypes = SECTION_TYPES;
   mixedType(): boolean { return this.mixed(section => section.type); }
   mixedMeasures(): boolean { return this.mixed(section => section.measures); }
-  readonly arrangementFlags = ['useMelodyHarmony', 'swapMelody'] as const;
-  flagMixed(key: 'useMelodyHarmony' | 'swapMelody'): boolean { return this.mixed(section => section[key] ?? false); }
-  setFlag(key: 'useMelodyHarmony' | 'swapMelody', event: Event): void {
-    const value = (event.target as HTMLInputElement).checked;
-    this.apply(section => ({ ...section, [key]: value }));
+  readonly inference = computed(() => projectMelodyHarmony(this.projects.project()));
+  mixedMelodyHarmony(): boolean { return this.mixed(section => section.useMelodyHarmony ?? false); }
+  toggleMelodyHarmony(): void {
+    const enabled = !this.section().useMelodyHarmony;
+    if (this.allSections()) this.projects.editAllSectionMusic(section => ({ ...section, useMelodyHarmony: enabled }));
+    else this.projects.updateSectionHarmony(this.section().id, { useMelodyHarmony: enabled });
   }
   setAllType(value: string): void {
     this.projects.editAllSectionMusic(section => ({ ...section, type: value as ArrangementSection['type'] }));

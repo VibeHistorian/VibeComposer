@@ -34,7 +34,6 @@ export interface GenerationHarmony {
   /** Preserve explicit sounding Chordlets where inverse scale conversion is ambiguous. */
   readonly soundingRoots?: readonly (readonly number[])[];
   readonly soundingVoicings?: readonly (readonly number[])[];
-  readonly melodySeedOffset?: number;
 }
 
 /** Carry canonical octave moves onto the original sounding tones, preserving chromatic Chordlets. */

@@ -4,19 +4,19 @@
     @for (chord of chords(); track $index; let index = $index) {
       <div class="chordlet" [attr.data-chord-index]="index" [style.--chord-hue]="chordHue(chord)"
         [class.dragging]="dragging() === index" [class.drop-target]="dropIndex() === index">
-        <button type="button" class="chordlet-label" [attr.aria-label]="'Chord ' + (index + 1) + ': ' + symbol(chord)" [title]="help"
+        <button type="button" class="chordlet-label" [disabled]="disabled()" [attr.aria-label]="'Chord ' + (index + 1) + ': ' + symbol(chord)" [title]="help"
           (pointerdown)="start(index, $event)" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()"
           (lostpointercapture)="cancel()" (contextmenu)="openMenu(index, 'root', $event)" (auxclick)="$event.preventDefault()"
           (wheel)="wheel(index, $event)" (keydown)="key(index, $event)" (dblclick)="reset(index)">{{ symbol(chord) }}</button>
-        <button type="button" class="chordlet-remove" [disabled]="chords().length <= 1" [attr.aria-label]="'Remove chord ' + (index + 1)"
+        <button type="button" class="chordlet-remove" [disabled]="disabled() || chords().length <= 1" [attr.aria-label]="'Remove chord ' + (index + 1)"
           (click)="remove(index)" title="Remove chord">×</button>
       </div>
     }
   </div>
-  <button type="button" class="chordlet-action" (click)="add()" [disabled]="chords().length >= 32" aria-label="Add chord" title="Add chord">＋</button>
-  <button type="button" class="chordlet-action" (click)="generate()" aria-label="Generate chord progression" title="Generate a seeded progression">↻</button>
+  <button type="button" class="chordlet-action" (click)="add()" [disabled]="disabled() || chords().length >= 32" aria-label="Add chord" title="Add chord">＋</button>
+  <button type="button" class="chordlet-action" (click)="generate()" [disabled]="disabled()" aria-label="Generate chord progression" title="Generate a seeded progression">↻</button>
 </div>
-@if (menu(); as popup) {
+@if (disabled() ? null : menu(); as popup) {
   <div class="chordlet-menu" role="menu" [attr.aria-label]="popup.kind === 'root' ? 'Chord root' : 'Chord spice'"
     (keydown)="menuKey($event)"
     [style.left.px]="popup.x" [style.bottom.px]="popup.y">

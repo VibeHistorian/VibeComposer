@@ -32,7 +32,7 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
   switch (track.role) {
     case 'melody':
       notes = generateMelody(seed, project.key, project.scale, project.progression, track.generatorSettings,
-        harmony.melodySeedOffset ?? 0, undefined, project.melodyGlobal, project.progressionChords, harmony);
+        0, undefined, project.melodyGlobal, project.progressionChords, harmony);
       break;
     case 'bass':
       notes = generateBassline(seed, project.key, project.scale, project.progression,
@@ -269,7 +269,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   let result = melodyContext([], progression.length);
   const contextual = sectionProject(project, section);
   const seeded = withTrackSeed(contextual, source);
-  generateMelody(BigInt(seeded.seed), contextual.key, contextual.scale, progression, effective.generatorSettings, harmony.melodySeedOffset ?? 0,
+  generateMelody(BigInt(seeded.seed), contextual.key, contextual.scale, progression, effective.generatorSettings, 0,
     notes => {
       const generated = notes.map((note, index) => ({ ...note, id: `context-${index}`, durationBeats: .25, velocity: 90,
         midi: note.midi < 0 ? note.midi : Math.max(0, Math.min(127, note.midi + (section?.context?.keyChange ?? 0))) }));

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input
 import { ProjectService } from '../../core/project/project.service';
 import { CHORD_SPICES, KEYS, chordKeyOverlap, chordRootHue, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
 import type { ArrangementSection } from '../../core/project/arrangement.model';
-import { baseGenerationHarmony } from '../../core/music/project-harmony';
+import { baseGenerationHarmony, sectionGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
 import { SCALE_DEFINITIONS } from '../../core/music/scales';
 
@@ -17,8 +17,10 @@ export class ChordletEditorComponent {
   readonly project = this.projects.project;
   readonly section = input<ArrangementSection>();
   readonly allSections = input(false);
+  readonly disabled = computed(() => !!this.section()?.useMelodyHarmony);
   readonly mixed = computed(() => this.allSections() && this.project().arrangement.some(section => {
-    const harmony = baseGenerationHarmony(this.project(), section);
+    const harmony = section.useMelodyHarmony ? sectionGenerationHarmony(this.project(), section, 'chords')
+      : baseGenerationHarmony(this.project(), section);
     const context = sectionProject(this.project(), section);
     return JSON.stringify(progressionChords(context.key, context.scale, harmony.degrees, harmony.customChords)) !== JSON.stringify(this.chords());
   }));
@@ -28,7 +30,9 @@ export class ChordletEditorComponent {
         ? chords.map((_, index) => section.customDurations?.[index] ?? 4) : undefined }));
   }
   readonly chords = computed(() => {
-    const project = sectionProject(this.project(), this.section()), harmony = baseGenerationHarmony(this.project(), this.section());
+    const section = this.section();
+    const project = sectionProject(this.project(), section), harmony = section?.useMelodyHarmony
+      ? sectionGenerationHarmony(this.project(), section, 'chords') : baseGenerationHarmony(this.project(), section);
     return progressionChords(project.key, project.scale, harmony.degrees, harmony.customChords);
   });
   readonly roots = KEYS;
@@ -63,13 +67,15 @@ export class ChordletEditorComponent {
   chordHue(chord: ProgressionChord): number { return this.rootHue(this.displayedPitch(chord.root)); }
   symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root)
     + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + (chord.inversion ? '.' + chord.inversion : ''); }
-  add(): void { this.closeMenu(); if (this.allSections()) { if (this.chords().length < 32) this.applyAll([...this.chords(), null]); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
-  remove(index: number): void { this.closeMenu(); if (this.allSections()) { if (this.chords().length > 1) this.applyAll(this.chords().filter((_, i) => i !== index)); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
+  add(): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length < 32) this.applyAll([...this.chords(), null]); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
+  remove(index: number): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length > 1) this.applyAll(this.chords().filter((_, i) => i !== index)); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
   generate(): void {
+    if (this.disabled()) return;
     this.closeMenu();
     this.projects.generateProgression(this.section()?.id, this.allSections());
   }
   private setChord(index: number, chord: ProgressionChord): void {
+    if (this.disabled()) return;
     if (this.allSections()) {
       this.projects.editAllSectionMusic(section => {
         const context = sectionProject(this.project(), section), harmony = baseGenerationHarmony(this.project(), section);
@@ -90,6 +96,7 @@ export class ChordletEditorComponent {
 
   openMenu(index: number, kind: 'root' | 'spice', event: Event): void {
     event.preventDefault(); event.stopPropagation();
+    if (this.disabled()) return;
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
     this.menu.set({ index, kind, x: Math.max(8, Math.min(innerWidth - 228, box.left)), y: Math.max(8, Math.min(innerHeight - 220, innerHeight - box.top + 6)), project: this.project(), sectionId: this.section()?.id });
     setTimeout(() => this.element.nativeElement.querySelector<HTMLElement>('.chordlet-menu button[aria-checked="true"]')?.focus(), 0);
@@ -132,11 +139,12 @@ export class ChordletEditorComponent {
     this.closeMenu(); this.setChord(index, next);
   }
   wheel(index: number, event: WheelEvent): void {
-    if (!event.deltaY || this.drag) return;
+    if (this.disabled() || !event.deltaY || this.drag) return;
     event.preventDefault(); event.stopPropagation();
     this.adjust(index, event.deltaY < 0 ? 1 : -1, event.shiftKey, event.ctrlKey || event.metaKey);
   }
   key(index: number, event: KeyboardEvent): void {
+    if (this.disabled()) return;
     if (event.key === 'Enter' || event.key === ' ') { this.openMenu(index, event.shiftKey ? 'spice' : 'root', event); return; }
     if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); this.remove(index); this.focusChord(Math.min(index, this.chords().length - 1)); return; }
     if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return;
@@ -148,6 +156,7 @@ export class ChordletEditorComponent {
     } else this.adjust(index, direction, event.shiftKey, event.ctrlKey || event.metaKey);
   }
   start(index: number, event: PointerEvent): void {
+    if (this.disabled()) return;
     if (event.button === 1) { this.openMenu(index, 'spice', event); return; }
     if (event.button !== 0) return;
     event.preventDefault(); (event.currentTarget as HTMLElement).focus(); this.closeMenu();

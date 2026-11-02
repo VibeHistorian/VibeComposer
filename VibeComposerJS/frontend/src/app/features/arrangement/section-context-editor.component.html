@@ -5,11 +5,6 @@
       [mixed]="mixedType()" (valueChange)="setAllType($event)" /></label>
     <label>Length in bars<input type="number" min="1" max="128" [value]="mixedMeasures() ? '' : section().measures"
       [placeholder]="mixedMeasures() ? 'Mixed' : ''" (change)="setAllMeasures($event)" /></label>
-    @for (flag of arrangementFlags; track flag) {
-      <label><input type="checkbox" [checked]="section()[flag] ?? false" [indeterminate]="flagMixed(flag)" (change)="setFlag(flag, $event)" />
-        {{ flag === 'useMelodyHarmony' ? 'Use Melody harmony' : 'Swap Melody' }} @if (flagMixed(flag)) { <span>Mixed</span> }
-      </label>
-    }
   </fieldset>
 }
 <fieldset>
@@ -26,8 +21,12 @@
 </fieldset>
 <fieldset data-control-category="pitch">
   <legend>Section chords</legend>
+  <vc-compact-toggle label="Use Melody harmony" [active]="section().useMelodyHarmony ?? false" [mixed]="mixedMelodyHarmony()"
+    [disabled]="hasChordOverride() || section().context?.keyChangeType === 'two-five-one' || !inference().available && !section().useMelodyHarmony"
+    description="Use the first Melody track’s inferred progression for this section."
+    (toggled)="toggleMelodyHarmony()" />
   <vc-chordlet-editor [section]="section()" [allSections]="allSections()" />
-  @if (allSections() || hasChordOverride()) {
+  @if ((allSections() || hasChordOverride()) && !section().useMelodyHarmony) {
     <button type="button" (click)="clearHarmony()">Use primary chords</button>
   }
 </fieldset>

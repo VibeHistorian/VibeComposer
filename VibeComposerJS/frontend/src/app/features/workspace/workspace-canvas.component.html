@@ -313,7 +313,7 @@
         <ng-container [ngTemplateOutlet]="groupTrackToggle" />
       }
       @if (settingsTarget().kind === 'arrangement' || 'sectionId' in settingsTarget()) {
-        <button type="button" class="restore-track-button" (click)="openArrangementVariations()" aria-label="Inspect selected arrangement variations">Variations…</button>
+        <button type="button" class="restore-track-button inspector-variations" (click)="openArrangementVariations()" aria-label="Inspect selected arrangement variations">Variations…</button>
       }
       @if (usePartSettingsInspector() && preferences.editingQuickSettings()) {
         <button type="button" class="part-inspector-link" (click)="toggleQuickSettingsEdit()">Save quick settings</button>
@@ -426,11 +426,6 @@
           }
         </section>
 
-      }
-      @if (settingsTarget().kind === 'section') {
-        <vc-harmony-settings [section]="selectedSection() ?? undefined" />
-      } @else if (settingsTarget().kind !== 'arrangement') {
-        <vc-harmony-settings />
       }
       }
     </aside>

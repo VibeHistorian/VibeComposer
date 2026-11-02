@@ -117,12 +117,12 @@ export class ProjectService {
     return 'changed';
   }
 
-  updateSectionHarmony(sectionId: string, patch: Pick<ArrangementSection, 'useMelodyHarmony' | 'swapMelody'>): PartWorkflowResult {
+  updateSectionHarmony(sectionId: string, patch: Pick<ArrangementSection, 'useMelodyHarmony'>): PartWorkflowResult {
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)
-      || Object.entries(patch).some(([key,value]) => !['useMelodyHarmony','swapMelody'].includes(key) || typeof value !== 'boolean')) return 'invalid';
+      || Object.entries(patch).some(([key,value]) => !['useMelodyHarmony'].includes(key) || typeof value !== 'boolean')) return 'invalid';
     const current = this.state(), section = current.arrangement.find(section => section.id === sectionId);
     if (!section) return 'invalid';
-    if (Object.entries(patch).every(([key,value]) => (section[key as 'useMelodyHarmony' | 'swapMelody'] ?? false) === value)) return 'unchanged';
+    if (Object.entries(patch).every(([key,value]) => (section[key as 'useMelodyHarmony'] ?? false) === value)) return 'unchanged';
     this.commit({ ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? { ...item, ...patch } : item) });
     return 'changed';
   }

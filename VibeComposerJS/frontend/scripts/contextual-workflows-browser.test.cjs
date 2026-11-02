@@ -714,19 +714,23 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>document.querySelector('.part-panel-toggle').getAttribute('aria-label').includes('Quick access settings'),'section-only panel title');
       if ([...document.querySelectorAll('.part-settings-content > .part-inheritance')].some(label=>['Global part settings','Inherited from global tracks'].includes(label.textContent.trim()))) throw new Error('duplicate part panel title');
       use.click(); await wait(() => read().arrangement.some(section => section.useMelodyHarmony),'section harmony commit');
-      document.querySelector('[aria-label="Swap Melody"]').click();
-      await wait(() => read().arrangement.some(section => section.swapMelody),'swap melody commit');
       const first = read().arrangement.find(section => section.useMelodyHarmony);
       const unchanged = JSON.stringify(read().arrangement.filter(section => section.id !== first.id));
       document.querySelector('[aria-label="Undo"]').click();
-      await wait(() => !read().arrangement.find(section => section.id === first.id).swapMelody,'swap undo');
-      (await wait(() => { const button=document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'swap redo enabled')).click();
-      await wait(() => read().arrangement.find(section => section.id === first.id).swapMelody,'swap redo');
-      const editor = document.querySelector('vc-harmony-settings');
+      await wait(() => !read().arrangement.find(section => section.id === first.id).useMelodyHarmony,'melody harmony undo');
+      (await wait(() => { const button=document.querySelector('[aria-label="Redo"]'); return button && !button.disabled ? button : null; },'melody harmony redo enabled')).click();
+      await wait(() => read().arrangement.find(section => section.id === first.id).useMelodyHarmony,'melody harmony redo');
+      const editor = document.querySelector('vc-section-context-editor');
       editor.scrollIntoView({block:'center'});
+      await wait(() => editor.querySelector('.chordlet-label')?.disabled && [...editor.querySelectorAll('.chordlet-row button')].every(button => button.disabled), 'inferred chordlets disabled');
       const section = read().arrangement.find(section => section.id === first.id);
-      return { section: section.useMelodyHarmony && section.swapMelody, global: read().harmonySettings.flattenVoicingChance===100,
-        source: editor.textContent.includes('generated base Melody'), independent: unchanged===JSON.stringify(read().arrangement.filter(section => section.id !== first.id)),
+      const variations = document.querySelector('[aria-label="Inspect selected arrangement variations"]').getBoundingClientRect();
+      const heading = document.querySelector('#part-inspector .inspector-heading').getBoundingClientRect();
+      return { moved: use.closest('fieldset').querySelector('legend').textContent.trim() === 'Section chords',
+        variationsFit: Math.abs(variations.width - heading.width) <= 1 && variations.top > heading.bottom,
+        section: section.useMelodyHarmony, global: read().harmonySettings.flattenVoicingChance===100,
+        source: !document.querySelector('vc-harmony-settings') && !document.querySelector('[aria-label="Swap Melody"]')
+          && [...editor.querySelectorAll('.chordlet-label')].length > 0 && [...editor.querySelectorAll('.chordlet-row button')].every(button => button.disabled), independent: unchanged===JSON.stringify(read().arrangement.filter(section => section.id !== first.id)),
         fits: editor.getBoundingClientRect().right <= innerWidth && editor.getBoundingClientRect().left >= 0 };
     })()` });
     assert.equal(harmonyResult.exceptionDetails, undefined, JSON.stringify(harmonyResult));
@@ -766,6 +770,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>!section().customDurations,'duration undo');
       (await wait(()=>{const button=document.querySelector('[aria-label="Redo"]');return button&&!button.disabled?button:null;},'duration redo enabled')).click();
       await wait(()=>section().customDurations?.[0]===2,'duration redo');
+      editor.querySelector('[aria-label="Use Melody harmony"]').click();
+      await wait(()=>!section().useMelodyHarmony && !editor.querySelector('.chordlet-label').disabled,'authored chord editing restored');
       const chord=editor.querySelector('.chordlet-label');
       chord.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
       const menu=await wait(()=>editor.querySelector('[aria-label="Chord root"]'),'section chord menu');

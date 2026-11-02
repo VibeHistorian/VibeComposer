@@ -403,11 +403,8 @@ test('P5e section selections share harmony across roles, preserve sparse overrid
     assert.deepEqual(notes(role).filter(note => note.startBeat >= 16), beforeNotes[role].filter(note => note.startBeat >= 16));
     assert.deepEqual(sectionGenerationHarmony(service.project(),service.project().arrangement[0],role).roots, inferred.harmony.roots);
   }
-  const allHarmonyNotes = notes('melody');
-  assert.equal(service.updateSectionHarmony(sectionId, { useMelodyHarmony: false, swapMelody: true }), 'changed');
-  assert.notDeepEqual(notes('melody'), allHarmonyNotes);
-  for (const role of ['bass','chords','arpeggio']) assert.deepEqual(notes(role),beforeNotes[role]);
-  assert.equal(sectionGenerationHarmony(service.project(),service.project().arrangement[0],'melody').melodySeedOffset,100);
+  assert.equal(service.updateSectionHarmony(sectionId, { useMelodyHarmony: false }), 'changed');
+  for (const role of ['melody','bass','chords','arpeggio']) assert.deepEqual(notes(role),beforeNotes[role]);
   service.updateSectionHarmony(sectionId, { useMelodyHarmony: true });
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts');
   const playback = new AudioPlaybackService();
@@ -453,7 +450,7 @@ test('P5e inference keeps base source ownership and explicit section harmony ahe
   service.updateTrackPhrase(id,manual);
   assert.equal(projectMelodyHarmony(service.project()).manualSource,true);
   assert.deepEqual(projectMelodyHarmony(service.project()).harmony,before);
-  service.updateSectionHarmony(sectionId,{ useMelodyHarmony:true,swapMelody:true });
+  service.updateSectionHarmony(sectionId,{ useMelodyHarmony:true });
   service.setSectionTrackPresence(0,id,true);
   assert.deepEqual(phrase.phraseForTrack(service.project(),track()),manual);
   service.updateTrackPhrase(id,[]); assert.deepEqual(phrase.layOutTrackPhrase(service.project(),track()),[]);
@@ -476,29 +473,26 @@ test('P5e inference keeps base source ownership and explicit section harmony ahe
   }
 });
 
-test('matching explicit section chords share primary harmony checks in both editors and generation', () => {
+test('matching explicit section chords share primary harmony checks in the inspector and generation', () => {
   const { service, load } = fixture({ contextualMelody: false });
   const { sectionHasChordOverride } = load('core/music/section-context.ts');
   const { progressionChords } = load('core/music/harmony.ts');
   const { sectionGenerationHarmony } = load('core/music/project-harmony.ts');
-  const harmonyEditor = new (load('features/harmony/harmony-settings.component.ts').HarmonySettingsComponent)();
   const contextEditor = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
   service.setProgression([1,5,6,4]);
   const id = service.project().arrangement[0].id;
   const section = () => service.project().arrangement[0];
   const check = expected => {
-    harmonyEditor.section.set(section()); contextEditor.section.set(section());
+    contextEditor.section.set(section());
     assert.equal(sectionHasChordOverride(service.project(), section()), expected);
-    assert.equal(harmonyEditor.hasChordOverride(), expected);
     assert.equal(contextEditor.hasChordOverride(), expected);
   };
   check(false);
   service.setSectionMusicalState(id, { chordDegrees: [1,5,6,4] }); check(false);
   const project = service.project(), chords = progressionChords(project.key, project.scale, project.progression);
   service.setSectionMusicalState(id, { customChords: chords }); check(false);
-  service.updateSectionHarmony(id, { useMelodyHarmony: true, swapMelody: true });
+  service.updateSectionHarmony(id, { useMelodyHarmony: true });
   assert.equal(sectionGenerationHarmony(service.project(), section(), 'melody').inferred, true);
-  assert.equal(sectionGenerationHarmony(service.project(), section(), 'melody').melodySeedOffset, 100);
   assert.equal(sectionGenerationHarmony(service.project(), section(), 'bass').inferred, true);
   const saved = service.exportProjectJson();
   for (const changed of [{ ...chords[0], inversion: 1 }, { ...chords[0], spice: '7' }, { ...chords[0], root: (chords[0].root + 1) % 12 }]) {
@@ -2649,4 +2643,44 @@ test('contextual range and tension are independent track settings with section h
   service.updatePartSettings({ kind: 'global-track', trackId: first }, { rangeMin: 80 });
   assert.equal(service.historyPosition(),position,'reject inverted effective range');
   for (const key of ['rangeMin','rangeMax','tension']) assert.equal(decodeMelodyGlobal({ [key]: 60 }),undefined);
+});
+
+
+test('section chordlets preview inferred harmony and restore authored chords when disabled', () => {
+  const { service, load } = fixture({ contextualMelody: false });
+  const { sectionGenerationHarmony } = load('core/music/project-harmony.ts');
+  const { progressionChords } = load('core/music/harmony.ts');
+  const { sectionProject } = load('core/music/section-context.ts');
+  const editor = new (load('features/harmony/chordlet-editor.component.ts').ChordletEditorComponent)();
+  const inspector = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
+  service.setProgression([1,5,6,4]);
+  const section = () => service.project().arrangement[0];
+  const sync = () => { editor.section.set(section()); inspector.section.set(section()); };
+  sync();
+  const authored = structuredClone(editor.chords());
+  assert.equal(editor.disabled(), false);
+  inspector.toggleMelodyHarmony(); sync();
+  assert.equal(editor.disabled(), true);
+  const harmony = sectionGenerationHarmony(service.project(), section(), 'chords');
+  const context = sectionProject(service.project(), section());
+  assert.equal(harmony.inferred, true);
+  assert.deepEqual(editor.chords(), progressionChords(context.key, context.scale, harmony.degrees, harmony.customChords));
+  const saved = service.exportProjectJson();
+  editor.add(); editor.remove(0); editor.generate();
+  editor.wheel(0, { deltaY: 1 });
+  editor.key(0, { key: 'Delete' });
+  editor.start(0, { button: 0 });
+  assert.equal(service.exportProjectJson(), saved, 'disabled chordlet gestures never publish edits');
+  inspector.toggleMelodyHarmony(); sync();
+  assert.equal(editor.disabled(), false);
+  assert.deepEqual(editor.chords(), authored);
+  service.undo(); sync(); assert.equal(editor.disabled(), true);
+  service.redo(); sync(); assert.deepEqual(editor.chords(), authored);
+  inspector.allSections.set(true);
+  inspector.toggleMelodyHarmony();
+  assert.ok(service.project().arrangement.every(section => section.useMelodyHarmony));
+  sync(); editor.allSections.set(true);
+  assert.equal(editor.mixed(), false, 'identical inferred harmony is not mixed');
+  service.undo();
+  assert.ok(service.project().arrangement.every(section => !section.useMelodyHarmony));
 });
