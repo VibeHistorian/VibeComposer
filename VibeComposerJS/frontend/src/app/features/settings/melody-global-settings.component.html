@@ -20,9 +20,9 @@
           (toggled)="changeContextual('chromaticApproaches', !(values().chromaticApproaches ?? false))" /></div>
     </div>
     <div class="setting-row ">
-      <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Randomize range on Compose</h3><p>Choose a seeded register for each eligible Melody track on Compose. Regenerate retains the range.</p></div>
+      <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Randomize range on Compose</h3><p>Choose a seeded register for each eligible Melody track on Compose. Reseed retains the range.</p></div>
       <div class="setting-controls"><vc-compact-toggle label="Randomize range on Compose" [shortLabel]="(values().rangeRandomizeOnCompose ?? false) ? 'On' : 'Off'" [active]="values().rangeRandomizeOnCompose ?? false"
-          description="Choose a seeded melodic register on Compose. Regenerate retains the range."
+          description="Choose a seeded melodic register on Compose. Reseed retains the range."
           (toggled)="changeContextual('rangeRandomizeOnCompose', !(values().rangeRandomizeOnCompose ?? false))" /></div>
     </div>
   } @else {
@@ -31,7 +31,7 @@
       <div class="setting-controls"><vc-select [options]="[{ value: '0', label: 'Chord note index' }, { value: '1', label: 'Chord root + offset' }, { value: '2', label: 'MIDI 60 + offset' }]" selectDefault="2" aria-label="Block target mode" [value]="values().blockTargetMode ?? 2" (valueChange)="changeTargetMode($event)"></vc-select></div>
     </div>
     <div class="setting-row ">
-      <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Target variation</h3><p>Set the range of prepared target directions. Requires Automatic targets on Compose or enabled Regenerate.</p></div>
+      <div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Target variation</h3><p>Set the range of prepared target directions. Requires Automatic targets on Compose or Reseed.</p></div>
       <div class="setting-controls"><vc-compact-knob label="Target variation" [defaultValue]="3" [value]="values().targetNoteVariation ?? 3" [minimum]="1" [maximum]="6" unit=""
         description="Magnitude of prepared target directions before chord-note correction. Ascending and Descending double the draw range. Requires Automatic targets."
         (valueCommit)="settingsChanged.emit({ targetNoteVariation: $event })" /></div>

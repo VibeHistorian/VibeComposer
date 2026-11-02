@@ -35,7 +35,7 @@
           </header>
           <div class="track-policy-header">
             <vc-track-generation-policy [role]="group.role" [policy]="policyFor(group.role)" [expanded]="!isGroupCollapsed(group.role)" [disabled]="editing()" (policyChanged)="updateRolePolicy(group.role, $event)"
-              [instrumentPolicy]="instrumentPolicyFor(group.role)" (instrumentPolicyChanged)="updateInstrumentPolicy(group.role, $event)" />
+              (reseedRequested)="reseedRole(group.role)" [instrumentPolicy]="instrumentPolicyFor(group.role)" (instrumentPolicyChanged)="updateInstrumentPolicy(group.role, $event)" />
             @if (rerollMessageFor(group.role)) { <span role="status">{{ rerollMessageFor(group.role) }}</span> }
           </div>
           @if (!generationAvailable[group.role]) {

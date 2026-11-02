@@ -260,10 +260,10 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const beforeRules = JSON.stringify(read().tracks);
       const melody = document.querySelector('.track-group.melody');
       melody.querySelector('.group-select').click();
-      (await wait(() => melody.querySelector('[aria-label="On Regenerate"]'), 'melody policies')).click();
-      await wait(() => read().trackGenerationPolicies?.melody?.onRegenerate, 'regenerate rule');
+      (await wait(() => melody.querySelector('[aria-label="Same seed"]'), 'melody policies')).click();
+      await wait(() => read().trackGenerationPolicies?.melody?.sameSeed, 'regenerate rule');
       result.rulesPreserveTracks = beforeRules === JSON.stringify(read().tracks);
-      document.querySelector('[aria-label="Regenerate"]').click();
+      melody.querySelector('.seed-controls button').click();
       await wait(() => read().tracks[0].generatorSettings.patternSeed, 'regenerate seed');
       result.regenerated = read().tracks.filter(track => track.role === 'melody').every(track => Number.isInteger(track.generatorSettings.patternSeed));
       document.querySelector('.track-group.arpeggio .group-select').click();

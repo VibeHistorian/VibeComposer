@@ -101,7 +101,7 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
       description: 'Swap notes and pauses in custom durations.' },
     ...durationControls,
     { ...choice('targetDirection', 'DIRECTION', ['ANY', 'ASC', 'DESC']), defaultValue: 'ASC', advanced: true,
-      description: 'Direction for this track’s prepared targets and contextual contour. Applies on Compose and enabled Regenerate.' },
+      description: 'Direction for this track’s prepared targets and contextual contour. Applies on Compose and Reseed.' },
     { ...number('tonicNoteTarget', 'TON%', 0, 100, 0), advanced: true,
       description: 'Requested tonic share before pauses; best-effort correction of nearby noninitial notes.' },
     { ...number('modeNoteTarget', 'MODE%', 0, 100, 0), advanced: true,

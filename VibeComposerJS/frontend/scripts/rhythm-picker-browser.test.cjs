@@ -437,13 +437,13 @@ test('production Angular controls initialize selects from settings and support r
           const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
           const track = read().tracks.find(track => track.role === role);
           const before = JSON.stringify(track.generatorSettings);
-          const toggleLabel = { chords: 'Vary length', drums: 'Patterns', melody: 'Reroll seeds' }[role];
-          const checkbox = toggleLabel ? group.querySelector('button[aria-label="' + toggleLabel + '"]') : null;
+          const toggleLabel = { chords: 'Vary length', drums: 'Patterns', melody: 'Enable reseeding' }[role];
+          const checkbox = toggleLabel ? group.querySelector('[aria-label="' + toggleLabel + '"]') : null;
           let unchanged = true, synced = true;
           if (checkbox) {
             const label = checkbox.getAttribute('aria-label'); checkbox.click();
             const key = { chords: 'varyLength', drums: 'patterns', melody: 'rerollSeeds' }[role];
-            await waitFor(() => read().trackGenerationPolicies[role][key] === (checkbox.getAttribute('aria-pressed') === 'true'), role + ' stored policy');
+            await waitFor(() => read().trackGenerationPolicies[role][key] === (checkbox.matches('input') ? checkbox.checked : checkbox.getAttribute('aria-pressed') === 'true'), role + ' stored policy');
             unchanged = JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) === before;
             synced = read().trackGenerationPolicies[role][key] === (checkbox.getAttribute('aria-pressed') === 'true');
             checkbox.click();

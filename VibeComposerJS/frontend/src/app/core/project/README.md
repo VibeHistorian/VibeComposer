@@ -12,6 +12,8 @@ Melody's project-wide inputs remain in `melodyGlobal` and are edited in Settings
 
 Exported files and session storage use `trackPresence: { melody: [...], bass: [...], chords: [...], arpeggio: [...], drums: [...] }`. Each array lists only included one-based track numbers, following the order of tracks with that role in `tracks`. For example, `drums: [4, 5]` includes the fourth and fifth drum tracks. Empty roles and roles with no included tracks export as `[]`. Import expands these lists to ID-keyed app maps with explicit false entries for excluded tracks. Existing ID-map files and complete boolean arrays are also accepted. Mixed forms, unknown roles, duplicate numbers, non-integers and out-of-range numbers are rejected.
 
+Role instrument-pool rows own the reseeding checkbox, Reseed command and shared-seed toggle. Only Melody enables reseeding by default; shared seeds default off for all roles. Reseed changes unlocked generated tracks in that role, preserves manual phrases and other roles, and refreshes enabled automatic Melody patterns/targets. The command validates generated phrases and section layouts before committing one undoable change. Disabling reseeding disables both action controls without discarding the shared-seed preference.
+
 ## Domain contracts
 
 Import contracts directly from their owner. `project.model.ts` defines the complete project and does not forward the musical, track or section contracts. All model dependencies use type-only imports; role/section constants and project defaults have explicit runtime owners. These modules remain independent of Angular, the DOM and Wails.

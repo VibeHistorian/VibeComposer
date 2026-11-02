@@ -22,7 +22,6 @@
 
 /* Main generation actions */
 .compose-button { --generation-accent: var(--compose-accent); }
-.regenerate-button { --generation-accent: var(--regenerate-accent); }
 .generation-button { border-color: var(--generation-accent); background: var(--generation-accent); color: var(--generation-symbol-color); font-size: 22px; line-height: 1; }
 .generation-button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--generation-accent), white 40%); background: color-mix(in srgb, var(--generation-accent), white 40%); }
 

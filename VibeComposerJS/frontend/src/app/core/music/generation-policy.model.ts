@@ -9,8 +9,13 @@ export interface InstrumentGenerationPolicy {
   readonly sustainChance?: number;
 }
 
+export interface SeedGenerationPolicy {
+  readonly rerollSeeds?: boolean;
+  readonly sameSeed?: boolean;
+}
+
 /** Rules for choosing stored part values, separate from phrase generation inputs. */
-export interface ArpeggioGenerationPolicy {
+export interface ArpeggioGenerationPolicy extends SeedGenerationPolicy {
   readonly onCompose?: boolean;
   readonly fixedHits: number;
   readonly randomHits: boolean;
@@ -32,7 +37,7 @@ export interface ArpeggioGenerationPolicy {
   readonly velocityMax: number;
 }
 
-export interface ChordGenerationPolicy {
+export interface ChordGenerationPolicy extends SeedGenerationPolicy {
   readonly onCompose?: boolean;
   readonly strum?: boolean;
   readonly struminess?: number;
@@ -53,7 +58,7 @@ export interface ChordGenerationPolicy {
   readonly velocityMax: number;
 }
 
-export interface DrumGenerationPolicy {
+export interface DrumGenerationPolicy extends SeedGenerationPolicy {
   readonly dynamicChance?: number;
   readonly overrandomizeChance?: number;
   readonly melodyChance?: number;
@@ -66,7 +71,7 @@ export interface DrumGenerationPolicy {
   readonly shiftChance: number;
 }
 
-export interface MelodyGenerationPolicy {
+export interface MelodyGenerationPolicy extends SeedGenerationPolicy {
   readonly onCompose?: boolean;
   readonly onRegenerate?: boolean;
   readonly targetsOnCompose?: boolean;
@@ -78,7 +83,7 @@ export interface MelodyGenerationPolicy {
 
 /** Bass uses its audited creation branches with an optional compose reroll. */
 export interface TrackGenerationPolicies {
-  readonly bass: { readonly onCompose?: boolean };
+  readonly bass: SeedGenerationPolicy & { readonly onCompose?: boolean };
   readonly chords: ChordGenerationPolicy;
   readonly arpeggio: ArpeggioGenerationPolicy;
   readonly drums: DrumGenerationPolicy;

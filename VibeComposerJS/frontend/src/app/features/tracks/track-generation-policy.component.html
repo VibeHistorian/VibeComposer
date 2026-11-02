@@ -1,8 +1,10 @@
-@if (expanded() && role() !== 'drums') {
+@if (expanded()) {
   <div class="policy-controls instrument-policy" role="group" [attr.aria-label]="role() + ' instrument reroll rules'">
-    <label><span>Instrument pool</span>
-      <vc-select [options]="poolSelectOptions()" [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (valueChange)="changeInstrument('pool', $event)"></vc-select>
-    </label>
+    @if (role() !== 'drums') {
+      <label><span>Instrument pool</span>
+        <vc-select [options]="poolSelectOptions()" [selectDefault]="defaultInstrumentPolicies[role()].pool" aria-label="Instrument pool" [value]="instrumentPolicy().pool" [disabled]="disabled()" (valueChange)="changeInstrument('pool', $event)"></vc-select>
+      </label>
+    }
     @if (role() === 'chords' && instrumentPolicy().pool === 'AUTO') {
       <vc-compact-knob [mini]="true" label="Instrument sustain chance %" [defaultValue]="50" shortLabel="SUST" unit="%"
         description="Chance to choose a sustained chord instrument from the automatic pool."
@@ -13,6 +15,11 @@
       <vc-compact-toggle label="One instrument" description="Choose one instrument for all eligible targets in this reroll."
         [active]="instrumentPolicy().sameInstrument === true" [disabled]="disabled()" (toggled)="toggleInstrument('sameInstrument')" />
     }
+    <div class="seed-controls" role="group" [attr.aria-label]="role() + ' reseeding'">
+      <input type="checkbox" aria-label="Enable reseeding" title="Enable seed rerolling for this role" [checked]="values()['rerollSeeds'] === true" [disabled]="disabled()" (change)="toggleSeedPolicy('rerollSeeds')" />
+      <button type="button" [disabled]="disabled() || !values()['rerollSeeds']" (click)="reseedRequested.emit()">Reseed</button>
+      <button type="button" class="same-seed" aria-label="Same seed" title="Use the same seed for all eligible tracks in this role" [attr.aria-pressed]="values()['sameSeed'] === true" [disabled]="disabled() || !values()['rerollSeeds']" (click)="toggleSeedPolicy('sameSeed')">==</button>
+    </div>
   </div>
 }
 @if (expanded() && controls().length) {

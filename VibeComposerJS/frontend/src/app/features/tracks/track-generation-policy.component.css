@@ -5,3 +5,13 @@ label { display: grid; gap: 3px; color: var(--text-muted); font: 9px var(--font-
 input { box-sizing: border-box; width: 58px; min-width: 0; padding: 3px; border: 1px solid var(--border-default); border-radius: var(--radius-tight); background: var(--surface-base); color: var(--text-primary); font: 10px var(--font-mono); }
 vc-select { width: 87px; padding: 3px; border-radius: var(--radius-tight); background: var(--surface-base); font: 10px var(--font-mono); }
 input:disabled, vc-select[aria-disabled="true"] { opacity: .5; }
+
+/* Role reseeding */
+.seed-controls { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+.seed-controls input { width: 13px; height: 13px; margin: 0; accent-color: var(--accent-primary); }
+.seed-controls button { min-height: 25px; padding: 4px 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 10px var(--font-ui); cursor: pointer; }
+.seed-controls button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
+.seed-controls button:focus-visible, .seed-controls input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.seed-controls button:disabled { opacity: .5; cursor: default; }
+.seed-controls .same-seed { font-family: var(--font-mono); }
+.seed-controls .same-seed[aria-pressed="true"] { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }

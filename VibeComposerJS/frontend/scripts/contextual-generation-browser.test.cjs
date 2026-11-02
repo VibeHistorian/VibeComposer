@@ -154,3 +154,56 @@ for (const width of [1440,780]) test(`whole arrangement toolbar reroll and undo 
     await closeBrowser({ child, server, socket, watchdog });
   }
 });
+
+for (const width of [1440,780]) test(`role reseeding controls at ${width}px`, { skip: !browser }, async () => {
+  const root = requireProductionBuild(), index = fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const script = `<script>(async () => {
+    const wait=async(read)=>{for(let i=0;i<200;i++){if(read())return;await new Promise(r=>setTimeout(r,30));}throw new Error('arrangement reroll timed out');};
+    const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    const button=label=>document.querySelector('[aria-label="'+label+'"]');
+    try {
+      await wait(()=>innerWidth===${width}&&document.querySelector('.track-group.melody'));
+      const ensure=(value,label)=>{if(!value)throw new Error(label);};
+      ensure(!button('Regenerate'),'global regenerate removed');
+      for(const role of ['melody','bass','chords','arpeggio','drums']) {
+        const group=document.querySelector('.track-group.'+role);
+        if(!group.querySelector('.seed-controls')) group.querySelector('.group-select').click();
+        await wait(()=>group.querySelector('.seed-controls'));
+        const controls=group.querySelector('.seed-controls'), checkbox=controls.querySelector('input'), reseed=controls.querySelector('button'), same=controls.querySelector('[aria-label="Same seed"]');
+        ensure(checkbox.checked===(role==='melody'),role+' default checkbox');
+        ensure(reseed.disabled===(role!=='melody')&&same.disabled===(role!=='melody'),role+' disabled controls');
+        ensure(same.getAttribute('aria-pressed')==='false',role+' independent default');
+        ensure(!group.querySelector('[aria-label="On Regenerate"]')&&!group.querySelector('[aria-label="Reroll seeds"]'),role+' old controls removed');
+        if(!checkbox.checked) { checkbox.click(); await wait(()=>!reseed.disabled); }
+        const before=read().tracks.find(track=>track.role===role).generatorSettings.patternSeed;
+        reseed.click();
+        await wait(()=>read().tracks.find(track=>track.role===role).generatorSettings.patternSeed!==before);
+        same.click(); await wait(()=>same.getAttribute('aria-pressed')==='true');
+        checkbox.click(); await wait(()=>reseed.disabled&&same.disabled);
+        const row=controls.parentElement.getBoundingClientRect(), bounds=controls.getBoundingClientRect();
+        ensure(bounds.right<=row.right+1&&bounds.left>=row.left-1,role+' fits pool row');
+      }
+      await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
+    } catch(error) {await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}
+  })();</script>`;
+  let resolve, reject;
+  const result = new Promise((done,fail)=>{resolve=done;reject=fail;});
+  result.catch(() => {}); // CDP setup can fail before the result is awaited.
+  const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
+  await listen(server);
+  const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/arrangement-reroll-browser-'));
+  const child=launchBrowser(browser,['--headless','--disable-gpu','--no-first-run','--disable-background-networking','--no-default-browser-check',
+    '--disable-background-timer-throttling','--disable-renderer-backgrounding','--remote-debugging-port=0','--window-size='+width+',1100',
+    '--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port+'/'],{stdio:['ignore','ignore','pipe']});
+  const watchdog = watchBrowser(child, reject, 45000);
+  let socket;
+  try {
+    const connection = await connectToPage(child);
+    socket = connection.socket;
+    const command = connection.command;
+    await command('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
+    const actual=await result;assert.equal(actual.error,undefined,JSON.stringify(actual));assert.equal(actual.ok,true);
+  } finally {
+    await closeBrowser({ child, server, socket, watchdog });
+  }
+});

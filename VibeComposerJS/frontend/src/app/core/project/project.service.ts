@@ -330,6 +330,46 @@ export class ProjectService {
     return BigInt.asIntN(64, BigInt(project.seed) + offset + BigInt(count) * 0x9e3779b97f4a7c15n);
   }
 
+  /** Reseed eligible tracks in one history transaction. */
+  reseedRoleTracks(role: ArrangedPart): PartWorkflowResult {
+    if (!ARRANGED_PARTS.includes(role)) return 'invalid';
+    this.generationFailure.set(null);
+    try {
+      const current = this.state();
+      const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
+      if (!(policy.rerollSeeds ?? role === 'melody')) return 'unchanged';
+      const count = current.trackRerollCounts?.[role] ?? 0;
+      if (count >= 2147483647) return 'invalid';
+      const random = new JavaRandom(this.trackRerollSeed(current, role, count));
+      const sharedSeed = random.nextInt();
+      let order = 0;
+      const tracks = current.tracks.map(track => {
+        if (track.role !== role) return track;
+        order++;
+        if (track.rerollLocked || hasManualPhrase(track)) return track;
+        const settings = { ...track.generatorSettings, patternSeed: policy.sameSeed ? sharedSeed : random.nextInt() };
+        if (track.role === 'melody') {
+          const melodyPolicy = current.trackGenerationPolicies?.melody ?? DEFAULT_TRACK_POLICIES.melody;
+          const seed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(current.seed)))) + order) | 0;
+          if (melodyPolicy.patternsOnCompose ?? true) Object.assign(settings, { melodyPatternOffsets: chooseMelodyPattern(seed) });
+          if (melodyPolicy.targetsOnCompose ?? true) Object.assign(settings, { chordNoteChoices: chooseMelodyTargets(seed, current.progression,
+            current.melodyGlobal, current.key, current.scale, current.progressionChords, { ...track.generatorSettings, patternSeed: settings.patternSeed }) });
+        }
+        return { ...track, generatorSettings: settings } as CompositionTrack;
+      });
+      if (tracks.every((track, index) => track === current.tracks[index])) return 'unchanged';
+      const next = { ...current, tracks, trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
+      for (const track of next.tracks) {
+        phraseForTrack(next, track);
+        layOutTrackPhrase(next, track, true);
+      }
+      return this.commitPartWorkflow(next);
+    } catch (error) {
+      this.generationFailure.set(error instanceof Error ? error.message : 'The requested music could not be generated.');
+      return 'invalid';
+    }
+  }
+
   rerollRoleTracks(role: ArrangedPart, trackId?: string): PartWorkflowResult {
     if (!ARRANGED_PARTS.includes(role)) return 'invalid';
     const candidate = this.buildRoleReroll(this.state(), role, trackId);

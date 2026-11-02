@@ -205,6 +205,13 @@ export class WorkspaceCanvasComponent {
       message: 'Invalid reroll limits. Minimum values must not exceed maximum values.' } : null);
   }
 
+  reseedRole(role: ArrangedPart): void {
+    if (this.editing()) return;
+    const result = this.projects.reseedRoleTracks(role);
+    this.rerollFeedback.set(result === 'changed' ? null : { project: this.project(), role,
+      message: result === 'invalid' ? 'Reseed conflicts with local settings.' : 'No eligible tracks to reseed.' });
+  }
+
   rerollRole(role: ArrangedPart, trackId?: string): void {
     if (this.editing()) return;
     const result = this.projects.rerollRoleTracks(role, trackId);

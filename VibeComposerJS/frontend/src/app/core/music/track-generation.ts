@@ -14,7 +14,7 @@ export const DEFAULT_CHORD_POLICY_EXTENSION = Object.freeze({ strum: true, strum
 export const DEFAULT_DRUM_POLICY_EXTENSION = Object.freeze({ dynamicChance: 50, overrandomizeChance: 0, melodyChance: 30 });
 
 export const DEFAULT_ARPEGGIO_POLICY: ArpeggioGenerationPolicy = Object.freeze({
-  onCompose: true, fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
+  onCompose: true, rerollSeeds: false, sameSeed: false, fixedHits: 4, randomHits: true, sameHits: true, powerOfTwo: true,
   fills: true, patterns: true, transpose: true, randomSpan: true,
   maxSplit: 20, lengthMin: 75, lengthMax: 100, maxRepeat: 2, shiftChance: 50,
   voicesMode: 'AT_MOST', voices: 4, voicesChance: 50, velocityMin: 65, velocityMax: 89,
@@ -50,11 +50,11 @@ export const ARPEGGIO_POLICY_CONTROLS: readonly PolicyControl[] = [
 
 export const DEFAULT_TRACK_POLICIES: TrackGenerationPolicies = Object.freeze({
   arpeggio: DEFAULT_ARPEGGIO_POLICY,
-  bass: Object.freeze({ onCompose: true }),
-  chords: Object.freeze({ onCompose: true, fills: true, patterns: true, transpose: true, varyLength: true, delay: false,
+  bass: Object.freeze({ onCompose: true, rerollSeeds: false, sameSeed: false }),
+  chords: Object.freeze({ onCompose: true, rerollSeeds: false, sameSeed: false, fills: true, patterns: true, transpose: true, varyLength: true, delay: false,
     ...DEFAULT_CHORD_POLICY_EXTENSION,
     shiftChance: 60, voicesMode: 'AT_MOST', voices: 5, voicesChance: 50, velocityMin: 65, velocityMax: 89 }),
-  drums: Object.freeze({ onCompose: true, patterns: true, fills: true, maxSwing: 20, randomOffset: false, hitsMultiplier: '1', shiftChance: 50, ...DEFAULT_DRUM_POLICY_EXTENSION }),
+  drums: Object.freeze({ onCompose: true, rerollSeeds: false, sameSeed: false, patterns: true, fills: true, maxSwing: 20, randomOffset: false, hitsMultiplier: '1', shiftChance: 50, ...DEFAULT_DRUM_POLICY_EXTENSION }),
   melody: Object.freeze({ onCompose: true, rerollSeeds: true, sameSeed: false, patterns: true }),
 });
 
@@ -99,11 +99,12 @@ export function automaticPolicyDefault(key: string): boolean {
 
 export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, value: unknown): TrackGenerationPolicies[R] | undefined {
   if (!ARRANGED_PARTS.includes(role) || !value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const fields = value as Record<string, unknown>, controls = TRACK_POLICY_CONTROLS[role];
+  const fields = value as Record<string, unknown>, controls: readonly PolicyControl[] = [...TRACK_POLICY_CONTROLS[role],
+    ...['rerollSeeds', 'sameSeed'].filter(key => !TRACK_POLICY_CONTROLS[role].some(control => control.key === key)).map(key => ({ key, label: key }))];
   if (Object.keys(fields).some(key => !controls.some(control => control.key === key))) return undefined;
   for (const control of controls) {
     const field = fields[control.key];
-    if (field === undefined && (AUTOMATIC_POLICY_KEYS.includes(control.key)
+    if (field === undefined && (['rerollSeeds', 'sameSeed'].includes(control.key) && role !== 'melody' || AUTOMATIC_POLICY_KEYS.includes(control.key)
       || role === 'chords' && control.key in DEFAULT_CHORD_POLICY_EXTENSION
       || role === 'drums' && control.key in DEFAULT_DRUM_POLICY_EXTENSION)) continue;
     if (control.options ? !control.options.includes(field as string)
@@ -116,19 +117,7 @@ export function decodeTrackGenerationPolicy<R extends ArrangedPart>(role: R, val
 }
 
 export function decodeArpeggioPolicy(value: unknown): ArpeggioGenerationPolicy | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const fields = value as Record<string, unknown>;
-  if (Object.keys(fields).some(key => !ARPEGGIO_POLICY_CONTROLS.some(control => control.key === key))) return undefined;
-  for (const control of ARPEGGIO_POLICY_CONTROLS) {
-    const field = fields[control.key];
-    if (field === undefined && AUTOMATIC_POLICY_KEYS.includes(control.key)) continue;
-    if (control.options ? !control.options.includes(field as string)
-      : control.minimum !== undefined ? !Number.isInteger(field) || (field as number) < control.minimum || (field as number) > control.maximum!
-        : typeof field !== 'boolean') return undefined;
-  }
-  if ((fields['lengthMin'] as number) > (fields['lengthMax'] as number)
-    || (fields['velocityMin'] as number) > (fields['velocityMax'] as number)) return undefined;
-  return { ...fields } as unknown as ArpeggioGenerationPolicy;
+  return decodeTrackGenerationPolicy('arpeggio', value);
 }
 
 export function validTrackGenerationMetadata(policies: unknown, counts: unknown): boolean {

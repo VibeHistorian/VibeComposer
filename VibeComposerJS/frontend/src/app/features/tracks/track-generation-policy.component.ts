@@ -20,18 +20,23 @@ export class TrackGenerationPolicyComponent {
 
   readonly role = input<ArrangedPart>('arpeggio');
   readonly policy = input.required<TrackGenerationPolicy>();
-  readonly values = computed(() => ({ onCompose: true, onRegenerate: false,
+  readonly values = computed(() => ({ onCompose: true, rerollSeeds: this.role() === 'melody', sameSeed: false,
     targetsOnCompose: automaticPolicyDefault('targetsOnCompose'), patternsOnCompose: automaticPolicyDefault('patternsOnCompose'),
     ...DEFAULT_TRACK_POLICIES[this.role()], ...this.policy() }) as unknown as Record<string, string | number | boolean>);
   readonly expanded = input(false);
   readonly disabled = input(false);
   readonly policyChanged = output<TrackGenerationPolicyPatch>();
+  readonly reseedRequested = output<void>();
+  toggleSeedPolicy(key: 'rerollSeeds' | 'sameSeed'): void {
+    if (this.disabled() || key === 'sameSeed' && !this.values()['rerollSeeds']) return;
+    this.policyChanged.emit({ [key]: !this.values()[key] });
+  }
   readonly instrumentPolicy = input<InstrumentGenerationPolicy>(DEFAULT_INSTRUMENT_POLICIES.arpeggio);
   readonly instrumentPolicyChanged = output<Partial<InstrumentGenerationPolicy>>();
   readonly instrumentPools = computed(() => instrumentPoolOptions(this.role()));
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
     PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Percussion' };
-  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control => control.key !== 'onCompose'));
+  readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control => !['onCompose', 'onRegenerate', 'rerollSeeds', 'sameSeed'].includes(control.key)));
 
   readonly defaultInstrumentPolicies = DEFAULT_INSTRUMENT_POLICIES;
   defaultValue(control: PolicyControl): string | number { return (DEFAULT_TRACK_POLICIES[this.role()] as unknown as Record<string, string | number>)[control.key]; }

@@ -1140,3 +1140,34 @@ test('Bass On Compose controls implicit rerolls, persists, and preserves locked 
   assert.deepEqual(bass(), before);
   assert.equal(service.project().trackRerollCounts?.bass ?? 0, 0);
 });
+
+for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+  test(role + ' role reseeding is gated, scoped, persistent and undoable', () => {
+    const { service } = fixture();
+    service.addTrack(role); service.addTrack(role);
+    const members = () => service.project().tracks.filter(track => track.role === role);
+    service.setTrackRerollLock(members()[2].id, true);
+    if (role !== 'melody') assert.equal(service.reseedRoleTracks(role), 'unchanged');
+    service.updateTrackGenerationPolicy(role, { rerollSeeds: true, sameSeed: true });
+    const before = service.exportProjectJson(), project = service.project(), locked = members()[2];
+    assert.equal(service.reseedRoleTracks(role), 'changed');
+    assert.equal(members()[0].generatorSettings.patternSeed, members()[1].generatorSettings.patternSeed);
+    assert.strictEqual(members()[2], locked);
+    for (const track of service.project().tracks.filter(track => track.role !== role)) {
+      assert.strictEqual(track, project.tracks.find(old => old.id === track.id));
+    }
+    assert.deepEqual(service.project().arrangement, project.arrangement);
+    const after = service.exportProjectJson();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+    assert.equal(service.importProjectJson(after), true);
+    assert.equal(service.project().trackGenerationPolicies[role].sameSeed, true);
+    service.updateTrackGenerationPolicy(role, { sameSeed: false });
+    assert.equal(service.reseedRoleTracks(role), 'changed');
+    assert.notEqual(members()[0].generatorSettings.patternSeed, members()[1].generatorSettings.patternSeed);
+    service.updateTrackGenerationPolicy(role, { rerollSeeds: false });
+    const disabled = service.exportProjectJson();
+    assert.equal(service.reseedRoleTracks(role), 'unchanged');
+    assert.equal(service.exportProjectJson(), disabled);
+  });
+}
