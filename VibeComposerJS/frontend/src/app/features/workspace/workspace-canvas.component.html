@@ -208,7 +208,9 @@
                 @for (group of roles; track group.role) {
                   <button type="button" [class.active]="displayedRoles().has(group.role)"
                     [attr.aria-pressed]="displayedRoles().has(group.role)" [attr.aria-label]="group.name"
-                    [title]="group.name" (click)="toggleScoreRole(group.role)"><i class="role-dot" [class]="group.role" aria-hidden="true"></i></button>
+                    [title]="group.name + ' — Middle-click to solo/reset'" (click)="toggleScoreRole(group.role)"
+                    (mousedown)="$event.button === 1 && $event.preventDefault()"
+                    (auxclick)="soloScoreRole($event, group.role)"><i class="role-dot" [class]="group.role" aria-hidden="true"></i></button>
                 }
               </div>
               <div class="score-ruler-viewport" [style.width.px]="scoreViewport().width">

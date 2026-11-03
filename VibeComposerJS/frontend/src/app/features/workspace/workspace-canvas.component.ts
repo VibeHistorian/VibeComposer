@@ -351,6 +351,12 @@ export class WorkspaceCanvasComponent {
   toggleScoreRole(role: ArrangedPart): void {
     this.displayedRoles.update(roles => { const next = new Set(roles); if (next.has(role)) next.delete(role); else next.add(role); return next; });
   }
+  soloScoreRole(event: MouseEvent, role: ArrangedPart): void {
+    if (event.button !== 1) return;
+    event.preventDefault();
+    this.displayedRoles.update(roles => new Set<ArrangedPart>(
+      roles.size === 1 && roles.has(role) ? ARRANGED_PARTS : [role]));
+  }
   readonly editing = signal(false);
   private selectionBeforeEditing: SettingsSelection | null = null;
   readonly hiddenTracks = signal(new Set<string>());

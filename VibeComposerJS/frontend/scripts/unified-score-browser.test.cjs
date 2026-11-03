@@ -15,6 +15,15 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   const command = connection.command;
   const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify(result));return result.result.value;};
   const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
+  const roleVisibility = await evaluate(`(async()=>{${waitCode}
+    await wait(()=>document.querySelectorAll('.score-role-controls button').length===5);
+    const buttons=[...document.querySelectorAll('.score-role-controls button')];
+    const visible=()=>buttons.flatMap((b,i)=>b.getAttribute('aria-pressed')==='true'?[i]:[]);
+    const middle=async i=>{buttons[i].dispatchEvent(new MouseEvent('auxclick',{button:1,bubbles:true,cancelable:true}));await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return visible();};
+    const solo=await middle(0), hiddenSolo=await middle(1), reset=await middle(1);
+    return {solo,hiddenSolo,reset};
+  })()`);
+  assert.deepEqual(roleVisibility,{solo:[0],hiddenSolo:[1],reset:[0,1,2,3,4]});
   const headerSelection=await evaluate(`(async()=>{${waitCode}
     await wait(()=>document.querySelectorAll('button.score-ruler-section').length>=2);
     const headers=()=>[...document.querySelectorAll('button.score-ruler-section')];
