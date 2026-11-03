@@ -519,17 +519,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             ? color(group.role === 'drums' ? '--role-drums' : `--role-${role}-strong`)
             : trackColor(group.role, trackNumber - 1, group.tracks.length, color);
           const toggleRow = Math.floor(index / togglesPerRow);
-          const rowCount = Math.min(togglesPerRow, visibleTracks.length - toggleRow * togglesPerRow);
-          const centerX = x + (width - rowCount * TRACK_BUTTON_PITCH + 3) / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
+          const centerX = x + CELL_HORIZONTAL_PADDING / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
           const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * TRACK_BUTTON_PITCH - 12;
           const present = this.trackPresent(item.section, track);
           const hovered = this.hoveredKey === `toggle:${item.section.id}:${track.id}`;
           context.globalAlpha = hovered ? 1 : present ? 0.6 : 0.48;
-          context.beginPath(); context.arc(centerX, centerY, 8, 0, Math.PI * 2);
+          context.beginPath(); context.rect(centerX - 8, centerY - 8, 16, 16);
           const buttonSurface = present ? trackColor(group.role, this.preferences.appearance().progressiveTrackColoring === false ? 0 : trackNumber - 1, group.tracks.length, color, '-surface') : color('--surface-button');
           context.fillStyle = hovered ? `color-mix(in srgb, ${buttonSurface} 85%, ${color('--text-primary')})` : buttonSurface;
           context.fill();
-          context.strokeStyle = present ? noteColor : color('--border-default'); context.stroke();
           context.textAlign = 'center';
           text(String(trackNumber), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', `9px ${monoFont}`);
           context.textAlign = 'start'; context.globalAlpha = 1;
