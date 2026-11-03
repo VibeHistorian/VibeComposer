@@ -22,6 +22,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focu
 vc-select:focus-visible { outline-offset: 2px; }
 
 /* Settings actions and appearance preview */
+.settings-heading > .appearance-toggle { margin-left: auto; }
 h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 .appearance-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
 .appearance-heading h2 { margin: 0; }
@@ -40,6 +41,9 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 .preferences-transfer { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border-subtle); }
 .scope-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-right: auto; }
 .scope-legend > span { display: inline-flex; align-items: center; gap: 3px; color: var(--text-secondary); font: 10px var(--font-ui); }
+/* Center symbol glyphs optically with the smaller legend labels. */
+.scope-legend vc-settings-scope-indicator,
+.category-scopes vc-settings-scope-indicator { transform: translateY(-3px); }
 .preferences-transfer > span { color: var(--text-muted); font-size: 11px; }
 .preferences-transfer > span:empty { display: none; }
 .preferences-transfer button { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); cursor: pointer; }

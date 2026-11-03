@@ -1,6 +1,7 @@
 <section class="settings-dialog" cdkDrag cdkDragBoundary="body" [class.explainers-as-tooltips]="preferences.preferences().settingsExplainersAsTooltips">
   <header class="settings-heading" cdkDragHandle>
     <h1 id="settings-title">Settings</h1>
+    <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()" title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
     <button type="button" class="close-button" (click)="dialog.close()" aria-label="Close settings">×</button>
   </header>
   <div class="settings-body">
@@ -50,7 +51,7 @@
         @case ('appearance') {
           <section aria-labelledby="appearance-title">
             <div class="appearance-heading"><h2 id="appearance-title">Appearance</h2>
-              <button type="button" class="appearance-toggle" [attr.aria-pressed]="preview()" title="Show the surrounding workspace without dimming" (click)="preview.set(!preview())">Preview</button>
+
             </div>
             <div class="setting-row">
               <div class="setting-copy"><h3>Window width limit</h3><p id="window-width-description">Use the available window width up to this limit. The middle panels fill the space between the track panel and inspector.</p></div>

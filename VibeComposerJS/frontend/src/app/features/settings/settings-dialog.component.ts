@@ -100,11 +100,6 @@ export class SettingsDialogComponent {
     input.value = '';
   }
   readonly categories = [
-    { id: 'appearance', label: 'Appearance', children: [
-      { id: 'appearance', label: 'General' },
-      { id: 'score', label: 'Score' },
-      { id: 'arrangement-appearance', label: 'Arrangement' },
-    ] },
     { id: 'behavior', label: 'Behavior', children: [
       { id: 'behavior', label: 'General' },
       { id: 'harmony', label: 'Harmony' },
@@ -112,6 +107,11 @@ export class SettingsDialogComponent {
       { id: 'variations', label: 'Variations' },
       { id: 'melody', label: 'Melody' },
       { id: 'section-types', label: 'Section Types' },
+    ] },
+    { id: 'appearance', label: 'Appearance', children: [
+      { id: 'appearance', label: 'General' },
+      { id: 'score', label: 'Score' },
+      { id: 'arrangement-appearance', label: 'Arrangement' },
     ] },
     { id: 'shortcuts', label: 'Shortcuts', children: SHORTCUT_PAGES.map(({ id, label }) => ({ id, label })) },
     { id: 'midi', label: 'MIDI', children: [] },
@@ -122,7 +122,7 @@ export class SettingsDialogComponent {
     variations: ['ui', 'compose'], harmony: ['compose', 'sound'], arrangement: ['compose'], melody: ['compose', 'sound'], 'section-types': ['compose'],
     ...Object.fromEntries(SHORTCUT_PAGES.map(page => [page.id, ['ui'] as const])), midi: ['ui', 'sound'], project: ['ui'],
   };
-  readonly selectedCategory = signal<typeof this.categories[number]['id'] | typeof this.categories[number]['children'][number]['id']>('appearance');
+  readonly selectedCategory = signal<typeof this.categories[number]['id'] | typeof this.categories[number]['children'][number]['id']>('behavior');
   readonly preview = signal(false);
 
   private captureUntil = 0;
@@ -191,9 +191,12 @@ export class SettingsDialogComponent {
     });
     const timer = setInterval(() => this.previewTime.set(new Date()), 1000);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
+    effect(() => {
+      this.preview.set(['appearance', 'score', 'arrangement-appearance'].includes(this.selectedCategory()));
+    });
     effect(onCleanup => {
       const backdrop = this.dialog.overlayRef.backdropElement;
-      backdrop?.classList.toggle('appearance-preview', this.preview() && this.selectedCategory() === 'appearance');
+      backdrop?.classList.toggle('appearance-preview', this.preview());
       onCleanup(() => backdrop?.classList.remove('appearance-preview'));
     });
   }
