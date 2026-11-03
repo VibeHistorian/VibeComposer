@@ -113,11 +113,11 @@
         @case ('behavior') {
           <section aria-labelledby="behavior-title">
             <h2 id="behavior-title">Behavior</h2>
-            <div class="setting-row"><div class="setting-copy"><h3>Global humanization</h3><p>Maximum ± beat offsets, after part timing and swing. Includes manual notes. Pickups and tails may cross section edges; ownership stays with the source section. Zero disables.</p></div><div class="setting-controls">
+            <div class="setting-row"><div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Global humanization</h3><p>Maximum ± beat offsets, after part timing and swing. Includes manual notes. Pickups and tails may cross section edges; ownership stays with the source section. Zero disables.</p></div><div class="setting-controls">
               <label>Timing beats<input aria-label="Global timing humanization" type="number" min="0" max="0.25" step="0.005" [value]="projects.project().humanization?.timingBeats ?? 0" (change)="setHumanization('timingBeats', +$any($event.target).value)" /></label>
               <label>Duration beats<input aria-label="Global duration humanization" type="number" min="0" max="0.25" step="0.005" [value]="projects.project().humanization?.durationBeats ?? 0" (change)="setHumanization('durationBeats', +$any($event.target).value)" /></label>
             </div></div>
-            <div class="setting-row"><div class="setting-copy"><h3>Compose BPM bounds</h3><p>Inclusive range when tempo randomization is enabled. UI preference; current tempo stays unchanged.</p></div><div class="setting-controls">
+            <div class="setting-row"><div class="setting-copy"><h3><vc-settings-scope-indicator scope="compose" />Compose BPM bounds</h3><p>Inclusive range when tempo randomization is enabled. UI preference; current tempo stays unchanged.</p></div><div class="setting-controls">
               <label>Minimum<input aria-label="Compose minimum BPM" type="number" min="30" max="240" [value]="preferences.preferences().composeBpmMin" (change)="preferences.setComposeBpmBound('composeBpmMin', +$any($event.target).value)" /></label>
               <label>Maximum<input aria-label="Compose maximum BPM" type="number" min="30" max="240" [value]="preferences.preferences().composeBpmMax" (change)="preferences.setComposeBpmBound('composeBpmMax', +$any($event.target).value)" /></label>
             </div></div>
@@ -230,7 +230,7 @@
           <section aria-labelledby="midi-settings-title">
             <h2 id="midi-settings-title">MIDI</h2>
             <div class="setting-row">
-              <div class="setting-copy"><h3>MIDI PPQ</h3><p>Ticks per quarter note for exported MIDI and musical time displays.</p></div>
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />MIDI PPQ</h3><p>Ticks per quarter note for exported MIDI and musical time displays.</p></div>
               <div class="setting-controls"><vc-select aria-label="MIDI PPQ" [options]="ppqOptions" [value]="'' + preferences.midiPpq()" (valueChange)="preferences.setMidiPpq(+$event)" /></div>
             </div>
             <div class="setting-row">
@@ -241,12 +241,12 @@
             </div>
             @for (font of instruments.loaded(); track font.id) {
               <div class="setting-row">
-                <div class="setting-copy"><h3>{{ font.name }}</h3><p>{{ (font.size / 1048576).toFixed(1) }} MiB · {{ font.bank.presets.length }} presets</p></div>
+                <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />{{ font.name }}</h3><p>{{ (font.size / 1048576).toFixed(1) }} MiB · {{ font.bank.presets.length }} presets</p></div>
                 <div class="setting-controls"><button type="button" [attr.aria-label]="'Unload ' + font.name" (click)="instruments.unload(font.id)">Unload</button></div>
               </div>
             }
             @if (instruments.message()) { <p role="status">{{ instruments.message() }}</p> }
-            <div class="setting-row"><div class="setting-copy"><h3>MIDI export track padding</h3><p>Minimum track counts per role (0–32). Adds named empty tracks after each role, including empty roles. Existing tracks are retained. Saved with the project.</p></div><div class="setting-controls">@for (role of roles; track role) {
+            <div class="setting-row"><div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />MIDI export track padding</h3><p>Minimum track counts per role (0–32). Adds named empty tracks after each role, including empty roles. Existing tracks are retained. Saved with the project.</p></div><div class="setting-controls">@for (role of roles; track role) {
               <label>{{ roleNames[role] }}<input type="number" min="0" max="32" [attr.aria-label]="roleNames[role] + ' MIDI padding'" [value]="projects.project().midiPadding?.[role] ?? 0" (change)="setPadding(role, +$any($event.target).value)" /></label>
             }</div></div>
             <div class="setting-row">
