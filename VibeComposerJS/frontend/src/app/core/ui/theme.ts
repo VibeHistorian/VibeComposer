@@ -27,7 +27,7 @@ export const DEFAULT_THEME_COLORS: ThemeColors = {
 };
 
 /** Derive concrete colors so CSS, Canvas and Pixi share the same palette. */
-export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, string>> {
+export function themeColorTokens(colors: ThemeColors, scoreRowBrightness = 0, scoreGridBrightness = 0): Readonly<Record<string, string>> {
   const mix = (from: string, to: string, amount: number): string => '#' + [1, 3, 5].map(offset =>
     Math.round(parseInt(from.slice(offset, offset + 2), 16) * (1 - amount)
       + parseInt(to.slice(offset, offset + 2), 16) * amount).toString(16).padStart(2, '0')).join('');
@@ -55,7 +55,7 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
       if (loopContrast(candidate) > loopContrast(loopAccent)) loopAccent = candidate;
     }
   }
-  return {
+  const tokens: Record<string, string> = {
     '--surface-canvas': background, '--surface-app-heading': colors.appHeading,
     '--surface-inspector': inspector, '--surface-role-group': roleGroups,
     '--surface-role-group-selected': mix(roleGroups, background, .3),
@@ -86,4 +86,12 @@ export function themeColorTokens(colors: ThemeColors): Readonly<Record<string, s
     '--loop-accent': loopAccent, '--loop-line': mix(loopAccent, surface, .2),
     '--loop-surface': loopAccent + '1f', '--loop-outline': loopAccent + '33',
   };
+  for (const [name, color] of Object.entries(tokens)) {
+    const brightness = name.startsWith('--score-') ? scoreRowBrightness : name.startsWith('--grid-') ? scoreGridBrightness : 0;
+    if (brightness === 0) continue;
+    tokens[name] = '#' + [1, 3, 5].map(offset => Math.max(0, Math.min(255,
+      Math.round(parseInt(color.slice(offset, offset + 2), 16) * (1 + brightness / 100))))
+      .toString(16).padStart(2, '0')).join('') + color.slice(7);
+  }
+  return tokens;
 }

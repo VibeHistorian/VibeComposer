@@ -38,6 +38,8 @@ export type ColorAdjustments = Readonly<Record<ColorAdjustment, number>>;
 const DEFAULT_COLOR_ADJUSTMENTS: ColorAdjustments = { brightness: 0, hueShift: 0, saturation: 0 };
 
 export interface AppearancePreferences {
+  readonly scoreRowBrightness: number;
+  readonly scoreGridBrightness: number;
   readonly windowWidthLimit: WindowWidthLimit;
   readonly preserveBrightnessSaturation: boolean;
   readonly hueShiftRoles: boolean;
@@ -50,6 +52,8 @@ export interface AppearancePreferences {
 
 export function defaultAppearance(): AppearancePreferences {
   return {
+    scoreRowBrightness: 0,
+    scoreGridBrightness: 0,
     windowWidthLimit: 'none',
     preserveBrightnessSaturation: false,
     hueShiftRoles: false,
@@ -68,6 +72,9 @@ export function isRoleColor(value: unknown): value is string {
 export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const data = value as AppearancePreferences;
+  for (const key of ['scoreRowBrightness', 'scoreGridBrightness'] as const) {
+    if (data[key] !== undefined && (!Number.isFinite(data[key]) || data[key] < -50 || data[key] > 50)) return null;
+  }
   if (data.windowWidthLimit !== undefined && !WINDOW_WIDTH_OPTIONS.some(option => option.value === data.windowWidthLimit)) return null;
   if (data.preserveBrightnessSaturation !== undefined && typeof data.preserveBrightnessSaturation !== 'boolean') return null;
   if (data.hueShiftRoles !== undefined && typeof data.hueShiftRoles !== 'boolean') return null;
@@ -91,6 +98,8 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   };
   if (!THEME_COLORS.every(color => isRoleColor(resolvedColors[color.key]))) return null;
   return {
+    scoreRowBrightness: data.scoreRowBrightness ?? 0,
+    scoreGridBrightness: data.scoreGridBrightness ?? 0,
     windowWidthLimit: data.windowWidthLimit ?? 'none',
     preserveBrightnessSaturation: data.preserveBrightnessSaturation === true,
     hueShiftRoles: data.hueShiftRoles === true,

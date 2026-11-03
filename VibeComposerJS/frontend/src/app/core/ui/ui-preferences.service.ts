@@ -154,6 +154,11 @@ export class UiPreferencesService {
       colorAdjustments: { ...appearance.colorAdjustments, [key]: Math.max(-50, Math.min(50, value)) } } });
   }
 
+  setScoreBrightness(key: 'scoreRowBrightness' | 'scoreGridBrightness', value: number): void {
+    if (!['scoreRowBrightness', 'scoreGridBrightness'].includes(key) || !Number.isFinite(value)) return;
+    this.commit({ ...this.state(), appearance: { ...this.appearance(), [key]: Math.max(-50, Math.min(50, value)) } });
+  }
+
   setThemeColor(key: ThemeColor, color: string): void {
     if (!THEME_COLORS.some(choice => choice.key === key) || !isRoleColor(color)) return;
     const appearance = this.appearance();
@@ -167,7 +172,7 @@ export class UiPreferencesService {
     style.setProperty('--workspace-max-width', width === 'none' ? '100vw' : `${width}px`);
     const adjust = (color: string) => adjustColor(color, preferences.appearance.colorAdjustments);
     const colors = Object.fromEntries(THEME_COLORS.map(({ key }) => [key, adjust(preferences.appearance.themeColors[key])])) as typeof preferences.appearance.themeColors;
-    for (const [name, color] of Object.entries(themeColorTokens(colors))) style.setProperty(name, color);
+    for (const [name, color] of Object.entries(themeColorTokens(colors, preferences.appearance.scoreRowBrightness, preferences.appearance.scoreGridBrightness))) style.setProperty(name, color);
     for (const [area, font] of Object.entries(preferences.appearance.fonts)) style.setProperty(`--font-${area}`, font);
     const roleAdjustments = { ...preferences.appearance.colorAdjustments,
       hueShift: preferences.appearance.hueShiftRoles ? preferences.appearance.colorAdjustments.hueShift : 0 };

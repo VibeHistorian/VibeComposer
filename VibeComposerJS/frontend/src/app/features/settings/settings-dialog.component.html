@@ -183,6 +183,14 @@
           <section aria-labelledby="score-settings-title">
             <h2 id="score-settings-title">Score</h2>
             <div class="setting-row">
+              <div class="setting-copy"><h3>Piano roll / grid row brightness</h3><p>Adjust the brightness of pitch and drum row shading. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><vc-compact-knob label="Piano roll / grid row brightness" [value]="preferences.appearance().scoreRowBrightness" [minimum]="-50" [maximum]="50" [defaultValue]="0" unit="%" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setScoreBrightness('scoreRowBrightness', $event)" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Grid subdivision brightness</h3><p>Adjust the brightness of pitch and time subdivision lines. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><vc-compact-knob label="Grid subdivision brightness" [value]="preferences.appearance().scoreGridBrightness" [minimum]="-50" [maximum]="50" [defaultValue]="0" unit="%" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setScoreBrightness('scoreGridBrightness', $event)" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3>Highlight audible</h3><p id="highlight-audible-description">Show only tracks audible under the current Solo/Mute settings. Score role filters still apply. Saved in your UI preferences.</p></div>
               <div class="setting-controls"><input type="checkbox" aria-label="Highlight audible" [checked]="preferences.syncScoreMix()"
                 (change)="preferences.toggleScoreMixSync()" aria-describedby="highlight-audible-description" /></div>

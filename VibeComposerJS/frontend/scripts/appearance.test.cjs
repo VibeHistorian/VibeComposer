@@ -146,3 +146,23 @@ test('adjustments survive serialization and reject invalid imported values', () 
   assert.equal(defaultAppearance().hueShiftRoles, false);
   assert.equal(decodeAppearance({ ...appearance, hueShiftRoles: 'true' }), null);
 });
+
+
+test('score brightness adjustments round-trip and independently affect rows and grid lines', () => {
+  const original = defaultAppearance();
+  const changed = { ...original, scoreRowBrightness: 40, scoreGridBrightness: -40 };
+  assert.deepEqual(decodeAppearance(JSON.parse(JSON.stringify(changed))), changed);
+  for (const key of ['scoreRowBrightness', 'scoreGridBrightness']) {
+    for (const value of [-51, 51, null, '20']) assert.equal(decodeAppearance({ ...original, [key]: value }), null);
+    const omitted = { ...original }; delete omitted[key];
+    assert.equal(decodeAppearance(omitted)[key], 0);
+  }
+  const base = themeColorTokens(original.themeColors);
+  const rows = themeColorTokens(original.themeColors, 40, 0);
+  const grid = themeColorTokens(original.themeColors, 0, -40);
+  assert.ok(luminance(rows['--score-row-even']) > luminance(base['--score-row-even']));
+  assert.equal(rows['--grid-beat'], base['--grid-beat']);
+  assert.ok(luminance(grid['--grid-beat']) < luminance(base['--grid-beat']));
+  assert.equal(grid['--score-row-even'], base['--score-row-even']);
+  assert.equal(rows['--text-primary'], base['--text-primary']);
+});
