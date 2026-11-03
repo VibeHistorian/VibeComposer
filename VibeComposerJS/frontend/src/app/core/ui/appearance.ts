@@ -38,6 +38,8 @@ export type ColorAdjustments = Readonly<Record<ColorAdjustment, number>>;
 const DEFAULT_COLOR_ADJUSTMENTS: ColorAdjustments = { brightness: 0, hueShift: 0, saturation: 0 };
 
 export interface AppearancePreferences {
+  readonly arrangementCellBrightness: number;
+  readonly arrangementNoteBrightness: number;
   readonly scoreRowBrightness: number;
   readonly scoreGridBrightness: number;
   readonly windowWidthLimit: WindowWidthLimit;
@@ -52,6 +54,8 @@ export interface AppearancePreferences {
 
 export function defaultAppearance(): AppearancePreferences {
   return {
+    arrangementCellBrightness: 0,
+    arrangementNoteBrightness: 0,
     scoreRowBrightness: 0,
     scoreGridBrightness: 0,
     windowWidthLimit: 'none',
@@ -72,7 +76,7 @@ export function isRoleColor(value: unknown): value is string {
 export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const data = value as AppearancePreferences;
-  for (const key of ['scoreRowBrightness', 'scoreGridBrightness'] as const) {
+  for (const key of ['scoreRowBrightness', 'scoreGridBrightness', 'arrangementCellBrightness', 'arrangementNoteBrightness'] as const) {
     if (data[key] !== undefined && (!Number.isFinite(data[key]) || data[key] < -50 || data[key] > 50)) return null;
   }
   if (data.windowWidthLimit !== undefined && !WINDOW_WIDTH_OPTIONS.some(option => option.value === data.windowWidthLimit)) return null;
@@ -98,6 +102,8 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   };
   if (!THEME_COLORS.every(color => isRoleColor(resolvedColors[color.key]))) return null;
   return {
+    arrangementCellBrightness: data.arrangementCellBrightness ?? 0,
+    arrangementNoteBrightness: data.arrangementNoteBrightness ?? 0,
     scoreRowBrightness: data.scoreRowBrightness ?? 0,
     scoreGridBrightness: data.scoreGridBrightness ?? 0,
     windowWidthLimit: data.windowWidthLimit ?? 'none',

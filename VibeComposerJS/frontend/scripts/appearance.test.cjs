@@ -166,3 +166,14 @@ test('score brightness adjustments round-trip and independently affect rows and 
   assert.equal(grid['--score-row-even'], base['--score-row-even']);
   assert.equal(rows['--text-primary'], base['--text-primary']);
 });
+
+test('arrangement brightness preferences round-trip and validate both independent ranges', () => {
+  const original = defaultAppearance();
+  const changed = { ...original, arrangementCellBrightness: -50, arrangementNoteBrightness: 50 };
+  assert.deepEqual(decodeAppearance(JSON.parse(JSON.stringify(changed))), changed);
+  for (const key of ['arrangementCellBrightness', 'arrangementNoteBrightness']) {
+    for (const value of [-51, 51, null, '20']) assert.equal(decodeAppearance({ ...original, [key]: value }), null);
+    const omitted = { ...original }; delete omitted[key];
+    assert.equal(decodeAppearance(omitted)[key], 0);
+  }
+});

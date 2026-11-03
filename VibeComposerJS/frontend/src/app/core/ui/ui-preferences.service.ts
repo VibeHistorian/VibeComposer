@@ -154,6 +154,11 @@ export class UiPreferencesService {
       colorAdjustments: { ...appearance.colorAdjustments, [key]: Math.max(-50, Math.min(50, value)) } } });
   }
 
+  setArrangementBrightness(key: 'arrangementCellBrightness' | 'arrangementNoteBrightness', value: number): void {
+    if (!['arrangementCellBrightness', 'arrangementNoteBrightness'].includes(key) || !Number.isFinite(value)) return;
+    this.commit({ ...this.state(), appearance: { ...this.appearance(), [key]: Math.max(-50, Math.min(50, value)) } });
+  }
+
   setScoreBrightness(key: 'scoreRowBrightness' | 'scoreGridBrightness', value: number): void {
     if (!['scoreRowBrightness', 'scoreGridBrightness'].includes(key) || !Number.isFinite(value)) return;
     this.commit({ ...this.state(), appearance: { ...this.appearance(), [key]: Math.max(-50, Math.min(50, value)) } });

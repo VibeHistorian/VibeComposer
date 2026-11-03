@@ -179,6 +179,19 @@
             </div>
           </section>
         }
+        @case ('arrangement-appearance') {
+          <section aria-labelledby="arrangement-appearance-title">
+            <h2 id="arrangement-appearance-title">Arrangement</h2>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Cell Brightness</h3><p>Adjust arrangement cell backgrounds relative to the default brightness. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><vc-compact-knob label="Cell Brightness" [value]="preferences.appearance().arrangementCellBrightness" [minimum]="-50" [maximum]="50" [defaultValue]="0" unit="%" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setArrangementBrightness('arrangementCellBrightness', $event)" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3>Note Brightness</h3><p>Adjust arrangement note previews relative to the default brightness. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><vc-compact-knob label="Note Brightness" [value]="preferences.appearance().arrangementNoteBrightness" [minimum]="-50" [maximum]="50" [defaultValue]="0" unit="%" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setArrangementBrightness('arrangementNoteBrightness', $event)" /></div>
+            </div>
+          </section>
+        }
         @case ('score') {
           <section aria-labelledby="score-settings-title">
             <h2 id="score-settings-title">Score</h2>

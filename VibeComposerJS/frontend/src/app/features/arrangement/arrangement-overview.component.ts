@@ -425,6 +425,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       if (!value) { value = style.getPropertyValue(name).trim() || '#000000'; colors.set(name, value); }
       return value;
     };
+    const appearance = this.preferences.appearance();
+    // Scope brightness to artwork so controls and markers retain their palette.
+    const cellFilter = `brightness(${0.75 * (1 + appearance.arrangementCellBrightness / 100)})`;
+    const noteFilter = `brightness(${0.75 * (1 + appearance.arrangementNoteBrightness / 100)})`;
     this.accent = color('--accent-primary');
     const fill = (x: number, y: number, width: number, height: number, name: string): void => {
       context.fillStyle = color(name);
@@ -468,9 +472,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
         const cellSurface = activeTracks === 0 ? emptySurface
           : activeTracks === group.tracks.length ? fullSurface
           : `color-mix(in srgb, ${fullSurface} ${activeWeight}%, ${emptySurface})`;
+        context.save();
+        context.filter = cellFilter;
         context.fillStyle = this.hoveredKey === `cell:${item.section.id}:${group.role}`
           ? `color-mix(in srgb, ${cellSurface} 85%, ${color('--text-primary')})` : cellSurface;
         context.fillRect(x, y, width, this.rowHeight);
+        context.restore();
         fill(x, y, 1, this.rowHeight, '--surface-base');
         fill(x, y + this.rowHeight - 1, width, 1, '--border-subtle');
         const target = this.settingsTarget();
@@ -499,6 +506,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           slotBeat += durations[(bar - 1) % durations.length];
           fill(x + slotBeat * this.pixelsPerBeat, y + 5, 1, previewHeight, '--border-subtle');
         }
+        context.filter = noteFilter;
         context.fillStyle = noteColor;
         for (const note of this.previewNotes(item.section.id, group.role)) {
           context.fillStyle = this.preferences.appearance().progressiveTrackColoring === false ? noteColor
@@ -529,6 +537,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.fillStyle = hovered ? `color-mix(in srgb, ${buttonSurface} 85%, ${color('--text-primary')})` : buttonSurface;
           context.fill();
           context.textAlign = 'center';
+          context.globalAlpha = 1;
           text(String(trackNumber), centerX, centerY + 3, present ? (group.role === 'drums' ? '--role-drums' : `--role-${role}-text`) : '--text-muted', `9px ${monoFont}`);
           context.textAlign = 'start'; context.globalAlpha = 1;
           if (target?.kind === 'section-track' && target.sectionId === item.section.id && target.trackId === track.id) {
@@ -571,6 +580,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       context.fillStyle = color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}-strong`);
       context.shadowColor = context.fillStyle;
       context.shadowBlur = 6;
+      context.filter = noteFilter;
       for (const item of sections) {
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         const tracks = this.overviewTracks(item.section, group);
