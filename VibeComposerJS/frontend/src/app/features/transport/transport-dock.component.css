@@ -1,7 +1,7 @@
 :host { display: block; }
 
 /* Dock surface and fixed placement */
-.transport-dock { position: fixed; z-index: 50; right: 0; bottom: 14px; left: 0; width: min(calc(100% - 48px), var(--workspace-max-width)); min-height: 68px; margin: 0 auto; padding: 10px 15px; display: grid; grid-template-columns: minmax(0, max-content) minmax(370px, 1fr) auto; align-items: center; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); box-shadow: 0 10px 35px var(--shadow-ink), inset 0 1px var(--shadow-highlight);  }
+.transport-dock { position: fixed; z-index: 50; right: 0; bottom: 14px; left: 0; width: min(calc(100% - var(--workspace-outer-space)), var(--workspace-max-width)); min-height: 68px; margin: 0 auto; padding: 10px 15px; display: grid; grid-template-columns: minmax(0, max-content) minmax(370px, 1fr) auto; align-items: center; gap: 12px; border: 1px solid var(--border-strong); border-radius: var(--workspace-dock-radius); background: var(--surface-base); box-shadow: 0 10px 35px var(--shadow-ink), inset 0 1px var(--shadow-highlight);  }
 /* Project identity and seed */
 .transport-project { width: max-content; flex: 0 0 auto; min-width: 90px; display: grid; grid-template-columns: minmax(90px, max-content); align-items: center; gap: 4px; }
 .transport-project > span { color: var(--text-muted); font: 10px var(--font-mono); text-align: center; white-space: nowrap; }

@@ -54,6 +54,12 @@
 
             </div>
             <div class="setting-row">
+              <div class="setting-copy"><h3>Panel layout</h3><p id="panel-layout-description">Spacious uses rounded panels with gaps. Compact uses square panels with minimal gaps.</p></div>
+              <div class="setting-controls"><vc-select aria-label="Panel layout" aria-describedby="panel-layout-description"
+                [options]="panelLayoutOptions" [value]="preferences.appearance().panelLayout"
+                (valueChange)="preferences.setPanelLayout($event)" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3>Window width limit</h3><p id="window-width-description">Use the available window width up to this limit. The middle panels fill the space between the track panel and inspector.</p></div>
               <div class="setting-controls"><vc-select aria-label="Window width limit" aria-describedby="window-width-description"
                 [options]="windowWidthOptions" [value]="preferences.appearance().windowWidthLimit"

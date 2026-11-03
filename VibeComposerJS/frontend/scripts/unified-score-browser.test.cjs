@@ -91,7 +91,14 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.deepEqual(scrollbars,{fit:true,ranges:true,visible:true,moved:true,reset:true,restored:true},'native scrollbars are visible and track zoom and pan in both directions');
   await command('Page.reload');
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));})()`);
-  for (const [width,height] of [[1601,766],[1600,766],[1600,765],[1400,906],[1400,905],[1401,905],[1280,800]]) {
+  for (const panelLayout of ['compact','spacious']) {
+    await evaluate(`(async()=>{${waitCode}
+      document.querySelector('[aria-label="Settings"]').click();
+      (await wait(()=>document.querySelector('[aria-label="Appearance General"]'))).click();
+      await changeControl(await wait(()=>document.querySelector('[aria-label="Panel layout"]')), '${panelLayout}');
+      document.querySelector('[aria-label="Close settings"]').click();
+    })()`);
+  for (const [width,height] of [[1601,766],[1600,766],[1600,765],[1400,906],[1400,905],[1401,905],[1280,800],[780,2160]]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
     const layout=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
       const box=selector=>document.querySelector(selector).getBoundingClientRect();
@@ -100,14 +107,20 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       const h=document.querySelector('.horizontal-scroll'),v=document.querySelector('.vertical-scroll');
       if(document.querySelectorAll('.score-role-controls button').length!==5 || [...document.querySelectorAll('.score-role-controls button')].some(b=>b.textContent.trim()))throw Error('Expected five dot-only role buttons');
       if(parseFloat(getComputedStyle(document.querySelector('.score-panel')).paddingTop)!==3)throw Error('Expected compact score padding');
-      return {visible:getComputedStyle(document.querySelector('.score-role-controls')).display!=='none',
+      return {panelRadius:parseFloat(getComputedStyle(document.querySelector('.score-panel')).borderTopLeftRadius),
+        columnGap:parseFloat(getComputedStyle(document.querySelector('.workspace-canvas')).columnGap),
+        visible:getComputedStyle(document.querySelector('.score-role-controls')).display!=='none',
         scoreClearance:dock.top-box('.score-panel').bottom,dockBottom:dock.bottom,viewportHeight:innerHeight,
         horizontalGap:horizontal.bottom-canvas.bottom-(h.offsetHeight-h.clientHeight),verticalGap:vertical.right-canvas.right-(v.offsetWidth-v.clientWidth),rulerGap:ruler.right-canvas.right};
     })()`);
     assert.equal(layout.visible,true,`role controls at ${width}x${height}`);
+    assert.equal(layout.panelRadius===0,panelLayout==='compact','compact panels have square corners');
+    assert.equal(layout.columnGap<=1,panelLayout==='compact','compact panels have minimal gaps');
     assert.ok(layout.scoreClearance>=-1,`transport does not cover score at ${width}x${height}: ${JSON.stringify(layout)}`);
     assert.ok(layout.dockBottom<=layout.viewportHeight,`transport fits viewport at ${width}x${height}: ${JSON.stringify(layout)}`);
     for(const key of ['horizontalGap','verticalGap','rulerGap'])assert.ok(Math.abs(layout[key])<=1,`${key} at ${width}x${height}: ${JSON.stringify(layout)}`);
+  }
+    await capture('unified-score-'+panelLayout);
   }
   await command('Emulation.setDeviceMetricsOverride',{width:1600,height:1100,deviceScaleFactor:1,mobile:false});
   await evaluate(`(async()=>{${waitCode}document.querySelector('.track-group.arpeggio .track-select').click();await wait(()=>document.querySelector('#part-inspector').dataset.controlRole==='arpeggio');})()`);

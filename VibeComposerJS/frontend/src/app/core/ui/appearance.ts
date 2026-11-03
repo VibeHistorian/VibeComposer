@@ -10,6 +10,11 @@ export const WINDOW_WIDTH_OPTIONS = [
   { value: '3840', label: '3840px' },
 ] as const;
 export type WindowWidthLimit = typeof WINDOW_WIDTH_OPTIONS[number]['value'];
+export const PANEL_LAYOUT_OPTIONS = [
+  { value: 'spacious', label: 'Spacious' },
+  { value: 'compact', label: 'Compact' },
+] as const;
+export type PanelLayout = typeof PANEL_LAYOUT_OPTIONS[number]['value'];
 
 export const FONT_CHOICES = [
   { value: "'DM Sans', sans-serif", label: 'DM Sans' },
@@ -43,6 +48,7 @@ export interface AppearancePreferences {
   readonly scoreRowBrightness: number;
   readonly scoreGridBrightness: number;
   readonly windowWidthLimit: WindowWidthLimit;
+  readonly panelLayout: PanelLayout;
   readonly preserveBrightnessSaturation: boolean;
   readonly hueShiftRoles: boolean;
   readonly progressiveTrackColoring: boolean;
@@ -59,6 +65,7 @@ export function defaultAppearance(): AppearancePreferences {
     scoreRowBrightness: 0,
     scoreGridBrightness: 0,
     windowWidthLimit: 'none',
+    panelLayout: 'spacious',
     preserveBrightnessSaturation: false,
     hueShiftRoles: false,
     progressiveTrackColoring: true,
@@ -80,6 +87,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
     if (data[key] !== undefined && (!Number.isFinite(data[key]) || data[key] < -50 || data[key] > 50)) return null;
   }
   if (data.windowWidthLimit !== undefined && !WINDOW_WIDTH_OPTIONS.some(option => option.value === data.windowWidthLimit)) return null;
+  if (data.panelLayout !== undefined && !PANEL_LAYOUT_OPTIONS.some(option => option.value === data.panelLayout)) return null;
   if (data.preserveBrightnessSaturation !== undefined && typeof data.preserveBrightnessSaturation !== 'boolean') return null;
   if (data.hueShiftRoles !== undefined && typeof data.hueShiftRoles !== 'boolean') return null;
   if (data.progressiveTrackColoring !== undefined && typeof data.progressiveTrackColoring !== 'boolean') return null;
@@ -107,6 +115,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
     scoreRowBrightness: data.scoreRowBrightness ?? 0,
     scoreGridBrightness: data.scoreGridBrightness ?? 0,
     windowWidthLimit: data.windowWidthLimit ?? 'none',
+    panelLayout: data.panelLayout ?? 'spacious',
     preserveBrightnessSaturation: data.preserveBrightnessSaturation === true,
     hueShiftRoles: data.hueShiftRoles === true,
     progressiveTrackColoring: data.progressiveTrackColoring !== false,

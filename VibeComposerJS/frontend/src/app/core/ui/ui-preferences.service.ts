@@ -5,7 +5,7 @@ import { defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type 
 import { computed, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
-import { decodeAppearance, adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, WINDOW_WIDTH_OPTIONS, type WindowWidthLimit, type ColorAdjustment, type FontArea } from './appearance';
+import { decodeAppearance, adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, PANEL_LAYOUT_OPTIONS, type PanelLayout, WINDOW_WIDTH_OPTIONS, type WindowWidthLimit, type ColorAdjustment, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
 import type { DrumMappingPreference } from '../music/drum-instruments';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
@@ -109,6 +109,11 @@ export class UiPreferencesService {
 
   constructor() { this.applyAppearance(this.state()); }
 
+  setPanelLayout(value: string): void {
+    if (!PANEL_LAYOUT_OPTIONS.some(option => option.value === value)) return;
+    this.commit({ ...this.state(), appearance: { ...this.appearance(), panelLayout: value as PanelLayout } });
+  }
+
   setWindowWidthLimit(value: string): void {
     if (!WINDOW_WIDTH_OPTIONS.some(option => option.value === value)) return;
     this.commit({ ...this.state(), appearance: { ...this.appearance(), windowWidthLimit: value as WindowWidthLimit } });
@@ -173,6 +178,17 @@ export class UiPreferencesService {
   private applyAppearance(preferences: UiPreferences): void {
     const style = globalThis.document?.documentElement?.style;
     if (!style) return;
+    const compact = preferences.appearance.panelLayout === 'compact';
+    for (const [name, value] of Object.entries({
+      '--workspace-panel-radius': compact ? '0px' : 'var(--radius-panel)',
+      '--workspace-dock-radius': compact ? '0px' : 'var(--radius-panel-large)',
+      '--workspace-group-radius': compact ? '0px' : 'var(--radius-control)',
+      '--workspace-column-gap': compact ? '1px' : '16px',
+      '--workspace-row-gap': compact ? '1px' : '12px',
+      '--workspace-group-gap': compact ? '1px' : '9px',
+      '--workspace-side-inset': compact ? '0px' : '10px',
+      '--workspace-outer-space': compact ? '4px' : '48px',
+    })) style.setProperty(name, value);
     const width = preferences.appearance.windowWidthLimit;
     style.setProperty('--workspace-max-width', width === 'none' ? '100vw' : `${width}px`);
     const adjust = (color: string) => adjustColor(color, preferences.appearance.colorAdjustments);

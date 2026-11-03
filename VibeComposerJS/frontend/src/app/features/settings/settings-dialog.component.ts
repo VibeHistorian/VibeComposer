@@ -14,7 +14,7 @@ import { downloadProjectFile } from '../../core/project/download-file';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
-import { COLOR_ADJUSTMENTS, FONT_AREAS, FONT_CHOICES, WINDOW_WIDTH_OPTIONS, type FontArea } from '../../core/ui/appearance';
+import { COLOR_ADJUSTMENTS, FONT_AREAS, FONT_CHOICES, PANEL_LAYOUT_OPTIONS, WINDOW_WIDTH_OPTIONS, type FontArea } from '../../core/ui/appearance';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ARRANGED_PARTS, type ArrangedPart } from '../../core/music/part-role';
 import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
@@ -71,6 +71,7 @@ export class SettingsDialogComponent {
   readonly exportNamePreview = computed(() => exportFilename(this.projects.project(), this.preferences.exportNameFields(), this.previewTime()));
   readonly fontAreas = FONT_AREAS;
   readonly windowWidthOptions = WINDOW_WIDTH_OPTIONS;
+  readonly panelLayoutOptions = PANEL_LAYOUT_OPTIONS;
   readonly fontChoices = FONT_CHOICES;
   readonly roles = ARRANGED_PARTS;
   readonly themeColors = THEME_COLORS;

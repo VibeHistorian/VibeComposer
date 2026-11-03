@@ -588,3 +588,32 @@ test('window width limits default to unlimited, persist, transfer and reject uns
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.historyPosition(), history);
 });
+
+test('panel layout persists, transfers, defaults and stays outside project history', () => {
+  const { service, uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  assert.equal(prefs.appearance().panelLayout, 'spacious');
+  prefs.setPanelLayout('compact');
+  assert.equal(new UiPreferencesService().appearance().panelLayout, 'compact');
+  const saved = prefs.exportJson();
+  for (const invalid of ['dense', '', null, 1]) {
+    prefs.setPanelLayout(invalid);
+    assert.equal(prefs.exportJson(), saved);
+    const candidate = JSON.parse(saved); candidate.appearance.panelLayout = invalid;
+    assert.equal(prefs.importJson(JSON.stringify(candidate)), false);
+    assert.equal(prefs.exportJson(), saved);
+  }
+  prefs.setPanelLayout('spacious');
+  assert.equal(prefs.importJson(saved), true);
+  assert.equal(prefs.appearance().panelLayout, 'compact');
+  prefs.randomizeAppearance('dark');
+  assert.equal(prefs.appearance().panelLayout, 'compact');
+  const older = JSON.parse(saved); delete older.appearance.panelLayout;
+  assert.equal(prefs.importJson(JSON.stringify(older)), true);
+  assert.equal(prefs.appearance().panelLayout, 'spacious');
+  prefs.setPanelLayout('compact'); prefs.resetAppearance();
+  assert.equal(prefs.appearance().panelLayout, 'spacious');
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), history);
+});
