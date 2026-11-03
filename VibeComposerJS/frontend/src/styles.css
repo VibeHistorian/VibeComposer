@@ -21,6 +21,7 @@
 
   /* Workspace width */
   --workspace-max-width: 100vw;
+  --workspace-edge-space: 5px;
   --workspace-panel-radius: var(--radius-panel);
   --workspace-dock-radius: var(--radius-panel-large);
   --workspace-group-radius: var(--radius-control);
@@ -318,7 +319,7 @@ button[aria-pressed="false"]:not(.group-select, .track-select, .score-ruler-sect
 :where(input[type="text"], input:not([type]), textarea):disabled { color: var(--text-disabled); cursor: default; }
 
 /* Application frame and branding */
-.app-frame { width: min(100% - var(--workspace-outer-space), var(--workspace-max-width)); height: calc(100vh - 5px); min-height: 0; margin: 5px auto 0; padding-bottom: 87px; display: flex; flex-direction: column; }
+.app-frame { width: min(100% - var(--workspace-outer-space), var(--workspace-max-width)); height: calc(100vh - var(--workspace-edge-space)); min-height: 0; margin: var(--workspace-edge-space) auto 0; padding-bottom: calc(var(--transport-height, 68px) + var(--workspace-edge-space)); display: flex; flex-direction: column; }
 .brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 700; letter-spacing: -.04em; }
 .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-card); background: var(--accent-primary); color: var(--surface-canvas); font-size: 16px; }
 .brand-light { color: var(--text-secondary); font-weight: 500; }
@@ -343,12 +344,12 @@ button[aria-pressed="false"]:not(.group-select, .track-select, .score-ruler-sect
 
 /* Tablet layout */
 @media (max-width: 900px) {
-  .app-frame { width: min(100% - min(40px, var(--workspace-outer-space)), var(--workspace-max-width)); height: auto; min-height: calc(100vh - 5px); }
+  .app-frame { width: min(100% - min(40px, var(--workspace-outer-space)), var(--workspace-max-width)); height: auto; min-height: calc(100vh - var(--workspace-edge-space)); }
   vc-workspace-canvas { flex: 0 0 auto; }
 }
 
 @media (max-width: 1050px) {
-  .app-frame { height: auto; min-height: calc(100vh - 5px); }
+  .app-frame { height: auto; min-height: calc(100vh - var(--workspace-edge-space)); }
   vc-workspace-canvas { flex: 0 0 auto; }
 }
 
@@ -356,21 +357,4 @@ button[aria-pressed="false"]:not(.group-select, .track-select, .score-ruler-sect
 @media (max-width: 520px) {
   .app-frame { width: min(100% - 28px, var(--workspace-max-width)); }
   .brand { font-size: 12px; }
-}
-
-@media (max-width: 620px) {
-  .app-frame { padding-bottom: 295px; }
-}
-
-/* Room for the wrapped transport at tablet widths */
-@media (min-width: 621px) and (max-width: 1050px) {
-  .app-frame { padding-bottom: 195px; }
-}
-@media (max-width: 480px) {
-  .app-frame { padding-bottom: 320px; }
-}
-
-/* Room for the two-row transport on smaller desktops */
-@media (min-width: 1051px) and (max-width: 1600px) {
-  .app-frame { padding-bottom: 170px; }
 }

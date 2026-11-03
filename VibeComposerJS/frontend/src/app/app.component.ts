@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { installPointerButtonFocus } from './shared/pointer-button-focus';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal, viewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { AudioExportService } from './core/audio/audio-export.service';
@@ -29,7 +29,18 @@ import { isEditingText, usesSpaceKey } from './shared/keyboard-shortcuts';
 })
 export class AppComponent {
   constructor() {
-    inject(DestroyRef).onDestroy(installPointerButtonFocus(inject(DOCUMENT)));
+    const destroyRef = inject(DestroyRef);
+    destroyRef.onDestroy(installPointerButtonFocus(inject(DOCUMENT)));
+    const host = inject<ElementRef<HTMLElement>>(ElementRef);
+    afterNextRender(() => {
+      const frame = host.nativeElement.querySelector<HTMLElement>('.app-frame')!;
+      const dock = frame.querySelector<HTMLElement>('.transport-dock')!;
+      const updateHeight = () => frame.style.setProperty('--transport-height', `${dock.getBoundingClientRect().height}px`);
+      const observer = new ResizeObserver(updateHeight);
+      observer.observe(dock);
+      updateHeight();
+      destroyRef.onDestroy(() => observer.disconnect());
+    });
   }
   readonly projectMessage = signal('');
   readonly audioExport = inject(AudioExportService);

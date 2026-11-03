@@ -109,15 +109,19 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       if(parseFloat(getComputedStyle(document.querySelector('.score-panel')).paddingTop)!==3)throw Error('Expected compact score padding');
       return {panelRadius:parseFloat(getComputedStyle(document.querySelector('.score-panel')).borderTopLeftRadius),
         columnGap:parseFloat(getComputedStyle(document.querySelector('.workspace-canvas')).columnGap),
+        expectedDockGap:parseFloat(getComputedStyle(document.querySelector('.workspace-canvas')).marginBottom),
         visible:getComputedStyle(document.querySelector('.score-role-controls')).display!=='none',
         scoreClearance:dock.top-box('.score-panel').bottom,dockBottom:dock.bottom,viewportHeight:innerHeight,
+        topMargin:box('.app-frame').top,bottomMargin:innerHeight-dock.bottom,
         horizontalGap:horizontal.bottom-canvas.bottom-(h.offsetHeight-h.clientHeight),verticalGap:vertical.right-canvas.right-(v.offsetWidth-v.clientWidth),rulerGap:ruler.right-canvas.right};
     })()`);
     assert.equal(layout.visible,true,`role controls at ${width}x${height}`);
     assert.equal(layout.panelRadius===0,panelLayout==='compact','compact panels have square corners');
     assert.equal(layout.columnGap<=1,panelLayout==='compact','compact panels have minimal gaps');
     assert.ok(layout.scoreClearance>=-1,`transport does not cover score at ${width}x${height}: ${JSON.stringify(layout)}`);
+    if(width>1050)assert.ok(Math.abs(layout.scoreClearance-layout.expectedDockGap)<=1,`score fills space above transport in ${panelLayout} at ${width}x${height}: ${JSON.stringify(layout)}`);
     assert.ok(layout.dockBottom<=layout.viewportHeight,`transport fits viewport at ${width}x${height}: ${JSON.stringify(layout)}`);
+    assert.ok(Math.abs(layout.topMargin-layout.bottomMargin)<=1,`matching outer vertical margins in ${panelLayout} at ${width}x${height}: ${JSON.stringify(layout)}`);
     for(const key of ['horizontalGap','verticalGap','rulerGap'])assert.ok(Math.abs(layout[key])<=1,`${key} at ${width}x${height}: ${JSON.stringify(layout)}`);
   }
     await capture('unified-score-'+panelLayout);

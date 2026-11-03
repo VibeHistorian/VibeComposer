@@ -1,6 +1,6 @@
 /* Workspace frame */
 :host { --part-section-accent: var(--accent-primary); --track-name-column-width: 44px; }
-.workspace-canvas { min-height: 0; margin: 0 0 12px; flex: 1 1 auto; display: grid; grid-template-columns: clamp(320px, calc(16vw + 80px), 380px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: var(--workspace-column-gap); }
+.workspace-canvas { min-height: 0; margin: 0 0 var(--workspace-row-gap); flex: 1 1 auto; display: grid; grid-template-columns: clamp(320px, calc(16vw + 80px), 380px) minmax(0, 1fr) clamp(260px, 17vw, 320px); gap: var(--workspace-column-gap); }
 .score-panel, .context-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--workspace-panel-radius); background: var(--surface-base); }
 .context-inspector { padding: 15px 13px; background: var(--surface-inspector) var(--background-inspector); }
 .track-browser { min-width: 0; height: calc(100% - var(--workspace-side-inset)); margin-top: var(--workspace-side-inset); max-height: none; display: flex; flex-direction: column; overflow: hidden; align-self: stretch; }
