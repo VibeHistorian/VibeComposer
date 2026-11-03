@@ -1,32 +1,39 @@
 <section class="transport-dock" aria-label="Playback controls">
   <div class="transport-left">
-    <button type="button" class="transport-button generation-button compose-button" [disabled]="workspaceUi.editingNoteId() !== null"
-      (click)="generate('compose')" aria-label="Compose" title="Compose using the current seed and enabled role rules">✦</button>
+    <div class="transport-generation">
+      <button type="button" class="transport-button generation-button compose-button" [disabled]="workspaceUi.editingNoteId() !== null"
+        (click)="generate('compose')" aria-label="Compose" title="Compose using the current seed and enabled role rules">✦</button>
+      <vc-mix-buttons [trackIds]="trackIds()" label="all tracks" [allowExclusive]="false" />
+      <div class="transport-tempo">
+        <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="♩=" unit=""
+            [value]="project().tempoBpm" [minimum]="30" [maximum]="240" (valueCommit)="updateTempo($event)"
+            [composeEnabled]="project().randomizeTempoOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTempoOnCompose')" />
+      </div>
+    </div>
     <div class="transport-globals" aria-label="Global song settings">
-      <div class="global-harmony" role="group" aria-labelledby="global-harmony-label">
-        <div class="global-harmony-heading">
-          <span id="global-harmony-label" class="global-harmony-label">Global Harmony</span>
-          <button type="button" class="harmony-compose-star" aria-label="Harmony On Compose"
-            title="On Compose: reroll global harmony when global Compose runs"
-            [class.active]="project().randomizeHarmonyOnCompose !== false"
-            [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
-            [disabled]="workspaceUi.editingNoteId() !== null"
-            (click)="toggleComposeRandomization('randomizeHarmonyOnCompose')">✦</button>
+      <div class="global-harmony" role="group" aria-label="Global Harmony">
+        <div class="global-knobs">
+          <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="+-" unit=""
+            [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)"
+            [composeEnabled]="project().randomizeTransposeOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTransposeOnCompose')" />
         </div>
-        <vc-chordlet-editor />
+        <div class="global-harmony-controls">
+          <label class="mode-control"><vc-select [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-select></label>
+          <vc-chordlet-editor>
+            <button type="button" chordletAction class="harmony-compose-star" aria-label="Harmony On Compose"
+              title="On Compose: reroll global harmony when global Compose runs"
+              [class.active]="project().randomizeHarmonyOnCompose !== false"
+              [attr.aria-pressed]="project().randomizeHarmonyOnCompose !== false"
+              [disabled]="workspaceUi.editingNoteId() !== null"
+              (click)="toggleComposeRandomization('randomizeHarmonyOnCompose')">✦</button>
+          </vc-chordlet-editor>
+        </div>
       </div>
-      <div class="global-knobs">
-        <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="+-" unit=""
-          [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)"
-          [composeEnabled]="project().randomizeTransposeOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTransposeOnCompose')" />
-
-      </div>
-      <label class="mode-control"><span aria-hidden="true">MODE</span><vc-select [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-select></label>
     </div>
   </div>
 
   <div class="transport-playback">
-    <vc-mix-buttons [trackIds]="trackIds()" label="all tracks" [allowExclusive]="false" />
+    <div class="transport-timeline">
     <div class="transport-actions">
       <button type="button" class="transport-button stop-button" (click)="stop()" aria-label="Stop" title="Stop">■</button>
       <button type="button" class="transport-button play-button" (click)="togglePlayback()"
@@ -40,10 +47,9 @@
         [title]="workspaceUi.selectedSectionIds().length ? 'Loop selected sections' : 'Loop full arrangement'">⟳</button>
     </div>
 
-    <div class="transport-timeline">
     <div class="transport-progress">
       <div class="position-line">
-        <span>{{ currentTimeText() }}</span>
+        <span>{{ currentTimeText() }} <span class="musical-position">[{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong>]</span></span>
         <span>{{ durationText() }}</span>
       </div>
       <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"
@@ -53,16 +59,11 @@
           <i class="progress-loop-line" [style.left.%]="region.left" [style.width.%]="region.width" aria-hidden="true"></i>
         }
       </div>
-      <div class="position-line position-below"><span class="musical-position">{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong></span></div>
     </div>
 
     </div>
 
-    <div class="transport-tempo">
-      <vc-compact-knob [dense]="true" label="Tempo in beats per minute" [defaultValue]="120" shortLabel="♩=" unit=""
-          [value]="project().tempoBpm" [minimum]="30" [maximum]="240" (valueCommit)="updateTempo($event)"
-          [composeEnabled]="project().randomizeTempoOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTempoOnCompose')" />
-    </div>
+
   </div>
 
   <div class="transport-tools project-tools" role="group" aria-label="Project actions">

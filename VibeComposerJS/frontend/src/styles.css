@@ -319,7 +319,7 @@ button[aria-pressed="false"]:not(.group-select, .track-select, .score-ruler-sect
 :where(input[type="text"], input:not([type]), textarea):disabled { color: var(--text-disabled); cursor: default; }
 
 /* Application frame and branding */
-.app-frame { width: min(100% - var(--workspace-outer-space), var(--workspace-max-width)); height: calc(100vh - var(--workspace-edge-space)); min-height: 0; margin: var(--workspace-edge-space) auto 0; padding-bottom: calc(var(--transport-height, 68px) + var(--workspace-edge-space)); display: flex; flex-direction: column; }
+.app-frame { width: min(100% - var(--workspace-outer-space), var(--workspace-max-width)); height: calc(100vh - var(--workspace-edge-space)); min-height: 0; margin: var(--workspace-edge-space) auto 0; padding-bottom: calc(var(--transport-height, 64px) + var(--workspace-edge-space)); display: flex; flex-direction: column; }
 .brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none; font-size: 14px; font-weight: 700; letter-spacing: -.04em; }
 .brand-mark { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-card); background: var(--accent-primary); color: var(--surface-canvas); font-size: 16px; }
 .brand-light { color: var(--text-secondary); font-weight: 500; }
