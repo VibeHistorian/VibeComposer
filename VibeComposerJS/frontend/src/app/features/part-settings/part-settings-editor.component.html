@@ -14,10 +14,12 @@
         (inheritRequested)="inheritRequested.emit(control.key)" />
       <input [id]="seedHeading.controlId" class="part-list" type="text" [value]="textValue(control)"
         [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
+        (mousedown)="seedMouseDown($event)" (contextmenu)="seedMouseAction($event)" (auxclick)="seedMouseAction($event)"
+        title="Right-click to reset to 0; middle-click to randomize"
         (focus)="startTextEdit()" (change)="commitText(control, $event)"
         (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
-      <button type="button" class="common-grid-button" [disabled]="values()[control.key] === 0"
-        (click)="settingsChanged.emit({ key: control.key, value: 0 })">Clear seed</button>
+      <button type="button" class="common-grid-button"
+        (click)="copyGlobalSeed()">Copy global</button>
       </div>
       <ng-container [ngTemplateOutlet]="quickInheritance" [ngTemplateOutletContext]="{ $implicit: control }" />
     </div>

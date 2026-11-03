@@ -342,8 +342,13 @@ test('production Angular controls initialize selects from settings and support r
           await changeControl(delays, '2');
           await waitFor(() => readTrack(role).generatorSettings.feedbackCount === 2 && [...document.querySelectorAll('vc-select[aria-label="Delays"]')].every(input => input.getAttribute("value") === '2'), role + ' feedback sync');
           if (document.querySelector('button[aria-label="Generate notes"]')) throw new Error(role + ' still has a generation toggle');
-          const clearSeed = await waitFor(() => [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Clear seed' && !button.disabled), role + ' clear seed enabled');
-          clearSeed.click();
+          const copySeed = await waitFor(() => [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Copy global' && !button.disabled), role + ' clear seed enabled');
+          copySeed.click();
+          const globalSeed = Number(BigInt.asIntN(32, BigInt(JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).seed)));
+          await waitFor(() => seeds.every(seed => seed.value === String(globalSeed)), role + ' global seed copied');
+          seeds[0].dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true, cancelable: true }));
+          await waitFor(() => seeds.every(seed => Number(seed.value) > 0), role + ' seed randomized');
+          seeds[0].dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true }));
           await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
           const state = readTrack(role).generatorSettings;
           result.sharedRoles.push({ role, hits: state.hitsPerPattern, seed: state.patternSeed, delays: state.feedbackCount,

@@ -144,7 +144,7 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
   chords: [...fill, ...rhythmControls, span, pause, swing, ...voices,
     { ...number('strum', 'Strum', 0, 2000, 0, ' /1000 beat'),
       description: 'Spread individual chord tones in time. Zero keeps simultaneous onsets. 31/62/333/666 retain Java’s fractional beat choices.' },
-    { ...choice('strumType', 'S.ARC', STRUM_TYPES), defaultValue: 'ARP_U',
+    { ...choice('strumType', 'STRM↗', STRUM_TYPES), defaultValue: 'ARP_U',
       description: 'ARP rolls evenly; RAND spreads or shuffles tone onsets; HUMAN adds small offsets. U/D determines pitch direction; one tone anchors the hit.' },
     { ...number('strumPauseChance', 'Strum pause', 0, 100, 0), advanced: true,
       description: 'Chance to omit each individual chord tone, independently of the whole-hit Pause setting.' },

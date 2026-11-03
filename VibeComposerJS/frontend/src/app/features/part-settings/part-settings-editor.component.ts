@@ -66,7 +66,7 @@ export class PartSettingsEditorComponent {
       maxBlockChange: 'B.MAX', blockJump: 'B.JMP', hitsPerPattern: 'HITS', euclideanPulses: 'PULSE',
       patternShift: 'SHIFT', chordSpan: 'SPAN', chordNotesStretch: 'VOICE', patternRepeat: 'REPT',
       noteVariation: 'VAR', pauseChance: 'PAUSE', exceptionChance: 'SPLIT', swingPercent: 'SWING',
-      strumPauseChance: 'S.PAU', transitionChance: 'TR.CH', transitionSplit: 'TR.AT',
+      strumPauseChance: 'STRM⏸︎', transitionChance: 'TRAN%', transitionSplit: 'TRAN⌖',
       offset: 'OFFS', accents: 'ACCNT',
     };
     return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
@@ -258,6 +258,31 @@ export class PartSettingsEditorComponent {
   textValue(control: PartControl): string {
     const value = this.values()[control.key];
     return value === null ? '' : Array.isArray(value) ? value.join(', ') : String(value ?? control.defaultValue ?? '');
+  }
+
+  copyGlobalSeed(): void {
+    // Narrow the exact global Java long to the part seed's Java int range.
+    this.setSeed(Number(BigInt.asIntN(32, BigInt(this.projects.project().seed))));
+  }
+
+  seedMouseDown(event: MouseEvent): void {
+    if (event.button !== 0) event.preventDefault();
+  }
+
+  seedMouseAction(event: MouseEvent): void {
+    if (event.type !== 'contextmenu' && event.button !== 1) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const value = event.type === 'contextmenu' ? 0 : Math.floor(Math.random() * 2147483647) + 1;
+    const element = event.target as HTMLInputElement;
+    element.value = String(value);
+    element.setCustomValidity('');
+    this.setSeed(value);
+  }
+
+  private setSeed(value: number): void {
+    this.textEditValues = null;
+    this.settingsChanged.emit({ key: 'patternSeed', value });
   }
 
   startTextEdit(): void { this.textEditValues = this.values(); }
