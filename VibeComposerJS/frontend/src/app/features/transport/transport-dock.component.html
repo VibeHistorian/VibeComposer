@@ -49,7 +49,7 @@
 
     <div class="transport-progress">
       <div class="position-line">
-        <span>{{ currentTimeText() }} <span class="musical-position">[{{ positionText().split(':')[0] }}:<strong>{{ positionText().split(':')[1] }}</strong>]</span></span>
+        <span>{{ currentTimeText() }} <span class="musical-position">[{{ positionText() }}]</span></span>
         <span>{{ durationText() }}</span>
       </div>
       <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"

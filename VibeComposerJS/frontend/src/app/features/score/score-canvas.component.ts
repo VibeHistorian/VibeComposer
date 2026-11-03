@@ -1045,7 +1045,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         if (!this.editable() && this.preferences.scoreOutlineOtherTracks() && selectedTrackId !== note.part) {
           shape.stroke({ color: parsed.value, alpha: opacity * parsed.alpha, width: 1 });
         } else {
-          shape.fill({ color: parsed.value, alpha: opacity * parsed.alpha });
+          const fillOpacity = 0.15 + Math.max(0, Math.min(127, note.velocity)) / 127 * 0.65;
+          shape.fill({ color: parsed.value, alpha: fillOpacity * parsed.alpha })
+            .stroke({ color: parsed.value, alpha: opacity * parsed.alpha, width: 1 });
         }
       }
       if (this.velocityVisible()) {

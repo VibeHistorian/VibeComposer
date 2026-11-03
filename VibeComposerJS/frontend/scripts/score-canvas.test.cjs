@@ -178,24 +178,25 @@ test('ghost outlines paint behind draft notes at half opacity without hit areas 
     },
   };
   c.drawStatic();
-  assert.deepEqual(capsules.map(({ method, alpha }) => [method, alpha]), [['stroke', .4], ['stroke', .4], ['fill', .8]]);
+  assert.deepEqual(capsules.map(({ method, alpha }) => [method, alpha]),
+    [['stroke', .4], ['stroke', .4], ['fill', .15 + 90 / 127 * .85], ['stroke', .8]]);
   assert.deepEqual(c.hitAreas.map(area => area.note.id), ['draft']);
   assert.equal(velocityBars.length, 1);
   assert.ok(c.drumPitches.includes(36), 'drum ghosts have a visible drum row');
   c.ghostNotes = () => []; c.drawStatic();
-  assert.equal(capsules.length, 1);
+  assert.equal(capsules.length, 2);
   c.editable = () => false;
   c.ghostNotes = () => [{ ...note, part: 'chords' }]; c.drawStatic();
-  assert.equal(capsules.length, 1, 'overview never renders ghost inputs');
+  assert.equal(capsules.length, 2, 'overview never renders ghost inputs');
   c.model.tracks.push({ id: 'chords', color: 'chords' });
   c.model.notes.push({ ...note, id: 'other', part: 'chords', color: 'chords' });
   c.preferences.scoreOutlineOtherTracks = () => true;
   c.drawStatic();
-  assert.deepEqual(capsules.map(item => item.method), ['fill', 'stroke']);
+  assert.deepEqual(capsules.map(item => item.method), ['fill', 'stroke', 'stroke']);
   assert.deepEqual(c.hitAreas.map(area => area.note.id), ['draft', 'other']);
   c.preferences.scoreOutlineOtherTracks = () => false;
   c.drawStatic();
-  assert.deepEqual(capsules.map(item => item.method), ['fill', 'fill']);
+  assert.deepEqual(capsules.map(item => item.method), ['fill', 'stroke', 'fill', 'stroke']);
 });
 
 test('optional chord grid draws chord colors at half the previous opacity only when enabled', () => {
@@ -750,7 +751,7 @@ test('drum-only editing renders every unselected drum note at visible row-based 
   }
 });
 
-test('note fills respect track selection and editor opacity while selected-track glow ignores velocity', () => {
+test('note fills follow velocity while outlines retain selection and editor opacity', () => {
   const { component: c } = fixture();
   c.horizontalOffset = 0; c.horizontalScale = 1;
   c.model = { tracks: [{ id: 'selected', color: 'drums', drumPitch: 36 }, { id: 'other', color: 'drums', drumPitch: 38 }],
@@ -758,12 +759,13 @@ test('note fills respect track selection and editor opacity while selected-track
       part, color: 'drums', midi: part === 'selected' ? 36 : 38, velocity, startBeat: 4 + index * 4,
       durationBeats: 1, opacity: .5 + velocity / 127 * .5 }))),
     sections: [], totalBeats: 16, selectedTrackId: 'selected', hiddenTrackIds: new Set() };
-  const notes = [], glow = [];
+  const notes = [], glow = [], outlines = [];
   let shape;
-  c.staticGraphics = { clear() { notes.length = 0; glow.length = 0; },
+  c.staticGraphics = { clear() { notes.length = 0; glow.length = 0; outlines.length = 0; },
     rect(x, y, width, height) { shape = { type: 'rect', x, width }; return this; },
     roundRect() { shape = { type: 'note' }; return this; },
-    moveTo() { return this; }, lineTo() { return this; }, stroke() { return this; },
+    moveTo() { return this; }, lineTo() { return this; },
+    stroke(style) { if (shape?.type === 'note') outlines.push(style.alpha); return this; },
     fill(style) {
       if (shape?.type === 'note') notes.push(style.alpha);
       else if (shape?.x === c.scoreX(4) - 6 || shape?.x === c.scoreX(8) - 6) glow.push(style.alpha);
@@ -774,10 +776,16 @@ test('note fills respect track selection and editor opacity while selected-track
     c.model.notes = c.model.notes.map(note => ({ ...note,
       opacity: editable ? .5 + note.velocity / 127 * .5 : .4 + note.velocity / 127 * .6 }));
     c.drawStatic();
-    assert.deepEqual(notes, editable ? [.5, 1, .3, .3] : [.4, 1, .3, .8]);
+    assert.deepEqual(notes, [.15, 1, .15, 1]);
+    assert.deepEqual(outlines, editable ? [.5, 1, .3, .3] : [.4, 1, .3, .8]);
     assert.equal(glow.length, 2);
     assert.equal(glow[0], glow[1], 'both velocities keep the same selected-track glow');
   }
+  c.editable = () => false;
+  c.preferences.scoreOutlineOtherTracks = () => true;
+  c.drawStatic();
+  assert.deepEqual(notes, [.15, 1], 'non-selected notes remain outline-only');
+  assert.deepEqual(outlines, [.5, 1, .3, .8]);
 });
 
 test('selected track glow fades outward over 5px and stays centered in short and tall score canvases', () => {

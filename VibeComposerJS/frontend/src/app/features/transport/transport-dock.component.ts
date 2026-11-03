@@ -111,7 +111,7 @@ export class TransportDockComponent {
 
     const measure = Math.floor(beat / 4) + 1;
     const beatInMeasure = Math.floor(beat % 4) + 1;
-    return `${String(measure).padStart(2, '0')}:${String(beatInMeasure).padStart(2, '0')}`;
+    return `${String(measure).padStart(2, '0')}.${String(beatInMeasure).padStart(2, '0')}`;
   });
 
   readonly currentTimeText = computed(() => elapsedTime(beatToSeconds(projectTempoMap(this.project()), this.playback.beat())));
