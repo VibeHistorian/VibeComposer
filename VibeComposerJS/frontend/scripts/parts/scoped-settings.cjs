@@ -2684,3 +2684,24 @@ test('section chordlets preview inferred harmony and restore authored chords whe
   service.undo();
   assert.ok(service.project().arrangement.every(section => !section.useMelodyHarmony));
 });
+
+test('rejected generation edits do not leave a velocity warning in either settings view', () => {
+  const { service, workspace, phrase } = fixture({ contextualMelody: false });
+  const scope = { kind: 'global-track', trackId: 'track-melody-1' };
+  const before = service.project();
+  const generate = phrase.phraseForTrack;
+  phrase.phraseForTrack = () => { throw new RangeError('No contextual melody satisfies the constraints.'); };
+  try {
+    workspace.editPartSettings(scope, { key: 'maxBlockChange', value: 0 });
+    assert.equal(service.project(), before);
+    assert.match(service.generationError(), /No contextual melody/);
+    assert.equal(workspace.partEditError(), null);
+    assert.equal(workspace.partEditErrorFor(scope), null);
+  } finally { phrase.phraseForTrack = generate; }
+  service.dismissGenerationError();
+  assert.equal(workspace.partEditErrorFor(scope), null);
+  workspace.editPartSettings(scope, { key: 'speed', value: 60 });
+  assert.equal(service.generationError(), null);
+  assert.equal(workspace.partEditErrorFor(scope), null);
+});
+

@@ -1010,3 +1010,28 @@ test('section velocity knobs reset the last override to 0 dB with RMB in single 
     service.undo(); assert.equal(service.exportProjectJson(), before);
   }
 });
+
+test('settings generation failures preserve project, storage and redo until a valid edit', () => {
+  for (const pipeline of ['phraseForTrack', 'layOutTrackPhrase']) {
+    const { service, phrase, stored } = fixture({ contextualMelody: false });
+    service.updateSettings({ name: 'Redo target' });
+    service.undo();
+    const previous = service.project(), storage = [...stored];
+    const history = JSON.stringify(service.historyEntries());
+    const original = phrase[pipeline];
+    phrase[pipeline] = () => { throw new RangeError('Impossible melody constraints'); };
+    try {
+      service.updateTrackGeneratorSettings('track-melody-1', { maxBlockChange: 1 });
+      assert.equal(service.project(), previous);
+      assert.deepEqual([...stored], storage);
+      assert.equal(JSON.stringify(service.historyEntries()), history);
+      assert.equal(service.canRedo(), true);
+      assert.match(service.generationError(), /Impossible melody/);
+    } finally { phrase[pipeline] = original; }
+    service.dismissGenerationError();
+    assert.equal(service.generationError(), null);
+    service.redo();
+    assert.equal(service.project().name, 'Redo target');
+  }
+});
+

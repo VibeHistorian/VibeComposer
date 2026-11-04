@@ -670,10 +670,11 @@ export class WorkspaceCanvasComponent {
   editPartSettings(scope: PartSettingsScope, change: { key: string; value: PartSettingValue }): void {
     // The emitted scope belongs to this editor instance; never redirect a delayed gesture into a new selection.
     const before = this.project();
+    this.projects.dismissGenerationError();
     this.projects.updatePartSettings(scope, { [change.key]: change.value });
     const row = this.groupTrackSettings().find(item => item.key === JSON.stringify(scope));
-    this.editFailure.set(this.project() === before && !partValuesEqual((row?.values ?? this.partValues())[change.key], change.value)
-      ? { scope: JSON.stringify(scope), message: 'This value conflicts with another track or cell setting. Keep each velocity minimum at or below its maximum.' } : null);
+    this.editFailure.set(!this.projects.generationError() && this.project() === before && !partValuesEqual((row?.values ?? this.partValues())[change.key], change.value)
+      ? { scope: JSON.stringify(scope), message: 'Change cancelled because this value conflicts with another track or cell setting. Previous value kept.' } : null);
   }
 
   melodyRhythmHits(scope: PartSettingsScope): number {
@@ -686,9 +687,10 @@ export class WorkspaceCanvasComponent {
     const before = this.project();
     const keys = this.groupTrackSettings().find(item => item.key === JSON.stringify(scope))?.overriddenKeys ?? this.overriddenKeys();
     const hadOverride = field ? (typeof field === 'string' ? [field] : field).some(key => keys.includes(key)) : keys.length > 0;
+    this.projects.dismissGenerationError();
     this.projects.resetPartSettings(scope, field);
-    this.editFailure.set(this.project() === before && hadOverride ? { scope: JSON.stringify(scope),
-      message: 'Reset would conflict with another velocity setting. Reset both bounds together or adjust the other bound first.' } : null);
+    this.editFailure.set(!this.projects.generationError() && this.project() === before && hadOverride ? { scope: JSON.stringify(scope),
+      message: 'Reset cancelled because it conflicts with another track or cell setting. Previous values kept.' } : null);
   }
 
   randomizeArrangement(): void {

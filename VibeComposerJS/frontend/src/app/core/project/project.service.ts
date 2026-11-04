@@ -1,3 +1,4 @@
+import { samePhraseInputs } from '../music/phrase-inputs';
 import * as arrangementCommands from './project-arrangement-commands';
 import { fitVariationCapacity } from './arrangement-variation-capacity';
 import { DEFAULT_VARIATION_POLICY, pruneVariations, validVariationPolicy } from '../music/arrangement-variations';
@@ -64,6 +65,7 @@ export class ProjectService {
   readonly project = this.state.asReadonly();
   private readonly generationFailure = signal<string | null>(null);
   readonly generationError = this.generationFailure.asReadonly();
+  dismissGenerationError(): void { this.generationFailure.set(null); }
   private readonly automaticSeed = signal(BigInt(this.state().seed) === 0n);
   readonly seedInput = computed(() => this.automaticSeed() ? '0' : this.project().seed);
   readonly canUndo = this.undoAvailable.asReadonly();
@@ -756,6 +758,7 @@ export class ProjectService {
     if (!isProject(next, this.sectionTypeSettings.chances(), Math.random)) return 'invalid';
     const before = this.state();
     this.commit(next, controlKey);
+    if (this.generationFailure()) return 'invalid';
     return before === this.state() ? 'unchanged' : 'changed';
   }
 
@@ -769,6 +772,7 @@ export class ProjectService {
         return false;
       }
       this.commit(project);
+      if (this.generationFailure()) return false;
       this.automaticSeed.set(BigInt(project.seed) === 0n);
       return true;
     } catch (error) {
@@ -1273,6 +1277,18 @@ export class ProjectService {
     if (!isProject(next, this.sectionTypeSettings.chances(), Math.random) || JSON.stringify(current) === JSON.stringify(next)) {
       return;
     }
+    // Exercise both the global preview and section/dependency pipeline before
+    // publishing signals, changing history or persisting an unusable candidate.
+    try {
+      for (const track of samePhraseInputs(current, next) ? [] : next.tracks) {
+        phraseForTrack(next, track);
+        layOutTrackPhrase(next, track, true);
+      }
+    } catch (error) {
+      this.generationFailure.set(error instanceof Error ? error.message : 'The requested music could not be generated.');
+      return;
+    }
+    this.generationFailure.set(null);
     if (historyContent(current) === historyContent(next)) {
       this.state.set(next);
       this.persist(next);

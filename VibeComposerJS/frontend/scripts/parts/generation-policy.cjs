@@ -106,7 +106,7 @@ test('track layouts share generation across consumers without sharing mutable no
   const generate = generator.generateMelody;
   let calls = 0;
   generator.generateMelody = (...args) => { calls++; return generate(...args); };
-  const project = service.project();
+  const project = structuredClone(service.project());
   const track = project.tracks.find(track => track.role === 'melody');
   const score = phrase.layOutTrackPhrase(project, track, true);
   const firstCalls = calls;
