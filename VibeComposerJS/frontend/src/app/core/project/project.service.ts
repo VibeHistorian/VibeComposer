@@ -456,88 +456,79 @@ export class ProjectService {
     return next;
   }
 
-  /** User-triggered events only. Live reload, playback and ordinary edits never run policies. */
-  generateComposition(event: 'compose' | 'regenerate'): PartWorkflowResult {
+  /** Explicit Compose only. Live reload, playback and ordinary edits never run policies. */
+  generateComposition(): PartWorkflowResult {
     this.generationFailure.set(null);
     try {
-      return this.prepareComposition(event);
+      return this.prepareComposition();
     } catch (error) {
       this.generationFailure.set(error instanceof Error ? error.message : 'The requested music could not be generated.');
       return 'invalid';
     }
   }
 
-  private prepareComposition(event: 'compose' | 'regenerate'): PartWorkflowResult {
-    if (event !== 'compose' && event !== 'regenerate') return 'invalid';
+  private prepareComposition(): PartWorkflowResult {
     const current = this.state();
     let next = current;
-    if (event === 'compose') {
-      const seed = this.automaticSeed() || BigInt(current.seed) === 0n
-        ? this.randomCompositionSeed() : current.seed;
-      const random = new JavaRandom(BigInt(seed));
-      // Separate stream from track rerolls; draw both values even when a star is disabled.
-      const transpose = random.nextInt(12) - 6;
-      const bounds = this.uiPreferences.preferences();
-      const tempo = random.nextInt(bounds.composeBpmMax - bounds.composeBpmMin + 1) + bounds.composeBpmMin;
-      next = { ...current, seed,
-        transposeSemitones: current.randomizeTransposeOnCompose === false ? current.transposeSemitones : transpose,
-        tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
-      if (current.randomizeHarmonyOnCompose !== false) {
-        // Harmony owns its seeded stream; toggling it never shifts other random draws.
-        const generated = generateHarmony(BigInt(seed), current.progression.length, next.key, next.scale,
-          next.harmonySettings, next.melodyGlobal);
-        next = { ...next, progression: generated.degrees, progressionChords: generated.chords };
-      }
-      if ((next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.rangeRandomizeOnCompose
-        && next.tracks.some(track => track.role === 'melody' && !track.rerollLocked && !hasManualPhrase(track))) {
-        next = { ...next, tracks: next.tracks.map((track, index) => track.role === 'melody' && !track.rerollLocked && !hasManualPhrase(track)
-          ? { ...track, generatorSettings: { ...track.generatorSettings, ...contextualRange(BigInt(seed) + BigInt(index)) } } : track) };
-      }
-      for (const role of ARRANGED_PARTS) {
-        if ((current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose === false) continue;
-        const candidate = this.buildRoleReroll(next, role);
-        if (!candidate) return 'invalid';
-        next = candidate;
-      }
+    const seed = this.automaticSeed() || BigInt(current.seed) === 0n
+      ? this.randomCompositionSeed() : current.seed;
+    const random = new JavaRandom(BigInt(seed));
+    // Separate stream from track rerolls; draw both values even when a star is disabled.
+    const transpose = random.nextInt(12) - 6;
+    const bounds = this.uiPreferences.preferences();
+    const tempo = random.nextInt(bounds.composeBpmMax - bounds.composeBpmMin + 1) + bounds.composeBpmMin;
+    next = { ...current, seed,
+      transposeSemitones: current.randomizeTransposeOnCompose === false ? current.transposeSemitones : transpose,
+      tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
+    if (current.randomizeHarmonyOnCompose !== false) {
+      // Harmony owns its seeded stream; toggling it never shifts other random draws.
+      const generated = generateHarmony(BigInt(seed), current.progression.length, next.key, next.scale,
+        next.harmonySettings, next.melodyGlobal);
+      next = { ...next, progression: generated.degrees, progressionChords: generated.chords };
+    }
+    if ((next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.rangeRandomizeOnCompose
+      && next.tracks.some(track => track.role === 'melody' && !track.rerollLocked && !hasManualPhrase(track))) {
+      next = { ...next, tracks: next.tracks.map((track, index) => track.role === 'melody' && !track.rerollLocked && !hasManualPhrase(track)
+        ? { ...track, generatorSettings: { ...track.generatorSettings, ...contextualRange(BigInt(seed) + BigInt(index)) } } : track) };
+    }
+    for (const role of ARRANGED_PARTS) {
+      if ((current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose === false) continue;
+      const candidate = this.buildRoleReroll(next, role);
+      if (!candidate) return 'invalid';
+      next = candidate;
     }
     const policy = current.trackGenerationPolicies?.melody ?? DEFAULT_TRACK_POLICIES.melody;
-    if (event === 'compose' || policy.onRegenerate) {
-      const count = current.trackRerollCounts?.melody ?? 0;
-      const sources = next.tracks.filter(track => track.role === 'melody' && !track.rerollLocked);
-      if (sources.length && ((policy.patternsOnCompose ?? true) || (policy.targetsOnCompose ?? true)
-        || event === 'regenerate' && policy.rerollSeeds || !(next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.forceFirstOutline)) {
-        if (count >= 2147483647) return 'invalid';
-        const seed = this.trackRerollSeed(next, 'melody', count);
-        const random = new JavaRandom(seed);
-        const sharedSeed = random.nextInt(); // randomizeMelodySeeds draws once even for independent seeds.
-        let tracks = next.tracks.map(track => {
-          if (track.role !== 'melody' || track.rerollLocked) return track;
-          const settings = { ...track.generatorSettings };
-          if (event === 'regenerate' && policy.rerollSeeds) settings.patternSeed = policy.sameSeed ? sharedSeed : random.nextInt();
-          const order = next.tracks.filter(item => item.role === 'melody').indexOf(track) + 1;
-          const patternSeed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(next.seed)))) + order) | 0;
-          if (policy.patternsOnCompose ?? true) settings.melodyPatternOffsets = chooseMelodyPattern(patternSeed);
-          if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression, next.melodyGlobal,
-            next.key, next.scale, next.progressionChords, settings);
+    const count = current.trackRerollCounts?.melody ?? 0;
+    const sources = next.tracks.filter(track => track.role === 'melody' && !track.rerollLocked);
+    if (sources.length && ((policy.patternsOnCompose ?? true) || (policy.targetsOnCompose ?? true)
+      || !(next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.forceFirstOutline)) {
+      if (count >= 2147483647) return 'invalid';
+      let tracks = next.tracks.map(track => {
+        if (track.role !== 'melody' || track.rerollLocked) return track;
+        const settings = { ...track.generatorSettings };
+        const order = next.tracks.filter(item => item.role === 'melody').indexOf(track) + 1;
+        const patternSeed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(next.seed)))) + order) | 0;
+        if (policy.patternsOnCompose ?? true) settings.melodyPatternOffsets = chooseMelodyPattern(patternSeed);
+        if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression, next.melodyGlobal,
+          next.key, next.scale, next.progressionChords, settings);
+        if (partPatchesEqual(track.generatorSettings, settings)) return track;
+        return { ...track, generatorSettings: settings };
+      });
+      if (!(next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.forceFirstOutline) {
+        const first = tracks.find(track => track.role === 'melody');
+        if (first?.role === 'melody') tracks = tracks.map(track => {
+          if (track.role !== 'melody' || track === first || track.rerollLocked) return track;
+          const settings = forceMelodyOutline(first.generatorSettings, track.generatorSettings);
           if (partPatchesEqual(track.generatorSettings, settings)) return track;
           return { ...track, generatorSettings: settings };
         });
-        if (!(next.melodyGlobal?.contextualMelody ?? true) && next.melodyGlobal?.forceFirstOutline) {
-          const first = tracks.find(track => track.role === 'melody');
-          if (first?.role === 'melody') tracks = tracks.map(track => {
-            if (track.role !== 'melody' || track === first || track.rerollLocked) return track;
-            const settings = forceMelodyOutline(first.generatorSettings, track.generatorSettings);
-            if (partPatchesEqual(track.generatorSettings, settings)) return track;
-            return { ...track, generatorSettings: settings };
-          });
-        }
-        // Forced outline can erase intermediate per-track preparation changes.
-        const changed = tracks.some((track, index) => !partPatchesEqual(track.generatorSettings, next.tracks[index].generatorSettings));
-        if (changed) next = { ...next, tracks,
-          trackRerollCounts: { ...next.trackRerollCounts, melody: count + 1 } };
       }
+      // Forced outline can erase intermediate per-track preparation changes.
+      const changed = tracks.some((track, index) => !partPatchesEqual(track.generatorSettings, next.tracks[index].generatorSettings));
+      if (changed) next = { ...next, tracks,
+        trackRerollCounts: { ...next.trackRerollCounts, melody: count + 1 } };
     }
-    if (event === 'compose' && next.randomizeArrangementOnCompose) {
+    if (next.randomizeArrangementOnCompose) {
       // Plan after track preparation; orchestration and variations own independent streams.
       const random = new JavaRandom(BigInt(next.seed));
       if (next.arrangementManual) {

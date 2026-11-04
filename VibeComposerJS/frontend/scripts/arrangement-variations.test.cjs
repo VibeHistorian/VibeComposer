@@ -544,7 +544,7 @@ test('Compose, insertion and toolbar rerolls read UI behavior immediately while 
   const { service, project, load, uiPreferences } = setup();
   const defaults = load('core/music/track-generation.ts').DEFAULT_TRACK_POLICIES;
   project.trackGenerationPolicies = Object.fromEntries(Object.entries(defaults).map(([role, policy]) => [role,
-    { ...policy, onCompose: false, ...(role === 'melody' ? { patternsOnCompose: false, targetsOnCompose: false, onRegenerate: false } : {}) }]));
+    { ...policy, onCompose: false, ...(role === 'melody' ? { patternsOnCompose: false, targetsOnCompose: false } : {}) }]));
   project.randomizeHarmonyOnCompose = false; project.randomizeTempoOnCompose = false; project.randomizeTransposeOnCompose = false;
   project.randomizeArrangementOnCompose = true; project.arrangementManual = true;
   project.arrangementVariationPolicy = { chance: 100, maxChanges: 2 };
@@ -552,7 +552,7 @@ test('Compose, insertion and toolbar rerolls read UI behavior immediately while 
   const before = service.exportProjectJson();
   uiPreferences.setArrangementBehavior('generateArrangementVariations', true);
   assert.equal(service.exportProjectJson(), before, 'no popup Apply needed and no project edits');
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.deepEqual(service.project().arrangement.map(s => [s.id, s.type, s.measures]), project.arrangement.map(s => [s.id, s.type, s.measures]));
   assert.ok(service.project().arrangement.every(s => s.variations));
   const choices = structuredClone(service.project().arrangement.map(s => s.variations));
@@ -560,14 +560,13 @@ test('Compose, insertion and toolbar rerolls read UI behavior immediately while 
   service.undo(); assert.equal(service.exportProjectJson(), before);
   assert.equal(uiPreferences.generateArrangementVariations(), true, 'project undo preserves app behavior');
   service.redo(); assert.equal(service.exportProjectJson(), composed);
-  service.generateComposition('regenerate'); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
   service.randomizeArrangementPresence(); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
   uiPreferences.setArrangementBehavior('generateArrangementVariations', false);
-  service.generateComposition('compose'); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
-  service.updateSettings({ arrangementManual: false }); service.generateComposition('compose');
+  service.generateComposition(); assert.deepEqual(service.project().arrangement.map(s => s.variations), choices);
+  service.updateSettings({ arrangementManual: false }); service.generateComposition();
   assert.ok(service.project().arrangement.every(s => s.variations === undefined));
   uiPreferences.setArrangementBehavior('generateArrangementVariations', true);
-  service.generateComposition('compose'); assert.ok(service.project().arrangement.every(s => s.variations));
+  service.generateComposition(); assert.ok(service.project().arrangement.every(s => s.variations));
   service.randomizeArrangement(); assert.ok(service.project().arrangement.every(s => s.variations));
   service.addSection('BUILDUP2', 0); assert.ok(service.project().arrangement[1].variations);
 });
@@ -1659,7 +1658,7 @@ test('authored choices retain seed, strength and slots through rerolls and fixed
   assert.equal(service.importProjectJson(JSON.stringify(project)),true);
   service.updateSettings({arrangementManual:true,randomizeArrangementOnCompose:true});
   uiPreferences.setArrangementBehavior('generateArrangementVariations',true);
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.deepEqual(service.project().arrangement[1].variations.choices.find(c=>c.trackId===track.id),authored);
   const saved=service.exportProjectJson();
   service.randomizeArrangementVariations(undefined,undefined,30n);
@@ -1705,7 +1704,7 @@ test('variation reroll preferences persist independently and filter all generati
   service.randomizeArrangement();assert.ok(service.project().arrangement.every(s=>s.variations.choices.length===0));
   service.addSection();assert.equal(service.project().arrangement.at(-1).variations.choices.length,0);
   service.updateSettings({arrangementManual:true,randomizeArrangementOnCompose:true});
-  service.generateComposition('compose');assert.ok(service.project().arrangement.every(s=>s.variations.choices.length===0));
+  service.generateComposition();assert.ok(service.project().arrangement.every(s=>s.variations.choices.length===0));
   const melody=project.tracks.find(t=>t.role==='melody');
   const choice={trackId:melody.id,kind:'melody-speed',amount:1,enabled:true,parameters:{speedDelta:40},origin:'authored',seed:'1'};
   const p={...project,arrangement:project.arrangement.map(s=>({...s,variations:{seed:'1',policy:{chance:100,maxChanges:2},choices:[choice]}}))};

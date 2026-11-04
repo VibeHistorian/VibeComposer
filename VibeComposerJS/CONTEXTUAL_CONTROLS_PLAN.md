@@ -52,7 +52,7 @@ Implementation slices and musical design live in [the arrangement variations pla
 - Define supported section-wide and section-part variations and their actual musical consumers. Keep variation-generation chances separate from realized choices and track presence.
 - Add indicators in the arrangement canvas and a popup for inspecting, enabling, disabling and rerolling variations in the selected context.
 - Distinguish variation state from selection, presence, customized settings and manual phrases. Give indicators accessible labels and keyboard/device alternatives without changing cell/track selection behavior.
-- Define precedence against explicit musical overrides and manual phrases, and the effect of Compose, Regenerate, presence rerolls, duplication and reset.
+- Define precedence against explicit musical overrides and manual phrases, and the effect of Compose, role reseeding, presence rerolls, duplication and reset.
 - Persist realized choices and policies; use deterministic streams and shared resolved output for score, dependencies, playback and export. Popup Apply commits once; Cancel publishes nothing.
 
 ### Instrument pool presets

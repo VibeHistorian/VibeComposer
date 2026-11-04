@@ -60,25 +60,23 @@ export class TransportDockComponent {
   private readonly generationFeedback = signal<{ project: unknown; message: string } | null>(null);
   readonly generationMessage = computed(() => this.generationFeedback()?.project === this.project() ? this.generationFeedback()?.message : null);
 
-  generate(event: 'compose' | 'regenerate'): void {
-    const started = event === 'compose' ? performance.now() : undefined;
-    const result = this.projects.generateComposition(event);
-    if (event === 'compose' && result !== 'invalid') {
+  generate(): void {
+    const started = performance.now();
+    const result = this.projects.generateComposition();
+    if (result !== 'invalid') {
       if (this.project().arrangementPreview) {
         const sectionId = this.playback.previewArrangement(this.project());
         if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId);
       }
       else if (this.preferences.restartPlaybackOnCompose()) this.playback.restartAfterCompose(this.project());
     }
-    this.generationFeedback.set({ project: this.project(), message: result === 'invalid'
-      ? `${event === 'compose' ? 'Compose' : 'Regenerate'} cancelled. ${this.projects.generationError() ?? 'Generation conflicts with local settings.'} Previous arrangement kept.`
-      : result === 'unchanged' ? 'Settings already match the generation rules.' : `${event === 'compose' ? 'Compose' : 'Regenerate'} settings applied.` });
-    if (started !== undefined) {
-      // Include Angular's update, canvas drawing and the browser's next paint.
-      afterNextRender(() => requestAnimationFrame(() => setTimeout(() => {
-        console.log(`[Compose] ${(performance.now() - started).toFixed(1)} ms`);
-      }, 0)), { injector: this.injector });
-    }
+    this.generationFeedback.set(result === 'changed' ? null : { project: this.project(), message: result === 'invalid'
+      ? `Compose cancelled. ${this.projects.generationError() ?? 'Generation conflicts with local settings.'} Previous arrangement kept.`
+      : 'Settings already match the generation rules.' });
+    // Include Angular's update, canvas drawing and the browser's next paint.
+    afterNextRender(() => requestAnimationFrame(() => setTimeout(() => {
+      console.log(`[Compose] ${(performance.now() - started).toFixed(1)} ms`);
+    }, 0)), { injector: this.injector });
   }
   readonly trackIds = computed(() => this.project().tracks.map(track => track.id));
   private readonly liveReloadEffect = effect(() => {

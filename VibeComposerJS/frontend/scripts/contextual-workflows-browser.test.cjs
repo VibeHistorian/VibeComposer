@@ -262,11 +262,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const melody = document.querySelector('.track-group.melody');
       melody.querySelector('.group-select').click();
       (await wait(() => melody.querySelector('[aria-label="Same seed"]'), 'melody policies')).click();
-      await wait(() => read().trackGenerationPolicies?.melody?.sameSeed, 'regenerate rule');
+      await wait(() => read().trackGenerationPolicies?.melody?.sameSeed, 'reseed rule');
       result.rulesPreserveTracks = beforeRules === JSON.stringify(read().tracks);
       melody.querySelector('.seed-controls button').click();
-      await wait(() => read().tracks[0].generatorSettings.patternSeed, 'regenerate seed');
-      result.regenerated = read().tracks.filter(track => track.role === 'melody').every(track => Number.isInteger(track.generatorSettings.patternSeed));
+      await wait(() => read().tracks[0].generatorSettings.patternSeed, 'reseed seed');
+      result.reseeded = read().tracks.filter(track => track.role === 'melody').every(track => Number.isInteger(track.generatorSettings.patternSeed));
       document.querySelector('.track-group.arpeggio .group-select').click();
       (await wait(() => document.querySelector('.track-group.arpeggio [aria-label="On Compose"]'), 'arp policies')).click();
       const beforeCompose = JSON.stringify(read());
@@ -980,7 +980,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     assert.equal(shortGroup.exceptionDetails, undefined, JSON.stringify(shortGroup));
     assert.deepEqual(shortGroup.result.value, { panelVisible: true, scoreVisible: true, fits: true });
     assert.deepEqual(actual.copied, [35,45,35,35,35,35]);
-    for (const key of ['rulesPreserveTracks','regenerated','composed','keyboardCell','mixed','localRetained','noopDisabled','quickCustomization',
+    for (const key of ['rulesPreserveTracks','reseeded','composed','keyboardCell','mixed','localRetained','noopDisabled','quickCustomization',
       'createRemoved','seedInDock','noKeySelector','transposeKey','tempoKnob','modeFitsRow','rootMenuFits','rootColors','spiceColors','menuKeyboard','chordletGestures',
       'chordEditors','chordPolicyOnly','chordPolicies','arpMusical','arpMelody','drumMusical','drumMelody','melodyExtended','melodyGlobal','catalogue','defaultResets','flipEmphasis','chordRepairs','tonalTargets','targetModes','targetPreparation','actionsFit','trackRowsFit','groupIconsVisible','pageFits','trackScroll']) assert.equal(actual[key], true, key + ': ' + JSON.stringify(actual));
   } finally {

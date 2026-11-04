@@ -69,10 +69,10 @@ test('Compose uses equal inclusive bounds and preserves disabled explicit tempo'
   const f = fixture();
   f.uiPreferences.setComposeBpmBound('composeBpmMax', 140);
   f.uiPreferences.setComposeBpmBound('composeBpmMin', 140);
-  assert.equal(f.service.generateComposition('compose'), 'changed');
+  assert.equal(f.service.generateComposition(), 'changed');
   assert.equal(f.service.project().tempoBpm, 140);
   f.service.updateSettings({ tempoBpm: 95, randomizeTempoOnCompose: false });
-  f.service.generateComposition('compose');
+  f.service.generateComposition();
   assert.equal(f.service.project().tempoBpm, 95);
 });
 

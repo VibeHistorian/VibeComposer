@@ -14,16 +14,16 @@ test('Global Harmony On Compose defaults on, uses the composition seed, and comm
   const project = service.project();
   const expected = load('core/music/contextual-harmony.ts').generateHarmony(BigInt(project.seed), 6,
     project.key, project.scale, project.harmonySettings, project.melodyGlobal);
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.deepEqual(service.project().progression, expected.degrees);
   assert.deepEqual(service.project().progressionChords, expected.chords);
   const after = service.exportProjectJson();
   service.undo(); assert.equal(service.exportProjectJson(), before, 'one undo restores the whole Compose');
   service.redo(); assert.equal(service.exportProjectJson(), after);
-  service.undo(); service.generateComposition('compose'); assert.equal(service.exportProjectJson(), after);
+  service.undo(); service.generateComposition(); assert.equal(service.exportProjectJson(), after);
 });
 
-test('Global Harmony Compose toggle persists and preserves custom harmony while off and during Regenerate', () => {
+test('Global Harmony Compose toggle persists and preserves custom harmony while off', () => {
   const { service, load, stored } = fixture({ contextualMelody: false });
   const { TransportDockComponent } = load('features/transport/transport-dock.component.ts');
   const transport = new TransportDockComponent();
@@ -39,10 +39,7 @@ test('Global Harmony Compose toggle persists and preserves custom harmony while 
   service.setProgressionChord(0, { root: 1, spice: '7', inversion: 0 });
   const harmony = () => [service.project().progression, service.project().progressionChords];
   const expected = harmony();
-  assert.equal(service.generateComposition('compose'), 'changed');
-  assert.deepEqual(harmony(), expected);
-  transport.toggleComposeRandomization('randomizeHarmonyOnCompose');
-  service.generateComposition('regenerate');
+  assert.equal(service.generateComposition(), 'changed');
   assert.deepEqual(harmony(), expected);
 });
 
@@ -65,7 +62,7 @@ test('failed contextual Compose keeps the rendered project, storage, history and
   transport.playback.restartAfterCompose = () => { restarts++; };
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
-      transport.generate('compose');
+      transport.generate();
       assert.equal(service.project(), previous);
       assert.match(service.generationError(), /No contextual melody satisfies/);
       assert.match(transport.generationMessage(), /Compose cancelled.*No contextual melody.*Previous arrangement kept/);
@@ -76,26 +73,25 @@ test('failed contextual Compose keeps the rendered project, storage, history and
       assert.equal(restarts, 0);
     }
   } finally { ranges.contextualRange = range; }
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.equal(service.generationError(), null, 'a successful attempt clears the old error');
   assert.equal(service.canRedo(), false);
   assert.doesNotThrow(() => workspace.scoreNotes());
 });
 
-test('section layout failures reject Compose and Regenerate before publishing a candidate', () => {
+test('section layout failures reject Compose before publishing a candidate', () => {
   const { service, phrase } = fixture({ contextualMelody: false });
-  service.updateTrackGenerationPolicy('melody', { onRegenerate: true, rerollSeeds: true });
   const previous = service.project();
   const layout = phrase.layOutTrackPhrase;
   let attempts = 0;
   phrase.layOutTrackPhrase = () => { attempts++; throw new RangeError('Section melody cannot be generated.'); };
   try {
-    for (const event of ['compose', 'regenerate']) {
-      assert.equal(service.generateComposition(event), 'invalid');
+    for (let attempt = 0; attempt < 2; attempt++) {
+      assert.equal(service.generateComposition(), 'invalid');
       assert.equal(service.project(), previous);
       assert.equal(service.generationError(), 'Section melody cannot be generated.');
     }
-    assert.equal(attempts, 2, 'both events validate section generation, beyond global note counts');
+    assert.equal(attempts, 2, 'both attempts validate section generation, beyond global note counts');
   } finally { phrase.layOutTrackPhrase = layout; }
 });
 
@@ -164,27 +160,22 @@ test('contextual range randomizes only on Compose and preserves disabled targets
   service.updateMelodyGlobal({ contextualMelody: true, rangeRandomizeOnCompose: true });
   service.updateTrackGenerationPolicy('melody', { targetsOnCompose: false });
   const targets = service.project().tracks.find(t => t.role === 'melody').generatorSettings.chordNoteChoices;
-  service.generateComposition('compose');
+  service.generateComposition();
   const range = contextualRange(9223372036854775807n);
   assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMin,range.rangeMin);
   assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMax,range.rangeMax);
   assert.deepEqual(service.project().tracks.find(t => t.role === 'melody').generatorSettings.chordNoteChoices,targets);
-  service.generateComposition('regenerate');
-  assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMin,range.rangeMin);
-  assert.equal(service.project().tracks.find(t => t.role === 'melody').generatorSettings.rangeMax,range.rangeMax);
 });
 
 test('zero seed keeps automatic input, saves the generated seed and loads it as explicit input', () => {
   const { service, load } = fixture({ contextualMelody: false });
   service.updateSettings({ seed: '0' });
   assert.equal(service.seedInput(), '0');
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   const first = service.project().seed;
   assert.notEqual(first, '0');
   assert.equal(service.seedInput(), '0');
-  service.generateComposition('regenerate');
-  assert.equal(service.project().seed, first);
-  service.generateComposition('compose');
+  service.generateComposition();
   const generated = service.project().seed;
   assert.notEqual(generated, first);
   const exported = service.exportProjectJson();
@@ -193,7 +184,7 @@ test('zero seed keeps automatic input, saves the generated seed and loads it as 
   assert.equal(service.importProjectJson(exported), true);
   assert.equal(service.seedInput(), generated);
   service.updateSettings({ seed: '9223372036854775807' });
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.equal(service.project().seed, '9223372036854775807');
 });
 
@@ -202,14 +193,14 @@ test('Compose stars default on, preserve disabled global values and round-trip i
   for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) assert.equal(workspace.policyFor(role).onCompose, true);
   service.updateSettings({ seed: '123', tempoBpm: 200, transposeSemitones: 24 });
   const before = service.exportProjectJson();
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.ok(service.project().tempoBpm >= 60 && service.project().tempoBpm <= 100);
   assert.ok(service.project().transposeSemitones >= -6 && service.project().transposeSemitones <= 5);
   const after = service.exportProjectJson();
   service.undo(); assert.equal(service.exportProjectJson(), before);
-  service.generateComposition('compose'); assert.equal(service.exportProjectJson(), after);
+  service.generateComposition(); assert.equal(service.exportProjectJson(), after);
   service.updateSettings({ tempoBpm: 200, transposeSemitones: 24, randomizeTempoOnCompose: false, randomizeTransposeOnCompose: false });
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.equal(service.project().tempoBpm, 200);
   assert.equal(service.project().transposeSemitones, 24);
   const saved = service.exportProjectJson();
@@ -217,7 +208,7 @@ test('Compose stars default on, preserve disabled global values and round-trip i
   assert.equal(service.project().randomizeTempoOnCompose, false);
   assert.equal(service.project().randomizeTransposeOnCompose, false);
   service.updateSettings({ randomizeTempoOnCompose: true });
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.notEqual(service.project().tempoBpm, 200);
   assert.equal(service.project().transposeSemitones, 24);
   for (const field of ['randomizeTempoOnCompose', 'randomizeTransposeOnCompose']) {
@@ -328,7 +319,7 @@ test('P6 drum rule-only edits, rerolls, Compose and additions preserve ownership
   assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
   assert.deepEqual(new (load('core/project/project.service.ts').ProjectService)().project(),service.project());
   service.setTrackRerollLock(id,true); const locked=service.project().tracks.find(track=>track.id===id);
-  service.generateComposition('compose'); assert.deepEqual(service.project().tracks.find(track=>track.id===id),locked);
+  service.generateComposition(); assert.deepEqual(service.project().tracks.find(track=>track.id===id),locked);
   const prior=service.exportProjectJson(); service.setRoleTrackCount('drums',4);
   assert.equal(service.project().tracks.filter(track=>track.role==='drums').length,4);
   assert.deepEqual(service.project().tracks.find(track=>track.id===id),locked);
@@ -417,7 +408,7 @@ test('chord policies bias strums, bound transitions/pauses, enforce Expand and r
   service.rerollRoleTracks('chords'); assert.equal(service.exportProjectJson(), after);
   assert.equal(service.importProjectJson(after), true);
   service.updateTrackGenerationPolicy('chords', { onCompose: true });
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   for (const patch of [{ struminess: 101 }, { maxSplit: -1 }, { split: 0 }, { maxStrumPause: 1.5 }, { expandChance: 101 }]) {
     assert.equal(service.updateTrackGenerationPolicy('chords', patch), 'invalid');
   }
@@ -437,7 +428,7 @@ test('automatic events are atomic, replayable and preserve locks, local settings
   for (const role of ['melody', 'chords', 'arpeggio', 'drums']) service.updateTrackGenerationPolicy(role, { onCompose: true });
   const before = service.exportProjectJson(), arrangement = service.project().arrangement;
   const locked = service.project().tracks.find(track => track.id === 'track-melody-2');
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   const after = service.exportProjectJson();
   for (const role of ['melody','chords','arpeggio','drums']) assert.equal(service.project().trackRerollCounts[role], 1);
   assert.strictEqual(service.project().arrangement, arrangement);
@@ -446,38 +437,15 @@ test('automatic events are atomic, replayable and preserve locks, local settings
   assert.equal(new Midi(midi.generateCompositionMidi(service.project())).tracks[0].notes[0].midi, 72);
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), after);
-  service.undo(); service.generateComposition('compose'); assert.equal(service.exportProjectJson(), after);
+  service.undo(); service.generateComposition(); assert.equal(service.exportProjectJson(), after);
   assert.deepEqual(projectData(stored.get('vibecomposer.project.v12')), projectData(after));
   assert.equal(service.importProjectJson(after), true);
   const { ProjectService } = load('core/project/project.service.ts');
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(after));
 });
 
-test('Regenerate changes only enabled Melody seeds, patterns and targets, respecting shared seeds', () => {
-  const { service } = fixture({ contextualMelody: false });
-  service.addTrack('melody'); service.addTrack('melody');
-  service.setTrackRerollLock('track-melody-3', true);
-  service.updateTrackGenerationPolicy('melody', { onRegenerate: true, sameSeed: true });
-  const before = service.project(), locked = before.tracks.find(track => track.id === 'track-melody-3');
-  assert.equal(service.generateComposition('regenerate'), 'changed');
-  const next = service.project(), members = next.tracks.filter(track => track.role === 'melody');
-  assert.equal(members[0].generatorSettings.patternSeed, members[1].generatorSettings.patternSeed);
-  assert.strictEqual(members[2], locked);
-  for (const track of next.tracks.filter(track => track.role !== 'melody')) assert.strictEqual(track, before.tracks.find(item => item.id === track.id));
-  for (const track of members.slice(0, 2)) {
-    const old = before.tracks.find(item => item.id === track.id).generatorSettings;
-    for (const [key, value] of Object.entries(old)) {
-      if (!['patternSeed', 'melodyPatternOffsets', 'chordNoteChoices'].includes(key)) assert.deepEqual(track.generatorSettings[key], value);
-    }
-  }
-  service.updateTrackGenerationPolicy('melody', { onRegenerate: false });
-  const json = service.exportProjectJson();
-  assert.equal(service.generateComposition('regenerate'), 'unchanged'); assert.equal(service.exportProjectJson(), json);
-  service.updateTrackGenerationPolicy('melody', { onRegenerate: true, rerollSeeds: false, targetsOnCompose: false, patternsOnCompose: false });
-  assert.equal(service.generateComposition('regenerate'), 'unchanged');
-});
 
-test('automatic batch failures and no-ops preserve state, counters and redo', () => {
+test('automatic batch failures preserve state, counters and redo', () => {
   const { service } = fixture({ contextualMelody: false });
   service.updateTrackGenerationPolicy('arpeggio', { onCompose: true, velocityMin: 65 });
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: 'track-arpeggio-1' };
@@ -486,10 +454,8 @@ test('automatic batch failures and no-ops preserve state, counters and redo', ()
   service.updateTrackGenerationPolicy('chords', { onCompose: true });
   const before = service.exportProjectJson();
   service.updateSettings({ tempoBpm: 130 }); service.undo();
-  assert.equal(service.generateComposition('compose'), 'invalid');
+  assert.equal(service.generateComposition(), 'invalid');
   assert.equal(service.exportProjectJson(), before); assert.equal(service.canRedo(), true);
-  assert.equal(service.generateComposition('regenerate'), 'unchanged'); assert.equal(service.canRedo(), true);
-  assert.equal(service.generateComposition('bad'), 'invalid');
 });
 
 test('P5e target mode edits reinterpret scoped notes and prepare Chordlet targets only on permitted events', () => {
@@ -517,20 +483,20 @@ test('P5e target mode edits reinterpret scoped notes and prepare Chordlet target
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track(id)), original);
   service.updateMelodyGlobal({ blockTargetMode: 1, useDirectionsFromProgression: true, targetNoteVariation: 6 });
   const { chooseMelodyTargets } = load('core/music/melody-targets.ts');
-  service.updateTrackGenerationPolicy('melody', { targetsOnCompose: false, patternsOnCompose: false, rerollSeeds: false, onRegenerate: true });
+  service.updateTrackGenerationPolicy('melody', { targetsOnCompose: false, patternsOnCompose: false, rerollSeeds: false });
   const existing = [...track(id).generatorSettings.chordNoteChoices ?? [0,2,2,4]];
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.deepEqual(track(id).generatorSettings.chordNoteChoices ?? [0,2,2,4], existing);
   service.updateTrackGenerationPolicy('melody', { targetsOnCompose: true });
   const project = service.project(), locked = track(duplicate);
   const targetSeed = ((track(id).generatorSettings.patternSeed || Number(BigInt.asIntN(32, BigInt(project.seed)))) + 1) | 0;
   const expected = chooseMelodyTargets(targetSeed, project.progression, project.melodyGlobal, project.key, project.scale, project.progressionChords);
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.deepEqual(track(id).generatorSettings.chordNoteChoices, expected);
   assert.strictEqual(track(duplicate), locked);
   assert.strictEqual(service.project().arrangement, project.arrangement);
   const prepared = service.exportProjectJson();
-  service.undo(); service.generateComposition('compose'); assert.equal(service.exportProjectJson(), prepared);
+  service.undo(); service.generateComposition(); assert.equal(service.exportProjectJson(), prepared);
   let saved = service.exportProjectJson();
   const notes = phrase.layOutTrackPhrase(service.project(), track(id));
   const exported = new Midi(midi.generateCompositionMidi(service.project()));
@@ -584,7 +550,7 @@ test('P5e target preparation preserves current notes until events, locks, local 
   const targetSeed = ((track(primary).generatorSettings.patternSeed || Number(BigInt.asIntN(32, BigInt(service.project().seed)))) + 1) | 0;
   const expected = chooseMelodyTargets(targetSeed, service.project().progression, { contextualMelody: false, ...inputs }, 'C', 'major', undefined, track(primary).generatorSettings);
   const locked = track(duplicate);
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.deepEqual(track(primary).generatorSettings.chordNoteChoices, expected);
   assert.strictEqual(track(duplicate), locked);
   assert.strictEqual(service.project().arrangement, arrangement);
@@ -598,20 +564,11 @@ test('P5e target preparation preserves current notes until events, locks, local 
     assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
   });
   service.undo(); assert.equal(service.exportProjectJson(), before);
-  service.generateComposition('compose'); assert.equal(service.exportProjectJson(), after);
+  service.generateComposition(); assert.equal(service.exportProjectJson(), after);
   assert.equal(service.importProjectJson(after), true);
   const { ProjectService } = load('core/project/project.service.ts');
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(after));
-  service.updateTrackGenerationPolicy('melody', { targetsOnCompose: false, patternsOnCompose: false, rerollSeeds: false, onRegenerate: true });
-  const disabled = service.exportProjectJson();
-  assert.equal(service.generateComposition('regenerate'), 'unchanged');
-  assert.equal(service.exportProjectJson(), disabled);
-  service.updateTrackGenerationPolicy('melody', { targetsOnCompose: true });
-  service.updatePartSettings({ kind: 'global-role', role: 'melody' }, { targetDirection: 'ANY' });
-  service.updateMelodyGlobal({ targetNoteVariation: 1, useDirectionsFromProgression: false });
-  assert.equal(service.generateComposition('regenerate'), 'changed');
-  assert.deepEqual(track(primary).generatorSettings.chordNoteChoices,
-    chooseMelodyTargets(targetSeed, service.project().progression, service.project().melodyGlobal, 'C', 'major', undefined, track(primary).generatorSettings));
+
 });
 
 test('P5e forced outline follows the first stored Melody and only copies the production outline fields', () => {
@@ -632,7 +589,7 @@ test('P5e forced outline follows the first stored Melody and only copies the pro
   assert.equal(service.updateMelodyGlobal({ forceFirstOutline: true }), 'changed');
   assert.strictEqual(service.project().tracks, members);
   const before = service.exportProjectJson();
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   const result = service.project().tracks.find(track => track.id === second);
   const previous = members.find(track => track.id === second);
   for (const [key, value] of Object.entries(sourceFields)) assert.deepEqual(result.generatorSettings[key], value);
@@ -647,13 +604,12 @@ test('P5e forced outline follows the first stored Melody and only copies the pro
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), after);
   service.updateSettings({ name: 'redo' }); service.undo();
-  assert.equal(service.generateComposition('compose'), 'unchanged');
+  assert.equal(service.generateComposition(), 'unchanged');
   assert.equal(service.exportProjectJson(), after); assert.equal(service.canRedo(), true);
-  assert.equal(service.generateComposition('regenerate'), 'unchanged', 'disabled event does not force outlines');
   service.removeTrack(primary);
   service.setTrackRerollLock(third, false);
   service.updatePartSettings({ kind: 'global-track', trackId: third }, { speed: 100 });
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.equal(service.project().tracks.find(track => track.id === third).generatorSettings.speed, 0, 'next stored member becomes the source');
 });
 
@@ -1123,20 +1079,20 @@ test('Bass On Compose controls implicit rerolls, persists, and preserves locked 
   service.setTrackRerollLock('track-bass-2', true);
   const bass = () => JSON.parse(JSON.stringify(service.project().tracks.filter(track => track.role === 'bass')));
   const before = bass();
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.deepEqual(bass(), before);
   assert.equal(service.updateTrackGenerationPolicy('bass', { onCompose: true }), 'changed');
   const enabled = service.exportProjectJson();
   assert.equal(service.importProjectJson(enabled), true);
   assert.equal(service.project().trackGenerationPolicies.bass.onCompose, true);
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.equal(service.project().trackRerollCounts.bass, 1);
   assert.notDeepEqual(bass()[0].generatorSettings, before[0].generatorSettings);
   assert.deepEqual(bass()[1], before[1]);
   service.undo();
   assert.deepEqual(projectData(service.exportProjectJson()), projectData(enabled));
   service.updateTrackGenerationPolicy('bass', { onCompose: false });
-  service.generateComposition('compose');
+  service.generateComposition();
   assert.deepEqual(bass(), before);
   assert.equal(service.project().trackRerollCounts?.bass ?? 0, 0);
 });

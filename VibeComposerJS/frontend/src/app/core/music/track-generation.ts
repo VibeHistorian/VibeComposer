@@ -86,13 +86,13 @@ export const TRACK_POLICY_CONTROLS: Readonly<Record<ArrangedPart, readonly Polic
     { key: 'melodyChance', label: 'Follow Melody %', minimum: 0, maximum: 100, advanced: true },
     { key: 'shiftChance', label: 'Shift chance %', minimum: 0, maximum: 100, advanced: true },
   ],
-  melody: [{ key: 'onCompose', label: 'On Compose' }, { key: 'onRegenerate', label: 'On Regenerate' },
+  melody: [{ key: 'onCompose', label: 'On Compose' },
     { key: 'targetsOnCompose', label: 'Automatic targets' }, { key: 'patternsOnCompose', label: 'Automatic block patterns' },
     { key: 'rerollSeeds', label: 'Reroll seeds' }, { key: 'sameSeed', label: 'Same seed' },
     { key: 'patterns', label: 'Block patterns' }],
 };
 
-const AUTOMATIC_POLICY_KEYS = ['onCompose', 'onRegenerate', 'targetsOnCompose', 'patternsOnCompose'];
+const AUTOMATIC_POLICY_KEYS = ['onCompose', 'targetsOnCompose', 'patternsOnCompose'];
 export function automaticPolicyDefault(key: string): boolean {
   return key === 'onCompose' || key === 'targetsOnCompose' || key === 'patternsOnCompose';
 }

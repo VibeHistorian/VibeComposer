@@ -206,7 +206,6 @@ test('automatic policy import accepts omission and rejects invalid or unknown fi
     assertRejectedProjectImport(service, JSON.stringify(data));
   }
   assert.equal(service.updateTrackGenerationPolicy('bass', { patterns: true }), 'invalid');
-  assert.equal(service.updateTrackGenerationPolicy('drums', { onRegenerate: true }), 'invalid');
 });
 
 test('instrument rules and locks strictly validate and persist without schema gates', () => {

@@ -167,7 +167,7 @@ test('melody tracks prepare targets with independent directions and preserve loc
     chooseMelodyTargets((Number(BigInt.asIntN(32, BigInt(before.seed))) + index + 1) | 0,
       before.progression, before.melodyGlobal, before.key, before.scale, before.progressionChords, track.generatorSettings));
   assert.notDeepEqual(expected[0], expected[1]);
-  assert.equal(service.generateComposition('compose'), 'changed');
+  assert.equal(service.generateComposition(), 'changed');
   assert.deepEqual(service.project().tracks.filter(track => track.role === 'melody').map(track => track.generatorSettings.chordNoteChoices), expected);
   assert.strictEqual(service.project().arrangement, before.arrangement);
   service.undo(); assert.equal(service.exportProjectJson(), beforeJson);

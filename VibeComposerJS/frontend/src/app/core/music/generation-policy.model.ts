@@ -73,7 +73,6 @@ export interface DrumGenerationPolicy extends SeedGenerationPolicy {
 
 export interface MelodyGenerationPolicy extends SeedGenerationPolicy {
   readonly onCompose?: boolean;
-  readonly onRegenerate?: boolean;
   readonly targetsOnCompose?: boolean;
   readonly patternsOnCompose?: boolean;
   readonly rerollSeeds: boolean;
