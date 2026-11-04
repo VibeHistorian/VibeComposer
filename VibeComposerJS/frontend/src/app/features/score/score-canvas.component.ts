@@ -880,7 +880,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     };
     const line = (x1: number, y1: number, x2: number, y2: number, name: string, alpha = 1): void => {
       const parsed = color(name);
-      graphics.moveTo(x1, y1).lineTo(x2, y2).stroke({ color: parsed.value, alpha: parsed.alpha * alpha, width: 1 });
+      // Match a centered, one-CSS-pixel butt-cap stroke without constructing
+      // and triangulating a stroked path for each axis-aligned grid line.
+      if (x1 === x2) graphics.rect(x1 - 0.5, Math.min(y1, y2), 1, Math.abs(y2 - y1))
+        .fill({ color: parsed.value, alpha: parsed.alpha * alpha });
+      else graphics.rect(Math.min(x1, x2), y1 - 0.5, Math.abs(x2 - x1), 1)
+        .fill({ color: parsed.value, alpha: parsed.alpha * alpha });
     };
 
     graphics.rect(0, 0, this.width, this.height).fill({ color: color('--surface-score').value });
@@ -975,7 +980,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const x = Math.floor(this.scoreX(boundary.beat)) + 0.5;
       if (x < 0 || x > this.width) continue;
       const tint = new Color(`hsl(${boundary.hue} ${rootStyle.getPropertyValue('--chordlet-foreground-tone').trim()})`);
-      graphics.moveTo(x, 0).lineTo(x, scoreHeight).stroke({ color: tint.toNumber(), alpha: tint.alpha * 0.175, width: 1 });
+      graphics.rect(x - 0.5, 0, 1, scoreHeight).fill({ color: tint.toNumber(), alpha: tint.alpha * 0.175 });
     }
     // Pitch increases upward: the B/C boundary sits below C, not above it.
     // Use absolute MIDI octaves so brightness stays consistent while zooming or scrolling.
@@ -1000,6 +1005,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     line(this.width - 0.5, 0, this.width - 0.5, this.height, '--border-default');
 
     const trackIndexes = new Map(tracks.flatMap((track, index) => (track.trackIds ?? [track.id]).map(id => [id, index] as const)));
+    const progressive = this.preferences.appearance().progressiveTrackColoring !== false;
+    const noteColorCache = new Map<string, { value: number; alpha: number }>();
+    const tokens = new Map<string, string>();
+    const token = (name: string): string => {
+      let value = tokens.get(name);
+      if (value === undefined) { value = rootStyle.getPropertyValue(name).trim(); tokens.set(name, value); }
+      return value;
+    };
     // Ghosts paint first and never enter the hit areas used by any interaction.
     for (const { note, ghost } of [
       ...ghosts.map(note => ({ note, ghost: true })),
@@ -1024,9 +1037,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const selectionOpacity = selectedTrackId === note.part ? 1 : 0.8;
       const opacity = selectedTrackId === note.part ? note.opacity : this.editable() ? 0.3 : 0.3 + note.velocity / 127 * 0.5;
       const noteColors = COLORS[note.color];
-      const mixed = new Color(trackColor(note.color, this.preferences.appearance().progressiveTrackColoring === false ? 0 : (note.trackOrder ?? 1) - 1,
-        note.trackCount ?? 1, name => rootStyle.getPropertyValue(name).trim()));
-      const parsedNote = { value: mixed.toNumber(), alpha: mixed.alpha };
+      const order = progressive ? (note.trackOrder ?? 1) - 1 : 0;
+      const count = note.trackCount ?? 1;
+      const paletteKey = `${note.color}:${order}:${count}`;
+      let parsedNote = noteColorCache.get(paletteKey);
+      if (!parsedNote) {
+        const mixed = new Color(trackColor(note.color, order, count, token));
+        parsedNote = { value: mixed.toNumber(), alpha: mixed.alpha };
+        noteColorCache.set(paletteKey, parsedNote);
+      }
       if (ghost) {
         const parsed = parsedNote;
         if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
@@ -1075,7 +1094,6 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.focusedNoteIndex = focusedNote ? this.hitAreas.findIndex((area) => area.note.id === focusedNote.id && area.note.part === focusedNote.part && area.note.startBeat === focusedNote.startBeat) : -1;
     this.describeCanvas(this.hitAreas[this.focusedNoteIndex]?.note);
     this.drawDynamic();
-    this.app.render();
   }
 
   private drawDynamic(): void {

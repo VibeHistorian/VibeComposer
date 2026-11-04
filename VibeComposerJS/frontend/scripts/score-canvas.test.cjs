@@ -179,7 +179,7 @@ test('ghost outlines paint behind draft notes at half opacity without hit areas 
   };
   c.drawStatic();
   assert.deepEqual(capsules.map(({ method, alpha }) => [method, alpha]),
-    [['stroke', .4], ['stroke', .4], ['fill', .15 + 90 / 127 * .85], ['stroke', .8]]);
+    [['stroke', .4], ['stroke', .4], ['fill', .15 + 90 / 127 * .65], ['stroke', .8]]);
   assert.deepEqual(c.hitAreas.map(area => area.note.id), ['draft']);
   assert.equal(velocityBars.length, 1);
   assert.ok(c.drumPitches.includes(36), 'drum ghosts have a visible drum row');
@@ -204,22 +204,52 @@ test('optional chord grid draws chord colors at half the previous opacity only w
   c.horizontalOffset = 0; c.horizontalScale = 1;
   c.model = { tracks: [{ id: 'bass', color: 'bass' }], notes: [], sections: [], totalBeats: 8, selectedTrackId: 'bass', hiddenTrackIds: new Set() };
   c.chordBoundaries = () => [{ beat: 2, hue: 60 }, { beat: 6, hue: 150 }, { beat: 16, hue: 0 }];
-  const strokes = [], tints = [];
+  const lines = [], tints = [];
   c.colorClass = class { alpha = 1; constructor(value) { tints.push(value); } toNumber() { return 123; } };
-  let x;
-  c.staticGraphics = { clear() { strokes.length = 0; }, rect() { return this; }, roundRect() { return this; },
-    moveTo(left) { x = left; return this; }, lineTo() { return this; }, fill() { return this; },
-    stroke(style) { strokes.push({ x, ...style }); return this; } };
+  let bounds;
+  c.staticGraphics = { clear() { lines.length = 0; }, rect(x, y, width, height) { bounds = { x, y, width, height }; return this; }, roundRect() { return this; },
+    moveTo() { assert.fail('static grid must not build stroked paths'); },
+    fill(style) { lines.push({ ...bounds, ...style }); return this; } };
   global.getComputedStyle = () => ({ getPropertyValue: key => key === '--chordlet-foreground-tone' ? '70% 84%' : '#32d7f4' });
   c.drawStatic();
-  assert.equal(strokes.some(stroke => stroke.alpha === .175), false);
+  assert.equal(lines.some(line => line.alpha === .175), false);
   c.preferences.scoreChordGrid = () => true;
   c.drawStatic();
-  assert.deepEqual(strokes.filter(stroke => stroke.alpha === .175).map(stroke => stroke.x), [200.5, 600.5]);
+  assert.deepEqual(lines.filter(line => line.alpha === .175).map(({ x, y, width, height }) =>
+    ({ x, y, width, height })), [200, 600].map(x => ({ x, y: 0, width: 1, height: c.scoreHeight })));
   assert.ok(tints.includes('hsl(60 70% 84%)')); assert.ok(tints.includes('hsl(150 70% 84%)'));
   c.preferences.scoreChordGrid = () => false;
   c.drawStatic();
-  assert.equal(strokes.some(stroke => stroke.alpha === .175), false);
+  assert.equal(lines.some(line => line.alpha === .175), false);
+});
+
+test('static redraw renders once and resolves shared note palettes once, refreshing on theme changes', () => {
+  const { component: c } = fixture();
+  c.horizontalOffset = 0; c.horizontalScale = 1; c.playhead = -1;
+  c.model = { tracks: [{ id: 'bass', color: 'bass' }], sections: [], totalBeats: 16,
+    hiddenTrackIds: new Set(), notes: Array.from({ length: 100 }, (_, id) => ({
+      id: String(id), part: 'bass', color: 'bass', midi: 60, velocity: 90,
+      startBeat: id / 10, durationBeats: 0.1, opacity: 1,
+    })) };
+  c.staticGraphics = { clear() {}, rect() { return this; }, roundRect() { return this; },
+    fill() { return this; }, stroke() { return this; } };
+  const parsed = [], painted = [];
+  c.colorClass = class { alpha = 1; constructor(value) { this.value = value; parsed.push(value); }
+    toNumber() { return this.value; } };
+  c.staticGraphics.fill = function(style) { painted.push(style.color); return this; };
+  let renders = 0, noteColor = '#123456';
+  c.app.render = () => renders++;
+  global.getComputedStyle = () => ({ getPropertyValue: key => key === '--role-bass-strong' ? noteColor : '#abcdef' });
+  c.drawStatic();
+  assert.equal(renders, 1);
+  assert.equal(c.hitAreas.length, 100);
+  assert.equal(parsed.filter(value => value === noteColor).length, 1);
+  assert.ok(painted.includes(noteColor));
+  noteColor = '#654321'; parsed.length = 0; painted.length = 0;
+  c.drawStatic();
+  assert.equal(renders, 2);
+  assert.equal(parsed.filter(value => value === noteColor).length, 1);
+  assert.ok(painted.includes(noteColor), 'a redraw never retains a stale theme palette');
 });
 
 test('empty score clicks seek through the zoomed and panned viewport, including scaled canvas bounds', () => {
@@ -776,7 +806,7 @@ test('note fills follow velocity while outlines retain selection and editor opac
     c.model.notes = c.model.notes.map(note => ({ ...note,
       opacity: editable ? .5 + note.velocity / 127 * .5 : .4 + note.velocity / 127 * .6 }));
     c.drawStatic();
-    assert.deepEqual(notes, [.15, 1, .15, 1]);
+    assert.deepEqual(notes, [.15, .8, .15, .8]);
     assert.deepEqual(outlines, editable ? [.5, 1, .3, .3] : [.4, 1, .3, .8]);
     assert.equal(glow.length, 2);
     assert.equal(glow[0], glow[1], 'both velocities keep the same selected-track glow');
@@ -784,7 +814,7 @@ test('note fills follow velocity while outlines retain selection and editor opac
   c.editable = () => false;
   c.preferences.scoreOutlineOtherTracks = () => true;
   c.drawStatic();
-  assert.deepEqual(notes, [.15, 1], 'non-selected notes remain outline-only');
+  assert.deepEqual(notes, [.15, .8], 'non-selected notes remain outline-only');
   assert.deepEqual(outlines, [.5, 1, .3, .8]);
 });
 
