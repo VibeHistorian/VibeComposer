@@ -1062,7 +1062,7 @@ test('musical time carries ticks and formats signed differences', () => {
     assert.equal(c.gutterRows().filter(row => row.drum).length, 3);
     assert.ok(c.gutterRows().filter(row => row.drum).every(row => row.tooltip.includes('54')));
     assert.equal(new Set(c.hitAreas.map(area => area.y)).size, 3);
-    assert.deepEqual(c.gutterRows().filter(row => row.drum).map(row => row.label), ['TAMBOURINE[2]', 'TAMBOURINE[5]', 'TAMBOURINE[8]']);
+    assert.deepEqual(c.gutterRows().filter(row => row.drum).map(row => row.label), ['TAMBOURINE[8]', 'TAMBOURINE[5]', 'TAMBOURINE[2]']);
   }
  });
 

@@ -910,6 +910,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         this.drumRows.push({ trackId: note.part, midi: note.midi, label: drumInstrumentName(note.midi).toUpperCase() });
       }
     }
+    this.drumRows.reverse();
     this.drumPitches = this.drumRows.map(row => row.midi);
     const hasDrums = this.drumRows.length > 0;
     this.drumHeight = hasDrums ? Math.min(scoreHeight * 0.27, Math.max(36, this.drumPitches.length * 14)) : 0;
