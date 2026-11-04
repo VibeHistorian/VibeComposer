@@ -12,10 +12,14 @@ p { margin: 7px 0 0; color: var(--text-muted); font-size: 10px; line-height: 1.5
 .duration-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .duration-list label { display: grid; gap: 2px; }
 .duration-list input { width: 48px; }
-.context-field { display: flex; align-items: end; gap: 5px; }
-.context-field label { flex: 1; min-width: 0; display: grid; gap: 3px; }
-.context-field input { width: 100%; }
-.context-field button { margin-bottom: 5px; }
+
+/* Section timing and key */
+fieldset[data-control-category="timing"] > label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+fieldset[data-control-category="timing"] vc-select { width: 100%; min-width: 0; box-sizing: border-box; }
+.context-field { display: grid; grid-template-columns: minmax(0, calc((100% - 8px) / 2)) repeat(2, minmax(0, 1fr)); align-items: center; column-gap: 8px; margin: 5px 0; }
+.context-field label { display: contents; }
+.context-field label span { color: var(--text-secondary); font-size: 11px; }
+.context-field input, .context-field button { width: 100%; min-width: 0; box-sizing: border-box; }
 
 /* Section role velocity */
 .velocity-knobs { display: flex; flex-wrap: wrap; gap: 8px; }

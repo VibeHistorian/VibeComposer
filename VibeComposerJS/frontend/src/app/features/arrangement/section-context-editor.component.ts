@@ -92,7 +92,7 @@ export class SectionContextEditorComponent {
     { key: 'keyChange', label: 'Key change (semitones)', min: -24, max: 24, step: 1 },
   ] as const;
   inherited(key: string): string {
-    return key === 'tempoBpm' ? String(this.projects.project().tempoBpm) : key === 'swingPercent' ? 'Part swing' : '0';
+    return key === 'tempoBpm' ? String(this.projects.project().tempoBpm) : key === 'swingPercent' ? '~' : '0';
   }
   update(key: keyof SectionMusicalContext, event: Event, numeric = false): void {
     this.choose(key, (event.target as HTMLInputElement).value, numeric);

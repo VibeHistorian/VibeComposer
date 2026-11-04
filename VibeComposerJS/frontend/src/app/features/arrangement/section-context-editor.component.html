@@ -44,7 +44,7 @@
   <legend>Section timing and key</legend>
   @for (field of numericFields; track field.key) {
     <div class="context-field">
-      <label>{{ field.label }}<input type="number" [min]="field.min" [max]="field.max" [step]="field.step"
+      <label><span>{{ field.label }}</span><input type="number" [min]="field.min" [max]="field.max" [step]="field.step"
         [value]="contextMixed(field.key) ? '' : section().context?.[field.key] ?? ''" [placeholder]="contextMixed(field.key) ? 'Mixed' : inherited(field.key)"
         (change)="update(field.key, $event, true)" /></label>
       <button type="button" [disabled]="!contextMixed(field.key) && section().context?.[field.key] === undefined" (click)="reset(field.key)">Inherit</button>
