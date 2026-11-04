@@ -88,7 +88,8 @@ for (const { width, missingMethod, sampler } of [
           ensure(settings.querySelectorAll('[aria-label^="Unload "]').length === 1, 'oversized font does not evict');
           for (const name of ['Second.sf2', 'Third.sf2', 'Fourth.sf2']) await upload(name);
           const options = await selectOptions(engineSelect);
-          ensure(options.length === 4 && !options.some(o => o.textContent.includes('SNES.sf2')), 'fourth load evicts oldest; three fonts plus synth');
+          ensure(options.at(-1)?.value === 'load-soundfont', 'soundfont load action follows engines');
+          ensure(options.filter(o => o.value !== 'load-soundfont').length === 4 && !options.some(o => o.textContent.includes('SNES.sf2')), 'fourth load evicts oldest; three fonts plus synth');
           const second = options.find(o => o.textContent.includes('Second.sf2'));
           await changeControl(engineSelect, second.value);
           settings.querySelector('[aria-label="Unload Second.sf2"]').click();

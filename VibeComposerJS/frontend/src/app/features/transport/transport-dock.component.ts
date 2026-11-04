@@ -27,11 +27,23 @@ export class TransportDockComponent {
   readonly scales = SCALE_MODES;
   readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly instruments = inject(InstrumentSettingsService);
-  readonly instrumentOptions = this.instruments.options;
+  readonly instrumentOptions = computed(() => [...this.instruments.options(),
+    { value: 'load-soundfont', label: 'Load soundfont...', disabled: this.instruments.busy() }]);
   readonly instrumentLabel = computed(() => this.instrumentOptions().find(option => option.value === this.instruments.kind())?.label ?? 'Audio instrument engine');
-  selectInstrument(value: string): void {
+  selectInstrument(value: string, selector: SelectComponent, input: HTMLInputElement): void {
+    if (value === 'load-soundfont') {
+      selector.restoreValue();
+      if (!this.instruments.busy()) input.click();
+      return;
+    }
     this.playback.stop();
     this.instruments.select(value);
+  }
+  async loadSoundfont(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) await this.instruments.load(file);
   }
   readonly playback = inject(AudioPlaybackService);
   private readonly projects = inject(ProjectService);
