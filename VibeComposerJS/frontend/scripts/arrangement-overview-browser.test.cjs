@@ -127,6 +127,30 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       refs.get('playheadCanvas').width, refs.get('playheadCanvas').height,
       host.scrollWidth, host.scrollHeight];
     (async () => { try {
+      // Compare against the former filter in real Canvas 2D, including alpha,
+      // clipping at bright settings, mixed cell colors and transparent notes.
+      const paint = (color, factor, filtered, alpha) => {
+        const canvas = document.createElement('canvas'); canvas.width = canvas.height = 8;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.fillStyle = '#233445'; ctx.fillRect(0, 0, 8, 8);
+        ctx.globalAlpha = alpha;
+        if (filtered) { ctx.filter = 'brightness(' + factor + ')'; ctx.fillStyle = color; }
+        else ctx.fillStyle = module.exports.arrangementBrightnessColor(color, factor);
+        ctx.fillRect(0, 0, 8, 8);
+        return [...ctx.getImageData(4, 4, 1, 1).data];
+      };
+      for (const color of ['#4070c0', '#e4b74e80', 'color-mix(in srgb, #6688aa 40%, #223344)',
+        'color-mix(in srgb, color-mix(in srgb, #6688aa 40%, #223344) 85%, #f2f7ff)']) {
+        for (const factor of [0, 0.375, 0.75, 1, 1.5]) for (const alpha of [0.48, 1]) {
+          const expected = paint(color, factor, true, alpha), actual = paint(color, factor, false, alpha);
+          if (actual.some((channel, index) => Math.abs(channel - expected[index]) > 2))
+            throw new Error('Brightness mismatch: ' + JSON.stringify({ color, factor, alpha, expected, actual }));
+        }
+      }
+      const originalFilter = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'filter');
+      Object.defineProperty(CanvasRenderingContext2D.prototype, 'filter', {
+        ...originalFilter, set() { throw new Error('Arrangement must not use canvas filters'); }
+      });
       for (const pageZoom of [0.8, 1, 1.25, 1.5]) {
       document.documentElement.style.zoom = pageZoom;
       for (const { name, width, height, scale, trackCount = 1, gaps = false, scaled = false } of ${JSON.stringify(layouts)}) {

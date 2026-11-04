@@ -273,7 +273,7 @@ test('unequal section lengths share the exact beat mapping with notes and playba
   const verse = component.hits.find((area) => area.key === 'heading:verse');
   assert.equal(verse.x, intro.x + intro.width);
   assert.equal(verse.width, intro.width * 2);
-  const note = base.rectangles.find((rect) => rect.color === '--role-bass-strong' && rect.bounds[0] === verse.x && rect.bounds[3] === 2);
+  const note = base.rectangles.find((rect) => rect.color.includes('--role-bass-strong') && rect.bounds[0] === verse.x && rect.bounds[3] === 2);
   assert.ok(note, 'note at beat 8 sits on the verse boundary');
   component.drawPlayhead(25); // Beat 8 of the 32-beat arrangement.
   assert.equal(overlay.rectangles.at(-1).bounds[0], verse.x);

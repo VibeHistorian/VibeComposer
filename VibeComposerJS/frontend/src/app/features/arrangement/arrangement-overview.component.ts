@@ -15,6 +15,11 @@ import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import type { SettingsTarget } from '../../core/ui/workspace-ui.service';
 import type { PlaybackRange } from '../../core/audio/audio-playback.service';
 
+/** CSS brightness scales sRGB channels without changing source alpha. */
+export function arrangementBrightnessColor(color: string, factor: number): string {
+  return `rgb(from ${color} clamp(0, r * ${factor}, 255) clamp(0, g * ${factor}, 255) clamp(0, b * ${factor}, 255))`;
+}
+
 interface OverviewSection {
   readonly section: ArrangementSection;
   readonly startBeat: number;
@@ -426,9 +431,21 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       return value;
     };
     const appearance = this.preferences.appearance();
-    // Scope brightness to artwork so controls and markers retain their palette.
-    const cellFilter = `brightness(${0.75 * (1 + appearance.arrangementCellBrightness / 100)})`;
-    const noteFilter = `brightness(${0.75 * (1 + appearance.arrangementNoteBrightness / 100)})`;
+    const cellBrightness = 0.75 * (1 + (appearance.arrangementCellBrightness ?? 0) / 100);
+    const noteBrightness = 0.75 * (1 + (appearance.arrangementNoteBrightness ?? 0) / 100);
+    // Resolve brightness in the paint color, avoiding an intermediate filtered
+    // surface for every primitive. Relative RGB preserves alpha and accepts
+    // theme colors and nested color-mix expressions as well as hex colors.
+    const brightColors = new Map<string, string>();
+    const brighten = (value: string, factor: number): string => {
+      const key = `${factor}:${value}`;
+      let result = brightColors.get(key);
+      if (!result) {
+        result = arrangementBrightnessColor(value, factor);
+        brightColors.set(key, result);
+      }
+      return result;
+    };
     this.accent = color('--accent-primary');
     const fill = (x: number, y: number, width: number, height: number, name: string): void => {
       context.fillStyle = color(name);
@@ -458,6 +475,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       if (y + this.rowHeight <= RULER_HEIGHT || y >= this.height) continue;
       const role = ROLE_COLORS[group.role];
       const noteColor = color(group.role === 'drums' ? '--role-drums' : `--role-${role}-strong`);
+      const noteColors = group.tracks.map((_, index) => brighten(
+        appearance.progressiveTrackColoring === false ? noteColor
+          : trackColor(group.role, index, group.tracks.length, color), noteBrightness));
       for (const item of sections) {
         const x = this.beatX(item.startBeat);
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
@@ -473,9 +493,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           : activeTracks === group.tracks.length ? fullSurface
           : `color-mix(in srgb, ${fullSurface} ${activeWeight}%, ${emptySurface})`;
         context.save();
-        context.filter = cellFilter;
-        context.fillStyle = this.hoveredKey === `cell:${item.section.id}:${group.role}`
-          ? `color-mix(in srgb, ${cellSurface} 85%, ${color('--text-primary')})` : cellSurface;
+        context.fillStyle = brighten(this.hoveredKey === `cell:${item.section.id}:${group.role}`
+          ? `color-mix(in srgb, ${cellSurface} 85%, ${color('--text-primary')})` : cellSurface, cellBrightness);
         context.fillRect(x, y, width, this.rowHeight);
         context.restore();
         fill(x, y, 1, this.rowHeight, '--surface-base');
@@ -506,14 +525,11 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           slotBeat += durations[(bar - 1) % durations.length];
           fill(x + slotBeat * this.pixelsPerBeat, y + 5, 1, previewHeight, '--border-subtle');
         }
-        context.filter = noteFilter;
-        context.fillStyle = noteColor;
         for (const note of this.previewNotes(item.section.id, group.role)) {
-          context.fillStyle = this.preferences.appearance().progressiveTrackColoring === false ? noteColor
-            : trackColor(group.role, note.trackIndex, group.tracks.length, color);
           const noteX = x + note.leftPercent / 100 * width;
           const noteWidth = Math.max(1, note.widthPercent / 100 * width);
           if (noteX + noteWidth <= this.labelWidth || noteX >= this.width) continue;
+          context.fillStyle = noteColors[note.trackIndex];
           context.globalAlpha = note.opacity;
           context.fillRect(noteX, y + 5 + note.topPercent / 100 * previewHeight, noteWidth, 2);
         }
@@ -577,10 +593,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const y = RULER_HEIGHT + row * this.rowHeight - this.offsetY;
       context.save();
       context.beginPath(); context.rect(this.labelWidth, y + 5, this.width - this.labelWidth, Math.max(4, this.rowHeight - 10 - TRACK_BUTTON_PITCH)); context.clip();
-      context.fillStyle = color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}-strong`);
+      context.fillStyle = brighten(color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}-strong`), noteBrightness);
       context.shadowColor = context.fillStyle;
       context.shadowBlur = 6;
-      context.filter = noteFilter;
       for (const item of sections) {
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         const tracks = this.overviewTracks(item.section, group);
