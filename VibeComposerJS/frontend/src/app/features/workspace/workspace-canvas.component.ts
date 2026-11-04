@@ -1,5 +1,8 @@
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { ContextMenuComponent, type ContextMenuItem, type ContextMenuAction } from '../../shared/context-menu.component';
+import { DuplicateTrackDialogComponent } from '../tracks/duplicate-track-dialog.component';
 import { Dialog } from '@angular/cdk/dialog';
+import { Overlay } from '@angular/cdk/overlay';
 import { TrackPresetDialogComponent } from '../tracks/track-preset-dialog.component';
 import { ArrangementVariationsDialogComponent } from '../arrangement/arrangement-variations-dialog.component';
 import type { VariationScope } from '../../core/project/arrangement-variation-draft';
@@ -70,13 +73,31 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
+  imports: [ContextMenuComponent, NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',
   styleUrl: './workspace-canvas.component.css',
 })
 export class WorkspaceCanvasComponent {
+  private readonly contextOverlay = inject(Overlay);
+  trackContextItems(): readonly ContextMenuItem[] {
+    return [{ id: 'duplicate', label: 'Duplicate', disabled: this.editing() || this.project().tracks.length >= 64,
+      children: [{ id: 'empty', label: 'Global (empty)' }, { id: 'events', label: 'Global + Events' }] }];
+  }
+  trackContextAction(trackId: string, action: ContextMenuAction): void {
+    if (this.editing() || !this.project().tracks.some(track => track.id === trackId)) return;
+    if (action.id === 'empty') {
+      this.projects.duplicateTrack(trackId, { manualNotes: false, presences: false, overrides: false, variations: false });
+    } else if (action.id === 'events') {
+      this.presetDialogs.open(DuplicateTrackDialogComponent, {
+        ariaLabel: 'Duplicate track with events', data: { trackId }, backdropClass: 'cdk-overlay-transparent-backdrop',
+        positionStrategy: this.contextOverlay.position().global()
+          .left(`${Math.max(8, Math.min(action.x, window.innerWidth - 308))}px`)
+          .top(`${Math.max(8, Math.min(action.y, window.innerHeight - 300))}px`),
+      });
+    }
+  }
   openArrangementVariations(all = false): void {
     const target = this.settingsTarget();
     const scope: VariationScope = all || !('sectionId' in target) ? {} : {

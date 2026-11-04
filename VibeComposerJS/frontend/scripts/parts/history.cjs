@@ -1031,3 +1031,36 @@ test('settings generation failures preserve project, storage and redo until a va
   }
 });
 
+
+test('appended duplicates selectively copy track-owned events in one transaction', () => {
+  for (let mask = 0; mask < 16; mask++) {
+    const { service } = fixture({ contextualMelody: false });
+    const sourceId = 'track-melody-1';
+    const project = structuredClone(service.project());
+    const source = project.tracks.find(track => track.id === sourceId);
+    const notes = [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }];
+    source.editedPhrase = notes;
+    project.arrangement[0] = { ...project.arrangement[0], trackPresence: { ...project.arrangement[0].trackPresence, [sourceId]: true },
+      trackPhrases: { [sourceId]: notes }, trackPartOverrides: { [sourceId]: { transpose: 12 } },
+      variations: { seed: '42', policy: { chance: 100, maxChanges: 2 },
+        choices: [{ trackId: sourceId, kind: 'melody-register', amount: 1, enabled: true }] } };
+    assert.equal(service.importProjectJson(JSON.stringify(project)), true);
+    const before = service.exportProjectJson();
+    const options = { manualNotes: !!(mask & 1), presences: !!(mask & 2), overrides: !!(mask & 4), variations: !!(mask & 8) };
+    const id = service.duplicateTrack(sourceId, options);
+    assert.ok(id);
+    const after = service.exportProjectJson(), next = service.project(), copy = next.tracks.at(-1), section = next.arrangement[0];
+    assert.equal(copy.id, id);
+    assert.deepEqual(copy.generatorSettings, source.generatorSettings);
+    assert.notEqual(copy.generatorSettings, source.generatorSettings);
+    assert.equal(!!copy.editedPhrase, options.manualNotes);
+    assert.equal(!!section.trackPhrases[id], options.manualNotes);
+    assert.equal(section.trackPresence[id], options.presences);
+    assert.equal(!!section.trackPartOverrides[id], options.presences && options.overrides);
+    assert.equal(section.variations.choices.some(choice => choice.trackId === id), options.presences && options.variations);
+    assert.deepEqual(next.tracks.find(track => track.id === sourceId), source);
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+    assert.equal(service.importProjectJson(after), true);
+  }
+});

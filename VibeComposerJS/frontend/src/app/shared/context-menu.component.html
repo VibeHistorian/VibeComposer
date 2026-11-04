@@ -1,0 +1,25 @@
+<span class="trigger" (contextmenu)="remember($event)" [cdkContextMenuTriggerFor]="root">
+  <ng-content />
+</span>
+<ng-template #root>
+  <div cdkMenu class="context-menu">
+    @for (item of items(); track item.id) {
+      <button type="button" cdkMenuItem [cdkMenuItemDisabled]="item.disabled ?? false"
+        [cdkMenuTriggerFor]="item.children?.length ? branch : null" [cdkMenuTriggerData]="{ path: [item.id] }"
+        (cdkMenuItemTriggered)="choose(item)">
+        <span>{{ item.label }}</span>@if (item.children?.length) { <span aria-hidden="true">›</span> }
+      </button>
+    }
+  </div>
+</ng-template>
+<ng-template #branch let-path="path">
+  <div cdkMenu class="context-menu">
+    @for (item of childrenFor(path); track item.id) {
+      <button type="button" cdkMenuItem [cdkMenuItemDisabled]="item.disabled ?? false"
+        [cdkMenuTriggerFor]="item.children?.length ? branch : null" [cdkMenuTriggerData]="{ path: path.concat(item.id) }"
+        (cdkMenuItemTriggered)="choose(item)">
+        <span>{{ item.label }}</span>@if (item.children?.length) { <span aria-hidden="true">›</span> }
+      </button>
+    }
+  </div>
+</ng-template>

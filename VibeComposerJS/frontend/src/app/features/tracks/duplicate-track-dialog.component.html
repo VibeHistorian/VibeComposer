@@ -1,0 +1,9 @@
+<h2>Duplicate · Global + Events</h2>
+<label><input type="checkbox" [checked]="manualNotes()" (change)="manualNotes.set($any($event.target).checked)" />Manual note overrides</label>
+<label><input type="checkbox" [checked]="presences()" (change)="presences.set($any($event.target).checked)" />Arrangement presences</label>
+<div class="dependent-options">
+  <label><input type="checkbox" [disabled]="!presences()" [checked]="presences() && overrides()" (change)="overrides.set($any($event.target).checked)" />Overrides</label>
+  <label><input type="checkbox" [disabled]="!presences()" [checked]="presences() && variations()" (change)="variations.set($any($event.target).checked)" />Variations</label>
+</div>
+@if (error()) { <p role="alert">{{ error() }}</p> }
+<footer><button type="button" (click)="dialog.close()">Cancel</button><button type="button" class="confirm" (click)="apply()">OK</button></footer>

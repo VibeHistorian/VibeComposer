@@ -1,4 +1,5 @@
 import { samePhraseInputs } from '../music/phrase-inputs';
+import type { TrackDuplicationOptions } from './track-duplication';
 import * as arrangementCommands from './project-arrangement-commands';
 import { fitVariationCapacity } from './arrangement-variation-capacity';
 import { DEFAULT_VARIATION_POLICY, pruneVariations, validVariationPolicy } from '../music/arrangement-variations';
@@ -884,7 +885,7 @@ export class ProjectService {
     return this.state().tracks.some((candidate) => candidate.id === id) ? id : undefined;
   }
 
-  duplicateTrack(trackId: string): string | undefined {
+  duplicateTrack(trackId: string, options?: TrackDuplicationOptions): string | undefined {
     const current = this.state();
     if (current.tracks.length >= 64) return undefined;
     const sourceIndex = current.tracks.findIndex((track) => track.id === trackId);
@@ -895,19 +896,22 @@ export class ProjectService {
     const duplicate = { ...source, id, name: `${source.name} copy`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(source.generatorSettings),
-      editedPhrase: source.editedPhrase?.map((note) => ({ ...note })),
-      phraseEdits: source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) } as CompositionTrack;
+      editedPhrase: !options || options.manualNotes ? source.editedPhrase?.map((note) => ({ ...note })) : undefined,
+      phraseEdits: !options || options.manualNotes ? source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) : undefined } as CompositionTrack;
     const tracks = [...current.tracks];
-    tracks.splice(sourceIndex + 1, 0, duplicate);
+    tracks.splice(options ? tracks.length : sourceIndex + 1, 0, duplicate);
     this.commit({ ...current, tracks, arrangement: current.arrangement.map((section) => ({
       ...section,
-      trackPresence: { ...section.trackPresence, [id]: section.trackPresence[source.id] ?? false },
-      ...(section.generatedTrackIds?.includes(source.id) ? { generatedTrackIds: [...section.generatedTrackIds, id] } : {}),
-      ...(section.trackPhrases?.[source.id] !== undefined ? { trackPhrases: { ...section.trackPhrases, [id]: section.trackPhrases[source.id].map(note => ({ ...note })) } } : {}),
-      trackPartOverrides: section.trackPartOverrides?.[source.id]
+      trackPresence: { ...section.trackPresence, [id]: (!options || options.presences) && (section.trackPresence[source.id] ?? false) },
+      ...((!options || options.manualNotes) && section.generatedTrackIds?.includes(source.id) ? { generatedTrackIds: [...section.generatedTrackIds, id] } : {}),
+      ...((!options || options.manualNotes) && section.trackPhrases?.[source.id] !== undefined ? { trackPhrases: { ...section.trackPhrases, [id]: section.trackPhrases[source.id].map(note => ({ ...note })) } } : {}),
+      ...(options?.presences && options.variations && section.variations ? { variations: { ...section.variations,
+        choices: [...section.variations.choices, ...section.variations.choices.filter(choice => choice.trackId === source.id)
+          .map(choice => ({ ...structuredClone(choice), trackId: id }))] } } : {}),
+      trackPartOverrides: (!options || options.presences && options.overrides) && section.trackPartOverrides?.[source.id]
         ? { ...section.trackPartOverrides, [id]: copyPartSettings(section.trackPartOverrides[source.id]) } : section.trackPartOverrides,
     })) });
-    return id;
+    return this.state().tracks.some(track => track.id === id) ? id : undefined;
   }
 
   updateTrack(trackId: string, patch: { name?: string; midiChannel?: number; mix?: Partial<MixChannelSettings> }): void {

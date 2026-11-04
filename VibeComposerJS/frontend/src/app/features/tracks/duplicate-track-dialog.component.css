@@ -1,0 +1,14 @@
+/* Anchored popup */
+:host { display: grid; gap: 12px; box-sizing: border-box; width: min(300px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; padding: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); box-shadow: 0 6px 20px var(--shadow-ink); font: 12px var(--font-ui); }
+h2 { margin: 0 0 4px; font: inherit; color: var(--accent-primary); }
+/* Carry-over options */
+label { display: flex; align-items: center; gap: 8px; }
+input { accent-color: var(--accent-primary); }
+label:has(input:disabled) { color: var(--text-muted); }
+.dependent-options { display: grid; gap: 12px; padding-left: 20px; }
+p { margin: 0; color: var(--color-warning); }
+/* Popup actions */
+footer { display: flex; justify-content: flex-end; gap: 8px; }
+button { padding: 5px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font: inherit; }
+.confirm, button:hover { background: var(--surface-accent); color: var(--accent-primary); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
