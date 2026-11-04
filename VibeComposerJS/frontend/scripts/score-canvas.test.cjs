@@ -111,13 +111,14 @@ test('drag helper returns musical previews without mutating the gesture or origi
   assert.equal(previewScoreDrag({ ...drag, lockPitch: true }, { x: 1000, y: -20 }, context)[0].midi, 60);
 });
 
-function fixture() {
-  const input = value => () => value;
+function fixture(reactivity) {
+  const input = value => reactivity ? reactivity.signal(value) : () => value;
   input.required = () => () => undefined;
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect() {}, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false,
+    effect: reactivity?.effect ?? (() => {}), untracked: reactivity?.untracked ?? (read => read()), inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false,
+      drumMapping: () => 'general-midi',
       drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -250,6 +251,65 @@ test('static redraw renders once and resolves shared note palettes once, refresh
   assert.equal(renders, 2);
   assert.equal(parsed.filter(value => value === noteColor).length, 1);
   assert.ok(painted.includes(noteColor), 'a redraw never retains a stale theme palette');
+});
+
+test('horizontal panning preserves gutter values while pitch layout and scale changes refresh them', () => {
+  const { component: c } = fixture();
+  c.model = { tracks: [], notes: [], sections: [], totalBeats: 16, hiddenTrackIds: new Set() };
+  c.staticGraphics = { clear() {}, rect() { return this; }, fill() { return this; } };
+  c.drawStatic();
+  const rows = c.gutterRows(), lines = c.octaveLines();
+  assert.ok(rows.length > 0 && lines.length > 0);
+  c.horizontalScale = 8; c.horizontalOffset = 0.5; c.drawStatic();
+  assert.equal(c.gutterRows(), rows);
+  assert.equal(c.octaveLines(), lines);
+  c.height += 100; c.drawStatic();
+  assert.notEqual(c.gutterRows(), rows);
+  assert.notEqual(c.octaveLines(), lines);
+  c.editable = () => true; c.snapToScale = () => true; c.scalePitchClasses = () => [0, 4, 7];
+  c.drawStatic();
+  const scaled = c.gutterRows();
+  assert.equal(scaled.find(row => row.midi === 60).inScale, true);
+  c.scalePitchClasses = () => [1, 5, 8]; c.drawStatic();
+  assert.notEqual(c.gutterRows(), scaled);
+  assert.equal(c.gutterRows().find(row => row.midi === 60).inScale, false);
+});
+
+test('selection updates redraw only overlays without rebuilding static geometry or hit areas', async () => {
+  const { signal, untracked } = await import('@angular/core');
+  const { createWatch } = await import('@angular/core/primitives/signals');
+  const watches = [], pending = new Set();
+  const { component: c, strokes } = fixture({ signal, untracked, effect: callback => {
+    const watch = createWatch(callback, watch => pending.add(watch), true);
+    watches.push(watch); return watch;
+  } });
+  let staticDraws = 0, dynamicDraws = 0;
+  c.staticGraphics = { clear() { staticDraws++; }, rect() { return this; },
+    roundRect() { return this; }, fill() { return this; }, stroke() { return this; } };
+  const originalClear = c.dynamicGraphics.clear;
+  c.dynamicGraphics.clear = function() { dynamicDraws++; originalClear.call(this); };
+  c.tracks = signal([{ id: 'bass', color: 'bass' }]);
+  c.notes = signal([{ id: 'n', part: 'bass', color: 'bass', midi: 60, velocity: 90,
+    startBeat: 4, durationBeats: 1, opacity: 1 }]);
+  c.sections = signal([]); c.totalBeats = signal(16); c.selectedTrackId = signal('bass');
+  c.hiddenTrackIds = signal(new Set()); c.playheadPercent = signal(0);
+  c.horizontalOffset = 0; c.horizontalScale = 1;
+  try {
+    watches.forEach(watch => watch.run());
+    const areas = c.hitAreas, beforeStatic = staticDraws, beforeDynamic = dynamicDraws;
+    c.selectedNoteIds.set(['n']);
+    while (pending.size) { const queued = [...pending]; pending.clear(); queued.forEach(watch => watch.run()); }
+    assert.equal(staticDraws, beforeStatic);
+    assert.ok(dynamicDraws > beforeDynamic);
+    assert.equal(c.hitAreas, areas);
+    assert.ok(c.selectedNoteIds().includes(c.hitAreas[0].note.id));
+    assert.ok(strokes.some(stroke => stroke.width === 2 && stroke.alpha === 1));
+    c.selectedNoteIds.set([]);
+    while (pending.size) { const queued = [...pending]; pending.clear(); queued.forEach(watch => watch.run()); }
+    assert.equal(staticDraws, beforeStatic);
+    assert.equal(c.hitAreas, areas);
+    assert.equal(strokes.some(stroke => stroke.width === 2 && stroke.alpha === 1), false);
+  } finally { watches.forEach(watch => watch.destroy()); }
 });
 
 test('empty score clicks seek through the zoomed and panned viewport, including scaled canvas bounds', () => {

@@ -3,7 +3,7 @@ import { musicalTime } from '../../core/ui/musical-time';
 import { trackColor } from '../../core/ui/track-color';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import {
-  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, viewChild,
+  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
@@ -179,7 +179,6 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     this.wasEditable = editable;
     this.velocityVisible();
-    this.selectedNoteIds();
     this.snapBeats();
     this.snapToScale();
     this.scalePitchClasses();
@@ -202,6 +201,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   });
   private readonly playheadEffect = effect(() => {
     this.playhead = this.playheadPercent();
+    this.selectedNoteIds();
     this.drawDynamic();
   });
 
@@ -950,7 +950,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       rows.push({ midi, label, tooltip: this.midi.drumLabel(midi), y, height: drumRowHeight, drum: true, black: false, inScale: false });
     });
     if (this.drumHeight > 0) line(0, this.harmonicHeight + 0.5, this.width, this.harmonicHeight + 0.5, '--border-strong');
-    this.gutterRows.set(rows);
+    // Horizontal panning changes note geometry but leaves the pitch gutter
+    // unchanged. Retain its signal value so Angular can skip those DOM updates.
+    const previousRows = untracked(this.gutterRows);
+    if (previousRows.length !== rows.length || rows.some((row, index) => {
+      const previous = previousRows[index];
+      return row.midi !== previous.midi || row.label !== previous.label || row.tooltip !== previous.tooltip
+        || row.y !== previous.y || row.height !== previous.height || row.drum !== previous.drum
+        || row.black !== previous.black || row.inScale !== previous.inScale;
+    })) this.gutterRows.set(rows);
     const beatWidth = this.width * this.horizontalScale / totalBeats;
     // Reveal successively finer divisions only when they have room in CSS
     // pixels. At overview scale, continue thinning beyond individual bars.
@@ -998,7 +1006,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       fill(0, top, this.width, height, '--score-octave-line', opacity);
       octaveLines.push({ midi, y: top, height, opacity });
     }
-    this.octaveLines.set(octaveLines);
+    const previousLines = untracked(this.octaveLines);
+    if (previousLines.length !== octaveLines.length || octaveLines.some((line, index) => {
+      const previous = previousLines[index];
+      return line.midi !== previous.midi || line.y !== previous.y
+        || line.height !== previous.height || line.opacity !== previous.opacity;
+    })) this.octaveLines.set(octaveLines);
     line(0, scoreHeight + 0.5, this.width, scoreHeight + 0.5, '--border-default');
     line(0, 0.5, this.width, 0.5, '--border-default');
     line(0.5, 0, 0.5, this.height, '--border-default');
@@ -1093,7 +1106,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
 
     this.focusedNoteIndex = focusedNote ? this.hitAreas.findIndex((area) => area.note.id === focusedNote.id && area.note.part === focusedNote.part && area.note.startBeat === focusedNote.startBeat) : -1;
     this.describeCanvas(this.hitAreas[this.focusedNoteIndex]?.note);
-    this.drawDynamic();
+    // Overlay inputs must not become dependencies of the static model effect.
+    untracked(() => this.drawDynamic());
   }
 
   private drawDynamic(): void {
