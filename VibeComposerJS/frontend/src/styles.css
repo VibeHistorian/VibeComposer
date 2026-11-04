@@ -57,6 +57,7 @@
   --surface-app-heading: #1a2c3c;
   --surface-low: #142a3e;
   --surface-inspector: #0b1e30;
+  --surface-transport-dock: #0b1e30;
   --surface-role-group: #112d45;
   --surface-role-group-selected: #0e2437;
   --surface-card: #1c354b;
@@ -235,7 +236,7 @@
     color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 30%) 0%,
     color-mix(in srgb, var(--surface-inspector), var(--control-role-color, var(--surface-inspector)) 5%) 10%,
     var(--surface-inspector) 40%,
-    var(--surface-base) 75%);
+    var(--surface-transport-dock) 75%);
 }
 
 /* Contextual role accents */

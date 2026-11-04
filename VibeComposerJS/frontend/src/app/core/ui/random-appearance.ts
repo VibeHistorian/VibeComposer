@@ -44,7 +44,7 @@ export function randomAppearance(current: AppearancePreferences, seed: bigint, m
     border: hsl(hue, saturation, light ? between(.56, .66) : between(.24, .34)),
     accent: hsl(hue + between(-8, 8), between(.5, .85), light ? .2 : .72),
   };
-  let themeColors: ThemeColors = { ...palette, appHeading: appHeadingColor(palette.surface) };
+  let themeColors: ThemeColors = { ...palette, transportDock: palette.surface, appHeading: appHeadingColor(palette.surface) };
   // Check actual derived button, selected-group and panel surfaces as well as the base colors.
   const surfaces = (colors: ThemeColors) => Object.entries(themeColorTokens(colors))
     .filter(([key, value]) => key.startsWith('--surface-') && value.length === 7).map(([, value]) => value);

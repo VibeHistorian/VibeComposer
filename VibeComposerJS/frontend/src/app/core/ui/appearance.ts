@@ -105,6 +105,9 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
     appHeading: themeColors.appHeading === undefined
       ? isRoleColor(themeColors.surface) ? appHeadingColor(themeColors.surface) : DEFAULT_THEME_COLORS.appHeading
       : themeColors.appHeading,
+    transportDock: themeColors.transportDock === undefined
+      ? isRoleColor(themeColors.surface) ? themeColors.surface : DEFAULT_THEME_COLORS.transportDock
+      : themeColors.transportDock,
     inspector: themeColors.inspector === undefined ? DEFAULT_THEME_COLORS.inspector : themeColors.inspector,
     roleGroups: themeColors.roleGroups === undefined ? DEFAULT_THEME_COLORS.roleGroups : themeColors.roleGroups,
   };

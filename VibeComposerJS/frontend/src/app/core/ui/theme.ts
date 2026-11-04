@@ -3,6 +3,7 @@ export const THEME_COLORS = [
   { key: 'surface', label: 'Surface' },
   { key: 'appHeading', label: 'App Heading' },
   { key: 'inspector', label: 'Inspector background' },
+  { key: 'transportDock', label: 'Transport dock' },
   { key: 'roleGroups', label: 'Role groups background' },
   { key: 'text', label: 'Text' },
   { key: 'border', label: 'Border' },
@@ -22,7 +23,7 @@ export function appHeadingColor(surface: string): string {
 export const DEFAULT_THEME_COLORS: ThemeColors = {
   background: '#080e16', surface: '#0b1e30',
   appHeading: appHeadingColor('#0b1e30'),
-  inspector: '#0b1e30', roleGroups: '#112d45',
+  inspector: '#0b1e30', transportDock: '#0b1e30', roleGroups: '#112d45',
   text: '#f2f7ff', border: '#3b607d', accent: '#32d7f4',
 };
 
@@ -57,6 +58,7 @@ export function themeColorTokens(colors: ThemeColors, scoreRowBrightness = 0, sc
   }
   const tokens: Record<string, string> = {
     '--surface-canvas': background, '--surface-app-heading': colors.appHeading,
+    '--surface-transport-dock': colors.transportDock,
     '--surface-inspector': inspector, '--surface-role-group': roleGroups,
     '--surface-role-group-selected': mix(roleGroups, background, .3),
     '--surface-input': mix(background, surface, .65), '--surface-base': surface,
