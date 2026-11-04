@@ -105,14 +105,19 @@ test('Preview triggers after global Reroll and Compose even with restart disable
   assert.equal(previews.length, 2);
   assert.equal(previews[1], service.project(), 'seeks using the composed arrangement');
   assert.deepEqual(transport.workspaceUi.selectedSectionIds(), [service.project().arrangement[1].id]);
+  const focusRevision = transport.workspaceUi.sectionFocusRevision();
+  transport.generate('compose');
+  assert.equal(transport.workspaceUi.sectionFocusRevision(), focusRevision + 1,
+    'repeated Compose requests a score refit even when Preview selects the same loop');
+  assert.deepEqual(transport.workspaceUi.selectedSectionIds(), [service.project().arrangement[1].id]);
   transport.generate('regenerate');
-  assert.equal(previews.length, 2);
+  assert.equal(previews.length, 3);
   service.generateComposition = () => 'invalid';
   transport.generate('compose');
-  assert.equal(previews.length, 2);
+  assert.equal(previews.length, 3);
   service.updateSettings({ arrangementPreview: false });
   workspace.randomizeArrangement();
-  assert.equal(previews.length, 2);
+  assert.equal(previews.length, 3);
 });
 
 test('overview role presence clears mixed or full groups and fills empty groups in one undo step', () => {

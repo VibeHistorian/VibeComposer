@@ -37,6 +37,8 @@ export class WorkspaceUiService {
   });
   readonly editingNoteId = signal<string | null>(null);
   private readonly sectionSelection = signal<readonly string[]>([]);
+  private readonly sectionFocusRequest = signal(0);
+  readonly sectionFocusRevision = computed(() => this.sectionFocusRequest());
   private readonly sectionAnchor = signal<string | null>(null);
   private readonly focusedSection = signal<string | null>(null);
   readonly selectedSectionIds = computed(() => {
@@ -126,6 +128,9 @@ export class WorkspaceUiService {
   }
 
   setSectionSelection(sectionId: string | null): void {
+    // Explicit selection (including Compose Preview) must refit a manually moved
+    // score even when the selected IDs and musical bounds are unchanged.
+    this.sectionFocusRequest.set(this.sectionFocusRequest() + 1);
     this.sectionSelection.set(sectionId ? [sectionId] : []);
     this.sectionAnchor.set(sectionId);
     this.focusedSection.set(sectionId);

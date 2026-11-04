@@ -369,6 +369,7 @@ export class WorkspaceCanvasComponent {
   });
   readonly scoreSectionFocus = computed<ScoreSectionFocus>(() => {
     if (this.editing()) return this.scoreEditBounds();
+    this.workspaceUi.sectionFocusRevision();
     this.selectedSectionIds();
     // A changed selection must refit even when its bounds equal the full arrangement.
     return { ...(this.workspaceUi.sectionRange() ?? this.scoreTimelineBounds()) };
