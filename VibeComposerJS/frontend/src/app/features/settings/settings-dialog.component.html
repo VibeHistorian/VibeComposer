@@ -70,8 +70,8 @@
               <div class="setting-controls"><input type="checkbox" aria-label="Settings explainers as tooltips" [checked]="preferences.preferences().settingsExplainersAsTooltips" (change)="preferences.toggleSettingsExplainers()" /></div>
             </div>
             <div class="setting-row">
-              <div class="setting-copy"><h3>Random theme</h3><p>Random theme with five distinct track colors. Keeps your fonts and resets hue shift.</p></div>
-              <div class="setting-controls"><div class="appearance-actions"><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('dark')">Random dark mode</button><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('light')">Random light mode</button></div><label class="preserve-color-adjustments"><input type="checkbox" [checked]="preferences.appearance().preserveBrightnessSaturation" (change)="preferences.togglePreserveBrightnessSaturation()" />Preserve brightness and saturation</label></div>
+              <div class="setting-copy"><h3>Random theme</h3><p>Random theme with five distinct track colors. Keeps your fonts and optionally resets color adjustments.</p></div>
+              <div class="setting-controls"><div class="appearance-actions"><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('dark')">Random dark mode</button><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('light')">Random light mode</button></div><label class="preserve-color-adjustments"><input type="checkbox" [checked]="preferences.appearance().resetAdjustments" (change)="preferences.toggleResetAdjustments()" />Reset adjustments</label></div>
             </div>
             <div class="setting-row">
               <div class="setting-copy"><h3>Color adjustments</h3><p>Adjust brightness, hue and saturation. Enable All to include track role colors in the hue shift.</p></div>
@@ -79,7 +79,7 @@
                 <div class="color-adjustment"><vc-compact-knob [label]="adjustment.label" [description]="adjustment.description" [value]="preferences.appearance().colorAdjustments[adjustment.key]" [minimum]="-50" [maximum]="50" [defaultValue]="0" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setColorAdjustment(adjustment.key, $event)" />
                   @if (adjustment.key === 'hueShift') { <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.appearance().hueShiftRoles" title="Include all five track role colors in hue shift" (click)="preferences.toggleHueShiftRoles()">All</button> }
                 </div>
-              }</div></div>
+              }</div><button type="button" class="appearance-reset" (click)="preferences.applyAdjustmentsToBaseColors()">Apply to Base Colors</button></div>
             </div>
             <h3 class="settings-section-heading">Main theme colors</h3>
             @for (color of themeColors; track color.key) {

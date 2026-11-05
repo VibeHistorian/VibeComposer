@@ -35,7 +35,7 @@ test('random palettes vary modes, preserve fonts and remain readable with distin
     palettes.add(JSON.stringify(theme));
     assert.deepEqual(decodeAppearance(appearance), appearance);
     assert.deepEqual(appearance.fonts, original.fonts);
-    assert.deepEqual(appearance.colorAdjustments, adjustments());
+    assert.deepEqual(appearance.colorAdjustments, original.colorAdjustments);
     for (const color of Object.values(theme)) {
       const rgb = [1, 3, 5].map(offset => parseInt(color.slice(offset, offset + 2), 16));
       assert.ok(Math.max(...rgb) - Math.min(...rgb) <= 3 || hue(color) >= 140 && hue(color) <= 240, color);

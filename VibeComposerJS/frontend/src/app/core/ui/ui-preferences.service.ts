@@ -137,9 +137,9 @@ export class UiPreferencesService {
     this.commit({ ...this.state(), appearance: randomAppearance(this.appearance(), seed, mode) });
   }
 
-  togglePreserveBrightnessSaturation(): void {
+  toggleResetAdjustments(): void {
     const appearance = this.appearance();
-    this.commit({ ...this.state(), appearance: { ...appearance, preserveBrightnessSaturation: !appearance.preserveBrightnessSaturation } });
+    this.commit({ ...this.state(), appearance: { ...appearance, resetAdjustments: !appearance.resetAdjustments } });
   }
 
   toggleProgressiveTrackColoring(): void {
@@ -150,6 +150,19 @@ export class UiPreferencesService {
   toggleHueShiftRoles(): void {
     const appearance = this.appearance();
     this.commit({ ...this.state(), appearance: { ...appearance, hueShiftRoles: !appearance.hueShiftRoles } });
+  }
+
+  applyAdjustmentsToBaseColors(): void {
+    const appearance = this.appearance();
+    const roleAdjustments = { ...appearance.colorAdjustments,
+      hueShift: appearance.hueShiftRoles ? appearance.colorAdjustments.hueShift : 0 };
+    this.commit({ ...this.state(), appearance: { ...appearance,
+      themeColors: Object.fromEntries(THEME_COLORS.map(({ key }) =>
+        [key, adjustColor(appearance.themeColors[key], appearance.colorAdjustments)])) as typeof appearance.themeColors,
+      roleColors: Object.fromEntries(ARRANGED_PARTS.map(role =>
+        [role, adjustColor(appearance.roleColors[role], roleAdjustments)])) as typeof appearance.roleColors,
+      colorAdjustments: { brightness: 0, hueShift: 0, saturation: 0 },
+    } });
   }
 
   setColorAdjustment(key: ColorAdjustment, value: number): void {

@@ -221,6 +221,7 @@ test('randomize colors persists a complete palette without changing fonts, proje
   preferences.setFont('ui', 'Verdana, sans-serif');
   preferences.setColorAdjustment('hueShift', 50);
   preferences.setColorAdjustment('brightness', -50);
+  preferences.toggleResetAdjustments();
   preferences.randomizeAppearance('dark');
   const appearance = preferences.appearance();
   assert.equal(appearance.fonts.ui, 'Verdana, sans-serif');
@@ -236,24 +237,24 @@ test('randomize colors persists a complete palette without changing fonts, proje
   assert.equal(service.historyPosition(), position);
 });
 
-test('theme randomization optionally preserves brightness and saturation in both modes', () => {
+test('theme randomization preserves adjustments by default and optionally resets them', () => {
   const { uiPreferences: preferences, load } = fixture();
-  preferences.togglePreserveBrightnessSaturation();
+  assert.equal(preferences.appearance().resetAdjustments, false);
   for (const mode of ['dark', 'light']) {
     preferences.setColorAdjustment('brightness', -25);
     preferences.setColorAdjustment('saturation', 30);
     preferences.setColorAdjustment('hueShift', 20);
     preferences.randomizeAppearance(mode);
-    assert.deepEqual(preferences.appearance().colorAdjustments, { brightness: -25, saturation: 30, hueShift: 0 });
+    assert.deepEqual(preferences.appearance().colorAdjustments, { brightness: -25, saturation: 30, hueShift: 20 });
     const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
-    assert.equal(restored.appearance().preserveBrightnessSaturation, true);
+    assert.equal(restored.appearance().resetAdjustments, false);
     assert.deepEqual(restored.appearance(), preferences.appearance());
   }
   const saved = preferences.exportJson();
   preferences.resetAppearance();
   assert.equal(preferences.importJson(saved), true);
-  assert.equal(preferences.appearance().preserveBrightnessSaturation, true);
-  preferences.togglePreserveBrightnessSaturation();
+  assert.equal(preferences.appearance().resetAdjustments, false);
+  preferences.toggleResetAdjustments();
   preferences.randomizeAppearance('light');
   assert.deepEqual(preferences.appearance().colorAdjustments, { brightness: 0, saturation: 0, hueShift: 0 });
 });
@@ -618,4 +619,26 @@ test('panel layout persists, transfers, defaults and stays outside project histo
   assert.equal(prefs.appearance().panelLayout, 'spacious');
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.historyPosition(), history);
+});
+
+ test('applying adjustments stores the visible palette and persists neutral knobs', () => {
+  for (const includeRoles of [false, true]) {
+    const { uiPreferences: preferences, load } = fixture();
+    const { adjustColor } = load('core/ui/appearance.ts');
+    if (includeRoles) preferences.toggleHueShiftRoles();
+    preferences.setColorAdjustment('brightness', -20);
+    preferences.setColorAdjustment('saturation', 30);
+    preferences.setColorAdjustment('hueShift', 25);
+    const before = preferences.appearance();
+    preferences.applyAdjustmentsToBaseColors();
+    const after = preferences.appearance();
+    for (const [key, color] of Object.entries(before.themeColors))
+      assert.equal(after.themeColors[key], adjustColor(color, before.colorAdjustments));
+    for (const [role, color] of Object.entries(before.roleColors))
+      assert.equal(after.roleColors[role], adjustColor(color, { ...before.colorAdjustments, hueShift: includeRoles ? 25 : 0 }));
+    assert.deepEqual(after.colorAdjustments, { brightness: 0, saturation: 0, hueShift: 0 });
+    assert.deepEqual(new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)().appearance(), after);
+    preferences.applyAdjustmentsToBaseColors();
+    assert.deepEqual(preferences.appearance(), after);
+  }
 });

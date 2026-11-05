@@ -49,7 +49,7 @@ export interface AppearancePreferences {
   readonly scoreGridBrightness: number;
   readonly windowWidthLimit: WindowWidthLimit;
   readonly panelLayout: PanelLayout;
-  readonly preserveBrightnessSaturation: boolean;
+  readonly resetAdjustments: boolean;
   readonly hueShiftRoles: boolean;
   readonly progressiveTrackColoring: boolean;
   readonly colorAdjustments: ColorAdjustments;
@@ -66,7 +66,7 @@ export function defaultAppearance(): AppearancePreferences {
     scoreGridBrightness: 0,
     windowWidthLimit: 'none',
     panelLayout: 'spacious',
-    preserveBrightnessSaturation: false,
+    resetAdjustments: false,
     hueShiftRoles: false,
     progressiveTrackColoring: true,
     colorAdjustments: { ...DEFAULT_COLOR_ADJUSTMENTS },
@@ -88,7 +88,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   }
   if (data.windowWidthLimit !== undefined && !WINDOW_WIDTH_OPTIONS.some(option => option.value === data.windowWidthLimit)) return null;
   if (data.panelLayout !== undefined && !PANEL_LAYOUT_OPTIONS.some(option => option.value === data.panelLayout)) return null;
-  if (data.preserveBrightnessSaturation !== undefined && typeof data.preserveBrightnessSaturation !== 'boolean') return null;
+  if (data.resetAdjustments !== undefined && typeof data.resetAdjustments !== 'boolean') return null;
   if (data.hueShiftRoles !== undefined && typeof data.hueShiftRoles !== 'boolean') return null;
   if (data.progressiveTrackColoring !== undefined && typeof data.progressiveTrackColoring !== 'boolean') return null;
   const colorAdjustments = data.colorAdjustments === undefined ? DEFAULT_COLOR_ADJUSTMENTS : data.colorAdjustments;
@@ -119,7 +119,7 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
     scoreGridBrightness: data.scoreGridBrightness ?? 0,
     windowWidthLimit: data.windowWidthLimit ?? 'none',
     panelLayout: data.panelLayout ?? 'spacious',
-    preserveBrightnessSaturation: data.preserveBrightnessSaturation === true,
+    resetAdjustments: data.resetAdjustments === true,
     hueShiftRoles: data.hueShiftRoles === true,
     progressiveTrackColoring: data.progressiveTrackColoring !== false,
     colorAdjustments: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, colorAdjustments[key]])) as ColorAdjustments,
