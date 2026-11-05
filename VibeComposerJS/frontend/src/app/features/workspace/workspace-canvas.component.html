@@ -59,6 +59,7 @@
                 <div class="track-reroll-actions" (click)="$event.stopPropagation()">
                   <vc-mix-buttons class="track-level" [trackIds]="[track.id]" [label]="track.name" />
                   <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
+                    [class.parameter-locks-active]="!track.rerollLocked && !!track.parameterLocks?.length"
                     [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
                     [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
                     (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">🔒︎</button>
