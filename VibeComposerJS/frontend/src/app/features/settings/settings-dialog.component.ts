@@ -39,8 +39,8 @@ export class SettingsDialogComponent {
     this.projects.updateSettings({ midiPadding: { ...this.projects.project().midiPadding, [role]: value } });
   }
   readonly variationGroups = [
-    { id: 'shared', label: 'Shared' }, { id: 'melody', label: 'Melody' }, { id: 'bass', label: 'Bass' },
-    { id: 'chords', label: 'Chords' }, { id: 'arpeggio', label: 'Arps' }, { id: 'drums', label: 'Drums' },
+    { id: 'shared', label: 'Shared' }, { id: 'melody', label: 'Melody' },
+    { id: 'chords', label: 'Chords' }, { id: 'arpeggio', label: 'Arps' }, { id: 'bass', label: 'Bass' }, { id: 'drums', label: 'Drums' },
   ].map(group => ({ ...group, rows: VARIATION_ROWS.filter(row => {
     const roles = VARIATION_DEFINITIONS[row.kind].roles;
     return group.id === 'shared' ? roles.length > 1 : roles.length === 1 && roles[0] === group.id;

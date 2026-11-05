@@ -1017,7 +1017,9 @@ test('Arpeggio policy preserves opted-out fields, shared counts and no-op histor
 test('melody has explicit type zero and generated tracks, with stable existing role seeds and channels', () => {
   const { service, ui, workspace, phrase, load } = fixture({ contextualMelody: false });
   const { ARRANGED_PARTS, PART_TYPES } = load('core/music/part-role.ts');
-  assert.deepEqual(ARRANGED_PARTS.map((role) => PART_TYPES[role]), [0, 1, 2, 3, 4]);
+  assert.deepEqual(ARRANGED_PARTS, ['melody', 'chords', 'arpeggio', 'bass', 'drums']);
+  assert.deepEqual(ARRANGED_PARTS.map((role) => PART_TYPES[role]), [0, 2, 3, 1, 4]);
+  assert.deepEqual(workspace.arrangedTracks().map(track => track.role), ARRANGED_PARTS);
   assert.equal(workspace.arrangedTracks()[0].role, 'melody');
   const melody = service.project().tracks.find((track) => track.role === 'melody');
   assert.equal(melody.midiChannel, 4);

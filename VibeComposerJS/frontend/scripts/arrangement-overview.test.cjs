@@ -29,7 +29,7 @@ function fixture(reactivity) {
     '../../core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
-    '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
+    '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'chords', 'arpeggio', 'bass', 'drums'] },
     '../../core/project/arrangement.model': { SECTION_TYPES: [] },
     '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
     '../../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes.map(note => ({ ...note, sectionId: note.sectionId ?? project.arrangement.find((section, index, all) => {

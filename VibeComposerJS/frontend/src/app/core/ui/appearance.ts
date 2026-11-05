@@ -72,7 +72,7 @@ export function defaultAppearance(): AppearancePreferences {
     colorAdjustments: { ...DEFAULT_COLOR_ADJUSTMENTS },
     themeColors: { ...DEFAULT_THEME_COLORS },
     fonts: { ui: FONT_CHOICES[0].value, heading: FONT_CHOICES[0].value, mono: FONT_CHOICES[1].value },
-    roleColors: { melody: '#d44040', bass: '#8ca9ba', chords: '#28b82b', arpeggio: '#ed55bf', drums: '#e4b74e' },
+    roleColors: { melody: '#d44040', chords: '#28b82b', arpeggio: '#ed55bf', bass: '#8ca9ba', drums: '#e4b74e' },
   };
 }
 

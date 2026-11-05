@@ -103,7 +103,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
       '../../core/music/phrase-bounds': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${boundsCode}; return module.exports; })(),
       '../../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),
-      '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'] },
+      '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'chords', 'arpeggio', 'bass', 'drums'] },
       '../../core/project/arrangement.model': { SECTION_TYPES: [] },
       '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.trackPresence?.[track.id] ?? true },
       '../../core/music/phrase': { layOutTrackPhrase: () => [] } };

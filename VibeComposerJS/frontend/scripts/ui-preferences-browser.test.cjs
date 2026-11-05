@@ -278,7 +278,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             ensure(chance?.type==='range','section chance slider');
             await setChance(chance,'37');
             await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1'))?.INTRO.melody===37,'section chance persists');
-            const roles=['melody','bass','chords','arpeggio','drums'];
+            const roles=['melody','chords','arpeggio','bass','drums'];
             const row=dialog.querySelector('[data-section-type="INTRO"]');
             const sliders=[...row.querySelectorAll('input[type="range"]')];
             const distribution=row.querySelector('.chance-distribution');

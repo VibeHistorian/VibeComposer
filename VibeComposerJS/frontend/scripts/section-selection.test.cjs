@@ -41,10 +41,10 @@ function fixture() {
       'core/ui/ui-preferences.service': { UiPreferencesService: 'preferences' },
       'core/ui/workspace-ui.service': { WorkspaceUiService: 'ui' },
       'core/project/arrangement.model': { SECTION_TYPES: [] },
-      'core/music/part-role': { ARRANGED_PARTS: ['melody', 'bass', 'chords', 'arpeggio', 'drums'],
+      'core/music/part-role': { ARRANGED_PARTS: ['melody', 'chords', 'arpeggio', 'bass', 'drums'],
         PART_GENERATION_AVAILABLE: { melody: false, bass: true, chords: true, arpeggio: true, drums: true },
         tracksInRoleOrder: (tracks) => [...tracks].sort((left, right) =>
-          ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(left.role) - ['melody', 'bass', 'chords', 'arpeggio', 'drums'].indexOf(right.role)) },
+          ['melody', 'chords', 'arpeggio', 'bass', 'drums'].indexOf(left.role) - ['melody', 'chords', 'arpeggio', 'bass', 'drums'].indexOf(right.role)) },
       'core/music/harmony': { KEYS: [] },
     };
     new Function('require', 'module', 'exports', compiled)(
@@ -62,7 +62,7 @@ function fixture() {
 
 test('role settings default collapsed, follow role selection and retain manual toggles until selection changes', () => {
   const { workspace, flushEffects } = fixture();
-  const roles = ['melody', 'bass', 'chords', 'arpeggio', 'drums'];
+  const roles = ['melody', 'chords', 'arpeggio', 'bass', 'drums'];
   assert.ok(roles.every(role => workspace.isGroupCollapsed(role)));
   workspace.selectRole('bass'); flushEffects();
   assert.equal(workspace.isGroupCollapsed('bass'), false);

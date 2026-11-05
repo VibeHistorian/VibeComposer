@@ -35,7 +35,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       if(!sessionStorage.getItem('variation-fixture')){
         await changeControl(seed,'42');const p=await wait(read,'project');
         p.melodyGlobal={...p.melodyGlobal,contextualMelody:true};
-        for(const role of ['melody','bass','chords','arpeggio','drums']){
+        for(const role of ['melody','chords','arpeggio','bass','drums']){
           const base=p.tracks.find(t=>t.role===role);
           for(let i=2;i<=6;i++)p.tracks.push({...base,id:'track-'+role+'-'+i,name:base.name[0]+i,generatorSettings:{...base.generatorSettings}});
         }
@@ -43,7 +43,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
         p.tracks.find(t=>t.role==='arpeggio').generatorSettings.rhythm='full';
         Object.assign(p.tracks.find(t=>t.role==='drums').generatorSettings,{pitch:38,rhythm:'full',hitsPerPattern:8,ghosts:false,pauseChance:0,exceptionChance:0,patternShift:0,swingPercent:50});
         p.arrangement=['VERSE1','BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
-          trackPresence:Object.fromEntries(['melody','bass','chords','arpeggio','drums'].map(role=>[role,Array(6).fill(true)]))}));
+          trackPresence:Object.fromEntries(['melody','chords','arpeggio','bass','drums'].map(role=>[role,Array(6).fill(true)]))}));
         p.arrangement[0].variations={seed:'1',policy:{chance:100,maxChanges:2},choices:[{trackId:p.tracks.find(t=>t.role==='melody').id,kind:'melody-range',amount:1,enabled:true}]};
         sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
       }
@@ -53,7 +53,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const variationSettings=await wait(()=>document.querySelector('vc-settings-dialog'),'variation settings');
       variationSettings.querySelector('[aria-label="Behavior Variations"]').click();
       await wait(()=>variationSettings.querySelectorAll('.variation-settings-group').length===6,'variation groups rendered');
-      ensure([...variationSettings.querySelectorAll('.variation-settings-group > h3')].map(h=>h.textContent.trim()).join(',')==='Shared,Melody,Bass,Chords,Arps,Drums','shared and role groups');
+      ensure([...variationSettings.querySelectorAll('.variation-settings-group > h3')].map(h=>h.textContent.trim()).join(',')==='Shared,Melody,Chords,Arps,Bass,Drums','shared and role groups');
       ensure(variationSettings.querySelector('[aria-label="Behavior Variations"] [data-scope="compose"]'),'variation menu On Compose indicator');
       const groupedKinds=[...variationSettings.querySelectorAll('.variation-settings-group input[type="checkbox"]')].map(i=>i.getAttribute('aria-label'));
       ensure(groupedKinds.includes('Reroll Arp subdivision ramp')&&new Set(groupedKinds).size===groupedKinds.length,'each variation appears once');
