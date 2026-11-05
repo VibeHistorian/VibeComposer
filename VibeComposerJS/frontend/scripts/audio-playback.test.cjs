@@ -88,6 +88,306 @@ function fixture({ loop = false } = {}) {
   return { playback, context, sources, project, angular, load, midi, instruments };
 }
 
+test('fractional loop boundaries do not move note times one entire cycle into the future', async () => {
+  const { playback, context, project } = fixture({ loop: true });
+  project.tempoBpm = 70;
+  project.tracks[0].notes = [
+    { id: 'start', midi: 60, startBeat: 0, durationBeats: 1, velocity: 100 },
+    { id: 'tail', midi: 48, startBeat: 88, durationBeats: 1.033, velocity: 100 },
+  ];
+  await playback.start(project);
+  const length = 89.033, seconds = length * 60 / 70;
+  assert.equal(playback.durationBeats(), length);
+  for (let cycle = 1; cycle <= 100; cycle++) {
+    const beat = cycle * length;
+    const boundaryTime = cycle * seconds;
+    assert.ok(Math.abs(playback.absoluteSeconds(beat) - boundaryTime) < 1e-8, 'forward conversion at cycle ' + cycle);
+    for (const delta of [-0.000001, 0, 0.000001]) {
+      context.currentTime = boundaryTime + delta;
+      const absoluteBeat = playback.currentAbsoluteBeat();
+      assert.ok(Math.abs(playback.absoluteSeconds(absoluteBeat) - context.currentTime) < 1e-8, 'clock round trip at cycle ' + cycle);
+      assert.ok(Math.abs(absoluteBeat - (beat + delta * 70 / 60)) < 1e-8, 'inverse conversion at cycle ' + cycle);
+      assert.ok(playback.currentSongBeat() >= -1e-8 && playback.currentSongBeat() <= length + 1e-8);
+    }
+  }
+});
+
+test('fractional partial loops retain their phase through tempo boundaries and negative pickups', async () => {
+  const { beatToSeconds } = require('./music-loader.cjs').loadMusic('section-context.ts');
+  for (const startBeat of [-1.25, 0, 3.5]) {
+    const { playback, context, project } = fixture({ loop: true });
+    project.arrangement = [
+      { measures: 4, trackPresence: {}, context: { tempoBpm: 70 } },
+      { measures: 4, trackPresence: {}, context: { tempoBpm: 95 } },
+    ];
+    project.tracks[0].notes = [
+      { id: 'pickup', midi: 60, startBeat: -2, durationBeats: .5, velocity: 100 },
+      { id: 'tail', midi: 48, startBeat: 88, durationBeats: 1.033, velocity: 100 },
+    ];
+    playback.setLoopRange({ startBeat, endBeat: 89.033 });
+    await playback.start(project);
+    const length = 89.033 - startBeat;
+    const firstSeconds = beatToSeconds(playback.tempoMap, startBeat);
+    const cycleSeconds = beatToSeconds(playback.tempoMap, 89.033) - firstSeconds;
+    for (let cycle = 1; cycle <= 100; cycle++) {
+      const beat = startBeat + cycle * length;
+      const seconds = firstSeconds + cycle * cycleSeconds;
+      assert.ok(Math.abs(playback.absoluteSeconds(beat) - seconds) < 1e-8);
+      context.currentTime = playback.originTime + seconds;
+      assert.ok(Math.abs(playback.currentAbsoluteBeat() - beat) < 1e-8);
+      assert.ok(Math.abs(playback.absoluteSeconds(playback.currentAbsoluteBeat()) - seconds) < 1e-8);
+    }
+  }
+});
+
+test('the first note of fractional loop three is queued before its boundary instead of waiting another loop', async () => {
+  const { playback, context, sources, project } = fixture({ loop: true });
+  project.tempoBpm = 70;
+  project.tracks[0].notes = [
+    { id: 'start', midi: 60, startBeat: 0, durationBeats: 1, velocity: 100 },
+    { id: 'tail', midi: 48, startBeat: 88, durationBeats: 1.033, velocity: 100 },
+  ];
+  await playback.start(project);
+  const boundaryTime = 3 * 89.033 * 60 / 70;
+  context.currentTime = boundaryTime - 0.1;
+  playback.tick();
+  assert.ok(sources.some(source => Math.abs(source.startTime - boundaryTime) < 1e-8
+    && source.frequency.value === 440 * 2 ** ((60 - 69) / 12)), 'loop-three note starts at the real boundary');
+});
+
+test('worker clock schedules playback, releases on pause, and reports worker failures', async (t) => {
+  const { playback, context, project } = fixture({ loop: true });
+  const previousWorker = globalThis.Worker, previousDocument = globalThis.document;
+  t.after(() => { globalThis.Worker = previousWorker; globalThis.document = previousDocument; });
+  const workers = [];
+  globalThis.document = { baseURI: 'https://example.test/composer/' };
+  globalThis.Worker = class {
+    constructor(url) { this.url = url.href; this.messages = []; workers.push(this); }
+    postMessage(message) { this.messages.push(message); }
+    terminate() { this.terminated = true; }
+  };
+  await playback.start(project);
+  assert.equal(playback.clockMode, 'worker');
+  assert.equal(playback.scheduler, undefined, 'window intervals are not needed');
+  assert.equal(workers[0].url, 'https://example.test/composer/audio-playback-clock.js');
+  assert.deepEqual(workers[0].messages[0], { type: 'start', intervalMs: 25 });
+  context.currentTime = .05;
+  workers[0].onmessage({ data: 'tick' });
+  assert.equal(playback.beat(), .1);
+  assert.equal(workers[0].messages.at(-1), 'ack');
+  const staleTick = workers[0].onmessage;
+  playback.pause();
+  assert.equal(workers[0].terminated, true);
+  assert.equal(workers[0].onmessage, null);
+  assert.equal(playback.clockMode, 'idle');
+  await playback.toggle(project);
+  assert.equal(workers.length, 2);
+  const messages = workers[0].messages.length;
+  staleTick({ data: 'tick' });
+  assert.equal(workers[0].messages.length, messages, 'stale worker messages are ignored');
+  workers[1].onerror();
+  assert.equal(playback.state(), 'paused');
+  assert.equal(workers[1].terminated, true);
+  assert.match(playback.error(), /audio clock failed/i);
+});
+
+test('worker tick backlog stays bounded while the main thread is busy', () => {
+  let interval;
+  const messages = [];
+  const self = { postMessage: message => messages.push(message) };
+  require('node:vm').runInNewContext(fs.readFileSync(path.join(__dirname, '../public/audio-playback-clock.js'), 'utf8'), {
+    self, setInterval: callback => { interval = callback; return 1; }, clearInterval() {},
+  });
+  self.onmessage({ data: { type: 'start', intervalMs: 25 } });
+  for (let index = 0; index < 1000; index++) interval();
+  assert.deepEqual(messages, ['tick'], 'a blocked UI does not accumulate thousands of callbacks');
+  self.onmessage({ data: 'ack' });
+  interval();
+  assert.deepEqual(messages, ['tick', 'tick']);
+});
+
+test('context suspension is detected from its event without waiting for a timer tick', async (t) => {
+  const { playback, context, project } = fixture();
+  const previousContext = globalThis.AudioContext;
+  t.after(() => { globalThis.AudioContext = previousContext; });
+  let changed;
+  context.addEventListener = (type, callback) => { assert.equal(type, 'statechange'); changed = callback; };
+  globalThis.AudioContext = class { constructor() { return context; } };
+  playback.context = undefined;
+  await playback.start(project);
+  context.state = 'suspended';
+  changed();
+  assert.equal(playback.state(), 'paused');
+  assert.match(playback.error(), /interrupted/i);
+});
+
+test('delayed scheduler restores sustained notes at the current loop position without replaying missed cycles', async () => {
+  const { playback, context, sources, project } = fixture({ loop: true });
+  await playback.start(project);
+  // A long background delay passes thousands of loops, then lands inside a sustain.
+  context.currentTime = 8 * 10000 + 1;
+  playback.tick();
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.beat(), 2);
+  assert.ok(sources.length >= 2 && sources.length <= 4, 'current sustain and bounded future notes replace the exhausted queue');
+  assert.equal(sources[1].startTime, context.currentTime + 0.003);
+  assert.ok(Math.abs(sources[1].stopTime - (context.currentTime + 3.023)) < 1e-8);
+  const count = sources.length;
+  context.currentTime += 0.025;
+  playback.tick();
+  assert.equal(sources.length, count, 'normal ticks do not duplicate the recovered sustain');
+});
+
+test('delayed scheduler does not replay missed drums or notes that have already ended', async () => {
+  const { playback, context, sources, project } = fixture({ loop: true });
+  project.tracks[0].role = 'drums';
+  await playback.start(project);
+  context.currentTime = 1;
+  playback.tick();
+  assert.equal(sources.filter(source => source.startTime <= context.currentTime).length, 1, 'missed drums are not replayed');
+  context.currentTime = 2;
+  playback.tick();
+  assert.equal(sources.length, 2, 'the next drum onset still plays');
+});
+
+test('a 349ms underrun preserves the graph, sounding voices and clock', async () => {
+  const { playback, context, sources, project } = fixture({ loop: true });
+  await playback.start(project);
+  const master = playback.master, origin = playback.originTime;
+  const source = sources[0], stopTime = source.stopTime;
+  context.currentTime = 0.34933333333333394;
+  playback.tick();
+  assert.equal(playback.master, master);
+  assert.equal(playback.originTime, origin);
+  assert.equal(source.stopTime, stopTime, 'held audio is not stopped to recover a late scheduler');
+  assert.equal(sources.length, 1, 'a held note is not retriggered');
+});
+
+test('lookahead is capped after a stall and returns to normal without cancelling queued voices', async () => {
+  const { playback, context, project, sources } = fixture({ loop: true });
+  await playback.start(project);
+  context.currentTime = 10;
+  playback.tick();
+  assert.equal(playback.scheduleAheadSeconds, 1, 'a long stall cannot allocate five seconds of future voices');
+  assert.match(playback.error(), /scheduling was delayed/);
+  const queued = sources.map(source => ({ source, stopTime: source.stopTime }));
+  for (let tick = 1; tick <= 40; tick++) {
+    context.currentTime = 10 + tick * 0.25;
+    playback.tick();
+  }
+  assert.equal(playback.scheduleAheadSeconds, 1, 'persistently slow callbacks retain their scheduling headroom');
+  for (let tick = 1; tick <= 400; tick++) {
+    context.currentTime = 20 + tick * 0.025;
+    playback.tick();
+    if (tick < 200) assert.equal(playback.scheduleAheadSeconds, 1, 'decay requires five consecutive healthy seconds');
+  }
+  assert.ok(Math.abs(playback.scheduleAheadSeconds - 0.18) < 1e-8);
+  assert.equal(playback.error(), '', 'the transient underrun message clears after healthy scheduling');
+  for (const { source, stopTime } of queued) assert.equal(source.stopTime, stopTime, 'shrinking does not stop existing voices');
+});
+
+test('hidden playback keeps scheduling audio and refreshes the visual playhead on return', async (t) => {
+  const { playback, context, project, sources } = fixture({ loop: true });
+  const previousDocument = globalThis.document;
+  t.after(() => { globalThis.document = previousDocument; });
+  globalThis.document = { visibilityState: 'hidden' };
+  await playback.start(project);
+  const publish = playback.position.set;
+  let publications = 0;
+  playback.position.set = value => { publications++; publish(value); };
+  for (let tick = 1; tick <= 90; tick++) {
+    context.currentTime = tick * 0.025;
+    playback.tick();
+  }
+  assert.equal(playback.state(), 'playing');
+  assert.equal(publications, 0, 'hidden scheduler ticks do not drive UI signals');
+  assert.equal(playback.beat(), 0);
+  assert.equal(sources.length, 2, 'the later note still reaches the audio engine');
+  globalThis.document.visibilityState = 'visible';
+  playback.foreground();
+  assert.equal(publications, 1);
+  assert.equal(playback.beat(), 4.5, 'returning to the tab immediately publishes the real song position');
+});
+
+test('late MIDI scheduling preserves held notes and does not send all-notes-off', async () => {
+  const { playback, context, project, midi } = fixture({ loop: true });
+  const sent = [];
+  let silenced = 0;
+  midi.schedule = (...args) => sent.push(args);
+  midi.silence = () => silenced++;
+  midi.selectedOutput.set({ id: 'external' });
+  await playback.start(project);
+  const beforeSilenced = silenced;
+  context.currentTime = 0.34933333333333394;
+  playback.tick();
+  assert.equal(sent.length, 1, 'the held MIDI note is not retriggered');
+  assert.equal(silenced, beforeSilenced);
+});
+
+test('late scheduling in a later partial loop keeps its absolute phase without replaying missed cycles', async () => {
+  const { playback, context, sources, project } = fixture({ loop: true });
+  playback.setLoopRange({ startBeat: 4, endBeat: 8 });
+  await playback.start(project);
+  const origin = playback.originTime;
+  context.currentTime = 20.25;
+  playback.tick();
+  assert.equal(playback.beat(), 4.5);
+  assert.equal(playback.originTime, origin);
+  assert.equal(sources[1].startTime, context.currentTime + 0.003);
+  assert.ok(Math.abs(sources[1].stopTime - (context.currentTime + 0.273)) < 1e-8);
+  const count = sources.length;
+  context.currentTime += 0.025;
+  playback.tick();
+  assert.equal(sources.length, count, 'recovery does not duplicate future onsets');
+});
+
+test('repeated one-second timer delays expand the queue instead of losing percussion between ticks', async () => {
+  const { playback, context, sources, project } = fixture({ loop: true });
+  project.tracks[0].role = 'drums';
+  project.tracks[0].notes = Array.from({ length: 32 }, (_, index) => ({
+    id: String(index), midi: 36, startBeat: index * 0.5, durationBeats: 0.1, velocity: 100,
+  }));
+  await playback.start(project);
+  for (let second = 1; second <= 10; second++) {
+    context.currentTime = second;
+    playback.tick();
+    for (const offset of [0.25, 0.5, 0.75]) {
+      assert.ok(sources.some(source => Math.abs(source.startTime - (second + offset)) < 1e-8
+        && source.stopTime > source.startTime), 'future percussion is queued before the next delayed tick');
+    }
+  }
+  assert.equal(playback.state(), 'playing');
+  assert.ok(playback.scheduleAheadSeconds >= 1);
+});
+
+test('audio suspension and interruption pause the transport and Play can resume', async () => {
+  for (const state of ['suspended', 'interrupted']) {
+    const { playback, context, project } = fixture({ loop: true });
+    await playback.start(project);
+    context.currentTime = 1;
+    context.state = state;
+    playback.tick();
+    assert.equal(playback.state(), 'paused');
+    assert.equal(playback.beat(), 2);
+    assert.match(playback.error(), /interrupted/i);
+    context.resume = async () => { context.state = 'running'; };
+    await playback.toggle(project);
+    assert.equal(playback.state(), 'playing');
+    assert.equal(playback.beat(), 2);
+    assert.equal(playback.error(), '');
+  }
+});
+
+test('scheduler failures pause playback and expose the error instead of silently advancing', async () => {
+  const { playback, context, project } = fixture({ loop: true });
+  await playback.start(project);
+  playback.synth.schedule = () => { throw new Error('Audio renderer failed'); };
+  context.currentTime = 2;
+  playback.tick();
+  assert.equal(playback.state(), 'paused');
+  assert.match(playback.error(), /Audio renderer failed/);
+});
+
 test('phrase drafts replace only their track and absolute window on start, seek, live editing and cancel', async () => {
   const { playback, project, context, sources } = fixture();
   const saved = JSON.stringify(project);
@@ -440,7 +740,7 @@ test('looping selected sections starts at their first beat and wraps within thei
   assert.equal(sources[0].frequency.value, 440 * 2 ** ((50 - 69) / 12));
   context.currentTime = 1.9;
   playback.tick();
-  assert.equal(sources.length, 2, 'next loop is scheduled ahead');
+  assert.ok(sources.length >= 2, 'next loop is scheduled ahead');
   assert.equal(sources[1].startTime, 2);
   context.currentTime = 2.1;
   playback.tick();

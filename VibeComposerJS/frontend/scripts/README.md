@@ -23,11 +23,13 @@ Run the relevant functional commands, then the browser commands for affected int
 | Theme, appearance, quick settings and responsive workspace | `test:appearance`, `test:parts:preferences` | `test:preferences:browser`, `test:rhythm:browser`, `test:overview:browser`, `node --test scripts/workspace-layout-browser.test.cjs` |
 | Global harmony popup alignment | `test:harness` | `node --test scripts/chordlet-popup-browser.test.cjs`, `test:contextual:browser` |
 | Keyboard shortcuts | `test:keyboard` | `test:contextual:browser`, `test:export:browser` |
-| Playback, scheduling, SF2 resolution and audio patches | `test:playback`, `node --test scripts/sf2-resolver.test.cjs` | `test:synth:browser`, `test:export:browser` |
+| Playback, scheduling, SF2 resolution and audio patches | `test:playback`, `node --test scripts/sf2-resolver.test.cjs` | `node --test scripts/playback-recovery-browser.test.cjs`, `test:synth:browser`, `test:export:browser` |
 | MIDI routing/output and export | `test:midi`, `test:export` | `test:midi:browser`, `test:export:browser` |
 | Test fixtures and browser infrastructure | `test:parts:support`, `test:harness`, `test:unit` | `test:browser` |
 
 Score geometry, hit testing and gesture-preview helpers have direct checks alongside the component interaction cases in `score-canvas.test.cjs`. See [score ownership](../src/app/features/score/README.md) for the rendering/interaction boundary and draft-history checks.
+
+The playback recovery browser suite checks the production worker clock with the window scheduler disabled and simulated hidden document visibility. Audio metering belongs only to the test fixture. The default three-second run uses a short fractional loop to cross the original failing boundary; set `PLAYBACK_CLOCK_TEST_SECONDS=150` to check the original 89.033-beat loop over a longer real-time run. It also verifies that hidden scheduler ticks do not publish playhead updates and returning to the tab refreshes the playhead. This does not simulate OS window focus or Chrome's real hidden-tab policy. The protected broker caps each browser session at three minutes, including setup and the other recovery scenarios.
 
 Prefer behavior over cosmetic snapshots: exercise settings changes, history, persistence, keyboard access, musical output and usable layout. Avoid pinning display labels, exact palette shades, decorative gaps, control variants or fixed pixel dimensions. Keep geometry checks that establish beat alignment, hit testing, viewport fit, clipping and layout stability; derive expected sizes from the viewport or musical coordinates where possible. Use option values when verifying available musical choices; labels may still locate controls during interactions.
 

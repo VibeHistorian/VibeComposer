@@ -26,6 +26,9 @@ export interface PlaybackPhrasePreview extends PlaybackRange {
 
 const SCHEDULER_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_SECONDS = 0.18;
+const MAX_SCHEDULE_AHEAD_SECONDS = 1;
+const LOOKAHEAD_RECOVERY_SECONDS = 5;
+const SCHEDULER_DELAY_MESSAGE = 'Audio scheduling was delayed. Playback is recovering.';
 const RELOAD_FADE_SECONDS = 0.012;
 
 @Injectable({ providedIn: 'root' })
@@ -54,7 +57,12 @@ export class AudioPlaybackService {
   private engineKind?: InstrumentEngineKind;
   private readonly instruments = inject(InstrumentSettingsService);
   private scheduler?: ReturnType<typeof setInterval>;
+  private schedulerWorker?: Worker;
+  private clockMode: 'idle' | 'worker' | 'timer' = 'idle';
   private originTime = 0;
+  private lastScheduleTime = 0;
+  private scheduleAheadSeconds = SCHEDULE_AHEAD_SECONDS;
+  private lastDelayedTickTime = 0;
   private tempoMap: readonly TempoPoint[] = [{ beat: 0, seconds: 0, bpm: 120 }];
   private selectedLoopRange: PlaybackRange | null = null;
   private mixProject?: CompositionProject;
@@ -68,8 +76,15 @@ export class AudioPlaybackService {
   private readonly buses = new Map<string, PartBus>();
   private readonly programs = new Map<string, number>();
   private readonly activeSources = new Set<InstrumentVoice>();
+  private scheduledNotes: { trackId: string; noteId: string; startTime: number; endTime: number }[] = [];
+  private readonly foreground = () => {
+    if (globalThis.document?.visibilityState !== 'hidden') this.tick();
+  };
+  private readonly contextChanged = () => this.tick();
 
   constructor() {
+    globalThis.document?.addEventListener('visibilitychange', this.foreground);
+    globalThis.addEventListener?.('focus', this.foreground);
     effect(() => {
       this.instruments.kind();
       untracked(() => {
@@ -89,11 +104,20 @@ export class AudioPlaybackService {
     });
   }
 
+  ngOnDestroy(): void {
+    globalThis.document?.removeEventListener('visibilitychange', this.foreground);
+    globalThis.removeEventListener?.('focus', this.foreground);
+    this.stop();
+    this.synth?.dispose();
+    this.context?.removeEventListener('statechange', this.contextChanged);
+    void this.context?.close().catch(() => {});
+  }
+
   async audition(track: CompositionTrack, notes: readonly PhraseNote[]): Promise<void> {
     if (!notes.length) return;
     try {
       const context = this.getContext();
-      if (context.state === 'suspended') await context.resume();
+      if (context.state !== 'running') await context.resume();
       if (!this.midi.selectedOutput()) await this.prepareInstrument(context);
       if (this.midi.selectedOutput()) {
         const pitches = new Set<number>();
@@ -145,12 +169,15 @@ export class AudioPlaybackService {
     this.playbackError.set('');
     try {
       const context = this.getContext();
-      if (context.state === 'suspended') await context.resume();
+      if (context.state !== 'running') await context.resume();
+      if (context.state !== 'running') throw new Error('Audio is interrupted. Press Play to resume when audio is available.');
       if (!this.midi.selectedOutput()) await this.prepareInstrument(context);
       if (request !== this.startRequest) return;
       this.clearScheduler();
       this.stopSources();
       this.prepareMix(project, context);
+      this.scheduleAheadSeconds = SCHEDULE_AHEAD_SECONDS;
+      this.lastDelayedTickTime = context.currentTime;
 
       this.tempoMap = projectTempoMap(project);
       this.notes = this.createSchedule(project);
@@ -164,7 +191,7 @@ export class AudioPlaybackService {
       this.playbackState.set('playing');
       this.resumeSustainedNotes(safeStart);
       this.scheduleAhead();
-      this.scheduler = setInterval(() => this.tick(), SCHEDULER_INTERVAL_MS);
+      this.startScheduler();
     } catch (error: unknown) {
       if (request !== this.startRequest) return;
       this.clearScheduler();
@@ -323,7 +350,31 @@ export class AudioPlaybackService {
       throw new Error('This browser does not support Web Audio playback.');
     }
     this.context = new AudioContext();
+    this.context.addEventListener('statechange', this.contextChanged);
     return this.context;
+  }
+
+  private startScheduler(): void {
+    if (globalThis.Worker) {
+      const worker = new Worker(new URL('audio-playback-clock.js', document.baseURI));
+      this.schedulerWorker = worker;
+      this.clockMode = 'worker';
+      worker.onmessage = () => {
+        if (this.schedulerWorker !== worker) return;
+        this.tick();
+        if (this.schedulerWorker === worker) worker.postMessage('ack');
+      };
+      worker.onerror = () => {
+        if (this.schedulerWorker !== worker) return;
+        this.pause();
+        this.playbackError.set('The audio clock failed. Press Play to retry.');
+        console.error('Audio clock failed.', this.playbackDiagnostics());
+      };
+      worker.postMessage({ type: 'start', intervalMs: SCHEDULER_INTERVAL_MS });
+      return;
+    }
+    this.clockMode = 'timer';
+    this.scheduler = setInterval(() => this.tick(), SCHEDULER_INTERVAL_MS);
   }
 
   private prepareMix(project: CompositionProject, context: AudioContext, crossfade = false): void {
@@ -396,7 +447,7 @@ export class AudioPlaybackService {
     ]);
   }
 
-  private resumeSustainedNotes(beat: number): void {
+  private resumeSustainedNotes(beat: number, absoluteBeat = beat, missingOnly = false): void {
     const { endBeat } = this.loopBounds();
     for (const note of this.queuedNotes) {
       if (note.role === 'drums') continue;
@@ -404,13 +455,29 @@ export class AudioPlaybackService {
         : note.startBeat + note.durationBeats;
       const remaining = noteEnd - beat;
       if (note.startBeat < beat && remaining > 0) {
-        this.scheduleNote({ ...note, durationBeats: remaining }, beat);
+        if (missingOnly && this.scheduledNotes.some(voice => voice.trackId === note.trackId
+          && voice.noteId === note.id && voice.startTime <= this.context!.currentTime && voice.endTime > this.context!.currentTime)) continue;
+        this.scheduleNote({ ...note, durationBeats: remaining }, absoluteBeat);
       }
     }
   }
 
   private tick(): void {
     if (!this.context || this.state() !== 'playing') return;
+    try {
+      if (this.context.state !== 'running') {
+        throw new Error('Audio was interrupted. Press Play to resume when audio is available.');
+      }
+      this.advancePlayback();
+    } catch (error: unknown) {
+      this.pause();
+      this.playbackError.set(error instanceof Error ? error.message : 'Audio playback was interrupted. Press Play to retry.');
+      console.error('Audio playback interrupted.', this.playbackDiagnostics(), error);
+    }
+  }
+
+  private advancePlayback(): void {
+    this.scheduledNotes = this.scheduledNotes.filter(note => note.endTime > this.context!.currentTime);
     const absoluteBeat = this.currentAbsoluteBeat();
     const stopAt = this.loopEnabled() ? Number.POSITIVE_INFINITY : this.duration();
     if (absoluteBeat >= stopAt) {
@@ -420,14 +487,46 @@ export class AudioPlaybackService {
       this.playbackState.set('stopped');
       return;
     }
-    this.position.set(this.currentSongBeat());
+    // Keep scheduling in hidden tabs without publishing visual playhead updates.
+    if (globalThis.document?.visibilityState !== 'hidden') this.position.set(this.currentSongBeat());
+    // Catch up without stopping existing voices.
+    const schedulerGap = this.context!.currentTime - this.lastScheduleTime;
+    if (schedulerGap > this.scheduleAheadSeconds) {
+      const previousLookaheadSeconds = this.scheduleAheadSeconds;
+      // Limit future voice allocation even after a long stall.
+      this.scheduleAheadSeconds = Math.min(MAX_SCHEDULE_AHEAD_SECONDS, Math.max(this.scheduleAheadSeconds, schedulerGap * 2));
+      this.lastDelayedTickTime = this.context!.currentTime;
+      this.playbackError.set(SCHEDULER_DELAY_MESSAGE);
+      this.catchUpSchedule(absoluteBeat);
+      console.warn('Audio scheduler underrun.', { ...this.playbackDiagnostics(), schedulerGap, previousLookaheadSeconds });
+    } else {
+      if (schedulerGap > SCHEDULE_AHEAD_SECONDS) this.lastDelayedTickTime = this.context!.currentTime;
+      else if (this.context!.currentTime - this.lastDelayedTickTime >= LOOKAHEAD_RECOVERY_SECONDS) {
+        // After five healthy seconds, return gradually to the normal horizon.
+        // Previously queued notes drain naturally; shrinking never cancels them.
+        this.scheduleAheadSeconds = Math.max(SCHEDULE_AHEAD_SECONDS, this.scheduleAheadSeconds - schedulerGap * 0.2);
+        if (this.error() === SCHEDULER_DELAY_MESSAGE) this.playbackError.set('');
+      }
+      this.scheduleAhead();
+    }
+  }
+
+  private catchUpSchedule(absoluteBeat: number): void {
+    const { startBeat, endBeat } = this.loopBounds();
+    const length = endBeat - startBeat;
+    const cycle = this.loopEnabled() && length > 0 ? Math.max(0, Math.floor((absoluteBeat - startBeat) / length)) : 0;
+    const beat = absoluteBeat - cycle * length;
+    this.resetQueue(beat);
+    this.cycle = cycle;
+    this.resumeSustainedNotes(beat, absoluteBeat, true);
     this.scheduleAhead();
   }
 
   private scheduleAhead(): void {
     if (!this.context || !this.master || this.duration() <= 0) return;
+    this.lastScheduleTime = this.context.currentTime;
     const currentBeat = this.currentAbsoluteBeat();
-    const horizonSeconds = this.absoluteSeconds(currentBeat) + SCHEDULE_AHEAD_SECONDS;
+    const horizonSeconds = this.absoluteSeconds(currentBeat) + this.scheduleAheadSeconds;
     const { startBeat, endBeat } = this.loopBounds();
     const cycleBeats = endBeat - startBeat;
     let scheduled = 0;
@@ -461,12 +560,14 @@ export class AudioPlaybackService {
       if (track && mixEnabled(track.mix, project!.tracks.some(track => track.mix.solo))) {
         this.midi.schedule(track, note.midi, note.velocity,
           performance.now() + (startTime - context.currentTime) * 1000, duration);
+        this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });
       }
       return;
     }
     if (!this.synth) return;
     const voices = this.synth.schedule(bus.gain, this.programs.get(note.trackId) ?? 0,
       note.role === 'drums', note.midi, note.velocity, startTime, duration);
+    if (voices.length) this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });
     for (const voice of voices) {
       this.activeSources.add(voice);
       voice.onEnded(() => {
@@ -476,6 +577,21 @@ export class AudioPlaybackService {
     }
   }
 
+  private playbackDiagnostics(): object {
+    const range = this.loopBounds();
+    const next = this.queuedNotes[this.nextNote];
+    const nextAbsoluteBeat = next ? next.startBeat + this.cycle * (range.endBeat - range.startBeat) : null;
+    return { contextState: this.context?.state, audioTime: this.context?.currentTime,
+      beat: this.state() === 'playing' ? this.currentSongBeat() : this.beat(), engine: this.engineKind, midiOutput: this.midi.selectedOutput()?.id ?? null,
+      absoluteBeat: this.currentAbsoluteBeat(), loopRange: range, nextNoteBeat: next?.startBeat ?? null,
+      secondsUntilNextNote: nextAbsoluteBeat === null ? null
+        : this.originTime + this.absoluteSeconds(nextAbsoluteBeat) - (this.context?.currentTime ?? 0),
+      nextNote: this.nextNote, queuedNotes: this.queuedNotes.length, cycle: this.cycle,
+      activeVoices: this.activeSources.size, lookaheadSeconds: this.scheduleAheadSeconds,
+      clockMode: this.clockMode,
+      visibility: globalThis.document?.visibilityState ?? 'unknown' };
+  }
+
   private currentAbsoluteBeat(): number {
     if (!this.context) return 0;
     const seconds = this.context.currentTime - this.originTime;
@@ -483,8 +599,9 @@ export class AudioPlaybackService {
     const endSeconds = beatToSeconds(this.tempoMap, endBeat);
     if (!this.loopEnabled() || seconds < endSeconds) return secondsToBeat(this.tempoMap, seconds);
     const startSeconds = beatToSeconds(this.tempoMap, startBeat), length = endSeconds - startSeconds;
-    const cycles = Math.floor((seconds - endSeconds) / length) + 1;
-    return cycles * (endBeat - startBeat) + secondsToBeat(this.tempoMap, startSeconds + (seconds - endSeconds) % length);
+    const offset = seconds - startSeconds;
+    const cycles = Math.floor(offset / length);
+    return cycles * (endBeat - startBeat) + secondsToBeat(this.tempoMap, startSeconds + (offset - cycles * length));
   }
 
   private absoluteSeconds(beat: number): number {
@@ -493,7 +610,10 @@ export class AudioPlaybackService {
     const length = endBeat - startBeat, cycles = Math.floor((beat - startBeat) / length);
     const startSeconds = beatToSeconds(this.tempoMap, startBeat);
     const cycleSeconds = beatToSeconds(this.tempoMap, endBeat) - startSeconds;
-    return cycles * cycleSeconds + beatToSeconds(this.tempoMap, startBeat + (beat - startBeat) % length);
+    // Use the same quotient to obtain the remainder. Floating-point division
+    // can round to an integer while `%` still returns almost a full loop,
+    // otherwise delaying a boundary note by an entire cycle (e.g. 3 * 89.033).
+    return cycles * cycleSeconds + beatToSeconds(this.tempoMap, startBeat + (beat - startBeat - cycles * length));
   }
 
   private loopBounds(): PlaybackRange {
@@ -506,9 +626,11 @@ export class AudioPlaybackService {
   private currentSongBeat(): number {
     const beat = this.currentAbsoluteBeat();
     const { startBeat, endBeat } = this.loopBounds();
-    return this.loopEnabled() && endBeat > startBeat && beat >= endBeat
-      ? startBeat + (beat - startBeat) % (endBeat - startBeat)
-      : Math.min(beat, this.duration());
+    if (this.loopEnabled() && endBeat > startBeat && beat >= endBeat) {
+      const length = endBeat - startBeat, cycles = Math.floor((beat - startBeat) / length);
+      return startBeat + (beat - startBeat - cycles * length);
+    }
+    return Math.min(beat, this.duration());
   }
 
   private safeStartBeat(beat: number): number {
@@ -541,6 +663,13 @@ export class AudioPlaybackService {
   }
 
   private clearScheduler(): void {
+    if (this.schedulerWorker) {
+      this.schedulerWorker.onmessage = null;
+      this.schedulerWorker.onerror = null;
+      this.schedulerWorker.terminate();
+      this.schedulerWorker = undefined;
+    }
+    this.clockMode = 'idle';
     if (this.scheduler !== undefined) {
       clearInterval(this.scheduler);
       this.scheduler = undefined;
@@ -548,10 +677,13 @@ export class AudioPlaybackService {
   }
 
   private stopSources(stopTime?: number): void {
+    this.scheduledNotes = [];
     this.midi.silence();
     for (const source of this.activeSources) {
       try { source.stop(stopTime); } catch { /* It may have ended between scheduler ticks. */ }
     }
-    if (stopTime === undefined) this.activeSources.clear();
+    if (stopTime === undefined) {
+      this.activeSources.clear();
+    }
   }
 }
