@@ -6,6 +6,72 @@ const { EventEmitter, once } = require('node:events');
 const test = require('node:test');
 const { createBrowserServer, listen, launchBrowser, watchBrowser, closeBrowser,
   requireProductionBuild, connectToPage, preflightBrowser } = require('./support/browser-harness.cjs');
+const { silenceBrowserAudio } = require('./support/browser-audio.cjs');
+
+test('audio isolation uses a silent sink or a final zero-gain boundary without altering offline output', () => {
+  for (const mode of ['silent-sink', 'ignored-option', 'rejected-option']) {
+    const gains = [];
+    class AudioNode {
+      constructor(context) { this.context = context; this.connections = []; }
+      connect(destination, ...ports) { this.connections.push({ destination, ports }); return destination; }
+      disconnect(...args) { this.disconnected = args; }
+    }
+    class NativeContext {
+      constructor(options) {
+        if (mode === 'rejected-option' && options?.sinkId) throw new TypeError('Unsupported sink');
+        this.options = options;
+        this.destination = new AudioNode(this);
+        if (mode === 'silent-sink') this.sinkId = options.sinkId;
+      }
+      createGain() { const node = new AudioNode(this); node.gain = { value: 1 }; gains.push(node); return node; }
+    }
+    class OfflineAudioContext {}
+    const sandbox = { AudioContext: NativeContext, AudioNode, OfflineAudioContext };
+    require('node:vm').runInNewContext('(' + silenceBrowserAudio.toString() + ')()', sandbox);
+    const options = { sampleRate: 22050 };
+    const context = new sandbox.AudioContext(options);
+    assert.ok(context instanceof NativeContext);
+    assert.ok(context instanceof sandbox.AudioContext);
+    assert.equal(context.options.sampleRate, 22050);
+    assert.equal(options.sinkId, undefined, 'caller options are not mutated');
+    const source = new AudioNode(context);
+    assert.equal(source.connect(context.destination, 1, 0), context.destination, 'connect retains its return value');
+    assert.deepEqual(source.connections[0].ports, [1, 0]);
+    source.disconnect(context.destination, 1, 0);
+    assert.equal(source.disconnected[0], source.connections[0].destination, 'disconnect uses the same safe route as connect');
+    source.disconnect(0);
+    assert.deepEqual(source.disconnected, [0], 'numeric disconnect overload is preserved');
+    if (mode === 'silent-sink') {
+      assert.equal(context.sinkId.type, 'none');
+      assert.equal(gains.length, 0, 'native silent output needs no gain modification');
+      assert.equal(source.connections[0].destination, context.destination);
+    } else {
+      assert.equal(gains.length, 1);
+      assert.equal(gains[0].gain.value, 0, 'fallback is fully muted, not just quiet');
+      assert.equal(source.connections[0].destination, gains[0]);
+      assert.equal(gains[0].connections[0].destination, context.destination);
+    }
+    const offlineDestination = new AudioNode({ offline: true });
+    source.connect(offlineDestination);
+    assert.equal(source.connections.at(-1).destination, offlineDestination);
+    assert.equal(sandbox.OfflineAudioContext, OfflineAudioContext);
+    class ChildContext extends sandbox.AudioContext {}
+    assert.ok(new ChildContext(options) instanceof ChildContext, 'context subclassing still works');
+  }
+});
+
+test('audio isolation precedes fixture scripts while preserving the doctype and production helpers', async () => {
+  const html = '<!doctype html><html><head><script>window.fixtureStarted = true</script></head><body>fixture</body></html>';
+  const server = createBrowserServer({ html });
+  await listen(server);
+  try {
+    const page = await (await fetch(`http://127.0.0.1:${server.address().port}/`)).text();
+    assert.ok(page.startsWith('<!doctype html>'));
+    assert.ok(page.indexOf('silenceBrowserAudio') < page.indexOf('window.fixtureStarted'));
+  } finally {
+    await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); });
+  }
+});
 
 test('browser server serves injected pages, assets and JSON results; rejects malformed results and escaped paths', async () => {
   const parent = path.resolve(__dirname, '../.angular');
@@ -23,7 +89,9 @@ test('browser server serves injected pages, assets and JSON results; rejects mal
   await listen(server);
   const url = `http://127.0.0.1:${server.address().port}`;
   try {
-    assert.equal(await (await fetch(url)).text(), '<p>injected</p>');
+    const page = await (await fetch(url)).text();
+    assert.ok(page.includes('silenceBrowserAudio'));
+    assert.ok(page.endsWith('<p>injected</p>'));
     const asset = await fetch(url + '/main.js?v=1');
     assert.equal(asset.headers.get('content-type'), 'text/javascript');
     assert.equal(await asset.text(), 'window.loaded = true;');

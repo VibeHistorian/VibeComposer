@@ -3,10 +3,18 @@ const http = require('node:http');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { selectSupport } = require('./browser-select.cjs');
+const { audioSupport } = require('./browser-audio.cjs');
 const { brokerBrowser, launchBrokerBrowser, connectToBrokerPage, readBrowserDownload } = require('./browser-broker.cjs');
 
 const frontend = path.resolve(__dirname, '../..');
 const profileRoot = path.join(frontend, '.angular');
+
+function preparePage(html, production) {
+  const support = audioSupport + (production ? selectSupport : '');
+  if (/<head\b[^>]*>/i.test(html)) return html.replace(/<head\b[^>]*>/i, head => head + support);
+  // Preserve the doctype (and standards mode) on minimal fixture pages.
+  return html.replace(/^\s*(?:<!doctype[^>]*>\s*)?(?:<html\b[^>]*>\s*)?/i, opening => opening + support);
+}
 
 function findBrowser() {
   if (process.env.VIBE_BROWSER_BROKER === '1') return brokerBrowser;
@@ -41,7 +49,7 @@ function createBrowserServer({ root, html, resolve, reject }) {
       }
       if (pathname === '/' && html !== undefined) {
         response.setHeader('Content-Type', 'text/html');
-        response.end(root ? html.replace('</head>', selectSupport + '</head>') : html);
+        response.end(preparePage(html, !!root));
         return;
       }
       const file = root && path.resolve(root, '.' + decodeURIComponent(pathname === '/' ? '/index.html' : pathname));
@@ -55,7 +63,7 @@ function createBrowserServer({ root, html, resolve, reject }) {
         '.woff': 'font/woff', '.woff2': 'font/woff2' };
       response.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream');
       if (path.extname(file) === '.html') {
-        response.end(fs.readFileSync(file, 'utf8').replace('</head>', selectSupport + '</head>'));
+        response.end(preparePage(fs.readFileSync(file, 'utf8'), true));
         return;
       }
       const stream = fs.createReadStream(file);

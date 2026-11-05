@@ -125,7 +125,7 @@ test('realtime audio survives delays and fractional loops without hidden playhea
         const clockReleased = playback.schedulerWorker === undefined && playback.clockMode === 'idle' && clock.onmessage === null;
         await fetch('/result', { method: 'POST', body: JSON.stringify({ peaks, graphPreserved,
           contextState: context.state, audioClockMode, audioTicks, clockPeak, audioClockPlaying, clockReleased,
-          hiddenPublications, playheadCaughtUp, boundaryDelays }) });
+          hiddenPublications, playheadCaughtUp, boundaryDelays, audioSinkType: context.sinkId?.type ?? null }) });
       } catch (error) {
         await fetch('/result', { method: 'POST', body: JSON.stringify({ error: String(error.stack || error) }) });
       } finally {
@@ -156,5 +156,6 @@ test('realtime audio survives delays and fractional loops without hidden playhea
     assert.equal(output.playheadCaughtUp, true, 'visibility restoration immediately refreshes the playhead');
     assert.ok(output.boundaryDelays.length >= 3, 'the test reaches the third fractional loop boundary');
     assert.ok(output.boundaryDelays.every(delay => Math.abs(delay) < 1e-8), 'boundary notes are never deferred by an extra loop');
+    assert.equal(output.audioSinkType, 'none', 'realtime PCM renders to a silent device instead of speakers');
   } finally { await closeBrowser({ child, server, watchdog }); }
 });
