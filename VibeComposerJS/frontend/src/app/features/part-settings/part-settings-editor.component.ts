@@ -197,6 +197,18 @@ export class PartSettingsEditorComponent {
     return this.local() ? combinedControlKeys(control.key, this.role()).some(key => this.overriddenKeys().includes(key)) ? 'custom' : 'inherited' : 'global';
   }
 
+  lockState(control: PartControl): boolean | 'mixed' {
+    const scope = this.scope();
+    const tracks = this.projects.project().tracks.filter(track => scope.kind === 'global-track'
+      ? track.id === scope.trackId : scope.kind === 'global-role' && track.role === scope.role);
+    const keys = combinedControlKeys(control.key, this.role());
+    const states = tracks.flatMap(track => keys.map(key => track.parameterLocks?.includes(key) ?? false));
+    return states.length > 0 && states.every(Boolean) ? true : states.some(Boolean) ? 'mixed' : false;
+  }
+  toggleLock(control: PartControl): void {
+    this.projects.setParameterLocks(this.scope(), combinedControlKeys(control.key, this.role()), this.lockState(control) !== true);
+  }
+
   resetControl(control: PartControl): void {
     this.inheritRequested.emit(combinedControlKeys(control.key, this.role()));
   }

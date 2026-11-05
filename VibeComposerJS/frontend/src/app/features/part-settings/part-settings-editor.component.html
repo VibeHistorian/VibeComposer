@@ -1,8 +1,8 @@
 <div class="part-controls">
   @if (seedControl(); as control) {
-    <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" [title]="control.description ?? ''">
+    <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" [title]="control.description ?? ''">
       <span class="quick-title-sizing" aria-hidden="true">{{ control.label }}</span>
-      <fieldset class="quick-control-border" [class.quick-inheritance-border]="!showGroupTitles() && inheritanceFor(control) !== 'global'" aria-hidden="true">
+      <fieldset class="quick-control-border" [class.quick-inheritance-border]="!showGroupTitles()" aria-hidden="true">
         <legend>{{ control.label }}</legend>
       </fieldset>
       @if (preferences.editingQuickSettings()) {
@@ -29,11 +29,11 @@
       @if (showGroupTitles()) { <h3>{{ group.label }}</h3> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.variation-only]="variationOnly(control)" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind !== 'boolean') {
               <span class="quick-title-sizing" aria-hidden="true">{{ title(control) }}</span>
             }
-            <fieldset class="quick-control-border" [class.quick-inheritance-border]="!showGroupTitles() && inheritanceFor(control) !== 'global'" [class.with-heading]="control.kind !== 'boolean'" aria-hidden="true">
+            <fieldset class="quick-control-border" [class.quick-inheritance-border]="!showGroupTitles()" [class.with-heading]="control.kind !== 'boolean'" aria-hidden="true">
               @if (control.kind !== 'boolean') {
                 <legend>{{ title(control) }}</legend>
               }
@@ -140,6 +140,13 @@
 </div>
 
 <ng-template #quickInheritance let-control>
+  @if (!local()) {
+    <button type="button" class="parameter-lock" [class.locked]="lockState(control) === true"
+      [class.inspector-lock]="showGroupTitles()" [attr.aria-pressed]="lockState(control)"
+      [attr.aria-label]="'Lock ' + control.label + ' during reroll and Compose'"
+      title="Preserve this parameter during reroll and Compose. Manual edits still apply."
+      [disabled]="preferences.editingQuickSettings()" (click)="toggleLock(control)">🔒︎</button>
+  }
   @if (!showGroupTitles() && inheritanceFor(control) !== 'global') {
     <vc-control-heading class="quick-inheritance" [label]="title(control)" [statusOnly]="true"
       [inheritance]="inheritanceFor(control)" [inert]="preferences.editingQuickSettings()"

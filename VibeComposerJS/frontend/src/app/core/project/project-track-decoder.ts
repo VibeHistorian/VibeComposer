@@ -3,6 +3,7 @@ import type { CompositionTrack, MixChannelSettings } from './track.model';
 import type { PhraseNote } from '../music/phrase-note';
 import type { PhraseRangeEdit } from '../music/phrase-range-edit';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
+import { PART_CONTROLS } from '../music/part-settings';
 import { INSTRUMENT_POOLS } from '../music/instrument-generation';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 
@@ -56,6 +57,11 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
       }
     }
     if (!decoded) return undefined;
+    if (track.parameterLocks !== undefined) {
+      if (!Array.isArray(track.parameterLocks) || new Set(track.parameterLocks).size !== track.parameterLocks.length
+        || track.parameterLocks.some(key => typeof key !== 'string' || !PART_CONTROLS[decoded!.role].some(control => control.key === key))) return undefined;
+      decoded = { ...decoded, parameterLocks: [...track.parameterLocks] };
+    }
     if (track.phraseEdits !== undefined) decoded = { ...decoded, phraseEdits: track.phraseEdits.map(edit => ({
       ...edit, notes: edit.notes.map(note => ({ ...note })),
     })) };

@@ -1096,3 +1096,49 @@ test('preview loop selection preserves inspector scopes and tolerates removed se
   ui.setSectionSelection(second.id);
   assert.deepEqual(ui.settingsTarget(), { kind: 'section', sectionId: second.id }, 'explicit section clicks still select the inspector');
 });
+
+
+test('parameter locks persist and undo, preserve rerolls and Compose, and permit role edits', () => {
+  const { service } = fixture();
+  const track = service.project().tracks.find(track => track.role === 'bass');
+  const scope = { kind: 'global-track', trackId: track.id };
+  const read = () => service.project().tracks.find(item => item.id === track.id);
+  service.updatePartSettings(scope, { noteVariation: 89 });
+  const before = service.exportProjectJson();
+  service.setParameterLocks(scope, ['noteVariation'], true);
+  const locked = service.exportProjectJson();
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), locked);
+  assert.equal(service.importProjectJson(locked), true);
+  assert.deepEqual(read().parameterLocks, ['noteVariation']);
+  assert.notEqual(service.rerollRoleTracks('bass', track.id), 'invalid');
+  assert.equal(read().generatorSettings.noteVariation, 89);
+  assert.notEqual(service.generateComposition(), 'invalid');
+  assert.equal(read().generatorSettings.noteVariation, 89);
+  service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { noteVariation: 91 });
+  assert.equal(read().generatorSettings.noteVariation, 91);
+  service.rerollRoleTracks('bass', track.id);
+  assert.equal(read().generatorSettings.noteVariation, 91);
+  service.setParameterLocks(scope, ['noteVariation'], false);
+  service.rerollRoleTracks('bass', track.id);
+  assert.ok(read().generatorSettings.noteVariation <= 50);
+  const json = JSON.parse(service.exportProjectJson());
+  const raw = json.tracks.find(item => item.id === track.id);
+  for (const locks of [['invalidParameter'], ['noteVariation', 'noteVariation'], 'noteVariation']) {
+    raw.parameterLocks = locks;
+    assert.equal(service.importProjectJson(JSON.stringify(json)), false);
+  }
+});
+
+
+test('Compose preserves locked Melody seeds, ranges and automatic pattern/target arrays', () => {
+  const { service } = fixture();
+  const track = service.project().tracks.find(track => track.role === 'melody');
+  const scope = { kind: 'global-track', trackId: track.id };
+  const keys = ['patternSeed', 'rangeMin', 'rangeMax', 'melodyPatternOffsets', 'chordNoteChoices'];
+  service.setParameterLocks(scope, keys, true);
+  const original = service.project().tracks.find(item => item.id === track.id).generatorSettings;
+  assert.notEqual(service.generateComposition(), 'invalid');
+  const actual = service.project().tracks.find(item => item.id === track.id).generatorSettings;
+  for (const key of keys) assert.deepEqual(actual[key], original[key], key);
+});

@@ -125,6 +125,12 @@ test('production Angular controls initialize selects from settings and support r
         const group = await waitFor(() => document.querySelector('.track-group.chords .group-select'));
         group.click();
         await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="chords"]'), 'Chords musical inspector');
+        const parameterLock = await waitFor(() => document.querySelector('vc-part-settings-editor[data-control-role="chords"] .parameter-lock'));
+        parameterLock.click();
+        await waitFor(() => parameterLock.getAttribute('aria-pressed') === 'true', 'parameter locked');
+        if (!readTrack('chords').parameterLocks?.length) throw new Error('parameter lock not persisted');
+        parameterLock.click();
+        await waitFor(() => parameterLock.getAttribute('aria-pressed') === 'false', 'parameter unlocked');
         let pickers = await waitFor(() => {
           const result = [...document.querySelectorAll('vc-select[aria-label="PATTERN"]')];
           return result.length === 1 ? result : null;

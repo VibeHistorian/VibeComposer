@@ -96,9 +96,9 @@
 .quick-inheritance { position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); width: var(--quick-inheritance-width); height: 18px; z-index: 2; }
 
 /* Local overrides share the snowflake accent across their control borders */
-.part-control.custom { --border-default: var(--accent-primary); }
-:host(.quick-layout) .part-control.custom .quick-control-border { box-shadow: 0 0 6px var(--accent-outline); }
-:host(:not(.quick-layout)) .part-control-area:has(.part-control.custom) { border-color: var(--accent-primary); box-shadow: 0 0 6px var(--accent-outline); }
+.part-control:is(.custom, .parameter-locked) { --border-default: var(--accent-primary); }
+:host(.quick-layout) .part-control:is(.custom, .parameter-locked) .quick-control-border { box-shadow: 0 0 6px var(--accent-outline); }
+:host(:not(.quick-layout)) .part-control-area:has(.part-control:is(.custom, .parameter-locked)) { border-color: var(--accent-primary); box-shadow: 0 0 6px var(--accent-outline); }
 
 /* Flowing quick settings */
 .quick-title-sizing { display: none; }
@@ -127,3 +127,11 @@
 /* Variation changes use the track role while inherited markers stay neutral */
 :host(.quick-layout) .part-control.variation-only .quick-control-border { border-color: var(--variation-role-color); box-shadow: 0 0 6px color-mix(in srgb, var(--variation-role-color) 18%, transparent); }
 :host(:not(.quick-layout)) .part-control.variation-only { outline: 1px solid var(--variation-role-color); outline-offset: 3px; border-radius: var(--radius-control); }
+
+/* Global parameter locks */
+.parameter-lock { position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; padding: 0; z-index: 2; border: 0; border-radius: var(--radius-control); background: var(--parameter-surface); color: var(--text-muted); font: 12px var(--font-ui); cursor: pointer; }
+.parameter-lock:hover, .parameter-lock.locked { color: var(--accent-primary); background: var(--surface-toggle-active); }
+.parameter-lock[aria-pressed="mixed"] { outline: 1px dashed var(--accent-primary); }
+.parameter-lock:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.parameter-lock.inspector-lock { bottom: auto; top: -3px; left: auto; right: -4px; transform: none; }
+:host(.quick-layout) .part-control:has(.parameter-lock) { margin-bottom: 1px; }

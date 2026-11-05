@@ -14,6 +14,8 @@ Exported files and session storage use `trackPresence: { melody: [...], bass: [.
 
 Role instrument-pool rows own the reseeding checkbox, Reseed command and shared-seed toggle. Only Melody enables reseeding by default; shared seeds default off for all roles. Reseed changes unlocked generated tracks in that role, preserves manual phrases and other roles, and refreshes enabled automatic Melody patterns/targets. The command validates generated phrases and section layouts before committing one undoable change. Disabling reseeding disables both action controls without discarding the shared-seed preference.
 
+Global track parameter locks are saved in `parameterLocks`, with one history command per toggle. The editor shares each combined control’s key set across quick and inspector layouts. Global rerolls and Compose retain locked values; manual changes, including global role edits, still update them. Section inheritance remains independent.
+
 ## Domain contracts
 
 Import contracts directly from their owner. `project.model.ts` defines the complete project and does not forward the musical, track or section contracts. All model dependencies use type-only imports; role/section constants and project defaults have explicit runtime owners. These modules remain independent of Angular, the DOM and Wails.

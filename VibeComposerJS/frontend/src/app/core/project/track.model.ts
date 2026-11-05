@@ -25,6 +25,8 @@ interface TrackBase {
   readonly editedPhrase?: readonly PhraseNote[];
   /** Track-owned replacements layered over each section's resolved phrase. */
   readonly phraseEdits?: readonly PhraseRangeEdit[];
+  /** Parameters preserved during reroll and Compose. */
+  readonly parameterLocks?: readonly string[];
   readonly rerollLocked?: boolean;
   readonly instrumentLocked?: boolean;
   readonly instrumentPool?: Exclude<InstrumentPool, 'AUTO'>;

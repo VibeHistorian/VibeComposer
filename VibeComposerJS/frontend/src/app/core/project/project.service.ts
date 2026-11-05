@@ -223,6 +223,31 @@ export class ProjectService {
       this.controlHistoryKey(['policy', role], patch));
   }
 
+  setParameterLocks(scope: PartSettingsScope, keys: readonly string[], locked: boolean): void {
+    if (scope.kind !== 'global-track' && scope.kind !== 'global-role') return;
+    const current = this.state();
+    const tracks = current.tracks.map(track => {
+      if (scope.kind === 'global-track' ? track.id !== scope.trackId : track.role !== scope.role) return track;
+      if (!keys.length || keys.some(key => !PART_CONTROLS[track.role].some(control => control.key === key))) return track;
+      const parameterLocks = new Set(track.parameterLocks ?? []);
+      for (const key of keys) locked ? parameterLocks.add(key) : parameterLocks.delete(key);
+      if (parameterLocks.size === (track.parameterLocks?.length ?? 0) && [...parameterLocks].every(key => track.parameterLocks?.includes(key))) return track;
+      return { ...track, parameterLocks: [...parameterLocks] };
+    });
+    if (tracks.some((track, index) => track !== current.tracks[index])) this.commit({ ...current, tracks });
+  }
+
+  private preserveParameterLocks(source: CompositionTrack, candidate: CompositionTrack): CompositionTrack {
+    if (!source.parameterLocks?.length) return candidate;
+    const settings = { ...candidate.generatorSettings } as unknown as Record<string, unknown>;
+    const original = source.generatorSettings as unknown as Record<string, unknown>;
+    for (const key of source.parameterLocks) {
+      if (original[key] === undefined) delete settings[key];
+      else settings[key] = original[key];
+    }
+    return { ...candidate, generatorSettings: settings } as unknown as CompositionTrack;
+  }
+
   setTrackRerollLock(trackId: string, locked: boolean): void {
     if (typeof locked !== 'boolean') return;
     const current = this.state();
@@ -451,7 +476,7 @@ export class ProjectService {
     const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, false, drumContext);
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1), drumContext);
     if (sources.every((track, index) => track === instrumentTracks[index] && partPatchesEqual(track.generatorSettings, settings[index]))) return current;
-    const replacements = new Map(instrumentTracks.map((track, index) => [track.id, { ...track, generatorSettings: settings[index] } as CompositionTrack]));
+    const replacements = new Map(instrumentTracks.map((track, index) => [track.id, this.preserveParameterLocks(sources[index], { ...track, generatorSettings: settings[index] } as CompositionTrack)]));
     const next = { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
       trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
     return next;
@@ -540,6 +565,10 @@ export class ProjectService {
       } else next = arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances(), BigInt(next.seed),
         this.uiPreferences.generateArrangementVariations(), this.uiPreferences.variationRerolls());
     }
+    next = { ...next, tracks: next.tracks.map(track => {
+      const source = current.tracks.find(source => source.id === track.id);
+      return source ? this.preserveParameterLocks(source, track) : track;
+    }) };
     if (next === current) return 'unchanged';
     // Rendering also asks for the global phrase (note counts) and for section
     // layouts/dependencies. Resolve both before publishing any candidate state.
