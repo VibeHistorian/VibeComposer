@@ -76,4 +76,4 @@ Follow [TRANSLATION_RULES.md](TRANSLATION_RULES.md) and the [workspace contracts
 
 Angular ownership rules live in the [feature README](frontend/src/app/features/README.md) and [shared UI README](frontend/src/app/shared/README.md). Project codecs, command helpers, and the service commit boundary are mapped in the [project-state guide](frontend/src/app/core/project/README.md). Java fixture regeneration is documented in [the fixture guide](frontend/scripts/java/README.md).
 
-Test commands, the focused and exhaustive browser matrices, and fixture performance notes are documented in the [frontend test guide](frontend/scripts/README.md).
+Test commands and [scope/runtime guidance](frontend/scripts/README.md#test-scope-and-runtime) are documented in the [frontend test guide](frontend/scripts/README.md). Use affected suites while iterating: the full browser aggregate takes several minutes. Exhaustive layout matrices, 150-second playback soak runs and Java fixture regeneration are opt-in checks for matching changes, not routine checks for unrelated features.

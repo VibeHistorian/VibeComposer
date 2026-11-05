@@ -4,6 +4,10 @@ Fixtures in [../fixtures](../fixtures/) compare TypeScript helpers and supported
 
 ## Regeneration
 
+Regeneration is an explicit oracle-maintenance task, not a prerequisite for routine frontend work or `pnpm test`. Normal tests read the checked-in JSON under `scripts/fixtures/` without compiling or launching Java. Regenerate only the affected matrix when the Java consumer changes or fixture expectations intentionally need updating; layout, appearance and unrelated UI changes do not need regeneration.
+
+Elapsed time has not been benchmarked for these scripts and varies with the JDK, compilation inputs and selected matrix; some selections generate hundreds or thousands of cases. Allow for compilation plus generation, and do not add all regeneration scripts to the normal test loop or treat a case count as a timing estimate. For measured frontend suite costs and the separate opt-in browser soak/matrix modes, see [test scope and runtime](../README.md#test-scope-and-runtime).
+
 Run from the repository root with the existing `midimasterpiece/target/classes` and dependency JAR. Scripts compile the current production consumers ahead of bundled classes; stale classes must not become the oracle. Override `-Jdk` if needed.
 
 ```powershell

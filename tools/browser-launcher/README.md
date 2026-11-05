@@ -67,8 +67,17 @@ frontend terminal:
 
 ```powershell
 $env:VIBE_BROWSER_BROKER = '1'
-pnpm run test:browser
+node --test scripts/playback-recovery-browser.test.cjs
 ```
+
+The example runs one focused playback suite (about eight seconds with default
+settings). Choose the suite for the changed feature from the
+[frontend test guide](../../VibeComposerJS/frontend/scripts/README.md#test-scope-and-runtime).
+`pnpm run test:browser` is the broader aggregate and typically takes 3–4 minutes;
+starting the broker does not require running that aggregate. Leave slow-mode
+overrides unset for routine work; the opt-in 150-second playback soak takes
+roughly 155–160 seconds and the exhaustive overview matrix about 105 seconds
+(remeasured on 2026-11-05).
 
 The environment setting opts into the broker; there is no automatic fallback to
 unsandboxed Node or direct Chromium execution if the broker fails. Existing
@@ -84,7 +93,8 @@ node --test tools/browser-launcher/verify.cjs
 ```
 
 Stop the broker with Ctrl+C. It also stops after 30 minutes. Each browser session
-expires after three minutes; explicit suite cleanup normally closes it much sooner.
+expires after three minutes; this is a per-launch limit, not a limit on the total
+multi-suite run. Explicit suite cleanup normally closes it much sooner.
 A Windows kill-on-close job contains the entire process tree, so stopping/killing
 the broker also stops its Chromium descendants. Interrupted sessions can leave
 disposable profile files under the runtime directory; remove those only when no
