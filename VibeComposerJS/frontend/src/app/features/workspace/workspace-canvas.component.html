@@ -61,7 +61,7 @@
                   <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
                     [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
                     [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
-                    (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">⍟</button>
+                    (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">🔒︎</button>
                   <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
                     (click)="rerollRole(track.role, track.id)">↻</button>
                 </div>

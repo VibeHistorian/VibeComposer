@@ -42,7 +42,7 @@
                   (valueChange)="replace(row.section.id, item.track.id, $event)" />
               </span>
             <button type="button" class="variation-lock" [attr.aria-label]="'Lock ' + item.track.name + ' variation'" title="Lock variation against rerolls"
-              [attr.aria-pressed]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (click)="keep(row.section.id, item.track.id, item.inspection.choice.origin !== 'authored')">⍟</button>
+              [attr.aria-pressed]="item.inspection.choice.origin === 'authored'" [disabled]="stale()" (click)="keep(row.section.id, item.track.id, item.inspection.choice.origin !== 'authored')">🔒︎</button>
             <button type="button" class="variation-delete" [attr.aria-label]="'Delete ' + item.track.name + ' variation'" title="Delete variation" [disabled]="stale()" (click)="remove(row.section.id, item.track.id)">×</button>
               </div>
               <div class="effect-values" [class.context-mismatch]="item.mismatch" [title]="item.mismatch ? 'This choice differs from the current section purpose. ' + (item.inspection.choice.origin === 'authored' ? 'Unlock to allow replanning.' : 'Reroll to replan.') : ''">

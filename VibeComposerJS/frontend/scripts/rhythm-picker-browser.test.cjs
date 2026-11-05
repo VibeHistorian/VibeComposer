@@ -595,7 +595,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.inlineActions.length, 5);
     assert.deepEqual(actual.instrumentDefaultChecks, [true, true, true, true, true]);
     for (const actions of actual.inlineActions) {
-      assert.deepEqual(actions, { symbols: ['M', 'S', '⍟', '↻'], actionsBeforeInstrument: true, oneLine: true, fits: true });
+      assert.deepEqual(actions, { symbols: ['M', 'S', '🔒︎', '↻'], actionsBeforeInstrument: true, oneLine: true, fits: true });
     }
     assert.deepEqual(actual.inlineIdentity, { program: 0, channel: 5, bassProgram: 33, bassChannel: 1,
       selectionPreserved: true, noInspectorIdentity: true, noG: true, hiddenArrow: true });
