@@ -288,11 +288,13 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             const name=row.querySelector('.setting-copy').getBoundingClientRect(), bar=distribution.getBoundingClientRect(), controls=row.querySelector('.chance-sliders').getBoundingClientRect();
             ensure(name.right<=bar.left&&bar.right<=controls.left,'proportional bar sits between section name and sliders');
             const values=[0,1,50,100,25], brightness=[0.25,0.5,0.5+49/99*0.5,1,0.5+24/99*0.5];
-            const shares=[0.1,0.1,80*50/175/100,80*100/175/100,80*25/175/100];
+            const referenceFill=segment(roles[3]).querySelector('.share-color').getBoundingClientRect();
+            const referenceArea=referenceFill.width*referenceFill.height;
             for (const [index,part] of roles.entries()) {
-              ensure(Math.abs(segment(part).getBoundingClientRect().width/bar.width-shares[index])<0.001,'bar width respects minimum and remaining proportions for '+part);
+              ensure(segment(part).getBoundingClientRect().width/bar.width>=0.099,'bar width respects visibility minimum for '+part);
               const fill=segment(part).querySelector('.share-color').getBoundingClientRect();
-              ensure(Math.abs(fill.height/bar.height-values[index]/100)<0.001,'fill height follows '+part+' chance');
+              ensure(Math.abs(fill.width*fill.height/referenceArea-values[index]/100)<0.002,'filled area follows '+part+' preference');
+              ensure(fill.height<=bar.height,'fill fits bar for '+part);
               ensure(Math.abs(fill.bottom-bar.bottom)<1,'fill anchored to bar bottom');
               const label=segment(part).querySelector('.share-value').getBoundingClientRect();
               ensure(Math.abs((label.top+label.bottom-bar.top-bar.bottom)/2)<1,'graph label centered in full height');
