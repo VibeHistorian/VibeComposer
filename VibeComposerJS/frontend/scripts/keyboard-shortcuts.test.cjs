@@ -211,3 +211,17 @@ test('unchanged saved phrase defaults adopt the new gestures while custom mappin
   assert.deepEqual(decodeShortcuts(old).seek,old.seek);
   assert.deepEqual(decodeShortcuts(old).addNote,old.addNote);
 });
+
+
+test('parameter lock shortcut defaults to Shift right mouse, fills older preferences and accepts remapping', () => {
+  const { defaultShortcuts, decodeShortcuts, SHORTCUTS, SHORTCUT_PAGES } = load('core/ui/shortcuts.ts');
+  const defaults = defaultShortcuts();
+  assert.deepEqual(defaults.controlFreeze, [{ kind: 'mouse', input: '2', ctrl: false, shift: true, alt: false }]);
+  delete defaults.controlFreeze;
+  assert.deepEqual(decodeShortcuts(defaults).controlFreeze, defaultShortcuts().controlFreeze);
+  const remapped = [{ kind: 'mouse', input: '1', ctrl: true, shift: false, alt: false }];
+  assert.deepEqual(decodeShortcuts({ controlFreeze: remapped }).controlFreeze, remapped);
+  assert.equal(decodeShortcuts({ controlFreeze: [{ kind: 'wheel', input: 'scroll', ctrl: false, shift: false, alt: false }] }), null);
+  const action = SHORTCUTS.find(action => action.id === 'controlFreeze');
+  assert.ok(SHORTCUT_PAGES.find(page => page.id === 'shortcuts-general').groups.includes(action.group));
+});

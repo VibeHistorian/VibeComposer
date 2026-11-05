@@ -1,6 +1,6 @@
-<div class="part-controls">
+<div class="part-controls" [vcParameterShortcut]="!preferences.editingQuickSettings()" (parameterShortcut)="parameterShortcut($event)">
   @if (seedControl(); as control) {
-    <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" [title]="control.description ?? ''">
+    <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" data-parameter-key="patternSeed" [title]="control.description ?? ''">
       <span class="quick-title-sizing" aria-hidden="true">{{ control.label }}</span>
       <fieldset class="quick-control-border quick-inheritance-border" aria-hidden="true">
         <legend>{{ control.label }}</legend>
@@ -29,7 +29,7 @@
       @if (showGroupTitles()) { <legend>{{ group.label }}</legend> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
-          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
+          <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" [attr.data-control-key]="control.key" [attr.data-parameter-key]="control.key" data-parameter-combined="true" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind !== 'boolean') {
               <span class="quick-title-sizing" aria-hidden="true">{{ title(control) }}</span>
             }
@@ -47,7 +47,7 @@
             @if (control.key === 'ending') {
               <vc-control-heading label="SENTENCE" [inheritance]="'global'" (inheritRequested)="resetControl(control)" />
               @for (member of members(control); track member.key) {
-                <vc-select #choice="vcSelect" [class.custom-member]="parameterFrozen(member.key)" [options]="member.options" [attr.data-control-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="choose(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
+                <vc-select #choice="vcSelect" [class.custom-member]="parameterFrozen(member.key)" [options]="member.options" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="choose(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
               }
             } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin' || control.key === 'rangeMin') {
               <vc-control-heading [label]="title(control)" [inheritance]="'global'" (inheritRequested)="resetControl(control)" />
@@ -57,7 +57,7 @@
                 }
               </div>
             } @else if (control.kind === 'number') {
-              <vc-compact-knob [defaultValue]="numericDefault(control)" [value]="numericValue(control)" [mixed]="values()[control.key] === null"
+              <vc-compact-knob [attr.data-parameter-key]="control.key" [defaultValue]="numericDefault(control)" [value]="numericValue(control)" [mixed]="values()[control.key] === null"
                 [minimum]="minimum(control)" [maximum]="maximum(control)"
                 [step]="control.step ?? 1"
                 [allowedValues]="control.allowedValues ?? emptyAllowedValues"
@@ -66,7 +66,7 @@
                 (inheritRequested)="inheritRequested.emit(control.key)"
                 (valueCommit)="settingsChanged.emit({ key: control.key, value: $event })" />
             } @else if (control.kind === 'boolean') {
-              <vc-compact-toggle [label]="control.label" [shortLabel]="code(control)"
+              <vc-compact-toggle [attr.data-parameter-key]="control.key" [label]="control.label" [shortLabel]="code(control)"
                 [description]="control.description ?? ''" [active]="values()[control.key] === true" [mixed]="values()[control.key] === null"
                 [showStatus]="true" [inheritance]="'global'"
                 (inheritRequested)="inheritRequested.emit(control.key)"
@@ -75,15 +75,15 @@
               <vc-control-heading #heading [label]="title(control)" [inheritance]="'global'"
                 (inheritRequested)="resetControl(control)" />
               @if (control.kind === 'integers' || control.kind === 'integer') {
-                <input [id]="heading.controlId" class="part-list" type="text" [value]="textValue(control)"
+                <input [attr.data-parameter-key]="control.key" [id]="heading.controlId" class="part-list" type="text" [value]="textValue(control)"
                   [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
                   (focus)="startTextEdit()" (change)="commitText(control, $event)"
                   (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
               } @else if (control.kind === 'choice') {
                 <div class="choice-controls">
-                <vc-select #choice="vcSelect" [class.custom-member]="parameterFrozen(control.key)" [options]="control.options" [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (valueChange)="choose(control, $event, choice)" [mixed]="values()[control.key] === null"></vc-select>
+                <vc-select #choice="vcSelect" [attr.data-parameter-key]="control.key" [class.custom-member]="parameterFrozen(control.key)" [options]="control.options" [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (valueChange)="choose(control, $event, choice)" [mixed]="values()[control.key] === null"></vc-select>
                 @if (flipControl(control); as flip) {
-                  <button type="button" class="flip-button" [class.custom-member]="parameterFrozen(flip.key)" [attr.data-control-key]="flip.key"
+                  <button type="button" class="flip-button" [class.custom-member]="parameterFrozen(flip.key)" [attr.data-control-key]="flip.key" [attr.data-parameter-key]="flip.key"
                     [class.active]="values()[flip.key] === true" [class.mixed]="values()[flip.key] === null"
                     [attr.aria-label]="flip.label" [attr.aria-pressed]="values()[flip.key] === null ? 'mixed' : values()[flip.key] === true"
                     [title]="flip.label + ': ' + flip.description"
@@ -155,7 +155,7 @@
 </ng-template>
 
 <ng-template #compactMember let-member>
-  <div class="joined-member" [class.custom-member]="parameterFrozen(member.key)" [attr.data-control-key]="member.key">
+  <div class="joined-member" [class.custom-member]="parameterFrozen(member.key)" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key">
     @if (member.key === 'feedbackCount' || member.key === 'patternShift') {
       <vc-select [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event)" [mixed]="values()[member.key] === null"></vc-select>
     } @else {

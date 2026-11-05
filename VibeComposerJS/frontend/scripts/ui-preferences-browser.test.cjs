@@ -239,6 +239,9 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             };
             if (category.getAttribute('aria-label')==='Shortcuts General') {
               ensure(button('Record Reset value') && button('Record Fine knob dragging'),'general includes controls and modifiers');
+              ensure(button('Record Toggle parameter lock / unfreeze'),'general includes parameter lock shortcut');
+              const lock=await record('Toggle parameter lock / unfreeze',new PointerEvent('pointerdown',{button:1,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'controlFreeze');
+              ensure(lock.kind==='mouse' && lock.input==='1' && lock.ctrl && lock.alt && !lock.shift,'parameter lock shortcut can be remapped');
               const fine=await record('Fine knob dragging',new KeyboardEvent('keyup',{key:'Alt',shiftKey:true,bubbles:true,cancelable:true}),'fineDrag');
               ensure(fine.kind==='modifier' && fine.shift && fine.alt,'capture modifier combination');
             }

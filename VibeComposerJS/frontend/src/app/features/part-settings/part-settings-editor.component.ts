@@ -1,3 +1,4 @@
+import { ParameterShortcutDirective } from './parameter-shortcut.directive';
 import { inspectArrangementVariation } from '../../core/music/arrangement-variation-inspection';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { NgTemplateOutlet } from '@angular/common';
@@ -25,7 +26,7 @@ import { ProjectService } from '../../core/project/project.service';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent],
+  imports: [ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()', '[style.--variation-role-color]': '"var(--role-" + role() + ")"', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',
@@ -221,6 +222,20 @@ export class PartSettingsEditorComponent {
     const states = tracks.flatMap(track => keys.map(key => track.parameterLocks?.includes(key) ?? false));
     return states.length > 0 && states.every(Boolean) ? true : states.some(Boolean) ? 'mixed' : false;
   }
+  parameterShortcut({ key, combined }: { key: string; combined: boolean }): void {
+    const keys = combined ? combinedControlKeys(key, this.role()) : [key];
+    if (this.local()) {
+      const frozen = keys.filter(key => this.overriddenKeys().includes(key));
+      if (frozen.length) this.inheritRequested.emit(frozen);
+      return;
+    }
+    const scope = this.scope();
+    const tracks = this.projects.project().tracks.filter(track => scope.kind === 'global-track'
+      ? track.id === scope.trackId : scope.kind === 'global-role' && track.role === scope.role);
+    const locked = tracks.length > 0 && tracks.every(track => keys.every(key => track.parameterLocks?.includes(key)));
+    this.projects.setParameterLocks(scope, keys, !locked);
+  }
+
   toggleLock(control: PartControl): void {
     this.projects.setParameterLocks(this.scope(), combinedControlKeys(control.key, this.role()), this.lockState(control) !== true);
   }

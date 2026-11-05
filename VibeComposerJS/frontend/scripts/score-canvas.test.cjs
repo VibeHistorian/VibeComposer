@@ -1132,6 +1132,7 @@ test('Ctrl Shift duplicate drags retain snapping and pitch movement while Shift 
 
 test('soloed narrow overview fills the piano gutter and grid while centering notes at every height', () => {
   const { component: c } = fixture();
+  c.horizontalOffset = 0; c.horizontalScale = 1;
   c.editable = () => false;
   c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
     fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
@@ -1149,6 +1150,7 @@ test('soloed narrow overview fills the piano gutter and grid while centering not
     assert.ok(Math.abs(rows.at(-1).y + rows.at(-1).height - c.harmonicHeight) < 1e-8, 'piano keys fill the harmonic height');
     for (let i = 1; i < rows.length; i++) assert.ok(Math.abs(rows[i].y - rows[i-1].y - rows[i-1].height) < 1e-8, 'no gaps between pitch rows');
     assert.ok(c.laneHeight <= 30);
+    assert.equal(c.hitAreas.length, pitches.length, 'the centered notes are inside the visible time window');
     const centers = c.hitAreas.map(area => area.y + area.height / 2);
     assert.ok(Math.abs((Math.min(...centers) + Math.max(...centers)) / 2 - c.harmonicHeight / 2) <= c.laneHeight / 2 + 1e-8,
       'visible notes center within half a pitch row');

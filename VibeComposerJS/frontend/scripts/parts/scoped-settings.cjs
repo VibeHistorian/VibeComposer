@@ -2705,3 +2705,28 @@ test('rejected generation edits do not leave a velocity warning in either settin
   assert.equal(workspace.partEditErrorFor(scope), null);
 });
 
+
+
+test('parameter shortcut targets exact combined members and only releases section freezes', () => {
+  const { service, load } = fixture();
+  const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
+  const editor = new Editor();
+  const track = service.project().tracks.find(track => track.role === 'chords');
+  editor.role.set('chords'); editor.scope.set({ kind: 'global-track', trackId: track.id });
+  editor.parameterShortcut({ key: 'velocityMin', combined: false });
+  const read = () => service.project().tracks.find(item => item.id === track.id);
+  assert.deepEqual(read().parameterLocks, ['velocityMin']);
+  const control = { key: 'velocityMin' };
+  assert.equal(editor.lockState(control), 'mixed');
+  assert.equal(editor.categoryFreezeState([control]), 'partial');
+  editor.parameterShortcut({ key: 'velocityMin', combined: false });
+  assert.deepEqual(read().parameterLocks, []);
+  editor.parameterShortcut({ key: 'velocityMin', combined: true });
+  assert.deepEqual(read().parameterLocks, ['velocityMin', 'velocityMax']);
+  editor.local.set(true); editor.overriddenKeys.set(['velocityMin']);
+  const emitted = []; editor.inheritRequested.emit = keys => emitted.push(keys);
+  editor.parameterShortcut({ key: 'velocityMax', combined: false });
+  assert.deepEqual(emitted, []);
+  editor.parameterShortcut({ key: 'velocityMin', combined: false });
+  assert.deepEqual(emitted, [['velocityMin']]);
+});

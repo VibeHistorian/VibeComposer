@@ -132,6 +132,25 @@ test('production Angular controls initialize selects from settings and support r
         if (!readTrack('chords').parameterLocks?.length) throw new Error('parameter lock not persisted');
         parameterLock.click();
         await waitFor(() => parameterLock.getAttribute('aria-pressed') === 'false', 'parameter unlocked');
+        const velocityMember = await waitFor(() => document.querySelector('vc-part-settings-editor[data-control-role="chords"] .joined-member[data-control-key="velocityMin"]'));
+        const velocityInput = velocityMember.querySelector('input');
+        const initialVelocity = readTrack('chords').generatorSettings.velocityMin;
+        const lockGesture = () => {
+          velocityInput.dispatchEvent(new PointerEvent('pointerdown', { button: 2, shiftKey: true, bubbles: true, cancelable: true }));
+          velocityInput.dispatchEvent(new MouseEvent('contextmenu', { button: 2, shiftKey: true, bubbles: true, cancelable: true }));
+          velocityInput.dispatchEvent(new MouseEvent('auxclick', { button: 2, shiftKey: true, bubbles: true, cancelable: true }));
+        };
+        lockGesture();
+        await waitFor(() => readTrack('chords').parameterLocks?.includes('velocityMin'), 'individual member locked once');
+        if (readTrack('chords').parameterLocks.includes('velocityMax') || readTrack('chords').generatorSettings.velocityMin !== initialVelocity) throw new Error('lock shortcut changed value or locked sibling');
+        const pair = velocityMember.closest('.part-control');
+        await waitFor(() => pair.classList.contains('partially-frozen'), 'global combined partial lock');
+        if (getComputedStyle(pair.querySelector('.quick-control-border')).borderStyle !== 'dashed') throw new Error('partial global lock needs dashed frame');
+        if (pair.querySelector('.parameter-lock').getAttribute('aria-pressed') !== 'mixed') throw new Error('combined marker must show mixed locks');
+        if (!document.querySelector('.track-group.chords .parameter-locks-active')) throw new Error('track must indicate individual locks');
+        lockGesture();
+        await waitFor(() => !readTrack('chords').parameterLocks?.includes('velocityMin'), 'individual member unlocked');
+
         let pickers = await waitFor(() => {
           const result = [...document.querySelectorAll('vc-select[aria-label="PATTERN"]')];
           return result.length === 1 ? result : null;

@@ -321,6 +321,15 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => velocityPair().classList.contains('partially-frozen'), 'undo restores partial freeze');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => JSON.stringify(read()) === beforeLocalIndividual, 'combined freeze checks undo');
+      await change(rowControl('track-bass-2', 'velocityMin'), '67');
+      const unfreeze = key => rowControl('track-bass-2', key).dispatchEvent(new MouseEvent('contextmenu', { button: 2, shiftKey: true, bubbles: true, cancelable: true }));
+      const beforeInheritedGesture = JSON.stringify(read());
+      unfreeze('velocityMax');
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+      if (JSON.stringify(read()) !== beforeInheritedGesture) throw new Error('shortcut must not freeze an inherited member');
+      unfreeze('velocityMin');
+      await wait(() => JSON.stringify(read()) === beforeLocalIndividual, 'shortcut unfreezes only targeted member');
+
       groupToggle().click();
       await wait(() => trackRows().length === 0, 'return to section group controls');
       // Quick inheritance interrupts the bottom border and leaves titles their full width.

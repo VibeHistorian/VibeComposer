@@ -19,6 +19,7 @@ export const SHORTCUTS = [
   { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob or dropdown to change its value.', defaults: [wheel()] },
   { id: 'controlFineWheel', group: 'Controls', label: 'Fine adjustment', description: 'Scroll over a knob to change its value in smaller steps.', defaults: [wheel(false, true)] },
   { id: 'controlReset', group: 'Controls', label: 'Reset value', description: 'On a knob or dropdown, restore the default value.', defaults: [mouse(2)] },
+  { id: 'controlFreeze', group: 'Controls', label: 'Toggle parameter lock / unfreeze', description: 'On a global track control, toggle its reroll/Compose lock. On a section control, remove its existing freeze. Combined members can be targeted individually.', defaults: [mouse(2, false, true)] },
   { id: 'fineDrag', group: 'Control modifiers', label: 'Fine knob dragging', description: 'Hold while dragging a knob for finer changes.', defaults: [modifier(false, true)] },
   { id: 'playback', group: 'Global', label: 'Play / pause', description: 'Toggle playback, including a phrase draft.', defaults: [key(' ')] },
   { id: 'undo', group: 'Global', label: 'Undo', description: 'Undo in the project or active phrase draft.', defaults: [key('z', true)] },
@@ -80,7 +81,7 @@ export function shortcutLabel(value: Shortcut): string {
 export function acceptsShortcut(action: typeof SHORTCUTS[number], value: Shortcut): boolean {
   return action.defaults[0].kind === 'modifier' ? value.kind === 'modifier'
     : action.defaults[0].kind === 'wheel' ? value.kind === 'wheel'
-    : action.group === 'Phrase gestures' || action.id === 'controlReset' ? value.kind === 'mouse'
+    : action.group === 'Phrase gestures' || ['controlReset', 'controlFreeze'].includes(action.id) ? value.kind === 'mouse'
     : action.group === 'Global' || action.group === 'Phrase editor' || action.id === 'clearSections' ? value.kind === 'key' : value.kind === 'key' || value.kind === 'mouse';
 }
 export function decodeShortcuts(value: unknown): ShortcutBindings | null {
