@@ -58,8 +58,6 @@ interface OverviewHitArea {
 
 const RULER_HEIGHT = 40;
 const MIN_ROW_HEIGHT = 52;
-const TRACK_BUTTON_PITCH = 19;
-const CELL_HORIZONTAL_PADDING = 10;
 const MAX_TRACK_BUTTON_ROWS = 2;
 const ROLE_COLORS: Readonly<Record<ArrangedPart, string>> = {
   melody: 'melody', bass: 'bass', chords: 'chords', arpeggio: 'arpeggio', drums: 'drum',
@@ -351,8 +349,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const totalBeats = this.timelineBounds().endBeat - this.timelineBounds().startBeat;
     const minimumHeight = RULER_HEIGHT + groups.length * MIN_ROW_HEIGHT;
     const trackCount = Math.max(0, ...groups.map((group) => group.tracks.length));
+    const buttonSize = trackCount < 10 ? 14 : 16;
+    const buttonHalf = buttonSize / 2;
+    const buttonGap = 3;
+    const buttonPitch = buttonSize + buttonGap;
+    const buttonInset = 1;
+    const buttonRightSpace = buttonSize === 16 ? buttonGap : 0;
+    const buttonHorizontalSpace = buttonInset * 2 + buttonRightSpace;
     const minimumCellWidth = trackCount > 0
-      ? CELL_HORIZONTAL_PADDING + TRACK_BUTTON_PITCH * Math.ceil(trackCount / MAX_TRACK_BUTTON_ROWS) : 0;
+      ? buttonPitch * Math.ceil(trackCount / MAX_TRACK_BUTTON_ROWS) - buttonGap + buttonHorizontalSpace : 0;
     const fullSectionBeats = sections.map(item => sectionDurationBeats(this.project(), item.section)).filter(beats => beats >= 4);
     const minimumPixelsPerBeat = fullSectionBeats.length ? minimumCellWidth / Math.min(...fullSectionBeats) : 0;
     const needsHorizontalScroll = (): boolean => totalBeats > 0 && (this.horizontalScale > 1
@@ -514,9 +519,9 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
           reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reset' }) }, this.labelWidth, RULER_HEIGHT);
         const visibleTracks = this.overviewTracks(item.section, group);
-        const togglesPerRow = Math.max(1, Math.floor((width - CELL_HORIZONTAL_PADDING + 1e-7) / TRACK_BUTTON_PITCH));
+        const togglesPerRow = Math.max(1, Math.floor((width - buttonHorizontalSpace + buttonGap + 1e-7) / buttonPitch));
         const toggleRows = Math.ceil(visibleTracks.length / togglesPerRow);
-        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, toggleRows) * TRACK_BUTTON_PITCH);
+        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, toggleRows) * buttonPitch);
         context.save();
         context.beginPath(); context.rect(x, y + 5, width, previewHeight); context.clip();
         const durations = sectionChordDurations(this.project(), item.section);
@@ -543,12 +548,12 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
             ? color(group.role === 'drums' ? '--role-drums' : `--role-${role}-strong`)
             : trackColor(group.role, trackNumber - 1, group.tracks.length, color);
           const toggleRow = Math.floor(index / togglesPerRow);
-          const centerX = x + CELL_HORIZONTAL_PADDING / 2 + index % togglesPerRow * TRACK_BUTTON_PITCH + 8;
-          const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * TRACK_BUTTON_PITCH - 12;
+          const centerX = x + buttonInset + index % togglesPerRow * buttonPitch + buttonHalf;
+          const centerY = y + this.rowHeight - (toggleRows - toggleRow - 1) * buttonPitch - buttonHalf - buttonInset;
           const present = this.trackPresent(item.section, track);
           const hovered = this.hoveredKey === `toggle:${item.section.id}:${track.id}`;
           context.globalAlpha = hovered ? 1 : present ? 0.6 : 0.48;
-          context.beginPath(); context.rect(centerX - 8, centerY - 8, 16, 16);
+          context.beginPath(); context.rect(centerX - buttonHalf, centerY - buttonHalf, buttonSize, buttonSize);
           const buttonSurface = present ? trackColor(group.role, this.preferences.appearance().progressiveTrackColoring === false ? 0 : trackNumber - 1, group.tracks.length, color, '-surface') : color('--surface-button');
           context.fillStyle = hovered ? `color-mix(in srgb, ${buttonSurface} 85%, ${color('--text-primary')})` : buttonSurface;
           context.fill();
@@ -558,26 +563,26 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.textAlign = 'start'; context.globalAlpha = 1;
           if (target?.kind === 'section-track' && target.sectionId === item.section.id && target.trackId === track.id) {
             context.strokeStyle = this.accent;
-            context.strokeRect(centerX - 10, centerY - 10, 20, 20);
+            context.strokeRect(centerX - buttonHalf + 0.5, centerY - buttonHalf + 0.5, buttonSize - 1, buttonSize - 1);
           }
           const trackCustomized = Object.keys(item.section.trackPartOverrides?.[track.id] ?? {}).length > 0
             || Object.keys(item.section.rolePartOverrides?.[group.role] ?? {}).length > 0;
           const variation = item.section.variations?.choices.find(choice => choice.trackId === track.id);
-          if (variation) text(variation.enabled ? '◆' : '◇', centerX - 8, centerY + 9, '--text-secondary', `8px ${monoFont}`);
+          if (variation) text(variation.enabled ? '◆' : '◇', centerX - buttonHalf, centerY + buttonHalf, '--text-secondary', `8px ${monoFont}`);
           const manualNotes = item.section.trackPhrases?.[track.id] !== undefined
             || hasManualPhrase(track) && !item.section.generatedTrackIds?.includes(track.id);
           if (manualNotes) {
             context.fillStyle = item.section.trackPhrases?.[track.id] !== undefined ? this.accent : noteColor;
-            context.beginPath(); context.arc(centerX + 6, centerY - 6, 2.5, 0, Math.PI * 2); context.fill();
+            context.beginPath(); context.arc(centerX + buttonHalf - 2, centerY - buttonHalf + 2, 2.5, 0, Math.PI * 2); context.fill();
           } else if (trackCustomized) {
             context.textAlign = 'center';
-            text('*', centerX + 6, centerY - 2, '--text-primary', `bold 10px ${monoFont}`);
+            text('*', centerX + buttonHalf - 2, centerY - 2, '--text-primary', `bold 10px ${monoFont}`);
             context.textAlign = 'start';
           }
-          const hitRadius = TRACK_BUTTON_PITCH / 2;
+          const hitRadius = buttonPitch / 2;
           const buttonLeft = Math.max(x, centerX - hitRadius), buttonRight = Math.min(x + width, centerX + hitRadius);
-          hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: centerY - hitRadius,
-            width: buttonRight - buttonLeft, height: TRACK_BUTTON_PITCH,
+          hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: Math.max(y, centerY - hitRadius),
+            width: buttonRight - buttonLeft, height: Math.min(y + this.rowHeight, centerY + hitRadius) - Math.max(y, centerY - hitRadius),
             label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} ${variation ? `Saved variation ${variation.enabled ? 'enabled' : 'disabled'}; inspect Variations in the selection inspector.` : ''} Presence controls: Settings > Shortcuts.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
             reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, trackId: track.id, action: 'reroll' }),
@@ -592,15 +597,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       const group = groups[row];
       const y = RULER_HEIGHT + row * this.rowHeight - this.offsetY;
       context.save();
-      context.beginPath(); context.rect(this.labelWidth, y + 5, this.width - this.labelWidth, Math.max(4, this.rowHeight - 10 - TRACK_BUTTON_PITCH)); context.clip();
+      context.beginPath(); context.rect(this.labelWidth, y + 5, this.width - this.labelWidth, Math.max(4, this.rowHeight - 10 - buttonPitch)); context.clip();
       context.fillStyle = brighten(color(group.role === 'drums' ? '--role-drums' : `--role-${ROLE_COLORS[group.role]}-strong`), noteBrightness);
       context.shadowColor = context.fillStyle;
       context.shadowBlur = 6;
       for (const item of sections) {
         const width = sectionDurationBeats(this.project(), item.section) * this.pixelsPerBeat;
         const tracks = this.overviewTracks(item.section, group);
-        const perRow = Math.max(1, Math.floor((width - CELL_HORIZONTAL_PADDING + 1e-7) / TRACK_BUTTON_PITCH));
-        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, Math.ceil(tracks.length / perRow)) * TRACK_BUTTON_PITCH);
+        const perRow = Math.max(1, Math.floor((width - buttonHorizontalSpace + buttonGap + 1e-7) / buttonPitch));
+        const previewHeight = Math.max(4, this.rowHeight - 10 - Math.max(1, Math.ceil(tracks.length / perRow)) * buttonPitch);
         for (const note of this.previewNotes(item.section.id, group.role)) {
           if (!note.overflow) continue;
           context.globalAlpha = note.opacity;

@@ -176,7 +176,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
           samples.push(sample());
         }
         const buttonRows = currentProject.arrangement.map(section =>
-          Math.ceil(component.overviewTracks(section,{role:'bass',tracks:currentProject.tracks}).length / Math.max(1, Math.floor((dependencies['../../core/music/section-context'].sectionDurationBeats(currentProject,section) * component.pixelsPerBeat - 10 + 1e-7) / 19))));
+          Math.ceil(component.overviewTracks(section,{role:'bass',tracks:currentProject.tracks}).length / Math.max(1, Math.floor((dependencies['../../core/music/section-context'].sectionDurationBeats(currentProject,section) * component.pixelsPerBeat - 2 - (Math.max(...component.groups().map(group => group.tracks.length)) < 10 ? 0 : 3) + 3 + 1e-7) / (Math.max(...component.groups().map(group => group.tracks.length)) < 10 ? 17 : 19)))));
         if(gaps) {
           const gapButtons=component.hits.filter(hit=>hit.key.startsWith('toggle:gap:'));
           if(component.effectiveHorizontalScale!==1||gapButtons.length!==1||gapButtons[0].key!=='toggle:gap:bass-2') throw new Error('gap sections must fit and show only their first included track');

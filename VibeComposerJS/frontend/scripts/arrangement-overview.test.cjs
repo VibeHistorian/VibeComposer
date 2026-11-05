@@ -424,7 +424,7 @@ test('Alt, Shift, and unmodified wheel events keep their existing browser behavi
 test('sections of at least four beats enforce enough zoom for at most two track-button rows', () => {
   const { component, refs } = fixture();
   const original = component.project();
-  for (const count of [1, 2, 7, 15, 16, 31, 32, 63, 64]) {
+  for (const count of [1, 2, 7, 9, 10, 15, 16, 31, 32, 63, 64]) {
     const tracks = Array.from({ length: count }, (_, index) => ({ ...original.tracks[0], id: `bass-${index + 1}` }));
     component.project.set({ ...original, tracks, arrangement: original.arrangement.map((section, index) => ({
       ...section, measures: index === 0 ? 1 : index === 1 ? 2 : 8,
@@ -442,7 +442,7 @@ test('sections of at least four beats enforce enough zoom for at most two track-
       assert.equal(component.hitAt({ clientX: button.x + 8, clientY: button.y + 8 }).key, button.key);
     }
     const shortestCellWidth = component.pixelsPerBeat * 4;
-    assert.ok(shortestCellWidth >= 10 + 19 * Math.ceil(count / 2) - 1e-7);
+    assert.ok(shortestCellWidth >= (count < 10 ? 17 : 19) * Math.ceil(count / 2) - 3 + 2 + (count < 10 ? 0 : 3) - 1e-7);
     assert.equal(refs.get('scoreCanvas').width, 1600, 'zoom keeps the canvas viewport-sized');
   }
   assert.equal(refs.get('scrollHost').style.overflowX, 'scroll');
@@ -536,7 +536,7 @@ test('the fit floor adapts to track removal and resize without overwriting delib
   assert.equal(component.horizontalScale, 1, 'automatic fit does not become a stored user zoom');
   refs.get('scrollHost').clientWidth = 400;
   component.drawOverview();
-  assert.ok(component.pixelsPerBeat * 8 >= 314 - 1e-7);
+  assert.ok(component.pixelsPerBeat * 8 >= 306 - 1e-7);
   component.project.set(original);
   component.drawOverview();
   assert.equal(component.effectiveHorizontalScale, 1);
@@ -611,9 +611,10 @@ test('manual section notes replace nearby freeze markers, including an empty sav
   assert.equal(component.rowHeight, 52, 'rows stay 20% shorter than the previous 65px height');
   for (const sectionId of ['intro', 'verse', 'outro']) {
     const button = component.hits.find(area => area.key === `toggle:${sectionId}:bass-1`);
-    const x = button.x + button.width / 2 + 6, y = button.y + button.height / 2 - 6;
+    const number = base.texts.find(mark => mark.value === '1' && mark.x >= button.x && mark.x < button.x + button.width && mark.y > button.y && mark.y < button.y + button.height);
+    const x = number.x + 5, y = number.y - 8;
     const manual = sectionId === 'verse';
-    assert.equal(base.texts.some(mark => mark.value === '*' && mark.x === x && mark.y === y + 4), !manual);
+    assert.equal(base.texts.some(mark => mark.value === '*' && mark.x === x && mark.y === y + 3), !manual);
     assert.equal(base.arcs.some(mark => mark.radius === 2.5 && mark.x === x && mark.y === y
       && mark.color === '--accent-primary'), manual);
     assert.equal(button.label.includes('Manual notes override part settings.'), manual);
@@ -686,8 +687,8 @@ test('global manual phrase dots use role accents and section manual dots use the
   base.arcs = []; component.drawOverview();
   for (const section of project.arrangement) {
     const button = component.hits.find(area => area.key === 'toggle:' + section.id + ':bass-1');
-    const dot = base.arcs.find(mark => mark.radius === 2.5
-      && mark.x === button.x + button.width / 2 + 6 && mark.y === button.y + button.height / 2 - 6);
+    const number = base.texts.find(mark => mark.value === '1' && mark.x >= button.x && mark.x < button.x + button.width && mark.y > button.y && mark.y < button.y + button.height);
+    const dot = base.arcs.find(mark => mark.radius === 2.5 && mark.x === number.x + 5 && mark.y === number.y - 8);
     assert.equal(dot.color, section.id === 'verse' ? '--accent-primary' : '--role-bass-strong');
   }
 });
@@ -760,4 +761,43 @@ test('arrangement corner indicators require shared non-default swing and duratio
   assert.equal(component.arrangementIndicators(), '∿');
   set(section => ({ ...section, context: { swingPercent: 50 }, customDurations: [4, 4, 4, 4] }));
   assert.equal(component.arrangementIndicators(), '');
+});
+
+test('button gaps select the closest track horizontally and vertically', () => {
+  for (const count of [9, 10, 32]) {
+    const { component, base } = fixture();
+    const original = component.project();
+    const tracks = Array.from({ length: count }, (_, index) => ({ ...original.tracks[0], id: `bass-${index + 1}` }));
+    component.project.set({ ...original, tracks });
+    base.texts = [];
+    component.drawOverview();
+    const cell = component.hits.find(hit => hit.key === 'cell:intro:bass');
+    const buttons = component.hits.filter(hit => hit.key.startsWith('toggle:intro:'));
+    const size = count < 10 ? 14 : 16;
+    const numbers = buttons.map(button => base.texts.find(mark => /^\d+$/.test(mark.value)
+      && mark.x >= button.x && mark.x < button.x + button.width && mark.y > button.y && mark.y < button.y + button.height));
+    const centers = numbers.map(mark => ({ x: mark.x, y: mark.y - 3 }));
+    assert.equal(centers[0].x - size / 2, cell.x + 1);
+    for (let index = 0; index < centers.length; index++) {
+      const a = centers[index];
+      if (Math.abs(a.y + size / 2 - (cell.y + cell.height - 1)) < 1e-7) {
+        assert.ok(a.x + size / 2 <= cell.x + cell.width - 1);
+      }
+      for (let next = index + 1; next < centers.length; next++) {
+        const b = centers[next];
+        if (a.y === b.y && b.x - a.x === size + 3) {
+          for (const offset of [-0.5, 0.5]) {
+            const hit = component.hitAt({ clientX: (a.x + b.x) / 2 + offset, clientY: a.y });
+            assert.equal(hit.key, buttons[offset < 0 ? index : next].key);
+          }
+        }
+        if (a.x === b.x && b.y - a.y === size + 3) {
+          for (const offset of [-0.5, 0.5]) {
+            const hit = component.hitAt({ clientX: a.x, clientY: (a.y + b.y) / 2 + offset });
+            assert.equal(hit.key, buttons[offset < 0 ? index : next].key);
+          }
+        }
+      }
+    }
+  }
 });
