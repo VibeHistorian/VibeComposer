@@ -305,6 +305,22 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       if (read().arrangement[0].rolePartOverrides.bass.noteVariation !== 35) throw new Error('track inheritance reset changed role patch');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => JSON.stringify(read()) === beforeLocalIndividual, 'individual inheritance undo');
+      const velocityPair = () => document.querySelector('.group-track-settings-row[data-track-id="track-bass-2"] .part-control[data-control-key="velocityMin"]');
+      const memberBorder = key => getComputedStyle(velocityPair().querySelector('.joined-member[data-control-key="' + key + '"] .knob-face')).borderColor;
+      const inheritedMaxBorder = memberBorder('velocityMax');
+      await change(rowControl('track-bass-2', 'velocityMin'), '67');
+      await wait(() => velocityPair().classList.contains('partially-frozen'), 'combined velocity partially frozen');
+      const frameStyle = getComputedStyle(velocityPair().querySelector('.quick-control-border'));
+      if (frameStyle.borderStyle !== 'dashed' || frameStyle.boxShadow !== 'none') throw new Error('partial combined control needs a weaker dashed frame');
+      if (memberBorder('velocityMax') !== inheritedMaxBorder || memberBorder('velocityMin') === inheritedMaxBorder) throw new Error('only frozen combined members should be highlighted');
+      await change(rowControl('track-bass-2', 'velocityMax'), '87');
+      await wait(() => !velocityPair().classList.contains('partially-frozen'), 'combined velocity fully frozen');
+      if (getComputedStyle(velocityPair().querySelector('.quick-control-border')).borderStyle !== 'solid') throw new Error('fully frozen combined control needs a solid frame');
+      await wait(() => memberBorder('velocityMax') === memberBorder('velocityMin'), 'both frozen member border transitions complete');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => velocityPair().classList.contains('partially-frozen'), 'undo restores partial freeze');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read()) === beforeLocalIndividual, 'combined freeze checks undo');
       groupToggle().click();
       await wait(() => trackRows().length === 0, 'return to section group controls');
       // Quick inheritance interrupts the bottom border and leaves titles their full width.

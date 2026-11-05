@@ -1,7 +1,7 @@
 /* Part controls */
 :host { display: block; min-width: 0; }
 .part-list { field-sizing: content; max-width: 100%; box-sizing: border-box; }
-.part-controls { --knob-default-brightness: 1; --quick-inheritance-width: 18px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.part-controls { --control-border-base: var(--border-default); --knob-default-brightness: 1; --quick-inheritance-width: 18px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
 
 /* Shared musical impact areas */
 .part-control-area { display: flex; flex-direction: column; flex: 1 1 180px; min-width: 0; max-width: 100%; margin: 0; padding: 9px 10px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-section); background: var(--parameter-surface); }
@@ -132,3 +132,10 @@
 .parameter-lock[aria-pressed="mixed"] { outline: 1px dashed var(--accent-primary); }
 .parameter-lock:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 :host .part-control:has(.parameter-lock) { margin-bottom: 1px; }
+
+/* Combined controls distinguish individually frozen members */
+.part-control.joined-control .control-content { --border-default: var(--control-border-base); }
+.part-control.joined-control .custom-member { --border-default: var(--accent-primary); }
+:host .part-control.partially-frozen .quick-control-border { border-style: dashed; border-color: color-mix(in srgb, var(--accent-primary) 45%, var(--control-border-base)); box-shadow: none; }
+
+.part-control.joined-control .flip-button.custom-member { border-color: var(--accent-primary); }
