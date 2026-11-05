@@ -50,6 +50,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         project.randomizeTransposeOnCompose = false;
         project.randomizeTempoOnCompose = false;
         project.randomizeHarmonyOnCompose = false;
+        project.randomizeArrangementOnCompose = false;
         for (const role of ['melody','bass','chords','arpeggio','drums']) {
           const base = project.tracks.find(track => track.role === role);
           for (let i = 2; i <= 6; i++) project.tracks.push({ ...base, id: 'track-' + role + '-' + i, name: base.name[0] + i,
@@ -276,11 +277,13 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       // Traverse the canvas's real keyboard targets, then activate the first Bass cell.
       const canvas = document.querySelector('.arrangement-panel canvas[tabindex]');
       canvas.focus();
-      for (let i = 0; i < 100; i++) {
+      // Thirty tracks across several sections expose more than 100 keyboard targets.
+      for (let i = 0; i < 500; i++) {
         canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
         await new Promise(r => requestAnimationFrame(r));
         if (canvas.getAttribute('aria-label').startsWith('Select Bass settings in INTRO')) break;
       }
+      if (!canvas.getAttribute('aria-label').startsWith('Select Bass settings in INTRO')) throw new Error('Bass INTRO keyboard target not reached');
       canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       const copy = await wait(() => [...document.querySelectorAll('vc-part-scope-actions button')].find(button => button.textContent.trim() === 'Copy to Globals'), 'local cell actions');
       result.keyboardCell = document.querySelector('.part-context-label').textContent.includes('Bass');
@@ -548,7 +551,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       result.actionsFit = [...document.querySelectorAll('.scope-actions button, .transport-actions button, .track-inline-select')].every(fits);
       result.trackRowsFit = [...document.querySelectorAll('.track-line')].every(row => {
         const bounds = row.getBoundingClientRect();
-        return [...row.children].every(child => { const box = child.getBoundingClientRect(); return box.left >= bounds.left - 1 && box.right <= bounds.right + 1 && box.width >= 8; });
+        return [...row.children].every(child => { const item = child.matches('vc-context-menu') ? child.querySelector('.track-select') : child; const box = item.getBoundingClientRect(); return box.left >= bounds.left - 1 && box.right <= bounds.right + 1 && box.width >= 8; });
       });
       const roleButtons = [...document.querySelectorAll('.group-select')];
       result.groupIconsVisible = roleButtons.length === 5 && roleButtons.every(button => {
@@ -835,7 +838,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const wait=async(read,label)=>{for(let i=0;i<200;i++){const value=read();if(value)return value;await new Promise(r=>setTimeout(r,20));}throw new Error(label);};
       const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
       const columns=[...document.querySelectorAll('.section-presence-role')];
-      const roles=['melody','bass','chords','arpeggio','drums'];
+      const roles=['melody','chords','arpeggio','bass','drums'];
       const grouped=columns.length===5 && columns.every((column,i)=>column.dataset.controlRole===roles[i]
         && column.querySelectorAll('vc-compact-toggle').length===read().tracks.filter(track=>track.role===roles[i]).length);
       const compact=columns.every(column=>Math.abs(column.getBoundingClientRect().top-columns[0].getBoundingClientRect().top)<1)

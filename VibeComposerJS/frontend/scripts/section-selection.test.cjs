@@ -21,7 +21,7 @@ function fixture() {
     ChangeDetectionStrategy: { OnPush: 0 },
   };
   const projects = { project };
-  const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false) });
+  const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false), appearance: signal({ progressiveTrackColoring: true }) });
   let ui;
   angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? { setPhrasePreview() {} } : projects;
   const load = (file, dependencies = {}) => {
@@ -361,8 +361,15 @@ test('score time grid progressively reveals subdivisions with at least eight pix
   score.width = 512;
   score.height = 300;
   const lines = [];
-  let start, end;
-  score.staticGraphics = { clear() { lines.length = 0; }, rect() { return this; }, fill() { return this; },
+  let start, end, rectangle;
+  score.staticGraphics = { clear() { lines.length = 0; },
+    rect(x, y, width, height) { rectangle = { x, y, width, height }; return this; },
+    // Axis-aligned grid lines now render as filled one-pixel rectangles.
+    fill(style) {
+      if (rectangle.width === 1) lines.push({ start: [rectangle.x + .5, rectangle.y],
+        end: [rectangle.x + .5, rectangle.y + rectangle.height], color: style.color, alpha: style.alpha });
+      return this;
+    },
     moveTo(x, y) { start = [x, y]; return this; }, lineTo(x, y) { end = [x, y]; return this; },
     stroke(style) { lines.push({ start, end, color: style.color, alpha: style.alpha }); return this; } };
   score.colorClass = class { constructor(value) { this.value = value; } alpha = 1; toNumber() { return this.value; } };

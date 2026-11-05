@@ -37,7 +37,8 @@ test('production Angular controls initialize selects from settings and support r
         const initialSelection = initialMidi.map(select => select.getAttribute("value"));
         const inlineActions = [...document.querySelectorAll('.track-line')].map(line => {
           const items = [...line.children];
-          const bounds = items.map(item => item.getBoundingClientRect());
+          // The context-menu host uses display: contents; measure its actual grid item.
+          const bounds = items.map(item => (item.matches('vc-context-menu') ? item.querySelector('.track-select') : item).getBoundingClientRect());
           const row = line.getBoundingClientRect();
           return { symbols: [...line.querySelectorAll('.track-reroll-actions button')].map(button => button.textContent.trim()),
             actionsBeforeInstrument: items[1].classList.contains('track-reroll-actions') && items[2].classList.contains('track-instrument'),

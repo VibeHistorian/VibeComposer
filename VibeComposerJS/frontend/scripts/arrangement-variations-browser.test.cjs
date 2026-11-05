@@ -210,6 +210,22 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       button(d,'Reroll variations').click();await wait(()=>d.querySelectorAll('article').length>0,'draft choices');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Build pulse')),'buildup purpose');
       ensure([...d.querySelectorAll('.variation-purpose')].some(p=>p.textContent.includes('Release tension')),'release purpose');
+      // A random reroll need not choose either operation. Add them explicitly to check their explanations.
+      for (const label of ['Arp rhythm density', 'Late chord anticipation']) {
+        if (![...d.querySelectorAll('article')].some(article => article.textContent.includes(label))) {
+          let added = false;
+          for (const section of d.querySelectorAll('.variation-section')) {
+            const adder = section.querySelector('.add-variation');
+            const option = (await selectOptions(adder)).find(option => option.textContent.includes(label));
+            if (!option) continue;
+            await changeControl(adder, option.value);
+            await wait(() => [...section.querySelectorAll('article')].some(article => article.textContent.includes(label)), label + ' added');
+            added = true;
+            break;
+          }
+          ensure(added, label + ' available for authored addition');
+        }
+      }
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Arp rhythm density')),'rhythm-aware density explanation');
       ensure([...d.querySelectorAll('article')].some(article=>article.textContent.includes('Late chord anticipation')),'chord transition explanation');
       ensure(JSON.stringify(read())===original,'reroll stays local');
