@@ -8,17 +8,30 @@ export function generateArrangementPlan(seed: bigint): { type: SectionType }[] {
   const random = new JavaRandom(seed);
   // Most songs establish quietly; others open with a hook before settling into a verse.
   const openings: readonly SectionType[] = ['INTRO', 'INTRO', 'INTRO', 'HALF_CHORUS', 'CHORUS2'];
-  const types: SectionType[] = [openings[random.nextInt(openings.length)]];
-  const cycles = 2 + random.nextInt(2);
+  const opening = openings[random.nextInt(openings.length)];
+  // Taking the lower of two uniform draws gives lengths 8–20 decreasing weights 25, 23, …, 1.
+  const length = 8 + Math.min(random.nextInt(13), random.nextInt(13));
+  const cycles = length >= 14 ? 3 : 2;
+  const slots: { type: SectionType; optional: boolean }[] = [{ type: opening, optional: false }];
+  const add = (type: SectionType, optional = false) => slots.push({ type, optional });
   for (let cycle = 0; cycle < cycles; cycle++) {
-    types.push(cycle === 0 ? 'VERSE1' : random.nextBoolean() ? 'VERSE2' : 'CHILL');
-    if (random.nextBoolean()) types.push('VERSE3');
-    types.push('BUILDUP1');
-    if (random.nextBoolean() || cycle === cycles - 1) types.push('BUILDUP2');
-    types.push(cycle === cycles - 1 ? 'CLIMAX' : cycle === 0 ? 'CHORUS2' : 'CHORUS3');
-    if (random.nextBoolean()) types.push(cycle === cycles - 1 ? 'CLIMAX' : 'CHORUS3');
-    if (cycle < cycles - 1) types.push('BREAKDOWN');
+    const last = cycle === cycles - 1;
+    const release = last ? 'CLIMAX' : cycle === 0 ? 'CHORUS2' : 'CHORUS3';
+    add(cycle === 0 ? 'VERSE1' : random.nextBoolean() ? 'VERSE2' : 'CHILL');
+    add('VERSE3', true);
+    add('BUILDUP1', last);
+    add('BUILDUP2', !last);
+    add(release);
+    add(last ? 'CLIMAX' : 'CHORUS3', true);
+    add(last ? 'HALF_CHORUS' : 'BREAKDOWN', true);
   }
-  types.push('HALF_CHORUS', 'OUTRO');
-  return types.map(type => ({ type }));
+  add('OUTRO');
+  // Select additions before rendering so every size retains its full musical arc.
+  const optional = slots.filter(slot => slot.optional);
+  for (let index = optional.length - 1; index > 0; index--) {
+    const other = random.nextInt(index + 1);
+    [optional[index], optional[other]] = [optional[other], optional[index]];
+  }
+  const selected = new Set(optional.slice(0, length - (slots.length - optional.length)));
+  return slots.filter(slot => !slot.optional || selected.has(slot)).map(({ type }) => ({ type }));
 }

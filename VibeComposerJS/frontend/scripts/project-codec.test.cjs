@@ -217,3 +217,24 @@ test('seeded openings include quiet introductions and high-energy hooks', () => 
   }
   assert.deepEqual([...openings].sort(), ['CHORUS2', 'HALF_CHORUS', 'INTRO']);
 });
+
+test('arrangement lengths span 8–20 with shorter forms more common', () => {
+  const { generateArrangementPlan } = loadMusic('arrangement-plan.ts');
+  const histogram = Array(21).fill(0);
+  for (let index = 0; index < 10000; index++) {
+    const plan = generateArrangementPlan(BigInt.asIntN(64, BigInt(index) * 0x9e3779b97f4a7c15n));
+    assert.ok(plan.length >= 8 && plan.length <= 20);
+    histogram[plan.length]++;
+    assert.equal(plan.at(-1).type, 'OUTRO');
+    assert.ok(plan.some(section => section.type === 'CLIMAX'));
+    for (let i = 0; i < plan.length; i++) {
+      if (plan[i].type === 'BUILDUP2') assert.ok(['CHORUS2', 'CHORUS3', 'CLIMAX'].includes(plan[i + 1].type));
+    }
+  }
+  assert.ok(histogram.slice(8).every(count => count > 0));
+  const count = (from, to) => histogram.slice(from, to + 1).reduce((a, b) => a + b, 0);
+  assert.ok(count(8, 11) > count(12, 15));
+  assert.ok(count(12, 15) > count(16, 19));
+  assert.ok(count(18, 20) < 800);
+  assert.ok(count(8, 14) > 7000);
+});
