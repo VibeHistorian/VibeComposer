@@ -474,6 +474,19 @@ test('production Angular controls initialize selects from settings and support r
           document.querySelector('.track-group.' + role + ' .group-select').click();
           await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="' + role + '"]'), role + ' categories');
           const editors = [...document.querySelectorAll('vc-part-settings-editor')];
+          const inspector = editors.find(editor => editor.closest('#part-inspector'));
+          for (const area of inspector.querySelectorAll('.part-control-area')) {
+            const legend = area.querySelector(':scope > legend');
+            const box = area.getBoundingClientRect(), title = legend?.getBoundingClientRect();
+            if (!title || title.left < box.left || title.top > box.top + 10) throw new Error(role + ' category legend missing from top border');
+          }
+          for (const control of inspector.querySelectorAll('.part-control')) {
+            const frame = control.querySelector('.quick-control-border');
+            const markers = control.querySelectorAll('.parameter-lock, .inherit-snowflake');
+            const marker = markers[0]?.getBoundingClientRect(), box = control.getBoundingClientRect();
+            if (getComputedStyle(frame).display === 'none' || markers.length !== 1) throw new Error(role + ' inspector control must share its frame and single marker');
+            if (Math.abs(marker.left + marker.width / 2 - box.left - box.width / 2) > 1 || Math.abs(marker.top + marker.height / 2 - box.bottom) > 2) throw new Error(role + ' inspector marker not bottom centered');
+          }
           for (const editor of editors.filter(editor => editor.classList.contains('quick-layout'))) {
             await document.fonts.ready;
             for (const label of editor.querySelectorAll('.control-name')) {

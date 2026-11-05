@@ -2,7 +2,7 @@
   @if (seedControl(); as control) {
     <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" [title]="control.description ?? ''">
       <span class="quick-title-sizing" aria-hidden="true">{{ control.label }}</span>
-      <fieldset class="quick-control-border" [class.quick-inheritance-border]="!showGroupTitles()" aria-hidden="true">
+      <fieldset class="quick-control-border quick-inheritance-border" aria-hidden="true">
         <legend>{{ control.label }}</legend>
       </fieldset>
       @if (preferences.editingQuickSettings()) {
@@ -10,7 +10,7 @@
           [attr.aria-label]="'Move ' + control.label + (inspectorOnly() ? ' to quick settings' : ' to inspector')"></button>
       }
       <div class="control-content" [inert]="preferences.editingQuickSettings()">
-      <vc-control-heading #seedHeading [label]="control.label" [inheritance]="showGroupTitles() ? inheritanceFor(control) : 'global'"
+      <vc-control-heading #seedHeading [label]="control.label" [inheritance]="'global'"
         (inheritRequested)="inheritRequested.emit(control.key)" />
       <input [id]="seedHeading.controlId" class="part-list" type="text" [value]="textValue(control)"
         [attr.aria-label]="control.label" [placeholder]="values()[control.key] === null ? 'Mixed' : ''"
@@ -25,15 +25,15 @@
     </div>
   }
   @for (group of controlGroups(); track group.id) {
-    <section class="part-control-area" [attr.data-control-category]="group.id" [attr.aria-label]="group.label + ' parameters'">
-      @if (showGroupTitles()) { <h3>{{ group.label }}</h3> }
+    <fieldset class="part-control-area" [attr.data-control-category]="group.id" [attr.aria-label]="group.label + ' parameters'">
+      @if (showGroupTitles()) { <legend>{{ group.label }}</legend> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
           <div class="part-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" [attr.data-control-key]="control.key" [attr.data-control-category]="group.id" [class.compact-control]="control.kind === 'number' || control.kind === 'boolean'" [class.knob-control]="control.kind === 'number'" [class.rhythm-control]="control.key === 'rhythm'" [class.joined-control]="members(control).length > 0" [class.melody-choices]="control.key === 'ending'" [class.pattern-control]="control.kind === 'pattern' || control.kind === 'velocities'" [title]="control.label + (control.description ? ': ' + control.description : '')">
             @if (control.kind !== 'boolean') {
               <span class="quick-title-sizing" aria-hidden="true">{{ title(control) }}</span>
             }
-            <fieldset class="quick-control-border" [class.quick-inheritance-border]="!showGroupTitles()" [class.with-heading]="control.kind !== 'boolean'" aria-hidden="true">
+            <fieldset class="quick-control-border quick-inheritance-border" [class.with-heading]="control.kind !== 'boolean'" aria-hidden="true">
               @if (control.kind !== 'boolean') {
                 <legend>{{ title(control) }}</legend>
               }
@@ -45,12 +45,12 @@
             }
             <div class="control-content" [inert]="preferences.editingQuickSettings()">
             @if (control.key === 'ending') {
-              <vc-control-heading label="SENTENCE" [inheritance]="showGroupTitles() ? inheritanceFor(control) : 'global'" (inheritRequested)="resetControl(control)" />
+              <vc-control-heading label="SENTENCE" [inheritance]="'global'" (inheritRequested)="resetControl(control)" />
               @for (member of members(control); track member.key) {
                 <vc-select #choice="vcSelect" [options]="member.options" [attr.data-control-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="choose(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
               }
             } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin' || control.key === 'rangeMin') {
-              <vc-control-heading [label]="title(control)" [inheritance]="showGroupTitles() ? inheritanceFor(control) : 'global'" (inheritRequested)="resetControl(control)" />
+              <vc-control-heading [label]="title(control)" [inheritance]="'global'" (inheritRequested)="resetControl(control)" />
               <div class="joined-members">
                 @for (member of members(control); track member.key) {
                   <ng-container [ngTemplateOutlet]="compactMember" [ngTemplateOutletContext]="{ $implicit: member }" />
@@ -62,17 +62,17 @@
                 [step]="control.step ?? 1"
                 [allowedValues]="control.allowedValues ?? emptyAllowedValues"
                 [label]="control.label" [shortLabel]="code(control)" [compact]="true" [description]="control.description ?? ''" [unit]="control.unit ?? ''"
-                [showValueBelow]="control.showValueBelow ?? false" [inheritance]="showGroupTitles() ? inheritanceFor(control) : 'global'"
+                [showValueBelow]="control.showValueBelow ?? false" [inheritance]="'global'"
                 (inheritRequested)="inheritRequested.emit(control.key)"
                 (valueCommit)="settingsChanged.emit({ key: control.key, value: $event })" />
             } @else if (control.kind === 'boolean') {
               <vc-compact-toggle [label]="control.label" [shortLabel]="code(control)"
                 [description]="control.description ?? ''" [active]="values()[control.key] === true" [mixed]="values()[control.key] === null"
-                [showStatus]="true" [inheritance]="showGroupTitles() ? inheritanceFor(control) : 'global'"
+                [showStatus]="true" [inheritance]="'global'"
                 (inheritRequested)="inheritRequested.emit(control.key)"
                 (toggled)="settingsChanged.emit({ key: control.key, value: values()[control.key] !== true })" />
             } @else {
-              <vc-control-heading #heading [label]="title(control)" [inheritance]="showGroupTitles() ? inheritanceFor(control) : 'global'"
+              <vc-control-heading #heading [label]="title(control)" [inheritance]="'global'"
                 (inheritRequested)="resetControl(control)" />
               @if (control.kind === 'integers' || control.kind === 'integer') {
                 <input [id]="heading.controlId" class="part-list" type="text" [value]="textValue(control)"
@@ -135,19 +135,19 @@
         }
 
       </div>
-    </section>
+    </fieldset>
   }
 </div>
 
 <ng-template #quickInheritance let-control>
   @if (!local()) {
     <button type="button" class="parameter-lock" [class.locked]="lockState(control) === true"
-      [class.inspector-lock]="showGroupTitles()" [attr.aria-pressed]="lockState(control)"
+      [attr.aria-pressed]="lockState(control)"
       [attr.aria-label]="'Lock ' + control.label + ' during reroll and Compose'"
       title="Preserve this parameter during reroll and Compose. Manual edits still apply."
       [disabled]="preferences.editingQuickSettings()" (click)="toggleLock(control)">🔒︎</button>
   }
-  @if (!showGroupTitles() && inheritanceFor(control) !== 'global') {
+  @if (inheritanceFor(control) !== 'global') {
     <vc-control-heading class="quick-inheritance" [label]="title(control)" [statusOnly]="true"
       [inheritance]="inheritanceFor(control)" [inert]="preferences.editingQuickSettings()"
       (inheritRequested)="resetControl(control)" />
