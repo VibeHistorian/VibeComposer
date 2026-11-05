@@ -718,7 +718,7 @@ export class WorkspaceCanvasComponent {
     this.projects.randomizeArrangement();
     if (this.project().arrangementPreview) {
       const sectionId = this.playback.previewArrangement(this.project());
-      if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId);
+      if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId, true);
     }
   }
 

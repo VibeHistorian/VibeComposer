@@ -94,7 +94,11 @@ test('Preview triggers after global Reroll and Compose even with restart disable
   const recordPreview = project => { previews.push(project); return project.arrangement[1].id; };
   transport.playback.previewArrangement = recordPreview;
   workspace.playback.previewArrangement = recordPreview;
+  const melody = service.project().tracks.find(track => track.role === 'melody');
+  workspace.workspaceUi.selectTrack(melody.id);
+  const selection = workspace.workspaceUi.captureSettingsSelection();
   workspace.randomizeArrangement();
+  assert.deepEqual(workspace.workspaceUi.captureSettingsSelection(), selection, 'Preview keeps the global track inspector');
   assert.deepEqual(previews, [service.project()]);
   assert.deepEqual(workspace.workspaceUi.selectedSectionIds(), [service.project().arrangement[1].id]);
   service.randomizeArrangementPresence(service.project().arrangement[0].id);
@@ -102,6 +106,8 @@ test('Preview triggers after global Reroll and Compose even with restart disable
   transport.generate();
   assert.equal(previews.length, 2);
   assert.equal(previews[1], service.project(), 'seeks using the composed arrangement');
+  assert.deepEqual(transport.workspaceUi.captureSettingsSelection(), selection, 'Compose Preview keeps the global track inspector');
+  assert.deepEqual(transport.workspaceUi.captureSettingsSelection(), selection, 'Compose Preview keeps the global track inspector');
   assert.deepEqual(transport.workspaceUi.selectedSectionIds(), [service.project().arrangement[1].id]);
   const focusRevision = transport.workspaceUi.sectionFocusRevision();
   transport.generate();
@@ -1063,4 +1069,30 @@ test('appended duplicates selectively copy track-owned events in one transaction
     service.redo(); assert.equal(service.exportProjectJson(), after);
     assert.equal(service.importProjectJson(after), true);
   }
+});
+
+test('preview loop selection preserves inspector scopes and tolerates removed sections', () => {
+  const { service, workspace } = fixture();
+  const ui = workspace.workspaceUi;
+  const [first, second] = service.project().arrangement;
+  const track = service.project().tracks[0];
+  for (const select of [
+    () => ui.selectArrangement(),
+    () => ui.selectRole(track.role),
+    () => ui.selectTrack(track.id),
+    () => ui.setSectionSelection(first.id),
+    () => ui.selectCell(first.id, track.role),
+    () => ui.selectSectionTrack(first.id, track.id),
+  ]) {
+    select();
+    const before = ui.captureSettingsSelection();
+    ui.setSectionSelection(second.id, true);
+    assert.deepEqual(ui.captureSettingsSelection(), before);
+    assert.deepEqual(ui.selectedSectionIds(), [second.id]);
+  }
+  service.removeSection(0);
+  ui.setSectionSelection(second.id, true);
+  assert.ok(!('sectionId' in ui.settingsTarget()), 'removed cell falls back to a valid inspector target');
+  ui.setSectionSelection(second.id);
+  assert.deepEqual(ui.settingsTarget(), { kind: 'section', sectionId: second.id }, 'explicit section clicks still select the inspector');
 });

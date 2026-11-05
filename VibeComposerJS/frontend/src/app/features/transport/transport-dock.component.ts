@@ -66,7 +66,7 @@ export class TransportDockComponent {
     if (result !== 'invalid') {
       if (this.project().arrangementPreview) {
         const sectionId = this.playback.previewArrangement(this.project());
-        if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId);
+        if (sectionId && this.playback.loopEnabled()) this.workspaceUi.setSectionSelection(sectionId, true);
       }
       else if (this.preferences.restartPlaybackOnCompose()) this.playback.restartAfterCompose(this.project());
     }

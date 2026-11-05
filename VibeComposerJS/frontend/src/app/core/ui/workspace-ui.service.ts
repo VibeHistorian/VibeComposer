@@ -127,15 +127,18 @@ export class WorkspaceUiService {
     this.target.set({ kind: 'section-track', sectionId, trackId });
   }
 
-  setSectionSelection(sectionId: string | null): void {
+  setSectionSelection(sectionId: string | null, preserveSettingsTarget = false): void {
     // Explicit selection (including Compose Preview) must refit a manually moved
     // score even when the selected IDs and musical bounds are unchanged.
     this.sectionFocusRequest.set(this.sectionFocusRequest() + 1);
     this.sectionSelection.set(sectionId ? [sectionId] : []);
     this.sectionAnchor.set(sectionId);
     this.focusedSection.set(sectionId);
-    if (sectionId) this.target.set({ kind: 'section', sectionId });
-    else this.selectTrack(this.selectedTrackId());
+    // Preview moves the loop and score focus independently of the inspector.
+    if (!preserveSettingsTarget) {
+      if (sectionId) this.target.set({ kind: 'section', sectionId });
+      else this.selectTrack(this.selectedTrackId());
+    }
   }
 
   selectSection(sectionId: string, modifiers: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean; altKey?: boolean } = {}): void {
