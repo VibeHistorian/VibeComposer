@@ -1015,7 +1015,7 @@ test('pitch rows cap at 30px during fitting, repeated zooming and resizing in ov
     assert.equal(c.laneHeight, 30);
     assert.equal(c.verticalOffset, offset, 'zooming at the cap does not move the viewport');
     c.height = 1000; c.drawStatic(true);
-    assert.equal(c.laneHeight, 30, 'growing the canvas cannot exceed the cap');
+    assert.ok(c.laneHeight <= 30, 'growing the canvas cannot exceed the cap');
     assert.ok(c.gutterRows().every(row => row.height <= 30));
     assert.equal(c.contentHeight, c.laneHeight * (c.pitchMax - c.pitchMin + 1), 'scroll range follows capped rows');
     c.onCanvasWheel({ ...wheel, deltaY: 10000 });
@@ -1127,4 +1127,40 @@ test('Ctrl Shift duplicate drags retain snapping and pitch movement while Shift 
   c.onPointerMove(pointer(303, 40, { ctrlKey: true, shiftKey: true }));
   assert.equal(c.drag.current.startBeat, 20);
   assert.notEqual(c.drag.current.midi, 48);
+});
+
+
+test('soloed narrow overview fills the piano gutter and grid while centering notes at every height', () => {
+  const { component: c } = fixture();
+  c.editable = () => false;
+  c.staticGraphics = { clear() {}, rect() { return this; }, moveTo() { return this; }, lineTo() { return this; },
+    fill() { return this; }, stroke() { return this; }, roundRect() { return this; } };
+  for (const height of [200, 600, 1000]) for (const pitches of [[60], [60, 62]]) for (const drums of [false, true]) {
+    c.height = height; c.verticalScale = 1; c.verticalOffset = 0;
+    c.model = { tracks: [{ id: 'bass', color: 'bass' }, { id: 'hidden', color: 'melody' },
+        ...(drums ? [{ id: 'drum', color: 'drums', drumPitch: 36 }] : [])],
+      notes: [...pitches.map((midi, i) => ({ id: String(i), part: 'bass', color: 'bass', midi, velocity: 90,
+        startBeat: i, durationBeats: 1, opacity: 1 })),
+        { id: 'hidden', part: 'hidden', color: 'melody', midi: 100, velocity: 90, startBeat: 0, durationBeats: 1, opacity: 1 }],
+      sections: [], totalBeats: 16, selectedTrackId: 'bass', hiddenTrackIds: new Set(['hidden']) };
+    c.drawStatic();
+    const rows = c.gutterRows().filter(row => !row.drum);
+    assert.equal(rows[0].y, 0);
+    assert.ok(Math.abs(rows.at(-1).y + rows.at(-1).height - c.harmonicHeight) < 1e-8, 'piano keys fill the harmonic height');
+    for (let i = 1; i < rows.length; i++) assert.ok(Math.abs(rows[i].y - rows[i-1].y - rows[i-1].height) < 1e-8, 'no gaps between pitch rows');
+    assert.ok(c.laneHeight <= 30);
+    const centers = c.hitAreas.map(area => area.y + area.height / 2);
+    assert.ok(Math.abs((Math.min(...centers) + Math.max(...centers)) / 2 - c.harmonicHeight / 2) <= c.laneHeight / 2 + 1e-8,
+      'visible notes center within half a pitch row');
+  }
+});
+
+test('overview fitting stays inside MIDI limits and retains wide phrase ranges', () => {
+  const { overviewPitchRange } = scoreHelper('score-geometry');
+  for (const [min, max] of [[0,0],[127,127],[0,127],[36,96]]) {
+    const range = overviewPitchRange(min, max, 600);
+    assert.ok(range.pitchMin >= 0 && range.pitchMax <= 127);
+    assert.ok(range.pitchMin <= min && range.pitchMax >= max);
+    assert.ok(range.pitchMax - range.pitchMin + 1 >= 20);
+  }
 });

@@ -46,6 +46,15 @@ export function laneHeight(geometry: ScorePitchGeometry): number {
   return Math.min(MAX_PITCH_ROW_HEIGHT, Math.max(1, geometry.harmonicHeight) * geometry.verticalScale / (geometry.pitchMax - geometry.pitchMin + 1));
 }
 
+/** Fill the overview with pitch rows even when the visible phrase spans only one note. */
+export function overviewPitchRange(noteMin: number, noteMax: number, height: number): { pitchMin: number; pitchMax: number } {
+  const paddedMin = Math.max(0, noteMin - 2);
+  const paddedMax = Math.min(127, noteMax + 2);
+  const count = Math.min(128, Math.max(paddedMax - paddedMin + 1, Math.ceil(height / MAX_PITCH_ROW_HEIGHT)));
+  const pitchMin = Math.max(0, Math.min(128 - count, Math.floor((paddedMin + paddedMax + 1 - count) / 2)));
+  return { pitchMin, pitchMax: pitchMin + count - 1 };
+}
+
 export function maxVerticalScale(geometry: ScorePitchGeometry, editable: boolean): number {
   return Math.min(editable ? 128 : 8,
     Math.max(1, MAX_PITCH_ROW_HEIGHT * (geometry.pitchMax - geometry.pitchMin + 1) / Math.max(1, geometry.harmonicHeight)));

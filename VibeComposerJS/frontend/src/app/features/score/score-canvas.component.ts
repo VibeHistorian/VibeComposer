@@ -12,7 +12,7 @@ import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-ed
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PhraseNote } from '../../core/music/phrase-note';
 import {
-  canvasPoint, clampViewport, contentHeight, laneHeight, maxVerticalScale, pitchAt,
+  canvasPoint, clampViewport, contentHeight, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
   scoreBeat, scoreHeight, scoreX, sectionViewport, VELOCITY_HEIGHT,
   type ScorePitchGeometry, type ScoreTimeGeometry,
 } from './score-geometry';
@@ -896,8 +896,6 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const notePitchMax = harmonic.length ? harmonic.reduce((max, note) => Math.max(max, note.midi), 0) : 72;
     const phrasePitchMin = Math.max(0, notePitchMin - 2);
     const phrasePitchMax = Math.min(127, notePitchMax + 2);
-    this.pitchMin = this.editable() ? 0 : phrasePitchMin;
-    this.pitchMax = this.editable() ? 127 : phrasePitchMax;
     const drumTracks = tracks.filter(track => track.color === 'drums');
     this.drumRows = drumTracks.filter(track => !hiddenTrackIds.has(track.id)).map(track => {
       const midi = track.drumPitch ?? [...visibleNotes, ...ghosts].find(note => note.part === track.id)?.midi ?? 36;
@@ -915,6 +913,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const hasDrums = this.drumRows.length > 0;
     this.drumHeight = hasDrums ? Math.min(scoreHeight * 0.27, Math.max(36, this.drumPitches.length * 14)) : 0;
     this.harmonicHeight = scoreHeight - this.drumHeight;
+    const range = overviewPitchRange(notePitchMin, notePitchMax, this.harmonicHeight);
+    this.pitchMin = this.editable() ? 0 : range.pitchMin;
+    this.pitchMax = this.editable() ? 127 : range.pitchMax;
     if (this.pendingEditPitchFocus && this.notesReady()) {
       this.pendingEditPitchFocus = false;
       // Fit the phrase initially, but keep every MIDI pitch reachable by zooming and scrolling.
