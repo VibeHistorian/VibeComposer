@@ -197,6 +197,14 @@ export class PartSettingsEditorComponent {
     return this.local() ? combinedControlKeys(control.key, this.role()).some(key => this.overriddenKeys().includes(key)) ? 'custom' : 'inherited' : 'global';
   }
 
+  categoryFreezeState(controls: readonly PartControl[]): 'none' | 'partial' | 'all' {
+    const states = controls.flatMap(control => this.local()
+      ? combinedControlKeys(control.key, this.role()).map(key => this.overriddenKeys().includes(key))
+      : [this.lockState(control)]);
+    return states.length && states.every(state => state === true) ? 'all'
+      : states.some(state => state !== false) ? 'partial' : 'none';
+  }
+
   lockState(control: PartControl): boolean | 'mixed' {
     const scope = this.scope();
     const tracks = this.projects.project().tracks.filter(track => scope.kind === 'global-track'

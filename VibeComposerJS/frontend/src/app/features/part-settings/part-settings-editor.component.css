@@ -97,7 +97,8 @@
 /* Local overrides share the snowflake accent across their control borders */
 .part-control:is(.custom, .parameter-locked) { --border-default: var(--accent-primary); }
 :host .part-control:is(.custom, .parameter-locked) .quick-control-border { box-shadow: 0 0 6px var(--accent-outline); }
-:host(:not(.quick-layout)) .part-control-area:has(.part-control:is(.custom, .parameter-locked)) { border-color: var(--accent-primary); box-shadow: 0 0 6px var(--accent-outline); }
+:host(:not(.quick-layout)) .part-control-area.fully-frozen { border-color: var(--accent-primary); box-shadow: 0 0 6px var(--accent-outline); }
+:host(:not(.quick-layout)) .part-control-area.partially-frozen { border-style: dashed; border-color: color-mix(in srgb, var(--accent-primary) 45%, var(--border-default)); }
 
 /* Flowing quick settings */
 :host .quick-title-sizing { display: block; grid-area: 1 / 1; width: max-content; height: 0; padding-inline: 3px; visibility: hidden; font: 10px var(--font-ui); white-space: nowrap; }

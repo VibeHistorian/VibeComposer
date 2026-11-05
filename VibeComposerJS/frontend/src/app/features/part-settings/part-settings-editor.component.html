@@ -25,7 +25,7 @@
     </div>
   }
   @for (group of controlGroups(); track group.id) {
-    <fieldset class="part-control-area" [attr.data-control-category]="group.id" [attr.aria-label]="group.label + ' parameters'">
+    <fieldset class="part-control-area" [class.fully-frozen]="categoryFreezeState(group.controls) === 'all'" [class.partially-frozen]="categoryFreezeState(group.controls) === 'partial'" [attr.data-control-category]="group.id" [attr.aria-label]="group.label + ' parameters'">
       @if (showGroupTitles()) { <legend>{{ group.label }}</legend> }
       <div class="part-area-controls">
         @for (control of group.controls; track control.key) {
