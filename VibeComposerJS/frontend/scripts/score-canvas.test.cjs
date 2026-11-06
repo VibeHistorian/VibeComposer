@@ -637,6 +637,24 @@ test('pitch and velocity painting expose previews, commit once and discard cance
   }
 });
 
+test('velocity painting respects selection and paints all notes when selection is empty', () => {
+  for (const selected of [['a'], []]) {
+    const { component: c, notes } = editFixture();
+    c.selectedNoteIds = () => selected;
+    c.beatAt = event => event.clientX;
+    const start = pointer(22.5, 100, { button: 1, ctrlKey: true });
+    c.onPointerDown(start);
+    assert.deepEqual(c.interactionPreview.notes.map(n => n.id), selected.length ? [] : ['b']);
+    c.onPointerMove(pointer(20.5, 100, { button: 1, ctrlKey: true }));
+    c.onPointerUp(start);
+    assert.equal(c.notesChanged.values.length, 1);
+    const changed = c.notesChanged.values[0].notes;
+    assert.deepEqual(changed.map(n => n.id).sort(), selected.length ? ['a'] : ['a', 'b']);
+    assert.ok(changed.every(n => n.velocity !== notes.find(original => original.id === n.id).velocity));
+    assert.deepEqual(notes.map(n => n.velocity), [80, 100], 'painting leaves source notes untouched');
+  }
+});
+
 test('a second touch cancels an active note preview without committing or adding a note', () => {
   const { component: c } = editFixture();
   const first = pointer(300, 20, { pointerType: 'touch' });

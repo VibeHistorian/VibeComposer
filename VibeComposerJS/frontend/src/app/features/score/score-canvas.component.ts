@@ -503,7 +503,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (this.shape) {
       const beat = this.beatAt(event);
       const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+      const selectedIds = new Set(this.selectedNoteIds());
       for (const note of this.model?.notes ?? []) {
+        if (this.shape.mode === 'velocity' && selectedIds.size && !selectedIds.has(note.id)) continue;
         if (note.startBeat <= beat && beat < note.startBeat + note.durationBeats) {
           const midi = note.color === 'drums' ? note.midi : this.snapPitch(this.pitchMax - Math.floor((y + this.verticalOffset) / this.laneHeight));
           const velocity = Math.max(1, Math.min(127, Math.round(127 * (1 - y / this.scoreHeight))));
