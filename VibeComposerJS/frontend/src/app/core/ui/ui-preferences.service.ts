@@ -56,6 +56,8 @@ export class UiPreferencesService {
   readonly syncScoreMix = computed(() => this.state().syncScoreMix);
   readonly scoreChordGrid = computed(() => this.state().scoreChordGrid);
   readonly scoreOutlineOtherTracks = computed(() => this.state().scoreOutlineOtherTracks);
+  readonly scoreTriangleNotes = computed(() => this.state().scoreTriangleNotes);
+  toggleScoreTriangleNotes(): void { this.commit({ ...this.state(), scoreTriangleNotes: !this.scoreTriangleNotes() }); }
   readonly scoreGhostNotes = computed(() => this.state().scoreGhostNotes);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly generateArrangementVariations = computed(() => this.state().generateArrangementVariations);

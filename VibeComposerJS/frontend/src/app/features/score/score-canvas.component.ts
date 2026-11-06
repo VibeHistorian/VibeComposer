@@ -191,6 +191,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.chordBoundaries();
     this.preferences.scoreChordGrid();
     this.preferences.scoreOutlineOtherTracks();
+    this.preferences.scoreTriangleNotes();
     this.model = {
       tracks: this.tracks(),
       notes: this.notes(),
@@ -1074,19 +1075,25 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
       if (ghost) {
         const parsed = parsedNote;
-        if (noteHeight > 0) graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
+        if (noteHeight > 0) this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
           .stroke({ color: parsed.value, alpha: note.opacity * parsed.alpha * 0.5, width: 1 });
         continue;
       }
       if (noteHeight > 0 && selectedTrackId === note.part && (!this.editable() || note.color === 'drums')) {
         for (let radius = 6; radius >= 1; radius--) {
-          fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2,
-            noteColors.glow, (7 - radius) / 15);
+          if (!this.editable() && this.preferences.scoreTriangleNotes()) {
+            const glow = color(noteColors.glow);
+            this.noteShape(graphics, x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2, 0)
+              .fill({ color: glow.value, alpha: glow.alpha * (7 - radius) / 15 });
+          } else {
+            fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2,
+              noteColors.glow, (7 - radius) / 15);
+          }
         }
       }
       const parsed = parsedNote;
       if (noteHeight > 0) {
-        const shape = graphics.roundRect(x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2));
+        const shape = this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2));
         if (!this.editable() && this.preferences.scoreOutlineOtherTracks() && selectedTrackId !== note.part) {
           shape.stroke({ color: parsed.value, alpha: opacity * parsed.alpha, width: 1 });
         } else {
@@ -1123,6 +1130,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     untracked(() => this.drawDynamic());
   }
 
+  private noteShape(graphics: PixiGraphics, x: number, y: number, width: number, height: number, radius: number): PixiGraphics {
+    return !this.editable() && this.preferences.scoreTriangleNotes()
+      ? graphics.moveTo(x, y).lineTo(x + width, y + height / 2).lineTo(x, y + height).closePath()
+      : graphics.roundRect(x, y, width, height, radius);
+  }
+
   private drawDynamic(): void {
     if (!this.app || this.width <= 0 || this.height <= 0) return;
     const graphics = this.dynamicGraphics;
@@ -1151,11 +1164,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1) + (this.model?.timelineStartBeat ?? 0);
     for (const area of this.hitAreas) {
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
+      const bounds = !this.editable() && this.preferences.scoreTriangleNotes() ? (area.visualBounds ?? area) : area;
       const glowStrength = 1 - (beat - area.note.startBeat) / area.note.durationBeats;
       const glow = new Color(style.getPropertyValue(COLORS[area.note.color].note).trim() || '#32d7f4');
-      graphics.roundRect(area.x - 3, area.y - 2, area.width + 6, area.height + 4, 3)
+      this.noteShape(graphics, bounds.x - 3, bounds.y - 2, bounds.width + 6, bounds.height + 4, 3)
         .stroke({ color: glow.toNumber(), alpha: 0.325 * glowStrength, width: 3 });
-      graphics.roundRect(area.x, area.y + area.height / 4, area.width, area.height / 2, 2)
+      this.noteShape(graphics, bounds.x, bounds.y + bounds.height / 4, bounds.width, bounds.height / 2, 2)
         .fill({ color: glow.toNumber(), alpha: 0.4 * glowStrength });
     }
     const placement = this.placementPreview;

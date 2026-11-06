@@ -203,6 +203,11 @@
           <section aria-labelledby="score-settings-title">
             <h2 id="score-settings-title">Score</h2>
             <div class="setting-row">
+              <div class="setting-copy"><h3>Triangle notes</h3><p id="score-triangle-notes-description">Taper score notes from full height on the left to a centered point on the right. Does not apply to the phrase editor.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Triangle notes" [checked]="preferences.scoreTriangleNotes()"
+                (change)="preferences.toggleScoreTriangleNotes()" aria-describedby="score-triangle-notes-description" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3>Piano roll / grid row brightness</h3><p>Adjust the brightness of pitch and drum row shading. Saved in your UI preferences.</p></div>
               <div class="setting-controls"><vc-compact-knob label="Piano roll / grid row brightness" [value]="preferences.appearance().scoreRowBrightness" [minimum]="-50" [maximum]="50" [defaultValue]="0" unit="%" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setScoreBrightness('scoreRowBrightness', $event)" /></div>
             </div>

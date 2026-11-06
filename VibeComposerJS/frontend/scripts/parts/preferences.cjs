@@ -642,3 +642,20 @@ test('panel layout persists, transfers, defaults and stays outside project histo
     assert.deepEqual(preferences.appearance(), after);
   }
 });
+test('triangle notes default off and persist independently of projects', () => {
+  const { service, uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson();
+  assert.equal(prefs.scoreTriangleNotes(), false);
+  prefs.toggleScoreTriangleNotes();
+  assert.equal(new UiPreferencesService().scoreTriangleNotes(), true);
+  const saved = prefs.exportJson();
+  assert.equal(prefs.importJson(JSON.stringify({ ...JSON.parse(saved), scoreTriangleNotes: 'true' })), false);
+  assert.equal(prefs.exportJson(), saved);
+  const older = JSON.parse(saved); delete older.scoreTriangleNotes;
+  assert.equal(prefs.importJson(JSON.stringify(older)), true);
+  assert.equal(prefs.scoreTriangleNotes(), false);
+  assert.equal(prefs.importJson(saved), true);
+  assert.equal(prefs.scoreTriangleNotes(), true);
+  assert.equal(service.exportProjectJson(), before);
+});

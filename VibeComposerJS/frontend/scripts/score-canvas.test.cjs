@@ -171,7 +171,7 @@ function fixture(reactivity) {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect: reactivity?.effect ?? (() => {}), untracked: reactivity?.untracked ?? (read => read()), inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false,
+    effect: reactivity?.effect ?? (() => {}), untracked: reactivity?.untracked ?? (read => read()), inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false, scoreTriangleNotes: () => false,
       drumMapping: () => 'general-midi',
       drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'), 'utf8');
@@ -1237,4 +1237,19 @@ test('overview fitting stays inside MIDI limits and retains wide phrase ranges',
     assert.ok(range.pitchMin <= min && range.pitchMax >= max);
     assert.ok(range.pitchMax - range.pitchMin + 1 >= 20);
   }
+});
+test('triangle geometry tapers to the right center and leaves phrase notes rounded', () => {
+  const { component: c } = fixture();
+  const calls = [];
+  const graphics = {};
+  for (const method of ['moveTo', 'lineTo', 'closePath', 'roundRect']) {
+    graphics[method] = (...args) => { calls.push([method, ...args]); return graphics; };
+  }
+  c.preferences.scoreTriangleNotes = () => true;
+  c.noteShape(graphics, 10, 20, 40, 12, 3);
+  assert.deepEqual(calls, [['moveTo', 10, 20], ['lineTo', 50, 26], ['lineTo', 10, 32], ['closePath']]);
+  calls.length = 0;
+  c.editable = () => true;
+  c.noteShape(graphics, 10, 20, 40, 12, 3);
+  assert.deepEqual(calls, [['roundRect', 10, 20, 40, 12, 3]]);
 });
