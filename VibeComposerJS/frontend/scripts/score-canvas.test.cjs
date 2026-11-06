@@ -13,6 +13,60 @@ test('score geometry round-trips negative pickup and post-end beats', () => {
 });
 const ts = require('typescript');
 
+test('shared modifiers deduplicate repeats, recover from pointer events and clear on focus loss', () => {
+  const { ModifierObserver } = loadHelper(path.resolve(__dirname, '../src/app/core/ui/modifier-observer.ts'));
+  const document = new EventTarget();
+  document.defaultView = new EventTarget();
+  const observer = new ModifierObserver(document);
+  const values = [];
+  const stop = observer.subscribe(value => values.push(value));
+  const send = (type, flags = {}) => document.dispatchEvent(Object.assign(new Event(type), flags));
+  send('keydown', { ctrlKey: true });
+  send('keydown', { ctrlKey: true, repeat: true });
+  send('keyup', { ctrlKey: true, key: 'a' });
+  send('pointermove', { ctrlKey: true });
+  assert.equal(values.length, 2, 'unchanged flags do not notify consumers');
+  document.defaultView.dispatchEvent(new Event('blur'));
+  assert.equal(values.at(-1).active, false);
+  assert.equal(values.at(-1).ctrlKey, false);
+  send('pointerdown', { metaKey: true, shiftKey: true });
+  assert.equal(values.at(-1).active, true);
+  assert.equal(values.at(-1).metaKey, true);
+  assert.equal(values.at(-1).ctrlKey, false, 'Ctrl and Meta remain distinct');
+  document.hidden = true;
+  send('visibilitychange');
+  assert.equal(values.at(-1).active, false);
+  stop();
+  const count = values.length;
+  send('keydown', { altKey: true });
+  assert.equal(values.length, count);
+  observer.destroy();
+  const afterDestroy = [];
+  observer.subscribe(value => afterDestroy.push(value));
+  send('keyup');
+  assert.equal(afterDestroy.length, 1, 'destroy removes DOM listeners');
+});
+
+test('modifier feedback updates trim hover without movement and avoids redundant rendering', () => {
+  const { component: c, canvas } = editFixture();
+  c.onPointerMove(pointer(300, 20));
+  let renders = 0;
+  c.drawDynamic = () => renders++;
+  c.onModifiersChanged({ active: true, altKey: true });
+  assert.equal(c.hoveredNote.zone, 'start');
+  assert.equal(canvas.style.cursor, 'ew-resize');
+  c.onModifiersChanged({ active: true });
+  assert.equal(c.hoveredNote.zone, 'move');
+  assert.equal(canvas.style.cursor, 'grab');
+  assert.equal(renders, 2, 'trim highlight follows the cursor');
+  c.onModifiersChanged({ active: true });
+  assert.equal(renders, 2, 'unchanged feedback does not redraw');
+  c.onModifiersChanged({ active: false });
+  assert.equal(c.placementPointer, null);
+  assert.equal(c.hoveredNote, null);
+  assert.equal(renders, 3);
+});
+
 // Plain score helpers are evaluated without Angular, Pixi, or browser globals.
 function scoreHelper(name) {
   const filename = path.resolve(__dirname, '../src/app/features/score', name + '.ts');
@@ -1126,9 +1180,9 @@ test('placement hover and click share snapped or free coordinates and never edit
   const free = c.placementPreview;
   c.onPointerDown(pointer(303, 20, { shiftKey: true }));
   assert.deepEqual(c.noteAdded.values, [snapped, free]);
-  c.onPlacementKey({ ctrlKey: false, shiftKey: false });
+  c.onModifiersChanged({ active: true, ctrlKey: false, shiftKey: false });
   assert.equal(c.placementPreview, null);
-  c.onPlacementKey({ ctrlKey: true });
+  c.onModifiersChanged({ active: true, ctrlKey: true });
   assert.deepEqual(c.placementPreview, snapped, 'modifier press updates a stationary pointer');
   c.onPointerLeave();
   assert.equal(c.placementPreview, null);

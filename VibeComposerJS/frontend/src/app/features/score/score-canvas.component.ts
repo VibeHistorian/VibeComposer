@@ -2,6 +2,8 @@ import { drumInstrumentName } from '../../core/music/drum-instruments';
 import { musicalTime } from '../../core/ui/musical-time';
 import { trackColor } from '../../core/ui/track-color';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { ModifierKeysService } from '../../core/ui/modifier-keys.service';
+import type { ModifierState } from '../../core/ui/modifier-observer';
 import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
@@ -155,6 +157,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private dynamicGraphics?: PixiGraphics;
   private colorClass?: typeof PixiColor;
   private readonly preferences = inject(UiPreferencesService);
+  private readonly modifiers = inject(ModifierKeysService);
+  private stopModifiers?: () => void;
   private readonly midi = inject(MidiOutputService);
   private readonly modelEffect = effect(() => {
     this.preferences.appearance();
@@ -231,18 +235,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     const host = this.rendererHost().nativeElement;
-    window.addEventListener('keydown', this.onPlacementKey);
-    window.addEventListener('keyup', this.onPlacementKey);
-    window.addEventListener('blur', this.clearPlacement);
+    this.stopModifiers = this.modifiers.subscribe(this.onModifiersChanged);
     this.resizeObserver = new ResizeObserver(() => this.resizeRenderer());
     this.resizeObserver.observe(host);
     void this.initializeRenderer(host);
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('keydown', this.onPlacementKey);
-    window.removeEventListener('keyup', this.onPlacementKey);
-    window.removeEventListener('blur', this.clearPlacement);
+    this.stopModifiers?.();
     this.destroyed = true;
     this.resizeObserver?.disconnect();
     const canvas = this.app?.canvas;
@@ -792,13 +792,22 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       && this.preferences.matchesGesture('addNote', gesture) && !this.preferences.matchesGesture('shapePitch', gesture)
       ? this.placementAt(event) : null;
   }
-  private readonly onPlacementKey = (event: KeyboardEvent): void => {
-    if (!this.placementPointer) return;
-    this.updatePlacement({ ...this.placementPointer, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey } as MouseEvent);
-    this.drawDynamic();
-  };
-  private readonly clearPlacement = (): void => {
-    this.placementPreview = null; this.placementPointer = null; this.drawDynamic();
+  private readonly onModifiersChanged = (state: ModifierState): void => {
+    if (!state.active) { if (this.placementPointer) this.onPointerLeave(); return; }
+    if (!this.editable() || !this.placementPointer || this.drag || this.box || this.shape) return;
+    const event = { ...this.placementPointer, ctrlKey: state.ctrlKey, metaKey: state.metaKey,
+      shiftKey: state.shiftKey, altKey: state.altKey } as MouseEvent;
+    const previous = this.placementPreview;
+    this.updatePlacement(event);
+    const next = this.placementPreview;
+    const area = this.hitAreaAt(event);
+    const previousZone = this.hoveredNote?.zone;
+    if (this.hoveredNote && area) {
+      this.hoveredNote = { area, zone: this.noteDragZone(area, this.hoverX ?? 0, this.preferences.matchesGestureHint('trimStart', event)) };
+      if (this.app) this.app.canvas.style.cursor = this.hoveredNote.zone === 'move' ? 'grab' : 'ew-resize';
+    }
+    if (previous?.midi !== next?.midi || previous?.startBeat !== next?.startBeat || previous?.trackId !== next?.trackId
+      || !!previous !== !!next || previousZone !== this.hoveredNote?.zone) this.drawDynamic();
   };
   private readonly onDoubleClick = (event: MouseEvent): void => {
     if (event.detail > 1 || !this.preferences.matchesGesture('addNote', event)
