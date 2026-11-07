@@ -60,6 +60,10 @@ export class UiPreferencesService {
   toggleScoreTriangleNotes(): void { this.commit({ ...this.state(), scoreTriangleNotes: !this.scoreTriangleNotes() }); }
   readonly scoreGhostNotes = computed(() => this.state().scoreGhostNotes);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
+  readonly replacePresetTracks = computed(() => this.state().replacePresetTracks);
+  setReplacePresetTracks(enabled: boolean): void {
+    if (typeof enabled === 'boolean') this.commit({ ...this.state(), replacePresetTracks: enabled });
+  }
   readonly generateArrangementVariations = computed(() => this.state().generateArrangementVariations);
   readonly rerollPresenceWithVariations = computed(() => this.state().rerollPresenceWithVariations);
   setArrangementBehavior(key: 'generateArrangementVariations' | 'rerollPresenceWithVariations', enabled: boolean): void {

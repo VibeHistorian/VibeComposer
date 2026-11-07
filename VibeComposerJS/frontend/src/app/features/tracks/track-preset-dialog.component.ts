@@ -7,7 +7,8 @@ import { formatCompactJson } from '../../core/project/project-json';
 import { SelectComponent } from '../../shared/select.component';
 import { BUILTIN_TRACK_PRESETS } from '../../core/project/builtin-track-presets';
 
-const STORAGE_KEY = 'vibecomposer.track-presets';
+import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
+import { readTrackPresetLibrary, TRACK_PRESET_STORAGE_KEY } from '../../core/ui/track-preset-storage';
 
 @Component({
   selector: 'vc-track-preset-dialog',
@@ -20,11 +21,12 @@ export class TrackPresetDialogComponent {
   readonly data = inject<{ role: ArrangedPart; name: string }>(DIALOG_DATA);
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
+  readonly preferences = inject(UiPreferencesService);
   readonly tracks = computed(() => this.projects.project().tracks.filter(track => track.role === this.data.role));
   readonly selected = signal(new Set(this.tracks().map(track => track.id)));
   readonly name = signal('');
   readonly presetName = signal('');
-  readonly replace = signal(true);
+  readonly replace = this.preferences.replacePresetTracks;
   readonly message = signal('');
   readonly library = signal<TrackPreset[]>(this.readLibrary());
   readonly presets = computed(() => this.library().filter(preset => preset.role === this.data.role));
@@ -42,17 +44,14 @@ export class TrackPresetDialogComponent {
     this.selected.update(current => { const next = new Set(current); checked ? next.add(id) : next.delete(id); return next; });
   }
   private readLibrary(): TrackPreset[] {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return [];
-      const presets = decodeTrackPresets(JSON.parse(saved));
-      if (!presets) throw new Error();
-      return presets;
-    } catch { this.message.set('Could not read saved presets. Import a valid library to recover it.'); return []; }
+    const presets = readTrackPresetLibrary();
+    if (presets) return presets;
+    this.message.set('Could not read saved presets. Import a valid library to recover it.');
+    return [];
   }
   private store(presets: TrackPreset[]): boolean {
     if (!decodeTrackPresets(presets)) { this.message.set('Preset library is invalid or exceeds 256 presets.'); return false; }
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); }
+    try { localStorage.setItem(TRACK_PRESET_STORAGE_KEY, JSON.stringify(presets)); }
     catch { this.message.set('Could not save presets in browser storage.'); return false; }
     this.library.set(presets);
     return true;

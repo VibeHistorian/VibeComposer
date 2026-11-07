@@ -85,7 +85,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       drumManager.querySelector('[aria-label="Close preset manager"]').click();
       await wait(() => !document.querySelector('vc-track-preset-dialog'), 'drum manager closed');
       const presetButton = document.querySelector('[aria-label="Bass preset manager"]');
-      if (presetButton.previousElementSibling.textContent.trim() !== '↻' || !presetButton.nextElementSibling.classList.contains('collapse-group-button')) throw new Error('preset button placement');
+      if (presetButton.closest('vc-context-menu').previousElementSibling.textContent.trim() !== '↻' || !presetButton.closest('vc-context-menu').nextElementSibling.classList.contains('collapse-group-button')) throw new Error('preset button placement');
       const bassRows = () => read().tracks.filter(track => track.role === 'bass');
       const originalBass = JSON.stringify(bassRows());
       const lock = document.querySelector('.track-group.bass .track-reroll-actions > button[aria-pressed]');
@@ -119,6 +119,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => JSON.stringify(read()) === beforePreset, 'undo appended preset');
       presetButton.click();
       const reopened = await wait(() => document.querySelector('vc-track-preset-dialog'), 'reopen stored library');
+      if (reopened.querySelector('.replace input').checked) throw new Error('preset replace preference was not remembered');
+      reopened.querySelector('.replace input').click();
       await change(reopened.querySelector(':is(vc-select, vc-menu-select)[aria-label="Track preset"]'), 'user:Browser bass');
       [...reopened.querySelectorAll('button')].find(button => button.textContent.trim() === 'Load preset').click();
       await wait(() => bassRows().length === 2, 'replace unlocked tracks');
@@ -140,6 +142,18 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => JSON.stringify(read()) === beforePreset, 'undo replaced preset');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => JSON.stringify(bassRows()) === originalBass, 'restore preset fixture');
+      const beforeQuickPreset = JSON.stringify(read());
+      presetButton.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 120, clientY: 160 }));
+      const menuChoice = text => [...document.querySelectorAll('.context-menu button')].find(button => button.textContent.trim().replace(/›$/, '').trim() === text);
+      const factory = await wait(() => menuChoice('Factory'), 'factory preset menu');
+      await wait(() => menuChoice('User'), 'saved presets in quick menu');
+      factory.dispatchEvent(new MouseEvent('mouseenter'));
+      const quickPreset = await wait(() => menuChoice('Deep House · 118–124 BPM (2)'), 'hover factory submenu');
+      quickPreset.click();
+      await wait(() => bassRows().length === 2, 'quick factory replacement');
+      if (document.querySelector('vc-track-preset-dialog')) throw new Error('quick preset opened manager');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read()) === beforeQuickPreset, 'undo quick factory preset');
       localStorage.removeItem('vibecomposer.track-presets');
       const groupToggle = () => document.querySelector('.group-track-toggle');
       const trackRows = () => [...document.querySelectorAll('.group-track-settings-row')];

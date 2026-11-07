@@ -14,7 +14,7 @@
   <h3 id="load-preset-heading">Load tracks</h3>
   <p>Built-in styles have matching presets in every role. BPM ranges are suggestions; loading keeps your tempo and harmony. Built-in notes are generated from track parameters and rhythm patterns.</p>
   <label>Preset <vc-select aria-label="Track preset" [options]="options()" [value]="presetName()" (valueChange)="presetName.set('' + $event)" /></label>
-  <label class="replace"><input type="checkbox" [checked]="replace()" (change)="replace.set($any($event.target).checked)" />Replace existing unlocked {{ data.name }} tracks</label>
+  <label class="replace"><input type="checkbox" [checked]="replace()" (change)="preferences.setReplacePresetTracks($any($event.target).checked)" />Replace existing unlocked {{ data.name }} tracks</label>
   <p>Locked tracks are kept. Turn Replace off to append preset tracks. Section overrides are not saved in presets.</p>
   <div class="actions"><button type="button" [disabled]="!chosen()" (click)="load()">Load preset</button><button type="button" [disabled]="!chosen() || isBuiltin()" (click)="remove()">Delete preset</button></div>
 </section>

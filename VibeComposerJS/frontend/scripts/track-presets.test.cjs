@@ -2,6 +2,50 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('quick preset menus group current libraries and load with the remembered replace preference', () => {
+  const { service, workspace, uiPreferences, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  assert.equal(uiPreferences.replacePresetTracks(), true);
+  const original = service.exportProjectJson();
+  const user = { name: 'My bass', role: 'bass', tracks: service.project().tracks.filter(track => track.role === 'bass') };
+  workspace.refreshQuickPresets();
+  assert.deepEqual(workspace.presetContextItems('bass').map(item => item.label), ['Factory']);
+  localStorage.setItem('vibecomposer.track-presets', JSON.stringify([user]));
+  workspace.refreshQuickPresets();
+  const menu = workspace.presetContextItems('bass');
+  assert.deepEqual(menu.map(item => item.label), ['Factory', 'User']);
+  assert.equal(workspace.presetContextItems('drums').length, 1);
+  assert.equal(menu[0].children.length, 24);
+  assert.ok(menu[0].children.every(item => !/Built-in|Factory/.test(item.label)));
+  uiPreferences.setReplacePresetTracks(false);
+  assert.equal(new UiPreferencesService().replacePresetTracks(), false);
+  workspace.loadQuickPreset('bass', { id: menu[1].children[0].id, x: 0, y: 0 });
+  assert.equal(service.project().tracks.filter(track => track.role === 'bass').length, 2);
+  service.undo(); assert.equal(service.exportProjectJson(), original);
+  for (const savedReplace of [true, false]) {
+    uiPreferences.setReplacePresetTracks(savedReplace);
+    workspace.refreshQuickPresets({ shiftKey: true });
+    workspace.loadQuickPreset('bass', { id: menu[1].children[0].id, x: 0, y: 0 });
+    assert.equal(service.project().tracks.filter(track => track.role === 'bass').length, savedReplace ? 2 : 1);
+    assert.equal(uiPreferences.replacePresetTracks(), savedReplace, 'Shift opening never changes the saved preference');
+    service.undo();
+    assert.equal(service.exportProjectJson(), original);
+  }
+  workspace.refreshQuickPresets({ shiftKey: false });
+  uiPreferences.setReplacePresetTracks(true);
+  workspace.loadQuickPreset('bass', { id: menu[0].children[0].id, x: 0, y: 0 });
+  assert.equal(service.project().tracks.filter(track => track.role === 'bass').length, 2);
+  service.undo(); assert.equal(service.exportProjectJson(), original);
+  const saved = uiPreferences.exportJson();
+  assert.equal(uiPreferences.importJson(JSON.stringify({ ...JSON.parse(saved), replacePresetTracks: 'false' })), false);
+  const older = JSON.parse(saved); delete older.replacePresetTracks;
+  assert.equal(uiPreferences.importJson(JSON.stringify(older)), true);
+  assert.equal(uiPreferences.replacePresetTracks(), true);
+  localStorage.setItem('vibecomposer.track-presets', '{broken');
+  workspace.refreshQuickPresets();
+  assert.deepEqual(workspace.presetContextItems('bass').map(item => item.label), ['Factory']);
+});
+
 test('factory library covers 24 complete styles with valid, deterministic generated layers', () => {
   const { service, load } = fixture();
   const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
