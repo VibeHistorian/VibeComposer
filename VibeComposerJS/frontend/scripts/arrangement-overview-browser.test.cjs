@@ -95,11 +95,12 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
     const signal = value => Object.assign(() => value, { set: next => { value = next; } });
     const input = value => signal(value); input.required = () => signal(undefined);
     const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-      computed: read => read, effect: () => {}, input, signal, inject: () => ({ appearance: () => ({}) }), output: () => ({ emit() {} }),
+      computed: read => read, effect: () => {}, input, signal, inject: () => ({ subscribe: () => () => {}, appearance: () => ({}) }), output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
       '../../core/music/phrase-range-edit': (() => { const module={exports:{}}; const exports=module.exports; ${rangeCode}; return module.exports; })(),
       '../../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
+      '../../core/ui/modifier-keys.service': { ModifierKeysService: class ModifierKeysService {} },
       '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
       '../../core/music/phrase-bounds': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${boundsCode}; return module.exports; })(),
       '../../core/music/section-context': (() => { const module={exports:{}}; const exports=module.exports; const require=()=>({}); ${contextCode}; return module.exports; })(),

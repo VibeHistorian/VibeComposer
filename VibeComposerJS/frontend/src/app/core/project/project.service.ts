@@ -1,3 +1,4 @@
+import { copyArrangementPhrase, type ArrangementPhraseCopy } from './arrangement-phrase-copy';
 import { samePhraseInputs } from '../music/phrase-inputs';
 import type { TrackDuplicationOptions } from './track-duplication';
 import * as arrangementCommands from './project-arrangement-commands';
@@ -983,6 +984,12 @@ export class ProjectService {
     if (!validSettings) return;
     tracks[index] = { ...track, generatorSettings } as CompositionTrack;
     this.commit({ ...current, tracks }, this.controlHistoryKey(['part', 'global-track', trackId], patch));
+  }
+
+  copyArrangementPhrase(request: ArrangementPhraseCopy): void {
+    const current = this.state();
+    const next = copyArrangementPhrase(current, request);
+    if (next !== current) this.commit(next);
   }
 
   updateSectionTrackPhrase(sectionId: string, trackId: string, notes: readonly PhraseNote[]): boolean {

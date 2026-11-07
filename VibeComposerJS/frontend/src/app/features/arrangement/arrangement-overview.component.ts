@@ -1,4 +1,6 @@
 import { trackColor } from '../../core/ui/track-color';
+import { ModifierKeysService } from '../../core/ui/modifier-keys.service';
+import type { ArrangementPhraseSource, ArrangementPhraseTarget, ArrangementPhraseCopy } from '../../core/project/arrangement-phrase-copy';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { sectionDurationBeats, sectionChordDurations } from '../../core/music/section-context';
 import type { SectionHarmonyDisplay } from '../../core/music/harmony-display';
@@ -42,6 +44,8 @@ interface PreviewNote {
 }
 
 interface OverviewHitArea {
+  readonly copySource?: ArrangementPhraseSource;
+  readonly copyTarget?: ArrangementPhraseTarget;
   readonly key: string;
   readonly x: number;
   readonly y: number;
@@ -149,6 +153,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly trackId?: string; readonly action: 'reroll' | 'reset' }>();
   readonly sectionDuplicateRequested = output<string>();
   readonly sectionRemoveRequested = output<string>();
+  readonly phraseCopyRequested = output<ArrangementPhraseCopy>();
 
   readonly sections = computed<OverviewSection[]>(() => {
     const project = this.project();
@@ -266,6 +271,15 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private focusedKey: string | null = null;
   private accent = '#32d7f4';
 
+  private copyDrag: { source: ArrangementPhraseSource; project: CompositionProject; pointerId: number;
+    x: number; y: number; moved: boolean; key?: string } | null = null;
+  private suppressCopyClick = false;
+  private controlHeld = false;
+  private readonly modifiers = inject(ModifierKeysService);
+  private readonly unsubscribeModifiers = this.modifiers.subscribe(state => {
+    this.controlHeld = state.ctrlKey;
+    if (!state.active) this.cancelCopyDrag();
+  });
   private readonly preferences = inject(UiPreferencesService);
   private readonly modelEffect = effect(() => {
     this.preferences.appearance();
@@ -302,6 +316,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.unsubscribeModifiers();
+    this.cancelCopyDrag();
     this.ready = false;
     this.scoreCanvas().nativeElement.removeEventListener('wheel', this.onCanvasWheel);
     this.resizeObserver?.disconnect();
@@ -512,7 +528,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.strokeStyle = this.accent;
           context.strokeRect(x + 0.5, y + 0.5, width - 1, this.rowHeight - 1);
         }
-        hit({ key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
+        hit({ copySource: { sectionId: item.section.id, role: group.role }, key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
           label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Presence controls: Settings > Shortcuts.`,
           activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }),
           togglePresence: () => this.groupPresenceToggled.emit({ sectionId: item.section.id, role: group.role }),
@@ -581,7 +597,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           }
           const hitRadius = buttonPitch / 2;
           const buttonLeft = Math.max(x, centerX - hitRadius), buttonRight = Math.min(x + width, centerX + hitRadius);
-          hit({ key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: Math.max(y, centerY - hitRadius),
+          hit({ copySource: present ? { sectionId: item.section.id, trackId: track.id } : undefined,
+            copyTarget: { sectionId: item.section.id, trackId: track.id }, key: `toggle:${item.section.id}:${track.id}`, x: buttonLeft, y: Math.max(y, centerY - hitRadius),
             width: buttonRight - buttonLeft, height: Math.min(y + this.rowHeight, centerY + hitRadius) - Math.max(y, centerY - hitRadius),
             label: `Select ${track.name ?? group.name + ' track ' + trackNumber} in ${this.sectionLabel(item.section.type)}. ${present ? 'Present' : 'Absent'}. ${manualNotes ? 'Manual notes override part settings.' : trackCustomized ? 'Customized track part.' : ''} ${variation ? `Saved variation ${variation.enabled ? 'enabled' : 'disabled'}; inspect Variations in the selection inspector.` : ''} Presence controls: Settings > Shortcuts.`,
             activate: () => this.trackSelected.emit({ sectionId: item.section.id, trackId: track.id }),
@@ -716,6 +733,16 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
       if (right > left) fill(left, RULER_HEIGHT - 2, right - left, 2, '--loop-line');
     }
     fill(this.labelWidth - 1, RULER_HEIGHT, 1, this.height - RULER_HEIGHT, '--border-subtle');
+    const drop = this.copyDrag?.moved && this.hits.find(area => area.key === this.copyDrag?.key);
+    if (drop) {
+      context.fillStyle = color('--surface-accent');
+      context.fillRect(drop.x, drop.y, drop.width, drop.height);
+      context.strokeStyle = this.accent;
+      context.lineWidth = 2;
+      context.strokeRect(drop.x + 1, drop.y + 1, drop.width - 2, drop.height - 2);
+      context.lineWidth = 1;
+    }
+    canvas.setAttribute('data-copy-target', drop ? drop.key : '');
     const focused = this.hits.find((area) => area.key === this.focusedKey);
     if (focused) {
       context.strokeStyle = this.accent;
@@ -765,6 +792,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasClick(event: MouseEvent): void {
+    if (this.suppressCopyClick) { this.suppressCopyClick = false; return; }
     if (event.button && event.button !== 0) return;
     const area = this.hitAt(event);
     if (!area) {
@@ -777,7 +805,19 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasPointerdown(event: PointerEvent): void {
+    this.suppressCopyClick = false;
     if (event.button === 1) event.preventDefault();
+    const source = this.hitAt(event)?.copySource;
+    if (event.button !== 0 || !(event.ctrlKey || this.controlHeld) || !source) return;
+    const section = this.project().arrangement.find(section => section.id === source.sectionId);
+    if (!section || !this.project().tracks.some(track => (source.trackId ? track.id === source.trackId : track.role === source.role)
+      && this.trackPresent(section, track))) return;
+    event.preventDefault();
+    // A redraw replays this pointer for hit testing. Discard the pre-drag hover,
+    // whose released buttons would otherwise cancel the captured drag.
+    this.hoverPointer = null;
+    this.copyDrag = { source, project: this.project(), pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
+    this.scoreCanvas().nativeElement.setPointerCapture(event.pointerId);
   }
 
   private runShortcut(area: OverviewHitArea, event: KeyboardEvent | MouseEvent): boolean {
@@ -809,6 +849,19 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
 
   onPointerMove(event: PointerEvent): void {
     this.hoverPointer = event;
+    const drag = this.copyDrag;
+    if (drag && drag.pointerId === event.pointerId) {
+      if (drag.project !== this.project() || !(event.buttons & 1)) { this.cancelCopyDrag(); return; }
+      drag.moved ||= Math.hypot(event.clientX - drag.x, event.clientY - drag.y) >= 4;
+      const area = this.hitAt(event), target = area?.copyTarget;
+      const valid = drag.moved && target && !(target.sectionId === drag.source.sectionId && target.trackId === drag.source.trackId);
+      const key = valid ? area.key : undefined;
+      if (drag.key !== key) { drag.key = key; this.scheduleDraw(); }
+      const canvas = this.scoreCanvas().nativeElement;
+      canvas.style.cursor = valid ? 'copy' : 'no-drop';
+      canvas.title = valid ? 'Copy notes here' : 'Drop onto a section track button';
+      return;
+    }
     const area = this.hitAt(event);
     const key = area?.key ?? null;
     if (this.hoveredKey !== key) {
@@ -818,6 +871,28 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const canvas = this.scoreCanvas().nativeElement;
     canvas.style.cursor = area ? 'pointer' : 'default';
     canvas.title = area ? area.label + ' Interactions: Settings > Shortcuts.' : '';
+  }
+
+  onCanvasPointerup(event: PointerEvent): void {
+    const drag = this.copyDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const target = this.hitAt(event)?.copyTarget;
+    this.cancelCopyDrag();
+    if (drag.moved && target && drag.project === this.project()) this.phraseCopyRequested.emit({ source: drag.source, target });
+  }
+
+  cancelCopyDrag(): void {
+    const drag = this.copyDrag;
+    if (!drag) return;
+    this.copyDrag = null;
+    this.hoverPointer = null;
+    this.suppressCopyClick = true;
+    const canvas = this.scoreCanvas().nativeElement;
+    if (canvas.hasPointerCapture(drag.pointerId)) canvas.releasePointerCapture(drag.pointerId);
+    canvas.style.cursor = 'default';
+    canvas.title = '';
+    canvas.setAttribute('data-copy-target', '');
+    this.scheduleDraw();
   }
 
   onPointerLeave(): void {
@@ -830,6 +905,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && this.copyDrag) { event.preventDefault(); event.stopPropagation(); this.cancelCopyDrag(); return; }
     if (this.preferences.matchesShortcut('clearSections', event)) {
       event.preventDefault();
       this.selectionCleared.emit();

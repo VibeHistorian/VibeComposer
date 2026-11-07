@@ -12,7 +12,7 @@ function fixture(reactivity) {
   input.required = () => signal(undefined);
   const angular = {
     Component: () => (component) => component, ChangeDetectionStrategy: { OnPush: 0 },
-    computed: reactivity?.computed ?? ((read) => read), effect: () => {}, input, signal, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => ({}) }),
+    computed: reactivity?.computed ?? ((read) => read), effect: () => {}, input, signal, inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { subscribe: () => () => {}, appearance: () => ({}) }),
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     viewChild: { required: (name) => () => ({ nativeElement: refs.get(name) }) },
   };
@@ -25,6 +25,7 @@ function fixture(reactivity) {
     '../../core/ui/track-color': require('./music-loader.cjs').loadMusic('../ui/track-color.ts'),
     '../../core/music/phrase-range-edit': require('./music-loader.cjs').loadMusic('phrase-range-edit.ts'),
     '../../core/music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
+    '../../core/ui/modifier-keys.service': { ModifierKeysService: class ModifierKeysService {} },
     '../../core/ui/ui-preferences.service': { UiPreferencesService: class UiPreferencesService {} },
     '../../core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
@@ -800,4 +801,37 @@ test('button gaps select the closest track horizontally and vertically', () => {
       }
     }
   }
+});
+
+test('Ctrl drag highlights a track destination, emits once and suppresses the following selection click', () => {
+  const { component, refs } = fixture();
+  const canvas=refs.get('scoreCanvas'); let captured=false;
+  canvas.setPointerCapture=()=>{captured=true;};canvas.hasPointerCapture=()=>captured;canvas.releasePointerCapture=()=>{captured=false;};
+  const attrs={};canvas.setAttribute=(name,value)=>{attrs[name]=value;};
+  const source=component.hits.find(h=>h.key==='cell:intro:bass');
+  const target=component.hits.find(h=>h.key==='toggle:verse:bass-1');
+  const event=(hit,extra={})=>({button:0,buttons:1,pointerId:1,ctrlKey:true,
+    clientX:(hit.x+hit.width/2)*800/component.width,clientY:(hit.y+hit.height/2)*320/component.height,preventDefault(){},...extra});
+  component.onPointerMove(event(source,{buttons:0,ctrlKey:false}));
+  component.onCanvasPointerdown(event(source));assert.equal(captured,true);
+  component.drawOverview();assert.ok(component.copyDrag,'a redraw must not replay pre-drag hover as button release');
+  component.onPointerMove(event(target));component.drawOverview();
+  assert.equal(attrs['data-copy-target'],target.key);
+  component.onCanvasPointerup(event(target,{buttons:0}));
+  assert.deepEqual(component.phraseCopyRequested.values,[{source:{sectionId:'intro',role:'bass'},target:{sectionId:'verse',trackId:'bass-1'}}]);
+  assert.equal(captured,false);assert.equal(attrs['data-copy-target'],'');
+  component.onCanvasClick(event(target));assert.equal(component.trackSelected.values.length,0);
+  component.onCanvasPointerdown(event(source));component.onPointerMove(event(target));
+  component.onCanvasKeydown({key:'Escape',preventDefault(){},stopPropagation(){}});
+  component.onCanvasPointerup(event(target,{buttons:0}));assert.equal(component.phraseCopyRequested.values.length,1);
+  component.onCanvasPointerdown(event(target));assert.equal(component.copyDrag,null,'absent track cannot be a source');
+  const trackSource=component.hits.find(h=>h.key==='toggle:intro:bass-1');
+  component.onCanvasPointerdown(event(trackSource));component.onPointerMove(event(target));
+  component.onCanvasPointerup(event(target,{buttons:0}));
+  assert.deepEqual(component.phraseCopyRequested.values[1].source,{sectionId:'intro',trackId:'bass-1'});
+  component.onCanvasPointerdown(event(source));component.onPointerMove(event(target));component.cancelCopyDrag();
+  component.onCanvasPointerup(event(target,{buttons:0}));assert.equal(component.phraseCopyRequested.values.length,2,'cancel never commits');
+  component.onCanvasPointerdown(event(source));component.onPointerMove(event(target));
+  component.project.set({...component.project()});
+  component.onCanvasPointerup(event(target,{buttons:0}));assert.equal(component.phraseCopyRequested.values.length,2,'stale source never commits');
 });

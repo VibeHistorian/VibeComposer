@@ -38,6 +38,7 @@
           aria-label="Arrangement overview. Select sections, edit presence and reroll settings. View and customize interactions in Settings > Shortcuts. Arrow keys navigate; Enter activates."
           aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Enter"
           (click)="onCanvasClick($event)" (pointermove)="onPointerMove($event)" (pointerleave)="onPointerLeave()"
+          (pointerup)="onCanvasPointerup($event)" (pointercancel)="cancelCopyDrag()" (lostpointercapture)="cancelCopyDrag()"
           (pointerdown)="onCanvasPointerdown($event)" (auxclick)="onCanvasAuxclick($event)"
           (contextmenu)="onCanvasContextmenu($event)"
           (keydown)="onCanvasKeydown($event)"></canvas>
