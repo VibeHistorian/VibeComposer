@@ -1,0 +1,63 @@
+const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const test = require('node:test');
+const browser = findBrowser();
+
+
+for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, { skip: !browser }, async () => {
+ const root=requireProductionBuild(), index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ const script=`<script>(async()=>{
+ const wait=async(fn,label)=>{for(let i=0;i<200;i++){const v=fn();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error(label);};
+ const check=(v,label)=>{if(!v)throw Error(label);};
+ const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+ const fit=()=>{for(const panel of document.querySelectorAll('.selection-menu')){const r=panel.getBoundingClientRect();check(r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,'menu fits viewport');}};
+ try{
+ const picker=await wait(()=>document.querySelector('.track-group.melody vc-menu-select'),'instrument');
+ check(picker.getAttribute('role')==='button','menu button semantics');
+ const before=JSON.stringify(read());const options=await selectOptions(picker);
+ check(options.length===128,'all GM instruments reachable');check(JSON.stringify(read())===before,'browsing never commits');
+ await changeControl(picker,'127');await wait(()=>read().tracks.find(t=>t.role==='melody').mix.program===127,'instrument commit');
+ picker.click();let root=await wait(()=>document.getElementById(picker.getAttribute('aria-controls')),'root');
+ const effects=[...root.querySelectorAll('button')].find(b=>b.textContent.includes('Sound effects'));effects.click();
+ const selected=await wait(()=>document.querySelector('.selection-menu [data-value="127"]'),'selected leaf');
+ check(selected.getAttribute('aria-checked')==='true','selected radio exposed');fit();
+ selected.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ picker.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
+ await wait(()=>picker.getAttribute('value')!=='127','right click resets');
+ const reset=picker.getAttribute('value');picker.dispatchEvent(new WheelEvent('wheel',{deltaY:100,bubbles:true,cancelable:true}));
+ await wait(()=>picker.getAttribute('value')!==reset,'wheel steps');
+ const drum=document.querySelector('.track-group.drums vc-menu-select');const drums=await selectOptions(drum);
+ check(drums.length===16,'all drum pitches reachable');await changeControl(drum,'82');await wait(()=>drum.textContent.includes('Shaker'),'mapped drum label');
+ document.querySelector('.track-group.chords .group-select').click();
+ const strum=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="chords"] vc-menu-select[data-parameter-key="strumType"]'),'strum');
+ const types=await selectOptions(strum);check(types.length===9,'all strum variants reachable');
+ await changeControl(strum,'HUMAN_D');await wait(()=>read().tracks.filter(t=>t.role==='chords').every(t=>t.generatorSettings.strumType==='HUMAN_D'),'strum commits scoped setting');
+ strum.click();await wait(()=>document.querySelector('.selection-menu'),'strum menu');fit();
+ await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
+ }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}
+ })();</script>`;
+
+  let resolve, reject;
+  const result = new Promise((done,fail)=>{resolve=done;reject=fail;});
+  result.catch(() => {}); // CDP setup can fail before the result is awaited.
+  const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
+  await listen(server);
+  const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/contextual-generation-browser-'));
+  const child=launchBrowser(browser,['--headless','--disable-gpu','--no-first-run','--disable-background-networking','--no-default-browser-check',
+    '--disable-background-timer-throttling','--disable-renderer-backgrounding','--remote-debugging-port=0','--window-size='+width+',1100',
+    '--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port+'/'],{stdio:['ignore','ignore','pipe']});
+  const watchdog = watchBrowser(child, reject, 45000);
+  let socket;
+  try {
+    const connection = await connectToPage(child);
+    socket = connection.socket;
+    const command = connection.command;
+    await command('Emulation.setDeviceMetricsOverride', { width, height: 1100, deviceScaleFactor: 1, mobile: false });
+    const actual=await result;assert.equal(actual.error,undefined,JSON.stringify(actual));assert.equal(actual.ok,true);
+  } finally {
+    await closeBrowser({ child, server, socket, watchdog });
+  }
+});
+

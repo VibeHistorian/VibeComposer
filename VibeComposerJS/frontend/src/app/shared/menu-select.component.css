@@ -1,0 +1,9 @@
+/* Accent popup surface */
+.selection-menu { display: grid; min-width: 170px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 24px); overflow: auto; padding: 3px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); box-shadow: 0 6px 20px var(--shadow-ink); font: 12px var(--font-ui); }
+/* Menu actions and focus */
+button { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 6px 8px; border: 0; border-radius: var(--radius-tight); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+button:hover, button:focus, button[aria-expanded="true"] { outline: none; background: var(--surface-accent); color: var(--accent-primary); }
+button[aria-disabled="true"] { color: var(--text-muted); cursor: default; }
+
+/* Selected family and leaf */
+.contains-selection, [aria-checked="true"] { color: var(--accent-primary); }

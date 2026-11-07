@@ -1,0 +1,35 @@
+<span class="select-value">{{ displayLabel() ?? selectedLabel() }}</span>
+<ng-template #root>
+  <div cdkMenu class="selection-menu">
+    @if (mixed()) { <button type="button" cdkMenuItem [cdkMenuItemDisabled]="true">Mixed</button> }
+    @for (group of branches(); track group.id) {
+      <button type="button" cdkMenuItem [cdkMenuTriggerFor]="branch" [cdkMenuTriggerData]="{ groupId: group.id, groupLabel: group.label }"
+        [class.contains-selection]="group.values.includes(selectedValue())">
+        <span>{{ group.label }}</span><span aria-hidden="true">›</span>
+      </button>
+    }
+    @for (option of ungrouped(); track option.value) {
+      <button type="button" cdkMenuItemRadio [cdkMenuItemChecked]="selectedValue() === option.value"
+        [cdkMenuItemDisabled]="option.disabled ?? false" [attr.data-value]="option.value"
+        (cdkMenuItemTriggered)="commit(option.value)">
+        <span>{{ option.label }}</span><span aria-hidden="true">{{ selectedValue() === option.value ? '✓' : '' }}</span>
+      </button>
+    }
+  </div>
+</ng-template>
+<!-- Keep leaves inside their owning menu so CDK navigation inherits the correct menu context. -->
+<ng-template #branch let-groupId="groupId" let-groupLabel="groupLabel">
+  <div cdkMenu class="selection-menu" [attr.aria-label]="groupLabel">
+    @for (group of branches(); track group.id) {
+      @if (group.id === groupId) {
+        @for (option of group.options; track option.value) {
+          <button type="button" cdkMenuItemRadio [cdkMenuItemChecked]="selectedValue() === option.value"
+            [cdkMenuItemDisabled]="option.disabled ?? false" [attr.data-value]="option.value"
+            (cdkMenuItemTriggered)="commit(option.value)">
+            <span>{{ option.label }}</span><span aria-hidden="true">{{ selectedValue() === option.value ? '✓' : '' }}</span>
+          </button>
+        }
+      }
+    }
+  </div>
+</ng-template>

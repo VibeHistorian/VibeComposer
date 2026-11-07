@@ -1,3 +1,4 @@
+import { MenuSelectComponent, type SelectMenuGroup } from '../../shared/menu-select.component';
 import { ParameterShortcutDirective } from './parameter-shortcut.directive';
 import { inspectArrangementVariation } from '../../core/music/arrangement-variation-inspection';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
@@ -26,13 +27,24 @@ import { ProjectService } from '../../core/project/project.service';
 
 @Component({
   selector: 'vc-part-settings-editor',
-  imports: [ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent],
+  imports: [MenuSelectComponent, ParameterShortcutDirective, NgTemplateOutlet, DialogModule, CompactKnobComponent, CompactToggleComponent, ControlHeadingComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[attr.data-control-role]': 'role()', '[style.--variation-role-color]': '"var(--role-" + role() + ")"', '[class.quick-layout]': '!showGroupTitles()', '[class.placement-editing]': 'preferences.editingQuickSettings()' },
   templateUrl: './part-settings-editor.component.html',
   styleUrl: './part-settings-editor.component.css',
 })
 export class PartSettingsEditorComponent {
+  readonly strumGroups: readonly SelectMenuGroup[] = [
+    { id: 'arp', label: 'Arpeggiated', values: ['ARP_U', 'ARP_D'] },
+    { id: 'random', label: 'Random', values: ['RAND_U', 'RAND', 'RAND_D', 'RAND_WU'] },
+    { id: 'human', label: 'Humanized', values: ['HUMAN_U', 'HUMAN', 'HUMAN_D'] },
+  ];
+  readonly strumOptions = [
+    { value: 'ARP_U', label: 'Arpeggiated up' }, { value: 'ARP_D', label: 'Arpeggiated down' },
+    { value: 'RAND_U', label: 'Random up' }, { value: 'RAND', label: 'Random unordered' },
+    { value: 'RAND_D', label: 'Random down' }, { value: 'RAND_WU', label: 'Random spaced up' },
+    { value: 'HUMAN_U', label: 'Humanized up' }, { value: 'HUMAN', label: 'Humanized unordered' }, { value: 'HUMAN_D', label: 'Humanized down' },
+  ];
   readonly delayOptions = [0, 1, 2, 3, 4, 5];
   readonly shiftOptions = [0, 1, 2, 3, 4, 5, 6, 7, 8];
   isQuick(key: string): boolean {

@@ -7,7 +7,7 @@ Keep reusable presentation controls and UI helpers here when multiple features h
 | `compact-knob.component.*` | Part settings, harmony, track policies, workspace, transport and preferences |
 | `compact-toggle.component.*` | Part settings, harmony, track policies and workspace |
 | `control-heading.component.*` | Knobs, toggles and the part editor; shared labels, reset and inheritance presentation |
-| `select.component.*` | All select controls; shared option rendering, surface/popup styles, wheel stepping and right-click reset |
+| `select.component.*`, `menu-select.component.*` | Flat and categorized value selectors; shared option rendering, surface/popup styles, wheel stepping and right-click reset |
 | `context-menu.component.*` | Track-name actions and variation additions (so far); reusable menus with dynamic nested choices |
 | `keyboard-shortcuts.ts` | Shared text-input/event helpers for global and phrase keyboard routing |
 
@@ -24,3 +24,5 @@ The custom element host uses Angular ARIA's `Combobox` directive and an explicit
 Popup geometry accounts for the space above and below the trigger, caps the list height to the available viewport, and repositions after ARIA's deferred listbox renders. Long lists scroll inside the panel. The DOM popup does not depend on native select or tooltip popup lifetimes; ordinary `title` tooltips remain available.
 
 Features own option data, change commands, dimensions and contextual variants; common surface, focus and popup rules live in the component CSS. Use computed option lists for dynamic labels such as drum mapping, fonts and instrument pools. Feature action-button CSS targets `button`; select styling targets `vc-select`. Disabled select styles use `[aria-disabled="true"]`.
+
+Use `<vc-menu-select [options]="choices" [groups]="families" [value]="value" (valueChange)="choose($event)" />` for categorized value choices. Feature-owned groups contain stable IDs, labels and string value IDs; empty families disappear, and ungrouped values remain available at the root. The trigger is a menu button with checked radio leaves; CDK owns keyboard navigation, typeahead, focus return and dismissal. Browsing never changes the value. The control shares select surface styling and preserves Mixed, disabled options, string outputs, right-click defaults and wheel order from the flat options array. Track instrument/percussion and strum selectors are the initial consumers.

@@ -23,9 +23,9 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     try {
       await wait(()=>innerWidth===${width},'viewport');
       await wait(()=>button('Edit quick settings'),'workspace');
-      const focusedSelect = document.querySelector('vc-select.track-instrument');
+      const focusedSelect = document.querySelector('vc-menu-select.track-instrument');
       focusedSelect.focus();
-      ensure(focusedSelect.matches(':focus-visible'),'instrument vc-select shows keyboard focus');
+      ensure(focusedSelect.matches(':focus-visible'),'instrument menu selector shows keyboard focus');
       const focusProbe = document.createElement('span');
       focusProbe.style.color='var(--border-focus)';
       focusedSelect.parentElement.append(focusProbe);
@@ -376,7 +376,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await wait(()=>restart.getAttribute('aria-pressed')==='false','restart toggles off');
         ensure(JSON.parse(localStorage.getItem(key)).restartPlaybackOnCompose===false,'restart preference persisted');
         const poolToggle=button('Limit instrument options to selected pool');
-        const bassInstrument=()=>document.querySelector('.track-group.bass vc-select.track-instrument');
+        const bassInstrument=()=>document.querySelector('.track-group.bass vc-menu-select.track-instrument');
         ensure(poolToggle?.getAttribute('aria-pressed')==='false','instrument pool filtering defaults off');
         ensure((await selectOptions(bassInstrument())).length===128,'all GM instruments available by default');
         const selectedProgram=bassInstrument().getAttribute("value");
@@ -567,7 +567,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     assert.equal(actual.ok, true);
     // Use trusted mouse input: synthetic change events cannot exercise native popup lifetime.
     const instrumentPoint = await command('Runtime.evaluate', { expression: `(() => {
-      const select = document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])');
+      const select = document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])');
       const rect = select.getBoundingClientRect();
       return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, value: select.getAttribute("value") };
     })()`, returnByValue: true });
@@ -583,42 +583,45 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     await command('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX: 0, deltaY: 100 });
     await clickInstrument();
     await new Promise(resolve => setTimeout(resolve, 250));
-    const wheelSelection = await command('Runtime.evaluate', { expression: `document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])').getAttribute("value")`, returnByValue: true });
+    const wheelSelection = await command('Runtime.evaluate', { expression: `document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').getAttribute("value")`, returnByValue: true });
     assert.notEqual(wheelSelection.result.value, beforeWheel, 'trusted wheel changes the remembered instrument');
-    const popup = await command('Runtime.evaluate', { expression: `document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])').getAttribute('aria-expanded')`, returnByValue: true });
-    assert.equal(popup.result.value, 'true', 'ARIA listbox stays open after open-close-wheel-immediate-reopen');
+    const popup = await command('Runtime.evaluate', { expression: `document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').getAttribute('aria-expanded')`, returnByValue: true });
+    assert.equal(popup.result.value, 'true', 'selection menu stays open after open-close-wheel-immediate-reopen');
     await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
     await command('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
     const press = async (key, code, windowsVirtualKeyCode) => {
-      await command('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode });
+      await command('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, ...(key === 'Enter' ? { text: '\r' } : {}) });
       await command('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode });
     };
     await command('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX: 0, deltaY: 100 });
     await press(' ', 'Space', 32);
     await new Promise(resolve => setTimeout(resolve, 250));
     const keyboardPopup = await command('Runtime.evaluate', { expression: `(() => {
-      const trigger = document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])');
+      const trigger = document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])');
       return { expanded: trigger.getAttribute('aria-expanded'), value: trigger.getAttribute("value") };
     })()`, returnByValue: true });
     assert.equal(keyboardPopup.result.value.expanded, 'true', 'Space opens a stable popup immediately after wheel input');
     await press('ArrowDown', 'ArrowDown', 40);
     await press('Escape', 'Escape', 27);
-    const cancelledSelection = await command('Runtime.evaluate', { expression: `document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])').getAttribute("value")`, returnByValue: true });
+    const cancelledSelection = await command('Runtime.evaluate', { expression: `document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').getAttribute("value")`, returnByValue: true });
     assert.equal(cancelledSelection.result.value, keyboardPopup.result.value.value, 'Escape cancels keyboard browsing without changing selection');
     await press(' ', 'Space', 32);
     await new Promise(resolve => setTimeout(resolve, 40));
+    await press('Home', 'Home', 36);
+    await press('ArrowRight', 'ArrowRight', 39);
+    await new Promise(resolve => setTimeout(resolve, 100));
     await press('End', 'End', 35);
     const activeChoice = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => {
-      const trigger = document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])');
-      const active = document.getElementById(trigger.getAttribute('aria-activedescendant'));
+      const trigger = document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])');
+      const active = document.activeElement;
       resolve({ value: trigger.getAttribute("value"), next: active?.getAttribute('data-value') });
     })))`, awaitPromise: true, returnByValue: true });
     assert.equal(activeChoice.result.value.value, cancelledSelection.result.value, 'keyboard navigation alone does not commit');
-    assert.ok(activeChoice.result.value.next, 'keyboard active option is exposed through ARIA');
+    assert.ok(activeChoice.result.value.next, 'keyboard focus reaches the submenu option');
     await press('Enter', 'Enter', 13);
     await new Promise(resolve => setTimeout(resolve, 40));
     const committedChoice = await command('Runtime.evaluate', { expression: `(() => {
-      const trigger = document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])');
+      const trigger = document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])');
       return { value: trigger.getAttribute("value"), expanded: trigger.getAttribute('aria-expanded') };
     })()`, returnByValue: true });
     assert.equal(committedChoice.result.value.value, activeChoice.result.value.next, 'Enter commits the activated option');
@@ -644,7 +647,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     assert.equal(popupGeometry.exceptionDetails, undefined, JSON.stringify(popupGeometry));
     assert.ok(popupGeometry.result.value.every(result => result.fits && result.correctSide && result.scrolls), JSON.stringify(popupGeometry.result.value));
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0 });
-    const restoredTitle = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => resolve(document.querySelector('vc-select.track-instrument:not([aria-disabled="true"])').title)))`, awaitPromise: true, returnByValue: true });
+    const restoredTitle = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => resolve(document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').title)))`, awaitPromise: true, returnByValue: true });
     assert.ok(restoredTitle.result.value.startsWith('Instrument:'), 'instrument tooltip remains available');
     const exported = JSON.parse(await readBrowserDownload(child, 'vibecomposer-ui-preferences.json'));
     assert.equal(exported.kind, 'vibecomposer-ui-preferences');

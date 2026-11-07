@@ -7,19 +7,19 @@
 .part-control-area { display: flex; flex-direction: column; flex: 1 1 180px; min-width: 0; max-width: 100%; margin: 0; padding: 9px 10px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-section); background: var(--parameter-surface); }
 .part-control-area > legend { margin: 0; padding: 0 4px; color: var(--accent-primary); font: 600 10px var(--font-ui); letter-spacing: .04em; }
 .part-area-controls { display: flex; flex: 1; flex-wrap: wrap; align-items: center; align-content: center; gap: 12px 6px; }
-.part-control-area vc-select, .part-control-area input[type="text"] { accent-color: var(--accent-primary); }
+.part-control-area :is(vc-select, vc-menu-select), .part-control-area input[type="text"] { accent-color: var(--accent-primary); }
 
 /* Individual parameters */
 .part-control { position: relative; min-width: 0; max-width: 160px; display: grid; align-content: center; gap: 4px; }
 .control-content { display: grid; gap: 4px; min-width: 0; }
 .part-control.compact-control { min-width: 58px; width: 58px; }
 .seed-control { flex: 1 1 100%; max-width: 100%; justify-items: start; }
-.part-control vc-select { appearance: none; width: max-content; min-width: max-content; max-width: 140px; height: 29px; padding: 0 5px; font-size: 10px; }
+.part-control :is(vc-select, vc-menu-select) { appearance: none; width: max-content; min-width: max-content; max-width: 140px; height: 29px; padding: 0 5px; font-size: 10px; }
 
 
 /* Combined selector and flip */
 .choice-controls { display: flex; align-items: center; gap: 4px; min-width: max-content; }
-.choice-controls vc-select { flex: 1 1 auto; max-width: 100%; }
+.choice-controls :is(vc-select, vc-menu-select) { flex: 1 1 auto; max-width: 100%; }
 .flip-button { flex: 0 0 auto; width: 25px; height: 29px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-secondary); font: 14px var(--font-ui); cursor: pointer; }
 .flip-button:hover:not(.active) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
 .flip-button.active { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: 0 0 8px var(--accent-outline); }
@@ -31,7 +31,7 @@
 .rhythm-control .control-content { grid-template-columns: minmax(0, 1fr); gap: 3px; min-height: 64px; align-content: start; }
 .rhythm-control .choice-controls { grid-column: 1; grid-row: 2; }
 .rhythm-control .mini-preview { grid-column: 1; grid-row: 3; }
-.rhythm-control vc-select { height: 22px; }
+.rhythm-control :is(vc-select, vc-menu-select) { height: 22px; }
 .rhythm-control .flip-button { width: 21px; height: 22px; font-size: 12px; }
 .rhythm-control .mini-preview { max-width: none; height: 18px; }
 
@@ -39,15 +39,15 @@
 .joined-members { display: flex; align-items: center; gap: 3px; }
 .joined-member { display: grid; justify-items: center; }
 .joined-member { --quick-knob-overlay-area: 2 / 1; --quick-heading-left: auto; --quick-heading-top: auto; }
-.part-control .joined-member > vc-select { width: 30px; height: 24px; text-align: center; }
+.part-control .joined-member > :is(vc-select, vc-menu-select) { width: 30px; height: 24px; text-align: center; }
 .part-control.joined-control { width: auto; max-width: none; }
 .rhythm-control.joined-control .control-content { grid-template-columns: minmax(85px, 1fr) auto; }
 .rhythm-control .control-content > vc-control-heading { grid-column: 1 / -1; grid-row: 1; }
 .rhythm-members { grid-column: 2; grid-row: 2 / span 3; }
 .part-control.melody-choices .control-content { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; }
 .melody-choices .control-content > vc-control-heading { grid-column: 1 / -1; }
-.melody-choices vc-select { width: 100%; height: 22px; max-width: 160px; }
-.melody-choices vc-select[data-control-key="form"] { grid-column: 1 / -1; }
+.melody-choices :is(vc-select, vc-menu-select) { width: 100%; height: 22px; max-width: 160px; }
+.melody-choices :is(vc-select, vc-menu-select)[data-control-key="form"] { grid-column: 1 / -1; }
 :host .joined-control > .control-content { --quick-heading-position: static; --quick-heading-transform: none; --quick-heading-max-width: 100%; }
 :host .joined-control > .control-content > vc-control-heading { --quick-heading-position: absolute; --quick-heading-transform: translate(-50%, -50%); grid-area: auto; }
 :host .rhythm-control .control-content > vc-control-heading { grid-area: auto; }
@@ -67,7 +67,7 @@
 .rhythm-preview-slot.active { background: var(--parameter-rhythm); }
 /* Arpeggio direction preview */
 .part-control:has(.arp-preview) .control-content { gap: 3px; }
-.part-control:has(.arp-preview) vc-select { height: 22px; }
+.part-control:has(.arp-preview) :is(vc-select, vc-menu-select) { height: 22px; }
 .arp-preview { height: 18px; }
 .arp-preview svg { display: block; width: 100%; height: 100%; }
 .arp-preview polyline { fill: none; stroke: var(--text-primary); stroke-width: 1.5; vector-effect: non-scaling-stroke; }

@@ -1,3 +1,5 @@
+import { MenuSelectComponent } from '../../shared/menu-select.component';
+import { INSTRUMENT_MENU_GROUPS, DRUM_MENU_GROUPS } from './instrument-menu-groups';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { ContextMenuComponent, type ContextMenuItem, type ContextMenuAction } from '../../shared/context-menu.component';
 import { DuplicateTrackDialogComponent } from '../tracks/duplicate-track-dialog.component';
@@ -73,7 +75,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [ContextMenuComponent, NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
+  imports: [MenuSelectComponent, ContextMenuComponent, NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',
@@ -110,6 +112,8 @@ export class WorkspaceCanvasComponent {
   openTrackPresets(role: ArrangedPart): void {
     this.presetDialogs.open(TrackPresetDialogComponent, { ariaLabel: `${ROLE_NAMES[role]} preset manager`, data: { role, name: ROLE_NAMES[role] } });
   }
+  readonly instrumentMenuGroups = INSTRUMENT_MENU_GROUPS;
+  readonly drumMenuGroups = DRUM_MENU_GROUPS;
   readonly drumSelectOptions = computed(() => this.drumInstruments.map(instrument => ({ value: instrument.midi, label: this.midi.drumLabel(instrument.midi) })));
   readonly instrumentSelectOptions = computed(() => Object.fromEntries(Object.entries(this.trackInstrumentOptions()).map(([id, options]) => [id, options.map(instrument => ({ value: instrument.program, label: instrument.name }))])));
   readonly channelSelectOptions = computed(() => this.midiChannels.map(channel => ({ value: channel, label: 'CH ' + channel.toString().padStart(2, '0') })));
@@ -128,7 +132,7 @@ export class WorkspaceCanvasComponent {
   private emptyMiddlePress: { pointerId: number; eligible: boolean; released: boolean } | null = null;
   private isEmptyMiddleTarget(event: MouseEvent): boolean {
     const target = event.target;
-    return target instanceof Element && !target.closest('button, input, select, vc-select, textarea, a, canvas, vc-score-canvas, vc-compact-knob, vc-compact-toggle, vc-mix-buttons');
+    return target instanceof Element && !target.closest('button, input, select, vc-select, vc-menu-select, textarea, a, canvas, vc-score-canvas, vc-compact-knob, vc-compact-toggle, vc-mix-buttons');
   }
   beginEmptyMiddleClick(event: PointerEvent): void {
     if (event.button !== 1) return;
