@@ -4,7 +4,7 @@ fieldset { min-width: 0; margin: 0; padding: 8px; border: 1px solid var(--border
 legend { color: var(--text-muted); font: 11px var(--font-mono); }
 label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 0; color: var(--text-secondary); font-size: 11px; }
 input { min-width: 0; width: 100px; padding: 4px; border: 1px solid var(--border-subtle); border-radius: var(--radius-small); background: var(--surface-input); color: var(--text-primary); }
-vc-select { width: 100px; border: 1px solid var(--border-subtle); border-radius: var(--radius-small); }
+:is(vc-select, vc-menu-select) { width: 100px; border: 1px solid var(--border-subtle); border-radius: var(--radius-small); }
 button { padding: 4px 6px; border: 1px solid var(--border-subtle); border-radius: var(--radius-small); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
 button:disabled { opacity: .4; cursor: default; }
 p { margin: 7px 0 0; color: var(--text-muted); font-size: 10px; line-height: 1.5; }
@@ -15,7 +15,7 @@ p { margin: 7px 0 0; color: var(--text-muted); font-size: 10px; line-height: 1.5
 
 /* Section timing and key */
 fieldset[data-control-category="timing"] > label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
-fieldset[data-control-category="timing"] vc-select { width: 100%; min-width: 0; box-sizing: border-box; }
+fieldset[data-control-category="timing"] :is(vc-select, vc-menu-select) { width: 100%; min-width: 0; box-sizing: border-box; }
 .context-field { display: grid; grid-template-columns: minmax(0, calc((100% - 8px) / 2)) repeat(2, minmax(0, 1fr)); align-items: center; column-gap: 8px; margin: 5px 0; }
 .context-field label { display: contents; }
 .context-field label span { color: var(--text-secondary); font-size: 11px; }

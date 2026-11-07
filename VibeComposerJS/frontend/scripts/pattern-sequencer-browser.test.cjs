@@ -22,7 +22,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       for (const role of ['bass', 'chords', 'arpeggio', 'drums']) {
         document.querySelector('.track-group.' + role + ' .track-select').click();
         const editor = await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="' + role + '"] [data-control-key="rhythm"]'), role + ' rhythm');
-        const selector = editor.querySelector('vc-select');
+        const selector = editor.querySelector(':is(vc-select, vc-menu-select)');
         await changeControl(selector, 'half');
         const preview = await wait(()=>editor.querySelector('.rhythm-preview-grid'), role + ' preview');
         check(!document.querySelector('.part-control[data-control-key="customPattern"]'), role + ' has one combined control');
@@ -129,10 +129,10 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       await wait(()=>read().tracks.find(t=>t.id===ids[1]).generatorSettings.customVelocities?.[0]!==22,'one undo velocity');
       document.querySelector('.track-group.melody .track-select').click();
       const melodyControl=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="melody"] [data-control-key="rhythm"]'),'melody rhythm selector');
-      check(melodyControl.querySelector('vc-select').getAttribute("value")==='melody1','normal melody rhythm default');
+      check(melodyControl.querySelector(':is(vc-select, vc-menu-select)').getAttribute("value")==='melody1','normal melody rhythm default');
       check(!melodyControl.querySelector('.flip-button, .mini-preview'),'normal melody hides flip and preview');
       const melodySettings=()=>read().tracks.find(t=>t.role==='melody').generatorSettings;
-      const rhythm=melodyControl.querySelector('vc-select');
+      const rhythm=melodyControl.querySelector(':is(vc-select, vc-menu-select)');
       await changeControl(rhythm, 'durations');
       const durationsPreview=await wait(()=>melodyControl.querySelector('[aria-label="Edit custom melody durations"]'),'custom melody preview');
       check(melodyControl.querySelector('.flip-button'),'custom melody flip');
@@ -181,7 +181,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       for (const role of ['bass','arpeggio']) {
         document.querySelector('.track-group.'+role+' .track-select').click();
         const control=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="'+role+'"] [data-control-key="rhythm"]'),role+' rhythm');
-        const select=control.querySelector('vc-select');
+        const select=control.querySelector(':is(vc-select, vc-menu-select)');
         check((await selectOptions(select)).some(option=>option.value==='custom'),'custom grid retained');
         await changeControl(select, 'durations');
         const preview=await wait(()=>control.querySelector('.duration-preview'),role+' compact durations');
@@ -207,7 +207,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       }
       document.querySelector('.track-group.arpeggio .track-select').click();
       const arpControl = await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="arpeggio"] [data-control-key="pattern"]'),'arp direction');
-      await changeControl(arpControl.querySelector('vc-select'), 'random');
+      await changeControl(arpControl.querySelector(':is(vc-select, vc-menu-select)'), 'random');
       const arpLauncher = await wait(()=>arpControl.querySelector('[aria-label="Edit arpeggio pattern"]'),'arp launcher');
       const arpSettings = ()=>read().tracks.find(track=>track.role==='arpeggio').generatorSettings;
       const arpBefore = sessionStorage.getItem('vibecomposer.project.v12');
@@ -216,7 +216,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       const arpSteps = ()=>arpPopup.querySelectorAll('.steps input');
       await wait(()=>arpSteps().length>0,'random pattern visible');
       check(!arpPopup.querySelector('textarea'),'no duplicated textarea');
-      check(arpLauncher.getBoundingClientRect().height<=18 && arpControl.querySelector('vc-select').getBoundingClientRect().height<=22,'compact arp control');
+      check(arpLauncher.getBoundingClientRect().height<=18 && arpControl.querySelector(':is(vc-select, vc-menu-select)').getBoundingClientRect().height<=22,'compact arp control');
       check([...arpPopup.querySelectorAll('.point-label')].every((label,index)=>label.textContent.trim()===arpSteps()[index].value),'point values match steps');
       check(arpPopup.querySelector('polyline').getAttribute('points').length>0,'random plotted');
       const arpButton = label=>[...arpPopup.querySelectorAll('button')].find(button=>button.textContent.trim()===label);

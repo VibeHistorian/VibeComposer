@@ -3,6 +3,12 @@ import { CdkMenuModule, CdkMenuTrigger } from '@angular/cdk/menu';
 import { UiPreferencesService } from '../core/ui/ui-preferences.service';
 import type { SelectOption } from './select.component';
 
+export interface SelectMenuAction {
+  readonly id: string;
+  readonly label: string;
+  readonly disabled?: boolean;
+}
+
 export interface SelectMenuGroup {
   readonly id: string;
   readonly label: string;
@@ -28,6 +34,8 @@ export class MenuSelectComponent {
   readonly menu = viewChild.required<TemplateRef<unknown>>('root');
   readonly options = input<readonly (string | number | SelectOption)[] | undefined>([]);
   readonly groups = input.required<readonly SelectMenuGroup[]>();
+  readonly actions = input<readonly SelectMenuAction[]>([]);
+  readonly action = output<string>();
   readonly value = input<unknown>();
   readonly disabled = input(false);
   readonly mixed = input(false);
@@ -50,6 +58,9 @@ export class MenuSelectComponent {
       this.trigger.menuTemplateRef = this.disabled() ? null : this.menu();
       if (this.disabled()) this.trigger.close();
     });
+  }
+  runAction(id: string): void {
+    if (!this.disabled() && this.actions().some(action => action.id === id && !action.disabled)) this.action.emit(id);
   }
   commit(value: string): void {
     if (this.choices().some(option => option.value === value && !option.disabled)) this.choose(value);

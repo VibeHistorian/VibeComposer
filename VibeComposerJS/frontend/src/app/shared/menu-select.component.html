@@ -15,6 +15,10 @@
         <span>{{ option.label }}</span><span aria-hidden="true">{{ selectedValue() === option.value ? '✓' : '' }}</span>
       </button>
     }
+    @for (item of actions(); track item.id) {
+      <button type="button" cdkMenuItem [cdkMenuItemDisabled]="item.disabled ?? false"
+        [attr.data-action]="item.id" (cdkMenuItemTriggered)="runAction(item.id)">{{ item.label }}</button>
+    }
   </div>
 </ng-template>
 <!-- Keep leaves inside their owning menu so CDK navigation inherits the correct menu context. -->

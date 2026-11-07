@@ -29,8 +29,8 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
       const focusProbe = document.createElement('span');
       focusProbe.style.color='var(--border-focus)';
       focusedSelect.parentElement.append(focusProbe);
-      ensure(getComputedStyle(focusedSelect).outlineColor===getComputedStyle(focusProbe).color,'vc-select focus outline follows the active theme');
-      ensure(getComputedStyle(focusedSelect).outlineStyle!=='none' && parseFloat(getComputedStyle(focusedSelect).outlineWidth)>0,'vc-select has a visible focus outline');
+      ensure(getComputedStyle(focusedSelect).outlineColor===getComputedStyle(focusProbe).color,':is(vc-select, vc-menu-select) focus outline follows the active theme');
+      ensure(getComputedStyle(focusedSelect).outlineStyle!=='none' && parseFloat(getComputedStyle(focusedSelect).outlineWidth)>0,':is(vc-select, vc-menu-select) has a visible focus outline');
       focusProbe.remove();
       focusedSelect.blur();
       for (const [family, weights] of [['DM Sans', [400, 500, 600, 700]], ['DM Mono', [400, 500]]]) {
@@ -161,12 +161,12 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const velocities=[...quick().querySelectorAll('.joined-member[data-control-key]')].map(c=>c.dataset.controlKey).filter(k=>k.startsWith('velocity'));
         ensure(velocities.join(',')==='velocityMin,velocityMax','fixed velocity order');
         const delay=control(quick(),'feedbackCount');
-        const delaySelect=delay.querySelector('vc-select');
-        ensure(delaySelect.matches('vc-select[role="combobox"]'),'shared select uses an ARIA combobox trigger');
+        const delaySelect=delay.querySelector(':is(vc-select, vc-menu-select)');
+        ensure(delaySelect.matches(':is(vc-select, vc-menu-select)[role="combobox"]'),'shared select uses an ARIA combobox trigger');
         let delayChanges=0;
         delaySelect.addEventListener('change',()=>delayChanges++);
         ensure((await selectOptions(delaySelect)).map(o=>o.value).join(',')==='0,1,2,3,4,5','delay count choices');
-        for (const select of quick().querySelectorAll('vc-select')) {
+        for (const select of quick().querySelectorAll(':is(vc-select, vc-menu-select)')) {
           const value=select.querySelector('.select-value');
           ensure(value.scrollWidth<=value.clientWidth,'quick combobox shows its full text: '+value.textContent);
         }
@@ -187,7 +187,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const selectZoom=new WheelEvent('wheel',{deltaY:1,ctrlKey:true,bubbles:true,cancelable:true});
         delaySelect.dispatchEvent(selectZoom);
         ensure(delayChanges===0 && !selectZoom.defaultPrevented && delaySelect.getAttribute("value")==='0','default reset is a no-op and modified wheel preserves zoom');
-        const rhythm=control(quick(),'rhythm'), rhythmSelect=rhythm.querySelector('vc-select');
+        const rhythm=control(quick(),'rhythm'), rhythmSelect=rhythm.querySelector(':is(vc-select, vc-menu-select)');
         await changeControl(rhythmSelect, 'full');
         const shift=await wait(()=>rhythm.querySelector('[aria-label="Shift"]'),'combined pattern shift');
         ensure((await selectOptions(shift)).map(o=>o.value).join(',')==='0,1,2,3,4,5,6,7,8','shift choices');
@@ -627,7 +627,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     assert.equal(committedChoice.result.value.value, activeChoice.result.value.next, 'Enter commits the activated option');
     assert.equal(committedChoice.result.value.expanded, 'false', 'Enter closes the popup');
     const popupGeometry = await command('Runtime.evaluate', { expression: `(async () => {
-      const trigger = document.querySelector('vc-select[aria-label="Mode"]');
+      const trigger = document.querySelector('vc-select.track-channel:not([aria-disabled="true"])');
       const previous = trigger.getAttribute('style');
       const results = [];
       for (const edge of ['bottom', 'top']) {

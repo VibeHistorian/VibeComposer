@@ -83,6 +83,8 @@
                 <div class="choice-controls">
                 @if (control.key === 'strumType') {
                   <vc-menu-select [groups]="strumGroups" [options]="strumOptions" [displayLabel]="values()[control.key] === null ? undefined : strumDisplayLabels['' + values()[control.key]]" [attr.data-parameter-key]="control.key" [class.custom-member]="parameterFrozen(control.key)" [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" [mixed]="values()[control.key] === null" (valueChange)="choose(control, $event)" />
+                } @else if (control.key === 'rhythm' || control.key === 'chordSpanFill') {
+                  <vc-menu-select #choice="vcMenuSelect" [groups]="control.key === 'rhythm' ? rhythmGroups : fillGroups" [options]="control.key === 'rhythm' ? control.options : fillOptions" [attr.data-parameter-key]="control.key" [class.custom-member]="parameterFrozen(control.key)" [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (valueChange)="choose(control, $event, choice)" [mixed]="values()[control.key] === null" />
                 } @else {
                   <vc-select #choice="vcSelect" [attr.data-parameter-key]="control.key" [class.custom-member]="parameterFrozen(control.key)" [options]="control.options" [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (valueChange)="choose(control, $event, choice)" [mixed]="values()[control.key] === null"></vc-select>
                 }

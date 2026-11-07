@@ -18,7 +18,7 @@
             [composeEnabled]="project().randomizeTransposeOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTransposeOnCompose')" />
         </div>
         <div class="global-harmony-controls">
-          <label class="mode-control"><vc-select [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-select></label>
+          <label class="mode-control"><vc-menu-select [groups]="scaleMenuGroups" [options]="scaleOptions()" selectDefault="major" aria-label="Mode" [value]="project().scale" (valueChange)="updateScale($event)"></vc-menu-select></label>
           <vc-chordlet-editor>
             <button type="button" chordletAction class="harmony-compose-star" aria-label="Harmony On Compose"
               title="On Compose: reroll global harmony when global Compose runs"
@@ -79,8 +79,8 @@
     <ng-content select="[transportHistory]" />
     <div class="project-tool-group transport-audio-tools" role="group" aria-label="Audio playback settings">
       <input #soundfontInput type="file" accept=".sf2" aria-label="Load soundfont" hidden [disabled]="instruments.busy()" (change)="loadSoundfont($event)" />
-      <vc-select #instrumentSelector="vcSelect" class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [title]="instrumentLabel()" aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()"
-        (valueChange)="selectInstrument($event, instrumentSelector, soundfontInput)" />
+      <vc-menu-select [groups]="instrumentMenuGroups()" [actions]="instrumentActions()" (action)="instrumentAction($event, soundfontInput)" class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [title]="instrumentLabel()" aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()"
+        (valueChange)="selectInstrument($event)" />
       <button type="button" class="transport-button live-button" [class.active]="playback.liveEnabled()"
         [attr.aria-pressed]="playback.liveEnabled()" (click)="toggleLive()" aria-label="Toggle live reload"
         title="Live reload: hear MIDI edits while playing">LIVE</button>

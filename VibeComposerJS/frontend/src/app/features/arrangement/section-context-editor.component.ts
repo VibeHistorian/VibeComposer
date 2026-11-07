@@ -1,3 +1,5 @@
+import { MenuSelectComponent } from '../../shared/menu-select.component';
+import { SCALE_MENU_GROUPS } from '../harmony/scale-menu-groups';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { SECTION_TYPES, type ArrangementSection, type SectionMusicalContext } from '../../core/project/arrangement.model';
 import { ProjectService } from '../../core/project/project.service';
@@ -13,12 +15,13 @@ import { projectMelodyHarmony } from '../../core/music/project-harmony';
 import { SelectComponent } from '../../shared/select.component';
 
 @Component({
-  selector: 'vc-section-context-editor', imports: [ChordletEditorComponent, SelectComponent, CompactKnobComponent, CompactToggleComponent],
+  selector: 'vc-section-context-editor', imports: [MenuSelectComponent, ChordletEditorComponent, SelectComponent, CompactKnobComponent, CompactToggleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './section-context-editor.component.html', styleUrl: './section-context-editor.component.css',
 })
 export class SectionContextEditorComponent {
   readonly keyOptions = computed(() => [{ value: '', label: 'Project key' }, ...this.keys.map(key => ({ value: key, label: key }))]);
+  readonly scaleMenuGroups = SCALE_MENU_GROUPS;
   readonly scaleOptions = computed(() => [{ value: '', label: 'Project scale' }, ...this.scales.map(scale => ({ value: scale, label: this.scaleDefinitions[scale].label }))]);
 
   readonly scales = SCALE_MODES;

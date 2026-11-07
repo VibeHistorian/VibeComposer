@@ -14,6 +14,21 @@ for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, {
  const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
  const fit=()=>{for(const panel of document.querySelectorAll('.selection-menu')){const r=panel.getBoundingClientRect();check(r.left>=0&&r.top>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,'menu fits viewport');}};
  try{
+ const mode=await wait(()=>document.querySelector('vc-menu-select[aria-label="Mode"]'),'mode');
+ check((await selectOptions(mode)).length===17,'all scale families reachable');
+ await changeControl(mode,'harmonic-minor');await wait(()=>read().scale==='harmonic-minor','mode selection');
+ mode.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
+ await wait(()=>read().scale==='major','mode reset');
+ const engine=document.querySelector('vc-menu-select[aria-label="Audio instrument engine"]');
+ const input=document.querySelector('input[aria-label="Load soundfont file"]') || document.querySelector('vc-transport-dock input[type="file"]');
+ let pickerOpens=0;input.click=()=>pickerOpens++;
+ engine.dispatchEvent(new WheelEvent('wheel',{deltaY:100,bubbles:true,cancelable:true}));
+ engine.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
+ check(pickerOpens===0,'engine gestures never invoke file actions');
+ const engineMenu=await selectPopup(engine), load=engineMenu.querySelector('[data-action="load-soundfont"]');
+ check(load?.getAttribute('role')==='menuitem','load soundfont is a command');
+ load.click();await wait(()=>pickerOpens===1,'load action invoked');
+ check(engine.getAttribute('value')==='synth','file action preserves selected engine');
  const picker=await wait(()=>document.querySelector('.track-group.melody vc-menu-select'),'instrument');
  check(picker.getAttribute('role')==='button','menu button semantics');
  const before=JSON.stringify(read());const options=await selectOptions(picker);
@@ -40,11 +55,22 @@ for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, {
  const strum=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="chords"] vc-menu-select[data-parameter-key="strumType"]'),'strum');
  const types=await selectOptions(strum);check(types.length===9,'all strum variants reachable');
  await changeControl(strum,'HUMAN_D');await wait(()=>read().tracks.filter(t=>t.role==='chords').every(t=>t.generatorSettings.strumType==='HUMAN_D'),'strum commits scoped setting');
- check(strum.textContent.trim()==='Human|Down','compact selected strum label');
- for(const [value,label] of [['ARP_U','Arp|Up'],['ARP_D','Arp|Down'],['RAND_U','Rand|Up'],['RAND','Rand|Any'],['RAND_D','Rand|Down'],['RAND_WU','Rand|Spaced'],['HUMAN_U','Human|Up'],['HUMAN','Human|Any'],['HUMAN_D','Human|Down']]) {
+ check(strum.textContent.trim()==='Human.Down','compact selected strum label');
+ for(const [value,label] of [['ARP_U','Arp.Up'],['ARP_D','Arp.Down'],['RAND_U','Rand.Up'],['RAND','Rand.Any'],['RAND_D','Rand.Down'],['RAND_WU','Rand.Spaced'],['HUMAN_U','Human.Up'],['HUMAN','Human.Any'],['HUMAN_D','Human.Down']]) {
    await changeControl(strum,value);await wait(()=>strum.textContent.trim()===label,'compact selected strum '+value);
  }
- strum.click();await wait(()=>document.querySelector('.selection-menu'),'strum menu');fit();
+ for(const [role,count] of [['melody',2],['bass',10],['chords',8],['arpeggio',10],['drums',9]]) {
+   document.querySelector('.track-group.'+role+' .group-select').click();
+   const editor=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="'+role+'"]'),'role editor '+role);
+   const rhythm=editor.querySelector('vc-menu-select[data-parameter-key="rhythm"]');
+   check((await selectOptions(rhythm)).length===count,'role rhythm catalogue '+role);
+   const fill=editor.querySelector('vc-menu-select[data-parameter-key="chordSpanFill"]');
+   check((await selectOptions(fill)).length===12,'all fill families reachable '+role);
+   await changeControl(fill,'F23');await wait(()=>read().tracks.filter(t=>t.role===role).every(t=>t.generatorSettings.chordSpanFill==='F23'),'fill selection '+role);
+ }
+ document.querySelector('.track-group.chords .group-select').click();
+ const reopened=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="chords"] vc-menu-select[data-parameter-key="strumType"]'),'reopened strum');
+ reopened.click();await wait(()=>document.querySelector('.selection-menu'),'strum menu');fit();
  await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
  }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}
  })();</script>`;

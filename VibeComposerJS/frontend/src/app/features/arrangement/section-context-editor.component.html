@@ -51,7 +51,7 @@
     </div>
   }
   <label>Key<vc-select [options]="keyOptions()" [selectDefault]="projects.project().key" [mixed]="contextMixed('key')" [value]="section().context?.key ?? ''" (valueChange)="choose('key', $event)"></vc-select></label>
-  <label>Scale<vc-select [options]="scaleOptions()" [selectDefault]="projects.project().scale" [mixed]="contextMixed('scale')" [value]="section().context?.scale ?? ''" (valueChange)="choose('scale', $event)"></vc-select></label>
+  <label>Scale<vc-menu-select [groups]="scaleMenuGroups" [options]="scaleOptions()" [selectDefault]="projects.project().scale" [mixed]="contextMixed('scale')" [value]="section().context?.scale ?? ''" (valueChange)="choose('scale', $event)"></vc-menu-select></label>
   <label>Key change type<vc-select [options]="[{ value: 'direct', label: 'Direct' }, { value: 'two-five-one', label: 'Ending ii–V' }]" selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
     [mixed]="contextMixed('keyChangeType')" [value]="section().context?.keyChangeType ?? 'direct'" (valueChange)="choose('keyChangeType', $event)"></vc-select></label>
   @if (section().customChords || section().chordDegrees) { <p>Explicit section chords take precedence over the ending cadence.</p> }

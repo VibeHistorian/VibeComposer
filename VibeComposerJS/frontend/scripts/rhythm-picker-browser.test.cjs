@@ -152,7 +152,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => !readTrack('chords').parameterLocks?.includes('velocityMin'), 'individual member unlocked');
 
         let pickers = await waitFor(() => {
-          const result = [...document.querySelectorAll('vc-select[aria-label="PATTERN"]')];
+          const result = [...document.querySelectorAll(':is(vc-select, vc-menu-select)[aria-label="PATTERN"]')];
           return result.length === 1 ? result : null;
         });
         const options = await Promise.all(pickers.map(async select => (await selectOptions(select)).map(option => option.value)));
@@ -175,11 +175,11 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         // Pattern commits rebuild the control groups. Use the mounted select rather
         // than the detached element captured before opening the sequencer.
-        pickers = [...document.querySelectorAll('vc-select[aria-label="PATTERN"]')];
+        pickers = [...document.querySelectorAll(':is(vc-select, vc-menu-select)[aria-label="PATTERN"]')];
         wheel(pickers[0], 100);
-        await waitFor(() => document.querySelector('vc-select[aria-label="PATTERN"]')?.getAttribute("value") === 'full'
+        await waitFor(() => document.querySelector(':is(vc-select, vc-menu-select)[aria-label="PATTERN"]')?.getAttribute("value") === 'full'
           && JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.rhythm === 'full', 'rhythm wheel commit');
-        pickers = [...document.querySelectorAll('vc-select[aria-label="PATTERN"]')];
+        pickers = [...document.querySelectorAll(':is(vc-select, vc-menu-select)[aria-label="PATTERN"]')];
         result.wheelRhythm = pickers.map(select => select.getAttribute("value"));
         const track = document.querySelector('.track-group.chords .track-row-card');
         const pan = track.querySelector('input[aria-label="Pan C1"]');
@@ -339,13 +339,13 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => [...document.querySelectorAll('vc-part-settings-editor')]
             .every(editor => editor.getAttribute('data-control-role') === role), role + ' editor context');
           const rhythms = await waitFor(() => {
-            const controls = [...document.querySelectorAll('vc-select[aria-label="PATTERN"]')];
+            const controls = [...document.querySelectorAll(':is(vc-select, vc-menu-select)[aria-label="PATTERN"]')];
             return controls.length === 1 ? controls : null;
           }, role + ' rhythm controls');
           await changeControl(rhythms[0], 'custom');
           await waitFor(() => document.querySelectorAll('.rhythm-preview-grid').length === 1, role + ' grids');
           for (const [selectorLabel, flipLabel] of [['PATTERN', 'Pattern flip'], ['FILL', 'Fill flip']]) {
-            const select = document.querySelector('vc-select[aria-label="' + selectorLabel + '"]');
+            const select = document.querySelector(':is(vc-select, vc-menu-select)[aria-label="' + selectorLabel + '"]');
             const control = select.closest('.part-control');
             const flip = control.querySelector('button[aria-label="' + flipLabel + '"]');
             if (!flip || control.querySelectorAll(':scope > .control-content > vc-control-heading').length !== 1) throw new Error(selectorLabel + ' and its flip must share one heading');
@@ -364,9 +364,9 @@ test('production Angular controls initialize selects from settings and support r
           const seeds = [...document.querySelectorAll('input[aria-label="Seed"]')];
           seeds[0].focus(); seeds[0].value = '-123'; seeds[0].dispatchEvent(new Event('change', { bubbles: true }));
           await waitFor(() => readTrack(role).generatorSettings.patternSeed === -123 && seeds.every(seed => seed.value === '-123'), role + ' seed sync');
-          const delays = document.querySelector('vc-select[aria-label="Delays"]');
+          const delays = document.querySelector(':is(vc-select, vc-menu-select)[aria-label="Delays"]');
           await changeControl(delays, '2');
-          await waitFor(() => readTrack(role).generatorSettings.feedbackCount === 2 && [...document.querySelectorAll('vc-select[aria-label="Delays"]')].every(input => input.getAttribute("value") === '2'), role + ' feedback sync');
+          await waitFor(() => readTrack(role).generatorSettings.feedbackCount === 2 && [...document.querySelectorAll(':is(vc-select, vc-menu-select)[aria-label="Delays"]')].every(input => input.getAttribute("value") === '2'), role + ' feedback sync');
           if (document.querySelector('button[aria-label="Generate notes"]')) throw new Error(role + ' still has a generation toggle');
           const copySeed = await waitFor(() => [...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Copy global' && !button.disabled), role + ' clear seed enabled');
           copySeed.click();
@@ -414,26 +414,26 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('button[aria-label="Unlock reroll for A1"]').click();
         await waitFor(() => !document.querySelector('button[aria-label="Reroll A1"]').disabled, 'reroll unlock');
         document.querySelector('.track-group.bass .group-select').click();
-        const bassJoin = await waitFor(() => document.querySelector('vc-select[aria-label="JOIN"]'), 'bass advanced join');
+        const bassJoin = await waitFor(() => document.querySelector(':is(vc-select, vc-menu-select)[aria-label="JOIN"]'), 'bass advanced join');
         result.bassJoinInitial = bassJoin.getAttribute("value");
         result.bassJoinOptions = (await selectOptions(bassJoin)).map(option => option.value);
-        result.bassJoinInspectorOnly = document.querySelectorAll('vc-select[aria-label="JOIN"]').length === 1
+        result.bassJoinInspectorOnly = document.querySelectorAll(':is(vc-select, vc-menu-select)[aria-label="JOIN"]').length === 1
           && !!bassJoin.closest('#part-inspector');
         await changeControl(bassJoin, 'JOIN');
         await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'bass').generatorSettings.patternJoinMode === 'JOIN', 'persisted bass join');
         result.bassJoinSaved = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'bass').generatorSettings.patternJoinMode;
-        const bassRhythm = document.querySelector('vc-select[aria-label="PATTERN"]');
+        const bassRhythm = document.querySelector(':is(vc-select, vc-menu-select)[aria-label="PATTERN"]');
         await changeControl(bassRhythm, 'bass1');
-        await waitFor(() => !document.querySelector('vc-select[aria-label="JOIN"]'), 'bass1 hides join');
+        await waitFor(() => !document.querySelector(':is(vc-select, vc-menu-select)[aria-label="JOIN"]'), 'bass1 hides join');
         await changeControl(bassRhythm, 'custom');
-        result.bassJoinRetained = (await waitFor(() => document.querySelector('vc-select[aria-label="JOIN"]'), 'grid restores join')).getAttribute("value");
+        result.bassJoinRetained = (await waitFor(() => document.querySelector(':is(vc-select, vc-menu-select)[aria-label="JOIN"]'), 'grid restores join')).getAttribute("value");
         document.querySelector('.track-group.drums .track-select').click();
         await waitFor(() => document.querySelector('#part-inspector vc-part-settings-editor[data-control-role="drums"]'), 'drum musical context');
         const drumPitch = await waitFor(() => document.querySelector('.track-group.drums .track-instrument'), 'drum pitch picker');
         result.initialDrumPitch = drumPitch.getAttribute("value");
         await changeControl(drumPitch, '38');
         await waitFor(() => document.querySelector('.track-group.drums .track-instrument').textContent.trim() === 'Snare · 38', 'drum track name');
-        const drumRhythms = [...document.querySelectorAll('vc-select[aria-label="PATTERN"]')];
+        const drumRhythms = [...document.querySelectorAll(':is(vc-select, vc-menu-select)[aria-label="PATTERN"]')];
         result.drumRhythmOptions = await Promise.all(drumRhythms.map(async select => (await selectOptions(select)).map(option => option.value)));
         await changeControl(drumRhythms[0], 'custom');
         document.querySelector('button[aria-label="Edit rhythm pattern"]').click();
@@ -546,7 +546,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => arpGroup.querySelector('.policy-controls'), 'arpeggio expanded by selection');
         arpGroup.querySelector('button[aria-label="Randomize instruments"]').click();
         arpGroup.querySelector('button[aria-label="One instrument"]').click();
-        const poolSelect = arpGroup.querySelector('vc-select[aria-label="Instrument pool"]');
+        const poolSelect = arpGroup.querySelector(':is(vc-select, vc-menu-select)[aria-label="Instrument pool"]');
         await changeControl(poolSelect, 'MELODY');
         await waitFor(() => readProject().instrumentGenerationPolicies?.arpeggio?.pool === 'MELODY', 'instrument policy');
         result.instrumentRulesPreserveTracks = JSON.stringify(readProject().tracks) === beforeInstrumentRules;
@@ -674,7 +674,7 @@ test('production Angular controls initialize selects from settings and support r
       { role: 'bass', hits: 5, seed: 0, delays: 2, grids: 1, pause: 0, split: 0, repeat: 0 },
       { role: 'arpeggio', hits: 5, seed: 0, delays: 2, grids: 1, pause: 1, split: 1, repeat: 1 },
     ]);
-    assert.deepEqual(actual.drumRhythmOptions, [[...expected, 'melody']]);
+    assert.deepEqual(actual.drumRhythmOptions.map(options => [...options].sort()), [[...expected, 'melody'].sort()]);
     assert.deepEqual(actual.drumGridCounts, [4]);
     assert.deepEqual(actual.drumVelocityCounts, [4]);
     assert.equal(actual.drumChannelLocked, true);
@@ -686,7 +686,7 @@ test('production Angular controls initialize selects from settings and support r
     assert.equal(actual.drumName, 'Snare · 38');
     assert.equal(actual.allDrumsEditor, true);
     assert.deepEqual(actual.initialChords, ['C', 'G', 'Am', 'F']);
-    assert.deepEqual(actual.options, [expected]);
+    assert.deepEqual(actual.options.map(options => [...options].sort()), [[...expected].sort()]);
     assert.deepEqual(actual.counts, [8]);
     assert.deepEqual(actual.selected, ['custom']);
     assert.equal(actual.rhythm, 'custom');

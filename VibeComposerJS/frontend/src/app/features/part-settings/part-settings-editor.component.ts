@@ -34,6 +34,23 @@ import { ProjectService } from '../../core/project/project.service';
   styleUrl: './part-settings-editor.component.css',
 })
 export class PartSettingsEditorComponent {
+  readonly rhythmGroups: readonly SelectMenuGroup[] = [
+    { id: 'static', label: 'Static patterns', values: ['full', 'half', 'tresillo', 'sparse', 'single', 'one-six'] },
+  ];
+  readonly fillGroups: readonly SelectMenuGroup[] = [
+    { id: 'alternating', label: 'Alternating', values: ['ODD', 'EVEN'] },
+    { id: 'position', label: 'Single position', values: ['F1', 'F2', 'F3', 'F4'] },
+    { id: 'pairs', label: 'Adjacent pairs', values: ['F12', 'F23', 'F34'] },
+    { id: 'halves', label: 'Halves', values: ['HALF1', 'HALF2'] },
+  ];
+  readonly fillOptions = [
+    { value: 'ALL', label: 'All' },
+    { value: 'ODD', label: 'Slots 2, 4, … (ODD)' }, { value: 'EVEN', label: 'Slots 1, 3, … (EVEN)' },
+    { value: 'F1', label: 'Position 1' }, { value: 'F2', label: 'Position 2' },
+    { value: 'F3', label: 'Position 3' }, { value: 'F4', label: 'Position 4' },
+    { value: 'F12', label: 'Positions 1 + 2' }, { value: 'F23', label: 'Positions 2 + 3' }, { value: 'F34', label: 'Positions 3 + 4' },
+    { value: 'HALF1', label: 'First half' }, { value: 'HALF2', label: 'Second half' },
+  ];
   readonly strumGroups: readonly SelectMenuGroup[] = [
     { id: 'arp', label: 'Arpeggiated', values: ['ARP_U', 'ARP_D'] },
     { id: 'random', label: 'Random', values: ['RAND_U', 'RAND', 'RAND_D', 'RAND_WU'] },
@@ -303,7 +320,7 @@ export class PartSettingsEditorComponent {
       ? this.values()['velocityMax'] as number : control.maximum!;
   }
 
-  choose(control: PartControl, selection: string, select?: SelectComponent): void {
+  choose(control: PartControl, selection: string, select?: Pick<SelectComponent, 'restoreValue'>): void {
     const value = selection;
     if (value === '') return;
     if (control.key === 'rhythm' && value === 'durations'

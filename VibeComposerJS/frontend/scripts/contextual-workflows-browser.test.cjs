@@ -116,7 +116,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => JSON.stringify(read()) === beforePreset, 'undo appended preset');
       presetButton.click();
       const reopened = await wait(() => document.querySelector('vc-track-preset-dialog'), 'reopen stored library');
-      await change(reopened.querySelector('vc-select[aria-label="Track preset"]'), 'Browser bass');
+      await change(reopened.querySelector(':is(vc-select, vc-menu-select)[aria-label="Track preset"]'), 'Browser bass');
       [...reopened.querySelectorAll('button')].find(button => button.textContent.trim() === 'Load preset').click();
       await wait(() => bassRows().length === 2, 'replace unlocked tracks');
       if (JSON.stringify(bassRows()[0]) !== JSON.stringify(JSON.parse(beforePreset).tracks.find(track => track.id === bassRows()[0].id))) throw new Error('locked preset survivor changed');
@@ -176,7 +176,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => trackRows().length === 0, 'return to global group controls');
       result.createRemoved = !document.querySelector('.primary-harmony') && !document.querySelector('.track-browser [aria-label="Generation seed"]');
       result.seedInDock = !!seed.closest('.transport-dock');
-      result.noKeySelector = !document.querySelector('vc-select[aria-label="Key"]');
+      result.noKeySelector = !document.querySelector(':is(vc-select, vc-menu-select)[aria-label="Key"]');
       const transpose = document.querySelector('.transport-dock [aria-label="Transpose in semitones"]');
       await change(transpose, '7');
       await wait(() => read().transposeSemitones === 7 && document.querySelector('.transport-project span').title.includes('G MAJOR'), 'project key label');
@@ -501,7 +501,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const otherTracks = () => JSON.stringify(read().tracks.filter(track => track.id !== selectedMelody().id));
       const untouched = otherTracks();
       const trackControl = key => document.querySelector('vc-part-settings-editor [data-control-key="' + key + '"]')
-        ?.querySelector('input[type="range"], vc-select, vc-compact-toggle .toggle-button');
+        ?.querySelector('input[type="range"], :is(vc-select, vc-menu-select), vc-compact-toggle .toggle-button');
       await wait(() => trackControl('targetDirection'), 'track controls');
       trackControl('fillPausesPerChord').click();
       await wait(() => selectedMelody().generatorSettings.fillPausesPerChord === true, 'track pause filling');
@@ -827,11 +827,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('D'),'section chord render');
       editor.querySelector('.chordlet-label').dispatchEvent(new WheelEvent('wheel',{deltaY:-1,bubbles:true,cancelable:true}));
       await wait(()=>section().customChords?.[0]?.explicitZeroInversion===true,'section explicit zero inversion');
-      await change(editor.querySelector('vc-select'),'G');
-      if((await selectOptions(editor.querySelectorAll('vc-select')[1])).length!==18) throw new Error('missing section modes');
-      await change(editor.querySelectorAll('vc-select')[1],'mixolydian');
+      await change(editor.querySelector(':is(vc-select, vc-menu-select)'),'G');
+      if((await selectOptions(editor.querySelectorAll(':is(vc-select, vc-menu-select)')[1])).length!==18) throw new Error('missing section modes');
+      await change(editor.querySelectorAll(':is(vc-select, vc-menu-select)')[1],'mixolydian');
       await wait(()=>section().context?.scale==='mixolydian'&&read().scale==='major','local Mixolydian override');
-      await change(editor.querySelectorAll('vc-select')[1],'natural-minor');
+      await change(editor.querySelectorAll(':is(vc-select, vc-menu-select)')[1],'natural-minor');
       await change(editor.querySelector('input[min="-24"]'),'2');
       await wait(()=>section().context?.key==='G'&&section().context?.scale==='natural-minor'&&section().context?.keyChange===2,'section key context');
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('E'),'section key render');
@@ -861,7 +861,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         primary:primary===JSON.stringify([read().progression,read().progressionChords]), tracks:tracks===JSON.stringify(read().tracks),
         others:other===JSON.stringify(read().arrangement.filter(section=>section.id!==id)),
         fits:editor.getBoundingClientRect().left>=0&&editor.getBoundingClientRect().right<=innerWidth&&document.documentElement.scrollWidth<=innerWidth+1
-          && [...editor.querySelectorAll('input,vc-select,.context-field button')].every(control=>control.getBoundingClientRect().right<=editor.getBoundingClientRect().right+1)};
+          && [...editor.querySelectorAll('input,:is(vc-select, vc-menu-select),.context-field button')].every(control=>control.getBoundingClientRect().right<=editor.getBoundingClientRect().right+1)};
     })()` });
     assert.equal(sectionResult.exceptionDetails,undefined,JSON.stringify(sectionResult));
     for(const [key,value] of Object.entries(sectionResult.result.value)) assert.equal(value,true,'P5f '+key);

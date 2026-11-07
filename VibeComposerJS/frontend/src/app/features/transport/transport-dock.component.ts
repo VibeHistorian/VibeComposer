@@ -1,3 +1,5 @@
+import { MenuSelectComponent } from '../../shared/menu-select.component';
+import { SCALE_MENU_GROUPS } from '../harmony/scale-menu-groups';
 import { elapsedTime } from '../../core/ui/musical-time';
 import { beatToSeconds, projectTempoMap } from '../../core/music/section-context';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
@@ -9,35 +11,34 @@ import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
 import { effectiveKey } from '../../core/music/harmony';
-import { SelectComponent } from '../../shared/select.component';
 import { MixButtonsComponent } from '../tracks/mix-buttons.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 
 @Component({
   selector: 'vc-transport-dock',
-  imports: [SelectComponent, MixButtonsComponent, CompactKnobComponent, ChordletEditorComponent],
+  imports: [MenuSelectComponent, MixButtonsComponent, CompactKnobComponent, ChordletEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transport-dock.component.html',
   styleUrl: './transport-dock.component.css',
 })
 export class TransportDockComponent {
+  readonly scaleMenuGroups = SCALE_MENU_GROUPS;
   readonly scaleOptions = computed(() => this.scales.map(scale => ({ value: scale, label: this.scaleDefinitions[scale].label })));
 
   readonly scales = SCALE_MODES;
   readonly scaleDefinitions = SCALE_DEFINITIONS;
   readonly instruments = inject(InstrumentSettingsService);
-  readonly instrumentOptions = computed(() => [...this.instruments.options(),
-    { value: 'load-soundfont', label: 'Load soundfont...', disabled: this.instruments.busy() }]);
+  readonly instrumentOptions = computed(() => this.instruments.options());
+  readonly instrumentMenuGroups = computed(() => [{ id: 'soundfonts', label: 'Soundfonts', values: this.instruments.loaded().map(bank => bank.id) }]);
+  readonly instrumentActions = computed(() => [{ id: 'load-soundfont', label: 'Load soundfont…', disabled: this.instruments.busy() }]);
   readonly instrumentLabel = computed(() => this.instrumentOptions().find(option => option.value === this.instruments.kind())?.label ?? 'Audio instrument engine');
-  selectInstrument(value: string, selector: SelectComponent, input: HTMLInputElement): void {
-    if (value === 'load-soundfont') {
-      selector.restoreValue();
-      if (!this.instruments.busy()) input.click();
-      return;
-    }
+  selectInstrument(value: string): void {
     this.playback.stop();
     this.instruments.select(value);
+  }
+  instrumentAction(id: string, input: HTMLInputElement): void {
+    if (id === 'load-soundfont' && !this.instruments.busy()) input.click();
   }
   async loadSoundfont(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;

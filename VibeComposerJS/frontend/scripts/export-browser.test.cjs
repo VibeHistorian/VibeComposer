@@ -68,7 +68,7 @@ for (const { width, missingMethod, sampler } of [
       window.AudioContext = class { constructor() { realtimeContexts++; throw Error('Export opened a realtime context'); } };
       try {
         if (${Boolean(sampler)}) {
-          const engineSelect = await wait(() => document.querySelector('vc-select[aria-label="Audio instrument engine"]'), 'instrument selector');
+          const engineSelect = await wait(() => document.querySelector(':is(vc-select, vc-menu-select)[aria-label="Audio instrument engine"]'), 'instrument selector');
           document.querySelector('[aria-label="Settings"]').click();
           const settings = await wait(() => document.querySelector('vc-settings-dialog'), 'soundfont settings');
           (await wait(() => [...settings.querySelectorAll('.settings-sidebar button')].find(b => b.querySelector('span')?.textContent.trim() === 'MIDI'), 'MIDI category')).click();
@@ -88,8 +88,10 @@ for (const { width, missingMethod, sampler } of [
           ensure(settings.querySelectorAll('[aria-label^="Unload "]').length === 1, 'oversized font does not evict');
           for (const name of ['Second.sf2', 'Third.sf2', 'Fourth.sf2']) await upload(name);
           const options = await selectOptions(engineSelect);
-          ensure(options.at(-1)?.value === 'load-soundfont', 'soundfont load action follows engines');
-          ensure(options.filter(o => o.value !== 'load-soundfont').length === 4 && !options.some(o => o.textContent.includes('SNES.sf2')), 'fourth load evicts oldest; three fonts plus synth');
+          const engineMenu = await selectPopup(engineSelect);
+          ensure(engineMenu.querySelector('[data-action="load-soundfont"][role="menuitem"]'), 'soundfont load is an action');
+          engineSelect.click();
+          ensure(options.length === 4 && !options.some(o => o.textContent.includes('SNES.sf2')), 'fourth load evicts oldest; three fonts plus synth');
           const second = options.find(o => o.textContent.includes('Second.sf2'));
           await changeControl(engineSelect, second.value);
           settings.querySelector('[aria-label="Unload Second.sf2"]').click();

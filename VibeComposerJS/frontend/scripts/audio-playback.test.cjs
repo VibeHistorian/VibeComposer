@@ -704,6 +704,8 @@ test('transport watches project changes and enabling LIVE without subscribing to
     '../../core/music/scales': require('./music-loader.cjs').loadMusic('scales.ts'),
     '../../core/ui/workspace-ui.service': { WorkspaceUiService: 'ui' },
     '../../shared/select.component': { SelectComponent: class {} },
+    '../../shared/menu-select.component': { MenuSelectComponent: class {} },
+    '../harmony/scale-menu-groups': { SCALE_MENU_GROUPS: [] },
     '../tracks/mix-buttons.component': { MixButtonsComponent: class {} },
     '../../shared/compact-knob.component': { CompactKnobComponent: class {} },
     '../harmony/chordlet-editor.component': { ChordletEditorComponent: class {} },
