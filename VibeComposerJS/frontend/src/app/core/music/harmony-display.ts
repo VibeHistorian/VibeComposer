@@ -2,7 +2,7 @@ import type { ArrangedPart } from './part-role';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
-import { chordPitches, chordRootHue, effectiveKey, KEYS, progressionChords } from './harmony';
+import { chordPitches, inversionSuffix, chordRootHue, effectiveKey, KEYS, progressionChords } from './harmony';
 import { baseGenerationHarmony, sectionGenerationHarmony } from './project-harmony';
 import { sectionProject } from './section-context';
 
@@ -45,7 +45,7 @@ export function sectionHarmonyDisplay(project: CompositionProject, section: Arra
     chords: chords.map(chord => {
       const root = ((chord.root + transpose) % 12 + 12) % 12;
       return { label: KEYS[root] + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice)
-        + (chord.inversion ? '.' + chord.inversion : ''), hue: chordRootHue(root, key) };
+        + inversionSuffix(chord), hue: chordRootHue(root, key) };
     }),
     durations: harmony.durations,
     chordsDiffer: cyclesDiffer(pitches, primaryPitches, (a, b) => a.length === b.length && a.every((pitch, index) => pitch === b[index])),

@@ -1142,3 +1142,32 @@ test('Compose preserves locked Melody seeds, ranges and automatic pattern/target
   const actual = service.project().tracks.find(item => item.id === track.id).generatorSettings;
   for (const key of keys) assert.deepEqual(actual[key], original[key], key);
 });
+
+
+test('explicit inversion zero protects voicing and survives history and JSON', () => {
+  const { service, load } = fixture();
+  const { baseGenerationHarmony } = load('core/music/project-harmony.ts');
+  const { stepChordInversion, inversionSuffix, validProgressionChords } = load('core/music/harmony.ts');
+  let chord = { root: 0, spice: '', inversion: 0 };
+  const labels = ['.0','.1','.2','.3','.4','.5',''];
+  for (const label of labels) { chord = stepChordInversion(chord, 1); assert.equal(inversionSuffix(chord), label); }
+  for (const label of ['.-1','.-2','.-3','.-4','.-5','']) {
+    chord = stepChordInversion(chord, -1); assert.equal(inversionSuffix(chord), label);
+  }
+  chord = stepChordInversion(chord, 1);
+  assert.equal(inversionSuffix(stepChordInversion(chord, -1)), '');
+  assert.ok(validProgressionChords([chord],1));
+  assert.equal(validProgressionChords([{ ...chord, inversion:1 }],1),false);
+  service.setProgression([1,5,6,4]);
+  service.updateHarmonySettings({ flattenVoicingChance:100 });
+  service.setProgressionChord(0, { root:0, spice:'', inversion:0 });
+  const automatic = baseGenerationHarmony(service.project()).soundingVoicings[0];
+  service.setProgressionChord(0,chord);
+  assert.deepEqual(baseGenerationHarmony(service.project()).soundingVoicings[0],[60,64,67]);
+  assert.notDeepEqual(automatic,[60,64,67]);
+  const saved = service.exportProjectJson();
+  service.undo(); assert.equal(service.project().progressionChords[0].explicitZeroInversion,undefined);
+  service.redo(); assert.equal(service.project().progressionChords[0].explicitZeroInversion,true);
+  assert.equal(service.importProjectJson(saved),true);
+  assert.equal(service.project().progressionChords[0].explicitZeroInversion,true);
+});

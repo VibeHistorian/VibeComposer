@@ -53,9 +53,7 @@ export function baseGenerationHarmony(project: CompositionProject, section?: Arr
   project = contextual;
   const roots = melodyRootChords(project.key, project.scale, degrees, customChords);
   const raw = melodyRepairChords(project.key, project.scale, degrees, customChords);
-  // The model stores inversion values rather than Java's explicit '.0' syntax.
-  // Only nonzero inversions claim a protected custom voicing.
-  const inversions = customChords?.flatMap((chord,index) => chord?.inversion ? [index] : []) ?? [];
+  const inversions = customChords?.flatMap((chord,index) => chord && (chord.inversion || chord.explicitZeroInversion) ? [index] : []) ?? [];
   const definitions = progressionChords(project.key, project.scale, degrees, customChords);
   const soundingRoots = definitions.map(chord => chordPitches({ ...chord,inversion:0 },60));
   const originalSounding = definitions.map(chord => chordPitches(chord,60));

@@ -133,7 +133,9 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
     const spice = CHORD_SPICES.find(spice => partValuesEqual(chordPitches({ root: 0, spice, inversion: 0 }, 0), intervals));
     const inversion = Number(match[4] ?? 0);
     if (Math.abs(inversion) > 5) throw new Error(`Chord inversion outside the supported range: ${symbol}.`);
-    return { root: mappedRoot % 12, spice: spice ?? '', inversion, ...(spice === undefined ? { intervals } : {}) };
+    return { root: mappedRoot % 12, spice: spice ?? '', inversion,
+      ...(match[4] !== undefined && inversion === 0 ? { explicitZeroInversion: true as const } : {}),
+      ...(spice === undefined ? { intervals } : {}) };
   };
   const chordList = (value: string, mode: ScaleMode) => value.split(',').map(symbol => chord(symbol, mode));
   const globalChordText = text(root, 'customChords');

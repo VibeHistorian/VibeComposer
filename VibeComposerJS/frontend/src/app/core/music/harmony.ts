@@ -4,8 +4,28 @@ export { SCALE_DEFINITIONS, SCALE_MODES, isScaleMode, scaleNotes, type ScaleMode
 export const CHORD_SPICES = ['', 'm', 'maj7', 'm7', '7', 'mM7', 'sus2', 'sus4', 'sus7',
   'maj6', 'm6', 'maj9', 'm9', 'maj13', 'm13', 'aug', 'dim'] as const;
 export type ChordSpice = typeof CHORD_SPICES[number];
+export const SCALE_INTERVALS = [2, 3, 4, 5, 6, 7] as const;
+
+/** Resolve a manual dyad in the current scale. Chromatic roots borrow the nearest
+ * scale degree's interval shape. Repeated experimental degrees stay below an octave. */
+export function scaleIntervalChord(chord: ProgressionChord, degree: typeof SCALE_INTERVALS[number],
+  key: string, scale: ScaleMode): ProgressionChord {
+  const notes = scaleNotes(scale), offset = (chord.root - getPitchClass(key)! + 12) % 12;
+  let anchor = 0;
+  const distance = (pitch: number) => Math.min((pitch - offset + 12) % 12, (offset - pitch + 12) % 12);
+  for (let i = 1; i < notes.length; i++) if (distance(notes[i]) < distance(notes[anchor])) anchor = i;
+  const target = anchor + degree - 1;
+  const interval = notes[target % notes.length] + 12 * Math.floor(target / notes.length) - notes[anchor];
+  // Some experimental scales repeat degrees or include the octave as degree VII.
+  const distinct = notes.map(pitch => (pitch - notes[anchor] + 12) % 12).filter(pitch => pitch > 0);
+  const resolved = interval > 0 && interval < 12 ? interval
+    : interval <= 0 ? Math.min(...distinct) : Math.max(...distinct);
+  return { ...chord, spice: '', inversion: 0, intervals: [0, resolved] };
+}
 export interface ProgressionChord { readonly root: number; readonly spice: ChordSpice; readonly inversion: number;
-  /** Exact mode-derived voicing when it cannot be expressed by a named chord spice. */
+  /** Distinguish a protected root-position '.0' from automatic voicing. */
+  readonly explicitZeroInversion?: true;
+  /** Exact voicing for manual intervals and mode-derived chords without a named spice. */
   readonly intervals?: readonly number[];
 }
 // Production MidiUtils spice intervals (including its identical maj9/m9 voicing).
@@ -16,11 +36,26 @@ const SPICE_INTERVALS: readonly (readonly number[])[] = [[0,4,7],[0,3,7],[0,4,7,
 export function validProgressionChords(value: unknown, count: number): value is readonly (ProgressionChord | null)[] | undefined {
   return value === undefined || Array.isArray(value) && value.length === count && value.every(chord => chord === null
     || chord && typeof chord === 'object' && !Array.isArray(chord)
-      && Object.keys(chord).every(key => ['root','spice','inversion','intervals'].includes(key))
+      && Object.keys(chord).every(key => ['root','spice','inversion','intervals','explicitZeroInversion'].includes(key))
       && Number.isInteger(chord.root) && chord.root >= 0 && chord.root < 12
       && CHORD_SPICES.includes(chord.spice) && Number.isInteger(chord.inversion) && Math.abs(chord.inversion) <= 5
+      && (chord.explicitZeroInversion === undefined || chord.explicitZeroInversion === true && chord.inversion === 0)
       && (chord.intervals === undefined || Array.isArray(chord.intervals) && chord.intervals.length >= 1 && chord.intervals.length <= 7
         && chord.intervals[0] === 0 && chord.intervals.every((n: unknown) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 36)));
+}
+
+export function inversionSuffix(chord: ProgressionChord): string {
+  return chord.inversion || chord.explicitZeroInversion ? `.${chord.inversion}` : '';
+}
+
+/** Wheel order: -5 … -1, automatic, explicit 0 … 5; overflow returns to automatic. */
+export function stepChordInversion(chord: ProgressionChord, movement: number): ProgressionChord {
+  const { explicitZeroInversion, ...base } = chord;
+  const position = chord.inversion > 0 || explicitZeroInversion ? chord.inversion + 1 : chord.inversion;
+  const next = position + movement;
+  if (next < -5 || next > 6 || next === 0) return { ...base, inversion: 0 };
+  return next === 1 ? { ...base, inversion: 0, explicitZeroInversion: true }
+    : { ...base, inversion: next > 1 ? next - 1 : next };
 }
 
 export function progressionChords(key: string, scale: ScaleMode, degrees: readonly number[],

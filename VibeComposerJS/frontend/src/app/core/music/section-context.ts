@@ -55,7 +55,8 @@ export function sectionHasChordOverride(project: CompositionProject, section: Ar
   const primary = resolve(project.progression, project.progressionChords);
   const local = resolve(sectionDegrees(project, section), section.customChords ?? (section.chordDegrees ? undefined : project.progressionChords));
   return local.length !== primary.length || local.some((chord, index) => chord.root !== primary[index].root
-    || chord.inversion !== primary[index].inversion || !sectionValuesEqual(chordPitches(chord, 60), chordPitches(primary[index], 60)));
+    || chord.inversion !== primary[index].inversion || chord.explicitZeroInversion !== primary[index].explicitZeroInversion
+    || !sectionValuesEqual(chordPitches(chord, 60), chordPitches(primary[index], 60)));
 }
 
 export function validSectionHarmony(section: ArrangementSection): boolean {

@@ -41,6 +41,13 @@
             [attr.data-key-overlap]="choice.overlap.ratio" [title]="choice.title"
             [attr.aria-checked]="menuSelected(choice.spice)" (click)="choose(choice.spice)">{{ choice.spice || 'Major' }}</button>
         }
+        <hr role="separator" />
+        @for (choice of intervalChoices(); track choice.degree) {
+          <button type="button" class="spice-choice" role="menuitemradio" [style.--chord-hue]="choice.hue"
+            [style.--spice-highlight]="choice.highlight" [style.--spice-border]="choice.border"
+            [attr.data-scale-interval]="choice.degree" [attr.data-key-overlap]="choice.overlap.ratio" [title]="choice.title"
+            [attr.aria-checked]="intervalSelected(choice.intervals)" (click)="chooseInterval(choice.degree)">{{ choice.label }}</button>
+        }
       }
     </div>
   </div>

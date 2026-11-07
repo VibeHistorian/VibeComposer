@@ -147,3 +147,31 @@ test('contextual phrase timing maps variable harmonic durations exactly once', (
     assert.ok(note.durationBeats > 0 && note.startBeat + note.durationBeats <= 10.5);
   }
 });
+
+
+test('manual scale intervals resolve dyads across roots and modes and feed both melody paths', () => {
+  const { scaleIntervalChord, SCALE_INTERVALS, chordPitches, validProgressionChords } = loadMusic('harmony.ts');
+  const base = { root: 0, spice: 'm', inversion: 2 };
+  assert.deepEqual(SCALE_INTERVALS.map(d => scaleIntervalChord(base, d, 'C', 'major').intervals[1]), [2,4,5,7,9,11]);
+  assert.deepEqual(SCALE_INTERVALS.map(d => scaleIntervalChord(base, d, 'C', 'natural-minor').intervals[1]), [2,3,5,7,8,10]);
+  assert.deepEqual(scaleIntervalChord({ ...base, root: 11 }, 2, 'C', 'major').intervals, [0,1]);
+  assert.deepEqual(scaleIntervalChord({ ...base, root: 2 }, 3, 'C', 'major').intervals, [0,3]);
+  for (const scale of SCALE_MODES) for (let root = 0; root < 12; root++) for (const degree of SCALE_INTERVALS) {
+    const chord = scaleIntervalChord({ ...base, root }, degree, 'C', scale);
+    assert.ok(validProgressionChords([chord], 1));
+    const pitches = chordPitches(chord, 60);
+    assert.equal(pitches.length, 2);
+    assert.ok(pitches[1] > pitches[0] && pitches[1] - pitches[0] < 12);
+  }
+  for (const degree of SCALE_INTERVALS) for (const contextualMelody of [false, true]) {
+    const custom = Array.from({ length: 4 }, () => scaleIntervalChord(base, degree, 'C', 'major'));
+    const { generateChordPart } = loadMusic('chord-generator.ts');
+    const hits = generateChordPart(42n, 'C', 'major', [1,1,1,1], { noteLengthPercent: 100, voicing: 'close', rhythm: 'full', hitsPerPattern: 8 }, custom);
+    assert.ok(hits.length);
+    assert.ok(hits.every(hit => hit.pitches.length === 2));
+    const notes = generateMelody(42n, 'C', 'major', [1,1,1,1], { algorithm: 'block' }, 0, undefined,
+      { contextualMelody }, custom);
+    assert.ok(notes.length);
+    assert.ok(notes.every(n => Number.isFinite(n.midi)));
+  }
+});

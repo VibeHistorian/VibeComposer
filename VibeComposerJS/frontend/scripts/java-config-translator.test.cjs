@@ -183,3 +183,11 @@ test('malformed/unsafe XML, missing actual structure, invalid numbers and unsupp
     config(section(),part()).replace('IONIAN','BBORIAN'),config(section('<measures>99</measures>'),part()),
     config(section(),part('<speed>NaN</speed>'))]) assert.throws(()=>translate(xml),xml);
 });
+
+
+test('Java explicit .0 inversion stays distinct from an unmarked chord', () => {
+  const { project } = translate(config(section()).replace('<customChords>C,G</customChords>', '<customChords>C.0,G</customChords>'));
+  assert.equal(project.progressionChords[0].inversion, 0);
+  assert.equal(project.progressionChords[0].explicitZeroInversion, true);
+  assert.equal(project.progressionChords[1].explicitZeroInversion, undefined);
+});

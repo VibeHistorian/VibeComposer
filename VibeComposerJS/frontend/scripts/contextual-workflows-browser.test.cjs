@@ -232,7 +232,19 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       rootMenu.querySelector('[data-root="F♯"]').click();
       await wait(() => read().progressionChords?.[0]?.root === 6, 'root selection');
       chordlet().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 1 }));
-      const spiceMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord spice"]'), 'spice menu');
+      let spiceMenu = await wait(() => document.querySelector('[role="menu"][aria-label="Chord spice"]'), 'spice menu');
+      const intervalButtons = [...spiceMenu.querySelectorAll('[data-scale-interval]')];
+      if (intervalButtons.map(b => Number(b.dataset.scaleInterval)).join(',') !== '2,3,4,5,6,7'
+        || !spiceMenu.querySelector('[role="separator"]')) throw new Error('manual interval group missing');
+      const originalChord = JSON.stringify(read().progressionChords[0]);
+      intervalButtons[2].click();
+      await wait(() => read().progressionChords[0].intervals?.length === 2, 'manual dyad selection');
+      if (read().progressionChords[0].inversion !== 0) throw new Error('dyad inversion not reset');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read().progressionChords[0]) === originalChord, 'manual dyad undo');
+      chordlet().dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 1 }));
+      await wait(() => document.querySelector('[aria-label="Chord spice"]'), 'reopen spice menu');
+      spiceMenu = document.querySelector('[aria-label="Chord spice"]');
       const spiceButton=name=>[...spiceMenu.querySelectorAll('button')].find(button=>button.textContent===name);
       result.spiceColors=Number(spiceButton('Major').dataset.keyOverlap)===0
         && Number(spiceButton('dim').dataset.keyOverlap)===2/3
@@ -243,6 +255,13 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       result.menuKeyboard = spiceMenu.contains(document.activeElement) && document.activeElement !== beforeArrow;
       [...spiceMenu.querySelectorAll('button')].find(button => button.textContent === 'sus4').click();
       await wait(() => read().progressionChords[0].spice === 'sus4', 'spice selection');
+      chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 }));
+      await wait(() => read().progressionChords[0].explicitZeroInversion === true, 'explicit zero inversion wheel');
+      await wait(() => chordlet().textContent.endsWith('.0'), 'explicit zero label');
+      chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 100 }));
+      await wait(() => !read().progressionChords[0].explicitZeroInversion && read().progressionChords[0].inversion === 0, 'zero to automatic');
+      chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 }));
+      await wait(() => read().progressionChords[0].explicitZeroInversion === true, 'automatic to zero');
       chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 }));
       await wait(() => read().progressionChords[0].inversion === 1, 'inversion wheel');
       chordlet().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100, shiftKey: true }));
@@ -807,7 +826,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>section().customChords?.[0]?.root===2,'section chord edit');
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('D'),'section chord render');
       editor.querySelector('.chordlet-label').dispatchEvent(new WheelEvent('wheel',{deltaY:-1,bubbles:true,cancelable:true}));
-      await wait(()=>section().customChords?.[0]?.inversion===1,'section inversion');
+      await wait(()=>section().customChords?.[0]?.explicitZeroInversion===true,'section explicit zero inversion');
       await change(editor.querySelector('vc-select'),'G');
       if((await selectOptions(editor.querySelectorAll('vc-select')[1])).length!==18) throw new Error('missing section modes');
       await change(editor.querySelectorAll('vc-select')[1],'mixolydian');

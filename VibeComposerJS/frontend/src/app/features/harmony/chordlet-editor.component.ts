@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { ProjectService } from '../../core/project/project.service';
-import { CHORD_SPICES, KEYS, chordKeyOverlap, chordRootHue, chordRomanNumeral, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
+import { CHORD_SPICES, inversionSuffix, stepChordInversion, SCALE_INTERVALS, scaleIntervalChord, KEYS, chordKeyOverlap, chordRootHue, chordRomanNumeral, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
 import type { ArrangementSection } from '../../core/project/arrangement.model';
 import { baseGenerationHarmony, sectionGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
@@ -55,6 +55,31 @@ export class ChordletEditorComponent {
         title: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${SCALE_DEFINITIONS[context.scale].label}` };
     });
   });
+  readonly intervalChoices = computed(() => {
+    const menu = this.menu(), chord = menu && this.chords()[menu.index];
+    if (!chord) return [];
+    const context = this.colorContext();
+    return SCALE_INTERVALS.map(degree => {
+      const candidate = scaleIntervalChord({ ...chord, root: this.displayedPitch(chord.root) }, degree, context.key, context.scale);
+      const overlap = chordKeyOverlap(candidate, context.key, context.scale);
+      return { degree, intervals: candidate.intervals!, overlap, hue: chordRootHue(candidate.root, context.key),
+        highlight: `${Math.round(6 + 56 * overlap.ratio ** 3)}%`, border: `${Math.round(20 + 60 * overlap.ratio ** 2)}%`,
+        label: degree === 2 ? '2nd' : degree === 3 ? '3rd' : `${degree}th`,
+        title: `Root + scale-relative ${degree}: ${candidate.intervals![1]} semitones (${context.key} ${SCALE_DEFINITIONS[context.scale].label}). Saved as two fixed pitches; chromatic roots borrow the nearest scale degree.` };
+    });
+  });
+  intervalSelected(intervals: readonly number[]): boolean {
+    const chord = this.chords()[this.menu()?.index ?? 0];
+    return !!chord.intervals && chord.intervals.length === 2 && chord.intervals.every((pitch, i) => pitch === intervals[i]);
+  }
+  chooseInterval(degree: typeof SCALE_INTERVALS[number]): void {
+    const menu = this.menu();
+    if (!menu || menu.project !== this.project() || menu.sectionId !== this.section()?.id) { this.closeMenu(); return; }
+    const chord = this.chords()[menu.index], context = this.colorContext();
+    const resolved = scaleIntervalChord({ ...chord, root: this.displayedPitch(chord.root) }, degree, context.key, context.scale);
+    this.setChord(menu.index, { ...resolved, root: chord.root });
+    this.closeMenu(); this.focusChord(menu.index);
+  }
   readonly rootsWithoutScaleSpice = computed(() => {
     const context = this.colorContext();
     return this.roots.map((_, root) => !this.spices.some(spice => {
@@ -80,7 +105,7 @@ export class ChordletEditorComponent {
     return chordRomanNumeral({ ...chord, root: this.displayedPitch(chord.root) }, this.colorContext().key);
   }
   symbol(chord: ProgressionChord): string { return this.displayedRoot(chord.root)
-    + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + (chord.inversion ? '.' + chord.inversion : ''); }
+    + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + inversionSuffix(chord); }
   add(): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length < 32) this.applyAll([...this.chords(), null]); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
   remove(index: number): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length > 1) this.applyAll(this.chords().filter((_, i) => i !== index)); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
   generate(): void {
@@ -112,7 +137,7 @@ export class ChordletEditorComponent {
     event.preventDefault(); event.stopPropagation();
     if (this.disabled()) return;
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    this.menu.set({ index, kind, x: Math.max(8, Math.min(innerWidth - 228, box.left)), y: Math.max(8, Math.min(innerHeight - 220, innerHeight - box.top + 6)), project: this.project(), sectionId: this.section()?.id });
+    this.menu.set({ index, kind, x: Math.max(8, Math.min(innerWidth - 228, box.left)), y: Math.max(8, Math.min(innerHeight - (kind === 'spice' ? 330 : 220), innerHeight - box.top + 6)), project: this.project(), sectionId: this.section()?.id });
     setTimeout(() => this.element.nativeElement.querySelector<HTMLElement>('.chordlet-menu button[aria-checked="true"]')?.focus(), 0);
   }
   choose(value: number | string): void {
@@ -126,7 +151,7 @@ export class ChordletEditorComponent {
   menuSelected(value: number | string): boolean {
     const menu = this.menu(); if (!menu) return false;
     const chord = this.chords()[menu.index];
-    return menu.kind === 'root' ? this.displayedRoot(chord.root) === KEYS[value as number] : chord.spice === value;
+    return menu.kind === 'root' ? this.displayedRoot(chord.root) === KEYS[value as number] : !chord.intervals && chord.spice === value;
   }
   closeMenu(): void { this.menu.set(null); }
   escape(): void { const index = this.menu()?.index; this.closeMenu(); this.cancel(); if (index !== undefined) this.focusChord(index); }
@@ -149,7 +174,7 @@ export class ChordletEditorComponent {
     const chord = this.chords()[index];
     const next = spice ? { ...chord, intervals: undefined, spice: CHORD_SPICES[(CHORD_SPICES.indexOf(chord.spice) + movement + CHORD_SPICES.length) % CHORD_SPICES.length] }
       : root ? { ...chord, root: (chord.root + movement + 12) % 12 }
-        : { ...chord, inversion: Math.abs(chord.inversion + movement) > 5 ? 0 : chord.inversion + movement };
+        : stepChordInversion(chord, movement);
     this.closeMenu(); this.setChord(index, next);
   }
   wheel(index: number, event: WheelEvent): void {
