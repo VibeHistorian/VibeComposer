@@ -23,6 +23,12 @@ for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, {
  const effects=[...root.querySelectorAll('button')].find(b=>b.textContent.includes('Sound effects'));effects.click();
  const selected=await wait(()=>document.querySelector('.selection-menu [data-value="127"]'),'selected leaf');
  check(selected.getAttribute('aria-checked')==='true','selected radio exposed');fit();
+ const plain=document.querySelector('.selection-menu [data-value="126"]');
+ const normal=getComputedStyle(plain).color, accent=getComputedStyle(selected).color;
+ check(normal!==accent,'only the selected leaf has accent text');
+ plain.focus();check(getComputedStyle(plain).color===normal,'keyboard focus retains normal text color');
+ check(getComputedStyle(plain).backgroundColor!==getComputedStyle(selected).backgroundColor,'keyboard focus changes the background');
+ check(getComputedStyle(selected).color===accent,'selected leaf retains accent text');
  selected.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
  picker.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
  await wait(()=>picker.getAttribute('value')!=='127','right click resets');
@@ -34,6 +40,10 @@ for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, {
  const strum=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="chords"] vc-menu-select[data-parameter-key="strumType"]'),'strum');
  const types=await selectOptions(strum);check(types.length===9,'all strum variants reachable');
  await changeControl(strum,'HUMAN_D');await wait(()=>read().tracks.filter(t=>t.role==='chords').every(t=>t.generatorSettings.strumType==='HUMAN_D'),'strum commits scoped setting');
+ check(strum.textContent.trim()==='Human|Down','compact selected strum label');
+ for(const [value,label] of [['ARP_U','Arp|Up'],['ARP_D','Arp|Down'],['RAND_U','Rand|Up'],['RAND','Rand|Any'],['RAND_D','Rand|Down'],['RAND_WU','Rand|Spaced'],['HUMAN_U','Human|Up'],['HUMAN','Human|Any'],['HUMAN_D','Human|Down']]) {
+   await changeControl(strum,value);await wait(()=>strum.textContent.trim()===label,'compact selected strum '+value);
+ }
  strum.click();await wait(()=>document.querySelector('.selection-menu'),'strum menu');fit();
  await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
  }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}

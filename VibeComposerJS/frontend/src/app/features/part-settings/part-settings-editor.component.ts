@@ -39,6 +39,11 @@ export class PartSettingsEditorComponent {
     { id: 'random', label: 'Random', values: ['RAND_U', 'RAND', 'RAND_D', 'RAND_WU'] },
     { id: 'human', label: 'Humanized', values: ['HUMAN_U', 'HUMAN', 'HUMAN_D'] },
   ];
+  readonly strumDisplayLabels: Readonly<Record<string, string>> = {
+    ARP_U: 'Arp.Up', ARP_D: 'Arp.Down',
+    RAND_U: 'Rand.Up', RAND: 'Rand.Any', RAND_D: 'Rand.Down', RAND_WU: 'Rand.Spaced',
+    HUMAN_U: 'Human.Up', HUMAN: 'Human.Any', HUMAN_D: 'Human.Down',
+  };
   readonly strumOptions = [
     { value: 'ARP_U', label: 'Arpeggiated up' }, { value: 'ARP_D', label: 'Arpeggiated down' },
     { value: 'RAND_U', label: 'Random up' }, { value: 'RAND', label: 'Random unordered' },

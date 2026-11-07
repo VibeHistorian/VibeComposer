@@ -6,7 +6,7 @@ const { findBrowser, requireProductionBuild, createBrowserServer, listen, launch
 const browser = findBrowser();
 for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px', { skip: !browser, timeout: 60000 }, async () => {
   const root = requireProductionBuild();
-  const server = createBrowserServer({root,index:fs.readFileSync(path.join(root,'index.html'),'utf8'),onResult() {}});
+  const server = createBrowserServer({root,html:fs.readFileSync(path.join(root,'index.html'),'utf8'),onResult() {}});
   await listen(server);
   const profile=fs.mkdtempSync(path.resolve(__dirname,'../.angular/copy-drag-browser-'));
   const child=launchBrowser(browser,['--headless','--disable-gpu','--no-first-run','--remote-debugging-port=0','--window-size='+width+',1000','--user-data-dir='+profile,'http://127.0.0.1:'+server.address().port+'/'],{stdio:['ignore','ignore','pipe']});
@@ -28,12 +28,15 @@ for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px'
       p.arrangement=['INTRO','VERSE1'].map((type,i)=>({id:'copy-section-'+i,type,measures:4,
         trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,i===0&&t.id===track.id])),
         ...(i===0?{trackPhrases:{[track.id]:[{id:'source',midi:64,startBeat:1,durationBeats:2,velocity:90}]}}:{})}));
-      sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));location.reload();})()`);
-    await wait(`JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')||'null')?.arrangement[0].id==='copy-section-0'&&!!document.querySelector('vc-arrangement-overview canvas[tabindex]')`);
+      sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+      window.copyDragReloadPending=true;location.reload();})()`);
+    // Wait for a new document: sessionStorage already contains the fixture before reload starts.
+    await wait(`!window.copyDragReloadPending&&JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')||'null')?.arrangement[0].id==='copy-section-0'&&!!document.querySelector('vc-arrangement-overview canvas[tabindex]')`);
     await evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
     const points=await evaluate(`(()=>{const c=document.querySelector('vc-arrangement-overview canvas[tabindex]');c.scrollIntoView({block:'center'});const b=c.getBoundingClientRect();
       return {source:{x:b.left+24+(b.width-24)/4,y:b.top+55},track:{x:b.left+32,y:b.top+84},target:{x:b.left+24+(b.width-24)/2+8,y:b.top+84}};})()`);
-    const mouse=(type,point,pressed=false)=>command('Input.dispatchMouseEvent',{type,...point,button:type==='mouseMoved'?'none':'left',buttons:pressed?1:0,modifiers:2,clickCount:type==='mouseMoved'?0:1});
+    // Keep the pressed button on movement events so Chromium retains pointer capture.
+    const mouse=(type,point,pressed=false)=>command('Input.dispatchMouseEvent',{type,...point,button:type==='mouseMoved'&&!pressed?'none':'left',buttons:pressed?1:0,modifiers:2,clickCount:type==='mouseMoved'?0:1});
     for (const source of [points.source,points.track]) {
       await mouse('mouseMoved',source);
       await evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
