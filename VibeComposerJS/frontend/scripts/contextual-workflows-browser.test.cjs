@@ -393,15 +393,15 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => read().tracks.find(track => track.role === 'chords').generatorSettings.patternJoinMode === 'EXPAND', 'chord join commit');
       const strum = await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]'), 'chord strum');
       await change(strum, '333');
-      await change(document.querySelector('.part-settings-panel [aria-label="STRM↗"]'), 'ARP_D');
+      await change(document.querySelector('.part-settings-panel [aria-label="STRUM↗"]'), 'ARP_D');
       await change(document.querySelector('#part-inspector [aria-label="Transition chance"]'), '100');
       await change(document.querySelector('#part-inspector [aria-label="Transition split"]'), '750');
       await change(document.querySelector('.part-settings-panel [aria-label="Strum pause"]'), '20');
       await wait(() => read().tracks.find(track => track.role === 'chords').generatorSettings.strum === 333 && read().tracks.find(track => track.role === 'chords').generatorSettings.strumPauseChance === 20, 'chord articulation commit');
       await wait(() => document.querySelector('.part-settings-panel [aria-label="Strum"]').value === '333'
-        && document.querySelector('.part-settings-panel [aria-label="STRM↗"]').getAttribute("value") === 'ARP_D', 'chord editors synchronized');
+        && document.querySelector('.part-settings-panel [aria-label="STRUM↗"]').getAttribute("value") === 'ARP_D', 'chord editors synchronized');
       result.chordEditors = document.querySelector('.part-settings-panel [aria-label="Strum"]').value === '333'
-        && document.querySelector('.part-settings-panel [aria-label="STRM↗"]').getAttribute("value") === 'ARP_D'
+        && document.querySelector('.part-settings-panel [aria-label="STRUM↗"]').getAttribute("value") === 'ARP_D'
         && read().tracks.find(track => track.role === 'chords').generatorSettings.patternJoinMode === 'EXPAND' && read().tracks.find(track => track.role === 'chords').generatorSettings.transitionChance === 100 && read().tracks.find(track => track.role === 'chords').generatorSettings.transitionSplit === 750;
       const chords = document.querySelector('.track-group.chords');
       const tracksBeforePolicy = JSON.stringify(read().tracks);
@@ -537,7 +537,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const dialog = await wait(() => document.querySelector('vc-settings-dialog'), 'Melody settings dialog');
       (await wait(() => [...dialog.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Melody'), 'Melody settings category')).click();
       const globals = await wait(() => dialog.querySelector('vc-melody-global-settings'), 'project melody settings');
-      for (const label of ['Target direction','TON%','MODE%','CHRD%','Emphasize key','Max direction changes','New blocks','Fill pauses per chord']) {
+      for (const label of ['Target direction','TONIC%','MODE%','CHORD%','Emphasize key','Max direction changes','New blocks','Fill pauses per chord']) {
         if (globals.querySelector('[aria-label="' + label + '"]')) throw new Error('Track control in project settings: ' + label);
       }
       const effect = globals.querySelector('[aria-label="Pattern effect"]');

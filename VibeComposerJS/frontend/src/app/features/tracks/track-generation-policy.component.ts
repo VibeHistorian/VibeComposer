@@ -46,9 +46,9 @@ export class TrackGenerationPolicyComponent {
   code(control: PolicyControl): string {
     const codes: Readonly<Record<string, string>> = {
       fixedHits: 'HITS', maxSplit: 'TRAN%', lengthMin: 'LEN↓', lengthMax: 'LEN↑',
-      maxRepeat: 'REPT', shiftChance: 'SHIFT', voices: 'VOICE', voicesChance: 'V.CH',
+      maxRepeat: 'REPEAT', shiftChance: 'SHIFT', voices: 'VOICE', voicesChance: 'V.CH',
       velocityMin: 'VEL↓', velocityMax: 'VEL↑', struminess: 'STRUM',
-      maxStrumPause: 'STRM⏸︎', expandChance: 'EXP', maxSwing: 'SWING',
+      maxStrumPause: 'STRUM⏸︎', expandChance: 'EXP', maxSwing: 'SWING',
       dynamicChance: 'GHOST', overrandomizeChance: 'OVER', melodyChance: 'MEL%',
     };
     return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);

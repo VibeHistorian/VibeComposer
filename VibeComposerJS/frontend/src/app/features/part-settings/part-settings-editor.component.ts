@@ -98,13 +98,14 @@ export class PartSettingsEditorComponent {
       transpose: 'TRANS', velocityMin: 'VEL↓', velocityMax: 'VEL↑', noteLengthMultiplier: 'LEN', noteLengthPercent: 'LEN',
       rangeMin: 'MIDI↓', rangeMax: 'MIDI↑', tension: 'TENSE',
       feedbackDuration: 'D.TIM', feedbackVol: 'D.VEL', feedbackCount: 'DELAY',
-      maxBlockChange: 'B.MAX', blockJump: 'B.JMP', hitsPerPattern: 'HITS', euclideanPulses: 'PULSE',
-      patternShift: 'SHIFT', chordSpan: 'SPAN', chordNotesStretch: 'VOICE', patternRepeat: 'REPT',
+      maxDirectionChanges: 'DIR ⤒', newBlocksChance: 'BLOCK*', tonicNoteTarget: 'TONIC%', chordNoteTarget: 'CHORD%',
+      maxBlockChange: 'BLOCK⤒', blockJump: 'BLOCK↕', hitsPerPattern: 'HITS', euclideanPulses: 'PULSE',
+      patternShift: 'SHIFT', chordSpan: 'SPAN', chordNotesStretch: 'VOICE', patternRepeat: 'REPEAT',
       noteVariation: 'VAR', pauseChance: 'PAUSE', exceptionChance: 'SPLIT', swingPercent: 'SWING',
-      strumPauseChance: 'STRM⏸︎', transitionChance: 'TRAN%', transitionSplit: 'TRAN⌖',
-      offset: 'OFFS', accents: 'ACCNT',
+      strumPauseChance: 'STRUM⏸︎', transitionChance: 'TRAN%', transitionSplit: 'TRAN⌖',
+      offset: 'OFFS', accents: 'ACCENT',
     };
-    return codes[control.key] ?? control.label.toUpperCase().slice(0, 5);
+    return codes[control.key] ?? control.label.toUpperCase().slice(0, 6);
   }
   readonly preferences = inject(UiPreferencesService);
   readonly projects = inject(ProjectService);
