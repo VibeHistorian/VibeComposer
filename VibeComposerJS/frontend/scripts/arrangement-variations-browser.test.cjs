@@ -14,6 +14,31 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
     const ensure=(value,label)=>{if(!value)throw new Error(label);};
     const button=(root,text)=>[...root.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
     const dialog=()=>document.querySelector('vc-arrangement-variations-dialog');
+    const menuItems=()=>[...document.querySelectorAll('.context-menu')].at(-1)?.querySelectorAll('[role="menuitem"]');
+    // Dispatch directly to the submenu so Escape does not also close its parent.
+    const escapeMenu=async()=>{[...document.querySelectorAll('.context-menu')].at(-1).dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27,bubbles:false}));await new Promise(r=>requestAnimationFrame(r));};
+    const additionOptions=async(trigger)=>{
+      if(trigger.disabled)return [];
+      trigger.click();
+      const roots=[...await wait(menuItems,'addition menu')],result=[];
+      for(const root of roots){
+        if(root.getAttribute('aria-haspopup')==='menu'){
+          root.click();
+          const children=[...await wait(()=>{const items=menuItems();return items&&items[0]!==roots[0]?items:null},'variation submenu')];
+          ensure(children.length>1,'multiple variations grouped under track');
+          for(const child of children)result.push({textContent:root.textContent.replace('›','').trim()+' · '+child.textContent,value:[root.textContent.trim(),child.textContent.trim()]});
+          await escapeMenu();
+        }else result.push({textContent:root.textContent,value:[root.textContent.trim()]});
+      }
+      await escapeMenu();return result;
+    };
+    const chooseAddition=async(trigger,path)=>{
+      trigger.click();
+      for(const label of path){
+        const item=await wait(()=>[...menuItems()??[]].find(item=>item.textContent.trim()===label),'variation menu action '+JSON.stringify(path));
+        item.click();await new Promise(r=>requestAnimationFrame(r));
+      }
+    };
     const prefs=()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1'));
     const setBehavior=async(generate,presence)=>{
       const before=JSON.stringify(read());
@@ -99,7 +124,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(![...d.querySelectorAll('.effect-status')].some(s=>['Active','Disabled'].includes(s.textContent.trim())),'no redundant state text');
       ensure(range.scrollWidth<=range.clientWidth,'range row fits');
       ensure(!d.textContent.includes('No variations in this scope.'),'empty-state text removed');
-      const heading=d.querySelector('.variation-section-heading'),add=heading.querySelector('vc-select');
+      const heading=d.querySelector('.variation-section-heading'),add=heading.querySelector('.add-variation');
       ensure(Math.abs(add.getBoundingClientRect().right-heading.getBoundingClientRect().right)<2,'add pinned to right');
       const addStyle=getComputedStyle(add), groupButton=document.querySelector('.add-track-button');
       ensure(addStyle.backgroundColor===getComputedStyle(groupButton).backgroundColor,'add uses app button surface');
@@ -108,15 +133,15 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const labels=[heading.querySelector('h2'),heading.querySelector('.section-intent'),heading.querySelector('.variation-purpose')];
       const centers=labels.map(e=>{const r=e.getBoundingClientRect();return r.top+r.height/2});
       ensure(Math.max(...centers)-Math.min(...centers)<3,'section details share one row');
-      const snareOption=(await selectOptions(add)).find(o=>o.textContent.includes('Snare section-end fill'));
-      ensure(snareOption,'manual snare fill available');await changeControl(add,snareOption.value);
+      const snareOption=(await additionOptions(add)).find(o=>o.textContent.includes('Snare section-end fill'));
+      ensure(snareOption,'manual snare fill available');await chooseAddition(add,snareOption.value);
       const snareRow=await wait(()=>[...d.querySelectorAll('article')].find(a=>a.textContent.includes('Snare section-end fill')),'snare fill staged');
       await changeControl(snareRow.querySelector('input[type="number"]'),'2');
       await wait(()=>snareRow.textContent.includes('up to 2 quiet retriggers'),'snare fill limit explained');
       ensure(snareRow.querySelector('.variation-replace').textContent.endsWith('↑'),'snare fill direction');
-      const manualOption=(await selectOptions(add)).find(o=>o.textContent.includes('M2 · Melody speed'));
+      const manualOption=(await additionOptions(add)).find(o=>o.textContent.includes('M2 · Melody speed'));
       ensure(manualOption,'manual speed choice offered');
-      await changeControl(add,manualOption.value);
+      await chooseAddition(add,manualOption.value);
       await wait(()=>[...d.querySelectorAll('article')].some(a=>a.textContent.includes('M2')&&a.textContent.includes('Melody speed')),'manual choice staged');
       const authoredRow=[...d.querySelectorAll('article')].find(a=>a.textContent.includes('M2')&&a.textContent.includes('Melody speed'));
       const replacement=authoredRow.querySelector('.variation-replace');
@@ -156,7 +181,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await changeControl(budget,'16');
       await wait(()=>button(d,'Reroll variations').disabled,'above-capacity budget rejected');
       const disabledAdd=d.querySelector('.add-variation');
-      ensure(disabledAdd.getAttribute('aria-disabled')==='true'&&Number(getComputedStyle(disabledAdd).opacity)<1&&getComputedStyle(disabledAdd).cursor==='default','disabled add visibly subdued');
+      ensure(disabledAdd.disabled&&Number(getComputedStyle(disabledAdd).opacity)<1&&getComputedStyle(disabledAdd).cursor==='default','disabled add visibly subdued');
       await changeControl(budget,'15');await wait(()=>!button(d,'Reroll variations').disabled,'valid capacity accepted');button(d,'Reroll variations').click();
       await wait(()=>[...d.querySelectorAll('.variation-section')].some(s=>s.querySelectorAll('article').length>4),'larger section budget');
       ensure(JSON.stringify(read())===original,'larger reroll stays local');
@@ -171,9 +196,9 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(velocityStrength.value==='35','invalid velocity strength restored');
       for(const kind of ['Late chord anticipation','Contextual melody range','Arp activity','Arp chord-relative contour','Hat / ride density','Cymbal activity']) {
         const section=d.querySelector('.variation-section'),adder=section.querySelector('.add-variation');
-        const option=(await selectOptions(adder)).find(o=>o.textContent.includes(kind));
+        const option=(await additionOptions(adder)).find(o=>o.textContent.includes(kind));
         if(option) {
-          await changeControl(adder,option.value);
+          await chooseAddition(adder,option.value);
           const article=await wait(()=>[...section.querySelectorAll('article')].find(a=>a.textContent.includes(kind)),'parameter choice added');
           const input=article.querySelector('input[type="number"]');
           ensure(input,'parameter strength control');await changeControl(input,kind==='Late chord anticipation'?'40':'3');
@@ -216,9 +241,9 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
           let added = false;
           for (const section of d.querySelectorAll('.variation-section')) {
             const adder = section.querySelector('.add-variation');
-            const option = (await selectOptions(adder)).find(option => option.textContent.includes(label));
+            const option = (await additionOptions(adder)).find(option => option.textContent.includes(label));
             if (!option) continue;
-            await changeControl(adder, option.value);
+            await chooseAddition(adder, option.value);
             await wait(() => [...section.querySelectorAll('article')].some(article => article.textContent.includes(label)), label + ' added');
             added = true;
             break;
@@ -234,7 +259,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const section=removedRow.closest('.variation-section'), count=section.querySelectorAll('article').length;
       remove.focus();remove.click();
       await wait(()=>section.querySelectorAll('article').length===count-1,'choice deleted from draft');
-      ensure(section.querySelector('.add-variation').getAttribute('aria-disabled')!=='true','addition pool available after deletion');
+      ensure(!section.querySelector('.add-variation').disabled,'addition pool available after deletion');
       ensure(JSON.stringify(read())===original,'deletion stays local');
       button(d,'Cancel').click();await wait(()=>!dialog(),'cancel closes');
       ensure(JSON.stringify(read())===original,'cancel preserves project');

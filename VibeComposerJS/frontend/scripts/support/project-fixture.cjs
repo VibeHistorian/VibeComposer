@@ -61,6 +61,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
       compiledModules.set(absolute, compiled);
     }
     new Function('require', 'module', 'exports', compiled)((name) => name === '@angular/core' ? angular
+      : name === '@angular/cdk/menu' ? { CdkMenuModule: class {} }
       : name === '@angular/cdk/dialog' ? { Dialog: class Dialog {}, DialogModule: class {}, DialogRef: class {}, DIALOG_DATA: 'sequencer-data' }
       : name === '@angular/common' ? { TitleCasePipe: class {} }
       : name === '@angular/aria/combobox' ? { Combobox: class Combobox {}, ComboboxPopup: class {}, ComboboxWidget: class {} }

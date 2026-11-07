@@ -1,4 +1,6 @@
 import { variationStrength, validVariationParameters } from '../../core/music/arrangement-variation-catalogue';
+import { CdkMenuModule } from '@angular/cdk/menu';
+import { ContextMenuComponent, type ContextMenuItem } from '../../shared/context-menu.component';
 import { SelectComponent } from '../../shared/select.component';
 import { variationAdditions } from '../../core/project/arrangement-variation-additions';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -14,7 +16,7 @@ import { resolveVariationContext, variationAmountForContext, VARIATION_GESTURE_L
 import type { VariationPolicy } from '../../core/music/arrangement-variation.model';
 
 @Component({
-  selector: 'vc-arrangement-variations-dialog', imports: [SelectComponent], changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'vc-arrangement-variations-dialog', imports: [SelectComponent, ContextMenuComponent, CdkMenuModule], changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './arrangement-variations-dialog.component.html', styleUrl: './arrangement-variations-dialog.component.css',
 })
 export class ArrangementVariationsDialogComponent {
@@ -67,7 +69,16 @@ export class ArrangementVariationsDialogComponent {
     });
     const presenceChanges = this.tracks.filter(track => current.trackPresence[track.id] !== section.trackPresence[track.id])
       .map(track => ({ track, present: current.trackPresence[track.id] }));
-    return { section, additions: variationAdditions(this.candidateProject(), current, this.tracks, this.preferences.variationRerolls()), intent: context.intent, context, gestureLabel: VARIATION_GESTURE_LABELS[context.gesture], choices, presenceChanges,
+    const additions = variationAdditions(this.candidateProject(), current, this.tracks, this.preferences.variationRerolls());
+    const additionMenu: ContextMenuItem[] = this.tracks.flatMap(track => {
+      const options = additions.filter(option => option.choice.trackId === track.id);
+      if (!options.length) return [];
+      if (options.length === 1) return [{ id: options[0].value, label: options[0].label }];
+      return [{ id: track.id, label: track.name, children: options.map(option => ({
+        id: option.value, label: option.label.slice(track.name.length + 3),
+      })) }];
+    });
+    return { section, additions, additionMenu, intent: context.intent, context, gestureLabel: VARIATION_GESTURE_LABELS[context.gesture], choices, presenceChanges,
       savedGestureLabel: current.variations?.gesture ? VARIATION_GESTURE_LABELS[current.variations.gesture] : undefined,
       gestureMismatch: current.variations?.gesture !== undefined && current.variations.gesture !== context.gesture };
   }));

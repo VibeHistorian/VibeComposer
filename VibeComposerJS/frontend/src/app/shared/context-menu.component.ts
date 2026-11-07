@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, TemplateRef, viewChild } from '@angular/core';
 import { CdkMenuModule } from '@angular/cdk/menu';
 
 export interface ContextMenuItem {
@@ -12,12 +12,14 @@ export interface ContextMenuAction { readonly id: string; readonly x: number; re
 /** Items remain live inputs; callers own actions and any subsequent popup. */
 @Component({
   selector: 'vc-context-menu',
+  exportAs: 'vcContextMenu',
   imports: [CdkMenuModule],
   templateUrl: './context-menu.component.html',
   styleUrl: './context-menu.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContextMenuComponent {
+  readonly menu = viewChild.required<TemplateRef<unknown>>('root');
   readonly items = input.required<readonly ContextMenuItem[]>();
   readonly action = output<ContextMenuAction>();
   private point = { x: 0, y: 0 };

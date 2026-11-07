@@ -27,8 +27,8 @@ h2 { flex: none; margin: 0; font-size: 13px; color: var(--text-primary); }
 .section-intent { flex: none; }
 .variation-purpose { min-width: 0; }
 .add-variation { display: grid; place-items: center; flex: none; margin-left: auto; width: 26px; height: 26px; padding: 0; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font-size: 16px; line-height: 1; text-align: center; cursor: pointer; }
-.add-variation:hover:not([aria-disabled="true"]), .add-variation[aria-expanded="true"]:not([aria-disabled="true"]) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
-.add-variation[aria-disabled="true"] { opacity: .5; cursor: default; }
+.add-variation:hover:not(:disabled), .add-variation[aria-expanded="true"]:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--text-primary); }
+.add-variation:disabled { opacity: .5; cursor: default; }
 article { padding: 10px; margin-bottom: 8px; background: var(--surface-low); border: 1px solid var(--border-subtle); border-radius: var(--radius-control); }
 .variation-line { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 16px; }
 .variation-label { display: flex; align-items: center; gap: 4px; font-size: 12px; line-height: 1.5; white-space: nowrap; }

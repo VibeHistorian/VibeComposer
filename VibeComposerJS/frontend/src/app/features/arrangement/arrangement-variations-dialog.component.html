@@ -23,8 +23,10 @@
           <h2>{{ row.section.type.replaceAll('_', ' ') }}</h2>
           <span class="section-intent">Energy {{ value(row.intent.energy * 100) }}% · Tension {{ value(row.intent.tension * 100) }}%</span>
           <strong class="variation-purpose">{{ row.gestureLabel }}</strong>
-          <vc-select #adder="vcSelect" class="add-variation" displayLabel="+" [attr.aria-label]="'Add variation to ' + row.section.type"
-            [options]="row.additions" value="" [disabled]="stale() || !policyValid() || !row.additions.length" (valueChange)="add(row.section.id, $event); adder.restoreValue()" />
+          <vc-context-menu #adder="vcContextMenu" [items]="row.additionMenu" (action)="add(row.section.id, $event.id)">
+            <button type="button" class="add-variation" [attr.aria-label]="'Add variation to ' + row.section.type"
+              [cdkMenuTriggerFor]="adder.menu()" [disabled]="stale() || !policyValid() || !row.additions.length">+</button>
+          </vc-context-menu>
         </div>
         @if (row.gestureMismatch) { <p class="context-warning">Saved plan: {{ row.savedGestureLabel }}. Reroll to replan for this position.</p> }
         @if (row.presenceChanges.length) {
