@@ -5,6 +5,7 @@ import { ProjectService } from '../../core/project/project.service';
 import { decodeTrackPresets, type TrackPreset } from '../../core/project/track-presets';
 import { formatCompactJson } from '../../core/project/project-json';
 import { SelectComponent } from '../../shared/select.component';
+import { BUILTIN_TRACK_PRESETS } from '../../core/project/builtin-track-presets';
 
 const STORAGE_KEY = 'vibecomposer.track-presets';
 
@@ -27,8 +28,14 @@ export class TrackPresetDialogComponent {
   readonly message = signal('');
   readonly library = signal<TrackPreset[]>(this.readLibrary());
   readonly presets = computed(() => this.library().filter(preset => preset.role === this.data.role));
-  readonly options = computed(() => [{ value: '', label: 'Choose a preset' }, ...this.presets().map(preset => ({ value: preset.name, label: `${preset.name} (${preset.tracks.length})` }))]);
-  readonly chosen = computed(() => this.presets().find(preset => preset.name === this.presetName()));
+  readonly builtins = BUILTIN_TRACK_PRESETS.filter(preset => preset.role === this.data.role);
+  readonly isBuiltin = computed(() => this.presetName().startsWith('builtin:'));
+  readonly options = computed(() => [{ value: '', label: 'Choose a preset' },
+    ...this.presets().map(preset => ({ value: `user:${preset.name}`, label: `${preset.name} (${preset.tracks.length})` })),
+    ...this.builtins.map(preset => ({ value: `builtin:${preset.name}`, label: `Built-in · ${preset.name} (${preset.tracks.length})` }))]);
+  readonly chosen = computed(() => this.isBuiltin()
+    ? this.builtins.find(preset => `builtin:${preset.name}` === this.presetName())
+    : this.presets().find(preset => `user:${preset.name}` === this.presetName()));
   readonly canSave = computed(() => !!this.name().trim() && this.name().trim().length <= 80 && this.tracks().some(track => this.selected().has(track.id)));
 
   toggle(id: string, checked: boolean): void {
@@ -55,7 +62,7 @@ export class TrackPresetDialogComponent {
     const name = this.name().trim();
     if (this.presets().some(preset => preset.name === name)) { this.message.set('This name already exists. Choose a different name.'); return; }
     const preset: TrackPreset = { name, role: this.data.role, tracks: structuredClone(this.tracks().filter(track => this.selected().has(track.id))) };
-    if (this.store([...this.library(), preset])) { this.presetName.set(name); this.name.set(''); this.message.set('Preset saved.'); }
+    if (this.store([...this.library(), preset])) { this.presetName.set(`user:${name}`); this.name.set(''); this.message.set('Preset saved.'); }
   }
   load(): void {
     const preset = this.chosen();
@@ -65,7 +72,7 @@ export class TrackPresetDialogComponent {
   }
   remove(): void {
     const preset = this.chosen();
-    if (preset && this.store(this.library().filter(item => item !== preset))) { this.presetName.set(''); this.message.set('Preset deleted.'); }
+    if (preset && !this.isBuiltin() && this.store(this.library().filter(item => item !== preset))) { this.presetName.set(''); this.message.set('Preset deleted.'); }
   }
   async importFile(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;

@@ -98,6 +98,9 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const managerBounds = manager.getBoundingClientRect();
       if (managerBounds.left < 0 || managerBounds.right > innerWidth || managerBounds.top < 0 || managerBounds.bottom > innerHeight) throw new Error('preset manager outside viewport');
       const managerButton = text => [...manager.querySelectorAll('button')].find(button => button.textContent.trim() === text);
+      await change(manager.querySelector('vc-select[aria-label="Track preset"]'), 'builtin:Deep House · 118–124 BPM');
+      await wait(() => !managerButton('Load preset').disabled && managerButton('Delete preset').disabled, 'factory preset available and protected');
+      if (JSON.parse(localStorage.getItem('vibecomposer.track-presets') ?? '[]').length) throw new Error('factory presets leaked into user storage');
       const selection = [...manager.querySelectorAll('.track-list input')];
       selection.slice(1).forEach(input => input.click());
       const presetNameInput = manager.querySelector('input[type="text"]');
@@ -116,7 +119,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => JSON.stringify(read()) === beforePreset, 'undo appended preset');
       presetButton.click();
       const reopened = await wait(() => document.querySelector('vc-track-preset-dialog'), 'reopen stored library');
-      await change(reopened.querySelector(':is(vc-select, vc-menu-select)[aria-label="Track preset"]'), 'Browser bass');
+      await change(reopened.querySelector(':is(vc-select, vc-menu-select)[aria-label="Track preset"]'), 'user:Browser bass');
       [...reopened.querySelectorAll('button')].find(button => button.textContent.trim() === 'Load preset').click();
       await wait(() => bassRows().length === 2, 'replace unlocked tracks');
       if (JSON.stringify(bassRows()[0]) !== JSON.stringify(JSON.parse(beforePreset).tracks.find(track => track.id === bassRows()[0].id))) throw new Error('locked preset survivor changed');

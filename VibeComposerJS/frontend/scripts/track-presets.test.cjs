@@ -2,6 +2,39 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('factory library covers 24 complete styles with valid, deterministic generated layers', () => {
+  const { service, load } = fixture();
+  const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
+  const { decodeTrackPresets } = load('core/project/track-presets.ts');
+  const { generateTrackPhrase } = load('core/music/phrase.ts');
+  assert.equal(library.length, 120);
+  assert.ok(decodeTrackPresets(JSON.parse(JSON.stringify(library))));
+  const names = new Set(library.map(preset => preset.name));
+  assert.equal(names.size, 24);
+  const original = JSON.stringify(library);
+  for (const name of names) {
+    const style = library.filter(preset => preset.name === name);
+    assert.equal(new Set(style.map(preset => preset.role)).size, 5);
+    const before = service.exportProjectJson();
+    for (const preset of style) {
+      assert.ok(preset.tracks.length >= 2);
+      assert.equal(service.loadTrackPreset(preset.role, preset.tracks, true), 'changed', name);
+      for (const track of service.project().tracks.filter(track => track.role === preset.role)) {
+        assert.equal(track.editedPhrase, undefined);
+        assert.equal(track.phraseEdits, undefined);
+        const notes = generateTrackPhrase(service.project(), track);
+        assert.ok(notes.length, `${name}: ${track.name} must sound`);
+        assert.deepEqual(generateTrackPhrase(service.project(), track), notes);
+        assert.ok(notes.every(note => Number.isFinite(note.startBeat) && note.durationBeats > 0
+          && note.midi >= 0 && note.midi <= 127 && note.velocity >= 1 && note.velocity <= 127));
+      }
+    }
+    for (let index = 0; index < 5; index++) service.undo();
+    assert.equal(service.exportProjectJson(), before);
+  }
+  assert.equal(JSON.stringify(library), original, 'loads never mutate factory data');
+});
+
 test('preset replacement preserves locked tracks and occupied slots, cleans surplus references and undoes once', () => {
   const { service } = fixture();
   const lockedId = service.project().tracks.find(track => track.role === 'bass').id;
