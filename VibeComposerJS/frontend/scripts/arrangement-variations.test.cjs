@@ -857,7 +857,7 @@ test('hat/ride density uses instrument bounds and never introduces kick rolls', 
   const { project, engine, phrase } = setup();
   const drums = project.tracks.find(t => t.role === 'drums');
   const choice = { trackId: drums.id, kind: 'drum-density', amount: 1, enabled: true };
-  for (const pitch of [42, 44, 46, 53]) {
+  for (const pitch of [42, 44, 46, 51, 53, 59]) {
     for (const rhythm of ['full', 'half', 'euclid']) {
       const track = { ...drums, generatorSettings: { ...drums.generatorSettings, pitch, rhythm, hitsPerPattern: 4, euclideanPulses: 2 } };
       const patch = engine.variationPatch(track, choice);
@@ -867,7 +867,7 @@ test('hat/ride density uses instrument bounds and never introduces kick rolls', 
       assert.ok(varied.every(note => note.midi === pitch));
     }
   }
-  for (const pitch of [35, 36, 38, 40, 49, 51]) assert.deepEqual(engine.variationPatch({ ...drums, generatorSettings: { ...drums.generatorSettings, pitch } }, choice), {});
+  for (const pitch of [35, 36, 38, 40, 49, 52, 55, 57]) assert.deepEqual(engine.variationPatch({ ...drums, generatorSettings: { ...drums.generatorSettings, pitch } }, choice), {});
   const capped = pitch => ({ ...drums, generatorSettings: { ...drums.generatorSettings, pitch, hitsPerPattern: pitch === 42 ? 16 : 8 } });
   for (const pitch of [42, 46, 53]) assert.deepEqual(engine.variationPatch(capped(pitch), choice), {});
 });

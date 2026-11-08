@@ -61,7 +61,7 @@ test('TinySynth renders GM presets and drums with independent voices and track r
           programs.push(voices.length);
           maxTail = Math.max(maxTail, ...voices.map(voice => voice.stopTime - .11));
         }
-        for (let pitch = 35; pitch <= 81; pitch++) {
+        for (let pitch = 35; pitch <= 82; pitch++) {
           const voices = finish(engine.schedule(silent, 0, true, pitch, 90, .01, .1));
           drums.push(voices.length);
           maxTail = Math.max(maxTail, ...voices.map(voice => voice.stopTime - .01));
@@ -122,7 +122,7 @@ test('TinySynth renders GM presets and drums with independent voices and track r
     assert.deepEqual(output.unhandled, [], 'offline initialization must not reject resume promises');
     assert.equal(output.programs.length, 128);
     assert.ok(output.programs.every(count => count > 0));
-    assert.equal(output.drums.length, 47);
+    assert.equal(output.drums.length, 48);
     assert.ok(output.maxTail > 30 && output.maxTail <= 40, 'offline export reserves the longest GM and drum tails');
     assert.ok(output.drums.every(count => count > 0));
     assert.ok(output.levels.every(level => level > .001), 'selected presets render audible output');
@@ -166,7 +166,7 @@ test('SF2 GM sampler resolves and renders all 128 programs and Standard drums of
           const note = Math.min(region.keyRange[1], Math.max(region.keyRange[0], 60));
           finish(engine.schedule(bus, program, false, note, 100, 4 + program * .25, .12));
         }
-        for (let note = 35; note <= 81; note++) finish(engine.schedule(bus, 0, true, note, 100, 36 + (note - 35) * .06, .03));
+        for (let note = 35; note <= 82; note++) finish(engine.schedule(bus, 0, true, note, 100, 36 + (note - 35) * .06, .03));
         finish(engine.schedule(bus, 0, false, 60, 100, .05, .2));
         finish(engine.schedule(bus, 0, false, 60, 100, 2, .2));
         const cancelled = engine.schedule(bus, 0, false, 60, 100, 1, .2);

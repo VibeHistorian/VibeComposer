@@ -11,7 +11,14 @@
       <p id="midi-import-duration-error" class="error" role="alert">{{ error() }}</p>
     </section>
   }
-  @if (data.choices.length) {
+  @if (data.drumImport) {
+    <section aria-label="Drum MIDI source mapping">
+      <label for="midi-import-drums">Source drum mapping</label>
+      <vc-select id="midi-import-drums" aria-label="Source drum mapping" [options]="scaleOptions()" [value]="choice()" (valueChange)="choice.set($event)" />
+      <p>Choose General MIDI to keep the original percussion pitches, or Chromatic to interpret notes using this project’s saved slots. Chromatic is available when every imported note has an assigned slot.</p>
+    </section>
+  }
+  @if (data.choices.length && !data.drumImport) {
     <section aria-label="Fit MIDI key and mode">
       <p>Some imported notes fall outside the current key and mode after global transpose correction. Scale snapping is on.</p>
       <label for="midi-import-scale">Key/mode translation</label>

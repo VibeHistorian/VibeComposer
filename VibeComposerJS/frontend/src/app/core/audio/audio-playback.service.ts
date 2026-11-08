@@ -1,3 +1,4 @@
+import { resolvedDrumSlots } from '../project/project-drum-kit';
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { mixEnabled } from './mix-values';
 import { MidiOutputService } from './midi-output.service';
@@ -68,6 +69,7 @@ export class AudioPlaybackService {
   private mixProject?: CompositionProject;
   private scheduledProject?: CompositionProject;
   private phrasePreview: PlaybackPhrasePreview | null = null;
+  private previewDrumSlots?: { project: CompositionProject; preview: PlaybackPhrasePreview | null; slots: ReturnType<typeof resolvedDrumSlots> };
   private notes: ScheduledNote[] = [];
   private queuedNotes: ScheduledNote[] = [];
   private nextNote = 0;
@@ -98,7 +100,12 @@ export class AudioPlaybackService {
       this.midi.selectedOutput();
       this.midi.drumMapping();
       untracked(() => {
-        if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
+        if (this.state() === 'playing' && !this.midi.selectedOutput() && !this.synth && this.mixProject) {
+          const beat = this.currentSongBeat();
+          this.clearScheduler();
+          this.stopSources();
+          void this.start(this.mixProject, beat);
+        } else if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
         else this.stopSources();
       });
     });
@@ -113,7 +120,7 @@ export class AudioPlaybackService {
     void this.context?.close().catch(() => {});
   }
 
-  async audition(track: CompositionTrack, notes: readonly PhraseNote[]): Promise<void> {
+  async audition(track: CompositionTrack, notes: readonly PhraseNote[], project?: CompositionProject): Promise<void> {
     if (!notes.length) return;
     try {
       const context = this.getContext();
@@ -124,7 +131,8 @@ export class AudioPlaybackService {
         for (const note of notes) {
           if (pitches.has(note.midi)) continue;
           pitches.add(note.midi);
-          this.midi.schedule(track, note.midi, note.velocity, performance.now() + 3, 0.3);
+          this.midi.schedule(track, note.midi, note.velocity, performance.now() + 3, 0.3,
+            project && track.role === 'drums' ? this.drumSlotsFor(project, notes.map(note => note.midi)) : undefined);
         }
         return;
       }
@@ -274,6 +282,13 @@ export class AudioPlaybackService {
   /** Drafts affect playback only; cancelling or applying clears this temporary window. */
   setPhrasePreview(project: CompositionProject, preview: PlaybackPhrasePreview | null): void {
     if (this.phrasePreview === preview) return;
+    try {
+      const pitches = preview?.notes.filter(note => project.tracks.some(track => track.id === note.trackId && track.role === 'drums')).map(note => note.midi) ?? [];
+      if (pitches.length) resolvedDrumSlots(project, pitches);
+    } catch (error) {
+      this.playbackError.set(error instanceof Error ? error.message : 'Cannot preview these drum sounds.');
+      return;
+    }
     this.phrasePreview = preview;
     this.reload(project, true);
   }
@@ -283,6 +298,7 @@ export class AudioPlaybackService {
     if ((!this.liveEnabled() && !phrasePreviewChanged) || this.state() !== 'playing' || !this.context) return;
     const previous = this.scheduledProject;
     if (!phrasePreviewChanged && previous && samePhraseInputs(previous, project)
+      && JSON.stringify(previous.drumSlots) === JSON.stringify(project.drumSlots)
       && previous.tracks.every((track, index) => track.mix.program === project.tracks[index].mix.program)) {
       this.updateMix(project);
       return;
@@ -440,6 +456,7 @@ export class AudioPlaybackService {
     // Compare audible events, ignoring labels and note IDs; mix controls already update their buses.
     return JSON.stringify([
       project.tempoBpm,
+      project.drumSlots,
       projectTempoMap(project),
       project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0),
       project.tracks.map((track) => [track.id, track.role, track.mix.program]),
@@ -559,7 +576,8 @@ export class AudioPlaybackService {
       const track = project?.tracks.find(track => track.id === note.trackId);
       if (track && mixEnabled(track.mix, project!.tracks.some(track => track.mix.solo))) {
         this.midi.schedule(track, note.midi, note.velocity,
-          performance.now() + (startTime - context.currentTime) * 1000, duration);
+          performance.now() + (startTime - context.currentTime) * 1000, duration,
+          track.role === 'drums' ? this.drumSlotsFor(project!) : undefined);
         this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });
       }
       return;
@@ -575,6 +593,17 @@ export class AudioPlaybackService {
         voice.dispose();
       });
     }
+  }
+
+  private drumSlotsFor(project: CompositionProject, extraPitches: readonly number[] = []): ReturnType<typeof resolvedDrumSlots> {
+    const cached = this.previewDrumSlots;
+    if (cached?.project === project && cached.preview === this.phrasePreview
+      && extraPitches.every(pitch => cached.slots[pitch] !== undefined)) return cached.slots;
+    const drumIds = new Set(project.tracks.filter(track => track.role === 'drums').map(track => track.id));
+    const pitches = this.phrasePreview?.notes.filter(note => drumIds.has(note.trackId)).map(note => note.midi) ?? [];
+    const slots = resolvedDrumSlots(project, [...pitches, ...extraPitches]);
+    this.previewDrumSlots = { project, preview: this.phrasePreview, slots };
+    return slots;
   }
 
   private playbackDiagnostics(): object {

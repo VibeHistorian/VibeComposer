@@ -1,3 +1,4 @@
+import type { DrumSlots } from '../music/drum-instruments';
 import type { PhraseNote } from '../music/phrase-note';
 import { Dialog } from '@angular/cdk/dialog';
 import type { Injector } from '@angular/core';
@@ -11,15 +12,21 @@ export interface MidiDropOptions {
   readonly root: number;
   readonly mode: ScaleMode;
   readonly snap: boolean;
+  readonly drumSlots?: DrumSlots;
 }
 
 /** Parse off the UI thread, with cancellation when the editor closes or changes track. */
 export async function readMidiFile(buffer: ArrayBuffer, maximumBeats: number, maximumNotes: number, signal: AbortSignal, options: MidiDropOptions): Promise<PhraseNote[] | null> {
   const { track, choices } = await readTrack(buffer, maximumNotes, signal, options);
   if (signal.aborted) return null;
-  if (track.durationBeats <= maximumBeats && !choices.length) return fitImportedMidi(track, maximumBeats);
+  if (options.drumSlots) {
+    const inverse = new Map(Object.entries(options.drumSlots).map(([pitch, slot]) => [slot, Number(pitch)]));
+    if (track.notes.every(note => inverse.has(note.midi))) choices.push({ id: 'chromatic-drums',
+      label: 'Chromatic 36–51 → project drum sounds', pitches: track.notes.map(note => inverse.get(note.midi)!) });
+  }
+  if (track.durationBeats <= maximumBeats && !choices.length && !options.drumSlots) return fitImportedMidi(track, maximumBeats);
   const dialog = options.injector.get(Dialog).open<PhraseNote[]>(MidiImportDialogComponent, {
-    ariaLabel: 'MIDI import options', data: { track, phraseBeats: maximumBeats, choices },
+    ariaLabel: 'MIDI import options', data: { track, phraseBeats: maximumBeats, choices, drumImport: options.drumSlots !== undefined },
   });
   return new Promise(resolve => {
     const abort = () => dialog.close();

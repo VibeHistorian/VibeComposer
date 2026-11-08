@@ -1,3 +1,4 @@
+import { drumSelectionSlot, projectDrumPitches, resolvedDrumSlots } from '../../core/project/project-drum-kit';
 import { MenuSelectComponent } from '../../shared/menu-select.component';
 import { INSTRUMENT_MENU_GROUPS, DRUM_MENU_GROUPS } from './instrument-menu-groups';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
@@ -25,11 +26,11 @@ import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../
 import type { CompositionTrack } from '../../core/project/track.model';
 import type { CompositionProject } from '../../core/project/project.model';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
-import type { TrackGenerationPolicyPatch, InstrumentGenerationPolicy } from '../../core/music/generation-policy.model';
+import type { TrackGenerationPolicyPatch, InstrumentGenerationPolicy, InstrumentPool } from '../../core/music/generation-policy.model';
 import { DEFAULT_MIX, DEFAULT_TRACKS } from '../../core/project/project-defaults';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
-import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
+import { DRUM_INSTRUMENTS, MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
 import { layOutTrackPhrase, phraseForTrack, trackPhraseSource } from '../../core/music/phrase';
@@ -139,7 +140,19 @@ export class WorkspaceCanvasComponent {
   }
   readonly instrumentMenuGroups = INSTRUMENT_MENU_GROUPS;
   readonly drumMenuGroups = DRUM_MENU_GROUPS;
-  readonly drumSelectOptions = computed(() => this.drumInstruments.map(instrument => ({ value: instrument.midi, label: this.midi.drumLabel(instrument.midi) })));
+  readonly drumSelectOptions = computed(() => {
+    const project = this.project(), slots = resolvedDrumSlots(project);
+    const pool = INSTRUMENT_POOLS[this.instrumentPolicyFor('drums').pool as Exclude<InstrumentPool, 'AUTO'>];
+    return Object.fromEntries(project.tracks.filter(track => track.role === 'drums').map(track => {
+      const retained = projectDrumPitches(project, [track.id]);
+      return [track.id, this.drumInstruments.map(instrument => {
+        const slot = drumSelectionSlot(instrument.midi, track.generatorSettings.pitch, retained, slots);
+        const inPool = !this.preferences.limitInstrumentsToPool() || pool.includes(instrument.midi) || instrument.midi === track.generatorSettings.pitch;
+        return { value: instrument.midi, label: this.midi.drumLabel(instrument.midi, slot === undefined ? slots : { [instrument.midi]: slot })
+          + (slot === undefined ? ` · ${MAX_DRUM_SOUNDS} sounds in use` : !inPool ? ' · outside pool' : ''), disabled: slot === undefined || !inPool };
+      })];
+    }));
+  });
   readonly instrumentSelectOptions = computed(() => Object.fromEntries(Object.entries(this.trackInstrumentOptions()).map(([id, options]) => [id, options.map(instrument => ({ value: instrument.program, label: instrument.name }))])));
   readonly channelSelectOptions = computed(() => this.midiChannels.map(channel => ({ value: channel, label: 'CH ' + channel.toString().padStart(2, '0') })));
   readonly sectionSelectOptions = computed(() => this.sectionTypes.map(type => ({ value: type, label: this.sectionLabel(type) })));
@@ -564,7 +577,7 @@ export class WorkspaceCanvasComponent {
   canvasNoteAdded(position: { trackId?: string; midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
     this.editor()?.addNoteAt({ ...position, startBeat: position.startBeat - this.editStartBeat() });
     const note = this.editor()?.selectedNote();
-    if (note) void this.playback.audition(this.selectedTrack(), [note]);
+    if (note) void this.playback.audition(this.selectedTrack(), [note], this.project());
   }
   canvasNotesChanged(change: { notes: readonly import('../../core/music/phrase-note').PhraseNote[]; duplicate: boolean }): void {
     this.editor()?.replaceNotes(change.notes.map(note => ({ ...note, startBeat: note.startBeat - this.editStartBeat() })), change.duplicate);
@@ -574,7 +587,7 @@ export class WorkspaceCanvasComponent {
     if (!editor) return;
     for (const track of editor.editedTracks()) {
       const owned = notes.filter(note => editor.notes().some(draft => draft.id === note.id && draft.trackId === track.id));
-      if (owned.length) void this.playback.audition(track, owned);
+      if (owned.length) void this.playback.audition(track, owned, this.project());
     }
   }
   canvasSplit(position: { id: string; beat: number }): void {
@@ -949,7 +962,7 @@ export class WorkspaceCanvasComponent {
   }
 
   instrumentName(track: TrackRow): string {
-    return track.role === 'drums' ? this.midi.drumLabel(track.generatorSettings.pitch) : this.instruments.find((item) => item.program === track.mix.program)?.name ?? `GM ${track.mix.program + 1}`;
+    return track.role === 'drums' ? this.midi.drumLabel(track.generatorSettings.pitch, this.project().drumSlots) : this.instruments.find((item) => item.program === track.mix.program)?.name ?? `GM ${track.mix.program + 1}`;
   }
 
   drumPitch(track: CompositionTrack): number | undefined {

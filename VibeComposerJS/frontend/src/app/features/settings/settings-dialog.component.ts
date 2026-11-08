@@ -21,7 +21,7 @@ import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
 import { HARMONY_GENERATIONS } from '../../core/music/contextual-harmony';
 import { DEFAULT_HARMONY_SETTINGS, type HarmonySettings } from '../../core/music/harmony-voicing';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
-import type { DrumMappingPreference } from '../../core/music/drum-instruments';
+import { MAX_DRUM_SOUNDS, type DrumMappingPreference } from '../../core/music/drum-instruments';
 
 @Component({
   selector: 'vc-settings-dialog',
@@ -32,6 +32,7 @@ import type { DrumMappingPreference } from '../../core/music/drum-instruments';
   styleUrls: ['./settings-dialog.component.css', './settings-rows.css'],
 })
 export class SettingsDialogComponent {
+  readonly maxDrumSounds = MAX_DRUM_SOUNDS;
   setHumanization(key: 'timingBeats' | 'durationBeats', value: number): void {
     this.projects.updateSettings({ humanization: { timingBeats: 0, durationBeats: 0, ...this.projects.project().humanization, [key]: value } });
   }

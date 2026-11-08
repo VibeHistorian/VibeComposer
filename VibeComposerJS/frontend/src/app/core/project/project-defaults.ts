@@ -68,6 +68,7 @@ export const DEFAULT_TRACKS: readonly CompositionTrack[] = [
 ];
 
 export const DEFAULT_PROJECT: CompositionProject = {
+  drumSlots: { 36: 37 },
   schemaVersion: 12,
   name: 'Untitled vibe',
   key: 'C',

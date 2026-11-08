@@ -1,3 +1,4 @@
+import { validDrumKit, reconcileDrumKit } from './project-drum-kit';
 import { validOutputSettings } from '../music/output-processing';
 import { validVariationPolicy } from '../music/arrangement-variations';
 import type { ArrangedPart } from '../music/part-role';
@@ -55,7 +56,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
   }
   const trackIds = new Set(tracks.map((track) => track.id));
   if (arrangement.some((section) => Object.keys(section.trackPresence).some((trackId) => !trackIds.has(trackId)))) return undefined;
-  return {
+  const decoded: CompositionProject = {
     schemaVersion: 12,
     name: project.name!,
     key: project.key!,
@@ -79,6 +80,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     editedPhrases,
     tracks,
     arrangement,
+    ...(project.drumSlots !== undefined ? { drumSlots: project.drumSlots } : {}),
     ...(project.trackGenerationPolicies !== undefined ? { trackGenerationPolicies: Object.fromEntries(
       Object.entries(project.trackGenerationPolicies).map(([role, policy]) => [role, decodeTrackGenerationPolicy(role as ArrangedPart, policy)!])
     ) as Partial<TrackGenerationPolicies> } : {}),
@@ -87,6 +89,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
       Object.entries(project.instrumentGenerationPolicies).map(([role, policy]) => [role, decodeInstrumentPolicy(role as ArrangedPart, policy)!])
     ) } : {}),
   };
+  return reconcileDrumKit(decoded);
 }
 
 /** Validate a complete command candidate without normalizing it or adding import defaults. */
@@ -122,5 +125,6 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && validTrackGenerationMetadata(project.trackGenerationPolicies, project.trackRerollCounts)
     && validInstrumentPolicies(project.instrumentGenerationPolicies)
     && (project.harmonySettings === undefined || decodeHarmonySettings(project.harmonySettings) !== undefined)
-    && (project.melodyGlobal === undefined || decodeMelodyGlobal(project.melodyGlobal) !== undefined);
+    && (project.melodyGlobal === undefined || decodeMelodyGlobal(project.melodyGlobal) !== undefined)
+    && validDrumKit(project as CompositionProject);
 }

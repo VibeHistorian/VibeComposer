@@ -1,3 +1,5 @@
+import { resolvedDrumSlots } from '../project/project-drum-kit';
+import type { DrumSlots } from './drum-instruments';
 import { DEFAULT_MIDI_PPQ, validMidiPpq } from './midi-resolution';
 import { Midi } from '@tonejs/midi';
 import { midiPanValue, mixEnabled } from '../audio/mix-values';
@@ -13,7 +15,7 @@ import { mapDrumPitch, type DrumMapping } from './drum-instruments';
  * Prepend pickup time and preserve tails. Notes already contain their sounding pitches. */
 export function generatePhraseMidi(name: string, tempoBpm: number,
   tracks: readonly { track: CompositionTrack; notes: readonly PhraseNote[] }[],
-  _phraseBeats: number, drumMapping: DrumMapping = 'general-midi', ppq = DEFAULT_MIDI_PPQ): Uint8Array {
+  _phraseBeats: number, drumMapping: DrumMapping = 'general-midi', ppq = DEFAULT_MIDI_PPQ, drumSlots?: DrumSlots): Uint8Array {
   const midi = new Midi();
   if (!validMidiPpq(ppq)) throw new Error('Unsupported MIDI PPQ');
   midi.header.fromJSON({ ...midi.header.toJSON(), ppq });
@@ -30,7 +32,7 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
       const end = start + note.durationBeats;
       if (end <= start) continue;
       track.addNote({
-        midi: source.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
+        midi: source.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots) : note.midi,
         ticks: Math.round(start * midi.header.ppq),
         durationTicks: Math.max(1, Math.round(end * midi.header.ppq) - Math.round(start * midi.header.ppq)),
         velocity: note.velocity / 127,
@@ -42,6 +44,7 @@ export function generatePhraseMidi(name: string, tempoBpm: number,
 
 /** Serialize every independent instrument track with its assigned channel and mix controls. */
 export function generateCompositionMidi(project: CompositionProject, drumMapping: DrumMapping = 'general-midi', ppq = DEFAULT_MIDI_PPQ): Uint8Array {
+  const drumSlots = resolvedDrumSlots(project);
   const midi = new Midi();
   if (!validMidiPpq(ppq)) throw new Error('Unsupported MIDI PPQ');
   midi.header.fromJSON({ ...midi.header.toJSON(), ppq });
@@ -63,7 +66,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
       if (!included) continue;
       for (const note of phrases.get(compositionTrack.id)!) {
         track.addNote({
-          midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping) : note.midi,
+          midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots) : note.midi,
           ticks: Math.round((note.startBeat + offset) * midi.header.ppq),
           durationTicks: Math.max(1, Math.round(note.durationBeats * midi.header.ppq)),
           velocity: note.velocity / 127,

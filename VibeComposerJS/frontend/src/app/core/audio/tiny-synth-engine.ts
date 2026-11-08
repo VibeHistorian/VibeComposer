@@ -56,6 +56,8 @@ export class TinySynthEngine implements InstrumentEngine {
   schedule(destination: AudioNode, program: number, percussion: boolean,
     midi: number, velocity: number, start: number, duration: number): InstrumentVoice[] {
     if (velocity <= 0) return [];
+    // TinySynth has no shaker (82); approximate it with maracas (70) for internal audio only.
+    if (percussion && midi === 82) midi = 70;
     const timbre = percussion ? this.synth.drummap[midi - 35]?.p : this.synth.program[program]?.p;
     if (!timbre) return [];
     const previous = this.synth.chvol[0];

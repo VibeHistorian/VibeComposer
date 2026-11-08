@@ -35,7 +35,7 @@ export class TrackGenerationPolicyComponent {
   readonly instrumentPolicyChanged = output<Partial<InstrumentGenerationPolicy>>();
   readonly instrumentPools = computed(() => instrumentPoolOptions(this.role()));
   readonly poolLabels = { AUTO: 'Chord / Pluck', ALL: 'All', MELODY: 'Melody', BASS: 'Bass', CHORD: 'Chord',
-    PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Percussion' };
+    PLUCK: 'Pluck', LONG_PAD: 'Long pad', DRUM: 'Classic drums', DRUM_FULL: 'Full percussion', DRUM_ACOUSTIC: 'Acoustic kit', DRUM_HAND: 'Hand percussion' };
   readonly controls = computed(() => TRACK_POLICY_CONTROLS[this.role()].filter(control => !['onCompose', 'rerollSeeds', 'sameSeed'].includes(control.key)));
 
   readonly defaultInstrumentPolicies = DEFAULT_INSTRUMENT_POLICIES;

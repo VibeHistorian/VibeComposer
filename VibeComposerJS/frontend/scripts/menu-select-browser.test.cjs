@@ -50,7 +50,7 @@ for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, {
  const reset=picker.getAttribute('value');picker.dispatchEvent(new WheelEvent('wheel',{deltaY:100,bubbles:true,cancelable:true}));
  await wait(()=>picker.getAttribute('value')!==reset,'wheel steps');
  const drum=document.querySelector('.track-group.drums vc-menu-select');const drums=await selectOptions(drum);
- check(drums.length===16,'all drum pitches reachable');await changeControl(drum,'82');await wait(()=>drum.textContent.includes('Shaker'),'mapped drum label');
+ check(drums.length===48,'all supported drum pitches reachable');await changeControl(drum,'82');await wait(()=>drum.textContent.includes('Shaker'),'mapped drum label');
  document.querySelector('.track-group.chords .group-select').click();
  const strum=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="chords"] vc-menu-select[data-parameter-key="strumType"]'),'strum');
  const types=await selectOptions(strum);check(types.length===9,'all strum variants reachable');

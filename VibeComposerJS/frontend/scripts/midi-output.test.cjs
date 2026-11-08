@@ -31,6 +31,22 @@ function port(id) {
   };
 }
 
+test('expanded drum identities use project slots for both MIDI messages and follow Auto without editing them', async () => {
+  const output = port('expanded');
+  const service = fixture(async () => ({ outputs: new Map([[output.id, output]]), addEventListener() {}, removeEventListener() {} }));
+  const slots = { 49: 37, 64: 50 };
+  const track = { midiChannel: 10, role: 'drums', mix: { program: 0, volumePercent: 100, panPercent: 0 } };
+  assert.equal(service.drumLabel(49, slots), 'Crash cymbal · 49');
+  await service.refresh(); await service.select(output.id);
+  service.schedule(track, 49, 100, 1000, .25, slots);
+  assert.deepEqual(output.messages.slice(-2).map(message => message.data), [[0x99, 37, 100], [0x89, 37, 0]]);
+  assert.equal(service.drumLabel(49, slots), 'Crash cymbal · 37');
+  await service.select(null);
+  assert.equal(service.drumLabel(49, slots), 'Crash cymbal · 49');
+  assert.deepEqual(slots, { 49: 37, 64: 50 });
+  service.ngOnDestroy();
+});
+
 test('permission is requested on demand without SysEx, ports update, selection opens and disconnect resets routing', async () => {
   const one = port('one'), two = port('two');
   let changed, calls = 0;
@@ -71,8 +87,8 @@ test('permission is requested on demand without SysEx, ports update, selection o
 });
 
 test('Java drum mapping covers the ordered pool, Auto follows routing, and note-on/off and export agree', async () => {
-  const { DRUM_INSTRUMENTS, mapDrumPitch, resolveDrumMapping } = require('./music-loader.cjs').loadMusic('drum-instruments.ts');
-  for (const [index, instrument] of DRUM_INSTRUMENTS.entries()) {
+  const { CLASSIC_DRUM_INSTRUMENTS, mapDrumPitch, resolveDrumMapping } = require('./music-loader.cjs').loadMusic('drum-instruments.ts');
+  for (const [index, instrument] of CLASSIC_DRUM_INSTRUMENTS.entries()) {
     assert.equal(mapDrumPitch(instrument.midi, 'general-midi'), instrument.midi);
     assert.equal(mapDrumPitch(instrument.midi, 'chromatic'), 36 + index);
   }

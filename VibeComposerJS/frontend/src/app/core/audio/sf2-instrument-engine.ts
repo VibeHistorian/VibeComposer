@@ -38,6 +38,8 @@ export class Sf2InstrumentEngine implements InstrumentEngine {
     if (velocity <= 0) return [];
     // This bank supplies only the Standard kit. Percussion program changes use that kit.
     const bank = percussion ? 128 : 0, preset = this.bank.resolve(bank, percussion ? 0 : program);
+    // Preserve a soundfont’s native shaker; use maracas only when note 82 has no region.
+    if (percussion && midi === 82 && !preset.regions.some(region => midi >= region.keyRange![0] && midi <= region.keyRange![1])) midi = 70;
     const matching = preset.regions.filter(r => midi >= r.keyRange![0] && midi <= r.keyRange![1]
       && velocity >= r.velRange![0] && velocity <= r.velRange![1]);
     if (!matching.length) return [];

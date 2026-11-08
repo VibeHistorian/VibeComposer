@@ -3,7 +3,7 @@ import type { CompositionTrack } from '../project/track.model';
 import type { DrumSettings } from './part-settings.model';
 import type { InstrumentGenerationPolicy, InstrumentPool } from './generation-policy.model';
 import { JavaRandom } from './java-random';
-import { DRUM_INSTRUMENTS } from './drum-instruments';
+import { CLASSIC_DRUM_INSTRUMENTS, DRUM_INSTRUMENTS, MAX_DRUM_SOUNDS, drumFamily } from './drum-instruments';
 import { chooseDrumPitches, type DrumRerollContext } from './drum-reroll';
 
 /** Ordered production InstUtils catalogues. ALL excludes Java's effects/noise programs 120–127. */
@@ -14,7 +14,10 @@ export const INSTRUMENT_POOLS: Readonly<Record<Exclude<InstrumentPool, 'AUTO'>, 
   CHORD: [4,16,17,32,44,48,49,52,70],
   PLUCK: [1,3,5,8,10,11,12,13,15,25,27,32,33,34,35,36,45,46,88],
   LONG_PAD: [16,17,20,21,22,23,40,41,42,43,44,48,49,51,56,57,58,60,61,64,65,67,68,69,70,71,72,74,76,91,92,93,94,95],
-  DRUM: DRUM_INSTRUMENTS.map(instrument => instrument.midi),
+  DRUM: CLASSIC_DRUM_INSTRUMENTS.map(instrument => instrument.midi),
+  DRUM_FULL: DRUM_INSTRUMENTS.map(instrument => instrument.midi),
+  DRUM_ACOUSTIC: DRUM_INSTRUMENTS.filter(instrument => instrument.family !== 'other').map(instrument => instrument.midi),
+  DRUM_HAND: DRUM_INSTRUMENTS.filter(instrument => instrument.family === 'other').map(instrument => instrument.midi),
 };
 export const DEFAULT_INSTRUMENT_POLICIES: Readonly<Record<ArrangedPart, InstrumentGenerationPolicy>> = {
   melody: { randomize: true, pool: 'MELODY' }, bass: { randomize: true, pool: 'BASS' },
@@ -23,7 +26,7 @@ export const DEFAULT_INSTRUMENT_POLICIES: Readonly<Record<ArrangedPart, Instrume
   drums: { randomize: true, pool: 'DRUM' },
 };
 export function instrumentPoolOptions(role: ArrangedPart): readonly InstrumentPool[] {
-  return role === 'drums' ? ['DRUM'] : [...(role === 'chords' ? ['AUTO' as const] : []),
+  return role === 'drums' ? ['DRUM', 'DRUM_FULL', 'DRUM_ACOUSTIC', 'DRUM_HAND'] : [...(role === 'chords' ? ['AUTO' as const] : []),
     'ALL', 'MELODY', 'BASS', 'CHORD', 'PLUCK', 'LONG_PAD'];
 }
 export function decodeInstrumentPolicy(role: ArrangedPart, value: unknown): InstrumentGenerationPolicy | undefined {
@@ -54,7 +57,31 @@ export function rerollInstruments(seed: bigint, role: ArrangedPart, policy: Inst
     const eligible = tracks.filter(track => !track.rerollLocked && !track.instrumentLocked);
     const remaining = [...(drumContext.remaining ?? []), ...tracks.filter(track => track.rerollLocked || track.instrumentLocked)
       .map(track => track.generatorSettings as DrumSettings)];
-    const pitches = chooseDrumPitches(random, eligible.length, remaining.map(settings => settings.pitch), drumContext.onlyAdd);
+    const reserved = [...remaining.map(settings => settings.pitch), ...(drumContext.reservedPitches ?? [])];
+    const candidates = INSTRUMENT_POOLS[policy.pool as Exclude<InstrumentPool, 'AUTO'>];
+    const pitches = policy.pool === 'DRUM'
+      ? chooseDrumPitches(random, eligible.length, remaining.map(settings => settings.pitch), drumContext.onlyAdd)
+      : Array.from({ length: eligible.length }, () => candidates[random.nextInt(candidates.length)]);
+    const used = new Set(reserved);
+    if (policy.pool !== 'DRUM') {
+      let index = 0;
+      for (const family of ['kicks', 'snares'] as const) {
+        const core = candidates.filter(pitch => drumFamily(pitch) === family);
+        if (index < pitches.length && core.length && !reserved.some(pitch => drumFamily(pitch) === family)) {
+          pitches[index++] = core[random.nextInt(core.length)];
+        }
+      }
+    }
+    for (let index = 0; index < pitches.length; index++) {
+      const allowed = candidates.filter(pitch => used.has(pitch) || used.size < MAX_DRUM_SOUNDS);
+      // A full project with no sounds in the selected pool cannot change its retained data.
+      if (!allowed.length) {
+        const original = (eligible[index].generatorSettings as DrumSettings).pitch;
+        pitches[index] = used.has(original) || used.size < MAX_DRUM_SOUNDS ? original : [...used][0];
+      }
+      else if (!allowed.includes(pitches[index])) pitches[index] = allowed[random.nextInt(allowed.length)];
+      used.add(pitches[index]);
+    }
     let index = 0;
     return tracks.map(track => {
       if (track.rerollLocked || track.instrumentLocked) return track;

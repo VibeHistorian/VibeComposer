@@ -46,7 +46,7 @@ export class PatternSequencerComponent {
         customPattern: values['customPattern'] as readonly number[] | undefined }) : [];
       const velocities = draft?.id === track.id && draft.velocities ? draft.velocities
         : [...(values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES)];
-      return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? this.midi.drumLabel(effective.generatorSettings.pitch) : effective.role,
+      return { id: track.id, name: track.name, instrument: effective.role === 'drums' ? this.midi.drumLabel(effective.generatorSettings.pitch, this.projects.project().drumSlots) : effective.role,
         values, supported, hits, pattern, velocities: velocities.slice(0, Math.min(32, hits)), velocitySupported: hits <= 32 && !(track.role === 'bass' && values['rhythm'] === 'bass1'),
         active: 'trackId' in scope && track.id === scope.trackId };
     });

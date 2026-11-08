@@ -67,7 +67,7 @@
                     (click)="rerollRole(track.role, track.id)">↻</button>
                 </div>
                 @if (track.role === 'drums') {
-                  <vc-menu-select [groups]="drumMenuGroups" [options]="drumSelectOptions()" class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
+                  <vc-menu-select [groups]="drumMenuGroups" [options]="drumSelectOptions()[track.id]" class="track-inline-select track-instrument" [attr.aria-label]="'Percussion instrument ' + track.name"
                     [selectDefault]="36" [value]="drumPitch(track)" [title]="'Percussion instrument: ' + instrumentName(track)" [disabled]="editing()"
                     (click)="$event.stopPropagation()" (valueChange)="updateDrumPitch(track, $event)"></vc-menu-select>
                 } @else {
@@ -259,7 +259,7 @@
               </div>
             </div>
               <div class="score-track-lanes">
-                <vc-score-canvas [tracks]="scoreTracks()" [notes]="canvasNotes()" [sections]="timelineSections()"
+                <vc-score-canvas [drumSlots]="project().drumSlots" [tracks]="scoreTracks()" [notes]="canvasNotes()" [sections]="timelineSections()"
                   [ghostNotes]="ghostNotes()"
                   [chordBoundaries]="scoreChordBoundaries()"
                   [notesReady]="!editing() || (editor()?.draftReady() ?? false)"

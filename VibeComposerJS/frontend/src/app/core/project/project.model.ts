@@ -7,6 +7,7 @@ import type { ArrangementSection } from './arrangement.model';
 import type { CompositionTrack } from './track.model';
 
 export interface CompositionProject {
+  readonly drumSlots?: import('../music/drum-instruments').DrumSlots;
   readonly humanization?: { readonly timingBeats: number; readonly durationBeats: number };
   readonly midiPadding?: Readonly<Partial<Record<ArrangedPart, number>>>;
   readonly harmonySettings?: import('../music/harmony-voicing').HarmonySettings;

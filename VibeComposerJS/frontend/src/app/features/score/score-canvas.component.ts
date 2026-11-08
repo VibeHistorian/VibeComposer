@@ -1,3 +1,4 @@
+import type { DrumSlots } from '../../core/music/drum-instruments';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
 import { musicalTime } from '../../core/ui/musical-time';
 import { trackColor } from '../../core/ui/track-color';
@@ -91,6 +92,7 @@ const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; gl
   styleUrl: './score-canvas.component.css',
 })
 export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
+  readonly drumSlots = input<DrumSlots>();
   readonly tracks = input.required<readonly ScoreCanvasTrack[]>();
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
   readonly ghostNotes = input<readonly ScoreCanvasNote[]>([]);
@@ -163,6 +165,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private readonly modelEffect = effect(() => {
     this.preferences.appearance();
     this.midi.drumMapping();
+    this.drumSlots();
     const editable = this.editable();
     if (editable && !this.wasEditable) {
       this.overviewViewport = { horizontalScale: this.horizontalScale, horizontalOffset: this.horizontalOffset,
@@ -555,7 +558,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       time: musicalTime(note.startBeat, false, this.preferences.midiPpq()),
       track: order && name !== defaultName ? `${name} (#${order})` : name,
       color: `var(--role-${note.color})`,
-      pitch: note.color === 'drums' ? this.midi.drumLabel(note.midi)
+      pitch: note.color === 'drums' ? this.midi.drumLabel(note.midi, this.drumSlots())
         : `${['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'][note.midi % 12]}${Math.floor(note.midi / 12) - 1} [${note.midi}]`,
       velocity: note.velocity, source: sources[note.phraseSource ?? 'global-generated'],
       x: Math.max(8, Math.min(x + 14, this.width - 248)),
@@ -961,7 +964,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const y = this.harmonicHeight + index * drumRowHeight;
       fill(0, y, this.width, drumRowHeight, index % 2 ? '--score-row-odd' : '--score-row-even');
       line(0, y, this.width, y, '--border-subtle');
-      rows.push({ midi, label, tooltip: this.midi.drumLabel(midi), y, height: drumRowHeight, drum: true, black: false, inScale: false });
+      rows.push({ midi, label, tooltip: this.midi.drumLabel(midi, this.drumSlots()), y, height: drumRowHeight, drum: true, black: false, inScale: false });
     });
     if (this.drumHeight > 0) line(0, this.harmonicHeight + 0.5, this.width, this.harmonicHeight + 0.5, '--border-strong');
     // Horizontal panning changes note geometry but leaves the pitch gutter

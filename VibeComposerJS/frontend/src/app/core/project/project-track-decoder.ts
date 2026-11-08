@@ -25,7 +25,7 @@ export function decodeTracks(value: unknown): CompositionTrack[] | undefined {
     if (!mix || editedPhrase === null || (track.rerollLocked !== undefined && typeof track.rerollLocked !== 'boolean')
       || (track.instrumentLocked !== undefined && typeof track.instrumentLocked !== 'boolean')) return undefined;
     if (track.phraseEdits !== undefined && !isPhraseRangeEdits(track.phraseEdits)) return undefined;
-    if (track.instrumentPool !== undefined && (typeof track.instrumentPool !== 'string' || track.role === 'drums' || track.instrumentPool === 'DRUM'
+    if (track.instrumentPool !== undefined && (typeof track.instrumentPool !== 'string' || track.role === 'drums' || track.instrumentPool.startsWith('DRUM')
       || !Object.hasOwn(INSTRUMENT_POOLS, track.instrumentPool)
       || !INSTRUMENT_POOLS[track.instrumentPool]?.includes(mix.program))) return undefined;
     let decoded: CompositionTrack | undefined;

@@ -61,7 +61,7 @@ export function rhythmVariationPatch(track: CompositionTrack, choice: Arrangemen
   switch (choice.kind) {
     case 'arp-density': return track.role === 'arpeggio' && grid.rhythm !== 'full' ? densityPatch(grid, amount, 32, choice.parameters?.densitySteps ?? 1) : {};
     case 'drum-density': {
-      if (track.role !== 'drums' || track.generatorSettings.ghosts || ![42, 44, 46, 53].includes(track.generatorSettings.pitch)) return {};
+      if (track.role !== 'drums' || track.generatorSettings.ghosts || ![42, 44, 46, 51, 53, 59].includes(track.generatorSettings.pitch)) return {};
       return densityPatch(grid, amount, track.generatorSettings.pitch === 42 ? 16 : 8, choice.parameters?.densitySteps ?? 1);
     }
     case 'drum-ghosts': {

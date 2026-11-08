@@ -1,3 +1,4 @@
+import { DRUM_INSTRUMENTS } from '../../core/music/drum-instruments';
 import type { SelectMenuGroup } from '../../shared/menu-select.component';
 
 export const INSTRUMENT_MENU_GROUPS: readonly SelectMenuGroup[] = [
@@ -12,4 +13,4 @@ export const DRUM_MENU_GROUPS: readonly SelectMenuGroup[] = [
   { id: 'toms', label: 'Toms', values: ['41', '47'] },
   { id: 'cymbals', label: 'Cymbals', values: ['53'] },
   { id: 'other', label: 'Other percussion', values: ['54', '60', '61', '82'] },
-];
+].map(group => ({ ...group, values: DRUM_INSTRUMENTS.filter(instrument => instrument.family === group.id).map(instrument => String(instrument.midi)) }));

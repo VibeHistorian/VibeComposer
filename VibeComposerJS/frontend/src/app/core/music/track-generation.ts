@@ -1,3 +1,4 @@
+import { CLASSIC_DRUM_INSTRUMENTS, drumFamily } from './drum-instruments';
 import type { ArpeggioGenerationPolicy, TrackGenerationPolicies, TrackGenerationPolicy } from './generation-policy.model';
 import type { ArpeggioSettings, BassSettings, ChordSettings, DrumSettings, MelodySettings } from './part-settings.model';
 import { type ArrangedPart, ARRANGED_PARTS } from './part-role';
@@ -312,7 +313,9 @@ function rerollDrums(random: JavaRandom, policy: TrackGenerationPolicies['drums'
   totalTracks: number): DrumSettings {
   if (policy.patterns && random.nextInt(100) < (policy.overrandomizeChance ?? 0))
     return overrandomizeDrums(random, policy, source, swing, offset);
-  const family = source.pitch <= 37 ? 0 : source.pitch <= 41 ? 1 : source.pitch <= 45 ? 2 : source.pitch <= 53 ? 3 : 4;
+  const family = CLASSIC_DRUM_INSTRUMENTS.some(item => item.midi === source.pitch)
+    ? source.pitch <= 37 ? 0 : source.pitch <= 41 ? 1 : source.pitch <= 45 ? 2 : source.pitch <= 53 ? 3 : 4
+    : ({ kicks: 0, snares: 1, hats: 2, toms: 1, cymbals: 3, other: 4 } as const)[drumFamily(source.pitch)];
   const flexible = family === 2 || family === 4;
   const next = { ...source, feedbackCount: 0, swingPercent: flexible ? swing : 50,
     ...(policy.patterns ? { offset: policy.randomOffset && flexible ? offset : 0 }

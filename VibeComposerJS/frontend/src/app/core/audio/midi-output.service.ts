@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { midiPanValue } from './mix-values';
 import type { CompositionTrack } from '../project/track.model';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
+import type { DrumSlots } from '../music/drum-instruments';
 import { drumInstrumentLabel, mapDrumPitch, resolveDrumMapping } from '../music/drum-instruments';
 
 @Injectable({ providedIn: 'root' })
@@ -16,7 +17,7 @@ export class MidiOutputService {
   private readonly configurations = new Map<number, string>();
   readonly selectedOutput = this.output.asReadonly();
   readonly drumMapping = computed(() => resolveDrumMapping(this.preferences.drumMapping(), this.selectedOutput() !== null));
-  drumLabel(pitch: number): string { return drumInstrumentLabel(pitch, this.drumMapping()); }
+  drumLabel(pitch: number, slots?: DrumSlots): string { return drumInstrumentLabel(pitch, this.drumMapping(), slots); }
   readonly outputs = this.ports.asReadonly();
   readonly busy = this.pending.asReadonly();
   readonly error = this.message.asReadonly();
@@ -77,8 +78,8 @@ export class MidiOutputService {
   }
 
   /** Web MIDI timestamps use performance.now(), rather than AudioContext time. */
-  schedule(track: CompositionTrack, pitch: number, velocity: number, start: number, duration: number): void {
-    if (track.role === 'drums') pitch = mapDrumPitch(pitch, this.drumMapping());
+  schedule(track: CompositionTrack, pitch: number, velocity: number, start: number, duration: number, slots?: DrumSlots): void {
+    if (track.role === 'drums') pitch = mapDrumPitch(pitch, this.drumMapping(), slots);
     const channel = track.midiChannel - 1;
     this.configure(track);
     this.send([0x90 | channel, pitch, velocity], start);

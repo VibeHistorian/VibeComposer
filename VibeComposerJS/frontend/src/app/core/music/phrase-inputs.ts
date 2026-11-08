@@ -8,7 +8,7 @@ function equalExcept(left: object, right: object, excluded: readonly string[]): 
 
 /** Projects are immutable. Mix settings do not affect generated note data. */
 export function samePhraseInputs(left: CompositionProject, right: CompositionProject): boolean {
-  return left === right || equalExcept(left, right, ['mix', 'tracks'])
+  return left === right || equalExcept(left, right, ['mix', 'tracks', 'drumSlots'])
     && left.tracks.length === right.tracks.length
     && left.tracks.every((track, index) => equalExcept(track, right.tracks[index], ['mix']));
 }

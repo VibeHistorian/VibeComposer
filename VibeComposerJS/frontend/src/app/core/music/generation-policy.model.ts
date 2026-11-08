@@ -1,6 +1,6 @@
 import type { ArrangedPart } from './part-role';
 
-export type InstrumentPool = 'AUTO' | 'ALL' | 'MELODY' | 'BASS' | 'CHORD' | 'PLUCK' | 'LONG_PAD' | 'DRUM';
+export type InstrumentPool = 'AUTO' | 'ALL' | 'MELODY' | 'BASS' | 'CHORD' | 'PLUCK' | 'LONG_PAD' | 'DRUM' | 'DRUM_FULL' | 'DRUM_ACOUSTIC' | 'DRUM_HAND';
 
 export interface InstrumentGenerationPolicy {
   readonly randomize: boolean;

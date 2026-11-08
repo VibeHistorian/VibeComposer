@@ -1,9 +1,10 @@
 import type { DrumSettings } from './part-settings.model';
 import { JavaRandom } from './java-random';
-import { DRUM_INSTRUMENTS } from './drum-instruments';
+import { CLASSIC_DRUM_INSTRUMENTS } from './drum-instruments';
 import { partRhythmMask } from './rhythm-pattern';
 
 export interface DrumRerollContext {
+  readonly reservedPitches?: readonly number[];
   readonly remaining?: readonly DrumSettings[];
   readonly onlyAdd?: boolean;
   readonly totalTracks?: number;
@@ -14,7 +15,7 @@ const isSnare = (pitch: number) => pitch === 38 || pitch === 40;
 /** Audited DrumGUI.createRandomDrumPanels pitch branches, using an explicit Random stream. */
 export function chooseDrumPitches(random: JavaRandom, count: number, remaining: readonly number[] = [], onlyAdd = false): number[] {
   if (!Number.isInteger(count) || count < 0 || count > 64) throw new RangeError('Invalid drum count.');
-  const pool = DRUM_INSTRUMENTS.map(instrument => instrument.midi);
+  const pool = CLASSIC_DRUM_INSTRUMENTS.map(instrument => instrument.midi);
   const pitches = Array.from({ length: count }, () => pool[random.nextInt(127) % pool.length]).sort((a, b) => a - b);
   if (!count) return pitches;
   const kicks = remaining.filter(isKick).length, snares = remaining.filter(isSnare).length;

@@ -54,6 +54,7 @@ function fixture({ loop = false } = {}) {
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts', {
     './mix-values': require('./music-loader.cjs').loadMusic('../audio/mix-values.ts'),
     '../music/arrangement-generator': require('./music-loader.cjs').loadMusic('arrangement-generator.ts'),
+    '../project/project-drum-kit': require('./music-loader.cjs').loadMusic('../project/project-drum-kit.ts'),
     '../music/phrase-inputs': require('./music-loader.cjs').loadMusic('phrase-inputs.ts'),
     '../music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
@@ -87,6 +88,46 @@ function fixture({ loop = false } = {}) {
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
   return { playback, context, sources, project, angular, load, midi, instruments };
 }
+
+test('routing from MIDI to the app prepares an unused engine and keeps the musical position', async () => {
+  const { playback, context, project, midi } = fixture();
+  const synth = playback.synth;
+  playback.synth = undefined;
+  let preparations = 0;
+  playback.prepareInstrument = async () => { preparations++; playback.synth = synth; };
+  midi.selectedOutput.set({ id: 'external' });
+  await playback.start(project);
+  assert.equal(preparations, 0);
+  context.currentTime = 1;
+  const beat = playback.currentSongBeat();
+  midi.selectedOutput.set(null);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(preparations, 1);
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.beat(), beat);
+  playback.stop();
+});
+
+test('draft playback and audition share temporary drum slots without editing project assignments', async () => {
+  const { playback, project, midi } = fixture();
+  const track = project.tracks[0];
+  track.role = 'drums'; track.generatorSettings = { pitch: 36 }; track.midiChannel = 10;
+  project.editedPhrases = {}; project.drumSlots = { 36: 37 };
+  const notes = [49, 51].map((pitch, index) => ({ id: `draft-${index}`, trackId: track.id,
+    midi: pitch, startBeat: 0, durationBeats: .25, velocity: 100 }));
+  playback.setPhrasePreview(project, { startBeat: 0, endBeat: 4, trackIds: [track.id], notes });
+  const sent = [];
+  midi.schedule = (...args) => sent.push(args);
+  midi.selectedOutput.set({ id: 'external' });
+  await playback.start(project);
+  assert.equal(sent.length, 2);
+  const slots = sent[0][5];
+  assert.notEqual(slots[49], slots[51]);
+  await playback.audition(track, [notes[1]], project);
+  assert.equal(sent.at(-1)[5][51], slots[51]);
+  assert.deepEqual(project.drumSlots, { 36: 37 });
+  playback.stop();
+});
 
 test('fractional loop boundaries do not move note times one entire cycle into the future', async () => {
   const { playback, context, project } = fixture({ loop: true });

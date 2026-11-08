@@ -1,3 +1,5 @@
+import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
+import { projectDrumPitches, reconcileDrumKit } from './project-drum-kit';
 import { copyArrangementPhrase, type ArrangementPhraseCopy } from './arrangement-phrase-copy';
 import { samePhraseInputs } from '../music/phrase-inputs';
 import type { TrackDuplicationOptions } from './track-duplication';
@@ -284,7 +286,7 @@ export class ProjectService {
     if (count >= 2147483647) return 'invalid';
     const targets = rerollInstruments(this.trackRerollSeed(current, role, count), role,
       current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, true,
-      { remaining: current.tracks.filter(track => track.role === 'drums' && !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) });
+      { reservedPitches: projectDrumPitches(current, sources.map(track => track.id)), remaining: current.tracks.filter(track => track.role === 'drums' && !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) });
     if (targets.every((track, index) => track === sources[index])) return 'unchanged';
     const replacements = new Map(targets.map(track => [track.id, track]));
     return this.commitPartWorkflow({ ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
@@ -341,7 +343,7 @@ export class ProjectService {
     const policy = current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role];
     const seed = this.trackRerollSeed(current, role, count);
     const members = tracks.filter(track => track.role === role);
-    const drumContext = { onlyAdd: true, totalTracks: members.length,
+    const drumContext = { onlyAdd: true, totalTracks: members.length, reservedPitches: projectDrumPitches(current),
       remaining: current.tracks.filter(track => track.role === 'drums').map(track => track.generatorSettings as DrumSettings) };
     const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], created, false, drumContext);
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, created.map(track => members.indexOf(track) + 1), drumContext);
@@ -440,7 +442,7 @@ export class ProjectService {
         const count = counts[role] ?? 0;
         if (count >= 2147483647) return 'invalid';
         const roleTracks = current.tracks.filter(track => track.role === role);
-        const drumContext = { totalTracks: roleTracks.length,
+        const drumContext = { totalTracks: roleTracks.length, reservedPitches: projectDrumPitches(current, sources.map(track => track.id)),
           remaining: roleTracks.filter(track => !sources.some(source => source.id === track.id))
             .map(track => resolvePartTrack(track, section, current.melodyGlobal).generatorSettings as DrumSettings) };
         const settings = rerollRoleSettings(this.trackRerollSeed(current, role, count), role,
@@ -472,7 +474,7 @@ export class ProjectService {
     const count = current.trackRerollCounts?.[role] ?? 0;
     if (count >= 2147483647) return undefined;
     const seed = this.trackRerollSeed(current, role, count);
-    const drumContext = { totalTracks: roleTracks.length,
+    const drumContext = { totalTracks: roleTracks.length, reservedPitches: projectDrumPitches(current, sources.map(track => track.id)),
       remaining: roleTracks.filter(track => !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) };
     const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, false, drumContext);
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1), drumContext);
@@ -801,6 +803,10 @@ export class ProjectService {
 
   private commitPartWorkflow(next: CompositionProject, controlKey?: string): PartWorkflowResult {
     // Validate the complete candidate before committing: a conflict in one destination rejects the entire batch.
+    if (!reconcileDrumKit(next, this.state())) {
+      this.generationFailure.set(`A project supports at most ${MAX_DRUM_SOUNDS} distinct drum sounds. Choose a sound already in use or replace its final use.`);
+      return 'invalid';
+    }
     if (!isProject(next, this.sectionTypeSettings.chances(), Math.random)) return 'invalid';
     const before = this.state();
     this.commit(next, controlKey);
@@ -1329,6 +1335,12 @@ export class ProjectService {
 
   private commit(next: CompositionProject, controlKey?: string): void {
     const current = this.state();
+    const kit = reconcileDrumKit(next, current);
+    if (!kit) {
+      this.generationFailure.set(`A project supports at most ${MAX_DRUM_SOUNDS} distinct drum sounds. Replace an unused sound or choose a sound already in use.`);
+      return;
+    }
+    next = kit;
     if (!isProject(next, this.sectionTypeSettings.chances(), Math.random) || JSON.stringify(current) === JSON.stringify(next)) {
       return;
     }

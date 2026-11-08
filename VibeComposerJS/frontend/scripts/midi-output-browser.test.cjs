@@ -76,6 +76,25 @@ for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard,
         ensure(!item('External synthesizer'),'disconnected output removed');
         output.state='connected';changed();
         await wait(()=>item('External synthesizer'),'hotplug output appears');
+        item('External synthesizer').click();
+        await wait(()=>trigger.classList.contains('midi-connected'),'expanded sound external routing');
+        const percussion = document.querySelector('.track-group.drums .track-instrument');
+        const choices = await selectOptions(percussion);
+        ensure(choices.some(option=>option.value==='49') && choices.some(option=>option.value==='81'),'expanded catalogue in grouped menu');
+        await changeControl(percussion,'49');
+        await wait(()=>percussion.textContent.trim()==='Crash cymbal · 37','unique replacement keeps MIDI slot');
+        const savedSlots=JSON.stringify(JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).drumSlots);
+        trigger.click();await wait(menu,'switch expanded sound to internal');item('Internal synth').click();
+        await wait(()=>percussion.textContent.trim()==='Crash cymbal · 49','Auto restores expanded internal pitch');
+        ensure(JSON.stringify(JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).drumSlots)===savedSlots,'routing preserves project mapping');
+        const expand=document.querySelector('.track-group.drums [aria-label="Expand Drums randomization settings"]');
+        if(expand)expand.click();
+        const pool=await wait(()=>document.querySelector('.track-group.drums [aria-label="Instrument pool"]'),'drum pool selector');
+        const pools=await selectOptions(pool);
+        ensure(['DRUM','DRUM_FULL','DRUM_ACOUSTIC','DRUM_HAND'].every(value=>pools.some(option=>option.value===value)),'all drum pools available');
+        await changeControl(pool,'DRUM_FULL');
+        ensure(percussion.textContent.trim()==='Crash cymbal · 49','pool change keeps selected sound');
+        ensure(JSON.stringify(JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).drumSlots)===savedSlots,'pool change preserves slots');
         await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
       }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack})});}
     })();

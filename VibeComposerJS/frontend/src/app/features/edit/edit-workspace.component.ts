@@ -1,3 +1,5 @@
+import { MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
+import { resolvedDrumSlots } from '../../core/project/project-drum-kit';
 import { SelectComponent } from '../../shared/select.component';
 import { afterNextRender, Injector, ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
 import { DOCUMENT, TitleCasePipe } from '@angular/common';
@@ -50,7 +52,7 @@ export class EditWorkspaceComponent {
   readonly drumVoices = computed(() => {
     if (this.selectedPart() !== 'drums') return [];
     return [...new Set([...this.editedTracks().flatMap(track => track.role === 'drums' ? [track.generatorSettings.pitch] : []), ...this.notes().map(note => note.midi)])]
-      .sort((left, right) => left - right).map(midi => ({ midi, label: this.midi.drumLabel(midi) }));
+      .sort((left, right) => left - right).map(midi => ({ midi, label: this.midi.drumLabel(midi, this.project().drumSlots) }));
   });
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);
@@ -71,7 +73,7 @@ export class EditWorkspaceComponent {
     const name = `${exportFilename(context, this.preferences.exportNameFields())}_${safeExportName(label) || 'Phrase'}_phrase`;
     const notes = this.notes();
     const tracks = this.editedTracks().map(track => ({ track, notes: notes.filter(note => note.trackId === track.id) }));
-    return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(), this.midi.drumMapping(), this.preferences.midiPpq())) };
+    return { name, bytes: new Uint8Array(generatePhraseMidi(name, context.tempoBpm, tracks, this.phraseBeats(), this.midi.drumMapping(), this.preferences.midiPpq(), resolvedDrumSlots(project, tracks.filter(({ track }) => track.role === 'drums').flatMap(({ notes }) => notes.map(note => note.midi))))) };
   }
 
   exportPhrase(): void {
@@ -118,6 +120,7 @@ export class EditWorkspaceComponent {
       const imported = await readMidiFile(buffer, Math.min(132, this.editBounds().endBeat), 2048, controller.signal, {
         injector: this.injector, transpose: this.displayTranspose(), root: getPitchClass(this.project().key)!,
         mode: this.project().scale, snap: this.snapToScale() && track.role !== 'drums',
+        ...(track.role === 'drums' ? { drumSlots: resolvedDrumSlots(this.project()) } : {}),
       });
       if (controller.signal.aborted || !imported) return;
       const current = this.draftNotes();
@@ -311,7 +314,7 @@ export class EditWorkspaceComponent {
   }
 
   noteName(midi: number): string {
-    if (this.selectedPart() === 'drums') return this.midi.drumLabel(midi);
+    if (this.selectedPart() === 'drums') return this.midi.drumLabel(midi, this.project().drumSlots);
     const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
     return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`;
   }
@@ -412,7 +415,7 @@ export class EditWorkspaceComponent {
         } } : {}) };
     });
     if (!this.projects.applyPhraseEdits(edits)) {
-      this.applyError.set('Cannot save these phrases. Check note timings and the 2048-note limit per track.');
+      this.applyError.set(`Cannot save these phrases. Check the ${MAX_DRUM_SOUNDS} distinct drum sounds per project, note timings, and the 2048-note limit per track.`);
       return;
     }
     this.applied.emit();

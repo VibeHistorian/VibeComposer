@@ -1,3 +1,4 @@
+import { projectDrumPitches, validDrumSlots } from './project-drum-kit';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
 import type { PartSettingsPatch } from '../music/part-settings.model';
 import { type SectionType, SECTION_TYPES } from './arrangement.model';
@@ -5,12 +6,12 @@ import { KEYS, validProgressionChords } from '../music/harmony';
 import { isScaleMode } from '../music/scales';
 import { validVolumePercent } from '../audio/mix-values';
 import { PART_CONTROLS, decodePartPatch, validVelocityRange } from '../music/part-settings';
-import { isDrumPitch } from '../music/drum-instruments';
+import { MAX_DRUM_SOUNDS, isDrumPitch } from '../music/drum-instruments';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
 import { decodeHarmonySettings } from '../music/harmony-voicing';
 import { DEFAULT_TRACK_POLICIES, decodeTrackGenerationPolicy, validTrackGenerationMetadata } from '../music/track-generation';
 import { DEFAULT_INSTRUMENT_POLICIES, decodeInstrumentPolicy, validInstrumentPolicies } from '../music/instrument-generation';
-import { decodeTracks, isPhrase } from './project-track-decoder';
+import { decodeTracks, decodeEditedPhrases, isPhrase } from './project-track-decoder';
 import { decodeArrangement, MAX_ARRANGEMENT_SECTIONS, MAX_ARRANGEMENT_MEASURES } from './project-arrangement-decoder';
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { decodeStoredArrangement, decodeStoredTrackPresence } from './project-storage';
@@ -61,8 +62,9 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
   };
   const required = ['name', 'key', 'scale', 'tempoBpm', 'seed', 'progression', 'editedPhrases', 'tracks', 'arrangement'];
   const project = object(value, 'project', required, [...required, 'schemaVersion', 'transposeSemitones', 'progressionChords',
-    'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies', 'arrangementVariationPolicy']);
+    'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies', 'arrangementVariationPolicy', 'drumSlots']);
   if (project) {
+    check('project.drumSlots', validDrumSlots(project['drumSlots']), `expected up to ${MAX_DRUM_SOUNDS} unique percussion pitches mapped to unique notes 36–${36 + MAX_DRUM_SOUNDS - 1}`);
     if (project['arrangementVariationPolicy'] !== undefined) check('project.arrangementVariationPolicy',
       validVariationPolicy(project['arrangementVariationPolicy'], Array.isArray(project['tracks']) ? project['tracks'].length : 0), 'expected a valid variation policy');
     check('project.name', typeof project['name'] === 'string', 'expected a string');
@@ -146,6 +148,11 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
       check(`${path}.id`, !arrangement.slice(0, index).some(previous => previous?.id === section['id']), 'duplicate section ID');
     });
     if (Array.isArray(arrangement)) check('project.arrangement', arrangement.reduce((total, section) => total + (section?.measures ?? 0), 0) <= MAX_ARRANGEMENT_MEASURES, `total length must not exceed ${MAX_ARRANGEMENT_MEASURES} measures`);
+    const decodedTracks = decodeTracks(tracks), editedPhrases = decodeEditedPhrases(project['editedPhrases']);
+    const decodedArrangement = decodedTracks ? decodeArrangement(decodeStoredArrangement(arrangement, decodedTracks), decodedTracks, 0n, chances, random) : undefined;
+    if (decodedTracks && editedPhrases && decodedArrangement) check('project.drums',
+      projectDrumPitches({ tracks: decodedTracks, editedPhrases, arrangement: decodedArrangement }).length <= MAX_DRUM_SOUNDS,
+      `a project supports at most ${MAX_DRUM_SOUNDS} distinct drum sounds, including retained manual notes`);
   }
   return issues.length ? issues : ['Project structure or values failed validation.'];
 }
