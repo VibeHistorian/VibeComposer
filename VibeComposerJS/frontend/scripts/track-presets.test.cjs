@@ -51,6 +51,8 @@ test('factory library covers 24 complete styles with valid, deterministic genera
   const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
   const { decodeTrackPresets } = load('core/project/track-presets.ts');
   const { generateTrackPhrase } = load('core/music/phrase.ts');
+  const { CLASSIC_DRUM_INSTRUMENTS, isDrumPitch, MAX_DRUM_SOUNDS } = load('core/music/drum-instruments.ts');
+  const classicPitches = new Set(CLASSIC_DRUM_INSTRUMENTS.map(instrument => instrument.midi));
   assert.equal(library.length, 120);
   assert.ok(decodeTrackPresets(JSON.parse(JSON.stringify(library))));
   const names = new Set(library.map(preset => preset.name));
@@ -61,7 +63,16 @@ test('factory library covers 24 complete styles with valid, deterministic genera
     assert.equal(new Set(style.map(preset => preset.role)).size, 5);
     const before = service.exportProjectJson();
     for (const preset of style) {
-      assert.ok(preset.tracks.length >= 2);
+      const minimum = preset.role === 'drums' ? 6 : preset.role === 'arpeggio' ? 3 : 2;
+      assert.ok(preset.tracks.length >= minimum, `${name}: ${preset.role} needs ${minimum} layers`);
+      assert.equal(new Set(preset.tracks.map(track => track.id)).size, preset.tracks.length);
+      if (preset.role === 'drums') {
+        const pitches = preset.tracks.map(track => track.generatorSettings.pitch);
+        assert.ok(pitches.every(isDrumPitch), `${name}: all voices belong to the drum catalogue`);
+        assert.equal(new Set(pitches).size, pitches.length, `${name}: distinct percussion voices`);
+        assert.ok(pitches.length <= MAX_DRUM_SOUNDS);
+        assert.ok(pitches.some(pitch => !classicPitches.has(pitch)), `${name}: expanded GM percussion`);
+      }
       assert.equal(service.loadTrackPreset(preset.role, preset.tracks, true), 'changed', name);
       for (const track of service.project().tracks.filter(track => track.role === preset.role)) {
         assert.equal(track.editedPhrase, undefined);
@@ -71,6 +82,10 @@ test('factory library covers 24 complete styles with valid, deterministic genera
         assert.deepEqual(generateTrackPhrase(service.project(), track), notes);
         assert.ok(notes.every(note => Number.isFinite(note.startBeat) && note.durationBeats > 0
           && note.midi >= 0 && note.midi <= 127 && note.velocity >= 1 && note.velocity <= 127));
+        if (track.role === 'drums') {
+          assert.ok(notes.every(note => note.midi === track.generatorSettings.pitch), `${name}: GM pitch survives loading and generation`);
+          assert.ok(Number.isInteger(service.project().drumSlots[String(track.generatorSettings.pitch)]));
+        }
       }
     }
     for (let index = 0; index < 5; index++) service.undo();

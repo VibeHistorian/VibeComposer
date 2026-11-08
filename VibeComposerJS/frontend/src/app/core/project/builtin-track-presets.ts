@@ -2,6 +2,7 @@ import type { TrackPreset } from './track-presets';
 import type { CompositionTrack } from './track.model';
 import type { PartSettingsByRole } from '../music/part-settings.model';
 import type { ArpeggioPattern } from '../music/arpeggio-pattern';
+import { drumInstrumentName } from '../music/drum-instruments';
 
 interface Style {
   name: string;
@@ -19,6 +20,35 @@ interface Style {
   variation: number;
   strum?: number;
 }
+
+// Additional voices use the full GM catalogue, with sparse accents around the core groove.
+// Each mask spans four beats; shuffle accents retain a twelve-cell triplet grid.
+const PERCUSSION: Readonly<Record<string, readonly (readonly [pitch: number, mask: string])[]>> = {
+  'Deep House': [[46, '0010001000100010'], [63, '0001000000010010'], [69, '1000100010001000']],
+  'Techno': [[46, '0010001000100010'], [52, '1000000000000000'], [50, '0000000000000011']],
+  'Trance': [[46, '0010001000100010'], [49, '1000000000000000'], [57, '0000000010000000']],
+  'Synthwave': [[46, '0000001000000010'], [49, '1000000000000000'], [45, '0000000000001010']],
+  'Disco': [[46, '0010001000100010'], [56, '1000001000100000'], [70, '1010101010101010']],
+  'Funk': [[46, '0000001000000010'], [56, '1001000000100100'], [63, '0001001000010010']],
+  'Boom Bap': [[44, '0000001000000010'], [51, '1000000000000000'], [69, '0010001000100010']],
+  'Lo-fi Hip Hop': [[44, '0000001000000010'], [59, '1000000000000000'], [70, '0010000000100000']],
+  'Trap': [[46, '0000001000000010'], [55, '1000000000000000'], [76, '0000000000010001']],
+  'Drum and Bass': [[46, '0000001000000010'], [51, '1000100010001000'], [57, '1000000000000000']],
+  'UK Garage': [[46, '0000001000000010'], [62, '0001000000010010'], [75, '0000000100000100']],
+  'Dubstep': [[46, '0000001000000010'], [52, '1000000000000000'], [50, '0000000000001010']],
+  'Reggae': [[46, '0000001000000010'], [64, '0001001000010010'], [73, '0010001000100010']],
+  'Dub': [[59, '0000000010000000'], [64, '0001000000000010'], [58, '1000000000000000']],
+  'Afrobeat': [[56, '1001001000101000'], [63, '0010010001000010'], [64, '0001001000010100'], [67, '1000001000100000']],
+  'Bossa Nova': [[69, '1010101010101010'], [75, '1001001000101000'], [63, '0000001000000010']],
+  'Samba': [[67, '1001001000101000'], [64, '1000001010000010'], [74, '0010010000100100'], [78, '0001000000010000']],
+  'Swing Jazz': [[44, '000100000100'], [51, '100101100101'], [55, '100000000000']],
+  'Blues Shuffle': [[46, '001000001000'], [51, '100101100101'], [45, '000000000011']],
+  'Indie Rock': [[46, '0000001000000010'], [49, '1000000000000000'], [48, '0000000000001010']],
+  'Pop Punk': [[46, '0010001000100010'], [57, '1000000010000000'], [50, '0000000000001111']],
+  'Acoustic Folk': [[70, '1010101010101010'], [77, '0000001000000010'], [81, '1000000000000000']],
+  'Ambient': [[59, '1000000000000000'], [80, '0000000010000000'], [74, '0000000000001000']],
+  'Cinematic Pulse': [[43, '1000000010000000'], [50, '0000001000000010'], [52, '1000000000000000'], [57, '0000000010000000']],
+};
 
 // All masks describe a four-beat bar. Twelve cells provide true triplet grids.
 const STYLES: readonly Style[] = [
@@ -81,11 +111,16 @@ export const BUILTIN_TRACK_PRESETS: readonly TrackPreset[] = STYLES.flatMap(styl
     [track('arpeggio', 'Moving figure', 1, style.programs[3], { ...common, pattern: style.arp, rate: 'sixteenth', octaves: 2,
       ...grid(style.comp), noteLengthMultiplier: Math.min(style.gate, 90) }, 60, 20),
     track('arpeggio', 'Answer figure', 2, style.programs[3], { ...common, pattern: 'down', rate: 'eighth', octaves: 1,
-      rhythm: 'durations', customDurations: durations, transpose: 12, velocityMin: 45, velocityMax: 65 }, 40, -20)],
+      rhythm: 'durations', customDurations: durations, transpose: 12, velocityMin: 45, velocityMax: 65 }, 40, -20),
+    track('arpeggio', 'Counterpulse', 3, style.programs[2], { ...common, pattern: 'up', rate: 'eighth', octaves: 1,
+      ...grid(style.bass), patternShift: 1, arpPatternRotate: 1, patternSeed: 389,
+      noteLengthMultiplier: Math.min(style.gate, 75), velocityMin: 40, velocityMax: 60 }, 35, -8)],
     [track('drums', 'Kick', 1, 0, { ...common, ...grid(style.kick), pitch: 36 }),
     track('drums', 'Snare / rim', 2, 0, { ...common, ...grid(style.snare), pitch: /Bossa|Reggae|Dub$/.test(style.name) ? 37 : 38 }),
     track('drums', 'Hat / ride', 3, 0, { ...common, ...grid(style.hat), pitch: style.name === 'Swing Jazz' ? 53 : 42,
-      velocityMin: 45, velocityMax: 75 }, 65, 12)],
+      velocityMin: 45, velocityMax: 75 }, 65, 12),
+    ...PERCUSSION[style.name].map(([pitch, mask], index) => track('drums', drumInstrumentName(pitch), index + 4, 0,
+      { ...common, ...grid(mask), pitch, velocityMin: 42, velocityMax: 72 }, 50, index % 2 === 0 ? -18 : 18))],
   ];
   return tracks.map(group => ({ name, role: group[0].role, tracks: group }));
 });
