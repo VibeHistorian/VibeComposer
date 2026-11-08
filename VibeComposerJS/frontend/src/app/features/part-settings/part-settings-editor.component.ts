@@ -44,12 +44,12 @@ export class PartSettingsEditorComponent {
     { id: 'halves', label: 'Halves', values: ['HALF1', 'HALF2'] },
   ];
   readonly fillOptions = [
-    { value: 'ALL', label: 'All' },
-    { value: 'ODD', label: 'Slots 2, 4, … (ODD)' }, { value: 'EVEN', label: 'Slots 1, 3, … (EVEN)' },
-    { value: 'F1', label: 'Position 1' }, { value: 'F2', label: 'Position 2' },
-    { value: 'F3', label: 'Position 3' }, { value: 'F4', label: 'Position 4' },
-    { value: 'F12', label: 'Positions 1 + 2' }, { value: 'F23', label: 'Positions 2 + 3' }, { value: 'F34', label: 'Positions 3 + 4' },
-    { value: 'HALF1', label: 'First half' }, { value: 'HALF2', label: 'Second half' },
+    { value: 'ALL', label: 'ALL' },
+    { value: 'ODD', label: 'ODD' }, { value: 'EVEN', label: 'EVEN' },
+    { value: 'F1', label: 'POS1' }, { value: 'F2', label: 'POS2' },
+    { value: 'F3', label: 'POS3' }, { value: 'F4', label: 'POS4' },
+    { value: 'F12', label: 'POS12' }, { value: 'F23', label: 'POS23' }, { value: 'F34', label: 'POS34' },
+    { value: 'HALF1', label: 'HALF1' }, { value: 'HALF2', label: 'HALF2' },
   ];
   readonly strumGroups: readonly SelectMenuGroup[] = [
     { id: 'arp', label: 'Arpeggiated', values: ['ARP_U', 'ARP_D'] },
