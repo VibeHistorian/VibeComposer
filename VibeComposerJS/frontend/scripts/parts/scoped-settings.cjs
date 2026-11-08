@@ -1947,7 +1947,7 @@ test('fill controls respect mixed scopes, track exceptions, flips and per-field 
   assert.equal(effective(second).chordSpanFill, 'F23');
   service.resetPartSettings(cell);
   assert.equal(effective(first).chordSpanFill, undefined);
-  assert.equal(effective(second).chordSpanFill, 'F23');
+  assert.equal(effective(second).chordSpanFill, 'EVEN');
 });
 
 test('section fills repeat over the effective progression and reach score/preview/editor and MIDI without changing presence', () => {
@@ -2104,7 +2104,7 @@ test('cell cleanup compares all bases while track cleanup inherits its cell, pre
   assert.deepEqual(workspace.overriddenKeys(), ['chordSpanFill']);
   service.updatePartSettings(part, { transpose: 24 });
   service.updatePartSettings(cell, { chordSpanFill: 'ALL' });
-  assert.deepEqual(workspace.overriddenKeys(), []);
+  assert.deepEqual(workspace.overriddenKeys(), ['transpose']);
   assert.equal(workspace.trackExceptionCount(), 1, 'clearing the role layer preserves individual track exceptions');
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
@@ -2735,6 +2735,32 @@ test('rejected generation edits do not leave a velocity warning in either settin
 });
 
 
+
+test('imported member-only overrides highlight group controls and reset both layers atomically', () => {
+  const { service, ui, workspace, load } = fixture({ contextualMelody: false });
+  const sectionId = service.project().arrangement[1].id;
+  const trackId = 'track-chords-1';
+  const part = { kind: 'section-track', sectionId, trackId };
+  service.updatePartSettings(part, { velocityMin: 35, transpose: 12 });
+  assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+  ui.selectCell(sectionId, 'chords');
+  assert.ok(workspace.overriddenKeys().includes('velocityMin'));
+  assert.equal(workspace.partResetChangesValues(), true);
+  const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
+  const editor = new Editor();
+  editor.local.set(true); editor.role.set('chords'); editor.overriddenKeys.set(workspace.overriddenKeys());
+  assert.equal(editor.inheritanceFor({ key: 'velocityMin' }), 'custom');
+  assert.equal(editor.categoryFreezeState([{ key: 'velocityMin' }]), 'partial');
+  const before = service.exportProjectJson();
+  workspace.resetPartSettings(workspace.partScope(), ['velocityMin', 'velocityMax']);
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId], { transpose: 12 });
+  assert.equal(workspace.partEditError(), null);
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+  workspace.resetPartSettings(workspace.partScope());
+  assert.deepEqual(workspace.overriddenKeys(), []);
+  assert.equal(workspace.partResetChangesValues(), false);
+});
 
 test('parameter shortcut targets exact combined members and only releases section freezes', () => {
   const { service, load } = fixture();

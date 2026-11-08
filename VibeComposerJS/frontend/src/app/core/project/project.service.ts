@@ -645,7 +645,16 @@ export class ProjectService {
       else for (const name of Object.keys(values)) delete values[name];
       if (Object.keys(values).length) (map as Record<string, PartSettingsPatch>)[key] = values as PartSettingsPatch;
       else delete (map as Record<string, PartSettingsPatch>)[key];
-      return scope.kind === 'section-role' ? { ...section, rolePartOverrides: map as NonNullable<ArrangementSection['rolePartOverrides']> }
+      const trackPartOverrides = { ...section.trackPartOverrides };
+      if (scope.kind === 'section-role') {
+        for (const track of current.tracks.filter(track => track.role === scope.role)) {
+          const patch = { ...trackPartOverrides[track.id] } as Record<string, unknown>;
+          for (const name of field ? typeof field === 'string' ? [field] : field : Object.keys(patch)) delete patch[name];
+          if (Object.keys(patch).length) trackPartOverrides[track.id] = patch as PartSettingsPatch;
+          else delete trackPartOverrides[track.id];
+        }
+      }
+      return scope.kind === 'section-role' ? { ...section, rolePartOverrides: map as NonNullable<ArrangementSection['rolePartOverrides']>, trackPartOverrides }
         : { ...section, trackPartOverrides: map };
     });
     this.commit({ ...current, arrangement });

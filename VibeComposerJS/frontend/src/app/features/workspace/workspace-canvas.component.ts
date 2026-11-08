@@ -331,8 +331,10 @@ export class WorkspaceCanvasComponent {
     const target = this.localPartTarget();
     const section = this.contextSection();
     if (!target || !section) return [];
-    return Object.keys(target.kind === 'section-role' ? section.rolePartOverrides?.[target.role] ?? {}
-      : section.trackPartOverrides?.[target.trackId] ?? {});
+    return target.kind === 'section-role'
+      ? [...new Set([...Object.keys(section.rolePartOverrides?.[target.role] ?? {}),
+        ...this.contextTracks().flatMap(track => Object.keys(section.trackPartOverrides?.[track.id] ?? {}))])]
+      : Object.keys(section.trackPartOverrides?.[target.trackId] ?? {});
   });
   readonly partResetChangesValues = computed(() => {
     const target = this.localPartTarget();
@@ -340,7 +342,10 @@ export class WorkspaceCanvasComponent {
     if (!target || !section || !this.overriddenKeys().length) return false;
     const rolePartOverrides = { ...section.rolePartOverrides };
     const trackPartOverrides = { ...section.trackPartOverrides };
-    if (target.kind === 'section-role') delete rolePartOverrides[target.role];
+    if (target.kind === 'section-role') {
+      delete rolePartOverrides[target.role];
+      for (const track of this.contextTracks()) delete trackPartOverrides[track.id];
+    }
     else delete trackPartOverrides[target.trackId];
     const inheritedSection = { ...section, rolePartOverrides, trackPartOverrides };
     return this.contextTracks().some(track => {
