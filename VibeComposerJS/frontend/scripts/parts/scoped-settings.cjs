@@ -1572,7 +1572,7 @@ test('a patch affects only its section while MIDI export uses the same resolved 
   }
 });
 
-test('mixed values are real aggregates and cell edits preserve track exceptions', () => {
+test('cell edits resolve mixed values by replacing member exceptions for edited fields', () => {
   const { service, ui, workspace } = fixture({ contextualMelody: false });
   const id = service.duplicateTrack('track-chords-1');
   service.updatePartSettings({ kind: 'global-track', trackId: id }, { transpose: 12 });
@@ -1581,12 +1581,41 @@ test('mixed values are real aggregates and cell edits preserve track exceptions'
   assert.equal(workspace.partValues().transpose, null);
   service.updatePartSettings({ kind: 'section-track', sectionId, trackId: id }, { transpose: 24 });
   workspace.editPartSettings(workspace.partScope(), { key: 'transpose', value: -12 });
+  assert.equal(workspace.partValues().transpose, -12);
+  assert.equal(workspace.trackExceptionCount(), 0);
+  service.undo();
   assert.equal(workspace.partValues().transpose, null);
-  assert.equal(workspace.trackExceptionCount(), 1);
+  service.redo();
+  assert.equal(workspace.partValues().transpose, -12);
   ui.selectSectionTrack(sectionId, id);
-  assert.equal(workspace.partValues().transpose, 24);
+  assert.equal(workspace.partValues().transpose, -12);
   workspace.resetPartSettings(workspace.partScope());
   assert.equal(workspace.partValues().transpose, -12);
+});
+
+test('repeating a cell value clears new member exceptions and returning to base preserves unrelated fields', () => {
+  const { service, settings } = fixture({ contextualMelody: false });
+  const sectionId = service.project().arrangement[1].id;
+  const cell = { kind: 'section-role', sectionId, role: 'chords' };
+  const trackId = 'track-chords-1';
+  const local = { kind: 'section-track', sectionId, trackId };
+  const base = settings.settingsValues(service.project().tracks.find(track => track.id === trackId).generatorSettings, 'chords').transpose;
+  service.updatePartSettings(cell, { transpose: 12 });
+  service.updatePartSettings(local, { transpose: 24, velocityMin: 35 });
+  service.updatePartSettings({ ...local, sectionId: service.project().arrangement[2].id }, { transpose: 24 });
+  service.updatePartSettings({ ...local, trackId: 'track-bass-1' }, { transpose: 24 });
+  const before = service.exportProjectJson();
+  service.updatePartSettings(cell, { transpose: 12 });
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId], { velocityMin: 35 });
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+  service.redo();
+  service.updatePartSettings(local, { transpose: 24 });
+  service.updatePartSettings(cell, { transpose: base });
+  assert.equal(service.project().arrangement[1].rolePartOverrides.chords, undefined);
+  assert.deepEqual(service.project().arrangement[1].trackPartOverrides[trackId], { velocityMin: 35 });
+  assert.equal(service.project().arrangement[1].trackPartOverrides['track-bass-1'].transpose, 24);
+  assert.equal(service.project().arrangement[2].trackPartOverrides[trackId].transpose, 24);
 });
 
 test('patches persist through history, JSON, presence rerolls, duplication, and track deletion', () => {
@@ -1696,7 +1725,7 @@ test('freezing mixed cells preserves each effective track, including omitted def
   assert.equal(service.freezePartSettings(cell), 'unchanged');
   service.updatePartSettings({ kind: 'global-role', role: 'bass' }, { transpose: -12, noteVariation: 0, velocityMin: 75 });
   service.updatePartSettings(cell, { octaveInterval: true });
-  assert.deepEqual([effective(first), effective(second)], values, 'snapshots shield every supported field');
+  assert.deepEqual([effective(first), effective(second)], values.map(value => ({ ...value, octaveInterval: true })), 'group edits replace the edited snapshot field');
   const third = service.addTrack('bass');
   assert.equal(effective(third).transpose, -12);
   assert.equal(effective(third).octaveInterval, true, 'new members keep inheriting the cell');
@@ -2327,7 +2356,7 @@ test('velocity enable and arrays preserve mixed scopes, inherited resets, snapsh
   assert.equal(workspace.partValues().useCustomVelocities, null);
   service.updatePartSettings(cell, { customVelocities: Array(32).fill(60) });
   let effective = settings.resolvePartTrack(service.project().tracks.find(track => track.id === second), service.project().arrangement[1]).generatorSettings;
-  assert.deepEqual(effective.customVelocities, override);
+  assert.deepEqual(effective.customVelocities, Array(32).fill(60));
   assert.equal(effective.useCustomVelocities, false);
   service.updatePartSettings(part, { customVelocities: Array(32).fill(60), useCustomVelocities: true });
   assert.equal(service.project().arrangement[1].trackPartOverrides[second], undefined, 'same-content arrays and booleans restore inheritance');
@@ -2403,7 +2432,7 @@ test('custom grid arrays resolve by content, replace whole values, and restore i
   const common = Array(32).fill(1); common[4] = 0;
   service.updatePartSettings(cell, { customPattern: common });
   const effective = () => settings.resolvePartTrack(service.project().tracks.find((track) => track.id === second), service.project().arrangement[1]).generatorSettings;
-  assert.deepEqual(effective().customPattern, exception, 'track array replaces role array in its entirety');
+  assert.deepEqual(effective().customPattern, common, 'group edits replace the entire member array');
   service.updatePartSettings(part, { customPattern: [...common] });
   assert.equal(service.project().arrangement[1].trackPartOverrides[second], undefined);
   assert.deepEqual(effective().customPattern, common);

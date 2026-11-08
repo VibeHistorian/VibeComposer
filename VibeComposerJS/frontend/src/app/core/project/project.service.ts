@@ -606,12 +606,27 @@ export class ProjectService {
         if (inherited.length && inherited.every((settings) => partValuesEqual(settings[field], value))) delete values[field];
         else values[field] = value as PartSettingValue;
       }
-      if (partPatchesEqual(previous, values as PartSettingsPatch)) return section;
+      let trackPartOverrides = section.trackPartOverrides;
+      if (scope.kind === 'section-role') {
+        // A group edit replaces member exceptions only for the edited fields.
+        for (const member of members) {
+          const previousTrack = trackPartOverrides?.[member.id];
+          if (!previousTrack) continue;
+          const nextTrack = { ...previousTrack };
+          for (const field of Object.keys(decoded)) delete (nextTrack as Record<string, unknown>)[field];
+          if (partPatchesEqual(previousTrack, nextTrack)) continue;
+          const nextOverrides = { ...trackPartOverrides };
+          if (Object.keys(nextTrack).length) nextOverrides[member.id] = nextTrack;
+          else delete nextOverrides[member.id];
+          trackPartOverrides = nextOverrides;
+        }
+      }
+      if (partPatchesEqual(previous, values as PartSettingsPatch) && trackPartOverrides === section.trackPartOverrides) return section;
       const map: Record<string, PartSettingsPatch> = { ...overrides };
       if (Object.keys(values).length) map[key] = values as PartSettingsPatch;
       else delete map[key];
       return scope.kind === 'section-role'
-        ? { ...section, rolePartOverrides: map as NonNullable<ArrangementSection['rolePartOverrides']> }
+        ? { ...section, rolePartOverrides: map as NonNullable<ArrangementSection['rolePartOverrides']>, trackPartOverrides }
         : { ...section, trackPartOverrides: map };
     });
     this.commit({ ...current, arrangement }, this.controlHistoryKey(
