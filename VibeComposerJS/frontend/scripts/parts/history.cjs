@@ -7,6 +7,8 @@ test('note removal clears track presence in one or all sections with one undo, p
   for (const local of [true, false]) {
     const { service } = fixture();
     const track = service.project().tracks[0];
+    // Clearing presence must be a real edit, regardless of randomized initial presence.
+    service.setSectionTrackPresence(1, track.id, true);
     service.updateTrackPhrase(track.id, [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
     const before = service.project();
     const sectionId = before.arrangement[1].id;

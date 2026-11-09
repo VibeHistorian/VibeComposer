@@ -63,6 +63,23 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920, 2560]) {
         assert.equal(spice.label, '🌶');
         assert.equal(spice.value, '100');
         assert.ok(spice.symbols.every(symbol => /[679\[]/.test(symbol)), JSON.stringify(spice));
+        const rerolls = await evaluate(`(async () => {
+          const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+          const harmony = () => JSON.stringify([read().progression, read().progressionChords]);
+          const settle = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const button = document.querySelector('.global-harmony button[aria-label="Generate chord progression"]');
+          const seed = read().seed;
+          button.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
+          await settle();
+          const seeded = harmony();
+          button.click();
+          await settle();
+          const randomSeed = read().seed;
+          button.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
+          await settle();
+          return { restored: harmony() === seeded, seedKept: read().seed === seed && randomSeed === seed };
+        })()`);
+        assert.ok(rerolls.restored && rerolls.seedKept, JSON.stringify(rerolls));
         const markers = await evaluate(`(() => [...document.querySelectorAll('.global-harmony .chordlet')].map(chord => {
           const marker = chord.querySelector('.chordlet-function');
           const box = chord.getBoundingClientRect(), label = marker.getBoundingClientRect();

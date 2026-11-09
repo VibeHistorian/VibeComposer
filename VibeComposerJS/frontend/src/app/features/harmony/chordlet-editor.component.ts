@@ -108,10 +108,10 @@ export class ChordletEditorComponent {
     + (chord.intervals ? `[${chord.intervals.join(',')}]` : chord.spice) + inversionSuffix(chord); }
   add(): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length < 32) this.applyAll([...this.chords(), null]); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'add'); else this.projects.addChord(); }
   remove(index: number): void { if (this.disabled()) return; this.closeMenu(); if (this.allSections()) { if (this.chords().length > 1) this.applyAll(this.chords().filter((_, i) => i !== index)); return; } const section = this.section(); if (section) this.projects.editSectionChordList(section.id, 'remove', index); else this.projects.removeChord(index); }
-  generate(): void {
+  generate(event?: MouseEvent): void {
     if (this.disabled()) return;
     this.closeMenu();
-    this.projects.generateProgression(this.section()?.id, this.allSections());
+    this.projects.generateProgression(this.section()?.id, this.allSections(), event?.shiftKey === true);
   }
   private setChord(index: number, chord: ProgressionChord): void {
     if (this.disabled()) return;
