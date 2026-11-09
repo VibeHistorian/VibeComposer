@@ -130,6 +130,22 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920, 2560]) {
             kind + ' aligns horizontally with its chord: ' + JSON.stringify(bounds));
           assert.ok(Math.abs(menu.bottom - (chord.top - 6)) <= 1,
             kind + ' opens immediately above its chord: ' + JSON.stringify(bounds));
+          if (kind === 'root') {
+            await evaluate(`document.querySelector('.global-harmony .root-choice[data-root="C"]').click()`);
+          } else {
+            const minorNinth = await evaluate(`(async () => {
+              const choice = [...document.querySelectorAll('.global-harmony .spice-choice')].find(button => button.textContent === 'm9');
+              const overlap = Number(choice.dataset.keyOverlap);
+              choice.click();
+              await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+              const chord = document.querySelector('.global-harmony .chordlet');
+              return { overlap, symbol: chord.querySelector('.chordlet-label').textContent,
+                function: chord.querySelector('.chordlet-function').textContent };
+            })()`);
+            assert.equal(minorNinth.overlap, 3 / 5, 'Cm9 has Eb and Bb outside C major');
+            assert.equal(minorNinth.symbol, 'Cm9');
+            assert.equal(minorNinth.function, 'i');
+          }
           await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
           await command('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
         }

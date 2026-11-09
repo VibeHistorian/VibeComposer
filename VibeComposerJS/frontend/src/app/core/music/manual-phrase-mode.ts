@@ -1,7 +1,7 @@
 import type { CompositionProject } from '../project/project.model';
 import type { PhraseNote } from './phrase-note';
 import { getPitchClass } from './harmony';
-import { scaleNotes, type ScaleMode } from './scales';
+import { convertScalePitch, scaleNotes, type ScaleMode } from './scales';
 
 /** Convert a whole manual phrase only when every pitch belongs to its old key/mode.
  * Stored pitches exclude global transpose. Preserve note identity, timing and velocity.
@@ -13,7 +13,9 @@ function convertPhrase(notes: readonly PhraseNote[] | undefined, key: string, fr
   const degree = (midi: number) => from.findIndex(pitch => pitch % 12 === ((midi - root) % 12 + 12) % 12);
   if (!notes.every(note => degree(note.midi) >= 0)) return notes;
   return notes.map(note => {
-    let midi = root + Math.floor((note.midi - root) / 12) * 12 + to[degree(note.midi)];
+    const relative = note.midi - root;
+    const octave = Math.floor(relative / 12) * 12;
+    let midi = root + octave + convertScalePitch(relative - octave, from, to);
     if (midi < 0) midi += 12;
     if (midi > 127) midi -= 12;
     return midi === note.midi ? note : { ...note, midi };

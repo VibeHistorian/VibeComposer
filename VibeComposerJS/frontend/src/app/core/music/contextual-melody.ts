@@ -278,7 +278,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
             }
           }
           if (slot.arrival) {
-            const choice = targets[events.indexOf(event) % targets.length], pc = mod(notesInScale[mod(choice,7)]);
+            const choice = targets[events.indexOf(event) % targets.length], pc = mod(notesInScale[mod(choice,notesInScale.length)]);
             score -= Math.min(mod(pitch - pc),mod(pc - pitch)) * 0.6;
           }
           if (index === finalIndex && options.ending === 'LOOP' && state.first >= 0) score -= Math.abs(pitch - state.first) * 0.75;

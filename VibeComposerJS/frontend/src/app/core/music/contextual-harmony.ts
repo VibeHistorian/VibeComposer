@@ -1,9 +1,10 @@
 import { JavaRandom } from './java-random';
-import { chordPitches, progressionChords, scaleNotes, type ProgressionChord, type ScaleMode } from './harmony';
+import { chordPitches, progressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 import { generateDiatonicProgression } from './progression-generator';
 import type { HarmonySettings } from './harmony-voicing';
 import type { MelodyGlobalSettings } from './part-settings.model';
 import { spiceHarmony } from './harmony-spiciness';
+import { harmonyScaleNotes } from './scales';
 
 export const HARMONY_GENERATIONS = [
   { value: 'CURRENT', label: 'Legacy' }, { value: 'FUNCTIONAL', label: 'Functional' },
@@ -40,7 +41,7 @@ export function generateHarmony(seed: bigint | number, length: number, key: stri
       progressionChords(key, scale, degrees, chords), { ...settings, generation: strategy }, locks) };
   };
   if (strategy === 'CURRENT') return finish(generateDiatonicProgression(seed, length), locks);
-  const notes = scaleNotes(scale), vocabulary = progressionChords(key, scale, [1,2,3,4,5,6,7]);
+  const notes = harmonyScaleNotes(scale), vocabulary = progressionChords(key, scale, [1,2,3,4,5,6,7]);
   const degreeOf = (chord: ProgressionChord | null | undefined) => chord ? vocabulary.findIndex(c => c.root === chord.root) : -1;
   const first = degreeOf(locks?.[0]), last = degreeOf(locks?.[length - 1]);
   let plans = CLOSED.filter(plan => plan[2] !== 6 || notes[6] === 11);

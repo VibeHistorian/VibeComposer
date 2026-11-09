@@ -75,7 +75,7 @@ export function generateArpeggio(seed: bigint | number, key: string, scale: Scal
     // Custom chromatic roots use the nearest degree of the current key for contour attacks.
     const contourRoot = settings.arpContourChordMode ? customChords?.[chordIndex]?.root ?? root : tonic;
     const relativeRoot = (contourRoot - tonic + 12) % 12;
-    const contourDegree = settings.arpContourChordMode && !customChords?.[chordIndex] ? degree - 1
+    const contourDegree = settings.arpContourChordMode && !customChords?.[chordIndex] && scaleSteps.length === 7 ? degree - 1
       : scaleSteps.reduce((best, pitch, index) => {
         const distance = (value: number) => Math.min(Math.abs(value - relativeRoot), 12 - Math.abs(value - relativeRoot));
         return distance(pitch) < distance(scaleSteps[best]) ? index : best;

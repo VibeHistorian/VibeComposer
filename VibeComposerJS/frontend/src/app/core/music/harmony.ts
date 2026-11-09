@@ -1,4 +1,4 @@
-import { scaleNotes, type ScaleMode } from './scales';
+import { harmonyScaleNotes, scaleNotes, type ScaleMode } from './scales';
 export { SCALE_DEFINITIONS, SCALE_MODES, isScaleMode, scaleNotes, type ScaleMode } from './scales';
 
 export const CHORD_SPICES = ['', 'm', 'maj7', 'm7', '7', 'mM7', 'sus2', 'sus4', 'sus7',
@@ -28,10 +28,11 @@ export interface ProgressionChord { readonly root: number; readonly spice: Chord
   /** Exact voicing for manual intervals and mode-derived chords without a named spice. */
   readonly intervals?: readonly number[];
 }
-// Production MidiUtils spice intervals (including its identical maj9/m9 voicing).
+// Root-position chord formulas. Thirteenths omit the optional eleventh to avoid
+// the major-third/eleventh clash; minor ninths retain both the minor third and seventh.
 const SPICE_INTERVALS: readonly (readonly number[])[] = [[0,4,7],[0,3,7],[0,4,7,11],[0,3,7,10],[0,4,7,10],
   [0,3,7,11],[0,2,7],[0,5,7],[0,5,7,10],[0,4,7,9],[0,3,7,9],[0,4,7,11,14],
-  [0,4,7,11,14],[0,4,7,11,14,21],[0,3,7,10,14,21],[0,4,8],[0,3,6]];
+  [0,3,7,10,14],[0,4,7,11,14,21],[0,3,7,10,14,21],[0,4,8],[0,3,6]];
 
 export function validProgressionChords(value: unknown, count: number): value is readonly (ProgressionChord | null)[] | undefined {
   return value === undefined || Array.isArray(value) && value.length === count && value.every(chord => chord === null
@@ -145,7 +146,7 @@ export function getDiatonicChords(key: string, scale: ScaleMode): DiatonicChord[
     return [];
   }
 
-  const notes = scaleNotes(scale);
+  const notes = harmonyScaleNotes(scale);
   const romans = ['I','II','III','IV','V','VI','VII'];
   const tonicLetter = NOTE_LETTERS.indexOf(key[0]);
   return notes.map((offset, index) => {
@@ -155,7 +156,7 @@ export function getDiatonicChords(key: string, scale: ScaleMode): DiatonicChord[
     const accidental = accidentalOffset > 0
       ? '♯'.repeat(accidentalOffset)
       : '♭'.repeat(-accidentalOffset);
-    const root = `${NOTE_LETTERS[letterIndex]}${accidental}`;
+    const root = scaleNotes(scale).length === 7 ? `${NOTE_LETTERS[letterIndex]}${accidental}` : KEYS[pitch];
     const pitches = [0,2,4].map(step => 60 + tonic + notes[(index + step) % 7] + 12 * Math.floor((index + step) / 7));
     const intervals = pitches.map(note => note - pitches[0]);
     const quality = intervals[1] === 4 && intervals[2] === 7 ? 'major'

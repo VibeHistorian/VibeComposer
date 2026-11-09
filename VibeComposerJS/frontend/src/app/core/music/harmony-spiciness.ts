@@ -1,19 +1,20 @@
 import { chordPitches, getPitchClass, scaleNotes, CHORD_SPICES, type ProgressionChord, type ScaleMode } from './harmony';
 import { JavaRandom } from './java-random';
 import type { HarmonySettings } from './harmony-voicing';
+import { harmonyScaleNotes } from './scales';
 
 const mod = (n: number) => (n % 12 + 12) % 12;
 
 /** Color an already planned progression without changing its functional roots or random stream.
  * The chance gates each unlocked slot; strategy and resolution determine its vocabulary.
- * Exact intervals avoid the legacy m9 spelling's major third and retain unusual modes.
+ * Exact intervals retain mode-derived qualities without a named chord symbol.
  */
 export function spiceHarmony(seed: bigint, key: string, scale: ScaleMode, degrees: readonly number[],
   chords: readonly ProgressionChord[], settings: HarmonySettings,
   locks?: readonly (ProgressionChord | null)[]): ProgressionChord[] {
   const chance = settings.spiciness ?? 0;
   if (!chance) return [...chords];
-  const notes = scaleNotes(scale), tonic = getPitchClass(key)!;
+  const notes = harmonyScaleNotes(scale), tonic = getPitchClass(key)!;
   const strategy = settings.generation ?? 'CURRENT';
   return chords.map((chord, index) => {
     if (locks?.[index]) return chord;
@@ -40,7 +41,7 @@ export function spiceHarmony(seed: bigint, key: string, scale: ScaleMode, degree
     // Repeated-degree/pentatonic scales can collapse stacked thirds. Use a distinct
     // added mode tone so a selected spice slot still gains a real harmonic color.
     if (!candidates.length) {
-      for (const offset of [1,3,5,6,2,4]) add([...triad, intervalAt(offset)], 1);
+      for (const pitch of scaleNotes(scale)) add([...triad, mod(pitch - mod(chord.root - tonic))], 1);
     }
     const next = chords[index + 1] ?? chords[0];
     // Applied dominants require an actual descending-fifth resolution to a major/minor

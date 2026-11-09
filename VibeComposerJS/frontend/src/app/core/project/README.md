@@ -1,5 +1,7 @@
 # Project state ownership
 
+Shared chord/scale definitions and their intentional departures from erroneous Java values are documented in [music theory definitions](../music/MUSIC_THEORY.md). Saved IDs remain stable; named chord formulas and generated output use the corrected definitions.
+
 `ProjectService` owns Angular signals, session storage, generation error reporting, and the history/persistence commit boundary. UI consumers continue to use its public commands. Candidate-building helpers do not publish state or create history entries.
 
 Independent tracks own generator settings and mix values. Global role edits update their member tracks; there is no duplicated project-level generator settings or role mix layer. Adding a track to an empty role uses the corresponding `DEFAULT_TRACKS` entry. Imports read track values and omit obsolete top-level role settings and mix when constructing project state.

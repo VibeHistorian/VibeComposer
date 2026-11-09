@@ -10,6 +10,8 @@ These rules define translation constraints and implementation conventions. Works
 
 2. **Match Java's seeded random behavior.** Use the project's `java-random.ts`.
 
+   Musical correctness overrides Java's chord/scale definition mistakes. Use conventional chord formulas and distinct scale pitch collections; Java fixtures are regression references, not authority for music theory. Preserve random algorithms and draw order independently of these definition corrections.
+
    Pass seeds as `bigint` whenever they may exceed JavaScript's safe integer range; converting an already-rounded `number` cannot preserve a Java `long` seed.
 
    Keep random streams and seed derivation explicit. Reproducibility depends on matching both the Java algorithm and the order in which each generator consumes random values.
