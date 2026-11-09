@@ -94,3 +94,21 @@ test('manual phrase mode changes between different scale sizes remain valid and 
     assert.deepEqual(service.project().tracks.find(item => item.id === track.id).editedPhrase, converted);
   }
 });
+
+
+test('harmony reinterpretation supports every mode pair with bounded, mode-relative explicit intervals', () => {
+  const { reinterpretHarmonyChords } = loadMusic('harmony-mode.ts');
+  for (const from of SCALE_MODES) for (const to of SCALE_MODES) {
+    const original = [...progressionChords('F♯', from, [1,2,3,4,5,6,7]), null];
+    const before = JSON.stringify(original);
+    const chords = reinterpretHarmonyChords(original, [1,2,3,4,5,6,7,1], 'F♯', from, to);
+    assert.equal(JSON.stringify(original), before, 'input immutable');
+    assert.equal(chords[7], null);
+    for(const chord of chords.filter(Boolean)) {
+      assert.ok(chord.root >= 0 && chord.root < 12);
+      const pitches = chordPitches(chord, 0);
+      assert.ok(pitches.every(p => scaleNotes(to).includes(((p-6)%12+12)%12)), from+' to '+to);
+      assert.ok(pitches.every(p => p-chord.root >= 0 && p-chord.root <= 36));
+    }
+  }
+});

@@ -659,3 +659,76 @@ test('triangle notes default off and persist independently of projects', () => {
   assert.equal(prefs.scoreTriangleNotes(), true);
   assert.equal(service.exportProjectJson(), before);
 });
+
+
+test('harmony mode preference defaults to all, persists and validates independently of project history', () => {
+  const { service, uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const before = service.exportProjectJson(), history = service.historyPosition();
+  assert.equal(prefs.harmonyFollowsMode(), 'all');
+  for (const scope of ['off', 'global', 'all']) {
+    prefs.setHarmonyFollowsMode(scope);
+    assert.equal(new UiPreferencesService().harmonyFollowsMode(), scope);
+  }
+  const saved = prefs.exportJson();
+  prefs.setHarmonyFollowsMode('invalid');
+  assert.equal(prefs.exportJson(), saved);
+  assert.equal(prefs.importJson(JSON.stringify({ ...JSON.parse(saved), harmonyFollowsMode: true })), false);
+  const old = JSON.parse(saved); delete old.harmonyFollowsMode;
+  assert.equal(prefs.importJson(JSON.stringify(old)), true);
+  assert.equal(prefs.harmonyFollowsMode(), 'all');
+  assert.equal(service.exportProjectJson(), before);
+  assert.equal(service.historyPosition(), history);
+});
+
+test('mode edits reinterpret explicit global and section chords by scope in one undoable edit', () => {
+  for (const scope of ['off', 'global', 'all']) {
+    const { service, uiPreferences: prefs } = fixture();
+    prefs.setHarmonyFollowsMode(scope);
+    service.updateSettings({ key: 'C', scale: 'major' });
+    service.setProgression([1,6,2,5]);
+    const chords = [{ root:0, spice:'maj9', inversion:1 }, { root:9, spice:'m7', inversion:0 },
+      { root:2, spice:'m7', inversion:0 }, { root:7, spice:'7', inversion:0 }];
+    chords.forEach((chord,i) => service.setProgressionChord(i,chord));
+    const section = service.project().arrangement[0];
+    service.setSectionMusicalState(section.id, { customChords: chords, chordDegrees: [1,6,2,5] });
+    const before = service.exportProjectJson();
+    service.updateSettings({ scale: 'natural-minor' });
+    const project = service.project();
+    const expected = ['m9', 'maj7', 'm7b5', '7'];
+    assert.deepEqual(project.progressionChords.map(c => c.spice), scope === 'off' ? chords.map(c => c.spice) : expected);
+    assert.equal(project.progressionChords[1].root, scope === 'off' ? 9 : 8);
+    assert.equal(project.progressionChords[0].inversion, 1);
+    assert.deepEqual(project.arrangement[0].customChords.map(c => c.spice), scope === 'all' ? expected : chords.map(c => c.spice));
+    service.undo();
+    assert.equal(service.exportProjectJson(), before);
+    service.redo();
+    assert.equal(service.project().scale, 'natural-minor');
+  }
+});
+
+test('All follows section mode edits and inherited modes while respecting explicit section modes', () => {
+  const { service } = fixture();
+  service.updateSettings({ key: 'C', scale: 'major' });
+  const [section] = service.project().arrangement;
+  service.setSectionMusicalState(section.id, { context: { scale: 'major' }, chordDegrees: [1],
+    customChords: [{ root:0, spice:'maj7', inversion:0, explicitZeroInversion:true }] });
+  service.updateSettings({ scale: 'natural-minor' });
+  assert.equal(service.project().arrangement[0].customChords[0].spice, 'maj7');
+  service.updateSectionContext(section.id, { scale: null });
+  assert.equal(service.project().arrangement[0].customChords[0].spice, 'm7');
+  assert.equal(service.project().arrangement[0].customChords[0].explicitZeroInversion, true);
+});
+
+
+test('local mode changes adapt inherited explicit global harmony without changing the global chords', () => {
+  const { service } = fixture();
+  service.updateSettings({ key: 'C', scale: 'major' });
+  service.setProgression([1]);
+  service.setProgressionChord(0, { root:0, spice:'maj9', inversion:-1 });
+  const [section] = service.project().arrangement;
+  service.updateSectionContext(section.id, { scale:'natural-minor' });
+  assert.equal(service.project().progressionChords[0].spice, 'maj9');
+  assert.equal(service.project().arrangement[0].customChords[0].spice, 'm9');
+  assert.equal(service.project().arrangement[0].customChords[0].inversion, -1);
+});

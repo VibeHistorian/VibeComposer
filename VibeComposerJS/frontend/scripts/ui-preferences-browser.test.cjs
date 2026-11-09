@@ -226,6 +226,16 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           }
           const content=dialog.querySelector('.settings-content');
           ensure(content.scrollWidth<=content.clientWidth+1,'settings fit without horizontal overflow: '+category.textContent.trim());
+          const modeHarmony=dialog.querySelector('vc-select[aria-label="Reinterpret harmony on Mode change"]');
+          if(modeHarmony) {
+            ensure(modeHarmony.getAttribute('value')==='all','mode harmony defaults to All');
+            ensure((await selectOptions(modeHarmony)).map(o=>o.value).join(',')==='off,global,all','mode harmony scopes');
+            for(const scope of ['off','global','all']) {
+              await changeControl(modeHarmony,scope);
+              await wait(()=>JSON.parse(localStorage.getItem(key)).harmonyFollowsMode===scope,'mode harmony preference persists');
+              ensure(sessionStorage.getItem('vibecomposer.project.v12')===beforeLayoutCheck,'mode harmony preference does not edit the project');
+            }
+          }
           if (category.getAttribute('aria-label')?.startsWith('Shortcuts ')) {
             ensure(category.querySelectorAll('[data-scope="ui"]').length===1 && category.querySelectorAll('vc-settings-scope-indicator').length===1,'shortcuts are UI only');
             ensure(!button('Record Undo') && !button('Record Play / pause') && !button('Record Extend / trim sections'),'universal shortcuts stay hidden');

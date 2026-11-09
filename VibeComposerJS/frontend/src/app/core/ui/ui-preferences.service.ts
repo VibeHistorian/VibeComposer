@@ -89,6 +89,11 @@ export class UiPreferencesService {
     const variationRerolls = decodeVariationRerolls(value);
     if (variationRerolls) this.commit({ ...this.state(), variationRerolls });
   }
+  readonly harmonyFollowsMode = computed(() => this.state().harmonyFollowsMode);
+  setHarmonyFollowsMode(value: string): void {
+    if (value !== 'off' && value !== 'global' && value !== 'all') return;
+    this.commit({ ...this.state(), harmonyFollowsMode: value });
+  }
   readonly manualPhrasesFollowMode = computed(() => this.state().manualPhrasesFollowMode);
   toggleManualPhrasesFollowMode(): void {
     this.commit({ ...this.state(), manualPhrasesFollowMode: !this.manualPhrasesFollowMode() });

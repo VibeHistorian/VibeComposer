@@ -128,11 +128,6 @@
               <label>Maximum<input aria-label="Compose maximum BPM" type="number" min="30" max="240" [value]="preferences.preferences().composeBpmMax" (change)="preferences.setComposeBpmBound('composeBpmMax', +$any($event.target).value)" /></label>
             </div></div>
             <div class="setting-row">
-              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Manual phrases follow global Mode</h3><p id="manual-mode-description">When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.</p></div>
-              <div class="setting-controls"><input type="checkbox" aria-label="Manual phrases follow global Mode" [checked]="preferences.manualPhrasesFollowMode()"
-                (change)="preferences.toggleManualPhrasesFollowMode()" aria-describedby="manual-mode-description" /></div>
-            </div>
-            <div class="setting-row">
               <div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />Limit instrument options to selected pool</h3><p id="instrument-pool-description">Show only instruments in each role's selected pool, plus each track's current instrument. Turn off to show all instruments. The automatic Chords pool includes both Chord and Pluck instruments. Saved in your UI preferences.</p></div>
               <div class="setting-controls"><button type="button" aria-label="Limit instrument options to selected pool" class="appearance-toggle" [attr.aria-pressed]="preferences.limitInstrumentsToPool()"
               aria-describedby="instrument-pool-description" (click)="preferences.toggleLimitInstrumentsToPool()">{{ preferences.limitInstrumentsToPool() ? 'On' : 'Off' }}</button></div>
@@ -293,6 +288,16 @@
               <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Progressive voicing</h3><p id="progressive-voicing-description">Voice global and explicit section progressions toward the processed prefix. Inferred progressions use the ordinary whole-progression average.</p></div>
               <div class="setting-controls"><input type="checkbox" aria-label="Progressive voicing" aria-describedby="progressive-voicing-description" [checked]="harmonyValues().progressiveVoicing"
                 (change)="projects.updateHarmonySettings({ progressiveVoicing: $any($event.target).checked })" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />Manual phrases follow global Mode</h3><p id="manual-mode-description">When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Manual phrases follow global Mode" [checked]="preferences.manualPhrasesFollowMode()"
+                (change)="preferences.toggleManualPhrasesFollowMode()" aria-describedby="manual-mode-description" /></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />Reinterpret harmony on Mode change</h3><p id="harmony-mode-description">Adapt chord roots and tones to the new mode, preserving inversions and resolving dominants. Off keeps explicit chords; Global adapts global harmony; All also adapts section chords. Applies to generated and edited chords.</p></div>
+              <div class="setting-controls"><vc-select [options]="[{ value: 'off', label: 'Off' }, { value: 'global', label: 'Global' }, { value: 'all', label: 'All' }]" aria-label="Reinterpret harmony on Mode change" aria-describedby="harmony-mode-description"
+                [value]="preferences.harmonyFollowsMode()" (valueChange)="preferences.setHarmonyFollowsMode($event)"></vc-select></div>
             </div>
           </section>
         }

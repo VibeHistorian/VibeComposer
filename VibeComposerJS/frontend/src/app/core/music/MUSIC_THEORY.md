@@ -10,6 +10,10 @@ Scale membership, score highlighting, melody candidates, arpeggio contours, MIDI
 
 Saved scale IDs and named chord symbols remain readable. Existing named `m9` chords acquire the corrected formula; explicitly authored interval arrays retain their pitches. Regenerating music in a corrected scale intentionally changes output. Mode conversion between collections with different cardinalities maps proportional scale position, preserving the octave; this conversion can be lossy. Undo restores the original project exactly.
 
+Settings → Behavior → Harmony includes the UI preference “Reinterpret harmony on Mode change”: Off, Global or All (default). Mode edits adapt explicit global chords for Global/All and explicit section chords for All when their effective mode changes. Generated and edited chords are treated alike. Degree-only slots already resolve through the current mode. Loading, undo and redo restore stored harmony without conversion.
+
+`harmony-mode.ts` maps roots and chord tones through the old/new seven-slot harmonic collections, retaining octave offsets and inversions. Chromatic tones use the nearest old harmonic slot, preferring the lower pitch on ties. Resolving dominant qualities are retained when the next major/minor chord is a descending fifth away, including loop boundaries. Results match named chord formulas where possible and otherwise store exact intervals. Smaller collections can merge tones, so conversion is lossy; undo restores the complete previous state. Section mode overrides remain authoritative.
+
 References used in the audit:
 
 - [John Mizarolli: chord formulas](https://www.mizarolli.net/lessons/chord-formulas.html).

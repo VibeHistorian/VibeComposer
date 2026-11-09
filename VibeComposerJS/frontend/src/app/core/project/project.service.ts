@@ -1,3 +1,4 @@
+import { followHarmonyMode } from '../music/harmony-mode';
 import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
 import { projectDrumPitches, reconcileDrumKit } from './project-drum-kit';
 import { copyArrangementPhrase, type ArrangementPhraseCopy } from './arrangement-phrase-copy';
@@ -138,7 +139,7 @@ export class ProjectService {
     const next = { ...current, arrangement: current.arrangement.map(change) };
     if (!isProject(next, this.sectionTypeSettings.chances(), Math.random)) return 'invalid';
     if (JSON.stringify(current) === JSON.stringify(next)) return 'unchanged';
-    this.commit(next);
+    this.commit(followHarmonyMode(current, next, this.uiPreferences.harmonyFollowsMode()));
     return 'changed';
   }
 
@@ -166,7 +167,7 @@ export class ProjectService {
     const copied = { ...next, context: next.context ? { ...next.context } : undefined,
       chordDegrees: next.chordDegrees ? [...next.chordDegrees] : undefined,
       customChords: next.customChords?.map(chord => chord ? { ...chord } : null), customDurations: next.customDurations ? [...next.customDurations] : undefined };
-    this.commit({ ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? copied : item) });
+    this.commit(followHarmonyMode(current, { ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? copied : item) }, this.uiPreferences.harmonyFollowsMode()));
     return 'changed';
   }
 
@@ -865,7 +866,7 @@ export class ProjectService {
       }
     }
     const current = this.state();
-    const next = { ...current, ...patch };
+    const next = followHarmonyMode(current, { ...current, ...patch }, this.uiPreferences.harmonyFollowsMode());
     this.commit(this.uiPreferences.manualPhrasesFollowMode() ? followManualPhraseMode(current, next) : next,
       this.controlHistoryKey(['project'], patch));
   }
