@@ -5,6 +5,7 @@ import type { ArrangementSection } from '../../core/project/arrangement.model';
 import { baseGenerationHarmony, sectionGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
 import { SCALE_DEFINITIONS } from '../../core/music/scales';
+import { CHORD_SPICE_GROUPS } from '../../core/music/harmony';
 
 @Component({
   selector: 'vc-chordlet-editor', changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +56,10 @@ export class ChordletEditorComponent {
         title: `${KEYS[candidate.root]}${spice}: ${overlap.matching} of ${overlap.total} notes in ${context.key} ${SCALE_DEFINITIONS[context.scale].label}` };
     });
   });
+  readonly spiceGroups = computed(() => CHORD_SPICE_GROUPS.map(group => ({
+    label: group.label,
+    choices: group.spices.map(spice => this.spiceChoices().find(choice => choice.spice === spice)!),
+  })));
   readonly intervalChoices = computed(() => {
     const menu = this.menu(), chord = menu && this.chords()[menu.index];
     if (!chord) return [];
@@ -137,7 +142,7 @@ export class ChordletEditorComponent {
     event.preventDefault(); event.stopPropagation();
     if (this.disabled()) return;
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    this.menu.set({ index, kind, x: Math.max(8, Math.min(innerWidth - 228, box.left)), y: Math.max(8, Math.min(innerHeight - (kind === 'spice' ? 330 : 220), innerHeight - box.top + 6)), project: this.project(), sectionId: this.section()?.id });
+    this.menu.set({ index, kind, x: Math.max(8, Math.min(innerWidth - 228, box.left)), y: Math.max(8, Math.min(innerHeight - 80, innerHeight - box.top + 6)), project: this.project(), sectionId: this.section()?.id });
     setTimeout(() => this.element.nativeElement.querySelector<HTMLElement>('.chordlet-menu button[aria-checked="true"]')?.focus(), 0);
   }
   choose(value: number | string): void {

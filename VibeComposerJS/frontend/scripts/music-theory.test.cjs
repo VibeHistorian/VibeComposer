@@ -13,8 +13,17 @@ test('every named chord spells its defining thirds, sevenths and extensions corr
     maj9: ['C','E','G','B','D+'], m9: ['C','Eb','G','Bb','D+'],
     maj13: ['C','E','G','B','D+','A+'], m13: ['C','Eb','G','Bb','D+','A+'],
     aug: ['C','E','G#'], dim: ['C','Eb','Gb'],
+    add9: ['C','E','G','D+'], add11: ['C','E','G','F+'], '6/9': ['C','E','G','A','D+'],
+    'maj7#11': ['C','E','G','B','F#+'], 'maj9#11': ['C','E','G','B','D+','F#+'],
+    madd9: ['C','Eb','G','D+'], madd11: ['C','Eb','G','F+'], 'm6/9': ['C','Eb','G','A','D+'],
+    m11: ['C','Eb','G','Bb','D+','F+'], mM9: ['C','Eb','G','B','D+'], m7b5: ['C','Eb','Gb','Bb'],
+    '9': ['C','E','G','Bb','D+'], '11': ['C','G','Bb','D+','F+'], '13': ['C','E','G','Bb','D+','A+'],
+    '7b5': ['C','E','Gb','Bb'], '7#5': ['C','E','G#','Bb'], '7b9': ['C','E','G','Bb','Db+'],
+    '7#9': ['C','E','G','Bb','D#+'], '7#11': ['C','E','G','Bb','F#+'], '7b13': ['C','E','G','Bb','Ab+'],
+    '9sus4': ['C','F','G','Bb','D+'], dim7: ['C','Eb','Gb','Bbb'],
   };
-  const pitches = { C:60, D:62, Eb:63, E:64, F:65, Gb:66, G:67, 'G#':68, A:69, Bb:70, B:71, 'D+':74, 'A+':81 };
+  const pitches = { C:60, D:62, Eb:63, E:64, F:65, Gb:66, G:67, 'G#':68, A:69, Bbb:69, Bb:70, B:71,
+    'Db+':73, 'D+':74, 'D#+':75, 'F+':77, 'F#+':78, 'Ab+':80, 'A+':81 };
   assert.deepEqual(Object.keys(spellings).sort(), [...CHORD_SPICES].sort());
   for (const spice of CHORD_SPICES) for (let root = 0; root < 12; root++) {
     assert.deepEqual(chordPitches({ root, spice, inversion: 0 }, 60), spellings[spice].map(note => pitches[note] + root));

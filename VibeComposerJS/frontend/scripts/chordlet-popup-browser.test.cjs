@@ -6,15 +6,15 @@ const { findBrowser, requireProductionBuild, createBrowserServer, listen, launch
   connectToPage, watchBrowser, closeBrowser } = require('./support/browser-harness.cjs');
 
 const browser = findBrowser();
-for (const width of [700, 780, 1050, 1400, 1440, 1920, 2560]) {
-  test(`global root and spice menus align with their chord at ${width}px`, { skip: !browser }, async () => {
+for (const [width, height] of [[700, 600], ...[700, 780, 1050, 1400, 1440, 1920, 2560].map(width => [width, 1000])]) {
+  test(`global root and spice menus align with their chord at ${width}×${height}px`, { skip: !browser }, async () => {
     const root = requireProductionBuild();
     const server = createBrowserServer({ root, html: fs.readFileSync(path.join(root, 'index.html'), 'utf8') });
     await listen(server);
     const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/chordlet-popup-'));
     const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run',
       '--disable-background-networking', '--no-default-browser-check', '--remote-debugging-port=0',
-      '--window-size=' + width + ',1000', '--user-data-dir=' + profile,
+      '--window-size=' + width + ',' + height, '--user-data-dir=' + profile,
       'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
     let reject;
     const failure = new Promise((_, fail) => { reject = fail; });
@@ -31,7 +31,7 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920, 2560]) {
           assert.equal(output.exceptionDetails, undefined, JSON.stringify(output));
           return output.result.value;
         };
-        await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
+        await command('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
         await evaluate(`(async () => {
           for (let i = 0; i < 200; i++) {
             if (document.querySelector('.global-harmony .chordlet-label')) {
@@ -137,6 +137,28 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920, 2560]) {
               assert.ok(choice.warningCrosses && choice.warningAccessible, JSON.stringify(choice));
               assert.notEqual(choice.mask, 'none');
             }
+          }
+          if (kind === 'spice') {
+            const groups = await evaluate(`(() => {
+              const menu = document.querySelector('.global-harmony [role="menu"]');
+              return { labels: [...menu.querySelectorAll('.spice-group-label')].map(el => el.textContent.trim()),
+                separators: menu.querySelectorAll('[role="separator"]').length,
+                spices: [...menu.querySelectorAll('[data-spice]')].map(el => el.dataset.spice),
+                lastInterval: menu.querySelector('button:last-child').dataset.scaleInterval };
+            })()`);
+            assert.deepEqual(groups.labels, ['good', 'bad', 'ugly', 'dom', 'dumb']);
+            assert.equal(groups.separators, 5);
+            assert.equal(groups.spices.length, new Set(groups.spices).size);
+            for (const spice of ['add9', 'maj7#11', 'm11', 'm7b5', '7b9', 'dim7']) assert.ok(groups.spices.includes(spice));
+            assert.equal(groups.lastInterval, '7');
+            await command('Input.dispatchKeyEvent', { type: 'keyDown', key: 'End', code: 'End', windowsVirtualKeyCode: 35 });
+            const reachable = await evaluate(`(() => {
+              const button = document.activeElement, box = button.getBoundingClientRect();
+              const menu = button.closest('[role="menu"]').getBoundingClientRect();
+              return { degree: button.dataset.scaleInterval, visible: box.top >= menu.top && box.bottom <= menu.bottom };
+            })()`);
+            assert.equal(reachable.degree, '7');
+            assert.ok(reachable.visible, JSON.stringify(reachable));
           }
           const screenshot = await command('Page.captureScreenshot', { format: 'png' });
           fs.writeFileSync(path.resolve(__dirname, '../.angular/global-harmony-' + kind + '-' + width + '.png'), Buffer.from(screenshot.data, 'base64'));

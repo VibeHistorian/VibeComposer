@@ -22,8 +22,8 @@
 @if (disabled() ? null : menu(); as popup) {
   <div class="chordlet-menu" role="menu" [attr.aria-label]="popup.kind === 'root' ? 'Chord root' : 'Chord spice'"
     (keydown)="menuKey($event)"
-    [style.left.px]="popup.x" [style.bottom.px]="popup.y">
-    <span>{{ popup.kind === 'root' ? 'Root' : 'Spice' }} <small>Chord {{ popup.index + 1 }}</small></span>
+    [style.left.px]="popup.x" [style.bottom.px]="popup.y" [style.--menu-bottom]="popup.y + 'px'">
+    @if (popup.kind === 'root') { <span>Root <small>Chord {{ popup.index + 1 }}</small></span> }
     <div>
       @if (popup.kind === 'root') {
         @for (root of roots; track root; let pitch = $index) {
@@ -35,13 +35,16 @@
             [attr.aria-checked]="menuSelected(pitch)" (click)="choose(pitch)">{{ root }}<span class="chordlet-function" aria-hidden="true">{{ rootFunction(pitch) }}</span>@if (rootsWithoutScaleSpice()[pitch]) {<span class="root-scale-warning" aria-hidden="true">!</span>}</button>
         }
       } @else {
-        @for (choice of spiceChoices(); track choice.spice) {
-          <button type="button" class="spice-choice" role="menuitemradio" [style.--chord-hue]="choice.hue"
-            [style.--spice-highlight]="choice.highlight" [style.--spice-border]="choice.border"
-            [attr.data-key-overlap]="choice.overlap.ratio" [title]="choice.title"
-            [attr.aria-checked]="menuSelected(choice.spice)" (click)="choose(choice.spice)">{{ choice.spice || 'Major' }}</button>
+        @for (group of spiceGroups(); track group.label) {
+          <span class="spice-group-label" role="separator" [attr.aria-label]="group.label">{{ group.label }}</span>
+          @for (choice of group.choices; track choice.spice) {
+            <button type="button" class="spice-choice" role="menuitemradio" [style.--chord-hue]="choice.hue"
+              [style.--spice-highlight]="choice.highlight" [style.--spice-border]="choice.border"
+              [attr.data-spice]="choice.spice" [attr.data-key-overlap]="choice.overlap.ratio" [title]="choice.title"
+              [attr.aria-checked]="menuSelected(choice.spice)" (click)="choose(choice.spice)">{{ choice.spice || 'Major' }}</button>
+          }
         }
-        <hr role="separator" />
+        <span class="spice-group-label" role="separator" aria-label="dumb">dumb</span>
         @for (choice of intervalChoices(); track choice.degree) {
           <button type="button" class="spice-choice" role="menuitemradio" [style.--chord-hue]="choice.hue"
             [style.--spice-highlight]="choice.highlight" [style.--spice-border]="choice.border"

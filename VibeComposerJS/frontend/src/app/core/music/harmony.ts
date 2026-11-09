@@ -2,8 +2,17 @@ import { harmonyScaleNotes, scaleNotes, type ScaleMode } from './scales';
 export { SCALE_DEFINITIONS, SCALE_MODES, isScaleMode, scaleNotes, type ScaleMode } from './scales';
 
 export const CHORD_SPICES = ['', 'm', 'maj7', 'm7', '7', 'mM7', 'sus2', 'sus4', 'sus7',
-  'maj6', 'm6', 'maj9', 'm9', 'maj13', 'm13', 'aug', 'dim'] as const;
+  'maj6', 'm6', 'maj9', 'm9', 'maj13', 'm13', 'aug', 'dim',
+  'add9', 'add11', '6/9', 'maj7#11', 'maj9#11',
+  'madd9', 'madd11', 'm6/9', 'm11', 'mM9', 'm7b5',
+  '9', '11', '13', '7b5', '7#5', '7b9', '7#9', '7#11', '7b13', '9sus4', 'dim7'] as const;
 export type ChordSpice = typeof CHORD_SPICES[number];
+export const CHORD_SPICE_GROUPS = [
+  { label: 'good', spices: ['', 'maj6', 'maj7', 'maj9', 'maj13', 'add9', 'add11', '6/9', 'maj7#11', 'maj9#11'] },
+  { label: 'bad', spices: ['m', 'm6', 'm7', 'm9', 'm11', 'm13', 'madd9', 'madd11', 'm6/9', 'mM7', 'mM9', 'm7b5'] },
+  { label: 'ugly', spices: ['sus2', 'sus4', 'aug', 'dim', 'dim7'] },
+  { label: 'dom', spices: ['7', '9', '11', '13', '7b5', '7#5', '7b9', '7#9', '7#11', '7b13', 'sus7', '9sus4'] },
+] as const satisfies readonly { label: string; spices: readonly ChordSpice[] }[];
 export const SCALE_INTERVALS = [2, 3, 4, 5, 6, 7] as const;
 
 /** Resolve a manual dyad in the current scale. Chromatic roots borrow the nearest
@@ -28,11 +37,23 @@ export interface ProgressionChord { readonly root: number; readonly spice: Chord
   /** Exact voicing for manual intervals and mode-derived chords without a named spice. */
   readonly intervals?: readonly number[];
 }
-// Root-position chord formulas. Thirteenths omit the optional eleventh to avoid
-// the major-third/eleventh clash; minor ninths retain both the minor third and seventh.
-const SPICE_INTERVALS: readonly (readonly number[])[] = [[0,4,7],[0,3,7],[0,4,7,11],[0,3,7,10],[0,4,7,10],
-  [0,3,7,11],[0,2,7],[0,5,7],[0,5,7,10],[0,4,7,9],[0,3,7,9],[0,4,7,11,14],
-  [0,3,7,10,14],[0,4,7,11,14,21],[0,3,7,10,14,21],[0,4,8],[0,3,6]];
+// Root-position formulas in semitones. Thirteenths omit the optional eleventh;
+// dominant 11 omits the third, as in a ninth suspended-fourth voicing.
+// Added tones have no seventh; m7b5 is half-diminished, dim7 fully diminished.
+const SPICE_FORMULAS: Record<ChordSpice, readonly number[]> = {
+  '': [0,4,7], m: [0,3,7], maj7: [0,4,7,11], m7: [0,3,7,10], '7': [0,4,7,10],
+  mM7: [0,3,7,11], sus2: [0,2,7], sus4: [0,5,7], sus7: [0,5,7,10],
+  maj6: [0,4,7,9], m6: [0,3,7,9], maj9: [0,4,7,11,14], m9: [0,3,7,10,14],
+  maj13: [0,4,7,11,14,21], m13: [0,3,7,10,14,21], aug: [0,4,8], dim: [0,3,6],
+  add9: [0,4,7,14], add11: [0,4,7,17], '6/9': [0,4,7,9,14],
+  'maj7#11': [0,4,7,11,18], 'maj9#11': [0,4,7,11,14,18],
+  madd9: [0,3,7,14], madd11: [0,3,7,17], 'm6/9': [0,3,7,9,14],
+  m11: [0,3,7,10,14,17], mM9: [0,3,7,11,14], m7b5: [0,3,6,10],
+  '9': [0,4,7,10,14], '11': [0,7,10,14,17], '13': [0,4,7,10,14,21],
+  '7b5': [0,4,6,10], '7#5': [0,4,8,10], '7b9': [0,4,7,10,13],
+  '7#9': [0,4,7,10,15], '7#11': [0,4,7,10,18], '7b13': [0,4,7,10,20],
+  '9sus4': [0,5,7,10,14], dim7: [0,3,6,9],
+};
 
 export function validProgressionChords(value: unknown, count: number): value is readonly (ProgressionChord | null)[] | undefined {
   return value === undefined || Array.isArray(value) && value.length === count && value.every(chord => chord === null
@@ -65,14 +86,15 @@ export function progressionChords(key: string, scale: ScaleMode, degrees: readon
   return degrees.map((degree, index) => custom?.[index] ?? (() => {
     const chord = diatonic.find(chord => chord.degree === degree)!;
     const intervals = chord.pitches.map(pitch => pitch - chord.pitches[0]);
-    const spiceIndex = SPICE_INTERVALS.findIndex(candidate => candidate.length === intervals.length && candidate.every((n,i) => n === intervals[i]));
-    return { root: getPitchClass(chord.root)!, spice: spiceIndex < 0 ? '' : CHORD_SPICES[spiceIndex], inversion: 0,
-      ...(spiceIndex < 0 ? { intervals } : {}) };
+    const spice = CHORD_SPICES.find(spice => SPICE_FORMULAS[spice].length === intervals.length
+      && SPICE_FORMULAS[spice].every((n,i) => n === intervals[i]));
+    return { root: getPitchClass(chord.root)!, spice: spice ?? '', inversion: 0,
+      ...(spice === undefined ? { intervals } : {}) };
   })());
 }
 
 export function chordPitches(chord: ProgressionChord, octaveBase: number, open = false): number[] {
-  const intervals = chord.intervals ?? SPICE_INTERVALS[CHORD_SPICES.indexOf(chord.spice)];
+  const intervals = chord.intervals ?? SPICE_FORMULAS[chord.spice];
   const notes = intervals.map(interval => octaveBase + chord.root + interval);
   if (open && notes.length === 3) { notes[1] += 12; notes.sort((a,b) => a-b); }
   const change = (chord.inversion + notes.length * 100) % notes.length;
@@ -95,7 +117,7 @@ export function chordRootHue(root: number, key: string): number {
 export function chordRomanNumeral(chord: ProgressionChord, key: string): string {
   const offset = ((chord.root - (getPitchClass(key) ?? 0)) % 12 + 12) % 12;
   const numeral = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♯IV', 'V', '♭VI', 'VI', '♭VII', 'VII'][offset];
-  const intervals = (chord.intervals ?? SPICE_INTERVALS[CHORD_SPICES.indexOf(chord.spice)]).map(note => note % 12);
+  const intervals = (chord.intervals ?? SPICE_FORMULAS[chord.spice]).map(note => note % 12);
   const minor = intervals.includes(3) && !intervals.includes(4);
   const diminished = minor && intervals.includes(6) && !intervals.includes(7);
   const augmented = intervals.includes(4) && intervals.includes(8) && !intervals.includes(7);
