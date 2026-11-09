@@ -927,9 +927,14 @@ export class ProjectService {
     return candidate ? this.commitPartWorkflow(candidate) : 'invalid';
   }
 
-  addTrack(role: ArrangedPart): string | undefined {
+  addTrack(role: ArrangedPart, scorePoint?: { sectionId: string; midi: number; scope?: 'section' | 'global' }): string | undefined {
     const current = this.state();
     if (!ARRANGED_PARTS.includes(role) || current.tracks.length >= 64) return undefined;
+    if (scorePoint && (!current.arrangement.some(section => section.id === scorePoint.sectionId)
+      || !Number.isInteger(scorePoint.midi) || scorePoint.midi < 0 || scorePoint.midi > 127
+      || scorePoint.scope !== undefined && scorePoint.scope !== 'section' && scorePoint.scope !== 'global')) return undefined;
+    const count = current.trackRerollCounts?.[role] ?? 0;
+    if (scorePoint && count >= 2147483647) return undefined;
     const source = current.tracks.find((track) => track.role === role) ?? DEFAULT_TRACKS.find(track => track.role === role)!;
     const nextNumber = current.tracks.reduce((maximum, track) => {
       const match = new RegExp(`^track-${role}-(\\d+)$`).exec(track.id);
@@ -937,18 +942,49 @@ export class ProjectService {
     }, 0) + 1;
     const id = `track-${role}-${nextNumber}`;
     const channel = role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
-    const track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
+    let track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(role === 'drums' ? DEFAULT_DRUM_SETTINGS : source.generatorSettings),
       rerollLocked: false,
       instrumentLocked: false,
       editedPhrase: role === 'drums' ? undefined : source.editedPhrase?.map((note) => ({ ...note })),
       phraseEdits: role === 'drums' ? undefined : source.phraseEdits?.map(edit => ({ ...edit, notes: edit.notes.map(note => ({ ...note })) })) } as CompositionTrack;
-    const arrangement = current.arrangement.map((section) => ({
+    if (scorePoint) {
+      track = { ...track, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack;
+      const members = [...current.tracks.filter(member => member.role === role), track];
+      const seed = this.trackRerollSeed(current, role, count);
+      const drumContext = { onlyAdd: true, totalTracks: members.length, reservedPitches: projectDrumPitches(current),
+        remaining: current.tracks.filter(member => member.role === 'drums').map(member => member.generatorSettings as DrumSettings) };
+      const instruments = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], [track], false, drumContext);
+      const settings = rerollRoleSettings(seed, role, current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role], instruments, [members.length], drumContext);
+      track = { ...instruments[0], generatorSettings: { ...settings[0], ...(role === 'drums' ? {} : { transpose: 0 }) } } as CompositionTrack;
+    }
+    let arrangement = current.arrangement.map((section) => ({
       ...section,
-      trackPresence: { ...section.trackPresence, ...generateTrackPresence([track], this.sectionTypeSettings.chances()[section.type]) },
+      trackPresence: { ...section.trackPresence, ...(scorePoint ? { [id]: scorePoint.scope === 'global' || section.id === scorePoint.sectionId }
+        : generateTrackPresence([track], this.sectionTypeSettings.chances()[section.type])) },
+      ...(scorePoint && role !== 'drums' && section.id === scorePoint.sectionId && section.rolePartOverrides?.[role]?.transpose !== undefined
+        ? { trackPartOverrides: { ...section.trackPartOverrides, [id]: { transpose: 0 } } } : {}),
     }));
-    this.commit({ ...current, tracks: [...current.tracks, track], arrangement });
+    if (scorePoint && role !== 'drums') {
+      const candidate = { ...current, tracks: [...current.tracks, track], arrangement };
+      let pitches: number[];
+      try {
+        pitches = layOutTrackPhrase(candidate, track, false, true).filter(note => note.sectionId === scorePoint.sectionId)
+          .map(note => note.midi).sort((a, b) => a - b);
+      } catch (error) {
+        this.generationFailure.set(error instanceof Error ? error.message : 'The requested music could not be generated.');
+        return undefined;
+      }
+      // Preserve the role's contour and choose the octave nearest the clicked pitch range.
+      const middle = pitches.length ? pitches[Math.floor(pitches.length / 2)] : role === 'bass' ? 36 : 60;
+      const transpose = Math.max(-36, Math.min(36, (Math.floor(scorePoint.midi / 12) - Math.floor(middle / 12)) * 12));
+      track = { ...track, generatorSettings: { ...track.generatorSettings, transpose } } as CompositionTrack;
+      arrangement = arrangement.map(section => section.trackPartOverrides?.[id]
+        ? { ...section, trackPartOverrides: { ...section.trackPartOverrides, [id]: { transpose } } } : section);
+    }
+    this.commit({ ...current, tracks: [...current.tracks, track], arrangement,
+      ...(scorePoint ? { trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } } : {}) });
     return this.state().tracks.some((candidate) => candidate.id === id) ? id : undefined;
   }
 

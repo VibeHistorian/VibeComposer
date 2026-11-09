@@ -1,5 +1,7 @@
 import type { DrumSlots } from '../../core/music/drum-instruments';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
+import { ContextMenuComponent } from '../../shared/context-menu.component';
+import { ARRANGED_PARTS } from '../../core/music/part-role';
 import { musicalTime } from '../../core/ui/musical-time';
 import { trackColor } from '../../core/ui/track-color';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
@@ -87,6 +89,7 @@ const COLORS: Readonly<Record<ArrangedPart, { note: string; velocity: string; gl
 
 @Component({
   selector: 'vc-score-canvas',
+  imports: [ContextMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './score-canvas.component.html',
   styleUrl: './score-canvas.component.css',
@@ -141,7 +144,30 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private pinch: { distance: number; x: number; y: number } | null = null;
   private touchGesture = false;
   private touchTap: { x: number; y: number } | null = null;
-  private readonly onContextMenu = (event: MouseEvent): void => { if (this.editable()) event.preventDefault(); };
+  readonly trackAddRequested = output<{ role: ArrangedPart; beat: number; midi: number; scope: 'section' | 'global' }>();
+  readonly trackRoleItems = ARRANGED_PARTS.map(role => ({ id: role,
+    label: role === 'arpeggio' ? 'Arpeggio' : role[0].toUpperCase() + role.slice(1),
+    children: [{ id: `${role}:section`, label: 'Section' }, { id: `${role}:global`, label: 'Global' }] }));
+  private trackAddPoint: { beat: number; midi: number } | null = null;
+  private readonly onContextMenu = (event: MouseEvent): void => {
+    this.trackAddPoint = null;
+    if (this.editable()) event.preventDefault();
+    if (this.editable() || !this.app || !this.model || !this.emptyCanvasPoint(event)) {
+      event.stopPropagation();
+      return;
+    }
+    const { y } = canvasPoint(event.clientX, event.clientY, this.app.canvas.getBoundingClientRect(), { width: this.width, height: this.height });
+    if (y >= this.scoreHeight) { event.stopPropagation(); return; }
+    this.trackAddPoint = { beat: this.beatAt(event), midi: Math.max(0, Math.min(127, pitchAt(y, this.pitchGeometry, this.drumPitches))) };
+    this.noteTooltip.set(null); this.timeTooltip.set(null);
+  };
+  addTrackAtPoint(action: string): void {
+    const [role, scope] = action.split(':');
+    if (this.editable() || !this.trackAddPoint || !ARRANGED_PARTS.includes(role as ArrangedPart)
+      || (scope !== 'section' && scope !== 'global')) return;
+    this.trackAddRequested.emit({ role: role as ArrangedPart, scope, ...this.trackAddPoint });
+    this.trackAddPoint = null;
+  }
   private suppressClick = false;
   readonly sectionFocus = input<ScoreSectionFocus | null>(null);
   readonly noteSelected = output<ScoreCanvasNote>();

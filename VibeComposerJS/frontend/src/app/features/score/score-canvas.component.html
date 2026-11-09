@@ -9,6 +9,7 @@
       [style.height.px]="line.height" [style.opacity]="line.opacity"></span>
   }
 </div>
+<vc-context-menu [items]="trackRoleItems" (action)="addTrackAtPoint($event.id)">
 <div class="score-canvas-host" #rendererHost>
   @if (noteTooltip(); as tooltip) {
     <div class="note-tooltip" role="tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">
@@ -21,6 +22,7 @@
     <div class="time-tooltip" role="tooltip" [style.left.px]="time.x" [style.top.px]="time.y">{{ time.text }}</div>
   }
 </div>
+</vc-context-menu>
 <div class="horizontal-scroll" #horizontalScroll (scroll)="onHorizontalScroll()" tabindex="0" aria-label="Score horizontal scroll">
   <div #horizontalContent></div>
 </div>

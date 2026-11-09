@@ -939,6 +939,16 @@ export class WorkspaceCanvasComponent {
     if (trackId) this.selectTrack(trackId);
   }
 
+  addScoreTrack(point: { role: ArrangedPart; beat: number; midi: number; scope: 'section' | 'global' }): void {
+    if (this.editing()) return;
+    const sections = this.timelineSections();
+    const section = sections.find((entry, index) => point.beat >= entry.startBeat
+      && point.beat < (sections[index + 1]?.startBeat ?? entry.startBeat + sectionDurationBeats(this.project(), entry.section)));
+    if (!section) return;
+    const trackId = this.projects.addTrack(point.role, { sectionId: section.section.id, midi: point.midi, scope: point.scope });
+    if (trackId) this.selectTrack(trackId);
+  }
+
   duplicateTrack(trackId: string): void {
     const duplicateId = this.projects.duplicateTrack(trackId);
     if (duplicateId) this.selectTrack(duplicateId);

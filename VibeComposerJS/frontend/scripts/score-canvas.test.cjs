@@ -187,6 +187,7 @@ function fixture(reactivity) {
     : name.includes('musical-time') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'))
     : name.includes('track-color') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/track-color.ts'))
     : name.includes('phrase-edit') ? helperModule.exports
+    : name.includes('part-role') ? require('./music-loader.cjs').loadMusic('part-role.ts')
     : name.includes('drum-instruments') ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports);
   const component = new module.exports.ScoreCanvasComponent();
   component.width = 800;
@@ -656,6 +657,30 @@ function editFixture() {
   return { ...value, notes };
 }
 const pointer = (x, y, extra = {}) => ({ preventDefault() {}, clientX: x, clientY: y, pointerId: 1, button: 0, ...extra });
+
+test('empty score context menu captures viewport pitch and beat and is unavailable on notes or in the editor', () => {
+  const { component: c } = fixture();
+  c.harmonicHeight = 300; c.pitchMin = 48; c.pitchMax = 72;
+  let stopped = false;
+  const event = { ...pointer(300, 20), stopPropagation() { stopped = true; } };
+  c.onContextMenu(event);
+  c.addTrackAtPoint('bass:section');
+  assert.deepEqual(c.trackAddRequested.values, [{ role: 'bass', scope: 'section', beat: 24, midi: 71 }]);
+  assert.equal(stopped, false);
+  assert.equal(c.trackRoleItems.length, 5);
+  assert.ok(c.trackRoleItems.every(item => item.children.map(child => child.label).join(',') === 'Section,Global'));
+  c.onContextMenu(event); c.addTrackAtPoint('chords:global');
+  assert.deepEqual(c.trackAddRequested.values[1], { role: 'chords', scope: 'global', beat: 24, midi: 71 });
+  c.editable = () => true;
+  c.onContextMenu(event); c.addTrackAtPoint('melody:section');
+  assert.equal(stopped, true);
+  assert.equal(c.trackAddRequested.values.length, 2);
+  c.editable = () => false; stopped = false;
+  c.hitAreaAt = () => ({ note: {} });
+  c.onContextMenu(event); c.addTrackAtPoint('chords:global');
+  assert.equal(stopped, true);
+  assert.equal(c.trackAddRequested.values.length, 2);
+});
 
 test('group moves preserve spacing at the phrase boundary and commit once', () => {
   const { component: c } = editFixture();

@@ -490,6 +490,28 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.equal(shortSection.hidden,true);assert.equal(shortSection.measure,'01');assert.equal(shortSection.saved,true);
   assert.equal(shortSection.reappeared,true);assert.notEqual(shortSection.separator,'rgba(0, 0, 0, 0)');
   await capture('score-chord-grid-short-sections');
+  for (const scope of ['Section','Global']) {
+  const scoreAddition=await evaluate(`(async()=>{${waitCode}
+    const canvas=document.querySelector('vc-score-canvas canvas'),bounds=canvas.getBoundingClientRect();
+    const before=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.length;
+    canvas.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2,clientX:bounds.left+bounds.width*.7,clientY:bounds.top+2}));
+    const menu=await wait(()=>document.querySelector('.cdk-overlay-container [role="menu"]'));
+    const items=[...menu.querySelectorAll('[role="menuitem"]')];
+    const labels=items.map(item=>item.querySelector('span').textContent.trim());
+    items.find(item=>item.querySelector('span').textContent.trim()==='Bass').click();
+    const submenu=await wait(()=>[...document.querySelectorAll('.cdk-overlay-container [role="menu"]')].find(m=>[...m.querySelectorAll('[role="menuitem"]')].some(item=>item.textContent.trim()==='Section')));
+    const choices=[...submenu.querySelectorAll('[role="menuitem"]')];
+    if(choices.map(item=>item.textContent.trim()).join(',')!=='Section,Global')throw Error('Expected scope choices');
+    choices.find(item=>item.textContent.trim()==='${scope}').click();
+    const project=await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.tracks.length===before+1?p:null;});
+    const track=project.tracks.at(-1),number=project.tracks.filter(t=>t.role==='bass').length;
+    const present=project.arrangement.filter(s=>Array.isArray(s.trackPresence.bass)?s.trackPresence.bass.includes(number):s.trackPresence[track.id]);
+    return {labels,role:track.role,present:present.length,total:project.arrangement.length,rerolls:project.trackRerollCounts.bass};
+  })()`);
+  assert.deepEqual(scoreAddition.labels,['Melody','Chords','Arpeggio','Bass','Drums']);
+  assert.equal(scoreAddition.role,'bass');assert.equal(scoreAddition.present,scope==='Section'?1:scoreAddition.total);
+  assert.ok(scoreAddition.rerolls>0);
+  }
  } finally {
     await closeBrowser({ child, server, socket });
   }

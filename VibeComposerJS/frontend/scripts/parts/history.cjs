@@ -3,6 +3,38 @@ const test = require('node:test');
 const { Midi } = require('@tonejs/midi');
 const { fixture } = require('../support/project-fixture.cjs');
 
+test('score track creation rerolls each role, targets section/global presence and undoes in one step', () => {
+  for (const scope of ['section', 'global']) for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const { service, load } = fixture();
+    const sectionId = service.project().arrangement[1].id;
+    if (role !== 'drums') service.updatePartSettings({ kind: 'section-role', sectionId, role }, { transpose: -12 });
+    const before = service.exportProjectJson();
+    const id = service.addTrack(role, { sectionId, midi: 72, scope });
+    assert.ok(id, role);
+    const project = service.project();
+    const track = project.tracks.find(track => track.id === id);
+    assert.equal(track.editedPhrase, undefined);
+    assert.equal(project.trackRerollCounts[role], 1);
+    const expected = fixture().service;
+    expected.generateRoleTracks(role, 1);
+    const withoutTranspose = settings => { const { transpose, ...rest } = settings; return rest; };
+    assert.deepEqual(withoutTranspose(track.generatorSettings), withoutTranspose(expected.project().tracks.at(-1).generatorSettings));
+    for (const section of project.arrangement) assert.equal(section.trackPresence[id], scope === 'global' || section.id === sectionId);
+    if (role !== 'drums') {
+      assert.equal(track.generatorSettings.transpose % 12, 0);
+      const { layOutTrackPhrase } = load('core/music/phrase.ts');
+      const pitches = layOutTrackPhrase(project, track, false, true).filter(note => note.sectionId === sectionId).map(note => note.midi).sort((a, b) => a - b);
+      assert.ok(pitches.length);
+      assert.equal(Math.floor(pitches[Math.floor(pitches.length / 2)] / 12), 6);
+    }
+    const after = service.exportProjectJson();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+    assert.equal(service.addTrack(role, { sectionId: 'missing', midi: 72 }), undefined);
+    assert.equal(service.exportProjectJson(), after);
+  }
+});
+
 test('arrangement toggles persist, validate and undo; Preview rerolls preserve sections', () => {
   const { service } = fixture();
   const initial = service.exportProjectJson();
