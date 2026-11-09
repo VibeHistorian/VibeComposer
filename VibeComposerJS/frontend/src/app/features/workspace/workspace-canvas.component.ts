@@ -676,11 +676,6 @@ export class WorkspaceCanvasComponent {
     this.workspaceUi.selectTrack(trackId);
   }
 
-  selectScoreTrack(track: ScoreCanvasTrack): void {
-    const ids = track.trackIds ?? [track.id];
-    this.selectTrack(ids.includes(this.selectedTrackId()) ? this.selectedTrackId() : ids[0]);
-  }
-
   selectRoleHeading(role: ArrangedPart): void {
     if (this.editing()) return;
     if (this.selectedRole() === role) this.toggleGroupCollapsed(role);

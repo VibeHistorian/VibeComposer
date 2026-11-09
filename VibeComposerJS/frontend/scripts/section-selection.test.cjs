@@ -92,17 +92,25 @@ test('role heading selects a role, then toggles its settings without changing se
   assert.equal(workspace.isGroupCollapsed('bass'), false);
 });
 
-test('score lane selection chooses global tracks and preserves the active member of combined drum lanes', () => {
+test('seeking preserves every inspector scope and the selected independent drum track', () => {
   const { workspace, ui, project } = fixture();
   project.set({ ...project(), tracks: [...project().tracks,
     { id: 'kick', role: 'drums' }, { id: 'snare', role: 'drums' }] });
-  workspace.selectScoreTrack({ id: 'role:drums', trackIds: ['kick', 'snare'] });
-  assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'kick' });
-  workspace.selectTrack('snare');
-  workspace.selectScoreTrack({ id: 'role:drums', trackIds: ['kick', 'snare'] });
-  assert.equal(ui.selectedTrackId(), 'snare');
-  workspace.selectScoreTrack({ id: 'track-bass-1' });
-  assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: 'track-bass-1' });
+  const seeks = [];
+  workspace.playback.seek = (project, beat) => seeks.push(beat);
+  for (const select of [
+    () => ui.selectTrack('snare'), () => ui.selectRole('drums'),
+    () => ui.selectSectionTrack('b', 'snare'), () => ui.selectCell('b', 'drums'),
+    () => ui.setSectionSelection('b'), () => ui.selectArrangement(),
+  ]) {
+    select();
+    const selection = ui.captureSettingsSelection();
+    const sections = ui.selectedSectionIds();
+    workspace.seek(13);
+    assert.deepEqual(ui.captureSettingsSelection(), selection);
+    assert.deepEqual(ui.selectedSectionIds(), sections);
+  }
+  assert.deepEqual(seeks, [13, 13, 13, 13, 13, 13]);
 });
 
 for (const scenario of [

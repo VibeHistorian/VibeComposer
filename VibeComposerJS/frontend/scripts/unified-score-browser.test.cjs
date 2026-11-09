@@ -43,6 +43,18 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await command('Page.reload');
   const initial=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));return {labels:document.querySelectorAll('.pitch-key').length,drums:document.querySelectorAll('.drum-label').length,arrangement:!!document.querySelector('vc-arrangement-overview canvas'),velocity:!!document.querySelector('.velocity-label')};})()`);
   assert.ok(initial.labels>=17);assert.equal(initial.drums,3);assert.equal(initial.arrangement,true);assert.equal(initial.velocity,false);
+  const seekSelection = await evaluate(`(async()=>{${waitCode}
+    const buttons=[...document.querySelectorAll('.track-group.drums .track-select')];
+    buttons.at(-1).click();
+    await wait(()=>buttons.at(-1).getAttribute('aria-pressed')==='true');
+    const snapshot=()=>({track:[...document.querySelectorAll('.track-select[aria-pressed="true"]')].map(button=>button.textContent.trim()),
+      inspector:document.querySelector('#part-inspector').textContent});
+    const before=snapshot(),canvas=document.querySelector('vc-score-canvas canvas'),bounds=canvas.getBoundingClientRect();
+    canvas.dispatchEvent(new MouseEvent('click',{bubbles:true,button:0,clientX:bounds.left+bounds.width*.7,clientY:bounds.top+2}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return {before,after:snapshot()};
+  })()`);
+  assert.deepEqual(seekSelection.after,seekSelection.before,'seeking in empty score space preserves the selected drum track and inspector');
   const capture=async name=>{const png=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.resolve(__dirname,'../.angular/'+name+'.png'),Buffer.from(png.data,'base64'));};
   await capture('unified-score');
   const fittedScroll = await evaluate(`(async()=>{

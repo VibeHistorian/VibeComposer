@@ -371,7 +371,7 @@ test('empty score clicks seek through the zoomed and panned viewport, including 
   const { component } = fixture();
   component.onCanvasClick({ button: 0, clientX: 300, clientY: 20 });
   assert.deepEqual(component.seekRequested.values, [24]);
-  assert.deepEqual(component.trackSelected.values, [component.model.tracks[0]]);
+  assert.deepEqual(component.noteTrackSelected.values, []);
   assert.deepEqual(component.noteSelected.values, []);
   component.onCanvasClick({ button: 1, clientX: 300, clientY: 20 });
   assert.equal(component.seekRequested.values.length, 1);
@@ -409,7 +409,7 @@ test('clicking a note emits only note selection even in a zoomed viewport', () =
   component.onCanvasClick({ button: 0, clientX: 300, clientY: 20 });
   assert.deepEqual(component.noteSelected.values, [note]);
   assert.deepEqual(component.seekRequested.values, []);
-  assert.deepEqual(component.trackSelected.values, []);
+  assert.deepEqual(component.noteTrackSelected.values, []);
 });
 
 test('middle press on an overview note requests its track context without opening through normal selection', () => {
