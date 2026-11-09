@@ -825,6 +825,65 @@ test('overview cell and section rerolls and resets stay local and undo atomicall
   }
 });
 
+test('overview rerolls freeze only differences while preserving effective rerolled values', () => {
+  for (const kind of ['section-track', 'section-role', 'section']) {
+    const { service, load } = fixture();
+    const settings = load('core/music/part-settings.ts');
+    const generation = load('core/music/track-generation.ts');
+    const sectionId = service.project().arrangement[0].id;
+    const tracks = service.project().tracks;
+    // Start with full snapshots, including equal array values and defaulted controls.
+    for (const track of tracks) {
+      service.updatePartSettings({ kind: 'section-role', sectionId, role: track.role }, { transpose: 12 });
+      service.freezePartSettings({ kind: 'section-track', sectionId, trackId: track.id });
+    }
+    const expected = new Map();
+    const reroll = generation.rerollRoleSettings;
+    generation.rerollRoleSettings = (...args) => {
+      const result = reroll(...args);
+      args[3].forEach((track, index) => expected.set(track.id, settings.settingsValues(result[index], track.role)));
+      return result;
+    };
+    const scope = { kind, sectionId, ...(kind === 'section-track' ? { trackId: 'track-bass-1' }
+      : kind === 'section-role' ? { role: 'bass' } : {}) };
+    const before = service.exportProjectJson();
+    assert.equal(service.changeOverviewTracks(scope, 'reroll'), 'changed');
+    const section = service.project().arrangement[0];
+    for (const track of tracks) {
+      if (!expected.has(track.id)) {
+        assert.deepEqual(section.trackPartOverrides[track.id], JSON.parse(before).arrangement[0].trackPartOverrides[track.id]);
+        continue;
+      }
+      const inherited = settings.settingsValues(settings.resolvePartTrack(track,
+        { ...section, trackPartOverrides: undefined }, service.project().melodyGlobal).generatorSettings, track.role);
+      const differences = Object.fromEntries(Object.entries(expected.get(track.id))
+        .filter(([field, value]) => !settings.partValuesEqual(value, inherited[field])));
+      assert.deepEqual(section.trackPartOverrides[track.id] ?? {}, differences);
+      assert.deepEqual(settings.settingsValues(settings.resolvePartTrack(track, section).generatorSettings, track.role), expected.get(track.id));
+      assert.ok(Object.keys(differences).length < Object.keys(inherited).length);
+    }
+    const after = service.exportProjectJson();
+    service.undo(); assert.equal(service.exportProjectJson(), before);
+    service.redo(); assert.equal(service.exportProjectJson(), after);
+    // An unchanged parameter must continue following subsequent global edits.
+    const bass = tracks.find(track => track.id === 'track-bass-1');
+    assert.equal(section.trackPartOverrides[bass.id]?.offset, undefined);
+    service.updateTrackGeneratorSettings(bass.id, { offset: 125 });
+    assert.equal(settings.resolvePartTrack(service.project().tracks.find(track => track.id === bass.id),
+      service.project().arrangement[0]).generatorSettings.offset, 125);
+  }
+});
+
+test('overview reroll removes an empty track override instead of retaining a frozen snapshot', () => {
+  const { service, load } = fixture();
+  const trackId = 'track-bass-1', sectionId = service.project().arrangement[0].id;
+  const scope = { kind: 'section-track', sectionId, trackId };
+  service.freezePartSettings(scope);
+  load('core/music/track-generation.ts').rerollRoleSettings = (_seed, _role, _policy, tracks) => tracks.map(track => track.generatorSettings);
+  assert.equal(service.changeOverviewTracks(scope, 'reroll'), 'changed');
+  assert.equal(service.project().arrangement[0].trackPartOverrides[trackId], undefined);
+});
+
 test('overview header shortcuts edit the clicked section and undo duplication/removal individually', () => {
   const { service, workspace } = fixture();
   const clicked = service.project().arrangement[1].id;

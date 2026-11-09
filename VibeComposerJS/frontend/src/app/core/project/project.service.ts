@@ -449,7 +449,14 @@ export class ProjectService {
           current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role], sources,
           sources.map(track => roleTracks.findIndex(item => item.id === track.id) + 1), drumContext);
         sources.forEach((track, index) => {
-          trackPartOverrides[track.id] = copyPartSettings(settingsValues(settings[index], role)) as PartSettingsPatch;
+          const base = current.tracks.find(item => item.id === track.id)!;
+          const inherited = settingsValues(resolvePartTrack(base, { ...section, trackPartOverrides: undefined },
+            current.melodyGlobal).generatorSettings, role);
+          // Keep unchanged controls inheriting instead of freezing the entire rerolled snapshot.
+          const patch = copyPartSettings(Object.fromEntries(Object.entries(settingsValues(settings[index], role))
+            .filter(([field, value]) => !partValuesEqual(value, inherited[field]))) as PartSettingsPatch);
+          if (Object.keys(patch).length) trackPartOverrides[track.id] = patch;
+          else delete trackPartOverrides[track.id];
         });
         counts[role] = count + 1;
       }
