@@ -43,6 +43,26 @@ for (const width of [700, 780, 1050, 1400, 1440, 1920, 2560]) {
           }
           throw new Error('Global harmony did not render');
         })()`);
+        const spice = await evaluate(`(async () => {
+          const input = document.querySelector('input[aria-label="Harmony spiciness"]');
+          const transpose = document.querySelector('input[aria-label="Transpose in semitones"]');
+          const a = input.getBoundingClientRect(), b = transpose.getBoundingClientRect();
+          const heading = input.closest('vc-compact-knob').querySelector('vc-control-heading');
+          const h = heading.getBoundingClientRect();
+          input.value = '100';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          document.querySelector('.global-harmony button[aria-label="Generate chord progression"]').click();
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          return { ordered: a.left >= b.right, labelLeft: h.right <= a.left + 1, visible: a.right <= innerWidth,
+            label: heading.textContent.trim(), value: input.value,
+            symbols: [...document.querySelectorAll('.global-harmony .chordlet-label')].map(el => el.textContent.trim()) };
+        })()`);
+        assert.ok(spice.ordered && spice.labelLeft && spice.visible, JSON.stringify(spice));
+        assert.equal(spice.label, '🌶');
+        assert.equal(spice.value, '100');
+        assert.ok(spice.symbols.every(symbol => /[679\[]/.test(symbol)), JSON.stringify(spice));
         const markers = await evaluate(`(() => [...document.querySelectorAll('.global-harmony .chordlet')].map(chord => {
           const marker = chord.querySelector('.chordlet-function');
           const box = chord.getBoundingClientRect(), label = marker.getBoundingClientRect();

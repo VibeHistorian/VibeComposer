@@ -156,6 +156,10 @@ export class TransportDockComponent {
   updateTranspose(transpose: number): void {
     if (Number.isInteger(transpose) && transpose >= -24 && transpose <= 24) this.projects.updateSettings({ transposeSemitones: transpose });
   }
+
+  updateSpiciness(spiciness: number): void {
+    this.projects.updateHarmonySettings({ spiciness });
+  }
   resetSeed(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();

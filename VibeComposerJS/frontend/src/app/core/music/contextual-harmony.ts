@@ -3,6 +3,7 @@ import { chordPitches, progressionChords, scaleNotes, type ProgressionChord, typ
 import { generateDiatonicProgression } from './progression-generator';
 import type { HarmonySettings } from './harmony-voicing';
 import type { MelodyGlobalSettings } from './part-settings.model';
+import { spiceHarmony } from './harmony-spiciness';
 
 export const HARMONY_GENERATIONS = [
   { value: 'CURRENT', label: 'Legacy' }, { value: 'FUNCTIONAL', label: 'Functional' },
@@ -33,12 +34,13 @@ export function generateHarmony(seed: bigint | number, length: number, key: stri
   const baseSeed = BigInt(seed);
   let strategy = settings.generation ?? 'CURRENT';
   if (strategy === 'RANDOM') strategy = HARMONY_GENERATIONS[new JavaRandom(baseSeed).nextInt(5)].value;
-  if (strategy === 'CURRENT') return { degrees: generateDiatonicProgression(seed, length), ...(locks ? { chords: locks } : {}) };
+  const finish = (degrees: number[], chords?: readonly (ProgressionChord | null)[]) => {
+    if (!(settings.spiciness ?? 0)) return { degrees, ...(chords ? { chords } : {}) };
+    return { degrees, chords: spiceHarmony(baseSeed, key, scale, degrees,
+      progressionChords(key, scale, degrees, chords), { ...settings, generation: strategy }, locks) };
+  };
+  if (strategy === 'CURRENT') return finish(generateDiatonicProgression(seed, length), locks);
   const notes = scaleNotes(scale), vocabulary = progressionChords(key, scale, [1,2,3,4,5,6,7]);
-  if (strategy === 'FUNCTIONAL' && notes[2] === 3 && notes[4] === 7) {
-    vocabulary[4] = { ...vocabulary[4], spice: '7', intervals: undefined };
-    if (notes[1] === 2) vocabulary[1] = { ...vocabulary[1], spice: 'm7', intervals: [0,3,6,10] };
-  }
   const degreeOf = (chord: ProgressionChord | null | undefined) => chord ? vocabulary.findIndex(c => c.root === chord.root) : -1;
   const first = degreeOf(locks?.[0]), last = degreeOf(locks?.[length - 1]);
   let plans = CLOSED.filter(plan => plan[2] !== 6 || notes[6] === 11);
@@ -87,5 +89,5 @@ export function generateHarmony(seed: bigint | number, length: number, key: stri
     next.sort((a,b) => b.score - a.score || a.serial - b.serial);
     beam = next.slice(0,32);
   }
-  return { degrees: beam[0].degrees, chords: beam[0].path };
+  return finish(beam[0].degrees, beam[0].path);
 }

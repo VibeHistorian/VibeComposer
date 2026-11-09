@@ -1332,7 +1332,12 @@ export class ProjectService {
     const context = sectionProject(project, section);
     const length = section?.customChords?.length ?? section?.chordDegrees?.length ?? project.progression.length;
     const generated = generateHarmony(BigInt(project.seed), length, context.key, context.scale, project.harmonySettings, project.melodyGlobal);
-    if (allSections) this.editAllSectionMusic(item => ({ ...item, chordDegrees: generated.degrees, customChords: generated.chords }));
+    if (allSections) this.editAllSectionMusic(item => {
+      const local = sectionProject(project, item);
+      const count = item.customChords?.length ?? item.chordDegrees?.length ?? project.progression.length;
+      const harmony = generateHarmony(BigInt(project.seed), count, local.key, local.scale, project.harmonySettings, project.melodyGlobal);
+      return { ...item, chordDegrees: harmony.degrees, customChords: harmony.chords };
+    });
     else if (section) this.setSectionMusicalState(section.id, { chordDegrees: generated.degrees, customChords: generated.chords });
     else this.commit({ ...project, progression: generated.degrees, progressionChords: generated.chords });
   }
