@@ -435,6 +435,19 @@ test('middle press on an overview note requests its track context without openin
   assert.equal(component.drag.mode, 'velocity');
 });
 
+test('score editing and parameter selection bindings can be swapped without changing phrase gestures', () => {
+  const { component: c } = fixture();
+  const note = { id: 'manual', part: 'bass', color: 'bass', midi: 48, velocity: 100 };
+  c.hitAreaAt = () => ({ note });
+  c.preferences.setShortcut('editScoreNote', { kind: 'mouse', input: '1', ctrl: false, shift: false, alt: false });
+  c.preferences.setShortcut('selectScoreNoteTrack', { kind: 'mouse', input: '0', ctrl: false, shift: false, alt: false });
+  c.onCanvasClick({ button: 0, clientX: 300, clientY: 20 });
+  assert.deepEqual(c.noteTrackSelected.values, [note]);
+  assert.deepEqual(c.noteSelected.values, []);
+  c.onPointerDown({ button: 1, clientX: 300, clientY: 20, preventDefault() {} });
+  assert.deepEqual(c.noteSelected.values, [note]);
+});
+
 test('note hover immediately shows pitch, velocity, custom track order and source, and clears on exit', () => {
   const { component, canvas } = fixture();
   const note = { id: 'note', startBeat: 4.5, part: 'bass', trackName: 'Deep bass', trackOrder: 2, color: 'bass', midi: 61, velocity: 103, phraseSource: 'section-edited' };
@@ -658,7 +671,7 @@ function editFixture() {
 }
 const pointer = (x, y, extra = {}) => ({ preventDefault() {}, clientX: x, clientY: y, pointerId: 1, button: 0, ...extra });
 
-test('empty score context menu captures viewport pitch and beat and is unavailable on notes or in the editor', () => {
+test('score context menu captures empty-space coordinates or note ownership and is unavailable in the editor', () => {
   const { component: c } = fixture();
   c.harmonicHeight = 300; c.pitchMin = 48; c.pitchMax = 72;
   let stopped = false;
@@ -676,10 +689,25 @@ test('empty score context menu captures viewport pitch and beat and is unavailab
   assert.equal(stopped, true);
   assert.equal(c.trackAddRequested.values.length, 2);
   c.editable = () => false; stopped = false;
-  c.hitAreaAt = () => ({ note: {} });
+  const note = { id: 'pickup', part: 'drums-4', sectionId: 'second', startBeat: 15 };
+  c.model.sections = [{ startBeat: 0, section: { id: 'first', type: 'VERSE1' } },
+    { startBeat: 16, section: { id: 'second', type: 'VERSE2' } }];
+  c.hitAreaAt = () => ({ note });
   c.onContextMenu(event); c.addTrackAtPoint('chords:global');
-  assert.equal(stopped, true);
+  assert.equal(stopped, false);
   assert.equal(c.trackAddRequested.values.length, 2);
+  assert.deepEqual(c.contextItems()[0].children.map(item => item.label), ['From Section 2 [VERSE2]', 'From All Sections', 'Track']);
+  for (const scope of ['section', 'global', 'track']) {
+    c.onContextMenu(event); c.contextAction('remove:' + scope);
+  }
+  assert.deepEqual(c.noteRemoveRequested.values, ['section', 'global', 'track'].map(scope => ({ note, scope })));
+  c.canRemoveTrack = () => false;
+  c.onContextMenu(event); c.contextAction('remove:track');
+  assert.equal(c.noteRemoveRequested.values.length, 3);
+  assert.equal(c.contextItems()[0].children[2].disabled, true);
+  c.editable = () => true;
+  c.onContextMenu(event); c.contextAction('remove:section');
+  assert.equal(c.noteRemoveRequested.values.length, 3);
 });
 
 test('group moves preserve spacing at the phrase boundary and commit once', () => {

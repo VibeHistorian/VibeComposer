@@ -3,6 +3,25 @@ const test = require('node:test');
 const { Midi } = require('@tonejs/midi');
 const { fixture } = require('../support/project-fixture.cjs');
 
+test('note removal clears track presence in one or all sections with one undo, preserving notes and other tracks', () => {
+  for (const local of [true, false]) {
+    const { service } = fixture();
+    const track = service.project().tracks[0];
+    service.updateTrackPhrase(track.id, [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+    const before = service.project();
+    const sectionId = before.arrangement[1].id;
+    service.clearTrackPresence(track.id, local ? sectionId : undefined);
+    const after = service.project();
+    assert.deepEqual(after.tracks, before.tracks);
+    after.arrangement.forEach((section, index) => assert.deepEqual(section, !local || section.id === sectionId
+      ? { ...before.arrangement[index], trackPresence: { ...before.arrangement[index].trackPresence, [track.id]: false } }
+      : before.arrangement[index]));
+    service.undo(); assert.deepEqual(service.project(), before);
+    service.redo(); assert.deepEqual(service.project(), after);
+    service.clearTrackPresence(track.id, 'missing'); assert.deepEqual(service.project(), after);
+  }
+});
+
 test('score track creation rerolls each role, targets section/global presence and undoes in one step', () => {
   for (const scope of ['section', 'global']) for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     const { service, load } = fixture();

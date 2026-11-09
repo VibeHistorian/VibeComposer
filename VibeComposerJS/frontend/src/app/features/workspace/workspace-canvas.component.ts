@@ -608,10 +608,7 @@ export class WorkspaceCanvasComponent {
     if (!track) return;
     const section = this.timelineSections().find((item, index, all) => note.sectionId ? item.section.id === note.sectionId
       : note.startBeat >= item.startBeat && note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()))?.section;
-    if (section && (section.trackPhrases?.[track.id] !== undefined
-        || hasManualPhrase(track) && !section.generatedTrackIds?.includes(track.id))) {
-      this.openNoteEditor(note);
-    } else if (section && (Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
+    if (section && (Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
         || Object.keys(section.rolePartOverrides?.[track.role] ?? {}).length > 0)) {
       this.selectSectionTrack(section.id, track.id);
     } else {
@@ -942,6 +939,16 @@ export class WorkspaceCanvasComponent {
     if (!section) return;
     const trackId = this.projects.addTrack(point.role, { sectionId: section.section.id, midi: point.midi, scope: point.scope });
     if (trackId) this.selectTrack(trackId);
+  }
+
+  removeScoreTrack(action: { note: ScoreNote; scope: 'section' | 'global' | 'track' }): void {
+    if (this.editing()) return;
+    if (action.scope === 'track') { this.removeTrack(action.note.part); return; }
+    const section = this.timelineSections().find((entry, index, all) => action.note.sectionId
+      ? entry.section.id === action.note.sectionId
+      : action.note.startBeat >= entry.startBeat && action.note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()));
+    if (action.scope === 'section' && !section) return;
+    this.projects.clearTrackPresence(action.note.part, action.scope === 'section' ? section!.section.id : undefined);
   }
 
   duplicateTrack(trackId: string): void {

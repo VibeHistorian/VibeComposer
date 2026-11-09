@@ -524,6 +524,40 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   assert.equal(scoreAddition.role,'bass');assert.equal(scoreAddition.present,scope==='Section'?1:scoreAddition.total);
   assert.ok(scoreAddition.rerolls>0);
   }
+  for (const action of ['From Section 1 [VERSE1]','From All Sections','Track']) {
+    await evaluate(`(()=>{
+      const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+      p.transposeSemitones=0;
+      p.tracks=[p.tracks.find(t=>t.role==='bass'),p.tracks.find(t=>t.role==='melody')];
+      p.tracks.forEach(t=>{t.editedPhrase=[{id:t.id+'-menu',midi:t.role==='bass'?48:60,startBeat:0,durationBeats:1,velocity:90}];delete t.phraseEdits;});
+      p.arrangement=['menu-a','menu-b'].map(id=>({id,type:'VERSE1',measures:1,trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,true]))}));
+      sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+    })()`);
+    await command('Page.reload');
+    const removal=await evaluate(`(async()=>{${waitCode}
+      const canvas=await wait(()=>document.querySelector('vc-score-canvas canvas'));
+      await wait(()=>document.querySelector('.pitch-key[title="MIDI 48"]'));
+      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      const c=canvas.getBoundingClientRect(),row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();
+      const point={bubbles:true,cancelable:true,clientX:c.left+c.width/16,clientY:row.top+row.height/2};
+      canvas.dispatchEvent(new PointerEvent('pointerdown',{...point,button:1}));
+      await new Promise(r=>requestAnimationFrame(r));
+      if(document.querySelector('#note-velocity'))throw Error('MMB must select parameters for manual notes');
+      if(!document.querySelector('#part-inspector').textContent.includes('Bass'))throw Error('Expected Bass parameters');
+      const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+      const before=read(),trackId=before.tracks.find(t=>t.role==='bass').id;
+      canvas.dispatchEvent(new MouseEvent('contextmenu',{...point,button:2}));
+      const remove=await wait(()=>[...document.querySelectorAll('.cdk-overlay-container [role="menuitem"]')].find(b=>b.querySelector('span')?.textContent.trim()==='Remove'));
+      remove.click();
+      const options=await wait(()=>{const items=[...document.querySelectorAll('.cdk-overlay-container [role="menuitem"]')].filter(b=>['From Section 1 [VERSE1]','From All Sections','Track'].includes(b.textContent.trim()));return items.length===3?items:null;});
+      options.find(b=>b.textContent.trim()==='${action}').click();
+      await wait(()=>JSON.stringify(read())!==JSON.stringify(before));
+      const after=read(),present=s=>Array.isArray(s.trackPresence.bass)?s.trackPresence.bass.includes(1):s.trackPresence[trackId];
+      return {removed:!after.tracks.some(t=>t.id===trackId),presence:after.arrangement.map(s=>!!present(s))};
+    })()`);
+    assert.deepEqual(removal,action==='Track'?{removed:true,presence:[false,false]}:
+      {removed:false,presence:action==='From Section 1 [VERSE1]'?[false,true]:[false,false]});
+  }
  } finally {
     await closeBrowser({ child, server, socket });
   }

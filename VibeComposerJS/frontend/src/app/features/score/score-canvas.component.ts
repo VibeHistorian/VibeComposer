@@ -1,6 +1,6 @@
 import type { DrumSlots } from '../../core/music/drum-instruments';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
-import { ContextMenuComponent } from '../../shared/context-menu.component';
+import { ContextMenuComponent, type ContextMenuItem } from '../../shared/context-menu.component';
 import { ARRANGED_PARTS } from '../../core/music/part-role';
 import { musicalTime } from '../../core/ui/musical-time';
 import { trackColor } from '../../core/ui/track-color';
@@ -50,6 +50,7 @@ export interface ScoreCanvasNote extends PhraseNote {
 
 export interface ScoreCanvasSection {
   readonly startBeat: number;
+  readonly section?: { readonly id: string; readonly type: string };
 }
 
 export interface ScoreSectionFocus {
@@ -148,17 +149,40 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly trackRoleItems = ARRANGED_PARTS.map(role => ({ id: role,
     label: role === 'arpeggio' ? 'Arpeggio' : role[0].toUpperCase() + role.slice(1),
     children: [{ id: `${role}:section`, label: 'Section' }, { id: `${role}:global`, label: 'Global' }] }));
+  readonly canRemoveTrack = input(true);
+  readonly contextItems = signal<readonly ContextMenuItem[]>(this.trackRoleItems);
+  readonly noteRemoveRequested = output<{ note: ScoreCanvasNote; scope: 'section' | 'global' | 'track' }>();
+  private contextNote: ScoreCanvasNote | null = null;
   private trackAddPoint: { beat: number; midi: number } | null = null;
   private readonly onContextMenu = (event: MouseEvent): void => {
     this.trackAddPoint = null;
+    this.contextNote = null;
     if (this.editable()) event.preventDefault();
-    if (this.editable() || !this.app || !this.model || !this.emptyCanvasPoint(event)) {
+    if (this.editable() || !this.app || !this.model) {
       event.stopPropagation();
       return;
     }
+    const area = this.hitAreaAt(event);
+    if (area) {
+      this.contextNote = area.note;
+      const sectionIndex = this.model.sections.findIndex((entry, index, sections) => area.note.sectionId
+        ? entry.section?.id === area.note.sectionId
+        : area.note.startBeat >= entry.startBeat && area.note.startBeat < (sections[index + 1]?.startBeat
+          ?? this.model!.totalBeats + (this.model!.timelineStartBeat ?? 0)));
+      const section = this.model.sections[sectionIndex]?.section;
+      this.contextItems.set([{ id: 'remove', label: 'Remove', children: [
+        { id: 'remove:section', label: section ? `From Section ${sectionIndex + 1} [${section.type}]` : 'From Section' },
+        { id: 'remove:global', label: 'From All Sections' },
+        { id: 'remove:track', label: 'Track', disabled: !this.canRemoveTrack() },
+      ] }]);
+      this.noteTooltip.set(null); this.timeTooltip.set(null);
+      return;
+    }
+    if (!this.emptyCanvasPoint(event)) { event.stopPropagation(); return; }
     const { y } = canvasPoint(event.clientX, event.clientY, this.app.canvas.getBoundingClientRect(), { width: this.width, height: this.height });
     if (y >= this.scoreHeight) { event.stopPropagation(); return; }
     this.trackAddPoint = { beat: this.beatAt(event), midi: Math.max(0, Math.min(127, pitchAt(y, this.pitchGeometry, this.drumPitches))) };
+    this.contextItems.set(this.trackRoleItems);
     this.noteTooltip.set(null); this.timeTooltip.set(null);
   };
   addTrackAtPoint(action: string): void {
@@ -167,6 +191,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       || (scope !== 'section' && scope !== 'global')) return;
     this.trackAddRequested.emit({ role: role as ArrangedPart, scope, ...this.trackAddPoint });
     this.trackAddPoint = null;
+  }
+  contextAction(action: string): void {
+    if (this.editable()) return;
+    const [command, scope] = action.split(':');
+    if (command === 'remove' && this.contextNote && (scope === 'section' || scope === 'global' || scope === 'track')) {
+      if (scope === 'track' && !this.canRemoveTrack()) return;
+      this.noteRemoveRequested.emit({ note: this.contextNote, scope });
+      this.contextNote = null;
+    } else this.addTrackAtPoint(action);
   }
   private suppressClick = false;
   readonly sectionFocus = input<ScoreSectionFocus | null>(null);
@@ -460,7 +493,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.focusedNoteIndex = area ? this.hitAreas.indexOf(area) : -1;
     this.describeCanvas(area?.note);
     this.drawDynamic();
-    if (area) this.noteSelected.emit(area.note);
+    if (area) {
+      if (this.preferences.matchesShortcut('editScoreNote', event)) this.noteSelected.emit(area.note);
+      else if (this.preferences.matchesShortcut('selectScoreNoteTrack', event)) this.noteTrackSelected.emit(area.note);
+    }
     else if (this.app && this.model && this.width > 0) {
       const bounds = this.app.canvas.getBoundingClientRect();
       const fraction = (event.clientX - bounds.left) / Math.max(1, bounds.width);
@@ -691,7 +727,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       event.preventDefault();
       if (!this.editable()) {
         const area = this.hitAreaAt(event);
-        if (area) this.noteTrackSelected.emit(area.note);
+        if (area && this.preferences.matchesShortcut('editScoreNote', event)) this.noteSelected.emit(area.note);
+        else if (area && this.preferences.matchesShortcut('selectScoreNoteTrack', event)) this.noteTrackSelected.emit(area.note);
         return;
       }
     }

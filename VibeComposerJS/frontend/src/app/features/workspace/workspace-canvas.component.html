@@ -267,6 +267,7 @@
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"
                   (seekRequested)="seek($event)"
                   (trackAddRequested)="addScoreTrack($event)"
+                  [canRemoveTrack]="project().tracks.length > 1" (noteRemoveRequested)="removeScoreTrack($event)"
                   [hiddenTrackIds]="editing() ? editingHiddenTracks : hiddenTracks()" [editable]="editing()" [editBounds]="editing() ? scoreSectionFocus() : null" [velocityVisible]="editing()"
                   (noteSelected)="canvasNoteSelected($event)" (noteTrackSelected)="selectNoteTrack($event)" (noteChanged)="canvasNoteChanged($event)"
                   [selectedNoteIds]="editor()?.selectedNoteIds() ?? []" [snapBeats]="editor()?.snapBeats() ?? 0.25" [placementDuration]="editor()?.placementDuration ?? 0.5"

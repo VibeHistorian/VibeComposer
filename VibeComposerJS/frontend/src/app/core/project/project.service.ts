@@ -1224,6 +1224,14 @@ export class ProjectService {
     if (next) this.commit(next);
   }
 
+  clearTrackPresence(trackId: string, sectionId?: string): void {
+    const current = this.state();
+    if (!current.tracks.some(track => track.id === trackId)
+      || sectionId !== undefined && !current.arrangement.some(section => section.id === sectionId)) return;
+    this.commit({ ...current, arrangement: current.arrangement.map(section => sectionId === undefined || section.id === sectionId
+      ? { ...section, trackPresence: { ...section.trackPresence, [trackId]: false } } : section) });
+  }
+
   /** Explicit toolbar action replaces the whole arrangement independently of Compose policy. */
   randomizeArrangement(): void {
     const seed = BigInt(Math.floor(Math.random() * 0x1000000000000));

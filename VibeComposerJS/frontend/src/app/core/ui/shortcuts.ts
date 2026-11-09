@@ -32,6 +32,8 @@ export const SHORTCUTS = [
   { id: 'removeSection', group: 'Section headers', label: 'Remove section', description: 'On a section header, remove that section.', defaults: [mouse(2)] },
   { id: 'clearSections', group: 'Arrangement', label: 'Clear section selection', description: 'While the overview has focus.', defaults: [key('escape')] },
   { id: 'zoomTime', group: 'Score', label: 'Zoom time', description: 'Scroll over the score to zoom horizontally at the pointer.', defaults: [wheel(true)] },
+  { id: 'editScoreNote', group: 'Score', label: 'Edit notes', description: 'Open the clicked note in the phrase editor.', defaults: [mouse(0)] },
+  { id: 'selectScoreNoteTrack', group: 'Score', label: 'Select note track parameters', description: 'Select global or section track parameters without opening the phrase editor.', defaults: [mouse(1)] },
   { id: 'zoomPitch', group: 'Score', label: 'Zoom pitch', description: 'Scroll over pitched lanes to zoom vertically.', defaults: [wheel(false, false, true)] },
   { id: 'panTime', group: 'Score', label: 'Scroll horizontally', description: 'Scroll over the score to move along the timeline.', defaults: [wheel(false, true)] },
   { id: 'panPitch', group: 'Score', label: 'Scroll vertically', description: 'Scroll over the score to move through pitch lanes.', defaults: [wheel()] },

@@ -9,7 +9,7 @@
       [style.height.px]="line.height" [style.opacity]="line.opacity"></span>
   }
 </div>
-<vc-context-menu [items]="trackRoleItems" (action)="addTrackAtPoint($event.id)">
+<vc-context-menu [items]="contextItems()" (action)="contextAction($event.id)">
 <div class="score-canvas-host" #rendererHost>
   @if (noteTooltip(); as tooltip) {
     <div class="note-tooltip" role="tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">

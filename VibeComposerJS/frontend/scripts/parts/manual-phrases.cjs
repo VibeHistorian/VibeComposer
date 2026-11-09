@@ -361,7 +361,7 @@ test('score combines drums on a shared pitch axis while preserving note ownershi
     const area = drumHits[0];
     let selected;
     score.noteSelected.emit = note => { selected = note; workspace.openNoteEditor(note); };
-    score.onCanvasClick({ clientX: area.x + 1, clientY: area.y + area.height / 2 });
+    score.onCanvasClick({ button: 0, clientX: area.x + 1, clientY: area.y + area.height / 2 });
     assert.equal(selected.part, snare);
     assert.equal(workspace.selectedTrackId(), snare);
     assert.equal(workspace.editingNoteId(), selected.id);

@@ -113,17 +113,36 @@ test('seeking preserves every inspector scope and the selected independent drum 
   assert.deepEqual(seeks, [13, 13, 13, 13, 13, 13]);
 });
 
+test('note removal targets independent track and stored section ownership without changing inspector selection', () => {
+  const { workspace, ui } = fixture();
+  const calls = [];
+  workspace.projects.clearTrackPresence = (...args) => calls.push(args);
+  workspace.removeTrack = id => calls.push(['delete', id]);
+  ui.selectCell('a', 'bass');
+  const before = ui.captureSettingsSelection();
+  const note = { part: 'track-bass-1', sectionId: 'b', startBeat: 7 };
+  workspace.removeScoreTrack({ note, scope: 'section' });
+  workspace.removeScoreTrack({ note, scope: 'global' });
+  workspace.removeScoreTrack({ note, scope: 'track' });
+  workspace.removeScoreTrack({ note: { ...note, sectionId: 'missing' }, scope: 'section' });
+  assert.deepEqual(calls, [['track-bass-1', 'b'], ['track-bass-1', undefined], ['delete', 'track-bass-1']]);
+  assert.deepEqual(ui.captureSettingsSelection(), before);
+  workspace.editing.set(true);
+  workspace.removeScoreTrack({ note, scope: 'section' });
+  assert.equal(calls.length, 3);
+});
+
 for (const scenario of [
   { name: 'inherited settings', expected: 'global-track' },
   { name: 'empty overrides', section: { trackPartOverrides: { 'track-bass-1': {} }, rolePartOverrides: { bass: {} } }, expected: 'global-track' },
   { name: 'track overrides', section: { trackPartOverrides: { 'track-bass-1': { swingPercent: 60 } } }, expected: 'section-track' },
   { name: 'role overrides', section: { rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'section-track' },
   { name: 'another track override', section: { trackPartOverrides: { other: { swingPercent: 60 } } }, expected: 'global-track' },
-  { name: 'section manual phrase before overrides', section: { trackPhrases: { 'track-bass-1': [] }, rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'phrase' },
-  { name: 'global manual phrase before overrides', track: { editedPhrase: [] }, section: { rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'phrase' },
+  { name: 'section manual phrase with overrides', section: { trackPhrases: { 'track-bass-1': [] }, rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'section-track' },
+  { name: 'global manual phrase with overrides', track: { editedPhrase: [] }, section: { rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'section-track' },
   { name: 'generated section bypasses global manual phrase', track: { editedPhrase: [] }, section: { generatedTrackIds: ['track-bass-1'] }, expected: 'global-track' },
   { name: 'generated section retains its custom settings', track: { editedPhrase: [] }, section: { generatedTrackIds: ['track-bass-1'], rolePartOverrides: { bass: { swingPercent: 60 } } }, expected: 'section-track' },
-  { name: 'section manual phrase overrides generated marker', section: { generatedTrackIds: ['track-bass-1'], trackPhrases: { 'track-bass-1': [] } }, expected: 'phrase' },
+  { name: 'section manual phrase overrides generated marker', section: { generatedTrackIds: ['track-bass-1'], trackPhrases: { 'track-bass-1': [] } }, expected: 'global-track' },
 ]) {
   test(`score smart selector follows arrangement indicators: ${scenario.name}`, () => {
     const { workspace, ui, project } = fixture();
@@ -132,23 +151,13 @@ for (const scenario of [
     ui.selectCell('a', 'bass');
     const note = { id: 'bass-note', part: 'track-bass-1', startBeat: 8 };
     workspace.selectNoteTrack(note);
-    if (scenario.expected === 'phrase') {
-      assert.equal(workspace.editing(), true);
-      assert.equal(workspace.editSectionId(), 'b', 'boundary note belongs to the following section');
-      assert.equal(workspace.editingNoteId(), note.id);
-    } else {
       assert.equal(workspace.editing(), false);
       assert.deepEqual(ui.settingsTarget(), scenario.expected === 'section-track'
         ? { kind: 'section-track', sectionId: 'b', trackId: note.part }
         : { kind: 'global-track', trackId: note.part });
       workspace.selectNoteTrack({ ...note, startBeat: 0 });
-      if (scenario.track?.editedPhrase !== undefined) {
-        assert.equal(workspace.editing(), true, 'global manual phrase still applies in other sections');
-        assert.equal(workspace.editSectionId(), 'a');
-      } else {
+      assert.equal(workspace.editing(), false, 'manual notes select parameters without opening the editor');
         assert.deepEqual(ui.settingsTarget(), { kind: 'global-track', trackId: note.part });
-      }
-    }
   });
 }
 
