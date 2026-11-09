@@ -1,5 +1,7 @@
 @if (mixed()) { <span role="status">Mixed chords</span> }
 <div class="chordlet-row" aria-label="Primary chords">
+  <ng-content select="[chordletAction]" />
+  <button type="button" class="chordlet-action" (click)="generate($event)" [disabled]="disabled()" aria-label="Generate chord progression" title="Reroll harmony with a random seed · Shift+click: use project seed">↻</button>
   <div class="chordlet-list">
     @for (chord of chords(); track $index; let index = $index) {
       <div class="chordlet" [attr.data-chord-index]="index" [style.--chord-hue]="chordHue(chord)"
@@ -16,8 +18,6 @@
     }
   </div>
   <button type="button" class="chordlet-action" (click)="add()" [disabled]="disabled() || chords().length >= 32" aria-label="Add chord" title="Add chord">＋</button>
-  <button type="button" class="chordlet-action" (click)="generate($event)" [disabled]="disabled()" aria-label="Generate chord progression" title="Reroll harmony with a random seed · Shift+click: use project seed">↻</button>
-  <ng-content select="[chordletAction]" />
 </div>
 @if (disabled() ? null : menu(); as popup) {
   <div class="chordlet-menu" role="menu" [attr.aria-label]="popup.kind === 'root' ? 'Chord root' : 'Chord spice'"

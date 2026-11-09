@@ -16,7 +16,7 @@
           <vc-compact-knob [dense]="true" label="Transpose in semitones" [defaultValue]="0" shortLabel="+-" unit=""
             [value]="project().transposeSemitones ?? 0" [minimum]="-24" [maximum]="24" (valueCommit)="updateTranspose($event)"
             [composeEnabled]="project().randomizeTransposeOnCompose !== false" (composeToggle)="toggleComposeRandomization('randomizeTransposeOnCompose')" />
-          <vc-compact-knob [dense]="true" label="Harmony spiciness" shortLabel="🌶" unit="%" [defaultValue]="0"
+          <vc-compact-knob [dense]="true" label="Harmony spiciness" shortLabel="🌶️" unit="%" [defaultValue]="0"
             description="Chance of a non-basic chord on global and section harmony rerolls; colors follow the mode, strategy and neighboring chords."
             [value]="project().harmonySettings?.spiciness ?? 0" [minimum]="0" [maximum]="100" (valueCommit)="updateSpiciness($event)" />
         </div>
