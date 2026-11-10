@@ -3,7 +3,7 @@ import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { VARIATION_DEFINITIONS, variationStrength } from '../../core/music/arrangement-variation-catalogue';
 import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
-import { acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, sameShortcut, type ShortcutId } from '../../core/ui/shortcuts';
+import { shortcutsConflict, acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, type ShortcutId } from '../../core/ui/shortcuts';
 import { SettingsScopeIndicatorComponent, type SettingScope } from './settings-scope-indicator.component';
 import { SelectComponent } from '../../shared/select.component';
 import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
@@ -165,11 +165,7 @@ export class SettingsDialogComponent {
         : action.group === 'Phrase gestures' ? 'Click a mouse button with your desired modifiers.' : 'Use a key or mouse input supported by this action.');
       return;
     }
-    const conflict = SHORTCUTS.find(other => other.id !== id && (other.group === action.group
-      || (other.group === 'Section headers' && ['reroll', 'reset', 'clearSections'].includes(action.id))
-      || (action.group === 'Section headers' && ['reroll', 'reset', 'clearSections'].includes(other.id))
-      || (['Global', 'Phrase editor'].includes(other.group) && ['Global', 'Phrase editor'].includes(action.group)))
-      && this.preferences.shortcuts()[other.id].some(value => sameShortcut(value, binding)));
+    const conflict = SHORTCUTS.find(other => shortcutsConflict(id, other.id, this.preferences.shortcuts(), binding));
     if (conflict) { this.shortcutMessage.set('Already used by ' + conflict.label + '. Clear or change that binding first.'); return; }
     this.captureUntil = performance.now() + 500;
     this.preferences.setShortcut(id, binding);

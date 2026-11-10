@@ -139,7 +139,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private harmonicHeight = 0;
   private drumHeight = 0;
   private drag: ScoreDrag<ScoreCanvasNote> | null = null;
-  private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[]; split?: boolean } | null = null;
+  private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[]; split?: boolean; delete?: boolean; select?: boolean } | null = null;
   private shape: { mode: 'pitch' | 'velocity'; pointerId: number; notes: Map<string, PhraseNote> } | null = null;
   private readonly touches = new Map<number, { x: number; y: number }>();
   private pinch: { distance: number; x: number; y: number } | null = null;
@@ -543,7 +543,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       drag.preview = previewScoreDrag(drag, { x: dx, y: dy }, {
         time: this.timeGeometry, laneHeight: this.laneHeight, snapBeats: this.snapBeats(),
         shiftKey: this.preferences.matchesModifiers('freeGrid', event)
-          && !(drag.duplicate && this.preferences.matchesGestureHint('shapePitch', event)),
+          && !(drag.duplicate && this.preferences.matchesGestureHint('duplicateNotes', event)),
+        retainPitch: this.preferences.matchesModifiers('retainPitch', event)
+          && !(drag.duplicate && this.preferences.matchesGestureHint('duplicateNotes', event)),
         scalePitchClasses: this.snapToScale() ? this.scalePitchClasses() : [],
         startBeat: this.editBounds()?.startBeat ?? 0,
         endBeat: this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1,
@@ -579,7 +581,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
     this.hoveredNote = this.editable() && area && y < this.scoreHeight
       && !this.drag && !this.box && !this.shape && event.pointerType !== 'touch'
-      ? { area, zone: this.noteDragZone(area, this.hoverX, this.preferences.matchesGestureHint('trimStart', event)) } : null;
+      ? { area, zone: this.hoverDragZone(area, this.hoverX, event) } : null;
     canvas.style.cursor = this.hoveredNote ? (this.hoveredNote.zone === 'move' ? 'grab' : 'ew-resize')
       : area ? 'pointer' : 'default';
     this.drawDynamic();
@@ -736,33 +738,40 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     event.preventDefault();
     this.app.canvas.focus?.();
     const area = this.hitAreaAt(event);
-    if (this.preferences.matchesShortcut('dragVelocity', event)) this.middlePress = { pointerId: event.pointerId, startedEmpty: this.emptyCanvasPoint(event), canApply: false };
+    if (this.preferences.matchesShortcut('applyPhrase', event)) this.middlePress = { pointerId: event.pointerId, startedEmpty: this.emptyCanvasPoint(event), canApply: false };
     const bounds = this.app.canvas.getBoundingClientRect();
     const { x, y } = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
     if (this.preferences.matchesShortcut('seek', event) && !area && x >= 0 && x < this.width && y >= 0 && y < this.scoreHeight) {
       this.seekRequested.emit(this.beatAt(event));
       return;
     }
-    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => this.preferences.matchesGesture(id, event);
-    if (matches('boxSelect') || matches('boxExtend') || matches('splitNote')) {
-      this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: matches('boxExtend') ? this.selectedNoteIds() : [], split: matches('splitNote') };
-    } else if (!area && matches('addNote') && !matches('shapePitch')) {
+    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => id === 'addNote' || id === 'addNoteFree'
+      ? this.preferences.matchesShortcut(id, event) : this.preferences.matchesGesture(id, event);
+    const edge = area ? this.noteDragZone(area, x) : null;
+    const trimStart = matches('trimStart') && ((!matches('moveNote') && !matches('trimEnd')) || edge === 'start');
+    const trimEnd = matches('trimEnd') && ((!matches('moveNote') && !matches('trimStart')) || edge === 'duration');
+    const velocity = matches('dragVelocity') || (y >= this.scoreHeight && matches('dragVelocityHandle'));
+    if (matches('boxSelect') || matches('boxExtend') || (area && (matches('splitNote') || matches('deleteNote')))) {
+      this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: matches('boxExtend') ? this.selectedNoteIds() : [], split: matches('splitNote'), delete: matches('deleteNote'), select: matches('boxSelect') || matches('boxExtend') };
+    } else if (!area && (matches('addNote') || matches('addNoteFree')) && !matches('shapePitch')) {
       this.selectionChanged.emit([]);
       this.onDoubleClick(event);
     } else if ((matches('shapePitch') || matches('shapeVelocity')) && (!area || !this.selectedNoteIds().includes(area.note.id) || matches('shapeVelocity'))) {
       this.shape = { mode: matches('shapeVelocity') ? 'velocity' : 'pitch', pointerId: event.pointerId, notes: new Map() };
       this.onPointerMove(event);
-    } else if (area && (matches('seek') || matches('addNote') || matches('shapePitch') || matches('trimStart') || matches('dragVelocity') || matches('dragDuration') || matches('dragPitch'))) {
+    } else if (area && (velocity || (y < this.scoreHeight && (matches('moveNote') || (matches('duplicateNotes') && this.selectedNoteIds().includes(area.note.id)) || trimStart || trimEnd || matches('dragDuration') || matches('dragPitch'))))) {
       const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
       this.selectionChanged.emit(ids);
-      const mode: PhraseDragMode = y >= this.scoreHeight ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch' : matches('dragVelocity') ? 'velocity'
-        : this.noteDragZone(area, x, matches('trimStart'));
+      const mode: PhraseDragMode = velocity ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch'
+        : matches('duplicateNotes') ? 'move'
+        : trimStart ? 'start'
+        : trimEnd ? 'duration' : 'move';
       const originals = (this.model?.notes ?? []).filter(note => ids.includes(note.id));
       this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
-        current: area.note, mode, originals, preview: originals, duplicate: matches('shapePitch'), lockPitch: area.note.color === 'drums' };
+        current: area.note, mode, originals, preview: originals, duplicate: matches('duplicateNotes'), lockPitch: area.note.color === 'drums' };
       this.auditionRequested.emit(originals);
       this.lastAudition = performance.now();
-    } else if (matches('addNote')) {
+    } else if (matches('addNote') || matches('addNoteFree')) {
       this.selectionChanged.emit([]);
       this.onDoubleClick(event);
     }
@@ -794,11 +803,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const area = this.hitAreaAt(event);
       if (Math.abs(box.endX - box.x) + Math.abs(box.endY - box.y) < 3 && area) {
         if (box.split) {
-          const grid = this.preferences.matchesModifiers('freeGrid', event) ? 0 : this.snapBeats();
+          const grid = this.preferences.matchesModifiers('freeSplitGrid', event) ? 0 : this.snapBeats();
           const beat = this.beatAt(event);
           this.splitRequested.emit({ id: area.note.id, beat: grid ? Math.round(beat / grid) * grid : beat });
-        } else this.deleteRequested.emit(area.note.id);
-      } else {
+        } else if (box.delete) this.deleteRequested.emit(area.note.id);
+      } else if (box.select) {
         const ids = boxNoteIds(this.hitAreas, box, { x: box.endX, y: box.endY });
         this.selectionChanged.emit([...new Set([...box.previous, ...ids])]);
       }
@@ -817,7 +826,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
     if (this.app?.canvas.hasPointerCapture(event.pointerId)) this.app.canvas.releasePointerCapture(event.pointerId);
-    if (event.button === 0 && this.middlePress?.canApply) {
+    if (this.middlePress?.canApply) {
       this.middlePress = null;
       this.applyRequested.emit();
     }
@@ -839,7 +848,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.drawDynamic();
   };
   private readonly onAuxClick = (event: MouseEvent): void => {
-    if (!this.preferences.matchesShortcut('dragVelocity', event)) return;
+    if (!this.preferences.matchesShortcut('applyPhrase', event)) return;
     event.preventDefault();
     event.stopPropagation();
     if (!this.editable()) return;
@@ -848,10 +857,13 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (canApply && this.emptyCanvasPoint(event)) this.applyRequested.emit();
   };
   private updatePlacement(event: MouseEvent): void {
-    const gesture = { button: 0, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey } as MouseEvent;
+    const binding = [...this.preferences.shortcuts().addNoteFree, ...this.preferences.shortcuts().addNote].find(binding =>
+      this.preferences.matchesShortcut('addNoteFree', { ...event, button: Number(binding.input), ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey } as MouseEvent)
+      || this.preferences.matchesShortcut('addNote', { ...event, button: Number(binding.input), ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey } as MouseEvent));
+    const gesture = { button: Number(binding?.input ?? 0), ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey } as MouseEvent;
     this.placementPreview = !event.buttons && !this.drag && !this.box && !this.shape
-      && this.preferences.matchesGesture('addNote', gesture) && !this.preferences.matchesGesture('shapePitch', gesture)
-      ? this.placementAt(event) : null;
+      && (this.preferences.matchesShortcut('addNote', gesture) || this.preferences.matchesShortcut('addNoteFree', gesture)) && !this.preferences.matchesGesture('shapePitch', gesture)
+      ? this.placementAt({ ...gesture, clientX: event.clientX, clientY: event.clientY } as MouseEvent) : null;
   }
   private readonly onModifiersChanged = (state: ModifierState): void => {
     if (!state.active) { if (this.placementPointer) this.onPointerLeave(); return; }
@@ -864,14 +876,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const area = this.hitAreaAt(event);
     const previousZone = this.hoveredNote?.zone;
     if (this.hoveredNote && area) {
-      this.hoveredNote = { area, zone: this.noteDragZone(area, this.hoverX ?? 0, this.preferences.matchesGestureHint('trimStart', event)) };
+      this.hoveredNote = { area, zone: this.hoverDragZone(area, this.hoverX ?? 0, event) };
       if (this.app) this.app.canvas.style.cursor = this.hoveredNote.zone === 'move' ? 'grab' : 'ew-resize';
     }
     if (previous?.midi !== next?.midi || previous?.startBeat !== next?.startBeat || previous?.trackId !== next?.trackId
       || !!previous !== !!next || previousZone !== this.hoveredNote?.zone) this.drawDynamic();
   };
   private readonly onDoubleClick = (event: MouseEvent): void => {
-    if (event.detail > 1 || !this.preferences.matchesGesture('addNote', event)
+    if (event.detail > 1 || !(this.preferences.matchesShortcut('addNote', event) || this.preferences.matchesShortcut('addNoteFree', event))
       || this.preferences.matchesGesture('shapePitch', event)) return;
     const position = this.placementAt(event);
     if (position) this.noteAdded.emit(position);
@@ -882,7 +894,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const { x, y } = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
     if (x < 0 || x >= this.width || y < 0 || y >= this.scoreHeight) return null;
     const midi = pitchAt(y, this.pitchGeometry, this.drumPitches);
-    const grid = this.preferences.matchesModifiers('freeGrid', event) ? 0 : this.snapBeats();
+    const grid = this.preferences.matchesShortcut('addNoteFree', event) ? 0 : this.snapBeats();
     const rawBeat = scoreBeat(x, this.timeGeometry);
     const startBeat = grid ? Math.round(rawBeat / grid) * grid : rawBeat;
     const range = this.editBounds();
@@ -905,6 +917,13 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.drawStatic(true);
   }
 
+  private hoverDragZone(area: NoteHitArea, x: number, event: MouseEvent): 'start' | 'move' | 'duration' {
+    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => this.preferences.matchesGestureHint(id, event);
+    const edge = this.noteDragZone(area, x);
+    if (matches('trimStart') && ((!matches('moveNote') && !matches('trimEnd')) || edge === 'start')) return 'start';
+    if (matches('trimEnd') && ((!matches('moveNote') && !matches('trimStart')) || edge === 'duration')) return 'duration';
+    return 'move';
+  }
   private noteDragZone(area: NoteHitArea, x: number, altKey = false): 'start' | 'move' | 'duration' {
     return noteDragZone(area, x, altKey);
   }

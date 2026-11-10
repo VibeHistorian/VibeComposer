@@ -1306,3 +1306,72 @@ test('triangle geometry tapers to the right center and leaves phrase notes round
   c.noteShape(graphics, 10, 20, 40, 12, 3);
   assert.deepEqual(calls, [['roundRect', 10, 20, 40, 12, 3]]);
 });
+
+const mouseBinding = (button, shift = false) => ({ kind: 'mouse', input: String(button), ctrl: false, shift, alt: false });
+test('snapped and free placement are independent of assigned modifiers and buttons', () => {
+  const { component: c } = fixture();
+  c.editable = () => true; c.model.notes = []; c.model.timelineStartBeat = -4;
+  c.preferences.setShortcut('addNote', mouseBinding(4, true));
+  c.preferences.setShortcut('addNoteFree', mouseBinding(3));
+  c.onPointerMove(pointer(303, 20));
+  assert.ok(Math.abs(c.placementPreview.startBeat - 20.12) < 1e-10);
+  c.onPointerDown(pointer(303, 20, { button: 3 }));
+  assert.ok(Math.abs(c.noteAdded.values[0].startBeat - 20.12) < 1e-10);
+  c.onPointerDown(pointer(303, 20, { button: 4, shiftKey: true }));
+  assert.equal(c.noteAdded.values[1].startBeat, 20);
+  c.preferences.setShortcut('addNoteFree', null);
+  c.onPointerDown(pointer(303, 20, { button: 3 })); assert.equal(c.noteAdded.values.length, 2);
+});
+test('seek, move and trimming can be disabled independently', () => {
+  const { component: c } = editFixture();
+  c.preferences.setShortcut('seek', null);
+  c.onPointerDown(pointer(300, 20)); assert.equal(c.drag.mode, 'move'); c.onPointerCancel();
+  c.preferences.setShortcut('moveNote', null);
+  c.onPointerDown(pointer(300, 20)); assert.equal(c.drag, null);
+  c.onPointerDown(pointer(296, 20)); assert.equal(c.drag.mode, 'start'); c.onPointerCancel();
+  c.preferences.setShortcut('trimStart', null); c.preferences.setShortcut('trimEnd', null);
+  c.preferences.setShortcut('moveNote', mouseBinding(3));
+  c.onPointerDown(pointer(296, 20, { button: 3 })); assert.equal(c.drag.mode, 'move');
+});
+test('box selection does not delete after the delete gesture is reassigned', () => {
+  const { component: c } = editFixture(); c.preferences.setShortcut('deleteNote', mouseBinding(3));
+  const right = pointer(300, 20, { button: 2 });
+  c.onPointerDown(right); c.onPointerUp(right); assert.deepEqual(c.deleteRequested.values, []);
+  const remove = pointer(300, 20, { button: 3 });
+  c.onPointerDown(remove); c.onPointerUp(remove); assert.deepEqual(c.deleteRequested.values, ['a']);
+  c.onPointerDown(pointer(290, 15, { button: 2 }));
+  c.onPointerMove(pointer(365, 25, { button: 2 })); c.onPointerUp(pointer(365, 25, { button: 2 }));
+  assert.deepEqual(c.selectionChanged.values.at(-1), ['a', 'b']);
+});
+test('duplicate and finish remapping leaves pitch painting and velocity dragging independent', () => {
+  const { component: c } = editFixture(); c.preferences.setShortcut('duplicateNotes', mouseBinding(3));
+  c.onPointerDown(pointer(300, 20, { button: 3 })); assert.equal(c.drag.duplicate, true); c.onPointerCancel();
+  c.onPointerDown(pointer(300, 20, { ctrlKey: true, shiftKey: true })); assert.equal(c.drag?.duplicate ?? false, false); c.onPointerCancel();
+  c.preferences.setShortcut('applyPhrase', mouseBinding(4));
+  c.onPointerDown(pointer(300, 20, { button: 1 })); assert.equal(c.drag.mode, 'velocity'); c.onPointerCancel();
+  const empty = pointer(200, 20, { button: 1 });
+  c.onPointerDown(empty); c.onPointerUp(empty); c.onAuxClick(empty); assert.deepEqual(c.applyRequested.values, []);
+  const finish = pointer(200, 20, { button: 4, stopPropagation() {} });
+  c.onPointerDown(finish); c.onPointerUp(finish); c.onAuxClick(finish); assert.equal(c.applyRequested.values.length, 1);
+});
+
+test('drag snapping, pitch retention and velocity bars have independent bindings', () => {
+  const { component: c } = editFixture();
+  c.preferences.setShortcut('retainPitch', null);
+  c.onPointerDown(pointer(300, 20, { shiftKey: true }));
+  c.onPointerMove(pointer(303, 40, { shiftKey: true }));
+  assert.ok(Math.abs(c.drag.current.startBeat - 20.12) < 1e-10);
+  assert.notEqual(c.drag.current.midi, 48); c.onPointerCancel();
+  c.preferences.setShortcut('freeGrid', null);
+  c.preferences.setShortcut('retainPitch', { kind:'modifier', input:'held', ctrl:false, shift:true, alt:false });
+  c.onPointerDown(pointer(300, 20, { shiftKey: true }));
+  c.onPointerMove(pointer(303, 40, { shiftKey: true }));
+  assert.equal(c.drag.current.startBeat, 20); assert.equal(c.drag.current.midi, 48); c.onPointerCancel();
+  c.preferences.setShortcut('moveNote', null);
+  const hit = c.hitAreas[0];
+  c.hitAreaAt = () => hit;
+  c.onPointerDown(pointer(300, c.scoreHeight + 10));
+  assert.equal(c.drag.mode, 'velocity'); c.onPointerCancel();
+  c.preferences.setShortcut('dragVelocityHandle', null);
+  c.onPointerDown(pointer(300, c.scoreHeight + 10)); assert.equal(c.drag, null);
+});

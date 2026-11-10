@@ -13,9 +13,10 @@ function fixture() {
   const root = { contains: () => true,
     addEventListener(type, handler, capture) { assert.equal(capture, true); listeners.set(type, handler); },
     removeEventListener(type, handler, capture) { assert.equal(listeners.get(type), handler); assert.equal(capture, true); listeners.delete(type); } };
+  let section = false;
   let binding = { button: 2, shiftKey: true, ctrlKey: false, altKey: false };
   const preferences = { matchesShortcut(id, event) {
-    assert.equal(id, 'controlFreeze');
+    assert.equal(id, section ? 'controlUnfreeze' : 'controlFreeze');
     return Object.entries(binding).every(([key, value]) => (event[key] ?? false) === value);
   } };
   const input = initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; };
@@ -36,7 +37,7 @@ function fixture() {
     listeners.get(type)?.(event);
     return event;
   };
-  return { directive, emitted, send, target, listeners, remap: value => binding = value };
+  return { directive, emitted, send, target, listeners, section: () => { section = true; directive.section.set(true); }, remap: value => binding = value };
 }
 
 test('parameter gesture consumes native follow-up events and runs once per pointer gesture', () => {
@@ -70,4 +71,12 @@ test('standalone context-menu gestures repeat, combined frames retain their targ
   assert.equal(f.send('pointerdown').prevented, false);
   assert.equal(f.emitted.length, 2);
   f.directive.ngOnDestroy(); assert.equal(f.listeners.size, 0);
+});
+
+test('section controls use their independent unfreeze binding', () => {
+  const f = fixture(); f.section();
+  f.remap({ button: 1, ctrlKey: true, shiftKey: false, altKey: false });
+  assert.equal(f.send('pointerdown').prevented, false);
+  assert.equal(f.send('pointerdown', { button: 1, ctrlKey: true, shiftKey: false }).prevented, true);
+  assert.equal(f.emitted.length, 1);
 });

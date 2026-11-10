@@ -249,9 +249,12 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             };
             if (category.getAttribute('aria-label')==='Shortcuts General') {
               ensure(button('Record Reset value') && button('Record Fine knob dragging'),'general includes controls and modifiers');
-              ensure(button('Record Toggle parameter lock / unfreeze'),'general includes parameter lock shortcut');
-              const lock=await record('Toggle parameter lock / unfreeze',new PointerEvent('pointerdown',{button:1,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'controlFreeze');
+              ensure(button('Record Toggle parameter lock'),'general includes parameter lock shortcut');
+              const lock=await record('Toggle parameter lock',new PointerEvent('pointerdown',{button:1,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'controlFreeze');
               ensure(lock.kind==='mouse' && lock.input==='1' && lock.ctrl && lock.alt && !lock.shift,'parameter lock shortcut can be remapped');
+              const unfreeze=JSON.parse(localStorage.getItem(key)).shortcuts.controlUnfreeze[0];
+              ensure(unfreeze.input==='2' && unfreeze.shift && !unfreeze.ctrl,'remapping global lock preserves section unfreeze');
+              await record('Toggle parameter lock',new PointerEvent('pointerdown',{button:2,shiftKey:true,bubbles:true,cancelable:true}),'controlFreeze');
               const fine=await record('Fine knob dragging',new KeyboardEvent('keyup',{key:'Alt',shiftKey:true,bubbles:true,cancelable:true}),'fineDrag');
               ensure(fine.kind==='modifier' && fine.shift && fine.alt,'capture modifier combination');
             }
@@ -259,13 +262,26 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
               ensure(button('Record Duplicate section') && !button('Record Zoom time'),'arrangement includes section headers only');
               const reroll=await record('Reroll settings',new PointerEvent('pointerdown',{button:0,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'reroll');
               ensure(reroll.kind==='mouse' && reroll.input==='0' && reroll.ctrl && reroll.alt,'capture mouse combination');
+              await record('Toggle presence',new PointerEvent('pointerdown',{button:1,bubbles:true,cancelable:true}),'presence');
+              button('Record Reroll settings').click();
+              document.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true,cancelable:true}));
+              await wait(()=>dialog.textContent.includes('Already used by Undo'),'global shortcut conflicts across settings pages');
+              document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
             }
             if (category.getAttribute('aria-label')==='Shortcuts Score') {
               const zoom=await record('Zoom time',new WheelEvent('wheel',{deltaY:-100,shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'zoomTime');
               ensure(zoom.kind==='wheel' && zoom.shift && zoom.alt,'capture wheel combination');
             }
             if (category.getAttribute('aria-label')==='Shortcuts Phrase editor') {
-              ensure(button('Record Split note') && button('Record Bypass time grid'),'phrase editor includes gestures and modifiers');
+              ensure(button('Record Split note') && button('Record Bypass drag time grid'),'phrase editor includes gestures and modifiers');
+              const snapped=await record('Place note on grid',new PointerEvent('pointerdown',{button:3,shiftKey:true,bubbles:true,cancelable:true}),'addNote');
+              ensure(snapped.input==='3' && snapped.shift,'snapped placement has its own binding');
+              const free=JSON.parse(localStorage.getItem(key)).shortcuts.addNoteFree[0];
+              ensure(free.input==='0' && free.shift && !free.ctrl,'remapping snapped placement preserves free placement');
+              button('Record Place note off grid').click();
+              document.dispatchEvent(new PointerEvent('pointerdown',{button:3,shiftKey:true,bubbles:true,cancelable:true}));
+              await wait(()=>dialog.textContent.includes('Already used by Place note on grid'),'placement variants share a context and require distinct bindings');
+              document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
               const transpose=await record('Open transpose',new KeyboardEvent('keydown',{key:'u',ctrlKey:true,shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'transposeNotes');
               ensure(transpose.kind==='key' && transpose.input==='u' && transpose.ctrl && transpose.shift && transpose.alt,'capture full key combination');
               button('Record Delete selected notes').click();

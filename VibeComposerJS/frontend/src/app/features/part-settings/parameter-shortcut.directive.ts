@@ -5,6 +5,7 @@ import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 @Directive({ selector: '[vcParameterShortcut]' })
 export class ParameterShortcutDirective implements OnDestroy {
   readonly enabled = input(true, { alias: 'vcParameterShortcut' });
+  readonly section = input(false);
   readonly parameterShortcut = output<{ key: string; combined: boolean }>();
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly preferences = inject(UiPreferencesService);
@@ -18,7 +19,7 @@ export class ParameterShortcutDirective implements OnDestroy {
     if (!target || !this.element.contains(target)) return;
     const key = target.dataset['parameterKey']!;
     const consumed = this.consumed?.key === key && this.consumed.button === mouse.button && !this.consumed.seen.has(event.type);
-    if (!consumed && !this.preferences.matchesShortcut('controlFreeze', mouse)) return;
+    if (!consumed && !this.preferences.matchesShortcut(this.section() ? 'controlUnfreeze' : 'controlFreeze', mouse)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (consumed) { this.consumed!.seen.add(event.type); return; }
     if (event.type === 'mousedown') return;

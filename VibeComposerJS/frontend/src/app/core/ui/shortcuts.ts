@@ -14,12 +14,16 @@ const modifier = (ctrl = false, shift = false, alt = false) => binding('modifier
 export const SHORTCUTS = [
   { id: 'extendSections', group: 'Section selection', label: 'Extend / trim sections', description: 'Hold while selecting a section. Extends a contiguous selection or trims it at the chosen section.', defaults: [modifier(true)] },
   { id: 'rangeSections', group: 'Section selection', label: 'Select section range', description: 'Hold while selecting a section to select from the selection anchor.', defaults: [modifier(false, true)] },
-  { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass time grid', description: 'Hold while moving, adding or splitting notes. Move drags also retain pitch.', defaults: [modifier(false, true)] },
-  { id: 'addNote', group: 'Phrase gestures', label: 'Place note', description: 'Ctrl-click adds a snapped note; Shift-click adds a note without time snapping. Hold to preview placement.', defaults: [mouse(0, true), mouse(0, false, true)] },
+  { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass drag time grid', description: 'Hold while dragging notes to bypass time snapping.', defaults: [modifier(false, true)] },
+  { id: 'retainPitch', group: 'Editing modifiers', label: 'Retain pitch while moving', description: 'Hold while moving notes to retain their pitch.', defaults: [modifier(false, true)] },
+  { id: 'freeSplitGrid', group: 'Editing modifiers', label: 'Bypass split time grid', description: 'Hold while splitting notes to bypass time snapping.', defaults: [modifier(false, true)] },
+  { id: 'addNote', group: 'Phrase gestures', label: 'Place note on grid', description: 'Place a note with time snapping. Hold to preview placement.', defaults: [mouse(0, true)] },
+  { id: 'addNoteFree', group: 'Phrase gestures', label: 'Place note off grid', description: 'Place a note without time snapping. Hold to preview placement.', defaults: [mouse(0, false, true)] },
   { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob or dropdown to change its value.', defaults: [wheel()] },
   { id: 'controlFineWheel', group: 'Controls', label: 'Fine adjustment', description: 'Scroll over a knob to change its value in smaller steps.', defaults: [wheel(false, true)] },
   { id: 'controlReset', group: 'Controls', label: 'Reset value', description: 'On a knob or dropdown, restore the default value.', defaults: [mouse(2)] },
-  { id: 'controlFreeze', group: 'Controls', label: 'Toggle parameter lock / unfreeze', description: 'On a global track control, toggle its reroll/Compose lock. On a section control, remove its existing freeze. Combined members can be targeted individually.', defaults: [mouse(2, false, true)] },
+  { id: 'controlFreeze', group: 'Controls', label: 'Toggle parameter lock', description: 'On a global track control, toggle its reroll/Compose lock. Combined members can be targeted individually.', defaults: [mouse(2, false, true)] },
+  { id: 'controlUnfreeze', group: 'Controls', label: 'Unfreeze section parameter', description: 'On a section control, remove its existing freeze. Combined members can be targeted individually.', defaults: [mouse(2, false, true)] },
   { id: 'fineDrag', group: 'Control modifiers', label: 'Fine knob dragging', description: 'Hold while dragging a knob for finer changes.', defaults: [modifier(false, true)] },
   { id: 'playback', group: 'Global', label: 'Play / pause', description: 'Toggle playback, including a phrase draft.', defaults: [key(' ')] },
   { id: 'undo', group: 'Global', label: 'Undo', description: 'Undo in the project or active phrase draft.', defaults: [key('z', true)] },
@@ -40,16 +44,22 @@ export const SHORTCUTS = [
   { id: 'selectAllNotes', group: 'Phrase editor', label: 'Select all notes', description: 'Select all notes in the current draft.', defaults: [key('a', true)] },
   { id: 'transposeNotes', group: 'Phrase editor', label: 'Open transpose', description: 'Open transpose controls for selected notes.', defaults: [key('t', false, true)] },
   { id: 'deleteNotes', group: 'Phrase editor', label: 'Delete selected notes', description: 'Remove the current note selection.', defaults: [key('delete'), key('backspace')] },
-  { id: 'seek', group: 'Phrase gestures', label: 'Set playback position / move note', description: 'Click empty grid space to seek; drag an existing note to move or trim it.', defaults: [mouse(0)] },
-  { id: 'boxSelect', group: 'Phrase gestures', label: 'Box select / delete note', description: 'Drag a selection box; click a note to delete it.', defaults: [mouse(2)] },
+  { id: 'seek', group: 'Phrase gestures', label: 'Set playback position', description: 'Click empty grid space to seek.', defaults: [mouse(0)] },
+  { id: 'moveNote', group: 'Phrase gestures', label: 'Move notes', description: 'Drag a note body to move the selected notes.', defaults: [mouse(0), mouse(0, true), mouse(0, false, true)] },
+  { id: 'trimEnd', group: 'Phrase gestures', label: 'Trim note end', description: 'Drag to trim note ends. When shared with Move notes, use the right edge.', defaults: [mouse(0), mouse(0, true), mouse(0, false, true)] },
+  { id: 'boxSelect', group: 'Phrase gestures', label: 'Box select notes', description: 'Drag a selection box.', defaults: [mouse(2)] },
+  { id: 'deleteNote', group: 'Phrase gestures', label: 'Delete note', description: 'Click a note to delete it.', defaults: [mouse(2)] },
   { id: 'boxExtend', group: 'Phrase gestures', label: 'Extend box selection', description: 'Add a box selection to the current selection.', defaults: [mouse(2, true)] },
   { id: 'splitNote', group: 'Phrase gestures', label: 'Split note', description: 'Click a note to split it at the pointer.', defaults: [mouse(2, false, false, true)] },
-  { id: 'shapePitch', group: 'Phrase gestures', label: 'Duplicate / shape pitch', description: 'Drag selected notes to duplicate; elsewhere draw note pitches.', defaults: [mouse(0, true, true)] },
+  { id: 'shapePitch', group: 'Phrase gestures', label: 'Draw note pitches', description: 'Draw pitches across unselected notes.', defaults: [mouse(0, true, true)] },
+  { id: 'duplicateNotes', group: 'Phrase gestures', label: 'Duplicate notes', description: 'Drag selected notes to duplicate them.', defaults: [mouse(0, true, true)] },
   { id: 'shapeVelocity', group: 'Phrase gestures', label: 'Shape velocities', description: 'Draw velocities across notes.', defaults: [mouse(1, true)] },
-  { id: 'dragVelocity', group: 'Phrase gestures', label: 'Drag velocity / apply phrase', description: 'Drag notes to change velocity. Click empty space to exit and apply edits, or cancel an unchanged draft.', defaults: [mouse(1)] },
+  { id: 'dragVelocity', group: 'Phrase gestures', label: 'Drag note velocity', description: 'Drag notes to change velocity.', defaults: [mouse(1)] },
+  { id: 'dragVelocityHandle', group: 'Phrase gestures', label: 'Drag velocity bars', description: 'Drag the velocity bars below the note grid to change velocity.', defaults: [mouse(0)] },
+  { id: 'applyPhrase', group: 'Phrase gestures', label: 'Finish phrase editing', description: 'Click empty space to apply edits and exit, or exit an unchanged draft.', defaults: [mouse(1)] },
   { id: 'dragDuration', group: 'Phrase gestures', label: 'Drag note length', description: 'Drag notes to change their length.', defaults: [mouse(1, false, false, true)] },
   { id: 'dragPitch', group: 'Phrase gestures', label: 'Drag pitch', description: 'Drag notes to change pitch.', defaults: [mouse(1, false, true)] },
-  { id: 'trimStart', group: 'Phrase gestures', label: 'Trim note start', description: 'Drag anywhere on a note to trim its start.', defaults: [mouse(0, false, false, true)] },
+  { id: 'trimStart', group: 'Phrase gestures', label: 'Trim note start', description: 'Drag to trim note starts. When shared with Move notes, use the left edge.', defaults: [mouse(0, false, false, true), mouse(0), mouse(0, true), mouse(0, false, true)] },
 ] as const;
 /** Visible settings pages. Global and section-selection bindings remain available internally. */
 export const SHORTCUT_PAGES = [
@@ -59,6 +69,94 @@ export const SHORTCUT_PAGES = [
   { id: 'shortcuts-phrase-editor', label: 'Phrase editor', groups: ['Phrase editor', 'Phrase gestures', 'Editing modifiers'] },
 ] as const;
 export type ShortcutId = typeof SHORTCUTS[number]['id'];
+/** A context is a conjunction of constraints; an omitted axis matches every value.
+ * Multiple contexts on an action are alternatives (OR). Groups are presentation only.
+ * Targets partition a surface, while selection is an independent axis: a selected
+ * note body still overlaps an action that accepts any note body.
+ */
+export interface ShortcutContext {
+  readonly surface?: readonly ('knob' | 'dropdown' | 'overview' | 'score')[];
+  readonly mode?: readonly ('arrangement' | 'phrase-editor')[];
+  readonly scope?: readonly ('global' | 'section')[];
+  readonly target?: readonly ('section-header' | 'role-cell' | 'track-cell' | 'empty-grid' | 'note-body' | 'note-start' | 'note-end' | 'velocity-bar')[];
+  readonly selection?: readonly ('selected' | 'unselected')[];
+  /** Only constrain phase when the shared handler actually distinguishes it.
+   * Actions claiming a pointer on press overlap both click and drag. */
+  readonly phase?: readonly ('click' | 'drag')[];
+  /** Held modifiers compose across effects, but compete within the same effect. */
+  readonly effect?: readonly ('section-selection' | 'time-snap' | 'pitch-retention' | 'precision')[];
+}
+const parameterContext: ShortcutContext = { surface: ['knob', 'dropdown'] };
+const overviewContext: ShortcutContext = { surface: ['overview'] };
+const scoreContext: ShortcutContext = { surface: ['score'] };
+const phraseContext: ShortcutContext = { surface: ['score'], mode: ['phrase-editor'] };
+const noteTargets = ['note-body', 'note-start', 'note-end'] as const;
+const phraseNotes: ShortcutContext = { ...phraseContext, target: noteTargets };
+const emptyPhrase: ShortcutContext = { ...phraseContext, target: ['empty-grid'] };
+const overviewNotes: ShortcutContext = { ...scoreContext, mode: ['arrangement'], target: [...noteTargets, 'velocity-bar'], phase: ['click'] };
+/** Exhaustive: every action must declare its activation contexts. Never infer them
+ * from its settings page, label, shortcut modifiers, or a list of action pairs.
+ */
+export const SHORTCUT_CONTEXTS = {
+  extendSections: [{ ...overviewContext, target: ['section-header'], effect: ['section-selection'] }],
+  rangeSections: [{ ...overviewContext, target: ['section-header'], effect: ['section-selection'] }],
+  freeGrid: [{ ...phraseContext, phase: ['drag'], effect: ['time-snap'] }],
+  retainPitch: [{ ...phraseNotes, effect: ['pitch-retention'] }],
+  freeSplitGrid: [{ ...phraseContext, target: noteTargets, phase: ['click'], effect: ['time-snap'] }],
+  addNote: [emptyPhrase],
+  addNoteFree: [emptyPhrase],
+  controlWheel: [parameterContext],
+  controlFineWheel: [{ surface: ['knob'] }],
+  controlReset: [parameterContext],
+  controlFreeze: [{ ...parameterContext, scope: ['global'] }],
+  controlUnfreeze: [{ ...parameterContext, scope: ['section'] }],
+  fineDrag: [{ surface: ['knob'], phase: ['drag'], effect: ['precision'] }],
+  playback: [{}], undo: [{}], redo: [{}],
+  overviewZoom: [overviewContext],
+  presence: [{ ...overviewContext, target: ['role-cell', 'track-cell'] }],
+  reroll: [{ ...overviewContext, target: ['section-header', 'role-cell', 'track-cell'] }],
+  reset: [{ ...overviewContext, target: ['section-header', 'role-cell', 'track-cell'] }],
+  duplicateSection: [{ ...overviewContext, target: ['section-header'] }],
+  removeSection: [{ ...overviewContext, target: ['section-header'] }],
+  clearSections: [overviewContext],
+  zoomTime: [scoreContext], editScoreNote: [overviewNotes], selectScoreNoteTrack: [overviewNotes],
+  zoomPitch: [scoreContext], panTime: [scoreContext], panPitch: [scoreContext],
+  selectAllNotes: [{ mode: ['phrase-editor'] }],
+  transposeNotes: [{ mode: ['phrase-editor'] }],
+  deleteNotes: [{ mode: ['phrase-editor'] }],
+  seek: [emptyPhrase],
+  moveNote: [{ ...phraseNotes, target: ['note-body'] }],
+  trimEnd: [{ ...phraseNotes, target: ['note-end'] }],
+  boxSelect: [{ ...phraseContext, phase: ['drag'] }],
+  deleteNote: [{ ...phraseContext, target: noteTargets, phase: ['click'] }],
+  boxExtend: [{ ...phraseContext, phase: ['drag'] }],
+  splitNote: [{ ...phraseContext, target: noteTargets, phase: ['click'] }],
+  shapePitch: [{ ...phraseNotes, selection: ['unselected'] }, { ...phraseContext, target: ['empty-grid'] }],
+  duplicateNotes: [{ ...phraseNotes, selection: ['selected'] }],
+  shapeVelocity: [phraseContext],
+  dragVelocity: [{ ...phraseNotes, target: [...noteTargets, 'velocity-bar'] }],
+  dragVelocityHandle: [{ ...phraseContext, target: ['velocity-bar'] }],
+  applyPhrase: [emptyPhrase],
+  dragDuration: [phraseNotes], dragPitch: [phraseNotes],
+  trimStart: [{ ...phraseNotes, target: ['note-start'] }],
+} as const satisfies Record<ShortcutId, readonly [ShortcutContext, ...ShortcutContext[]]>;
+
+/** Product contexts intersect unless at least one constrained axis is disjoint.
+ * This is deliberately conservative: broad/global contexts overlap narrower ones.
+ */
+export function shortcutContextsOverlap(a: ShortcutContext, b: ShortcutContext): boolean {
+  return (Object.keys(a) as (keyof ShortcutContext)[]).every(axis => {
+    const left: readonly string[] | undefined = a[axis];
+    const right: readonly string[] | undefined = b[axis];
+    return !left || !right || left.some(value => right.includes(value));
+  });
+}
+export function canShareShortcut(a: ShortcutId, b: ShortcutId): boolean {
+  return !SHORTCUT_CONTEXTS[a].some(left => SHORTCUT_CONTEXTS[b].some(right => shortcutContextsOverlap(left, right)));
+}
+export function shortcutsConflict(a: ShortcutId, b: ShortcutId, bindings: ShortcutBindings, candidate: Shortcut): boolean {
+  return a !== b && !canShareShortcut(a, b) && bindings[b].some(binding => sameShortcut(binding, candidate));
+}
 export type ShortcutBindings = Readonly<Record<ShortcutId, readonly Shortcut[]>>;
 export function defaultShortcuts(): ShortcutBindings {
   return Object.fromEntries(SHORTCUTS.map(action => [action.id, action.defaults.map(value => ({ ...value }))])) as unknown as ShortcutBindings;
@@ -83,7 +181,7 @@ export function shortcutLabel(value: Shortcut): string {
 export function acceptsShortcut(action: typeof SHORTCUTS[number], value: Shortcut): boolean {
   return action.defaults[0].kind === 'modifier' ? value.kind === 'modifier'
     : action.defaults[0].kind === 'wheel' ? value.kind === 'wheel'
-    : action.group === 'Phrase gestures' || ['controlReset', 'controlFreeze'].includes(action.id) ? value.kind === 'mouse'
+    : action.group === 'Phrase gestures' || ['controlReset', 'controlFreeze', 'controlUnfreeze'].includes(action.id) ? value.kind === 'mouse'
     : action.group === 'Global' || action.group === 'Phrase editor' || action.id === 'clearSections' ? value.kind === 'key' : value.kind === 'key' || value.kind === 'mouse';
 }
 export function decodeShortcuts(value: unknown): ShortcutBindings | null {
@@ -108,6 +206,32 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
   if (phraseIds.every(id => result[id].length === 1 && sameShortcut(result[id][0], previousPhraseDefaults[id]))) {
     const defaults = defaultShortcuts();
     for (const id of phraseIds) result[id] = defaults[id];
+  }
+  const saved = value as Record<string, unknown>;
+  // Older maps stored one binding for several operations. Carry customized
+  // bindings to their new operations, but never overwrite an explicit new entry.
+  const inherited = {
+    controlUnfreeze: 'controlFreeze', retainPitch: 'freeGrid', freeSplitGrid: 'freeGrid',
+    moveNote: 'seek', trimEnd: 'seek', dragVelocityHandle: 'seek', deleteNote: 'boxSelect',
+    duplicateNotes: 'shapePitch', applyPhrase: 'dragVelocity',
+  } as const;
+  for (const [target, source] of Object.entries(inherited) as [keyof typeof inherited, ShortcutId][]) {
+    if (saved[target] === undefined && saved[source] !== undefined) result[target] = result[source].map(b => ({ ...b }));
+  }
+  // Placement bindings also moved/trimmed existing notes in the old gesture map.
+  const legacyDrags = [...result.seek, ...result.addNote];
+  for (const target of ['moveNote', 'trimEnd', 'dragVelocityHandle'] as const) {
+    if (saved[target] === undefined && saved['seek'] !== undefined) {
+      result[target] = legacyDrags.filter((b, i, all) => all.findIndex(other => sameShortcut(b, other)) === i).slice(0, 4);
+    }
+  }
+  if (saved['trimEnd'] === undefined && saved['seek'] !== undefined) {
+    result.trimStart = [...result.trimStart, ...legacyDrags].filter((b, i, all) => all.findIndex(other => sameShortcut(b, other)) === i).slice(0, 4);
+  }
+  if (saved['addNoteFree'] === undefined && saved['addNote'] !== undefined) {
+    const free = result.addNote.filter(b => result.freeGrid.some(m => (!m.ctrl || b.ctrl) && (!m.shift || b.shift) && (!m.alt || b.alt)));
+    if (free.length || !result.addNote.length) result.addNoteFree = free;
+    result.addNote = result.addNote.filter(b => !free.includes(b));
   }
   return result;
 }

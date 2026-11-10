@@ -225,3 +225,68 @@ test('parameter lock shortcut defaults to Shift right mouse, fills older prefere
   const action = SHORTCUTS.find(action => action.id === 'controlFreeze');
   assert.ok(SHORTCUT_PAGES.find(page => page.id === 'shortcuts-general').groups.includes(action.group));
 });
+
+test('legacy grouped bindings migrate once and explicit split bindings survive saving', () => {
+  const { defaultShortcuts, decodeShortcuts } = shortcutSupport; const old = defaultShortcuts();
+  for (const id of ['addNoteFree', 'moveNote', 'trimEnd', 'deleteNote', 'duplicateNotes', 'applyPhrase', 'controlUnfreeze', 'retainPitch', 'freeSplitGrid']) delete old[id];
+  old.addNote.push({ kind: 'mouse', input: '0', ctrl: false, shift: true, alt: false });
+  old.seek = [{ kind: 'mouse', input: '3', ctrl: false, shift: false, alt: false }];
+  old.dragVelocity = []; old.controlFreeze = [];
+  const migrated = decodeShortcuts(old);
+  assert.deepEqual(migrated.addNote, defaultShortcuts().addNote); assert.deepEqual(migrated.addNoteFree, defaultShortcuts().addNoteFree);
+  assert.deepEqual(migrated.moveNote, [...old.seek, ...old.addNote]); assert.deepEqual(migrated.trimEnd, migrated.moveNote);
+  assert.deepEqual(migrated.applyPhrase, []); assert.deepEqual(migrated.controlUnfreeze, []);
+  migrated.moveNote = []; migrated.addNoteFree = []; migrated.duplicateNotes = [];
+  assert.deepEqual(decodeShortcuts(JSON.parse(JSON.stringify(migrated))), migrated);
+});
+
+test('separate targets can share defaults while competing operations still conflict', () => {
+  const { canShareShortcut } = shortcutSupport;
+  for (const [a, b] of [['seek','moveNote'], ['trimStart','trimEnd'], ['boxSelect','deleteNote'], ['shapePitch','duplicateNotes'], ['controlFreeze','controlUnfreeze'], ['dragVelocity','applyPhrase'], ['freeGrid','retainPitch']]) {
+    assert.equal(canShareShortcut(a,b), true); assert.equal(canShareShortcut(b,a), true);
+  }
+  assert.equal(canShareShortcut('addNote','addNoteFree'), false);
+  assert.equal(canShareShortcut('deleteNote','splitNote'), false);
+});
+
+test('context overlap compares every constrained axis and treats omitted axes as wildcards', () => {
+  const { shortcutContextsOverlap: overlaps } = shortcutSupport;
+  const pairs = [
+    [{}, { surface:['score'], mode:['phrase-editor'] }, true],
+    [{surface:['knob','dropdown']}, {surface:['knob'], scope:['section']}, true],
+    [{surface:['score']}, {surface:['overview']}, false],
+    [{surface:['knob'], scope:['global']}, {surface:['knob'], scope:['section']}, false],
+    [{target:['note-body'], selection:['selected']}, {target:['note-body']}, true],
+    [{target:['note-body'], selection:['selected']}, {target:['note-body'], selection:['unselected']}, false],
+    [{surface:['score'], mode:['arrangement']}, {surface:['score'], mode:['phrase-editor']}, false],
+  ];
+  for (const [a,b,expected] of pairs) { assert.equal(overlaps(a,b),expected); assert.equal(overlaps(b,a),expected); }
+});
+test('context alternatives, global actions and cross-page conflicts use one policy', () => {
+  const { canShareShortcut, shortcutsConflict, SHORTCUTS, SHORTCUT_CONTEXTS, defaultShortcuts } = shortcutSupport;
+  for (const action of SHORTCUTS) {
+    assert.ok(SHORTCUT_CONTEXTS[action.id].length > 0, action.id);
+    assert.equal(canShareShortcut(action.id, action.id), false);
+    for (const other of SHORTCUTS) assert.equal(canShareShortcut(action.id,other.id),canShareShortcut(other.id,action.id));
+  }
+  assert.equal(canShareShortcut('shapePitch','duplicateNotes'), true, 'selection partitions note targets');
+  assert.equal(canShareShortcut('shapePitch','moveNote'), false, 'one overlapping alternative is sufficient');
+  assert.equal(canShareShortcut('seek','boxSelect'), false, 'seek claims the pointer before a drag can begin');
+  assert.equal(canShareShortcut('controlFineWheel','controlWheel'), false, 'knobs are part of the broader control context');
+  assert.equal(canShareShortcut('presence','duplicateSection'), true, 'cell and header targets are distinct');
+  assert.equal(canShareShortcut('reroll','duplicateSection'), false, 'section reroll overlaps the header target');
+  const bindings = defaultShortcuts(); const candidate = bindings.undo[0];
+  bindings.presence = [candidate];
+  assert.equal(shortcutsConflict('undo','presence',bindings,candidate), true, 'global overlaps arrangement regardless of settings page');
+  assert.equal(shortcutsConflict('controlFreeze','controlUnfreeze',bindings,bindings.controlUnfreeze[0]), false);
+  assert.equal(shortcutsConflict('addNote','addNoteFree',bindings,bindings.addNoteFree[0]), true);
+  assert.equal(shortcutsConflict('undo','undo',bindings,candidate), false, 'replacing the same action is allowed');
+});
+
+test('all shared default bindings are justified by disjoint activation contexts', () => {
+  const { SHORTCUTS, defaultShortcuts, shortcutsConflict } = shortcutSupport;
+  const defaults = defaultShortcuts();
+  for (const action of SHORTCUTS) for (const other of SHORTCUTS) for (const binding of defaults[action.id]) {
+    assert.equal(shortcutsConflict(action.id, other.id, defaults, binding), false, action.id+' / '+other.id);
+  }
+});

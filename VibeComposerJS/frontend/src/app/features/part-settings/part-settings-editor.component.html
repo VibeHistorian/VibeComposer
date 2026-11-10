@@ -1,4 +1,4 @@
-<div class="part-controls" [vcParameterShortcut]="!preferences.editingQuickSettings()" (parameterShortcut)="parameterShortcut($event)">
+<div class="part-controls" [section]="local()" [vcParameterShortcut]="!preferences.editingQuickSettings()" (parameterShortcut)="parameterShortcut($event)">
   @if (seedControl(); as control) {
     <div class="part-control seed-control" [class.custom]="inheritanceFor(control) === 'custom'" [class.partially-frozen]="categoryFreezeState([control]) === 'partial'" [class.parameter-locked]="!local() && lockState(control) !== false" [class.variation-only]="variationOnly(control)" data-control-key="patternSeed" data-parameter-key="patternSeed" [title]="control.description ?? ''">
       <span class="quick-title-sizing" aria-hidden="true">{{ control.label }}</span>

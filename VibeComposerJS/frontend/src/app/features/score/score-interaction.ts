@@ -28,6 +28,7 @@ export interface ScoreDragContext {
   readonly laneHeight: number;
   readonly snapBeats: number;
   readonly shiftKey: boolean;
+  readonly retainPitch?: boolean;
   readonly scalePitchClasses: readonly number[];
   readonly startBeat: number;
   readonly endBeat: number;
@@ -38,7 +39,7 @@ export function previewScoreDrag(drag: ScoreDrag, delta: ScorePoint, context: Sc
   const grid = context.shiftKey ? 0 : context.snapBeats;
   const anchor = drag.mode === 'duration' ? drag.note.durationBeats : drag.note.startBeat;
   const beatDelta = grid ? Math.round((anchor + rawDelta) / grid) * grid - anchor : rawDelta;
-  const pitchDelta = drag.lockPitch || (context.shiftKey && drag.mode === 'move') ? 0 : -Math.round(delta.y / context.laneHeight);
+  const pitchDelta = drag.lockPitch || ((context.retainPitch ?? context.shiftKey) && drag.mode === 'move') ? 0 : -Math.round(delta.y / context.laneHeight);
   let preview = dragPhraseNotes(drag.originals, drag.mode, beatDelta, pitchDelta, -Math.round(delta.y), context.startBeat, context.endBeat);
   if ((drag.mode === 'pitch' || drag.mode === 'move') && pitchDelta !== 0 && !drag.lockPitch) {
     preview = preview.map(note => ({ ...note, midi: snapMidiToScale(note.midi, context.scalePitchClasses) }));

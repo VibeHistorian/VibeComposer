@@ -38,8 +38,9 @@ export class UiPreferencesService {
   }
   matchesGesture(id: ShortcutId, event: MouseEvent): boolean {
     if (this.matchesShortcut(id, event)) return true;
-    if (!this.matchesModifiers('freeGrid', event)) return false;
-    return this.shortcuts().freeGrid.some(modifier => this.matchesShortcut(id, {
+    const modifiers = id === 'splitNote' ? this.shortcuts().freeSplitGrid
+      : id === 'moveNote' ? [...this.shortcuts().freeGrid, ...this.shortcuts().retainPitch] : this.shortcuts().freeGrid;
+    return modifiers.some(modifier => this.matchesShortcut(id, {
       button: event.button, ctrlKey: modifier.ctrl ? false : event.ctrlKey, metaKey: modifier.ctrl ? false : event.metaKey,
       shiftKey: modifier.shift ? false : event.shiftKey, altKey: modifier.alt ? false : event.altKey,
     } as MouseEvent));
