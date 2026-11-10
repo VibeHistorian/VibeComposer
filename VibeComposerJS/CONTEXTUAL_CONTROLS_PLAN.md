@@ -1,6 +1,6 @@
 # Contextual controls: future work
 
-Scope revised 2026-10-28. Only the items under Planned work are implementation commitments. Other Java differences below are outside this plan and must not be promoted into work without a new scope decision.
+Scope revised 2026-10-28; far-future audio-track candidate recorded 2026-11-10. Only the items under Planned work are implementation commitments. Other Java differences below are outside this plan and must not be promoted into work without a new scope decision.
 
 Use [translation rules](TRANSLATION_RULES.md), [workspace contracts](DAW_REDESIGN_PLAN.md), the [frontend entry map](frontend/AGENTS.md), and the [project ownership guide](frontend/src/app/core/project/README.md) for enduring implementation contracts. [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) owns Java symbol lookups, Melody setting scopes and exclusions. Do not duplicate those rules or completed checkpoint narratives here.
 
@@ -86,6 +86,17 @@ Implementation slices and musical design live in [the arrangement variations pla
 - Propagate source edits and rerolls through a shared resolver. Define interactions with section overrides, pool restrictions, manual notes and per-control locks.
 - Handle chains, reject cycles, and specify missing/deleted sources, duplication and import validation. Resolve links deterministically without reactive update loops or extra history entries for derived values.
 - Persist link definitions, preserve independent track identities, and make score, generators, playback and exports consume the same effective values.
+
+## Far-future candidates
+
+These ideas are deferred and are not current implementation commitments.
+
+### Free audio tracks (likely desktop-only)
+
+- Allow imported audio clips to play alongside MIDI/synth tracks in free waveform lanes below the main arrangement rows. Preserve the arrangement's visible height; access additional lanes through the existing scroll area and share its timeline, zoom and playhead.
+- Likely target the desktop app so source audio can remain on disk, with project metadata storing file references rather than embedding full audio files. Browser support is undecided; durable disk access and reference persistence are reasons to prefer desktop support.
+- Before implementation, define relative/absolute reference handling, missing or moved file relinking, project portability and optional asset collection. Keep audio data out of project JSON and undo snapshots.
+- Resolve tempo behavior, section moves/deletion/regeneration, seeking and looping, live MIDI edits, shared mix controls, audio export and decoded-audio memory limits. Recording and pitch-preserving time stretching require separate scope decisions.
 
 ## Other remaining differences: no implementation planned
 
