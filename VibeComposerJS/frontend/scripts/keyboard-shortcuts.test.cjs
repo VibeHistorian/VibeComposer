@@ -319,3 +319,23 @@ test('fixed gesture buttons survive preference migration and reject recording ot
     assert.deepEqual(decodeShortcuts(migrated),migrated);
   }
 });
+
+
+test('updated phrase defaults replace unchanged prior defaults and keep custom or cleared bindings', () => {
+  const {defaultShortcuts, decodeShortcuts, SHORTCUTS} = shortcutSupport;
+  const mouse=(input,ctrl=false,shift=false,alt=false)=>({kind:'mouse',input:String(input),ctrl,shift,alt});
+  const expected={dragVelocity:mouse(0,false,false,true),trimStart:mouse(0,true,false,true),
+    duplicateNotes:mouse(0,true),dragPitch:mouse(0,true,true),shapePitch:mouse(1,true,true),
+    shapeVelocity:mouse(1,false,false,true),applyPhrase:mouse(1)};
+  const defaults=defaultShortcuts();
+  for(const [id,binding] of Object.entries(expected)) assert.deepEqual(defaults[id],[binding],id);
+  const old={...defaults,dragVelocity:[mouse(0,true,false,true)],trimStart:[mouse(0,false,false,true)],
+    duplicateNotes:[mouse(0,true,true)],dragPitch:[mouse(0,true)],shapePitch:[mouse(1)],
+    shapeVelocity:[mouse(1,true)],applyPhrase:[mouse(1,false,false,true)]};
+  assert.deepEqual(decodeShortcuts(old),defaults);
+  old.dragVelocity=[]; old.shapeVelocity=[mouse(1,true,true,true)];
+  const custom=decodeShortcuts(old);
+  assert.deepEqual(custom.dragVelocity,[]); assert.deepEqual(custom.shapeVelocity,old.shapeVelocity);
+  assert.equal(SHORTCUTS.find(a=>a.id==='trimStart').label,'Drag note start');
+  assert.equal(SHORTCUTS.find(a=>a.id==='shapeVelocity').label,'Draw velocities');
+});

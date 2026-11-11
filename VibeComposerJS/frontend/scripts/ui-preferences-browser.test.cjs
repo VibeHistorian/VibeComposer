@@ -276,7 +276,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
               ensure(button('Record Split note') && button('Record Bypass time grid'),'phrase editor includes gestures and modifiers');
               ensure(!button('Record Drag velocity bars') && !button('Record Move notes') && !button('Record Trim note end') && !button('Record Bypass split time grid'),'standard drags and shared grid bypass need no duplicate settings');
               ensure(dialog.querySelector('section[aria-label="Drag actions"] .shortcut-fixed')?.textContent.includes('Left Mouse'),'fixed mouse part is displayed separately');
-              const trim=await record('Trim note start',new KeyboardEvent('keyup',{key:'Control',shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'trimStart');
+              const trim=await record('Drag note start',new KeyboardEvent('keyup',{key:'Control',shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'trimStart');
               ensure(trim.kind==='mouse' && trim.input==='0' && trim.ctrl && trim.shift && trim.alt,'start trimming records only modifiers');
               const bypass=await record('Bypass time grid',new KeyboardEvent('keyup',{key:'Control',bubbles:true,cancelable:true}),'freeGrid');
               ensure(bypass.kind==='modifier' && bypass.ctrl,'shared grid bypass can be remapped');

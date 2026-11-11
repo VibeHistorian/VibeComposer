@@ -48,14 +48,14 @@ export const SHORTCUTS = [
   { id: 'deleteNote', group: 'Destructive actions', label: 'Delete note', description: 'Click a note to delete it.', defaults: [mouse(2)] },
   { id: 'boxExtend', group: 'Selection and navigation', label: 'Extend box selection', description: 'Add a box selection to the current selection.', defaults: [mouse(2, true)] },
   { id: 'splitNote', group: 'Destructive actions', label: 'Split note', description: 'Click a note to split it at the pointer.', defaults: [mouse(2, false, false, true)] },
-  { id: 'shapePitch', group: 'Drawing', label: 'Draw note pitches', description: 'Draw pitches across notes.', defaults: [mouse(1)] },
-  { id: 'shapeVelocity', group: 'Drawing', label: 'Shape velocities', description: 'Draw velocities across notes.', defaults: [mouse(1, true)] },
-  { id: 'dragVelocity', group: 'Drag actions', label: 'Drag note velocity', description: 'Drag notes to change velocity.', defaults: [mouse(0, true, false, true)] },
-  { id: 'applyPhrase', group: 'Selection and navigation', label: 'Finish phrase editing', description: 'Click empty space to apply edits and exit, or exit an unchanged draft.', defaults: [mouse(1, false, false, true)] },
+  { id: 'shapePitch', group: 'Drawing', label: 'Draw note pitches', description: 'Draw pitches across notes.', defaults: [mouse(1, true, true)] },
+  { id: 'shapeVelocity', group: 'Drawing', label: 'Draw velocities', description: 'Draw velocities across notes.', defaults: [mouse(1, false, false, true)] },
+  { id: 'dragVelocity', group: 'Drag actions', label: 'Drag note velocity', description: 'Drag notes to change velocity.', defaults: [mouse(0, false, false, true)] },
+  { id: 'applyPhrase', group: 'Selection and navigation', label: 'Finish phrase editing', description: 'Click empty space to apply edits and exit, or exit an unchanged draft.', defaults: [mouse(1)] },
   { id: 'dragDuration', group: 'Drag actions', label: 'Drag note length', description: 'Drag notes to change their length.', defaults: [mouse(0, false, true, true)] },
-  { id: 'dragPitch', group: 'Drag actions', label: 'Drag pitch', description: 'Drag notes to change pitch.', defaults: [mouse(0, true)] },
-  { id: 'trimStart', group: 'Drag actions', label: 'Trim note start', description: 'Hold while left-dragging anywhere on a note to trim its start.', defaults: [mouse(0, false, false, true)] },
-  { id: 'duplicateNotes', group: 'Drag actions', label: 'Duplicate notes', description: 'Drag selected notes to duplicate them.', defaults: [mouse(0, true, true)] },
+  { id: 'dragPitch', group: 'Drag actions', label: 'Drag pitch', description: 'Drag notes to change pitch.', defaults: [mouse(0, true, true)] },
+  { id: 'trimStart', group: 'Drag actions', label: 'Drag note start', description: 'Hold while left-dragging anywhere on a note to trim its start.', defaults: [mouse(0, true, false, true)] },
+  { id: 'duplicateNotes', group: 'Drag actions', label: 'Duplicate notes', description: 'Drag notes to duplicate them. During the drag, hold Ctrl/Cmd to retain pitch; hold the time-grid bypass modifier for free timing.', defaults: [mouse(0, true)] },
 ] as const;
 /** Visible settings pages. Global and section-selection bindings remain available internally. */
 export const SHORTCUT_PAGES = [
@@ -231,10 +231,14 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
     result.addNote = result.addNote.filter(b => !free.includes(b));
   }
   // Refresh unchanged old defaults, then preserve custom modifiers on the fixed button.
-  const previousDefaults = { shapePitch: mouse(0, true, true), dragVelocity: mouse(1),
-    dragDuration: mouse(1, false, false, true), dragPitch: mouse(1, false, true), applyPhrase: mouse(1) } as const;
+  const previousDefaults = {
+    shapePitch: [mouse(0, true, true), mouse(1)], shapeVelocity: [mouse(1, true)],
+    dragVelocity: [mouse(1), mouse(0, true, false, true)], dragDuration: [mouse(1, false, false, true)],
+    dragPitch: [mouse(1, false, true), mouse(0, true)], trimStart: [mouse(0, false, false, true)],
+    duplicateNotes: [mouse(0, true, true)], applyPhrase: [mouse(1, false, false, true)],
+  } as const;
   for (const id of Object.keys(previousDefaults) as (keyof typeof previousDefaults)[]) {
-    if (result[id].length === 1 && sameShortcut(result[id][0], previousDefaults[id])) result[id] = defaultShortcuts()[id];
+    if (result[id].length === 1 && previousDefaults[id].some(previous => sameShortcut(result[id][0], previous))) result[id] = defaultShortcuts()[id];
   }
   for (const action of SHORTCUTS) {
     const button = fixedMouseButton(action.id);

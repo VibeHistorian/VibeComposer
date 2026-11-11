@@ -537,6 +537,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.hoverX = Math.min(this.width, Math.max(0, (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width)));
     if (this.drag) {
       const drag = this.drag;
+      drag.currentPointer = { x: event.clientX, y: event.clientY };
       const dx = (event.clientX - drag.x) * this.width / Math.max(1, bounds.width);
       const dy = (event.clientY - drag.y) * this.height / Math.max(1, bounds.height);
       const previousPreview = drag.preview;
@@ -546,8 +547,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         altKey: event.altKey && !drag.gestureModifiers?.alt };
       drag.preview = previewScoreDrag(drag, { x: dx, y: dy }, {
         time: this.timeGeometry, laneHeight: this.laneHeight, snapBeats: this.snapBeats(),
-        shiftKey: this.preferences.matchesModifiers('freeGrid', effectModifiers),
-        retainPitch: this.preferences.matchesModifiers('retainPitch', effectModifiers),
+        shiftKey: this.preferences.matchesModifiers('freeGrid', drag.duplicate ? event : effectModifiers),
+        retainPitch: drag.duplicate ? !!(event.ctrlKey || event.metaKey) : this.preferences.matchesModifiers('retainPitch', effectModifiers),
         scalePitchClasses: this.snapToScale() ? this.scalePitchClasses() : [],
         startBeat: this.editBounds()?.startBeat ?? 0,
         endBeat: this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1,
@@ -875,6 +876,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
   private readonly onModifiersChanged = (state: ModifierState): void => {
     if (!state.active) { if (this.placementPointer) this.onPointerLeave(); return; }
+    if (this.drag?.duplicate) {
+      const { x, y } = this.drag.currentPointer ?? this.drag;
+      this.onPointerMove({ clientX: x, clientY: y, pointerId: this.drag.pointerId,
+        ctrlKey: state.ctrlKey, metaKey: state.metaKey, shiftKey: state.shiftKey, altKey: state.altKey } as PointerEvent);
+      return;
+    }
     if (!this.editable() || !this.placementPointer || this.drag || this.box || this.shape) return;
     const event = { ...this.placementPointer, ctrlKey: state.ctrlKey, metaKey: state.metaKey,
       shiftKey: state.shiftKey, altKey: state.altKey } as MouseEvent;

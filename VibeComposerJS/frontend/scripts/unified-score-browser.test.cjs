@@ -293,10 +293,10 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return true;
   })()`),true,'open phrase follows global transpose while preserving draft edits and history');
   const middleStart=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();const row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();const section=document.querySelector(".score-ruler-section").getBoundingClientRect();return {x:section.left+section.width/32,y:row.top+row.height/2};})()`);
-  await command('Input.dispatchMouseEvent',{type:'mousePressed',...middleStart,button:'left',modifiers:3,clickCount:1});
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',...middleStart,button:'left',modifiers:1,clickCount:1});
   const middleEnd={x:middleStart.x+100,y:middleStart.y-10};
-  await command('Input.dispatchMouseEvent',{type:'mouseMoved',...middleEnd,button:'left',buttons:1,modifiers:3});
-  await command('Input.dispatchMouseEvent',{type:'mouseReleased',...middleEnd,button:'left',modifiers:3,clickCount:1});
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',...middleEnd,button:'left',buttons:1,modifiers:1});
+  await command('Input.dispatchMouseEvent',{type:'mouseReleased',...middleEnd,button:'left',modifiers:1,clickCount:1});
   const middleGuard=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(r));const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return {editing:!!document.querySelector('#note-velocity'),global:p.tracks.find(t=>t.role==='bass').editedPhrase[0].velocity,local:!!p.arrangement[0].trackPhrases};})()`);
   assert.deepEqual(middleGuard,{editing:true,global:90,local:false},'Velocity drag ending empty must not apply');
   const local=await evaluate(`(async()=>{${waitCode}
@@ -316,7 +316,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     // Let the gutter labels catch up with the restored overview before measuring the click target.
     const open=async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect(),row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();const point={bubbles:true,button:0,clientX:c.left+5,clientY:row.top+row.height/2};canvas.dispatchEvent(new PointerEvent('pointerdown',point));canvas.dispatchEvent(new MouseEvent('click',point));await wait(()=>document.querySelector('#note-velocity'));};
-    const exit=()=>{const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect(),p={bubbles:true,cancelable:true,button:1,altKey:true,pointerId:7,clientX:c.left+c.width*.7,clientY:c.top+20};canvas.dispatchEvent(new PointerEvent('pointerdown',p));canvas.dispatchEvent(new PointerEvent('pointerup',p));canvas.dispatchEvent(new MouseEvent('auxclick',p));};
+    const exit=()=>{const canvas=document.querySelector('vc-score-canvas canvas'),c=canvas.getBoundingClientRect(),p={bubbles:true,cancelable:true,button:1,pointerId:7,clientX:c.left+c.width*.7,clientY:c.top+20};canvas.dispatchEvent(new PointerEvent('pointerdown',p));canvas.dispatchEvent(new PointerEvent('pointerup',p));canvas.dispatchEvent(new MouseEvent('auxclick',p));};
     await open();const input=document.querySelector('#note-velocity');await changeControl(input, '119');exit();
     await wait(()=>!document.querySelector('#note-velocity'));
     const local=read().arrangement[0].trackPhrases['track-bass-1'][0].velocity===119 && read().tracks.find(t=>t.role==='bass').editedPhrase[0].velocity===90;
@@ -341,11 +341,11 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).transposeSemitones===0);
     return unchanged;
   })()`),true,'global transpose leaves drum drafts unchanged');
-  await command('Input.dispatchMouseEvent',{type:'mousePressed',...editingDrumPoint,button:'left',modifiers:3,clickCount:1});
-  await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'left',buttons:1,modifiers:3});
-  await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'left',modifiers:3,clickCount:1});
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',...editingDrumPoint,button:'left',modifiers:1,clickCount:1});
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'left',buttons:1,modifiers:1});
+  await command('Input.dispatchMouseEvent',{type:'mouseReleased',x:editingDrumPoint.x,y:editingDrumPoint.y-11,button:'left',modifiers:1,clickCount:1});
   const empty=await evaluate(`(()=>{const c=document.querySelector('vc-score-canvas canvas').getBoundingClientRect();return {x:c.left+c.width*.7,y:c.top+20};})()`);
-  await command('Input.dispatchMouseEvent',{type:'mousePressed',...empty,button:'middle',modifiers:1,clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...empty,button:'middle',modifiers:1,clickCount:1});
+  await command('Input.dispatchMouseEvent',{type:'mousePressed',...empty,button:'middle',clickCount:1});await command('Input.dispatchMouseEvent',{type:'mouseReleased',...empty,button:'middle',modifiers:1,clickCount:1});
   const globalDrum=await evaluate(`(async()=>{${waitCode}return await wait(()=>{const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return p.tracks.filter(t=>t.role==='drums').every(t=>t.phraseEdits?.at(-1).notes[0].velocity===101);});})()`);assert.equal(globalDrum,true);
   for (const width of [1024,780]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
