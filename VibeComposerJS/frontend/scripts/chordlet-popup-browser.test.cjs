@@ -56,11 +56,11 @@ for (const [width, height] of [[700, 600], ...[700, 780, 1050, 1400, 1440, 1920,
           document.querySelector('.global-harmony button[aria-label="Generate chord progression"]').click();
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           return { ordered: a.left >= b.right, labelLeft: h.right <= a.left + 1, visible: a.right <= innerWidth,
-            label: heading.textContent.trim(), value: input.value,
+            labelled: heading.querySelector('label')?.control === input, value: input.value,
             symbols: [...document.querySelectorAll('.global-harmony .chordlet-label')].map(el => el.textContent.trim()) };
         })()`);
         assert.ok(spice.ordered && spice.labelLeft && spice.visible, JSON.stringify(spice));
-        assert.equal(spice.label, '🌶');
+        assert.ok(spice.labelled, 'spiciness heading labels its input');
         assert.equal(spice.value, '100');
         assert.ok(spice.symbols.every(symbol => /[679\[]/.test(symbol)), JSON.stringify(spice));
         const rerolls = await evaluate(`(async () => {

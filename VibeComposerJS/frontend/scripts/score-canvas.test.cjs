@@ -1429,3 +1429,79 @@ test('drag defaults keep left mouse and select each editing mode without consumi
     if (mode==='duration') assert.equal(c.drag.current.durationBeats,1,'length modifier does not also bypass snapping');
   }
 });
+
+
+test('velocity drag feedback reports the clamped value and signed change, including velocity bars', () => {
+  const { component:c } = editFixture(); c.harmonicHeight=264;
+  c.onPointerDown(pointer(300,20,{altKey:true}));
+  for(const [y,value,delta] of [[10,100,'+20'],[30,60,'-20'],[-100,107,'+27'],[1000,1,'-79'],[20,80,'+0']]) {
+    c.onPointerMove(pointer(300,y,{altKey:true}));
+    assert.equal(c.timeTooltip().text,'Velocity '+value+' ['+delta+']');
+  }
+  c.onPointerCancel();
+  c.hitAreaAt=()=>c.hitAreas[0];
+  c.onPointerDown(pointer(300,c.scoreHeight+10));
+  c.onPointerMove(pointer(300,c.scoreHeight));
+  assert.equal(c.timeTooltip().text,'Velocity 100 [+20]');
+});
+
+test('move and copy feedback show the actual signed semitone change and react to the copy pitch lock', () => {
+  for(const duplicate of [false,true]) {
+    const { component:c } = editFixture(); c.harmonicHeight=264; c.snapToScale=()=>false;
+    c.onPointerDown(pointer(300,20,duplicate?{ctrlKey:true}:{}));
+    for(const [y,delta] of [[8,3],[32,-3],[20,0]]) {
+      c.onPointerMove(pointer(303,y));
+      assert.equal(c.drag.current.midi-48,delta);
+      assert.ok(c.timeTooltip().text.endsWith(' ['+(delta<0?'':'+')+delta+' st.]'));
+    }
+    if(duplicate) {
+      c.onPointerMove(pointer(303,8));
+      c.onModifiersChanged({active:true,ctrlKey:true});
+      assert.ok(c.timeTooltip().text.endsWith(' [+0 st.]'));
+      c.onModifiersChanged({active:true});
+      assert.ok(c.timeTooltip().text.endsWith(' [+3 st.]'));
+    }
+  }
+});
+
+test('the velocity modifier highlights the top of the note and follows remapping without pointer movement', () => {
+  const { component:c,canvas } = editFixture(); c.harmonicHeight=264; c.playhead=-1;
+  const area=c.hitAreas[0]; area.visualBounds={x:391,y:16,width:23,height:8};
+  const fills=[]; let rect;
+  c.dynamicGraphics.rect=function(...args){rect=args;return this;};
+  c.dynamicGraphics.fill=function(style){fills.push({rect,...style});return this;};
+  c.onPointerMove(pointer(300,20)); fills.length=0;
+  c.onModifiersChanged({active:true,altKey:true});
+  assert.equal(c.hoveredNote.zone,'velocity'); assert.equal(canvas.style.cursor,'ns-resize');
+  assert.deepEqual(fills.filter(f=>f.color===0xffffff),[{rect:[391,16,23,4],color:0xffffff,alpha:.2}]);
+  c.preferences.setShortcut('dragVelocity',{kind:'mouse',input:'0',ctrl:true,shift:true,alt:true});
+  c.onModifiersChanged({active:true,altKey:true}); assert.notEqual(c.hoveredNote.zone,'velocity');
+  c.onModifiersChanged({active:true,ctrlKey:true,shiftKey:true,altKey:true});
+  assert.equal(c.hoveredNote.zone,'velocity');
+});
+
+test('velocity drag and drawing accents fill from the note bottom in proportion to every preview velocity', () => {
+  for(const drawing of [false,true]) {
+    const { component:c,notes } = editFixture(); c.harmonicHeight=264; c.playhead=-1; c.beatAt=()=>20.5;
+    const fills=[]; let rect;
+    c.dynamicGraphics.roundRect=function(...args){rect=args;return this;};
+    c.dynamicGraphics.fill=function(style){fills.push({rect,...style});return this;};
+    const event=y=>pointer(300,y,{altKey:true,button:drawing?1:0});
+    c.onPointerDown(event(20));
+    for(const y of [-100,85,1000]) {
+      c.onPointerMove(event(y)); fills.length=0; c.drawDynamic();
+      const previews=c.interactionPreview.notes;
+      const accents=fills.filter(f=>f.alpha===.9);
+      assert.equal(accents.length,previews.length);
+      previews.forEach((note,i)=>{
+        const height=c.laneHeight*.75;
+        const bottom=(c.pitchMax-note.midi+.5)*c.laneHeight-c.verticalOffset+height/2;
+        assert.ok(Math.abs(accents[i].rect[3]/height-note.velocity/127)<1e-10);
+        assert.ok(Math.abs(accents[i].rect[1]+accents[i].rect[3]-bottom)<1e-10);
+        if(note.velocity<127) assert.ok(accents[i].rect[3]<height,'the role color remains above the accent');
+      });
+    }
+    c.onPointerCancel(); fills.length=0; c.drawDynamic(); assert.equal(fills.filter(f=>f.alpha===.9).length,0);
+    assert.deepEqual(notes.map(n=>n.velocity),[80,100]);
+  }
+});

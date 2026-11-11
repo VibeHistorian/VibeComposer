@@ -293,9 +293,16 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return true;
   })()`),true,'open phrase follows global transpose while preserving draft edits and history');
   const middleStart=await evaluate(`(()=>{const canvas=document.querySelector('vc-score-canvas canvas');const c=canvas.getBoundingClientRect();const row=document.querySelector('.pitch-key[title="MIDI 48"]').getBoundingClientRect();const section=document.querySelector(".score-ruler-section").getBoundingClientRect();return {x:section.left+section.width/32,y:row.top+row.height/2};})()`);
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',...middleStart,modifiers:1});
+  await capture('velocity-hover');
   await command('Input.dispatchMouseEvent',{type:'mousePressed',...middleStart,button:'left',modifiers:1,clickCount:1});
   const middleEnd={x:middleStart.x+100,y:middleStart.y-10};
   await command('Input.dispatchMouseEvent',{type:'mouseMoved',...middleEnd,button:'left',buttons:1,modifiers:1});
+  const velocityFeedback=await evaluate(`(async()=>{${waitCode}return await wait(()=>{const text=document.querySelector('.time-tooltip')?.textContent;return text?.startsWith('Velocity ')?text:null;});})()`);
+  const velocityMatch=/^Velocity (\d+) \[\+(\d+)\]$/.exec(velocityFeedback);
+  assert.ok(velocityMatch,'velocity drag displays its current value and positive change');
+  assert.equal(Number(velocityMatch[1]),90+Number(velocityMatch[2]));
+  await capture('velocity-drag-feedback');
   await command('Input.dispatchMouseEvent',{type:'mouseReleased',...middleEnd,button:'left',modifiers:1,clickCount:1});
   const middleGuard=await evaluate(`(async()=>{await new Promise(r=>requestAnimationFrame(r));const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));return {editing:!!document.querySelector('#note-velocity'),global:p.tracks.find(t=>t.role==='bass').editedPhrase[0].velocity,local:!!p.arrangement[0].trackPhrases};})()`);
   assert.deepEqual(middleGuard,{editing:true,global:90,local:false},'Velocity drag ending empty must not apply');
