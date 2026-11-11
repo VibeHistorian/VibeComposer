@@ -1,4 +1,5 @@
 import { MIDI_PPQ_CHOICES } from '../../core/music/midi-resolution';
+import { version } from '../../../../package.json';
 import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { VARIATION_DEFINITIONS, variationStrength } from '../../core/music/arrangement-variation-catalogue';
 import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
@@ -32,6 +33,7 @@ import { MAX_DRUM_SOUNDS, type DrumMappingPreference } from '../../core/music/dr
   styleUrls: ['./settings-dialog.component.css', './settings-rows.css'],
 })
 export class SettingsDialogComponent {
+  readonly appVersion = version;
   readonly maxDrumSounds = MAX_DRUM_SOUNDS;
   setHumanization(key: 'timingBeats' | 'durationBeats', value: number): void {
     this.projects.updateSettings({ humanization: { timingBeats: 0, durationBeats: 0, ...this.projects.project().humanization, [key]: value } });

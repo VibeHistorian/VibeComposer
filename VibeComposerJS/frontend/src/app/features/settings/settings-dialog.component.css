@@ -2,7 +2,8 @@
 :host { display: block; width: min(1280px, 96vw); }
 .settings-dialog { display: flex; flex-direction: column; height: min(720px, 88vh); overflow: hidden; border: 1px solid var(--border-strong); border-radius: var(--radius-panel-large); background: var(--surface-base); color: var(--text-primary); box-shadow: 0 24px 80px var(--shadow-ink); }
 .settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 18px; border-bottom: 1px solid var(--border-subtle); }
-h1 { margin: 0; font-size: 20px; font-weight: 550; }
+.settings-heading .brand { margin: 0; white-space: nowrap; }
+.brand-version { color: var(--text-muted); font-weight: 400; letter-spacing: normal; }
 .close-button { width: 32px; height: 32px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font-size: 20px; cursor: pointer; }
 .close-button:hover { background: var(--surface-button-hover); }
 .settings-body { display: flex; flex: 1; min-height: 0; }
