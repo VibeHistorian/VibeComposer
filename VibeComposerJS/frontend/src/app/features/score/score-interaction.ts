@@ -18,6 +18,7 @@ export interface ScoreDrag<Note extends PhraseNote = PhraseNote> {
   readonly mode: PhraseDragMode;
   readonly originals: readonly Note[];
   readonly duplicate: boolean;
+  readonly gestureModifiers?: { readonly ctrl: boolean; readonly shift: boolean; readonly alt: boolean };
   readonly lockPitch: boolean;
   current: PhraseNote;
   preview: readonly PhraseNote[];

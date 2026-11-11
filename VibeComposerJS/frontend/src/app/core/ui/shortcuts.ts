@@ -16,8 +16,8 @@ export const SHORTCUTS = [
   { id: 'rangeSections', group: 'Section selection', label: 'Select section range', description: 'Hold while selecting a section to select from the selection anchor.', defaults: [modifier(false, true)] },
   { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass time grid', description: 'Hold while moving, resizing or splitting notes to bypass time snapping.', defaults: [modifier(false, true)] },
   { id: 'retainPitch', group: 'Editing modifiers', label: 'Retain pitch while moving', description: 'Hold while moving notes to retain their pitch.', defaults: [modifier(false, true)] },
-  { id: 'addNote', group: 'Phrase gestures', label: 'Place note on grid', description: 'Place a note with time snapping. Hold to preview placement.', defaults: [mouse(0, true)] },
-  { id: 'addNoteFree', group: 'Phrase gestures', label: 'Place note off grid', description: 'Place a note without time snapping. Hold to preview placement.', defaults: [mouse(0, false, true)] },
+  { id: 'addNote', group: 'Placement', label: 'Place note on grid', description: 'Place a note with time snapping. Hold to preview placement.', defaults: [mouse(0, true)] },
+  { id: 'addNoteFree', group: 'Placement', label: 'Place note off grid', description: 'Place a note without time snapping. Hold to preview placement.', defaults: [mouse(0, false, true)] },
   { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob or dropdown to change its value.', defaults: [wheel()] },
   { id: 'controlFineWheel', group: 'Controls', label: 'Fine adjustment', description: 'Scroll over a knob to change its value in smaller steps.', defaults: [wheel(false, true)] },
   { id: 'controlReset', group: 'Controls', label: 'Reset value', description: 'On a knob or dropdown, restore the default value.', defaults: [mouse(2)] },
@@ -43,28 +43,35 @@ export const SHORTCUTS = [
   { id: 'selectAllNotes', group: 'Phrase editor', label: 'Select all notes', description: 'Select all notes in the current draft.', defaults: [key('a', true)] },
   { id: 'transposeNotes', group: 'Phrase editor', label: 'Open transpose', description: 'Open transpose controls for selected notes.', defaults: [key('t', false, true)] },
   { id: 'deleteNotes', group: 'Phrase editor', label: 'Delete selected notes', description: 'Remove the current note selection.', defaults: [key('delete'), key('backspace')] },
-  { id: 'seek', group: 'Phrase gestures', label: 'Set playback position', description: 'Click empty grid space to seek.', defaults: [mouse(0)] },
-  { id: 'boxSelect', group: 'Phrase gestures', label: 'Box select notes', description: 'Drag a selection box.', defaults: [mouse(2)] },
-  { id: 'deleteNote', group: 'Phrase gestures', label: 'Delete note', description: 'Click a note to delete it.', defaults: [mouse(2)] },
-  { id: 'boxExtend', group: 'Phrase gestures', label: 'Extend box selection', description: 'Add a box selection to the current selection.', defaults: [mouse(2, true)] },
-  { id: 'splitNote', group: 'Phrase gestures', label: 'Split note', description: 'Click a note to split it at the pointer.', defaults: [mouse(2, false, false, true)] },
-  { id: 'shapePitch', group: 'Phrase gestures', label: 'Draw note pitches', description: 'Draw pitches across unselected notes.', defaults: [mouse(0, true, true)] },
-  { id: 'duplicateNotes', group: 'Phrase gestures', label: 'Duplicate notes', description: 'Drag selected notes to duplicate them.', defaults: [mouse(0, true, true)] },
-  { id: 'shapeVelocity', group: 'Phrase gestures', label: 'Shape velocities', description: 'Draw velocities across notes.', defaults: [mouse(1, true)] },
-  { id: 'dragVelocity', group: 'Phrase gestures', label: 'Drag note velocity', description: 'Drag notes to change velocity.', defaults: [mouse(1)] },
-  { id: 'dragVelocityHandle', group: 'Phrase gestures', label: 'Drag velocity bars', description: 'Drag the velocity bars below the note grid to change velocity.', defaults: [mouse(0)] },
-  { id: 'applyPhrase', group: 'Phrase gestures', label: 'Finish phrase editing', description: 'Click empty space to apply edits and exit, or exit an unchanged draft.', defaults: [mouse(1)] },
-  { id: 'dragDuration', group: 'Phrase gestures', label: 'Drag note length', description: 'Drag notes to change their length.', defaults: [mouse(1, false, false, true)] },
-  { id: 'dragPitch', group: 'Phrase gestures', label: 'Drag pitch', description: 'Drag notes to change pitch.', defaults: [mouse(1, false, true)] },
-  { id: 'trimStart', group: 'Phrase gestures', label: 'Trim note start', description: 'Hold while left-dragging anywhere on a note to trim its start. Drag either edge directly to resize without this modifier.', defaults: [modifier(false, false, true)] },
+  { id: 'seek', group: 'Selection and navigation', label: 'Set playback position', description: 'Click empty grid space to seek.', defaults: [mouse(0)] },
+  { id: 'boxSelect', group: 'Selection and navigation', label: 'Box select notes', description: 'Drag a selection box.', defaults: [mouse(2)] },
+  { id: 'deleteNote', group: 'Destructive actions', label: 'Delete note', description: 'Click a note to delete it.', defaults: [mouse(2)] },
+  { id: 'boxExtend', group: 'Selection and navigation', label: 'Extend box selection', description: 'Add a box selection to the current selection.', defaults: [mouse(2, true)] },
+  { id: 'splitNote', group: 'Destructive actions', label: 'Split note', description: 'Click a note to split it at the pointer.', defaults: [mouse(2, false, false, true)] },
+  { id: 'shapePitch', group: 'Drawing', label: 'Draw note pitches', description: 'Draw pitches across notes.', defaults: [mouse(1)] },
+  { id: 'shapeVelocity', group: 'Drawing', label: 'Shape velocities', description: 'Draw velocities across notes.', defaults: [mouse(1, true)] },
+  { id: 'dragVelocity', group: 'Drag actions', label: 'Drag note velocity', description: 'Drag notes to change velocity.', defaults: [mouse(0, true, false, true)] },
+  { id: 'applyPhrase', group: 'Selection and navigation', label: 'Finish phrase editing', description: 'Click empty space to apply edits and exit, or exit an unchanged draft.', defaults: [mouse(1, false, false, true)] },
+  { id: 'dragDuration', group: 'Drag actions', label: 'Drag note length', description: 'Drag notes to change their length.', defaults: [mouse(0, false, true, true)] },
+  { id: 'dragPitch', group: 'Drag actions', label: 'Drag pitch', description: 'Drag notes to change pitch.', defaults: [mouse(0, true)] },
+  { id: 'trimStart', group: 'Drag actions', label: 'Trim note start', description: 'Hold while left-dragging anywhere on a note to trim its start.', defaults: [mouse(0, false, false, true)] },
+  { id: 'duplicateNotes', group: 'Drag actions', label: 'Duplicate notes', description: 'Drag selected notes to duplicate them.', defaults: [mouse(0, true, true)] },
 ] as const;
 /** Visible settings pages. Global and section-selection bindings remain available internally. */
 export const SHORTCUT_PAGES = [
   { id: 'shortcuts-general', label: 'General', groups: ['Controls', 'Control modifiers'] },
   { id: 'shortcuts-arrangement', label: 'Arrangement', groups: ['Arrangement', 'Section headers'] },
   { id: 'shortcuts-score', label: 'Score', groups: ['Score'] },
-  { id: 'shortcuts-phrase-editor', label: 'Phrase editor', groups: ['Phrase editor', 'Phrase gestures', 'Editing modifiers'] },
+  { id: 'shortcuts-phrase-editor', label: 'Phrase editor', groups: ['Drag actions', 'Drawing', 'Destructive actions', 'Placement', 'Selection and navigation', 'Editing modifiers', 'Phrase editor'] },
 ] as const;
+/** These actions customize modifiers while retaining their standard mouse button. */
+export const FIXED_MOUSE_BUTTONS = {
+  dragVelocity: 0, dragDuration: 0, dragPitch: 0, trimStart: 0, duplicateNotes: 0,
+  shapePitch: 1, shapeVelocity: 1, deleteNote: 2, splitNote: 2, addNote: 0, addNoteFree: 0,
+} as const;
+export function fixedMouseButton(id: ShortcutId): number | undefined {
+  return (FIXED_MOUSE_BUTTONS as Partial<Record<ShortcutId, number>>)[id];
+}
 export type ShortcutId = typeof SHORTCUTS[number]['id'];
 /** A context is a conjunction of constraints; an omitted axis matches every value.
  * Multiple contexts on an action are alternatives (OR). Groups are presentation only.
@@ -125,14 +132,13 @@ export const SHORTCUT_CONTEXTS = {
   deleteNote: [{ ...phraseContext, target: noteTargets, phase: ['click'] }],
   boxExtend: [{ ...phraseContext, phase: ['drag'] }],
   splitNote: [{ ...phraseContext, target: noteTargets, phase: ['click'] }],
-  shapePitch: [{ ...phraseNotes, selection: ['unselected'] }, { ...phraseContext, target: ['empty-grid'] }],
-  duplicateNotes: [{ ...phraseNotes, selection: ['selected'] }],
+  shapePitch: [phraseContext],
+  duplicateNotes: [phraseNotes],
   shapeVelocity: [phraseContext],
   dragVelocity: [{ ...phraseNotes, target: [...noteTargets, 'velocity-bar'] }],
-  dragVelocityHandle: [{ ...phraseContext, target: ['velocity-bar'] }],
   applyPhrase: [emptyPhrase],
   dragDuration: [phraseNotes], dragPitch: [phraseNotes],
-  trimStart: [{ ...phraseNotes, phase: ['drag'] }],
+  trimStart: [phraseNotes],
 } as const satisfies Record<ShortcutId, readonly [ShortcutContext, ...ShortcutContext[]]>;
 
 /** Product contexts intersect unless at least one constrained axis is disjoint.
@@ -173,9 +179,11 @@ export function shortcutLabel(value: Shortcut): string {
   return [value.ctrl ? 'Ctrl/Cmd' : '', value.shift ? 'Shift' : '', value.alt ? 'Alt' : '', input].filter(Boolean).join(' + ');
 }
 export function acceptsShortcut(action: typeof SHORTCUTS[number], value: Shortcut): boolean {
+  const fixed = fixedMouseButton(action.id);
+  if (fixed !== undefined) return value.kind === 'mouse' && value.input === String(fixed);
   return action.defaults[0].kind === 'modifier' ? value.kind === 'modifier'
     : action.defaults[0].kind === 'wheel' ? value.kind === 'wheel'
-    : action.group === 'Phrase gestures' || ['controlReset', 'controlFreeze', 'controlUnfreeze'].includes(action.id) ? value.kind === 'mouse'
+    : action.group === 'Selection and navigation' || ['controlReset', 'controlFreeze', 'controlUnfreeze'].includes(action.id) ? value.kind === 'mouse'
     : action.group === 'Global' || action.group === 'Phrase editor' || action.id === 'clearSections' ? value.kind === 'key' : value.kind === 'key' || value.kind === 'mouse';
 }
 export function decodeShortcuts(value: unknown): ShortcutBindings | null {
@@ -190,7 +198,7 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
       || b.input.length > 40 || ['ctrl', 'shift', 'alt'].some(k => typeof b[k] !== 'boolean')
       || (b.kind === 'mouse' && !/^[0-4]$/.test(b.input)) || (b.kind === 'wheel' && b.input !== 'scroll')
       || (b.kind === 'modifier' && (b.input !== 'held' || !(b.ctrl || b.shift || b.alt)))
-      || !(acceptsShortcut(action, b) || (action.id === 'trimStart' && b.kind === 'mouse')))) return null;
+      || !(acceptsShortcut(action, b) || (fixedMouseButton(action.id) !== undefined && b.kind === 'mouse') || (action.id === 'trimStart' && b.kind === 'modifier')))) return null;
     result[action.id] = bindings.map(({ kind, input, ctrl, shift, alt }) => ({ kind, input, ctrl, shift, alt }));
   }
   // Old start-trim defaults also listed ordinary edge drags. Drop those alternatives.
@@ -198,8 +206,8 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
   if (result.trimStart.length === legacyTrimDefaults.length && result.trimStart.every((b, i) => sameShortcut(b, legacyTrimDefaults[i]))) {
     result.trimStart = defaultShortcuts().trimStart;
   }
-  result.trimStart = result.trimStart.filter(b => b.ctrl || b.shift || b.alt)
-    .map(b => ({ ...b, kind: 'modifier', input: 'held' }));
+  result.trimStart = result.trimStart
+    .map(b => ({ ...b, kind: 'mouse', input: '0' }));
   // Preferences save the full map, including defaults. Refresh the unchanged
   // previous phrase gesture set while retaining explicitly customized bindings.
   const previousPhraseDefaults = { addNote: mouse(0), seek: mouse(0, false, true), shapePitch: mouse(0, true) } as const;
@@ -212,24 +220,25 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
   // Older maps stored one binding for several operations. Carry customized
   // bindings to their new operations, but never overwrite an explicit new entry.
   const inherited = {
-    controlUnfreeze: 'controlFreeze', retainPitch: 'freeGrid',
-    dragVelocityHandle: 'seek', deleteNote: 'boxSelect',
-    duplicateNotes: 'shapePitch', applyPhrase: 'dragVelocity',
+    controlUnfreeze: 'controlFreeze', retainPitch: 'freeGrid', deleteNote: 'boxSelect',
   } as const;
   for (const [target, source] of Object.entries(inherited) as [keyof typeof inherited, ShortcutId][]) {
     if (saved[target] === undefined && saved[source] !== undefined) result[target] = result[source].map(b => ({ ...b }));
-  }
-  // Placement bindings also moved/trimmed existing notes in the old gesture map.
-  const legacyDrags = [...result.seek, ...result.addNote];
-  for (const target of ['dragVelocityHandle'] as const) {
-    if (saved[target] === undefined && saved['seek'] !== undefined) {
-      result[target] = legacyDrags.filter((b, i, all) => all.findIndex(other => sameShortcut(b, other)) === i).slice(0, 4);
-    }
   }
   if (saved['addNoteFree'] === undefined && saved['addNote'] !== undefined) {
     const free = result.addNote.filter(b => result.freeGrid.some(m => (!m.ctrl || b.ctrl) && (!m.shift || b.shift) && (!m.alt || b.alt)));
     if (free.length || !result.addNote.length) result.addNoteFree = free;
     result.addNote = result.addNote.filter(b => !free.includes(b));
+  }
+  // Refresh unchanged old defaults, then preserve custom modifiers on the fixed button.
+  const previousDefaults = { shapePitch: mouse(0, true, true), dragVelocity: mouse(1),
+    dragDuration: mouse(1, false, false, true), dragPitch: mouse(1, false, true), applyPhrase: mouse(1) } as const;
+  for (const id of Object.keys(previousDefaults) as (keyof typeof previousDefaults)[]) {
+    if (result[id].length === 1 && sameShortcut(result[id][0], previousDefaults[id])) result[id] = defaultShortcuts()[id];
+  }
+  for (const action of SHORTCUTS) {
+    const button = fixedMouseButton(action.id);
+    if (button !== undefined) result[action.id] = result[action.id].map(b => ({ ...b, kind: 'mouse', input: String(button) }));
   }
   return result;
 }

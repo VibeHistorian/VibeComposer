@@ -235,14 +235,14 @@ test('legacy grouped bindings migrate once and explicit split bindings survive s
   const migrated = decodeShortcuts(old);
   assert.deepEqual(migrated.addNote, defaultShortcuts().addNote); assert.deepEqual(migrated.addNoteFree, defaultShortcuts().addNoteFree);
   assert.equal(migrated.moveNote, undefined); assert.equal(migrated.trimEnd, undefined);
-  assert.deepEqual(migrated.applyPhrase, []); assert.deepEqual(migrated.controlUnfreeze, []);
+  assert.deepEqual(migrated.applyPhrase, defaultShortcuts().applyPhrase); assert.deepEqual(migrated.controlUnfreeze, []);
   migrated.addNoteFree = []; migrated.duplicateNotes = [];
   assert.deepEqual(decodeShortcuts(JSON.parse(JSON.stringify(migrated))), migrated);
 });
 
 test('separate targets can share defaults while competing operations still conflict', () => {
   const { canShareShortcut } = shortcutSupport;
-  for (const [a, b] of [['boxSelect','deleteNote'], ['shapePitch','duplicateNotes'], ['controlFreeze','controlUnfreeze'], ['dragVelocity','applyPhrase'], ['freeGrid','retainPitch']]) {
+  for (const [a, b] of [['boxSelect','deleteNote'], ['controlFreeze','controlUnfreeze'], ['dragVelocity','applyPhrase'], ['freeGrid','retainPitch']]) {
     assert.equal(canShareShortcut(a,b), true); assert.equal(canShareShortcut(b,a), true);
   }
   assert.equal(canShareShortcut('addNote','addNoteFree'), false);
@@ -269,7 +269,7 @@ test('context alternatives, global actions and cross-page conflicts use one poli
     assert.equal(canShareShortcut(action.id, action.id), false);
     for (const other of SHORTCUTS) assert.equal(canShareShortcut(action.id,other.id),canShareShortcut(other.id,action.id));
   }
-  assert.equal(canShareShortcut('shapePitch','duplicateNotes'), true, 'selection partitions note targets');
+  assert.equal(canShareShortcut('shapePitch','duplicateNotes'), false, 'drawing can target selected notes too');
   assert.equal(canShareShortcut('shapePitch','dragPitch'), false, 'one overlapping alternative is sufficient');
   assert.equal(canShareShortcut('seek','boxSelect'), false, 'seek claims the pointer before a drag can begin');
   assert.equal(canShareShortcut('controlFineWheel','controlWheel'), false, 'knobs are part of the broader control context');
@@ -300,7 +300,22 @@ test('legacy phrase drag preferences migrate to modifiers without restoring redu
   assert.deepEqual(migrated.trimStart, defaultShortcuts().trimStart);
   for (const id of ['moveNote','trimEnd','freeSplitGrid']) assert.equal(id in migrated, false);
   const custom = decodeShortcuts({ trimStart: [mouse(true,false,true)] });
-  assert.deepEqual(custom.trimStart, [{ kind:'modifier', input:'held', ctrl:true, shift:false, alt:true }]);
+  assert.deepEqual(custom.trimStart, [{ kind:'mouse', input:'0', ctrl:true, shift:false, alt:true }]);
   assert.deepEqual(decodeShortcuts(custom), custom);
   assert.deepEqual(decodeShortcuts({ trimStart: [] }).trimStart, []);
+});
+
+
+test('fixed gesture buttons survive preference migration and reject recording other buttons', () => {
+  const {SHORTCUTS, fixedMouseButton, acceptsShortcut, defaultShortcuts, decodeShortcuts} = shortcutSupport;
+  const defaults=defaultShortcuts();
+  assert.deepEqual(decodeShortcuts(defaults), defaults);
+  for(const action of SHORTCUTS) {
+    const button=fixedMouseButton(action.id); if(button===undefined) continue;
+    assert.equal(acceptsShortcut(action,{...defaults[action.id][0],input:String((button+1)%3)}),false);
+    const custom={kind:'mouse',input:'4',ctrl:true,shift:true,alt:true};
+    const migrated=decodeShortcuts({...defaults,[action.id]:[custom]});
+    assert.deepEqual(migrated[action.id],[{...custom,input:String(button)}],action.id);
+    assert.deepEqual(decodeShortcuts(migrated),migrated);
+  }
 });

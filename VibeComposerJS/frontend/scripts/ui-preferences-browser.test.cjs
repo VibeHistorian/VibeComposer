@@ -274,17 +274,18 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             }
             if (category.getAttribute('aria-label')==='Shortcuts Phrase editor') {
               ensure(button('Record Split note') && button('Record Bypass time grid'),'phrase editor includes gestures and modifiers');
-              ensure(!button('Record Move notes') && !button('Record Trim note end') && !button('Record Bypass split time grid'),'standard drags and shared grid bypass need no duplicate settings');
-              const trim=await record('Trim note start',new KeyboardEvent('keyup',{key:'Control',altKey:true,bubbles:true,cancelable:true}),'trimStart');
-              ensure(trim.kind==='modifier' && trim.ctrl && trim.alt,'start trimming records only modifiers');
+              ensure(!button('Record Drag velocity bars') && !button('Record Move notes') && !button('Record Trim note end') && !button('Record Bypass split time grid'),'standard drags and shared grid bypass need no duplicate settings');
+              ensure(dialog.querySelector('section[aria-label="Drag actions"] .shortcut-fixed')?.textContent.includes('Left Mouse'),'fixed mouse part is displayed separately');
+              const trim=await record('Trim note start',new KeyboardEvent('keyup',{key:'Control',shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'trimStart');
+              ensure(trim.kind==='mouse' && trim.input==='0' && trim.ctrl && trim.shift && trim.alt,'start trimming records only modifiers');
               const bypass=await record('Bypass time grid',new KeyboardEvent('keyup',{key:'Control',bubbles:true,cancelable:true}),'freeGrid');
               ensure(bypass.kind==='modifier' && bypass.ctrl,'shared grid bypass can be remapped');
-              const snapped=await record('Place note on grid',new PointerEvent('pointerdown',{button:3,shiftKey:true,bubbles:true,cancelable:true}),'addNote');
-              ensure(snapped.input==='3' && snapped.shift,'snapped placement has its own binding');
+              const snapped=await record('Place note on grid',new PointerEvent('pointerdown',{button:0,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'addNote');
+              ensure(snapped.input==='0' && snapped.ctrl && snapped.alt,'snapped placement has its own binding');
               const free=JSON.parse(localStorage.getItem(key)).shortcuts.addNoteFree[0];
               ensure(free.input==='0' && free.shift && !free.ctrl,'remapping snapped placement preserves free placement');
               button('Record Place note off grid').click();
-              document.dispatchEvent(new PointerEvent('pointerdown',{button:3,shiftKey:true,bubbles:true,cancelable:true}));
+              document.dispatchEvent(new PointerEvent('pointerdown',{button:0,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}));
               await wait(()=>dialog.textContent.includes('Already used by Place note on grid'),'placement variants share a context and require distinct bindings');
               document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
               const transpose=await record('Open transpose',new KeyboardEvent('keydown',{key:'u',ctrlKey:true,shiftKey:true,altKey:true,bubbles:true,cancelable:true}),'transposeNotes');

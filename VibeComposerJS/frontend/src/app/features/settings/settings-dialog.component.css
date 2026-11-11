@@ -74,3 +74,5 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 .settings-sidebar button > span:first-child { white-space: nowrap; }
 .scope-legend { align-items: center; justify-content: center; }
 .scope-legend > span { justify-content: center; text-align: center; }
+
+.shortcut-controls .shortcut-fixed { color: var(--text-muted); }

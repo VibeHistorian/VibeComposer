@@ -15,7 +15,7 @@ function shortcutPreferences() {
   let bindings = shortcuts.defaultShortcuts();
   preferences.shortcuts = () => bindings;
   preferences.capturingShortcut = () => false;
-  preferences.setShortcut = (id, binding) => { bindings = { ...bindings, [id]: binding ? [binding] : [] }; };
+  preferences.setShortcut = (id, binding) => { const button = shortcuts.fixedMouseButton(id); bindings = { ...bindings, [id]: binding ? [{ ...binding, ...(button === undefined ? {} : { kind: 'mouse', input: String(button) }) }] : [] }; };
   return preferences;
 }
 module.exports = { shortcutPreferences, ...shortcuts };

@@ -1,7 +1,7 @@
 import { DEFAULT_MIDI_PPQ, validMidiPpq } from '../music/midi-resolution';
 import { decodeVariationRerolls, type VariationRerollPreferences } from './variation-reroll-preferences';
 import type { VariationKind } from '../music/arrangement-variation.model';
-import { defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type ShortcutId } from './shortcuts';
+import { fixedMouseButton, defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type ShortcutId } from './shortcuts';
 import { computed, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
@@ -49,7 +49,9 @@ export class UiPreferencesService {
       && (!binding.ctrl || event.ctrlKey || event.metaKey) && (!binding.shift || event.shiftKey) && (!binding.alt || event.altKey));
   }
   setShortcut(id: ShortcutId, binding: Shortcut | null): void {
-    this.commit({ ...this.state(), shortcuts: { ...this.shortcuts(), [id]: binding ? [binding] : [] } });
+    const button = fixedMouseButton(id);
+    const normalized = binding && button !== undefined ? { ...binding, kind: 'mouse' as const, input: String(button) } : binding;
+    this.commit({ ...this.state(), shortcuts: { ...this.shortcuts(), [id]: normalized ? [normalized] : [] } });
   }
   resetShortcuts(): void { this.commit({ ...this.state(), shortcuts: defaultShortcuts() }); }
   readonly compactHistory = computed(() => this.state().compactHistory);

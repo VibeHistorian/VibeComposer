@@ -3,7 +3,7 @@ import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { VARIATION_DEFINITIONS, variationStrength } from '../../core/music/arrangement-variation-catalogue';
 import { VARIATION_ROWS } from '../../core/ui/variation-reroll-preferences';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
-import { shortcutsConflict, acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, type ShortcutId } from '../../core/ui/shortcuts';
+import { fixedMouseButton, shortcutsConflict, acceptsShortcut, SHORTCUTS, SHORTCUT_PAGES, shortcutFromEvent, shortcutLabel, type ShortcutId } from '../../core/ui/shortcuts';
 import { SettingsScopeIndicatorComponent, type SettingScope } from './settings-scope-indicator.component';
 import { SelectComponent } from '../../shared/select.component';
 import { MelodyGlobalSettingsComponent } from './melody-global-settings.component';
@@ -130,16 +130,23 @@ export class SettingsDialogComponent {
   private captureUntil = 0;
   readonly shortcutPage = computed(() => {
     const page = SHORTCUT_PAGES.find(page => page.id === this.selectedCategory());
-    return page ? { ...page, actions: page.groups.flatMap(group => SHORTCUTS.filter(action => action.group === group)) } : null;
+    return page ? { ...page, sections: page.groups.map(label => ({ label, actions: SHORTCUTS.filter(action => action.group === label) })) } : null;
   });
   readonly recording = signal<ShortcutId | null>(null);
   readonly shortcutMessage = signal('');
-  shortcutText(id: ShortcutId): string { return this.preferences.shortcuts()[id].map(shortcutLabel).join(' or ') || 'Unassigned'; }
+  readonly fixedMouseButton = fixedMouseButton;
+  fixedMouseText(id: ShortcutId): string { return ['Left Mouse', 'Middle Mouse', 'Right Mouse'][fixedMouseButton(id)!]; }
+  shortcutText(id: ShortcutId): string {
+    return this.preferences.shortcuts()[id].map(b => fixedMouseButton(id) === undefined ? shortcutLabel(b)
+      : shortcutLabel({ ...b, kind: 'modifier' }) || 'No modifiers').join(' or ') || 'Unassigned';
+  }
   recordShortcut(id: ShortcutId): void {
     this.recording.set(id);
     this.preferences.capturingShortcut.set(true);
-    this.shortcutMessage.set(SHORTCUTS.find(action => action.id === id)!.defaults[0].kind === 'modifier'
-      ? 'Hold your desired modifiers, then release one to record. Escape cancels.' : 'Press a key, click a mouse button or scroll, with optional Ctrl, Shift and Alt. Escape cancels.');
+    this.shortcutMessage.set(fixedMouseButton(id) !== undefined
+      ? 'Hold and release the desired modifiers. For no modifiers, click the fixed mouse button. Escape cancels.'
+      : SHORTCUTS.find(action => action.id === id)!.defaults[0].kind === 'modifier'
+      ? 'Hold and release the desired modifiers. Escape cancels.' : 'Press a key, click a mouse button or scroll, with optional Ctrl, Shift and Alt. Escape cancels.');
   }
   cancelRecording(): void {
     this.recording.set(null);
@@ -153,16 +160,21 @@ export class SettingsDialogComponent {
     event.preventDefault(); event.stopImmediatePropagation();
     if ('key' in event && event.key === 'Escape') { this.cancelRecording(); return; }
     const action = SHORTCUTS.find(action => action.id === id)!;
-    const modifierOnly = action.defaults[0].kind === 'modifier';
-    if (modifierOnly && event.type !== 'keyup') return;
+    const fixed = fixedMouseButton(id);
+    const modifierOnly = fixed !== undefined || action.defaults[0].kind === 'modifier';
+    if (modifierOnly && event.type !== 'keyup' && !(fixed !== undefined && event.type === 'pointerdown')) return;
     if (!modifierOnly && event.type === 'keyup') return;
-    const binding = modifierOnly && 'key' in event && ['Control', 'Meta', 'Shift', 'Alt'].includes(event.key)
+    const captured = modifierOnly && 'key' in event && ['Control', 'Meta', 'Shift', 'Alt'].includes(event.key)
       ? { kind: 'modifier' as const, input: 'held', ctrl: event.ctrlKey || event.metaKey || event.key === 'Control' || event.key === 'Meta',
         shift: event.shiftKey || event.key === 'Shift', alt: event.altKey || event.key === 'Alt' } : shortcutFromEvent(event);
-    if (!binding) return;
+    if (!captured || (fixed !== undefined && captured.kind === 'key')) return;
+    const binding = fixed === undefined ? captured : { ...captured, kind: 'mouse' as const, input: String(fixed) };
+    if (fixed !== undefined && captured.kind === 'mouse' && captured.input !== String(fixed)) {
+      this.shortcutMessage.set('Use ' + this.fixedMouseText(id) + ' or hold and release modifiers.'); return;
+    }
     if (!acceptsShortcut(action, binding)) {
       this.shortcutMessage.set(action.defaults[0].kind === 'wheel' ? 'Scroll the wheel with your desired modifiers.'
-        : action.group === 'Phrase gestures' ? 'Click a mouse button with your desired modifiers.' : 'Use a key or mouse input supported by this action.');
+        : action.defaults[0].kind === 'mouse' ? 'Click a mouse button with your desired modifiers.' : 'Use a key or mouse input supported by this action.');
       return;
     }
     const conflict = SHORTCUTS.find(other => shortcutsConflict(id, other.id, this.preferences.shortcuts(), binding));

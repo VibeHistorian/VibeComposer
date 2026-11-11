@@ -432,7 +432,7 @@ test('middle press on an overview note requests its track context without openin
   component.model.notes = [note];
   component.onPointerDown(event);
   assert.deepEqual(component.noteTrackSelected.values, [note], 'editor middle press retains its editing gesture');
-  assert.equal(component.drag.mode, 'velocity');
+  assert.equal(component.shape.mode, 'pitch');
 });
 
 test('score editing and parameter selection bindings can be swapped without changing phrase gestures', () => {
@@ -517,7 +517,7 @@ test('edit drags stay within the phrase and publish a draft change only on relea
 
 test('middle click applies only when press and release are both empty', () => {
   const { component } = fixture();
-  const event = { button: 1, clientX: 300, clientY: 20, pointerId: 1, preventDefault() {}, stopPropagation() {} };
+  const event = { button: 1, altKey: true, clientX: 300, clientY: 20, pointerId: 1, preventDefault() {}, stopPropagation() {} };
   component.onAuxClick(event); assert.deepEqual(component.applyRequested.values, []);
   component.editable = () => true;
   component.onAuxClick(event); assert.deepEqual(component.applyRequested.values, [], 'release without a press is ignored');
@@ -724,9 +724,9 @@ test('group moves preserve spacing at the phrase boundary and commit once', () =
 });
 
 test('pitch and velocity painting expose previews, commit once and discard cancellation', () => {
-  for (const button of [0, 1]) {
+  for (const ctrlKey of [false, true]) {
     const { component: c } = editFixture();
-    const start = pointer(212.5, 20, { button, ctrlKey: true, shiftKey: button === 0 });
+    const start = pointer(212.5, 20, { button: 1, ctrlKey });
     c.onPointerDown(start);
     assert.equal(c.interactionPreview.active, true);
     assert.equal(c.interactionPreview.notes.length, 1);
@@ -798,11 +798,11 @@ test('Shift move bypasses the grid and locks pitch; cancellation publishes no ed
   c.onPointerCancel(); assert.equal(c.notesChanged.values.length, 0);
 });
 
-test('middle drag adjusts selection velocity within MIDI bounds without changing timing', () => {
+test('Ctrl Alt left drag adjusts selection velocity within MIDI bounds without changing timing', () => {
   const { component: c } = editFixture();
-  c.onPointerDown(pointer(300, 20, { button: 1 }));
-  c.onPointerMove(pointer(300, -100, { button: 1 }));
-  c.onPointerUp(pointer(300, -100, { button: 1 }));
+  c.onPointerDown(pointer(300, 20, { ctrlKey:true, altKey:true }));
+  c.onPointerMove(pointer(300, -100, { ctrlKey:true, altKey:true }));
+  c.onPointerUp(pointer(300, -100, { ctrlKey:true, altKey:true }));
   assert.deepEqual(c.notesChanged.values[0].notes.map(n => n.velocity), [107, 127]);
   assert.deepEqual(c.notesChanged.values[0].notes.map(n => n.startBeat), [20, 22]);
 });
@@ -1242,6 +1242,8 @@ test('placement hover and click share snapped or free coordinates and never edit
   c.onPointerMove(pointer(303, 20, { ctrlKey: true, shiftKey: true }));
   assert.equal(c.placementPreview, null, 'drawing gesture does not preview note insertion');
   c.onPointerDown(pointer(303, 20, { ctrlKey: true, shiftKey: true }));
+  assert.equal(c.shape, null);
+  c.onPointerDown(pointer(303, 20, { button: 1 }));
   assert.equal(c.shape.mode, 'pitch');
   assert.equal(c.noteAdded.values.length, 2);
 });
@@ -1308,16 +1310,16 @@ test('triangle geometry tapers to the right center and leaves phrase notes round
 });
 
 const mouseBinding = (button, shift = false) => ({ kind: 'mouse', input: String(button), ctrl: false, shift, alt: false });
-test('snapped and free placement are independent of assigned modifiers and buttons', () => {
+test('snapped and free placement customize modifiers on fixed left mouse', () => {
   const { component: c } = fixture();
-  c.editable = () => true; c.model.notes = []; c.model.timelineStartBeat = -4;
+  c.editable = () => true; c.model.notes = []; c.model.timelineStartBeat = -4; c.preferences.setShortcut('seek', null);
   c.preferences.setShortcut('addNote', mouseBinding(4, true));
   c.preferences.setShortcut('addNoteFree', mouseBinding(3));
   c.onPointerMove(pointer(303, 20));
   assert.ok(Math.abs(c.placementPreview.startBeat - 20.12) < 1e-10);
-  c.onPointerDown(pointer(303, 20, { button: 3 }));
+  c.onPointerDown(pointer(303, 20, { button: 0 }));
   assert.ok(Math.abs(c.noteAdded.values[0].startBeat - 20.12) < 1e-10);
-  c.onPointerDown(pointer(303, 20, { button: 4, shiftKey: true }));
+  c.onPointerDown(pointer(303, 20, { button: 0, shiftKey: true }));
   assert.equal(c.noteAdded.values[1].startBeat, 20);
   c.preferences.setShortcut('addNoteFree', null);
   c.onPointerDown(pointer(303, 20, { button: 3 })); assert.equal(c.noteAdded.values.length, 2);
@@ -1335,14 +1337,15 @@ test('left dragging moves and resizes notes independently of start-trim modifier
   c.onPointerDown(pointer(300, 20, { ctrlKey:true, shiftKey:true }));
   // The explicit duplicate gesture takes precedence on selected notes.
   assert.equal(c.drag.mode, 'move'); c.onPointerCancel();
+  c.preferences.setShortcut('dragPitch', null);
   c.onPointerDown(pointer(300, 20, { ctrlKey:true })); assert.equal(c.drag.mode, 'start'); c.onPointerCancel();
   c.onPointerDown(pointer(300, 20, { altKey:true })); assert.equal(c.drag.mode, 'move');
 });
 test('box selection does not delete after the delete gesture is reassigned', () => {
-  const { component: c } = editFixture(); c.preferences.setShortcut('deleteNote', mouseBinding(3));
+  const { component: c } = editFixture(); c.preferences.setShortcut('deleteNote', { ...mouseBinding(2), alt:true, ctrl:true });
   const right = pointer(300, 20, { button: 2 });
   c.onPointerDown(right); c.onPointerUp(right); assert.deepEqual(c.deleteRequested.values, []);
-  const remove = pointer(300, 20, { button: 3 });
+  const remove = pointer(300, 20, { button:2, altKey:true, ctrlKey:true });
   c.onPointerDown(remove); c.onPointerUp(remove); assert.deepEqual(c.deleteRequested.values, ['a']);
   c.onPointerDown(pointer(290, 15, { button: 2 }));
   c.onPointerMove(pointer(365, 25, { button: 2 })); c.onPointerUp(pointer(365, 25, { button: 2 }));
@@ -1350,10 +1353,10 @@ test('box selection does not delete after the delete gesture is reassigned', () 
 });
 test('duplicate and finish remapping leaves pitch painting and velocity dragging independent', () => {
   const { component: c } = editFixture(); c.preferences.setShortcut('duplicateNotes', mouseBinding(3));
-  c.onPointerDown(pointer(300, 20, { button: 3 })); assert.equal(c.drag.duplicate, true); c.onPointerCancel();
+  c.onPointerDown(pointer(300, 20)); assert.equal(c.drag.duplicate, true); c.onPointerCancel();
   c.onPointerDown(pointer(300, 20, { ctrlKey: true, shiftKey: true })); assert.equal(c.drag?.duplicate ?? false, false); c.onPointerCancel();
   c.preferences.setShortcut('applyPhrase', mouseBinding(4));
-  c.onPointerDown(pointer(300, 20, { button: 1 })); assert.equal(c.drag.mode, 'velocity'); c.onPointerCancel();
+  c.onPointerDown(pointer(300, 20, { ctrlKey:true, altKey:true })); assert.equal(c.drag.mode, 'velocity'); c.onPointerCancel();
   const empty = pointer(200, 20, { button: 1 });
   c.onPointerDown(empty); c.onPointerUp(empty); c.onAuxClick(empty); assert.deepEqual(c.applyRequested.values, []);
   const finish = pointer(200, 20, { button: 4, stopPropagation() {} });
@@ -1376,8 +1379,8 @@ test('drag snapping, pitch retention and velocity bars have independent bindings
   c.hitAreaAt = () => hit;
   c.onPointerDown(pointer(300, c.scoreHeight + 10));
   assert.equal(c.drag.mode, 'velocity'); c.onPointerCancel();
-  c.preferences.setShortcut('dragVelocityHandle', null);
-  c.onPointerDown(pointer(300, c.scoreHeight + 10)); assert.equal(c.drag, null);
+  c.preferences.setShortcut('dragVelocity', null);
+  c.onPointerDown(pointer(300, c.scoreHeight + 10)); assert.equal(c.drag.mode, 'velocity');
 });
 
 
@@ -1390,8 +1393,23 @@ test('one remapped grid modifier bypasses snapping for splitting and start trimm
   const snapped = pointer(303, 20, { button:2, altKey:true });
   c.onPointerDown(snapped); c.onPointerUp(snapped);
   assert.equal(c.splitRequested.values.at(-1).beat, 24);
+  c.preferences.setShortcut('dragVelocity', null);
   c.onPointerDown(pointer(300, 20, { altKey:true, ctrlKey:true }));
   assert.equal(c.drag.mode, 'start');
   c.onPointerMove(pointer(303, 20, { altKey:true, ctrlKey:true }));
   assert.ok(Math.abs(c.drag.current.startBeat - 20.12) < 1e-10);
+});
+
+
+test('drag defaults keep left mouse and select each editing mode without consuming grid bypass', () => {
+  for (const [modifiers, mode, duplicate] of [
+    [{ctrlKey:true,altKey:true},'velocity',false], [{shiftKey:true,altKey:true},'duration',false],
+    [{ctrlKey:true},'pitch',false], [{altKey:true},'start',false], [{ctrlKey:true,shiftKey:true},'move',true],
+  ]) {
+    const { component:c } = editFixture();
+    c.onPointerDown(pointer(300,20,modifiers));
+    assert.equal(c.drag.mode,mode); assert.equal(c.drag.duplicate,duplicate);
+    c.onPointerMove(pointer(303,20,modifiers));
+    if (mode==='duration') assert.equal(c.drag.current.durationBeats,1,'length modifier does not also bypass snapping');
+  }
 });

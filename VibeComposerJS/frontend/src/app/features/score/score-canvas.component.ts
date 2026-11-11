@@ -540,12 +540,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const dx = (event.clientX - drag.x) * this.width / Math.max(1, bounds.width);
       const dy = (event.clientY - drag.y) * this.height / Math.max(1, bounds.height);
       const previousPreview = drag.preview;
+      const effectModifiers = { ctrlKey: event.ctrlKey && !drag.gestureModifiers?.ctrl,
+        metaKey: event.metaKey && !drag.gestureModifiers?.ctrl,
+        shiftKey: event.shiftKey && !drag.gestureModifiers?.shift,
+        altKey: event.altKey && !drag.gestureModifiers?.alt };
       drag.preview = previewScoreDrag(drag, { x: dx, y: dy }, {
         time: this.timeGeometry, laneHeight: this.laneHeight, snapBeats: this.snapBeats(),
-        shiftKey: this.preferences.matchesModifiers('freeGrid', event)
-          && !(drag.duplicate && this.preferences.matchesGestureHint('duplicateNotes', event)),
-        retainPitch: this.preferences.matchesModifiers('retainPitch', event)
-          && !(drag.duplicate && this.preferences.matchesGestureHint('duplicateNotes', event)),
+        shiftKey: this.preferences.matchesModifiers('freeGrid', effectModifiers),
+        retainPitch: this.preferences.matchesModifiers('retainPitch', effectModifiers),
         scalePitchClasses: this.snapToScale() ? this.scalePitchClasses() : [],
         startBeat: this.editBounds()?.startBeat ?? 0,
         endBeat: this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1,
@@ -745,22 +747,24 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       this.seekRequested.emit(this.beatAt(event));
       return;
     }
-    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => id === 'addNote' || id === 'addNoteFree'
+    const noteGestures = ['dragVelocity', 'dragDuration', 'dragPitch', 'trimStart', 'duplicateNotes', 'shapePitch', 'shapeVelocity', 'splitNote', 'deleteNote', 'boxSelect', 'boxExtend'] as const;
+    const exactGesture = noteGestures.some(id => this.preferences.matchesShortcut(id, event));
+    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => exactGesture || id === 'addNote' || id === 'addNoteFree'
       ? this.preferences.matchesShortcut(id, event) : this.preferences.matchesGesture(id, event);
     const edge = area ? this.noteDragZone(area, x) : null;
     const leftDrag = event.button === 0 && !this.preferences.capturingShortcut();
-    const trimStart = leftDrag && (this.preferences.matchesModifiers('trimStart', event) || edge === 'start');
+    const trimStart = leftDrag && (matches('trimStart') || edge === 'start');
     const trimEnd = leftDrag && edge === 'duration';
-    const velocity = matches('dragVelocity') || (y >= this.scoreHeight && matches('dragVelocityHandle'));
+    const velocity = matches('dragVelocity') || (y >= this.scoreHeight && leftDrag);
     if (matches('boxSelect') || matches('boxExtend') || (area && (matches('splitNote') || matches('deleteNote')))) {
       this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: matches('boxExtend') ? this.selectedNoteIds() : [], split: matches('splitNote'), delete: matches('deleteNote'), select: matches('boxSelect') || matches('boxExtend') };
     } else if (!area && (matches('addNote') || matches('addNoteFree')) && !matches('shapePitch')) {
       this.selectionChanged.emit([]);
       this.onDoubleClick(event);
-    } else if ((matches('shapePitch') || matches('shapeVelocity')) && (!area || !this.selectedNoteIds().includes(area.note.id) || matches('shapeVelocity'))) {
+    } else if (matches('shapePitch') || matches('shapeVelocity')) {
       this.shape = { mode: matches('shapeVelocity') ? 'velocity' : 'pitch', pointerId: event.pointerId, notes: new Map() };
       this.onPointerMove(event);
-    } else if (area && (velocity || (y < this.scoreHeight && (leftDrag || (matches('duplicateNotes') && this.selectedNoteIds().includes(area.note.id)) || trimStart || trimEnd || matches('dragDuration') || matches('dragPitch'))))) {
+    } else if (area && (velocity || (y < this.scoreHeight && (leftDrag || matches('duplicateNotes') || trimStart || trimEnd || matches('dragDuration') || matches('dragPitch'))))) {
       const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
       this.selectionChanged.emit(ids);
       const mode: PhraseDragMode = velocity ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch'
@@ -768,8 +772,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         : trimStart ? 'start'
         : trimEnd ? 'duration' : 'move';
       const originals = (this.model?.notes ?? []).filter(note => ids.includes(note.id));
+      const gesture = noteGestures.find(id => matches(id));
+      const gestureModifiers = gesture ? this.preferences.shortcuts()[gesture].find(b => b.kind === 'mouse'
+        && (!b.ctrl || event.ctrlKey || event.metaKey) && (!b.shift || event.shiftKey) && (!b.alt || event.altKey)) : undefined;
       this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
-        current: area.note, mode, originals, preview: originals, duplicate: matches('duplicateNotes'), lockPitch: area.note.color === 'drums' };
+        current: area.note, mode, originals, preview: originals, gestureModifiers, duplicate: matches('duplicateNotes'), lockPitch: area.note.color === 'drums' };
       this.auditionRequested.emit(originals);
       this.lastAudition = performance.now();
     } else if (matches('addNote') || matches('addNoteFree')) {
@@ -919,7 +926,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private hoverDragZone(area: NoteHitArea, x: number, event: MouseEvent): 'start' | 'move' | 'duration' {
-    if (this.preferences.matchesModifiers('trimStart', event)) return 'start';
+    if (this.preferences.matchesGestureHint('dragDuration', event)
+      && this.preferences.shortcuts().dragDuration.some(b => b.ctrl === !!(event.ctrlKey || event.metaKey) && b.shift === !!event.shiftKey && b.alt === !!event.altKey)) return 'duration';
+    if (this.preferences.matchesGestureHint('trimStart', event)) return 'start';
     return this.noteDragZone(area, x);
   }
   private noteDragZone(area: NoteHitArea, x: number, altKey = false): 'start' | 'move' | 'duration' {
