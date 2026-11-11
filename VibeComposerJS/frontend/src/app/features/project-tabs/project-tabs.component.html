@@ -1,0 +1,21 @@
+<nav class="project-tabs" aria-label="Open projects">
+  <div class="project-pills">
+    @for (tab of projects.openProjects(); track tab.id) {
+      @if (renamingId() === tab.id) {
+        <input #nameInput type="text" class="project-pill project-name-edit" aria-label="Project name" maxlength="80"
+          [style.width.ch]="draftName().length + 4" [value]="draftName()" [disabled]="disabled()"
+          (input)="draftName.set($any($event.target).value)" (blur)="finishRename()"
+          (keydown.enter)="$event.preventDefault(); $any($event.target).blur()" (keydown.escape)="cancelRename($event)" />
+      } @else {
+        <vc-context-menu [items]="items" (action)="action(tab.id, $event)">
+          <button type="button" class="project-pill" [class.active]="projects.activeProjectTabId() === tab.id"
+            [attr.aria-current]="projects.activeProjectTabId() === tab.id ? 'page' : null"
+            [disabled]="disabled()" [title]="tab.name + ' · Right-click for project actions'"
+            (click)="activate(tab.id)">{{ tab.name }}</button>
+        </vc-context-menu>
+      }
+    }
+  </div>
+  <button type="button" class="branch-project" aria-label="Branch project" title="Create a checkpoint copy including undo and redo history"
+    [disabled]="disabled()" (click)="projects.duplicateProjectTab()">⎇</button>
+</nav>

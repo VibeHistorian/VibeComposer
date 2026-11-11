@@ -167,7 +167,7 @@ test('contextual range randomizes only on Compose and preserves disabled targets
   assert.deepEqual(service.project().tracks.find(t => t.role === 'melody').generatorSettings.chordNoteChoices,targets);
 });
 
-test('zero seed keeps automatic input, saves the generated seed and loads it as explicit input', () => {
+test('zero seed survives workspace restore while exported projects load the generated seed as explicit input', () => {
   const { service, load } = fixture({ contextualMelody: false });
   service.updateSettings({ seed: '0' });
   assert.equal(service.seedInput(), '0');
@@ -180,7 +180,7 @@ test('zero seed keeps automatic input, saves the generated seed and loads it as 
   assert.notEqual(generated, first);
   const exported = service.exportProjectJson();
   const { ProjectService } = load('core/project/project.service.ts');
-  assert.equal(new ProjectService().seedInput(), generated);
+  assert.equal(new ProjectService().seedInput(), '0');
   assert.equal(service.importProjectJson(exported), true);
   assert.equal(service.seedInput(), generated);
   service.updateSettings({ seed: '9223372036854775807' });

@@ -1,0 +1,103 @@
+const assert = require('node:assert/strict');
+const test = require('node:test');
+const { fixture } = require('./support/project-fixture.cjs');
+
+test('project tabs isolate edits, undo, redo and automatic seed; checkpoints retain both history directions', () => {
+  const { service } = fixture();
+  const first = service.activeProjectTabId();
+  service.updateSettings({ name: 'Original', tempoBpm: 120 });
+  service.updateSettings({ tempoBpm: 140 });
+  service.undo();
+  const position = service.historyPosition();
+  service.updateSettings({ seed: '0' });
+  service.duplicateProjectTab();
+  const copy = service.activeProjectTabId();
+  assert.notEqual(first, copy);
+  assert.equal(service.project().name, 'Original (copy)');
+  assert.equal(service.historyPosition(), position);
+  assert.equal(service.canRedo(), true);
+  assert.equal(service.seedInput(), '0');
+  service.redo();
+  assert.equal(service.project().tempoBpm, 140);
+  service.switchProjectTab(first);
+  assert.equal(service.project().tempoBpm, 120);
+  assert.equal(service.project().name, 'Original');
+  assert.equal(service.canRedo(), true);
+  service.updateSettings({ name: 'Changed source' });
+  service.switchProjectTab(copy);
+  assert.equal(service.project().tempoBpm, 140);
+  assert.equal(service.canRedo(), false);
+  service.undo();
+  assert.equal(service.project().tempoBpm, 120);
+});
+
+test('tabs and histories restore, inactive removal preserves active state, and final removal starts fresh', () => {
+  const { service, load } = fixture();
+  const first = service.activeProjectTabId();
+  service.updateSettings({ name: 'Keep me', tempoBpm: 110 });
+  service.duplicateProjectTab();
+  const second = service.activeProjectTabId();
+  service.updateSettings({ tempoBpm: 150 });
+  service.undo();
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.deepEqual(restored.openProjects(), service.openProjects());
+  assert.equal(restored.activeProjectTabId(), second);
+  assert.equal(restored.canRedo(), true);
+  restored.redo(); assert.equal(restored.project().tempoBpm, 150);
+  restored.switchProjectTab(first); assert.equal(restored.project().name, 'Keep me');
+  restored.removeProjectTab(second);
+  assert.equal(restored.activeProjectTabId(), first);
+  restored.removeProjectTab(first);
+  assert.equal(restored.openProjects().length, 1);
+  assert.notEqual(restored.activeProjectTabId(), first);
+  assert.equal(restored.canUndo(), false);
+});
+
+test('opening defaults to new tabs; replace preference persists and rejected loads leave tabs and history intact', () => {
+  const { service, uiPreferences, load } = fixture();
+  const first = service.activeProjectTabId();
+  const json = service.exportProjectJson();
+  assert.equal(uiPreferences.replaceCurrentProjectTab(), false);
+  assert.equal(service.importProjectJson(json), true);
+  assert.equal(service.openProjects().length, 2);
+  assert.notEqual(service.activeProjectTabId(), first);
+  assert.equal(service.canUndo(), false);
+  uiPreferences.setReplaceCurrentProjectTab(true);
+  assert.equal(new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)().replaceCurrentProjectTab(), true);
+  const second = service.activeProjectTabId();
+  service.updateSettings({ name: 'Before replacement' });
+  assert.equal(service.importProjectJson(json), true);
+  assert.equal(service.openProjects().length, 2);
+  assert.equal(service.activeProjectTabId(), second);
+  assert.equal(service.canUndo(), false);
+  const before = JSON.stringify(service.openProjects());
+  const warn = console.warn; console.warn = () => {};
+  try { assert.equal(service.importProjectJson('{}'), false); } finally { console.warn = warn; }
+  assert.equal(JSON.stringify(service.openProjects()), before);
+  assert.equal(service.canUndo(), false);
+});
+
+test('tab renames commit once, retain selection, isolate history and persist inactive names', () => {
+  const { service, load } = fixture();
+  const first = service.activeProjectTabId();
+  const oldName = service.project().name;
+  service.duplicateProjectTab();
+  const second = service.activeProjectTabId();
+  const activeHistory = service.historyPosition();
+  service.renameProjectTab(first, '  Renamed source  ');
+  assert.equal(service.activeProjectTabId(), second);
+  assert.equal(service.historyPosition(), activeHistory);
+  assert.equal(service.projectForTab(first).name, 'Renamed source');
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.projectForTab(first).name, 'Renamed source');
+  service.switchProjectTab(first);
+  assert.equal(service.project().name, 'Renamed source');
+  service.undo(); assert.equal(service.project().name, oldName);
+  service.redo(); assert.equal(service.project().name, 'Renamed source');
+  const position = service.historyPosition();
+  service.renameProjectTab(first, 'Renamed source');
+  assert.equal(service.historyPosition(), position);
+  service.renameProjectTab(first, ' ');
+  assert.equal(service.project().name, 'Untitled vibe');
+  service.undo(); assert.equal(service.project().name, 'Renamed source');
+});

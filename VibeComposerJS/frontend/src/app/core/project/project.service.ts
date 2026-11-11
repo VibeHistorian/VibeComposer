@@ -52,6 +52,14 @@ import { layOutTrackPhrase, phraseForTrack } from '../music/phrase';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
+const TABS_STORAGE_KEY = 'vibecomposer.project-tabs.v1';
+interface ProjectTab {
+  readonly id: string;
+  readonly project: CompositionProject;
+  readonly past: readonly CompositionProject[];
+  readonly future: readonly CompositionProject[];
+  readonly automaticSeed: boolean;
+}
 const MAX_HISTORY = 100;
 const COMPACT_HISTORY_WINDOW_MS = 1000;
 
@@ -84,6 +92,98 @@ export class ProjectService {
       changes: index === 0 ? ['Starting point of retained history'] : projectDiff(states[index - 1], state),
     }));
   });
+
+  private readonly tabs = signal<readonly ProjectTab[]>([]);
+  readonly activeProjectTabId = signal('');
+  readonly projectActivation = signal(0);
+  readonly openProjects = computed(() => this.tabs().map(tab => ({ id: tab.id,
+    name: tab.id === this.activeProjectTabId() ? this.project().name : tab.project.name })));
+
+  constructor() {
+    const restored: ProjectTab[] = [];
+    let active = '';
+    try {
+      const raw = globalThis.localStorage?.getItem(TABS_STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.tabs)) {
+          const decode = (value: unknown) => decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
+          for (const tab of data.tabs) {
+            if (!tab || typeof tab !== 'object') continue;
+            const project = decode(tab.project);
+            const past = Array.isArray(tab.past) ? tab.past.slice(-MAX_HISTORY).map(decode) : [];
+            const future = Array.isArray(tab.future) ? tab.future.slice(-MAX_HISTORY).map(decode) : [];
+            if (typeof tab.id === 'string' && project && past.every(Boolean) && future.every(Boolean)
+                && !restored.some(item => item.id === tab.id)) {
+              restored.push({ id: tab.id, project, past: past as CompositionProject[], future: future as CompositionProject[],
+                automaticSeed: tab.automaticSeed === true });
+            }
+          }
+          active = data.activeId;
+        }
+      }
+    } catch { /* Keep the session project when workspace storage is unavailable. */ }
+    if (!restored.length) restored.push(this.snapshotTab(globalThis.crypto.randomUUID()));
+    this.tabs.set(restored);
+    this.activateTab(restored.find(tab => tab.id === active) ?? restored[0]);
+  }
+
+  private snapshotTab(id = this.activeProjectTabId()): ProjectTab {
+    return { id, project: this.state(), past: [...this.past], future: [...this.future], automaticSeed: this.automaticSeed() };
+  }
+
+  private activateTab(tab: ProjectTab): void {
+    this.projectActivation.update(revision => revision + 1);
+    this.activeProjectTabId.set(tab.id);
+    this.past.splice(0, this.past.length, ...tab.past);
+    this.future.splice(0, this.future.length, ...tab.future);
+    this.lastControlEdit = null;
+    this.automaticSeed.set(tab.automaticSeed);
+    this.generationFailure.set(null);
+    this.state.set(tab.project);
+    this.refreshHistoryAvailability();
+    this.persist(tab.project);
+  }
+
+  switchProjectTab(id: string): void {
+    if (id === this.activeProjectTabId()) return;
+    const tab = this.tabs().find(tab => tab.id === id);
+    if (tab) this.activateTab(tab);
+  }
+
+  duplicateProjectTab(id = this.activeProjectTabId()): void {
+    const source = id === this.activeProjectTabId() ? this.snapshotTab() : this.tabs().find(tab => tab.id === id);
+    if (!source) return;
+    const tab = structuredClone({ ...source, id: globalThis.crypto.randomUUID(),
+      project: { ...source.project, name: `${source.project.name} (copy)` } });
+    this.tabs.update(tabs => [...tabs, tab]);
+    this.activateTab(tab);
+  }
+
+  removeProjectTab(id: string): void {
+    const index = this.tabs().findIndex(tab => tab.id === id);
+    if (index < 0) return;
+    const remaining = this.tabs().filter(tab => tab.id !== id);
+    if (!remaining.length) remaining.push({ id: globalThis.crypto.randomUUID(),
+      project: copyDefaultProject(this.sectionTypeSettings.chances(), Math.random), past: [], future: [], automaticSeed: BigInt(DEFAULT_PROJECT.seed) === 0n });
+    this.tabs.set(remaining);
+    if (id === this.activeProjectTabId()) this.activateTab(remaining[Math.min(index, remaining.length - 1)]);
+    else this.persist(this.state());
+  }
+
+  projectForTab(id: string): CompositionProject | undefined {
+    return id === this.activeProjectTabId() ? this.project() : this.tabs().find(tab => tab.id === id)?.project;
+  }
+
+  renameProjectTab(id: string, value: string): void {
+    const name = value.trim() || 'Untitled vibe';
+    if (id === this.activeProjectTabId()) { this.updateSettings({ name }); return; }
+    const tab = this.tabs().find(tab => tab.id === id);
+    if (!tab || tab.project.name === name) return;
+    this.tabs.update(tabs => tabs.map(item => item.id === id ? { ...item,
+      project: { ...item.project, name }, past: [...item.past, item.project].slice(-MAX_HISTORY), future: [] } : item));
+    this.persist(this.state());
+  }
 
   goToHistory(index: number): void {
     if (!Number.isInteger(index) || index < 0 || index > this.past.length + this.future.length) return;
@@ -831,9 +931,15 @@ export class ProjectService {
         this.warnProjectLoadFailure('imported JSON', value);
         return false;
       }
-      this.commit(project);
-      if (this.generationFailure()) return false;
-      this.automaticSeed.set(BigInt(project.seed) === 0n);
+      // Reject unusable musical states before creating or replacing a tab.
+      for (const track of project.tracks) {
+        phraseForTrack(project, track);
+        layOutTrackPhrase(project, track, true);
+      }
+      const tab: ProjectTab = { id: this.uiPreferences.replaceCurrentProjectTab()
+        ? this.activeProjectTabId() : globalThis.crypto.randomUUID(), project, past: [], future: [], automaticSeed: BigInt(project.seed) === 0n };
+      if (!this.uiPreferences.replaceCurrentProjectTab()) this.tabs.update(tabs => [...tabs, tab]);
+      this.activateTab(tab);
       return true;
     } catch (error) {
       console.warn('Could not load project from imported JSON.', error);
@@ -859,6 +965,7 @@ export class ProjectService {
       if (!/^-?\d+$/.test(patch.seed) || BigInt(patch.seed) < -(1n << 63n) || BigInt(patch.seed) > (1n << 63n) - 1n) return;
       const automatic = BigInt(patch.seed) === 0n;
       this.automaticSeed.set(automatic);
+      this.persist(this.state());
       if (automatic) {
         const { seed, ...settings } = patch;
         if (Object.keys(settings).length) this.updateSettings(settings);
@@ -1501,5 +1608,13 @@ export class ProjectService {
     } catch {
       // Keep the project usable if storage is disabled or full.
     }
+    if (!this.tabs || !this.activeProjectTabId()) return;
+    const current = this.snapshotTab();
+    this.tabs.update(tabs => tabs.map(tab => tab.id === current.id ? current : tab));
+    try {
+      globalThis.localStorage?.setItem(TABS_STORAGE_KEY, JSON.stringify({ activeId: current.id,
+        tabs: this.tabs().map(tab => ({ ...tab, project: encodeProjectStorage(tab.project),
+          past: tab.past.map(encodeProjectStorage), future: tab.future.map(encodeProjectStorage) })) }));
+    } catch { /* Tabs remain usable when browser storage is disabled or full. */ }
   }
 }

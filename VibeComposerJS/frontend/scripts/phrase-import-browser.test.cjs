@@ -47,7 +47,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     project.progression=[1,5,6,4];
     project.arrangement=[{...project.arrangement[0],measures:4,trackPresence:Object.fromEntries(project.tracks.map(t=>[t.id,true]))}];
     for(const track of project.tracks)track.editedPhrase=[{id:track.id+'-old',midi:track.role==='drums'?36:48,startBeat:2,durationBeats:1,velocity:90}];
-    sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
+    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
   })()`);
   await reload();
   const setup=`

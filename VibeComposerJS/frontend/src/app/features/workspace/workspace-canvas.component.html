@@ -127,7 +127,7 @@
         (trackSelected)="selectSectionTrack($event.sectionId, $event.trackId)"
         (partToggled)="toggleArrangementTrack($event.sectionId, $event.trackId, $event.present)"
         (groupPresenceToggled)="projects.toggleSectionRolePresence($event.sectionId, $event.role)">
-      <input type="text" arrangementProjectName class="project-name" [value]="project().name" maxlength="80" aria-label="Project name" [title]="project().name" (change)="updateProjectName($event)" (keydown.enter)="$any($event.target).blur()" />
+      <vc-project-tabs arrangementProjectTabs [disabled]="editing()" />
       </vc-arrangement-overview>
 
       @if (!usePartSettingsInspector()) {

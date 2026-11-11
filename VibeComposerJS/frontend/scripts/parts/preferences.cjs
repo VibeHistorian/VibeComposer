@@ -399,7 +399,8 @@ test('UI preferences customize per-role placement without changing project, hist
   preferences.saveQuickSettings();
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.historyPosition(), position);
-  assert.equal(uiStored.size, 1);
+  assert.ok(uiStored.has('vibecomposer.ui-preferences.v1'));
+  assert.ok(uiStored.has('vibecomposer.project-tabs.v1'));
   const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
   assert.deepEqual(restored.preferences(), preferences.preferences());
   assert.equal(service.importProjectJson(before), true);

@@ -2,9 +2,8 @@
   <header class="canvas-heading">
     <h1 id="arrangement-title" class="brand" aria-label="VibeComposer">
       <span class="brand-mark" aria-hidden="true">V</span>
-      <span>vibe<span class="brand-light">composer</span></span>
     </h1>
-    <ng-content select="[arrangementProjectName]" />
+    <ng-content select="[arrangementProjectTabs]" />
     <div class="canvas-actions">
       <button type="button" class="add-section-button" [disabled]="!canAddSection()"
         [attr.aria-expanded]="!!sectionPicker()" aria-haspopup="menu" aria-label="Add arrangement section" title="Add section"

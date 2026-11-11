@@ -39,7 +39,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   const hoveredHeader=await evaluate(`({background:getComputedStyle(document.querySelector('.score-ruler-section')).backgroundColor,
     expected:getComputedStyle(document.documentElement).getPropertyValue('--surface-hover').trim(),hovered:document.querySelector('.score-ruler-section').matches(':hover')})`);
   assert.equal(hoveredHeader.hovered,true);assert.notEqual(hoveredHeader.background,headerSelection.background);
-  await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('vc-score-canvas canvas'));const seed=document.querySelector('[aria-label="Generation seed"]');await changeControl(seed, '43');const p=await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')));p.arrangement=[{...p.arrangement[0],measures:4,trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,true]))}];for(const t of p.tracks)t.editedPhrase=[{id:t.id+'-fixture',midi:t.role==='drums'?36:t.role==='bass'?48:60,startBeat:0,durationBeats:1,velocity:90}];const bass=p.tracks.find(t=>t.role==='bass');bass.editedPhrase.push({id:'bass-low',midi:24,startBeat:4,durationBeats:1,velocity:90},{id:'bass-high',midi:96,startBeat:8,durationBeats:1,velocity:90});const drum=p.tracks.find(t=>t.role==='drums');for(const [index,pitch] of [[2,38],[3,42]])p.tracks.push({...drum,id:'track-drums-'+index,name:'D'+index,generatorSettings:{...drum.generatorSettings,pitch},editedPhrase:[{id:'shared-drum',midi:pitch,startBeat:0,durationBeats:1,velocity:90}]});sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));return true;})()`);
+  await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('vc-score-canvas canvas'));const seed=document.querySelector('[aria-label="Generation seed"]');await changeControl(seed, '43');const p=await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')));p.arrangement=[{...p.arrangement[0],measures:4,trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,true]))}];for(const t of p.tracks)t.editedPhrase=[{id:t.id+'-fixture',midi:t.role==='drums'?36:t.role==='bass'?48:60,startBeat:0,durationBeats:1,velocity:90}];const bass=p.tracks.find(t=>t.role==='bass');bass.editedPhrase.push({id:'bass-low',midi:24,startBeat:4,durationBeats:1,velocity:90},{id:'bass-high',midi:96,startBeat:8,durationBeats:1,velocity:90});const drum=p.tracks.find(t=>t.role==='drums');for(const [index,pitch] of [[2,38],[3,42]])p.tracks.push({...drum,id:'track-drums-'+index,name:'D'+index,generatorSettings:{...drum.generatorSettings,pitch},editedPhrase:[{id:'shared-drum',midi:pitch,startBeat:0,durationBeats:1,velocity:90}]});localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));return true;})()`);
   await command('Page.reload');
   const initial=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));return {labels:document.querySelectorAll('.pitch-key').length,drums:document.querySelectorAll('.drum-label').length,arrangement:!!document.querySelector('vc-arrangement-overview canvas'),velocity:!!document.querySelector('.velocity-label')};})()`);
   assert.ok(initial.labels>=17);assert.equal(initial.drums,3);assert.equal(initial.arrangement,true);assert.equal(initial.velocity,false);
@@ -387,7 +387,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     delete base.chordDegrees;delete base.customChords;delete base.customDurations;delete base.context;
     delete base.useMelodyHarmony;delete base.generatedTrackIds;
     p.arrangement=[base,{...base,id:'section-harmony',chordDegrees:[2,5],customDurations:[2,6],generatedTrackIds:[bass.id]}];
-    sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
   })()`);
   await command('Page.reload');
   const harmonyHeader=await evaluate(`(async()=>{${waitCode}
@@ -492,7 +492,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await evaluate(`(()=>{
     const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     p.arrangement=[{...p.arrangement[0],measures:1,customDurations:[.25],chordDegrees:[1]},p.arrangement[1]];
-    sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
   })()`);
   await command('Page.reload');
   const shortSection=await evaluate(`(async()=>{${waitCode}
@@ -538,7 +538,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       p.tracks=[p.tracks.find(t=>t.role==='bass'),p.tracks.find(t=>t.role==='melody')];
       p.tracks.forEach(t=>{t.editedPhrase=[{id:t.id+'-menu',midi:t.role==='bass'?48:60,startBeat:0,durationBeats:1,velocity:90}];delete t.phraseEdits;});
       p.arrangement=['menu-a','menu-b'].map(id=>({id,type:'VERSE1',measures:1,trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,true]))}));
-      sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+      localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
     })()`);
     await command('Page.reload');
     const removal=await evaluate(`(async()=>{${waitCode}

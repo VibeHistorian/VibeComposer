@@ -1,0 +1,13 @@
+/* Scrollable project pills and checkpoint action */
+:host { display: block; flex: 1 1 180px; min-width: 0; }
+.project-tabs { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.project-pills { display: flex; align-items: center; gap: 5px; min-width: 0; overflow-x: auto; }
+.project-pill, .branch-project { height: 29px; border: 1px solid var(--border-strong); background: var(--surface-button); color: var(--text-secondary); cursor: pointer; }
+.project-pill { max-width: 180px; padding: 0 12px; border-radius: 999px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 11px var(--font-ui); }
+.branch-project { flex: 0 0 29px; display: grid; place-items: center; padding: 0; border-radius: var(--radius-control); font: 20px / 1 var(--font-ui); align-items: baseline; line-height: 22px; }
+.project-pill:hover, .branch-project:hover { background: var(--surface-button-hover); border-color: var(--accent-primary); }
+.project-pill.active { background: var(--surface-toggle-active); border-color: var(--accent-primary); color: var(--text-primary); }
+.project-pill:focus-visible, .branch-project:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.project-pill:disabled, .branch-project:disabled { opacity: .4; cursor: default; }
+/* Inline project naming */
+.project-name-edit { min-width: 80px; flex-shrink: 0; cursor: text; background: var(--surface-input); color: var(--text-primary); border-color: var(--accent-primary); }

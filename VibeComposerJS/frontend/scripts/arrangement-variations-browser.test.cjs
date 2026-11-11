@@ -70,7 +70,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
         p.arrangement=['VERSE1','BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','chords','arpeggio','bass','drums'].map(role=>[role,Array(6).fill(true)]))}));
         p.arrangement[0].variations={seed:'1',policy:{chance:100,maxChanges:2},choices:[{trackId:p.tracks.find(t=>t.role==='melody').id,kind:'melody-range',amount:1,enabled:true}]};
-        sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
+        localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
       }
       await changeControl(seed,'43');await wait(()=>read()?.seed==='43','canonical project');
       const original=JSON.stringify(read());

@@ -38,6 +38,7 @@ export interface UiPreferences {
   readonly scoreGhostNotes: boolean;
   readonly scoreOutlineOtherTracks: boolean;
   readonly restartPlaybackOnCompose: boolean;
+  readonly replaceCurrentProjectTab: boolean;
   readonly replacePresetTracks: boolean;
   readonly generateArrangementVariations: boolean;
   readonly variationRerolls: VariationRerollPreferences;
@@ -84,7 +85,7 @@ export function defaultQuickSettings(): QuickSettings {
 }
 
 export function defaultUiPreferences(): UiPreferences {
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin: 60, composeBpmMax: 100, compactHistory: true, midiPpq: DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: true, syncScoreMix: false, scoreChordGrid: false, scoreTriangleNotes: false, scoreGhostNotes: true, scoreOutlineOtherTracks: false, restartPlaybackOnCompose: true, replacePresetTracks: true, generateArrangementVariations: false, variationRerolls: defaultVariationRerolls(), rerollPresenceWithVariations: false, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, harmonyFollowsMode: 'all', manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance(), shortcuts: defaultShortcuts() };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin: 60, composeBpmMax: 100, compactHistory: true, midiPpq: DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: true, syncScoreMix: false, scoreChordGrid: false, scoreTriangleNotes: false, scoreGhostNotes: true, scoreOutlineOtherTracks: false, restartPlaybackOnCompose: true, replaceCurrentProjectTab: false, replacePresetTracks: true, generateArrangementVariations: false, variationRerolls: defaultVariationRerolls(), rerollPresenceWithVariations: false, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, harmonyFollowsMode: 'all', manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance(), shortcuts: defaultShortcuts() };
 }
 
 /** Decode atomically, accepting only UI data and retaining the code's control order. */
@@ -109,6 +110,7 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
   if (data['scoreOutlineOtherTracks'] !== undefined && typeof data['scoreOutlineOtherTracks'] !== 'boolean') return null;
   if (data['scoreTriangleNotes'] !== undefined && typeof data['scoreTriangleNotes'] !== 'boolean') return null;
   if (data['scoreGhostNotes'] !== undefined && typeof data['scoreGhostNotes'] !== 'boolean') return null;
+  if (data['replaceCurrentProjectTab'] !== undefined && typeof data['replaceCurrentProjectTab'] !== 'boolean') return null;
   if (data['replacePresetTracks'] !== undefined && typeof data['replacePresetTracks'] !== 'boolean') return null;
   if (data['restartPlaybackOnCompose'] !== undefined && typeof data['restartPlaybackOnCompose'] !== 'boolean') return null;
   if (data['generateArrangementVariations'] !== undefined && typeof data['generateArrangementVariations'] !== 'boolean') return null;
@@ -128,5 +130,5 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
     quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key, role).some(key => keys.includes(key))).map(control => control.key);
   }
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin, composeBpmMax, compactHistory: data['compactHistory'], midiPpq: data['midiPpq'] as number ?? DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: data['settingsExplainersAsTooltips'] !== false, syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreTriangleNotes: data['scoreTriangleNotes'] === true, scoreGhostNotes: data['scoreGhostNotes'] !== false, scoreOutlineOtherTracks: data['scoreOutlineOtherTracks'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, replacePresetTracks: data['replacePresetTracks'] !== false, generateArrangementVariations: data['generateArrangementVariations'] === true, variationRerolls, rerollPresenceWithVariations: data['rerollPresenceWithVariations'] === true, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, harmonyFollowsMode: data['harmonyFollowsMode'] as HarmonyModeScope ?? 'all', manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance, shortcuts };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin, composeBpmMax, compactHistory: data['compactHistory'], midiPpq: data['midiPpq'] as number ?? DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: data['settingsExplainersAsTooltips'] !== false, syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreTriangleNotes: data['scoreTriangleNotes'] === true, scoreGhostNotes: data['scoreGhostNotes'] !== false, scoreOutlineOtherTracks: data['scoreOutlineOtherTracks'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, replaceCurrentProjectTab: data['replaceCurrentProjectTab'] === true, replacePresetTracks: data['replacePresetTracks'] !== false, generateArrangementVariations: data['generateArrangementVariations'] === true, variationRerolls, rerollPresenceWithVariations: data['rerollPresenceWithVariations'] === true, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, harmonyFollowsMode: data['harmonyFollowsMode'] as HarmonyModeScope ?? 'all', manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance, shortcuts };
 }

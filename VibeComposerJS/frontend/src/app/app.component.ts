@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { installPointerButtonFocus } from './shared/pointer-button-focus';
-import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, untracked, inject, signal, viewChild } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { AudioExportService } from './core/audio/audio-export.service';
@@ -56,6 +56,18 @@ export class AppComponent {
   readonly project = this.projects.project;
   private readonly dialogs = inject(Dialog);
   private readonly workspace = viewChild(WorkspaceCanvasComponent);
+
+  private lastProjectTab = this.projects.projectActivation();
+  private readonly projectTabEffect = effect(() => {
+    const id = this.projects.projectActivation();
+    if (id === this.lastProjectTab) return;
+    this.lastProjectTab = id;
+    untracked(() => {
+      if (this.workspace()?.editing()) this.workspace()?.closeEditor();
+      this.playback.stop();
+      this.workspaceUi.clearSelection();
+    });
+  });
 
   historyKeydown(event: KeyboardEvent): void {
     if (this.preferences.matchesShortcut('playback', event) && !event.defaultPrevented && !event.isComposing

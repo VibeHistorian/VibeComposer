@@ -36,7 +36,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => settings.querySelector('vc-section-type-settings'), 'section types');
       if (!settings.querySelector('vc-section-type-settings input[type="range"]')) throw new Error('section type editor missing');
       category.click();
-      const compact = await wait(() => settings.querySelector('input[type="checkbox"]'), 'compact preference');
+      const compact = await wait(() => settings.querySelector('[aria-label="Compact History"]'), 'compact preference');
       if (compact.checked) compact.click();
       settings.querySelector('[aria-label="Close settings"]').click();
       await wait(() => !document.querySelector('vc-settings-dialog'), 'settings closed');
@@ -60,7 +60,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         project.arrangement[0].rolePartOverrides = { bass: { noteVariation: 35 } };
         project.arrangement[0].trackPartOverrides = { 'track-bass-2': { noteVariation: 45 } };
         project.melodyGlobal = { ...project.melodyGlobal, contextualMelody: false };
-        sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
+        localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
         sessionStorage.setItem('contextual-fixture', 'ready'); location.reload(); return;
       }
       await wait(() => document.querySelectorAll('.track-line').length === 30, '30 track rows');

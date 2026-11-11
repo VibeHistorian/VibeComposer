@@ -59,7 +59,7 @@ test('production Angular controls initialize selects from settings and support r
           if (!settings.querySelector('vc-section-type-settings input[type="range"]')) throw new Error('section types missing');
           const sidebar = settings.querySelector('.settings-sidebar');
           [...sidebar.querySelectorAll('button')].find(button => button.textContent.trim() === 'Project').click();
-          const checkbox = await waitFor(() => settings.querySelector('input[type="checkbox"]'), 'Compact History setting');
+          const checkbox = await waitFor(() => settings.querySelector('[aria-label="Compact History"]'), 'Compact History setting');
           if (sidebar.getBoundingClientRect().right > settings.querySelector('.settings-content').getBoundingClientRect().left + 1) throw new Error('sidebar not on left');
           return checkbox;
         };

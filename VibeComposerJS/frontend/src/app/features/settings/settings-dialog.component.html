@@ -322,6 +322,10 @@
           <section aria-labelledby="project-title">
             <h2 id="project-title">Project</h2>
             <div class="setting-row">
+              <div class="setting-copy"><h3>Replace current project tab when opening projects</h3><p>Open projects in the current tab. When disabled, each opened project creates a new tab.</p></div>
+              <div class="setting-controls"><input type="checkbox" aria-label="Replace current project tab when opening projects" [checked]="preferences.replaceCurrentProjectTab()" (change)="preferences.setReplaceCurrentProjectTab($any($event.target).checked)" /></div>
+            </div>
+            <div class="setting-row">
               <div class="setting-copy"><h3>Export filenames</h3><p>Include these fields before the project name, separated by underscores. Time uses HH-mm; sharp keys use s and flat keys use b.</p></div>
               <div class="setting-controls"><div class="export-name-fields" role="group" aria-label="Export filename fields">
               @for (field of exportNameFields; track field.id) {

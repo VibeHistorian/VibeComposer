@@ -32,7 +32,7 @@ test('production score edits pickups and late notes with 00/END space and retain
           {id:'cross',midi:50,startBeat:3,durationBeats:3,velocity:90},
           {id:'late',midi:52,startBeat:7,durationBeats:1,velocity:90}
         ]}}];
-      sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+      localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
     })()`);
     await command('Page.reload');
     const point = await evaluate(`(async()=>{${helpers}

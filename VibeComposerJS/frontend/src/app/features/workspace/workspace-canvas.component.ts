@@ -1,3 +1,4 @@
+import { ProjectTabsComponent } from '../project-tabs/project-tabs.component';
 import { drumSelectionSlot, projectDrumPitches, resolvedDrumSlots } from '../../core/project/project-drum-kit';
 import { MenuSelectComponent } from '../../shared/menu-select.component';
 import { INSTRUMENT_MENU_GROUPS, DRUM_MENU_GROUPS } from './instrument-menu-groups';
@@ -79,7 +80,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-workspace-canvas',
-  imports: [MenuSelectComponent, ContextMenuComponent, NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
+  imports: [ProjectTabsComponent, MenuSelectComponent, ContextMenuComponent, NgTemplateOutlet, SectionContextEditorComponent, ArrangementOverviewComponent, PartSettingsEditorComponent, PartScopeActionsComponent, EditWorkspaceComponent, ScoreCanvasComponent, ScoreChordLabelsDirective, CompactKnobComponent, CompactToggleComponent, MixButtonsComponent, SelectComponent, TrackGenerationPolicyComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:resize)': 'updatePartSettingsLayout()' },
   templateUrl: './workspace-canvas.component.html',
@@ -191,11 +192,6 @@ export class WorkspaceCanvasComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
 
-  updateProjectName(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.projects.updateSettings({ name: input.value.trim() || 'Untitled vibe' });
-    input.value = this.project().name;
-  }
   private readonly phraseProject = computed(() => this.project(), { equal: samePhraseInputs });
   readonly instruments = GM_INSTRUMENTS;
   readonly trackInstrumentOptions = computed(() => {

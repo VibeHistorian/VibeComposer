@@ -62,6 +62,10 @@ export class UiPreferencesService {
   toggleScoreTriangleNotes(): void { this.commit({ ...this.state(), scoreTriangleNotes: !this.scoreTriangleNotes() }); }
   readonly scoreGhostNotes = computed(() => this.state().scoreGhostNotes);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
+  readonly replaceCurrentProjectTab = computed(() => this.state().replaceCurrentProjectTab);
+  setReplaceCurrentProjectTab(enabled: boolean): void {
+    if (typeof enabled === 'boolean') this.commit({ ...this.state(), replaceCurrentProjectTab: enabled });
+  }
   readonly replacePresetTracks = computed(() => this.state().replacePresetTracks);
   setReplacePresetTracks(enabled: boolean): void {
     if (typeof enabled === 'boolean') this.commit({ ...this.state(), replacePresetTracks: enabled });

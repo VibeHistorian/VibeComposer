@@ -43,7 +43,7 @@ test('manual Mode behavior setting changes matching phrases and persists in the 
     project.tracks.find(t=>t.role==='bass').editedPhrase=notes([62,66,69,73]);
     project.tracks.find(t=>t.role==='chords').editedPhrase=notes([62,63,66]);
     project.tracks.find(t=>t.role==='drums').editedPhrase=notes([38]);
-    sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
+    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
   })()`);
   await reload();
   const result=await evaluate(`(async()=>{${waitCode}${helpers}
