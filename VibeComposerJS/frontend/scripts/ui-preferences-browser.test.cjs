@@ -273,7 +273,12 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
               ensure(zoom.kind==='wheel' && zoom.shift && zoom.alt,'capture wheel combination');
             }
             if (category.getAttribute('aria-label')==='Shortcuts Phrase editor') {
-              ensure(button('Record Split note') && button('Record Bypass drag time grid'),'phrase editor includes gestures and modifiers');
+              ensure(button('Record Split note') && button('Record Bypass time grid'),'phrase editor includes gestures and modifiers');
+              ensure(!button('Record Move notes') && !button('Record Trim note end') && !button('Record Bypass split time grid'),'standard drags and shared grid bypass need no duplicate settings');
+              const trim=await record('Trim note start',new KeyboardEvent('keyup',{key:'Control',altKey:true,bubbles:true,cancelable:true}),'trimStart');
+              ensure(trim.kind==='modifier' && trim.ctrl && trim.alt,'start trimming records only modifiers');
+              const bypass=await record('Bypass time grid',new KeyboardEvent('keyup',{key:'Control',bubbles:true,cancelable:true}),'freeGrid');
+              ensure(bypass.kind==='modifier' && bypass.ctrl,'shared grid bypass can be remapped');
               const snapped=await record('Place note on grid',new PointerEvent('pointerdown',{button:3,shiftKey:true,bubbles:true,cancelable:true}),'addNote');
               ensure(snapped.input==='3' && snapped.shift,'snapped placement has its own binding');
               const free=JSON.parse(localStorage.getItem(key)).shortcuts.addNoteFree[0];

@@ -748,8 +748,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => id === 'addNote' || id === 'addNoteFree'
       ? this.preferences.matchesShortcut(id, event) : this.preferences.matchesGesture(id, event);
     const edge = area ? this.noteDragZone(area, x) : null;
-    const trimStart = matches('trimStart') && ((!matches('moveNote') && !matches('trimEnd')) || edge === 'start');
-    const trimEnd = matches('trimEnd') && ((!matches('moveNote') && !matches('trimStart')) || edge === 'duration');
+    const leftDrag = event.button === 0 && !this.preferences.capturingShortcut();
+    const trimStart = leftDrag && (this.preferences.matchesModifiers('trimStart', event) || edge === 'start');
+    const trimEnd = leftDrag && edge === 'duration';
     const velocity = matches('dragVelocity') || (y >= this.scoreHeight && matches('dragVelocityHandle'));
     if (matches('boxSelect') || matches('boxExtend') || (area && (matches('splitNote') || matches('deleteNote')))) {
       this.box = { x, y, endX: x, endY: y, pointerId: event.pointerId, previous: matches('boxExtend') ? this.selectedNoteIds() : [], split: matches('splitNote'), delete: matches('deleteNote'), select: matches('boxSelect') || matches('boxExtend') };
@@ -759,7 +760,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     } else if ((matches('shapePitch') || matches('shapeVelocity')) && (!area || !this.selectedNoteIds().includes(area.note.id) || matches('shapeVelocity'))) {
       this.shape = { mode: matches('shapeVelocity') ? 'velocity' : 'pitch', pointerId: event.pointerId, notes: new Map() };
       this.onPointerMove(event);
-    } else if (area && (velocity || (y < this.scoreHeight && (matches('moveNote') || (matches('duplicateNotes') && this.selectedNoteIds().includes(area.note.id)) || trimStart || trimEnd || matches('dragDuration') || matches('dragPitch'))))) {
+    } else if (area && (velocity || (y < this.scoreHeight && (leftDrag || (matches('duplicateNotes') && this.selectedNoteIds().includes(area.note.id)) || trimStart || trimEnd || matches('dragDuration') || matches('dragPitch'))))) {
       const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
       this.selectionChanged.emit(ids);
       const mode: PhraseDragMode = velocity ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch'
@@ -803,7 +804,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const area = this.hitAreaAt(event);
       if (Math.abs(box.endX - box.x) + Math.abs(box.endY - box.y) < 3 && area) {
         if (box.split) {
-          const grid = this.preferences.matchesModifiers('freeSplitGrid', event) ? 0 : this.snapBeats();
+          const grid = this.preferences.matchesModifiers('freeGrid', event) ? 0 : this.snapBeats();
           const beat = this.beatAt(event);
           this.splitRequested.emit({ id: area.note.id, beat: grid ? Math.round(beat / grid) * grid : beat });
         } else if (box.delete) this.deleteRequested.emit(area.note.id);
@@ -918,11 +919,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private hoverDragZone(area: NoteHitArea, x: number, event: MouseEvent): 'start' | 'move' | 'duration' {
-    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => this.preferences.matchesGestureHint(id, event);
-    const edge = this.noteDragZone(area, x);
-    if (matches('trimStart') && ((!matches('moveNote') && !matches('trimEnd')) || edge === 'start')) return 'start';
-    if (matches('trimEnd') && ((!matches('moveNote') && !matches('trimStart')) || edge === 'duration')) return 'duration';
-    return 'move';
+    if (this.preferences.matchesModifiers('trimStart', event)) return 'start';
+    return this.noteDragZone(area, x);
   }
   private noteDragZone(area: NoteHitArea, x: number, altKey = false): 'start' | 'move' | 'duration' {
     return noteDragZone(area, x, altKey);

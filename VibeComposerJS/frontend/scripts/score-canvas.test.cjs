@@ -1322,16 +1322,21 @@ test('snapped and free placement are independent of assigned modifiers and butto
   c.preferences.setShortcut('addNoteFree', null);
   c.onPointerDown(pointer(303, 20, { button: 3 })); assert.equal(c.noteAdded.values.length, 2);
 });
-test('seek, move and trimming can be disabled independently', () => {
+test('left dragging moves and resizes notes independently of start-trim modifier', () => {
   const { component: c } = editFixture();
   c.preferences.setShortcut('seek', null);
-  c.onPointerDown(pointer(300, 20)); assert.equal(c.drag.mode, 'move'); c.onPointerCancel();
-  c.preferences.setShortcut('moveNote', null);
-  c.onPointerDown(pointer(300, 20)); assert.equal(c.drag, null);
-  c.onPointerDown(pointer(296, 20)); assert.equal(c.drag.mode, 'start'); c.onPointerCancel();
-  c.preferences.setShortcut('trimStart', null); c.preferences.setShortcut('trimEnd', null);
-  c.preferences.setShortcut('moveNote', mouseBinding(3));
-  c.onPointerDown(pointer(296, 20, { button: 3 })); assert.equal(c.drag.mode, 'move');
+  c.preferences.setShortcut('trimStart', null);
+  for (const [x, mode] of [[300, 'move'], [296, 'start'], [307, 'duration']]) {
+    c.onPointerDown(pointer(x, 20)); assert.equal(c.drag.mode, mode); c.onPointerCancel();
+  }
+  c.preferences.setShortcut('trimStart', { kind:'modifier', input:'held', ctrl:false, shift:false, alt:true });
+  c.onPointerDown(pointer(300, 20, { altKey:true })); assert.equal(c.drag.mode, 'start'); c.onPointerCancel();
+  c.preferences.setShortcut('trimStart', { kind:'modifier', input:'held', ctrl:true, shift:false, alt:false });
+  c.onPointerDown(pointer(300, 20, { ctrlKey:true, shiftKey:true }));
+  // The explicit duplicate gesture takes precedence on selected notes.
+  assert.equal(c.drag.mode, 'move'); c.onPointerCancel();
+  c.onPointerDown(pointer(300, 20, { ctrlKey:true })); assert.equal(c.drag.mode, 'start'); c.onPointerCancel();
+  c.onPointerDown(pointer(300, 20, { altKey:true })); assert.equal(c.drag.mode, 'move');
 });
 test('box selection does not delete after the delete gesture is reassigned', () => {
   const { component: c } = editFixture(); c.preferences.setShortcut('deleteNote', mouseBinding(3));
@@ -1367,11 +1372,26 @@ test('drag snapping, pitch retention and velocity bars have independent bindings
   c.onPointerDown(pointer(300, 20, { shiftKey: true }));
   c.onPointerMove(pointer(303, 40, { shiftKey: true }));
   assert.equal(c.drag.current.startBeat, 20); assert.equal(c.drag.current.midi, 48); c.onPointerCancel();
-  c.preferences.setShortcut('moveNote', null);
   const hit = c.hitAreas[0];
   c.hitAreaAt = () => hit;
   c.onPointerDown(pointer(300, c.scoreHeight + 10));
   assert.equal(c.drag.mode, 'velocity'); c.onPointerCancel();
   c.preferences.setShortcut('dragVelocityHandle', null);
   c.onPointerDown(pointer(300, c.scoreHeight + 10)); assert.equal(c.drag, null);
+});
+
+
+test('one remapped grid modifier bypasses snapping for splitting and start trimming', () => {
+  const { component: c } = editFixture();
+  c.preferences.setShortcut('freeGrid', { kind:'modifier', input:'held', ctrl:true, shift:false, alt:false });
+  const split = pointer(303, 20, { button:2, altKey:true, ctrlKey:true });
+  c.onPointerDown(split); c.onPointerUp(split);
+  assert.ok(Math.abs(c.splitRequested.values.at(-1).beat - 24.12) < 1e-10);
+  const snapped = pointer(303, 20, { button:2, altKey:true });
+  c.onPointerDown(snapped); c.onPointerUp(snapped);
+  assert.equal(c.splitRequested.values.at(-1).beat, 24);
+  c.onPointerDown(pointer(300, 20, { altKey:true, ctrlKey:true }));
+  assert.equal(c.drag.mode, 'start');
+  c.onPointerMove(pointer(303, 20, { altKey:true, ctrlKey:true }));
+  assert.ok(Math.abs(c.drag.current.startBeat - 20.12) < 1e-10);
 });

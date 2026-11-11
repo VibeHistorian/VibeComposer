@@ -14,9 +14,8 @@ const modifier = (ctrl = false, shift = false, alt = false) => binding('modifier
 export const SHORTCUTS = [
   { id: 'extendSections', group: 'Section selection', label: 'Extend / trim sections', description: 'Hold while selecting a section. Extends a contiguous selection or trims it at the chosen section.', defaults: [modifier(true)] },
   { id: 'rangeSections', group: 'Section selection', label: 'Select section range', description: 'Hold while selecting a section to select from the selection anchor.', defaults: [modifier(false, true)] },
-  { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass drag time grid', description: 'Hold while dragging notes to bypass time snapping.', defaults: [modifier(false, true)] },
+  { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass time grid', description: 'Hold while moving, resizing or splitting notes to bypass time snapping.', defaults: [modifier(false, true)] },
   { id: 'retainPitch', group: 'Editing modifiers', label: 'Retain pitch while moving', description: 'Hold while moving notes to retain their pitch.', defaults: [modifier(false, true)] },
-  { id: 'freeSplitGrid', group: 'Editing modifiers', label: 'Bypass split time grid', description: 'Hold while splitting notes to bypass time snapping.', defaults: [modifier(false, true)] },
   { id: 'addNote', group: 'Phrase gestures', label: 'Place note on grid', description: 'Place a note with time snapping. Hold to preview placement.', defaults: [mouse(0, true)] },
   { id: 'addNoteFree', group: 'Phrase gestures', label: 'Place note off grid', description: 'Place a note without time snapping. Hold to preview placement.', defaults: [mouse(0, false, true)] },
   { id: 'controlWheel', group: 'Controls', label: 'Adjust value', description: 'Scroll over a knob or dropdown to change its value.', defaults: [wheel()] },
@@ -45,8 +44,6 @@ export const SHORTCUTS = [
   { id: 'transposeNotes', group: 'Phrase editor', label: 'Open transpose', description: 'Open transpose controls for selected notes.', defaults: [key('t', false, true)] },
   { id: 'deleteNotes', group: 'Phrase editor', label: 'Delete selected notes', description: 'Remove the current note selection.', defaults: [key('delete'), key('backspace')] },
   { id: 'seek', group: 'Phrase gestures', label: 'Set playback position', description: 'Click empty grid space to seek.', defaults: [mouse(0)] },
-  { id: 'moveNote', group: 'Phrase gestures', label: 'Move notes', description: 'Drag a note body to move the selected notes.', defaults: [mouse(0), mouse(0, true), mouse(0, false, true)] },
-  { id: 'trimEnd', group: 'Phrase gestures', label: 'Trim note end', description: 'Drag to trim note ends. When shared with Move notes, use the right edge.', defaults: [mouse(0), mouse(0, true), mouse(0, false, true)] },
   { id: 'boxSelect', group: 'Phrase gestures', label: 'Box select notes', description: 'Drag a selection box.', defaults: [mouse(2)] },
   { id: 'deleteNote', group: 'Phrase gestures', label: 'Delete note', description: 'Click a note to delete it.', defaults: [mouse(2)] },
   { id: 'boxExtend', group: 'Phrase gestures', label: 'Extend box selection', description: 'Add a box selection to the current selection.', defaults: [mouse(2, true)] },
@@ -59,7 +56,7 @@ export const SHORTCUTS = [
   { id: 'applyPhrase', group: 'Phrase gestures', label: 'Finish phrase editing', description: 'Click empty space to apply edits and exit, or exit an unchanged draft.', defaults: [mouse(1)] },
   { id: 'dragDuration', group: 'Phrase gestures', label: 'Drag note length', description: 'Drag notes to change their length.', defaults: [mouse(1, false, false, true)] },
   { id: 'dragPitch', group: 'Phrase gestures', label: 'Drag pitch', description: 'Drag notes to change pitch.', defaults: [mouse(1, false, true)] },
-  { id: 'trimStart', group: 'Phrase gestures', label: 'Trim note start', description: 'Drag to trim note starts. When shared with Move notes, use the left edge.', defaults: [mouse(0, false, false, true), mouse(0), mouse(0, true), mouse(0, false, true)] },
+  { id: 'trimStart', group: 'Phrase gestures', label: 'Trim note start', description: 'Hold while left-dragging anywhere on a note to trim its start. Drag either edge directly to resize without this modifier.', defaults: [modifier(false, false, true)] },
 ] as const;
 /** Visible settings pages. Global and section-selection bindings remain available internally. */
 export const SHORTCUT_PAGES = [
@@ -100,9 +97,8 @@ const overviewNotes: ShortcutContext = { ...scoreContext, mode: ['arrangement'],
 export const SHORTCUT_CONTEXTS = {
   extendSections: [{ ...overviewContext, target: ['section-header'], effect: ['section-selection'] }],
   rangeSections: [{ ...overviewContext, target: ['section-header'], effect: ['section-selection'] }],
-  freeGrid: [{ ...phraseContext, phase: ['drag'], effect: ['time-snap'] }],
+  freeGrid: [{ ...phraseContext, effect: ['time-snap'] }],
   retainPitch: [{ ...phraseNotes, effect: ['pitch-retention'] }],
-  freeSplitGrid: [{ ...phraseContext, target: noteTargets, phase: ['click'], effect: ['time-snap'] }],
   addNote: [emptyPhrase],
   addNoteFree: [emptyPhrase],
   controlWheel: [parameterContext],
@@ -125,8 +121,6 @@ export const SHORTCUT_CONTEXTS = {
   transposeNotes: [{ mode: ['phrase-editor'] }],
   deleteNotes: [{ mode: ['phrase-editor'] }],
   seek: [emptyPhrase],
-  moveNote: [{ ...phraseNotes, target: ['note-body'] }],
-  trimEnd: [{ ...phraseNotes, target: ['note-end'] }],
   boxSelect: [{ ...phraseContext, phase: ['drag'] }],
   deleteNote: [{ ...phraseContext, target: noteTargets, phase: ['click'] }],
   boxExtend: [{ ...phraseContext, phase: ['drag'] }],
@@ -138,7 +132,7 @@ export const SHORTCUT_CONTEXTS = {
   dragVelocityHandle: [{ ...phraseContext, target: ['velocity-bar'] }],
   applyPhrase: [emptyPhrase],
   dragDuration: [phraseNotes], dragPitch: [phraseNotes],
-  trimStart: [{ ...phraseNotes, target: ['note-start'] }],
+  trimStart: [{ ...phraseNotes, phase: ['drag'] }],
 } as const satisfies Record<ShortcutId, readonly [ShortcutContext, ...ShortcutContext[]]>;
 
 /** Product contexts intersect unless at least one constrained axis is disjoint.
@@ -196,9 +190,16 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
       || b.input.length > 40 || ['ctrl', 'shift', 'alt'].some(k => typeof b[k] !== 'boolean')
       || (b.kind === 'mouse' && !/^[0-4]$/.test(b.input)) || (b.kind === 'wheel' && b.input !== 'scroll')
       || (b.kind === 'modifier' && (b.input !== 'held' || !(b.ctrl || b.shift || b.alt)))
-      || !acceptsShortcut(action, b))) return null;
+      || !(acceptsShortcut(action, b) || (action.id === 'trimStart' && b.kind === 'mouse')))) return null;
     result[action.id] = bindings.map(({ kind, input, ctrl, shift, alt }) => ({ kind, input, ctrl, shift, alt }));
   }
+  // Old start-trim defaults also listed ordinary edge drags. Drop those alternatives.
+  const legacyTrimDefaults = [mouse(0, false, false, true), mouse(0), mouse(0, true), mouse(0, false, true)];
+  if (result.trimStart.length === legacyTrimDefaults.length && result.trimStart.every((b, i) => sameShortcut(b, legacyTrimDefaults[i]))) {
+    result.trimStart = defaultShortcuts().trimStart;
+  }
+  result.trimStart = result.trimStart.filter(b => b.ctrl || b.shift || b.alt)
+    .map(b => ({ ...b, kind: 'modifier', input: 'held' }));
   // Preferences save the full map, including defaults. Refresh the unchanged
   // previous phrase gesture set while retaining explicitly customized bindings.
   const previousPhraseDefaults = { addNote: mouse(0), seek: mouse(0, false, true), shapePitch: mouse(0, true) } as const;
@@ -211,8 +212,8 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
   // Older maps stored one binding for several operations. Carry customized
   // bindings to their new operations, but never overwrite an explicit new entry.
   const inherited = {
-    controlUnfreeze: 'controlFreeze', retainPitch: 'freeGrid', freeSplitGrid: 'freeGrid',
-    moveNote: 'seek', trimEnd: 'seek', dragVelocityHandle: 'seek', deleteNote: 'boxSelect',
+    controlUnfreeze: 'controlFreeze', retainPitch: 'freeGrid',
+    dragVelocityHandle: 'seek', deleteNote: 'boxSelect',
     duplicateNotes: 'shapePitch', applyPhrase: 'dragVelocity',
   } as const;
   for (const [target, source] of Object.entries(inherited) as [keyof typeof inherited, ShortcutId][]) {
@@ -220,13 +221,10 @@ export function decodeShortcuts(value: unknown): ShortcutBindings | null {
   }
   // Placement bindings also moved/trimmed existing notes in the old gesture map.
   const legacyDrags = [...result.seek, ...result.addNote];
-  for (const target of ['moveNote', 'trimEnd', 'dragVelocityHandle'] as const) {
+  for (const target of ['dragVelocityHandle'] as const) {
     if (saved[target] === undefined && saved['seek'] !== undefined) {
       result[target] = legacyDrags.filter((b, i, all) => all.findIndex(other => sameShortcut(b, other)) === i).slice(0, 4);
     }
-  }
-  if (saved['trimEnd'] === undefined && saved['seek'] !== undefined) {
-    result.trimStart = [...result.trimStart, ...legacyDrags].filter((b, i, all) => all.findIndex(other => sameShortcut(b, other)) === i).slice(0, 4);
   }
   if (saved['addNoteFree'] === undefined && saved['addNote'] !== undefined) {
     const free = result.addNote.filter(b => result.freeGrid.some(m => (!m.ctrl || b.ctrl) && (!m.shift || b.shift) && (!m.alt || b.alt)));
