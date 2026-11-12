@@ -1510,7 +1510,7 @@ test('velocity drag and drawing accents fill from the note bottom in proportion 
 test('instrument shapes follow sound character and log envelopes surround the triangle', () => {
   const { component: c } = fixture();
   const calls = [], graphics = {};
-  for (const method of ['moveTo', 'lineTo', 'closePath', 'roundRect', 'bezierCurveTo']) {
+  for (const method of ['moveTo', 'lineTo', 'closePath', 'roundRect', 'poly']) {
     graphics[method] = (...args) => { calls.push([method, ...args]); return graphics; };
   }
   const draw = (program, mode, drums = false) => {
@@ -1524,17 +1524,44 @@ test('instrument shapes follow sound character and log envelopes surround the tr
   for (const program of [16, 29, 38, 40, 48, 56, 64, 73, 80, 88, 105 + 4]) assert.equal(draw(program, 'instrument')[0][0], 'roundRect');
   assert.equal(draw(48, 'instrument', true)[1][0], 'lineTo');
   for (const [program, thin] of [[0, true], [48, false]]) {
-    const curves = draw(program, 'instrument-log').filter(call => call[0] === 'bezierCurveTo');
-    assert.equal(curves.length, 24);
-    for (const curve of curves.slice(0, 11)) {
-      const x = curve[5], y = curve[6], triangleY = x / 12;
+    const polygon = draw(program, 'instrument-log').find(call => call[0] === 'poly')[1];
+    const tip = polygon.findIndex((value, index) => index % 2 === 0 && value === 120);
+    for (let i = 2; i < tip; i += 2) {
+      const x = polygon[i], y = polygon[i + 1], triangleY = x / 12;
       assert.ok(thin ? y > triangleY : y < triangleY);
       assert.ok(y >= 0 && y <= 10);
     }
-    assert.deepEqual(curves[11].slice(5), [120, 10]);
-    assert.deepEqual(curves[23].slice(5), [0, 20]);
+    assert.deepEqual(polygon.slice(tip, tip + 2), [120, 10]);
+    assert.deepEqual(polygon.slice(-2), [0, 20]);
     c.editable = () => true;
     assert.equal(draw(program, 'instrument-log')[0][0], 'roundRect');
     c.editable = () => false;
+  }
+});
+
+test('log note polygons keep subpixel envelope error across zoom levels and cache by height', () => {
+  const { logNoteContour, logNotePolygon, LOG_NOTE_MAX_ERROR } = scoreHelper('score-note-shape');
+  assert.equal(logNoteContour(13, true), logNoteContour(16, true));
+  for (const height of [1, 3, 8, 13, 16, 24, 64, 257, 1024]) for (const plucky of [true, false]) {
+    const contour = logNoteContour(height, plucky);
+    assert.ok(Object.isFrozen(contour));
+    let segment = 0;
+    for (let i = 0; i <= 10000; i++) {
+      const t = i / 10000;
+      while (contour[segment + 2] < t) segment += 2;
+      const a = contour[segment], b = contour[segment + 2];
+      const y = contour[segment + 1] + (contour[segment + 3] - contour[segment + 1]) * (t - a) / (b - a);
+      const envelope = plucky ? 1 - Math.log1p(15 * t) / Math.log(16) : Math.log1p(15 * (1 - t)) / Math.log(16);
+      assert.ok(Math.abs(y - (1 - envelope) / 2) * height <= LOG_NOTE_MAX_ERROR + 1e-9, `${height}px, plucky=${plucky}, t=${t}`);
+    }
+    for (const width of [3, 120, 4000]) {
+      const polygon = logNotePolygon(-10, 20, width, height, plucky);
+      assert.deepEqual(polygon.slice(0, 2), [-10, 20]);
+      assert.deepEqual(polygon.slice(-2), [-10, 20 + height]);
+      for (let i = 0; i < polygon.length; i += 2) {
+        assert.ok(polygon[i] >= -10 && polygon[i] <= -10 + width);
+        assert.ok(polygon[i + 1] >= 20 && polygon[i + 1] <= 20 + height);
+      }
+    }
   }
 });

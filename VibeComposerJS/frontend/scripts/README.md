@@ -6,6 +6,8 @@ Run tests from `frontend/` using the `test:*` scripts in `package.json`. `pnpm t
 
 Production browser suites use `dist/browser`: run `pnpm run build` first and rebuild after changing application code. The browser aggregate checks for the build and a browser before starting; focused production suites also report a missing build explicitly. Existing assets can be reused for test-only changes. The overview layout and TinySynth fixture suites read source directly and do not require a production build. Browser discovery accepts `OVERVIEW_TEST_BROWSER` as an explicit Chromium executable path, then checks common Chrome/Edge/Chromium locations on Windows, Linux and macOS. Focused suites skip when no browser is installed; the aggregate fails with a setup instruction. Supported viewport widths start at 700 CSS pixels.
 
+`score-note-rendering-browser.test.cjs` also reads source directly and uses the installed Pixi WebGL renderer. It compares Classic, the retained original Bézier log path, and the cached polygon contour in the same 1,280-note scene with selected-note glows. Warmed, alternating runs report median command/render times in `.angular/score-note-rendering.json`; timings are diagnostics rather than machine-dependent assertions. Tests assert geometry reduction and raster similarity independently of speed. This is a controlled rendering benchmark, not an end-to-end regeneration measurement.
+
 ## Test scope and runtime
 
 During development, start with the affected functional suite and add the browser suite that exercises the changed interaction. The table below is a selection guide, not a checklist to run after every edit. Use the normal aggregates for broader validation when the change crosses owners or before finishing that work; do not repeat them after each small adjustment once relevant checks pass. Documentation-only edits do not require a build or application test run.
@@ -45,6 +47,7 @@ Choose the functional commands and browser suites that match the changed behavio
 | Manual phrases, draft history, manual Mode preference | `test:parts:phrases`, `test:parts:preferences` | `test:manual:browser`, `test:score:browser` |
 | MIDI import, phrase drop and transpose | `test:midi-import`, `test:parts:phrases` | `test:phrase-import:browser` |
 | Score geometry, notes, piano roll and drum editing | `test:score`, `test:selection` | `test:score:browser`, `test:phrase-import:browser` |
+| Note shapes and rendering cost | `test:score` | `node --test scripts/score-note-rendering-browser.test.cjs`, `test:score:browser`, `test:preferences:browser` |
 | Rhythm controls and pattern sequencer | `test:parts:scopes`, `test:parts:phrases` | `test:rhythm:browser`, `test:patterns:browser` |
 | Theme, appearance, quick settings and responsive workspace | `test:appearance`, `test:parts:preferences` | `test:preferences:browser`, `test:rhythm:browser`, `test:overview:browser`, `node --test scripts/workspace-layout-browser.test.cjs` |
 | Global harmony popup alignment | `test:harness` | `node --test scripts/chordlet-popup-browser.test.cjs`, `test:contextual:browser` |

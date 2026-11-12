@@ -1,3 +1,4 @@
+import { logNotePolygon } from './score-note-shape';
 import { instrumentEnvelope } from '../../core/music/gm-instruments';
 import type { DrumSlots } from '../../core/music/drum-instruments';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
@@ -1238,26 +1239,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
 
   private noteShape(graphics: PixiGraphics, x: number, y: number, width: number, height: number, radius: number, note?: ScoreCanvasNote): PixiGraphics {
     const mode = this.editable() ? 'classic' : this.preferences.scoreNoteShape();
+    if (mode === 'classic') return graphics.roundRect(x, y, width, height, radius);
     const plucky = instrumentEnvelope(note?.instrumentProgram ?? 0, note?.color === 'drums') === 'plucky';
-    if (mode === 'classic' || (mode === 'instrument' && !plucky)) return graphics.roundRect(x, y, width, height, radius);
+    if (mode === 'instrument' && !plucky) return graphics.roundRect(x, y, width, height, radius);
     if (mode !== 'instrument-log') return graphics.moveTo(x, y).lineTo(x + width, y + height / 2).lineTo(x, y + height).closePath();
-    // Smooth logarithmic envelopes with mirrored boundaries. Cubic Hermite
-    // segments preserve the log slope at each join, including the pointed tip.
-    const k = 15, scale = Math.log1p(k), center = y + height / 2;
-    const envelope = (t: number) => plucky ? 1 - Math.log1p(k * t) / scale : Math.log1p(k * (1 - t)) / scale;
-    const slope = (t: number) => -k / ((1 + k * (plucky ? t : 1 - t)) * scale);
-    graphics.moveTo(x, y);
-    for (const side of [-1, 1]) {
-      for (let i = 0; i < 12; i++) {
-        const a = side === -1 ? i / 12 : 1 - i / 12;
-        const b = side === -1 ? (i + 1) / 12 : 1 - (i + 1) / 12;
-        const d = b - a, half = side * height / 2;
-        graphics.bezierCurveTo(x + (a + d / 3) * width, center + half * (envelope(a) + slope(a) * d / 3),
-          x + (b - d / 3) * width, center + half * (envelope(b) - slope(b) * d / 3),
-          x + b * width, center + half * envelope(b));
-      }
-    }
-    return graphics.closePath();
+    return graphics.poly(logNotePolygon(x, y, width, height, plucky));
   }
 
   private drawDynamic(): void {
@@ -1266,7 +1252,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const Color = this.colorClass;
     if (!graphics || !Color) return;
     graphics.clear();
-    const accent = new Color(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#32d7f4');
+    const style = getComputedStyle(document.documentElement);
+    const accent = new Color(style.getPropertyValue('--accent-primary').trim() || '#32d7f4');
     if (this.hoverX !== null) {
       const hoverX = Math.floor(this.hoverX) + 0.5;
       graphics.moveTo(hoverX, 0).lineTo(hoverX, this.height)
@@ -1284,17 +1271,21 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
           .stroke({ color: accent.toNumber(), alpha: accent.alpha * Math.pow(weight, 1 / 2.2), width: 1 });
       }
     }
-    const style = getComputedStyle(document.documentElement);
+    const glowColors = new Map<string, number>();
     const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1) + (this.model?.timelineStartBeat ?? 0);
     for (const area of this.hitAreas) {
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
       const bounds = !this.editable() && this.preferences.scoreNoteShape() !== 'classic' ? (area.visualBounds ?? area) : area;
       const glowStrength = 1 - (beat - area.note.startBeat) / area.note.durationBeats;
-      const glow = new Color(style.getPropertyValue(COLORS[area.note.color].note).trim() || '#32d7f4');
+      let glow = glowColors.get(area.note.color);
+      if (glow === undefined) {
+        glow = new Color(style.getPropertyValue(COLORS[area.note.color].note).trim() || '#32d7f4').toNumber();
+        glowColors.set(area.note.color, glow);
+      }
       this.noteShape(graphics, bounds.x - 3, bounds.y - 2, bounds.width + 6, bounds.height + 4, 3, area.note)
-        .stroke({ color: glow.toNumber(), alpha: 0.325 * glowStrength, width: 3 });
+        .stroke({ color: glow, alpha: 0.325 * glowStrength, width: 3 });
       this.noteShape(graphics, bounds.x, bounds.y + bounds.height / 4, bounds.width, bounds.height / 2, 2, area.note)
-        .fill({ color: glow.toNumber(), alpha: 0.4 * glowStrength });
+        .fill({ color: glow, alpha: 0.4 * glowStrength });
     }
     const placement = this.placementPreview;
     if (placement && this.editable()) {
