@@ -1,8 +1,6 @@
+import { resolveProjectTimeline } from '../music/project-timeline';
 import type { CompositionProject } from '../project/project.model';
 import { mixEnabled } from './mix-values';
-import { layOutTrackPhrase } from '../music/phrase';
-import { noteTimelineBounds } from '../music/phrase-bounds';
-import { beatToSeconds, projectTempoMap, sectionDurationBeats } from '../music/section-context';
 import { createInstrumentEngine } from './create-instrument-engine';
 import type { Sf2Bank } from './sf2-resolver';
 import type { InstrumentEngineKind } from './instrument-engine';
@@ -20,10 +18,10 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   if (region && (!Number.isFinite(region.startBeat) || !Number.isFinite(region.endBeat) || region.endBeat <= region.startBeat)) {
     throw new Error('The audio export region is invalid.');
   }
-  const tempo = projectTempoMap(project);
+  const timeline = resolveProjectTimeline(project);
   const anySolo = project.tracks.some(track => track.mix.solo);
   const phrases = project.tracks.map(track => {
-    const notes = layOutTrackPhrase(project, track);
+    const notes = timeline.notesByTrack[track.id];
     return { track, notes: region ? notes.filter(note => note.startBeat < region.endBeat
       && note.startBeat + note.durationBeats > region.startBeat).map(note => ({ ...note,
         startBeat: Math.max(region.startBeat, note.startBeat),
@@ -34,10 +32,9 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   if (!tracks.some(({ notes }) => notes.some(note => note.velocity > 0))) {
     throw new Error('There are no audible notes to export.');
   }
-  const { startBeat, endBeat } = region ?? noteTimelineBounds(phrases.flatMap(({ notes }) => notes),
-    project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
-  const offsetSeconds = -beatToSeconds(tempo, startBeat);
-  const songSeconds = beatToSeconds(tempo, endBeat) + offsetSeconds;
+  const { startBeat, endBeat } = region ?? timeline.soundingBounds;
+  const offsetSeconds = -timeline.beatToSeconds(startBeat);
+  const songSeconds = timeline.beatToSeconds(endBeat) + offsetSeconds;
   const length = Math.ceil((songSeconds + (region ? 0 : MAX_RELEASE_TAIL_SECONDS)) * SAMPLE_RATE);
   const context = new OfflineAudioContext(2, length, SAMPLE_RATE);
   const synth = await createInstrumentEngine(context, kind, bank);
@@ -56,8 +53,8 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
       pan.connect(master);
       nodes.push(gain, pan);
       for (const note of notes) {
-        const start = beatToSeconds(tempo, note.startBeat) + offsetSeconds;
-        const duration = Math.max(0.035, beatToSeconds(tempo, note.startBeat + note.durationBeats) + offsetSeconds - start);
+        const start = timeline.beatToSeconds(note.startBeat) + offsetSeconds;
+        const duration = Math.max(0.035, timeline.beatToSeconds(note.startBeat + note.durationBeats) + offsetSeconds - start);
         for (const voice of synth.schedule(gain, track.mix.program, track.role === 'drums',
           note.midi, note.velocity, start, duration)) {
           voice.onEnded(() => voice.dispose());

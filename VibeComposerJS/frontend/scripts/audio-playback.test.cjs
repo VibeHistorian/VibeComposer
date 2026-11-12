@@ -51,7 +51,10 @@ function fixture({ loop = false } = {}) {
       (name) => dependencies[name], module, module.exports, () => 1, () => {}, () => 1);
     return module.exports;
   };
+  const timelineModule = require('./support/timeline-fixture.cjs')((project, track) =>
+    !project.arrangement.length || project.arrangement[0].trackPresence[track.id] === false ? [] : track.notes);
   const { AudioPlaybackService } = load('core/audio/audio-playback.service.ts', {
+    '../music/project-timeline': timelineModule,
     './mix-values': require('./music-loader.cjs').loadMusic('../audio/mix-values.ts'),
     '../music/arrangement-generator': require('./music-loader.cjs').loadMusic('arrangement-generator.ts'),
     '../project/project-drum-kit': require('./music-loader.cjs').loadMusic('../project/project-drum-kit.ts'),
@@ -86,7 +89,7 @@ function fixture({ loop = false } = {}) {
       { id: 'sustain', midi: 48, startBeat: 0, durationBeats: 8, velocity: 100 },
       { id: 'next', midi: 50, startBeat: 4, durationBeats: 1, velocity: 100 },
     ], mix: { program: 32, volumePercent: 80, panPercent: 0, muted: false, solo: false } }] };
-  return { playback, context, sources, project, angular, load, midi, instruments };
+  return { playback, context, sources, project, angular, load, midi, instruments, timelineModule };
 }
 
 test('routing from MIDI to the app prepares an unused engine and keeps the musical position', async () => {
@@ -732,7 +735,7 @@ test('paused and stopped playback stay inactive until resumed with the latest pr
 });
 
 function transportFixture() {
-  const { playback, project, angular, load, context } = fixture();
+  const { playback, project, angular, load, context, timelineModule } = fixture();
   const projectSignal = angular.signal(project);
   const projects = { project: projectSignal };
   const workspaceUi = { sectionRange: angular.signal(null), selectedSectionIds: () => [] };
@@ -747,6 +750,7 @@ function transportFixture() {
     '../../shared/select.component': { SelectComponent: class {} },
     '../../shared/menu-select.component': { MenuSelectComponent: class {} },
     '../harmony/scale-menu-groups': { SCALE_MENU_GROUPS: [] },
+    '../../core/music/project-timeline': timelineModule,
     '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '../../core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../../core/music/phrase': { layOutTrackPhrase: (project, track) => project.arrangement.length ? track.notes : [] },
@@ -834,6 +838,41 @@ test('transport includes pickups and tails before playback and reaches its displ
   transport.seekKey({ key: 'Home', preventDefault() {} });
   transport.seekKey({ key: 'End', preventDefault() {} });
   assert.deepEqual(seeks, [-2, 5.5, 13, -2, 13]);
+});
+
+test('transport keeps the scheduled timeline through LIVE-off edits and pauses', async () => {
+  const { playback, project, projectSignal, TransportDockComponent } = transportFixture();
+  playback.toggleLive();
+  const transport = new TransportDockComponent();
+  await playback.start(project);
+  const scheduled = playback.timeline();
+  assert.equal(transport.timeline(), scheduled);
+  projectSignal.set({ ...project, tempoBpm: 60, arrangement: [{ ...project.arrangement[0], measures: 8 }] });
+  assert.equal(transport.timeline(), scheduled);
+  assert.equal(transport.durationText(), '00:08.000');
+  playback.pause();
+  assert.equal(transport.timeline(), scheduled);
+  playback.stop();
+  assert.notEqual(transport.timeline(), scheduled);
+  assert.equal(transport.durationText(), '00:32.000');
+});
+
+test('draft playback publishes derived note bounds and leaves the committed timeline intact', async () => {
+  const { playback, project, TransportDockComponent } = transportFixture();
+  const transport = new TransportDockComponent();
+  const committed = transport.timeline();
+  playback.setPhrasePreview(project, { startBeat: -4, endBeat: 16, trackIds: ['bass'], notes: [
+    { id: 'draft', trackId: 'bass', midi: 48, startBeat: -2, durationBeats: 21, velocity: 100 },
+  ] });
+  await playback.start(project);
+  assert.notEqual(transport.timeline(), committed);
+  assert.equal(transport.timeline().sections, committed.sections);
+  assert.deepEqual(transport.timelineBounds(), { startBeat: -2, endBeat: 19 });
+  assert.equal(transport.durationText(), '00:10.500');
+  playback.setPhrasePreview(project, null);
+  assert.equal(transport.timeline(), committed);
+  assert.deepEqual(committed.soundingBounds, { startBeat: 0, endBeat: 16 });
+  playback.stop();
 });
 
 test('transport watches project changes and enabling LIVE without subscribing to playback ticks', async () => {

@@ -1,9 +1,7 @@
 import { MenuSelectComponent } from '../../shared/menu-select.component';
 import { SCALE_MENU_GROUPS } from '../harmony/scale-menu-groups';
 import { elapsedTime } from '../../core/ui/musical-time';
-import { beatToSeconds, projectTempoMap, sectionDurationBeats } from '../../core/music/section-context';
-import { layOutTrackPhrase } from '../../core/music/phrase';
-import { noteTimelineBounds } from '../../core/music/phrase-bounds';
+import { resolveProjectTimeline } from '../../core/music/project-timeline';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { isScaleMode } from '../../core/music/scales';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
@@ -92,17 +90,12 @@ export class TransportDockComponent {
     const range = this.workspaceUi.sectionRange();
     untracked(() => this.playback.setLoopRange(range));
   });
-  readonly totalBeats = computed(() => {
-    const project = this.project();
-    return project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0);
-  });
-  readonly timelineBounds = computed(() => {
-    const project = this.project();
-    return noteTimelineBounds(project.tracks.flatMap(track => layOutTrackPhrase(project, track)), this.totalBeats());
-  });
+  private readonly projectTimeline = computed(() => resolveProjectTimeline(this.project()));
+  readonly timeline = computed(() => this.playback.state() === 'stopped'
+    ? this.projectTimeline() : this.playback.timeline() ?? this.projectTimeline());
+  readonly totalBeats = computed(() => this.timeline().arrangementBounds.endBeat);
+  readonly timelineBounds = computed(() => this.timeline().soundingBounds);
   private readonly timelineBeats = computed(() => this.timelineBounds().endBeat - this.timelineBounds().startBeat);
-  private readonly tempoMap = computed(() => projectTempoMap(this.project()));
-  private readonly startSeconds = computed(() => beatToSeconds(this.tempoMap(), this.timelineBounds().startBeat));
   readonly loopRegion = computed(() => {
     const duration = this.timelineBeats();
     if (!this.playback.loopEnabled() || duration <= 0) return null;
@@ -137,8 +130,8 @@ export class TransportDockComponent {
     return `${String(measure).padStart(2, '0')}.${String(beatInMeasure).padStart(2, '0')}`;
   });
 
-  readonly currentTimeText = computed(() => elapsedTime(beatToSeconds(this.tempoMap(), this.playback.beat()) - this.startSeconds()));
-  readonly durationText = computed(() => elapsedTime(beatToSeconds(this.tempoMap(), this.timelineBounds().endBeat) - this.startSeconds()));
+  readonly currentTimeText = computed(() => elapsedTime(this.timeline().elapsedSeconds(this.playback.beat())));
+  readonly durationText = computed(() => elapsedTime(this.timeline().durationSeconds));
 
   togglePlayback(): void {
     void this.playback.toggle(this.project());

@@ -24,6 +24,7 @@ function fixture() {
   const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false), appearance: signal({ progressiveTrackColoring: true }) });
   let ui;
   angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? { setPhrasePreview() {} } : projects;
+  const timelineModule = require('./support/timeline-fixture.cjs')(() => []);
   const load = (file, dependencies = {}) => {
     const source = fs.readFileSync(path.join(__dirname, '../src/app', file), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: {
@@ -31,6 +32,7 @@ function fixture() {
     } }).outputText;
     const module = { exports: {} };
     const defaults = {
+      'core/music/project-timeline': timelineModule,
       'core/music/phrase-range-edit': require('./music-loader.cjs').loadMusic('phrase-range-edit.ts'),
       'core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
       'core/music/phrase': { phraseForTrack: () => [], layOutTrackPhrase: () => [] },

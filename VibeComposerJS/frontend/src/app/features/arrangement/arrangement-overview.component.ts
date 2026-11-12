@@ -10,10 +10,8 @@ import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../
 import type { CompositionProject } from '../../core/project/project.model';
 import type { CompositionTrack } from '../../core/project/track.model';
 import { shouldGenerateTrackInSection } from '../../core/music/arrangement-generator';
-import { noteTimelineBounds } from '../../core/music/phrase-bounds';
-import { layOutTrackPhrase } from '../../core/music/phrase';
+import { resolveProjectTimeline } from '../../core/music/project-timeline';
 import { hasManualPhrase } from '../../core/music/phrase-range-edit';
-import { samePhraseInputs } from '../../core/music/phrase-inputs';
 import type { SettingsTarget } from '../../core/ui/workspace-ui.service';
 import type { PlaybackRange } from '../../core/audio/audio-playback.service';
 
@@ -155,21 +153,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   readonly sectionRemoveRequested = output<string>();
   readonly phraseCopyRequested = output<ArrangementPhraseCopy>();
 
-  readonly sections = computed<OverviewSection[]>(() => {
-    const project = this.project();
-    let startBeat = 0;
-    let startMeasure = 1;
-    return project.arrangement.map((section) => {
-      const item = {
-        section,
-        startBeat,
-        startMeasure,
-      };
-      startBeat += sectionDurationBeats(project, section);
-      startMeasure += section.measures;
-      return item;
-    });
-  });
+  private readonly timeline = computed(() => resolveProjectTimeline(this.project()));
+  readonly sections = computed<OverviewSection[]>(() => this.timeline().sections.map((item, index) => ({
+    section: this.project().arrangement[index], startBeat: item.startBeat, startMeasure: item.startMeasure,
+  })));
 
   readonly groups = computed<InstrumentGroup[]>(() => ARRANGED_PARTS.map((role) => ({
     role,
@@ -177,14 +164,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     tracks: this.project().tracks.filter((track) => track.role === role),
   })));
 
-  private readonly phraseProject = computed(() => this.project(), { equal: samePhraseInputs });
-  private readonly trackNotes = computed(() => {
-    const project = this.phraseProject();
-    return new Map(project.tracks.map((track) => [track.id, layOutTrackPhrase(project, track, false, true)]));
-  });
-
-  readonly timelineBounds = computed(() => noteTimelineBounds([...this.trackNotes().values()].flat(),
-    this.sections().reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0)));
+  private readonly trackNotes = computed(() => this.timeline().notesByTrack);
+  readonly timelineBounds = computed(() => this.timeline().soundingBounds);
 
   private readonly cellNotes = computed(() => {
     const trackNotes = this.trackNotes();
@@ -192,7 +173,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     for (const section of this.sections()) {
       const sectionEndBeat = section.startBeat + sectionDurationBeats(this.project(), section.section);
       for (const group of this.groups()) {
-        const notes = this.overviewTracks(section.section, group).flatMap((track) => (trackNotes.get(track.id) ?? [])
+        const notes = this.overviewTracks(section.section, group).flatMap((track) => (trackNotes[track.id] ?? [])
           .filter((note) => note.sectionId === section.section.id).map(note => ({ ...note, trackIndex: group.tracks.indexOf(track) })));
         if (notes.length === 0) {
           previews.set(this.cellKey(section.section.id, group.role), []);
@@ -761,7 +742,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, this.width, this.height);
-    const totalBeats = this.sections().reduce((sum, item) => sum + sectionDurationBeats(this.project(), item.section), 0);
+    const totalBeats = this.timeline().arrangementBounds.endBeat;
     const x = this.beatX(percent / 100 * totalBeats);
     if (x < this.labelWidth || x > this.width) return;
     context.fillStyle = this.accent;

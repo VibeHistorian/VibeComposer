@@ -16,7 +16,7 @@ import type { VariationScope } from '../../core/project/arrangement-variation-dr
 import { isScaleMode } from '../../core/music/scales';
 import { NgTemplateOutlet } from '@angular/common';
 import { SectionContextEditorComponent } from '../arrangement/section-context-editor.component';
-import { noteTimelineBounds } from '../../core/music/phrase-bounds';
+import { resolveProjectTimeline } from '../../core/music/project-timeline';
 import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
@@ -34,7 +34,7 @@ import { shouldGenerateTrackInSection } from '../../core/music/arrangement-gener
 import { DRUM_INSTRUMENTS, MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
-import { layOutTrackPhrase, phraseForTrack, trackPhraseSource } from '../../core/music/phrase';
+import { phraseForTrack, trackPhraseSource } from '../../core/music/phrase';
 import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import { getDiatonicChords } from '../../core/music/harmony';
 import { sectionGenerationHarmony } from '../../core/music/project-harmony';
@@ -455,7 +455,7 @@ export class WorkspaceCanvasComponent {
     untracked(() => this.playback.setPhrasePreview(project, preview));
   });
   readonly scoreTimelineBounds = computed(() => {
-    const bounds = noteTimelineBounds(this.scoreNotes(), this.totalBeats());
+    const bounds = this.timeline().soundingBounds;
     if (!this.editing()) return bounds;
     const edit = this.scoreEditBounds();
     return { startBeat: Math.min(bounds.startBeat, edit.startBeat), endBeat: Math.max(bounds.endBeat, edit.endBeat) };
@@ -464,40 +464,34 @@ export class WorkspaceCanvasComponent {
   readonly scorePlayheadPercent = computed(() => (this.playback.beat() - this.scoreTimelineBounds().startBeat) / Math.max(1, this.scoreTimelineBeats()) * 100);
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly selectedSectionBeats = computed(() => { const section = this.selectedSection(); return section ? sectionDurationBeats(this.project(), section) : 0; });
-  readonly totalBeats = computed(() => this.project().arrangement.reduce((sum, section) => sum + sectionDurationBeats(this.project(), section), 0));
+  readonly timeline = computed(() => resolveProjectTimeline(this.project()));
+  readonly totalBeats = computed(() => this.timeline().arrangementBounds.endBeat);
   readonly loopRange = computed(() => this.playback.loopEnabled()
-    ? this.workspaceUi.sectionRange() ?? noteTimelineBounds(this.scoreNotes(), this.totalBeats()) : null);
+    ? this.workspaceUi.sectionRange() ?? this.timeline().soundingBounds : null);
 
   seek(beat: number): void {
     this.playback.seek(this.project(), beat);
   }
   readonly playheadPercent = computed(() => this.totalBeats() > 0
     ? this.playback.beat() / this.totalBeats() * 100 : 0);
-  readonly timelineSections = computed<TimelineSection[]>(() => {
-    let beat = 0;
-    let measure = 1;
-    return this.project().arrangement.map((section) => {
-      const item = { section, startBeat: beat, startMeasure: measure, widthPercent: sectionDurationBeats(this.project(), section) / this.totalBeats() * 100 };
-      beat += sectionDurationBeats(this.project(), section);
-      measure += section.measures;
-      return item;
-    });
-  });
+  readonly timelineSections = computed<TimelineSection[]>(() => this.timeline().sections.map((item, index) => ({
+    section: this.project().arrangement[index], startBeat: item.startBeat, startMeasure: item.startMeasure,
+    widthPercent: (item.endBeat - item.startBeat) / this.totalBeats() * 100,
+  })));
   readonly sectionHarmony = computed(() => Object.fromEntries(this.phraseProject().arrangement.map(section =>
     [section.id, sectionHarmonyDisplay(this.phraseProject(), section)])));
-  readonly scoreRulerSections = computed(() => this.timelineSections().map(item => {
+  readonly scoreRulerSections = computed(() => this.timelineSections().map((item, sectionIndex) => {
     const harmony = this.sectionHarmony()[item.section.id];
-    let beat = item.startBeat;
-    const durationBeats = sectionDurationBeats(this.project(), item.section);
-    const slots = Array.from({ length: item.section.measures }, (_, index) => {
-      const duration = harmony.durations[index % harmony.durations.length];
-      const slot = { id: `${item.section.id}:${index}`, startBeat: beat, endBeat: beat + duration,
+    const timing = this.timeline().sections[sectionIndex];
+    const durationBeats = timing.endBeat - timing.startBeat;
+    const slots = timing.slots.map((timing, index) => {
+      const duration = timing.endBeat - timing.startBeat;
+      const slot = { id: `${item.section.id}:${index}`, startBeat: timing.startBeat, endBeat: timing.endBeat,
         widthPercent: duration / durationBeats * 100, chord: harmony.chords[index % harmony.chords.length],
         measureRange: index === item.section.measures - 1
           ? (item.section.measures === 1 ? '' : item.startMeasure.toString().padStart(2, '0') + '–')
             + (item.startMeasure + item.section.measures - 1).toString().padStart(2, '0') : '',
         endMeasure: (item.startMeasure + item.section.measures - 1).toString().padStart(2, '0') };
-      beat += duration;
       return slot;
     });
     return { ...item, slots };
@@ -626,12 +620,9 @@ export class WorkspaceCanvasComponent {
     return section ? Array.from({ length: section.measures }, (_, measure) =>
       section.chordDegrees?.[measure] ?? this.project().progression[measure % this.project().progression.length]) : [];
   });
-  private readonly trackPhrases = computed(() => {
-    const project = this.phraseProject();
-    return new Map(project.tracks.map(track => [track.id, layOutTrackPhrase(project, track, true, true)]));
-  });
+  private readonly trackPhrases = computed(() => this.timeline().notesByTrack);
   readonly scoreNotes = computed<ScoreNote[]>(() => {
-    const phrases = this.tracks().map(track => ({ track, notes: this.trackPhrases().get(track.id) ?? [] }));
+    const phrases = this.tracks().map(track => ({ track, notes: this.trackPhrases()[track.id] ?? [] }));
     const drumPitches = phrases.filter(item => item.track.role === 'drums').flatMap(item => item.notes.map(note => note.midi));
     const drumMin = drumPitches.reduce((minimum, pitch) => Math.min(minimum, pitch), Infinity);
     const drumMax = drumPitches.reduce((maximum, pitch) => Math.max(maximum, pitch), -Infinity);

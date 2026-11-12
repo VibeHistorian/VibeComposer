@@ -36,6 +36,7 @@ function fixture(reactivity) {
     '../../core/music/phrase': { layOutTrackPhrase: (project, track) => track.notes.map(note => ({ ...note, sectionId: note.sectionId ?? project.arrangement.find((section, index, all) => {
       const start = all.slice(0, index).reduce((sum, s) => sum + s.measures * 4, 0); return note.startBeat >= start && note.startBeat < start + section.measures * 4; })?.id })) },
   };
+  dependencies['../../core/music/project-timeline'] = require('./support/timeline-fixture.cjs')(dependencies['../../core/music/phrase'].layOutTrackPhrase);
   new Function('require', 'module', 'exports', compiled)((name) => dependencies[name], module, module.exports);
   const component = new module.exports.ArrangementOverviewComponent();
   const context = () => ({

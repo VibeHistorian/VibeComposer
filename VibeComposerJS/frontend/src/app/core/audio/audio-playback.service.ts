@@ -6,14 +6,13 @@ import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from '../music/phrase-note';
-import { noteTimelineBounds } from '../music/phrase-bounds';
-import { layOutTrackPhrase } from '../music/phrase';
+import { resolveProjectTimeline, withTimelineNotes, type ResolvedProjectTimeline } from '../music/project-timeline';
 import { samePhraseInputs } from '../music/phrase-inputs';
 import { mostIntenseSection } from '../music/arrangement-generator';
 import type { InstrumentEngine, InstrumentVoice, InstrumentEngineKind } from './instrument-engine';
 import { createInstrumentEngine } from './create-instrument-engine';
 import { InstrumentSettingsService } from './instrument-settings.service';
-import { beatToSeconds, secondsToBeat, projectTempoMap, sectionDurationBeats, type TempoPoint } from '../music/section-context';
+import { beatToSeconds, secondsToBeat, type TempoPoint } from '../music/section-context';
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
@@ -46,6 +45,8 @@ export class AudioPlaybackService {
   readonly state = this.playbackState.asReadonly();
   readonly beat = this.position.asReadonly();
   readonly durationBeats = this.duration.asReadonly();
+  private readonly scheduledTimeline = signal<ResolvedProjectTimeline | null>(null);
+  readonly timeline = this.scheduledTimeline.asReadonly();
   readonly loopEnabled = this.loopState.asReadonly();
   readonly liveEnabled = this.liveState.asReadonly();
   readonly error = this.playbackError.asReadonly();
@@ -187,7 +188,7 @@ export class AudioPlaybackService {
       this.scheduleAheadSeconds = SCHEDULE_AHEAD_SECONDS;
       this.lastDelayedTickTime = context.currentTime;
 
-      this.tempoMap = projectTempoMap(project);
+      this.tempoMap = resolveProjectTimeline(project).tempoMap;
       this.notes = this.createSchedule(project);
       this.setTimelineBounds(project, this.notes);
       this.scheduledProject = project;
@@ -319,7 +320,7 @@ export class AudioPlaybackService {
       this.position.set(duration);
       return;
     }
-    this.tempoMap = projectTempoMap(project);
+    this.tempoMap = resolveProjectTimeline(project).tempoMap;
     this.duration.set(duration);
     this.notes = notes;
     this.scheduleSignature = signature;
@@ -434,16 +435,25 @@ export class AudioPlaybackService {
     }
   }
 
-  private setTimelineBounds(project: CompositionProject, notes: readonly PhraseNote[]): void {
-    const bounds = noteTimelineBounds(notes, project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
+  private setTimelineBounds(project: CompositionProject, notes: readonly ScheduledNote[]): void {
+    const base = resolveProjectTimeline(project);
+    let timeline = base;
+    if (this.phrasePreview) {
+      const notesByTrack: Record<string, ScheduledNote[]> = Object.fromEntries(project.tracks.map(track => [track.id, []]));
+      for (const note of notes) notesByTrack[note.trackId].push(note);
+      timeline = withTimelineNotes(base, notesByTrack);
+    }
+    this.scheduledTimeline.set(timeline);
+    const bounds = timeline.soundingBounds;
     this.timelineStart.set(bounds.startBeat);
     this.duration.set(bounds.endBeat);
   }
 
   private createSchedule(project: CompositionProject): ScheduledNote[] {
     const preview = this.phrasePreview;
+    const timeline = resolveProjectTimeline(project);
     return project.tracks.flatMap((track) => {
-      const notes = layOutTrackPhrase(project, track);
+      const notes = timeline.notesByTrack[track.id];
       const audible = preview?.trackIds.includes(track.id)
         ? [...notes.filter(note => note.startBeat < preview.startBeat || note.startBeat >= preview.endBeat),
           ...preview.notes.filter(note => note.trackId === track.id)] : notes;
@@ -457,8 +467,8 @@ export class AudioPlaybackService {
     return JSON.stringify([
       project.tempoBpm,
       project.drumSlots,
-      projectTempoMap(project),
-      project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0),
+      resolveProjectTimeline(project).tempoMap,
+      resolveProjectTimeline(project).arrangementBounds.endBeat,
       project.tracks.map((track) => [track.id, track.role, track.mix.program]),
       notes.map((note) => [note.trackId, note.role, note.startBeat, note.durationBeats, note.midi, note.velocity]),
     ]);

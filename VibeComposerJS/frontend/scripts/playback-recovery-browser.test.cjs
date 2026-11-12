@@ -27,13 +27,19 @@ test('realtime audio survives delays and fractional loops without hidden playhea
           './midi-output.service': { MidiOutputService: class MidiOutputService {} },
           './create-instrument-engine': { createInstrumentEngine: async ctx => new adapter.exports.TinySynthEngine(ctx) },
           './mix-values': { mixEnabled: (mix, solo) => !mix.muted && (!solo || mix.solo) },
-          '../music/phrase': { layOutTrackPhrase: (project, track) => track.notes },
+          '../music/phrase': { resolvedTrackPhrase: (project, track) => track.notes },
           '../music/phrase-bounds': { noteTimelineBounds: () => ({ startBeat: 0, endBeat: window.testDurationBeats ?? 16 }) },
           '../music/phrase-inputs': { samePhraseInputs: () => false },
           '../music/arrangement-generator': {},
           '../music/section-context': { projectTempoMap: () => [{ beat: 0, seconds: 0, bpm: 120 }],
-            beatToSeconds: (_, beat) => beat / 2, secondsToBeat: (_, seconds) => seconds * 2, sectionDurationBeats: () => 16 },
+            beatToSeconds: (_, beat) => beat / 2, secondsToBeat: (_, seconds) => seconds * 2,
+            sectionChordDurations: () => [(window.testDurationBeats ?? 16) / 4],
+            sectionDurationBeats: () => window.testDurationBeats ?? 16 },
         };
+        const timelineModule = { exports: {} };
+        new Function('require', 'module', 'exports', ${JSON.stringify(compile('../music/project-timeline.ts'))})(
+          name => dependencies['../music/' + name.slice(2)], timelineModule, timelineModule.exports);
+        dependencies['../music/project-timeline'] = timelineModule.exports;
         const service = { exports: {} };
         let forbidWindowScheduler = false;
         // Drive the service scheduler explicitly, while the real audio thread continues.
@@ -85,15 +91,14 @@ test('realtime audio survives delays and fractional loops without hidden playhea
         // the user's original length for a longer real-time check.
         const longRun = ${clockTestSeconds} > 3;
         window.testDurationBeats = longRun ? 89.033 : 0.89033;
-        project.tracks[0].role = 'drums';
-        project.tracks[0].notes = Array.from({ length: longRun ? 178 : 4 }, (_, i) => ({
+        const loopNotes = Array.from({ length: longRun ? 178 : 4 }, (_, i) => ({
           id: String(i), midi: 36, startBeat: i * (longRun ? .5 : .25), durationBeats: .1, velocity: 100 }));
         let visibility = 'hidden';
         Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility });
         let audioTicks = 0;
         const nativeTick = playback.tick.bind(playback);
         playback.tick = () => { audioTicks++; nativeTick(); };
-        await playback.start(project);
+        await playback.start({ ...project, tracks: [{ ...project.tracks[0], notes: loopNotes }] });
         attachMeter();
         const loopOrigin = playback.originTime;
         const boundaryDelays = [];

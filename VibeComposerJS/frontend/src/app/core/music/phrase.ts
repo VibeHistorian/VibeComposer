@@ -104,10 +104,16 @@ export function trackPhraseSource(track: CompositionTrack, section?: Arrangement
 type ArrangedNote = PhraseNote & { readonly phraseSource?: PhraseSource; readonly sectionId?: string };
 const trackLayouts = new WeakMap<CompositionProject, WeakMap<CompositionTrack, readonly ArrangedNote[]>>();
 
-/** Share generated layouts across score, overview and playback for an immutable project.
- * Return copies so callers cannot change another consumer's cached note data.
- */
+/** Detached notes for editing and callers that need their own metadata projection. */
 export function layOutTrackPhrase(project: CompositionProject, track: CompositionTrack, includeSource = false, includeOwnership = false): (PhraseNote & { readonly phraseSource?: PhraseSource; readonly sectionId?: string })[] {
+  return resolvedTrackPhrase(project, track).map(note => {
+    const { phraseSource, sectionId, ...plain } = note;
+    return { ...plain, ...(includeSource ? { phraseSource } : {}), ...(includeOwnership ? { sectionId } : {}) };
+  });
+}
+
+/** Canonical frozen layout shared by resolved timelines without copying every note. */
+export function resolvedTrackPhrase(project: CompositionProject, track: CompositionTrack): readonly ArrangedNote[] {
   let cache = trackLayouts.get(project);
   if (!cache) { cache = new WeakMap(); trackLayouts.set(project, cache); }
   let notes = cache.get(track);
@@ -154,12 +160,11 @@ export function layOutTrackPhrase(project: CompositionProject, track: Compositio
       }
       sectionStart += sectionDurationBeats(project, section);
     }
+    for (const note of notes) Object.freeze(note);
+    notes = Object.freeze(notes);
     cache.set(track, notes);
   }
-  return notes.map(note => {
-    const { phraseSource, sectionId, ...plain } = note;
-    return { ...plain, ...(includeSource ? { phraseSource } : {}), ...(includeOwnership ? { sectionId } : {}) };
-  });
+  return notes;
 }
 
 function buildTrackLayout(project: CompositionProject, track: CompositionTrack, includeSource: boolean): ArrangedNote[] {

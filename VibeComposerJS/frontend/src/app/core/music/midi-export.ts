@@ -1,3 +1,4 @@
+import { resolveProjectTimeline } from './project-timeline';
 import { resolvedDrumSlots } from '../project/project-drum-kit';
 import type { DrumSlots } from './drum-instruments';
 import { DEFAULT_MIDI_PPQ, validMidiPpq } from './midi-resolution';
@@ -7,8 +8,6 @@ import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from './phrase-note';
 import { ARRANGED_PARTS, tracksInRoleOrder } from './part-role';
-import { layOutTrackPhrase } from './phrase';
-import { projectTempoMap } from './section-context';
 import { mapDrumPitch, type DrumMapping } from './drum-instruments';
 
 /** Export the current editor draft in phrase-relative beats, regardless of mute/solo state.
@@ -49,9 +48,10 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
   if (!validMidiPpq(ppq)) throw new Error('Unsupported MIDI PPQ');
   midi.header.fromJSON({ ...midi.header.toJSON(), ppq });
   midi.name = project.name;
-  const phrases = new Map(project.tracks.map(track => [track.id, layOutTrackPhrase(project, track)]));
-  const offset = -[...phrases.values()].reduce((start, notes) => notes.reduce((minimum, note) => Math.min(minimum, note.startBeat), start), 0);
-  midi.header.tempos = projectTempoMap(project).map(point => ({ ticks: (point.beat + offset) * midi.header.ppq, bpm: point.bpm }));
+  const timeline = resolveProjectTimeline(project);
+  const phrases = timeline.notesByTrack;
+  const offset = -timeline.soundingBounds.startBeat;
+  midi.header.tempos = timeline.tempoMap.map(point => ({ ticks: (point.beat + offset) * midi.header.ppq, bpm: point.bpm }));
   if (offset > 0) midi.header.tempos.unshift({ ticks: 0, bpm: midi.header.tempos[0].bpm });
   midi.header.update();
   const anySolo = project.tracks.some((track) => track.mix.solo);
@@ -64,7 +64,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
       track.channel = compositionTrack.midiChannel - 1;
       const included = configureMix(track, compositionTrack, anySolo);
       if (!included) continue;
-      for (const note of phrases.get(compositionTrack.id)!) {
+      for (const note of phrases[compositionTrack.id]) {
         track.addNote({
           midi: compositionTrack.role === 'drums' ? mapDrumPitch(note.midi, drumMapping, drumSlots) : note.midi,
           ticks: Math.round((note.startBeat + offset) * midi.header.ppq),

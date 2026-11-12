@@ -1,5 +1,5 @@
 import { UiPreferencesService } from './ui-preferences.service';
-import { sectionDurationBeats } from '../music/section-context';
+import { resolveProjectTimeline } from '../music/project-timeline';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import type { ArrangedPart } from '../music/part-role';
 import { ProjectService } from '../project/project.service';
@@ -56,15 +56,9 @@ export class WorkspaceUiService {
   readonly sectionRange = computed(() => {
     const selected = this.selectedSectionIds();
     if (!selected.length) return null;
-    let beat = 0;
-    let startBeat = 0;
-    let endBeat = 0;
-    for (const section of this.projects.project().arrangement) {
-      if (section.id === selected[0]) startBeat = beat;
-      beat += sectionDurationBeats(this.projects.project(), section);
-      if (section.id === selected.at(-1)) endBeat = beat;
-    }
-    return { startBeat, endBeat };
+    const sections = resolveProjectTimeline(this.projects.project()).sections;
+    return { startBeat: sections.find(section => section.sectionId === selected[0])!.startBeat,
+      endBeat: sections.find(section => section.sectionId === selected.at(-1))!.endBeat };
   }, { equal: (left, right) => left?.startBeat === right?.startBeat && left?.endBeat === right?.endBeat });
 
   constructor() {
