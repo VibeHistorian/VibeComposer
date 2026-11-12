@@ -731,7 +731,7 @@ test('paused and stopped playback stay inactive until resumed with the latest pr
   assert.equal(playback.beat(), 0);
 });
 
-test('transport watches project changes and enabling LIVE without subscribing to playback ticks', async () => {
+function transportFixture() {
   const { playback, project, angular, load, context } = fixture();
   const projectSignal = angular.signal(project);
   const projects = { project: projectSignal };
@@ -747,10 +747,97 @@ test('transport watches project changes and enabling LIVE without subscribing to
     '../../shared/select.component': { SelectComponent: class {} },
     '../../shared/menu-select.component': { MenuSelectComponent: class {} },
     '../harmony/scale-menu-groups': { SCALE_MENU_GROUPS: [] },
+    '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
+    '../../core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
+    '../../core/music/phrase': { layOutTrackPhrase: (project, track) => project.arrangement.length ? track.notes : [] },
+    '../../core/ui/musical-time': require('./music-loader.cjs').loadMusic('../ui/musical-time.ts'),
     '../tracks/mix-buttons.component': { MixButtonsComponent: class {} },
     '../../shared/compact-knob.component': { CompactKnobComponent: class {} },
     '../harmony/chordlet-editor.component': { ChordletEditorComponent: class {} },
   });
+  return { playback, project, context, projectSignal, workspaceUi, TransportDockComponent };
+}
+
+for (const multiplier of [0.5, 1, 2]) test(`transport resolves arrangement-wide ${multiplier} beat durations before playback`, () => {
+  const { project, projectSignal, TransportDockComponent } = transportFixture();
+  projectSignal.set({ ...project, arrangement: project.arrangement.map(section => ({
+    ...section, context: { beatDurationMultiplier: multiplier },
+  })) });
+  const transport = new TransportDockComponent();
+  assert.equal(transport.totalBeats(), 16 * multiplier);
+  assert.equal(transport.durationText(), multiplier === .5 ? '00:04.000' : multiplier === 1 ? '00:08.000' : '00:16.000');
+  assert.equal(transport.currentTimeText(), '00:00.000');
+});
+
+test('transport progress, time, loop overlay and seeking share resolved section timing', () => {
+  const { project, projectSignal, playback, workspaceUi, TransportDockComponent } = transportFixture();
+  projectSignal.set({ ...project, arrangement: [
+    { measures: 2, context: { beatDurationMultiplier: .5 }, trackPresence: {} },
+    { measures: 2, context: { beatDurationMultiplier: 2, tempoBpm: 60 }, trackPresence: {} },
+    { measures: 2, customDurations: [1, 3], trackPresence: {} },
+  ] });
+  const transport = new TransportDockComponent();
+  playback.position.set(12);
+  assert.equal(transport.totalBeats(), 24);
+  assert.equal(transport.progressPercent(), 50);
+  assert.equal(transport.currentTimeText(), '00:10.000');
+  assert.equal(transport.durationText(), '00:20.000');
+  assert.equal(transport.positionText(), '04.01');
+  playback.toggleLoop();
+  assert.deepEqual(transport.loopRegion(), { left: 0, width: 100 });
+  workspaceUi.sectionRange.set({ startBeat: 4, endBeat: 20 });
+  assert.deepEqual(transport.loopRegion(), { left: 4 / 24 * 100, width: 16 / 24 * 100 });
+  const seeks = [];
+  playback.seek = (_project, beat) => seeks.push(beat);
+  transport.seek({ currentTarget: { getBoundingClientRect: () => ({ left: 100, width: 200 }) }, clientX: 250 });
+  transport.seekKey({ key: 'End', preventDefault() {} });
+  transport.seekKey({ key: 'Home', preventDefault() {} });
+  assert.deepEqual(seeks, [18, 24, 0]);
+  projectSignal.set({ ...project, arrangement: [] });
+  assert.equal(transport.progressPercent(), 0);
+  assert.equal(transport.durationText(), '00:00.000');
+  assert.equal(transport.loopRegion(), null);
+});
+
+test('transport includes pickups and tails before playback and reaches its displayed end time', () => {
+  const { project, projectSignal, playback, workspaceUi, TransportDockComponent } = transportFixture();
+  const transport = new TransportDockComponent();
+  projectSignal.set({ ...project, arrangement: [
+    { measures: 1, context: { beatDurationMultiplier: .5 }, trackPresence: {} },
+    { measures: 1, context: { beatDurationMultiplier: 2, tempoBpm: 60 }, trackPresence: {} },
+  ], tracks: [{ ...project.tracks[0], notes: [
+    { midi: 60, startBeat: -2, durationBeats: 1 },
+    { midi: 60, startBeat: 9, durationBeats: 4 },
+  ] }] });
+  assert.deepEqual(transport.timelineBounds(), { startBeat: -2, endBeat: 13 });
+  assert.equal(transport.durationText(), '00:13.000');
+  playback.position.set(-2);
+  assert.equal(transport.currentTimeText(), '00:00.000');
+  assert.equal(transport.positionText(), '00.03');
+  assert.equal(transport.progressPercent(), 0);
+  playback.position.set(0);
+  assert.equal(transport.currentTimeText(), '00:01.000');
+  assert.equal(transport.progressPercent(), 2 / 15 * 100);
+  playback.position.set(13);
+  assert.equal(transport.currentTimeText(), transport.durationText());
+  assert.equal(transport.progressPercent(), 100);
+  playback.toggleLoop();
+  assert.deepEqual(transport.loopRegion(), { left: 0, width: 100 });
+  workspaceUi.sectionRange.set({ startBeat: 0, endBeat: 2 });
+  assert.deepEqual(transport.loopRegion(), { left: 2 / 15 * 100, width: 2 / 15 * 100 });
+  const seeks = [];
+  playback.seek = (_project, beat) => seeks.push(beat);
+  const currentTarget = { getBoundingClientRect: () => ({ left: 100, width: 200 }) };
+  transport.seek({ currentTarget, clientX: 100 });
+  transport.seek({ currentTarget, clientX: 200 });
+  transport.seek({ currentTarget, clientX: 300 });
+  transport.seekKey({ key: 'Home', preventDefault() {} });
+  transport.seekKey({ key: 'End', preventDefault() {} });
+  assert.deepEqual(seeks, [-2, 5.5, 13, -2, 13]);
+});
+
+test('transport watches project changes and enabling LIVE without subscribing to playback ticks', async () => {
+  const { playback, project, context, projectSignal, TransportDockComponent } = transportFixture();
   let reloads = 0;
   const reload = playback.reload.bind(playback);
   playback.reload = (next) => { reloads++; reload(next); };

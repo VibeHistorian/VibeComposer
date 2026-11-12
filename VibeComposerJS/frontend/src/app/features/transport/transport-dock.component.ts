@@ -1,7 +1,9 @@
 import { MenuSelectComponent } from '../../shared/menu-select.component';
 import { SCALE_MENU_GROUPS } from '../harmony/scale-menu-groups';
 import { elapsedTime } from '../../core/ui/musical-time';
-import { beatToSeconds, projectTempoMap } from '../../core/music/section-context';
+import { beatToSeconds, projectTempoMap, sectionDurationBeats } from '../../core/music/section-context';
+import { layOutTrackPhrase } from '../../core/music/phrase';
+import { noteTimelineBounds } from '../../core/music/phrase-bounds';
 import { InstrumentSettingsService } from '../../core/audio/instrument-settings.service';
 import { isScaleMode } from '../../core/music/scales';
 import { SCALE_MODES, SCALE_DEFINITIONS } from '../../core/music/scales';
@@ -90,43 +92,53 @@ export class TransportDockComponent {
     const range = this.workspaceUi.sectionRange();
     untracked(() => this.playback.setLoopRange(range));
   });
-  readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
+  readonly totalBeats = computed(() => {
+    const project = this.project();
+    return project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0);
+  });
+  readonly timelineBounds = computed(() => {
+    const project = this.project();
+    return noteTimelineBounds(project.tracks.flatMap(track => layOutTrackPhrase(project, track)), this.totalBeats());
+  });
+  private readonly timelineBeats = computed(() => this.timelineBounds().endBeat - this.timelineBounds().startBeat);
+  private readonly tempoMap = computed(() => projectTempoMap(this.project()));
+  private readonly startSeconds = computed(() => beatToSeconds(this.tempoMap(), this.timelineBounds().startBeat));
   readonly loopRegion = computed(() => {
-    const duration = this.totalMeasures() * 4;
+    const duration = this.timelineBeats();
     if (!this.playback.loopEnabled() || duration <= 0) return null;
-    const range = this.workspaceUi.sectionRange() ?? { startBeat: 0, endBeat: duration };
-    return { left: range.startBeat / duration * 100, width: (range.endBeat - range.startBeat) / duration * 100 };
+    const range = this.workspaceUi.sectionRange() ?? this.timelineBounds();
+    return { left: (range.startBeat - this.timelineBounds().startBeat) / duration * 100, width: (range.endBeat - range.startBeat) / duration * 100 };
   });
 
   seek(event: MouseEvent): void {
     const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
     if (bounds.width <= 0) return;
-    this.playback.seek(this.project(), (event.clientX - bounds.left) / bounds.width * this.totalMeasures() * 4);
+    const fraction = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+    this.playback.seek(this.project(), this.timelineBounds().startBeat + fraction * this.timelineBeats());
   }
 
   seekKey(event: KeyboardEvent): void {
-    const duration = this.totalMeasures() * 4;
-    const beat = event.key === 'Home' ? 0 : event.key === 'End' ? duration
+    const bounds = this.timelineBounds();
+    const beat = event.key === 'Home' ? bounds.startBeat : event.key === 'End' ? bounds.endBeat
       : event.key === 'ArrowLeft' ? this.playback.beat() - 1 : event.key === 'ArrowRight' ? this.playback.beat() + 1 : null;
     if (beat === null) return;
     event.preventDefault();
     this.playback.seek(this.project(), beat);
   }
   readonly progressPercent = computed(() => {
-    const duration = this.totalMeasures() * 4;
-    return duration > 0 ? Math.min(100, this.playback.beat() / duration * 100) : 0;
+    const duration = this.timelineBeats();
+    return duration > 0 ? Math.max(0, Math.min(100, (this.playback.beat() - this.timelineBounds().startBeat) / duration * 100)) : 0;
   });
   readonly positionText = computed(() => {
-    const duration = this.playback.durationBeats();
     const beat = this.playback.beat();
 
     const measure = Math.floor(beat / 4) + 1;
-    const beatInMeasure = Math.floor(beat % 4) + 1;
+    const beatInMeasure = Math.floor((beat % 4 + 4) % 4) + 1;
     return `${String(measure).padStart(2, '0')}.${String(beatInMeasure).padStart(2, '0')}`;
   });
 
-  readonly currentTimeText = computed(() => elapsedTime(beatToSeconds(projectTempoMap(this.project()), this.playback.beat())));
-  readonly durationText = computed(() => elapsedTime(beatToSeconds(projectTempoMap(this.project()), this.totalMeasures() * 4)));
+  readonly currentTimeText = computed(() => elapsedTime(beatToSeconds(this.tempoMap(), this.playback.beat()) - this.startSeconds()));
+  readonly durationText = computed(() => elapsedTime(beatToSeconds(this.tempoMap(), this.timelineBounds().endBeat) - this.startSeconds()));
 
   togglePlayback(): void {
     void this.playback.toggle(this.project());

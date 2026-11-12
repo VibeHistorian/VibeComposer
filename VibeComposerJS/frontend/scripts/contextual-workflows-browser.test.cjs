@@ -4,6 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const { DEFAULT_TRACK_POLICIES } = require('./music-loader.cjs').loadMusic('track-generation.ts');
+const { layOutTrackPhrase } = require('./music-loader.cjs').loadMusic('phrase.ts');
+const { noteTimelineBounds } = require('./music-loader.cjs').loadMusic('phrase-bounds.ts');
+const { sectionDurationBeats } = require('./music-loader.cjs').loadMusic('section-context.ts');
+const { decodeStoredArrangement } = require('./music-loader.cjs').loadMusic('../project/project-storage.ts');
 const browser = findBrowser();
 
 for (const width of [1440, 780]) test(`production contextual workflows with 30 tracks at ${width}px`, {
@@ -639,6 +643,24 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
   result.catch(() => {}); // CDP setup can fail before the result is awaited.
   result.catch(() => {}); // Startup failure can precede awaiting the browser result.
   const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
+  const serve = server.listeners('request')[0];
+  const timelineCache = new Map();
+  server.removeListener('request', serve);
+  server.on('request', async (request, response) => {
+    if (request.url !== '/timeline-bounds') return serve(request, response);
+    try {
+      let body = '';
+      for await (const chunk of request) body += chunk;
+      if (timelineCache.has(body)) { response.end(timelineCache.get(body)); return; }
+      const project = JSON.parse(body);
+      project.arrangement = decodeStoredArrangement(project.arrangement, project.tracks);
+      const bounds = noteTimelineBounds(project.tracks.flatMap(track => layOutTrackPhrase(project, track)),
+        project.arrangement.reduce((sum, section) => sum + sectionDurationBeats(project, section), 0));
+      response.setHeader('Content-Type', 'application/json');
+      timelineCache.set(body, JSON.stringify(bounds));
+      response.end(timelineCache.get(body));
+    } catch (error) { response.writeHead(500); response.end(String(error)); reject(error); }
+  });
   await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/contextual-browser-'));
   const downloadPath = path.join(profile, 'downloads');
@@ -933,7 +955,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     assert.equal(placementResult.exceptionDetails,undefined,JSON.stringify(placementResult));
     for(const [key,value] of Object.entries(placementResult.result.value)) assert.equal(value,true,'placement '+key);
     const arrangementControls = await command('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async () => {
-      const wait=async(read)=>{for(let i=0;i<200;i++){if(read())return;await new Promise(r=>setTimeout(r,20));}throw new Error('Arrangement control timed out');};
+      const wait=async(read)=>{for(let i=0;i<200;i++){if(await read())return;await new Promise(r=>setTimeout(r,20));}throw new Error('Arrangement control timed out');};
       const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
       const panel=document.querySelector('vc-arrangement-overview');
       const star=panel.querySelector('[aria-label="Arrangement On Compose"]');
@@ -950,7 +972,8 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const structure=project=>JSON.stringify(project.arrangement.map(({trackPresence,...section})=>section));
       const originalStructure=structure(read());
       const position=document.querySelector('[aria-label="Song position"]');
-      const expectedPosition=project=>{
+      const timelineBounds=async project=>(await fetch('/timeline-bounds',{method:'POST',body:JSON.stringify(project)})).json();
+      const expectedPosition=async project=>{
         let beat=0,best=0,most=-1;
         for(const section of project.arrangement){
           const count=Object.values(section.trackPresence).flat().filter(Boolean).length;
@@ -958,12 +981,13 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
           const durations=section.customDurations;
           beat+=Array.from({length:section.measures},(_,i)=>durations?.[i%durations.length]??4).reduce((sum,value)=>sum+value,0)*(section.context?.beatDurationMultiplier??1);
         }
-        const transportBeats=project.arrangement.reduce((sum,section)=>sum+section.measures*4,0);
-        return transportBeats>0 ? Math.min(100,best/transportBeats*100) : 0;
+        const bounds=await timelineBounds(project);
+        const duration=bounds.endBeat-bounds.startBeat;
+        return duration>0 ? (best-bounds.startBeat)/duration*100 : 0;
       };
       const loop= document.querySelector('[aria-label="Toggle loop"]');
       const enableLoop=()=>{if(loop.getAttribute('aria-pressed')!=='true')loop.click();};
-      const previewLoopMatches=()=>{
+      const previewLoopMatches=async()=>{
         const project=read();
         const best=project.arrangement.reduce((result,section,index)=>{
           const count=Object.values(section.trackPresence).flat().filter(Boolean).length;
@@ -971,16 +995,17 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         },{count:-1,index:0}).index;
         const section=project.arrangement[best];
         const sectionBeats=Array.from({length:section.measures},(_,i)=>section.customDurations?.[i%section.customDurations.length]??4).reduce((sum,value)=>sum+value,0)*(section.context?.beatDurationMultiplier??1);
-        const duration=project.arrangement.reduce((sum,section)=>sum+section.measures*4,0);
+        const bounds=await timelineBounds(project);
+        const duration=bounds.endBeat-bounds.startBeat;
         const line=document.querySelector('.progress-loop-line');
         return loop.getAttribute('aria-pressed')==='true' && line
-          && Math.abs(parseFloat(line.style.left)-expectedPosition(project))<0.001
+          && Math.abs(parseFloat(line.style.left)-await expectedPosition(project))<0.001
           && Math.abs(parseFloat(line.style.width)-sectionBeats/duration*100)<0.001;
       };
       enableLoop();
       reroll.click();
       await wait(()=>JSON.stringify(read().arrangement)!==before);
-      await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
+      await wait(async()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-await expectedPosition(read()))<0.001);
       await wait(previewLoopMatches);
       const rerollPreview=structure(read())!==originalStructure;
       document.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true,cancelable:true}));
@@ -992,7 +1017,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const beforeCompose=JSON.stringify(read());
       document.querySelector('[aria-label="Compose"]').click();
       await wait(()=>JSON.stringify(read())!==beforeCompose);
-      await wait(()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-expectedPosition(read()))<0.001);
+      await wait(async()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-await expectedPosition(read()))<0.001);
       await wait(previewLoopMatches);
       const composePreview=structure(read())===originalStructure;
       const fits=[star,eye,manual,reroll].every(button=>{const b=button.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth;});
