@@ -152,10 +152,20 @@ export class ProjectService {
   }
 
   duplicateProjectTab(id = this.activeProjectTabId()): void {
+    this.copyProjectTab(id, 'copy');
+  }
+
+  checkpointProjectTab(): void {
+    const now = new Date();
+    const time = `${String(now.getHours()).padStart(2, '0')}_${String(now.getMinutes()).padStart(2, '0')}`;
+    this.copyProjectTab(this.activeProjectTabId(), time);
+  }
+
+  private copyProjectTab(id: string, suffix: string): void {
     const source = id === this.activeProjectTabId() ? this.snapshotTab() : this.tabs().find(tab => tab.id === id);
     if (!source) return;
     const tab = structuredClone({ ...source, id: globalThis.crypto.randomUUID(),
-      project: { ...source.project, name: `${source.project.name} (copy)` } });
+      project: { ...source.project, name: `${source.project.name} (${suffix})` } });
     this.tabs.update(tabs => [...tabs, tab]);
     this.activateTab(tab);
   }

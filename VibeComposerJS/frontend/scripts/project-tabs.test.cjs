@@ -2,7 +2,8 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
-test('project tabs isolate edits, undo, redo and automatic seed; checkpoints retain both history directions', () => {
+test('project tabs isolate edits, undo, redo and automatic seed; checkpoints retain both history directions', (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: new Date(2026, 0, 1, 7, 5).getTime() });
   const { service } = fixture();
   const first = service.activeProjectTabId();
   service.updateSettings({ name: 'Original', tempoBpm: 120 });
@@ -10,10 +11,10 @@ test('project tabs isolate edits, undo, redo and automatic seed; checkpoints ret
   service.undo();
   const position = service.historyPosition();
   service.updateSettings({ seed: '0' });
-  service.duplicateProjectTab();
+  service.checkpointProjectTab();
   const copy = service.activeProjectTabId();
   assert.notEqual(first, copy);
-  assert.equal(service.project().name, 'Original (copy)');
+  assert.equal(service.project().name, 'Original (07_05)');
   assert.equal(service.historyPosition(), position);
   assert.equal(service.canRedo(), true);
   assert.equal(service.seedInput(), '0');
@@ -36,6 +37,7 @@ test('tabs and histories restore, inactive removal preserves active state, and f
   const first = service.activeProjectTabId();
   service.updateSettings({ name: 'Keep me', tempoBpm: 110 });
   service.duplicateProjectTab();
+  assert.equal(service.project().name, 'Keep me (copy)');
   const second = service.activeProjectTabId();
   service.updateSettings({ tempoBpm: 150 });
   service.undo();

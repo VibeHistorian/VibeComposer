@@ -13,6 +13,7 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
     const pills = () => [...document.querySelectorAll('.project-pill')];
     const read = () => JSON.parse(localStorage.getItem('vibecomposer.project-tabs.v1'));
     const name = () => ({value: document.querySelector('button.project-pill.active')?.textContent.trim()});
+    let checkpointName = sessionStorage.getItem('checkpoint-name');
     const editor = () => document.querySelector('input[aria-label="Project name"]');
     const editName = async (value, key='Enter') => {
       const input=await wait(editor,'inline name input');
@@ -35,17 +36,17 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
       if(sessionStorage.getItem('tabs-reload')) {
         ensure(pills().length===2,'restored tabs');
         ensure(name().value==='Original','restored active');
-        pills()[1].click();await wait(()=>name().value==='Original (copy)','switch restored copy');
+        pills()[1].click();await wait(()=>name().value===checkpointName,'switch restored copy');
         ensure(!button('Undo').disabled,'checkpoint retained undo after reload');
         await context(0,'Remove Project');await wait(()=>pills().length===1,'remove inactive');
-        ensure(name().value==='Original (copy)','removal keeps current project');
+        ensure(name().value===checkpointName,'removal keeps current project');
         await context(0,'Duplicate Project');await wait(()=>pills().length===2,'context duplicate');
-        ensure(name().value==='Original (copy) (copy)','context duplicate activated');
+        ensure(name().value===checkpointName+' (copy)','context duplicate activated');
         const downloads=[]; const native=HTMLAnchorElement.prototype.click;
         HTMLAnchorElement.prototype.click=function(){if(this.download)downloads.push({name:this.download,url:this.href});else native.call(this);};
         await context(0,'Export Project');await wait(()=>downloads.length,'export');
         const exported=await (await fetch(downloads[0].url)).json();
-        ensure(exported.name==='Original (copy)','exports clicked inactive tab');
+        ensure(exported.name===checkpointName,'exports clicked inactive tab');
         ensure(downloads[0].name.endsWith('.vibe.json'),'project extension');
         HTMLAnchorElement.prototype.click=native;
         const open = async project => {
@@ -72,15 +73,17 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
         document.querySelector('button.project-pill.active').click();await editName('Discard this','Escape');
         ensure(name().value==='Original','Escape cancels rename');
         button('Branch project').click();await wait(()=>pills().length===2,'branch');
-        ensure(name().value==='Original (copy)','branch activated');
+        checkpointName=name().value;
+        ensure(/^Original \\(\\d{2}_\\d{2}\\)$/.test(checkpointName),'branch timestamp');
+        sessionStorage.setItem('checkpoint-name',checkpointName);
         ensure(!button('Undo').disabled,'branch has source history');
-        await rename('Independent edit');button('Undo').click();await wait(()=>name().value==='Original (copy)','independent undo');
+        await rename('Independent edit');button('Undo').click();await wait(()=>name().value===checkpointName,'independent undo');
         pills()[0].click();await wait(()=>name().value==='Original','left click switching');
         const active=read().activeId;
         await context(1,'Rename Project');await editName('Renamed inactive');
         ensure(read().activeId===active && name().value==='Original','inactive rename keeps active tab');
         ensure(pills()[1].textContent.trim()==='Renamed inactive','inactive name changed');
-        await context(1,'Rename Project');await editName('Original (copy)');
+        await context(1,'Rename Project');await editName(checkpointName);
         pills()[1].dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:100,clientY:100,button:2}));
         await wait(()=>button('Remove Project'),'right click menu');
         ensure(read().activeId===active,'right click does not switch');
