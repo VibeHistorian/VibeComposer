@@ -6,6 +6,39 @@ const { generateHarmony } = loadMusic('contextual-harmony.ts');
 const { SCALE_MODES } = loadMusic('scales.ts');
 const { mapChordNotes } = loadMusic('section-context.ts');
 
+test('section-track swing overrides whole-section swing while other tracks inherit it', () => {
+  const { DEFAULT_PROJECT } = loadMusic('../project/project-defaults.ts');
+  const { layOutTrackPhrase } = loadMusic('phrase.ts');
+  for (const original of DEFAULT_PROJECT.tracks.filter(track => track.role !== 'bass')) {
+    const track = { ...original, generatorSettings: { ...original.generatorSettings,
+      ...(original.role === 'melody' ? {} : { rhythm: 'full', hitsPerPattern: 8 }),
+      pauseChance: 0, swingPercent: 55 } };
+    const sibling = { ...track, id: `${track.id}-sibling` };
+    const section = { ...DEFAULT_PROJECT.arrangement[0], measures: 4,
+      trackPresence: { [track.id]: true, [sibling.id]: true }, context: { swingPercent: 70 } };
+    const project = { ...DEFAULT_PROJECT, tracks: [track, sibling], arrangement: [section] };
+    const inherited = layOutTrackPhrase(project, track);
+    assert.ok(inherited.length > 0, track.role);
+    for (const swingPercent of [0, 50, 60]) {
+      const local = { ...project, arrangement: [{ ...section,
+        trackPartOverrides: { [track.id]: { swingPercent } } }] };
+      const expected = { ...project, arrangement: [{ ...section, context: { swingPercent } }] };
+      const actual = layOutTrackPhrase(local, track);
+      assert.deepEqual(actual, layOutTrackPhrase(expected, track), `${track.role}: local swing ${swingPercent}`);
+      assert.notDeepEqual(actual, inherited, `${track.role}: local swing changes timing`);
+      assert.deepEqual(layOutTrackPhrase(local, sibling), layOutTrackPhrase(project, sibling),
+        `${track.role}: sibling keeps whole-section swing`);
+    }
+    const unrelated = { ...project, arrangement: [{ ...section,
+      trackPartOverrides: { [track.id]: { pauseChance: 0 } } }] };
+    assert.deepEqual(layOutTrackPhrase(unrelated, track), inherited,
+      `${track.role}: unrelated override still inherits whole-section swing`);
+    const noSectionSwing = { ...project, arrangement: [{ ...section, context: {} }] };
+    assert.notDeepEqual(inherited, layOutTrackPhrase(noSectionSwing, track),
+      `${track.role}: whole-section swing still overrides track base`);
+  }
+});
+
 test('contextual melody consumes independent track ending, style and form', () => {
   const phrasing = { tension: 50, ending: 'CLOSED', style: 'JAZZ', form: 'SENTENCE' };
   const global = { contextualMelody: true };

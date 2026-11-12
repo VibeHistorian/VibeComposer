@@ -180,7 +180,9 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
     }
     const manual = track.editedPhrase !== undefined && !section.generatedTrackIds?.includes(track.id);
     const resolved = resolvePartTrack(manual ? track : { ...track, editedPhrase: undefined } as CompositionTrack, section, project.melodyGlobal);
-    const effectiveTrack = section.context?.swingPercent === undefined || resolved.role === 'bass' ? resolved : {
+    // An explicit section-track swing takes precedence over the section-wide fallback.
+    const effectiveTrack = section.context?.swingPercent === undefined || resolved.role === 'bass'
+      || section.trackPartOverrides?.[track.id]?.swingPercent !== undefined ? resolved : {
       ...resolved, generatorSettings: { ...resolved.generatorSettings, swingPercent: section.context.swingPercent },
     } as CompositionTrack;
     const harmony = sectionGenerationHarmony(project, section, track.role);
