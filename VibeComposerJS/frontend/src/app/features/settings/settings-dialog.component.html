@@ -207,9 +207,9 @@
           <section aria-labelledby="score-settings-title">
             <h2 id="score-settings-title">Score</h2>
             <div class="setting-row">
-              <div class="setting-copy"><h3>Triangle notes</h3><p id="score-triangle-notes-description">Taper score notes from full height on the left to a centered point on the right. Does not apply to the phrase editor.</p></div>
-              <div class="setting-controls"><input type="checkbox" aria-label="Triangle notes" [checked]="preferences.scoreTriangleNotes()"
-                (change)="preferences.toggleScoreTriangleNotes()" aria-describedby="score-triangle-notes-description" /></div>
+              <div class="setting-copy"><h3>Note shape</h3><p id="score-note-shape-description">Instrument-based uses triangles for plucky sounds and classic shapes for sustained sounds. Log uses a thin concave taper for plucky sounds and a thick convex taper for sustained sounds. Does not apply to the phrase editor.</p></div>
+              <div class="setting-controls"><vc-select aria-label="Note shape" [options]="scoreNoteShapes" [value]="preferences.scoreNoteShape()"
+                (valueChange)="preferences.setScoreNoteShape($event)" aria-describedby="score-note-shape-description" /></div>
             </div>
             <div class="setting-row">
               <div class="setting-copy"><h3>Piano roll / grid row brightness</h3><p>Adjust the brightness of pitch and drum row shading. Saved in your UI preferences.</p></div>

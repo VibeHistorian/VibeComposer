@@ -19,3 +19,22 @@ const NAMES = [
   'Guitar Fret Noise', 'Breath Noise', 'Seashore', 'Bird Tweet', 'Telephone Ring', 'Helicopter', 'Applause', 'Gunshot',
 ] as const;
 export const GM_INSTRUMENTS = NAMES.map((name, program) => ({ program, name }));
+
+export type InstrumentEnvelope = 'plucky' | 'sustained';
+
+/** GM sound character, independent of the role playing the instrument.
+ * Distorted guitars and synth basses sustain; pizzicato, harp and orchestral
+ * hits decay even though their neighboring string/ensemble programs sustain.
+ * FX are classified by their dominant attack/decay rather than their family.
+ */
+const PROGRAM_ENVELOPES: readonly InstrumentEnvelope[] = NAMES.map((_, program) =>
+  program <= 15 || (program >= 24 && program <= 28) || program === 31
+    || (program >= 32 && program <= 37) || (program >= 45 && program <= 47)
+    || program === 55 || [96, 98, 102].includes(program)
+    || (program >= 104 && program <= 108) || (program >= 112 && program <= 120)
+    || program === 123 || program === 124 || program === 127 ? 'plucky' : 'sustained');
+
+export function instrumentEnvelope(program: number, drums = false): InstrumentEnvelope {
+  if (drums) return 'plucky';
+  return PROGRAM_ENVELOPES[program] ?? 'sustained';
+}

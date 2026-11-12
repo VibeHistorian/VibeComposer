@@ -171,7 +171,7 @@ function fixture(reactivity) {
   const viewChild = () => () => undefined;
   viewChild.required = viewChild;
   const angular = { Component: () => type => type, ChangeDetectionStrategy: { OnPush: 0 },
-    effect: reactivity?.effect ?? (() => {}), untracked: reactivity?.untracked ?? (read => read()), inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false, scoreTriangleNotes: () => false,
+    effect: reactivity?.effect ?? (() => {}), untracked: reactivity?.untracked ?? (read => read()), inject: () => Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { appearance: () => 'dark', midiPpq: () => 960, scoreChordGrid: () => false, scoreOutlineOtherTracks: () => false, scoreNoteShape: () => 'classic',
       drumMapping: () => 'general-midi',
       drumLabel: pitch => require('./music-loader.cjs').loadMusic('drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }), input, viewChild, signal: initial => { let value = initial; const read = () => value; read.set = next => value = next; return read; }, output: () => ({ values: [], emit(value) { this.values.push(value); } }) };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/features/score/score-canvas.component.ts'), 'utf8');
@@ -187,6 +187,7 @@ function fixture(reactivity) {
     : name.includes('musical-time') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/musical-time.ts'))
     : name.includes('track-color') ? loadHelper(path.resolve(__dirname, '../src/app/core/ui/track-color.ts'))
     : name.includes('phrase-edit') ? helperModule.exports
+    : name.includes('gm-instruments') ? require('./music-loader.cjs').loadMusic('gm-instruments.ts')
     : name.includes('part-role') ? require('./music-loader.cjs').loadMusic('part-role.ts')
     : name.includes('drum-instruments') ? require('./music-loader.cjs').loadMusic('drum-instruments.ts') : angular, module, module.exports);
   const component = new module.exports.ScoreCanvasComponent();
@@ -1314,7 +1315,7 @@ test('triangle geometry tapers to the right center and leaves phrase notes round
   for (const method of ['moveTo', 'lineTo', 'closePath', 'roundRect']) {
     graphics[method] = (...args) => { calls.push([method, ...args]); return graphics; };
   }
-  c.preferences.scoreTriangleNotes = () => true;
+  c.preferences.scoreNoteShape = () => 'triangle';
   c.noteShape(graphics, 10, 20, 40, 12, 3);
   assert.deepEqual(calls, [['moveTo', 10, 20], ['lineTo', 50, 26], ['lineTo', 10, 32], ['closePath']]);
   calls.length = 0;
@@ -1503,5 +1504,37 @@ test('velocity drag and drawing accents fill from the note bottom in proportion 
     }
     c.onPointerCancel(); fills.length=0; c.drawDynamic(); assert.equal(fills.filter(f=>f.alpha===.9).length,0);
     assert.deepEqual(notes.map(n=>n.velocity),[80,100]);
+  }
+});
+
+test('instrument shapes follow sound character and log envelopes surround the triangle', () => {
+  const { component: c } = fixture();
+  const calls = [], graphics = {};
+  for (const method of ['moveTo', 'lineTo', 'closePath', 'roundRect', 'bezierCurveTo']) {
+    graphics[method] = (...args) => { calls.push([method, ...args]); return graphics; };
+  }
+  const draw = (program, mode, drums = false) => {
+    calls.length = 0;
+    c.preferences.scoreNoteShape = () => mode;
+    c.noteShape(graphics, 0, 0, 120, 20, 3, { instrumentProgram: program, color: drums ? 'drums' : 'melody' });
+    return calls.map(call => [...call]);
+  };
+  // Family exceptions matter: pizzicato decays while bowed strings sustain.
+  for (const program of [0, 8, 24, 32, 45, 46, 55, 104, 112]) assert.equal(draw(program, 'instrument')[1][0], 'lineTo');
+  for (const program of [16, 29, 38, 40, 48, 56, 64, 73, 80, 88, 105 + 4]) assert.equal(draw(program, 'instrument')[0][0], 'roundRect');
+  assert.equal(draw(48, 'instrument', true)[1][0], 'lineTo');
+  for (const [program, thin] of [[0, true], [48, false]]) {
+    const curves = draw(program, 'instrument-log').filter(call => call[0] === 'bezierCurveTo');
+    assert.equal(curves.length, 24);
+    for (const curve of curves.slice(0, 11)) {
+      const x = curve[5], y = curve[6], triangleY = x / 12;
+      assert.ok(thin ? y > triangleY : y < triangleY);
+      assert.ok(y >= 0 && y <= 10);
+    }
+    assert.deepEqual(curves[11].slice(5), [120, 10]);
+    assert.deepEqual(curves[23].slice(5), [0, 20]);
+    c.editable = () => true;
+    assert.equal(draw(program, 'instrument-log')[0][0], 'roundRect');
+    c.editable = () => false;
   }
 });

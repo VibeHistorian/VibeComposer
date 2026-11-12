@@ -1,3 +1,4 @@
+import { SCORE_NOTE_SHAPES } from '../../core/ui/ui-preferences';
 import { MIDI_PPQ_CHOICES } from '../../core/music/midi-resolution';
 import { version } from '../../../../package.json';
 import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
@@ -34,6 +35,7 @@ import { MAX_DRUM_SOUNDS, type DrumMappingPreference } from '../../core/music/dr
 })
 export class SettingsDialogComponent {
   readonly appVersion = version;
+  readonly scoreNoteShapes = SCORE_NOTE_SHAPES;
   readonly maxDrumSounds = MAX_DRUM_SOUNDS;
   setHumanization(key: 'timingBeats' | 'durationBeats', value: number): void {
     this.projects.updateSettings({ humanization: { timingBeats: 0, durationBeats: 0, ...this.projects.project().humanization, [key]: value } });

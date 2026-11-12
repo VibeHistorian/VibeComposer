@@ -1,3 +1,4 @@
+import { instrumentEnvelope } from '../../core/music/gm-instruments';
 import type { DrumSlots } from '../../core/music/drum-instruments';
 import { drumInstrumentName } from '../../core/music/drum-instruments';
 import { ContextMenuComponent, type ContextMenuItem } from '../../shared/context-menu.component';
@@ -38,6 +39,7 @@ export interface ScoreCanvasTrack {
 
 export interface ScoreCanvasNote extends PhraseNote {
   readonly part: string;
+  readonly instrumentProgram?: number;
   readonly trackName?: string;
   readonly trackOrder?: number;
   readonly trackCount?: number;
@@ -252,7 +254,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.chordBoundaries();
     this.preferences.scoreChordGrid();
     this.preferences.scoreOutlineOtherTracks();
-    this.preferences.scoreTriangleNotes();
+    this.preferences.scoreNoteShape();
     this.model = {
       tracks: this.tracks(),
       notes: this.notes(),
@@ -1179,15 +1181,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
       if (ghost) {
         const parsed = parsedNote;
-        if (noteHeight > 0) this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2))
+        if (noteHeight > 0) this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2), note)
           .stroke({ color: parsed.value, alpha: note.opacity * parsed.alpha * 0.5, width: 1 });
         continue;
       }
       if (noteHeight > 0 && selectedTrackId === note.part && (!this.editable() || note.color === 'drums')) {
         for (let radius = 6; radius >= 1; radius--) {
-          if (!this.editable() && this.preferences.scoreTriangleNotes()) {
+          if (!this.editable() && this.preferences.scoreNoteShape() !== 'classic') {
             const glow = color(noteColors.glow);
-            this.noteShape(graphics, x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2, 0)
+            this.noteShape(graphics, x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2, 0, note)
               .fill({ color: glow.value, alpha: glow.alpha * (7 - radius) / 15 });
           } else {
             fill(x - radius, y - radius, noteWidth + radius * 2, noteHeight + radius * 2,
@@ -1197,7 +1199,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
       const parsed = parsedNote;
       if (noteHeight > 0) {
-        const shape = this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2));
+        const shape = this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2), note);
         if (!this.editable() && this.preferences.scoreOutlineOtherTracks() && selectedTrackId !== note.part) {
           shape.stroke({ color: parsed.value, alpha: opacity * parsed.alpha, width: 1 });
         } else {
@@ -1234,10 +1236,28 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     untracked(() => this.drawDynamic());
   }
 
-  private noteShape(graphics: PixiGraphics, x: number, y: number, width: number, height: number, radius: number): PixiGraphics {
-    return !this.editable() && this.preferences.scoreTriangleNotes()
-      ? graphics.moveTo(x, y).lineTo(x + width, y + height / 2).lineTo(x, y + height).closePath()
-      : graphics.roundRect(x, y, width, height, radius);
+  private noteShape(graphics: PixiGraphics, x: number, y: number, width: number, height: number, radius: number, note?: ScoreCanvasNote): PixiGraphics {
+    const mode = this.editable() ? 'classic' : this.preferences.scoreNoteShape();
+    const plucky = instrumentEnvelope(note?.instrumentProgram ?? 0, note?.color === 'drums') === 'plucky';
+    if (mode === 'classic' || (mode === 'instrument' && !plucky)) return graphics.roundRect(x, y, width, height, radius);
+    if (mode !== 'instrument-log') return graphics.moveTo(x, y).lineTo(x + width, y + height / 2).lineTo(x, y + height).closePath();
+    // Smooth logarithmic envelopes with mirrored boundaries. Cubic Hermite
+    // segments preserve the log slope at each join, including the pointed tip.
+    const k = 15, scale = Math.log1p(k), center = y + height / 2;
+    const envelope = (t: number) => plucky ? 1 - Math.log1p(k * t) / scale : Math.log1p(k * (1 - t)) / scale;
+    const slope = (t: number) => -k / ((1 + k * (plucky ? t : 1 - t)) * scale);
+    graphics.moveTo(x, y);
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 12; i++) {
+        const a = side === -1 ? i / 12 : 1 - i / 12;
+        const b = side === -1 ? (i + 1) / 12 : 1 - (i + 1) / 12;
+        const d = b - a, half = side * height / 2;
+        graphics.bezierCurveTo(x + (a + d / 3) * width, center + half * (envelope(a) + slope(a) * d / 3),
+          x + (b - d / 3) * width, center + half * (envelope(b) - slope(b) * d / 3),
+          x + b * width, center + half * envelope(b));
+      }
+    }
+    return graphics.closePath();
   }
 
   private drawDynamic(): void {
@@ -1268,12 +1288,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1) + (this.model?.timelineStartBeat ?? 0);
     for (const area of this.hitAreas) {
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
-      const bounds = !this.editable() && this.preferences.scoreTriangleNotes() ? (area.visualBounds ?? area) : area;
+      const bounds = !this.editable() && this.preferences.scoreNoteShape() !== 'classic' ? (area.visualBounds ?? area) : area;
       const glowStrength = 1 - (beat - area.note.startBeat) / area.note.durationBeats;
       const glow = new Color(style.getPropertyValue(COLORS[area.note.color].note).trim() || '#32d7f4');
-      this.noteShape(graphics, bounds.x - 3, bounds.y - 2, bounds.width + 6, bounds.height + 4, 3)
+      this.noteShape(graphics, bounds.x - 3, bounds.y - 2, bounds.width + 6, bounds.height + 4, 3, area.note)
         .stroke({ color: glow.toNumber(), alpha: 0.325 * glowStrength, width: 3 });
-      this.noteShape(graphics, bounds.x, bounds.y + bounds.height / 4, bounds.width, bounds.height / 2, 2)
+      this.noteShape(graphics, bounds.x, bounds.y + bounds.height / 4, bounds.width, bounds.height / 2, 2, area.note)
         .fill({ color: glow.toNumber(), alpha: 0.4 * glowStrength });
     }
     const placement = this.placementPreview;

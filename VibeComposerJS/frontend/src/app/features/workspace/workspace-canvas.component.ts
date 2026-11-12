@@ -546,7 +546,7 @@ export class WorkspaceCanvasComponent {
       const track = this.project().tracks.find(track => track.id === note.trackId)!;
       const changed = editor.changedTracks().some(changed => changed.id === track.id);
       return { ...note, startBeat: note.startBeat + this.editStartBeat(), part: note.trackId,
-        trackCount: this.tracksFor(track.role).length, trackName: track.name, trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
+        trackCount: this.tracksFor(track.role).length, trackName: track.name, instrumentProgram: track.mix.program, trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
         phraseSource: changed ? section ? 'section-edited' : 'global-edited' : trackPhraseSource(track, section, this.project()),
         color: track.role, topPercent: 0, opacity: 0.5 + note.velocity / 127 * 0.5 };
     });
@@ -643,7 +643,7 @@ export class WorkspaceCanvasComponent {
       return notes.map((note) => ({
         ...note,
         part: track.id,
-        trackName: track.name,
+        trackName: track.name, instrumentProgram: track.mix.program,
         trackCount: this.tracksFor(track.role).length,
         trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
         color: track.role,

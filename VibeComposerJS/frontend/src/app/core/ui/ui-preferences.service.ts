@@ -10,7 +10,7 @@ import { PART_CONTROLS } from '../music/part-settings';
 import type { DrumMappingPreference } from '../music/drum-instruments';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
 import { randomAppearance, type AppearanceMode } from './random-appearance';
-import { combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
+import { SCORE_NOTE_SHAPES, type ScoreNoteShape, combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
 const STORAGE_KEY = 'vibecomposer.ui-preferences.v1';
 
@@ -58,8 +58,10 @@ export class UiPreferencesService {
   readonly syncScoreMix = computed(() => this.state().syncScoreMix);
   readonly scoreChordGrid = computed(() => this.state().scoreChordGrid);
   readonly scoreOutlineOtherTracks = computed(() => this.state().scoreOutlineOtherTracks);
-  readonly scoreTriangleNotes = computed(() => this.state().scoreTriangleNotes);
-  toggleScoreTriangleNotes(): void { this.commit({ ...this.state(), scoreTriangleNotes: !this.scoreTriangleNotes() }); }
+  readonly scoreNoteShape = computed(() => this.state().scoreNoteShape);
+  setScoreNoteShape(value: string): void {
+    if (SCORE_NOTE_SHAPES.some(choice => choice.value === value)) this.commit({ ...this.state(), scoreNoteShape: value as ScoreNoteShape });
+  }
   readonly scoreGhostNotes = computed(() => this.state().scoreGhostNotes);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly replaceCurrentProjectTab = computed(() => this.state().replaceCurrentProjectTab);

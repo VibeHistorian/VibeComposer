@@ -40,6 +40,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         }
       }
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
+        ensure(JSON.parse(localStorage.getItem(key)).scoreNoteShape==='instrument-log','note shape restored after reload');
         ensure(button('Harmony On Compose').getAttribute('aria-pressed')==='false','harmony Compose toggle restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
         ensure(getComputedStyle(document.querySelector('.arrangement-panel > .canvas-heading')).backgroundColor==='rgb(56, 40, 72)','app heading restored after reload');
@@ -382,6 +383,14 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         button('Reset appearance to defaults').click();
         await wait(()=>getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#32d7f4','reset randomized palette');
         button('Appearance Score').click();
+        const noteShape = await wait(()=>document.querySelector('vc-select[aria-label="Note shape"]'),'note shape combobox');
+        ensure(JSON.stringify((await selectOptions(noteShape)).map(option=>option.value))===JSON.stringify(['classic','triangle','instrument','instrument-log']),'note shape choices');
+        for (const mode of ['triangle','instrument','classic','instrument-log']) {
+          await changeControl(noteShape, mode);
+          await wait(()=>JSON.parse(localStorage.getItem(key)).scoreNoteShape===mode,'note shape saved: '+mode);
+          ensure(document.querySelector('vc-score-canvas canvas'),'score canvas remains mounted after shape change');
+        }
+
         const ghostToggle = await wait(()=>document.querySelector('[aria-label="Ghost notes from other tracks"]'),'ghost preference');
         ensure(ghostToggle.checked, 'ghost notes default on');
         ghostToggle.click();
