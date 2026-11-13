@@ -55,9 +55,11 @@ export function applyPartTiming(notes: readonly PhraseNote[], settings: CommonPa
   if (offset === 0 && count === 0) return [...notes];
   const delay = (settings.feedbackDuration ?? 750) / 1000;
   const multiplier = (settings.feedbackVol ?? 65) / 100;
-  return notes.flatMap(note => Array.from({ length: count + 1 }, (_, index) => ({
-    ...note, id: index === 0 ? note.id : `${note.id}-delay-${index}`,
-    startBeat: Math.max(0, note.startBeat + offset + index * delay),
-    velocity: index === 0 ? note.velocity : Math.max(0, Math.min(127, Math.trunc(note.velocity * multiplier ** index))),
-  }))).filter(note => note.velocity > 0).sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
+  return notes.flatMap(note => Array.from({ length: count + 1 }, (_, index) => {
+    const delayed = { ...note };
+    delayed.id = index === 0 ? note.id : `${note.id}-delay-${index}`;
+    delayed.startBeat = Math.max(0, note.startBeat + offset + index * delay);
+    delayed.velocity = index === 0 ? note.velocity : Math.max(0, Math.min(127, Math.trunc(note.velocity * multiplier ** index)));
+    return delayed;
+  })).filter(note => note.velocity > 0).sort((left, right) => left.startBeat - right.startBeat || left.midi - right.midi);
 }

@@ -567,8 +567,13 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       remove.click();
       const options=await wait(()=>{const items=[...document.querySelectorAll('.cdk-overlay-container [role="menuitem"]')].filter(b=>['From Section 1 [VERSE1]','From All Sections','Track'].includes(b.textContent.trim()));return items.length===3?items:null;});
       options.find(b=>b.textContent.trim()==='${action}').click();
-      await wait(()=>JSON.stringify(read())!==JSON.stringify(before));
-      const after=read(),present=s=>Array.isArray(s.trackPresence.bass)?s.trackPresence.bass.includes(1):s.trackPresence[trackId];
+      const present=s=>Array.isArray(s.trackPresence.bass)?s.trackPresence.bass.includes(1):s.trackPresence[trackId];
+      await wait(()=>{
+        const project=read();
+        if('${action}'==='Track')return !project.tracks.some(t=>t.id===trackId);
+        return project.arrangement.every((section,index)=>!!present(section)===('${action}'==='From Section 1 [VERSE1]'&&index===1));
+      });
+      const after=read();
       return {removed:!after.tracks.some(t=>t.id===trackId),presence:after.arrangement.map(s=>!!present(s))};
     })()`);
     assert.deepEqual(removal,action==='Track'?{removed:true,presence:[false,false]}:

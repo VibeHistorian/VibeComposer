@@ -24,7 +24,11 @@ export function processOutputNotes<T extends PhraseNote & { readonly sectionId?:
     const timing = (random.nextDouble() * 2 - 1) * (h?.timingBeats ?? 0);
     const duration = (random.nextDouble() * 2 - 1) * (h?.durationBeats ?? 0);
     const percent = project.arrangement.find(section => section.id === note.sectionId)?.context?.velocityPercent?.[role] ?? 100;
-    return { ...note, startBeat: note.startBeat + timing, durationBeats: Math.max(1 / 960, note.durationBeats + duration),
-      velocity: note.velocity <= 0 || percent === 0 ? 0 : Math.max(1, Math.min(127, Math.round(note.velocity * percent / 100))) };
+    // Copy extension/ownership fields too, without rebuilding property descriptors for replacements.
+    const processed: { -readonly [K in keyof T]: T[K] } = { ...note };
+    processed.startBeat = note.startBeat + timing;
+    processed.durationBeats = Math.max(1 / 960, note.durationBeats + duration);
+    processed.velocity = note.velocity <= 0 || percent === 0 ? 0 : Math.max(1, Math.min(127, Math.round(note.velocity * percent / 100)));
+    return processed;
   });
 }

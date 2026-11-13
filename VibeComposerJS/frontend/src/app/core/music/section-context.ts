@@ -101,8 +101,12 @@ export function mapChordBeat(beat: number, durations: readonly number[]): number
 }
 
 export function mapChordNotes(notes: readonly PhraseNote[], durations: readonly number[]): PhraseNote[] {
-  return notes.map(note => ({ ...note, startBeat: mapChordBeat(note.startBeat, durations),
-    durationBeats: mapChordBeat(note.startBeat + note.durationBeats, durations) - mapChordBeat(note.startBeat, durations) }));
+  return notes.map(note => {
+    const mapped = { ...note };
+    mapped.startBeat = mapChordBeat(note.startBeat, durations);
+    mapped.durationBeats = mapChordBeat(note.startBeat + note.durationBeats, durations) - mapped.startBeat;
+    return mapped;
+  });
 }
 
 /** Convert section beats back to the generator's four-beat chord grid. */

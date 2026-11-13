@@ -1193,7 +1193,7 @@ test('section velocity knobs reset the last override to 0 dB with RMB in single 
 });
 
 test('settings generation failures preserve project, storage and redo until a valid edit', () => {
-  for (const pipeline of ['phraseForTrack', 'layOutTrackPhrase']) {
+  for (const pipeline of ['phraseForTrack', 'resolvedTrackPhrase']) {
     const { service, phrase, stored } = fixture({ contextualMelody: false });
     service.updateSettings({ name: 'Redo target' });
     service.undo();

@@ -50,7 +50,7 @@ import { DEFAULT_TRACK_POLICIES, chooseMelodyPattern, decodeTrackGenerationPolic
 import { DEFAULT_INSTRUMENT_POLICIES, decodeInstrumentPolicy, rerollInstruments } from '../music/instrument-generation';
 import { sectionDegrees, sectionProject, sectionValuesEqual, validSectionHarmony } from '../music/section-context';
 import { baseGenerationHarmony } from '../music/project-harmony';
-import { layOutTrackPhrase, phraseForTrack } from '../music/phrase';
+import { layOutTrackPhrase, phraseForTrack, resolvedTrackPhrase } from '../music/phrase';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
 const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
@@ -511,7 +511,7 @@ export class ProjectService {
       const next = { ...current, tracks, trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
       for (const track of next.tracks) {
         phraseForTrack(next, track);
-        layOutTrackPhrase(next, track, true);
+        resolvedTrackPhrase(next, track);
       }
       return this.commitPartWorkflow(next);
     } catch (error) {
@@ -705,7 +705,7 @@ export class ProjectService {
     // Successful layouts are cached and reused by the view and playback.
     for (const track of next.tracks) {
       phraseForTrack(next, track);
-      layOutTrackPhrase(next, track, true);
+      resolvedTrackPhrase(next, track);
     }
     return this.commitPartWorkflow(next);
   }
@@ -953,7 +953,7 @@ export class ProjectService {
       // Reject unusable musical states before creating or replacing a tab.
       for (const track of project.tracks) {
         phraseForTrack(project, track);
-        layOutTrackPhrase(project, track, true);
+        resolvedTrackPhrase(project, track);
       }
       const tab: ProjectTab = { id: this.uiPreferences.replaceCurrentProjectTab()
         ? this.activeProjectTabId() : globalThis.crypto.randomUUID(), project, past: [], future: [], automaticSeed: BigInt(project.seed) === 0n };
@@ -1561,7 +1561,7 @@ export class ProjectService {
     try {
       for (const track of samePhraseInputs(current, next) ? [] : next.tracks) {
         phraseForTrack(next, track);
-        layOutTrackPhrase(next, track, true);
+        resolvedTrackPhrase(next, track);
       }
     } catch (error) {
       this.generationFailure.set(error instanceof Error ? error.message : 'The requested music could not be generated.');

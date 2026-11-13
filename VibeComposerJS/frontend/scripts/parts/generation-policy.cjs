@@ -83,9 +83,9 @@ test('failed contextual Compose keeps the rendered project, storage, history and
 test('section layout failures reject Compose before publishing a candidate', () => {
   const { service, phrase } = fixture({ contextualMelody: false });
   const previous = service.project();
-  const layout = phrase.layOutTrackPhrase;
+  const layout = phrase.resolvedTrackPhrase;
   let attempts = 0;
-  phrase.layOutTrackPhrase = () => { attempts++; throw new RangeError('Section melody cannot be generated.'); };
+  phrase.resolvedTrackPhrase = () => { attempts++; throw new RangeError('Section melody cannot be generated.'); };
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
       assert.equal(service.generateComposition(), 'invalid');
@@ -93,7 +93,29 @@ test('section layout failures reject Compose before publishing a candidate', () 
       assert.equal(service.generationError(), 'Section melody cannot be generated.');
     }
     assert.equal(attempts, 2, 'both attempts validate section generation, beyond global note counts');
-  } finally { phrase.layOutTrackPhrase = layout; }
+  } finally { phrase.resolvedTrackPhrase = layout; }
+});
+
+test('parameter edits, track/group rerolls and Compose validate without detached note copies', () => {
+  const { service, phrase } = fixture({ contextualMelody: false });
+  phrase.layOutTrackPhrase = () => { throw Error('Validation requested detached notes'); };
+  const commands = [
+    () => service.updateTrackGeneratorSettings('track-bass-1', { noteLengthMultiplier: 125 }),
+    () => service.rerollRoleTracks('chords', 'track-chords-1'),
+    () => service.rerollRoleTracks('bass'),
+    () => service.generateComposition(),
+  ];
+  for (const command of commands) {
+    const previous = service.project();
+    command();
+    assert.notEqual(service.project(), previous);
+    assert.equal(service.generationError(), null);
+    for (const track of service.project().tracks) {
+      const notes = phrase.resolvedTrackPhrase(service.project(), track);
+      assert.ok(Object.isFrozen(notes));
+      assert.ok(notes.every(Object.isFrozen));
+    }
+  }
 });
 
 test('track layouts share generation across consumers without sharing mutable note objects', () => {

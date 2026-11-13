@@ -3,6 +3,59 @@ const assert = require('node:assert/strict');
 const { Midi } = require('@tonejs/midi');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('note processing preserves enumerable extension fields and detaches frozen inputs', () => {
+  const f = fixture(), project = f.service.project();
+  const { mapChordNotes } = f.load('core/music/section-context.ts');
+  const { applyPartTiming } = f.load('core/music/part-processing.ts');
+  const { processOutputNotes } = f.load('core/music/output-processing.ts');
+  const marker = Symbol('note extension'), extension = Object.freeze({ owner: 'manual' });
+  const note = Object.freeze({ id: 'pickup', midi: 60, startBeat: -1, durationBeats: 6, velocity: 90,
+    sectionId: project.arrangement[0].id, phraseSource: 'section-edited', extension, [marker]: 'retained',
+    ...JSON.parse('{"__proto__":{"retained":true}}') });
+  const mapped = mapChordNotes([note], [2, 6, 3, 5]);
+  const delayed = applyPartTiming(mapped, { offset: 100, feedbackCount: 2, feedbackDuration: 750, feedbackVol: 65 });
+  const processed = processOutputNotes(project, 'track-test', 'melody', delayed);
+  assert.equal(mapped[0].startBeat, -.5);
+  assert.equal(mapped[0].durationBeats, 4);
+  assert.equal(processed.length, 3);
+  for (const output of [...mapped, ...delayed, ...processed]) {
+    assert.notEqual(output, note);
+    assert.equal(output.extension, extension);
+    assert.equal(output[marker], 'retained');
+    assert.equal(output.sectionId, note.sectionId);
+    assert.equal(output.phraseSource, note.phraseSource);
+    assert.ok(Object.hasOwn(output, '__proto__'));
+    assert.equal(Object.getPrototypeOf(output), Object.prototype);
+  }
+  assert.deepEqual(delayed.map(n => [n.startBeat, n.velocity]), [[0, 90], [.35, 58], [1.1, 38]]);
+  assert.equal(note.startBeat, -1);
+  assert.equal(note.durationBeats, 6);
+  assert.notEqual(processed[0], delayed[0]);
+});
+
+test('arranged manual notes retain metadata through ownership tagging and project transpose', () => {
+  const f = fixture(), base = f.service.project();
+  const { resolvedTrackPhrase } = f.load('core/music/phrase.ts');
+  const marker = Symbol('manual extension'), extension = Object.freeze({ label: 'source' });
+  const note = Object.freeze({ id: 'manual', midi: 60, startBeat: 1, durationBeats: 2, velocity: 90, extension, [marker]: true });
+  const track = { ...base.tracks.find(track => track.role === 'bass'), editedPhrase: [note] };
+  const project = { ...base, transposeSemitones: 7, tracks: [track], arrangement: base.arrangement.slice(0, 2).map((section, index) => ({
+    ...section, measures: 1, trackPresence: { [track.id]: true }, context: { keyChange: 3 },
+    ...(index === 0 ? { trackPhrases: { [track.id]: [note] } } : {}),
+  })) };
+  const notes = resolvedTrackPhrase(project, track);
+  assert.deepEqual(notes.map(note => [note.midi, note.startBeat, note.phraseSource]), [[67, 1, 'section-edited'], [67, 5, 'global-edited']]);
+  for (const [index, output] of notes.entries()) {
+    assert.equal(output.sectionId, project.arrangement[index].id);
+    assert.equal(output.extension, extension);
+    assert.equal(output[marker], true);
+    assert.ok(Object.isFrozen(output));
+    assert.notEqual(output, note);
+  }
+  assert.equal(note.midi, 60);
+  assert.equal(note.startBeat, 1);
+});
+
 test('output processing is deterministic, bounded, preserves silence and section ownership', () => {
   const f = fixture(), p = f.service.project();
   const process = f.load('core/music/output-processing.ts').processOutputNotes;
