@@ -398,6 +398,19 @@ function rerollMelody(random: JavaRandom, seed: bigint, policy: TrackGenerationP
     const patternSeed = next.patternSeed || Number(BigInt.asIntN(32, seed));
     Object.assign(next, { melodyPatternOffsets: chooseMelodyPattern((patternSeed + order) | 0) });
   }
+  // Intentional variety beyond Java's GUI defaults. Keep the creation stream above
+  // intact (especially pattern seeds); stable role order gives each voice its own stream.
+  const variety = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4d454c4f44595641n ^ BigInt(order) * 0x9e3779b97f4a7c15n));
+  Object.assign(next, {
+    speed: variety.nextInt(201) - 100,
+    targetDirection: (['ANY', 'ANY', 'ASC', 'DESC'] as const)[variety.nextInt(4)],
+    ending: (['OPEN', 'CLOSED', 'LOOP'] as const)[variety.nextInt(3)],
+    style: (['TONAL', 'MODAL', 'JAZZ'] as const)[variety.nextInt(3)],
+    form: (['STATEMENT_VARIATION', 'QUESTION_ANSWER', 'SENTENCE', 'CONTINUOUS'] as const)[variety.nextInt(4)],
+  });
+  // Secondary voices can be active countermelodies as well as sparse accents.
+  // Their quieter velocities and register choices still distinguish them from the lead.
+  if (order > 1) Object.assign(next, { pauseChance: variety.nextInt(66), fillPauses: variety.nextBoolean() });
   return next;
 }
 

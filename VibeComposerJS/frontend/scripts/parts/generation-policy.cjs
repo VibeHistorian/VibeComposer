@@ -490,8 +490,9 @@ test('P5e target mode edits reinterpret scoped notes and prepare Chordlet target
   service.updateTrackGenerationPolicy('melody', { targetsOnCompose: true });
   const project = service.project(), locked = track(duplicate);
   const targetSeed = ((track(id).generatorSettings.patternSeed || Number(BigInt.asIntN(32, BigInt(project.seed)))) + 1) | 0;
-  const expected = chooseMelodyTargets(targetSeed, project.progression, project.melodyGlobal, project.key, project.scale, project.progressionChords);
   assert.equal(service.generateComposition(), 'changed');
+  const expected = chooseMelodyTargets(targetSeed, project.progression, project.melodyGlobal, project.key, project.scale,
+    project.progressionChords, track(id).generatorSettings);
   assert.deepEqual(track(id).generatorSettings.chordNoteChoices, expected);
   assert.strictEqual(track(duplicate), locked);
   assert.strictEqual(service.project().arrangement, project.arrangement);
@@ -721,6 +722,53 @@ test('main rerolls randomize instruments by default for every role and preserve 
     const restored = new (load('core/project/project.service.ts').ProjectService)();
     assert.equal(restored.project().instrumentGenerationPolicies[role].randomize, false);
   }
+});
+
+test('Melody rerolls cover contours, the full speed range and sentence choices for every voice', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts');
+  const source = service.project().tracks.find(track => track.role === 'melody');
+  for (const order of [1, 2, 3]) {
+    const seen = Object.fromEntries(['speed', 'pauseChance', 'fillPauses', 'targetDirection', 'ending', 'style', 'form'].map(key => [key, new Set()]));
+    for (let sample = 0n; sample < 600n; sample++) {
+      const seed = BigInt.asIntN(64, 9007199254740993n + sample * 0x9e3779b97f4a7c15n);
+      const roll = () => core.rerollRoleSettings(seed, 'melody', core.DEFAULT_TRACK_POLICIES.melody, [source], [order])[0];
+      const result = roll();
+      assert.deepEqual(result, roll(), 'exact long seeds replay');
+      const settings = load('core/music/part-settings.ts');
+      assert.ok(settings.decodePartPatch('melody', settings.settingsValues(result, 'melody')));
+      assert.ok(settings.validVelocityRange(result, 'melody'));
+      assert.ok(result.speed >= -100 && result.speed <= 100);
+      assert.ok(result.pauseChance >= 0 && result.pauseChance <= (order === 1 ? 34 : 65));
+      for (const key of Object.keys(seen)) seen[key].add(result[key]);
+    }
+    assert.ok(Math.min(...seen.speed) <= -95 && Math.max(...seen.speed) >= 95);
+    assert.deepEqual([...seen.targetDirection].sort(), ['ANY', 'ASC', 'DESC']);
+    assert.deepEqual([...seen.ending].sort(), ['CLOSED', 'LOOP', 'OPEN']);
+    assert.deepEqual([...seen.style].sort(), ['JAZZ', 'MODAL', 'TONAL']);
+    assert.deepEqual([...seen.form].sort(), ['CONTINUOUS', 'QUESTION_ANSWER', 'SENTENCE', 'STATEMENT_VARIATION']);
+    assert.equal(seen.fillPauses.size, 2);
+    if (order > 1) assert.ok(Math.min(...seen.pauseChance) <= 5 && Math.max(...seen.pauseChance) >= 60);
+  }
+});
+
+test('Melody variety keeps Java creation seeds aligned and does not depend on pattern permissions', () => {
+  const { service, load } = fixture();
+  const core = load('core/music/track-generation.ts'), { JavaRandom } = load('core/music/java-random.ts');
+  const source = service.project().tracks.find(track => track.role === 'melody');
+  const random = new JavaRandom(42n);
+  const results = core.rerollRoleSettings(42n, 'melody', core.DEFAULT_TRACK_POLICIES.melody, [source, source, source], [1, 2, 3]);
+  for (const [index, result] of results.entries()) {
+    random.nextInt(25); random.nextInt(5); random.nextInt(15); random.nextInt(2); random.nextInt(50); random.nextInt(6);
+    if (index === 0) { random.nextBoolean(); random.nextInt(35); random.nextInt(30); random.nextInt(25); random.nextInt(25); }
+    else { random.nextInt(40); random.nextInt(20); random.nextInt(20); random.nextInt(40); }
+    assert.equal(result.patternSeed, random.nextInt());
+  }
+  const policy = { ...core.DEFAULT_TRACK_POLICIES.melody, patterns: false, rerollSeeds: false };
+  const [result] = core.rerollRoleSettings(42n, 'melody', policy, [source], [1]);
+  for (const key of ['speed', 'targetDirection', 'ending', 'style', 'form']) assert.equal(result[key], results[0][key]);
+  assert.deepEqual(result.melodyPatternOffsets, source.generatorSettings.melodyPatternOffsets);
+  assert.equal(result.patternSeed, source.generatorSettings.patternSeed);
 });
 
 test('Arp direction covers every selection and Bass randomized variance stays within 0–50 without limiting manual edits', () => {

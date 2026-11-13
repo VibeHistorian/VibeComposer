@@ -16,6 +16,8 @@ These rules define translation constraints and implementation conventions. Works
 
    Keep random streams and seed derivation explicit. Reproducibility depends on matching both the Java algorithm and the order in which each generator consumes random values.
 
+   Melody parameter creation/rerolls intentionally broaden Java's GUI defaults: Speed spans −100–100, secondary Pause spans 0–65%, and Direction, Ending, Style and Form vary. These choices use a separate seeded stream keyed by stable Melody order; retain the original creation draws so pattern seeds and unrelated settings keep their existing sequence. Fixed-setting phrase generation and Java algorithm fixtures remain unchanged.
+
 3. **Port generation behavior, not the legacy control layout.** Follow [DAW_REDESIGN_PLAN.md](DAW_REDESIGN_PLAN.md) for workspace layout and interaction, the [project ownership guide](frontend/src/app/core/project/README.md) for settings and state ownership, [CONTEXTUAL_CONTROLS_PLAN.md](CONTEXTUAL_CONTROLS_PLAN.md) for future implementation scope, and [CONTROL_PLACEMENT_MAP.md](CONTROL_PLACEMENT_MAP.md) for Melody scopes, role exceptions, exclusions and Java lookups.
 
 4. **Use historical project commands; commit each gesture once.**
