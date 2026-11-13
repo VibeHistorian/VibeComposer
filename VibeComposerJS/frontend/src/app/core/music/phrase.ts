@@ -21,7 +21,7 @@ import { melodyContext, type MelodyContext } from './melody-context';
 import { baseGenerationHarmony, sectionGenerationHarmony, withTrackSeed } from './project-harmony';
 import type { GenerationHarmony } from './harmony-voicing';
 import { chordGridBeat, mapChordBeat, mapChordNotes, sectionDurationBeats, sectionProject } from './section-context';
-import { trackHasSectionHarmony } from './harmony-display';
+import { trackHasSectionHarmony, trackHasSectionRhythm } from './harmony-display';
 import { applyPhraseRangeEdits, hasManualPhrase } from './phrase-range-edit';
 import { sectionPhraseBounds } from './phrase-bounds';
 
@@ -92,7 +92,8 @@ export function withBassOctaveInterval(notes: readonly PhraseNote[], enabled: bo
   ];
 }
 
-export type PhraseSource = 'global-generated' | 'global-edited' | 'section-generated' | 'section-edited' | 'global-section-harmony';
+export type PhraseSource = 'global-generated' | 'global-edited' | 'section-generated' | 'section-edited'
+  | 'global-section-harmony' | 'global-section-rhythm' | 'global-section-harmony-rhythm';
 
 export function trackPhraseSource(track: CompositionTrack, section?: ArrangementSection, project?: CompositionProject): PhraseSource {
   if (section?.trackPhrases?.[track.id] !== undefined) return 'section-edited';
@@ -102,7 +103,10 @@ export function trackPhraseSource(track: CompositionTrack, section?: Arrangement
   const local = section && (Object.keys(section.trackPartOverrides?.[track.id] ?? {}).length > 0
     || Object.keys(section.rolePartOverrides?.[track.role] ?? {}).length > 0);
   if (local) return 'section-generated';
-  return section && project && trackHasSectionHarmony(project, track, section) ? 'global-section-harmony' : 'global-generated';
+  if (!section || !project) return 'global-generated';
+  const harmony = trackHasSectionHarmony(project, track, section), rhythm = trackHasSectionRhythm(project, track, section);
+  return harmony && rhythm ? 'global-section-harmony-rhythm' : harmony ? 'global-section-harmony'
+    : rhythm ? 'global-section-rhythm' : 'global-generated';
 }
 
 type ArrangedNote = PhraseNote & { readonly phraseSource?: PhraseSource; readonly sectionId?: string };

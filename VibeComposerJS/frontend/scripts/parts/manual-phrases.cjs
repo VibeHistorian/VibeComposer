@@ -285,12 +285,36 @@ test('global generated notes mark differing section harmony without claiming sec
   const { service, phrase } = fixture();
   const project = service.project(), track = project.tracks.find(track => track.role === 'bass');
   const section = { ...project.arrangement[0], measures: 1, chordDegrees: [2], customDurations: [2], trackPresence: { [track.id]: true } };
-  assert.equal(phrase.trackPhraseSource(track, section, project), 'global-section-harmony');
+  assert.equal(phrase.trackPhraseSource(track, section, project), 'global-section-harmony-rhythm');
   assert.equal(phrase.trackPhraseSource(track, { ...section, trackPartOverrides: { [track.id]: { transpose: 12 } } }, project), 'section-generated');
   assert.equal(phrase.trackPhraseSource({ ...track, editedPhrase: [] }, section, project), 'global-edited');
   assert.equal(phrase.trackPhraseSource(track, { ...section, trackPhrases: { [track.id]: [] } }, project), 'section-edited');
   const notes = phrase.layOutTrackPhrase({ ...project, arrangement: [section] }, track, true);
-  assert.ok(notes.length > 0); assert.ok(notes.every(note => note.phraseSource === 'global-section-harmony'));
+  assert.ok(notes.length > 0); assert.ok(notes.every(note => note.phraseSource === 'global-section-harmony-rhythm'));
+});
+
+test('section source qualifiers classify harmony, rhythm and neutral modifiers by their effective role', () => {
+  const { service, phrase } = fixture();
+  const project = { ...service.project(), key: 'C', scale: 'major', progression: [1,4,5,1], progressionChords: undefined };
+  const section = { ...project.arrangement[0], context: undefined };
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
+    const track = { ...project.tracks.find(track => track.role === role), generatorSettings: {
+      ...project.tracks.find(track => track.role === role).generatorSettings, swingPercent: 50 } };
+    const source = patch => phrase.trackPhraseSource(track, { ...section, ...patch }, project);
+    for (const patch of [
+      { customDurations: [2,6,2,6] }, { context: { beatDurationMultiplier: 0.5 } },
+      { context: { beatDurationMultiplier: 2 } }, { context: { tempoBpm: project.tempoBpm + 10 } },
+    ]) assert.equal(source(patch), 'global-section-rhythm', role);
+    assert.equal(source({ context: { swingPercent: 65 } }), role === 'bass' ? 'global-generated' : 'global-section-rhythm');
+    for (const context of [{ key: 'D' }, { scale: 'natural-minor' }, { keyChange: 2 }, { keyChangeType: 'two-five-one' }]) {
+      assert.equal(source({ context }), role === 'drums' ? 'global-generated' : 'global-section-harmony');
+    }
+    assert.equal(source({ chordDegrees: [2,5,2,5] }), role === 'drums' ? 'global-generated' : 'global-section-harmony');
+    for (const patch of [{ customDurations: [4,4,4,4] }, { context: { beatDurationMultiplier: 1, tempoBpm: project.tempoBpm,
+      swingPercent: 50, key: project.key, scale: project.scale, keyChange: 0, velocityPercent: { [role]: 50 } } }]) {
+      assert.equal(source(patch), 'global-generated', 'explicit matching values and dynamics do not imply harmony/rhythm');
+    }
+  }
 });
 
 test('score phrase sources follow local edits, forced generation and inherited global edits without changing layout output', () => {

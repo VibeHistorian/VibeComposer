@@ -621,6 +621,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       'global-generated': 'Global generated', 'global-edited': 'Global edited phrase',
       'section-generated': 'Section generated', 'section-edited': 'Section edited phrase',
       'global-section-harmony': 'Global track [Section harmony]',
+      'global-section-rhythm': 'Global track [Section rhythm]',
+      'global-section-harmony-rhythm': 'Global track [Section harmony] [Section rhythm]',
     };
     this.noteTooltip.set({
       time: musicalTime(note.startBeat, false, this.preferences.midiPpq()),
@@ -629,7 +631,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       pitch: note.color === 'drums' ? this.midi.drumLabel(note.midi, this.drumSlots())
         : `${['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'][note.midi % 12]}${Math.floor(note.midi / 12) - 1} [${note.midi}]`,
       velocity: note.velocity, source: sources[note.phraseSource ?? 'global-generated'],
-      x: Math.max(8, Math.min(x + 14, this.width - 248)),
+      x: Math.max(8, Math.min(x + 14, this.width - 328)),
       y: y + 110 <= this.height ? y + 14 : Math.max(8, y - 102),
     });
   }

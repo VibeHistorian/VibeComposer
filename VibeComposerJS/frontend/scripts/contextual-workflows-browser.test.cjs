@@ -969,7 +969,11 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       star.click(); eye.click(); manual.click();
       await wait(()=>read().randomizeArrangementOnCompose && read().arrangementPreview && star.getAttribute('aria-pressed')==='true' && eye.getAttribute('aria-pressed')==='true');
       const before=JSON.stringify(read().arrangement);
-      const structure=project=>JSON.stringify(project.arrangement.map(({trackPresence,...section})=>section));
+      const structure=project=>JSON.stringify(project.arrangement.map(({trackPresence,...section})=>{
+        // Compose may choose a shared beat multiplier while manual mode keeps structure.
+        const {beatDurationMultiplier,...context}=section.context??{};
+        return {...section,context:Object.keys(context).length?context:undefined};
+      }));
       const originalStructure=structure(read());
       const position=document.querySelector('[aria-label="Song position"]');
       const timelineBounds=async project=>(await fetch('/timeline-bounds',{method:'POST',body:JSON.stringify(project)})).json();
@@ -1020,6 +1024,9 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(async()=>Math.abs(Number(position.getAttribute('aria-valuenow'))-await expectedPosition(read()))<0.001);
       await wait(previewLoopMatches);
       const composePreview=structure(read())===originalStructure;
+      const sharedBeatDuration=read().arrangement[0].context?.beatDurationMultiplier;
+      const composeTiming=[0.5,1,2].includes(sharedBeatDuration)
+        && read().arrangement.every(section=>section.context?.beatDurationMultiplier===sharedBeatDuration);
       const fits=[star,eye,manual,reroll].every(button=>{const b=button.getBoundingClientRect();return b.left>=0 && b.right<=innerWidth;});
       manual.click();
       await wait(()=>read().arrangementManual===false);
@@ -1028,7 +1035,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>JSON.stringify(read())!==beforeAutoCompose && structure(read())!==originalStructure);
       await wait(previewLoopMatches);
       const automaticStructure=structure(read())!==originalStructure;
-      return {noBars,icons,rerollPreview,composePreview,fits,manualDefault,automaticStructure};
+      return {noBars,icons,rerollPreview,composePreview,composeTiming,fits,manualDefault,automaticStructure};
     })()` });
     assert.equal(arrangementControls.exceptionDetails,undefined,JSON.stringify(arrangementControls));
     for (const [key,value] of Object.entries(arrangementControls.result.value)) assert.equal(value,true,'arrangement '+key);

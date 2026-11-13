@@ -447,11 +447,17 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       canvas.dispatchEvent(new PointerEvent('pointermove',{clientX:c.left+c.width*fraction,clientY:box.top+box.height/2}));
       await new Promise(r=>requestAnimationFrame(r));
       const text=document.querySelector('.note-tooltip')?.textContent;
-      if(text?.includes('Global track [Section harmony]'))return text;
+      if(text?.includes('Global track [Section harmony]')){
+        const tip=document.querySelector('.note-tooltip'),source=tip.querySelector('.note-tooltip-source'),track=tip.querySelector('.note-tooltip-track');
+        const s=source.getBoundingClientRect(),t=track.getBoundingClientRect();
+        return {text,source:source.textContent,trackBelow:t.top>=s.bottom,trackLast:tip.lastElementChild===track,
+          sourceFits:source.scrollWidth<=source.clientWidth&&s.height<20};
+      }
     }
     throw Error('No generated bass note showed the section harmony source');
   })()`);
-  assert.match(harmonyTooltip,/Global track \[Section harmony\]/);
+  assert.match(harmonyTooltip.source,/Global track \[Section harmony\] \[Section rhythm\]/);
+  assert.equal(harmonyTooltip.trackBelow,true);assert.equal(harmonyTooltip.trackLast,true);assert.equal(harmonyTooltip.sourceFits,true);
   await capture('section-harmony-headers');
   const scoreSettings=await evaluate(`(async()=>{${waitCode}
     const button=text=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===text||b.getAttribute('aria-label')===text);

@@ -464,8 +464,17 @@ test('note hover immediately shows pitch, velocity, custom track order and sourc
   component.showNoteTooltip({ ...hit, note: { ...note, trackName: 'B2', midi: 0, phraseSource: 'global-generated' } }, 799, 299);
   assert.equal(component.noteTooltip().track, 'B2');
   assert.equal(component.noteTooltip().pitch, 'C-1 [0]');
-  assert.ok(component.noteTooltip().x + 240 <= component.width);
+  assert.ok(component.noteTooltip().x + 320 <= component.width);
   assert.ok(component.noteTooltip().y + 76 <= component.height);
+  for (const [source, label] of [
+    ['global-section-harmony', 'Global track [Section harmony]'],
+    ['global-section-rhythm', 'Global track [Section rhythm]'],
+    ['global-section-harmony-rhythm', 'Global track [Section harmony] [Section rhythm]'],
+  ]) {
+    component.showNoteTooltip({ ...hit, note: { ...note, phraseSource: source } }, 799, 299);
+    assert.equal(component.noteTooltip().source, label);
+    assert.equal(component.noteTooltip().track, 'Deep bass (#2)');
+  }
   component.onPointerLeave();
   assert.equal(component.noteTooltip(), null);
 });

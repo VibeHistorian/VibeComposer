@@ -267,7 +267,7 @@ test('harmony headers compare effective chords and durations and reuse transpose
   assert.equal(trackHasSectionHarmony(project, bass, section), false);
   assert.equal(trackHasSectionHarmony(project, bass, local), true);
   assert.equal(trackHasSectionHarmony(project, drums, { ...section, chordDegrees: [2, 5] }), false);
-  assert.equal(trackHasSectionHarmony(project, drums, local), true);
+  assert.equal(trackHasSectionHarmony(project, drums, local), false);
   assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { key: 'C', scale: 'major', tempoBpm: project.tempoBpm } }), false);
   assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { key: 'D' } }), true);
 });

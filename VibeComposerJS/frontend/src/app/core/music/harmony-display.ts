@@ -55,12 +55,18 @@ export function sectionHarmonyDisplay(project: CompositionProject, section: Arra
   return result;
 }
 
-/** Section-wide context may affect generated notes without taking ownership of track settings. */
+/** Pitch/harmonic changes, independent of section timing and dynamics. */
 export function trackHasSectionHarmony(project: CompositionProject, track: CompositionTrack, section: ArrangementSection): boolean {
   const harmony = sectionHarmonyDisplay(project, section, track.role), context = section.context;
-  return (track.role !== 'drums' && harmony.chordsDiffer) || harmony.durationsDiffer
+  return track.role !== 'drums' && (harmony.chordsDiffer
+    || context?.key !== undefined && context.key !== project.key
+    || context?.scale !== undefined && context.scale !== project.scale);
+}
+
+/** Temporal changes: chord lengths/beat scaling, tempo and role-effective swing. */
+export function trackHasSectionRhythm(project: CompositionProject, track: CompositionTrack, section: ArrangementSection): boolean {
+  const harmony = sectionHarmonyDisplay(project, section, track.role), context = section.context;
+  return harmony.durationsDiffer
     || context?.tempoBpm !== undefined && context.tempoBpm !== project.tempoBpm
-    || track.role !== 'bass' && context?.swingPercent !== undefined && context.swingPercent !== (track.generatorSettings.swingPercent ?? 50)
-    || track.role !== 'drums' && (context?.key !== undefined && context.key !== project.key
-      || context?.scale !== undefined && context.scale !== project.scale);
+    || track.role !== 'bass' && context?.swingPercent !== undefined && context.swingPercent !== (track.generatorSettings.swingPercent ?? 50);
 }
