@@ -616,26 +616,47 @@ export class WorkspaceCanvasComponent {
   });
   private readonly trackPhrases = computed(() => this.timeline().notesByTrack);
   readonly scoreNotes = computed<ScoreNote[]>(() => {
-    const phrases = this.tracks().map(track => ({ track, notes: this.trackPhrases()[track.id] ?? [] }));
-    const drumPitches = phrases.filter(item => item.track.role === 'drums').flatMap(item => item.notes.map(note => note.midi));
-    const drumMin = drumPitches.reduce((minimum, pitch) => Math.min(minimum, pitch), Infinity);
-    const drumMax = drumPitches.reduce((maximum, pitch) => Math.max(maximum, pitch), -Infinity);
-    return phrases.flatMap(({ track, notes }) => {
-      if (notes.length === 0) return [];
-      const minPitch = track.role === 'drums' ? drumMin : Math.min(...notes.map((note) => note.midi));
-      const maxPitch = track.role === 'drums' ? drumMax : Math.max(...notes.map((note) => note.midi));
+    const tracks = this.tracks(), phrases = this.trackPhrases();
+    const counts = new Map<ArrangedPart, number>(), orders = new Map<ArrangedPart, number>();
+    let drumMin = Infinity, drumMax = -Infinity;
+    for (const track of tracks) {
+      counts.set(track.role, (counts.get(track.role) ?? 0) + 1);
+      if (track.role === 'drums') for (const note of phrases[track.id] ?? []) {
+        drumMin = Math.min(drumMin, note.midi);
+        drumMax = Math.max(drumMax, note.midi);
+      }
+    }
+    const result: ScoreNote[] = [];
+    for (const track of tracks) {
+      const trackCount = counts.get(track.role)!;
+      const trackOrder = (orders.get(track.role) ?? 0) + 1;
+      orders.set(track.role, trackOrder);
+      const notes = phrases[track.id];
+      if (!notes?.length) continue;
+      let minPitch = drumMin, maxPitch = drumMax;
+      if (track.role !== 'drums') {
+        minPitch = Infinity; maxPitch = -Infinity;
+        for (const note of notes) {
+          minPitch = Math.min(minPitch, note.midi);
+          maxPitch = Math.max(maxPitch, note.midi);
+        }
+      }
       const pitchSpan = Math.max(12, maxPitch - minPitch);
-      return notes.map((note) => ({
-        ...note,
-        part: track.id,
-        trackName: track.name, instrumentProgram: track.mix.program,
-        trackCount: this.tracksFor(track.role).length,
-        trackOrder: this.tracksFor(track.role).findIndex(candidate => candidate.id === track.id) + 1,
-        color: track.role,
-        topPercent: (maxPitch - note.midi) / pitchSpan * 86 + 3,
-        opacity: 0.4 + note.velocity / 127 * 0.6,
-      }));
-    });
+      for (const note of notes) {
+        // Preserve source/extension fields on a detached copy, then add display metadata.
+        const projected = { ...note } as { -readonly [K in keyof ScoreNote]: ScoreNote[K] };
+        projected.part = track.id;
+        projected.trackName = track.name;
+        projected.instrumentProgram = track.mix.program;
+        projected.trackCount = trackCount;
+        projected.trackOrder = trackOrder;
+        projected.color = track.role;
+        projected.topPercent = (maxPitch - note.midi) / pitchSpan * 86 + 3;
+        projected.opacity = 0.4 + note.velocity / 127 * 0.6;
+        result.push(projected);
+      }
+    }
+    return result;
   });
   tracksFor(role: ArrangedPart): TrackRow[] { return this.tracks().filter((track) => track.role === role); }
 

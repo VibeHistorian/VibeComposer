@@ -62,6 +62,53 @@ function fixture() {
   return { ui, project, workspace, load, flushEffects: () => effects.forEach(callback => callback()) };
 }
 
+test('score projection retains track order, empty-role members, shared drum bounds and detached metadata', () => {
+  const { workspace } = fixture();
+  const marker = Symbol('source extension'), extension = Object.freeze({ label: 'manual' });
+  const track = (id, role, program = 0) => Object.freeze({ id, role, name: id, mix: Object.freeze({ program }) });
+  const note = (id, midi, velocity = 90) => Object.freeze({ id, midi, startBeat: 1, durationBeats: 2, velocity,
+    sectionId: 'section-a', phraseSource: 'section-edited', extension, [marker]: 'retained' });
+  let tracks = [track('silent-bass', 'bass'), track('kick', 'drums'), track('bass', 'bass', 32),
+    track('melody', 'melody', 40), track('silent-drums', 'drums'), track('missing-arp', 'arpeggio'),
+    track('snare', 'drums'), track('wide-bass', 'bass', 33), track('silent-melody', 'melody')];
+  const phrases = Object.freeze({ kick: Object.freeze([note('low-drum', 36), note('high-drum', 42)]),
+    bass: Object.freeze([note('low-bass', 40), note('high-bass', 44)]),
+    melody: Object.freeze([note('silent-note', 60, 0), note('loud-note', 60, 127)]),
+    snare: Object.freeze([note('snare-note', 50)]), 'wide-bass': Object.freeze([note('wide-low', 20), note('wide-high', 80)]),
+    'silent-bass': Object.freeze([]), 'silent-drums': Object.freeze([]), 'silent-melody': Object.freeze([]) });
+  workspace.tracks = () => tracks;
+  workspace.trackPhrases = () => phrases;
+  const result = workspace.scoreNotes();
+  assert.deepEqual(result.map(note => [note.id, note.part, note.trackOrder, note.trackCount]), [
+    ['low-drum', 'kick', 1, 3], ['high-drum', 'kick', 1, 3],
+    ['low-bass', 'bass', 2, 3], ['high-bass', 'bass', 2, 3],
+    ['silent-note', 'melody', 1, 2], ['loud-note', 'melody', 1, 2],
+    ['snare-note', 'snare', 3, 3], ['wide-low', 'wide-bass', 3, 3], ['wide-high', 'wide-bass', 3, 3],
+  ]);
+  assert.deepEqual(result.map(note => note.topPercent), [89, 8 / 14 * 86 + 3, 4 / 12 * 86 + 3, 3, 3, 3, 3, 89, 3]);
+  assert.equal(result[4].opacity, .4);
+  assert.equal(result[5].opacity, 1);
+  for (const projected of result) {
+    const source = phrases[projected.part].find(note => note.id === projected.id);
+    assert.notEqual(projected, source);
+    assert.equal(projected.sectionId, source.sectionId);
+    assert.equal(projected.phraseSource, source.phraseSource);
+    assert.equal(projected.extension, extension);
+    assert.equal(projected[marker], 'retained');
+    assert.equal(projected.trackName, projected.part);
+    assert.equal(projected.instrumentProgram, tracks.find(track => track.id === projected.part).mix.program);
+    assert.equal(projected.color, tracks.find(track => track.id === projected.part).role);
+  }
+  result[0].midi = 1;
+  assert.equal(phrases.kick[0].midi, 36);
+  tracks = [track('snare', 'drums', 10), track('kick', 'drums', 11)];
+  const changed = workspace.scoreNotes();
+  assert.deepEqual(changed.map(note => [note.part, note.trackOrder, note.trackCount, note.instrumentProgram]),
+    [['snare', 1, 2, 10], ['kick', 2, 2, 11], ['kick', 2, 2, 11]]);
+  tracks = [track('missing-arp', 'arpeggio')];
+  assert.deepEqual(workspace.scoreNotes(), []);
+});
+
 test('role settings default collapsed, follow role selection and retain manual toggles until selection changes', () => {
   const { workspace, flushEffects } = fixture();
   const roles = ['melody', 'chords', 'arpeggio', 'bass', 'drums'];
