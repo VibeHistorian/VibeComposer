@@ -34,7 +34,7 @@ import { shouldGenerateTrackInSection } from '../../core/music/arrangement-gener
 import { DRUM_INSTRUMENTS, MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
-import { phraseForTrack, trackPhraseSource } from '../../core/music/phrase';
+import { trackPhraseSource } from '../../core/music/phrase';
 import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import { getDiatonicChords } from '../../core/music/harmony';
 import { sectionGenerationHarmony } from '../../core/music/project-harmony';
@@ -61,7 +61,6 @@ import { resolvePartTrack, settingsValues, partValuesEqual, type PartSettingValu
 
 type TrackRow = CompositionTrack & {
   readonly color: ArrangedPart;
-  readonly noteCount: number;
 };
 
 interface TimelineSection {
@@ -511,14 +510,9 @@ export class WorkspaceCanvasComponent {
       return { ...slot, left: start - left, width: end - start, endX: end - left, sectionEnd: index === section.slots.length - 1 };
     }) };
   }));
-  private readonly trackNoteCounts = computed(() => {
-    const project = this.phraseProject();
-    return new Map(project.tracks.map(track => [track.id, phraseForTrack(project, track).length]));
-  });
   readonly tracks = computed<TrackRow[]>(() => this.project().tracks.map((track) => ({
     ...track,
     color: track.role,
-    noteCount: this.trackNoteCounts().get(track.id) ?? 0,
   })));
   readonly arrangedTracks = computed(() => tracksInRoleOrder(this.tracks()));
   private readonly scoreVisibleTrackIds = computed(() => {
