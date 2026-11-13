@@ -676,3 +676,143 @@ test('multi-drum drafts keep ownership, smart-exit destinations and one atomic u
     { trackId: tracks[2].id, notes: phrase(42, 200) }]), false);
   assert.equal(service.exportProjectJson(), invalidBefore, 'an invalid phrase aborts the whole batch');
 });
+
+test('manual adjustments resolve global and section inheritance without mutating notes, persist and transfer on restore', () => {
+  const { service, phrase, midi, load } = fixture();
+  const id = 'track-bass-1';
+  const notes = [{ id: 'manual-adjust', midi: 60, startBeat: 0, durationBeats: 1, velocity: 100 }];
+  service.updateTrackPhrase(id, notes);
+  const section = service.project().arrangement[0];
+  service.setSectionTrackPresence(0, id, true);
+  const global = { kind: 'global-track', trackId: id };
+  const local = { kind: 'section-track', trackId: id, sectionId: section.id };
+  service.updatePartSettings(global, { manualTranspose: 12, manualLength: 150, manualOffset: -250,
+    manualDelayCount: 1, manualDelayDuration: 500, manualDelayVelocity: 50 });
+  service.updatePartSettings(local, { manualTranspose: 24 });
+  const track = () => service.project().tracks.find(t => t.id === id);
+  const layout = () => phrase.layOutTrackPhrase({ ...service.project(), transposeSemitones: 0,
+    arrangement: [service.project().arrangement[0]] }, track());
+  const output = layout();
+  assert.equal(output[0].midi, 84);
+  assert.equal(output[0].startBeat, -.25);
+  assert.equal(output[0].durationBeats, 1.5);
+  assert.equal(output[1].startBeat, .25);
+  assert.equal(output[1].velocity, 50);
+  assert.deepEqual(track().editedPhrase, notes);
+  const parsed = new Midi(midi.generateCompositionMidi({ ...service.project(), transposeSemitones: 0,
+    arrangement: [service.project().arrangement[0]] }));
+  const exported = parsed.tracks.find(t => t.name === track().name);
+  assert.ok(exported.notes.some(note => note.midi === 84 && note.durationTicks / parsed.header.ppq === 1.5));
+  const saved = service.exportProjectJson();
+  assert.equal(service.importProjectJson(saved), true);
+  assert.deepEqual(layout(), output);
+  service.clearTrackPhrase(id);
+  assert.equal(track().generatorSettings.transpose, 12);
+  assert.equal(track().generatorSettings.noteLengthMultiplier, 150);
+  assert.equal(service.project().arrangement[0].trackPartOverrides[id].transpose, 24);
+  service.undo(); assert.deepEqual(layout(), output);
+  service.redo(); assert.equal(track().editedPhrase, undefined);
+});
+
+test('manual controls follow effective phrase ownership and drafts edit unadjusted source notes', () => {
+  const { service, ui, load } = fixture();
+  const id = 'track-bass-1';
+  service.updateTrackPhrase(id, [{ id: 'source', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  service.updatePartSettings({ kind: 'global-track', trackId: id }, { manualTranspose: 12, manualLength: 150, manualDelayCount: 1 });
+  const Controls = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
+  const controls = new Controls(); controls.scope = () => ({ kind: 'global-track', trackId: id }); controls.role = () => 'bass'; controls.values = () => ({});
+  assert.ok(controls.controls().some(c => c.key === 'manualTranspose'));
+  assert.ok(!controls.controls().some(c => c.key === 'rhythm'));
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.ngOnInit();
+  assert.equal(editor.notes()[0].midi, 60);
+  assert.equal(editor.notes()[0].durationBeats, 1);
+  assert.equal(editor.notes().length, 1);
+  service.clearTrackPhrase(id);
+  assert.ok(!controls.controls().some(c => c.key.startsWith('manual')));
+  assert.ok(controls.controls().some(c => c.key === 'rhythm'));
+});
+
+test('local and range manual adjustments preserve ownership, generated continuations and source editor notes', () => {
+  const { service, phrase, ui, load } = fixture();
+  const id = 'track-bass-1', section = service.project().arrangement[0];
+  service.setSectionTrackPresence(0, id, true);
+  const track = () => service.project().tracks.find(t => t.id === id);
+  const layout = () => phrase.layOutTrackPhrase({ ...service.project(), transposeSemitones: 0,
+    arrangement: [service.project().arrangement[0]] }, track());
+  const before = layout().filter(n => n.startBeat >= 4);
+  const notes = [{ id: 'range-note', midi: 60, startBeat: 0, durationBeats: 1, velocity: 100 }];
+  service.applyPhraseEdits([{ trackId: id, range: { startBeat: 0, endBeat: 4 }, notes }]);
+  service.updatePartSettings({ kind: 'global-track', trackId: id }, { manualTranspose: 12, manualLength: 150, manualOffset: -250 });
+  assert.equal(layout().find(n => n.id === 'range-note').startBeat, -.25);
+  assert.equal(layout().find(n => n.id === 'range-note').midi, 72);
+  assert.deepEqual(layout().filter(n => n.startBeat >= 4), before);
+  service.updateSectionTrackPhrase(section.id, id, notes);
+  service.updatePartSettings({ kind: 'section-role', sectionId: section.id, role: 'bass' }, { manualTranspose: 24 });
+  assert.equal(layout()[0].midi, 84);
+  ui.selectedTrackId.set(id);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId = section.id; editor.ngOnInit();
+  assert.equal(editor.notes()[0].midi, 60);
+  assert.equal(editor.notes()[0].startBeat, 0);
+  assert.equal(editor.notes()[0].durationBeats, 1);
+});
+
+test('restoring generated notes adds manual deltas to original global and effective section settings', () => {
+  for (const draftRestore of [false, true]) {
+    const { service, load } = fixture();
+    const id = 'track-bass-1';
+    const sections = service.project().arrangement;
+    const global = { kind: 'global-track', trackId: id };
+    const local = index => ({ kind: 'section-track', sectionId: sections[index].id, trackId: id });
+    service.updatePartSettings(global, { transpose: -12, noteLengthMultiplier: 125, offset: 100,
+      feedbackCount: 1, feedbackDuration: 500, feedbackVol: 80 });
+    service.updatePartSettings(local(1), { transpose: -24 });
+    service.updateTrackPhrase(id, [{ id: 'source', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+    service.updatePartSettings(local(0), { manualTranspose: 12 });
+    service.updatePartSettings(global, { manualLength: 125, manualOffset: 200, manualDelayCount: 1,
+      manualDelayDuration: 1000, manualDelayVelocity: 75 });
+    const saved = service.exportProjectJson();
+    assert.equal(service.importProjectJson(saved), true);
+    const beforeRestore = service.exportProjectJson();
+    if (draftRestore) assert.equal(service.applyPhraseEdits([{ trackId: id, notes: null }]), true);
+    else service.clearTrackPhrase(id);
+    const track = service.project().tracks.find(t => t.id === id);
+    const resolve = load('core/music/part-settings.ts').resolvePartTrack;
+    assert.equal(track.generatorSettings.transpose, -12);
+    assert.equal(resolve(track, service.project().arrangement[0]).generatorSettings.transpose, 0);
+    assert.equal(resolve(track, service.project().arrangement[1]).generatorSettings.transpose, -24);
+    assert.equal(track.generatorSettings.noteLengthMultiplier, 150);
+    assert.equal(track.generatorSettings.offset, 300);
+    assert.equal(track.generatorSettings.feedbackCount, 2);
+    assert.equal(track.generatorSettings.feedbackDuration, 750);
+    assert.equal(track.generatorSettings.feedbackVol, 90);
+    service.undo(); assert.equal(service.exportProjectJson(), beforeRestore);
+    service.redo(); assert.equal(resolve(service.project().tracks.find(t => t.id === id), service.project().arrangement[0]).generatorSettings.transpose, 0);
+  }
+});
+
+test('inherited manual deltas use section generator baselines and neutral values preserve originals', () => {
+  const { service, load } = fixture();
+  const id = 'track-bass-1', section = service.project().arrangement[0];
+  const global = { kind: 'global-track', trackId: id };
+  const local = { kind: 'section-track', sectionId: section.id, trackId: id };
+  service.updatePartSettings(global, { transpose: -12, noteLengthMultiplier: 125 });
+  service.updatePartSettings(local, { transpose: -24, noteLengthMultiplier: 75 });
+  service.updateTrackPhrase(id, [{ id: 'source', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  service.updatePartSettings(global, { manualTranspose: 12, manualLength: 125 });
+  service.clearTrackPhrase(id);
+  const resolve = load('core/music/part-settings.ts').resolvePartTrack;
+  const track = () => service.project().tracks.find(t => t.id === id);
+  assert.equal(track().generatorSettings.transpose, 0);
+  assert.equal(track().generatorSettings.noteLengthMultiplier, 150);
+  assert.equal(resolve(track(), service.project().arrangement[0]).generatorSettings.transpose, -12);
+  assert.equal(resolve(track(), service.project().arrangement[0]).generatorSettings.noteLengthMultiplier, 100);
+  service.updateTrackPhrase(id, [{ id: 'source', midi: 60, startBeat: 0, durationBeats: 1, velocity: 90 }]);
+  service.updatePartSettings(global, { manualTranspose: 0, manualLength: 100 });
+  service.clearTrackPhrase(id);
+  assert.equal(track().generatorSettings.transpose, 0);
+  assert.equal(track().generatorSettings.noteLengthMultiplier, 150);
+  assert.equal(resolve(track(), service.project().arrangement[0]).generatorSettings.transpose, -12);
+});

@@ -10,6 +10,14 @@ export type ChordVoicing = 'close' | 'open';
 export type ArpeggioRate = 'eighth' | 'sixteenth';
 
 export interface CommonPartSettings {
+  /** Non-destructive adjustments to stored manual notes, independent of baked generation. */
+  readonly manualTranspose?: number;
+  readonly manualLength?: number;
+  readonly manualOffset?: number;
+  readonly manualDelayCount?: number;
+  readonly manualDelayDuration?: number;
+  readonly manualDelayVelocity?: number;
+
   readonly customDurations?: import('./durations').Durations;
   readonly customDurationChances?: readonly number[];
   readonly customDurationRandomWeighting?: boolean;

@@ -46,6 +46,14 @@ test('manual Mode behavior setting changes matching phrases and persists in the 
     localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
   })()`);
   await reload();
+  await evaluate(`(async()=>{${waitCode}${helpers}
+    (await wait(()=>document.querySelector('.track-group.bass .track-select'))).click();
+    const length = await wait(()=>document.querySelector('[data-control-key="manualLength"] input[type="range"]'));
+    if(document.querySelector('[data-control-role="bass"] [data-control-key="rhythm"]')) throw Error('Generator controls shown for manual phrase');
+    await change(length, '150');
+    await wait(()=>read().tracks.find(t=>t.role==='bass').generatorSettings.manualLength===150);
+    if(!document.body.textContent.includes('Some controls are not available for manual phrases')) throw Error('Missing manual warning');
+  })()`);
   const result=await evaluate(`(async()=>{${waitCode}${helpers}
     const checkbox=await settings(),defaultOn=checkbox.checked;close();
     const mode=await wait(()=>document.querySelector('[aria-label="Mode"]'));

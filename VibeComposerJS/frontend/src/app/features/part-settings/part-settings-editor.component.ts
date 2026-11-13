@@ -1,3 +1,4 @@
+import { trackPhraseSource } from '../../core/music/phrase';
 import { MenuSelectComponent, type SelectMenuGroup } from '../../shared/menu-select.component';
 import { ParameterShortcutDirective } from './parameter-shortcut.directive';
 import { inspectArrangementVariation } from '../../core/music/arrangement-variation-inspection';
@@ -15,7 +16,7 @@ import type { CommonPartSettings, ChordRhythm } from '../../core/music/part-sett
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
-import { PART_CONTROLS, type PartControl, type PartSettingValue, partValuesEqual } from '../../core/music/part-settings';
+import { PART_CONTROLS, MANUAL_PARAMETER_TARGETS, type PartControl, type PartSettingValue, partValuesEqual } from '../../core/music/part-settings';
 import { chordRhythmMask } from '../../core/music/rhythm-pattern';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
@@ -105,7 +106,9 @@ export class PartSettingsEditorComponent {
       strumPauseChance: 'STRUM⏸︎', transitionChance: 'TRAN%', transitionSplit: 'TRAN⌖',
       offset: 'OFFS', accents: 'ACCENT',
     };
-    return codes[control.key] ?? control.label.toUpperCase().slice(0, 6);
+    const manualTarget = MANUAL_PARAMETER_TARGETS[control.key];
+    const label = codes[manualTarget ?? control.key] ?? control.label.toUpperCase().slice(0, 6);
+    return manualTarget ? `m${label}` : label;
   }
   readonly preferences = inject(UiPreferencesService);
   readonly projects = inject(ProjectService);
@@ -147,7 +150,17 @@ export class PartSettingsEditorComponent {
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
   readonly inheritRequested = output<string | readonly string[]>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
+  readonly phraseModes = computed(() => {
+    const scope = this.scope() ?? { kind: 'global-role', role: this.role() };
+    const project = this.projects.project();
+    const section = 'sectionId' in scope ? project.arrangement.find(section => section.id === scope.sectionId) : undefined;
+    return project.tracks.filter(track => 'trackId' in scope ? track.id === scope.trackId : track.role === scope.role)
+      .map(track => trackPhraseSource(track, section, project).endsWith('edited'));
+  });
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
+    (this.preferences.editingQuickSettings() || (control.key in MANUAL_PARAMETER_TARGETS
+      ? this.phraseModes().some(Boolean) && (control.key !== 'manualTranspose' || this.role() !== 'drums')
+      : this.phraseModes().some(manual => !manual))) &&
     !['patternFlip', 'fillFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'arpPatternCustom'].includes(control.key) &&
     (this.inspectorOnly() ? !this.isQuick(control.key)
       : this.advanced() || this.isQuick(control.key)) &&

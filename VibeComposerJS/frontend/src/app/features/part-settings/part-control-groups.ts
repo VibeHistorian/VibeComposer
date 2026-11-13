@@ -1,3 +1,4 @@
+import { MANUAL_PARAMETER_TARGETS } from '../../core/music/part-settings';
 /** Musical impact categories shared by the quick panel and inspector across roles. */
 export const PART_CONTROL_GROUPS = [
   { id: 'rhythm', label: 'Rhythm', keys: ['speed', 'hitsPerPattern', 'rhythm', 'euclideanPulses', 'patternShift', 'patternFlip', 'customPattern', 'pauseChance', 'fillPauses', 'humanize'] },
@@ -10,6 +11,7 @@ export const PART_CONTROL_GROUPS = [
 ] as const;
 
 export function partControlGroup(key: string): string {
+  key = MANUAL_PARAMETER_TARGETS[key] ?? key;
   if (['fillPausesPerChord', 'splitChance', 'startNoteChance'].includes(key)) return 'rhythm';
   if (['arpPatternRotate', 'arpPatternCustom', 'arpContour', 'arpContourChordMode'].includes(key)) return 'shape';
   if (key === 'useOctaveAdjustments') return 'pitch';

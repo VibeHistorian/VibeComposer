@@ -71,7 +71,20 @@ const split = number('exceptionChance', 'Split', 0, 100, 0);
 const swing = number('swingPercent', 'Swing', 0, 100, 50);
 const voices: readonly PartControl[] = [number('chordNotesStretch', 'Voices', 2, 6, 3, ''),
   { key: 'stretchEnabled', label: 'Use voices', kind: 'boolean', defaultValue: false }];
+export const MANUAL_PARAMETER_TARGETS: Readonly<Record<string, string>> = {
+  manualTranspose: 'transpose', manualLength: 'noteLengthMultiplier', manualOffset: 'offset',
+  manualDelayCount: 'feedbackCount', manualDelayDuration: 'feedbackDuration', manualDelayVelocity: 'feedbackVol',
+};
+const manualControls: readonly PartControl[] = [
+  { ...number('manualTranspose', 'Transpose', -36, 36, 0, ' st'), description: 'Transpose stored manual pitches in semitones.' },
+  { ...number('manualLength', 'Length', 25, 200, 100), description: 'Scale manual note durations; keep onsets unchanged.' },
+  number('manualOffset', 'Offset', -1000, 1000, 0, ' /1000 beat'),
+  number('manualDelayCount', 'Delays', 0, 5, 0, ''),
+  number('manualDelayDuration', 'Delay duration', -2000, 2000, 750, ' /1000 beat'),
+  number('manualDelayVelocity', 'Delay velocity', 10, 150, 65),
+];
 const common: readonly PartControl[] = [
+  ...manualControls,
   { key: 'patternSeed', label: 'Seed', kind: 'integer', minimum: -2147483648, maximum: 2147483647, defaultValue: 0, advanced: true,
     description: 'Java int part seed. Zero follows the project/track seed; this changes notes without rerolling settings.' },
   number('offset', 'Offset', -1000, 1000, 0, ' /1000 beat'),

@@ -2,7 +2,7 @@ import type { HarmonyModeScope } from '../music/harmony-mode';
 import { DEFAULT_MIDI_PPQ, validMidiPpq } from '../music/midi-resolution';
 import { defaultVariationRerolls, decodeVariationRerolls, type VariationRerollPreferences } from './variation-reroll-preferences';
 import { decodeShortcuts, defaultShortcuts, type ShortcutBindings } from './shortcuts';
-import { PART_CONTROLS } from '../music/part-settings';
+import { PART_CONTROLS, MANUAL_PARAMETER_TARGETS } from '../music/part-settings';
 import { decodeAppearance, defaultAppearance, type AppearancePreferences } from './appearance';
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
 import type { DrumMappingPreference } from '../music/drum-instruments';
@@ -63,33 +63,35 @@ export interface UiPreferences {
 }
 
 export function defaultQuickSettings(): QuickSettings {
-  return {
-    melody: [
+  const selected: QuickSettings = {
+    melody: [...Object.keys(MANUAL_PARAMETER_TARGETS),
       'chordSpanFill', 'fillFlip', 'ending', 'style', 'form', 'rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
       'patternFlexible', 'pauseChance', 'swingPercent', 'transpose', 'velocityMin', 'velocityMax',
       'feedbackCount', 'feedbackDuration',
     ],
-    bass: [
+    bass: [...Object.keys(MANUAL_PARAMETER_TARGETS),
       'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'euclideanPulses', 'patternShift',
       'patternFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'chordSpan', 'noteVariation', 'octaveInterval', 'transpose',
       'velocityMin', 'velocityMax', 'noteLengthMultiplier',
     ],
-    chords: [
+    chords: [...Object.keys(MANUAL_PARAMETER_TARGETS),
       'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
       'customPattern', 'chordSpan', 'chordNotesStretch', 'stretchEnabled', 'strum', 'strumType',
       'strumPauseChance', 'voicing', 'noteLengthPercent', 'transpose',
     ],
-    arpeggio: [
+    arpeggio: [...Object.keys(MANUAL_PARAMETER_TARGETS),
       'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip', 'customPattern',
       'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'chordSpan', 'patternRepeat', 'pauseChance', 'chordNotesStretch', 'stretchEnabled', 'pattern',
       'arpPatternRotate', 'arpPatternCustom', 'transpose',
     ],
-    drums: [
+    drums: [...Object.keys(MANUAL_PARAMETER_TARGETS).filter(key => key !== 'manualTranspose'),
       'chordSpanFill', 'fillFlip', 'rhythm', 'hitsPerPattern', 'euclideanPulses', 'patternShift',
       'patternFlip', 'customPattern', 'velocityMin', 'velocityMax', 'chordSpan', 'pauseChance',
       'swingPercent', 'ghosts',
     ],
   };
+  return Object.fromEntries(ARRANGED_PARTS.map(role => [role,
+    PART_CONTROLS[role].filter(control => selected[role].includes(control.key)).map(control => control.key)])) as unknown as QuickSettings;
 }
 
 export function defaultUiPreferences(): UiPreferences {

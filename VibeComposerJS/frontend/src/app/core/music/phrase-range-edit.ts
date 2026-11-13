@@ -18,8 +18,11 @@ export function hasManualPhrase(track: CompositionTrack): boolean {
 /** Apply in save order. Missing notes inside a window mean silence, not inheritance.
  * Use onset ownership; sustained notes keep their complete durations. */
 export function applyPhraseRangeEdits(source: readonly PhraseNote[], edits: readonly PhraseRangeEdit[] | undefined,
-  sectionEnd: number, bounds = { startBeat: -4, endBeat: sectionEnd + 4 }): PhraseNote[] {
+  sectionEnd: number, bounds = { startBeat: -4, endBeat: sectionEnd + 4 },
+  transform: (note: PhraseNote) => readonly PhraseNote[] = note => [note]): PhraseNote[] {
   let notes = [...source];
+  const replacements = new Set<PhraseNote>();
+  const insert = (note: PhraseNote) => { replacements.add(note); notes.push(note); };
   for (const edit of edits ?? []) {
     const bodyEnd = Math.min(edit.endBeat, sectionEnd);
     const pickupStart = Math.max(-(edit.pickupBeats ?? 0), bounds.startBeat);
@@ -31,14 +34,14 @@ export function applyPhraseRangeEdits(source: readonly PhraseNote[], edits: read
     for (const note of edit.notes) {
       const beat = note.startBeat;
       if (beat >= edit.startBeat && beat < bodyEnd
-        || edit.pickupBeats !== undefined && beat >= pickupStart && beat < 0) notes.push({ ...note });
+        || edit.pickupBeats !== undefined && beat >= pickupStart && beat < 0) insert({ ...note });
       else if (edit.tailBeats !== undefined && beat >= edit.endBeat) {
         const startBeat = sectionEnd + beat - edit.endBeat;
-        if (startBeat < tailEnd) notes.push({ ...note, startBeat });
+        if (startBeat < tailEnd) insert({ ...note, startBeat });
       }
     }
   }
-  return notes;
+  return notes.flatMap(note => replacements.has(note) ? transform(note) : [note]);
 }
 
 export function appendPhraseRangeEdit(previous: readonly PhraseRangeEdit[] | undefined, edit: PhraseRangeEdit): PhraseRangeEdit[] {

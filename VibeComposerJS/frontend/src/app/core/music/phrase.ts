@@ -1,3 +1,4 @@
+import { processManualPhrase } from './manual-phrase-processing';
 import { resolveDrumEndFill } from './arrangement-drum-fill';
 import { applyArpSubdivision, resolveArpSubdivision } from './arrangement-subdivision-ramp';
 import { applyVelocityEnvelope, resolveVelocityEnvelope } from './arrangement-velocity-envelope';
@@ -71,7 +72,10 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
 }
 
 export function phraseForTrack(project: CompositionProject, track: CompositionTrack): readonly PhraseNote[] {
-  return applyPhraseRangeEdits(track.editedPhrase ?? generateTrackPhrase(project, track), track.phraseEdits, project.progression.length * 4);
+  const transform = (note: PhraseNote) => processManualPhrase([note], track.generatorSettings, track.role);
+  if (track.editedPhrase !== undefined) return processManualPhrase(applyPhraseRangeEdits(track.editedPhrase, track.phraseEdits,
+    project.progression.length * 4), track.generatorSettings, track.role);
+  return applyPhraseRangeEdits(generateTrackPhrase(project, track), track.phraseEdits, project.progression.length * 4, undefined, transform);
 }
 
 /** Add the legacy BassPart octave interval as a quieter upper octave. */
@@ -178,7 +182,7 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
     if (localPhrase !== undefined) {
       const length = sectionGenerationHarmony(project, section, track.role).durations;
       const sectionLength = Array.from({ length: section.measures }, (_, index) => length[index % length.length]).reduce((sum, value) => sum + value, 0);
-      if (partEnters) result.push(...localPhrase.map(note => ({ ...note,
+      if (partEnters) result.push(...processManualPhrase(localPhrase, resolvePartTrack(track, section, project.melodyGlobal).generatorSettings, track.role).map(note => ({ ...note,
         ...(includeSource ? { phraseSource, sectionId: section.id } : {}), startBeat: arrangementBeat + note.startBeat })));
       arrangementBeat += sectionLength;
       continue;
@@ -226,9 +230,11 @@ function buildTrackLayout(project: CompositionProject, track: CompositionTrack, 
     const edits = partEnters && !section.generatedTrackIds?.includes(track.id) ? track.phraseEdits : undefined;
     const timedNotes = edits?.length
       ? applyPhraseRangeEdits(timed.map(note => ({ ...note, startBeat: note.startBeat - sectionStart })),
-        edits, arrangementBeat - sectionStart, sectionPhraseBounds(project, section))
+        edits, arrangementBeat - sectionStart, sectionPhraseBounds(project, section),
+          note => manual ? [note] : processManualPhrase([note], effectiveTrack.generatorSettings, track.role))
         .map(note => ({ ...note, startBeat: note.startBeat + sectionStart })) : timed;
-    result.push(...(includeSource ? timedNotes.map(note => ({ ...note, phraseSource, sectionId: section.id })) : timedNotes));
+    const adjusted = manual ? processManualPhrase(timedNotes, effectiveTrack.generatorSettings, track.role) : timedNotes;
+    result.push(...(includeSource ? adjusted.map(note => ({ ...note, phraseSource, sectionId: section.id })) : adjusted));
   }
   const notes = result;
   if (track.role === 'drums') return notes;
@@ -264,12 +270,13 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   const sectionEnd = section ? sectionDurationBeats(project, section) : progression.length * 4;
   const bounds = section ? sectionPhraseBounds(project, section) : undefined;
   const local = section?.trackPhrases?.[source.id];
-  if (local !== undefined) return melodyContext(local.map(note => ({ ...note,
+  const effective = resolvePartTrack(source, section, project.melodyGlobal);
+  if (local !== undefined) return melodyContext(processManualPhrase(local, effective.generatorSettings, 'melody').map(note => ({ ...note,
     startBeat: chordGridBeat(note.startBeat, harmony.durations) })), progression.length);
   if (source.editedPhrase !== undefined && !section?.generatedTrackIds?.includes(source.id)) {
-    return melodyContext(applyPhraseRangeEdits(source.editedPhrase, edits, sectionEnd, bounds), progression.length);
+    return melodyContext(processManualPhrase(applyPhraseRangeEdits(source.editedPhrase, edits, sectionEnd, bounds),
+      effective.generatorSettings, 'melody'), progression.length);
   }
-  const effective = resolvePartTrack(source, section, project.melodyGlobal);
   if (effective.role !== 'melody') {
     return { ...melodyContext([], progression.length), available: false };
   }

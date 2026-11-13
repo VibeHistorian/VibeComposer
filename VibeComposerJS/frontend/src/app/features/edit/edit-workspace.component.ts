@@ -1,3 +1,4 @@
+import { withoutManualAdjustments } from '../../core/music/manual-phrase-processing';
 import { MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
 import { resolvedDrumSlots } from '../../core/project/project-drum-kit';
 import { SelectComponent } from '../../shared/select.component';
@@ -390,12 +391,13 @@ export class EditWorkspaceComponent {
   private commitChanges(destination: 'local' | 'global' | 'smart'): void {
     if (!this.hasChanges()) return;
     const section = this.project().arrangement.find(section => section.id === this.sectionId);
+    const sourceProject = withoutManualAdjustments(this.project());
     const edits = this.changedTracks().map(track => {
       const local = destination === 'local' || destination === 'smart' && section?.trackPhrases?.[track.id] !== undefined;
       const draft = this.draftNotes().filter(note => note.trackId === track.id);
       if (!local && this.restoredTrackIds().includes(track.id)) return { trackId: track.id, notes: null };
-      const source = local && section ? layOutTrackPhrase({ ...this.project(), transposeSemitones: 0, arrangement: [{ ...section,
-        trackPresence: { ...section.trackPresence, [track.id]: true } }] }, track) : [];
+      const source = local && section ? layOutTrackPhrase({ ...sourceProject, transposeSemitones: 0, arrangement: [{ ...sourceProject.arrangement.find(candidate => candidate.id === section.id)!,
+        trackPresence: { ...section.trackPresence, [track.id]: true } }] }, sourceProject.tracks.find(candidate => candidate.id === track.id)!) : [];
       const start = this.phraseStartBeat + this.editBounds().startBeat;
       const end = this.phraseStartBeat + this.editBounds().endBeat;
       const preserved = source.filter(note => note.startBeat < start || note.startBeat >= end);
@@ -446,12 +448,13 @@ export class EditWorkspaceComponent {
     const section = this.project().arrangement.find(section => section.id === this.sectionId);
     const tracks = track.role === 'drums' ? [track, ...this.project().tracks.filter(candidate => candidate.role === 'drums' && candidate.id !== track.id)] : [track];
     const ids = new Set<string>();
+    const sourceProject = withoutManualAdjustments(this.project());
     this.baselineNotes = tracks.flatMap(track => {
-      const source = section ? layOutTrackPhrase({ ...this.project(), transposeSemitones: 0, arrangement: [{ ...section, trackPresence: { ...section.trackPresence, [track.id]: true } }] }, track)
+      const source = section ? layOutTrackPhrase({ ...sourceProject, transposeSemitones: 0, arrangement: [{ ...sourceProject.arrangement.find(candidate => candidate.id === section.id)!, trackPresence: { ...section.trackPresence, [track.id]: true } }] }, sourceProject.tracks.find(candidate => candidate.id === track.id)!)
         .filter(note => note.startBeat >= this.phraseStartBeat + this.editBounds().startBeat
           && note.startBeat < this.phraseStartBeat + this.editBounds().endBeat)
         .map(note => ({ ...note, startBeat: note.startBeat - this.phraseStartBeat }))
-        : phraseForTrack(this.project(), track);
+        : phraseForTrack(sourceProject, sourceProject.tracks.find(candidate => candidate.id === track.id)!);
       return source.map(note => {
         const id = ids.has(note.id) ? this.makeNoteId() : note.id; ids.add(id);
         return { ...note, id, trackId: track.id };

@@ -1,3 +1,4 @@
+import { transferManualParameters } from '../music/manual-phrase-processing';
 import { followHarmonyMode } from '../music/harmony-mode';
 import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
 import { projectDrumPitches, reconcileDrumKit } from './project-drum-kit';
@@ -35,7 +36,7 @@ import type { PartSettingsScope, LocalPartSettingsScope, PartWorkflowResult } fr
 import type { InstrumentGenerationPolicy, ArpeggioGenerationPolicy, TrackGenerationPolicyPatch } from '../music/generation-policy.model';
 import type { CompositionProject } from './project.model';
 import { SectionTypeSettingsService } from './section-type-settings.service';
-import { copyPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS } from '../music/part-settings';
+import { copyPartSettings, decodePartPatch, resolvePartTrack, settingsValues, partPatchesEqual, partValuesEqual, type PartSettingValue, PART_CONTROLS, MANUAL_PARAMETER_TARGETS } from '../music/part-settings';
 import { JavaRandom } from '../music/java-random';
 import { DRUM_HIT_MULTIPLIERS, multiplyDrumHits } from '../music/drum-hit-multiplier';
 import { chooseMelodyTargets, forceMelodyOutline } from '../music/melody-targets';
@@ -1210,13 +1211,21 @@ export class ProjectService {
           const trackPhrases = { ...section.trackPhrases };
           if (edit.notes === null) delete trackPhrases[edit.trackId];
           else trackPhrases[edit.trackId] = edit.notes.map(note => ({ ...note }));
+          if (edit.notes === null) {
+            const track = tracks.find(track => track.id === edit.trackId)!;
+            const patch = { ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] };
+            return { ...section, trackPhrases, trackPartOverrides: { ...section.trackPartOverrides,
+              [track.id]: transferManualParameters(patch, track.role, resolvePartTrack(track, section).generatorSettings) } };
+          }
           return { ...section, trackPhrases };
         });
       } else {
         tracks = tracks.map(track => track.id !== edit.trackId ? track : edit.range && edit.notes !== null
           ? { ...track, phraseEdits: appendPhraseRangeEdit(track.phraseEdits, { ...edit.range, notes: edit.notes }) } as CompositionTrack
-          : { ...track, editedPhrase: edit.notes?.map(note => ({ ...note })), phraseEdits: undefined } as CompositionTrack);
+          : { ...track, editedPhrase: edit.notes?.map(note => ({ ...note })), phraseEdits: undefined,
+              generatorSettings: edit.notes === null ? transferManualParameters(track.generatorSettings, track.role) : track.generatorSettings } as CompositionTrack);
         const track = tracks.find(track => track.id === edit.trackId)!;
+        if (edit.notes === null) arrangement = [...this.transferRestoredSectionParameters(arrangement, current.tracks.find(source => source.id === edit.trackId)!)];
         if (tracks.find(candidate => candidate.role === track.role)?.id === track.id) {
           if (track.editedPhrase === undefined) delete editedPhrases[track.role];
           else editedPhrases[track.role] = track.editedPhrase;
@@ -1246,11 +1255,31 @@ export class ProjectService {
     const track = current.tracks.find((candidate) => candidate.id === trackId);
     if (!track || !hasManualPhrase(track)) return;
     const tracks = current.tracks.map((candidate) => candidate.id === trackId
-      ? { ...candidate, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack : candidate);
+      ? { ...candidate, editedPhrase: undefined, phraseEdits: undefined, generatorSettings: transferManualParameters(candidate.generatorSettings, candidate.role) } as CompositionTrack : candidate);
     const isPrimary = current.tracks.find((candidate) => candidate.role === track.role)?.id === trackId;
     const editedPhrases = { ...current.editedPhrases };
     if (isPrimary) delete editedPhrases[track.role];
-    this.commit({ ...current, tracks, editedPhrases });
+    const arrangement = this.transferRestoredSectionParameters(current.arrangement, track);
+    this.commit({ ...current, tracks, editedPhrases, arrangement });
+  }
+
+  private transferRestoredSectionParameters(arrangement: CompositionProject['arrangement'], track: CompositionTrack): CompositionProject['arrangement'] {
+    return arrangement.map(section => {
+      if (section.trackPhrases?.[track.id] !== undefined) return section;
+      const patch = { ...section.rolePartOverrides?.[track.role], ...section.trackPartOverrides?.[track.id] };
+      const effective = resolvePartTrack(track, section).generatorSettings;
+      if (!Object.keys(effective).some(key => key in MANUAL_PARAMETER_TARGETS)) return section;
+      const converted = transferManualParameters(effective, track.role) as unknown as Record<string, unknown>;
+      const inherited = transferManualParameters(track.generatorSettings, track.role) as unknown as Record<string, unknown>;
+      const next = Object.fromEntries(Object.entries(patch).filter(([key]) => !(key in MANUAL_PARAMETER_TARGETS)));
+      for (const [manual, target] of Object.entries(MANUAL_PARAMETER_TARGETS)) {
+        if ((effective as unknown as Record<string, unknown>)[manual] === undefined) continue;
+        const destination = manual === 'manualLength' && track.role === 'chords' ? 'noteLengthPercent' : target;
+        if (converted[destination] !== (next[destination] ?? inherited[destination])) next[destination] = converted[destination];
+      }
+      return { ...section, trackPartOverrides: { ...section.trackPartOverrides,
+        [track.id]: next as PartSettingsPatch } };
+    });
   }
 
   private trackMoveTargetIndex(trackId: string, offset: -1 | 1): number {
