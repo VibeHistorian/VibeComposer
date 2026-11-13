@@ -28,12 +28,24 @@ export function randomizeArrangement(project: CompositionProject, chances: Secti
   const random = new JavaRandom(BigInt.asIntN(64, seed ^ 0x415252414e4745n));
   const plan = generateArrangementPlan(seed);
   const presence = generateContextualPresence(project.tracks, plan, chances, () => random.nextDouble());
-  const arrangement = plan.map(({ type }, index) => ({
-    id: `section-${index + 1}`, type, measures: 4, trackPresence: presence[index],
-  }));
+  const arrangement = plan.map(({ type }, index) => {
+    // Keep timing when manually replacing structure. New slots inherit the first
+    // section's value, including the shared choice written by Compose.
+    const beatDurationMultiplier = (project.arrangement[index] ?? project.arrangement[0])?.context?.beatDurationMultiplier;
+    return { id: `section-${index + 1}`, type, measures: 4, trackPresence: presence[index],
+      ...(beatDurationMultiplier !== undefined ? { context: { beatDurationMultiplier } } : {}) };
+  });
   const next = { ...project, arrangement };
   return generateVariations
     ? randomizeArrangementVariations(next, seed, undefined, project.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, generation)! : next;
+}
+
+/** Compose-only shared timing choice; independent of structure/presence draws. */
+export function randomizeArrangementBeatDuration(project: CompositionProject, seed: bigint): CompositionProject {
+  const roll = new JavaRandom(BigInt.asIntN(64, seed ^ 0x4245415444555241n)).nextDouble();
+  const beatDurationMultiplier = roll < 0.85 ? 1 : roll < 0.95 ? 0.5 : 2;
+  return { ...project, arrangement: project.arrangement.map(section => ({ ...section,
+    context: { ...section.context, beatDurationMultiplier } })) };
 }
 
 // Build immutable candidates. ProjectService validates and commits each command once.

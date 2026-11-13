@@ -686,6 +686,7 @@ export class ProjectService {
           BigInt(next.seed), undefined, next.arrangementVariationPolicy ?? DEFAULT_VARIATION_POLICY, this.uiPreferences.variationRerolls())!;
       } else next = arrangementCommands.randomizeArrangement(next, this.sectionTypeSettings.chances(), BigInt(next.seed),
         this.uiPreferences.generateArrangementVariations(), this.uiPreferences.variationRerolls());
+      next = arrangementCommands.randomizeArrangementBeatDuration(next, BigInt(next.seed));
     }
     next = { ...next, tracks: next.tracks.map(track => {
       const source = current.tracks.find(source => source.id === track.id);

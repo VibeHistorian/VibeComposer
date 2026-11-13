@@ -85,6 +85,68 @@ test('arrangement toggles persist, validate and undo; Preview rerolls preserve s
   }
 });
 
+test('Compose timing uses one rare Half/Double choice with an independent exact-seed stream', () => {
+  const { service, load } = fixture();
+  const commands = load('core/project/project-arrangement-commands.ts');
+  const project = service.project(), counts = { '0.5': 0, '1': 0, '2': 0 };
+  for (let sample = 0n; sample < 1000n; sample++) {
+    const seed = BigInt.asIntN(64, 9007199254740993n + sample * 0x9e3779b97f4a7c15n);
+    const next = commands.randomizeArrangementBeatDuration(project, seed);
+    const value = next.arrangement[0].context.beatDurationMultiplier;
+    counts[value]++;
+    assert.ok(next.arrangement.every(section => section.context.beatDurationMultiplier === value));
+    assert.deepEqual(next, commands.randomizeArrangementBeatDuration(project, seed));
+    assert.deepEqual(next.arrangement.map(({ context, ...section }) => section), project.arrangement.map(({ context, ...section }) => section));
+  }
+  assert.ok(counts[1] > 800 && counts[1] < 900);
+  assert.ok(counts[0.5] > 60 && counts[0.5] < 140);
+  assert.ok(counts[2] > 20 && counts[2] < 80);
+});
+
+test('Compose shares beat duration in the full inspector, gates it, and restores it atomically', () => {
+  for (const arrangementManual of [false, true]) {
+    const { service, load } = fixture();
+    for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) service.updateTrackGenerationPolicy(role, { onCompose: false });
+    const commands = load('core/project/project-arrangement-commands.ts');
+    const seeds = new Map();
+    for (let sample = 0n; seeds.size < 3; sample++) {
+      const seed = BigInt.asIntN(64, 9007199254740993n + sample * 0x9e3779b97f4a7c15n);
+      seeds.set(commands.randomizeArrangementBeatDuration(service.project(), seed).arrangement[0].context.beatDurationMultiplier, seed);
+    }
+    for (const [value, seed] of seeds) {
+      service.updateSettings({ seed: String(seed), arrangementManual, randomizeArrangementOnCompose: true });
+      const before = service.exportProjectJson();
+      assert.equal(service.generateComposition(), 'changed');
+      const after = service.exportProjectJson();
+      assert.ok(service.project().arrangement.every(section => section.context.beatDurationMultiplier === value));
+      const inspector = new (load('features/arrangement/section-context-editor.component.ts').SectionContextEditorComponent)();
+      inspector.section = () => service.project().arrangement[0]; inspector.allSections = () => true;
+      assert.equal(inspector.contextMixed('beatDurationMultiplier'), false);
+      assert.equal(inspector.section().context.beatDurationMultiplier, value);
+      service.undo(); assert.equal(service.exportProjectJson(), before);
+      service.redo(); assert.equal(service.exportProjectJson(), after);
+      assert.equal(service.importProjectJson(after), true);
+      assert.ok(service.project().arrangement.every(section => section.context.beatDurationMultiplier === value), 'timing survives export/import');
+      service.randomizeArrangement();
+      assert.ok(service.project().arrangement.every(section => section.context.beatDurationMultiplier === value), 'manual structure reroll retains shared timing');
+      service.randomizeArrangementPresence(); service.randomizeArrangementVariations();
+      assert.ok(service.project().arrangement.every(section => section.context.beatDurationMultiplier === value), 'manual presence/variation rerolls retain timing');
+      service.updateSettings({ randomizeArrangementOnCompose: false });
+      const arrangement = service.project().arrangement;
+      service.generateComposition(); assert.deepEqual(service.project().arrangement, arrangement);
+    }
+  }
+});
+
+test('manual structure rerolls retain per-slot beat duration and use the first value for new slots', () => {
+  const { service } = fixture();
+  service.project().arrangement.forEach((section, index) => service.setSectionMusicalState(section.id,
+    { context: { beatDurationMultiplier: index % 2 ? 2 : 0.5 } }));
+  const values = service.project().arrangement.map(section => section.context.beatDurationMultiplier);
+  service.randomizeArrangement();
+  service.project().arrangement.forEach((section, index) => assert.equal(section.context.beatDurationMultiplier, values[index] ?? values[0]));
+});
+
 test('arrangement On Compose gates rerolls, commits with Compose once', () => {
   const { service } = fixture();
   service.updateSettings({ seed: '42', arrangementPreview: true });
