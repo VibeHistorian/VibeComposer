@@ -274,6 +274,7 @@ test('compact history groups same-control bursts while keeping live state, persi
     now += 200;
     service.updateSettings({ tempoBpm });
     assert.equal(service.project().tempoBpm, tempoBpm);
+    service.flushPersistence();
     assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).tempoBpm, tempoBpm);
   }
   const after = service.exportProjectJson();
@@ -370,6 +371,7 @@ test('Chordlet edits follow reorder/add/remove through history, persistence and 
   service.removeChord(1); assert.equal(service.project().progressionChords.length, 2);
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
+  service.flushPersistence();
   assert.equal(new (load('core/project/project.service.ts').ProjectService)().project().progressionChords[1].root, 1);
   service.setChordDegree(1, 5); assert.equal(service.project().progressionChords[1], null);
   service.setProgression([1,6,4,5]); assert.equal(service.project().progressionChords, undefined);
@@ -563,6 +565,7 @@ test('role totals preserve the final track and enforce capacity without consumin
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.project().tracks.length, 1);
   assert.equal(service.importProjectJson(before), true);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.equal(restored.project().tracks.length, 1);
   assert.equal(service.setRoleTrackCount('drums', 64), 'changed');
@@ -612,6 +615,7 @@ test('generated tracks append atomically with one history entry for every role',
     service.redo(); assert.equal(service.exportProjectJson(), after);
     service.undo(); service.generateRoleTracks(role, 3); assert.equal(service.exportProjectJson(), after);
     assert.equal(service.importProjectJson(after), true);
+    service.flushPersistence();
     const restored = new (load('core/project/project.service.ts').ProjectService)();
     assert.deepEqual(restored.project(), service.project());
     service.updateSettings({ name: 'redo' }); service.undo(); const state = service.exportProjectJson();
@@ -916,6 +920,7 @@ test('overview reset restores globals and generated notes locally, preserves sib
   assert.equal(service.changeOverviewTracks(scope, 'reset'), 'unchanged');
   assert.equal(service.exportProjectJson(), after);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   const restored = new ProjectService();
   assert.equal(restored.importProjectJson(after), true);
   assert.deepEqual(restored.project().arrangement[0].generatedTrackIds, [trackId]);

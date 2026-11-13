@@ -36,6 +36,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       const count = document.querySelector('input[aria-label="Drums track count"]');
       await changeControl(count, '3');
       await wait(()=>document.querySelectorAll('.track-group.drums .track-select').length===3,'three drums');
+      await wait(()=>read()?.tracks.filter(t=>t.role==='drums').length===3,'three drums persisted');
       const ids = read().tracks.filter(t=>t.role==='drums').map(t=>t.id);
       document.querySelector('.track-group.drums .track-select').click();
       await wait(()=>document.querySelector('.track-group.drums .track-select').getAttribute('aria-pressed')==='true','selected drum track');
@@ -65,6 +66,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
         const input = row(id).querySelector('input[type="number"]');
         await changeControl(input, String(count));
         await wait(()=>row(id).querySelectorAll('.step').length===count, 'set steps ' + count);
+        await wait(()=>read().tracks.find(t=>t.id===id).generatorSettings.hitsPerPattern===count, 'saved steps ' + count);
       };
       const checkPreview = async count => {
         await setSteps(ids[0], count);
@@ -102,8 +104,10 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       row(ids[1]).querySelector('input[type="number"]').dispatchEvent(new Event('change',{bubbles:true}));
       await wait(()=>row(ids[1]).querySelectorAll('.step').length===8,'independent steps');
       const original=row(ids[1]).querySelector('.step').getAttribute('aria-pressed');
+      const beforeStep=JSON.stringify(read().tracks.find(t=>t.id===ids[1]));
       row(ids[1]).querySelector('.step').click();
       await wait(()=>row(ids[1]).querySelector('.step').getAttribute('aria-pressed')!==original,'step edit');
+      await wait(()=>JSON.stringify(read().tracks.find(t=>t.id===ids[1]))!==beforeStep,'step edit persisted');
       check(JSON.stringify(read().tracks.find(t=>t.id===ids[0]))===before,'other track retained');
       const settings=read().tracks.find(t=>t.id===ids[1]).generatorSettings;
       check(settings.rhythm==='custom' && settings.customPattern.length===32,'bake rhythm');
@@ -134,6 +138,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       const melodySettings=()=>read().tracks.find(t=>t.role==='melody').generatorSettings;
       const rhythm=melodyControl.querySelector(':is(vc-select, vc-menu-select)');
       await changeControl(rhythm, 'durations');
+      await wait(()=>melodySettings().rhythm==='durations','melody rhythm saved before drafting');
       const durationsPreview=await wait(()=>melodyControl.querySelector('[aria-label="Edit custom melody durations"]'),'custom melody preview');
       check(melodyControl.querySelector('.flip-button'),'custom melody flip');
       const beforeDraft=sessionStorage.getItem('vibecomposer.project.v12');
@@ -165,6 +170,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       await wait(()=>!durationButton('Save durations').disabled,'check before commit');
       durationButton('Save durations').click();
       await wait(()=>!document.querySelector('vc-durations-dialog'),'save closes durations');
+      await wait(()=>!!melodySettings().customDurations,'durations persisted');
       check(JSON.stringify(melodySettings().customDurations[0])==='[1,-1,1,-1]','durations saved');
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
       await wait(()=>!melodySettings().customDurations,'one undo for duration save');
@@ -187,6 +193,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
         const preview=await wait(()=>control.querySelector('.duration-preview'),role+' compact durations');
         check(!control.querySelector('.rhythm-preview-grid'),role+' replaces grid');
         const settings=()=>read().tracks.find(track=>track.role===role).generatorSettings;
+        await wait(()=>settings().rhythm==='durations',role+' rhythm persisted before drafting');
         const before=sessionStorage.getItem('vibecomposer.project.v12');
         preview.click(); durations=await wait(()=>document.querySelector('vc-durations-dialog'),role+' shared editor');
         await wait(()=>durations.querySelectorAll('.duration-row').length===10,role+' lanes');
@@ -201,6 +208,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
         await wait(()=>!durationButton('Save durations').disabled,role+' valid');
         durationButton('Save durations').click();
         await wait(()=>!document.querySelector('vc-durations-dialog'),role+' save');
+        await wait(()=>!!settings().customDurations,role+' durations persisted');
         check(JSON.stringify(settings().customDurations[0])==='[1,-1,0.5,-1.5]',role+' persisted');
         document.querySelector('.project-tools button[aria-label="Undo"]').click();
         await wait(()=>!settings().customDurations,role+' single undo');
@@ -210,6 +218,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       await changeControl(arpControl.querySelector(':is(vc-select, vc-menu-select)'), 'random');
       const arpLauncher = await wait(()=>arpControl.querySelector('[aria-label="Edit arpeggio pattern"]'),'arp launcher');
       const arpSettings = ()=>read().tracks.find(track=>track.role==='arpeggio').generatorSettings;
+      await wait(()=>arpSettings().pattern==='random','arpeggio direction persisted before drafting');
       const arpBefore = sessionStorage.getItem('vibecomposer.project.v12');
       arpLauncher.click();
       let arpPopup = await wait(()=>document.querySelector('vc-arpeggio-pattern-dialog'),'arp popup');
@@ -234,6 +243,7 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       check(!arpButton('Save pattern').disabled,'arp save enabled');
       arpButton('Save pattern').click();
       await wait(()=>!document.querySelector('vc-arpeggio-pattern-dialog'),'arp save closes');
+      await wait(()=>arpSettings().pattern==='custom','arpeggio pattern persisted');
       check(arpSettings().pattern==='custom' && JSON.stringify(arpSettings().arpPatternCustom)==='[-2,0,4,7]','arp save custom');
       document.querySelector('.project-tools button[aria-label="Undo"]').click();
       await wait(()=>arpSettings().pattern==='random','arp one undo');

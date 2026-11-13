@@ -621,6 +621,7 @@ for (const role of ['melody', 'bass', 'chords', 'arpeggio', 'drums']) {
     assert.equal(service.rerollRoleInstruments(role), 'changed'); assert.equal(service.exportProjectJson(), after);
     service.undo(); service.redo(); assert.equal(service.exportProjectJson(), after);
     assert.equal(service.importProjectJson(after), true);
+    service.flushPersistence();
     const restored = new (load('core/project/project.service.ts').ProjectService)();
     assert.deepEqual(restored.project().tracks, service.project().tracks);
     assert.equal(restored.rerollRoleInstruments(role), service.rerollRoleInstruments(role));
@@ -663,6 +664,7 @@ for (const role of ['bass', 'chords', 'drums', 'melody']) {
     assert.equal(service.rerollRoleTracks(role), 'changed'); assert.equal(service.exportProjectJson(), after);
     service.undo(); service.redo(); assert.equal(service.exportProjectJson(), after);
     assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+    service.flushPersistence();
     const restored = new (load('core/project/project.service.ts').ProjectService)();
     assert.equal(service.rerollRoleTracks(role, primaryId), 'changed');
     assert.equal(restored.rerollRoleTracks(role, primaryId), 'changed');

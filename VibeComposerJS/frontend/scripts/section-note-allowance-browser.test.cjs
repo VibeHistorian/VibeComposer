@@ -25,6 +25,7 @@ test('production score edits pickups and late notes with 00/END space and retain
     await evaluate(`(async()=>{${helpers}
       const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'));
       await changeControl(seed,'8675309');
+      window.dispatchEvent(new Event('pagehide')); // Flush before replacing the saved fixture.
       const p=await wait(read), bass=p.tracks.find(t=>t.role==='bass');
       p.arrangement=[{...p.arrangement[0],measures:1,trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,t.id===bass.id])),
         trackPhrases:{[bass.id]:[
@@ -53,6 +54,7 @@ test('production score edits pickups and late notes with 00/END space and retain
       await changeControl(document.querySelector('#note-length'),'2');
       (await wait(()=>[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Local Apply'&&!b.disabled))).click();
       await wait(()=>!document.querySelector('#note-start'));
+      await wait(()=>read().arrangement[0].trackPhrases?.[read().tracks.find(t=>t.role==='bass').id]?.find(n=>n.id==='late')?.startBeat===6);
       const p=read(),id=p.tracks.find(t=>t.role==='bass').id;
       return {before,notes:p.arrangement[0].trackPhrases[id]};
     })()`);

@@ -386,6 +386,7 @@ test('score chord grid defaults off and persists and transfers without changing 
 
 test('UI preferences customize per-role placement without changing project, history, or fixed order', () => {
   const { service, uiPreferences: preferences, uiStored, load } = fixture();
+  service.flushPersistence();
   const before = service.exportProjectJson(), position = service.historyPosition();
   const defaults = preferences.exportJson();
   preferences.beginQuickSettings();

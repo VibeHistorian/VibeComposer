@@ -46,6 +46,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(() => !document.querySelector('vc-settings-dialog'), 'settings closed');
       if (!sessionStorage.getItem('contextual-fixture')) {
         await change(seed, '9007199254740993');
+        window.dispatchEvent(new Event('pagehide')); // Flush before replacing the saved fixture.
         const project = await wait(read, 'saved project');
         // Keep the authored fixture stable until this workflow explicitly enables each reroll.
         // Fresh projects now enable On Compose, which would otherwise replace the drum grids.
@@ -726,7 +727,14 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destination.result.value.point, button: 'left', buttons: 1 });
     await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destination.result.value.point, button: 'left', clickCount: 1 });
     await new Promise(done => setTimeout(done, 100));
-    const moved = await command('Runtime.evaluate', { expression: `JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))`, returnByValue: true });
+    const moved = await command('Runtime.evaluate', { awaitPromise: true, expression: `(async()=>{
+      for(let i=0;i<200;i++) {
+        const project=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+        if(project.progression[1]===${beforeDrag.project.progression[0]})return project;
+        await new Promise(resolve=>setTimeout(resolve,20));
+      }
+      throw Error('Chord reorder was not persisted');
+    })()`, returnByValue: true });
     assert.equal(moved.result.value.progression[1], beforeDrag.project.progression[0]);
     assert.deepEqual(moved.result.value.progressionChords[1], beforeDrag.project.progressionChords[0]);
     const screenshot = await command('Page.captureScreenshot', { format: 'png' });

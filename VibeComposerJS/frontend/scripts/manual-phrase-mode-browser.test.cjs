@@ -38,6 +38,7 @@ test('manual Mode behavior setting changes matching phrases and persists in the 
   `;
   await evaluate(`(async()=>{${waitCode}${helpers}
     const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'));await change(seed,'43');
+    window.dispatchEvent(new Event('pagehide')); // Flush before replacing the saved fixture.
     const project=await wait(read);project.scale='major';project.key='D';project.transposeSemitones=7;
     const notes=pitches=>pitches.map((midi,i)=>({id:'manual-'+i,midi,startBeat:i,durationBeats:.5,velocity:90}));
     project.tracks.find(t=>t.role==='bass').editedPhrase=notes([62,66,69,73]);

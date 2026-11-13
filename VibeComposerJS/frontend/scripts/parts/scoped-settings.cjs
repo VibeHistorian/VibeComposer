@@ -339,7 +339,9 @@ test('P5f durations share chord boundaries across all roles, score ranges, tempo
   }
   assert.equal(service.importProjectJson(after), true); assert.deepEqual(JSON.parse(service.exportProjectJson()), JSON.parse(after));
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   const restored = new ProjectService(); assert.deepEqual(restored.project(),service.project());
+  service.flushPersistence();
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).arrangement[0].context.tempoBpm, 90);
 });
 
@@ -428,6 +430,7 @@ test('P5e section selections share harmony across roles, preserve sparse overrid
   service.updateHarmonySettings({ flattenVoicingChance: 35, flattenLargeChords: true, progressiveVoicing: true });
   const saved = service.exportProjectJson(), expected = notes('melody');
   assert.equal(service.importProjectJson(saved),true); assert.deepEqual(notes('melody'),expected);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.deepEqual(JSON.parse(restored.exportProjectJson()),JSON.parse(service.exportProjectJson()));
   assert.equal(restored.project().seed,'9007199254740993');
@@ -558,6 +561,7 @@ test('P5e tonal targets preserve track ownership, history, restore and MIDI', ()
   });
   service.undo(); service.redo(); assert.equal(service.exportProjectJson(), saved);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true);
   saved = service.exportProjectJson();
@@ -630,6 +634,7 @@ test('P5e chord targeting and avoid notes preserve scoped harmony, history, manu
     assert.ok(Math.abs(note.durationTicks / exported.header.ppq - notes[index].durationBeats) < 0.003);
   });
   service.undo(); service.redo(); assert.equal(service.exportProjectJson(), saved);
+  service.flushPersistence();
   assert.deepEqual(projectData(new (load('core/project/project.service.ts').ProjectService)().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true); saved = service.exportProjectJson();
   service.updateSettings({ name: 'redo' }); service.undo();
@@ -779,7 +784,9 @@ test('P5c/P5d controls resolve mixed scopes, snapshots, independent arrays, rese
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.importProjectJson(before), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.equal(new ProjectService().exportProjectJson(), service.exportProjectJson());
+  service.flushPersistence();
   assert.ok(stored.get('vibecomposer.project.v12'));
 });
 
@@ -869,6 +876,7 @@ test('chord articulation resolves scopes, mixed values, snapshots, manual owners
   const saved = service.exportProjectJson(), beforeImport = phrase.layOutTrackPhrase(service.project(), track());
   assert.equal(service.importProjectJson(saved), true);
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), beforeImport);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.equal(restored.project().arrangement[0].trackPartOverrides[id].strumType, 'ARP_U');
   service.updateTrackPhrase(id, [{ id: 'manual', midi: 60, startBeat: 0, durationBeats: 1, velocity: 80 }]);
@@ -905,6 +913,7 @@ test('copy to globals preserves mixed cell members, track exceptions and local o
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), after);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(after));
 });
 
@@ -981,6 +990,7 @@ test('bass join articulation resolves at all scopes, persists snapshots and expo
   assert.equal(service.importProjectJson(saved), true);
   assert.deepEqual(service.project().arrangement[0].trackPartOverrides, JSON.parse(saved).arrangement[0].trackPartOverrides);
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), beforeImport);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.equal(restored.project().arrangement[0].trackPartOverrides[id].patternJoinMode, 'JOIN');
   service.resetPartSettings(part, 'patternJoinMode');
@@ -1142,6 +1152,7 @@ test('P5e catalogue inputs preserve independent arrays, atomic history, scopes a
     assert.equal(service.exportProjectJson(), saved, 'global catalogue inputs cannot enter part patches');
   }
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true);
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track()), notes);
@@ -1247,6 +1258,7 @@ test('P5e global Melody settings preserve scope ownership, replay, manual notes 
   service.redo(); assert.equal(service.exportProjectJson(), saved);
   assert.equal(service.updateMelodyGlobal(global), 'unchanged');
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true);
   saved = service.exportProjectJson();
@@ -1313,6 +1325,7 @@ test('melody scope resolution reaches parsed MIDI, isolates sections and survive
   service.redo(); assert.equal(service.exportProjectJson(), saved);
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   const restored = new ProjectService();
   assert.deepEqual(phrase.layOutTrackPhrase(restored.project(), restored.project().tracks.find(track => track.id === trackId)), after);
   const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
@@ -1794,6 +1807,7 @@ test('track copying distinguishes explicit overrides from effective snapshots an
   assert.deepEqual(exported.notes.map((note) => note.midi), notes.map((note) => note.midi));
   const saved = service.exportProjectJson();
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved), 'snapshots survive session restore');
   service.resetPartSettings(target);
   assert.equal(settings.resolvePartTrack(track(), service.project().arrangement[1]).generatorSettings.transpose, undefined);
@@ -2007,6 +2021,7 @@ test('fill values survive copy/freeze, one-entry history, duplication and sessio
   assert.equal(service.project().arrangement[1].trackPartOverrides[trackId].chordSpanFill, 'F34');
   const saved = service.exportProjectJson();
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true);
   const manual = [{ id: 'manual', midi: 36, startBeat: 0, durationBeats: 0.5, velocity: 90 }];
@@ -2194,6 +2209,7 @@ test('chord rhythm controls share resolved score/MIDI notes and survive history,
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   ui.selectSectionTrack(sectionId, trackId);
   assert.equal(workspace.partValues().patternFlip, true);
@@ -2330,6 +2346,7 @@ test('Euclidean settings survive local generation, parsed MIDI, snapshots, dupli
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   const importedTrack = service.project().tracks.find((track) => track.id === trackId);
   assert.equal(settings.resolvePartTrack(importedTrack, service.project().arrangement[1]).generatorSettings.euclideanPulses, 2);
@@ -2405,6 +2422,7 @@ test('custom velocities survive section MIDI, history, session and JSON while ma
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
   service.updateTrackPhrase(trackId, manual);
@@ -2488,6 +2506,7 @@ test('custom chord grids retain seeded dynamics, hidden cells, section isolation
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   const restored = new ProjectService();
   assert.deepEqual(projectData(restored.exportProjectJson()), projectData(saved));
   const manual = [{ id: 'manual', midi: 72, startBeat: 0, durationBeats: 1, velocity: 90 }];
@@ -2631,6 +2650,7 @@ test('P5e Melody key emphasis preserve ownership, update consumers and replay ex
     assert.equal(service.canRedo(), true);
   }
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true);
   const manual = [{ id: 'flip-manual', midi: 62, startBeat: 1, durationBeats: 2, velocity: 90 }];

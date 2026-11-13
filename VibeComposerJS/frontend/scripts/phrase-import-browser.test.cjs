@@ -40,6 +40,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
   await evaluate(`(async()=>{${waitCode}
     const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'));
     await changeControl(seed, '43');
+    window.dispatchEvent(new Event('pagehide')); // Flush before replacing the saved fixture.
     const project=await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')));
     project.transposeSemitones=7;
     const drum=project.tracks.find(track=>track.role==='drums');
@@ -90,16 +91,16 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     button('Undo phrase').click();await wait(()=>knob().value==='0'&&document.querySelector('#note-pitch').value==='61');
     button('Redo phrase').click();await wait(()=>knob().value==='5'&&document.querySelector('#note-pitch').value==='66');
     button('Undo phrase').click();await wait(()=>knob().value==='0');
-    button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    {const beforeApply=sessionStorage.getItem('vibecomposer.project.v12');button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));await wait(()=>sessionStorage.getItem('vibecomposer.project.v12')!==beforeApply);}
     const notes=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes;
     const compensation=notes.some(n=>n.midi===54&&n.startBeat===0);
     const preserved=notes.some(n=>n.id.endsWith('-old'));
     const preservedTail=notes.some(n=>n.startBeat===15&&n.durationBeats===3)&&notes.length===3;
     await open('bass');const reopenedZero=knob().value==='0';button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'));
     const checkbox=await settings();checkbox.click();closeSettings();
-    await open('bass');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    await open('bass');await drop();{const beforeApply=sessionStorage.getItem('vibecomposer.project.v12');button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));await wait(()=>sessionStorage.getItem('vibecomposer.project.v12')!==beforeApply);}
     const replaced=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes.length===2;
-    await open('drums');await drop();button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    await open('drums');await drop();{const beforeApply=sessionStorage.getItem('vibecomposer.project.v12');button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));await wait(()=>sessionStorage.getItem('vibecomposer.project.v12')!==beforeApply);}
     const drumsUntransposed=read().tracks.find(t=>t.role==='drums').phraseEdits.at(-1).notes.some(n=>n.midi===61);
     const oldDrumsCleared=read().tracks.find(t=>t.id==='track-drums-extra').phraseEdits.at(-1).notes.length===0;
     return {defaultOff,initialZero,noAddNote,glow,noGlow,freePitch,compensation,preserved,preservedTail,reopenedZero,replaced,drumsUntransposed,oldDrumsCleared};
@@ -136,7 +137,7 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     button('Undo phrase').click();await wait(()=>document.querySelector('[aria-label="Transpose phrase"]').value==='0');
     const singleUndo=button('Undo phrase').disabled;
     button('Redo phrase').click();await wait(()=>!button('Undo phrase').disabled);
-    button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));
+    {const beforeApply=sessionStorage.getItem('vibecomposer.project.v12');button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));await wait(()=>sessionStorage.getItem('vibecomposer.project.v12')!==beforeApply);}
     const notes=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes;
     const scaled=notes.length===3&&Math.abs(Math.max(...notes.map(n=>n.startBeat+n.durationBeats))-12)<1e-8;
     const translated=notes.every(n=>[0,2,4,5,7,9,11].includes(n.midi%12));

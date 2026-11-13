@@ -129,6 +129,7 @@ test('production Angular controls initialize selects from settings and support r
         const parameterLock = await waitFor(() => document.querySelector('vc-part-settings-editor[data-control-role="chords"] .parameter-lock'));
         parameterLock.click();
         await waitFor(() => parameterLock.getAttribute('aria-pressed') === 'true', 'parameter locked');
+        await waitFor(() => readTrack('chords').parameterLocks?.length, 'parameter lock saved');
         if (!readTrack('chords').parameterLocks?.length) throw new Error('parameter lock not persisted');
         parameterLock.click();
         await waitFor(() => parameterLock.getAttribute('aria-pressed') === 'false', 'parameter unlocked');
@@ -166,6 +167,7 @@ test('production Angular controls initialize selects from settings and support r
         grids[0].querySelector('button').click();
         await waitFor(() => [...document.querySelectorAll('.custom-pattern-grid button:first-child')]
           .every(button => button.getAttribute('aria-pressed') === 'false'));
+        await waitFor(() => readTrack('chords').generatorSettings.customPattern?.[0]===0, 'custom pattern saved');
         const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
         const result = { instrumentDefaultChecks, inlineActions, inlineIdentity, initialSelection, melodySelection, initialChords, options, counts, selected: pickers.map(select => select.getAttribute("value")),
           rhythm: project.tracks.find(track => track.role === 'chords').generatorSettings.rhythm, grid: project.tracks.find(track => track.role === 'chords').generatorSettings.customPattern };
@@ -245,6 +247,7 @@ test('production Angular controls initialize selects from settings and support r
         track.querySelector('.solo-toggle').click();
         await waitFor(() => !track.querySelector('.mute-toggle').classList.contains('active')
           && track.querySelector('.solo-toggle').classList.contains('active'));
+        await waitFor(() => { const mix=readTrack('chords').mix;return mix.volumePercent===50&&mix.panPercent===1&&!mix.muted&&mix.solo; }, 'quick mix saved');
         result.quickMix = readTrack('chords').mix;
         result.panLabel = pan.closest('.compact-knob').querySelector('output').textContent.trim();
         result.miniWidths = [pan, volume].map(input => input.closest('.compact-knob').getBoundingClientRect().width);
@@ -298,6 +301,7 @@ test('production Angular controls initialize selects from settings and support r
         const secondVelocity = velocityGrids[0].querySelectorAll('input')[1];
         wheel(secondVelocity, -100, true);
         await waitFor(() => secondVelocity.value === '80', 'velocity wheel update');
+        await waitFor(() => readTrack('chords').generatorSettings.customVelocities?.[1]===80, 'custom velocities saved');
         result.customVelocities = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.customVelocities;
         result.randomBoundsHidden = !document.querySelector('input[aria-label="Min velocity"]');
         document.querySelector('button[aria-label="Close pattern sequencer"]').click();
@@ -308,6 +312,7 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('#part-inspector button[aria-label="Custom velocities"]').click();
         (await waitFor(() => document.querySelector('button[aria-label="Edit pattern velocities"]'))).click();
         await waitFor(() => document.querySelector('.velocity-pattern-grid input')?.value === '22', 'velocity grids restored');
+        await waitFor(() => readTrack('chords').generatorSettings.useCustomVelocities===true, 'custom velocities enabled saved');
         result.velocitiesEnabled = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').generatorSettings.useCustomVelocities;
         document.querySelector('button[aria-label="Close pattern sequencer"]').click();
         await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
@@ -327,6 +332,7 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => transpose.getAttribute('aria-valuetext') === '5 st', 'melody discrete transpose');
         wheel(transpose, -100, true);
         await waitFor(() => transpose.getAttribute('aria-valuetext') === '7 st', 'melody next discrete transpose');
+        await waitFor(() => readTrack('melody').generatorSettings.transpose===7, 'melody transpose saved');
         result.melody = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'melody').generatorSettings;
         result.melodyHasSpeed = document.querySelectorAll('input[aria-label="Speed"]').length;
         result.melodyHasAccent = document.querySelectorAll('input[aria-label="Accent"]').length;
@@ -376,6 +382,7 @@ test('production Angular controls initialize selects from settings and support r
           await waitFor(() => seeds.every(seed => Number(seed.value) > 0), role + ' seed randomized');
           seeds[0].dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true }));
           await waitFor(() => seeds.every(seed => seed.value === '0'), role + ' seed cleared');
+          await waitFor(() => readTrack(role).generatorSettings.patternSeed===0, role + ' cleared seed saved');
           const state = readTrack(role).generatorSettings;
           result.sharedRoles.push({ role, hits: state.hitsPerPattern, seed: state.patternSeed, delays: state.feedbackCount,
             grids: document.querySelectorAll('.rhythm-preview-grid').length,
@@ -454,6 +461,7 @@ test('production Angular controls initialize selects from settings and support r
         document.querySelector('button[aria-label="Close pattern sequencer"]').click();
         await waitFor(() => !document.querySelector('vc-pattern-sequencer'));
         result.drumChannelLocked = document.querySelector('.track-group.drums .track-channel').getAttribute('aria-disabled') === 'true';
+        await waitFor(() => { const settings=readTrack('drums').generatorSettings;return settings.pitch===38&&settings.rhythm==='custom'&&settings.customPattern?.[0]===0&&settings.useCustomVelocities===true; }, 'drum edits saved');
         result.drumSettings = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'drums').generatorSettings;
         const drumInstrument = document.querySelector('.track-group.drums .track-instrument');
         result.drumPitch = drumInstrument.getAttribute("value");
@@ -476,7 +484,7 @@ test('production Angular controls initialize selects from settings and support r
           if (checkbox) {
             const label = checkbox.getAttribute('aria-label'); checkbox.click();
             const key = { chords: 'varyLength', drums: 'patterns', melody: 'rerollSeeds' }[role];
-            await waitFor(() => read().trackGenerationPolicies[role][key] === (checkbox.matches('input') ? checkbox.checked : checkbox.getAttribute('aria-pressed') === 'true'), role + ' stored policy');
+            await waitFor(() => read().trackGenerationPolicies?.[role]?.[key] === (checkbox.matches('input') ? checkbox.checked : checkbox.getAttribute('aria-pressed') === 'true'), role + ' stored policy');
             unchanged = JSON.stringify(read().tracks.find(item => item.id === track.id).generatorSettings) === before;
             synced = read().trackGenerationPolicies[role][key] === (checkbox.getAttribute('aria-pressed') === 'true');
             checkbox.click();
@@ -534,10 +542,12 @@ test('production Angular controls initialize selects from settings and support r
         await waitFor(() => generateGroup.querySelector('.policy-controls'), 'expanded rules');
         result.countAfterExpand = countInput.value;
         await waitFor(() => generateGroup.querySelectorAll('.track-select').length === 3, 'Generate N adds tracks');
+        await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length===3, 'generated tracks saved');
         result.generatedChords = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length;
         generateGroup.querySelector('button[aria-label="Lock reroll for C3"]').click();
         await changeControl(countInput, '0');
         await waitFor(() => countInput.value === '1' && generateGroup.querySelectorAll('.track-select').length === 1, 'locked count floor');
+        await waitFor(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track => track.role === 'chords').length===1, 'locked count saved');
         result.lockedCountTrack = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'chords').id;
         const arpGroup = document.querySelector('.track-group.arpeggio');
         const readProject = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
@@ -554,12 +564,14 @@ test('production Angular controls initialize selects from settings and support r
         const arpTotal = arpGroup.querySelector('input[aria-label="Arps track count"]');
         await changeControl(arpTotal, '3');
         await waitFor(() => arpGroup.querySelectorAll('.track-select').length === 3, 'new instrument tracks');
+        await waitFor(() => readProject().tracks.filter(track => track.role === 'arpeggio').length===3, 'new instrument tracks saved');
         const arpRows = [...arpGroup.querySelectorAll('.track-row-card')];
         const lockedInstrument = arpRows[2].querySelector('.track-instrument');
         await changeControl(lockedInstrument, '127');
         const lastArp = readProject().tracks.filter(track => track.role === 'arpeggio')[2];
         arpRows[2].querySelector('button[aria-label="Lock reroll for ' + lastArp.name + '"]').click();
         await waitFor(() => arpRows[2].querySelector('button[aria-label="Reroll ' + lastArp.name + '"]').disabled, 'whole-track lock');
+        await waitFor(() => { const track=readProject().tracks.find(track=>track.id===lastArp.id);return track.rerollLocked&&track.mix.program===127; }, 'locked instrument saved');
         const beforeInstrumentRoll = readProject();
         arpGroup.querySelector('button[aria-label="Reroll Arps tracks"]').click();
         await waitFor(() => readProject().trackRerollCounts.arpeggio > beforeInstrumentRoll.trackRerollCounts.arpeggio, 'combined roll');
@@ -597,6 +609,7 @@ test('production Angular controls initialize selects from settings and support r
         const drumCount = drumGroup.querySelector('input[aria-label="Drums track count"]');
         await changeControl(drumCount, '5');
         await waitFor(() => drumGroup.querySelectorAll('.track-select').length === 5, 'generated drum kit');
+        await waitFor(() => readProject().tracks.filter(track => track.role === 'drums').length===5, 'generated drum kit saved');
         const beforeKitRoll = readProject().trackRerollCounts.drums;
         drumGroup.querySelector('button[aria-label="Reroll Drums tracks"]').click();
         await waitFor(() => readProject().trackRerollCounts.drums > beforeKitRoll, 'drum kit reroll');

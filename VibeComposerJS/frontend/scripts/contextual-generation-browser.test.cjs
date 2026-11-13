@@ -112,6 +112,7 @@ for (const width of [1440,780]) test(`whole arrangement toolbar reroll and undo 
     const button=label=>document.querySelector('[aria-label="'+label+'"]');
     try {
       await wait(()=>innerWidth===${width}&&button('Arrangement Manual'));
+      await wait(read);
       button('Arrangement Manual').click();
       await wait(()=>read().arrangementManual===true);
       const before=read();

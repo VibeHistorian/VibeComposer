@@ -2,6 +2,138 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('all project commands publish immediately and coalesce encoding and both storage writes', () => {
+  const { service, load, stored, uiStored, advancePersistence, persistenceTimers } = fixture();
+  service.flushPersistence();
+  const storage = load('core/project/project-storage.ts'), encode = storage.encodeProjectStorage;
+  let encodes = 0, sessionWrites = 0, workspaceWrites = 0;
+  storage.encodeProjectStorage = project => { encodes++; return encode(project); };
+  global.sessionStorage.setItem = (key, value) => { sessionWrites++; stored.set(key, value); };
+  global.localStorage.setItem = (key, value) => { workspaceWrites++; uiStored.set(key, value); };
+  const commands = [
+    () => service.updateSettings({ tempoBpm: 137 }),
+    () => service.rerollRoleTracks('chords', 'track-chords-1'),
+    () => service.rerollRoleTracks('bass'),
+    () => service.generateComposition(),
+  ];
+  for (const command of commands) {
+    const previous = service.project();
+    command();
+    assert.notEqual(service.project(), previous, 'command publishes before persistence');
+    assert.equal(service.canUndo(), true);
+    advancePersistence(30);
+    assert.equal(encodes, 0, 'no encoding in the command or during the burst');
+    assert.equal(sessionWrites + workspaceWrites, 0);
+  }
+  advancePersistence(119);
+  assert.equal(sessionWrites, 0);
+  advancePersistence(1);
+  assert.ok(encodes > 0);
+  assert.equal(sessionWrites, 1);
+  assert.equal(workspaceWrites, 1);
+  assert.equal(persistenceTimers.size, 0);
+  assert.equal(stored.get('vibecomposer.project.v12'), JSON.stringify(encode(service.project())));
+  const saved = JSON.parse(uiStored.get('vibecomposer.project-tabs.v1'));
+  assert.equal(saved.tabs.find(tab => tab.id === saved.activeId).past.length, service.historyPosition());
+  advancePersistence(2000);
+  assert.equal(sessionWrites, 1, 'cancelled deadlines do not save again');
+  service.ngOnDestroy();
+});
+
+test('sustained project changes save at the deadline and resume coalescing afterwards', () => {
+  const { service, stored, advancePersistence } = fixture();
+  service.flushPersistence();
+  const original = stored.get('vibecomposer.project.v12');
+  for (let index = 0; index < 10; index++) {
+    service.updateSettings({ name: `Continuous ${index}` });
+    advancePersistence(99);
+    assert.equal(stored.get('vibecomposer.project.v12'), original);
+  }
+  advancePersistence(10);
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Continuous 9');
+  service.updateSettings({ name: 'After deadline' });
+  advancePersistence(149);
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Continuous 9');
+  advancePersistence(1);
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'After deadline');
+  service.ngOnDestroy();
+});
+
+test('pending saves retain both tabs, undo/redo, inactive edits and the latest active identity', () => {
+  const { service, load, stored, uiStored, advancePersistence } = fixture();
+  service.flushPersistence();
+  const first = service.activeProjectTabId();
+  service.updateSettings({ name: 'Original latest' });
+  service.updateSettings({ tempoBpm: 137 });
+  service.undo();
+  service.duplicateProjectTab();
+  const second = service.activeProjectTabId();
+  service.redo();
+  service.renameProjectTab(first, 'Inactive renamed');
+  service.switchProjectTab(first);
+  assert.equal(service.project().name, 'Inactive renamed');
+  service.undo();
+  service.switchProjectTab(second);
+  assert.equal(service.project().tempoBpm, 137);
+  advancePersistence(150);
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, service.project().name);
+  const saved = JSON.parse(uiStored.get('vibecomposer.project-tabs.v1'));
+  assert.equal(saved.activeId, second);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  restored.switchProjectTab(first);
+  restored.redo();
+  assert.equal(restored.project().name, 'Inactive renamed');
+  restored.switchProjectTab(second);
+  restored.undo();
+  assert.notEqual(restored.project().tempoBpm, 137);
+  restored.redo();
+  assert.equal(restored.project().tempoBpm, 137);
+  service.ngOnDestroy(); restored.ngOnDestroy();
+});
+
+test('visibility, pagehide and destruction flush the latest workspace and release callbacks', () => {
+  const { service, stored, advancePersistence, persistencePage, persistenceDocument, persistenceTimers } = fixture();
+  service.flushPersistence();
+  service.updateSettings({ name: 'Hidden save' });
+  persistenceDocument.dispatchEvent(new Event('visibilitychange'));
+  assert.notEqual(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Hidden save');
+  persistenceDocument.visibilityState = 'hidden';
+  persistenceDocument.dispatchEvent(new Event('visibilitychange'));
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Hidden save');
+  service.updateSettings({ name: 'Pagehide save' });
+  persistencePage.dispatchEvent(new Event('pagehide'));
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Pagehide save');
+  service.updateSettings({ name: 'Destroy save' });
+  service.ngOnDestroy();
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Destroy save');
+  assert.equal(persistenceTimers.size, 0);
+  let writes = 0;
+  global.sessionStorage.setItem = () => writes++;
+  persistencePage.dispatchEvent(new Event('pagehide'));
+  persistenceDocument.dispatchEvent(new Event('visibilitychange'));
+  advancePersistence(2000);
+  assert.equal(writes, 0);
+});
+
+test('unavailable storage does not reject changes or prevent later persistence', () => {
+  const { service, stored, uiStored, advancePersistence } = fixture();
+  service.flushPersistence();
+  global.sessionStorage.setItem = () => { throw new Error('Storage unavailable'); };
+  service.updateSettings({ name: 'Workspace only' });
+  advancePersistence(150);
+  assert.equal(JSON.parse(uiStored.get('vibecomposer.project-tabs.v1')).tabs[0].project.name, 'Workspace only');
+  global.localStorage.setItem = () => { throw new Error('Quota exceeded'); };
+  service.updateSettings({ name: 'Memory only' });
+  advancePersistence(150);
+  assert.equal(service.project().name, 'Memory only');
+  global.sessionStorage.setItem = (key, value) => stored.set(key, value);
+  global.localStorage.setItem = (key, value) => uiStored.set(key, value);
+  service.updateSettings({ name: 'Storage recovered' });
+  advancePersistence(150);
+  assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Storage recovered');
+  service.ngOnDestroy();
+});
+
 test('storage role arrays follow track order, including arbitrary IDs, empty roles and all-false groups', () => {
   const { service, load } = fixture();
   const { encodeProjectStorage } = load('core/project/project-storage.ts');
@@ -62,6 +194,7 @@ test('reorder, duplicate, deletion, undo and session reload preserve track ident
   service.setSectionTrackPresence(0, first, true);
   service.setSectionTrackPresence(0, second, false);
   service.reorderTrack(second, -1);
+  service.flushPersistence();
   let saved = JSON.parse(stored.get('vibecomposer.project.v12'));
   assert.deepEqual(saved.arrangement[0].trackPresence.drums, [2]);
   assert.equal(service.project().arrangement[0].trackPresence[first], true);
@@ -75,10 +208,13 @@ test('reorder, duplicate, deletion, undo and session reload preserve track ident
   const expected = { ...service.project().arrangement[0].trackPresence };
   assert.equal(service.importProjectJson(exported), true);
   assert.deepEqual(service.project().arrangement[0].trackPresence, expected);
-  // Existing sessions are rewritten to role arrays immediately on restore.
+  // Existing sessions are rewritten to role arrays when the restored workspace saves.
+  service.flushPersistence();
   stored.set('vibecomposer.project.v12', JSON.stringify(service.project()));
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.deepEqual(restored.project().arrangement.find(item => item.id === section.id).trackPresence, expected);
+  restored.flushPersistence();
   saved = JSON.parse(stored.get('vibecomposer.project.v12'));
   assert.ok(Object.values(saved.arrangement[0].trackPresence).every(Array.isArray));
 });

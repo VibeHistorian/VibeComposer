@@ -58,7 +58,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await wait(()=>innerWidth===${width},'viewport');
       const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'),'app');
       if(!sessionStorage.getItem('variation-fixture')){
-        await changeControl(seed,'42');const p=await wait(read,'project');
+        await changeControl(seed,'42');window.dispatchEvent(new Event('pagehide'));const p=await wait(read,'project');
         p.melodyGlobal={...p.melodyGlobal,contextualMelody:true};
         for(const role of ['melody','chords','arpeggio','bass','drums']){
           const base=p.tracks.find(t=>t.role===role);
@@ -170,6 +170,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       await changeControl(strength,'45');
       ensure(JSON.stringify(read())===original,'authoring stays local');
       button(d,'Apply variations').click();await wait(()=>!dialog(),'manual addition applied');
+      await wait(()=>read().arrangement[0].variations.choices.some(c=>c.trackId==='track-melody-2'&&c.parameters?.speedDelta===45),'manual addition persisted');
       const inserted=read().arrangement[0].variations.choices.find(c=>c.trackId==='track-melody-2');
       ensure(inserted?.origin==='authored'&&inserted.parameters.speedDelta===45,'manual strength and ownership saved');
       ensure(read().arrangement[0].variations.choices.some(c=>c.kind==='drum-end-fill'&&c.parameters.fillLimit===2),'snare fill saved with strength');
@@ -267,6 +268,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       opener.click();d=await wait(dialog,'reopen');await changeControl(d.querySelector('[aria-label="Variation change budget"]'),'4');button(d,'Reroll variations').click();
       await wait(()=>d.querySelector('article'),'new choices');button(d,'Apply variations').click();
       await wait(()=>!dialog(),'apply closes');
+      await wait(()=>JSON.stringify(read())!==original,'choices persisted');
       const saved=JSON.stringify(read());ensure(saved!==original,'apply saves choices');
       ensure(read().arrangementVariationPolicy.melodySpeedDelta===undefined,'strength remains outside project policy');
       ensure(read().arrangement.flatMap(s=>s.variations.choices).filter(c=>c.kind==='melody-speed').every(c=>c.parameters.speedDelta===30),'choices capture speed strength');
@@ -290,6 +292,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(d.querySelectorAll('.variation-section').length===1,'section scope');
       button(d,'Reset variations').click();ensure(JSON.stringify(read())===saved,'reset stays local');
       button(d,'Apply variations').click();await wait(()=>!dialog(),'reset applied');
+      await wait(()=>!read().arrangement[0].variations,'reset persisted');
       ensure(!read().arrangement[0].variations&&read().arrangement[1].variations,'reset leaves other section');
       document.querySelector('[aria-label="Undo"]').click();await wait(()=>JSON.stringify(read())===saved,'undo reset');
       opener.click();d=await wait(dialog,'escape dialog');
@@ -305,6 +308,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       ensure(prefs().rerollPresenceWithVariations,'presence behavior survives Cancel and reopen');
       button(d,'Reroll variations').click();await wait(()=>d.querySelector('.presence-changes'),'combined presence');
       button(d,'Apply variations').click();await wait(()=>!dialog(),'combined saved');
+      await wait(()=>JSON.stringify(read())!==saved,'combined persisted');
       const combined=JSON.stringify(read());ensure(prefs().generateArrangementVariations,'generation preference saved');
       ensure(!read().arrangementVariationGeneration,'project contains no generation switch');
       const structural=p=>p.arrangement.map(({trackPresence,variations,...rest})=>rest);

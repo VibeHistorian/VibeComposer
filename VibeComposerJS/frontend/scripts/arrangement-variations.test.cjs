@@ -327,6 +327,7 @@ test('variation commands persist, undo atomically, duplicate and prune deleted i
   const before = service.exportProjectJson();
   assert.equal(service.randomizeArrangementVariations('section-2', undefined, 9223372036854775807n), 'changed');
   let saved = service.exportProjectJson();
+  service.flushPersistence();
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).arrangement[1].variations.seed, '9223372036854775807');
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), saved);

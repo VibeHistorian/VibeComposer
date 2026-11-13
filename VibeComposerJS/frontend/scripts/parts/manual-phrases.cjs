@@ -431,6 +431,7 @@ test('drum identities are independent, named, fixed to channel 10 and preserved 
   assert.equal(settings.PART_CONTROLS.drums.some(control => ['pitch', 'groove', 'transpose', 'accents'].includes(control.key)), false);
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(saved));
 });
 
@@ -581,6 +582,7 @@ test('manual melody notes work through the editor, scoped presence, history, per
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   const restored = new ProjectService();
   assert.deepEqual(restored.project(), service.project());
   assert.equal(restored.project().seed, '9223372036854775807');

@@ -29,6 +29,7 @@ test('Global Harmony Compose toggle persists and preserves custom harmony while 
   const transport = new TransportDockComponent();
   transport.toggleComposeRandomization('randomizeHarmonyOnCompose');
   assert.equal(service.project().randomizeHarmonyOnCompose, false);
+  service.flushPersistence();
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).randomizeHarmonyOnCompose, false);
   const saved = service.exportProjectJson();
   transport.toggleComposeRandomization('randomizeHarmonyOnCompose');
@@ -126,11 +127,11 @@ test('track layouts share generation across consumers without sharing mutable no
   assert.deepEqual(phrase.layOutTrackPhrase(service.project(), track), playback);
 });
 
-test('mix edits reuse score phrases and note counts with real Angular signal equality', async () => {
+test('mix edits reuse score phrases with real Angular signal equality', async () => {
   const reactivity = await import('@angular/core');
   const { service, workspace, phrase } = fixture({ reactivity });
   let generations = 0;
-  for (const name of ['phraseForTrack', 'layOutTrackPhrase']) {
+  for (const name of ['phraseForTrack', 'layOutTrackPhrase', 'resolvedTrackPhrase']) {
     const original = phrase[name];
     phrase[name] = (...args) => { generations++; return original(...args); };
   }
@@ -180,6 +181,7 @@ test('zero seed survives workspace restore while exported projects load the gene
   assert.notEqual(generated, first);
   const exported = service.exportProjectJson();
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.equal(new ProjectService().seedInput(), '0');
   assert.equal(service.importProjectJson(exported), true);
   assert.equal(service.seedInput(), generated);
@@ -317,6 +319,7 @@ test('P6 drum rule-only edits, rerolls, Compose and additions preserve ownership
   service.undo(); assert.equal(service.exportProjectJson(),before); service.redo(); assert.equal(service.exportProjectJson(),after);
   service.importProjectJson(before); service.rerollRoleTracks('drums'); assert.deepEqual(JSON.parse(service.exportProjectJson()),JSON.parse(after));
   assert.deepEqual(midi.generateCompositionMidi(service.project()),bytes);
+  service.flushPersistence();
   assert.deepEqual(new (load('core/project/project.service.ts').ProjectService)().project(),service.project());
   service.setTrackRerollLock(id,true); const locked=service.project().tracks.find(track=>track.id===id);
   service.generateComposition(); assert.deepEqual(service.project().tracks.find(track=>track.id===id),locked);
@@ -438,9 +441,11 @@ test('automatic events are atomic, replayable and preserve locks, local settings
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), after);
   service.undo(); service.generateComposition(); assert.equal(service.exportProjectJson(), after);
+  service.flushPersistence();
   assert.deepEqual(projectData(stored.get('vibecomposer.project.v12')), projectData(after));
   assert.equal(service.importProjectJson(after), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(after));
 });
 
@@ -508,6 +513,7 @@ test('P5e target mode edits reinterpret scoped notes and prepare Chordlet target
     assert.ok(Math.abs(note.ticks / exported.header.ppq - notes[index].startBeat) < 0.003);
     assert.ok(Math.abs(note.durationTicks / exported.header.ppq - notes[index].durationBeats) < 0.003);
   });
+  service.flushPersistence();
   assert.deepEqual(projectData(new (load('core/project/project.service.ts').ProjectService)().exportProjectJson()), projectData(saved));
   assert.equal(service.importProjectJson(saved), true); saved = service.exportProjectJson();
   service.updateSettings({ name: 'redo' }); service.undo();
@@ -568,6 +574,7 @@ test('P5e target preparation preserves current notes until events, locks, local 
   service.generateComposition(); assert.equal(service.exportProjectJson(), after);
   assert.equal(service.importProjectJson(after), true);
   const { ProjectService } = load('core/project/project.service.ts');
+  service.flushPersistence();
   assert.deepEqual(projectData(new ProjectService().exportProjectJson()), projectData(after));
 
 });
@@ -639,6 +646,7 @@ test('drum group rerolls reserve a core kit, respect remaining drums, and retain
   const after = service.exportProjectJson(); service.undo(); assert.equal(service.exportProjectJson(), before);
   service.rerollRoleTracks('drums'); assert.equal(service.exportProjectJson(), after);
   assert.equal(service.importProjectJson(after), true);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   restored.rerollRoleTracks('drums'); service.rerollRoleTracks('drums'); assert.deepEqual(restored.project(), service.project());
   for (const track of tracks()) service.setTrackRerollLock(track.id, false);
@@ -719,6 +727,7 @@ test('main rerolls randomize instruments by default for every role and preserve 
     assert.equal(track().mix.program, program);
     if (role === 'drums') assert.equal(track().generatorSettings.pitch, pitch);
     assert.equal(service.importProjectJson(service.exportProjectJson()), true);
+    service.flushPersistence();
     const restored = new (load('core/project/project.service.ts').ProjectService)();
     assert.equal(restored.project().instrumentGenerationPolicies[role].randomize, false);
   }
@@ -948,6 +957,7 @@ test('Arpeggio reroll policy edits leave part settings and notes untouched, with
   service.undo(); assert.equal(service.project().trackGenerationPolicies, undefined);
   service.redo(); assert.equal(service.project().trackGenerationPolicies.arpeggio.fixedHits, 16);
   const saved = service.exportProjectJson(); assert.equal(service.importProjectJson(saved), true);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.deepEqual(restored.project().trackGenerationPolicies, service.project().trackGenerationPolicies);
   const reordered = JSON.parse(saved);
@@ -999,6 +1009,7 @@ test('Arpeggio group rerolls preserve ownership, locks, local overrides and manu
     phrase.layOutTrackPhrase(service.project(), track(id)).length);
   const saved = service.exportProjectJson(); assert.equal(service.importProjectJson(saved), true);
   assert.equal(track(lockedId).rerollLocked, true);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.deepEqual(restored.project().trackRerollCounts, service.project().trackRerollCounts);
   const bases = service.project().tracks.map(track => track.generatorSettings);

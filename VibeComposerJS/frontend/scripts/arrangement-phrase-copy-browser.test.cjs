@@ -24,6 +24,7 @@ for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px'
     };
     await wait(`!!document.querySelector('[aria-label="Generation seed"]')`);
     await evaluate(`(async()=>{await changeControl(document.querySelector('[aria-label="Generation seed"]'),'42');
+      window.dispatchEvent(new Event('pagehide')); // Flush the running app before replacing its saved fixture.
       const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')),track=p.tracks.find(t=>t.role==='melody');
       p.arrangement=['INTRO','VERSE1'].map((type,i)=>({id:'copy-section-'+i,type,measures:4,
         trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,i===0&&t.id===track.id])),

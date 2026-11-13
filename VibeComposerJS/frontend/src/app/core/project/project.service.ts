@@ -17,6 +17,7 @@ import { appendPhraseRangeEdit, hasManualPhrase, type PhraseRangeEdit } from '..
 import { decodeProject, isProject } from './project-codec';
 import { formatProjectJson } from './project-json';
 import { encodeProjectStorage } from './project-storage';
+import { ProjectPersistence } from './project-persistence';
 import { copyDefaultProject, DEFAULT_DRUM_SETTINGS, DEFAULT_PROJECT, DEFAULT_TRACKS } from './project-defaults';
 import { projectLoadIssues } from './project-load-diagnostics';
 import { UiPreferencesService } from '../ui/ui-preferences.service';
@@ -99,6 +100,12 @@ export class ProjectService {
   readonly projectActivation = signal(0);
   readonly openProjects = computed(() => this.tabs().map(tab => ({ id: tab.id,
     name: tab.id === this.activeProjectTabId() ? this.project().name : tab.project.name })));
+  private readonly persistence = new ProjectPersistence(() => this.writeWorkspace());
+
+  /** Flush before an explicit host shutdown; browser lifecycle events also flush pending saves. */
+  flushPersistence(): void { this.persistence.flush(); }
+
+  ngOnDestroy(): void { this.persistence.destroy(); }
 
   constructor() {
     const restored: ProjectTab[] = [];
@@ -143,7 +150,7 @@ export class ProjectService {
     this.generationFailure.set(null);
     this.state.set(tab.project);
     this.refreshHistoryAvailability();
-    this.persist(tab.project);
+    this.persist();
   }
 
   switchProjectTab(id: string): void {
@@ -179,7 +186,7 @@ export class ProjectService {
       project: copyDefaultProject(this.sectionTypeSettings.chances(), Math.random), past: [], future: [], automaticSeed: BigInt(DEFAULT_PROJECT.seed) === 0n });
     this.tabs.set(remaining);
     if (id === this.activeProjectTabId()) this.activateTab(remaining[Math.min(index, remaining.length - 1)]);
-    else this.persist(this.state());
+    else this.persist();
   }
 
   projectForTab(id: string): CompositionProject | undefined {
@@ -193,7 +200,7 @@ export class ProjectService {
     if (!tab || tab.project.name === name) return;
     this.tabs.update(tabs => tabs.map(item => item.id === id ? { ...item,
       project: { ...item.project, name }, past: [...item.past, item.project].slice(-MAX_HISTORY), future: [] } : item));
-    this.persist(this.state());
+    this.persist();
   }
 
   goToHistory(index: number): void {
@@ -205,7 +212,7 @@ export class ProjectService {
     this.future.splice(0, this.future.length, ...states.slice(index + 1).reverse());
     this.lastControlEdit = null;
     this.state.set(next);
-    this.persist(next);
+    this.persist();
     this.refreshHistoryAvailability();
   }
 
@@ -977,7 +984,7 @@ export class ProjectService {
       if (!/^-?\d+$/.test(patch.seed) || BigInt(patch.seed) < -(1n << 63n) || BigInt(patch.seed) > (1n << 63n) - 1n) return;
       const automatic = BigInt(patch.seed) === 0n;
       this.automaticSeed.set(automatic);
-      this.persist(this.state());
+      this.persist();
       if (automatic) {
         const { seed, ...settings } = patch;
         if (Object.keys(settings).length) this.updateSettings(settings);
@@ -1521,7 +1528,7 @@ export class ProjectService {
     this.future.push(this.state());
     const restored = preserveAudition(previous, this.state());
     this.state.set(restored);
-    this.persist(restored);
+    this.persist();
     this.refreshHistoryAvailability();
   }
 
@@ -1534,7 +1541,7 @@ export class ProjectService {
     this.past.push(this.state());
     const restored = preserveAudition(next, this.state());
     this.state.set(restored);
-    this.persist(restored);
+    this.persist();
     this.refreshHistoryAvailability();
   }
 
@@ -1563,7 +1570,7 @@ export class ProjectService {
     this.generationFailure.set(null);
     if (historyContent(current) === historyContent(next)) {
       this.state.set(next);
-      this.persist(next);
+      this.persist();
       return;
     }
 
@@ -1578,7 +1585,7 @@ export class ProjectService {
     this.lastControlEdit = this.compactHistory() && controlKey !== undefined ? { key: controlKey, time } : null;
     this.future.length = 0;
     this.state.set(next);
-    this.persist(next);
+    this.persist();
     this.refreshHistoryAvailability();
   }
 
@@ -1625,7 +1632,6 @@ export class ProjectService {
         const value: unknown = JSON.parse(raw);
         const decoded = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
         if (decoded) {
-          this.persist(decoded);
           return decoded;
         }
         this.warnProjectLoadFailure(`session storage (${key})`, value);
@@ -1634,7 +1640,6 @@ export class ProjectService {
       }
     }
     const initial = copyDefaultProject(this.sectionTypeSettings.chances(), Math.random);
-    this.persist(initial);
     return initial;
   }
 
@@ -1642,17 +1647,22 @@ export class ProjectService {
     console.warn(`Could not load project from ${source}.`, projectLoadIssues(value, this.sectionTypeSettings.chances(), Math.random));
   }
 
-  private persist(project: CompositionProject): void {
+  private persist(): void {
+    // Tab snapshots must follow every edit immediately, even before a save runs.
+    const current = this.snapshotTab();
+    this.tabs.update(tabs => tabs.map(tab => tab.id === current.id ? current : tab));
+    this.persistence.schedule();
+  }
+
+  private writeWorkspace(): void {
     try {
-      globalThis.sessionStorage?.setItem(STORAGE_KEY, JSON.stringify(encodeProjectStorage(project)));
+      globalThis.sessionStorage?.setItem(STORAGE_KEY, JSON.stringify(encodeProjectStorage(this.state())));
     } catch {
       // Keep the project usable if storage is disabled or full.
     }
     if (!this.tabs || !this.activeProjectTabId()) return;
-    const current = this.snapshotTab();
-    this.tabs.update(tabs => tabs.map(tab => tab.id === current.id ? current : tab));
     try {
-      globalThis.localStorage?.setItem(TABS_STORAGE_KEY, JSON.stringify({ activeId: current.id,
+      globalThis.localStorage?.setItem(TABS_STORAGE_KEY, JSON.stringify({ activeId: this.activeProjectTabId(),
         tabs: this.tabs().map(tab => ({ ...tab, project: encodeProjectStorage(tab.project),
           past: tab.past.map(encodeProjectStorage), future: tab.future.map(encodeProjectStorage) })) }));
     } catch { /* Tabs remain usable when browser storage is disabled or full. */ }

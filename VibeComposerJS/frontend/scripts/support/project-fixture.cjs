@@ -76,6 +76,30 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
   const preferences = { chances: () => sectionTypes.DEFAULT_SECTION_TYPE_CHANCES };
   const uiStored = new Map();
   global.localStorage = { getItem: key => uiStored.get(key) ?? null, setItem: (key, value) => uiStored.set(key, value) };
+  // Persistence uses a fixture-owned clock and lifecycle, never timers that can
+  // write into a later fixture's browser-storage stand-ins.
+  let persistenceTime = 0, nextTimer = 0;
+  const persistenceTimers = new Map();
+  const persistencePage = new EventTarget(), persistenceDocument = new EventTarget();
+  persistenceDocument.visibilityState = 'visible';
+  const persistenceEnvironment = {
+    setTimeout: (callback, delay) => { const id = ++nextTimer; persistenceTimers.set(id, { callback, time: persistenceTime + delay }); return id; },
+    clearTimeout: id => persistenceTimers.delete(id), page: persistencePage, document: persistenceDocument,
+  };
+  const advancePersistence = milliseconds => {
+    const end = persistenceTime + milliseconds;
+    for (;;) {
+      const next = [...persistenceTimers].sort((a, b) => a[1].time - b[1].time)[0];
+      if (!next || next[1].time > end) break;
+      persistenceTime = next[1].time; persistenceTimers.delete(next[0]); next[1].callback();
+    }
+    persistenceTime = end;
+  };
+  const persistenceModule = load('core/project/project-persistence.ts');
+  const ProjectPersistence = persistenceModule.ProjectPersistence;
+  persistenceModule.ProjectPersistence = class extends ProjectPersistence {
+    constructor(write) { super(write, persistenceEnvironment); }
+  };
   uiPreferences = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
   const { ProjectService } = load('core/project/project.service.ts');
   service = new ProjectService();
@@ -89,7 +113,8 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
   const phrase = load('core/music/phrase.ts');
   const settings = load('core/music/part-settings.ts');
   const midi = load('core/music/midi-export.ts');
-  return { service, ui, workspace, phrase, settings, midi, stored, load, uiPreferences, uiStored, flushEffects };
+  return { service, ui, workspace, phrase, settings, midi, stored, load, uiPreferences, uiStored, flushEffects,
+    advancePersistence, persistencePage, persistenceDocument, persistenceTimers };
 }
 
 function projectData(json) {

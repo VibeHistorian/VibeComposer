@@ -29,7 +29,9 @@ test('track-only projects preserve MIDI and session state through role edits, re
   assertTrackOnly(service.project());
   assert.deepEqual(generateCompositionMidi(service.project()), expected);
   assertTrackOnly(JSON.parse(service.exportProjectJson()));
+  service.flushPersistence();
   assertTrackOnly(JSON.parse(stored.get('vibecomposer.project.v12')));
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assertTrackOnly(restored.project());
   assert.deepEqual(generateCompositionMidi(restored.project()), expected);
@@ -216,6 +218,7 @@ test('instrument rules and locks strictly validate and persist without schema ga
   service.setTrackInstrumentLock('track-bass-1', true);
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
+  service.flushPersistence();
   assert.deepEqual(new (load('core/project/project.service.ts').ProjectService)().project(), service.project());
   service.updateSettings({ name: 'redo' }); service.undo();
   const snapshot = service.exportProjectJson();
@@ -252,6 +255,7 @@ test('other role rules leave musical values untouched and strictly validate pers
   assert.equal(service.project().trackRerollCounts, undefined);
   const saved = service.exportProjectJson();
   assert.equal(service.importProjectJson(saved), true);
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.deepEqual(restored.project().trackGenerationPolicies, service.project().trackGenerationPolicies);
   service.updateSettings({ name: 'redo' }); service.undo();
@@ -437,8 +441,10 @@ test('failed project loads warn with property paths and preserve the current pro
     assert.ok(warnings[0][1] instanceof SyntaxError);
 
     warnings.length = 0;
+    service.flushPersistence();
     stored.set('vibecomposer.project.v12', JSON.stringify(invalid));
     const { ProjectService } = load('core/project/project.service.ts');
+    service.flushPersistence();
     const restored = new ProjectService();
     assert.equal(warnings.length, 1);
     assert.match(warnings[0][0], /session storage \(vibecomposer\.project\.v12\)/);

@@ -41,6 +41,7 @@ test('tabs and histories restore, inactive removal preserves active state, and f
   const second = service.activeProjectTabId();
   service.updateSettings({ tempoBpm: 150 });
   service.undo();
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.deepEqual(restored.openProjects(), service.openProjects());
   assert.equal(restored.activeProjectTabId(), second);
@@ -90,6 +91,7 @@ test('tab renames commit once, retain selection, isolate history and persist ina
   assert.equal(service.activeProjectTabId(), second);
   assert.equal(service.historyPosition(), activeHistory);
   assert.equal(service.projectForTab(first).name, 'Renamed source');
+  service.flushPersistence();
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.equal(restored.projectForTab(first).name, 'Renamed source');
   service.switchProjectTab(first);

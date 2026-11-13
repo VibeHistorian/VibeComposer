@@ -133,7 +133,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         }), 'project actions fit inside transport');
         const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'),'seed');
         await changeControl(seed, '123');
-        await wait(()=>sessionStorage.getItem('vibecomposer.project.v12'),'project saved');
+        await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.seed==='123','project saved');
         let before=sessionStorage.getItem('vibecomposer.project.v12');
         button('Edit quick settings').click();
         await wait(()=>button('Save quick settings'),'edit mode');
@@ -197,6 +197,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         shift.dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}));
         await changeControl(rhythmSelect, 'bass1');
         await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(t=>t.role==='bass').generatorSettings.rhythm==='bass1','restore bass rhythm');
+        window.dispatchEvent(new Event('pagehide')); // Establish a saved baseline for the UI-only assertions below.
         before=sessionStorage.getItem('vibecomposer.project.v12');
         document.querySelector('.track-group.bass .group-select').click();
         await wait(()=>document.querySelector('.track-group.bass.group-selected'),'selected bass role');
