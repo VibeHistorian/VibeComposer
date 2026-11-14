@@ -15,7 +15,7 @@ for (const { width, missingMethod, sampler } of [
   const sf2Base64 = sampler ? fs.readFileSync(path.join(__dirname, '../../Super_Nintendo_Unofficial_update.sf2')).toString('base64') : '';
   const trackId = 'track-bass-1';
   const presence = Object.fromEntries(DEFAULT_PROJECT.tracks.map(track => [track.id, true]));
-  const project = { ...DEFAULT_PROJECT, name: 'Export: test', tracks: DEFAULT_PROJECT.tracks.map(track => ({
+  const project = { ...DEFAULT_PROJECT, name: 'Export: test', key: 'C', transposeSemitones: 7, tracks: DEFAULT_PROJECT.tracks.map(track => ({
     ...track, mix: { ...track.mix, program: 19, solo: track.id === trackId, panPercent: -100 },
   })), arrangement: [
     { id: 'first', type: 'VERSE1', measures: 1, trackPresence: presence, context: { tempoBpm: 120 },
@@ -113,7 +113,8 @@ for (const { width, missingMethod, sampler } of [
         trigger.click(); await wait(menu,'project menu'); item('Export Project').click();
         await wait(()=>downloads.length===1,'project download');
         const saved=JSON.parse(await (await downloads[0].blob).text());
-        const filenamePattern = /^\\d{8}_\\d{2}-\\d{2}_${project.key}_${project.tempoBpm}_${project.seed}_Export- test/;
+        const filenamePattern = /^\\d{8}_\\d{2}-\\d{2}_G_${project.tempoBpm}_${project.seed}_Export- test/;
+        ensure(saved.key==='C' && saved.transposeSemitones===7,'project export preserves base key and global transpose');
         ensure(saved.name==='Export: test' && filenamePattern.test(downloads[0].name) && downloads[0].name.endsWith('.vibe.json'),'project export preserved with automatic filename');
         trigger.click(); await wait(menu,'MIDI menu'); item('Export MIDI').click();
         await wait(()=>downloads.length===2,'MIDI download');

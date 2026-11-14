@@ -13,6 +13,16 @@ test('export fields use local date and time, fixed order, and preserve long seed
   assert.equal(exportFilename({ ...project, key: 'F♯' }, ['key'], now), 'Fs_My composition');
 });
 
+test('export key follows global transpose across semitones and octaves', () => {
+  const keys = ['C', 'Cs', 'D', 'Eb', 'E', 'F', 'Fs', 'G', 'Ab', 'A', 'Bb', 'B'];
+  for (const [key, root] of [['C', 0], ['F#', 6], ['B♭', 10]]) {
+    for (let transposeSemitones = -24; transposeSemitones <= 24; transposeSemitones++) {
+      const expected = keys[((root + transposeSemitones) % 12 + 12) % 12];
+      assert.equal(exportFilename({ ...project, key, transposeSemitones }, ['key'], now), `${expected}_My composition`);
+    }
+  }
+});
+
 test('no enabled fields retains project name and invalid filename characters are sanitized', () => {
   assert.equal(exportFilename(project, [], now), 'My composition');
   assert.equal(exportFilename({ ...project, name: 'Export: test.' }, [], now), 'Export- test');
