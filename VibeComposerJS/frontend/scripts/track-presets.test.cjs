@@ -94,6 +94,61 @@ test('factory library covers 24 complete styles with valid, deterministic genera
   assert.equal(JSON.stringify(library), original, 'loads never mutate factory data');
 });
 
+test('factory styles follow exact project seeds with musical variation and stable drum anchors', () => {
+  const { service, load } = fixture();
+  const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
+  const { generateTrackPhrase } = load('core/music/phrase.ts');
+  const { resolvedTrackPhrase } = load('core/music/phrase.ts');
+  const seeds = ['1', '17', '42', '12345', '271828', '987654321', '9007199254740993', '-9223372036854775808'];
+  const shape = notes => notes.map(({ midi, startBeat, durationBeats }) => [midi, startBeat, durationBeats]);
+  for (const preset of library) {
+    const tracks = preset.tracks.map((track, index) => ({ ...track, id: `track-${preset.role}-${index + 1}` }));
+    const takes = seeds.map(seed => {
+      const project = { ...service.project(), seed, tracks };
+      return tracks.map(track => {
+        assert.equal(track.generatorSettings.patternSeed, 0, 'factory voices follow project reseeding');
+        let notes;
+        assert.doesNotThrow(() => { notes = generateTrackPhrase(project, track); }, `${preset.name}: ${track.name} at ${seed}`);
+        assert.deepEqual(generateTrackPhrase(project, track), notes);
+        assert.ok(notes.length || track.generatorSettings.pauseChance > 0,
+          `${preset.name}: only voices with seeded pauses may rest at seed ${seed}`);
+        assert.ok(notes.every(note => Number.isFinite(note.startBeat) && note.startBeat >= 0
+          && Number.isFinite(note.durationBeats) && note.durationBeats > 0
+          && note.midi >= 0 && note.midi <= 127 && note.velocity >= 1 && note.velocity <= 127));
+        assert.doesNotThrow(() => resolvedTrackPhrase(project, track), `${preset.name}: section generation at ${seed}`);
+        return notes;
+      });
+    });
+    assert.ok(new Set(takes.map(take => JSON.stringify(take))).size > 1, `${preset.name}: ${preset.role} responds to seed`);
+    if (preset.role === 'melody' || preset.role === 'arpeggio' || preset.role === 'chords') {
+      assert.ok(new Set(takes.map(take => JSON.stringify(take.map(shape)))).size > 1,
+        `${preset.name}: ${preset.role} varies beyond velocity`);
+    }
+    if (preset.role === 'drums') {
+      for (const index of [0, 1]) {
+        assert.equal(tracks[index].generatorSettings.pauseChance ?? 0, 0);
+        assert.equal(tracks[index].generatorSettings.exceptionChance ?? 0, 0);
+        for (const take of takes.slice(1)) {
+          assert.equal(take[index].length, takes[0][index].length);
+          take[index].forEach((note, hit) => assert.ok(Math.abs(note.startBeat - takes[0][index][hit].startBeat) < 0.01,
+            'kick/backbeat retain their grid within the humanize amount'));
+        }
+      }
+      assert.ok(new Set(takes.map(take => JSON.stringify(shape(take[2])))).size > 1, `${preset.name}: hats vary`);
+    }
+  }
+});
+
+test('factory support voices and melody controls are distinct across styles', () => {
+  const { load } = fixture();
+  const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
+  for (const role of ['melody', 'bass', 'chords', 'arpeggio']) {
+    const signatures = library.filter(preset => preset.role === role)
+      .map(preset => JSON.stringify(preset.tracks.map(track => track.generatorSettings)));
+    assert.equal(new Set(signatures).size, 24, `${role}: every style has its own musical settings`);
+  }
+});
+
 test('preset replacement preserves locked tracks and occupied slots, cleans surplus references and undoes once', () => {
   const { service } = fixture();
   const lockedId = service.project().tracks.find(track => track.role === 'bass').id;

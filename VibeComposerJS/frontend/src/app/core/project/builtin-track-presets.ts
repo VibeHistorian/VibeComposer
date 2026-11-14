@@ -3,9 +3,10 @@ import type { CompositionTrack } from './track.model';
 import type { PartSettingsByRole } from '../music/part-settings.model';
 import type { ArpeggioPattern } from '../music/arpeggio-pattern';
 import { drumInstrumentName } from '../music/drum-instruments';
+import { builtinStyleSettings, type BuiltinStyleName } from './builtin-track-style-settings';
 
 interface Style {
-  name: string;
+  name: BuiltinStyleName;
   bpm: string;
   swing: number;
   programs: readonly [number, number, number, number];
@@ -83,6 +84,12 @@ function grid(mask: string) {
     customPattern: Array.from({ length: 32 }, (_, index) => Number(mask[index] ?? 0)) };
 }
 
+/** A recognizable motif with a less frequent, style-specific answer rhythm. */
+function durationSettings(primary: readonly number[], answer: readonly number[], weight = 75) {
+  return { customDurations: [primary, answer, ...Array.from({ length: 8 }, () => [] as number[])],
+    customDurationRandomWeighting: true, customDurationChances: [weight, 100 - weight, ...Array(8).fill(0)] };
+}
+
 function track<R extends keyof PartSettingsByRole>(role: R, name: string, index: number,
   program: number, generatorSettings: PartSettingsByRole[R], volumePercent = 80, panPercent = 0): CompositionTrack {
   return { id: `builtin-${role}-${index}`, role, name, midiChannel: { melody: 4, bass: 1, chords: 2, arpeggio: 3, drums: 10 }[role],
@@ -91,36 +98,47 @@ function track<R extends keyof PartSettingsByRole>(role: R, name: string, index:
 
 /** Factory presets stay separate from browser-owned libraries and never contain phrase data. */
 export const BUILTIN_TRACK_PRESETS: readonly TrackPreset[] = STYLES.flatMap(style => {
-  const common = { swingPercent: style.swing, velocityMin: 68, velocityMax: 100 };
-  const bassCommon = { velocityMin: 68, velocityMax: 100 };
-  const durations = [style.durations, ...Array.from({ length: 9 }, () => [] as number[])];
+  const character = builtinStyleSettings(style.name);
+  const common = { patternSeed: 0, swingPercent: style.swing, velocityMin: 68, velocityMax: 100 };
+  const bassCommon = { patternSeed: 0, velocityMin: 68, velocityMax: 100 };
+  const durations = durationSettings(style.durations, character.answer);
   const name = `${style.name} · ${style.bpm} BPM`;
   const tracks: CompositionTrack[][] = [
-    [track('melody', 'Lead', 1, style.programs[0], { ...common, algorithm: 'block', rhythm: 'durations', customDurations: durations,
-      speed: 50, maxBlockChange: 3, blockJump: 1, splitChance: 0, noteLengthMultiplier: Math.min(100, style.gate) }),
+    [track('melody', 'Lead', 1, style.programs[0], { ...common, algorithm: 'block', rhythm: 'durations', ...durations,
+      ending: 'OPEN', splitChance: 0, noteLengthMultiplier: Math.min(100, style.gate), ...character.lead }),
     track('melody', 'Quiet response', 2, style.programs[3], { ...common, algorithm: 'block', rhythm: 'durations',
-      customDurations: [[-2, 1, 1], ...Array.from({ length: 9 }, () => [])], transpose: 12, patternSeed: 271, velocityMin: 45, velocityMax: 65 }, 45, 18)],
+      ...character.lead, ...durationSettings(character.answer, style.durations, 85),
+      ending: 'OPEN', transpose: 12, noteLengthMultiplier: Math.min(100, style.gate), velocityMin: 45, velocityMax: 65 }, 45, 18)],
     [track('bass', 'Foundation', 1, style.programs[1], { ...bassCommon, ...grid(style.bass), noteVariation: style.variation, octaveInterval: false,
       patternJoinMode: 'NOJOIN', noteLengthMultiplier: Math.min(style.gate, 95) }),
-    track('bass', 'Sub support', 2, 38, { ...bassCommon, rhythm: 'single', hitsPerPattern: 4, noteVariation: 0, octaveInterval: false,
-      velocityMin: 50, velocityMax: 65, noteLengthMultiplier: 90 }, 40)],
+    track('bass', 'Low anchor', 2, style.programs[1], { ...bassCommon, ...grid(character.bassSupport),
+      noteVariation: Math.floor(style.variation / 3), octaveInterval: false, patternJoinMode: 'NOJOIN',
+      velocityMin: 50, velocityMax: 65, noteLengthMultiplier: Math.min(style.gate + 15, 110) }, 40)],
     [track('chords', 'Comping', 1, style.programs[2], { ...common, ...grid(style.comp), voicing: 'close',
-      noteLengthPercent: style.gate, strum: style.strum ?? 0, patternJoinMode: 'NOJOIN' }, 70, -15),
+      noteLengthPercent: style.gate, strum: style.strum ?? 0, patternJoinMode: 'NOJOIN', ...character.harmony }, 70, -15),
     track('chords', 'Sustained harmony', 2, style.programs[2], { ...common, rhythm: 'single', hitsPerPattern: 4,
-      voicing: 'open', noteLengthPercent: 160, velocityMin: 45, velocityMax: 60 }, 40, 15)],
+      voicing: 'open', noteLengthPercent: 160, velocityMin: 45, velocityMax: 60, ...character.pad }, 40, 15)],
     [track('arpeggio', 'Moving figure', 1, style.programs[3], { ...common, pattern: style.arp, rate: 'sixteenth', octaves: 2,
-      ...grid(style.comp), noteLengthMultiplier: Math.min(style.gate, 90) }, 60, 20),
+      ...grid(style.comp), noteLengthMultiplier: Math.min(style.gate, 90), transpose: -12,
+      arpContourChordMode: true, ...character.arp }, 60, 20),
     track('arpeggio', 'Answer figure', 2, style.programs[3], { ...common, pattern: 'down', rate: 'eighth', octaves: 1,
-      rhythm: 'durations', customDurations: durations, transpose: 12, velocityMin: 45, velocityMax: 65 }, 40, -20),
+      rhythm: 'durations', ...durationSettings(character.answer, style.durations, 85),
+      transpose: 12, velocityMin: 45, velocityMax: 65 }, 40, -20),
     track('arpeggio', 'Counterpulse', 3, style.programs[2], { ...common, pattern: 'up', rate: 'eighth', octaves: 1,
-      ...grid(style.bass), patternShift: 1, arpPatternRotate: 1, patternSeed: 389,
+      ...grid(character.bassSupport), patternShift: 1, arpPatternRotate: 1,
+      pauseChance: character.accentPause, exceptionChance: Math.floor(character.hatSplit / 2),
       noteLengthMultiplier: Math.min(style.gate, 75), velocityMin: 40, velocityMax: 60 }, 35, -8)],
-    [track('drums', 'Kick', 1, 0, { ...common, ...grid(style.kick), pitch: 36 }),
-    track('drums', 'Snare / rim', 2, 0, { ...common, ...grid(style.snare), pitch: /Bossa|Reggae|Dub$/.test(style.name) ? 37 : 38 }),
+    [track('drums', 'Kick', 1, 0, { ...common, ...grid(style.kick), pitch: 36, humanize: Math.floor(character.humanize / 3) }),
+    track('drums', 'Snare / rim', 2, 0, { ...common, ...grid(style.snare), pitch: /Bossa|Reggae|Dub$/.test(style.name) ? 37 : 38,
+      humanize: Math.floor(character.humanize / 2) }),
     track('drums', 'Hat / ride', 3, 0, { ...common, ...grid(style.hat), pitch: style.name === 'Swing Jazz' ? 53 : 42,
-      velocityMin: 45, velocityMax: 75 }, 65, 12),
+      velocityMin: 45, velocityMax: 75, humanize: character.humanize,
+      exceptionChance: character.hatSplit }, 65, 12),
     ...PERCUSSION[style.name].map(([pitch, mask], index) => track('drums', drumInstrumentName(pitch), index + 4, 0,
-      { ...common, ...grid(mask), pitch, velocityMin: 42, velocityMax: 72 }, 50, index % 2 === 0 ? -18 : 18))],
+      { ...common, ...grid(mask), pitch, velocityMin: 42, velocityMax: 72, humanize: character.humanize,
+        // Single-hit crashes/bells remain dependable; denser percussion may leave gaps.
+        pauseChance: [...mask].filter(cell => cell === '1').length > 1 ? character.accentPause : 0,
+        exceptionChance: Math.floor(character.hatSplit / 3) }, 50, index % 2 === 0 ? -18 : 18))],
   ];
   return tracks.map(group => ({ name, role: group[0].role, tracks: group }));
 });
