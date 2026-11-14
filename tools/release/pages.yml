@@ -1,0 +1,73 @@
+name: Deploy Angular to GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Check out the selected branch or version tag
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.22.1'
+          package-manager-cache: false
+
+      - name: Set up the pinned pnpm version
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+          cache: true
+          cache_dependency_path: frontend/pnpm-lock.yaml
+
+      - name: Read GitHub Pages configuration
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Install dependencies and apply library patches
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Angular for the Pages URL
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: pnpm exec ng build --configuration production --base-href "${PAGES_BASE_PATH}/"
+
+      - name: Upload the browser application
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
