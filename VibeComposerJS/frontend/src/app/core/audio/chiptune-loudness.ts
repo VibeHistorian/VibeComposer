@@ -12,115 +12,115 @@ export const CHIPTUNE_MELODIC_OFFSETS_DB: Readonly<Record<number, number>> = {
   2: 2.955929, // Electric Grand Piano
   3: 2.955929, // Honky-tonk Piano
   4: 2.955929, // Electric Piano 1
-  5: -0.651405, // Electric Piano 2
-  6: -3.474548, // Harpsichord
-  7: -3.474548, // Clavinet
-  8: -5.042472, // Celesta
-  9: -5.042472, // Glockenspiel
-  10: -5.042472, // Music Box
+  5: -0.651150, // Electric Piano 2
+  6: -3.384769, // Harpsichord
+  7: -3.478969, // Clavinet
+  8: -5.040154, // Celesta
+  9: -5.046729, // Glockenspiel
+  10: -5.043004, // Music Box
   11: 1.012745, // Vibraphone
-  12: -5.042472, // Marimba
+  12: -5.044654, // Marimba
   13: 1.012745, // Xylophone
   14: 1.022960, // Tubular Bells
-  15: -4.267966, // Dulcimer
-  16: -4.037617, // Drawbar Organ
-  17: -2.759162, // Percussive Organ
-  18: -2.759162, // Rock Organ
-  19: -4.037617, // Church Organ
+  15: -4.266495, // Dulcimer
+  16: -4.034145, // Drawbar Organ
+  17: -2.766644, // Percussive Organ
+  18: -2.760391, // Rock Organ
+  19: -4.033088, // Church Organ
   20: -3.818534, // Reed Organ
   21: -6.970786, // Accordion
-  22: -6.970786, // Harmonica
-  23: -6.970786, // Tango Accordion
+  22: -6.967543, // Harmonica
+  23: -6.973552, // Tango Accordion
   24: 4.022167, // Nylon Guitar
   25: 4.022167, // Steel Guitar
-  26: -4.648946, // Jazz Guitar
-  27: -3.970509, // Clean Guitar
-  28: -2.557342, // Muted Guitar
-  29: -4.528013, // Overdriven Guitar
-  30: -4.528013, // Distortion Guitar
-  31: -3.891490, // Guitar Harmonics
-  32: -2.627793, // Acoustic Bass
-  33: -2.029893, // Fingered Bass
-  34: -2.029893, // Picked Bass
-  35: -4.394177, // Fretless Bass
-  36: -2.362187, // Slap Bass 1
-  37: -2.362187, // Slap Bass 2
+  26: -4.648850, // Jazz Guitar
+  27: -3.967939, // Clean Guitar
+  28: -2.559317, // Muted Guitar
+  29: -4.524109, // Overdriven Guitar
+  30: -4.533795, // Distortion Guitar
+  31: -3.892623, // Guitar Harmonics
+  32: -2.626091, // Acoustic Bass
+  33: -2.119488, // Fingered Bass
+  34: -2.025083, // Picked Bass
+  35: -4.398419, // Fretless Bass
+  36: -2.361706, // Slap Bass 1
+  37: -2.447562, // Slap Bass 2
   38: 4.839034, // Synth Bass 1
   39: -0.594414, // Synth Bass 2
-  40: -5.602228, // Violin
-  41: -6.164916, // Viola
+  40: -5.599323, // Violin
+  41: -6.163588, // Viola
   42: -4.860562, // Cello
-  43: -4.860562, // Contrabass
-  44: -2.237684, // Tremolo Strings
+  43: -4.857716, // Contrabass
+  44: -2.239853, // Tremolo Strings
   45: 4.022167, // Pizzicato Strings
-  46: -0.932496, // Harp
+  46: -0.934177, // Harp
   47: 2.303952, // Timpani
-  48: -5.178904, // Strings
-  49: -4.019693, // String Ensemble 2
-  50: -2.542565, // Synth Strings 1
-  51: -2.542565, // Synth Strings 2
-  52: -5.088806, // Choir Aahs
-  53: -4.986763, // Voice Oohs
-  54: -5.026834, // Synth Voice
+  48: -5.177201, // Strings
+  49: -4.021160, // String Ensemble 2
+  50: -2.628898, // Synth Strings 1
+  51: -2.636286, // Synth Strings 2
+  52: -5.089248, // Choir Aahs
+  53: -4.986555, // Voice Oohs
+  54: -5.028424, // Synth Voice
   55: 5.938061, // Orchestra Hit
   56: 1.895048, // Trumpet
-  57: -4.782702, // Trombone
-  58: -4.782702, // Tuba
-  59: -4.782702, // Muted Trumpet
-  60: -5.408865, // French Horn
-  61: -4.398968, // Brass Section
-  62: -5.703852, // Synth Brass 1
+  57: -4.781829, // Trombone
+  58: -4.779749, // Tuba
+  59: -4.788184, // Muted Trumpet
+  60: -5.409463, // French Horn
+  61: -4.392918, // Brass Section
+  62: -5.709260, // Synth Brass 1
   63: -0.594414, // Synth Brass 2
-  64: -6.606295, // Soprano Sax
-  65: -6.606295, // Alto Sax
-  66: -6.606295, // Tenor Sax
-  67: -6.606295, // Baritone Sax
-  68: -3.429940, // Oboe
-  69: -3.429940, // English Horn
-  70: -3.429940, // Bassoon
+  64: -6.607614, // Soprano Sax
+  65: -6.612316, // Alto Sax
+  66: -6.605477, // Tenor Sax
+  67: -6.613748, // Baritone Sax
+  68: -3.430456, // Oboe
+  69: -3.425490, // English Horn
+  70: -3.429615, // Bassoon
   71: -2.580363, // Clarinet
-  72: -3.429940, // Piccolo
+  72: -3.434623, // Piccolo
   73: -4.487361, // Flute
-  74: -5.497008, // Recorder
-  75: -5.497008, // Pan Flute
-  76: -5.497008, // Blown Bottle
-  77: -3.429940, // Shakuhachi
-  78: -4.986763, // Whistle
-  79: -5.497008, // Ocarina
-  80: -7.678907, // Square Lead
-  81: -5.609802, // Sawtooth Lead
-  82: -7.678907, // Calliope Lead
-  83: -5.703852, // Chiff Lead
+  74: -5.496664, // Recorder
+  75: -5.499229, // Pan Flute
+  76: -5.493376, // Blown Bottle
+  77: -3.430560, // Shakuhachi
+  78: -4.987253, // Whistle
+  79: -5.495848, // Ocarina
+  80: -7.683412, // Square Lead
+  81: -5.612307, // Sawtooth Lead
+  82: -7.676264, // Calliope Lead
+  83: -5.709260, // Chiff Lead
   84: -1.770582, // Charang Lead
-  85: -5.408865, // Voice Lead
-  86: -4.867573, // Fifths Lead
-  87: -5.004711, // Bass and Lead
-  88: -2.309205, // New Age Pad
-  89: -2.908862, // Warm Pad
-  90: -3.672667, // Polysynth Pad
-  91: -2.908862, // Choir Pad
-  92: -0.839332, // Bowed Pad
-  93: -3.579099, // Metallic Pad
-  94: -3.579099, // Halo Pad
-  95: -2.237684, // Sweep Pad
+  85: -5.407654, // Voice Lead
+  86: -4.869572, // Fifths Lead
+  87: -5.000725, // Bass and Lead
+  88: -2.082406, // New Age Pad
+  89: -2.908514, // Warm Pad
+  90: -3.666610, // Polysynth Pad
+  91: -2.909732, // Choir Pad
+  92: -0.836521, // Bowed Pad
+  93: -3.582662, // Metallic Pad
+  94: -3.579714, // Halo Pad
+  95: -2.236177, // Sweep Pad
   96: 5.135525, // Rain FX
-  97: -3.112298, // Soundtrack FX
-  98: -3.780868, // Crystal FX
-  99: -4.019693, // Atmosphere FX
-  100: -4.194143, // Brightness FX
+  97: -3.106310, // Soundtrack FX
+  98: -3.783662, // Crystal FX
+  99: -4.018581, // Atmosphere FX
+  100: -4.191856, // Brightness FX
   101: 0.154874, // Goblins FX
-  102: -2.908862, // Echoes FX
-  103: -3.090667, // Sci-Fi FX
-  104: -4.267966, // Sitar
+  102: -2.909461, // Echoes FX
+  103: -3.084768, // Sci-Fi FX
+  104: -4.273915, // Sitar
   105: -4.267966, // Banjo
-  106: -5.042472, // Shamisen
-  107: -3.474548, // Koto
-  108: -3.631094, // Kalimba
-  109: -7.678907, // Bagpipe
-  110: -4.860562, // Fiddle
-  111: -4.398968, // Shanai
-  112: -1.131089, // Tinkle Bell
-  113: -0.095927, // Agogo
+  106: -5.041156, // Shamisen
+  107: -3.390682, // Koto
+  108: -3.629155, // Kalimba
+  109: -7.682536, // Bagpipe
+  110: -4.857605, // Fiddle
+  111: -4.395027, // Shanai
+  112: -1.132275, // Tinkle Bell
+  113: -0.094734, // Agogo
   114: 1.012745, // Steel Drums
   115: 9.861213, // Woodblock
   116: 2.303213, // Taiko Drum
@@ -160,7 +160,7 @@ export const CHIPTUNE_DRUM_OFFSETS_DB: Readonly<Record<number, number>> = {
   54: -1.149664, // Tambourine
   55: -1.182443, // Splash cymbal
   56: 7.266282, // Cowbell
-  57: 2.066734, // Crash cymbal 2
+  57: 2.066733, // Crash cymbal 2
   58: -0.035580, // Vibraslap
   59: 2.590885, // Ride cymbal 2
   60: 3.660561, // High bongo

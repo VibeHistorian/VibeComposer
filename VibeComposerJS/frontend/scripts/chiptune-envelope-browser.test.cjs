@@ -5,7 +5,7 @@ const test = require('node:test');
 const { loadMusic } = require('./music-loader.cjs');
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser } = require('./support/browser-harness.cjs');
 
-test('Harp decay matches the SF2 sampler and note-off clips linear envelope stages', { skip: !findBrowser() }, async () => {
+test('Harp tuning and decay match the SF2 sampler and note-off clips linear envelope stages', { skip: !findBrowser() }, async () => {
   const { Sf2Bank } = loadMusic('../audio/sf2-resolver.ts');
   const bytes = fs.readFileSync(path.join(__dirname, '../../chiptune_soundfont_4.0.sf2'));
   const bank = new Sf2Bank(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
@@ -20,7 +20,7 @@ test('Harp decay matches the SF2 sampler and note-off clips linear envelope stag
   const html = '<!doctype html><script>' + bundle + '</script><script>const harpRegion=' + JSON.stringify(region)
     + ';const harpPcm=' + JSON.stringify(Array.from(bank.pcm(region))) + ';(' + (async () => {
     try {
-      const rate = 24000, errors = [], ratios = [];
+      const rate = 24000, errors = [], ratios = [], cents = [];
       const harp = Chip.CHIPTUNE_PATCHES.melodic[46][0];
       const controlled = { delay: .05, attack: .1, hold: .1, decay: .3, sustain: .2, release: .15 };
       for (const [envelope, duration] of [[harp.envelope, 1.2], [controlled, .025], [controlled, .1],
@@ -60,10 +60,21 @@ test('Harp decay matches the SF2 sampler and note-off clips linear envelope stag
         const reference = duration === 1.2 ? t => rms(1, t) : expected;
         const peakB = Math.max(...times.map(reference));
         errors.push(Math.max(...times.map(t => Math.abs(rms(0, t) / (peakA || 1) - reference(t) / (peakB || 1)))));
-        if (duration === 1.2) ratios.push(rms(0, .5) / rms(0, .05), rms(1, .5) / rms(1, .05));
+        if (duration === 1.2) {
+          ratios.push(rms(0, .5) / rms(0, .05), rms(1, .5) / rms(1, .05));
+          // Interpolated positive zero crossings measure actual rendered pitch.
+          for (let channel = 0; channel < 2; channel++) {
+            const pcm = audio.getChannelData(channel), crossings = [];
+            for (let i = Math.floor(.1 * rate); i < Math.floor(.8 * rate); i++) {
+              if (pcm[i] <= 0 && pcm[i + 1] > 0) crossings.push(i - pcm[i] / (pcm[i + 1] - pcm[i]));
+            }
+            const hz = (crossings.length - 1) * rate / (crossings.at(-1) - crossings[0]);
+            cents.push(1200 * Math.log2(hz / (440 * 2 ** ((60 - 69) / 12))));
+          }
+        }
         [...a, ...b].forEach(v => v.dispose()); synth.dispose(); sampler.dispose();
       }
-      await fetch('/result', { method: 'POST', body: JSON.stringify({ errors, ratios }) });
+      await fetch('/result', { method: 'POST', body: JSON.stringify({ errors, ratios, cents }) });
     } catch (e) { await fetch('/result', { method: 'POST', body: JSON.stringify({ error: e.stack }) }); }
   }).toString() + ')();</script>';
   let resolve, reject;
@@ -77,5 +88,6 @@ test('Harp decay matches the SF2 sampler and note-off clips linear envelope stag
     assert.equal(output.error, undefined);
     output.errors.forEach((error, index) => assert.ok(error < .04, `envelope scenario ${index}: ${error}`));
     assert.ok(output.ratios.every(r => r > .45 && r < .6), 'Harp retains roughly half its amplitude after half a second');
+    assert.ok(output.cents.every(c => Math.abs(c - 7) < .1), 'both synth and SF2 Harp render at +7 cents: ' + output.cents);
   } finally { await closeBrowser({ child, server, watchdog }); }
 });

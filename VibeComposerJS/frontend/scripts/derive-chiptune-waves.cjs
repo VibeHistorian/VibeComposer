@@ -29,7 +29,10 @@ const melodic = {};
 for (const preset of bank.presets.filter(p => p.bank === 0)) {
   const r = preset.regions[0];
   if (preset.regions.length !== 1 || r.sampleId > 18) continue;
+  // TinySynth's t is a frequency ratio, so cents remain constant across notes.
+  // detune includes both preset fine tuning and the sample's pitch correction.
   melodic[preset.program] = [{ w: 'wChip' + r.sampleId, v: round(10 ** (r.volume / 20)),
+    t: 2 ** ((r.tune * 100 + r.detune) / 1200),
     a: round(r.ampAttack), h: round(r.ampHold), d: round(r.ampDecay),
     s: round(r.ampSustain), r: round(r.ampRelease / 3.5),
     envelope: { delay: r.ampDelay, attack: r.ampAttack, hold: r.ampHold,

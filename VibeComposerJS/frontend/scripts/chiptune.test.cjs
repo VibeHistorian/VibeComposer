@@ -21,10 +21,17 @@ test('chiptune covers GM and Standard drums with at most four operators and inde
   assert.notEqual(CHIPTUNE_LOUDNESS_PROFILE.drums[82], 1, 'shaker fallback has a measured gain');
 });
 
-test('compact chip waves retain more than 98% of reference loop energy at the original pitch', () => {
+test('derived chip patches preserve reference tuning and more than 98% of loop energy', () => {
   const { Sf2Bank } = loadMusic('../audio/sf2-resolver.ts');
   const bytes = fs.readFileSync(path.join(__dirname, '../../chiptune_soundfont_4.0.sf2'));
   const bank = new Sf2Bank(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+  const derived = bank.presets.filter(p => p.bank === 0 && p.regions.length === 1 && p.regions[0].sampleId < 19);
+  for (const preset of derived) {
+    const region = preset.regions[0], patch = CHIPTUNE_PATCHES.melodic[preset.program][0];
+    assert.ok(Math.abs(1200 * Math.log2(patch.t) - (region.tune * 100 + region.detune)) < 1e-8,
+      'preserves source tuning for GM ' + preset.program);
+  }
+  assert.ok(Math.abs(1200 * Math.log2(CHIPTUNE_PATCHES.melodic[46][0].t) - 7) < 1e-8, 'Harp is +7 cents');
   for (let id = 0; id < 19; id++) {
     const region = bank.presets.flatMap(p => p.regions).find(r => r.sampleId === id);
     const pcm = bank.pcm(region);

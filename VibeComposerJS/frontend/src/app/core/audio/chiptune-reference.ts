@@ -6,6 +6,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip16",
       "v": 1,
+      "t": 0.9994225441413808,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -25,6 +26,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip14",
       "v": 1,
+      "t": 0.9971160533345892,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -44,6 +46,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip14",
       "v": 1,
+      "t": 1.001734370234696,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -63,6 +66,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 0.9959648048147479,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -82,6 +86,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 1.005212140041476,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -101,6 +106,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 1.0005777895065548,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -120,6 +126,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 1.0028922878693671,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -139,6 +146,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 1,
+      "t": 0.9988454217380301,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -158,6 +166,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip9",
       "v": 1,
+      "t": 0.9965402628278678,
       "a": 0.059989,
       "h": 0.000977,
       "d": 0.000977,
@@ -177,6 +186,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip10",
       "v": 1,
+      "t": 1.0057929410678534,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -196,6 +206,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip10",
       "v": 1,
+      "t": 1.0011559128538237,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -215,6 +226,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip9",
       "v": 1,
+      "t": 0.9953896791032291,
       "a": 0.059989,
       "h": 0.000977,
       "d": 0.000977,
@@ -234,6 +246,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 1,
+      "t": 1,
       "a": 0.059989,
       "h": 0.000977,
       "d": 0.000977,
@@ -253,6 +266,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 1,
+      "t": 0.9976921765270234,
       "a": 0.059989,
       "h": 0.000977,
       "d": 0.000977,
@@ -272,6 +286,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 1,
+      "t": 1.0023131618421728,
       "a": 0.059989,
       "h": 0.000977,
       "d": 0.000977,
@@ -291,6 +306,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip3",
       "v": 1,
+      "t": 0.9994225441413808,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -310,6 +326,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 1,
+      "t": 0.9971160533345892,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -329,6 +346,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 1,
+      "t": 1.001734370234696,
       "a": 0.000977,
       "h": 0.000977,
       "d": 1,
@@ -348,6 +366,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip1",
       "v": 1,
+      "t": 0.9959648048147479,
       "a": 0.000977,
       "h": 0.000977,
       "d": 29.995344,
@@ -367,6 +386,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip1",
       "v": 1,
+      "t": 1.005212140041476,
       "a": 0.000977,
       "h": 0.000977,
       "d": 29.995344,
@@ -386,6 +406,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip9",
       "v": 1,
+      "t": 1.0005777895065548,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -405,6 +426,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip17",
       "v": 1,
+      "t": 0.9982686325973925,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -424,6 +446,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 1,
+      "t": 1.0028922878693671,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -443,6 +466,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 1,
+      "t": 0.9942404238175473,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -462,6 +486,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip0",
       "v": 1,
+      "t": 1.0034717485095028,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -481,6 +506,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip7",
       "v": 1,
+      "t": 0.9988454217380301,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -500,6 +526,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip7",
       "v": 1,
+      "t": 0.9965402628278678,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -519,6 +546,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip4",
       "v": 1,
+      "t": 0.9953896791032291,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -538,6 +566,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip5",
       "v": 1,
+      "t": 1.0046316744020538,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -557,6 +586,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip2",
       "v": 1,
+      "t": 1,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -576,6 +606,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip2",
       "v": 1,
+      "t": 0.9976921765270234,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -595,6 +626,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip2",
       "v": 0.749894,
+      "t": 1.0023131618421728,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -614,6 +646,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip18",
       "v": 1,
+      "t": 1.004051543955916,
       "a": 0.000977,
       "h": 0.000977,
       "d": 1,
@@ -633,6 +666,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 0.749894,
+      "t": 0.9971160533345892,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -652,6 +686,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 0.749894,
+      "t": 1.001734370234696,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -671,6 +706,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip8",
       "v": 0.749894,
+      "t": 0.9959648048147479,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -690,6 +726,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip8",
       "v": 0.749894,
+      "t": 1.005212140041476,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -709,6 +746,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 0.749894,
+      "t": 1.0005777895065548,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -728,6 +766,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip18",
       "v": 1,
+      "t": 0.9982686325973925,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -747,6 +786,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip18",
       "v": 1,
+      "t": 1.0028922878693671,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -766,6 +806,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip14",
       "v": 1,
+      "t": 0.9988454217380301,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -785,6 +826,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip14",
       "v": 1,
+      "t": 0.9965402628278678,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -804,6 +846,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip14",
       "v": 1,
+      "t": 1.0057929410678534,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -823,6 +866,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 1,
+      "t": 1.0011559128538237,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -842,6 +886,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 0.749894,
+      "t": 0.9953896791032291,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -861,6 +906,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip0",
       "v": 1,
+      "t": 1.0046316744020538,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -880,6 +926,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 1,
+      "t": 0.9976921765270234,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -899,6 +946,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 1,
+      "t": 1.0023131618421728,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -918,6 +966,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 1,
+      "t": 0.9948148855014217,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -937,6 +986,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 1,
+      "t": 1.004051543955916,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -956,6 +1006,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 1,
+      "t": 0.9994225441413808,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -975,6 +1026,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 1,
+      "t": 0.9971160533345892,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -994,6 +1046,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 1,
+      "t": 1.001734370234696,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1013,6 +1066,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 1,
+      "t": 1.005212140041476,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1032,6 +1086,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 1,
+      "t": 0.9982686325973925,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1051,6 +1106,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 1,
+      "t": 1.0028922878693671,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1070,6 +1126,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 1,
+      "t": 0.9942404238175473,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1089,6 +1146,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 1,
+      "t": 1.0034717485095028,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1108,6 +1166,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip18",
       "v": 1,
+      "t": 0.9988454217380301,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1127,6 +1186,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 1,
+      "t": 0.9965402628278678,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1146,6 +1206,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 1.0057929410678534,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1165,6 +1226,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip4",
       "v": 1,
+      "t": 1.0011559128538237,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1184,6 +1246,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 0.9953896791032291,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1203,6 +1266,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip0",
       "v": 1,
+      "t": 1.0046316744020538,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1222,6 +1286,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 1,
+      "t": 0.9976921765270234,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1241,6 +1306,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip2",
       "v": 1,
+      "t": 1.0023131618421728,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1260,6 +1326,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip8",
       "v": 1,
+      "t": 0.9948148855014217,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1279,6 +1346,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip9",
       "v": 0.749894,
+      "t": 1.004051543955916,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1298,6 +1366,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 0.749894,
+      "t": 0.9994225441413808,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1317,6 +1386,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip5",
       "v": 0.749894,
+      "t": 0.9971160533345892,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1336,6 +1406,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 0.749894,
+      "t": 1.001734370234696,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1355,6 +1426,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip6",
       "v": 0.749894,
+      "t": 0.9959648048147479,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1374,6 +1446,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip5",
       "v": 0.749894,
+      "t": 1.005212140041476,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1393,6 +1466,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip5",
       "v": 0.749894,
+      "t": 1.0005777895065548,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1412,6 +1486,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip2",
       "v": 0.749894,
+      "t": 0.9982686325973925,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1431,6 +1506,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip0",
       "v": 0.749894,
+      "t": 0.9942404238175473,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1450,6 +1526,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 0.749894,
+      "t": 1.0034717485095028,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -1469,6 +1546,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip13",
       "v": 0.749894,
+      "t": 0.9988454217380301,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1488,6 +1566,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 0.749894,
+      "t": 0.9965402628278678,
       "a": 0.000977,
       "h": 0.000977,
       "d": 3.000078,
@@ -1507,6 +1586,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip11",
       "v": 0.749894,
+      "t": 1.0011559128538237,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1526,6 +1606,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 0.749894,
+      "t": 0.9953896791032291,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -1545,6 +1626,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 1,
+      "t": 1.0046316744020538,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -1564,6 +1646,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 1,
+      "t": 1,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -1583,6 +1666,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 0.9976921765270234,
       "a": 0.000977,
       "h": 0.000977,
       "d": 2,
@@ -1602,6 +1686,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip14",
       "v": 1,
+      "t": 1.0023131618421728,
       "a": 0.000977,
       "h": 0.000977,
       "d": 4,
@@ -1621,6 +1706,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 0.9948148855014217,
       "a": 0.000977,
       "h": 0.000977,
       "d": 1,
@@ -1640,6 +1726,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 1,
+      "t": 1.004051543955916,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1659,6 +1746,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip2",
       "v": 1,
+      "t": 0.9994225441413808,
       "a": 0.100018,
       "h": 0.000977,
       "d": 0.000977,
@@ -1678,6 +1766,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip15",
       "v": 0.749894,
+      "t": 0.9971160533345892,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.000977,
@@ -1697,6 +1786,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 0.749894,
+      "t": 1.001734370234696,
       "a": 0.000977,
       "h": 0.000977,
       "d": 1,
@@ -1716,6 +1806,7 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
     {
       "w": "wChip12",
       "v": 0.749894,
+      "t": 0.9959648048147479,
       "a": 0.000977,
       "h": 0.000977,
       "d": 0.5,
