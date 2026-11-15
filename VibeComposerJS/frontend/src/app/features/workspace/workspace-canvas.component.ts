@@ -153,7 +153,7 @@ export class WorkspaceCanvasComponent {
       })];
     }));
   });
-  readonly instrumentSelectOptions = computed(() => Object.fromEntries(Object.entries(this.trackInstrumentOptions()).map(([id, options]) => [id, options.map(instrument => ({ value: instrument.program, label: instrument.name }))])));
+  readonly instrumentSelectOptions = computed(() => Object.fromEntries(Object.entries(this.trackInstrumentOptions()).map(([id, options]) => [id, options.map(instrument => ({ value: instrument.program, label: `${instrument.name} · ${instrument.program + 1}` }))])));
   readonly channelSelectOptions = computed(() => this.midiChannels.map(channel => ({ value: channel, label: 'CH ' + channel.toString().padStart(2, '0') })));
   readonly sectionSelectOptions = computed(() => this.sectionTypes.map(type => ({ value: type, label: this.sectionLabel(type) })));
 
