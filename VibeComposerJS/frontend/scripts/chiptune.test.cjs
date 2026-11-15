@@ -32,15 +32,19 @@ test('compact chip waves retain more than 98% of reference loop energy at the or
     const energy = pcm.reduce((sum, x) => sum + (x - mean) ** 2, 0) / pcm.length;
     const wave = CHIPTUNE_PATCHES.waves['wChip' + id];
     // Measure actual residual, checking phase and coefficients, not just magnitude.
-    let residual = 0;
+    let residual = 0, baselineResidual = 0;
     for (let i = 0; i < pcm.length; i += 7) {
-      let synthesized = 0;
+      let synthesized = 0, baseline = 0;
       for (let k = 1; k < wave.real.length; k++) {
         const phase = 2 * Math.PI * 55 * k * i / region.sampleRate;
-        synthesized += wave.real[k] * Math.cos(phase) + wave.imag[k] * Math.sin(phase);
+        const partial = wave.real[k] * Math.cos(phase) + wave.imag[k] * Math.sin(phase);
+        synthesized += partial;
+        if (k <= 64) baseline += partial;
       }
       residual += (pcm[i] - mean - synthesized) ** 2;
+      baselineResidual += (pcm[i] - mean - baseline) ** 2;
     }
     assert.ok(residual / Math.ceil(pcm.length / 7) / energy < .02, 'wave ' + id);
+    if (id === 12) assert.ok(residual < baselineResidual / 2, 'extra square-wave harmonics reduce reconstruction error by more than half');
   }
 });

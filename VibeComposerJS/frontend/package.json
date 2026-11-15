@@ -10,6 +10,7 @@
   "scripts": {
     "calibrate:tinysynth": "node scripts/precompute-tiny-synth-calibration.cjs",
     "calibrate:chiptune": "node scripts/precompute-tiny-synth-calibration.cjs --chiptune",
+    "benchmark:chiptune": "node scripts/benchmark-chiptune.cjs",
     "test": "pnpm run test:unit",
     "test:unit": "node scripts/run-tests.cjs unit",
     "test:browser": "node scripts/run-tests.cjs browser",
