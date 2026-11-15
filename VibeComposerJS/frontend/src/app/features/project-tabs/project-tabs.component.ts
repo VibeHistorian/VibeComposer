@@ -1,4 +1,5 @@
-import { afterRenderEffect, ChangeDetectionStrategy, Component, ElementRef, inject, input, signal, viewChild } from '@angular/core';
+import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, signal, viewChild } from '@angular/core';
+import { HostedContentService } from '../../core/ui/hosted-content.service';
 import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { ContextMenuComponent, type ContextMenuAction } from '../../shared/context-menu.component';
@@ -16,6 +17,12 @@ import { formatProjectJson } from '../../core/project/project-json';
 export class ProjectTabsComponent {
   readonly projects = inject(ProjectService);
   readonly preferences = inject(UiPreferencesService);
+  readonly hosted = inject(HostedContentService);
+  readonly loadingDemo = signal(false);
+  readonly newProjectItems = computed(() => [
+    { id: 'empty', label: 'Empty Project', disabled: this.disabled() || this.loadingDemo() },
+    { id: 'demo', label: 'Demo Project', disabled: this.disabled() || this.loadingDemo() || !this.hosted.demoAvailable() },
+  ]);
   readonly disabled = input(false);
   readonly renamingId = signal<string | null>(null);
   readonly draftName = signal('');
@@ -30,6 +37,18 @@ export class ProjectTabsComponent {
     { id: 'export', label: 'Export Project' },
     { id: 'duplicate', label: 'Duplicate Project' },
   ];
+  async newProject(action: ContextMenuAction): Promise<void> {
+    if (this.disabled() || this.loadingDemo()) return;
+    if (action.id === 'empty') { this.projects.newEmptyProjectTab(); return; }
+    if (action.id !== 'demo' || !this.hosted.demoAvailable()) return;
+    this.loadingDemo.set(true);
+    try {
+      const json = await this.hosted.demoProject();
+      if (json !== null && !this.disabled() && !this.projects.importProjectJson(json, 'new-tab')) {
+        this.hosted.report('Could not open the demo project: invalid file.');
+      }
+    } finally { this.loadingDemo.set(false); }
+  }
   activate(id: string): void {
     if (this.disabled()) return;
     if (this.projects.activeProjectTabId() === id) this.rename(id);

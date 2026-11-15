@@ -41,6 +41,7 @@ Choose the functional commands and browser suites that match the changed behavio
 | Change area | Functional commands (`pnpm run …`) | Browser commands (`pnpm run …`) |
 | --- | --- | --- |
 | Project decoding, persistence, Java XML import | `test:parts:imports`, `test:java-import` | `test:preferences:browser` |
+| Hosted startup, shared project/settings/theme links and new-project tabs | `node --test scripts/hosted-content.test.cjs scripts/project-tabs.test.cjs` | `node --test scripts/hosted-content-browser.test.cjs scripts/project-tabs-browser.test.cjs` |
 | History, arrangement commands, selection | `test:parts:history`, `test:selection`, `test:overview` | `test:overview:browser`, `test:contextual:browser` |
 | Arrangement variation inspection, drafts and indicators | `node --test scripts/arrangement-variations.test.cjs`, `test:overview` | `node --test scripts/arrangement-variations-browser.test.cjs`, `test:overview:browser`, `test:contextual:browser` |
 | Settings inheritance, contextual generation, seeded parity | `test:parts:scopes`, `test:parts:generation`, `test:generation` | `test:generation:browser`, `test:contextual:browser` |

@@ -143,8 +143,21 @@ builds; Wails regenerates them when Go bindings change. Commit updated bindings.
 No soundfont downloads are needed for the default synthesized instruments.
 Optional SF2 banks are supplied by the user and are not included here.
 
-This repository contains release snapshots. Development history, internal
-documentation, fixtures and test tools remain in the development repository.
+Hosted startup and shared links
+  frontend/public/startup.json accepts optional demoProject and recommendedSettings
+  paths (null disables each). Place exported JSON under frontend/public/, e.g.
+  projects/demo.vibe.json and settings/recommended.json, and set those relative paths.
+  Saved workspaces and settings take precedence over these defaults.
+  URL parameters project, settings and theme accept relative JSON paths or HTTP(S)
+  URLs (remote servers must allow CORS). For example:
+    ?project=projects/demo.vibe.json&settings=settings/recommended.json
+  Linked projects always open new tabs. Linked settings override preferences;
+  linked themes import only appearance from a settings export. Successful import
+  parameters are removed from the current URL to avoid reimporting on reload.
+  Changing hosted JSON requires a new deployment. Requests revalidate caches;
+  already-open sessions retain their state and cache their loaded demo.
+
+This repository contains release snapshots.
 '@ + "`n")
 
 # Fail before copying if a local filesystem path or binary sneaks into the export.

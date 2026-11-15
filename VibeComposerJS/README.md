@@ -42,6 +42,55 @@ Wails v2 caches installation using only `package.json.md5`, and writes that chec
 
 If migrating an existing npm or mixed npm/pnpm checkout, remove only `frontend/node_modules` and any untracked `frontend/package-lock.json`, then run the frozen pnpm install. The previous `npm install` Wails command could crash while traversing pnpm links (`Cannot read properties of null (reading 'children')`); using pnpm throughout fixes that failure.
 
+## Hosted startup and shared links
+
+`frontend/public/startup.json` configures optional runtime defaults. Both paths
+start unset; add exported JSON files under `frontend/public/` and configure, for example:
+
+```json
+{
+  "demoProject": "projects/demo.vibe.json",
+  "recommendedSettings": "settings/recommended.json"
+}
+```
+
+Paths resolve against the app's base URL, including a GitHub Pages repository
+subpath. Absolute HTTP(S) URLs also work if their server allows browser CORS
+requests. Settings use the existing Settings dialog's export format; theme links
+use that same format but import only appearance. `null` disables either default.
+
+Startup loads recommended settings only when the UI-preferences storage entry is
+absent. A restored local-storage workspace or valid session project prevents the
+demo from replacing saved work. Missing, unreachable or invalid files leave the
+built-in defaults and saved work usable and show a dismissible notification.
+Startup requests time out after six seconds each.
+
+Right-click the branching/checkpoint button for **Empty Project** (the built-in
+project) or **Demo Project** (the configured JSON). Both create a new tab with fresh
+history; left-click still creates a checkpoint including undo/redo history. Demo
+Project is disabled until its path is configured. Removing the last tab still
+creates the built-in project.
+
+Shared links accept `project`, `settings` and `theme` query parameters:
+
+```text
+https://vibehistorian.github.io/VibeComposerJS/?project=projects/demo.vibe.json
+https://vibehistorian.github.io/VibeComposerJS/?settings=settings/recommended.json&theme=themes/blue.json
+```
+
+Encode parameter values with `encodeURIComponent` or `URLSearchParams` when they
+contain reserved characters. Explicit settings override recommendations or saved
+preferences; an explicit theme then overrides appearance only. An explicit
+project always opens a new tab, even if file opening normally replaces the active
+tab. Successful URL imports are removed from the current URL so reload restores
+the workspace without repeatedly importing; failed parameters remain retryable.
+Unrelated query parameters and the fragment are preserved.
+
+Configuration and hosted JSON are fetched at runtime with cache revalidation.
+Changing files hosted alongside the app still requires a Pages deployment; the
+current workflow rebuilds Angular for that deployment. Already-open sessions keep
+their current state. The demo is fetched on first use and cached for that session.
+
 ## Project layout
 
 ```text

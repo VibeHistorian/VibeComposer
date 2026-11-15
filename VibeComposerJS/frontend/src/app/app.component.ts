@@ -10,6 +10,7 @@ import { generateCompositionMidi } from './core/music/midi-export';
 import { downloadProjectFile } from './core/project/download-file';
 import { exportFilename } from './core/project/export-filename';
 import { UiPreferencesService } from './core/ui/ui-preferences.service';
+import { HostedContentService } from './core/ui/hosted-content.service';
 import { HistoryDialogComponent } from './features/history/history-dialog.component';
 import { ProjectService } from './core/project/project.service';
 import { SettingsDialogComponent } from './features/settings/settings-dialog.component';
@@ -43,6 +44,7 @@ export class AppComponent {
     });
   }
   readonly projectMessage = signal('');
+  readonly hosted = inject(HostedContentService);
   readonly audioExport = inject(AudioExportService);
   readonly playback = inject(AudioPlaybackService);
   readonly preferences = inject(UiPreferencesService);

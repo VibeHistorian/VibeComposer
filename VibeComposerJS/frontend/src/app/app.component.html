@@ -55,12 +55,12 @@
       <button type="button" (click)="projectFile.click()" title="Open project">Open...</button>
       <input #projectFile type="file" accept="application/json,application/xml,text/xml,.json,.xml,.xml-config" hidden (change)="importProject($event)" />
     </div>
-    @if (audioExport.status() || projectMessage()) {
+    @if (audioExport.status() || projectMessage() || hosted.message()) {
       <div transportNotice class="project-message" role="status"
         [class.export-finishing]="audioExport.busy() && audioExport.progress() === 100">
-        <span>{{ audioExport.status() || projectMessage() }}</span>
+        <span>{{ audioExport.status() || projectMessage() || hosted.message() }}</span>
         @if (!audioExport.busy()) {
-          <button type="button" (click)="projectMessage.set('')" aria-label="Dismiss project notification" title="Dismiss">×</button>
+          <button type="button" (click)="projectMessage.set(''); hosted.message.set('')" aria-label="Dismiss project notification" title="Dismiss">×</button>
         }
       </div>
     }

@@ -36,6 +36,14 @@ Role instrument-pool rows own the reseeding checkbox, Reseed command and shared-
 
 Global track parameter locks are saved in `parameterLocks`, with one history command per toggle. The editor shares each combined control’s key set across quick and inspector layouts. Global rerolls and Compose retain locked values; manual changes, including global role edits, still update them. Section inheritance remains independent.
 
+Hosted startup is coordinated by `core/ui/hosted-content.service.ts` before the
+root component starts. `hasSavedWorkspace` captures successful tab/session restore
+before initial persistence. Hosted demo initialization replaces only the initial
+fallback; explicit linked/menu projects use `importProjectJson(json, 'new-tab')`
+to bypass the file-open replacement preference. `newEmptyProjectTab()` uses the
+built-in defaults with a fresh history. Configuration and URL precedence are
+documented in the root project README under Hosted startup and shared links.
+
 ## Domain contracts
 
 Import contracts directly from their owner. `project.model.ts` defines the complete project and does not forward the musical, track or section contracts. All model dependencies use type-only imports; role/section constants and project defaults have explicit runtime owners. These modules remain independent of Angular, the DOM and Wails.

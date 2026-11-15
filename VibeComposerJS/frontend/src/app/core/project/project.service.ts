@@ -68,6 +68,9 @@ const COMPACT_HISTORY_WINDOW_MS = 1000;
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
   private readonly sectionTypeSettings = inject(SectionTypeSettingsService);
+  private restoredSession = false;
+  /** Captured before the initial workspace is persisted; hosted defaults must not replace restored work. */
+  readonly hasSavedWorkspace: boolean;
   private readonly state = signal<CompositionProject>(this.loadProject());
   private readonly past: CompositionProject[] = [];
   private readonly future: CompositionProject[] = [];
@@ -131,6 +134,7 @@ export class ProjectService {
         }
       }
     } catch { /* Keep the session project when workspace storage is unavailable. */ }
+    this.hasSavedWorkspace = restored.length > 0 || this.restoredSession;
     if (!restored.length) restored.push(this.snapshotTab(globalThis.crypto.randomUUID()));
     this.tabs.set(restored);
     this.activateTab(restored.find(tab => tab.id === active) ?? restored[0]);
@@ -167,6 +171,14 @@ export class ProjectService {
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, '0')}_${String(now.getMinutes()).padStart(2, '0')}`;
     this.copyProjectTab(this.activeProjectTabId(), time);
+  }
+
+  newEmptyProjectTab(): void {
+    const project = copyDefaultProject(this.sectionTypeSettings.chances(), Math.random);
+    const tab: ProjectTab = { id: globalThis.crypto.randomUUID(), project,
+      past: [], future: [], automaticSeed: BigInt(project.seed) === 0n };
+    this.tabs.update(tabs => [...tabs, tab]);
+    this.activateTab(tab);
   }
 
   private copyProjectTab(id: string, suffix: string): void {
@@ -941,7 +953,7 @@ export class ProjectService {
     return before === this.state() ? 'unchanged' : 'changed';
   }
 
-  importProjectJson(json: string): boolean {
+  importProjectJson(json: string, destination: 'preference' | 'new-tab' | 'replace' = 'preference'): boolean {
     let value: unknown;
     try {
       value = JSON.parse(json);
@@ -955,9 +967,10 @@ export class ProjectService {
         phraseForTrack(project, track);
         resolvedTrackPhrase(project, track);
       }
-      const tab: ProjectTab = { id: this.uiPreferences.replaceCurrentProjectTab()
+      const replace = destination === 'replace' || (destination === 'preference' && this.uiPreferences.replaceCurrentProjectTab());
+      const tab: ProjectTab = { id: replace
         ? this.activeProjectTabId() : globalThis.crypto.randomUUID(), project, past: [], future: [], automaticSeed: BigInt(project.seed) === 0n };
-      if (!this.uiPreferences.replaceCurrentProjectTab()) this.tabs.update(tabs => [...tabs, tab]);
+      if (!replace) this.tabs.update(tabs => [...tabs, tab]);
       this.activateTab(tab);
       return true;
     } catch (error) {
@@ -1632,6 +1645,7 @@ export class ProjectService {
         const value: unknown = JSON.parse(raw);
         const decoded = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
         if (decoded) {
+          this.restoredSession = true;
           return decoded;
         }
         this.warnProjectLoadFailure(`session storage (${key})`, value);

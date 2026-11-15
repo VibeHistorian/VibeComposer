@@ -16,6 +16,8 @@
       }
     }
   </div>
-  <button type="button" class="branch-project" aria-label="Branch project" title="Create a checkpoint copy including undo and redo history"
-    [disabled]="disabled()" (click)="projects.checkpointProjectTab()">⎇</button>
+  <vc-context-menu [items]="newProjectItems()" (action)="newProject($event)">
+    <button type="button" class="branch-project" aria-label="Branch project" title="Create a checkpoint copy including undo and redo history · Right-click for a new empty or demo project"
+      [disabled]="disabled()" (click)="projects.checkpointProjectTab()">⎇</button>
+  </vc-context-menu>
 </nav>

@@ -281,6 +281,10 @@ export class UiPreferencesService {
     } catch { return false; }
   }
   exportJson(): string { return JSON.stringify(this.state(), null, 2); }
+  hasStoredPreferences(): boolean {
+    try { return globalThis.localStorage?.getItem(STORAGE_KEY) != null; }
+    catch { return false; }
+  }
   importJson(json: string): boolean {
     try {
       const preferences = decodeUiPreferences(JSON.parse(json));
