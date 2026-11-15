@@ -17,7 +17,7 @@ for (const { width, missingMethod, sampler, chiptune } of [
   const trackId = 'track-bass-1';
   const presence = Object.fromEntries(DEFAULT_PROJECT.tracks.map(track => [track.id, true]));
   const project = { ...DEFAULT_PROJECT, name: 'Export: test', key: 'C', transposeSemitones: 7, tracks: DEFAULT_PROJECT.tracks.map(track => ({
-    ...track, mix: { ...track.mix, program: 19, solo: track.id === trackId, panPercent: -100 },
+    ...track, mix: { ...track.mix, program: chiptune ? 13 : 19, solo: track.id === trackId, panPercent: -100 },
   })), arrangement: [
     { id: 'first', type: 'VERSE1', measures: 1, trackPresence: presence, context: { tempoBpm: 120 },
       trackPhrases: { [trackId]: [{ id: 'sustain', midi: 48, startBeat: .5, durationBeats: 5, velocity: 100 }] } },

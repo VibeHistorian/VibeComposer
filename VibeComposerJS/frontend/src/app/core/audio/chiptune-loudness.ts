@@ -20,7 +20,7 @@ export const CHIPTUNE_MELODIC_OFFSETS_DB: Readonly<Record<number, number>> = {
   10: -5.043004, // Music Box
   11: 1.012745, // Vibraphone
   12: -5.044654, // Marimba
-  13: 1.012745, // Xylophone
+  13: -2.823243, // Xylophone
   14: 1.022960, // Tubular Bells
   15: -4.266495, // Dulcimer
   16: -4.034145, // Drawbar Organ
@@ -160,7 +160,7 @@ export const CHIPTUNE_DRUM_OFFSETS_DB: Readonly<Record<number, number>> = {
   54: -1.149664, // Tambourine
   55: -1.182443, // Splash cymbal
   56: 7.266282, // Cowbell
-  57: 2.066733, // Crash cymbal 2
+  57: 2.066734, // Crash cymbal 2
   58: -0.035580, // Vibraslap
   59: 2.590885, // Ride cymbal 2
   60: 3.660561, // High bongo

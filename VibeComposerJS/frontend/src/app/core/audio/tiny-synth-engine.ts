@@ -6,11 +6,13 @@ export interface SynthEnvelope {
   readonly delay: number; readonly attack: number; readonly hold: number;
   readonly decay: number; readonly sustain: number; readonly release: number;
 }
-interface TimbreOperator { readonly d: number; readonly envelope?: SynthEnvelope; }
+interface TimbreOperator extends SynthOperator { readonly d: number; }
 export interface SynthOperator {
   w: string; v: number; g?: number; t?: number; f?: number;
   a?: number; h?: number; d?: number; s?: number; r?: number; p?: number; q?: number; k?: number;
   envelope?: SynthEnvelope;
+  /** For gain routing (g > 10), v is a fraction of the target carrier's peak gain. */
+  relativeAmplitude?: boolean;
 }
 export interface SynthPatchBank {
   readonly melodic: readonly (readonly SynthOperator[])[];
@@ -85,8 +87,19 @@ export class TinySynthEngine implements InstrumentEngine {
     if (velocity <= 0) return [];
     // TinySynth has no shaker (82); approximate it with maracas (70) for internal audio only.
     if (percussion && midi === 82) midi = 70;
-    const timbre = percussion ? this.synth.drummap[midi - 35]?.p : this.synth.program[program]?.p;
+    let timbre = percussion ? this.synth.drummap[midi - 35]?.p : this.synth.program[program]?.p;
     if (!timbre) return [];
+    if (timbre.some(op => op.relativeAmplitude)) {
+      const operators = timbre;
+      timbre = operators.map(op => {
+        const target = op.g !== undefined && op.g > 10 ? operators[op.g - 11] : undefined;
+        if (!op.relativeAmplitude || !target) return op;
+        // Native TinySynth gain modulators use an absolute gain, independent of
+        // velocity. Scale relative depth per voice to avoid overmodulating quiet notes.
+        return { ...op, v: op.v * target.v * velocity * velocity / 16384
+          * 2 ** ((midi - 60) / 12 * (target.k ?? 0)), k: 0 };
+      });
+    }
     const previous = this.synth.chvol[0];
     this.synth.chvol[0] = destination;
     try {

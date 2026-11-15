@@ -4,13 +4,30 @@ import { CHIPTUNE_REFERENCE, CHIPTUNE_WAVES } from './chiptune-reference';
 const tone = (w: string, v = .2, a = .001, d = .2, s = 0, r = .015): SynthOperator =>
   ({ w, v, a, h: 0, d, s, r });
 
+// Xylophone's sampled C4 body emphasizes 4/6/9/11, with quieter higher partials.
+// Keep them on one carrier so a fourth operator can modulate their brightness.
+const xylophoneOvertones = Array<number>(22).fill(0);
+for (const [harmonic, amplitude] of [[4, .24], [6, .22], [9, .11], [11, .095],
+  [14, .026], [16, .034], [19, .011], [21, .028]]) xylophoneOvertones[harmonic] = amplitude;
+const xylophoneTuning = 2 ** (-10 / 1200);
+const XYLOPHONE: readonly SynthOperator[] = [
+  { ...tone('sine', .25, .001, 1.2, 0, .18), t: xylophoneTuning },
+  { ...tone('wXylophoneOvertones', .25, .001, 1.2, 0, .18), t: xylophoneTuning },
+  // Brief FM roughens the overtone carrier's attack, then fades within ~150ms.
+  { ...tone('sine', .16, .001, .04, 0, .025), g: 2, t: 1 },
+  // ~3.4Hz shimmer affects the overtones, while the fundamental stays steady.
+  // Matching decay/release constants retain relative modulation depth through note-off.
+  { ...tone('sine', .2, .001, 1.2, 0, .18), g: 12, t: 0, f: 3.36, relativeAmplitude: true },
+];
+
 /** Sampled GM slots are deliberately synthesized; the stationary chip loops use
  * compact Fourier waves and envelopes measured from chiptune_soundfont_4.0.sf2.
  * Every slot is explicit, with at most four operators. No stock GM patches leak in. */
 function melodic(program: number): readonly SynthOperator[] {
   if (CHIPTUNE_REFERENCE[program]) return CHIPTUNE_REFERENCE[program];
   if (program <= 4) return [tone('triangle', .24, .001, .4), { ...tone('square', .035, .001, .06), t: 2 }];
-  if ([11, 13, 14, 114].includes(program)) return [tone('sine', .25, .001, .35, 0, .08),
+  if (program === 13) return XYLOPHONE;
+  if ([11, 14, 114].includes(program)) return [tone('sine', .25, .001, .35, 0, .08),
     { ...tone('sine', .08, .001, .13, 0, .04), t: program === 14 ? 2.76 : 3 }];
   if (program === 20) return [tone('square', .16, .015, .1, 1)];
   if (program === 24 || program === 25 || program === 45) return [tone('triangle', .25, .001, .18),
@@ -60,5 +77,5 @@ function drum(note: number): readonly SynthOperator[] {
 export const CHIPTUNE_PATCHES: SynthPatchBank = {
   melodic: Array.from({ length: 128 }, (_, program) => melodic(program)),
   drums: Array.from({ length: 47 }, (_, index) => drum(index + 35)),
-  waves: CHIPTUNE_WAVES,
+  waves: { ...CHIPTUNE_WAVES, wXylophoneOvertones: { real: Array<number>(22).fill(0), imag: xylophoneOvertones } },
 };
