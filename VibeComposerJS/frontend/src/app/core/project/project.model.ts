@@ -17,6 +17,7 @@ export interface CompositionProject {
   readonly key: string;
   readonly scale: ScaleMode;
   readonly transposeSemitones?: number;
+  readonly masterVolumePercent?: number;
   readonly tempoBpm: number;
   readonly randomizeTempoOnCompose?: boolean;
   readonly randomizeHarmonyOnCompose?: boolean;

@@ -8,7 +8,7 @@ import { DuplicateTrackDialogComponent } from '../tracks/duplicate-track-dialog.
 import { Dialog } from '@angular/cdk/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { TrackPresetDialogComponent } from '../tracks/track-preset-dialog.component';
-import { BUILTIN_TRACK_PRESETS } from '../../core/project/builtin-track-presets';
+import { BUILTIN_TRACK_PRESETS, BUILTIN_MULTI_ROLE_PRESETS } from '../../core/project/builtin-track-presets';
 import type { TrackPreset } from '../../core/project/track-presets';
 import { readTrackPresetLibrary } from '../../core/ui/track-preset-storage';
 import { ArrangementVariationsDialogComponent } from '../arrangement/arrangement-variations-dialog.component';
@@ -113,8 +113,8 @@ export class WorkspaceCanvasComponent {
     this.presetDialogs.open(ArrangementVariationsDialogComponent, { ariaLabel: 'Arrangement variations', data: scope });
   }
   private readonly presetDialogs = inject(Dialog);
-  openTrackPresets(role: ArrangedPart): void {
-    this.presetDialogs.open(TrackPresetDialogComponent, { ariaLabel: `${ROLE_NAMES[role]} preset manager`, data: { role, name: ROLE_NAMES[role] } });
+  openTrackPresets(role: ArrangedPart | 'all'): void {
+    this.presetDialogs.open(TrackPresetDialogComponent, { ariaLabel: `${role === 'all' ? 'All roles' : ROLE_NAMES[role]} preset manager`, data: { role, name: role === 'all' ? 'All roles' : ROLE_NAMES[role] } });
   }
   private readonly quickUserPresets = signal<readonly TrackPreset[]>([]);
   private invertQuickPresetReplace = false;
@@ -122,21 +122,39 @@ export class WorkspaceCanvasComponent {
     this.invertQuickPresetReplace = event?.shiftKey === true;
     this.quickUserPresets.set(readTrackPresetLibrary() ?? []);
   }
-  presetContextItems(role: ArrangedPart): readonly ContextMenuItem[] {
+  presetContextItems(role: ArrangedPart | 'all'): readonly ContextMenuItem[] {
     const items = (presets: readonly TrackPreset[], source: string) => presets.filter(preset => preset.role === role)
       .map(preset => ({ id: `${source}:${preset.name}`, label: `${preset.name} (${preset.tracks.length})`, disabled: this.editing() }));
     const user = items(this.quickUserPresets(), 'user');
-    return [{ id: 'factory', label: 'Factory', children: items(BUILTIN_TRACK_PRESETS, 'factory') },
+    return [{ id: 'factory', label: 'Factory', children: items([...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS], 'factory') },
       ...(user.length ? [{ id: 'user', label: 'User', children: user }] : [])];
   }
-  loadQuickPreset(role: ArrangedPart, action: ContextMenuAction): void {
+  loadQuickPreset(role: ArrangedPart | 'all', action: ContextMenuAction): void {
     if (this.editing()) return;
     const factory = action.id.startsWith('factory:');
-    const source = factory ? BUILTIN_TRACK_PRESETS : readTrackPresetLibrary() ?? [];
+    const source = factory ? [...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS] : readTrackPresetLibrary() ?? [];
     const preset = source.find(preset => preset.role === role && `${factory ? 'factory' : 'user'}:${preset.name}` === action.id);
     if (!preset) return;
     const replace = this.preferences.replacePresetTracks();
-    this.projects.loadTrackPreset(role, preset.tracks, this.invertQuickPresetReplace ? !replace : replace);
+    const result = this.projects.loadTrackPreset(role, preset.tracks, this.invertQuickPresetReplace ? !replace : replace);
+    this.allRoleMessage.set(result === 'invalid' ? 'Cannot load preset. Check track capacity and local settings.' : '');
+  }
+  readonly allRoleExpanded = signal(false);
+  readonly allRoleMessage = signal('');
+  readonly allTrackIds = computed(() => this.project().tracks.map(track => track.id));
+  readonly canRerollAll = computed(() => this.project().tracks.some(track => !track.rerollLocked));
+  rerollAll(instrumentsOnly = false, overrideRoleToggles = false): void {
+    if (this.editing()) return;
+    const result = this.projects.rerollAllTracks(instrumentsOnly, overrideRoleToggles);
+    this.allRoleMessage.set(result === 'invalid' ? 'Reroll conflicts with local settings. Change cancelled.'
+      : result === 'unchanged' ? 'No eligible track settings changed.' : '');
+  }
+  previewMasterVolume(value: number): void {
+    this.playback.updateMix({ ...this.project(), masterVolumePercent: value });
+  }
+  updateMasterVolume(value: number): void {
+    this.projects.updateSettings({ masterVolumePercent: value });
+    this.playback.updateMix(this.project());
   }
   readonly instrumentMenuGroups = INSTRUMENT_MENU_GROUPS;
   readonly drumMenuGroups = DRUM_MENU_GROUPS;

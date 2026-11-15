@@ -1187,3 +1187,21 @@ test('changing normalization leaves external MIDI playback running', async () =>
   assert.equal(restarts, 0);
   assert.equal(playback.synth, undefined);
 });
+
+
+test('master gain previews and commits change the output bus without rebuilding notes', async () => {
+  const { playback, project, sources } = fixture();
+  await playback.start({ ...project, masterVolumePercent: 50 });
+  assert.equal(playback.master.gain.value, 0.4);
+  const master = playback.master;
+  playback.createSchedule = () => { throw Error('Master gain must not rebuild notes'); };
+  for (const masterVolumePercent of [0, 25, 100, 150]) {
+    const updated = { ...project, masterVolumePercent };
+    playback.updateMix(updated);
+    playback.reload(updated);
+    assert.equal(playback.master, master);
+    assert.equal(master.gain.events.at(-1).value, 0.8 * masterVolumePercent / 100);
+    assert.equal(sources.length, 1);
+  }
+  playback.stop();
+});

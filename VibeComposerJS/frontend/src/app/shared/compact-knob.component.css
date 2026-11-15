@@ -58,3 +58,8 @@
 /* Vertical labels beside transport knob faces */
 :host-context(vc-transport-dock) .dense > vc-control-heading { position: absolute; top: 20px; left: var(--transport-knob-label-left); width: 12px; height: 32px; writing-mode: vertical-rl; text-orientation: upright; font-size: 9px; line-height: 10px; }
 :host-context(vc-transport-dock) .dense .knob-face { margin-top: 20px; }
+
+/* Mini level control with its readout beside the face. */
+.mini.inline-value { width: auto; grid-template-columns: 24px minmax(30px, auto); align-items: center; gap: 4px; }
+.mini.inline-value .knob-value { justify-self: start; }
+.mini.inline-value input { left: 12px; }

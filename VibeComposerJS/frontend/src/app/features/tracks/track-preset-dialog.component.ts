@@ -5,7 +5,7 @@ import { ProjectService } from '../../core/project/project.service';
 import { decodeTrackPresets, type TrackPreset } from '../../core/project/track-presets';
 import { formatCompactJson } from '../../core/project/project-json';
 import { SelectComponent } from '../../shared/select.component';
-import { BUILTIN_TRACK_PRESETS } from '../../core/project/builtin-track-presets';
+import { BUILTIN_TRACK_PRESETS, BUILTIN_MULTI_ROLE_PRESETS } from '../../core/project/builtin-track-presets';
 
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { readTrackPresetLibrary, TRACK_PRESET_STORAGE_KEY } from '../../core/ui/track-preset-storage';
@@ -18,11 +18,11 @@ import { readTrackPresetLibrary, TRACK_PRESET_STORAGE_KEY } from '../../core/ui/
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrackPresetDialogComponent {
-  readonly data = inject<{ role: ArrangedPart; name: string }>(DIALOG_DATA);
+  readonly data = inject<{ role: ArrangedPart | 'all'; name: string }>(DIALOG_DATA);
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
   readonly preferences = inject(UiPreferencesService);
-  readonly tracks = computed(() => this.projects.project().tracks.filter(track => track.role === this.data.role));
+  readonly tracks = computed(() => this.projects.project().tracks.filter(track => (this.data.role === 'all' || track.role === this.data.role)));
   readonly selected = signal(new Set(this.tracks().map(track => track.id)));
   readonly name = signal('');
   readonly presetName = signal('');
@@ -30,7 +30,7 @@ export class TrackPresetDialogComponent {
   readonly message = signal('');
   readonly library = signal<TrackPreset[]>(this.readLibrary());
   readonly presets = computed(() => this.library().filter(preset => preset.role === this.data.role));
-  readonly builtins = BUILTIN_TRACK_PRESETS.filter(preset => preset.role === this.data.role);
+  readonly builtins = [...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS].filter(preset => preset.role === this.data.role);
   readonly isBuiltin = computed(() => this.presetName().startsWith('builtin:'));
   readonly options = computed(() => [{ value: '', label: 'Choose a preset' },
     ...this.presets().map(preset => ({ value: `user:${preset.name}`, label: `${preset.name} (${preset.tracks.length})` })),

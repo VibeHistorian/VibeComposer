@@ -23,6 +23,7 @@ export class CompactKnobComponent {
   readonly mixed = input(false);
   readonly disabled = input(false);
   readonly showValueBelow = input(false);
+  readonly showValueInline = input(false);
   readonly mini = input(false);
   readonly hoverLabelOnly = input(false);
   readonly showLabel = input(true);

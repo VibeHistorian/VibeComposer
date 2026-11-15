@@ -145,3 +145,7 @@ export const BUILTIN_TRACK_PRESETS: readonly TrackPreset[] = STYLES.flatMap(styl
 
 
 
+
+/** Matching factory styles load every role in one gesture. */
+export const BUILTIN_MULTI_ROLE_PRESETS: readonly TrackPreset[] = [...new Set(BUILTIN_TRACK_PRESETS.map(preset => preset.name))]
+  .map(name => ({ name, role: 'all', tracks: BUILTIN_TRACK_PRESETS.filter(preset => preset.name === name).flatMap(preset => preset.tracks) }));

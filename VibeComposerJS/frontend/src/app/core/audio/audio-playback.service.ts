@@ -1,6 +1,6 @@
 import { resolvedDrumSlots } from '../project/project-drum-kit';
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
-import { mixEnabled } from './mix-values';
+import { withMasterVolume, mixEnabled } from './mix-values';
 import { MidiOutputService } from './midi-output.service';
 import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from '../project/project.model';
@@ -143,14 +143,14 @@ export class AudioPlaybackService {
         for (const note of notes) {
           if (pitches.has(note.midi)) continue;
           pitches.add(note.midi);
-          this.midi.schedule(track, note.midi, note.velocity, performance.now() + 3, 0.3,
+          this.midi.schedule(withMasterVolume(track, project), note.midi, note.velocity, performance.now() + 3, 0.3,
             project && track.role === 'drums' ? this.drumSlotsFor(project, notes.map(note => note.midi)) : undefined);
         }
         return;
       }
       const gain = context.createGain();
       const pan = context.createStereoPanner();
-      gain.gain.value = 0.8 * track.mix.volumePercent / 100;
+      gain.gain.value = 0.8 * track.mix.volumePercent / 100 * (project?.masterVolumePercent ?? 100) / 100;
       pan.pan.value = track.mix.panPercent / 100;
       gain.connect(pan);
       pan.connect(context.destination);
@@ -344,11 +344,12 @@ export class AudioPlaybackService {
     if (!this.context || this.state() === 'stopped') return;
     const anySolo = project.tracks.some((track) => track.mix.solo);
     const now = this.context.currentTime;
+    this.master?.gain.setTargetAtTime(0.8 * (project.masterVolumePercent ?? 100) / 100, now, 0.02);
     for (const track of project.tracks) {
       const settings = track.mix;
       this.programs.set(track.id, settings.program);
       const audible = mixEnabled(settings, anySolo);
-      this.midi.configure(track, audible);
+      this.midi.configure(withMasterVolume(track, project), audible);
       const bus = this.buses.get(track.id);
       if (!bus) continue;
       bus.gain.gain.setTargetAtTime(audible ? settings.volumePercent / 100 : 0, now, 0.02);
@@ -431,8 +432,8 @@ export class AudioPlaybackService {
     this.buses.clear();
     this.programs.clear();
     this.master = context.createGain();
-    this.master.gain.value = crossfade ? 0 : 0.8;
-    if (crossfade) this.master.gain.linearRampToValueAtTime(0.8, context.currentTime + RELOAD_FADE_SECONDS);
+    this.master.gain.value = crossfade ? 0 : 0.8 * (project.masterVolumePercent ?? 100) / 100;
+    if (crossfade) this.master.gain.linearRampToValueAtTime(0.8 * (project.masterVolumePercent ?? 100) / 100, context.currentTime + RELOAD_FADE_SECONDS);
     this.master.connect(context.destination);
     const anySolo = project.tracks.some((track) => track.mix.solo);
 
@@ -600,7 +601,7 @@ export class AudioPlaybackService {
       const project = this.mixProject;
       const track = project?.tracks.find(track => track.id === note.trackId);
       if (track && mixEnabled(track.mix, project!.tracks.some(track => track.mix.solo))) {
-        this.midi.schedule(track, note.midi, note.velocity,
+        this.midi.schedule(withMasterVolume(track, project), note.midi, note.velocity,
           performance.now() + (startTime - context.currentTime) * 1000, duration,
           track.role === 'drums' ? this.drumSlotsFor(project!) : undefined);
         this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });

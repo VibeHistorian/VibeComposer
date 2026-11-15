@@ -410,18 +410,24 @@ export class ProjectService {
   /** Explicit instrument-only action ignores permission, but respects both locks. */
   rerollRoleInstruments(role: ArrangedPart, trackId?: string): PartWorkflowResult {
     if (!ARRANGED_PARTS.includes(role)) return 'invalid';
-    const current = this.state(), count = current.trackRerollCounts?.[role] ?? 0;
+    const current = this.state();
+    const candidate = this.buildInstrumentReroll(current, role, trackId);
+    return candidate ? candidate === current ? 'unchanged' : this.commitPartWorkflow(candidate) : 'invalid';
+  }
+
+  private buildInstrumentReroll(current: CompositionProject, role: ArrangedPart, trackId?: string): CompositionProject | undefined {
+    const count = current.trackRerollCounts?.[role] ?? 0;
     const sources = current.tracks.filter(track => track.role === role && !track.rerollLocked && !track.instrumentLocked
       && (trackId === undefined || track.id === trackId));
-    if (!sources.length) return 'unchanged';
-    if (count >= 2147483647) return 'invalid';
+    if (!sources.length) return current;
+    if (count >= 2147483647) return undefined;
     const targets = rerollInstruments(this.trackRerollSeed(current, role, count), role,
       current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, true,
       { reservedPitches: projectDrumPitches(current, sources.map(track => track.id)), remaining: current.tracks.filter(track => track.role === 'drums' && !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) });
-    if (targets.every((track, index) => track === sources[index])) return 'unchanged';
+    if (targets.every((track, index) => track === sources[index])) return current;
     const replacements = new Map(targets.map(track => [track.id, track]));
-    return this.commitPartWorkflow({ ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
-      trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } });
+    return { ...current, tracks: current.tracks.map(track => replacements.get(track.id) ?? track),
+      trackRerollCounts: { ...current.trackRerollCounts, [role]: count + 1 } };
   }
 
   /** Reroll existing global track bases. Local overrides, identity and saved manual notes remain owned. */
@@ -532,6 +538,21 @@ export class ProjectService {
     }
   }
 
+  rerollAllTracks(instrumentsOnly = false, overrideRoleToggles = false): PartWorkflowResult {
+    const current = this.state();
+    let next = current;
+    for (const role of ARRANGED_PARTS) {
+      const enabled = instrumentsOnly
+        ? (current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role]).randomize
+        : (current.trackGenerationPolicies?.[role] ?? DEFAULT_TRACK_POLICIES[role]).onCompose;
+      if (!overrideRoleToggles && !enabled) continue;
+      const candidate = instrumentsOnly ? this.buildInstrumentReroll(next, role) : this.buildRoleReroll(next, role, undefined, overrideRoleToggles);
+      if (!candidate) return 'invalid';
+      next = candidate;
+    }
+    return next === current ? 'unchanged' : this.commitPartWorkflow(next);
+  }
+
   rerollRoleTracks(role: ArrangedPart, trackId?: string): PartWorkflowResult {
     if (!ARRANGED_PARTS.includes(role)) return 'invalid';
     const candidate = this.buildRoleReroll(this.state(), role, trackId);
@@ -604,7 +625,7 @@ export class ProjectService {
       arrangement: current.arrangement.map(item => item === section ? nextSection : item) });
   }
 
-  private buildRoleReroll(current: CompositionProject, role: ArrangedPart, trackId?: string): CompositionProject | undefined {
+  private buildRoleReroll(current: CompositionProject, role: ArrangedPart, trackId?: string, forceInstruments = false): CompositionProject | undefined {
     const roleTracks = current.tracks.filter(track => track.role === role);
     const sources = roleTracks.filter(track => !track.rerollLocked && (trackId === undefined || track.id === trackId));
     if (!sources.length) return current;
@@ -614,7 +635,7 @@ export class ProjectService {
     const seed = this.trackRerollSeed(current, role, count);
     const drumContext = { totalTracks: roleTracks.length, reservedPitches: projectDrumPitches(current, sources.map(track => track.id)),
       remaining: roleTracks.filter(track => !sources.includes(track)).map(track => track.generatorSettings as DrumSettings) };
-    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, false, drumContext);
+    const instrumentTracks = rerollInstruments(seed, role, current.instrumentGenerationPolicies?.[role] ?? DEFAULT_INSTRUMENT_POLICIES[role], sources, forceInstruments, drumContext);
     const settings = rerollRoleSettings(seed, role, policy, instrumentTracks, sources.map(track => roleTracks.indexOf(track) + 1), drumContext);
     if (sources.every((track, index) => track === instrumentTracks[index] && partPatchesEqual(track.generatorSettings, settings[index]))) return current;
     const replacements = new Map(instrumentTracks.map((track, index) => [track.id, this.preserveParameterLocks(sources[index], { ...track, generatorSettings: settings[index] } as CompositionTrack)]));
@@ -989,8 +1010,9 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationPolicy'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'masterVolumePercent' | 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationPolicy'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
+    if (patch.masterVolumePercent !== undefined && !validVolumePercent(patch.masterVolumePercent)) return;
     if (patch.transposeSemitones !== undefined
         && (!Number.isInteger(patch.transposeSemitones) || patch.transposeSemitones < -24 || patch.transposeSemitones > 24)) return;
     if (patch.seed !== undefined) {
@@ -1061,7 +1083,7 @@ export class ProjectService {
     this.commit({ ...current, editedPhrases, tracks: this.updatePrimaryTrack(current.tracks, part, { editedPhrase: undefined, phraseEdits: undefined }) });
   }
 
-  loadTrackPreset(role: ArrangedPart, tracks: unknown, replace: boolean): PartWorkflowResult {
+  loadTrackPreset(role: ArrangedPart | 'all', tracks: unknown, replace: boolean): PartWorkflowResult {
     const candidate = loadTrackPreset(this.state(), role, tracks, replace,
       (added, section) => generateTrackPresence(added, this.sectionTypeSettings.chances()[section.type]));
     return candidate ? this.commitPartWorkflow(candidate) : 'invalid';

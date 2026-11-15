@@ -32,3 +32,9 @@ export function mixEnabled(mix: Pick<MixChannelSettings, 'muted' | 'solo'>, anyS
 export function midiPanValue(panPercent: number): number {
   return Math.round((panPercent + 100) * 127 / 200);
 }
+
+/** MIDI channel volume has no separate master bus; combine levels only at the output boundary. */
+export function withMasterVolume(track: import('../project/track.model').CompositionTrack, project?: import('../project/project.model').CompositionProject): import('../project/track.model').CompositionTrack {
+  const master = project?.masterVolumePercent ?? 100;
+  return master === 100 ? track : { ...track, mix: { ...track.mix, volumePercent: track.mix.volumePercent * master / 100 } };
+}

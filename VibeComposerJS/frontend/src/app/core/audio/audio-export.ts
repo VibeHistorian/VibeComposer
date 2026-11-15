@@ -40,7 +40,7 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   const context = new OfflineAudioContext(2, length, SAMPLE_RATE);
   const synth = await createInstrumentEngine(context, kind, bank, normalize, calibrationProgress);
   const master = context.createGain();
-  master.gain.value = 0.8;
+  master.gain.value = 0.8 * (project.masterVolumePercent ?? 100) / 100;
   master.connect(context.destination);
   const nodes: AudioNode[] = [master];
   try {

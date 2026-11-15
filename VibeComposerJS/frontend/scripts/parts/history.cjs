@@ -1350,3 +1350,103 @@ test('explicit inversion zero protects voicing and survives history and JSON', (
   assert.equal(service.importProjectJson(saved),true);
   assert.equal(service.project().progressionChords[0].explicitZeroInversion,true);
 });
+
+
+test('all-role factory and user presets load atomically, preserve locks and reject overflow', () => {
+  const { service, load } = fixture();
+  const { BUILTIN_MULTI_ROLE_PRESETS } = load('core/project/builtin-track-presets.ts');
+  const { decodeTrackPresets } = load('core/project/track-presets.ts');
+  const samba = BUILTIN_MULTI_ROLE_PRESETS.find(p => p.name.startsWith('Samba'));
+  assert.ok(samba);
+  assert.equal(new Set(samba.tracks.map(t => t.role)).size, 5);
+  assert.ok(decodeTrackPresets([samba]));
+  const locked = service.project().tracks[0];
+  service.setTrackRerollLock(locked.id, true);
+  const before = service.project();
+  assert.equal(service.loadTrackPreset('all', samba.tracks, true), 'changed');
+  const after = service.project();
+  assert.deepEqual(after.tracks.find(t => t.id === locked.id), before.tracks[0]);
+  assert.equal(after.tracks.length, samba.tracks.length + 1);
+  service.undo(); assert.deepEqual(service.project(), before);
+  service.redo(); assert.deepEqual(service.project(), after);
+  const tooMany = Array.from({ length: 64 }, (_, i) => ({ ...samba.tracks[0], id: 'extra-' + i }));
+  assert.equal(service.loadTrackPreset('all', tooMany, false), 'invalid');
+  assert.deepEqual(service.project(), after);
+});
+
+test('all-role rerolls preserve locks and undo as one command', () => {
+  for (const instrumentsOnly of [false, true]) {
+    const { service } = fixture();
+    const locked = service.project().tracks[0];
+    service.setTrackRerollLock(locked.id, true);
+    const before = service.project();
+    assert.equal(service.rerollAllTracks(instrumentsOnly), 'changed');
+    const after = service.project();
+    assert.deepEqual(after.tracks.find(t => t.id === locked.id), before.tracks[0]);
+    if (instrumentsOnly) after.tracks.forEach((t, i) => {
+      const { pitch: nextPitch, ...next } = t.generatorSettings;
+      const { pitch: oldPitch, ...old } = before.tracks[i].generatorSettings;
+      assert.deepEqual(next, old);
+    });
+    service.undo(); assert.deepEqual(service.project(), before);
+    service.redo(); assert.deepEqual(service.project(), after);
+  }
+});
+
+test('master volume persists, validates, exports MIDI levels and undoes independently of track mix', () => {
+  const { service, load } = fixture();
+  const before = service.project();
+  service.updateSettings({ masterVolumePercent: 50 });
+  const after = service.project();
+  assert.deepEqual(after.tracks, before.tracks);
+  const { decodeProject } = load('core/project/project-codec.ts');
+  // Round-trip the saved master level through the project decoder.
+  const json = service.exportProjectJson();
+  assert.equal(JSON.parse(json).masterVolumePercent, 50);
+  const { DEFAULT_SECTION_TYPE_CHANCES } = load('core/project/section-type-chances.ts');
+  assert.equal(decodeProject(JSON.parse(json), DEFAULT_SECTION_TYPE_CHANCES, () => 0.5).masterVolumePercent, 50);
+  service.updateSettings({ masterVolumePercent: -1 });
+  assert.deepEqual(service.project(), after);
+  const { generateCompositionMidi } = load('core/music/midi-export.ts');
+  const midi = new Midi(generateCompositionMidi(after));
+  const sounding = midi.tracks.find(t => t.controlChanges[7]?.length);
+  assert.ok(sounding.controlChanges[7][0].value <= 0.5);
+  service.undo(); assert.deepEqual(service.project(), before);
+  service.redo(); assert.deepEqual(service.project(), after);
+});
+
+
+test('global rerolls honor the matching role toggle; override bypasses toggles but preserves locks', () => {
+  for (const instrumentsOnly of [false, true]) {
+    const { service } = fixture();
+    const roles = ['melody', 'bass', 'chords', 'arpeggio', 'drums'];
+    for (const role of roles) {
+      service.updateTrackGenerationPolicy(role, { onCompose: false });
+      service.updateInstrumentPolicy(role, { randomize: false });
+    }
+    const disabled = service.project();
+    assert.equal(service.rerollAllTracks(instrumentsOnly), 'unchanged');
+    assert.deepEqual(service.project(), disabled);
+    if (instrumentsOnly) service.updateInstrumentPolicy('bass', { randomize: true });
+    else service.updateTrackGenerationPolicy('bass', { onCompose: true });
+    const before = service.project();
+    assert.equal(service.rerollAllTracks(instrumentsOnly), 'changed');
+    const after = service.project();
+    for (const role of roles.filter(r => r !== 'bass')) {
+      assert.deepEqual(after.tracks.filter(t => t.role === role), before.tracks.filter(t => t.role === role));
+      assert.equal(after.trackRerollCounts?.[role], before.trackRerollCounts?.[role]);
+    }
+    service.undo(); assert.deepEqual(service.project(), before);
+    // Whole-track and instrument locks still win over the Shift override.
+    const melody = before.tracks.find(t => t.role === 'melody');
+    const chord = before.tracks.find(t => t.role === 'chords');
+    service.setTrackRerollLock(melody.id, true);
+    service.setTrackInstrumentLock(chord.id, true);
+    const locked = service.project();
+    assert.equal(service.rerollAllTracks(instrumentsOnly, true), 'changed');
+    assert.deepEqual(service.project().tracks.find(t => t.id === melody.id), locked.tracks.find(t => t.id === melody.id));
+    assert.equal(service.project().tracks.find(t => t.id === chord.id).mix.program, chord.mix.program);
+    for (const role of ['bass', 'arpeggio', 'drums']) assert.ok(service.project().trackRerollCounts[role] > (locked.trackRerollCounts?.[role] ?? 0));
+    service.undo(); assert.deepEqual(service.project(), locked);
+  }
+});

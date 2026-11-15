@@ -11,13 +11,12 @@ import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
 import { effectiveKey } from '../../core/music/harmony';
-import { MixButtonsComponent } from '../tracks/mix-buttons.component';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 
 @Component({
   selector: 'vc-transport-dock',
-  imports: [MenuSelectComponent, MixButtonsComponent, CompactKnobComponent, ChordletEditorComponent],
+  imports: [MenuSelectComponent, CompactKnobComponent, ChordletEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transport-dock.component.html',
   styleUrl: './transport-dock.component.css',
@@ -79,7 +78,6 @@ export class TransportDockComponent {
       console.log(`[Compose] ${(performance.now() - started).toFixed(1)} ms`);
     }, 0)), { injector: this.injector });
   }
-  readonly trackIds = computed(() => this.project().tracks.map(track => track.id));
   private readonly liveReloadEffect = effect(() => {
     const project = this.project();
     const live = this.playback.liveEnabled();

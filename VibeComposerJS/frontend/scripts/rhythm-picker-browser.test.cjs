@@ -257,7 +257,7 @@ test('production Angular controls initialize selects from settings and support r
         result.mixColors = ['--mix-track-mute-active', '--mix-track-solo-active']
           .map(token => rgb(getComputedStyle(track).getPropertyValue(token)));
         const readMixProject = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-        const globalMix = document.querySelector('.transport-dock vc-mix-buttons');
+        const globalMix = document.querySelector('.all-role-group vc-mix-buttons');
         await waitFor(() => globalMix.querySelector('.solo-toggle').getAttribute('aria-pressed') === 'mixed');
         const globalMixBounds = globalMix.getBoundingClientRect();
         result.globalMixVisible = globalMixBounds.width > 0 && globalMixBounds.height > 0

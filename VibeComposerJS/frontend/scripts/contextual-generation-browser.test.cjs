@@ -19,6 +19,57 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
     };
     try {
       await wait(()=>innerWidth===${width}&&button('Settings'),'workspace');
+      const all = document.querySelector('.all-role-group');
+      ensure(all && document.querySelector('.track-groups').firstElementChild === all, 'all-role panel comes first');
+      ensure(document.querySelectorAll('.all-role-group').length === 1, 'one all-role panel');
+      for (const label of ['Reroll all tracks', 'Reroll all instruments']) {
+        const action = button(label);
+        ensure(action && !action.hasAttribute('aria-pressed'), label + ' is an action');
+        action.click();
+      }
+      const heading = all.querySelector('.group-heading');
+      ensure(all.querySelector('.all-role-icon').textContent.includes('🛠'), 'tool symbol');
+      const level = all.querySelector('.master-volume');
+      const face = level.querySelector('.knob-face').getBoundingClientRect();
+      const value = level.querySelector('.knob-value').getBoundingClientRect();
+      ensure(value.left >= face.right && Math.abs(value.top + value.height / 2 - face.top - face.height / 2) < 2, 'master readout beside knob');
+      const roleHeading = document.querySelector('.track-group.melody .group-heading').getBoundingClientRect();
+      ensure(Math.abs(heading.getBoundingClientRect().height - roleHeading.height) < 2, 'master header matches role height');
+      ensure(button('Reroll all tracks').getBoundingClientRect().left > level.getBoundingClientRect().right, 'reroll actions to right of master');
+      // Turn off both Melody permissions, then exercise each Shift override through the DOM.
+      for (const label of ['On Compose', 'Randomize instruments']) {
+        const toggle = document.querySelector('.track-group.melody [aria-label="' + label + '"]');
+        if (toggle.getAttribute('aria-pressed') === 'true') toggle.click();
+      }
+      await wait(() => read()?.trackGenerationPolicies?.melody?.onCompose === false && read()?.instrumentGenerationPolicies?.melody?.randomize === false, 'disabled role policies');
+      for (const label of ['Reroll all tracks', 'Reroll all instruments']) {
+        const beforeCount = read().trackRerollCounts?.melody ?? 0;
+        button(label).click();
+        await new Promise(r => setTimeout(r, 250));
+        ensure((read().trackRerollCounts?.melody ?? 0) === beforeCount, 'global reroll skips disabled melody');
+        button(label).dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
+        await wait(() => (read().trackRerollCounts?.melody ?? 0) > beforeCount, 'Shift overrides role toggle');
+      }
+      const master = all.querySelector('vc-compact-knob input');
+      ensure(master, 'master knob');
+      master.value = '50'; master.dispatchEvent(new Event('input', { bubbles: true }));
+      master.dispatchEvent(new Event('change', { bubbles: true }));
+      await wait(() => read()?.masterVolumePercent === 50, 'master persisted');
+      button('Expand all-role settings').click();
+      await wait(() => all.querySelector('.all-role-settings'), 'expanded all-role heading');
+      button('All roles preset manager').click();
+      const presets = await wait(() => document.querySelector('vc-track-preset-dialog'), 'multi-role presets');
+      const chooser = presets.querySelector('vc-select');
+      const styles = await selectOptions(chooser);
+      const samba = styles.find(option => option.value.startsWith('builtin:Samba'));
+      ensure(samba, 'Samba all-role factory preset');
+      await change(chooser, samba.value);
+      button('Load preset').click();
+      await wait(() => presets.textContent.includes('Preset loaded'), 'Samba loaded once');
+      ensure(new Set(read().tracks.map(track => track.role)).size === 5, 'all roles loaded');
+      presets.querySelector('[aria-label="Close preset manager"]').click();
+      const bounds = all.getBoundingClientRect();
+      ensure([...all.querySelectorAll('button, vc-compact-knob')].every(control => control.getBoundingClientRect().right <= bounds.right + 1), 'all-role controls fit');
       let dialog=await settings('Harmony');
       let generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'harmony generation');
       ensure(generation.getAttribute("value")==='CURRENT','Legacy default');

@@ -7,7 +7,7 @@ import type { CompositionProject } from './project.model';
 
 export interface TrackPreset {
   readonly name: string;
-  readonly role: ArrangedPart;
+  readonly role: ArrangedPart | 'all';
   readonly tracks: readonly CompositionTrack[];
 }
 
@@ -17,20 +17,36 @@ export function decodeTrackPresets(value: unknown): TrackPreset[] | undefined {
   const presets: TrackPreset[] = [];
   for (const raw of value) {
     if (!raw || typeof raw !== 'object' || typeof raw.name !== 'string' || !raw.name.trim()
-      || raw.name.length > 80 || !ARRANGED_PARTS.includes(raw.role)) return undefined;
+      || raw.name.length > 80 || !(raw.role === 'all' || ARRANGED_PARTS.includes(raw.role))) return undefined;
     const tracks = decodeTracks(raw.tracks);
-    if (!tracks?.length || tracks.some(track => track.role !== raw.role)
+    if (!tracks?.length || (raw.role !== 'all' && tracks.some(track => track.role !== raw.role))
       || presets.some(preset => preset.role === raw.role && preset.name === raw.name.trim())) return undefined;
     presets.push({ name: raw.name.trim(), role: raw.role, tracks });
   }
   return presets;
 }
 
-export function loadTrackPreset(project: CompositionProject, role: ArrangedPart, value: unknown, replace: boolean,
+export function loadTrackPreset(project: CompositionProject, role: ArrangedPart | 'all', value: unknown, replace: boolean,
   presence: (tracks: readonly CompositionTrack[], section: CompositionProject['arrangement'][number]) => Readonly<Record<string, boolean>>): CompositionProject | undefined {
   const decoded = decodeTrackPresets([{ name: 'Load', role, tracks: value }]);
   if (!decoded || typeof replace !== 'boolean') return undefined;
-  const sources = decoded[0].tracks;
+  if (role === 'all') {
+    let next = project;
+    const delta = (r: ArrangedPart) => decoded[0].tracks.filter(t => t.role === r).length
+      - project.tracks.filter(t => replace && t.role === r && !t.rerollLocked).length;
+    // Free surplus slots first, avoiding intermediate capacity failures.
+    for (const member of [...ARRANGED_PARTS].sort((a, b) => delta(a) - delta(b))) {
+      const candidate = loadRolePreset(next, member, decoded[0].tracks.filter(t => t.role === member), replace, presence);
+      if (!candidate) return undefined;
+      next = candidate;
+    }
+    return next;
+  }
+  return loadRolePreset(project, role, decoded[0].tracks, replace, presence);
+}
+
+function loadRolePreset(project: CompositionProject, role: ArrangedPart, sources: readonly CompositionTrack[], replace: boolean,
+  presence: (tracks: readonly CompositionTrack[], section: CompositionProject['arrangement'][number]) => Readonly<Record<string, boolean>>): CompositionProject | undefined {
   const destinations = project.tracks.filter(track => replace && track.role === role && !track.rerollLocked);
   const removed = new Set(destinations.slice(sources.length).map(track => track.id));
   const replacements = new Map(destinations.slice(0, sources.length).map((track, index) =>

@@ -619,7 +619,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         const bounds = row.getBoundingClientRect();
         return [...row.children].every(child => { const item = child.matches('vc-context-menu') ? child.querySelector('.track-select') : child; const box = item.getBoundingClientRect(); return box.left >= bounds.left - 1 && box.right <= bounds.right + 1 && box.width >= 8; });
       });
-      const roleButtons = [...document.querySelectorAll('.group-select')];
+      const roleButtons = [...document.querySelectorAll('.track-group:not(.all-role-group) .group-select')];
       result.groupIconsVisible = roleButtons.length === 5 && roleButtons.every(button => {
         const icon = button.querySelector('.group-role-icon');
         const bounds = button.getBoundingClientRect();

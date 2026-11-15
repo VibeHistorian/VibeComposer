@@ -3,7 +3,7 @@ import { resolvedDrumSlots } from '../project/project-drum-kit';
 import type { DrumSlots } from './drum-instruments';
 import { DEFAULT_MIDI_PPQ, validMidiPpq } from './midi-resolution';
 import { Midi } from '@tonejs/midi';
-import { midiPanValue, mixEnabled } from '../audio/mix-values';
+import { midiPanValue, mixEnabled, withMasterVolume } from '../audio/mix-values';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import type { PhraseNote } from './phrase-note';
@@ -62,7 +62,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
       const track = midi.addTrack();
       track.name = compositionTrack.name;
       track.channel = compositionTrack.midiChannel - 1;
-      const included = configureMix(track, compositionTrack, anySolo);
+      const included = configureMix(track, withMasterVolume(compositionTrack, project), anySolo);
       if (!included) continue;
       for (const note of phrases[compositionTrack.id]) {
         track.addNote({
