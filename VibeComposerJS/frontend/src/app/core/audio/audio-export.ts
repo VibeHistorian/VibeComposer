@@ -13,7 +13,8 @@ const MAX_RELEASE_TAIL_SECONDS = 40;
 export interface AudioExportRegion { readonly startBeat: number; readonly endBeat: number; }
 
 /** Render the arrangement or a bounded region with the playback instruments, tempo map and mix. */
-export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank, region?: AudioExportRegion): Promise<AudioBuffer> {
+export async function renderProjectAudio(project: CompositionProject, onProgress?: (percent: number) => void, kind: InstrumentEngineKind = 'synth', bank?: Sf2Bank, region?: AudioExportRegion,
+  normalize = false, calibrationProgress?: (message: string) => void): Promise<AudioBuffer> {
   if (!globalThis.OfflineAudioContext) throw new Error('This browser does not support offline audio export.');
   if (region && (!Number.isFinite(region.startBeat) || !Number.isFinite(region.endBeat) || region.endBeat <= region.startBeat)) {
     throw new Error('The audio export region is invalid.');
@@ -37,7 +38,7 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   const songSeconds = timeline.beatToSeconds(endBeat) + offsetSeconds;
   const length = Math.ceil((songSeconds + (region ? 0 : MAX_RELEASE_TAIL_SECONDS)) * SAMPLE_RATE);
   const context = new OfflineAudioContext(2, length, SAMPLE_RATE);
-  const synth = await createInstrumentEngine(context, kind, bank);
+  const synth = await createInstrumentEngine(context, kind, bank, normalize, calibrationProgress);
   const master = context.createGain();
   master.gain.value = 0.8;
   master.connect(context.destination);

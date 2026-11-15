@@ -98,6 +98,17 @@ for (const { width, missingMethod, sampler } of [
           await wait(() => engineSelect.getAttribute('value') === 'synth', 'unloading selected font chooses synth');
           const fourth = (await selectOptions(engineSelect)).find(o => o.textContent.includes('Fourth.sf2'));
           await changeControl(engineSelect, fourth.value);
+          const normalization = settings.querySelector('[aria-label="Instrument loudness normalization"]');
+          ensure(normalization && !normalization.checked, 'normalization is opt-in');
+          normalization.click();
+          await wait(() => localStorage.getItem('vibecomposer.instrument-normalization.v1') === 'true', 'normalization preference saved');
+          await wait(() => settings.textContent.includes('Calibrating instrument loudness:'), 'calibration progress while settings is open');
+          await wait(() => settings.textContent.includes('Loudness normalization ready for Fourth.sf2.'), 'soundfont ready before playback or export');
+          ensure(downloads.length === 0, 'calibration does not require exporting');
+          await changeControl(engineSelect, 'synth');
+          await wait(() => settings.textContent.includes('Loudness normalization ready for TinySynth.'), 'bundled TinySynth ready in settings');
+          await changeControl(engineSelect, fourth.value);
+          await wait(() => settings.textContent.includes('Loudness normalization ready for Fourth.sf2.'), 'cached soundfont ready after reselection');
           settings.querySelector('[aria-label="Close settings"]').click();
         }
         const trigger = await wait(()=>document.querySelector('[title="Export"]'), 'export trigger');

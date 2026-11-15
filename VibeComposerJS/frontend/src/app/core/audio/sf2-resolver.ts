@@ -64,6 +64,11 @@ export class Sf2Bank {
     if (!preset) throw new Error(`SoundFont has no preset ${bank}:${program}.`);
     return preset;
   }
+  /** Hash the original bank bytes only when calibration is requested. */
+  async contentHash(): Promise<string> {
+    const digest = await crypto.subtle.digest('SHA-256', this.view.buffer as ArrayBuffer);
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  }
   /** Stable IDs avoid collisions between samples with identical display names. */
   pcm(region: Sf2Region): Float32Array<ArrayBuffer> {
     const pcm = new Float32Array(region.sampleEnd - region.sampleStart);

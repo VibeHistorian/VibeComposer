@@ -13,6 +13,7 @@ export class AudioExportService {
   async export(project: CompositionProject, region?: AudioExportRegion): Promise<Blob> {
     if (this.busy()) throw new Error('An audio export is already running.');
     const kind = this.instruments.kind(), bank = this.instruments.selectedBank();
+    const normalize = this.instruments.normalization();
     this.busy.set(true);
     this.progress.set(0);
     this.status.set('Rendering audio: 0%...');
@@ -22,7 +23,7 @@ export class AudioExportService {
       const buffer = await renderProjectAudio(project, percent => {
         this.progress.set(percent);
         this.status.set(`Rendering audio: ${percent}%...`);
-      }, kind, bank, region);
+      }, kind, bank, region, normalize, message => this.status.set(message));
       return await this.encode(buffer);
     } finally {
       this.busy.set(false);

@@ -4,6 +4,10 @@ import type { Sf2Bank } from './sf2-resolver';
 
 export const MAX_SOUNDFONT_BYTES = 250 * 1024 * 1024;
 export const MAX_LOADED_SOUNDFONTS = 3;
+const NORMALIZATION_KEY = 'vibecomposer.instrument-normalization.v1';
+function loadNormalization(): boolean {
+  try { return localStorage.getItem(NORMALIZATION_KEY) === 'true'; } catch { return false; }
+}
 export interface LoadedSoundfont {
   readonly id: InstrumentEngineKind;
   readonly name: string;
@@ -13,6 +17,9 @@ export interface LoadedSoundfont {
 /** Session audio resources, independent of project history and MIDI program identity. */
 @Injectable({ providedIn: 'root' })
 export class InstrumentSettingsService {
+  readonly normalization = signal(loadNormalization());
+  readonly calibrationStatus = signal('');
+  private calibrationRequest = 0;
   readonly kind = signal<InstrumentEngineKind>('synth');
   private readonly banks = signal<readonly LoadedSoundfont[]>([]);
   readonly loaded = this.banks.asReadonly();
@@ -22,9 +29,39 @@ export class InstrumentSettingsService {
     ...this.loaded().map(bank => ({ value: bank.id, label: bank.name }))]);
   private nextId = 0;
 
+  constructor() { void this.prepareNormalization(); }
+  async setNormalization(enabled: boolean): Promise<void> {
+    this.normalization.set(enabled);
+    try { localStorage.setItem(NORMALIZATION_KEY, String(enabled)); } catch { /* Session preference remains usable. */ }
+    await this.prepareNormalization();
+  }
+  /** Prepare while Settings is still open; selection changes invalidate old status updates. */
+  private async prepareNormalization(): Promise<void> {
+    const request = ++this.calibrationRequest;
+    if (!this.normalization()) { this.calibrationStatus.set(''); return; }
+    const kind = this.kind(), bank = this.selectedBank();
+    const name = kind === 'synth' ? 'TinySynth' : this.loaded().find(entry => entry.id === kind)?.name ?? 'Soundfont';
+    this.calibrationStatus.set(`Preparing loudness normalization for ${name}…`);
+    try {
+      const { calibrateInstruments } = await import('./instrument-loudness');
+      // An obsolete request must not start more work after a settings change.
+      if (request !== this.calibrationRequest) return;
+      if (kind !== 'synth' && !bank) throw new Error('The selected soundfont is no longer loaded.');
+      await calibrateInstruments(bank, message => {
+        if (request === this.calibrationRequest) this.calibrationStatus.set(`${name}: ${message}`);
+      });
+      if (request === this.calibrationRequest) this.calibrationStatus.set(`Loudness normalization ready for ${name}.`);
+    } catch (error) {
+      if (request === this.calibrationRequest) this.calibrationStatus.set(`Could not prepare loudness normalization for ${name}: `
+        + (error instanceof Error ? error.message : 'Calibration failed.') + ' Turn normalization off and on to retry.');
+    }
+  }
   selectedBank(): Sf2Bank | undefined { return this.loaded().find(bank => bank.id === this.kind())?.bank; }
   select(id: string): void {
-    if (id === 'synth' || this.loaded().some(bank => bank.id === id)) this.kind.set(id as InstrumentEngineKind);
+    if (id === 'synth' || this.loaded().some(bank => bank.id === id)) {
+      this.kind.set(id as InstrumentEngineKind);
+      void this.prepareNormalization();
+    }
   }
   async load(file: File): Promise<void> {
     if (this.busy()) return;
@@ -45,13 +82,16 @@ export class InstrumentSettingsService {
       const evicted = previous.length === MAX_LOADED_SOUNDFONTS ? previous[0] : undefined;
       this.banks.set([...previous, entry].slice(-MAX_LOADED_SOUNDFONTS));
       this.kind.set(entry.id);
+      void this.prepareNormalization();
       this.message.set('Loaded ' + file.name + '.' + (evicted ? ' Unloaded ' + evicted.name + ' (oldest).' : ''));
     } catch (error) {
       this.message.set('Could not load ' + file.name + ': ' + (error instanceof Error ? error.message : 'Invalid soundfont.'));
     } finally { this.busy.set(false); }
   }
   unload(id: InstrumentEngineKind): void {
-    if (this.kind() === id) this.kind.set('synth');
+    const selected = this.kind() === id;
+    if (selected) this.kind.set('synth');
     this.banks.update(banks => banks.filter(bank => bank.id !== id));
+    if (selected) void this.prepareNormalization();
   }
 }

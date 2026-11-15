@@ -57,6 +57,7 @@ export class AudioPlaybackService {
   private startRequest = 0;
   private engineLoading?: Promise<void>;
   private engineKind?: InstrumentEngineKind;
+  private engineNormalized = false;
   private readonly instruments = inject(InstrumentSettingsService);
   private scheduler?: ReturnType<typeof setInterval>;
   private schedulerWorker?: Worker;
@@ -108,6 +109,16 @@ export class AudioPlaybackService {
           void this.start(this.mixProject, beat);
         } else if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
         else this.stopSources();
+      });
+    });
+    effect(() => {
+      const normalize = this.instruments.normalization();
+      untracked(() => {
+        if (!this.synth || this.engineNormalized === normalize) return;
+        if (!this.midi.selectedOutput()) this.stop();
+        this.synth.dispose();
+        this.synth = undefined;
+        this.engineKind = undefined;
       });
     });
   }
@@ -347,16 +358,20 @@ export class AudioPlaybackService {
 
   private async prepareInstrument(context: AudioContext): Promise<void> {
     const kind = this.instruments.kind();
-    if (this.synth && this.engineKind === kind) return;
+    const normalize = this.instruments.normalization();
+    if (this.synth && this.engineKind === kind && this.engineNormalized === normalize) return;
     if (this.engineLoading) await this.engineLoading;
-    if (this.synth && this.engineKind === kind) return;
+    if (this.synth && this.engineKind === kind && this.engineNormalized === normalize) return;
     this.engineLoading = (async () => {
-      const engine = await createInstrumentEngine(context, kind, this.instruments.selectedBank());
-      if (kind !== this.instruments.kind()) { engine.dispose(); throw new Error('Instrument selection changed while loading.'); }
+      const engine = await createInstrumentEngine(context, kind, this.instruments.selectedBank(), normalize);
+      if (kind !== this.instruments.kind() || normalize !== this.instruments.normalization()) {
+        engine.dispose(); throw new Error('Instrument settings changed while loading.');
+      }
       this.stopSources();
       this.synth?.dispose();
       this.synth = engine;
       this.engineKind = kind;
+      this.engineNormalized = normalize;
     })();
     try { await this.engineLoading; } finally { this.engineLoading = undefined; }
   }

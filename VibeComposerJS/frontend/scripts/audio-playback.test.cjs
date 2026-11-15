@@ -37,7 +37,7 @@ function fixture({ loop = false } = {}) {
     createGain: node, createStereoPanner: node,
     createOscillator() { const source = node(); sources.push(source); return source; },
   };
-  const instruments = { kind: signal('synth'), selectedBank: () => undefined };
+  const instruments = { kind: signal('synth'), normalization: signal(false), calibrationStatus: signal(''), selectedBank: () => undefined };
   const midi = { selectedOutput: signal(null), drumMapping: signal('general-midi'), schedule() {}, configure() {}, silence() {} };
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
     signal, effect, untracked, inject: (token) => token.name === 'InstrumentSettingsService' ? instruments : midi, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
@@ -1161,4 +1161,29 @@ test('changing the selected soundfont stops voices and disposes the old engine a
   assert.equal(playback.activeSources.size, 0);
   assert.equal(disposed, 1);
   assert.ok(sources.every(s => s.stopTime === undefined));
+});
+
+test('changing normalization stops playback and discards the engine with the previous gain profile', async () => {
+  const {playback, project, instruments} = fixture();
+  let disposed = 0;
+  playback.synth.dispose = () => { disposed++; };
+  await playback.start(project);
+  instruments.normalization.set(true);
+  assert.equal(playback.state(), 'stopped');
+  assert.equal(playback.synth, undefined);
+  assert.equal(playback.activeSources.size, 0);
+  assert.equal(disposed, 1);
+});
+
+test('changing normalization leaves external MIDI playback running', async () => {
+  const {playback, project, instruments, midi} = fixture();
+  playback.synth.dispose = () => {};
+  midi.selectedOutput.set('external');
+  await playback.start(project);
+  let restarts = 0;
+  playback.restartAt = () => { restarts++; };
+  instruments.normalization.set(true);
+  assert.equal(playback.state(), 'playing');
+  assert.equal(restarts, 0);
+  assert.equal(playback.synth, undefined);
 });

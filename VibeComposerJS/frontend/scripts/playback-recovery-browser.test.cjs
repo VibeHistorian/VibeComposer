@@ -15,7 +15,8 @@ test('realtime audio survives delays and fractional loops without hidden playhea
       let playback, context, meter;
       try {
         const signal = value => { const read = () => value; read.set = next => value = next; read.asReadonly = () => read; return read; };
-        const instruments = { kind: () => 'synth', selectedBank: () => undefined };
+        const instruments = { kind: () => 'synth', normalization: () => false,
+          calibrationStatus: signal(''), selectedBank: () => undefined };
         const midi = { selectedOutput: () => null, drumMapping: () => 'general-midi', silence() {}, configure() {} };
         const angular = { Injectable: () => type => type, signal, effect: callback => callback(), untracked: callback => callback(),
           inject: token => token.name === 'InstrumentSettingsService' ? instruments : midi };
