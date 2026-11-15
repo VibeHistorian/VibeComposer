@@ -6,11 +6,12 @@ const test = require('node:test');
 const { DEFAULT_PROJECT } = require('./music-loader.cjs').loadMusic('../project/project-defaults.ts');
 const browser = findBrowser();
 
-for (const { width, missingMethod, sampler } of [
+for (const { width, missingMethod, sampler, chiptune } of [
   { width: 1440 }, { width: 780 }, { width: 1440, sampler: true },
+  { width: 1440, chiptune: true },
   { width: 1440, missingMethod: 'suspend' },
   { width: 1440, missingMethod: 'resume' },
-]) test(`production export menu and offline Opus download at ${width}px${sampler ? ' with GM sampler' : ''}${missingMethod ? ` without ${missingMethod}` : ''}`, { skip: !browser }, async () => {
+]) test(`production export menu and offline Opus download at ${width}px${sampler ? ' with GM sampler' : ''}${chiptune ? ' with Chiptune' : ''}${missingMethod ? ` without ${missingMethod}` : ''}`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
   const sf2Base64 = sampler ? fs.readFileSync(path.join(__dirname, '../../Super_Nintendo_Unofficial_update.sf2')).toString('base64') : '';
   const trackId = 'track-bass-1';
@@ -91,7 +92,7 @@ for (const { width, missingMethod, sampler } of [
           const engineMenu = await selectPopup(engineSelect);
           ensure(engineMenu.querySelector('[data-action="load-soundfont"][role="menuitem"]'), 'soundfont load is an action');
           engineSelect.click();
-          ensure(options.length === 4 && !options.some(o => o.textContent.includes('SNES.sf2')), 'fourth load evicts oldest; three fonts plus synth');
+          ensure(options.length === 5 && !options.some(o => o.textContent.includes('SNES.sf2')), 'fourth load evicts oldest; three fonts plus two synths');
           const second = options.find(o => o.textContent.includes('Second.sf2'));
           await changeControl(engineSelect, second.value);
           settings.querySelector('[aria-label="Unload Second.sf2"]').click();
@@ -107,9 +108,15 @@ for (const { width, missingMethod, sampler } of [
           ensure(downloads.length === 0, 'calibration does not require exporting');
           await changeControl(engineSelect, 'synth');
           await wait(() => settings.textContent.includes('Loudness normalization ready for TinySynth.'), 'bundled TinySynth ready in settings');
+          await changeControl(engineSelect, 'chiptune');
+          await wait(() => settings.textContent.includes('Loudness normalization ready for Chiptune (TinySynth).'), 'bundled chiptune ready in settings');
           await changeControl(engineSelect, fourth.value);
           await wait(() => settings.textContent.includes('Loudness normalization ready for Fourth.sf2.'), 'cached soundfont ready after reselection');
           settings.querySelector('[aria-label="Close settings"]').click();
+        }
+        if (${!!chiptune}) {
+          const engineSelect = await wait(() => document.querySelector(':is(vc-select, vc-menu-select)[aria-label="Audio instrument engine"]'), 'instrument selector');
+          await changeControl(engineSelect, 'chiptune');
         }
         const trigger = await wait(()=>document.querySelector('[title="Export"]'), 'export trigger');
         trigger.focus(); key(trigger,'ArrowDown');

@@ -9,6 +9,7 @@
   },
   "scripts": {
     "calibrate:tinysynth": "node scripts/precompute-tiny-synth-calibration.cjs",
+    "calibrate:chiptune": "node scripts/precompute-tiny-synth-calibration.cjs --chiptune",
     "test": "pnpm run test:unit",
     "test:unit": "node scripts/run-tests.cjs unit",
     "test:browser": "node scripts/run-tests.cjs browser",
@@ -25,7 +26,7 @@
     "test:export": "node --test scripts/export-filename.test.cjs",
     "test:score:browser": "node --test scripts/unified-score-browser.test.cjs",
     "test:score": "node --test scripts/score-canvas.test.cjs",
-    "test:synth:browser": "node --test scripts/tiny-synth-browser.test.cjs",
+    "test:synth:browser": "node --test scripts/tiny-synth-browser.test.cjs scripts/chiptune-browser.test.cjs",
     "test:selection": "node --test scripts/section-selection.test.cjs",
     "test:parts": "node --test scripts/part-settings.test.cjs scripts/project-codec.test.cjs",
     "test:parts:imports": "node --test scripts/parts/imports-validation.cjs scripts/project-codec.test.cjs",

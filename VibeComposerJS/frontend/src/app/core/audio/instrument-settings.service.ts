@@ -26,6 +26,7 @@ export class InstrumentSettingsService {
   readonly busy = signal(false);
   readonly message = signal('');
   readonly options = computed(() => [{ value: 'synth', label: 'TinySynth' },
+    { value: 'chiptune', label: 'Chiptune (TinySynth)' },
     ...this.loaded().map(bank => ({ value: bank.id, label: bank.name }))]);
   private nextId = 0;
 
@@ -40,16 +41,16 @@ export class InstrumentSettingsService {
     const request = ++this.calibrationRequest;
     if (!this.normalization()) { this.calibrationStatus.set(''); return; }
     const kind = this.kind(), bank = this.selectedBank();
-    const name = kind === 'synth' ? 'TinySynth' : this.loaded().find(entry => entry.id === kind)?.name ?? 'Soundfont';
+    const name = this.options().find(entry => entry.value === kind)?.label ?? 'Soundfont';
     this.calibrationStatus.set(`Preparing loudness normalization for ${name}…`);
     try {
       const { calibrateInstruments } = await import('./instrument-loudness');
       // An obsolete request must not start more work after a settings change.
       if (request !== this.calibrationRequest) return;
-      if (kind !== 'synth' && !bank) throw new Error('The selected soundfont is no longer loaded.');
+      if (kind.startsWith('sf2:') && !bank) throw new Error('The selected soundfont is no longer loaded.');
       await calibrateInstruments(bank, message => {
         if (request === this.calibrationRequest) this.calibrationStatus.set(`${name}: ${message}`);
-      });
+      }, kind);
       if (request === this.calibrationRequest) this.calibrationStatus.set(`Loudness normalization ready for ${name}.`);
     } catch (error) {
       if (request === this.calibrationRequest) this.calibrationStatus.set(`Could not prepare loudness normalization for ${name}: `
@@ -58,7 +59,7 @@ export class InstrumentSettingsService {
   }
   selectedBank(): Sf2Bank | undefined { return this.loaded().find(bank => bank.id === this.kind())?.bank; }
   select(id: string): void {
-    if (id === 'synth' || this.loaded().some(bank => bank.id === id)) {
+    if (id === 'synth' || id === 'chiptune' || this.loaded().some(bank => bank.id === id)) {
       this.kind.set(id as InstrumentEngineKind);
       void this.prepareNormalization();
     }

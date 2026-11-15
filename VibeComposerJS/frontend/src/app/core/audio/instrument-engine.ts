@@ -14,4 +14,4 @@ export interface InstrumentEngine {
     midi: number, velocity: number, start: number, duration: number): InstrumentVoice[];
   dispose(): void;
 }
-export type InstrumentEngineKind = 'synth' | `sf2:${number}`;
+export type InstrumentEngineKind = 'synth' | 'chiptune' | `sf2:${number}`;

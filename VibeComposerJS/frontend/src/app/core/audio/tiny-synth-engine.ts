@@ -2,6 +2,15 @@ import type { InstrumentEngine, InstrumentVoice } from './instrument-engine';
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
 interface TimbreOperator { readonly d: number; }
+export interface SynthOperator {
+  w: string; v: number; g?: number; t?: number; f?: number;
+  a?: number; h?: number; d?: number; s?: number; r?: number; p?: number; q?: number; k?: number;
+}
+export interface SynthPatchBank {
+  readonly melodic: readonly (readonly SynthOperator[])[];
+  readonly drums: readonly (readonly SynthOperator[])[];
+  readonly waves?: Readonly<Record<string, { real: readonly number[]; imag: readonly number[] }>>;
+}
 interface TinyVoice {
   readonly o: AudioScheduledSourceNode[];
   readonly g: GainNode[];
@@ -19,6 +28,8 @@ interface TinySynthInternals extends WebAudioTinySynth {
   readonly timerId: ReturnType<typeof setInterval>;
   readonly lfo: OscillatorNode;
   readonly comp: DynamicsCompressorNode;
+  readonly wave: Record<string, PeriodicWave>;
+  setTimbre(mode: number, note: number, operators: SynthOperator[]): void;
   _note(start: number, channel: number, midi: number, velocity: number, timbre: TimbreOperator[]): void;
   _releaseNote(voice: TinyVoice, time: number): void;
 }
@@ -35,11 +46,20 @@ export class TinySynthEngine implements InstrumentEngine {
   private readonly synth: TinySynthInternals;
   readonly context: BaseAudioContext;
 
-  constructor(context?: BaseAudioContext) {
+  constructor(context?: BaseAudioContext, patches?: SynthPatchBank) {
     this.synth = new WebAudioTinySynth({ quality: 1, useReverb: 0,
       internalcontext: context ? 0 : 1 }) as TinySynthInternals;
     if (context) this.synth.setAudioContext(context);
     this.context = context ?? this.synth.getAudioContext();
+    if (patches) {
+      for (const [name, wave] of Object.entries(patches.waves ?? {})) {
+        this.synth.wave[name] = this.context.createPeriodicWave(
+          new Float32Array(wave.real), new Float32Array(wave.imag), { disableNormalization: true });
+      }
+      // setTimbre fills defaults in place. Keep the shipped bank immutable across engines.
+      patches.melodic.forEach((patch, program) => this.synth.setTimbre(0, program, patch.map(op => ({ ...op }))));
+      patches.drums.forEach((patch, index) => this.synth.setTimbre(1, index + 35, patch.map(op => ({ ...op }))));
+    }
     // All rendered operators go straight to our track buses, bypassing its mixer.
     this.synth.out.disconnect();
   }

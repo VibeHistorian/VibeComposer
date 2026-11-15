@@ -73,7 +73,7 @@ test('loaded soundfonts appear in transport options, select by stable identity a
   service.select(ids[0]);
   await service.load(file('four.sf2'));
   assert.deepEqual(service.loaded().map(b => b.name), ['two.sf2','three.sf2','four.sf2']);
-  assert.equal(service.options().length, 4);
+  assert.equal(service.options().length, 5);
   assert.equal(service.selectedBank(), service.loaded()[2].bank);
   assert.match(service.message(), /Unloaded one.sf2/);
   service.select(ids[0]);
@@ -81,6 +81,18 @@ test('loaded soundfonts appear in transport options, select by stable identity a
   service.unload(service.kind());
   assert.equal(service.kind(), 'synth');
   assert.equal(service.selectedBank(), undefined);
+});
+
+test('bundled chiptune selects without a soundfont and prepares its own normalization', async () => {
+  let selectedKind;
+  const {service} = fixture(async (bank, progress, kind) => { assert.equal(bank, undefined); selectedKind = kind; });
+  service.select('chiptune');
+  assert.equal(service.kind(), 'chiptune');
+  assert.equal(service.selectedBank(), undefined);
+  assert.ok(service.options().some(option => option.value === 'chiptune'));
+  await service.setNormalization(true);
+  assert.equal(selectedKind, 'chiptune');
+  assert.equal(service.calibrationStatus(), 'Loudness normalization ready for Chiptune (TinySynth).');
 });
 test('250 MiB is accepted; oversized files are rejected before reading or evicting a bank', async () => {
   const {service,max} = fixture();let read = false;

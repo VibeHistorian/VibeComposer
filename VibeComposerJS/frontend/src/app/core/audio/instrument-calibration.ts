@@ -54,7 +54,9 @@ export function calibrateSoundfont(bank: Sf2Bank, progress?: (message: string) =
 }
 
 /** Raw measurement, also used by the explicit TinySynth precomputation script. */
-export async function measureInstrumentLoudness(bank?: Sf2Bank, progress?: (message: string) => void): Promise<LoudnessProfile> {
+export async function measureInstrumentLoudness(bank?: Sf2Bank, progress?: (message: string) => void,
+  chiptune = false): Promise<LoudnessProfile> {
+  const patches = chiptune ? (await import('./chiptune-patches')).CHIPTUNE_PATCHES : undefined;
   const melodic = Array<number>(128).fill(1), drums = Array<number>(128).fill(1);
   const programs = bank ? [...new Set(bank.presets.filter(p => p.bank === 0 && p.regions.length).map(p => p.program))]
     .filter(p => p >= 0 && p < 128) : Array.from({ length: 128 }, (_, i) => i);
@@ -72,7 +74,7 @@ export async function measureInstrumentLoudness(bank?: Sf2Bank, progress?: (mess
     progress?.(`Calibrating instrument loudness: ${index + 1}/${probes.length}`);
     await new Promise<void>(resolve => setTimeout(resolve, 0));
     const context = new OfflineAudioContext(2, RATE * (percussion ? 2.5 : 6), RATE);
-    const engine: InstrumentEngine = bank && Sf2Engine ? new Sf2Engine(context, bank) : new TinySynthEngine(context);
+    const engine: InstrumentEngine = bank && Sf2Engine ? new Sf2Engine(context, bank) : new TinySynthEngine(context, patches);
     const voices: InstrumentVoice[] = [];
     try {
       await engine.prepare();

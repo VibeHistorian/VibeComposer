@@ -263,7 +263,7 @@
             @if (instruments.message()) { <p role="status">{{ instruments.message() }}</p> }
             <div class="setting-row">
               <div class="setting-copy"><h3><vc-settings-scope-indicator scope="ui" />Instrument loudness normalization</h3>
-                <p id="instrument-normalization-description">Balance melodic instruments and individual drum sounds in TinySynth and loaded soundfonts. Applies to playback, note previews and audio export. TinySynth is ready immediately. Soundfont calibration starts when enabled or when selecting a bank; progress and readiness appear below, and results are cached. Leave off to preserve the engine's original instrument levels. External MIDI is unaffected.</p>
+                <p id="instrument-normalization-description">Balance melodic instruments and individual drum sounds in TinySynth, Chiptune and loaded soundfonts. Applies to playback, note previews and audio export. Both bundled synths are ready immediately. Soundfont calibration starts when enabled or when selecting a bank; progress and readiness appear below, and results are cached. Leave off to preserve the engine's original instrument levels. External MIDI is unaffected.</p>
               </div>
               <div class="setting-controls"><input type="checkbox" aria-label="Instrument loudness normalization" aria-describedby="instrument-normalization-description"
                 [checked]="instruments.normalization()" (change)="instruments.setNormalization($any($event.target).checked)" /></div>

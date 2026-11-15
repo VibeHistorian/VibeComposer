@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
+const chiptune = process.argv.includes('--chiptune');
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser } = require('./support/browser-harness.cjs');
 
 (async () => {
@@ -20,7 +21,7 @@ const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, w
       let state = 0x51f15e;
       Math.random = () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
       const started = performance.now();
-      const profile = await Precompute.measureInstrumentLoudness();
+      const profile = await Precompute.measureInstrumentLoudness(undefined, undefined, ${chiptune});
       await fetch('/result', { method: 'POST', body: JSON.stringify({ profile,
         programs: Precompute.GM_INSTRUMENTS, drums: Precompute.DRUM_INSTRUMENTS,
         seconds: (performance.now() - started) / 1000 }) });
@@ -44,7 +45,7 @@ const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, w
     }
     const rows = (values, names, keys) => keys.map(key =>
       `  ${key}: ${(20 * Math.log10(values[key])).toFixed(6)}, // ${names.get(key) ?? 'MIDI note ' + key}`);
-    const text = [
+    let text = [
       "import type { LoudnessProfile } from './normalized-instrument-engine';", '',
       '/** TinySynth 1.1.3, quality 1. Editable offsets in dB; programs are ZERO-BASED.',
       ' * Positive values boost, negative values attenuate. Drums use MIDI note numbers.',
@@ -63,7 +64,10 @@ const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, w
       '  melodic: gains(TINY_SYNTH_MELODIC_OFFSETS_DB),',
       '  drums: gains(TINY_SYNTH_DRUM_OFFSETS_DB),', '};', '',
     ].join('\n');
-    const target = path.resolve(__dirname, '../src/app/core/audio/tiny-synth-loudness.ts');
+    if (chiptune) text = text.replaceAll('TINY_SYNTH_', 'CHIPTUNE_')
+      .replace('TinySynth 1.1.3, quality 1.', 'Chiptune (TinySynth 1.1.3).')
+      .replace('pnpm run calibrate:tinysynth', 'pnpm run calibrate:chiptune');
+    const target = path.resolve(__dirname, '../src/app/core/audio/' + (chiptune ? 'chiptune-loudness.ts' : 'tiny-synth-loudness.ts'));
     fs.writeFileSync(target, text);
     console.log(`Wrote ${target} (${output.seconds.toFixed(2)}s measurement).`);
   } finally { await closeBrowser({ child, server, watchdog }); }
