@@ -7,10 +7,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip16",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "6": [
@@ -18,10 +26,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip14",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "7": [
@@ -29,10 +45,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip14",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "8": [
@@ -40,10 +64,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "9": [
@@ -51,10 +83,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "10": [
@@ -62,10 +102,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "12": [
@@ -73,10 +121,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "15": [
@@ -84,10 +140,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "16": [
@@ -95,10 +159,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip9",
       "v": 1,
       "a": 0.059989,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.01714
+      "r": 0.01714,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.05998864825421405,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.05998864825421405
+      }
     }
   ],
   "17": [
@@ -106,10 +178,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip10",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "18": [
@@ -117,10 +197,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip10",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "19": [
@@ -128,10 +216,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip9",
       "v": 1,
       "a": 0.059989,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.01714
+      "r": 0.01714,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.05998864825421405,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.05998864825421405
+      }
     }
   ],
   "21": [
@@ -139,10 +235,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 1,
       "a": 0.059989,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.05998864825421405,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "22": [
@@ -150,10 +254,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 1,
       "a": 0.059989,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.05998864825421405,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "23": [
@@ -161,10 +273,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 1,
       "a": 0.059989,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.05998864825421405,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "26": [
@@ -172,10 +292,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip3",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "27": [
@@ -183,10 +311,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "28": [
@@ -194,10 +330,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.086858,
+      "h": 0.000977,
+      "d": 1,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 1,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "29": [
@@ -205,10 +349,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip1",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 8.570098,
+      "h": 0.000977,
+      "d": 29.995344,
       "s": 0.031623,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 29.995343889919354,
+        "sustain": 0.03162277660168379,
+        "release": 0.0009765625
+      }
     }
   ],
   "30": [
@@ -216,10 +368,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip1",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 8.570098,
+      "h": 0.000977,
+      "d": 29.995344,
       "s": 0.031623,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 29.995343889919354,
+        "sustain": 0.03162277660168379,
+        "release": 0.0009765625
+      }
     }
   ],
   "31": [
@@ -227,10 +387,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip9",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "32": [
@@ -238,10 +406,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip17",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "33": [
@@ -249,10 +425,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "34": [
@@ -260,10 +444,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "35": [
@@ -271,10 +463,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip0",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "36": [
@@ -282,10 +482,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip7",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "37": [
@@ -293,10 +501,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip7",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "40": [
@@ -304,10 +520,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip4",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "41": [
@@ -315,10 +539,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip5",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "42": [
@@ -326,10 +558,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip2",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "43": [
@@ -337,10 +577,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip2",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "44": [
@@ -348,10 +596,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip2",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.171464
+      "r": 0.171464,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.6001243333326338
+      }
     }
   ],
   "46": [
@@ -359,10 +615,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip18",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.086858,
+      "h": 0.000977,
+      "d": 1,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 1,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "48": [
@@ -370,10 +634,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "49": [
@@ -381,10 +653,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "50": [
@@ -392,10 +672,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip8",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.057153
+      "r": 0.057153,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.20003624493065955
+      }
     }
   ],
   "51": [
@@ -403,10 +691,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip8",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.057153
+      "r": 0.057153,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.20003624493065955
+      }
     }
   ],
   "52": [
@@ -414,10 +710,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "53": [
@@ -425,10 +729,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip18",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "54": [
@@ -436,10 +748,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip18",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.057153
+      "r": 0.057153,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.20003624493065955
+      }
     }
   ],
   "57": [
@@ -447,10 +767,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip14",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "58": [
@@ -458,10 +786,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip14",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "59": [
@@ -469,10 +805,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip14",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "60": [
@@ -480,10 +824,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "61": [
@@ -491,10 +843,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "62": [
@@ -502,10 +862,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip0",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "64": [
@@ -513,10 +881,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "65": [
@@ -524,10 +900,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "66": [
@@ -535,10 +919,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "67": [
@@ -546,10 +938,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "68": [
@@ -557,10 +957,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "69": [
@@ -568,10 +976,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "70": [
@@ -579,10 +995,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "72": [
@@ -590,10 +1014,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "74": [
@@ -601,10 +1033,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "75": [
@@ -612,10 +1052,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "76": [
@@ -623,10 +1071,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "77": [
@@ -634,10 +1090,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "78": [
@@ -645,10 +1109,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip18",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "79": [
@@ -656,10 +1128,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "80": [
@@ -667,10 +1147,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "81": [
@@ -678,10 +1166,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip4",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "82": [
@@ -689,10 +1185,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "83": [
@@ -700,10 +1204,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip0",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "85": [
@@ -711,10 +1223,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "86": [
@@ -722,10 +1242,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip2",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "87": [
@@ -733,10 +1261,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip8",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "88": [
@@ -744,10 +1280,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip9",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.571429
+      "r": 0.571429,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 2
+      }
     }
   ],
   "89": [
@@ -755,10 +1299,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "90": [
@@ -766,10 +1318,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip5",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "91": [
@@ -777,10 +1337,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "92": [
@@ -788,10 +1356,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip6",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "93": [
@@ -799,10 +1375,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip5",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "94": [
@@ -810,10 +1394,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip5",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "95": [
@@ -821,10 +1413,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip2",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.171464
+      "r": 0.171464,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.6001243333326338
+      }
     }
   ],
   "97": [
@@ -832,10 +1432,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip0",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "98": [
@@ -843,10 +1451,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000558,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.001953125
+      }
     }
   ],
   "99": [
@@ -854,10 +1470,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip13",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "100": [
@@ -865,10 +1489,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.857165,
+      "h": 0.000977,
+      "d": 3.000078,
       "s": 0.316228,
-      "r": 0.571429
+      "r": 0.571429,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 3.0000779785716363,
+        "sustain": 0.31622776601683794,
+        "release": 2
+      }
     }
   ],
   "102": [
@@ -876,10 +1508,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip11",
       "v": 0.749894,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.114306
+      "r": 0.114306,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.4000724898613191
+      }
     }
   ],
   "103": [
@@ -887,10 +1527,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "104": [
@@ -898,10 +1546,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "105": [
@@ -909,10 +1565,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "106": [
@@ -920,10 +1584,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.173717,
+      "h": 0.000977,
+      "d": 2,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 2,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "107": [
@@ -931,10 +1603,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip14",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.347433,
+      "h": 0.000977,
+      "d": 4,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 4,
+        "sustain": 0.00001,
+        "release": 0.0009765625
+      }
     }
   ],
   "108": [
@@ -942,10 +1622,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.086858,
+      "h": 0.000977,
+      "d": 1,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.00014,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 1,
+        "sustain": 0.00001,
+        "release": 0.00048828125
+      }
     }
   ],
   "109": [
@@ -953,10 +1641,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 1,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "110": [
@@ -964,10 +1660,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip2",
       "v": 1,
       "a": 0.100018,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.10001812246532978,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "111": [
@@ -975,10 +1679,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip15",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.000279,
+      "h": 0.000977,
+      "d": 0.000977,
       "s": 1,
-      "r": 0.003
+      "r": 0.000279,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.0009765625,
+        "sustain": 1,
+        "release": 0.0009765625
+      }
     }
   ],
   "112": [
@@ -986,10 +1698,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.086858,
+      "h": 0.000977,
+      "d": 1,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.00014,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 1,
+        "sustain": 0.00001,
+        "release": 0.00048828125
+      }
     }
   ],
   "113": [
@@ -997,10 +1717,18 @@ export const CHIPTUNE_REFERENCE: Readonly<Record<number, readonly SynthOperator[
       "w": "wChip12",
       "v": 0.749894,
       "a": 0.000977,
-      "h": 0,
-      "d": 0.043429,
+      "h": 0.000977,
+      "d": 0.5,
       "s": 0.00001,
-      "r": 0.003
+      "r": 0.00007,
+      "envelope": {
+        "delay": 0.0009765625,
+        "attack": 0.0009765625,
+        "hold": 0.0009765625,
+        "decay": 0.5,
+        "sustain": 0.00001,
+        "release": 0.000244140625
+      }
     }
   ]
 };

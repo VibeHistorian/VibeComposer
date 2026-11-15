@@ -1,10 +1,16 @@
 import type { InstrumentEngine, InstrumentVoice } from './instrument-engine';
 import WebAudioTinySynth from 'webaudio-tinysynth';
 
-interface TimbreOperator { readonly d: number; }
+/** Matches this application's SF2 sampler's linear volume envelope, in seconds. */
+export interface SynthEnvelope {
+  readonly delay: number; readonly attack: number; readonly hold: number;
+  readonly decay: number; readonly sustain: number; readonly release: number;
+}
+interface TimbreOperator { readonly d: number; readonly envelope?: SynthEnvelope; }
 export interface SynthOperator {
   w: string; v: number; g?: number; t?: number; f?: number;
   a?: number; h?: number; d?: number; s?: number; r?: number; p?: number; q?: number; k?: number;
+  envelope?: SynthEnvelope;
 }
 export interface SynthPatchBank {
   readonly melodic: readonly (readonly SynthOperator[])[];
@@ -15,6 +21,7 @@ interface TinyVoice {
   readonly o: AudioScheduledSourceNode[];
   readonly g: GainNode[];
   readonly r: number[];
+  readonly v: number[];
   e: number;
 }
 interface TinySynthInternals extends WebAudioTinySynth {
@@ -96,6 +103,31 @@ export class TinySynthEngine implements InstrumentEngine {
     } else {
       this.synth._releaseNote(voice, start + duration);
       stopTime = start + duration + Math.max(...voice.r) * this.synth.releaseRatio;
+      timbre.forEach((operator, index) => {
+        const envelope = operator.envelope;
+        if (!envelope) return;
+        const gain = voice.g[index].gain, peak = voice.v[index];
+        const attackStart = start + envelope.delay, attackEnd = attackStart + envelope.attack;
+        const holdEnd = attackEnd + envelope.hold, decayEnd = holdEnd + envelope.decay;
+        const end = start + duration;
+        const levelAt = (time: number) => time < attackStart ? 0 : time < attackEnd
+          ? (time - attackStart) / Math.max(envelope.attack, 1e-9) : time < holdEnd ? 1
+          : time < decayEnd ? 1 + (envelope.sustain - 1) * (time - holdEnd) / Math.max(envelope.decay, 1e-9)
+          : envelope.sustain;
+        // TinySynth still renders the oscillator and velocity gain. Replace only
+        // this operator's automation, clipping stages when note-off interrupts one.
+        gain.cancelScheduledValues(start);
+        gain.setValueAtTime(0, start);
+        if (attackStart < end) gain.setValueAtTime(0, attackStart);
+        if (attackEnd < end) gain.linearRampToValueAtTime(peak, attackEnd);
+        if (holdEnd < end) gain.setValueAtTime(peak, holdEnd);
+        if (decayEnd < end) gain.linearRampToValueAtTime(peak * envelope.sustain, decayEnd);
+        if (end > attackStart && (end <= attackEnd || end > holdEnd && end <= decayEnd)) {
+          gain.linearRampToValueAtTime(peak * levelAt(end), end);
+        } else gain.setValueAtTime(peak * levelAt(end), end);
+        gain.linearRampToValueAtTime(0, end + envelope.release);
+        stopTime = Math.max(stopTime, end + envelope.release);
+      });
     }
     for (const source of voice.o) source.stop(stopTime);
     return voice.o.map((source, index) => ({ stopTime,
