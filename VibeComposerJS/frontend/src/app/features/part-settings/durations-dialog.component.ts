@@ -1,3 +1,5 @@
+import { LiveRecordingComponent } from '../recording/live-recording.component';
+import { recordedSegments, type RecordedSpan } from '../../core/audio/live-recording';
 import { SelectComponent } from '../../shared/select.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
@@ -9,7 +11,7 @@ import { DEFAULT_DURATION_CHANCES, DEFAULT_DURATIONS, durationError, paddedDurat
 import { validateDurationDraft } from '../../core/music/duration-validation';
 
 @Component({
-  imports: [SelectComponent],
+  imports: [LiveRecordingComponent, SelectComponent],
   selector: 'vc-durations-dialog',
   templateUrl: './durations-dialog.component.html',
   styleUrl: './durations-dialog.component.css',
@@ -29,6 +31,19 @@ export class DurationsDialogComponent {
   readonly chances = signal([...(this.initial.customDurationChances ?? DEFAULT_DURATION_CHANCES)]);
   readonly weighted = signal(this.initial.customDurationRandomWeighting ?? false);
   readonly flipped = signal(this.data.flipped ?? this.initial.patternFlip ?? false);
+  readonly recordingLaneOptions = Array.from({ length: 10 }, (_, value) => ({ value, label: String(value + 1) }));
+  readonly recordingLane = signal(0);
+  readonly recordingBeat = signal<number | null>(null);
+  recordSpan(span: RecordedSpan): void {
+    if (this.stale()) return;
+    const lane = this.recordingLane(), grid = this.grid();
+    for (const segment of recordedSegments(span, 4, grid)) {
+      // Reuse drawing so pauses outside the held interval and separate attacks survive.
+      this.gesture = { pointer: -1, row: lane, start: Math.round(segment.start / grid),
+        end: Math.round(segment.end / grid) - 1, original: this.rows()[lane] };
+      this.paint(); this.gesture = null;
+    }
+  }
   readonly grid = signal(0.25);
   readonly tool = signal<'note' | 'rest'>('note');
   readonly rows = computed(() => this.texts().map(text => text.trim() ? text.split(',').map(value => value.trim() ? Number(value) : NaN) : []));

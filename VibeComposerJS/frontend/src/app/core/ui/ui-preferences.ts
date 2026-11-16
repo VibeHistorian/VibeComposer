@@ -38,6 +38,8 @@ export interface UiPreferences {
   readonly composeBpmMin: number;
   readonly composeBpmMax: number;
   readonly compactHistory: boolean;
+  readonly recordingTick: boolean;
+  readonly keyboardNoteInput: boolean;
   readonly midiPpq: number;
   readonly settingsExplainersAsTooltips: boolean;
   readonly syncScoreMix: boolean;
@@ -95,7 +97,7 @@ export function defaultQuickSettings(): QuickSettings {
 }
 
 export function defaultUiPreferences(): UiPreferences {
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin: 60, composeBpmMax: 100, compactHistory: true, midiPpq: DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: true, syncScoreMix: false, scoreChordGrid: false, scoreNoteShape: 'classic', scoreGhostNotes: true, scoreOutlineOtherTracks: false, restartPlaybackOnCompose: true, replaceCurrentProjectTab: false, replacePresetTracks: true, generateArrangementVariations: false, variationRerolls: defaultVariationRerolls(), rerollPresenceWithVariations: false, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, harmonyFollowsMode: 'all', manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance(), shortcuts: defaultShortcuts() };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin: 60, composeBpmMax: 100, compactHistory: true, recordingTick: false, keyboardNoteInput: true, midiPpq: DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: true, syncScoreMix: false, scoreChordGrid: false, scoreNoteShape: 'classic', scoreGhostNotes: true, scoreOutlineOtherTracks: false, restartPlaybackOnCompose: true, replaceCurrentProjectTab: false, replacePresetTracks: true, generateArrangementVariations: false, variationRerolls: defaultVariationRerolls(), rerollPresenceWithVariations: false, limitInstrumentsToPool: false, drumMapping: 'auto', discardPhraseNotesOnMidiDrop: false, harmonyFollowsMode: 'all', manualPhrasesFollowMode: true, exportNameFields: DEFAULT_EXPORT_NAME_FIELDS, quickSettings: defaultQuickSettings(), appearance: defaultAppearance(), shortcuts: defaultShortcuts() };
 }
 
 /** Decode atomically, accepting only UI data and retaining the code's control order. */
@@ -105,6 +107,8 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
   if (data['kind'] !== 'vibecomposer-ui-preferences' || typeof data['compactHistory'] !== 'boolean'
       || !data['quickSettings'] || typeof data['quickSettings'] !== 'object' || Array.isArray(data['quickSettings'])) return null;
   if (data['settingsExplainersAsTooltips'] !== undefined && typeof data['settingsExplainersAsTooltips'] !== 'boolean') return null;
+  if (data['recordingTick'] !== undefined && typeof data['recordingTick'] !== 'boolean') return null;
+  if (data['keyboardNoteInput'] !== undefined && typeof data['keyboardNoteInput'] !== 'boolean') return null;
   if (data['midiPpq'] !== undefined && !validMidiPpq(data['midiPpq'])) return null;
   const composeBpmMin = data['composeBpmMin'] ?? 60, composeBpmMax = data['composeBpmMax'] ?? 100;
   if (typeof composeBpmMin !== 'number' || typeof composeBpmMax !== 'number' || !Number.isInteger(composeBpmMin) || !Number.isInteger(composeBpmMax) || composeBpmMin < 30 || composeBpmMax > 240 || composeBpmMin > composeBpmMax) return null;
@@ -140,5 +144,5 @@ export function decodeUiPreferences(value: unknown): UiPreferences | null {
     if (!Array.isArray(keys) || keys.some(key => typeof key !== 'string' || !PART_CONTROLS[role].some(control => control.key === key))) return null;
     quickSettings[role] = PART_CONTROLS[role].filter(control => combinedControlKeys(control.key, role).some(key => keys.includes(key))).map(control => control.key);
   }
-  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin, composeBpmMax, compactHistory: data['compactHistory'], midiPpq: data['midiPpq'] as number ?? DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: data['settingsExplainersAsTooltips'] !== false, syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreNoteShape: data['scoreNoteShape'] as ScoreNoteShape ?? 'classic', scoreGhostNotes: data['scoreGhostNotes'] !== false, scoreOutlineOtherTracks: data['scoreOutlineOtherTracks'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, replaceCurrentProjectTab: data['replaceCurrentProjectTab'] === true, replacePresetTracks: data['replacePresetTracks'] !== false, generateArrangementVariations: data['generateArrangementVariations'] === true, variationRerolls, rerollPresenceWithVariations: data['rerollPresenceWithVariations'] === true, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, harmonyFollowsMode: data['harmonyFollowsMode'] as HarmonyModeScope ?? 'all', manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance, shortcuts };
+  return { kind: 'vibecomposer-ui-preferences', schemaVersion: 1, composeBpmMin, composeBpmMax, compactHistory: data['compactHistory'], recordingTick: data['recordingTick'] === true, keyboardNoteInput: data['keyboardNoteInput'] !== false, midiPpq: data['midiPpq'] as number ?? DEFAULT_MIDI_PPQ, settingsExplainersAsTooltips: data['settingsExplainersAsTooltips'] !== false, syncScoreMix: data['syncScoreMix'] === true, scoreChordGrid: data['scoreChordGrid'] === true, scoreNoteShape: data['scoreNoteShape'] as ScoreNoteShape ?? 'classic', scoreGhostNotes: data['scoreGhostNotes'] !== false, scoreOutlineOtherTracks: data['scoreOutlineOtherTracks'] === true, restartPlaybackOnCompose: data['restartPlaybackOnCompose'] !== false, replaceCurrentProjectTab: data['replaceCurrentProjectTab'] === true, replacePresetTracks: data['replacePresetTracks'] !== false, generateArrangementVariations: data['generateArrangementVariations'] === true, variationRerolls, rerollPresenceWithVariations: data['rerollPresenceWithVariations'] === true, limitInstrumentsToPool: data['limitInstrumentsToPool'] === true, drumMapping: data['drumMapping'] as DrumMappingPreference ?? 'auto', discardPhraseNotesOnMidiDrop: data['discardPhraseNotesOnMidiDrop'] === true, harmonyFollowsMode: data['harmonyFollowsMode'] as HarmonyModeScope ?? 'all', manualPhrasesFollowMode: data['manualPhrasesFollowMode'] !== false, exportNameFields, quickSettings, appearance, shortcuts };
 }

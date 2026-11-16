@@ -28,6 +28,7 @@ Paths below are relative to `src/app/`. Feature folders group embedded interacti
 | `features/part-settings/` | Part editor, scope actions, control groups, pattern sequencer and shared Melody/Bass/Arpeggio duration dialog |
 | `features/harmony/` | Chordlet editor and harmony settings, reused by transport and section/workspace editors |
 | `features/tracks/` | Mix buttons and track generation policies embedded in Tracks and transport |
+| `features/recording/` | Shared live recording controls for phrase drafts, custom durations and hit patterns; Web MIDI selection and session cursor live in `core/audio/`. |
 | `features/transport/` | `transport-dock.component.*`: playback and global musical controls |
 | `features/history/` | `history-dialog.component.*`: project history navigation |
 | `features/midi-import/` | `midi-import-dialog.component.*`: import choices; file/worker orchestration remains in `core/ui/` |

@@ -1,6 +1,8 @@
 import { withoutManualAdjustments } from '../../core/music/manual-phrase-processing';
 import { MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
 import { resolvedDrumSlots } from '../../core/project/project-drum-kit';
+import { LiveRecordingComponent } from '../recording/live-recording.component';
+import { recordedSegments, type RecordedSpan } from '../../core/audio/live-recording';
 import { SelectComponent } from '../../shared/select.component';
 import { afterNextRender, Injector, ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
 import { DOCUMENT, TitleCasePipe } from '@angular/common';
@@ -28,12 +30,24 @@ export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; 
 
 @Component({
   selector: 'vc-edit-workspace',
-  imports: [SelectComponent, TitleCasePipe],
+  imports: [LiveRecordingComponent, SelectComponent, TitleCasePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './edit-workspace.component.html',
   styleUrl: './edit-workspace.component.css',
 })
 export class EditWorkspaceComponent {
+  recordSpan(span: RecordedSpan): void {
+    for (const segment of recordedSegments(span, this.phraseBeats(), this.snapBeats())) {
+      // Live MIDI and keyboard pitches remain chromatic, independently of drawing snap.
+      const track = this.selectedTrack();
+      if (this.draftNotes().filter(note => note.trackId === track.id).length >= 2048) break;
+      const note = { id: this.makeNoteId(), trackId: track.id, midi: Math.max(0, Math.min(127, segment.midi - this.displayTranspose())),
+        startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity };
+      this.draftNotes.update(notes => [...notes, note]); this.selectNote(note.id); this.markManual([track.id]);
+    }
+    this.record();
+  }
+  private readonly recorder = viewChild(LiveRecordingComponent);
   readonly gridSelectOptions = computed(() => this.gridChoices.map(grid => ({ value: grid, label: String(grid === 1 / 6 ? '1/6' : grid === 1 / 3 ? '1/3' : grid === 2 / 3 ? '2/3' : grid === 4 / 3 ? '4/3' : grid) })));
 
   readonly projects = inject(ProjectService);
@@ -228,6 +242,7 @@ export class EditWorkspaceComponent {
   }
 
   selectTrack(trackId: string): void {
+    this.recorder()?.stop();
     const editingDrums = this.selectedPart() === 'drums';
     this.workspaceUi.selectTrack(trackId);
     const track = this.project().tracks.find((candidate) => candidate.id === trackId);
@@ -383,12 +398,14 @@ export class EditWorkspaceComponent {
   }
 
   smartExit(): void {
+    this.recorder()?.stop();
     if (!this.hasChanges()) { this.cancelChanges(); return; }
     this.commitChanges('smart');
   }
   applyLocalChanges(): void { if (this.sectionId) this.commitChanges('local'); }
   applyChanges(): void { this.commitChanges('global'); }
   private commitChanges(destination: 'local' | 'global' | 'smart'): void {
+    this.recorder()?.stop();
     if (!this.hasChanges()) return;
     const section = this.project().arrangement.find(section => section.id === this.sectionId);
     const sourceProject = withoutManualAdjustments(this.project());

@@ -1,3 +1,5 @@
+import { LiveRecordingComponent } from '../recording/live-recording.component';
+import { recordedSegments, recordingCell, type RecordedSpan } from '../../core/audio/live-recording';
 import { SelectComponent } from '../../shared/select.component';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
@@ -14,7 +16,7 @@ import { MidiOutputService } from '../../core/audio/midi-output.service';
 export interface PatternSequencerData { scope: PartSettingsScope; role: ArrangedPart; velocities: boolean; melodyHits: number }
 
 @Component({
-  imports: [SelectComponent],
+  imports: [LiveRecordingComponent, SelectComponent],
   selector: 'vc-pattern-sequencer',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pattern-sequencer.component.html',
@@ -25,6 +27,44 @@ export class PatternSequencerComponent {
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
   private readonly midi = inject(MidiOutputService);
+  readonly recordingCell = recordingCell;
+  readonly recordingTrack = signal('');
+  readonly recordingBeat = signal<number | null>(null);
+  readonly recordingOptions = computed(() => this.rows().filter(row => row.supported).sort((left, right) => Number(right.active) - Number(left.active)).map(row => ({ value: row.id, label: row.name })));
+  private recordingProject: ReturnType<ProjectService['project']> | null = null;
+  private recordingId = '';
+  private recordedHits = false;
+  beginRecording(): void {
+    this.recordedHits = false; this.cancel(); this.recordingProject = this.projects.project();
+    this.recordingId = this.recordingTrack() || this.recordingOptions()[0]?.value || '';
+    const row = this.rows().find(row => row.id === this.recordingId);
+    if (row) this.draft.set({ id: row.id, pattern: [...row.pattern] });
+  }
+  recordCursor(event: { beat: number; held: boolean }): void {
+    this.recordingBeat.set(event.beat % 4);
+    if (this.recordingProject !== this.projects.project() || !event.held) return;
+    const row = this.rows().find(row => row.id === this.recordingId);
+    if (!row || !this.draft()?.pattern) return;
+    this.recordedHits = true;
+    const pattern = [...this.draft()!.pattern!]; pattern[recordingCell(event.beat, 4, row.hits)] = 1;
+    this.draft.set({ id: row.id, pattern });
+  }
+  recordSpan(span: RecordedSpan): void {
+    this.recordedHits = true;
+    if (this.recordingProject !== this.projects.project()) return;
+    const row = this.rows().find(row => row.id === this.recordingId);
+    if (!row || !this.draft()?.pattern) return;
+    const pattern = [...this.draft()!.pattern!];
+    for (const segment of recordedSegments(span, 4, 4 / row.hits)) {
+      for (let i = Math.round(segment.start * row.hits / 4); i < Math.round(segment.end * row.hits / 4); i++) pattern[i] = 1;
+    }
+    this.draft.set({ id: row.id, pattern });
+  }
+  endRecording(): void {
+    const draft = this.draft(), valid = this.recordingProject === this.projects.project();
+    this.recordingBeat.set(null); this.recordingProject = null; this.cancel();
+    if (valid && this.recordedHits && draft?.pattern) this.storePattern(draft.id, draft.pattern);
+  }
   readonly showVelocities = signal(this.data.velocities);
   readonly draft = signal<{ id: string; pattern?: number[]; velocities?: number[] } | null>(null);
   private gesture: { pointer: number; id: string; last: number; sounded: number; project: ReturnType<ProjectService['project']> } | null = null;

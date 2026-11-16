@@ -1,3 +1,4 @@
+import { MidiInputService } from '../../core/audio/midi-input.service';
 import { SCORE_NOTE_SHAPES } from '../../core/ui/ui-preferences';
 import { MIDI_PPQ_CHOICES } from '../../core/music/midi-resolution';
 import { version } from '../../../../package.json';
@@ -65,6 +66,7 @@ export class SettingsDialogComponent {
   }
   readonly ppqOptions = MIDI_PPQ_CHOICES.map(value => ({ value: String(value), label: String(value) }));
   readonly midi = inject(MidiOutputService);
+  readonly midiInput = inject(MidiInputService);
   changeDrumMapping(selection: string): void {
     this.preferences.setDrumMapping(selection as DrumMappingPreference);
   }

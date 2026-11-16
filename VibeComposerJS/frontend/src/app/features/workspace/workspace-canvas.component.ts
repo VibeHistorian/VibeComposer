@@ -1,3 +1,4 @@
+import { LiveRecordingService } from '../../core/audio/live-recording.service';
 import { ProjectTabsComponent } from '../project-tabs/project-tabs.component';
 import { drumSelectionSlot, projectDrumPitches, resolvedDrumSlots } from '../../core/project/project-drum-kit';
 import { MenuSelectComponent } from '../../shared/menu-select.component';
@@ -478,7 +479,12 @@ export class WorkspaceCanvasComponent {
     return { startBeat: Math.min(bounds.startBeat, edit.startBeat), endBeat: Math.max(bounds.endBeat, edit.endBeat) };
   });
   readonly scoreTimelineBeats = computed(() => this.scoreTimelineBounds().endBeat - this.scoreTimelineBounds().startBeat);
-  readonly scorePlayheadPercent = computed(() => (this.playback.beat() - this.scoreTimelineBounds().startBeat) / Math.max(1, this.scoreTimelineBeats()) * 100);
+  private readonly recording = inject(LiveRecordingService);
+  readonly scorePlayheadPercent = computed(() => {
+    const recordingBeat = this.editing() ? this.recording.phraseBeat() : null;
+    const beat = recordingBeat === null ? this.playback.beat() : recordingBeat + this.editStartBeat();
+    return (beat - this.scoreTimelineBounds().startBeat) / Math.max(1, this.scoreTimelineBeats()) * 100;
+  });
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly selectedSectionBeats = computed(() => { const section = this.selectedSection(); return section ? sectionDurationBeats(this.project(), section) : 0; });
   readonly timeline = computed(() => resolveProjectTimeline(this.project()));

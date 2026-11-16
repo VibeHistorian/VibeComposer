@@ -38,3 +38,6 @@ footer { display: flex; flex-direction: column; gap: 10px; }
 .validation { color: var(--text-secondary); min-height: 18px; }
 .error { color: var(--color-danger); }
 .duration-actions { display: flex; justify-content: end; gap: 8px; }
+
+/* Recording cursor */
+.recording-cursor { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--text-primary); z-index: 2; pointer-events: none; }

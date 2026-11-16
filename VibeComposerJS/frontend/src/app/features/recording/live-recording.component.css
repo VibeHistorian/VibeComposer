@@ -1,0 +1,4 @@
+/* Recording controls */
+.recording-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-block: 6px; color: var(--text-secondary); }
+label { display: inline-flex; align-items: center; gap: 4px; }
+button { color: var(--text-primary); background: var(--surface-button); border: 1px solid var(--border-default); border-radius: var(--radius-small); cursor: pointer; }

@@ -12,6 +12,7 @@ const mouse = (button: number, ctrl = false, shift = false, alt = false) => bind
 const wheel = (ctrl = false, shift = false, alt = false) => binding('wheel', 'scroll', ctrl, shift, alt);
 const modifier = (ctrl = false, shift = false, alt = false) => binding('modifier', 'held', ctrl, shift, alt);
 export const SHORTCUTS = [
+  { id: 'recordRhythm', group: 'Recording', label: 'Tap recording rhythm', description: 'Tap or hold while recording durations or hit patterns.', defaults: [key('`')] },
   { id: 'extendSections', group: 'Section selection', label: 'Extend / trim sections', description: 'Hold while selecting a section. Extends a contiguous selection or trims it at the chosen section.', defaults: [modifier(true)] },
   { id: 'rangeSections', group: 'Section selection', label: 'Select section range', description: 'Hold while selecting a section to select from the selection anchor.', defaults: [modifier(false, true)] },
   { id: 'freeGrid', group: 'Editing modifiers', label: 'Bypass time grid', description: 'Hold while moving, resizing or splitting notes to bypass time snapping.', defaults: [modifier(false, true)] },
@@ -59,7 +60,7 @@ export const SHORTCUTS = [
 ] as const;
 /** Visible settings pages. Global and section-selection bindings remain available internally. */
 export const SHORTCUT_PAGES = [
-  { id: 'shortcuts-general', label: 'General', groups: ['Controls', 'Control modifiers'] },
+  { id: 'shortcuts-general', label: 'General', groups: ['Controls', 'Control modifiers', 'Recording'] },
   { id: 'shortcuts-arrangement', label: 'Arrangement', groups: ['Arrangement', 'Section headers'] },
   { id: 'shortcuts-score', label: 'Score', groups: ['Score'] },
   { id: 'shortcuts-phrase-editor', label: 'Phrase editor', groups: ['Drag actions', 'Drawing', 'Destructive actions', 'Placement', 'Selection and navigation', 'Editing modifiers', 'Phrase editor'] },
@@ -139,6 +140,7 @@ export const SHORTCUT_CONTEXTS = {
   applyPhrase: [emptyPhrase],
   dragDuration: [phraseNotes], dragPitch: [phraseNotes],
   trimStart: [phraseNotes],
+  recordRhythm: [{}],
 } as const satisfies Record<ShortcutId, readonly [ShortcutContext, ...ShortcutContext[]]>;
 
 /** Product contexts intersect unless at least one constrained axis is disjoint.

@@ -6,6 +6,9 @@
   <button type="button" [attr.aria-pressed]="showVelocities()" (click)="cancel(); showVelocities.set(!showVelocities())">Velocities</button>
   <button type="button" aria-label="Close pattern sequencer" (click)="dialog.close()">×</button>
 </header>
+<vc-live-recording [disabled]="!recordingOptions().length" (began)="beginRecording()" (cursor)="recordCursor($event)" (span)="recordSpan($event)" (ended)="endRecording()" />
+<label>Recording track <vc-select aria-label="Recording pattern track" [disabled]="recordingBeat() !== null" [options]="recordingOptions()" [value]="recordingTrack() || recordingOptions()[0]?.value || ''" (valueChange)="recordingTrack.set($event)" /></label>
+<p>Tap or hold the rhythm shortcut or MIDI notes to add hits. Stop recording saves one undo step.</p>
 <div class="sequencer-scroll">
   <div class="sequencer" [style.--steps]="steps().length">
     <div class="ruler"><span class="identity">Track / steps</span><div class="cells">@for (step of steps(); track step) { <span>{{ step + 1 }}</span> }</div></div>
@@ -19,7 +22,7 @@
           @if (row.supported) {
             <div class="cells custom-pattern-grid" [style.--row-steps]="row.pattern.length" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel()" (lostpointercapture)="cancel()" (keydown.escape)="cancel(); $event.stopPropagation()">
               @for (slot of row.pattern; track $index) {
-                <button type="button" class="step custom-pattern-slot" [style.--step-index]="$index" [class.active]="slot > 0" [class.beat]="$index * 4 % row.hits === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index" [attr.aria-pressed]="slot > 0" [attr.aria-label]="row.name + ' subdivision ' + ($index + 1)"
+                <button type="button" class="step custom-pattern-slot" [style.--step-index]="$index" [class.active]="slot > 0" [class.recording-step]="recordingBeat() !== null && row.id === (recordingTrack() || recordingOptions()[0]?.value) && $index === recordingCell(recordingBeat()!, 4, row.hits)" [class.beat]="$index * 4 % row.hits === 0" [attr.data-step]="$index" [attr.data-rhythm-slot]="$index" [attr.aria-pressed]="slot > 0" [attr.aria-label]="row.name + ' subdivision ' + ($index + 1)"
                   (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index)"></button>
               }
             </div>
