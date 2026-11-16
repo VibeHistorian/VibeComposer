@@ -22,7 +22,10 @@ test('realtime audio survives delays and fractional loops without hidden playhea
           inject: token => token.name === 'InstrumentSettingsService' ? instruments : midi };
         const adapter = { exports: {} };
         new Function('require', 'module', 'exports', ${JSON.stringify(compile('tiny-synth-engine.ts'))})(() => WebAudioTinySynth, adapter, adapter.exports);
+        const outputStage = { exports: {} };
+        new Function('module', 'exports', ${JSON.stringify(compile('output-limiter.ts'))})(outputStage, outputStage.exports);
         const dependencies = {
+          './output-limiter': outputStage.exports,
           '@angular/core': angular,
           './instrument-settings.service': { InstrumentSettingsService: class InstrumentSettingsService {} },
           './midi-output.service': { MidiOutputService: class MidiOutputService {} },

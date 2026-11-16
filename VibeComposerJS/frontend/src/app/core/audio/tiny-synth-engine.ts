@@ -100,16 +100,21 @@ export class TinySynthEngine implements InstrumentEngine {
           * 2 ** ((midi - 60) / 12 * (target.k ?? 0)), k: 0 };
       });
     }
+    const tail = this.context.createGain();
+    tail.connect(destination);
     const previous = this.synth.chvol[0];
-    this.synth.chvol[0] = destination;
+    this.synth.chvol[0] = tail;
     try {
       // Channel zero remains melodic internally so drums also get cancellable voice handles.
       this.synth._note(start, 0, midi, velocity, timbre);
+    } catch (error) {
+      tail.disconnect();
+      throw error;
     } finally {
       this.synth.chvol[0] = previous;
     }
     const voice = this.synth.notetab.pop();
-    if (!voice) return [];
+    if (!voice) { tail.disconnect(); return []; }
     let stopTime: number;
     if (percussion) {
       stopTime = start + Math.max(0.035, timbre[0].d * this.synth.releaseRatio);
@@ -142,11 +147,17 @@ export class TinySynthEngine implements InstrumentEngine {
         stopTime = Math.max(stopTime, end + envelope.release);
       });
     }
+    // Exponential releases retain ~3% of their release level at the native
+    // stop boundary. Fade that residual instead of abruptly cutting the wave.
+    tail.gain.setValueAtTime(1, Math.max(start, stopTime - 0.005));
+    tail.gain.linearRampToValueAtTime(0, stopTime);
+    let remaining = voice.o.length;
     for (const source of voice.o) source.stop(stopTime);
     return voice.o.map((source, index) => ({ stopTime,
       stop: (time?: number) => source.stop(time),
       onEnded: (callback: () => void) => { source.onended = callback; },
       dispose: () => {
+        if (--remaining === 0) tail.disconnect();
         source.disconnect();
         voice.g[index].disconnect();
         const detune = (source as OscillatorNode | AudioBufferSourceNode).detune;

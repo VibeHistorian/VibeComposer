@@ -34,7 +34,7 @@ function fixture({ loop = false } = {}) {
     start(time) { this.startTime = time; }, stop(time) { this.stopTime = time; },
   });
   const context = { currentTime: 0, state: 'running', destination: {},
-    createGain: node, createStereoPanner: node,
+    createGain: node, createStereoPanner: node, createWaveShaper: node,
     createOscillator() { const source = node(); sources.push(source); return source; },
   };
   const instruments = { kind: signal('synth'), normalization: signal(false), calibrationStatus: signal(''), selectedBank: () => undefined };
@@ -63,6 +63,7 @@ function fixture({ loop = false } = {}) {
     '../music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
     './create-instrument-engine': {},
+    './output-limiter': require('./music-loader.cjs').loadMusic('../audio/output-limiter.ts'),
     './instrument-settings.service': { InstrumentSettingsService: class InstrumentSettingsService {} },
     './midi-output.service': { MidiOutputService: class {} },
     '../music/phrase': { layOutTrackPhrase: (project, track) =>

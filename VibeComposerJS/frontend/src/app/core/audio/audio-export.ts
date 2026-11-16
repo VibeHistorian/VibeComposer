@@ -1,3 +1,4 @@
+import { protectedAudioOutput } from './output-limiter';
 import { resolveProjectTimeline } from '../music/project-timeline';
 import type { CompositionProject } from '../project/project.model';
 import { mixEnabled } from './mix-values';
@@ -41,7 +42,7 @@ export async function renderProjectAudio(project: CompositionProject, onProgress
   const synth = await createInstrumentEngine(context, kind, bank, normalize, calibrationProgress);
   const master = context.createGain();
   master.gain.value = 0.8 * (project.masterVolumePercent ?? 100) / 100;
-  master.connect(context.destination);
+  master.connect(protectedAudioOutput(context));
   const nodes: AudioNode[] = [master];
   try {
     let scheduled = 0;

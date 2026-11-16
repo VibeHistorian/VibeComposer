@@ -1,3 +1,4 @@
+import { protectedAudioOutput } from './output-limiter';
 import { resolvedDrumSlots } from '../project/project-drum-kit';
 import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { withMasterVolume, mixEnabled } from './mix-values';
@@ -153,7 +154,7 @@ export class AudioPlaybackService {
       gain.gain.value = 0.8 * track.mix.volumePercent / 100 * (project?.masterVolumePercent ?? 100) / 100;
       pan.pan.value = track.mix.panPercent / 100;
       gain.connect(pan);
-      pan.connect(context.destination);
+      pan.connect(protectedAudioOutput(context));
       const pitches = new Set<number>();
       const voices = notes.filter(note => {
         if (pitches.has(note.midi)) return false;
@@ -434,7 +435,7 @@ export class AudioPlaybackService {
     this.master = context.createGain();
     this.master.gain.value = crossfade ? 0 : 0.8 * (project.masterVolumePercent ?? 100) / 100;
     if (crossfade) this.master.gain.linearRampToValueAtTime(0.8 * (project.masterVolumePercent ?? 100) / 100, context.currentTime + RELOAD_FADE_SECONDS);
-    this.master.connect(context.destination);
+    this.master.connect(protectedAudioOutput(context));
     const anySolo = project.tracks.some((track) => track.mix.solo);
 
     for (const track of project.tracks) {
