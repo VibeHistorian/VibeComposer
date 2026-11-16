@@ -1,6 +1,8 @@
 import { withoutManualAdjustments } from '../../core/music/manual-phrase-processing';
 import { MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
 import { resolvedDrumSlots } from '../../core/project/project-drum-kit';
+import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
+import type { LiveMidiNote } from '../../core/audio/midi-input.service';
 import { LiveRecordingComponent } from '../recording/live-recording.component';
 import { recordedSegments, type RecordedSpan } from '../../core/audio/live-recording';
 import { SelectComponent } from '../../shared/select.component';
@@ -36,6 +38,29 @@ export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; 
   styleUrl: './edit-workspace.component.css',
 })
 export class EditWorkspaceComponent {
+  private readonly audio = inject(AudioPlaybackService);
+  private readonly liveVoices = new Map<string, () => void>();
+  readonly heldRecordingNotes = signal<PhraseDraftNote[]>([]);
+  readonly recordingPitches = signal<readonly number[]>([]);
+  readonly canvasNotes = computed(() => [...this.notes(), ...this.heldRecordingNotes()]);
+  previewInput(note: LiveMidiNote): void {
+    this.liveVoices.get(note.id)?.(); this.liveVoices.delete(note.id);
+    if (note.down) {
+      this.recordingPitches.update(pitches => [...new Set([...pitches, note.midi])]);
+      this.liveVoices.set(note.id, this.audio.liveAudition(this.selectedTrack(), {
+        id: note.id, midi: note.midi, velocity: note.velocity, startBeat: 0, durationBeats: 1,
+      }, this.project()));
+    }
+  }
+  updateHeldNotes(spans: readonly (RecordedSpan & { id: string })[]): void {
+    this.heldRecordingNotes.set(spans.flatMap(span => recordedSegments(span, this.phraseBeats(), this.snapBeats(), true)
+      .map((segment, index) => ({ id: 'recording-' + span.id + '-' + index, trackId: this.selectedTrack().id,
+        midi: segment.midi, startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity }))));
+  }
+  finishRecording(): void {
+    for (const release of this.liveVoices.values()) release();
+    this.liveVoices.clear(); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
+  }
   recordSpan(span: RecordedSpan): void {
     for (const segment of recordedSegments(span, this.phraseBeats(), this.snapBeats())) {
       // Live MIDI and keyboard pitches remain chromatic, independently of drawing snap.
@@ -167,7 +192,7 @@ export class EditWorkspaceComponent {
     this.record();
   }
 
-  ngOnDestroy(): void { this.midiImport?.abort(); }
+  ngOnDestroy(): void { this.recorder()?.stop(); this.finishRecording(); this.midiImport?.abort(); }
   readonly selectedNoteIds = signal<readonly string[]>([]);
   readonly selectedNoteId = computed(() => this.selectedNoteIds()[0] ?? null);
   readonly snapBeats = signal(0.25);

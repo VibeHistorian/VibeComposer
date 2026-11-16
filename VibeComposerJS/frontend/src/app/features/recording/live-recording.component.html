@@ -1,6 +1,8 @@
 <div class="recording-controls">
   <button type="button" [disabled]="disabled && !running()" [attr.aria-pressed]="running()" (click)="toggle()">{{ running() ? 'Stop recording' : 'Record live' }}</button>
+  <label><input type="checkbox" [disabled]="running()" [checked]="preferences.preferences().recordingCountIn" (change)="preferences.setRecordingOption('recordingCountIn', $any($event.target).checked)" /> Count-in (4 beats)</label>
   <label><input type="checkbox" [checked]="preferences.preferences().recordingTick" (change)="preferences.setRecordingOption('recordingTick', $any($event.target).checked)" /> Recording tick</label>
   @if (!notes) { <span>Tap / hold: @for (binding of preferences.shortcuts().recordRhythm; track $index) { {{ shortcutLabel(binding) }} } · Settings → Shortcuts → General</span> }
-  @if (running()) { <output aria-label="Recording beat">Beat {{ (beat() + 1).toFixed(1) }}</output> }
+  @if (countingIn()) { <output aria-label="Recording count-in">Count-in {{ countingIn() }}</output> }
+  @else if (running()) { <output aria-label="Recording beat">Beat {{ (beat() + 1).toFixed(1) }}</output> }
 </div>

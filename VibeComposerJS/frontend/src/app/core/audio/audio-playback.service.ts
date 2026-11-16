@@ -133,6 +133,40 @@ export class AudioPlaybackService {
     void this.context?.close().catch(() => {});
   }
 
+  /** Return cancellation immediately, including when instrument preparation is still pending. */
+  liveAudition(track: CompositionTrack, note: PhraseNote, project: CompositionProject): () => void {
+    let cancelled = false, release: (() => void) | undefined;
+    void (async () => {
+      try {
+        const context = this.getContext();
+        if (context.state !== 'running') await context.resume();
+        if (cancelled) return;
+        if (this.midi.selectedOutput()) {
+          release = this.midi.hold(withMasterVolume(track, project), note.midi, note.velocity,
+            track.role === 'drums' ? this.drumSlotsFor(project, [note.midi]) : undefined);
+          return;
+        }
+        await this.prepareInstrument(context);
+        if (cancelled) return;
+        const gain = context.createGain(), pan = context.createStereoPanner();
+        gain.gain.value = 0.8 * track.mix.volumePercent / 100 * (project.masterVolumePercent ?? 100) / 100;
+        pan.pan.value = track.mix.panPercent / 100;
+        gain.connect(pan); pan.connect(protectedAudioOutput(context));
+        const voices = this.synth!.schedule(gain, track.mix.program, track.role === 'drums', note.midi, note.velocity, context.currentTime + 0.003, 3600);
+        let remaining = voices.length;
+        const disconnect = () => { gain.disconnect(); pan.disconnect(); };
+        for (const voice of voices) voice.onEnded(() => { voice.dispose(); if (--remaining === 0) disconnect(); });
+        if (!remaining) disconnect();
+        release = () => {
+          const now = context.currentTime;
+          gain.gain.setTargetAtTime(0, now, 0.005);
+          for (const voice of voices) voice.stop(now + 0.025);
+        };
+      } catch (error) { this.playbackError.set(error instanceof Error ? error.message : 'Live note preview could not start.'); }
+    })();
+    return () => { cancelled = true; release?.(); };
+  }
+
   async audition(track: CompositionTrack, notes: readonly PhraseNote[], project?: CompositionProject): Promise<void> {
     if (!notes.length) return;
     try {

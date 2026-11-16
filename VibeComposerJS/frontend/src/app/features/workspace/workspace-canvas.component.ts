@@ -554,7 +554,7 @@ export class WorkspaceCanvasComponent {
     if (!this.editing() || !editor) return this.scoreNotes().filter(note => this.editing()
       ? this.displayedRoles().has(note.color) : this.scoreVisibleTrackIds().has(note.part));
     const section = this.project().arrangement.find(section => section.id === this.editSectionId());
-    return editor.notes().map(note => {
+    return editor.canvasNotes().map(note => {
       const track = this.project().tracks.find(track => track.id === note.trackId)!;
       const changed = editor.changedTracks().some(changed => changed.id === track.id);
       return { ...note, startBeat: note.startBeat + this.editStartBeat(), part: note.trackId,

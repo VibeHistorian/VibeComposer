@@ -34,15 +34,41 @@ export class DurationsDialogComponent {
   readonly recordingLaneOptions = Array.from({ length: 10 }, (_, value) => ({ value, label: String(value + 1) }));
   readonly recordingLane = signal(0);
   readonly recordingBeat = signal<number | null>(null);
-  recordSpan(span: RecordedSpan): void {
+  private recordingBaseline: readonly number[] = [];
+  private recordingIntervals: { start: number; end: number; sounded: boolean }[] = [];
+  beginRecording(): void {
+    this.recordingBaseline = [...this.rows()[this.recordingLane()]];
+    this.recordingIntervals = [{ start: 0, end: 0, sounded: false }];
+  }
+  recordCursor(event: { beat: number; held: boolean }): void {
     if (this.stale()) return;
+    this.recordingBeat.set(event.beat % 4);
+    const current = this.recordingIntervals.at(-1);
+    if (!current) return;
+    current.end = event.beat;
+    if (current.sounded !== event.held) this.recordingIntervals.push({ start: event.beat, end: event.beat, sounded: event.held });
+    this.editRow(this.recordingLane(), this.recordingBaseline.join(', '));
+    for (const [index, interval] of this.recordingIntervals.entries()) {
+      // Silence only replaces complete cells; note attacks get at least one cell.
+      const end = interval.sounded ? interval.end : Math.floor((interval.end + 1e-7) / this.grid()) * this.grid();
+      const previous = this.recordingIntervals[index - 1];
+      const start = interval.sounded ? interval.start : Math.max(Math.round(interval.start / this.grid()) * this.grid(),
+        previous?.sounded ? (Math.floor(previous.start / this.grid()) + 1) * this.grid() : 0);
+      if (!interval.sounded && end <= start) continue;
+      this.writeRecordingSpan({ ...interval, start, end, midi: 60, velocity: 90 }, interval.sounded);
+    }
+  }
+  private writeRecordingSpan(span: RecordedSpan, sounded: boolean): void {
     const lane = this.recordingLane(), grid = this.grid();
     for (const segment of recordedSegments(span, 4, grid)) {
-      // Reuse drawing so pauses outside the held interval and separate attacks survive.
       this.gesture = { pointer: -1, row: lane, start: Math.round(segment.start / grid),
         end: Math.round(segment.end / grid) - 1, original: this.rows()[lane] };
-      this.paint(); this.gesture = null;
+      this.paint(sounded); this.gesture = null;
     }
+  }
+  recordSpan(span: RecordedSpan): void {
+    if (this.stale()) return;
+    this.writeRecordingSpan(span, true);
   }
   readonly grid = signal(0.25);
   readonly tool = signal<'note' | 'rest'>('note');
@@ -93,7 +119,7 @@ export class DurationsDialogComponent {
     if (this.gesture) this.editRow(this.gesture.row, this.gesture.original.join(', '));
     this.gesture = null;
   }
-  private paint(): void {
+  private paint(recordedSounded?: boolean): void {
     const gesture = this.gesture!;
     const left = Math.min(gesture.start, gesture.end) * this.grid(), right = (Math.max(gesture.start, gesture.end) + 1) * this.grid();
     const before: number[] = [], after: number[] = [];
@@ -104,7 +130,7 @@ export class DurationsDialogComponent {
       if (end > right) after.push(sign * (end - Math.max(time, right)));
       time = end;
     }
-    const sign = (this.tool() === 'note') !== this.flipped() ? 1 : -1;
+    const sign = (recordedSounded ?? (this.tool() === 'note')) !== this.flipped() ? 1 : -1;
     this.editRow(gesture.row, [...before, sign * (right - left), ...after].map(value => Math.round(value * 960) / 960).join(', '));
   }
   validate(): void {

@@ -29,8 +29,14 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   (await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')),'edit')).click();
   await wait(()=>document.querySelector('#phrase-grid'),'phrase');
   const before=sessionStorage.getItem('vibecomposer.project.v12');
-  button('Record live').click();await wait(()=>button('Stop recording'),'running');
-  press('keydown','Digit1','!',true);await pause(220);press('keyup','Digit1','!',true);
+  const countIn=document.querySelector('vc-live-recording input[type="checkbox"]');countIn.click();
+  button('Record live').click();await wait(()=>document.querySelector('[aria-label="Recording count-in"]'),'count-in');
+  press('keydown','Digit1','!',true);press('keyup','Digit1','!',true);await pause(150);
+  check(!document.querySelector('#note-pitch'),'count-in ignores early input');
+  await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'capture after count-in');
+  press('keydown','Digit1','!',true);
+  await wait(()=>document.querySelector('.pitch-key[title="MIDI 37"]'),'live pitch fits before release');
+  await pause(220);press('keyup','Digit1','!',true);
   await wait(()=>document.querySelector('#note-pitch')?.value==='37','C sharp keyboard');
   check(document.querySelector('#note-length').value>0,'held keyboard duration');
   check(!!document.querySelector('vc-live-recording output'),'visible moving beat');
@@ -49,6 +55,10 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   check(notes.some(n=>n.midi===37)&&notes.some(n=>n.midi===38)&&notes.some(n=>n.midi===63&&n.velocity===111),'recorded notes saved');
   check(!document.querySelector('vc-live-recording output'),'recorder cleaned up');
 
+  (await wait(()=>document.querySelector('[aria-label="Settings"]'),'settings again')).click();
+  (await wait(()=>button('MIDI'),'MIDI again')).click();
+  (await wait(()=>document.querySelector('[aria-label="Recording count-in"]'),'count-in setting')).click();
+  document.querySelector('[aria-label="Close settings"]').click();
   document.querySelector('.track-group.drums .track-select').click();
   (await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="drums"] button[aria-label="Edit rhythm pattern"]'),'pattern launcher')).click();
   const popup=await wait(()=>document.querySelector('vc-pattern-sequencer'),'pattern popup');
@@ -70,12 +80,16 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   if(durationTrigger.tagName.toLowerCase()!=='vc-durations-dialog')durationTrigger.click();
   const durations=await wait(()=>document.querySelector('vc-durations-dialog'),'durations popup');
   const lane=await wait(()=>durations.querySelector('[aria-label="Lane 1 durations"]'),'duration lane');
-  await changeControl(lane,'');
+  await changeControl(lane,'4');
+  button('Draw pauses').click();
   button('Record live').focus();button('Record live').click();
   await wait(()=>durations.querySelector('.recording-cursor'),'moving duration cursor');
   press('keydown','Backquote','\u0060');await pause(300);press('keyup','Backquote','\u0060');
   await wait(()=>lane.value && lane.value.split(',').some(n=>Number(n)>0),'held duration recorded');
-  button('Stop recording').click();button('Cancel').click();
+  await pause(250);
+  button('Stop recording').click();
+  check(lane.value.split(',').some(n=>Number(n)<0),'silence becomes pauses regardless of drawing tool');
+  button('Cancel').click();
   await fetch('/result',{method:'POST',body:JSON.stringify({passed:true})});
  }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack})});}
 })();</script>`;

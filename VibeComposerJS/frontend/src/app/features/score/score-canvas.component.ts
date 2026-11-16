@@ -103,6 +103,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly tracks = input.required<readonly ScoreCanvasTrack[]>();
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
   readonly ghostNotes = input<readonly ScoreCanvasNote[]>([]);
+  readonly recordingPitches = input<readonly number[]>([]);
   readonly notesReady = input(true);
   readonly sections = input.required<readonly ScoreCanvasSection[]>();
   readonly chordBoundaries = input<readonly { beat: number; hue: number }[]>([]);
@@ -250,6 +251,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.snapBeats();
     this.snapToScale();
     this.scalePitchClasses();
+    this.recordingPitches();
     this.notesReady();
     this.ghostNotes();
     this.chordBoundaries();
@@ -1052,6 +1054,20 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       }
     }
     this.updateViewport();
+    const recordingPitches = this.editable() ? this.recordingPitches() : [];
+    if (this.harmonicHeight > 0 && recordingPitches.some(midi => {
+      const top = (this.pitchMax - midi) * this.laneHeight - this.verticalOffset;
+      return top < -0.5 || top + this.laneHeight > this.harmonicHeight + 0.5;
+    })) {
+      // Expand the current visible slice, retaining pitches the user was already viewing.
+      const topPitch = this.pitchMax - this.verticalOffset / this.laneHeight;
+      const bottomPitch = topPitch - this.harmonicHeight / this.laneHeight + 1;
+      const low = Math.max(0, Math.min(bottomPitch, ...recordingPitches) - 2);
+      const high = Math.min(127, Math.max(topPitch, ...recordingPitches) + 2);
+      this.verticalScale = Math.min(this.verticalScale, 128 / (high - low + 1));
+      this.verticalOffset = (this.pitchMax - (high + low) / 2 + 0.5) * this.laneHeight - this.harmonicHeight / 2;
+      this.updateViewport();
+    }
     const rows: { midi: number; label: string; tooltip?: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[] = [];
     for (let midi = this.pitchMax; midi >= this.pitchMin && this.harmonicHeight > 0; midi--) {
       const y = (this.pitchMax - midi) * this.laneHeight - this.verticalOffset;

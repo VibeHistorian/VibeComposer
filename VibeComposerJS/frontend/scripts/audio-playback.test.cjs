@@ -1206,3 +1206,12 @@ test('master gain previews and commits change the output bus without rebuilding 
   }
   playback.stop();
 });
+test('live audition sustains to release and cancels cleanly during asynchronous preparation', async () => {
+ const {playback,project,sources,context}=fixture();const track=project.tracks[0],note=track.notes[0];
+ const release=playback.liveAudition(track,note,project);await new Promise(r=>setImmediate(r));
+ assert.equal(sources.length,1);assert.ok(sources[0].stopTime>3000);
+ context.currentTime=1;release();assert.equal(sources[0].stopTime,1.025);
+ let prepare;playback.prepareInstrument=()=>new Promise(r=>{prepare=r;});
+ const cancel=playback.liveAudition(track,note,project);cancel();prepare();await new Promise(r=>setImmediate(r));
+ assert.equal(sources.length,1,'a released key cannot start a late voice');
+});

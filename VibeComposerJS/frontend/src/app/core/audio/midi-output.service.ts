@@ -86,6 +86,13 @@ export class MidiOutputService {
     this.send([0x80 | channel, pitch, 0], start + duration * 1000);
   }
 
+  hold(track: CompositionTrack, pitch: number, velocity: number, slots?: DrumSlots): () => void {
+    if (track.role === 'drums') pitch = mapDrumPitch(pitch, this.drumMapping(), slots);
+    const output = this.output(), channel = track.midiChannel - 1;
+    this.configure(track); this.send([0x90 | channel, pitch, velocity]);
+    return () => { try { output?.send([0x80 | channel, pitch, 0]); } catch { /* Disconnected input preview output. */ } };
+  }
+
   configure(track: CompositionTrack, audible = true): void {
     if (!this.output()) return;
     const channel = track.midiChannel - 1;

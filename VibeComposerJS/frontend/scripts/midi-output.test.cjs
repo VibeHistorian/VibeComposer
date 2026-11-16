@@ -219,3 +219,12 @@ test('song and phrase MIDI exports use the requested PPQ without changing musica
     assert.equal(note.durationTicks, .25 * ppq);
   }
 });
+test('held MIDI preview sends note-on immediately and note-off only on release to its original output', async () => {
+ const output=port('live');const service=fixture(async()=>({outputs:new Map([[output.id,output]]),addEventListener(){},removeEventListener(){}}));
+ await service.refresh();await service.select(output.id);
+ const track={midiChannel:2,role:'bass',mix:{program:32,volumePercent:80,panPercent:0}};
+ const release=service.hold(track,61,103);
+ assert.deepEqual(output.messages.at(-1).data,[0x91,61,103]);
+ assert.equal(output.messages.filter(m=>m.data[0]===0x81).length,0);
+ release();assert.deepEqual(output.messages.at(-1).data,[0x81,61,0]);service.ngOnDestroy();
+});
