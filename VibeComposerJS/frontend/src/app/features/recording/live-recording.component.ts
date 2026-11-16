@@ -1,24 +1,29 @@
-import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, computed, inject, signal } from '@angular/core';
 import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { MidiInputService, type LiveMidiNote } from '../../core/audio/midi-input.service';
 import { LiveRecordingService } from '../../core/audio/live-recording.service';
-import { keyboardMidi, type RecordedSpan } from '../../core/audio/live-recording';
+import { keyboardMidi, recordingPosition, recordingTickAtOrAfter, nextRecordingTick, type RecordedSpan } from '../../core/audio/live-recording';
 import { shortcutLabel } from '../../core/ui/shortcuts';
 import { isEditingText } from '../../shared/keyboard-shortcuts';
 @Component({ selector: 'vc-live-recording', templateUrl: './live-recording.component.html', styleUrl: './live-recording.component.css', changeDetection: ChangeDetectionStrategy.OnPush })
 export class LiveRecordingComponent {
-  @Input() beats = 4;
-  @Input() notes = false;
-  @Input() disabled = false;
-  @Output() heldNotes = new EventEmitter<readonly (RecordedSpan & { id: string })[]>();
-  @Output() noteInput = new EventEmitter<LiveMidiNote>();
+  readonly beats = input(4);
+  readonly keyboardScale = input<readonly number[]>([]);
+  readonly keyboardTonic = input<number | undefined>(undefined);
+  readonly loopBeats = computed(() => Math.max(1 / 960, this.beats()));
+  readonly displayBeat = computed(() => Math.floor(this.beat()) + 1);
+  readonly beatCount = computed(() => Math.ceil(this.loopBeats()));
+  readonly notes = input(false);
+  readonly disabled = input(false);
+  readonly heldNotes = output<readonly (RecordedSpan & { id: string })[]>();
+  readonly noteInput = output<LiveMidiNote>();
   readonly countingIn = signal(0);
   private started = false;
-  @Output() began = new EventEmitter<void>();
-  @Output() ended = new EventEmitter<void>();
-  @Output() span = new EventEmitter<RecordedSpan>();
-  @Output() cursor = new EventEmitter<{ beat: number; held: boolean }>();
+  readonly began = output<void>();
+  readonly ended = output<void>();
+  readonly span = output<RecordedSpan>();
+  readonly cursor = output<{ beat: number; held: boolean }>();
   readonly shortcutLabel = shortcutLabel;
   readonly running = signal(false);
   readonly beat = signal(0);
@@ -35,9 +40,9 @@ export class LiveRecordingComponent {
   private nextTick = 0;
   toggle(): void {
     if (this.running()) { this.stop(); return; }
-    if (this.disabled) return;
+    if (this.disabled()) return;
     this.session.stop?.(); this.session.stop = this.stop;
-    this.running.set(true); this.elapsed = this.preferences.preferences().recordingCountIn ? -4 : 0;
+    this.running.set(true); this.elapsed = this.preferences.preferences().recordingCountIn ? -this.loopBeats() : 0;
     this.started = false; this.countingIn.set(-this.elapsed); this.beat.set(0); this.lastTime = performance.now(); this.nextTick = this.elapsed;
     {
       try { this.audio = new AudioContext(); void this.audio.resume(); this.tickTimer = setInterval(this.tick, 25); this.tick(); } catch { /* Visual recording remains available. */ }
@@ -51,7 +56,7 @@ export class LiveRecordingComponent {
   private startRecording(): void {
     if (this.started) return;
     this.started = true; this.countingIn.set(0);
-    if (this.notes) this.session.phraseBeat.set(0);
+    if (this.notes()) this.session.phraseBeat.set(0);
     this.began.emit();
   }
   private publishHeld(beat: number): void {
@@ -66,8 +71,8 @@ export class LiveRecordingComponent {
     if (!this.running()) return;
     const beat = this.time();
     if (beat < 0) { this.countingIn.set(Math.ceil(-beat)); this.frame = requestAnimationFrame(this.advance); return; }
-    this.startRecording(); this.beat.set(beat % this.beats); this.publishHeld(beat);
-    if (this.notes) this.session.phraseBeat.set(beat % this.beats);
+    this.startRecording(); this.beat.set(recordingPosition(beat, this.loopBeats())); this.publishHeld(beat);
+    if (this.notes()) this.session.phraseBeat.set(recordingPosition(beat, this.loopBeats()));
     this.cursor.emit({ beat, held: this.held.size > 0 });
     this.frame = requestAnimationFrame(this.advance);
   };
@@ -75,14 +80,15 @@ export class LiveRecordingComponent {
   private readonly tick = (): void => {
     if (!this.audio) return;
     const beat = this.time(), bpm = this.projects.project().tempoBpm, ahead = 0.12 * bpm / 60;
-    if (this.nextTick < beat - ahead) this.nextTick = Math.ceil(beat);
+    if (this.nextTick < beat - ahead) this.nextTick = recordingTickAtOrAfter(beat, this.loopBeats());
     while (this.nextTick <= beat + ahead) {
-      if (this.nextTick >= 0 && !this.preferences.preferences().recordingTick) { this.nextTick++; continue; }
+      if (this.nextTick >= 0 && !this.preferences.preferences().recordingTick) { this.nextTick = nextRecordingTick(this.nextTick, this.loopBeats()); continue; }
       const at = this.audio.currentTime + Math.max(0, (this.nextTick - beat) * 60 / bpm);
       const osc = this.audio.createOscillator(), gain = this.audio.createGain();
-      osc.frequency.value = this.nextTick % 4 === 0 ? 1200 : 800;
+      const phase = recordingPosition(this.nextTick, this.loopBeats());
+      osc.frequency.value = Math.min(phase, this.loopBeats() - phase) < 1e-7 ? 1200 : 800;
       gain.gain.setValueAtTime(0.12, at); gain.gain.exponentialRampToValueAtTime(0.001, at + 0.04);
-      osc.connect(gain); gain.connect(this.audio.destination); osc.start(at); osc.stop(at + 0.05); this.nextTick++;
+      osc.connect(gain); gain.connect(this.audio.destination); osc.start(at); osc.stop(at + 0.05); this.nextTick = nextRecordingTick(this.nextTick, this.loopBeats());
     }
   };
   private readonly input = (note: LiveMidiNote): void => {
@@ -100,8 +106,8 @@ export class LiveRecordingComponent {
   };
   private readonly keydown = (event: KeyboardEvent): void => {
     if (event.defaultPrevented || event.isComposing || isEditingText(event) || this.preferences.capturingShortcut()) return;
-    const midi = this.notes && this.preferences.preferences().keyboardNoteInput && !event.ctrlKey && !event.metaKey && !event.altKey ? keyboardMidi(event.code, event.shiftKey) : null;
-    if (this.notes ? midi === null : !this.preferences.matchesShortcut('recordRhythm', event)) return;
+    const midi = this.notes() && this.preferences.preferences().keyboardNoteInput && !event.ctrlKey && !event.metaKey && !event.altKey ? keyboardMidi(event.code, event.shiftKey, this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : null;
+    if (this.notes() ? midi === null : !this.preferences.matchesShortcut('recordRhythm', event)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (!event.repeat) this.input({ id: event.code, midi: midi ?? 60, velocity: 90, down: true });
   };

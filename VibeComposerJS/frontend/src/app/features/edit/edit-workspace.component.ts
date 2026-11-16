@@ -4,9 +4,9 @@ import { resolvedDrumSlots } from '../../core/project/project-drum-kit';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import type { LiveMidiNote } from '../../core/audio/midi-input.service';
 import { LiveRecordingComponent } from '../recording/live-recording.component';
-import { recordedSegments, type RecordedSpan } from '../../core/audio/live-recording';
+import { recordedSegments, keyboardLabels, type RecordedSpan } from '../../core/audio/live-recording';
 import { SelectComponent } from '../../shared/select.component';
-import { afterNextRender, Injector, ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
+import { afterNextRender, Injector, ChangeDetectionStrategy, Component, HostListener, input, output, computed, inject, signal, TemplateRef, viewChild } from '@angular/core';
 import { DOCUMENT, TitleCasePipe } from '@angular/common';
 import { type ArrangedPart, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
 import type { CompositionTrack } from '../../core/project/track.model';
@@ -73,6 +73,10 @@ export class EditWorkspaceComponent {
     this.record();
   }
   private readonly recorder = viewChild(LiveRecordingComponent);
+  readonly keyboardScale = computed(() => this.selectedPart() === 'drums' ? [] : this.scalePitchClasses());
+  readonly keyboardTonic = computed(() => 36 + (getPitchClass(this.project().key) ?? 0) + this.displayTranspose());
+  readonly keyboardLabels = computed(() => this.recorder()?.running() && this.preferences.preferences().keyboardNoteInput
+    ? keyboardLabels(this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : []);
   readonly gridSelectOptions = computed(() => this.gridChoices.map(grid => ({ value: grid, label: String(grid === 1 / 6 ? '1/6' : grid === 1 / 3 ? '1/3' : grid === 2 / 3 ? '2/3' : grid === 4 / 3 ? '4/3' : grid) })));
 
   readonly projects = inject(ProjectService);
@@ -83,12 +87,12 @@ export class EditWorkspaceComponent {
   readonly workspaceUi = inject(WorkspaceUiService);
   readonly project = this.projects.project;
   readonly inspectorTemplate = viewChild.required<TemplateRef<unknown>>('inspector');
-  @Input() sectionId: string | null = null;
-  @Input() phraseStartBeat = 0;
-  @Input() phraseLength: number | null = null;
-  @Input() initialNoteId: string | null = null;
-  @Output() applied = new EventEmitter<void>();
-  @Output() cancelled = new EventEmitter<void>();
+  readonly sectionId = input<string | null>(null);
+  readonly phraseStartBeat = input<number>(0);
+  readonly phraseLength = input<number | null>(null);
+  readonly initialNoteId = input<string | null>(null);
+  readonly applied = output<void>();
+  readonly cancelled = output<void>();
   readonly drumVoices = computed(() => {
     if (this.selectedPart() !== 'drums') return [];
     return [...new Set([...this.editedTracks().flatMap(track => track.role === 'drums' ? [track.generatorSettings.pitch] : []), ...this.notes().map(note => note.midi)])]
@@ -107,7 +111,7 @@ export class EditWorkspaceComponent {
 
   private phraseExport(): { bytes: Uint8Array<ArrayBuffer>; name: string } {
     const project = this.project();
-    const section = project.arrangement.find(section => section.id === this.sectionId);
+    const section = project.arrangement.find(section => section.id === this.sectionId());
     const context = sectionProject(project, section);
     const label = this.selectedPart() === 'drums' ? 'Drums' : this.selectedTrack().name;
     const name = `${exportFilename(context, this.preferences.exportNameFields())}_${safeExportName(label) || 'Phrase'}_phrase`;
@@ -234,14 +238,17 @@ export class EditWorkspaceComponent {
   readonly canRedo = computed(() => { this.historyRevision(); return this.history.canRedo; });
   private lastDuration = 0.5;
   get placementDuration(): number { return this.lastDuration; }
-  readonly phraseBeats = computed(() => this.phraseLength ?? this.project().progression.length * 4);
+  readonly phraseBeats = computed(() => {
+    const section = this.project().arrangement.find(section => section.id === this.sectionId());
+    return this.phraseLength() ?? (section ? sectionDurationBeats(this.project(), section) : this.project().progression.length * 4);
+  });
   readonly editBounds = computed(() => {
-    const section = this.project().arrangement.find(section => section.id === this.sectionId);
+    const section = this.project().arrangement.find(section => section.id === this.sectionId());
     if (!section) return { startBeat: -4, endBeat: this.phraseBeats() + 4 };
     const bounds = sectionPhraseBounds(this.project(), section);
     const sectionEnd = sectionDurationBeats(this.project(), section);
-    return { startBeat: this.phraseStartBeat === 0 ? bounds.startBeat : 0,
-      endBeat: this.phraseBeats() + (this.phraseStartBeat + this.phraseBeats() >= sectionEnd ? bounds.endBeat - sectionEnd : 0) };
+    return { startBeat: this.phraseStartBeat() === 0 ? bounds.startBeat : 0,
+      endBeat: this.phraseBeats() + (this.phraseStartBeat() + this.phraseBeats() >= sectionEnd ? bounds.endBeat - sectionEnd : 0) };
   });
   readonly draftNotes = signal<PhraseDraftNote[]>([]);
   readonly draftReady = signal(false);
@@ -253,7 +260,7 @@ export class EditWorkspaceComponent {
   readonly displayNotes = this.notes;
   readonly selectedNote = computed(() => this.displayNotes().find((note) => note.id === this.selectedNoteId()) ?? null);
   readonly isEdited = computed(() => hasManualPhrase(this.selectedTrack())
-    || this.project().arrangement.find(section => section.id === this.sectionId)?.trackPhrases?.[this.selectedTrack().id] !== undefined);
+    || this.project().arrangement.find(section => section.id === this.sectionId())?.trackPhrases?.[this.selectedTrack().id] !== undefined);
   readonly noteCount = computed(() => this.notes().length);
   private newNoteId = 0;
   private baselineNotes: readonly PhraseDraftNote[] = [];
@@ -261,7 +268,7 @@ export class EditWorkspaceComponent {
 
   ngOnInit(): void {
     this.loadTrackDraft(this.selectedTrack());
-    if (this.initialNoteId) this.selectNote(this.initialNoteId);
+    if (this.initialNoteId()) this.selectNote(this.initialNoteId()!);
     this.history.reset({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: false });
     this.draftReady.set(true);
   }
@@ -427,12 +434,12 @@ export class EditWorkspaceComponent {
     if (!this.hasChanges()) { this.cancelChanges(); return; }
     this.commitChanges('smart');
   }
-  applyLocalChanges(): void { if (this.sectionId) this.commitChanges('local'); }
+  applyLocalChanges(): void { if (this.sectionId()) this.commitChanges('local'); }
   applyChanges(): void { this.commitChanges('global'); }
   private commitChanges(destination: 'local' | 'global' | 'smart'): void {
     this.recorder()?.stop();
     if (!this.hasChanges()) return;
-    const section = this.project().arrangement.find(section => section.id === this.sectionId);
+    const section = this.project().arrangement.find(section => section.id === this.sectionId());
     const sourceProject = withoutManualAdjustments(this.project());
     const edits = this.changedTracks().map(track => {
       const local = destination === 'local' || destination === 'smart' && section?.trackPhrases?.[track.id] !== undefined;
@@ -440,10 +447,10 @@ export class EditWorkspaceComponent {
       if (!local && this.restoredTrackIds().includes(track.id)) return { trackId: track.id, notes: null };
       const source = local && section ? layOutTrackPhrase({ ...sourceProject, transposeSemitones: 0, arrangement: [{ ...sourceProject.arrangement.find(candidate => candidate.id === section.id)!,
         trackPresence: { ...section.trackPresence, [track.id]: true } }] }, sourceProject.tracks.find(candidate => candidate.id === track.id)!) : [];
-      const start = this.phraseStartBeat + this.editBounds().startBeat;
-      const end = this.phraseStartBeat + this.editBounds().endBeat;
+      const start = this.phraseStartBeat() + this.editBounds().startBeat;
+      const end = this.phraseStartBeat() + this.editBounds().endBeat;
       const preserved = source.filter(note => note.startBeat < start || note.startBeat >= end);
-      const changed = draft.map(note => ({ ...note, startBeat: note.startBeat + (section ? this.phraseStartBeat : 0) }));
+      const changed = draft.map(note => ({ ...note, startBeat: note.startBeat + (section ? this.phraseStartBeat() : 0) }));
       const ids = new Set<string>();
       const notes = [...preserved, ...changed].map(note => {
         const id = ids.has(note.id) ? this.makeNoteId() : note.id; ids.add(id);
@@ -452,8 +459,8 @@ export class EditWorkspaceComponent {
       });
       return { trackId: track.id, ...(local && section ? { sectionId: section.id } : {}), notes,
         ...(!local ? { range: {
-          startBeat: section ? this.phraseStartBeat : 0,
-          endBeat: (section ? this.phraseStartBeat : 0) + this.phraseBeats(),
+          startBeat: section ? this.phraseStartBeat() : 0,
+          endBeat: (section ? this.phraseStartBeat() : 0) + this.phraseBeats(),
           ...(this.editBounds().startBeat < 0 ? { pickupBeats: -this.editBounds().startBeat } : {}),
           ...(this.editBounds().endBeat > this.phraseBeats() ? { tailBeats: this.editBounds().endBeat - this.phraseBeats() } : {}),
         } } : {}) };
@@ -487,15 +494,15 @@ export class EditWorkspaceComponent {
     this.midiImport?.abort();
     this.freeTranspose.set(0);
     this.midiDragOver.set(false);
-    const section = this.project().arrangement.find(section => section.id === this.sectionId);
+    const section = this.project().arrangement.find(section => section.id === this.sectionId());
     const tracks = track.role === 'drums' ? [track, ...this.project().tracks.filter(candidate => candidate.role === 'drums' && candidate.id !== track.id)] : [track];
     const ids = new Set<string>();
     const sourceProject = withoutManualAdjustments(this.project());
     this.baselineNotes = tracks.flatMap(track => {
       const source = section ? layOutTrackPhrase({ ...sourceProject, transposeSemitones: 0, arrangement: [{ ...sourceProject.arrangement.find(candidate => candidate.id === section.id)!, trackPresence: { ...section.trackPresence, [track.id]: true } }] }, sourceProject.tracks.find(candidate => candidate.id === track.id)!)
-        .filter(note => note.startBeat >= this.phraseStartBeat + this.editBounds().startBeat
-          && note.startBeat < this.phraseStartBeat + this.editBounds().endBeat)
-        .map(note => ({ ...note, startBeat: note.startBeat - this.phraseStartBeat }))
+        .filter(note => note.startBeat >= this.phraseStartBeat() + this.editBounds().startBeat
+          && note.startBeat < this.phraseStartBeat() + this.editBounds().endBeat)
+        .map(note => ({ ...note, startBeat: note.startBeat - this.phraseStartBeat() }))
         : phraseForTrack(sourceProject, sourceProject.tracks.find(candidate => candidate.id === track.id)!);
       return source.map(note => {
         const id = ids.has(note.id) ? this.makeNoteId() : note.id; ids.add(id);

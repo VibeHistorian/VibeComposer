@@ -38,3 +38,6 @@
 /* Musical cursor position */
 .time-tooltip { position: absolute; z-index: 3; pointer-events: none; opacity: .5; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-small); background: var(--surface-base); color: var(--text-primary); font: 11px var(--font-mono); white-space: nowrap; }
 .note-tooltip-time { color: var(--text-secondary); }
+
+/* Live recording keyboard positions */
+.keyboard-label { position: absolute; right: 2px; top: 0; max-width: calc(100% - 18px); overflow: hidden; color: var(--text-primary); background: var(--surface-accent); border-radius: var(--radius-micro); padding-inline: 2px; font: 9px var(--font-mono); line-height: 1; pointer-events: none; }

@@ -96,14 +96,14 @@ function recordingFixture(countIn = true) {
  function signal(value){return Object.assign(()=>value,{set:next=>{value=next;}});}
  const prefs={preferences:()=>({recordingCountIn:countIn,recordingTick:false,keyboardNoteInput:true})};
  const dependencies={ProjectService:{project:()=>({tempoBpm:120})},UiPreferencesService:prefs,MidiInputService:{},LiveRecordingService:session};
- const angular={ Component:()=>t=>t,Input:()=>()=>{},Output:()=>()=>{},ChangeDetectionStrategy:{},signal,
+ const angular={ Component:()=>t=>t,input:signal,output:()=>({values:[],emit(v){this.values.push(v);}}),computed:read=>read,ChangeDetectionStrategy:{},signal,
   EventEmitter:class { values=[];emit(v){this.values.push(v);} },inject:token=>dependencies[token.name] };
  const modules={'@angular/core':angular,'../../core/audio/live-recording':helpers,'../../shared/keyboard-shortcuts':{isEditingText:()=>false}};
  for(const [name,file] of [['ProjectService','../../core/project/project.service'],['UiPreferencesService','../../core/ui/ui-preferences.service'],['MidiInputService','../../core/audio/midi-input.service'],['LiveRecordingService','../../core/audio/live-recording.service']])modules[file]={[name]:{name}};
  const globals={performance:{now:()=>now},window:{addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)},
   requestAnimationFrame:()=>1,cancelAnimationFrame(){},setInterval:()=>1,clearInterval(){},AudioContext:class{resume(){return Promise.resolve();}close(){return Promise.resolve();}}};
  const Component=load('features/recording/live-recording.component.ts',modules,globals).LiveRecordingComponent;
- const component=new Component();component.notes=true;
+ const component=new Component();component.notes.set(true);
  // Audio behavior is independently covered by playback tests; this clock tests capture gating.
  component.tick=()=>{};
  return {component,session,listeners,advance(ms){now=ms;component.advance();}};
@@ -128,4 +128,42 @@ test('held phrase notes are visible and growing without changing the draft until
  assert.equal(JSON.stringify(editor.draftNotes()),before);
  editor.recordSpan({...span,end:1.3});editor.updateHeldNotes([]);assert.ok(editor.draftNotes().some(n=>n.midi===100));
  editor.finishRecording();assert.equal(editor.heldRecordingNotes().length,0);
+});
+test('scale-matched keyboard input follows degrees and labels, including wrapped keys and Shift', () => {
+ const minor=[2,4,5,7,9,10,0]; // D natural minor, shared scale/key pitch classes.
+ assert.deepEqual(helpers.NOTE_CODES.slice(0,8).map(code=>helpers.keyboardMidi(code,false,minor)),[38,40,41,43,45,46,48,50]);
+ for(const scale of [[0,2,4,5,7,9,11],minor,[11,1,3,4,6,8,10]]) {
+  for(const label of helpers.keyboardLabels(scale)) {
+   const shift=label.label.startsWith('⇧'),key=label.label.replace('⇧','');
+   const code=/\d/.test(key)?'Digit'+key:'Key'+key;
+   assert.equal(label.midi,helpers.keyboardMidi(code,shift,scale));
+   if(!shift)assert.ok(scale.includes(label.midi%12));
+  }
+ }
+ assert.equal(helpers.keyboardMidi('Digit3',false),40,'disabled matching retains C-major white keys');
+});
+test('count-in, cursor wrapping and accent boundaries follow six-beat and fractional loops', () => {
+ const f=recordingFixture(),c=f.component;c.beats.set(6);c.toggle();assert.equal(c.countingIn(),6);
+ f.advance(2000);assert.equal(c.countingIn(),2);assert.equal(c.began.values.length,0);
+ f.advance(3000);assert.equal(c.began.values.length,1);f.advance(6500);
+ assert.ok(Math.abs(c.beat()-1)<1e-7);assert.equal(c.displayBeat(),2);assert.equal(c.beatCount(),6);c.stop();
+ const ticks=[];let beat=-3.5;for(let i=0;i<10;i++){ticks.push(beat);beat=helpers.nextRecordingTick(beat,3.5);}
+ assert.deepEqual(ticks,[-3.5,-2.5,-1.5,-.5,0,1,2,3,3.5,4.5]);
+ assert.equal(helpers.recordingPosition(3.5,3.5),0);assert.equal(helpers.recordingTickAtOrAfter(3.4,3.5),3.5);
+});
+test('keyboard scale matching defaults on, persists and rejects invalid preference values', () => {
+ const f=fixture();assert.equal(f.uiPreferences.preferences().keyboardMatchScale,true);
+ f.uiPreferences.setRecordingOption('keyboardMatchScale',false);
+ const json=f.uiPreferences.exportJson();assert.equal(JSON.parse(json).keyboardMatchScale,false);
+ assert.equal(f.uiPreferences.importJson(JSON.stringify({...JSON.parse(json),keyboardMatchScale:'false'})),false);
+ assert.equal(f.uiPreferences.preferences().keyboardMatchScale,false);
+});
+test('keyboard tonic preserves signed project transpose and octave shifts', () => {
+ const bMajor=[11,1,3,4,6,8,10];
+ assert.equal(helpers.keyboardMidi('Digit1',false,bMajor,35),35,'C2 transposed down one semitone is B1');
+ assert.equal(helpers.keyboardMidi('Digit1',false,[0,2,4,5,7,9,11],48),48,'an octave of project transpose is retained');
+ assert.equal(helpers.keyboardLabels(bMajor,35).find(l=>l.label==='1').midi,35);
+ const f=fixture(),editor=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();
+ f.ui.selectedTrackId.set(f.service.project().tracks.find(t=>t.role==='drums').id);
+ assert.deepEqual(editor.keyboardScale(),[],'drum notes bypass pitched scale matching, like scale snapping');
 });

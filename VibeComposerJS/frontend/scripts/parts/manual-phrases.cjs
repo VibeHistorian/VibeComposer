@@ -43,7 +43,7 @@ test('global range Apply from a short section preserves each longer section cont
   const before = service.exportProjectJson();
   ui.selectedTrackId.set(id);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const editor = new Editor(); editor.sectionId = sectionId; editor.phraseLength = 4; editor.ngOnInit();
+  const editor = new Editor(); editor.sectionId.set(sectionId); editor.phraseLength.set(4); editor.ngOnInit();
   const first = editor.notes().find(note => note.startBeat >= 0);
   editor.selectNote(first.id); editor.updateSelected('velocity', { target: { value: '117' } });
   editor.applyChanges();
@@ -77,7 +77,7 @@ test('global range Apply from a long section excludes later body notes from shor
   ]);
   ui.selectedTrackId.set(id);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const editor = new Editor(); editor.sectionId = service.project().arrangement[0].id; editor.phraseLength = 16; editor.ngOnInit();
+  const editor = new Editor(); editor.sectionId.set(service.project().arrangement[0].id); editor.phraseLength.set(16); editor.ngOnInit();
   editor.selectNote('first'); editor.updateSelected('velocity', { target: { value: '111' } });
   editor.addNoteAt({ midi: 55, startBeat: 17, durationBeats: 1 });
   editor.applyChanges(); assert.equal(editor.applyError(), null);
@@ -97,12 +97,12 @@ test('empty global ranges suppress notes and later windows preserve previous edi
   const continuation = layout().filter(note => note.startBeat >= 4);
   ui.selectedTrackId.set(id);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const first = new Editor(); first.sectionId = sectionId; first.phraseLength = 4; first.ngOnInit();
+  const first = new Editor(); first.sectionId.set(sectionId); first.phraseLength.set(4); first.ngOnInit();
   first.selectAll(); first.deleteSelected(); first.applyChanges();
   assert.equal(first.applyError(), null);
   assert.equal(layout().some(note => note.startBeat < 4), false);
   assert.deepEqual(layout(), continuation);
-  const later = new Editor(); later.sectionId = sectionId; later.phraseStartBeat = 16; later.phraseLength = 4; later.ngOnInit();
+  const later = new Editor(); later.sectionId.set(sectionId); later.phraseStartBeat.set(16); later.phraseLength.set(4); later.ngOnInit();
   later.selectAll(); later.deleteSelected(); later.addNoteAt({ midi: 72, startBeat: 1, durationBeats: 1 });
   later.applyChanges(); assert.equal(later.applyError(), null);
   assert.equal(layout().some(note => note.startBeat < 4), false, 'earlier silence remains owned');
@@ -168,7 +168,7 @@ test('custom-duration range edits use actual beats and anchor explicit margins t
   const continuation = layout(1).filter(note => note.startBeat >= 2 && note.startBeat < 16);
   ui.selectedTrackId.set(id);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const editor = new Editor(); editor.sectionId = service.project().arrangement[0].id; editor.phraseLength = 2; editor.ngOnInit();
+  const editor = new Editor(); editor.sectionId.set(service.project().arrangement[0].id); editor.phraseLength.set(2); editor.ngOnInit();
   editor.selectAll(); editor.deleteSelected();
   for (const startBeat of [-1, 1, 3]) editor.addNoteAt({ midi: 60, startBeat, durationBeats: .5 });
   editor.applyChanges(); assert.equal(editor.applyError(), null);
@@ -213,7 +213,7 @@ test('section pickups and late notes survive editing, local apply, history, relo
   assert.equal(service.updateSectionTrackPhrase(section.id, id, original), true);
   ui.selectedTrackId.set(id);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const editor = new Editor(); editor.sectionId = section.id; editor.phraseLength = 4; editor.ngOnInit();
+  const editor = new Editor(); editor.sectionId.set(section.id); editor.phraseLength.set(4); editor.ngOnInit();
   assert.deepEqual(editor.editBounds(), { startBeat: -4, endBeat: 8 });
   assert.deepEqual(editor.draftNotes().map(({ trackId, ...note }) => note), original);
   editor.selectNote('pickup');
@@ -250,7 +250,7 @@ test('section allowance follows the first and last custom measure durations', ()
   service.setSectionMusicalState(section.id, { customDurations: [2, 6] });
   ui.selectedTrackId.set('track-bass-1');
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const editor = new Editor(); editor.sectionId = section.id; editor.phraseLength = 8; editor.ngOnInit();
+  const editor = new Editor(); editor.sectionId.set(section.id); editor.phraseLength.set(8); editor.ngOnInit();
   assert.deepEqual(editor.editBounds(), { startBeat: -2, endBeat: 14 });
   editor.addNoteAt({ midi: 48, startBeat: -2, durationBeats: 1 });
   editor.addNoteAt({ midi: 48, startBeat: 13, durationBeats: 2 });
@@ -270,7 +270,7 @@ test('global Apply retains pickups and the extra measure when a section is short
   service.updateTrackPhrase(id, []);
   ui.selectedTrackId.set(id);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const editor = new Editor(); editor.sectionId = section.id; editor.phraseLength = 4; editor.ngOnInit();
+  const editor = new Editor(); editor.sectionId.set(section.id); editor.phraseLength.set(4); editor.ngOnInit();
   editor.addNoteAt({ midi: 48, startBeat: -4, durationBeats: 1 });
   editor.addNoteAt({ midi: 50, startBeat: 7, durationBeats: 1 });
   editor.applyChanges();
@@ -652,9 +652,9 @@ test('contextual Local Apply preserves other phrase cycles and leaves the global
   const before = phrase.layOutTrackPhrase({ ...service.project(), arrangement: [service.project().arrangement[1]] }, track);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
   const editor = new Editor();
-  editor.sectionId = section.id;
-  editor.phraseStartBeat = 0;
-  editor.phraseLength = 4;
+  editor.sectionId.set(section.id);
+  editor.phraseStartBeat.set(0);
+  editor.phraseLength.set(4);
   editor.ngOnInit();
   const history = service.exportProjectJson();
   editor.selectNote('kick'); editor.updateSelected('velocity', { target: { value: '117' } });
@@ -681,7 +681,7 @@ test('multi-drum drafts keep ownership, smart-exit destinations and one atomic u
   const before = service.exportProjectJson();
   const { EditWorkspaceComponent } = load('features/edit/edit-workspace.component.ts');
   ui.selectedTrackId.set(tracks[0].id);
-  const editor = new EditWorkspaceComponent(); editor.sectionId = sectionId; editor.phraseLength = 16; editor.ngOnInit();
+  const editor = new EditWorkspaceComponent(); editor.sectionId.set(sectionId); editor.phraseLength.set(16); editor.ngOnInit();
   assert.equal(editor.editedTracks().length, 3);
   assert.equal(new Set(editor.notes().map(note => note.id)).size, editor.notes().length, 'editor IDs are unique across tracks');
   assert.equal(editor.hasChanges(), false);
@@ -779,7 +779,7 @@ test('local and range manual adjustments preserve ownership, generated continuat
   assert.equal(layout()[0].midi, 84);
   ui.selectedTrackId.set(id);
   const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
-  const editor = new Editor(); editor.sectionId = section.id; editor.ngOnInit();
+  const editor = new Editor(); editor.sectionId.set(section.id); editor.ngOnInit();
   assert.equal(editor.notes()[0].midi, 60);
   assert.equal(editor.notes()[0].startBeat, 0);
   assert.equal(editor.notes()[0].durationBeats, 1);

@@ -36,7 +36,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
     signal, linkedSignal, afterRenderEffect: () => {}, computed: reactivity?.computed ?? ((read) => read), effect: callback => { effects.push(callback); }, untracked: read => read(), input,
-    output: () => ({ emit() {} }), ElementRef: class ElementRef {}, ChangeDetectorRef: class ChangeDetectorRef {}, ChangeDetectionStrategy: { OnPush: 0 },
+    output: () => ({ values: [], emit(value) { this.values.push(value); } }), ElementRef: class ElementRef {}, ChangeDetectorRef: class ChangeDetectorRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
       : type?.name === 'AudioPlaybackService' ? { setPhrasePreview() {} } : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }

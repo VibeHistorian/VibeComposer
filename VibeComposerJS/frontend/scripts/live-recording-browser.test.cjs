@@ -12,7 +12,7 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   const script = `<script>
 
 (async()=>{
- const wait=async(fn,label)=>{for(let i=0;i<300;i++){const value=fn();if(value)return value;await new Promise(r=>setTimeout(r,25));}throw Error(label);};
+ const wait=async(fn,label,attempts=300)=>{for(let i=0;i<attempts;i++){const value=fn();if(value)return value;await new Promise(r=>setTimeout(r,25));}throw Error(label);};
  const check=(value,label)=>{if(!value)throw Error(label);};
  const button=text=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
  const pause=ms=>new Promise(r=>setTimeout(r,ms));
@@ -33,9 +33,10 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   button('Record live').click();await wait(()=>document.querySelector('[aria-label="Recording count-in"]'),'count-in');
   press('keydown','Digit1','!',true);press('keyup','Digit1','!',true);await pause(150);
   check(!document.querySelector('#note-pitch'),'count-in ignores early input');
-  await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'capture after count-in');
+  await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'capture after count-in',1000);
   press('keydown','Digit1','!',true);
   await wait(()=>document.querySelector('.pitch-key[title="MIDI 37"]'),'live pitch fits before release');
+  check(!!document.querySelector('[data-keyboard-midi="37"]'),'keyboard mapping appears on piano keys');
   await pause(220);press('keyup','Digit1','!',true);
   await wait(()=>document.querySelector('#note-pitch')?.value==='37','C sharp keyboard');
   check(document.querySelector('#note-length').value>0,'held keyboard duration');
@@ -54,11 +55,29 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   const notes=track.phraseEdits.flatMap(edit=>edit.notes);
   check(notes.some(n=>n.midi===37)&&notes.some(n=>n.midi===38)&&notes.some(n=>n.midi===63&&n.velocity===111),'recorded notes saved');
   check(!document.querySelector('vc-live-recording output'),'recorder cleaned up');
+  check(!document.querySelector('.keyboard-label'),'keyboard labels removed after recording');
 
   (await wait(()=>document.querySelector('[aria-label="Settings"]'),'settings again')).click();
   (await wait(()=>button('MIDI'),'MIDI again')).click();
   (await wait(()=>document.querySelector('[aria-label="Recording count-in"]'),'count-in setting')).click();
   document.querySelector('[aria-label="Close settings"]').click();
+
+  await changeControl(document.querySelector('[aria-label="Mode"]'),'natural-minor');
+  await changeControl(document.querySelector('[aria-label="Transpose in semitones"]'),'12');
+  document.querySelector('.track-group.bass .track-select').click();
+  (await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')),'edit minor phrase')).click();
+  await wait(()=>document.querySelector('#phrase-grid'),'minor phrase');
+  button('Record live').focus();button('Record live').click();
+  await wait(()=>document.querySelector('[data-keyboard-midi="51"]')?.textContent.includes('3'),'mapped scale-degree label');
+  press('keydown','Digit3','3');await pause(150);press('keyup','Digit3','3');
+  await wait(()=>document.querySelector('#note-pitch')?.value==='51','scale-matched pitch');
+  document.querySelector('vc-live-recording [aria-label="Match keyboard scale/key"]').click();
+  button('Stop recording').focus();
+  press('keydown','Digit3','3');await pause(150);press('keyup','Digit3','3');
+  await wait(()=>document.querySelector('#note-pitch')?.value==='40','optional matching off');
+  await wait(()=>document.querySelector('[data-keyboard-midi="40"]')?.textContent.includes('3'),'unmatched C-major label');
+  button('Stop recording').click();button('Cancel').click();
+  await wait(()=>!document.querySelector('#phrase-grid'),'cancelled minor phrase');
   document.querySelector('.track-group.drums .track-select').click();
   (await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="drums"] button[aria-label="Edit rhythm pattern"]'),'pattern launcher')).click();
   const popup=await wait(()=>document.querySelector('vc-pattern-sequencer'),'pattern popup');

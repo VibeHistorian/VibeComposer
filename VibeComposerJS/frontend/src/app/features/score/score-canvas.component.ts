@@ -10,7 +10,7 @@ import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { ModifierKeysService } from '../../core/ui/modifier-keys.service';
 import type { ModifierState } from '../../core/ui/modifier-observer';
 import {
-  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild,
+  AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
 import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
@@ -104,6 +104,12 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
   readonly ghostNotes = input<readonly ScoreCanvasNote[]>([]);
   readonly recordingPitches = input<readonly number[]>([]);
+  readonly keyboardLabels = input<readonly { midi: number; label: string }[]>([]);
+  readonly keyboardLabelsByPitch = computed(() => {
+    const labels = new Map<number, string[]>();
+    for (const item of this.keyboardLabels()) labels.set(item.midi, [...(labels.get(item.midi) ?? []), item.label]);
+    return new Map([...labels].map(([midi, values]) => [midi, values.join(' ')]));
+  });
   readonly notesReady = input(true);
   readonly sections = input.required<readonly ScoreCanvasSection[]>();
   readonly chordBoundaries = input<readonly { beat: number; hue: number }[]>([]);
