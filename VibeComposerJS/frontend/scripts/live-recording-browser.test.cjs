@@ -67,6 +67,11 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   await wait(()=>!document.querySelector('.pitch-key.sounding[title="MIDI 37"]'),'recorded key clears on release');
   await wait(()=>document.querySelector('#note-pitch')?.value==='37','C sharp keyboard');
   check(document.querySelector('#note-length').value>0,'held keyboard duration');
+  press('keydown','KeyT','T',true);
+  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 61"]'),'Shift+T records its note despite selected notes');
+  check(!document.querySelector('#phrase-transpose'),'recording does not open transpose');
+  press('keyup','KeyT','T',true);
+  await wait(()=>document.querySelector('#note-pitch')?.value==='61','shifted note committed on release');
   check(!!document.querySelector('vc-live-recording output'),'visible moving beat');
   port.onmidimessage({data:[0x90,63,111]});await pause(170);port.onmidimessage({data:[0x80,63,0]});
   await wait(()=>document.querySelector('#note-pitch')?.value==='63','MIDI pitch');

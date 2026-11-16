@@ -255,3 +255,26 @@ test('backing-track preference defaults off and persists independently of the pr
  f.uiPreferences.setRecordingOption('recordingOtherTracks',true);assert.equal(JSON.parse(f.uiPreferences.exportJson()).recordingOtherTracks,true);
  assert.equal(JSON.stringify(f.service.project()),before);
 });
+test('selected-note action shortcuts bypass audition while unbound keys still audition', () => {
+ const f=fixture(),editor=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();editor.ngOnInit();
+ const {shortcutPreferences}=require('./support/shortcut-preferences.cjs');editor.preferences=shortcutPreferences();
+ const event={key:'T',code:'KeyT',shiftKey:true,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}};
+ assert.equal(editor.preferActionShortcut(event),false);
+ editor.selectedNoteIds.set(['selected']);assert.equal(editor.preferActionShortcut(event),true);
+ assert.equal(editor.preferActionShortcut({...event,key:'q',code:'KeyQ',shiftKey:false}),false);
+ const fixtureInput=recordingFixture(false),c=fixtureInput.component;c.ngOnInit();c.preferActionShortcut.set(editor.preferActionShortcut);
+ c.keydown(event);assert.equal(c.noteInput.values.length,0);assert.equal(event.prevented,undefined,'editing handler must receive the event');
+ editor.selectedNoteIds.set([]);c.keydown(event);assert.equal(c.noteInput.values.length,1);assert.equal(event.prevented,true);
+ editor.selectedNoteIds.set(['selected']);c.keyup(event);assert.equal(c.noteInput.values.at(-1).down,false,'changing selection does not strand a held key');
+ c.ngOnDestroy();
+});
+test('live recording reserves shifted note keys even when selected-note actions match', () => {
+ const f=recordingFixture(false),c=f.component;c.ngOnInit();c.preferActionShortcut.set(()=>true);
+ const event={key:'T',code:'KeyT',shiftKey:true,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}};
+ c.keydown(event);assert.equal(c.noteInput.values.length,0,'idle selection prefers the action');
+ c.toggle();c.keydown(event);assert.equal(c.noteInput.values.at(-1).midi,61);assert.equal(c.noteInput.values.at(-1).down,true);
+ assert.equal(event.prevented,true);assert.equal(event.stopped,true);f.advance(250);c.keyup(event);
+ assert.equal(c.span.values.length,1);assert.equal(c.span.values[0].midi,61);
+ c.stop();const count=c.noteInput.values.length;event.prevented=false;c.keydown(event);
+ assert.equal(c.noteInput.values.length,count,'after recording stops, action priority returns');assert.equal(event.prevented,false);c.ngOnDestroy();
+});

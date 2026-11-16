@@ -24,14 +24,6 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return {solo,hiddenSolo,reset};
   })()`);
   assert.deepEqual(roleVisibility,{solo:[0],hiddenSolo:[1],reset:[0,1,2,3,4]});
-  // This suite exercises editing shortcuts such as Shift+T, rather than keyboard audition mode.
-  await evaluate(`(async()=>{${waitCode}
-    document.querySelector('[aria-label="Settings"]').click();
-    (await wait(()=>[...document.querySelectorAll('vc-settings-dialog button')].find(button=>button.textContent.trim()==='MIDI'))).click();
-    const input=await wait(()=>document.querySelector('[aria-label="Keyboard note input"]'));
-    if(input.checked)input.click();document.querySelector('[aria-label="Close settings"]').click();
-    await wait(()=>!document.querySelector('vc-settings-dialog'));
-  })()`);
   const headerSelection=await evaluate(`(async()=>{${waitCode}
     await wait(()=>document.querySelectorAll('button.score-ruler-section').length>=2);
     const headers=()=>[...document.querySelectorAll('button.score-ruler-section')];

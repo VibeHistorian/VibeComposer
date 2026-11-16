@@ -88,6 +88,9 @@ export class EditWorkspaceComponent {
     }
     this.record();
   }
+  readonly preferActionShortcut = (event: KeyboardEvent): boolean => this.selectedNoteIds().length > 0
+    && (['selectAllNotes', 'transposeNotes', 'deleteNotes', 'undo', 'redo', 'playback'] as const)
+      .some(action => this.preferences.matchesShortcut(action, event));
   private readonly recorder = viewChild(LiveRecordingComponent);
   readonly recordingBackingContext = computed(() => ({ project: this.project(),
     startBeat: (resolveProjectTimeline(this.project()).sections.find(section => section.sectionId === this.sectionId())?.startBeat ?? 0) + this.phraseStartBeat(),

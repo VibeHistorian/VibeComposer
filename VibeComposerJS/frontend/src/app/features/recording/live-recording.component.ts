@@ -22,6 +22,7 @@ export class LiveRecordingComponent {
   readonly displayBeat = computed(() => Math.floor(this.beat()) + 1);
   readonly beatCount = computed(() => Math.ceil(this.loopBeats()));
   readonly notes = input(false);
+  readonly preferActionShortcut = input<((event: KeyboardEvent) => boolean) | null>(null);
   readonly disabled = input(false);
   readonly heldNotes = output<readonly (RecordedSpan & { id: string })[]>();
   readonly noteInput = output<LiveMidiNote>();
@@ -156,6 +157,7 @@ export class LiveRecordingComponent {
   private readonly keydown = (event: KeyboardEvent): void => {
     if (!this.midi.ownsInput(this.input) || !this.activeContext()) return;
     if (event.defaultPrevented || event.isComposing || isEditingText(event) || this.preferences.capturingShortcut()) return;
+    if (this.notes() && !this.running() && this.preferActionShortcut()?.(event)) return;
     const code = keyboardCode(event.code, event.key);
     const midi = this.notes() && this.preferences.preferences().keyboardNoteInput && !event.ctrlKey && !event.metaKey && !event.altKey ? keyboardMidi(code, event.shiftKey, this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : null;
     if (this.notes() ? midi === null : !this.preferences.matchesShortcut('recordRhythm', event)) return;
