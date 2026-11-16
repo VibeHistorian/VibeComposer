@@ -42,6 +42,8 @@ export class EditWorkspaceComponent {
   private readonly liveVoices = new Map<string, () => void>();
   readonly heldRecordingNotes = signal<PhraseDraftNote[]>([]);
   readonly recordingPitches = signal<readonly number[]>([]);
+  private readonly liveRecordingSelection = signal<readonly string[]>([]);
+  readonly canvasSelectedNoteIds = computed(() => this.recorder()?.running() ? this.liveRecordingSelection() : this.selectedNoteIds());
   readonly canvasNotes = computed(() => [...this.notes(), ...this.heldRecordingNotes()]);
   previewInput(note: LiveMidiNote): void {
     this.liveVoices.get(note.id)?.(); this.liveVoices.delete(note.id);
@@ -53,13 +55,20 @@ export class EditWorkspaceComponent {
     }
   }
   updateHeldNotes(spans: readonly (RecordedSpan & { id: string })[]): void {
-    this.heldRecordingNotes.set(spans.flatMap(span => recordedSegments(span, this.phraseBeats(), this.snapBeats(), true)
-      .map((segment, index) => ({ id: 'recording-' + span.id + '-' + index, trackId: this.selectedTrack().id,
-        midi: segment.midi, startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity }))));
+    const selected: string[] = [];
+    this.heldRecordingNotes.set(spans.flatMap(span => {
+      const segments = recordedSegments(span, this.phraseBeats(), this.snapBeats(), true)
+        .map((segment, index) => ({ id: 'recording-' + span.id + '-' + index, trackId: this.selectedTrack().id,
+          midi: segment.midi, startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity }));
+      // A held note crossing a loop highlights its current segment, not earlier passes.
+      if (segments.length) selected.push(segments.at(-1)!.id);
+      return segments;
+    }));
+    this.liveRecordingSelection.set(selected);
   }
   finishRecording(): void {
     for (const release of this.liveVoices.values()) release();
-    this.liveVoices.clear(); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
+    this.liveVoices.clear(); this.liveRecordingSelection.set([]); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
   }
   recordSpan(span: RecordedSpan): void {
     for (const segment of recordedSegments(span, this.phraseBeats(), this.snapBeats())) {

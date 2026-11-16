@@ -134,8 +134,8 @@ test('scale-matched keyboard input follows degrees and labels, including wrapped
  assert.deepEqual(helpers.NOTE_CODES.slice(0,8).map(code=>helpers.keyboardMidi(code,false,minor)),[38,40,41,43,45,46,48,50]);
  for(const scale of [[0,2,4,5,7,9,11],minor,[11,1,3,4,6,8,10]]) {
   for(const label of helpers.keyboardLabels(scale)) {
-   const shift=label.label.startsWith('⇧'),key=label.label.replace('⇧','');
-   const code=/\d/.test(key)?'Digit'+key:'Key'+key;
+   const shift=label.label.startsWith('⇧') || /^[A-Z]$/.test(label.label),key=label.label.replace('⇧','');
+   const code=/\d/.test(key)?'Digit'+key:'Key'+key.toUpperCase();
    assert.equal(label.midi,helpers.keyboardMidi(code,shift,scale));
    if(!shift)assert.ok(scale.includes(label.midi%12));
   }
@@ -166,4 +166,24 @@ test('keyboard tonic preserves signed project transpose and octave shifts', () =
  const f=fixture(),editor=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();
  f.ui.selectedTrackId.set(f.service.project().tracks.find(t=>t.role==='drums').id);
  assert.deepEqual(editor.keyboardScale(),[],'drum notes bypass pitched scale matching, like scale snapping');
+});
+test('recording highlights all held notes instead of normal selection, including loop crossings', () => {
+ const f=fixture(),editor=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();editor.ngOnInit();
+ let running=true;editor.recorder=()=>({running:()=>running});editor.phraseLength.set(4);editor.selectedNoteIds.set(['previous']);
+ assert.deepEqual(editor.canvasSelectedNoteIds(),[],'silence does not highlight the previously recorded note');
+ const a={id:'a',start:0,end:.5,midi:60,velocity:90},b={id:'b',start:3.8,end:4.3,midi:64,velocity:90};
+ editor.updateHeldNotes([a,b]);assert.deepEqual(editor.canvasSelectedNoteIds(),['recording-a-0','recording-b-1']);
+ assert.ok(!editor.canvasSelectedNoteIds().includes('recording-b-0'),'earlier loop segment is not sounding now');
+ editor.updateHeldNotes([b]);assert.deepEqual(editor.canvasSelectedNoteIds(),['recording-b-1']);
+ editor.updateHeldNotes([]);assert.deepEqual(editor.canvasSelectedNoteIds(),[]);
+ assert.deepEqual(editor.selectedNoteIds(),['previous'],'live highlighting does not replace the editing selection');
+ editor.finishRecording();running=false;assert.deepEqual(editor.canvasSelectedNoteIds(),['previous']);
+});
+test('keyboard labels use letter case and hide shifted aliases without changing valid input', () => {
+ const labels=helpers.keyboardLabels();
+ assert.deepEqual(labels.filter(l=>l.midi===53).map(l=>l.label),['q']);
+ assert.deepEqual(labels.filter(l=>l.midi===54).map(l=>l.label),['Q']);
+ assert.deepEqual(labels.filter(l=>l.midi===60).map(l=>l.label),['t']);
+ assert.equal(helpers.keyboardMidi('KeyR',true),helpers.keyboardMidi('KeyT',false),'hidden uppercase R remains a valid alias for t');
+ assert.ok(!labels.some(l=>/^⇧[a-z]$/i.test(l.label)));
 });

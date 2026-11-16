@@ -3,8 +3,10 @@
     <span class="pitch-key" [class.black-key]="row.black" [class.drum-label]="row.drum" [class.in-scale]="row.inScale"
       [class.out-of-scale]="!row.drum && scaleColoringActive() && !row.inScale" [class.octave-key]="!row.drum && !!row.label"
       [style.top.px]="row.y" [style.height.px]="row.height" [title]="row.drum ? row.tooltip : 'MIDI ' + row.midi"><i>{{ row.label }}</i>
-      @if (!row.drum && keyboardLabelsByPitch().get(row.midi); as letters) { <b class="keyboard-label" [attr.data-keyboard-midi]="row.midi" [title]="'Keyboard: ' + letters">{{ letters }}</b> }
     </span>
+    @if (!row.drum && keyboardLabelsByPitch().get(row.midi); as letters) {
+      <b class="keyboard-label" [style.top.px]="row.y" [attr.data-keyboard-midi]="row.midi" [title]="'Keyboard: ' + letters">{{ letters }}</b>
+    }
   }
   @for (line of octaveLines(); track line.midi) {
     <span class="octave-boundary" aria-hidden="true" [style.top.px]="line.y"

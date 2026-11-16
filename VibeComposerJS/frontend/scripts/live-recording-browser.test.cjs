@@ -37,6 +37,10 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   press('keydown','Digit1','!',true);
   await wait(()=>document.querySelector('.pitch-key[title="MIDI 37"]'),'live pitch fits before release');
   check(!!document.querySelector('[data-keyboard-midi="37"]'),'keyboard mapping appears on piano keys');
+  const labels=[...document.querySelectorAll('.keyboard-label')];
+  check(labels.length>1 && labels.every(label=>label.parentElement.classList.contains('score-gutter')),'labels belong to the common gutter');
+  const right=labels[0].getBoundingClientRect().right;
+  check(labels.every(label=>Math.abs(label.getBoundingClientRect().right-right)<.1),'keyboard labels share one right-aligned column');
   await pause(220);press('keyup','Digit1','!',true);
   await wait(()=>document.querySelector('#note-pitch')?.value==='37','C sharp keyboard');
   check(document.querySelector('#note-length').value>0,'held keyboard duration');

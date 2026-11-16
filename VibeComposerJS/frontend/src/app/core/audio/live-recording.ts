@@ -12,8 +12,14 @@ export function keyboardMidi(code: string, shift: boolean, scale: readonly numbe
   return 36 + Math.floor(index / 7) * 12 + [0,2,4,5,7,9,11][index % 7] + Number(shift);
 }
 export function keyboardLabels(scale: readonly number[] = [], tonic?: number): readonly { midi: number; label: string }[] {
-  return NOTE_CODES.flatMap(code => [false, true].map(shift => ({ midi: keyboardMidi(code, shift, scale, tonic)!,
-    label: (shift ? '⇧' : '') + code.replace('Digit', '').replace('Key', '') })));
+  const normalPitches = new Set(NOTE_CODES.map(code => keyboardMidi(code, false, scale, tonic)!));
+  return NOTE_CODES.flatMap(code => [false, true].flatMap(shift => {
+    const midi = keyboardMidi(code, shift, scale, tonic)!;
+    // Keep all input aliases valid; prefer unshifted keys only in the presentation.
+    if (shift && normalPitches.has(midi)) return [];
+    const key = code.replace('Digit', '').replace('Key', '');
+    return [{ midi, label: code.startsWith('Key') ? shift ? key : key.toLowerCase() : (shift ? '⇧' : '') + key }];
+  }));
 }
 /** Position and tick boundaries also support fractional phrase/section lengths. */
 export function recordingPosition(beat: number, length: number): number { return (beat % length + length) % length; }
