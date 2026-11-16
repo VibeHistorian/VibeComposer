@@ -2,6 +2,15 @@
 export const NOTE_CODES = ['Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Digit8','Digit9','Digit0',
   ...'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map(key => 'Key' + key)];
 /** Scale pitch classes are in degree order, shared with the phrase editor's scale/key snapping. */
+/** Some desktop hosts omit the physical code on key release. */
+export function keyboardCode(code: string | undefined, key: string | undefined): string {
+  if (code && code !== 'Unidentified') return code;
+  if (/^[a-z]$/i.test(key ?? '')) return 'Key' + key!.toUpperCase();
+  if (/^[0-9]$/.test(key ?? '')) return 'Digit' + key;
+  const shifted = '!@#$%^&*()'.indexOf(key ?? '');
+  if (key && shifted >= 0) return 'Digit' + ((shifted + 1) % 10);
+  return key === '~' || key === '`' ? 'Backquote' : key ?? '';
+}
 export function keyboardMidi(code: string, shift: boolean, scale: readonly number[] = [], tonic?: number): number | null {
   const index = NOTE_CODES.indexOf(code);
   if (index < 0) return null;

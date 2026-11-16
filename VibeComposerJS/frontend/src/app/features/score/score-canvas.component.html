@@ -1,12 +1,12 @@
 <div class="score-gutter" aria-label="Pitch and percussion labels">
   @for (row of gutterRows(); track $index) {
-    <span class="pitch-key" [class.sounding]="soundingPitches().includes(row.midi)" [class.black-key]="row.black" [class.drum-label]="row.drum" [class.in-scale]="row.inScale"
+    <span class="pitch-key" [class.sounding]="row.drum === soundingDrums() && soundingPitches().includes(row.midi)" [class.black-key]="row.black" [class.drum-label]="row.drum" [class.in-scale]="row.inScale"
       [class.out-of-scale]="!row.drum && scaleColoringActive() && !row.inScale" [class.octave-key]="!row.drum && !!row.label"
       [style.top.px]="row.y" [style.height.px]="row.height" [title]="row.drum ? row.tooltip : 'MIDI ' + row.midi"><i>{{ row.label }}</i>
     </span>
   }
   @for (label of keyboardLabelRows(); track label.midi) {
-    <b class="keyboard-label" [class.column-two]="label.column === 1" [class.sounding]="soundingPitches().includes(label.midi)" [style.top.px]="label.y" [style.font-size.px]="label.fontSize"
+    <b class="keyboard-label" [class.column-two]="label.column === 1" [class.sounding]="!soundingDrums() && soundingPitches().includes(label.midi)" [style.top.px]="label.y" [style.font-size.px]="label.fontSize"
       [attr.data-keyboard-midi]="label.midi" [title]="'Keyboard: ' + label.label">{{ label.label }}</b>
   }
   @for (line of octaveLines(); track line.midi) {

@@ -137,7 +137,7 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   check(lane.value.split(',').some(n=>Number(n)<0),'silence becomes pauses regardless of drawing tool');
   button('Cancel').click();
   await fetch('/result',{method:'POST',body:JSON.stringify({passed:true})});
- }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack})});}
+ }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack + " | controls: " + document.querySelector('vc-live-recording')?.textContent + " | alerts: " + [...document.querySelectorAll('[role=alert]')].map(e=>e.textContent).join(' / ')})});}
 })();</script>`;
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
@@ -145,7 +145,7 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   const server = createBrowserServer({ root, html: index.replace('</body>', script + '</body>'), resolve, reject });
   await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/live-recording-browser-'));
-  const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--disable-background-networking',
+  const child = launchBrowser(browser, ['--headless', '--autoplay-policy=no-user-gesture-required', '--disable-gpu', '--no-first-run', '--disable-background-networking',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--no-default-browser-check',
     '--user-data-dir=' + profile, 'http://127.0.0.1:' + server.address().port + '/'], { stdio: ['ignore', 'ignore', 'pipe'] });
   const watchdog = watchBrowser(child, reject, 30000);

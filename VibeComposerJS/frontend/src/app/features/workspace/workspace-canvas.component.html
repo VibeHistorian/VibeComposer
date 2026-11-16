@@ -290,7 +290,7 @@
                 <vc-score-canvas [drumSlots]="project().drumSlots" [tracks]="scoreTracks()" [notes]="canvasNotes()" [sections]="timelineSections()"
                   [ghostNotes]="ghostNotes()"
                   [chordBoundaries]="scoreChordBoundaries()"
-                  [soundingPitches]="editor()?.soundingPitches() ?? []" [recordingPitches]="editor()?.recordingPitches() ?? []" [keyboardLabels]="editor()?.keyboardLabels() ?? []"
+                  [soundingDrums]="editor()?.selectedPart() === 'drums'" [soundingPitches]="editor()?.soundingPitches() ?? []" [recordingPitches]="editor()?.recordingPitches() ?? []" [keyboardLabels]="editor()?.keyboardLabels() ?? []"
                   [notesReady]="!editing() || (editor()?.draftReady() ?? false)"
                   [totalBeats]="scoreTimelineBeats()" [timelineStartBeat]="scoreTimelineBounds().startBeat" [playheadPercent]="scorePlayheadPercent()" [selectedTrackId]="selectedTrackId()"
                   [sectionFocus]="scoreSectionFocus()" (viewportChanged)="scoreViewport.set($event)"

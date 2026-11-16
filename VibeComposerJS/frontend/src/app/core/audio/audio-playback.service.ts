@@ -18,6 +18,8 @@ import { beatToSeconds, secondsToBeat, type TempoPoint } from '../music/section-
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
 interface PartBus { readonly gain: GainNode; readonly pan: StereoPannerNode; }
+export interface RecordingBackingContext { readonly project: CompositionProject; readonly startBeat: number; readonly trackIds: readonly string[]; }
+export interface RecordingBackingSession { readonly ready: Promise<void>; beat(): number; active(): boolean; stop(): void; }
 export interface PlaybackRange { readonly startBeat: number; readonly endBeat: number; }
 export interface PlaybackPhrasePreview extends PlaybackRange {
   readonly trackIds: readonly string[];
@@ -71,6 +73,7 @@ export class AudioPlaybackService {
   private selectedLoopRange: PlaybackRange | null = null;
   private mixProject?: CompositionProject;
   private scheduledProject?: CompositionProject;
+  private recordingBacking: { range: PlaybackRange; excluded: ReadonlySet<string>; offset: number; previousRange: PlaybackRange | null; previousLoop: boolean; stop(): void } | null = null;
   private phrasePreview: PlaybackPhrasePreview | null = null;
   private previewDrumSlots?: { project: CompositionProject; preview: PlaybackPhrasePreview | null; slots: ReturnType<typeof resolvedDrumSlots> };
   private notes: ScheduledNote[] = [];
@@ -160,11 +163,11 @@ export class AudioPlaybackService {
         release = () => {
           const now = context.currentTime;
           gain.gain.setTargetAtTime(0, now, 0.005);
-          for (const voice of voices) voice.stop(now + 0.025);
+          for (const voice of voices) { try { voice.stop(now + 0.025); } catch { /* Already ended/disposed; the audition gain still fades to zero. */ } }
         };
       } catch (error) { this.playbackError.set(error instanceof Error ? error.message : 'Live note preview could not start.'); }
     })();
-    return () => { cancelled = true; release?.(); };
+    return () => { if (cancelled) return; cancelled = true; release?.(); };
   }
 
   async audition(track: CompositionTrack, notes: readonly PhraseNote[], project?: CompositionProject): Promise<void> {
@@ -210,6 +213,31 @@ export class AudioPlaybackService {
     }
   }
 
+  /** Temporary transport loop excluding the edited tracks; never mutates the project. */
+  beginRecordingBacking(context: RecordingBackingContext, beats: number): RecordingBackingSession {
+    this.recordingBacking?.stop();
+    this.pause();
+    const session = { range: { startBeat: context.startBeat, endBeat: context.startBeat + beats },
+      excluded: new Set(context.trackIds), offset: 0, previousRange: this.selectedLoopRange,
+      previousLoop: this.loopEnabled(), stop: () => {
+        if (this.recordingBacking !== session) return;
+        const position = this.state() === 'playing' ? this.currentSongBeat() : this.beat();
+        this.stop(); this.recordingBacking = null;
+        this.selectedLoopRange = session.previousRange; this.loopState.set(session.previousLoop);
+        const project = this.scheduledProject ?? context.project;
+        this.notes = this.createSchedule(project); this.setTimelineBounds(project, this.notes);
+        this.tempoMap = this.recordingBacking ? [{ beat: 0, bpm: project.tempoBpm, seconds: 0 }] : resolveProjectTimeline(project).tempoMap;
+        this.position.set(Math.max(this.timelineStart(), Math.min(this.duration(), position)));
+        this.playbackState.set('paused');
+      } };
+    this.recordingBacking = session; this.selectedLoopRange = session.range; this.loopState.set(true);
+    const ready = this.start(context.project, context.startBeat).then(() => {
+      if (this.recordingBacking === session && this.state() !== 'playing') throw new Error(this.error() || 'Backing playback could not start.');
+    });
+    return { ready, beat: () => session.offset + this.currentAbsoluteBeat() - session.range.startBeat,
+      active: () => this.recordingBacking === session && this.state() === 'playing', stop: session.stop };
+  }
+
   async toggle(project: CompositionProject): Promise<void> {
     if (this.state() === 'playing') {
       this.pause();
@@ -234,7 +262,7 @@ export class AudioPlaybackService {
       this.scheduleAheadSeconds = SCHEDULE_AHEAD_SECONDS;
       this.lastDelayedTickTime = context.currentTime;
 
-      this.tempoMap = resolveProjectTimeline(project).tempoMap;
+      this.tempoMap = this.recordingBacking ? [{ beat: 0, bpm: project.tempoBpm, seconds: 0 }] : resolveProjectTimeline(project).tempoMap;
       this.notes = this.createSchedule(project);
       this.setTimelineBounds(project, this.notes);
       this.scheduledProject = project;
@@ -274,6 +302,7 @@ export class AudioPlaybackService {
   }
 
   toggleLoop(): void {
+    if (this.recordingBacking) return;
     const beat = this.state() === 'playing' ? this.currentSongBeat() : this.beat();
     const enabled = !this.loopEnabled();
     this.loopState.set(enabled);
@@ -293,6 +322,7 @@ export class AudioPlaybackService {
   }
 
   setLoopRange(range: PlaybackRange | null): void {
+    if (this.recordingBacking) { this.recordingBacking.previousRange = range; return; }
     if (range?.startBeat === this.selectedLoopRange?.startBeat && range?.endBeat === this.selectedLoopRange?.endBeat) return;
     const beat = this.state() === 'playing' ? this.currentSongBeat() : this.beat();
     this.selectedLoopRange = range;
@@ -366,7 +396,7 @@ export class AudioPlaybackService {
       this.position.set(duration);
       return;
     }
-    this.tempoMap = resolveProjectTimeline(project).tempoMap;
+    this.tempoMap = this.recordingBacking ? [{ beat: 0, bpm: project.tempoBpm, seconds: 0 }] : resolveProjectTimeline(project).tempoMap;
     this.duration.set(duration);
     this.notes = notes;
     this.scheduleSignature = signature;
@@ -504,6 +534,7 @@ export class AudioPlaybackService {
     const preview = this.phrasePreview;
     const timeline = resolveProjectTimeline(project);
     return project.tracks.flatMap((track) => {
+      if (this.recordingBacking?.excluded.has(track.id)) return [];
       const notes = timeline.notesByTrack[track.id];
       const audible = preview?.trackIds.includes(track.id)
         ? [...notes.filter(note => note.startBeat < preview.startBeat || note.startBeat >= preview.endBeat),
@@ -707,6 +738,7 @@ export class AudioPlaybackService {
   }
 
   private loopBounds(): PlaybackRange {
+    if (this.recordingBacking) return this.recordingBacking.range;
     const duration = this.duration();
     const startBeat = Math.max(this.timelineStart(), this.selectedLoopRange?.startBeat ?? this.timelineStart());
     const endBeat = Math.min(duration, this.selectedLoopRange?.endBeat ?? duration);
@@ -742,10 +774,12 @@ export class AudioPlaybackService {
 
   private restartAt(beat: number): void {
     if (!this.context || !this.mixProject) return;
+    const elapsed = this.recordingBacking ? this.recordingBacking.offset + this.currentAbsoluteBeat() - this.recordingBacking.range.startBeat : 0;
     const now = this.context.currentTime;
     this.stopSources(now + RELOAD_FADE_SECONDS);
     this.prepareMix(this.mixProject, this.context, true);
     this.originTime = now - this.absoluteSeconds(beat);
+    if (this.recordingBacking) this.recordingBacking.offset = elapsed - (beat - this.recordingBacking.range.startBeat);
     this.position.set(beat);
     this.resetQueue(beat);
     this.resumeSustainedNotes(beat);

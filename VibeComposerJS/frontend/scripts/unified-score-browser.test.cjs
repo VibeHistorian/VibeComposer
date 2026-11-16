@@ -13,7 +13,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   const connection = await connectToPage(child);
   socket = connection.socket;
   const command = connection.command;
-  const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify(result));return result.result.value;};
+  const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify({...result,expressionContext:expression.split('\n').slice(18,25)}));return result.result.value;};
   const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
   const roleVisibility = await evaluate(`(async()=>{${waitCode}
     await wait(()=>document.querySelectorAll('.score-role-controls button').length===5);
@@ -24,6 +24,14 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return {solo,hiddenSolo,reset};
   })()`);
   assert.deepEqual(roleVisibility,{solo:[0],hiddenSolo:[1],reset:[0,1,2,3,4]});
+  // This suite exercises editing shortcuts such as Shift+T, rather than keyboard audition mode.
+  await evaluate(`(async()=>{${waitCode}
+    document.querySelector('[aria-label="Settings"]').click();
+    (await wait(()=>[...document.querySelectorAll('vc-settings-dialog button')].find(button=>button.textContent.trim()==='MIDI'))).click();
+    const input=await wait(()=>document.querySelector('[aria-label="Keyboard note input"]'));
+    if(input.checked)input.click();document.querySelector('[aria-label="Close settings"]').click();
+    await wait(()=>!document.querySelector('vc-settings-dialog'));
+  })()`);
   const headerSelection=await evaluate(`(async()=>{${waitCode}
     await wait(()=>document.querySelectorAll('button.score-ruler-section').length>=2);
     const headers=()=>[...document.querySelectorAll('button.score-ruler-section')];

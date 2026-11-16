@@ -1,15 +1,21 @@
 import { ChangeDetectionStrategy, Component, input, output, computed, ElementRef, inject, signal } from '@angular/core';
+import { AudioPlaybackService, type RecordingBackingContext, type RecordingBackingSession } from '../../core/audio/audio-playback.service';
 import { DOCUMENT } from '@angular/common';
 import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { MidiInputService, type LiveMidiNote } from '../../core/audio/midi-input.service';
 import { LiveRecordingService } from '../../core/audio/live-recording.service';
-import { keyboardMidi, recordingPosition, recordingTickAtOrAfter, nextRecordingTick, type RecordedSpan } from '../../core/audio/live-recording';
+import { keyboardCode, keyboardMidi, recordingPosition, recordingTickAtOrAfter, nextRecordingTick, type RecordedSpan } from '../../core/audio/live-recording';
 import { shortcutLabel } from '../../core/ui/shortcuts';
 import { isEditingText } from '../../shared/keyboard-shortcuts';
 @Component({ selector: 'vc-live-recording', templateUrl: './live-recording.component.html', styleUrl: './live-recording.component.css', changeDetection: ChangeDetectionStrategy.OnPush })
 export class LiveRecordingComponent {
   readonly beats = input(4);
+  readonly backingContext = input<RecordingBackingContext | null>(null);
+  readonly preparingBacking = signal(false);
+  readonly recordingError = signal('');
+  private backing?: RecordingBackingSession;
+  private readonly playback = inject(AudioPlaybackService);
   readonly keyboardScale = input<readonly number[]>([]);
   readonly keyboardTonic = input<number | undefined>(undefined);
   readonly loopBeats = computed(() => Math.max(1 / 960, this.beats()));
@@ -62,6 +68,8 @@ export class LiveRecordingComponent {
   toggle(): void {
     if (this.running()) { this.stop(); return; }
     if (this.disabled()) return;
+    this.recordingError.set('');
+    if (this.notes() && !this.preferences.preferences().recordingOtherTracks) this.playback?.pause?.();
     this.session.stop?.(); this.releaseAll(0); this.attachInput(); this.session.stop = this.stop;
     this.running.set(true); this.elapsed = this.preferences.preferences().recordingCountIn ? -this.loopBeats() : 0;
     this.started = false; this.countingIn.set(-this.elapsed); this.beat.set(0); this.lastTime = performance.now(); this.nextTick = this.elapsed;
@@ -73,7 +81,23 @@ export class LiveRecordingComponent {
     this.frame = requestAnimationFrame(this.advance);
   }
   private startRecording(): void {
-    if (this.started) return;
+    if (this.started || this.preparingBacking()) return;
+    const context = this.backingContext();
+    if (this.notes() && context && this.preferences.preferences().recordingOtherTracks) {
+      this.preparingBacking.set(true);
+      const backing = this.playback.beginRecordingBacking(context, this.loopBeats()); this.backing = backing;
+      void backing.ready.then(() => {
+        if (!this.running() || this.backing !== backing) return;
+        this.elapsed = 0; this.lastTime = performance.now(); this.nextTick = 0; this.preparingBacking.set(false); this.beginCapture();
+      }).catch(error => {
+        if (this.backing !== backing) return;
+        this.recordingError.set(error instanceof Error ? error.message : 'Backing playback could not start.'); this.stop();
+      });
+      return;
+    }
+    this.beginCapture();
+  }
+  private beginCapture(): void {
     this.started = true; this.countingIn.set(0);
     if (this.notes()) this.session.phraseBeat.set(0);
     this.began.emit();
@@ -82,23 +106,28 @@ export class LiveRecordingComponent {
     this.heldNotes.emit(this.running() ? [...this.held].map(([id, held]) => ({ ...held, id, end: beat })) : []);
   }
   private time(): number {
+    if (this.backing && this.started) return this.backing.beat();
     const now = performance.now();
     this.elapsed += (now - this.lastTime) / 60000 * this.projects.project().tempoBpm;
     this.lastTime = now; return this.elapsed;
   }
   private readonly advance = (): void => {
     if (!this.running()) return;
+    if (this.backing && this.started && !this.backing.active()) { this.stop(); return; }
     const beat = this.time();
     if (beat < 0) { this.countingIn.set(Math.ceil(-beat)); this.frame = requestAnimationFrame(this.advance); return; }
-    this.startRecording(); this.beat.set(recordingPosition(beat, this.loopBeats())); this.publishHeld(beat);
+    this.startRecording();
+    if (!this.started) { this.frame = requestAnimationFrame(this.advance); return; }
+    this.beat.set(recordingPosition(beat, this.loopBeats())); this.publishHeld(beat);
     if (this.notes()) this.session.phraseBeat.set(recordingPosition(beat, this.loopBeats()));
     this.cursor.emit({ beat, held: this.held.size > 0 });
     this.frame = requestAnimationFrame(this.advance);
   };
   /** Audio lookahead scheduler runs independently of Angular rendering. */
   private readonly tick = (): void => {
-    if (!this.audio) return;
+    if (!this.audio || this.preparingBacking()) return;
     const beat = this.time(), bpm = this.projects.project().tempoBpm, ahead = 0.12 * bpm / 60;
+    if (beat >= 0 && this.notes() && this.backingContext() && this.preferences.preferences().recordingOtherTracks && !this.started) return;
     if (this.nextTick < beat - ahead) this.nextTick = recordingTickAtOrAfter(beat, this.loopBeats());
     while (this.nextTick <= beat + ahead) {
       if (this.nextTick >= 0 && !this.preferences.preferences().recordingTick) { this.nextTick = nextRecordingTick(this.nextTick, this.loopBeats()); continue; }
@@ -116,6 +145,7 @@ export class LiveRecordingComponent {
     if (note.id === '*') { this.releaseAll(beat); return; }
     if (note.down && (!this.activeContext() || beat < 0)) return;
     if (this.running() && beat >= 0) this.startRecording();
+    if (this.running() && !this.started) return;
     if (note.down) {
       if (!this.held.has(note.id)) { this.held.set(note.id, { start: beat, midi: note.midi, velocity: note.velocity }); this.noteInput.emit(note); this.publishHeld(beat); if (this.running()) this.cursor.emit({ beat, held: true }); }
     } else {
@@ -126,14 +156,20 @@ export class LiveRecordingComponent {
   private readonly keydown = (event: KeyboardEvent): void => {
     if (!this.midi.ownsInput(this.input) || !this.activeContext()) return;
     if (event.defaultPrevented || event.isComposing || isEditingText(event) || this.preferences.capturingShortcut()) return;
-    const midi = this.notes() && this.preferences.preferences().keyboardNoteInput && !event.ctrlKey && !event.metaKey && !event.altKey ? keyboardMidi(event.code, event.shiftKey, this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : null;
+    const code = keyboardCode(event.code, event.key);
+    const midi = this.notes() && this.preferences.preferences().keyboardNoteInput && !event.ctrlKey && !event.metaKey && !event.altKey ? keyboardMidi(code, event.shiftKey, this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : null;
     if (this.notes() ? midi === null : !this.preferences.matchesShortcut('recordRhythm', event)) return;
     event.preventDefault(); event.stopImmediatePropagation();
-    if (!event.repeat) this.input({ id: event.code, midi: midi ?? 60, velocity: 90, down: true });
+    if (!event.repeat) {
+      // A fresh press is also a recovery point if the host lost the preceding release.
+      if (this.held.has(code)) this.input({ id: code, midi: 0, velocity: 0, down: false });
+      this.input({ id: code, midi: midi ?? 60, velocity: 90, down: true });
+    }
   };
   private readonly keyup = (event: KeyboardEvent): void => {
-    if (!this.held.has(event.code)) return;
-    event.preventDefault(); event.stopImmediatePropagation(); this.input({ id: event.code, midi: 0, velocity: 0, down: false });
+    const code = keyboardCode(event.code, event.key);
+    if (!this.held.has(code)) return;
+    event.preventDefault(); event.stopImmediatePropagation(); this.input({ id: code, midi: 0, velocity: 0, down: false });
   };
   private releaseAll(beat: number): void {
     for (const [id, held] of this.held) { this.noteInput.emit({ id, midi: held.midi, velocity: 0, down: false }); if (this.running()) this.span.emit({ ...held, end: beat }); }
@@ -143,6 +179,7 @@ export class LiveRecordingComponent {
   readonly stop = (): void => {
     if (!this.running()) { this.releaseAll(0); return; }
     this.releaseAll(this.time()); this.running.set(false); this.countingIn.set(0); cancelAnimationFrame(this.frame); clearInterval(this.tickTimer);
+    this.backing?.stop(); this.backing = undefined; this.preparingBacking.set(false);
     if (!this.notes()) this.detachInput();
     if (this.session.stop === this.stop) { this.session.stop = undefined; this.session.phraseBeat.set(null); }
     void this.audio?.close(); this.audio = undefined; if (this.started) this.ended.emit(); this.started = false;

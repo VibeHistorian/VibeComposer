@@ -1215,3 +1215,25 @@ test('live audition sustains to release and cancels cleanly during asynchronous 
  const cancel=playback.liveAudition(track,note,project);cancel();prepare();await new Promise(r=>setImmediate(r));
  assert.equal(sources.length,1,'a released key cannot start a late voice');
 });
+test('recording backing loops other tracks on the transport clock and restores loop settings', async () => {
+ const {playback,project,context}=fixture();
+ project.tracks.push({...project.tracks[0],id:'other',notes:[{id:'backing',midi:67,startBeat:4,durationBeats:1,velocity:90}]});
+ playback.setLoopRange({startBeat:0,endBeat:2});const original=JSON.stringify(project);
+ const session=playback.beginRecordingBacking({project,startBeat:4,trackIds:['bass']},4);await session.ready;
+ assert.equal(playback.state(),'playing');assert.deepEqual(playback.loopBounds(),{startBeat:4,endBeat:8});
+ assert.ok(playback.notes.every(n=>n.trackId==='other'));assert.equal(playback.loopEnabled(),true);
+ context.currentTime=2.5;playback.tick();assert.ok(Math.abs(session.beat()-5)<1e-7);assert.ok(playback.beat()>=4&&playback.beat()<8);
+ session.stop();assert.equal(playback.state(),'paused');assert.equal(playback.loopEnabled(),false);assert.deepEqual(playback.selectedLoopRange,{startBeat:0,endBeat:2});
+ assert.equal(JSON.stringify(project),original);
+});
+test('cancelling backing preparation cannot start transport after recording stops', async () => {
+ const {playback,project}=fixture();let done;playback.prepareInstrument=()=>new Promise(r=>done=r);
+ const session=playback.beginRecordingBacking({project,startBeat:0,trackIds:['bass']},4);session.stop();done();await session.ready;
+ assert.equal(session.active(),false);assert.notEqual(playback.state(),'playing');
+});
+test('audition release mutes and stops remaining voices even if an ended voice rejects stop', async () => {
+ const {playback,project,context}=fixture();let stopped=0;let gain;
+ playback.synth.schedule=destination=>{gain=destination.gain;return[{onEnded(){},stop(){throw Error('already ended');}},{onEnded(){},stop(){stopped++;}}];};
+ const release=playback.liveAudition(project.tracks[0],project.tracks[0].notes[0],project);await new Promise(r=>setImmediate(r));
+ assert.doesNotThrow(release);assert.equal(stopped,1);assert.ok(gain.events.some(e=>e.value===0));assert.doesNotThrow(release);assert.equal(stopped,1);
+});

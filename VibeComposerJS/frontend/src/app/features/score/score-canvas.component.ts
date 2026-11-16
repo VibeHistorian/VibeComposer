@@ -106,6 +106,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly ghostNotes = input<readonly ScoreCanvasNote[]>([]);
   readonly recordingPitches = input<readonly number[]>([]);
   readonly soundingPitches = input<readonly number[]>([]);
+  readonly soundingDrums = input(false);
   readonly keyboardLabels = input<readonly { midi: number; label: string }[]>([]);
   readonly keyboardLabelsByPitch = computed(() => {
     const labels = new Map<number, string[]>();

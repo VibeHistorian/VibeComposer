@@ -37,7 +37,7 @@
       }
 
   <div class="phrase-tools">
-    <vc-live-recording [notes]="true" [keyboardScale]="keyboardScale()" [keyboardTonic]="keyboardTonic()" [beats]="phraseBeats()" (span)="recordSpan($event)" (noteInput)="previewInput($event)" (heldNotes)="updateHeldNotes($event)" (ended)="finishRecording()" />
+    <vc-live-recording [notes]="true" [backingContext]="recordingBackingContext()" [keyboardScale]="keyboardScale()" [keyboardTonic]="keyboardTonic()" [beats]="phraseBeats()" (span)="recordSpan($event)" (noteInput)="previewInput($event)" (heldNotes)="updateHeldNotes($event)" (ended)="finishRecording()" />
     <p class="inspector-copy">Loop recording adds notes on the time grid. Hold keys or MIDI notes for longer notes. Stop before Apply; Cancel discards the draft.</p>
     <label class="field-label" for="phrase-grid">Time grid (beats)</label>
     <vc-select [options]="gridSelectOptions()" id="phrase-grid" [value]="snapBeats()" (valueChange)="setGrid($event)"></vc-select>

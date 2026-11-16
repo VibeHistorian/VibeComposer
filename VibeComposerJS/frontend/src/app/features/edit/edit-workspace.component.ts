@@ -1,5 +1,6 @@
 import { withoutManualAdjustments } from '../../core/music/manual-phrase-processing';
 import { MAX_DRUM_SOUNDS } from '../../core/music/drum-instruments';
+import { resolveProjectTimeline } from '../../core/music/project-timeline';
 import { resolvedDrumSlots } from '../../core/project/project-drum-kit';
 import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import type { LiveMidiNote } from '../../core/audio/midi-input.service';
@@ -48,8 +49,9 @@ export class EditWorkspaceComponent {
   readonly canvasSelectedNoteIds = computed(() => this.recorder()?.running() ? this.liveRecordingSelection() : this.selectedNoteIds());
   readonly canvasNotes = computed(() => [...this.notes(), ...this.heldRecordingNotes()]);
   previewInput(note: LiveMidiNote): void {
-    this.liveVoices.get(note.id)?.(); this.liveVoices.delete(note.id);
-    this.heldInputPitches.delete(note.id);
+    const release = this.liveVoices.get(note.id);
+    this.liveVoices.delete(note.id); this.heldInputPitches.delete(note.id);
+    try { release?.(); } catch { /* A disposed voice must not retain input/highlight state. */ }
     if (note.down) {
       this.heldInputPitches.set(note.id, note.midi);
       this.liveVoices.set(note.id, this.audio.liveAudition(this.selectedTrack(), {
@@ -72,7 +74,7 @@ export class EditWorkspaceComponent {
     this.liveRecordingSelection.set(selected);
   }
   finishRecording(): void {
-    for (const release of this.liveVoices.values()) release();
+    for (const release of this.liveVoices.values()) { try { release(); } catch { /* Continue releasing the other voices. */ } }
     this.liveVoices.clear(); this.heldInputPitches.clear(); this.soundingPitches.set([]); this.liveRecordingSelection.set([]); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
   }
   recordSpan(span: RecordedSpan): void {
@@ -87,6 +89,9 @@ export class EditWorkspaceComponent {
     this.record();
   }
   private readonly recorder = viewChild(LiveRecordingComponent);
+  readonly recordingBackingContext = computed(() => ({ project: this.project(),
+    startBeat: (resolveProjectTimeline(this.project()).sections.find(section => section.sectionId === this.sectionId())?.startBeat ?? 0) + this.phraseStartBeat(),
+    trackIds: this.editedTracks().map(track => track.id) }));
   readonly keyboardScale = computed(() => this.selectedPart() === 'drums' ? [] : this.scalePitchClasses());
   readonly keyboardTonic = computed(() => 36 + (getPitchClass(this.project().key) ?? 0) + this.displayTranspose());
   readonly keyboardLabels = computed(() => this.preferences.preferences().keyboardNoteInput

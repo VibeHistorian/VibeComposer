@@ -232,3 +232,26 @@ test('dense keyboard labels alternate stable columns and fit without vertical ov
  const scrolled=keyboardLabelLayout(rows.slice(7),labels);assert.equal(scrolled[0].column,dense[7].column);
  const spacious=keyboardLabelLayout(rows.map((row,i)=>({...row,y:i*14,height:14})),labels);assert.ok(spacious.every(l=>l.column===0&&l.fontSize===9));
 });
+test('x/X release works without physical codes and a fresh press recovers a lost release', () => {
+ const f=recordingFixture(false),c=f.component;c.ngOnInit();
+ const event=(key,code,shiftKey=false)=>({key,code,shiftKey,preventDefault(){},stopImmediatePropagation(){}});
+ for(const shift of [false,true])for(let i=0;i<2;i++){
+  c.keydown(event(shift?'X':'x','KeyX',shift));c.keyup(event(shift?'X':'x','',shift));assert.equal(c.held.size,0);
+ }
+ c.keydown(event('x','KeyX'));c.keydown(event('x','KeyX'));assert.equal(c.noteInput.values.at(-2).down,false);assert.equal(c.noteInput.values.at(-1).down,true);
+ c.ngOnDestroy();
+});
+test('voice-release errors cannot retain x highlights or block re-audition', () => {
+ const f=fixture(),editor=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();editor.ngOnInit();
+ let starts=0;editor.audio={liveAudition:()=>{starts++;return()=>{throw Error('disposed voice');};}};
+ for(let i=0;i<2;i++){
+  editor.previewInput({id:'KeyX',midi:88,velocity:90,down:true});
+  assert.doesNotThrow(()=>editor.previewInput({id:'KeyX',midi:88,velocity:0,down:false}));assert.deepEqual(editor.soundingPitches(),[]);
+ }
+ assert.equal(starts,2);assert.doesNotThrow(()=>editor.finishRecording());
+});
+test('backing-track preference defaults off and persists independently of the project', () => {
+ const f=fixture(),before=JSON.stringify(f.service.project());assert.equal(f.uiPreferences.preferences().recordingOtherTracks,false);
+ f.uiPreferences.setRecordingOption('recordingOtherTracks',true);assert.equal(JSON.parse(f.uiPreferences.exportJson()).recordingOtherTracks,true);
+ assert.equal(JSON.stringify(f.service.project()),before);
+});
