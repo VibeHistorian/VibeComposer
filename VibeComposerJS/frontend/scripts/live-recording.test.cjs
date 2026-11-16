@@ -94,10 +94,10 @@ test('provisional held-note segments grow continuously before quantized release'
 function recordingFixture(countIn = true) {
  let now=0;const listeners=new Map();const session={phraseBeat:signal(null)};
  function signal(value){return Object.assign(()=>value,{set:next=>{value=next;}});}
- const prefs={preferences:()=>({recordingCountIn:countIn,recordingTick:false,keyboardNoteInput:true})};
- const dependencies={ProjectService:{project:()=>({tempoBpm:120})},UiPreferencesService:prefs,MidiInputService:{},LiveRecordingService:session};
- const angular={ Component:()=>t=>t,input:signal,output:()=>({values:[],emit(v){this.values.push(v);}}),computed:read=>read,ChangeDetectionStrategy:{},signal,
-  EventEmitter:class { values=[];emit(v){this.values.push(v);} },inject:token=>dependencies[token.name] };
+ const prefs={capturingShortcut:()=>false,matchesShortcut:()=>false,preferences:()=>({recordingCountIn:countIn,recordingTick:false,keyboardNoteInput:true})};
+ const dependencies={ElementRef:{nativeElement:{}},ProjectService:{project:()=>({tempoBpm:120})},UiPreferencesService:prefs,MidiInputService:{ listen(listener){this.listener=listener;return()=>{this.listener=undefined;};}, ownsInput(listener){return this.listener===listener;} },LiveRecordingService:session};
+ const angular={ Component:()=>t=>t,ElementRef:{name:'ElementRef'},input:signal,output:()=>({values:[],emit(v){this.values.push(v);}}),computed:read=>read,ChangeDetectionStrategy:{},signal,
+  EventEmitter:class { values=[];emit(v){this.values.push(v);} },inject:token=>dependencies[token?.name] };
  const modules={'@angular/core':angular,'../../core/audio/live-recording':helpers,'../../shared/keyboard-shortcuts':{isEditingText:()=>false}};
  for(const [name,file] of [['ProjectService','../../core/project/project.service'],['UiPreferencesService','../../core/ui/ui-preferences.service'],['MidiInputService','../../core/audio/midi-input.service'],['LiveRecordingService','../../core/audio/live-recording.service']])modules[file]={[name]:{name}};
  const globals={performance:{now:()=>now},window:{addEventListener:(k,v)=>listeners.set(k,v),removeEventListener:k=>listeners.delete(k)},
@@ -116,7 +116,7 @@ test('four beat count-in gates notes and cursors, and cancelling it leaves no re
  f.advance(2000);assert.equal(c.countingIn(),0);assert.equal(c.began.values.length,1);
  c.input({id:'key',midi:60,velocity:90,down:true});f.advance(2300);
  assert.ok(c.heldNotes.values.at(-1)[0].end>0);assert.equal(c.noteInput.values.length,1);
- c.stop();assert.equal(c.noteInput.values.at(-1).down,false);assert.equal(f.session.phraseBeat(),null);assert.equal(f.listeners.size,0);
+ c.stop();assert.equal(c.noteInput.values.at(-1).down,false);assert.equal(f.session.phraseBeat(),null);c.ngOnDestroy();assert.equal(f.listeners.size,0);
  const g=recordingFixture();g.component.toggle();g.component.stop();assert.equal(g.component.began.values.length,0);assert.equal(g.component.ended.values.length,0);
 });
 test('held phrase notes are visible and growing without changing the draft until release', () => {
@@ -186,4 +186,49 @@ test('keyboard labels use letter case and hide shifted aliases without changing 
  assert.deepEqual(labels.filter(l=>l.midi===60).map(l=>l.label),['t']);
  assert.equal(helpers.keyboardMidi('KeyR',true),helpers.keyboardMidi('KeyT',false),'hidden uppercase R remains a valid alias for t');
  assert.ok(!labels.some(l=>/^⇧[a-z]$/i.test(l.label)));
+});
+test('idle keyboard and MIDI audition emit sound events and never create recording spans', () => {
+ const f=recordingFixture(false),c=f.component;c.ngOnInit();
+ const key={code:'KeyQ',shiftKey:false,preventDefault(){},stopImmediatePropagation(){}};
+ c.keydown(key);assert.equal(c.noteInput.values.at(-1).midi,53);assert.equal(c.noteInput.values.at(-1).down,true);
+ c.input({id:'midi',midi:108,velocity:110,down:true});
+ c.keyup(key);assert.equal(c.noteInput.values.at(-1).down,false);
+ assert.equal(c.span.values.length,0);assert.equal(c.began.values.length,0);assert.equal(c.cursor.values.length,0);
+ assert.ok(c.heldNotes.values.every(notes=>notes.length===0),'idle audition does not draw phrase notes');
+ c.stop();assert.equal(c.noteInput.values.at(-1).id,'midi');assert.equal(c.noteInput.values.at(-1).down,false);
+ assert.equal(c.span.values.length,0);c.ngOnDestroy();assert.equal(f.listeners.size,0);
+});
+test('audition-to-record transitions release previews and record only new input', () => {
+ const f=recordingFixture(false),c=f.component;c.ngOnInit();
+ c.input({id:'idle',midi:60,velocity:90,down:true});c.toggle();assert.equal(c.span.values.length,0);
+ c.input({id:'recorded',midi:64,velocity:90,down:true});f.advance(500);c.stop();
+ assert.equal(c.span.values.length,1);assert.equal(c.span.values[0].midi,64);
+ c.input({id:'idle-again',midi:67,velocity:90,down:true});c.input({id:'idle-again',midi:67,velocity:0,down:false});
+ assert.equal(c.span.values.length,1);c.ngOnDestroy();
+});
+test('idle audition highlights retain shared pitches until every source releases and leave draft/history untouched', () => {
+ const f=fixture(),editor=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();editor.ngOnInit();
+ let releases=0;editor.audio={liveAudition:()=>()=>releases++};
+ const before=JSON.stringify(editor.draftNotes());
+ editor.previewInput({id:'a',midi:60,velocity:90,down:true});editor.previewInput({id:'b',midi:60,velocity:90,down:true});
+ assert.deepEqual(editor.soundingPitches(),[60]);
+ editor.previewInput({id:'a',midi:60,velocity:0,down:false});assert.deepEqual(editor.soundingPitches(),[60]);
+ editor.previewInput({id:'b',midi:60,velocity:0,down:false});assert.deepEqual(editor.soundingPitches(),[]);
+ assert.equal(releases,2);assert.equal(JSON.stringify(editor.draftNotes()),before);assert.equal(editor.canUndo(),false);
+});
+test('MIDI input ownership restores the live underlying editor and never restores a destroyed subscriber', () => {
+ const service=midiFixture();const a=[],b=[];const one=n=>a.push(n),two=n=>b.push(n);
+ const stopOne=service.listen(one);const stopTwo=service.listen(two);
+ assert.equal(a.at(-1).id,'*');assert.equal(service.ownsInput(two),true);
+ stopTwo();assert.equal(service.ownsInput(one),true);service.dispatch({id:'test',midi:60,velocity:90,down:true});assert.equal(a.at(-1).id,'test');
+ const stopOther=service.listen(two);stopOne();stopOther();assert.equal(service.ownsInput(one),false);
+});
+test('dense keyboard labels alternate stable columns and fit without vertical overlap', () => {
+ const {keyboardLabelLayout}=load('features/score/score-keyboard-labels.ts');
+ const labels=new Map(Array.from({length:61},(_,i)=>[96-i,'x']));
+ const rows=[...labels.keys()].map((midi,i)=>({midi,y:i*4,height:4,drum:false}));
+ const dense=keyboardLabelLayout(rows,labels);assert.deepEqual([...new Set(dense.map(l=>l.column))],[0,1]);
+ for(const column of [0,1]) {const lane=dense.filter(l=>l.column===column);for(let i=1;i<lane.length;i++)assert.ok(lane[i-1].y+lane[i-1].fontSize<lane[i].y);}
+ const scrolled=keyboardLabelLayout(rows.slice(7),labels);assert.equal(scrolled[0].column,dense[7].column);
+ const spacious=keyboardLabelLayout(rows.map((row,i)=>({...row,y:i*14,height:14})),labels);assert.ok(spacious.every(l=>l.column===0&&l.fontSize===9));
 });

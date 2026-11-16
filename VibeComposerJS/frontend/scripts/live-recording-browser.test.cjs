@@ -28,6 +28,27 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   (await wait(()=>document.querySelector('.track-group.bass .track-select'),'bass track')).click();
   (await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')),'edit')).click();
   await wait(()=>document.querySelector('#phrase-grid'),'phrase');
+  await wait(()=>document.querySelector('.keyboard-label'),'keyboard labels while idle');
+  button('Record live').focus();
+  press('keydown','KeyQ','q');
+  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 53"]'),'idle keyboard key highlight');
+  port.onmidimessage({data:[0x90,60,100]});
+  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 60"]'),'idle MIDI key highlight');
+  press('keyup','KeyQ','q');
+  await wait(()=>!document.querySelector('.pitch-key.sounding[title="MIDI 53"]') && document.querySelector('.pitch-key.sounding[title="MIDI 60"]'),'independent key release');
+  port.onmidimessage({data:[0x80,60,0]});
+  await wait(()=>!document.querySelector('.pitch-key.sounding'),'all idle keys released');
+  check(button('Apply').disabled,'idle audition does not change the phrase');
+  port.onmidimessage({data:[0x90,108,100]});
+  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 108"]'),'idle MIDI expands pitch view');
+  await wait(()=>document.querySelector('.keyboard-label.column-two'),'dense labels use two columns');
+  for(const second of [false,true]){
+    const boxes=[...document.querySelectorAll('.keyboard-label')].filter(label=>label.classList.contains('column-two')===second).map(label=>label.getBoundingClientRect()).sort((a,b)=>a.top-b.top);
+    for(let i=1;i<boxes.length;i++)check(boxes[i-1].bottom<=boxes[i].top+.1,'dense labels do not overlap');
+  }
+  port.onmidimessage({data:[0x80,108,0]});
+  await wait(()=>!document.querySelector('.pitch-key.sounding'),'outlier release');
+  check(button('Apply').disabled,'zooming and auditioning leave the draft unchanged');
   const before=sessionStorage.getItem('vibecomposer.project.v12');
   const countIn=document.querySelector('vc-live-recording input[type="checkbox"]');countIn.click();
   button('Record live').click();await wait(()=>document.querySelector('[aria-label="Recording count-in"]'),'count-in');
@@ -39,9 +60,11 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   check(!!document.querySelector('[data-keyboard-midi="37"]'),'keyboard mapping appears on piano keys');
   const labels=[...document.querySelectorAll('.keyboard-label')];
   check(labels.length>1 && labels.every(label=>label.parentElement.classList.contains('score-gutter')),'labels belong to the common gutter');
-  const right=labels[0].getBoundingClientRect().right;
-  check(labels.every(label=>Math.abs(label.getBoundingClientRect().right-right)<.1),'keyboard labels share one right-aligned column');
+  const right=labels.find(label=>!label.classList.contains('column-two')).getBoundingClientRect().right;
+  check(labels.filter(label=>!label.classList.contains('column-two')).every(label=>Math.abs(label.getBoundingClientRect().right-right)<.1),'keyboard labels align in their column');
+  await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI 37"]'),'recorded input highlights piano key');
   await pause(220);press('keyup','Digit1','!',true);
+  await wait(()=>!document.querySelector('.pitch-key.sounding[title="MIDI 37"]'),'recorded key clears on release');
   await wait(()=>document.querySelector('#note-pitch')?.value==='37','C sharp keyboard');
   check(document.querySelector('#note-length').value>0,'held keyboard duration');
   check(!!document.querySelector('vc-live-recording output'),'visible moving beat');

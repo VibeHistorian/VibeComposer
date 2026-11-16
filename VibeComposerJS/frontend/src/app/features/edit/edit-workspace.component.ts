@@ -42,17 +42,22 @@ export class EditWorkspaceComponent {
   private readonly liveVoices = new Map<string, () => void>();
   readonly heldRecordingNotes = signal<PhraseDraftNote[]>([]);
   readonly recordingPitches = signal<readonly number[]>([]);
+  readonly soundingPitches = signal<readonly number[]>([]);
+  private readonly heldInputPitches = new Map<string, number>();
   private readonly liveRecordingSelection = signal<readonly string[]>([]);
   readonly canvasSelectedNoteIds = computed(() => this.recorder()?.running() ? this.liveRecordingSelection() : this.selectedNoteIds());
   readonly canvasNotes = computed(() => [...this.notes(), ...this.heldRecordingNotes()]);
   previewInput(note: LiveMidiNote): void {
     this.liveVoices.get(note.id)?.(); this.liveVoices.delete(note.id);
+    this.heldInputPitches.delete(note.id);
     if (note.down) {
-      this.recordingPitches.update(pitches => [...new Set([...pitches, note.midi])]);
+      this.heldInputPitches.set(note.id, note.midi);
       this.liveVoices.set(note.id, this.audio.liveAudition(this.selectedTrack(), {
         id: note.id, midi: note.midi, velocity: note.velocity, startBeat: 0, durationBeats: 1,
       }, this.project()));
     }
+    const pitches = [...new Set(this.heldInputPitches.values())];
+    this.soundingPitches.set(pitches); this.recordingPitches.set(pitches);
   }
   updateHeldNotes(spans: readonly (RecordedSpan & { id: string })[]): void {
     const selected: string[] = [];
@@ -68,7 +73,7 @@ export class EditWorkspaceComponent {
   }
   finishRecording(): void {
     for (const release of this.liveVoices.values()) release();
-    this.liveVoices.clear(); this.liveRecordingSelection.set([]); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
+    this.liveVoices.clear(); this.heldInputPitches.clear(); this.soundingPitches.set([]); this.liveRecordingSelection.set([]); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
   }
   recordSpan(span: RecordedSpan): void {
     for (const segment of recordedSegments(span, this.phraseBeats(), this.snapBeats())) {
@@ -84,7 +89,7 @@ export class EditWorkspaceComponent {
   private readonly recorder = viewChild(LiveRecordingComponent);
   readonly keyboardScale = computed(() => this.selectedPart() === 'drums' ? [] : this.scalePitchClasses());
   readonly keyboardTonic = computed(() => 36 + (getPitchClass(this.project().key) ?? 0) + this.displayTranspose());
-  readonly keyboardLabels = computed(() => this.recorder()?.running() && this.preferences.preferences().keyboardNoteInput
+  readonly keyboardLabels = computed(() => this.preferences.preferences().keyboardNoteInput
     ? keyboardLabels(this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : []);
   readonly gridSelectOptions = computed(() => this.gridChoices.map(grid => ({ value: grid, label: String(grid === 1 / 6 ? '1/6' : grid === 1 / 3 ? '1/3' : grid === 2 / 3 ? '2/3' : grid === 4 / 3 ? '4/3' : grid) })));
 

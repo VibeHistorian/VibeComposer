@@ -1,3 +1,4 @@
+import { keyboardLabelLayout } from './score-keyboard-labels';
 import { logNotePolygon } from './score-note-shape';
 import { instrumentEnvelope } from '../../core/music/gm-instruments';
 import type { DrumSlots } from '../../core/music/drum-instruments';
@@ -104,6 +105,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
   readonly ghostNotes = input<readonly ScoreCanvasNote[]>([]);
   readonly recordingPitches = input<readonly number[]>([]);
+  readonly soundingPitches = input<readonly number[]>([]);
   readonly keyboardLabels = input<readonly { midi: number; label: string }[]>([]);
   readonly keyboardLabelsByPitch = computed(() => {
     const labels = new Map<number, string[]>();
@@ -138,6 +140,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly noteChanged = output<PhraseNote>();
   readonly applyRequested = output<void>();
   readonly noteAdded = output<{ trackId?: string; midi: number; startBeat: number }>();
+  readonly keyboardLabelRows = computed(() => keyboardLabelLayout(this.gutterRows(), this.keyboardLabelsByPitch()));
   readonly gutterRows = signal<readonly { midi: number; label: string; tooltip?: string; y: number; height: number; drum: boolean; black: boolean; inScale: boolean }[]>([]);
   readonly octaveLines = signal<readonly { midi: number; y: number; height: number; opacity: number }[]>([]);
   readonly timeTooltip = signal<{ text: string; x: number; y: number } | null>(null);
