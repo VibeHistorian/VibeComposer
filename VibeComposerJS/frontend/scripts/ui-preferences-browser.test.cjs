@@ -688,6 +688,57 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     })()`, awaitPromise: true, returnByValue: true });
     assert.equal(popupGeometry.exceptionDetails, undefined, JSON.stringify(popupGeometry));
     assert.ok(popupGeometry.result.value.every(result => result.fits && result.correctSide && result.scrolls), JSON.stringify(popupGeometry.result.value));
+    if (width === 1440) {
+      const channel = 'vc-select.track-channel:not([aria-disabled="true"])';
+      const waitFor = async (predicate, message) => {
+        const result = await command('Runtime.evaluate', { expression: `(async () => {
+          for (let i = 0; i < 150; i++) {
+            const value = (${predicate})();
+            if (value) return value;
+            await new Promise(resolve => setTimeout(resolve, 20));
+          }
+        })()`, awaitPromise: true, returnByValue: true });
+        assert.ok(result.result.value, message);
+        return result.result.value;
+      };
+      const clickAt = async ({ x, y }) => {
+        await command('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+        await command('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+      };
+      const clickControl = async selector => clickAt(await waitFor(`() => {
+        const control = document.querySelector(${JSON.stringify(selector)});
+        if (!control) return;
+        control.scrollIntoView({ block: 'nearest' });
+        const rect = control.getBoundingClientRect();
+        return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+      }`, 'control is available: ' + selector));
+      const trigger = `document.querySelector(${JSON.stringify(channel)})`;
+      await clickControl(channel);
+      await clickAt(await waitFor(`() => {
+        const trigger = ${trigger};
+        const panel = document.getElementById(trigger.getAttribute('aria-controls'));
+        if (document.activeElement !== trigger || !panel) return;
+        const option = panel.querySelector('[role="option"]:not([aria-disabled="true"])');
+        if (!option) return;
+        const rect = option.getBoundingClientRect();
+        return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+      }`, 'pointer-opened channel combobox keeps focus while expanded'));
+      await waitFor(`() => ${trigger}.getAttribute('aria-expanded') === 'false' && document.activeElement !== ${trigger}`,
+        'choosing a channel releases the closed combobox');
+      await press(' ', 'Space', 32);
+      await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Pause'`, 'Space starts playback after choosing a channel');
+      await clickControl('.harmony-compose-star');
+      await waitFor(`() => !document.activeElement.matches('.harmony-compose-star')`, 'pointer button releases focus');
+      await press(' ', 'Space', 32);
+      await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Resume'`, 'Space pauses after clicking a toggle');
+      await clickControl('.midi-port-button');
+      await clickControl('.midi-menu [role="menuitemradio"]:not([aria-disabled="true"])');
+      await waitFor(`() => !document.querySelector('.midi-menu') && !document.activeElement.matches('.midi-port-button')`,
+        'choosing a MIDI output releases the menu trigger');
+      await press(' ', 'Space', 32);
+      await waitFor(`() => document.querySelector('.play-button').ariaLabel === 'Pause'`, 'Space resumes after a menu selection');
+      await clickControl('.stop-button');
+    }
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0 });
     const restoredTitle = await command('Runtime.evaluate', { expression: `new Promise(resolve => requestAnimationFrame(() => resolve(document.querySelector('vc-menu-select.track-instrument:not([aria-disabled="true"])').title)))`, awaitPromise: true, returnByValue: true });
     assert.ok(restoredTitle.result.value.startsWith('Instrument:'), 'instrument tooltip remains available');

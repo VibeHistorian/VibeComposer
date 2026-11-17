@@ -85,12 +85,10 @@ test('pointer Add section opens and commits without moving focus into the picker
   global.innerWidth = 1440;
   global.innerHeight = 900;
   document.querySelector = () => { assert.fail('pointer picker must not request keyboard focus'); };
-  let blurred = false;
   const event = { detail: 1, stopPropagation() {}, currentTarget: {
-    blur() { blurred = true; }, getBoundingClientRect: () => ({ right: 500, bottom: 100 }),
+    getBoundingClientRect: () => ({ right: 500, bottom: 100 }),
   } };
   component.toggleSectionPicker(event);
-  assert.equal(blurred, true);
   assert.ok(component.sectionPicker());
   component.chooseSection('INTRO', event);
   assert.equal(component.sectionPicker(), null);

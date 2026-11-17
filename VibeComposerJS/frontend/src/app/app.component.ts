@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { installPointerButtonFocus } from './shared/pointer-button-focus';
+import { installPointerActionFocus } from './shared/pointer-action-focus';
 import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, untracked, inject, signal, viewChild } from '@angular/core';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { CdkMenuModule } from '@angular/cdk/menu';
@@ -31,7 +31,7 @@ import { isEditingText, usesSpaceKey } from './shared/keyboard-shortcuts';
 export class AppComponent {
   constructor() {
     const destroyRef = inject(DestroyRef);
-    destroyRef.onDestroy(installPointerButtonFocus(inject(DOCUMENT)));
+    destroyRef.onDestroy(installPointerActionFocus(inject(DOCUMENT)));
     const host = inject<ElementRef<HTMLElement>>(ElementRef);
     afterNextRender(() => {
       const frame = host.nativeElement.querySelector<HTMLElement>('.app-frame')!;

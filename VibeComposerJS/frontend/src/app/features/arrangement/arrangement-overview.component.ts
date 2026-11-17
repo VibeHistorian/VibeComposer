@@ -96,7 +96,6 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   toggleSectionPicker(event: MouseEvent): void {
     event.stopPropagation();
     const keyboard = event.detail === 0;
-    if (!keyboard) (event.currentTarget as HTMLElement).blur();
     if (this.sectionPicker()) { this.closeSectionPicker(); return; }
     const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
     this.sectionPicker.set({ x: Math.max(8, Math.min(innerWidth - 278, bounds.right - 270)),

@@ -15,13 +15,14 @@ class Element {
   }
 }
 
-function load(file, dependencies = {}) {
+function load(file, dependencies = {}, globals = {}) {
   const source = fs.readFileSync(path.join(__dirname, '../src/app', file), 'utf8');
   const compiled = ts.transpileModule(source, { compilerOptions: {
     target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true,
   } }).outputText;
   const module = { exports: {} };
-  new Function('require', 'module', 'exports', 'HTMLElement', compiled)(name => dependencies[name] ?? {}, module, module.exports, Element);
+  new Function('require', 'module', 'exports', 'HTMLElement', ...Object.keys(globals), compiled)(
+    name => dependencies[name] ?? {}, module, module.exports, Element, ...Object.values(globals));
   return module.exports;
 }
 
@@ -154,48 +155,82 @@ test('capture normalization and preference decoding cover keys, mouse, wheel and
   assert.equal(decodeShortcuts({ freeGrid: [{ kind: 'modifier', input: 'held', ctrl: false, shift: false, alt: false }] }), null);
 });
 
-test('pointer actions release focus for global Space while keyboard and composite controls retain it', async () => {
-  const { installPointerButtonFocus } = load('shared/pointer-button-focus.ts');
+test('completed pointer actions release focus while open popups, keyboard focus and editors keep it', () => {
+  let attributeChanged, observed;
+  class Observer {
+    constructor(callback) { attributeChanged = callback; }
+    observe(element) { observed = element; }
+    disconnect() { observed = null; }
+  }
+  const { installPointerActionFocus } = load('shared/pointer-action-focus.ts',
+    { './keyboard-shortcuts': helpers }, { MutationObserver: Observer });
   const listeners = new Map();
-  const document = { activeElement: null,
+  let timer, frame;
+  const document = { activeElement: null, querySelectorAll: () => [], defaultView: {
+    setTimeout(callback) { timer = callback; }, clearTimeout() { timer = null; },
+    requestAnimationFrame(callback) { frame = callback; }, cancelAnimationFrame() { frame = null; },
+  },
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name) };
-  const control = (tag, composite = false, type = 'button') => {
-    const element = new Element(tag, false, type);
-    element.closest = () => composite ? element : null;
+  const control = (tag, { type = '', role = '', composite = false, dialog = null } = {}) => {
+    const element = new Element(tag, false, type, role);
+    element.matches = selector => selector.split(/,\s*(?![^()]*\))/).some(part =>
+      part === tag || (type && part === `${tag}[type="${type}"]`) || (role && part.startsWith(`[role="${role}"]`)));
+    element.closest = selector => selector.includes('dialog') ? dialog : composite ? element : null;
+    element.getAttribute = () => String(element.expanded ?? false);
     element.blur = () => { document.activeElement = null; };
     return element;
   };
-  const cleanup = installPointerButtonFocus(document);
+  const cleanup = installPointerActionFocus(document);
+  const click = () => {
+    listeners.get('pointerdown')();
+    listeners.get('click')({ type: 'click', detail: 1 });
+  };
+  const render = () => { timer?.(); frame?.(); };
   const button = control('button');
-  document.activeElement = button;
-  listeners.get('focusin')();
-  assert.equal(document.activeElement, button, 'initial keyboard focus stays');
-  listeners.get('pointerdown')();
-  listeners.get('click')();
-  await Promise.resolve();
-  assert.equal(document.activeElement, null, 'click releases already-focused action');
-  const f = fixture();
-  f.press(' ', { ctrlKey: false, composedPath: () => [] });
-  assert.deepEqual(f.calls, ['playback:Song']);
-  for (const element of [button, control('input', false, 'checkbox')]) {
+  for (const element of [button, control('summary'), control('input', { type: 'checkbox' })]) {
     document.activeElement = element;
-    listeners.get('focusin')();
-    assert.equal(document.activeElement, null, 'pointer-focused actions release');
+    click();
+    assert.equal(document.activeElement, element, 'focus survives through the click handler');
+    render();
+    assert.equal(document.activeElement, null, 'completed action releases focus');
   }
+
+  const combo = control('div', { role: 'combobox' });
+  document.activeElement = combo;
+  click();
+  combo.expanded = true;
+  render();
+  assert.equal(document.activeElement, combo, 'expanded combobox keeps its focus');
+  assert.equal(observed, combo, 'watch only the focused trigger');
+  combo.expanded = false;
+  attributeChanged();
+  assert.equal(document.activeElement, null, 'pointer-opened combobox releases on dismissal');
+
+  const menuItem = control('button', { composite: true });
+  document.activeElement = menuItem;
+  click();
+  render();
+  assert.equal(document.activeElement, menuItem, 'the open menu keeps focus');
+  click();
+  document.activeElement = button;
+  render();
+  assert.equal(document.activeElement, null, 'focus restored by menu click handlers is released');
+
+  for (const element of [control('textarea'), control('button', { dialog: {} })]) {
+    click();
+    document.activeElement = element;
+    render();
+    assert.equal(document.activeElement, element, 'editing or newly opened dialog focus stays');
+    document.activeElement = null;
+  }
+
+  document.activeElement = combo;
+  click();
   listeners.get('keydown')();
-  document.activeElement = button;
-  listeners.get('focusin')();
-  assert.equal(document.activeElement, button, 'Tab focus stays');
-  listeners.get('pointerdown')();
-  const menuButton = control('button', true);
-  document.activeElement = menuButton;
-  listeners.get('focusin')();
-  assert.equal(document.activeElement, menuButton, 'composite widget focus stays');
-  listeners.get('click')();
-  document.activeElement = button;
-  await Promise.resolve();
-  assert.equal(document.activeElement, null, 'focus restored by click handlers is released');
+  listeners.get('click')({ type: 'click', detail: 0 });
+  render();
+  assert.equal(document.activeElement, combo, 'keyboard focus and activation stay');
   cleanup();
   assert.equal(listeners.size, 0);
 });
