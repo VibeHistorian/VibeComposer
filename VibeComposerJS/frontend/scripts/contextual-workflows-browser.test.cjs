@@ -69,6 +69,24 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         sessionStorage.setItem('contextual-fixture', 'ready'); location.reload(); return;
       }
       await wait(() => document.querySelectorAll('.track-line').length === 30, '30 track rows');
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const trackScroller = document.querySelector('.track-groups');
+      const allRoles = document.querySelector('.all-role-group');
+      if (trackScroller.contains(allRoles)) throw new Error('All roles shares the track scrollbar');
+      const allRolesBeforeScroll = allRoles.getBoundingClientRect();
+      trackScroller.scrollTop = trackScroller.scrollHeight;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const allRolesAfterScroll = allRoles.getBoundingClientRect();
+      if (Math.abs(allRolesBeforeScroll.top - allRolesAfterScroll.top) > 1)
+        throw new Error('All roles moves when tracks scroll');
+      if (innerWidth > 1050) {
+        if (trackScroller.scrollTop <= 0) throw new Error('Dense tracks exercise scrolling');
+        const dock = document.querySelector('.transport-dock').getBoundingClientRect();
+        if (allRolesAfterScroll.top < trackScroller.getBoundingClientRect().bottom - 1
+          || allRolesAfterScroll.bottom > dock.top || allRolesAfterScroll.top < 0)
+          throw new Error('All roles footer must remain visible between tracks and transport');
+      }
+      trackScroller.scrollTop = 0;
       // Persist the decoded fixture before comparing a policy-only action.
       await change(seed, '9007199254740995');
       await wait(() => read().seed === '9007199254740995', 'canonical project');

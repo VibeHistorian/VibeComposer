@@ -7,34 +7,6 @@
 <section class="workspace-canvas" [class.quick-layout-editing]="preferences.editingQuickSettings()" aria-label="Song workspace" (pointerdown)="beginEmptyMiddleClick($event)" (pointerup)="endEmptyMiddleClick($event)" (pointercancel)="cancelEmptyMiddleClick()" (auxclick)="applyOnEmptyMiddleClick($event)">
   <aside class="track-browser" aria-label="Tracks">
     <div class="track-groups">
-      <section class="track-group all-role-group" aria-label="All roles">
-        <header class="group-heading">
-          <button type="button" class="group-select all-role-label" aria-label="All roles" title="Expand all-role settings"
-            [attr.aria-expanded]="allRoleExpanded()" (click)="allRoleExpanded.update(toggleBoolean)"><span class="group-role-icon all-role-icon" aria-hidden="true">🛠︎</span></button>
-          <vc-mix-buttons class="group-mix-controls" [trackIds]="allTrackIds()" label="all tracks" [allowExclusive]="false" />
-          <div class="all-role-level">
-            <vc-compact-knob class="master-volume" [mini]="true" [showValueInline]="true" label="Master volume" [defaultValue]="100"
-              [value]="project().masterVolumePercent ?? 100" [minimum]="0" [maximum]="maximumVolume" [step]="0.1" valueFormat="decibels"
-              (valuePreview)="previewMasterVolume($event)" (valueCommit)="updateMasterVolume($event)" />
-          </div>
-          <button type="button" class="add-track-button vc-button" aria-label="Reroll all tracks"
-            title="Reroll unlocked tracks in roles with On Compose enabled · Shift+click: all roles, overriding role toggles"
-            [disabled]="editing() || !canRerollAll()" (click)="rerollAll(false, $event.shiftKey)">↻</button>
-          <button type="button" class="add-track-button vc-button" aria-label="Reroll all instruments"
-            title="Reroll unlocked instruments in roles with Randomize instruments enabled · Shift+click: all roles"
-            [disabled]="editing() || !canRerollAll()" (click)="rerollAll(true, $event.shiftKey)">♪</button>
-          <vc-context-menu [items]="presetContextItems('all')" (action)="loadQuickPreset('all', $event)">
-            <button type="button" class="add-track-button vc-button" [disabled]="editing()" aria-label="All roles preset manager"
-              (contextmenu)="refreshQuickPresets($event)" title="Manage multi-role presets · Right-click for quick presets · Shift+right-click to invert Replace"
-              aria-haspopup="dialog" (click)="openTrackPresets('all')">☰</button>
-          </vc-context-menu>
-          <button type="button" class="collapse-group-button vc-button" [attr.aria-expanded]="allRoleExpanded()"
-            [attr.aria-label]="(allRoleExpanded() ? 'Collapse' : 'Expand') + ' all-role settings'"
-            (click)="allRoleExpanded.update(toggleBoolean)">{{ allRoleExpanded() ? '▵' : '›' }}</button>
-        </header>
-        @if (allRoleExpanded()) { <div class="all-role-settings" aria-label="All-role settings"></div> }
-        @if (allRoleMessage()) { <p class="generation-status" role="status">{{ allRoleMessage() }}</p> }
-      </section>
       @for (group of roles; track group.role) {
         <section class="track-group" [class]="'track-group ' + group.role" [class.group-selected]="selectedRole() === group.role">
           <header class="group-heading">
@@ -124,6 +96,34 @@
         </section>
       }
     </div>
+    <section class="track-group all-role-group" aria-label="All roles">
+      <header class="group-heading">
+        <button type="button" class="group-select all-role-label" aria-label="All roles" title="Expand all-role settings"
+          [attr.aria-expanded]="allRoleExpanded()" (click)="allRoleExpanded.update(toggleBoolean)"><span class="group-role-icon all-role-icon" aria-hidden="true">🛠︎</span></button>
+        <vc-mix-buttons class="group-mix-controls" [trackIds]="allTrackIds()" label="all tracks" [allowExclusive]="false" />
+        <div class="all-role-level">
+          <vc-compact-knob class="master-volume" [mini]="true" [showValueInline]="true" label="Master volume" [defaultValue]="100"
+            [value]="project().masterVolumePercent ?? 100" [minimum]="0" [maximum]="maximumVolume" [step]="0.1" valueFormat="decibels"
+            (valuePreview)="previewMasterVolume($event)" (valueCommit)="updateMasterVolume($event)" />
+        </div>
+        <button type="button" class="add-track-button vc-button" aria-label="Reroll all tracks"
+          title="Reroll unlocked tracks in roles with On Compose enabled · Shift+click: all roles, overriding role toggles"
+          [disabled]="editing() || !canRerollAll()" (click)="rerollAll(false, $event.shiftKey)">↻</button>
+        <button type="button" class="add-track-button vc-button" aria-label="Reroll all instruments"
+          title="Reroll unlocked instruments in roles with Randomize instruments enabled · Shift+click: all roles"
+          [disabled]="editing() || !canRerollAll()" (click)="rerollAll(true, $event.shiftKey)">♪</button>
+        <vc-context-menu [items]="presetContextItems('all')" (action)="loadQuickPreset('all', $event)">
+          <button type="button" class="add-track-button vc-button" [disabled]="editing()" aria-label="All roles preset manager"
+            (contextmenu)="refreshQuickPresets($event)" title="Manage multi-role presets · Right-click for quick presets · Shift+right-click to invert Replace"
+            aria-haspopup="dialog" (click)="openTrackPresets('all')">☰</button>
+        </vc-context-menu>
+        <button type="button" class="collapse-group-button vc-button" [attr.aria-expanded]="allRoleExpanded()"
+          [attr.aria-label]="(allRoleExpanded() ? 'Collapse' : 'Expand') + ' all-role settings'"
+          (click)="allRoleExpanded.update(toggleBoolean)">{{ allRoleExpanded() ? '▵' : '›' }}</button>
+      </header>
+      @if (allRoleExpanded()) { <div class="all-role-settings" aria-label="All-role settings"></div> }
+      @if (allRoleMessage()) { <p class="generation-status" role="status">{{ allRoleMessage() }}</p> }
+    </section>
   </aside>
 
   <main class="song-canvas" [class.editing]="editing()" [class.settings-in-inspector]="usePartSettingsInspector()" [class.group-track-settings]="showGroupTrackSettings()">

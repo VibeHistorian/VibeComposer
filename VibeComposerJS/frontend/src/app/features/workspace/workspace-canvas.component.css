@@ -278,7 +278,7 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
   border-radius: var(--radius-md);
 }
 
-.all-role-group { --track-group-color: var(--accent-primary); }
+.all-role-group { --track-group-color: var(--accent-primary); flex: 0 0 auto; margin-top: var(--workspace-group-gap); }
 .all-role-group .group-heading { background: var(--surface-app-heading); }
 .all-role-icon { color: var(--accent-primary); font: 23px/23px sans-serif; margin: -5px 0 0 0; }
 .all-role-level { flex: 1 1 auto; min-width: 0; display: flex; justify-content: center; }
