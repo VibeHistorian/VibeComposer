@@ -15,8 +15,8 @@
     }
     <div class="seed-controls" role="group" [attr.aria-label]="role() + ' reseeding'">
       <input type="checkbox" aria-label="Enable reseeding" title="Enable seed rerolling for this role" [checked]="values()['rerollSeeds'] === true" [disabled]="disabled()" (change)="toggleSeedPolicy('rerollSeeds')" />
-      <button type="button" [disabled]="disabled() || !values()['rerollSeeds']" (click)="reseedRequested.emit()">Reseed</button>
-      <button type="button" class="same-seed" aria-label="Same seed" title="Use the same seed for all eligible tracks in this role" [attr.aria-pressed]="values()['sameSeed'] === true" [disabled]="disabled() || !values()['rerollSeeds']" (click)="toggleSeedPolicy('sameSeed')">==</button>
+      <button class="vc-button" type="button" [disabled]="disabled() || !values()['rerollSeeds']" (click)="reseedRequested.emit()">Reseed</button>
+      <button type="button" class="same-seed vc-button vc-toggle" aria-label="Same seed" title="Use the same seed for all eligible tracks in this role" [attr.aria-pressed]="values()['sameSeed'] === true" [disabled]="disabled() || !values()['rerollSeeds']" (click)="toggleSeedPolicy('sameSeed')">==</button>
     </div>
   </div>
 }

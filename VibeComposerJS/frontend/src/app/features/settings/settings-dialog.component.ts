@@ -32,7 +32,7 @@ import { MAX_DRUM_SOUNDS, type DrumMappingPreference } from '../../core/music/dr
   imports: [CdkDrag, CdkDragHandle, SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-dialog.component.html',
-  styleUrls: ['./settings-dialog.component.css', './settings-rows.css'],
+  styleUrl: './settings-dialog.component.css',
 })
 export class SettingsDialogComponent {
   readonly appVersion = version;

@@ -74,8 +74,8 @@
       <div class="setting-copy"><h3><vc-settings-scope-indicator scope="sound" />Change preference</h3><p>Rank every block change from 0–7, most preferred first. Leave empty for uniform selection.</p></div>
       <div class="setting-controls"><input aria-label="Block change preference" placeholder="Uniform (empty)" [value]="(values().blockChangePreference ?? []).join(', ')"
           (change)="changeBlockPreference($event)" /><div class="preference-actions">
-        <button type="button" aria-label="Default block change order" (click)="useBlockPreference(true)">Default order</button>
-        <button type="button" aria-label="Uniform block changes" (click)="useBlockPreference(false)">Uniform</button>
+        <button class="vc-button" type="button" aria-label="Default block change order" (click)="useBlockPreference(true)">Default order</button>
+        <button class="vc-button" type="button" aria-label="Uniform block changes" (click)="useBlockPreference(false)">Uniform</button>
       </div>@if (blockPreferenceError()) { <p class="preference-error" role="alert">{{ blockPreferenceError() }}</p> }</div>
     </div>
   }

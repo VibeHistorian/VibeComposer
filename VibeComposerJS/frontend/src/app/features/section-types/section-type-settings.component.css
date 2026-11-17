@@ -4,9 +4,7 @@ h2 { margin: 0 0 20px; color: var(--text-primary); font-size: 18px; font-weight:
 .distribution-description { margin: 12px 0 4px; color: var(--text-muted); font: 11px var(--font-ui); line-height: 1.5; }
 .setting-row.section-chance-row { grid-template-columns: 94px minmax(0, .85fr) minmax(0, 1.8fr); gap: 16px; padding: 16px 0; }
 .section-chance-row .setting-copy h3 { margin: 0; font-size: 12px; }
-.reset-button { max-width: 100%; padding: 6px 9px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); cursor: pointer; }
-.reset-button:hover { border-color: var(--accent-primary); background: var(--surface-button-hover); }
-.reset-button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.reset-button { max-width: 100%; padding: 6px 9px; font: 12px var(--font-ui); }
 
 /* Relative role distribution */
 .chance-distribution { display: flex; min-width: 0; height: 36px; overflow: hidden; border-radius: var(--radius-control); background: var(--surface-low); }
@@ -28,3 +26,7 @@ h2 { margin: 0 0 20px; color: var(--text-primary); font-size: 18px; font-weight:
   .setting-row.section-chance-row { grid-template-columns: 78px minmax(0, .85fr) minmax(0, 1.25fr); gap: 12px; }
   .setting-controls.chance-sliders { gap: 6px; }
 }
+
+/* Settings layout host and owned input focus */
+:host { display: block; min-width: 0; }
+vc-select:focus-visible, input:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }

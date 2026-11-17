@@ -18,7 +18,7 @@
         title="Right-click to reset to 0; middle-click to randomize"
         (focus)="startTextEdit()" (change)="commitText(control, $event)"
         (keydown.enter)="$any($event.target).blur()" (keydown.escape)="cancelTextEdit(control, $event)" />
-      <button type="button" class="common-grid-button"
+      <button type="button" class="common-grid-button vc-button"
         (click)="copyGlobalSeed()">Copy global</button>
       </div>
       <ng-container [ngTemplateOutlet]="quickInheritance" [ngTemplateOutletContext]="{ $implicit: control }" />
@@ -89,7 +89,7 @@
                   <vc-select #choice="vcSelect" [attr.data-parameter-key]="control.key" [class.custom-member]="parameterFrozen(control.key)" [options]="control.options" [selectDefault]="choiceDefault(control)" [id]="heading.controlId" [attr.aria-label]="control.label" [value]="values()[control.key] ?? ''" (valueChange)="choose(control, $event, choice)" [mixed]="values()[control.key] === null"></vc-select>
                 }
                 @if (flipControl(control); as flip) {
-                  <button type="button" class="flip-button" [class.custom-member]="parameterFrozen(flip.key)" [attr.data-control-key]="flip.key" [attr.data-parameter-key]="flip.key"
+                  <button type="button" class="flip-button vc-button vc-toggle vc-toggle-steady" [class.custom-member]="parameterFrozen(flip.key)" [attr.data-control-key]="flip.key" [attr.data-parameter-key]="flip.key"
                     [class.active]="values()[flip.key] === true" [class.mixed]="values()[flip.key] === null"
                     [attr.aria-label]="flip.label" [attr.aria-pressed]="values()[flip.key] === null ? 'mixed' : values()[flip.key] === true"
                     [title]="flip.label + ': ' + flip.description"

@@ -10,9 +10,6 @@
 .coded { width: 58px; }
 .coded > vc-control-heading:first-child { justify-content: center; }
 
-/* Retain the face overlay position for future reroll locks */
-.coded .knob-status { position: var(--quick-knob-overlay-position, absolute); z-index: 2; grid-area: var(--quick-knob-overlay-area, auto); align-self: end; justify-self: center; top: var(--quick-knob-overlay-top, 50px); left: var(--quick-knob-overlay-left, 50%); transform: var(--quick-knob-overlay-transform, translateX(-50%)); width: 14px; height: 14px; }
-
 /* Native keyboard and pointer control */
 .compact-knob input { position: var(--quick-knob-overlay-position, absolute); grid-area: var(--quick-knob-overlay-area, auto); justify-self: center; top: var(--quick-knob-overlay-top, 22px); left: var(--quick-knob-overlay-left, 50%); width: 42px; height: 42px; margin: 0; transform: var(--quick-knob-overlay-transform, translateX(-50%)); opacity: 0; cursor: ns-resize; touch-action: none; }
 .compact-knob:has(input:focus-visible) .knob-face { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-outline), inset 0 0 0 2px var(--parameter-surface, var(--surface-base)); }

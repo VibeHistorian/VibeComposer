@@ -1,8 +1,7 @@
 /* Local actions */
 :host { display: block; min-width: 0; }
 .scope-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-button { min-height: 26px; padding: 0 7px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); cursor: pointer; font-size: 10px; }
-button:hover:not(:disabled) { border-color: var(--accent-primary); background: var(--surface-button-hover); }
+button { min-height: 26px; padding: 0 7px; font-size: 10px; }
 button:disabled { opacity: .38; cursor: default; }
 .workflow-message { color: var(--text-primary); font-size: 12px; }
 .feedback-text { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

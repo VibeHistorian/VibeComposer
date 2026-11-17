@@ -1,5 +1,5 @@
 <div class="recording-controls">
-  <button type="button" [disabled]="disabled() && !running()" [attr.aria-pressed]="running()" (click)="toggle()">{{ waiting() ? 'Waiting for note' : running() ? 'Stop recording' : armed() ? 'Arm recording' : 'Record live' }}</button>
+  <button class="vc-button vc-toggle" type="button" [disabled]="disabled() && !running()" [attr.aria-pressed]="running()" (click)="toggle()">{{ waiting() ? 'Waiting for note' : running() ? 'Stop recording' : armed() ? 'Arm recording' : 'Record live' }}</button>
   @if (notes()) {
     <vc-select aria-label="Recording mode" [disabled]="running()" [options]="recordingModes" [value]="preferences.preferences().recordingMode" (valueChange)="preferences.setRecordingMode($event)" />
   } @else {

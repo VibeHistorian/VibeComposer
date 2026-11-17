@@ -1,0 +1,11 @@
+/* Native action surfaces; feature styles own dimensions and typography. */
+:where(.vc-button) { border: var(--button-border, 1px solid var(--border-strong)); border-radius: var(--radius-control); background: var(--button-background, var(--surface-button)); color: var(--button-color, var(--text-primary)); cursor: pointer; }
+:where(.vc-button:hover:not(:disabled):not([aria-disabled="true"])) { border-color: var(--accent-primary); background: var(--surface-button-hover); color: var(--button-hover-color, var(--button-color, var(--text-primary))); }
+:where(.vc-button:focus-visible) { outline: 2px solid var(--border-focus); outline-offset: var(--button-focus-offset, 2px); }
+:where(.vc-button:disabled, .vc-button[aria-disabled="true"]) { cursor: default; }
+
+/* Toggle state preserves feature-specific accents through normal component overrides. */
+:where(.vc-toggle[aria-pressed="true"]) { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); box-shadow: var(--button-active-shadow, 0 0 8px var(--accent-outline)); }
+:where(.vc-toggle[aria-pressed="mixed"]) { border-style: dashed; }
+:where(.vc-toggle:disabled) { opacity: .5; }
+:where(.vc-toggle-steady[aria-pressed="true"]:hover:not(:disabled)) { border-color: var(--accent-primary); background: var(--surface-toggle-active); color: var(--accent-hover); }

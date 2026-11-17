@@ -12,7 +12,7 @@ import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from '../../core/music/melo
   imports: [SettingsScopeIndicatorComponent, CompactKnobComponent, CompactToggleComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './melody-global-settings.component.html',
-  styleUrls: ['./melody-global-settings.component.css', './settings-rows.css'],
+  styleUrl: './melody-global-settings.component.css',
 })
 export class MelodyGlobalSettingsComponent {
   readonly contextualNumbers = [

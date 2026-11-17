@@ -17,18 +17,18 @@
               [value]="project().masterVolumePercent ?? 100" [minimum]="0" [maximum]="maximumVolume" [step]="0.1" valueFormat="decibels"
               (valuePreview)="previewMasterVolume($event)" (valueCommit)="updateMasterVolume($event)" />
           </div>
-          <button type="button" class="add-track-button" aria-label="Reroll all tracks"
+          <button type="button" class="add-track-button vc-button" aria-label="Reroll all tracks"
             title="Reroll unlocked tracks in roles with On Compose enabled · Shift+click: all roles, overriding role toggles"
             [disabled]="editing() || !canRerollAll()" (click)="rerollAll(false, $event.shiftKey)">↻</button>
-          <button type="button" class="add-track-button" aria-label="Reroll all instruments"
+          <button type="button" class="add-track-button vc-button" aria-label="Reroll all instruments"
             title="Reroll unlocked instruments in roles with Randomize instruments enabled · Shift+click: all roles"
             [disabled]="editing() || !canRerollAll()" (click)="rerollAll(true, $event.shiftKey)">♪</button>
           <vc-context-menu [items]="presetContextItems('all')" (action)="loadQuickPreset('all', $event)">
-            <button type="button" class="add-track-button" [disabled]="editing()" aria-label="All roles preset manager"
+            <button type="button" class="add-track-button vc-button" [disabled]="editing()" aria-label="All roles preset manager"
               (contextmenu)="refreshQuickPresets($event)" title="Manage multi-role presets · Right-click for quick presets · Shift+right-click to invert Replace"
               aria-haspopup="dialog" (click)="openTrackPresets('all')">☰</button>
           </vc-context-menu>
-          <button type="button" class="collapse-group-button" [attr.aria-expanded]="allRoleExpanded()"
+          <button type="button" class="collapse-group-button vc-button" [attr.aria-expanded]="allRoleExpanded()"
             [attr.aria-label]="(allRoleExpanded() ? 'Collapse' : 'Expand') + ' all-role settings'"
             (click)="allRoleExpanded.update(toggleBoolean)">{{ allRoleExpanded() ? '▵' : '›' }}</button>
         </header>
@@ -44,11 +44,11 @@
             </button>
             <vc-mix-buttons class="group-mix-controls" [trackIds]="roleTrackIds(group.role)" [label]="group.name + ' tracks'" />
             <div class="group-policy-toggles">
-              <button type="button" class="group-policy-toggle" aria-label="On Compose"
+              <button type="button" class="group-policy-toggle vc-button vc-toggle vc-toggle-steady" aria-label="On Compose"
                 title="On Compose: reroll this role's track settings when composing"
                 [class.active]="policyFor(group.role).onCompose === true" [attr.aria-pressed]="policyFor(group.role).onCompose === true"
                 [disabled]="editing()" (click)="updateRolePolicy(group.role, { onCompose: !policyFor(group.role).onCompose })">✦</button>
-              <button type="button" class="group-policy-toggle" aria-label="Randomize instruments"
+              <button type="button" class="group-policy-toggle vc-button vc-toggle vc-toggle-steady" aria-label="Randomize instruments"
                 title="Randomize instruments: choose instruments on settings rerolls and when increasing the track total"
                 [class.active]="instrumentPolicyFor(group.role).randomize" [attr.aria-pressed]="instrumentPolicyFor(group.role).randomize"
                 [disabled]="editing()" (click)="updateInstrumentPolicy(group.role, { randomize: !instrumentPolicyFor(group.role).randomize })">♪</button>
@@ -57,12 +57,12 @@
               [attr.aria-label]="group.name + ' track count'" title="Change total tracks; locked tracks are kept"
               [value]="tracksFor(group.role).length" [disabled]="editing()" (focus)="$any($event.target).select()"
               (keydown.enter)="$any($event.target).blur()" (change)="changeRoleCount(group.role, $event)" />
-            <button type="button" class="add-track-button" [disabled]="editing()" (click)="addTrack(group.role)"
+            <button type="button" class="add-track-button vc-button" [disabled]="editing()" (click)="addTrack(group.role)"
               [attr.aria-label]="'Add ' + group.name + ' track'" [title]="'Add ' + group.name + ' track'">＋</button>
-              <button type="button" class="add-track-button" [attr.aria-label]="'Reroll ' + group.name + ' tracks'" [title]="'Reroll unlocked ' + group.name + ' track settings'"
+              <button type="button" class="add-track-button vc-button" [attr.aria-label]="'Reroll ' + group.name + ' tracks'" [title]="'Reroll unlocked ' + group.name + ' track settings'"
                 [disabled]="editing() || !canRerollRole(group.role)" (click)="rerollRole(group.role)">↻</button>
-            <vc-context-menu [items]="presetContextItems(group.role)" (action)="loadQuickPreset(group.role, $event)"><button type="button" class="add-track-button" [disabled]="editing()" [attr.aria-label]="group.name + ' preset manager'" (contextmenu)="refreshQuickPresets($event)" title="Manage track presets · Right-click for quick presets · Shift+right-click to invert Replace" aria-haspopup="dialog" (click)="openTrackPresets(group.role)">☰</button></vc-context-menu>
-            <button type="button" class="collapse-group-button" [disabled]="editing()" [attr.aria-expanded]="!isGroupCollapsed(group.role)"
+            <vc-context-menu [items]="presetContextItems(group.role)" (action)="loadQuickPreset(group.role, $event)"><button type="button" class="add-track-button vc-button" [disabled]="editing()" [attr.aria-label]="group.name + ' preset manager'" (contextmenu)="refreshQuickPresets($event)" title="Manage track presets · Right-click for quick presets · Shift+right-click to invert Replace" aria-haspopup="dialog" (click)="openTrackPresets(group.role)">☰</button></vc-context-menu>
+            <button type="button" class="collapse-group-button vc-button" [disabled]="editing()" [attr.aria-expanded]="!isGroupCollapsed(group.role)"
               [attr.aria-label]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' randomization settings'"
               [title]="(isGroupCollapsed(group.role) ? 'Expand ' : 'Collapse ') + group.name + ' randomization settings'"
               (click)="toggleGroupCollapsed(group.role)">{{ isGroupCollapsed(group.role) ? '›' : '▵' }}</button>
@@ -187,11 +187,11 @@
             }
             @if (editableScopes().length || preferences.editingQuickSettings()) {
               @if (preferences.editingQuickSettings()) {
-                <button type="button" class="part-inspector-link" [disabled]="!editableScopes().length" (click)="preferences.resetQuickSettings(partRole())">Reset to default</button>
+                <button type="button" class="part-inspector-link vc-button" [disabled]="!editableScopes().length" (click)="preferences.resetQuickSettings(partRole())">Reset to default</button>
               }
-              <button type="button" class="part-inspector-link" [attr.aria-pressed]="preferences.editingQuickSettings()" (click)="toggleQuickSettingsEdit()">{{ preferences.editingQuickSettings() ? 'Save quick settings' : 'Edit quick settings' }}</button>
+              <button type="button" class="part-inspector-link vc-button" [attr.aria-pressed]="preferences.editingQuickSettings()" (click)="toggleQuickSettingsEdit()">{{ preferences.editingQuickSettings() ? 'Save quick settings' : 'Edit quick settings' }}</button>
             }
-            <button type="button" class="part-panel-toggle" [disabled]="preferences.editingQuickSettings()" [attr.aria-expanded]="partPanelExpanded()"
+            <button type="button" class="part-panel-toggle vc-button" [disabled]="preferences.editingQuickSettings()" [attr.aria-expanded]="partPanelExpanded()"
               [attr.aria-label]="(partPanelExpanded() ? 'Collapse ' : 'Expand ') + partPanelLabel()"
               [title]="(partPanelExpanded() ? 'Collapse ' : 'Expand ') + partPanelLabel()"
               aria-controls="part-settings-content" (click)="partPanelExpanded.set(!partPanelExpanded())">
@@ -310,20 +310,20 @@
         </div>
         @if (editing()) {
         <footer class="score-display-header" aria-label="Score edit actions">
-            <button type="button" class="export-phrase" [disabled]="!editor()?.draftReady()"
+            <button type="button" class="export-phrase vc-button" [disabled]="!editor()?.draftReady()"
               title="Download the current phrase as a MIDI file, including unapplied edits."
               (click)="editor()?.exportPhrase()">Export Phrase</button>
             <vc-compact-knob label="Transpose phrase" description="Transpose the whole phrase freely in semitones" unit=" st"
               [mini]="true" [hoverLabelOnly]="true" [minimum]="-36" [maximum]="36" [defaultValue]="0"
               [value]="editor()?.freeTranspose() ?? 0" (valueCommit)="editor()?.transposePhrase($event)" />
-            <button type="button" title="Undo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
-            <button type="button" title="Redo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
-            <button type="button" (click)="editor()?.cancelChanges()">Cancel</button>
+            <button class="vc-button" type="button" title="Undo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canUndo()" (click)="editor()?.undo()">Undo phrase</button>
+            <button class="vc-button" type="button" title="Redo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
+            <button class="vc-button" type="button" (click)="editor()?.cancelChanges()">Cancel</button>
             @if (editor(); as edit) {
-              <button type="button" [disabled]="selectedPart() === 'drums'" [class.active]="edit.snapToScale() && selectedPart() !== 'drums'" [attr.aria-pressed]="edit.snapToScale()" aria-label="Snap to scale/key" title="Snap pitch edits to the current key and scale" (click)="edit.snapToScale.update(toggleBoolean)">Snap to scale/key</button>
+              <button class="vc-button" type="button" [disabled]="selectedPart() === 'drums'" [class.active]="edit.snapToScale() && selectedPart() !== 'drums'" [attr.aria-pressed]="edit.snapToScale()" aria-label="Snap to scale/key" title="Snap pitch edits to the current key and scale" (click)="edit.snapToScale.update(toggleBoolean)">Snap to scale/key</button>
             }
-            <button type="button" (click)="editor()?.applyLocalChanges()" [disabled]="!editSectionId() || !editor()?.hasChanges()">Local Apply</button>
-            <button type="button" [class.active]="editor()?.hasChanges()" [disabled]="!editor()?.hasChanges()" (click)="editor()?.applyChanges()">Apply</button>
+            <button class="vc-button" type="button" (click)="editor()?.applyLocalChanges()" [disabled]="!editSectionId() || !editor()?.hasChanges()">Local Apply</button>
+            <button class="vc-button" type="button" [class.active]="editor()?.hasChanges()" [disabled]="!editor()?.hasChanges()" (click)="editor()?.applyChanges()">Apply</button>
         </footer>
         }
       </section>
@@ -353,10 +353,10 @@
         <ng-container [ngTemplateOutlet]="groupTrackToggle" />
       }
       @if (settingsTarget().kind === 'arrangement' || 'sectionId' in settingsTarget()) {
-        <button type="button" class="restore-track-button inspector-variations" (click)="openArrangementVariations()" aria-label="Inspect selected arrangement variations">Variations…</button>
+        <button type="button" class="restore-track-button inspector-variations vc-button" (click)="openArrangementVariations()" aria-label="Inspect selected arrangement variations">Variations…</button>
       }
       @if (usePartSettingsInspector() && preferences.editingQuickSettings()) {
-        <button type="button" class="part-inspector-link" (click)="toggleQuickSettingsEdit()">Save quick settings</button>
+        <button type="button" class="part-inspector-link vc-button" (click)="toggleQuickSettingsEdit()">Save quick settings</button>
       }
 
       @if (localPartTarget()) {
@@ -387,10 +387,10 @@
                 <vc-compact-toggle [attr.data-control-role]="track.role" label="Include in this section"
                   [description]="'Include ' + track.name + ' in the selected section.'"
                   [active]="contextTrackPresent(track)" (toggled)="toggleContextTrackPresence(track)" />
-                <button type="button" class="restore-track-button" (click)="selectTrack(track.id)">Edit global track settings</button>
-                <button type="button" class="restore-track-button" (click)="openTrackEditor(track.id)">Edit notes for entire track</button>
+                <button type="button" class="restore-track-button vc-button" (click)="selectTrack(track.id)">Edit global track settings</button>
+                <button type="button" class="restore-track-button vc-button" (click)="openTrackEditor(track.id)">Edit notes for entire track</button>
                 @if (track.editedPhrase && generationAvailable[track.role]) {
-                  <button type="button" class="restore-track-button" (click)="projects.clearTrackPhrase(track.id)">Restore generated notes for entire track</button>
+                  <button type="button" class="restore-track-button vc-button" (click)="projects.clearTrackPhrase(track.id)">Restore generated notes for entire track</button>
                 }
               </section>
             }
@@ -416,15 +416,15 @@
             <span class="section-beat-count">{{ selectedSectionBeats() }} beats</span>
           </div>
           <div class="section-actions">
-            <button type="button" (click)="moveSection(-1)" [disabled]="selectedSectionIndex() <= 0" aria-label="Move section earlier">↑</button>
-            <button type="button" (click)="moveSection(1)" [disabled]="selectedSectionIndex() >= project().arrangement.length - 1" aria-label="Move section later">↓</button>
-            <button type="button" (click)="duplicateSection()" [disabled]="project().arrangement.length >= 32 || totalMeasures() + section.measures > 128">Duplicate</button>
-            <button type="button" class="remove-track" (click)="removeSection()" [disabled]="project().arrangement.length <= 1">Remove</button>
+            <button class="vc-button" type="button" (click)="moveSection(-1)" [disabled]="selectedSectionIndex() <= 0" aria-label="Move section earlier">↑</button>
+            <button class="vc-button" type="button" (click)="moveSection(1)" [disabled]="selectedSectionIndex() >= project().arrangement.length - 1" aria-label="Move section later">↓</button>
+            <button class="vc-button" type="button" (click)="duplicateSection()" [disabled]="project().arrangement.length >= 32 || totalMeasures() + section.measures > 128">Duplicate</button>
+            <button type="button" class="remove-track vc-button" (click)="removeSection()" [disabled]="project().arrangement.length <= 1">Remove</button>
           </div>
           <vc-section-context-editor [section]="section" />
           <div class="section-track-controls">
             <div class="inspector-section-heading"><p class="eyebrow">TRACKS IN SECTION</p>
-              <button type="button" (click)="randomizeSectionPresence(section)">Reroll</button>
+              <button type="button" class="vc-button" (click)="randomizeSectionPresence(section)">Reroll</button>
             </div>
             <div class="section-presence-columns">
               @for (group of roles; track group.role) {
@@ -447,13 +447,13 @@
             <label class="track-name-field"><input aria-label="Track name" [value]="selectedTrack().name" maxlength="48" (change)="updateTrackName($event)" /></label>
             @if (hasChannelCollision()) { <span class="channel-warning" role="status">Another track also uses channel {{ selectedTrack().midiChannel }}.</span> }
             <div class="track-actions" aria-label="Track actions">
-              <button type="button" (click)="openTrackEditor(selectedTrack().id)">Edit notes</button>
-              <button type="button" (click)="duplicateTrack(selectedTrack().id)">Duplicate</button>
-              <button type="button" [disabled]="!canMoveTrack(selectedTrack().id, -1)" (click)="reorderTrack(selectedTrack().id, -1)" aria-label="Move track up">↑</button>
-              <button type="button" [disabled]="!canMoveTrack(selectedTrack().id, 1)" (click)="reorderTrack(selectedTrack().id, 1)" aria-label="Move track down">↓</button>
-              @if (canRemoveTrack(selectedTrack().id)) { <button type="button" class="remove-track" (click)="removeTrack(selectedTrack().id)">Remove</button> }
+              <button class="vc-button" type="button" (click)="openTrackEditor(selectedTrack().id)">Edit notes</button>
+              <button class="vc-button" type="button" (click)="duplicateTrack(selectedTrack().id)">Duplicate</button>
+              <button class="vc-button" type="button" [disabled]="!canMoveTrack(selectedTrack().id, -1)" (click)="reorderTrack(selectedTrack().id, -1)" aria-label="Move track up">↑</button>
+              <button class="vc-button" type="button" [disabled]="!canMoveTrack(selectedTrack().id, 1)" (click)="reorderTrack(selectedTrack().id, 1)" aria-label="Move track down">↓</button>
+              @if (canRemoveTrack(selectedTrack().id)) { <button type="button" class="remove-track vc-button" (click)="removeTrack(selectedTrack().id)">Remove</button> }
             </div>
-            @if (selectedTrack().editedPhrase && partGenerationAvailable()) { <button type="button" class="restore-track-button" (click)="restoreTrackPhrase()">Restore generated notes</button> }
+            @if (selectedTrack().editedPhrase && partGenerationAvailable()) { <button type="button" class="restore-track-button vc-button" (click)="restoreTrackPhrase()">Restore generated notes</button> }
           }
         </div>
 
@@ -472,7 +472,7 @@
 </section>
 
 <ng-template #groupTrackToggle>
-  <button type="button" class="group-track-toggle" [attr.aria-pressed]="showGroupTrackSettings()"
+  <button type="button" class="group-track-toggle vc-button" [attr.aria-pressed]="showGroupTrackSettings()"
     aria-label="Show individual track quick settings" title="Toggle individual track quick settings"
     aria-controls="part-settings-content" (click)="toggleGroupTrackSettings()">?</button>
 </ng-template>

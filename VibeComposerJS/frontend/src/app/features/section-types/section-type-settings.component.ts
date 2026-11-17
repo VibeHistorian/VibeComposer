@@ -11,7 +11,7 @@ const PART_NAMES: Readonly<Record<ArrangedPart, string>> = {
   selector: 'vc-section-type-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './section-type-settings.component.html',
-  styleUrls: ['./section-type-settings.component.css', '../settings/settings-rows.css'],
+  styleUrl: './section-type-settings.component.css',
 })
 export class SectionTypeSettingsComponent {
   readonly settings = inject(SectionTypeSettingsService);
