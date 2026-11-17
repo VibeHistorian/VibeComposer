@@ -143,10 +143,10 @@ test('scale-matched keyboard input follows degrees and labels, including wrapped
  assert.equal(helpers.keyboardMidi('Digit3',false),40,'disabled matching retains C-major white keys');
 });
 test('count-in, cursor wrapping and accent boundaries follow six-beat and fractional loops', () => {
- const f=recordingFixture(),c=f.component;c.beats.set(6);c.toggle();assert.equal(c.countingIn(),6);
+ const f=recordingFixture(),c=f.component;c.beats.set(16);c.measureBeats.set(6);c.toggle();assert.equal(c.countingIn(),6);
  f.advance(2000);assert.equal(c.countingIn(),2);assert.equal(c.began.values.length,0);
- f.advance(3000);assert.equal(c.began.values.length,1);f.advance(6500);
- assert.ok(Math.abs(c.beat()-1)<1e-7);assert.equal(c.displayBeat(),2);assert.equal(c.beatCount(),6);c.stop();
+ f.advance(3000);assert.equal(c.began.values.length,1);f.advance(11500);
+ assert.ok(Math.abs(c.beat()-1)<1e-7);assert.equal(c.displayBeat(),2);assert.equal(c.beatCount(),16);c.stop();
  const ticks=[];let beat=-3.5;for(let i=0;i<10;i++){ticks.push(beat);beat=helpers.nextRecordingTick(beat,3.5);}
  assert.deepEqual(ticks,[-3.5,-2.5,-1.5,-.5,0,1,2,3,3.5,4.5]);
  assert.equal(helpers.recordingPosition(3.5,3.5),0);assert.equal(helpers.recordingTickAtOrAfter(3.4,3.5),3.5);
@@ -201,7 +201,7 @@ test('idle keyboard and MIDI audition emit sound events and never create recordi
 test('audition-to-record transitions release previews and record only new input', () => {
  const f=recordingFixture(false),c=f.component;c.ngOnInit();
  c.input({id:'idle',midi:60,velocity:90,down:true});c.toggle();assert.equal(c.span.values.length,0);
- c.input({id:'recorded',midi:64,velocity:90,down:true});f.advance(500);c.stop();
+ f.advance(2000);c.input({id:'recorded',midi:64,velocity:90,down:true});f.advance(2500);c.stop();
  assert.equal(c.span.values.length,1);assert.equal(c.span.values[0].midi,64);
  c.input({id:'idle-again',midi:67,velocity:90,down:true});c.input({id:'idle-again',midi:67,velocity:0,down:false});
  assert.equal(c.span.values.length,1);c.ngOnDestroy();
@@ -272,9 +272,38 @@ test('live recording reserves shifted note keys even when selected-note actions 
  const f=recordingFixture(false),c=f.component;c.ngOnInit();c.preferActionShortcut.set(()=>true);
  const event={key:'T',code:'KeyT',shiftKey:true,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;}};
  c.keydown(event);assert.equal(c.noteInput.values.length,0,'idle selection prefers the action');
- c.toggle();c.keydown(event);assert.equal(c.noteInput.values.at(-1).midi,61);assert.equal(c.noteInput.values.at(-1).down,true);
- assert.equal(event.prevented,true);assert.equal(event.stopped,true);f.advance(250);c.keyup(event);
+ c.toggle();f.advance(2000);c.keydown(event);assert.equal(c.noteInput.values.at(-1).midi,61);assert.equal(c.noteInput.values.at(-1).down,true);
+ assert.equal(event.prevented,true);assert.equal(event.stopped,true);f.advance(2250);c.keyup(event);
  assert.equal(c.span.values.length,1);assert.equal(c.span.values[0].midi,61);
  c.stop();const count=c.noteInput.values.length;event.prevented=false;c.keydown(event);
  assert.equal(c.noteInput.values.length,count,'after recording stops, action priority returns');assert.equal(event.prevented,false);c.ngOnDestroy();
+});
+
+ test('armed count-in loops until the first note and records that note at the positioned beat', () => {
+  const f=recordingFixture(),c=f.component;
+  c.armed=()=>true;c.beats.set(16);c.startBeat.set(7);c.toggle();
+  f.advance(21500);assert.equal(c.waiting(),true);assert.equal(c.began.values.length,0);assert.ok(c.countingIn()>0);
+  c.input({id:'first',midi:64,velocity:113,down:true});
+  assert.equal(c.waiting(),false);assert.equal(c.began.values.length,1);assert.equal(f.session.phraseBeat(),7);
+  f.advance(22000);c.input({id:'first',midi:64,velocity:0,down:false});c.stop();
+  assert.equal(c.span.values.length,1);assert.equal(c.span.values[0].start,7);assert.equal(c.span.values[0].end,8);assert.equal(c.span.values[0].velocity,113);
+ });
+ test('short measures count at least two beats and multi-measure phrases count only one measure',()=>{
+  for(const [measure,expected] of [[.5,2],[3.5,3.5],[4,4]]){
+   const {component:c}=recordingFixture();c.beats.set(32);c.measureBeats.set(measure);c.toggle();assert.equal(c.countingIn(),expected);c.stop();
+  }
+ });
+ test('a phrase recording batch takes one undo and redo; cancellation removes only the last batch',()=>{
+  const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();
+  const before=JSON.stringify(e.draftNotes());
+  e.beginRecording();e.recordSpan({start:0,end:.5,midi:60,velocity:90});e.recordSpan({start:1,end:1.5,midi:64,velocity:90});e.finishRecording();
+  const after=JSON.stringify(e.draftNotes());assert.notEqual(after,before);e.undo();assert.equal(JSON.stringify(e.draftNotes()),before);e.redo();assert.equal(JSON.stringify(e.draftNotes()),after);
+  e.beginRecording();e.recordSpan({start:2,end:2.5,midi:67,velocity:90});e.finishRecording();e.cancelRecording();assert.equal(JSON.stringify(e.draftNotes()),after);
+ });
+
+test('phrase recording mode persists and Shift backtick matches the cancel shortcut',()=>{
+ const f=fixture();assert.equal(f.uiPreferences.preferences().recordingMode,'count-in');
+ f.uiPreferences.setRecordingMode('armed');const saved=JSON.parse(f.uiPreferences.exportJson());assert.equal(saved.recordingMode,'armed');
+ assert.equal(f.uiPreferences.importJson(JSON.stringify({...saved,recordingMode:'invalid'})),false);
+ assert.equal(f.uiPreferences.matchesShortcut('cancelPhraseRecording',{code:'Backquote',key:'~',shiftKey:true}),true);
 });

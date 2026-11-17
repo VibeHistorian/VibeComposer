@@ -26,7 +26,7 @@ import { generatePhraseMidi } from '../../core/music/midi-export';
 import { downloadProjectFile } from '../../core/project/download-file';
 import { exportFilename, safeExportName } from '../../core/project/export-filename';
 import { sectionPhraseBounds } from '../../core/music/phrase-bounds';
-import { sectionDurationBeats, sectionProject } from '../../core/music/section-context';
+import { sectionChordDurations, sectionDurationBeats, sectionProject } from '../../core/music/section-context';
 
 
 export interface PhraseDraftNote extends PhraseNote { readonly trackId: string; }
@@ -73,7 +73,29 @@ export class EditWorkspaceComponent {
     }));
     this.liveRecordingSelection.set(selected);
   }
+  private recordingSnapshot?: PhraseEditSnapshot<PhraseDraftNote>;
+  private recordingActive = false;
+  private lastRecordingIds: string[] = [];
+  beginRecording(): void {
+    this.recordingSnapshot = { notes: [...this.draftNotes()], selection: [...this.selectedNoteIds()], restore: false, restoredTrackIds: this.restoredTrackIds(), phraseTranspose: this.freeTranspose() };
+    this.recordingActive = true; this.lastRecordingIds = [];
+  }
+  cancelRecording(): void {
+    if (!this.lastRecordingIds.length) return;
+    const removed = new Set(this.lastRecordingIds);
+    this.draftNotes.update(notes => notes.filter(note => !removed.has(note.id)));
+    this.selectedNoteIds.update(ids => ids.filter(id => !removed.has(id)));
+    if (this.recordingSnapshot && phraseNotesEqual(this.draftNotes(), this.recordingSnapshot.notes)) {
+      this.restoredTrackIds.set(this.recordingSnapshot.restoredTrackIds ?? []);
+      this.selectNotes(this.recordingSnapshot.selection);
+    }
+    this.lastRecordingIds = []; this.record();
+  }
   finishRecording(): void {
+    if (this.recordingActive) {
+      this.recordingActive = false;
+      this.record();
+    }
     for (const release of this.liveVoices.values()) { try { release(); } catch { /* Continue releasing the other voices. */ } }
     this.liveVoices.clear(); this.heldInputPitches.clear(); this.soundingPitches.set([]); this.liveRecordingSelection.set([]); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
   }
@@ -84,14 +106,20 @@ export class EditWorkspaceComponent {
       if (this.draftNotes().filter(note => note.trackId === track.id).length >= 2048) break;
       const note = { id: this.makeNoteId(), trackId: track.id, midi: Math.max(0, Math.min(127, segment.midi - this.displayTranspose())),
         startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity };
+      this.lastRecordingIds.push(note.id);
       this.draftNotes.update(notes => [...notes, note]); this.selectNote(note.id); this.markManual([track.id]);
     }
-    this.record();
+    if (!this.recordingActive) this.record();
   }
   readonly preferActionShortcut = (event: KeyboardEvent): boolean => this.selectedNoteIds().length > 0
     && (['selectAllNotes', 'transposeNotes', 'deleteNotes', 'undo', 'redo', 'playback'] as const)
       .some(action => this.preferences.matchesShortcut(action, event));
   private readonly recorder = viewChild(LiveRecordingComponent);
+  readonly recordingMeasureBeats = computed(() => {
+    const section = this.project().arrangement.find(section => section.id === this.sectionId());
+    return section ? sectionChordDurations(this.project(), section)[0] : 4;
+  });
+  readonly recordingStartBeat = computed(() => Math.max(0, this.audio.beat() - this.recordingBackingContext().startBeat));
   readonly recordingBackingContext = computed(() => ({ project: this.project(),
     startBeat: (resolveProjectTimeline(this.project()).sections.find(section => section.sectionId === this.sectionId())?.startBeat ?? 0) + this.phraseStartBeat(),
     trackIds: this.editedTracks().map(track => track.id) }));
@@ -314,8 +342,8 @@ export class EditWorkspaceComponent {
     if (note) this.workspaceUi.selectedTrackId.set(note.trackId);
   }
   selectAll(): void { this.selectNotes(this.notes().map(note => note.id)); }
-  undo(): void { this.loadHistory(this.history.undo()); }
-  redo(): void { this.loadHistory(this.history.redo()); }
+  undo(): void { this.recorder()?.stop(); this.loadHistory(this.history.undo()); }
+  redo(): void { this.recorder()?.stop(); this.loadHistory(this.history.redo()); }
   private loadHistory(snapshot?: PhraseEditSnapshot<PhraseDraftNote>): void {
     if (!snapshot) return;
     this.draftNotes.set([...snapshot.notes]);
@@ -326,6 +354,7 @@ export class EditWorkspaceComponent {
     this.applyError.set(null);
   }
   private record(): void {
+    if (this.recordingActive) return;
     this.history.record({ notes: this.draftNotes(), selection: this.selectedNoteIds(), restore: this.restoredTrackIds().length > 0, restoredTrackIds: this.restoredTrackIds(), phraseTranspose: this.freeTranspose() });
     this.historyRevision.update(value => value + 1);
     this.applyError.set(null);

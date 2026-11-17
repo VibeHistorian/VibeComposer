@@ -12,6 +12,8 @@ const mouse = (button: number, ctrl = false, shift = false, alt = false) => bind
 const wheel = (ctrl = false, shift = false, alt = false) => binding('wheel', 'scroll', ctrl, shift, alt);
 const modifier = (ctrl = false, shift = false, alt = false) => binding('modifier', 'held', ctrl, shift, alt);
 export const SHORTCUTS = [
+  { id: 'togglePhraseRecording', group: 'Recording', label: 'Start / stop phrase recording', description: 'Arm or start recording; press again to stop.', defaults: [key('`')] },
+  { id: 'cancelPhraseRecording', group: 'Recording', label: 'Cancel last phrase recording', description: 'Stop and remove the last recorded batch of notes.', defaults: [key('`', false, true)] },
   { id: 'recordRhythm', group: 'Recording', label: 'Tap recording rhythm', description: 'Tap or hold while recording durations or hit patterns.', defaults: [key('`')] },
   { id: 'extendSections', group: 'Section selection', label: 'Extend / trim sections', description: 'Hold while selecting a section. Extends a contiguous selection or trims it at the chosen section.', defaults: [modifier(true)] },
   { id: 'rangeSections', group: 'Section selection', label: 'Select section range', description: 'Hold while selecting a section to select from the selection anchor.', defaults: [modifier(false, true)] },
@@ -81,7 +83,7 @@ export type ShortcutId = typeof SHORTCUTS[number]['id'];
  */
 export interface ShortcutContext {
   readonly surface?: readonly ('knob' | 'dropdown' | 'overview' | 'score')[];
-  readonly mode?: readonly ('arrangement' | 'phrase-editor')[];
+  readonly mode?: readonly ('arrangement' | 'phrase-editor' | 'rhythm-editor')[];
   readonly scope?: readonly ('global' | 'section')[];
   readonly target?: readonly ('section-header' | 'role-cell' | 'track-cell' | 'empty-grid' | 'note-body' | 'note-start' | 'note-end' | 'velocity-bar')[];
   readonly selection?: readonly ('selected' | 'unselected')[];
@@ -140,7 +142,9 @@ export const SHORTCUT_CONTEXTS = {
   applyPhrase: [emptyPhrase],
   dragDuration: [phraseNotes], dragPitch: [phraseNotes],
   trimStart: [phraseNotes],
-  recordRhythm: [{}],
+  togglePhraseRecording: [phraseContext],
+  cancelPhraseRecording: [phraseContext],
+  recordRhythm: [{ mode: ['rhythm-editor'] }],
 } as const satisfies Record<ShortcutId, readonly [ShortcutContext, ...ShortcutContext[]]>;
 
 /** Product contexts intersect unless at least one constrained axis is disjoint.
@@ -167,7 +171,7 @@ export function shortcutFromEvent(event: KeyboardEvent | MouseEvent | WheelEvent
   const modifiers = { ctrl: !!(event.ctrlKey || event.metaKey), shift: !!event.shiftKey, alt: !!event.altKey };
   if ('key' in event) {
     if (['Control', 'Shift', 'Alt', 'Meta', 'AltGraph'].includes(event.key) || event.isComposing) return null;
-    return { kind: 'key', input: event.key.toLowerCase(), ...modifiers };
+    return { kind: 'key', input: event.code === 'Backquote' ? '`' : event.key.toLowerCase(), ...modifiers };
   }
   if ('deltaY' in event) return event.deltaY || event.deltaX ? { kind: 'wheel', input: 'scroll', ...modifiers } : null;
   return { kind: 'mouse', input: String(event.button), ...modifiers };

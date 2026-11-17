@@ -1237,3 +1237,11 @@ test('audition release mutes and stops remaining voices even if an ended voice r
  const release=playback.liveAudition(project.tracks[0],project.tracks[0].notes[0],project);await new Promise(r=>setImmediate(r));
  assert.doesNotThrow(release);assert.equal(stopped,1);assert.ok(gain.events.some(e=>e.value===0));assert.doesNotThrow(release);assert.equal(stopped,1);
 });
+
+test('armed backing resolves its capture position after instrument preparation', async()=>{
+ const {playback,project}=fixture();let ready,beat=3;
+ playback.prepareInstrument=()=>new Promise(resolve=>ready=resolve);
+ const session=playback.beginRecordingBacking({project,startBeat:4,trackIds:['bass'],captureBeat:()=>beat},8);
+ beat=3.5;ready();await session.ready;
+ assert.equal(session.beat(),3.5);assert.equal(playback.beat(),7.5);session.stop();
+});

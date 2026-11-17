@@ -1,9 +1,13 @@
 <div class="recording-controls">
-  <button type="button" [disabled]="disabled() && !running()" [attr.aria-pressed]="running()" (click)="toggle()">{{ running() ? 'Stop recording' : 'Record live' }}</button>
-  <label><input type="checkbox" [disabled]="running()" [checked]="preferences.preferences().recordingCountIn" (change)="preferences.setRecordingOption('recordingCountIn', $any($event.target).checked)" /> Count-in ({{ loopBeats() }} beats)</label>
-  <label><input type="checkbox" [checked]="preferences.preferences().recordingTick" (change)="preferences.setRecordingOption('recordingTick', $any($event.target).checked)" /> Recording tick</label>
-  @if (notes()) { <label><input type="checkbox" aria-label="Play other tracks while recording" [disabled]="running()" [checked]="preferences.preferences().recordingOtherTracks" (change)="preferences.setRecordingOption('recordingOtherTracks', $any($event.target).checked)" /> Play other tracks</label> }
-  @if (notes()) { <label title="Map keyboard letters to scale degrees. Shift adds one semitone; MIDI pitches stay unchanged."><input type="checkbox" aria-label="Match keyboard scale/key" [checked]="preferences.preferences().keyboardMatchScale" (change)="preferences.setRecordingOption('keyboardMatchScale', $any($event.target).checked)" /> Match scale/key</label> }
+  <button type="button" [disabled]="disabled() && !running()" [attr.aria-pressed]="running()" (click)="toggle()">{{ waiting() ? 'Waiting for note' : running() ? 'Stop recording' : armed() ? 'Arm recording' : 'Record live' }}</button>
+  @if (notes()) {
+    <vc-select aria-label="Recording mode" [disabled]="running()" [options]="recordingModes" [value]="preferences.preferences().recordingMode" (valueChange)="preferences.setRecordingMode($event)" />
+  } @else {
+    <vc-compact-toggle label="Count-in" [disabled]="running()" [active]="preferences.preferences().recordingCountIn" (toggled)="preferences.setRecordingOption('recordingCountIn', !preferences.preferences().recordingCountIn)" />
+  }
+  <vc-compact-toggle label="Recording tick" [active]="preferences.preferences().recordingTick" (toggled)="preferences.setRecordingOption('recordingTick', !preferences.preferences().recordingTick)" />
+  @if (notes()) { <vc-compact-toggle label="Play other tracks" [disabled]="running()" [active]="preferences.preferences().recordingOtherTracks" (toggled)="preferences.setRecordingOption('recordingOtherTracks', !preferences.preferences().recordingOtherTracks)" /> }
+  @if (notes()) { <vc-compact-toggle label="Match scale/key" description="Map keyboard letters to scale degrees. Shift adds one semitone; MIDI pitches stay unchanged." [active]="preferences.preferences().keyboardMatchScale" (toggled)="preferences.setRecordingOption('keyboardMatchScale', !preferences.preferences().keyboardMatchScale)" /> }
   @if (!notes()) { <span>Tap / hold: @for (binding of preferences.shortcuts().recordRhythm; track $index) { {{ shortcutLabel(binding) }} } · Settings → Shortcuts → General</span> }
   @if (countingIn()) { <output aria-label="Recording count-in">Count-in {{ countingIn() }}</output> }
   @else if (preparingBacking()) { <output role="status">Preparing backing playback…</output> }

@@ -42,7 +42,7 @@ test('recording backing advances transport and arrangement while x/X release and
   await wait(()=>document.querySelector('#phrase-grid'),'phrase');
   await wait(()=>document.querySelector('.keyboard-label'),'keyboard labels while idle');
   button('Record live').focus();
-  check(!document.querySelector('[aria-label="Play other tracks while recording"]').checked,'backing playback defaults off');
+  check(!document.querySelector('button[aria-label="Play other tracks"]').checked,'backing playback defaults off');
   for(const shifted of [false,true])for(let repeat=0;repeat<2;repeat++){
     press('keydown','KeyX',shifted?'X':'x',shifted);
     await wait(()=>document.querySelector('.pitch-key.sounding[title="MIDI '+(shifted?89:88)+'"]'),'x/X starts again');
@@ -74,7 +74,6 @@ test('recording backing advances transport and arrangement while x/X release and
   await wait(()=>!document.querySelector('.pitch-key.sounding'),'outlier release');
   check(button('Apply').disabled,'zooming and auditioning leave the draft unchanged');
   const before=sessionStorage.getItem('vibecomposer.project.v12');
-  const countIn=document.querySelector('vc-live-recording input[type="checkbox"]');countIn.click();
   button('Record live').click();await wait(()=>document.querySelector('[aria-label="Recording count-in"]'),'count-in');
   press('keydown','Digit1','!',true);press('keyup','Digit1','!',true);await pause(150);
   check(!document.querySelector('#note-pitch'),'count-in ignores early input');
@@ -119,10 +118,11 @@ test('recording backing advances transport and arrangement while x/X release and
   (await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')),'edit minor phrase')).click();
   await wait(()=>document.querySelector('#phrase-grid'),'minor phrase');
   button('Record live').focus();button('Record live').click();
+  await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'minor capture');
   await wait(()=>document.querySelector('[data-keyboard-midi="51"]')?.textContent.includes('3'),'mapped scale-degree label');
   press('keydown','Digit3','3');await pause(150);press('keyup','Digit3','3');
   await wait(()=>document.querySelector('#note-pitch')?.value==='51','scale-matched pitch');
-  document.querySelector('vc-live-recording [aria-label="Match keyboard scale/key"]').click();
+  document.querySelector('vc-live-recording button[aria-label="Match scale/key"]').click();
   button('Stop recording').focus();
   press('keydown','Digit3','3');await pause(150);press('keyup','Digit3','3');
   await wait(()=>document.querySelector('#note-pitch')?.value==='40','optional matching off');
@@ -132,7 +132,7 @@ test('recording backing advances transport and arrangement while x/X release and
   document.querySelector('.track-group.bass .track-select').click();
   (await wait(()=>[...document.querySelectorAll('#part-inspector button')].find(b=>b.textContent.trim().startsWith('Edit notes')),'backing editor')).click();
   await wait(()=>document.querySelector('#phrase-grid'),'backing phrase');
-  const backingOption=await wait(()=>document.querySelector('[aria-label="Play other tracks while recording"]'),'backing checkbox');backingOption.click();
+  const backingOption=await wait(()=>document.querySelector('button[aria-label="Play other tracks"]'),'backing checkbox');backingOption.click();
   button('Record live').focus();button('Record live').click();
   await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'backing ready');
   const progress=()=>Number(document.querySelector('[aria-label="Song position"]').getAttribute('aria-valuenow'));
@@ -141,6 +141,16 @@ test('recording backing advances transport and arrangement while x/X release and
   check(overview.toDataURL()!==overviewBefore,'arrangement playhead advances during backing recording');
   check(button('Apply').disabled,'backing alone creates no phrase notes');
   button('Stop recording').click();await pause(60);const stopped=progress();await pause(160);check(progress()===stopped,'backing stops with recording');
+  await changeControl(document.querySelector('[aria-label="Recording mode"]'),'armed');
+  button('Arm recording').click();await wait(()=>button('Waiting for note'),'armed backing waiting');
+  port.onmidimessage({data:[0x90,65,107]});
+  await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'armed backing started');
+  await pause(180);port.onmidimessage({data:[0x80,65,0]});
+  await wait(()=>document.querySelector('#note-pitch')?.value==='65','armed backing retains triggering MIDI note');
+  check(document.querySelector('#note-velocity').value==='107','armed backing retains MIDI velocity');
+  button('Stop recording').click();
+  (await wait(()=>button('Arm recording'),'armed backing stopped')).focus();press('keydown','Backquote','~',true);press('keyup','Backquote','~',true);
+  await wait(()=>button('Apply').disabled,'armed backing batch cancelled');
   button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'),'backing editor closed');
   await fetch('/result',{method:'POST',body:JSON.stringify({passed:true})});
  }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack + " | controls: " + document.querySelector('vc-live-recording')?.textContent + " | alerts: " + [...document.querySelectorAll('[role=alert]')].map(e=>e.textContent).join(' / ')})});}

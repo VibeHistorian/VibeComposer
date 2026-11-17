@@ -18,7 +18,7 @@ import { beatToSeconds, secondsToBeat, type TempoPoint } from '../music/section-
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
 interface PartBus { readonly gain: GainNode; readonly pan: StereoPannerNode; }
-export interface RecordingBackingContext { readonly project: CompositionProject; readonly startBeat: number; readonly trackIds: readonly string[]; }
+export interface RecordingBackingContext { readonly project: CompositionProject; readonly startBeat: number; readonly captureBeat?: () => number; readonly trackIds: readonly string[]; }
 export interface RecordingBackingSession { readonly ready: Promise<void>; beat(): number; active(): boolean; stop(): void; }
 export interface PlaybackRange { readonly startBeat: number; readonly endBeat: number; }
 export interface PlaybackPhrasePreview extends PlaybackRange {
@@ -231,7 +231,7 @@ export class AudioPlaybackService {
         this.playbackState.set('paused');
       } };
     this.recordingBacking = session; this.selectedLoopRange = session.range; this.loopState.set(true);
-    const ready = this.start(context.project, context.startBeat).then(() => {
+    const ready = this.start(context.project, () => context.startBeat + (context.captureBeat?.() ?? 0)).then(() => {
       if (this.recordingBacking === session && this.state() !== 'playing') throw new Error(this.error() || 'Backing playback could not start.');
     });
     return { ready, beat: () => session.offset + this.currentAbsoluteBeat() - session.range.startBeat,
@@ -247,7 +247,7 @@ export class AudioPlaybackService {
     await this.start(project, this.state() === 'stopped' && resumeAt === 0 ? undefined : resumeAt);
   }
 
-  async start(project: CompositionProject, startBeat?: number): Promise<void> {
+  async start(project: CompositionProject, startBeat?: number | (() => number)): Promise<void> {
     const request = ++this.startRequest;
     this.playbackError.set('');
     try {
@@ -267,7 +267,7 @@ export class AudioPlaybackService {
       this.setTimelineBounds(project, this.notes);
       this.scheduledProject = project;
       this.scheduleSignature = this.signature(project, this.notes);
-      const safeStart = this.safeStartBeat(startBeat ?? this.timelineStart());
+      const safeStart = this.safeStartBeat((typeof startBeat === 'function' ? startBeat() : startBeat) ?? this.timelineStart());
       this.position.set(safeStart);
       this.originTime = context.currentTime - this.absoluteSeconds(safeStart);
       this.resetQueue(safeStart);

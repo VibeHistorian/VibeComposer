@@ -20,6 +20,7 @@ export class UiPreferencesService {
   private readonly draft = signal<QuickSettings | null>(null);
   readonly preferences = this.state.asReadonly();
   setRecordingOption(key: 'recordingOtherTracks' | 'recordingCountIn' | 'recordingTick' | 'keyboardNoteInput' | 'keyboardMatchScale', value: boolean): void { this.commit({ ...this.state(), [key]: value }); }
+  setRecordingMode(value: string): void { if (value === 'count-in' || value === 'armed') this.commit({ ...this.state(), recordingMode: value }); }
   readonly midiPpq = computed(() => this.state().midiPpq ?? DEFAULT_MIDI_PPQ);
   setMidiPpq(value: number): void {
     if (validMidiPpq(value)) this.commit({ ...this.state(), midiPpq: value });
