@@ -345,7 +345,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private async initializeRenderer(host: HTMLDivElement): Promise<void> {
     let app: PixiApplication | undefined;
     try {
-      const pixi = await import('pixi.js');
+      const pixi = await import('./score-pixi');
       if (this.destroyed) return;
       this.colorClass = pixi.Color;
       this.staticGraphics = new pixi.Graphics({ roundPixels: false });
