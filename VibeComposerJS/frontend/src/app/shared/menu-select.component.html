@@ -1,6 +1,6 @@
 <span class="select-value">{{ displayLabel() ?? selectedLabel() }}</span>
 <ng-template #root>
-  <div cdkMenu class="selection-menu">
+  <div cdkMenu class="selection-menu vc-menu-popup">
     @if (mixed()) { <button type="button" cdkMenuItem [cdkMenuItemDisabled]="true">Mixed</button> }
     @for (group of branches(); track group.id) {
       <button type="button" cdkMenuItem [cdkMenuTriggerFor]="branch" [cdkMenuTriggerData]="{ groupId: group.id, groupLabel: group.label }"
@@ -23,7 +23,7 @@
 </ng-template>
 <!-- Keep leaves inside their owning menu so CDK navigation inherits the correct menu context. -->
 <ng-template #branch let-groupId="groupId" let-groupLabel="groupLabel">
-  <div cdkMenu class="selection-menu" [attr.aria-label]="groupLabel">
+  <div cdkMenu class="selection-menu vc-menu-popup" [attr.aria-label]="groupLabel">
     @for (group of branches(); track group.id) {
       @if (group.id === groupId) {
         @for (option of group.options; track option.value) {

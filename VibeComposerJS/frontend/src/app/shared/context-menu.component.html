@@ -2,7 +2,7 @@
   <ng-content />
 </span>
 <ng-template #root>
-  <div cdkMenu class="context-menu">
+  <div cdkMenu class="context-menu vc-menu-popup">
     @for (item of items(); track item.id) {
       <button type="button" cdkMenuItem [cdkMenuItemDisabled]="item.disabled ?? false"
         [cdkMenuTriggerFor]="item.children?.length ? branch : null" [cdkMenuTriggerData]="{ path: [item.id] }"
@@ -13,7 +13,7 @@
   </div>
 </ng-template>
 <ng-template #branch let-path="path">
-  <div cdkMenu class="context-menu">
+  <div cdkMenu class="context-menu vc-menu-popup">
     @for (item of childrenFor(path); track item.id) {
       <button type="button" cdkMenuItem [cdkMenuItemDisabled]="item.disabled ?? false"
         [cdkMenuTriggerFor]="item.children?.length ? branch : null" [cdkMenuTriggerData]="{ path: path.concat(item.id) }"

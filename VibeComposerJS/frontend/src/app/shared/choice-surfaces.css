@@ -1,0 +1,31 @@
+/* Shared selector triggers and value truncation */
+:where(vc-select, vc-menu-select) {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+:where(vc-select, vc-menu-select) > .select-value { min-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; }
+:is(vc-select, vc-menu-select):focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+:is(vc-select, vc-menu-select)[aria-disabled="true"] { cursor: default; }
+
+/* Shared CDK menu surfaces and navigation states */
+.vc-menu-popup { display: grid; min-width: 170px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 24px); overflow: auto; padding: 3px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); box-shadow: 0 6px 20px var(--shadow-ink); font: 12px var(--font-ui); }
+.vc-menu-popup > button { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 6px 8px; border: 0; border-radius: var(--radius-tight); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.vc-menu-popup > button:hover, .vc-menu-popup > button:focus, .vc-menu-popup > button[aria-expanded="true"] { outline: none; background: var(--surface-accent); }
+.vc-menu-popup > button[aria-disabled="true"] { color: var(--text-muted); cursor: default; }
+
+/* Selected menu families and radio leaves */
+.vc-menu-popup .contains-selection, .vc-menu-popup [aria-checked="true"] { color: var(--accent-primary); }

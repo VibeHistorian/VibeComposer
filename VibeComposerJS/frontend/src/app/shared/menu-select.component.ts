@@ -20,7 +20,6 @@ export interface SelectMenuGroup {
   selector: 'vc-menu-select', exportAs: 'vcMenuSelect',
   imports: [CdkMenuModule], hostDirectives: [CdkMenuTrigger],
   templateUrl: './menu-select.component.html',
-  styleUrls: ['./select.component.css', './menu-select.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     role: 'button', '[attr.tabindex]': 'disabled() ? -1 : 0',

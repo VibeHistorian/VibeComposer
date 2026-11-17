@@ -1,4 +1,4 @@
-import { SettingsScopeIndicatorComponent } from './settings-scope-indicator.component';
+import { SettingsRowComponent } from './settings-row.component';
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import type { MelodyGlobalSettings } from '../../core/music/part-settings.model';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
@@ -9,7 +9,7 @@ import { DEFAULT_MELODY_GLOBAL, decodeMelodyGlobal } from '../../core/music/melo
 
 @Component({
   selector: 'vc-melody-global-settings',
-  imports: [SettingsScopeIndicatorComponent, CompactKnobComponent, CompactToggleComponent, SelectComponent],
+  imports: [SettingsRowComponent, CompactKnobComponent, CompactToggleComponent, SelectComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './melody-global-settings.component.html',
   styleUrl: './melody-global-settings.component.css',

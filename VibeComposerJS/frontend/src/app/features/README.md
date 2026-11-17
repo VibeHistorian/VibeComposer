@@ -38,6 +38,8 @@ Paths below are relative to `src/app/`. Feature folders group embedded interacti
 
 Templates and styles stay beside their components. Fixture loaders and source-reading tests under `scripts/` use these same paths; see the [test guide](../../../scripts/README.md) for focused commands and production-build prerequisites.
 
+Settings rows reuse the presentation-only `[vcSettingRow]` component in `settings/`: keep the existing `setting-row` host and project the feature-owned `setting-controls`. Labels, optional scope indicators, descriptions and description IDs render once through its template. Homogeneous checkbox groups in the settings dialog use typed descriptors, while their callbacks retain the original preference setters or project commands. Musical controls and special input timing stay with their owners.
+
 ## Compatibility
 
 - Use actual translated parameters and the shared theme; the legacy Java layout is a reference for capability breadth, not a screen to reproduce.

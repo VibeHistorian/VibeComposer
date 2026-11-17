@@ -79,5 +79,38 @@ test('shared button hover, disabled, toggle and settings-row styles work in prod
     const rerollOff = await style();
     await move(50,45);
     assert.notEqual((await style()).background, rerollOff.background, 'quiet inspector Reroll action has hover feedback');
+    const settings = await evaluate(`(async () => {
+      document.getElementById('ui-style-probe').remove();
+      document.querySelector('[aria-label="Settings"]').click();
+      await uiStyleWait(() => document.querySelector('vc-settings-dialog'));
+      window.dispatchEvent(new Event('pagehide'));
+      const before = sessionStorage.getItem('vibecomposer.project.v12');
+      const rows = [];
+      for (const [category, label] of [['Behavior Arrangement','Generate arrangement variations'], ['Appearance Score','Highlight audible'], ['MIDI','Recording tick']]) {
+        const navigation = await uiStyleWait(() => [...document.querySelectorAll('.settings-sidebar button')].find(b => b.getAttribute('aria-label') === category || b.querySelector('span')?.textContent.trim() === category));
+        navigation.click();
+        const input = await uiStyleWait(() => document.querySelector('input[aria-label="' + label + '"]'));
+        const previous = input.checked;
+        input.click();
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const row = input.closest('.setting-row');
+        const descriptionId = input.getAttribute('aria-describedby');
+        rows.push({ changed: input.checked !== previous, heading: !!row.querySelector('.setting-copy h3'), description: descriptionId ? row.contains(document.getElementById(descriptionId)) : !row.querySelector('.setting-copy p').hasAttribute('id') });
+        input.click();
+      }
+      window.dispatchEvent(new Event('pagehide'));
+      const uiLeavesProjectUnchanged = sessionStorage.getItem('vibecomposer.project.v12') === before;
+      document.querySelector('[aria-label="Behavior Harmony"]').click();
+      const harmony = await uiStyleWait(() => document.querySelector('input[aria-label="Progressive voicing"]'));
+      harmony.click();
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      window.dispatchEvent(new Event('pagehide'));
+      const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+      return { rows, uiLeavesProjectUnchanged, harmonySaved: project.harmonySettings.progressiveVoicing === harmony.checked };
+    })()`);
+    assert.equal(settings.uiLeavesProjectUnchanged, true, 'preference rows retain UI-only ownership');
+    assert.equal(settings.harmonySaved, true, 'musical rows retain project command ownership');
+    assert.equal(settings.rows.length, 3);
+    assert.ok(settings.rows.every(row => row.changed && row.heading && row.description), JSON.stringify(settings));
   } finally { await closeBrowser({ child, server, socket }); }
 });

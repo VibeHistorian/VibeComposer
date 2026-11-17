@@ -1,0 +1,5 @@
+<div class="setting-copy">
+  <h3>@if (scope(); as indicator) { <vc-settings-scope-indicator [scope]="indicator" /> }{{ label() }}</h3>
+  @if (description()) { <p [attr.id]="descriptionId() ?? null">{{ description() }}</p> }
+</div>
+<ng-content />

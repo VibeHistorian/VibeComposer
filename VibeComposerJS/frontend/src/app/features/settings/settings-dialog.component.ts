@@ -1,3 +1,5 @@
+import { NgTemplateOutlet } from '@angular/common';
+import { SettingsRowComponent } from './settings-row.component';
 import { MidiInputService } from '../../core/audio/midi-input.service';
 import { SCORE_NOTE_SHAPES } from '../../core/ui/ui-preferences';
 import { MIDI_PPQ_CHOICES } from '../../core/music/midi-resolution';
@@ -26,10 +28,20 @@ import { DEFAULT_HARMONY_SETTINGS, type HarmonySettings } from '../../core/music
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { MAX_DRUM_SOUNDS, type DrumMappingPreference } from '../../core/music/drum-instruments';
 
+interface SettingsCheckboxRow {
+  readonly label: string;
+  readonly description: string;
+  readonly descriptionId?: string;
+  readonly scope?: SettingScope;
+  readonly ariaLabel: string;
+  readonly checked: () => boolean;
+  readonly change: (checked: boolean) => void;
+}
+
 @Component({
   selector: 'vc-settings-dialog',
   host: { '[class.explainers-as-tooltips]': 'preferences.preferences().settingsExplainersAsTooltips' },
-  imports: [CdkDrag, CdkDragHandle, SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
+  imports: [NgTemplateOutlet, SettingsRowComponent, CdkDrag, CdkDragHandle, SettingsScopeIndicatorComponent, SelectComponent, SectionTypeSettingsComponent, CompactKnobComponent, MelodyGlobalSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-dialog.component.html',
   styleUrl: './settings-dialog.component.css',
@@ -73,6 +85,121 @@ export class SettingsDialogComponent {
   readonly transferMessage = signal('');
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
+  readonly checkboxSettings: Readonly<Record<"arrangement" | "score" | "midi" | "harmony", readonly SettingsCheckboxRow[]>> = {
+    arrangement: [
+      {
+        label: "Generate variations with arrangements",
+        description: "Generate variations for new arrangements, inserted sections and Manual arrangement Compose. Turning this off keeps existing choices. Saved immediately in your UI preferences.",
+        descriptionId: "arrangement-variations-description",
+        scope: "compose",
+        ariaLabel: "Generate arrangement variations",
+        checked: () => this.preferences.generateArrangementVariations(),
+        change: (checked: boolean) => this.preferences.setArrangementBehavior('generateArrangementVariations', checked)
+      },
+      {
+        label: "Reroll presence too",
+        description: "Include track presence when rerolling whole-arrangement variations. Review both changes in the variations popup before Apply; section order stays fixed. Saved immediately in your UI preferences.",
+        descriptionId: "variation-presence-description",
+        scope: "compose",
+        ariaLabel: "Reroll presence too",
+        checked: () => this.preferences.rerollPresenceWithVariations(),
+        change: (checked: boolean) => this.preferences.setArrangementBehavior('rerollPresenceWithVariations', checked)
+      }
+    ],
+    score: [
+      {
+        label: "Highlight audible",
+        description: "Show only tracks audible under the current Solo/Mute settings. Score role filters still apply. Saved in your UI preferences.",
+        descriptionId: "highlight-audible-description",
+        ariaLabel: "Highlight audible",
+        checked: () => this.preferences.syncScoreMix(),
+        change: () => this.preferences.toggleScoreMixSync()
+      },
+      {
+        label: "Chord-based grid subdivisions",
+        description: "Show faint lines in each chord's color at its ending beat. Saved in your UI preferences.",
+        descriptionId: "score-chord-grid-description",
+        ariaLabel: "Chord-based grid subdivisions",
+        checked: () => this.preferences.scoreChordGrid(),
+        change: () => this.preferences.toggleScoreChordGrid()
+      },
+      {
+        label: "Outline non-selected tracks",
+        description: "Show notes from all non-selected tracks as outlines in the score canvas. Saved in your UI preferences.",
+        descriptionId: "score-outline-tracks-description",
+        ariaLabel: "Outline non-selected tracks",
+        checked: () => this.preferences.scoreOutlineOtherTracks(),
+        change: () => this.preferences.toggleScoreOutlineOtherTracks()
+      },
+      {
+        label: "Ghost notes from other tracks",
+        description: "Show other tracks in the phrase editor as outlines at half opacity. Ghost notes are informational only. Saved in your UI preferences.",
+        descriptionId: "score-ghost-notes-description",
+        ariaLabel: "Ghost notes from other tracks",
+        checked: () => this.preferences.scoreGhostNotes(),
+        change: () => this.preferences.toggleScoreGhostNotes()
+      }
+    ],
+    midi: [
+      {
+        label: "Keyboard note input",
+        description: "While recording a phrase, keys run from 1–0, Q–P, A–L, Z–M. Match scale/key maps these to the current scale degrees; turn it off for C-major white keys beginning at C2. Keyboard labels appear on the piano roll while recording. Hold Shift to raise a key by one semitone. Rhythm tapping is reassignable in Shortcuts → General (default: backtick).",
+        ariaLabel: "Keyboard note input",
+        checked: () => this.preferences.preferences().keyboardNoteInput,
+        change: (checked: boolean) => this.preferences.setRecordingOption('keyboardNoteInput', checked)
+      },
+      {
+        label: "Match keyboard scale/key",
+        description: "Transpose keyboard note recording to the same scale and key highlighted by Snap scale/key. Shift raises a mapped note by one semitone. MIDI input keeps its original pitches.",
+        ariaLabel: "Match keyboard scale/key",
+        checked: () => this.preferences.preferences().keyboardMatchScale,
+        change: (checked: boolean) => this.preferences.setRecordingOption('keyboardMatchScale', checked)
+      },
+      {
+        label: "Recording count-in",
+        description: "Wait one full phrase or section loop before capturing input. The recording tick remains optional after the count-in.",
+        ariaLabel: "Recording count-in",
+        checked: () => this.preferences.preferences().recordingCountIn,
+        change: (checked: boolean) => this.preferences.setRecordingOption('recordingCountIn', checked)
+      },
+      {
+        label: "Recording tick",
+        description: "Hear strong and weak beats at the project BPM during recording.",
+        ariaLabel: "Recording tick",
+        checked: () => this.preferences.preferences().recordingTick,
+        change: (checked: boolean) => this.preferences.setRecordingOption('recordingTick', checked)
+      }
+    ],
+    harmony: [
+      {
+        label: "Flatten large chords",
+        description: "Also flatten chords with more than three tones.",
+        descriptionId: "flatten-large-description",
+        scope: "sound",
+        ariaLabel: "Flatten large chords",
+        checked: () => this.harmonyValues().flattenLargeChords,
+        change: (checked: boolean) => this.projects.updateHarmonySettings({ flattenLargeChords: checked })
+      },
+      {
+        label: "Progressive voicing",
+        description: "Voice global and explicit section progressions toward the processed prefix. Inferred progressions use the ordinary whole-progression average.",
+        descriptionId: "progressive-voicing-description",
+        scope: "sound",
+        ariaLabel: "Progressive voicing",
+        checked: () => this.harmonyValues().progressiveVoicing,
+        change: (checked: boolean) => this.projects.updateHarmonySettings({ progressiveVoicing: checked })
+      },
+      {
+        label: "Manual phrases follow global Mode",
+        description: "When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.",
+        descriptionId: "manual-mode-description",
+        scope: "ui",
+        ariaLabel: "Manual phrases follow global Mode",
+        checked: () => this.preferences.manualPhrasesFollowMode(),
+        change: () => this.preferences.toggleManualPhrasesFollowMode()
+      }
+    ]
+  };
   readonly exportNameFields = EXPORT_NAME_FIELDS;
   private readonly previewTime = signal(new Date());
   readonly exportNamePreview = computed(() => exportFilename(this.projects.project(), this.preferences.exportNameFields(), this.previewTime()));

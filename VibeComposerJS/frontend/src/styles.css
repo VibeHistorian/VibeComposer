@@ -1,6 +1,7 @@
 @import '@angular/cdk/overlay-prebuilt.css';
 @import './fonts.css';
 @import './app/shared/buttons.css';
+@import './app/shared/choice-surfaces.css';
 @import './app/features/settings/settings-rows.css';
 
 /* Appearance preview backdrop */
