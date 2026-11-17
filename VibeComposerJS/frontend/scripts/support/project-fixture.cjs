@@ -126,4 +126,10 @@ function projectData(json) {
   return project;
 }
 
-module.exports = { fixture, projectData };
+// Rendering fixtures can seed parameter combinations without invoking generation or history.
+function setGeneratorSettings(service, role, patch) {
+  service.state.update(project => ({ ...project, tracks: project.tracks.map(track => track.role === role
+    ? { ...track, generatorSettings: { ...track.generatorSettings, ...patch } } : track) }));
+}
+
+module.exports = { fixture, projectData, setGeneratorSettings };

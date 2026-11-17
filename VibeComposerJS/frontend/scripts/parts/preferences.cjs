@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const { fixture } = require('../support/project-fixture.cjs');
+const { fixture, setGeneratorSettings } = require('../support/project-fixture.cjs');
 
 test('arrangement behavior preferences persist immediately, transfer, and stay outside project history', () => {
   const { service, uiPreferences: prefs, uiStored, load } = fixture();
@@ -426,8 +426,8 @@ test('combined selectors move together and reset all local values in one undo st
   const { service, uiPreferences: preferences, load } = fixture();
   const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const editor = new Editor();
-  editor.role.set('chords'); editor.local.set(true); editor.values.set({ rhythm: 'full' });
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: 'track-chords-1' };
+  editor.scope.set(scope);
   for (const [selector, flip, value] of [['rhythm', 'patternFlip', 'tresillo'], ['chordSpanFill', 'fillFlip', 'ODD']]) {
     preferences.beginQuickSettings();
     preferences.moveControl('chords', selector);
@@ -439,12 +439,13 @@ test('combined selectors move together and reset all local values in one undo st
     assert.ok(preferences.quickSettings().chords.includes(flip));
     preferences.saveQuickSettings();
     const control = editor.controls().find(control => control.key === selector);
-    editor.overriddenKeys.set([flip]);
+    service.updatePartSettings(scope, { [flip]: true });
     assert.equal(editor.inheritanceFor(control), 'custom', 'flip-only override enables the shared reset');
     const keys = load('core/ui/ui-preferences.ts').combinedControlKeys(selector);
     if (selector === 'rhythm') {
       assert.ok(preferences.quickSettings().chords.includes('customPattern'));
-      editor.overriddenKeys.set(['customPattern']);
+      service.resetPartSettings(scope, flip);
+      service.updatePartSettings(scope, { customPattern: Array(32).fill(0) });
       assert.equal(editor.inheritanceFor(control), 'custom', 'grid-only override enables the shared reset');
     }
     service.updatePartSettings(scope, { [selector]: value, [flip]: true, pauseChance: 12,
@@ -466,10 +467,11 @@ test('combined selectors move together and reset all local values in one undo st
 });
 
 test('placement editing exposes dormant controls and partitions customized quick/inspector sets', () => {
-  const { load, uiPreferences: preferences, settings } = fixture();
+  const { load, service, uiPreferences: preferences, settings } = fixture();
   const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const quick = new Editor(), inspector = new Editor();
-  for (const editor of [quick, inspector]) { editor.role.set('bass'); editor.values.set({ rhythm: 'bass1' }); }
+  setGeneratorSettings(service, 'bass', { rhythm: 'bass1' });
+  for (const editor of [quick, inspector]) editor.scope.set({ kind: 'global-role', role: 'bass' });
   quick.advanced.set(false); inspector.inspectorOnly.set(true);
   assert.equal(quick.controls().some(control => control.key === 'hitsPerPattern'), false);
   preferences.beginQuickSettings();

@@ -4,7 +4,7 @@ const test = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
 const { Midi } = require('@tonejs/midi');
-const { fixture } = require('../support/project-fixture.cjs');
+const { fixture, setGeneratorSettings } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
 test('arpeggio register matches all production Java pitches in the saved bug configuration and exported MIDI', () => {
@@ -809,8 +809,8 @@ test('every applicable shared control has a role consumer and genuine Java excep
     }
   }
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
-  const editor = new PartSettingsEditorComponent(); editor.role.set('bass');
-  editor.values.set({ ...settings.settingsValues(service.project().tracks.find(track => track.role === 'bass').generatorSettings, 'bass'), useCustomVelocities: true });
+  const editor = new PartSettingsEditorComponent(); editor.scope.set({ kind: 'global-role', role: 'bass' });
+  setGeneratorSettings(service, 'bass', { useCustomVelocities: true });
   assert.equal(editor.controls().some(control => control.key === 'hitsPerPattern'), false);
   assert.equal(editor.controls().some(control => control.key === 'velocityMin'), true);
 });

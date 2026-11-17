@@ -14,7 +14,6 @@ import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
 import type { CommonPartSettings, ChordRhythm } from '../../core/music/part-settings.model';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import type { ArrangedPart } from '../../core/music/part-role';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { PART_CONTROLS, MANUAL_PARAMETER_TARGETS, type PartControl, type PartSettingValue, partValuesEqual } from '../../core/music/part-settings';
 import { chordRhythmMask } from '../../core/music/rhythm-pattern';
@@ -25,6 +24,9 @@ import { SelectComponent } from '../../shared/select.component';
 import { ControlHeadingComponent, type ControlInheritance } from '../../shared/control-heading.component';
 import { PART_CONTROL_GROUPS, partControlGroup } from './part-control-groups';
 import { ProjectService } from '../../core/project/project.service';
+import { partEditorContext } from './part-editor-context';
+import { samePhraseInputs } from '../../core/music/phrase-inputs';
+import { sectionGenerationHarmony } from '../../core/music/project-harmony';
 
 @Component({
   selector: 'vc-part-settings-editor',
@@ -114,6 +116,7 @@ export class PartSettingsEditorComponent {
   readonly projects = inject(ProjectService);
   private readonly dialogs = inject(Dialog);
   readonly scope = input.required<PartSettingsScope>();
+  private readonly context = computed(() => partEditorContext(this.projects.project(), this.scope()));
   openArpeggioPattern(): void {
     this.dialogs.open(ArpeggioPatternDialogComponent, { ariaLabel: 'Arpeggio pattern', data: { scope: this.scope() } });
   }
@@ -139,22 +142,26 @@ export class PartSettingsEditorComponent {
   }
   readonly usesDurations = computed(() => this.values()['rhythm'] === 'durations');
   readonly emptyAllowedValues: readonly number[] = [];
-  readonly role = input.required<ArrangedPart>();
-  readonly values = input.required<Readonly<Record<string, PartSettingValue | null>>>();
-  readonly overriddenKeys = input<readonly string[]>([]);
-  readonly local = input(false);
+  readonly role = computed(() => this.context().role);
+  readonly values = computed(() => this.context().values);
+  readonly overriddenKeys = computed(() => this.context().overriddenKeys);
+  readonly local = computed(() => 'sectionId' in this.scope());
   readonly advanced = input(true);
   readonly inspectorOnly = input(false);
   readonly showGroupTitles = input(true);
-  readonly melodyHits = input(16);
+  private readonly phraseProject = computed(() => this.projects.project(), { equal: samePhraseInputs });
+  readonly melodyHits = computed(() => {
+    const project = this.phraseProject(), scope = this.scope();
+    const section = 'sectionId' in scope ? project.arrangement.find(section => section.id === scope.sectionId) : undefined;
+    return (section ? sectionGenerationHarmony(project, section, 'melody').degrees : project.progression).length * 16;
+  });
   readonly settingsChanged = output<{ readonly key: string; readonly value: PartSettingValue }>();
   readonly inheritRequested = output<string | readonly string[]>();
   private textEditValues: Readonly<Record<string, PartSettingValue | null>> | null = null;
   readonly phraseModes = computed(() => {
-    const scope = this.scope() ?? { kind: 'global-role', role: this.role() };
     const project = this.projects.project();
-    const section = 'sectionId' in scope ? project.arrangement.find(section => section.id === scope.sectionId) : undefined;
-    return project.tracks.filter(track => 'trackId' in scope ? track.id === scope.trackId : track.role === scope.role)
+    const { tracks, section } = this.context();
+    return tracks
       .map(track => trackPhraseSource(track, section, project).endsWith('edited'));
   });
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
@@ -224,10 +231,10 @@ export class PartSettingsEditorComponent {
     const scope = this.scope();
     if (!('sectionId' in scope)) return new Set<string>();
     const project = this.projects.project();
-    const section = project.arrangement.find(section => section.id === scope.sectionId);
+    const { section, tracks } = this.context();
     if (!section) return new Set<string>();
     const keys = new Set<string>();
-    for (const track of project.tracks.filter(track => scope.kind === 'section-track' ? track.id === scope.trackId : track.role === scope.role)) {
+    for (const track of tracks) {
       const choice = section.variations?.choices.find(choice => choice.trackId === track.id);
       if (!choice) continue;
       const inspection = inspectArrangementVariation(track, section, choice, project.melodyGlobal);
@@ -248,10 +255,7 @@ export class PartSettingsEditorComponent {
 
   parameterFrozen(key: string): boolean {
     if (this.local()) return this.overriddenKeys().includes(key);
-    const scope = this.scope();
-    return this.projects.project().tracks.some(track => (scope.kind === 'global-track'
-      ? track.id === scope.trackId : scope.kind === 'global-role' && track.role === scope.role)
-      && track.parameterLocks?.includes(key));
+    return this.context().tracks.some(track => track.parameterLocks?.includes(key));
   }
 
   categoryFreezeState(controls: readonly PartControl[]): 'none' | 'partial' | 'all' {
@@ -263,9 +267,8 @@ export class PartSettingsEditorComponent {
   }
 
   lockState(control: PartControl): boolean | 'mixed' {
-    const scope = this.scope();
-    const tracks = this.projects.project().tracks.filter(track => scope.kind === 'global-track'
-      ? track.id === scope.trackId : scope.kind === 'global-role' && track.role === scope.role);
+    if (this.local()) return false;
+    const tracks = this.context().tracks;
     const keys = combinedControlKeys(control.key, this.role());
     const states = tracks.flatMap(track => keys.map(key => track.parameterLocks?.includes(key) ?? false));
     return states.length > 0 && states.every(Boolean) ? true : states.some(Boolean) ? 'mixed' : false;
@@ -278,8 +281,7 @@ export class PartSettingsEditorComponent {
       return;
     }
     const scope = this.scope();
-    const tracks = this.projects.project().tracks.filter(track => scope.kind === 'global-track'
-      ? track.id === scope.trackId : scope.kind === 'global-role' && track.role === scope.role);
+    const tracks = this.context().tracks;
     const locked = tracks.length > 0 && tracks.every(track => keys.every(key => track.parameterLocks?.includes(key)));
     this.projects.setParameterLocks(scope, keys, !locked);
   }

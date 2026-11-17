@@ -22,6 +22,7 @@ import { sectionDurationBeats } from '../../core/music/section-context';
 import { sectionHarmonyDisplay } from '../../core/music/harmony-display';
 import { MAX_VOLUME_PERCENT, mixEnabled, validVolumePercent } from '../../core/audio/mix-values';
 import { samePhraseInputs } from '../../core/music/phrase-inputs';
+import { partEditorContext } from '../part-settings/part-editor-context';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { type ArrangedPart, ARRANGED_PARTS, PART_GENERATION_AVAILABLE, tracksInRoleOrder } from '../../core/music/part-role';
 import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
@@ -38,7 +39,6 @@ import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
 import { trackPhraseSource } from '../../core/music/phrase';
 import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import { getDiatonicChords } from '../../core/music/harmony';
-import { sectionGenerationHarmony } from '../../core/music/project-harmony';
 
 
 import { ProjectService } from '../../core/project/project.service';
@@ -336,32 +336,24 @@ export class WorkspaceCanvasComponent {
     const target = this.localPartTarget();
     return target ? this.project().arrangement.find((section) => section.id === target.sectionId) : undefined;
   });
-  readonly effectiveContextTracks = computed(() => this.contextTracks().map((track) => resolvePartTrack(track, this.contextSection(), this.project().melodyGlobal)));
   readonly groupTrackSettings = computed(() => {
     if (!this.showGroupTrackSettings() || !this.partGenerationAvailable()) return [];
     const section = this.contextSection();
-    return this.effectiveContextTracks().map(track => {
+    return this.contextTracks().map(track => {
       const scope: PartSettingsScope = section
         ? { kind: 'section-track', sectionId: section.id, trackId: track.id }
         : { kind: 'global-track', trackId: track.id };
       return { track, scope, key: JSON.stringify(scope),
-        values: settingsValues(track.generatorSettings, track.role),
         overriddenKeys: Object.keys(section?.trackPartOverrides?.[track.id] ?? {}) };
     });
   });
   readonly partValues = computed(() => {
-    const values = this.effectiveContextTracks().map((track) => settingsValues(track.generatorSettings, track.role));
-    return Object.fromEntries(Object.keys(values[0] ?? {}).map((key) => [key,
-      values.every((value) => partValuesEqual(value[key], values[0][key])) ? values[0][key] : null]));
+    const scope = this.partScope();
+    return scope ? partEditorContext(this.project(), scope).values : {};
   });
   readonly overriddenKeys = computed(() => {
     const target = this.localPartTarget();
-    const section = this.contextSection();
-    if (!target || !section) return [];
-    return target.kind === 'section-role'
-      ? [...new Set([...Object.keys(section.rolePartOverrides?.[target.role] ?? {}),
-        ...this.contextTracks().flatMap(track => Object.keys(section.trackPartOverrides?.[track.id] ?? {}))])]
-      : Object.keys(section.trackPartOverrides?.[target.trackId] ?? {});
+    return target ? partEditorContext(this.project(), target).overriddenKeys : [];
   });
   readonly partResetChangesValues = computed(() => {
     const target = this.localPartTarget();
@@ -760,14 +752,8 @@ export class WorkspaceCanvasComponent {
     this.projects.dismissGenerationError();
     this.projects.updatePartSettings(scope, { [change.key]: change.value });
     const row = this.groupTrackSettings().find(item => item.key === JSON.stringify(scope));
-    this.editFailure.set(!this.projects.generationError() && this.project() === before && !partValuesEqual((row?.values ?? this.partValues())[change.key], change.value)
+    this.editFailure.set(!this.projects.generationError() && this.project() === before && !partValuesEqual((row ? partEditorContext(this.project(), scope).values : this.partValues())[change.key], change.value)
       ? { scope: JSON.stringify(scope), message: 'Change cancelled because this value conflicts with another track or cell setting. Previous value kept.' } : null);
-  }
-
-  melodyRhythmHits(scope: PartSettingsScope): number {
-    const project = this.phraseProject();
-    const section = 'sectionId' in scope ? project.arrangement.find(item => item.id === scope.sectionId) : undefined;
-    return (section ? sectionGenerationHarmony(project,section,'melody').degrees : project.progression).length * 16;
   }
 
   resetPartSettings(scope: PartSettingsScope, field?: string | readonly string[]): void {

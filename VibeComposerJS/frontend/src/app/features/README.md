@@ -38,6 +38,8 @@ Paths below are relative to `src/app/`. Feature folders group embedded interacti
 
 Templates and styles stay beside their components. Fixture loaders and source-reading tests under `scripts/` use these same paths; see the [test guide](../../../scripts/README.md) for focused commands and production-build prerequisites.
 
+`PartSettingsEditorComponent` takes an explicit `PartSettingsScope` plus presentation inputs. It derives role, effective/mixed values, local override markers and melody rhythm length from the injected project. `part-settings/part-editor-context.ts` caches immutable project/scope resolution for quick settings, inspector and workspace feedback. Keep the scope independent of the global selection so individual group rows and delayed gestures retain their own targets. Settings/reset outputs still return to the workspace for project commits and rejection feedback.
+
 Settings rows reuse the presentation-only `[vcSettingRow]` component in `settings/`: keep the existing `setting-row` host and project the feature-owned `setting-controls`. Labels, optional scope indicators, descriptions and description IDs render once through its template. Homogeneous checkbox groups in the settings dialog use typed descriptors, while their callbacks retain the original preference setters or project commands. Musical controls and special input timing stay with their owners.
 
 ## Compatibility

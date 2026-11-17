@@ -3,7 +3,7 @@ const test = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
 const { Midi } = require('@tonejs/midi');
-const { fixture, projectData } = require('../support/project-fixture.cjs');
+const { fixture, projectData, setGeneratorSettings } = require('../support/project-fixture.cjs');
 const { assertRejectedProjectImport } = require('../support/project-import-assertions.cjs');
 
 test('arp editor freezes the seeded direction without changing generated notes', () => {
@@ -280,7 +280,7 @@ test('contextual Melody settings persist, undo, and filter controls by algorithm
   assert.equal(DEFAULT_HARMONY_SETTINGS.generation, 'CURRENT');
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent();
-  editor.role.set('melody'); editor.values.set({});
+  editor.scope.set({ kind: 'global-role', role: 'melody' });
   assert.ok(editor.controls().some(c => c.key === 'patternFlexible'));
   const before = service.exportProjectJson();
   assert.equal(service.updateMelodyGlobal({ contextualMelody: true,
@@ -826,10 +826,10 @@ test('P5d Multiply Hits transforms mixed drums atomically at global/local scopes
 });
 
 test('P5 editor supports empty contour and separates pitch direction from melody rhythm and hit actions', () => {
-  const { load } = fixture({ contextualMelody: false });
+  const { load, service } = fixture({ contextualMelody: false });
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
-  const editor = new PartSettingsEditorComponent(); editor.role.set('arpeggio');
-  editor.values.set({ pattern: 'custom', rhythm: 'melody', arpContour: [1] });
+  const editor = new PartSettingsEditorComponent(); editor.scope.set({ kind: 'global-role', role: 'arpeggio' });
+  setGeneratorSettings(service, 'arpeggio', { pattern: 'custom', rhythm: 'melody', arpContour: [1] });
   assert.ok(editor.controls().some(control => control.key === 'pattern'));
   assert.equal(editor.controls().some(control => control.key === 'arpPatternCustom'), false, 'custom directions use the combined popup');
   assert.equal(editor.controls().some(control => control.key === 'hitsPerPattern'), false);
@@ -1000,10 +1000,10 @@ test('bass join articulation resolves at all scopes, persists snapshots and expo
   assert.deepEqual(phrase.phraseForTrack(service.project(), track()), manual);
   assert.ok(phrase.layOutTrackPhrase(service.project(), track()).every(note => note.midi === 40 && note.durationBeats === 0.75));
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
-  const editor = new PartSettingsEditorComponent(); editor.role.set('bass'); editor.values.set({ rhythm: 'full' });
+  const editor = new PartSettingsEditorComponent(); editor.scope.set({ kind: 'global-role', role: 'bass' }); setGeneratorSettings(service, 'bass', { rhythm: 'full' });
   assert.ok(editor.controls().some(control => control.key === 'patternJoinMode'));
   editor.advanced.set(false); assert.equal(editor.controls().some(control => control.key === 'patternJoinMode'), false);
-  editor.advanced.set(true); editor.values.set({ rhythm: 'bass1' });
+  editor.advanced.set(true); setGeneratorSettings(service, 'bass', { rhythm: 'bass1' });
   assert.equal(editor.controls().some(control => control.key === 'patternJoinMode'), false);
 });
 
@@ -1404,7 +1404,7 @@ test('melody integer-list editors commit once and reject invalid or stale drafts
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const editor = new PartSettingsEditorComponent();
   const scope = { kind: 'section-track', sectionId: service.project().arrangement[1].id, trackId: 'track-melody-1' };
-  editor.role.set('melody'); editor.values.set(settings.settingsValues({ algorithm: 'block' }, 'melody'));
+  editor.scope.set(scope);
   const targets = settings.PART_CONTROLS.melody.find(control => control.key === 'chordNoteChoices');
   const commits = [];
   editor.settingsChanged.emit = change => { commits.push(change); service.updatePartSettings(scope, { [change.key]: change.value }); };
@@ -1418,7 +1418,7 @@ test('melody integer-list editors commit once and reject invalid or stale drafts
   service.undo(); assert.equal(service.exportProjectJson(), before);
   input.value = '1,,2'; editor.startTextEdit(); editor.commitText(targets, { target: input });
   assert.ok(input.error); assert.equal(commits.length, 1);
-  input.value = '1, 2'; editor.startTextEdit(); editor.values.set({ ...editor.values(), speed: 100 });
+  input.value = '1, 2'; editor.startTextEdit(); service.updatePartSettings(scope, { speed: 100 });
   editor.commitText(targets, { target: input });
   assert.equal(commits.length, 1);
   assert.equal(input.value, '0, 2, 2, 4');
@@ -2254,10 +2254,8 @@ test('quick access and inspector partition musical controls across roles and rhy
       const values = { ...settings.settingsValues(service.project().tracks.find(track => track.role === role).generatorSettings, role), rhythm,
         useCustomVelocities: true };
       const complete = new PartSettingsEditorComponent();
-      for (const editor of [quick, inspector, complete]) {
-        editor.role.set(role);
-        editor.values.set(values);
-      }
+      setGeneratorSettings(service, role, values);
+      for (const editor of [quick, inspector, complete]) editor.scope.set({ kind: 'global-role', role });
       const quickKeys = quick.controls().map(control => control.key);
       const inspectorKeys = inspector.controls().map(control => control.key);
       assert.equal(quickKeys.some(key => inspectorKeys.includes(key)), false);
@@ -2287,23 +2285,25 @@ test('the chord rhythm preview shares generation masks and shows mixed values on
   const { PartSettingsEditorComponent } = load('features/part-settings/part-settings-editor.component.ts');
   const { chordRhythmMask } = load('core/music/rhythm-pattern.ts');
   const editor = new PartSettingsEditorComponent();
-  editor.role.set('chords');
+  editor.scope.set({ kind: 'global-role', role: 'chords' });
   const values = settings.settingsValues(service.project().tracks.find(track => track.role === 'chords').generatorSettings, 'chords');
-  editor.values.set(values);
+  setGeneratorSettings(service, 'chords', values);
   assert.deepEqual(editor.rhythmPreview(), chordRhythmMask(service.project().tracks.find(track => track.role === 'chords').generatorSettings));
   assert.equal(editor.controls().some((control) => control.key === 'euclideanPulses'), false);
-  editor.values.set({ ...values, rhythm: 'euclid', hitsPerPattern: 5, euclideanPulses: 2, patternShift: 1, patternFlip: true });
+  setGeneratorSettings(service, 'chords', { ...values, rhythm: 'euclid', hitsPerPattern: 5, euclideanPulses: 2, patternShift: 1, patternFlip: true });
   assert.equal(editor.controls().some((control) => control.key === 'euclideanPulses'), true);
   assert.deepEqual(editor.rhythmPreview(), chordRhythmMask(editor.values()));
-  editor.values.set({ ...editor.values(), euclideanPulses: null });
+  service.state.update(project => ({ ...project, tracks: [...project.tracks, { ...project.tracks.find(track => track.role === 'chords'),
+    id: 'mixed-chords', generatorSettings: { ...project.tracks.find(track => track.role === 'chords').generatorSettings, euclideanPulses: 3 } }] }));
   assert.equal(editor.rhythmPreview(), null);
   assert.match(editor.rhythmPreviewLabel(), /Mixed/);
-  editor.values.set({ ...editor.values(), rhythm: 'half' });
+  setGeneratorSettings(service, 'chords', { rhythm: 'half' });
   assert.notEqual(editor.rhythmPreview(), null, 'mixed unused Pulses does not hide a static rhythm preview');
-  editor.values.set({ ...editor.values(), rhythm: null });
+  service.state.update(project => ({ ...project, tracks: project.tracks.map(track => track.id === 'mixed-chords'
+    ? { ...track, generatorSettings: { ...track.generatorSettings, rhythm: 'tresillo' } } : track) }));
   assert.equal(editor.rhythmPreview(), null);
-  editor.role.set('bass');
-  editor.values.set({ ...editor.values(), rhythm: 'bass1' });
+  editor.scope.set({ kind: 'global-role', role: 'bass' });
+  setGeneratorSettings(service, 'bass', { rhythm: 'bass1' });
   assert.equal(editor.rhythmPreview(), undefined);
 });
 
@@ -2768,7 +2768,7 @@ test('imported member-only overrides highlight group controls and reset both lay
   assert.equal(workspace.partResetChangesValues(), true);
   const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const editor = new Editor();
-  editor.local.set(true); editor.role.set('chords'); editor.overriddenKeys.set(workspace.overriddenKeys());
+  editor.scope.set(workspace.partScope());
   assert.equal(editor.inheritanceFor({ key: 'velocityMin' }), 'custom');
   assert.equal(editor.categoryFreezeState([{ key: 'velocityMin' }]), 'partial');
   const before = service.exportProjectJson();
@@ -2787,7 +2787,7 @@ test('parameter shortcut targets exact combined members and only releases sectio
   const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
   const editor = new Editor();
   const track = service.project().tracks.find(track => track.role === 'chords');
-  editor.role.set('chords'); editor.scope.set({ kind: 'global-track', trackId: track.id });
+  editor.scope.set({ kind: 'global-track', trackId: track.id });
   editor.parameterShortcut({ key: 'velocityMin', combined: false });
   const read = () => service.project().tracks.find(item => item.id === track.id);
   assert.deepEqual(read().parameterLocks, ['velocityMin']);
@@ -2798,7 +2798,8 @@ test('parameter shortcut targets exact combined members and only releases sectio
   assert.deepEqual(read().parameterLocks, []);
   editor.parameterShortcut({ key: 'velocityMin', combined: true });
   assert.deepEqual(read().parameterLocks, ['velocityMin', 'velocityMax']);
-  editor.local.set(true); editor.overriddenKeys.set(['velocityMin']);
+  const local = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: track.id };
+  service.updatePartSettings(local, { velocityMin: 35 }); editor.scope.set(local);
   const emitted = []; editor.inheritRequested.emit = keys => emitted.push(keys);
   editor.parameterShortcut({ key: 'velocityMax', combined: false });
   assert.deepEqual(emitted, []);

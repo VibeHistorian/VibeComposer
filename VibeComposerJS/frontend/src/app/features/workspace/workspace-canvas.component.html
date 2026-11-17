@@ -218,13 +218,13 @@
                 <section class="group-track-settings-row" [attr.data-track-id]="item.track.id" [attr.aria-label]="item.track.name + ' quick settings'">
                   <span class="group-track-settings-order">{{ $index + 1 }}</span>
                   @if (partEditErrorFor(item.scope); as error) { <span class="channel-warning" role="status">{{ error }}</span> }
-                  <vc-part-settings-editor [scope]="item.scope" [role]="item.track.role" [values]="item.values" [melodyHits]="melodyRhythmHits(item.scope)" [advanced]="false" [showGroupTitles]="false" [local]="!!localPartTarget()" [overriddenKeys]="item.overriddenKeys"
+                  <vc-part-settings-editor [scope]="item.scope" [advanced]="false" [showGroupTitles]="false"
                     (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
                 </section>
               }
             } @else {
             @for (item of editableScopes(); track item.key) {
-              <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [advanced]="false" [showGroupTitles]="false" [local]="!!localPartTarget()" [overriddenKeys]="overriddenKeys()"
+              <vc-part-settings-editor [scope]="item.scope" [advanced]="false" [showGroupTitles]="false"
                 (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
             }
             }
@@ -368,7 +368,7 @@
           @if (trackExceptionCount()) { <span>{{ trackExceptionCount() }} track exception(s) remain active.</span> }
           @if (manualTrackNames() && partGenerationAvailable()) { <span>Some controls are not available for manual phrases: {{ manualTrackNames() }}.</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!usePartSettingsInspector()" [local]="true" [overriddenKeys]="overriddenKeys()"
+            <vc-part-settings-editor [scope]="item.scope" [inspectorOnly]="!usePartSettingsInspector()"
               (settingsChanged)="editPartSettings(item.scope, $event)" (inheritRequested)="resetPartSettings(item.scope, $event)" />
           }
           @if (settingsTarget().kind === 'section-role') {
@@ -461,7 +461,7 @@
           @if (!partGenerationAvailable()) { <span class="part-inheritance">Automatic melody generation is not available yet. Add notes with Edit notes.</span> }
           @if (partEditError()) { <span class="channel-warning" role="status">{{ partEditError() }}</span> }
           @for (item of editableScopes(); track item.key) {
-            <vc-part-settings-editor [scope]="item.scope" [role]="partRole()" [values]="partValues()" [melodyHits]="melodyRhythmHits(item.scope)" [inspectorOnly]="!usePartSettingsInspector()"
+            <vc-part-settings-editor [scope]="item.scope" [inspectorOnly]="!usePartSettingsInspector()"
               (settingsChanged)="editPartSettings(item.scope, $event)" />
           }
         </section>
