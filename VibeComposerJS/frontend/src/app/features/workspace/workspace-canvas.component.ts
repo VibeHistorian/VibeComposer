@@ -480,6 +480,7 @@ export class WorkspaceCanvasComponent {
   });
   readonly scoreTimelineBeats = computed(() => this.scoreTimelineBounds().endBeat - this.scoreTimelineBounds().startBeat);
   private readonly recording = inject(LiveRecordingService);
+  readonly scorePlayheadFlashing = computed(() => this.editing() && this.recording.countInFlash());
   readonly scorePlayheadPercent = computed(() => {
     const recordingBeat = this.editing() ? this.recording.phraseBeat() : null;
     const beat = recordingBeat === null ? this.playback.beat() : recordingBeat + this.editStartBeat();

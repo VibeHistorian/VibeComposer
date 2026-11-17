@@ -41,9 +41,9 @@ export function recordingCell(beat: number, length: number, cells: number): numb
   return Math.min(cells - 1, Math.floor(((beat % length + length) % length) / length * cells));
 }
 export interface RecordedSpan { start: number; end: number; midi: number; velocity: number; }
-export function recordedSegments(span: RecordedSpan, length: number, grid: number, live = false): RecordedSpan[] {
-  const start = Math.floor(span.start / grid + 1e-7) * grid;
-  const end = live ? Math.max(start + 0.02, span.end) : Math.max(start + grid, Math.round(span.end / grid) * grid);
+export function recordedSegments(span: RecordedSpan, length: number, grid: number | null, live = false): RecordedSpan[] {
+  const start = grid === null ? span.start : Math.floor(span.start / grid + 1e-7) * grid;
+  const end = live ? Math.max(start + 0.02, span.end) : grid === null ? Math.max(start + 1 / 960, span.end) : Math.max(start + grid, Math.round(span.end / grid) * grid);
   const result: RecordedSpan[] = [];
   for (let cursor = start; cursor < end; ) {
     const local = (cursor % length + length) % length;

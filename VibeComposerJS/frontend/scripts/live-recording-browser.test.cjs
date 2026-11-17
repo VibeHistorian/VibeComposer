@@ -49,8 +49,14 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   port.onmidimessage({data:[0x80,108,0]});
   await wait(()=>!document.querySelector('.pitch-key.sounding'),'outlier release');
   check(button('Apply').disabled,'zooming and auditioning leave the draft unchanged');
+  const gridLock=await wait(()=>button('Lock Grid'),'grid lock');check(gridLock.getAttribute('aria-pressed')==='false','free timing defaults on');
+  gridLock.click();await wait(()=>gridLock.getAttribute('aria-pressed')==='true','grid lock enabled');gridLock.click();
+  await wait(()=>gridLock.getAttribute('aria-pressed')==='false','grid lock disabled');
   const before=sessionStorage.getItem('vibecomposer.project.v12');
   button('Record live').click();await wait(()=>document.querySelector('[aria-label="Recording count-in"]'),'count-in');
+  const playheadFrames=new Set();
+  for(let i=0;i<36;i++){playheadFrames.add(document.querySelector('.score-canvas-host canvas').toDataURL());await pause(20);}
+  check(playheadFrames.size>=2,'stationary count-in playhead visibly blinks');
   press('keydown','Digit1','!',true);press('keyup','Digit1','!',true);await pause(150);
   check(!document.querySelector('#note-pitch'),'count-in ignores early input');
   await wait(()=>document.querySelector('[aria-label="Recording beat"]'),'capture after count-in',1000);

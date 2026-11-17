@@ -92,7 +92,7 @@ test('provisional held-note segments grow continuously before quantized release'
  assert.equal(helpers.recordedSegments({...span,start:3.8,end:4.3},4,.25,true).length,2);
 });
 function recordingFixture(countIn = true) {
- let now=0;const listeners=new Map();const session={phraseBeat:signal(null)};
+ let now=0;const listeners=new Map();const session={phraseBeat:signal(null),countInFlash:signal(false)};
  function signal(value){return Object.assign(()=>value,{set:next=>{value=next;}});}
  const prefs={capturingShortcut:()=>false,matchesShortcut:()=>false,preferences:()=>({recordingCountIn:countIn,recordingTick:false,keyboardNoteInput:true})};
  const dependencies={ElementRef:{nativeElement:{}},ProjectService:{project:()=>({tempoBpm:120})},UiPreferencesService:prefs,MidiInputService:{ listen(listener){this.listener=listener;return()=>{this.listener=undefined;};}, ownsInput(listener){return this.listener===listener;} },LiveRecordingService:session};
@@ -105,8 +105,8 @@ function recordingFixture(countIn = true) {
  const Component=load('features/recording/live-recording.component.ts',modules,globals).LiveRecordingComponent;
  const component=new Component();component.notes.set(true);
  // Audio behavior is independently covered by playback tests; this clock tests capture gating.
- component.tick=()=>{};
- return {component,session,listeners,advance(ms){now=ms;component.advance();}};
+ const scheduledTick=component.tick;component.tick=()=>{};
+ return {component,session,listeners,tick:scheduledTick,advance(ms){now=ms;component.advance();}};
 }
 test('four beat count-in gates notes and cursors, and cancelling it leaves no recording gesture', () => {
  const f=recordingFixture(),c=f.component;c.toggle();
@@ -306,4 +306,48 @@ test('phrase recording mode persists and Shift backtick matches the cancel short
  f.uiPreferences.setRecordingMode('armed');const saved=JSON.parse(f.uiPreferences.exportJson());assert.equal(saved.recordingMode,'armed');
  assert.equal(f.uiPreferences.importJson(JSON.stringify({...saved,recordingMode:'invalid'})),false);
  assert.equal(f.uiPreferences.matchesShortcut('cancelPhraseRecording',{code:'Backquote',key:'~',shiftKey:true}),true);
+});
+
+test('count-in positions the playhead at the capture point and rejects out-of-region armed positions',()=>{
+ for(const [armed,start,expected] of [[false,7,0],[true,7,7],[true,-1,0],[true,16,0],[true,19,0]]){
+  const f=recordingFixture(),c=f.component,seeks=[];c.armed=()=>armed;c.beats.set(16);c.startBeat.set(start);
+  c.playback={pause(){},seek(project,beat){seeks.push(beat);}};
+  c.backingContext.set({project:{},startBeat:20,trackIds:[]});c.toggle();
+  assert.equal(f.session.phraseBeat(),expected);assert.deepEqual(seeks,[20+expected]);c.stop();
+ }
+});
+test('count-in flashes follow scheduled audio time for 100ms and recording accents repeat each measure',()=>{
+ const f=recordingFixture(),c=f.component;c.beats.set(16);c.toggle();
+ const beeps=[];const audio={currentTime:0,destination:{},close(){return Promise.resolve();},
+ createOscillator(){const oscillator={frequency:{value:0},connect(){},start(at){beeps.push({at,frequency:this.frequency.value});},stop(){}};return oscillator;},
+ createGain(){return {gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}};
+ c.audio=audio;c.preferences.preferences=()=>({recordingTick:true});
+ f.tick();f.advance(0);assert.equal(f.session.countInFlash(),true);
+ audio.currentTime=.101;f.advance(101);assert.equal(f.session.countInFlash(),false);
+ audio.currentTime=.45;f.advance(450);f.tick();assert.equal(f.session.countInFlash(),false,'lookahead does not flash early');
+ audio.currentTime=.5;f.advance(500);assert.equal(f.session.countInFlash(),true);
+ for(let ms=1000;ms<=4500;ms+=500){audio.currentTime=ms/1000;f.advance(ms);f.tick();}
+ assert.deepEqual(beeps.filter(beep=>beep.frequency===1200).map(beep=>beep.at),[0,2,4]);
+ assert.equal(f.session.countInFlash(),false,'recording ticks do not flash');c.stop();assert.equal(f.session.countInFlash(),false);
+});
+test('free recording preserves onset and release, splits loops, and Lock Grid opts into quantization',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();
+ assert.equal(f.uiPreferences.preferences().recordingLockGrid,false);e.phraseLength.set(4);
+ e.updateHeldNotes([{id:'free',start:.31,end:.83,midi:60,velocity:90}]);assert.ok(Math.abs(e.heldRecordingNotes()[0].startBeat-.31)<1e-9);
+ e.recordSpan({start:.31,end:.83,midi:60,velocity:90});let last=e.draftNotes().at(-1);assert.ok(Math.abs(last.startBeat-.31)<1e-9);assert.ok(Math.abs(last.durationBeats-.52)<1e-9);
+ const segments=helpers.recordedSegments({start:3.93,end:4.27,midi:60,velocity:90},4,null);
+ assert.ok(Math.abs(segments.reduce((sum,n)=>sum+n.end-n.start,0)-.34)<1e-9);assert.equal(segments.length,2);
+ f.uiPreferences.setRecordingOption('recordingLockGrid',true);e.recordSpan({start:.31,end:.83,midi:64,velocity:90});last=e.draftNotes().at(-1);assert.equal(last.startBeat,.25);assert.equal(last.durationBeats,.5);
+ assert.equal(JSON.parse(f.uiPreferences.exportJson()).recordingLockGrid,true);
+});
+
+test('very short measure count-in accents stay aligned through the minimum two-beat boundary',()=>{
+ const f=recordingFixture(),c=f.component;c.armed=()=>true;c.measureBeats.set(.75);c.toggle();
+ const beeps=[];const audio={currentTime:0,destination:{},close(){return Promise.resolve();},
+ createOscillator(){return {frequency:{value:0},connect(){},start(at){beeps.push([at,this.frequency.value]);},stop(){}};},
+ createGain(){return {gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}};
+ c.audio=audio;
+ for(const ms of [0,350,700,950,1050]){audio.currentTime=ms/1000;f.advance(ms);f.tick();}
+ assert.equal(beeps.length,4);for(let i=0;i<4;i++){assert.ok(Math.abs(beeps[i][0]-[0,.375,.75,1][i])<1e-9);assert.equal(beeps[i][1],1200);}
+ c.stop();
 });

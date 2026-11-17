@@ -8,6 +8,7 @@
   <vc-compact-toggle label="Recording tick" [active]="preferences.preferences().recordingTick" (toggled)="preferences.setRecordingOption('recordingTick', !preferences.preferences().recordingTick)" />
   @if (notes()) { <vc-compact-toggle label="Play other tracks" [disabled]="running()" [active]="preferences.preferences().recordingOtherTracks" (toggled)="preferences.setRecordingOption('recordingOtherTracks', !preferences.preferences().recordingOtherTracks)" /> }
   @if (notes()) { <vc-compact-toggle label="Match scale/key" description="Map keyboard letters to scale degrees. Shift adds one semitone; MIDI pitches stay unchanged." [active]="preferences.preferences().keyboardMatchScale" (toggled)="preferences.setRecordingOption('keyboardMatchScale', !preferences.preferences().keyboardMatchScale)" /> }
+  @if (notes()) { <vc-compact-toggle label="Lock Grid" [disabled]="running()" [active]="preferences.preferences().recordingLockGrid" (toggled)="preferences.setRecordingOption('recordingLockGrid', !preferences.preferences().recordingLockGrid)" /> }
   @if (!notes()) { <span>Tap / hold: @for (binding of preferences.shortcuts().recordRhythm; track $index) { {{ shortcutLabel(binding) }} } · Settings → Shortcuts → General</span> }
   @if (countingIn()) { <output aria-label="Recording count-in">Count-in {{ countingIn() }}</output> }
   @else if (preparingBacking()) { <output role="status">Preparing backing playback…</output> }

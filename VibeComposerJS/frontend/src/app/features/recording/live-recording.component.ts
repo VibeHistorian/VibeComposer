@@ -76,13 +76,21 @@ export class LiveRecordingComponent {
   private audio?: AudioContext;
   private tickTimer?: ReturnType<typeof setInterval>;
   private nextTick = 0;
+  private countInPulses: number[] = [];
+  private flashUntil = 0;
   toggle(): void {
     if (this.running()) { this.stop(); return; }
     if (this.disabled()) return;
     this.recordingError.set('');
-    if (this.notes() && !this.preferences.preferences().recordingOtherTracks) this.playback?.pause?.();
+    if (this.notes()) this.playback?.pause?.();
     this.session.stop?.(); this.releaseAll(0); this.attachInput(); this.session.stop = this.stop;
-    this.offset = this.armed() ? recordingPosition(this.startBeat(), this.loopBeats()) : 0;
+    const positionedBeat = this.startBeat();
+    this.offset = this.armed() && positionedBeat >= 0 && positionedBeat < this.loopBeats() ? positionedBeat : 0;
+    if (this.notes()) {
+      const context = this.backingContext();
+      if (context) this.playback.seek(context.project, context.startBeat + this.offset);
+      this.session.phraseBeat.set(this.offset);
+    }
     this.waiting.set(this.armed());
     this.running.set(true); this.elapsed = this.notes() || this.preferences.preferences().recordingCountIn ? -this.countInBeats() : 0;
     this.started = false; this.countingIn.set(-this.elapsed); this.beat.set(0); this.lastTime = performance.now(); this.nextTick = this.elapsed;
@@ -111,6 +119,7 @@ export class LiveRecordingComponent {
     this.beginCapture();
   }
   private beginCapture(): void {
+    this.clearCountInFlash();
     this.started = true; this.countingIn.set(0);
     if (this.notes()) this.session.phraseBeat.set(this.offset);
     this.began.emit();
@@ -124,13 +133,14 @@ export class LiveRecordingComponent {
     this.elapsed += (now - this.lastTime) / 60000 * this.projects.project().tempoBpm;
     this.lastTime = now;
     if (this.waiting() && this.elapsed >= 0) {
-      this.elapsed = -this.countInBeats() + recordingPosition(this.elapsed, this.countInBeats()); this.nextTick = recordingTickAtOrAfter(this.elapsed, this.countInBeats());
+      this.elapsed = -this.countInBeats() + recordingPosition(this.elapsed, this.countInBeats()); this.nextTick = recordingTickAtOrAfter(this.elapsed + this.countInBeats(), Math.max(1 / 960, this.measureBeats())) - this.countInBeats();
     }
     return this.elapsed + (this.started ? this.offset : 0);
   }
   private readonly advance = (): void => {
     if (!this.running()) return;
     if (this.backing && this.started && !this.preparingBacking() && !this.backing.active()) { this.stop(); return; }
+    this.updateCountInFlash();
     const beat = this.time();
     if (beat < 0) { this.countingIn.set(Math.ceil(-beat)); this.frame = requestAnimationFrame(this.advance); return; }
     this.startRecording();
@@ -143,20 +153,40 @@ export class LiveRecordingComponent {
   /** Audio lookahead scheduler runs independently of Angular rendering. */
   private readonly tick = (): void => {
     if (!this.audio || this.preparingBacking()) return;
-    const tickLength = this.started ? this.loopBeats() : this.countInBeats();
+    const tickLength = Math.max(1 / 960, this.measureBeats());
     const beat = this.time(), bpm = this.projects.project().tempoBpm, ahead = 0.12 * bpm / 60;
     if (beat >= 0 && this.notes() && this.backingContext() && this.preferences.preferences().recordingOtherTracks && !this.started) return;
-    if (this.nextTick < beat - ahead) this.nextTick = recordingTickAtOrAfter(beat, tickLength);
+    const tickOrigin = this.started ? 0 : -this.countInBeats();
+    if (this.nextTick < beat - ahead) this.nextTick = recordingTickAtOrAfter(beat - tickOrigin, tickLength) + tickOrigin;
     while (this.nextTick <= beat + ahead) {
-      if (this.nextTick >= 0 && !this.waiting() && !this.preferences.preferences().recordingTick) { this.nextTick = nextRecordingTick(this.nextTick, tickLength); continue; }
+      if (this.nextTick >= 0 && !this.waiting() && !this.preferences.preferences().recordingTick) { this.nextTick = this.followingTick(this.nextTick, tickOrigin, tickLength); continue; }
       const at = this.audio.currentTime + Math.max(0, (this.nextTick - beat) * 60 / bpm);
       const osc = this.audio.createOscillator(), gain = this.audio.createGain();
-      const phase = recordingPosition(this.nextTick, tickLength);
+      const phase = !this.started && Math.abs(this.nextTick) < 1e-7 ? 0
+        : recordingPosition(this.nextTick + (this.started ? 0 : this.countInBeats()), tickLength);
       osc.frequency.value = Math.min(phase, tickLength - phase) < 1e-7 ? 1200 : 800;
       gain.gain.setValueAtTime(0.12, at); gain.gain.exponentialRampToValueAtTime(0.001, at + 0.04);
-      osc.connect(gain); gain.connect(this.audio.destination); osc.start(at); osc.stop(at + 0.05); this.nextTick = nextRecordingTick(this.nextTick, tickLength);
+      if (this.notes() && !this.started) this.countInPulses.push(at);
+      osc.connect(gain); gain.connect(this.audio.destination); osc.start(at); osc.stop(at + 0.05); this.nextTick = this.followingTick(this.nextTick, tickOrigin, tickLength);
     }
   };
+  private followingTick(beat: number, origin: number, length: number): number {
+    const next = nextRecordingTick(beat - origin, length) + origin;
+    // The minimum two-beat count-in can end partway through a very short measure.
+    return !this.started && beat < 0 ? Math.min(0, next) : next;
+  }
+  private updateCountInFlash(): void {
+    if (!this.audio || !this.notes()) return;
+    const now = this.audio.currentTime;
+    while (this.countInPulses.length && this.countInPulses[0] <= now) {
+      this.flashUntil = this.countInPulses.shift()! + 0.1;
+    }
+    this.session.countInFlash.set(now < this.flashUntil);
+  }
+  private clearCountInFlash(): void {
+    this.countInPulses = []; this.flashUntil = 0;
+    this.session.countInFlash.set(false);
+  }
   private readonly input = (note: LiveMidiNote): void => {
     if (!this.running() && !this.notes()) return;
     let beat = this.running() ? this.time() : 0;
@@ -216,6 +246,7 @@ export class LiveRecordingComponent {
     this.backing?.stop(); this.backing = undefined; this.preparingBacking.set(false);
     if (!this.notes()) this.detachInput();
     if (this.session.stop === this.stop) { this.session.stop = undefined; this.session.phraseBeat.set(null); }
+    this.clearCountInFlash();
     void this.audio?.close(); this.audio = undefined; if (this.started) this.ended.emit(); this.started = false;
   };
   ngOnDestroy(): void { this.stop(); this.detachInput(); }

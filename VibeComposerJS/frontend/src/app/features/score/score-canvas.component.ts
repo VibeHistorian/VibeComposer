@@ -1,3 +1,4 @@
+import { adjustColor } from '../../core/ui/appearance';
 import { keyboardLabelLayout } from './score-keyboard-labels';
 import { logNotePolygon } from './score-note-shape';
 import { instrumentEnvelope } from '../../core/music/gm-instruments';
@@ -118,6 +119,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly chordBoundaries = input<readonly { beat: number; hue: number }[]>([]);
   readonly totalBeats = input.required<number>();
   readonly timelineStartBeat = input(0);
+  readonly playheadFlashing = input(false);
   readonly playheadPercent = input.required<number>();
   readonly selectedTrackId = input.required<string>();
   readonly hiddenTrackIds = input.required<ReadonlySet<string>>();
@@ -282,6 +284,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   });
   private readonly playheadEffect = effect(() => {
     this.playhead = this.playheadPercent();
+    this.playheadFlashing();
     this.selectedNoteIds();
     this.drawDynamic();
   });
@@ -1287,6 +1290,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       graphics.moveTo(hoverX, 0).lineTo(hoverX, this.height)
         .stroke({ color: accent.toNumber(), alpha: accent.alpha * 0.25, width: 1 });
     }
+    const playheadColor = this.playheadFlashing()
+      ? new Color(adjustColor('#' + accent.toNumber().toString(16).padStart(6, '0'), { brightness: 0, hueShift: 50, saturation: 0 })) : accent;
     const x = (this.playhead / 100 - this.horizontalOffset) * this.width * this.horizontalScale;
     if (x >= 0 && x <= this.width) {
       const position = Math.min(this.width - 1, x);
@@ -1296,7 +1301,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       for (const [column, weight] of [[left, 1 - fraction], [left + 1, fraction]]) {
         if (weight === 0) continue;
         graphics.moveTo(column + 0.5, 0).lineTo(column + 0.5, this.height)
-          .stroke({ color: accent.toNumber(), alpha: accent.alpha * Math.pow(weight, 1 / 2.2), width: 1 });
+          .stroke({ color: playheadColor.toNumber(), alpha: playheadColor.alpha * Math.pow(weight, 1 / 2.2), width: 1 });
       }
     }
     const glowColors = new Map<string, number>();
