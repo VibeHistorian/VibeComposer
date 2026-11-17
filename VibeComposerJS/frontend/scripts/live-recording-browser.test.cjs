@@ -49,6 +49,9 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   port.onmidimessage({data:[0x80,108,0]});
   await wait(()=>!document.querySelector('.pitch-key.sounding'),'outlier release');
   check(button('Apply').disabled,'zooming and auditioning leave the draft unchanged');
+  const discardLoop=await wait(()=>button('Discard on Loop'),'discard on loop');check(discardLoop.getAttribute('aria-pressed')==='true','discard on loop defaults on');
+  discardLoop.click();await wait(()=>discardLoop.getAttribute('aria-pressed')==='false','keep loop passes');
+  discardLoop.click();await wait(()=>discardLoop.getAttribute('aria-pressed')==='true','discard loop passes');
   const gridLock=await wait(()=>button('Lock Grid'),'grid lock');check(gridLock.getAttribute('aria-pressed')==='false','free timing defaults on');
   gridLock.click();await wait(()=>gridLock.getAttribute('aria-pressed')==='true','grid lock enabled');gridLock.click();
   await wait(()=>gridLock.getAttribute('aria-pressed')==='false','grid lock disabled');

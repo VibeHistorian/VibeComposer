@@ -351,3 +351,69 @@ test('very short measure count-in accents stay aligned through the minimum two-b
  assert.equal(beeps.length,4);for(let i=0;i<4;i++){assert.ok(Math.abs(beeps[i][0]-[0,.375,.75,1][i])<1e-9);assert.equal(beeps[i][1],1200);}
  c.stop();
 });
+
+test('Discard on Loop defaults on, persists, and rejects invalid preferences',()=>{
+ const f=fixture();assert.equal(f.uiPreferences.preferences().recordingDiscardOnLoop,true);
+ f.uiPreferences.setRecordingOption('recordingDiscardOnLoop',false);const saved=JSON.parse(f.uiPreferences.exportJson());assert.equal(saved.recordingDiscardOnLoop,false);
+ assert.equal(f.uiPreferences.importJson(JSON.stringify({...saved,recordingDiscardOnLoop:'false'})),false);
+ delete saved.recordingDiscardOnLoop;assert.equal(f.uiPreferences.importJson(JSON.stringify(saved)),true);assert.equal(f.uiPreferences.preferences().recordingDiscardOnLoop,true);
+});
+test('loop grace expiry discards only earlier passes, including during silence, and keeps one undo step',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();e.phraseLength.set(4);
+ e.recordSpan({start:0,end:.3,midi:59,velocity:90});const before=JSON.stringify(e.draftNotes());
+ e.beginRecording();e.recordSpan({start:1,end:1.5,midi:60,velocity:90});assert.notEqual(JSON.stringify(e.draftNotes()),before);
+ e.recordCursor({beat:4});assert.notEqual(JSON.stringify(e.draftNotes()),before,'restart retains the previous pass');
+ e.recordingMeasureBeats=()=>1;e.recordCursor({beat:5});assert.equal(JSON.stringify(e.draftNotes()),before,'grace expiry clears the previous pass');
+ e.recordSpan({start:4.2,end:4.7,midi:64,velocity:90});e.recordCursor({beat:4.8});e.finishRecording();
+ const after=JSON.stringify(e.draftNotes());assert.notEqual(after,before);e.undo();assert.equal(JSON.stringify(e.draftNotes()),before);e.redo();assert.equal(JSON.stringify(e.draftNotes()),after);
+ e.cancelRecording();assert.equal(JSON.stringify(e.draftNotes()),before);
+});
+test('discarding a loop trims held previews and late releases to the latest pass without resurrecting older passes',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();e.phraseLength.set(4);
+ const before=JSON.stringify(e.draftNotes());e.recordingMeasureBeats=()=>.25;e.beginRecording();e.recordSpan({start:.2,end:.7,midi:60,velocity:90});
+ const held={id:'held',start:3.8,end:8.4,midi:67,velocity:105};e.updateHeldNotes([held]);
+ assert.equal(JSON.stringify(e.draftNotes()),before);assert.equal(e.heldRecordingNotes().length,1);assert.equal(e.heldRecordingNotes()[0].startBeat,0);
+ assert.ok(Math.abs(e.heldRecordingNotes()[0].durationBeats-.4)<1e-9);
+ e.recordSpan(held);const note=e.draftNotes().at(-1);assert.equal(note.startBeat,0);assert.ok(Math.abs(note.durationBeats-.4)<1e-9);assert.equal(note.velocity,105);
+ e.recordSpan({start:3.9,end:4,midi:64,velocity:90});assert.equal(e.draftNotes().at(-1).id,note.id,'late older releases cannot resurrect a discarded pass');
+ e.recordCursor({beat:12.25});e.finishRecording();assert.equal(JSON.stringify(e.draftNotes()),before);
+});
+test('turning Discard on Loop off layers every pass, including held notes across the loop',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();e.phraseLength.set(4);
+ f.uiPreferences.setRecordingOption('recordingDiscardOnLoop',false);const before=e.draftNotes().length;e.beginRecording();
+ e.recordSpan({start:.2,end:.7,midi:60,velocity:90});e.recordCursor({beat:4});e.recordSpan({start:3.8,end:4.3,midi:64,velocity:90});e.finishRecording();
+ assert.equal(e.draftNotes().length,before+3);e.undo();assert.equal(e.draftNotes().length,before);
+});
+
+test('grid-locked held notes start at zero after a fractional loop discards the earlier pass',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();e.phraseLength.set(3.5);e.recordingMeasureBeats=()=>.25;e.setGrid('1');
+ f.uiPreferences.setRecordingOption('recordingLockGrid',true);const before=e.draftNotes().length;e.beginRecording();
+ const held={id:'held',start:3.4,end:3.8,midi:67,velocity:90};e.updateHeldNotes([held]);
+ assert.equal(e.heldRecordingNotes().length,1);assert.equal(e.heldRecordingNotes()[0].startBeat,0);
+ e.recordSpan(held);assert.equal(e.draftNotes().length,before+1);assert.equal(e.draftNotes().at(-1).startBeat,0);
+ e.finishRecording();e.undo();assert.equal(e.draftNotes().length,before);
+});
+
+test('one-measure grace retains late releases and new-pass notes, then discards only the previous pass',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();e.phraseLength.set(16);
+ const baseline=e.draftNotes().map(n=>n.id);e.beginRecording();e.recordSpan({start:15.8,end:16.2,midi:65,velocity:98});
+ const old=e.draftNotes().at(-2),fresh=e.draftNotes().at(-1);
+ assert.ok(old.startBeat>15);assert.equal(fresh.startBeat,0);
+ e.recordSpan({start:17,end:17.5,midi:67,velocity:90});const fresh2=e.draftNotes().at(-1);
+ e.recordCursor({beat:19.999});assert.ok(e.draftNotes().some(n=>n.id===old.id),'previous pass survives until a full measure has elapsed');
+ e.recordCursor({beat:20});assert.deepEqual(e.draftNotes().map(n=>n.id),[...baseline,fresh.id,fresh2.id]);
+ e.finishRecording();e.undo();assert.deepEqual(e.draftNotes().map(n=>n.id),baseline);
+});
+test('stopping within the grace period preserves the previous pass as one undo step',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();e.phraseLength.set(16);
+ const before=JSON.stringify(e.draftNotes());e.beginRecording();e.recordSpan({start:15,end:15.5,midi:60,velocity:90});e.recordCursor({beat:16.1});e.finishRecording();
+ const after=JSON.stringify(e.draftNotes());assert.notEqual(after,before);e.undo();assert.equal(JSON.stringify(e.draftNotes()),before);e.redo();assert.equal(JSON.stringify(e.draftNotes()),after);e.cancelRecording();assert.equal(JSON.stringify(e.draftNotes()),before);
+});
+test('short loops retain a full measure of leeway even when another restart occurs',()=>{
+ const f=fixture(),e=new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();e.ngOnInit();e.phraseLength.set(2);
+ const before=e.draftNotes().length;e.beginRecording();e.recordSpan({start:1,end:1.3,midi:60,velocity:90});const first=e.draftNotes().at(-1).id;
+ e.recordSpan({start:2.2,end:2.6,midi:64,velocity:90});const second=e.draftNotes().at(-1).id;
+ e.recordCursor({beat:5.99});assert.equal(e.draftNotes().length,before+2);
+ e.recordCursor({beat:6});assert.ok(!e.draftNotes().some(n=>n.id===first));assert.ok(e.draftNotes().some(n=>n.id===second));
+ e.recordCursor({beat:8});assert.equal(e.draftNotes().length,before);
+});

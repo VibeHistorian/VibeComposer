@@ -64,7 +64,9 @@ export class EditWorkspaceComponent {
   updateHeldNotes(spans: readonly (RecordedSpan & { id: string })[]): void {
     const selected: string[] = [];
     this.heldRecordingNotes.set(spans.flatMap(span => {
-      const segments = recordedSegments(span, this.phraseBeats(), this.recordingGrid(), true)
+      const retained = this.retainedRecordingSpan(span);
+      if (!retained) return [];
+      const segments = recordedSegments(retained, this.phraseBeats(), this.recordingGrid(), true)
         .map((segment, index) => ({ id: 'recording-' + span.id + '-' + index, trackId: this.selectedTrack().id,
           midi: segment.midi, startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity }));
       // A held note crossing a loop highlights its current segment, not earlier passes.
@@ -76,20 +78,44 @@ export class EditWorkspaceComponent {
   private recordingSnapshot?: PhraseEditSnapshot<PhraseDraftNote>;
   private recordingActive = false;
   private lastRecordingIds: string[] = [];
+  private recordingCycle = 0;
+  private readonly recordingNoteCycles = new Map<string, number>();
   beginRecording(): void {
     this.recordingSnapshot = { notes: [...this.draftNotes()], selection: [...this.selectedNoteIds()], restore: false, restoredTrackIds: this.restoredTrackIds(), phraseTranspose: this.freeTranspose() };
-    this.recordingActive = true; this.lastRecordingIds = [];
+    this.recordingActive = true; this.lastRecordingIds = []; this.recordingCycle = 0; this.recordingNoteCycles.clear();
   }
-  cancelRecording(): void {
+  private discardRecordedNotes(beforeCycle = Infinity): void {
     if (!this.lastRecordingIds.length) return;
-    const removed = new Set(this.lastRecordingIds);
+    const removed = new Set(this.lastRecordingIds.filter(id => (this.recordingNoteCycles.get(id) ?? -Infinity) < beforeCycle));
+    if (!removed.size) return;
     this.draftNotes.update(notes => notes.filter(note => !removed.has(note.id)));
     this.selectedNoteIds.update(ids => ids.filter(id => !removed.has(id)));
     if (this.recordingSnapshot && phraseNotesEqual(this.draftNotes(), this.recordingSnapshot.notes)) {
       this.restoredTrackIds.set(this.recordingSnapshot.restoredTrackIds ?? []);
       this.selectNotes(this.recordingSnapshot.selection);
     }
-    this.lastRecordingIds = []; this.record();
+    this.lastRecordingIds = this.lastRecordingIds.filter(id => !removed.has(id));
+    for (const id of removed) this.recordingNoteCycles.delete(id);
+  }
+  cancelRecording(): void {
+    if (!this.lastRecordingIds.length) return;
+    this.discardRecordedNotes(); this.record();
+  }
+  recordCursor(cursor: { beat: number }): void {
+    if (!this.recordingActive) return;
+    // Retain the previous pass for one measure after the next pass begins.
+    const cycle = Math.max(0, Math.floor((cursor.beat - this.recordingMeasureBeats()) / this.phraseBeats()));
+    if (cycle <= this.recordingCycle) return;
+    if (this.preferences.preferences().recordingDiscardOnLoop) this.discardRecordedNotes(cycle);
+    this.recordingCycle = cycle;
+  }
+  private retainedRecordingSpan(span: RecordedSpan): RecordedSpan | null {
+    this.recordCursor({ beat: span.end });
+    if (!this.recordingActive || !this.preferences.preferences().recordingDiscardOnLoop) return span;
+    const origin = this.recordingCycle * this.phraseBeats();
+    const start = Math.max(span.start, origin);
+    // Quantize within the retained pass so fractional loops cannot snap into the old pass.
+    return start < span.end ? { ...span, start: start - origin, end: span.end - origin } : null;
   }
   finishRecording(): void {
     if (this.recordingActive) {
@@ -100,13 +126,18 @@ export class EditWorkspaceComponent {
     this.liveVoices.clear(); this.heldInputPitches.clear(); this.soundingPitches.set([]); this.liveRecordingSelection.set([]); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
   }
   recordSpan(span: RecordedSpan): void {
-    for (const segment of recordedSegments(span, this.phraseBeats(), this.recordingGrid())) {
+    const retained = this.retainedRecordingSpan(span);
+    if (!retained) return;
+    const grid = this.recordingGrid();
+    const snappedStart = grid === null ? retained.start : Math.floor(retained.start / grid + 1e-7) * grid;
+    let cycle = this.recordingCycle + Math.floor(snappedStart / this.phraseBeats());
+    for (const segment of recordedSegments(retained, this.phraseBeats(), grid)) {
       // Live MIDI and keyboard pitches remain chromatic, independently of drawing snap.
       const track = this.selectedTrack();
       if (this.draftNotes().filter(note => note.trackId === track.id).length >= 2048) break;
       const note = { id: this.makeNoteId(), trackId: track.id, midi: Math.max(0, Math.min(127, segment.midi - this.displayTranspose())),
         startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity };
-      this.lastRecordingIds.push(note.id);
+      this.lastRecordingIds.push(note.id); this.recordingNoteCycles.set(note.id, cycle++);
       this.draftNotes.update(notes => [...notes, note]); this.selectNote(note.id); this.markManual([track.id]);
     }
     if (!this.recordingActive) this.record();
