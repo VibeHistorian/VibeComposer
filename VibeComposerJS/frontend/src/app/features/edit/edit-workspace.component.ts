@@ -52,9 +52,10 @@ export class EditWorkspaceComponent {
     const release = this.liveVoices.get(note.id);
     this.liveVoices.delete(note.id); this.heldInputPitches.delete(note.id);
     try { release?.(); } catch { /* A disposed voice must not retain input/highlight state. */ }
-    if (note.down) {
+    const track = this.recordingActive ? this.recordingTrackForPitch(note.midi) : this.selectedTrack();
+    if (note.down && track) {
       this.heldInputPitches.set(note.id, note.midi);
-      this.liveVoices.set(note.id, this.audio.liveAudition(this.selectedTrack(), {
+      this.liveVoices.set(note.id, this.audio.liveAudition(track, {
         id: note.id, midi: note.midi, velocity: note.velocity, startBeat: 0, durationBeats: 1,
       }, this.project()));
     }
@@ -64,10 +65,12 @@ export class EditWorkspaceComponent {
   updateHeldNotes(spans: readonly (RecordedSpan & { id: string })[]): void {
     const selected: string[] = [];
     this.heldRecordingNotes.set(spans.flatMap(span => {
+      const track = this.recordingTrackForPitch(span.midi);
+      if (!track) return [];
       const retained = this.retainedRecordingSpan(span);
       if (!retained) return [];
       const segments = recordedSegments(retained, this.phraseBeats(), this.recordingGrid(), true)
-        .map((segment, index) => ({ id: 'recording-' + span.id + '-' + index, trackId: this.selectedTrack().id,
+        .map((segment, index) => ({ id: 'recording-' + span.id + '-' + index, trackId: track.id,
           midi: segment.midi, startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity }));
       // A held note crossing a loop highlights its current segment, not earlier passes.
       if (segments.length) selected.push(segments.at(-1)!.id);
@@ -126,14 +129,15 @@ export class EditWorkspaceComponent {
     this.liveVoices.clear(); this.heldInputPitches.clear(); this.soundingPitches.set([]); this.liveRecordingSelection.set([]); this.heldRecordingNotes.set([]); this.recordingPitches.set([]);
   }
   recordSpan(span: RecordedSpan): void {
+    // Live MIDI and keyboard pitches remain chromatic, independently of drawing snap.
+    const track = this.recordingTrackForPitch(span.midi);
+    if (!track) return;
     const retained = this.retainedRecordingSpan(span);
     if (!retained) return;
     const grid = this.recordingGrid();
     const snappedStart = grid === null ? retained.start : Math.floor(retained.start / grid + 1e-7) * grid;
     let cycle = this.recordingCycle + Math.floor(snappedStart / this.phraseBeats());
     for (const segment of recordedSegments(retained, this.phraseBeats(), grid)) {
-      // Live MIDI and keyboard pitches remain chromatic, independently of drawing snap.
-      const track = this.selectedTrack();
       if (this.draftNotes().filter(note => note.trackId === track.id).length >= 2048) break;
       const note = { id: this.makeNoteId(), trackId: track.id, midi: Math.max(0, Math.min(127, segment.midi - this.displayTranspose())),
         startBeat: segment.start, durationBeats: segment.end - segment.start, velocity: segment.velocity };
@@ -142,6 +146,16 @@ export class EditWorkspaceComponent {
     }
     if (!this.recordingActive) this.record();
   }
+  private drumTrackForPitch(midi: number): CompositionTrack | undefined {
+    const selected = this.selectedTrack();
+    if (selected.role !== 'drums') return undefined;
+    if (selected.generatorSettings.pitch === midi) return selected;
+    return this.editedTracks().find(track => track.role === 'drums' && track.generatorSettings.pitch === midi);
+  }
+  private recordingTrackForPitch(midi: number): CompositionTrack | undefined {
+    return this.selectedPart() === 'drums' ? this.drumTrackForPitch(midi) : this.selectedTrack();
+  }
+  readonly acceptRecordingPitch = (midi: number): boolean => this.recordingTrackForPitch(midi) !== undefined;
   readonly preferActionShortcut = (event: KeyboardEvent): boolean => this.selectedNoteIds().length > 0
     && (['selectAllNotes', 'transposeNotes', 'deleteNotes', 'undo', 'redo', 'playback'] as const)
       .some(action => this.preferences.matchesShortcut(action, event));
@@ -501,8 +515,7 @@ export class EditWorkspaceComponent {
 
   addNoteAt(position: { trackId?: string; midi: number; startBeat: number; durationBeats?: number; velocity?: number }): void {
     const track = this.editedTracks().find(track => track.id === position.trackId)
-      ?? (this.selectedPart() === 'drums' ? this.editedTracks().find(track => track.role === 'drums' && track.generatorSettings.pitch === position.midi && track.id === this.selectedTrack().id)
-        ?? this.editedTracks().find(track => track.role === 'drums' && track.generatorSettings.pitch === position.midi) : undefined) ?? this.selectedTrack();
+      ?? this.drumTrackForPitch(position.midi) ?? this.selectedTrack();
     if (this.notes().filter(note => note.trackId === track.id).length >= 2048 || position.startBeat < this.editBounds().startBeat || position.startBeat >= this.editBounds().endBeat) return;
     const note = { id: this.makeNoteId(), trackId: track.id, midi: this.snapPitch(position.midi), startBeat: position.startBeat,
       durationBeats: Math.min(position.durationBeats ?? this.lastDuration, this.editBounds().endBeat - position.startBeat), velocity: position.velocity ?? 90 };

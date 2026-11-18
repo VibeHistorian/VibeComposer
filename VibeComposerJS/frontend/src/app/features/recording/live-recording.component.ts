@@ -32,6 +32,7 @@ export class LiveRecordingComponent {
   readonly displayBeat = computed(() => Math.floor(this.beat()) + 1);
   readonly beatCount = computed(() => Math.ceil(this.loopBeats()));
   readonly notes = input(false);
+  readonly acceptRecordingPitch = input<((midi: number) => boolean) | null>(null);
   readonly preferActionShortcut = input<((event: KeyboardEvent) => boolean) | null>(null);
   readonly disabled = input(false);
   readonly heldNotes = output<readonly (RecordedSpan & { id: string })[]>();
@@ -189,6 +190,7 @@ export class LiveRecordingComponent {
   }
   private readonly input = (note: LiveMidiNote): void => {
     if (!this.running() && !this.notes()) return;
+    if (note.down && this.running() && this.acceptRecordingPitch()?.(note.midi) === false) return;
     let beat = this.running() ? this.time() : 0;
     if (note.down && this.waiting() && this.activeContext()) {
       this.waiting.set(false); this.elapsed = 0; this.lastTime = performance.now(); this.nextTick = this.offset;

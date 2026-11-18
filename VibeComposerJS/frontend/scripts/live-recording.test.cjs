@@ -179,6 +179,64 @@ test('recording highlights all held notes instead of normal selection, including
  assert.deepEqual(editor.selectedNoteIds(),['previous'],'live highlighting does not replace the editing selection');
  editor.finishRecording();running=false;assert.deepEqual(editor.canvasSelectedNoteIds(),['previous']);
 });
+test('drum recording ignores undefined pitches and routes audition, held notes, and draft notes to the same tracks', () => {
+ const f = fixture();
+ f.service.setRoleTrackCount('drums', 4);
+ const [firstKick, firstSnare, selectedKick, otherSnare] = f.service.project().tracks.filter(track => track.role === 'drums');
+ for (const [track, pitch] of [[firstKick, 36], [firstSnare, 38], [selectedKick, 36], [otherSnare, 38]]) {
+  f.service.updateTrackGeneratorSettings(track.id, { pitch });
+ }
+ f.ui.selectedTrackId.set(selectedKick.id);
+ const editor = new (f.load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent)();
+ editor.ngOnInit();
+ const baseline = editor.draftNotes();
+ const auditioned = [], released = [];
+ editor.audio = { liveAudition(track, note) {
+  auditioned.push([track.id, note.midi, note.velocity]);
+  return () => released.push(track.id);
+ } };
+
+ const recorder = recordingFixture();
+ const c = recorder.component;
+ c.ngOnInit();
+ c.armed = () => true;
+ c.acceptRecordingPitch.set(editor.acceptRecordingPitch);
+ c.began.emit = () => editor.beginRecording();
+ c.ended.emit = () => editor.finishRecording();
+ c.noteInput.emit = note => editor.previewInput(note);
+ c.heldNotes.emit = notes => editor.updateHeldNotes(notes);
+ c.span.emit = span => editor.recordSpan(span);
+ c.cursor.emit = cursor => editor.recordCursor(cursor);
+
+ const sendMidi = (midi, velocity) => c.input({ id: `midi:${midi}`, midi, velocity, down: velocity > 0 });
+ c.toggle();
+ sendMidi(127, 100);
+ sendMidi(127, 0);
+ assert.equal(c.waiting(), true, 'undefined pitches leave armed recording waiting');
+ assert.deepEqual(auditioned, []);
+
+ const kickKey = { code: 'Digit1', shiftKey: false, preventDefault() {}, stopImmediatePropagation() {} };
+ c.keydown(kickKey);
+ assert.equal(c.waiting(), false);
+ sendMidi(38, 111);
+ sendMidi(127, 100);
+ recorder.advance(200);
+ const expected = [[selectedKick.id, 36, 90], [firstSnare.id, 38, 111]];
+ const routing = notes => notes.map(note => [note.trackId, note.midi, note.velocity]);
+ assert.deepEqual(auditioned, expected);
+ assert.deepEqual(routing(editor.heldRecordingNotes()), expected);
+ assert.deepEqual(editor.soundingPitches(), [36, 38]);
+ assert.deepEqual(editor.draftNotes(), baseline);
+
+ c.keyup(kickKey);
+ c.stop();
+ c.ngOnDestroy();
+ assert.deepEqual(released, [selectedKick.id, firstSnare.id]);
+ assert.deepEqual(editor.soundingPitches(), []);
+ assert.deepEqual(routing(editor.draftNotes().filter(note => !baseline.some(old => old.id === note.id))), expected);
+ editor.undo();
+ assert.deepEqual(editor.draftNotes(), baseline);
+});
 test('keyboard labels use letter case and hide shifted aliases without changing valid input', () => {
  const labels=helpers.keyboardLabels();
  assert.deepEqual(labels.filter(l=>l.midi===53).map(l=>l.label),['q']);
