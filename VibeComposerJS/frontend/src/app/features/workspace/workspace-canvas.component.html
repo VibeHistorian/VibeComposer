@@ -51,7 +51,7 @@
             <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
               <span class="track-row-gradient" aria-hidden="true"></span>
               <div class="track-line" (click)="selectTrack(track.id)">
-                <vc-context-menu [items]="trackContextItems()" (action)="trackContextAction(track.id, $event)"><button type="button" class="track-select" [disabled]="editing()"
+                <vc-context-menu [items]="trackContextItems(track)" (action)="trackContextAction(track.id, $event)"><button type="button" class="track-select" [disabled]="editing()"
                   title="Select track; middle-click to solo only this track" (mousedown)="preventSelectionScroll($event)" (auxclick)="soloSelection($event, [track.id])"
                   [attr.aria-pressed]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
                   <span>{{ track.name }}</span>

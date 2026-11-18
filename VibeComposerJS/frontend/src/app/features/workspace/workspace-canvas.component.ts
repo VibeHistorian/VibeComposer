@@ -89,13 +89,29 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 })
 export class WorkspaceCanvasComponent {
   private readonly contextOverlay = inject(Overlay);
-  trackContextItems(): readonly ContextMenuItem[] {
-    return [{ id: 'duplicate', label: 'Duplicate', disabled: this.editing() || this.project().tracks.length >= 64,
-      children: [{ id: 'empty', label: 'Global (empty)' }, { id: 'events', label: 'Global + Events' }] }];
+  trackContextItems(track: CompositionTrack): readonly ContextMenuItem[] {
+    const disabled = this.editing();
+    const items: ContextMenuItem[] = [
+      { id: 'edit-notes', label: 'Edit notes', disabled },
+      { id: 'duplicate', label: 'Duplicate', disabled: disabled || this.project().tracks.length >= 64,
+        children: [{ id: 'empty', label: 'Global (empty)' }, { id: 'events', label: 'Global + Events' }] },
+    ];
+    if (hasManualPhrase(track) && this.generationAvailable[track.role]) {
+      items.push({ id: 'restore-generated', label: 'Restore generated', disabled });
+    }
+    if (this.canRemoveTrack(track.id)) items.push({ id: 'remove', label: 'Remove', disabled });
+    return items;
   }
   trackContextAction(trackId: string, action: ContextMenuAction): void {
-    if (this.editing() || !this.project().tracks.some(track => track.id === trackId)) return;
-    if (action.id === 'empty') {
+    const track = this.project().tracks.find(track => track.id === trackId);
+    if (this.editing() || !track) return;
+    if (action.id === 'edit-notes') {
+      this.openTrackEditor(trackId);
+    } else if (action.id === 'restore-generated') {
+      this.restoreTrackPhrase(track);
+    } else if (action.id === 'remove') {
+      this.removeTrack(trackId);
+    } else if (action.id === 'empty') {
       this.projects.duplicateTrack(trackId, { manualNotes: false, presences: false, overrides: false, variations: false });
     } else if (action.id === 'events') {
       this.presetDialogs.open(DuplicateTrackDialogComponent, {
@@ -1064,9 +1080,9 @@ export class WorkspaceCanvasComponent {
   updateTrackName(event: Event): void {
     this.projects.updateTrack(this.selectedTrackId(), { name: this.inputValue(event) });
   }
-  restoreTrackPhrase(): void {
-    if (!this.generationAvailable[this.selectedTrack().role]) return;
-    this.projects.clearTrackPhrase(this.selectedTrackId());
+  restoreTrackPhrase(track: CompositionTrack = this.selectedTrack()): void {
+    if (!this.generationAvailable[track.role]) return;
+    this.projects.clearTrackPhrase(track.id);
   }
   updateChannel(track: CompositionTrack, selection: string): void {
     if (this.editing() || track.role === 'drums') return;

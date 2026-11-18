@@ -13,7 +13,12 @@ for (const width of [1440, 780]) test(`track context menu at ${width}px`, { skip
  const ensure=(v,label)=>{if(!v)throw Error(label);};
  const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
  const menuButton=text=>[...document.querySelectorAll('.context-menu button')].find(b=>b.textContent.trim()===text);
- const open=async(x=120,y=180)=>{const target=await wait(()=>document.querySelector('.track-select'),'track');target.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:x,clientY:y,button:2}));const parent=await wait(()=>menuButton('Duplicate›'),'parent');parent.dispatchEvent(new MouseEvent('mouseenter'));parent.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));await wait(()=>menuButton('Global (empty)'),'submenu');};
+ const openMenu=async(selector,x=120,y=180)=>{
+   const target=await wait(()=>document.querySelector(selector),'track');
+   target.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:x,clientY:y,button:2}));
+   await wait(()=>menuButton('Edit notes'),'track menu');
+ };
+ const open=async(x,y)=>{await openMenu('.track-select',x,y);const parent=await wait(()=>menuButton('Duplicate›'),'parent');parent.dispatchEvent(new MouseEvent('mouseenter'));parent.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));await wait(()=>menuButton('Global (empty)'),'submenu');};
  try{
  await wait(()=>read()?.tracks,'project');const before=JSON.stringify(read());
  await open(innerWidth-12,innerHeight-12);
@@ -29,6 +34,40 @@ for (const width of [1440, 780]) test(`track context menu at ${width}px`, { skip
  await open();menuButton('Global (empty)').click();await wait(()=>JSON.stringify(read())!==before,'empty duplicate');
  const p=read(),copy=p.tracks.at(-1);ensure(!copy.editedPhrase&&!copy.phraseEdits,'empty manual');ensure(p.arrangement.every(s=>!s.trackPhrases?.[copy.id]&&!s.trackPartOverrides?.[copy.id]&&!s.variations?.choices.some(c=>c.trackId===copy.id)),'empty events');
  await open();menuButton('Global + Events').click();const d=await wait(()=>document.querySelector('vc-duplicate-track-dialog'),'popup again');[...d.querySelectorAll('button')].find(b=>b.textContent==='OK').click();await wait(()=>read().tracks.length===p.tracks.length+1,'events duplicate');await wait(()=>!document.querySelector('vc-duplicate-track-dialog'),'popup closed');
+
+ const chords='.track-group.chords .track-select';
+ const chordId=read().tracks.find(t=>t.role==='chords').id;
+ const chordTrack=()=>read().tracks.find(t=>t.id===chordId);
+ const sectionPhrase=()=>read().arrangement.find(s=>s.trackPhrases?.[chordId])?.trackPhrases[chordId];
+ const button=(selector,label)=>[...document.querySelectorAll(selector)].find(b=>b.textContent.trim()===label);
+ const editVelocity=async applyLabel=>{
+   menuButton('Edit notes').click();
+   await wait(()=>document.querySelector('#phrase-grid'),'phrase editor');
+   ensure(document.querySelector('#part-inspector').dataset.controlRole==='chords','edited the context track');
+   (await wait(()=>button('#part-inspector button','Select all'),'select notes')).click();
+   const velocity=await wait(()=>document.querySelector('#note-velocity'),'selected note velocity');
+   velocity.value=Number(velocity.value)===90?'91':'90';
+   velocity.dispatchEvent(new Event('change',{bubbles:true}));
+   (await wait(()=>button('[aria-label="Score edit actions"] button:enabled',applyLabel),'apply phrase edit')).click();
+   await wait(()=>!document.querySelector('#phrase-grid'),'editor closed');
+ };
+ await openMenu(chords);
+ ensure(!menuButton('Restore generated'),'generated track has no restore action');
+ await editVelocity('Local Apply');
+ const localNotes=JSON.stringify(await wait(sectionPhrase,'local phrase saved'));
+ await openMenu(chords);
+ ensure(!menuButton('Restore generated'),'local-only edit has no restore action');
+ await editVelocity('Apply');
+ await wait(()=>chordTrack()?.phraseEdits?.length,'global phrase edit saved');
+ await openMenu(chords);
+ (await wait(()=>menuButton('Restore generated'),'restore action')).click();
+ await wait(()=>!chordTrack()?.phraseEdits?.length,'global edit cleared');
+ ensure(JSON.stringify(sectionPhrase())===localNotes,'section phrase preserved');
+ await openMenu(chords);
+ ensure(!menuButton('Restore generated'),'restore action hidden after clearing the edit');
+ menuButton('Remove').click();
+ await wait(()=>!chordTrack(),'context track removed');
+
  await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
  }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.message,stack:error.stack})});}
  })();</script>`;
