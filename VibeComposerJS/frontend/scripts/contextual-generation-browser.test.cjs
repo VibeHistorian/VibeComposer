@@ -20,7 +20,8 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
     try {
       await wait(()=>innerWidth===${width}&&button('Settings'),'workspace');
       const all = document.querySelector('.all-role-group');
-      ensure(all && document.querySelector('.track-groups').firstElementChild === all, 'all-role panel comes first');
+      const groups = document.querySelector('.track-browser > .track-groups');
+      ensure(all && groups?.nextElementSibling === all && all.parentElement.lastElementChild === all, 'all-role panel follows the scrollable track groups');
       ensure(document.querySelectorAll('.all-role-group').length === 1, 'one all-role panel');
       for (const label of ['Reroll all tracks', 'Reroll all instruments']) {
         const action = button(label);
