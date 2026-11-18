@@ -16,6 +16,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
     };
     const ensure = (value, label) => { if(!value) throw new Error(label); };
     const button = label => [...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label || b.getAttribute('aria-label')===label);
+    const scopeControl = label => document.querySelector('vc-select[aria-label="'+label+' scope"]');
     const key = 'vibecomposer.ui-preferences.v1';
     const quick = () => document.querySelector('.part-settings-content vc-part-settings-editor');
     const inspector = () => document.querySelector('#part-inspector vc-part-settings-editor');
@@ -86,7 +87,8 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(!document.querySelector('.cdk-overlay-backdrop.appearance-preview'),'reopened dialog dims workspace');
         button('Appearance General').click();
         await wait(()=>document.querySelector('#appearance-title'),'appearance after reopening');
-        ensure(button('All').getAttribute('aria-pressed')==='true','hue role inclusion restored after reload');
+        ensure(scopeControl('Brightness').getAttribute('value')==='app' && scopeControl('Hue shift').getAttribute('value')==='role' &&
+          scopeControl('Saturation').getAttribute('value')==='all','independent scopes restored after reload');
         await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'reopened font selectors');
         checkFonts();
         document.querySelector('[aria-label="Close settings"]').click();
@@ -459,6 +461,14 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           ensure(knob && knob.min==='-50' && knob.max==='50','adjustment knob range');
           await changeControl(knob, String(value));
         };
+        for (const [label,defaultScope] of [['Brightness','all'],['Hue shift','app'],['Saturation','all']]) {
+          const scope=scopeControl(label);
+          ensure(scope?.getAttribute('role')==='combobox' && scope.getAttribute('value')===defaultScope,label+' scope default');
+          const knob=scope.parentElement.querySelector('vc-compact-knob');
+          ensure(scope.getBoundingClientRect().top>=knob.getBoundingClientRect().bottom,label+' scope below knob');
+          ensure(JSON.stringify((await selectOptions(scope)).map(option=>option.textContent.trim()))===
+            JSON.stringify(['All','Role','App']),label+' scope choices');
+        }
         await changeAdjustment('Brightness',50);
         await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#4bffff','brightness scales and clamps');
         ensure(style().getPropertyValue('--role-melody').trim()==='#ff6060','brightness adjusts role colors');
@@ -466,23 +476,33 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#32d7f4','brightness returns to original');
         await changeAdjustment('Hue shift',50);
         await wait(()=>style().getPropertyValue('--accent-primary').trim()!=='#32d7f4','hue shifts main theme');
-        ensure(button('All').getAttribute('aria-pressed')==='false','role hue shift defaults off');
         ensure(style().getPropertyValue('--role-melody').trim()==='#d44040','default hue shift excludes role colors');
-        button('All').click();
-        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#40d4d4','hue shifts role colors');
-        button('All').click();
-        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#d44040','turning All off restores role hue');
+        await changeControl(scopeControl('Hue shift'), 'all');
+        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#40d4d4','All shifts role hues too');
+        await changeControl(scopeControl('Hue shift'), 'role');
+        await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#32d7f4','Role scope restores main theme hue');
+        ensure(style().getPropertyValue('--role-melody').trim()==='#40d4d4','Role scope retains shifted role hue');
+        await changeControl(scopeControl('Brightness'), 'app');
         await changeAdjustment('Brightness',50);
-        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#ff6060','brightness still applies with role hue excluded');
-        await changeAdjustment('Brightness',0);
-        button('All').click();
-        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#40d4d4','All can be reenabled');
-        await changeAdjustment('Hue shift',0);
+        await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#4bffff','App brightness adjusts the main theme');
+        ensure(style().getPropertyValue('--role-melody').trim()==='#40d4d4','App brightness excludes role colors');
         await changeAdjustment('Saturation',-50);
-        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#d48a8a','saturation adjusts role colors');
+        await wait(()=>style().getPropertyValue('--role-melody').trim()==='#8ad4d4','saturation combines with scoped role hue');
         ensure(JSON.parse(localStorage.getItem(key)).appearance.colorAdjustments.saturation===-50,'adjustment persisted');
         ensure(JSON.parse(localStorage.getItem(key)).appearance.roleColors.melody==='#d44040','chosen color retained');
-        await changeAdjustment('Saturation',0);
+        const adjustedAccent=style().getPropertyValue('--accent-primary').trim();
+        button('Apply to Base Colors').click();
+        const applied=JSON.parse(localStorage.getItem(key)).appearance;
+        ensure(applied.themeColors.accent===adjustedAccent && applied.roleColors.melody==='#8ad4d4','apply saves the scoped preview');
+        ensure(style().getPropertyValue('--accent-primary').trim()===adjustedAccent &&
+          style().getPropertyValue('--role-melody').trim()==='#8ad4d4','apply preserves visible colors');
+        ensure(Object.values(applied.colorAdjustments).every(value=>value===0),'apply neutralizes the knobs');
+        ensure(applied.colorAdjustmentScopes.brightness==='app' && applied.colorAdjustmentScopes.hueShift==='role' &&
+          applied.colorAdjustmentScopes.saturation==='all','apply retains independent scopes');
+        button('Reset appearance to defaults').click();
+        await wait(()=>style().getPropertyValue('--accent-primary').trim()==='#32d7f4','reset applied palette');
+        await changeControl(scopeControl('Brightness'), 'app');
+        await changeControl(scopeControl('Hue shift'), 'role');
         for (const [label,value] of [['Background','#100818'],['Surface','#281838'],['App Heading','#382848'],['Inspector background','#211831'],['Transport dock','#123456'],['Role groups background','#504060'],['Text','#e8dfef'],['Border','#78618a'],['Accent','#dd88ee']]) {
           const input=dialog.querySelector('[aria-label="'+label+' theme color"]');
           input.value=value; input.dispatchEvent(new Event('input',{bubbles:true}));
@@ -560,7 +580,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         button('Reset appearance to defaults').click();
         await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8ca9ba','reset appearance');
         ensure(style().getPropertyValue('--accent-primary').trim()==='#32d7f4','main theme reset');
-        await wait(()=>button('All').getAttribute('aria-pressed')==='false','reset excludes role hues');
+        await wait(()=>scopeControl('Hue shift').getAttribute('value')==='app','reset restores App hue scope');
         await upload(json);
         await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8855cc','import reapplies appearance');
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===before,'UI import changed musical project');

@@ -5,7 +5,7 @@ import { fixedMouseButton, defaultShortcuts, shortcutFromEvent, sameShortcut, ty
 import { computed, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
-import { decodeAppearance, adjustColor, COLOR_ADJUSTMENTS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, PANEL_LAYOUT_OPTIONS, type PanelLayout, WINDOW_WIDTH_OPTIONS, type WindowWidthLimit, type ColorAdjustment, type FontArea } from './appearance';
+import { decodeAppearance, adjustedPalette, COLOR_ADJUSTMENTS, COLOR_ADJUSTMENT_SCOPE_OPTIONS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, PANEL_LAYOUT_OPTIONS, type PanelLayout, WINDOW_WIDTH_OPTIONS, type WindowWidthLimit, type ColorAdjustment, type FontArea } from './appearance';
 import { PART_CONTROLS } from '../music/part-settings';
 import type { DrumMappingPreference } from '../music/drum-instruments';
 import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
@@ -169,20 +169,17 @@ export class UiPreferencesService {
     this.commit({ ...this.state(), appearance: { ...appearance, progressiveTrackColoring: !appearance.progressiveTrackColoring } });
   }
 
-  toggleHueShiftRoles(): void {
+  setColorAdjustmentScope(key: ColorAdjustment, value: string): void {
+    const scope = COLOR_ADJUSTMENT_SCOPE_OPTIONS.find(option => option.value === value)?.value;
+    if (!scope || !COLOR_ADJUSTMENTS.some(choice => choice.key === key)) return;
     const appearance = this.appearance();
-    this.commit({ ...this.state(), appearance: { ...appearance, hueShiftRoles: !appearance.hueShiftRoles } });
+    this.commit({ ...this.state(), appearance: { ...appearance,
+      colorAdjustmentScopes: { ...appearance.colorAdjustmentScopes, [key]: scope } } });
   }
 
   applyAdjustmentsToBaseColors(): void {
     const appearance = this.appearance();
-    const roleAdjustments = { ...appearance.colorAdjustments,
-      hueShift: appearance.hueShiftRoles ? appearance.colorAdjustments.hueShift : 0 };
-    this.commit({ ...this.state(), appearance: { ...appearance,
-      themeColors: Object.fromEntries(THEME_COLORS.map(({ key }) =>
-        [key, adjustColor(appearance.themeColors[key], appearance.colorAdjustments)])) as typeof appearance.themeColors,
-      roleColors: Object.fromEntries(ARRANGED_PARTS.map(role =>
-        [role, adjustColor(appearance.roleColors[role], roleAdjustments)])) as typeof appearance.roleColors,
+    this.commit({ ...this.state(), appearance: { ...appearance, ...adjustedPalette(appearance),
       colorAdjustments: { brightness: 0, hueShift: 0, saturation: 0 },
     } });
   }
@@ -226,15 +223,11 @@ export class UiPreferencesService {
     })) style.setProperty(name, value);
     const width = preferences.appearance.windowWidthLimit;
     style.setProperty('--workspace-max-width', width === 'none' ? '100vw' : `${width}px`);
-    const adjust = (color: string) => adjustColor(color, preferences.appearance.colorAdjustments);
-    const colors = Object.fromEntries(THEME_COLORS.map(({ key }) => [key, adjust(preferences.appearance.themeColors[key])])) as typeof preferences.appearance.themeColors;
-    for (const [name, color] of Object.entries(themeColorTokens(colors, preferences.appearance.scoreRowBrightness, preferences.appearance.scoreGridBrightness))) style.setProperty(name, color);
+    const { themeColors, roleColors } = adjustedPalette(preferences.appearance);
+    for (const [name, color] of Object.entries(themeColorTokens(themeColors, preferences.appearance.scoreRowBrightness, preferences.appearance.scoreGridBrightness))) style.setProperty(name, color);
     for (const [area, font] of Object.entries(preferences.appearance.fonts)) style.setProperty(`--font-${area}`, font);
-    const roleAdjustments = { ...preferences.appearance.colorAdjustments,
-      hueShift: preferences.appearance.hueShiftRoles ? preferences.appearance.colorAdjustments.hueShift : 0 };
     for (const role of ARRANGED_PARTS) {
-      const color = adjustColor(preferences.appearance.roleColors[role], roleAdjustments);
-      for (const [name, value] of Object.entries(roleColorTokens(role, color, colors))) style.setProperty(name, value);
+      for (const [name, value] of Object.entries(roleColorTokens(role, roleColors[role], themeColors))) style.setProperty(name, value);
     }
   }
 

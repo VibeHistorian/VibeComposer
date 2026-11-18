@@ -41,6 +41,14 @@ export const COLOR_ADJUSTMENTS = [
 export type ColorAdjustment = typeof COLOR_ADJUSTMENTS[number]['key'];
 export type ColorAdjustments = Readonly<Record<ColorAdjustment, number>>;
 const DEFAULT_COLOR_ADJUSTMENTS: ColorAdjustments = { brightness: 0, hueShift: 0, saturation: 0 };
+export const COLOR_ADJUSTMENT_SCOPE_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'role', label: 'Role' },
+  { value: 'app', label: 'App' },
+] as const;
+export type ColorAdjustmentScope = typeof COLOR_ADJUSTMENT_SCOPE_OPTIONS[number]['value'];
+type ColorAdjustmentScopes = Readonly<Record<ColorAdjustment, ColorAdjustmentScope>>;
+export const DEFAULT_COLOR_ADJUSTMENT_SCOPES: ColorAdjustmentScopes = { brightness: 'all', hueShift: 'app', saturation: 'all' };
 
 export interface AppearancePreferences {
   readonly arrangementCellBrightness: number;
@@ -50,9 +58,9 @@ export interface AppearancePreferences {
   readonly windowWidthLimit: WindowWidthLimit;
   readonly panelLayout: PanelLayout;
   readonly resetAdjustments: boolean;
-  readonly hueShiftRoles: boolean;
   readonly progressiveTrackColoring: boolean;
   readonly colorAdjustments: ColorAdjustments;
+  readonly colorAdjustmentScopes: ColorAdjustmentScopes;
   readonly themeColors: ThemeColors;
   readonly fonts: Readonly<Record<FontArea, string>>;
   readonly roleColors: Readonly<Record<ArrangedPart, string>>;
@@ -67,9 +75,9 @@ export function defaultAppearance(): AppearancePreferences {
     windowWidthLimit: 'none',
     panelLayout: 'spacious',
     resetAdjustments: false,
-    hueShiftRoles: false,
     progressiveTrackColoring: true,
     colorAdjustments: { ...DEFAULT_COLOR_ADJUSTMENTS },
+    colorAdjustmentScopes: { ...DEFAULT_COLOR_ADJUSTMENT_SCOPES },
     themeColors: { ...DEFAULT_THEME_COLORS },
     fonts: { ui: FONT_CHOICES[0].value, heading: FONT_CHOICES[0].value, mono: FONT_CHOICES[1].value },
     roleColors: { melody: '#d44040', chords: '#28b82b', arpeggio: '#ed55bf', bass: '#8ca9ba', drums: '#e4b74e' },
@@ -82,7 +90,7 @@ export function isRoleColor(value: unknown): value is string {
 
 export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const data = value as AppearancePreferences;
+  const data = value as AppearancePreferences & { hueShiftRoles?: unknown };
   for (const key of ['scoreRowBrightness', 'scoreGridBrightness', 'arrangementCellBrightness', 'arrangementNoteBrightness'] as const) {
     if (data[key] !== undefined && (!Number.isFinite(data[key]) || data[key] < -50 || data[key] > 50)) return null;
   }
@@ -95,6 +103,11 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
   if (!colorAdjustments || typeof colorAdjustments !== 'object' || Array.isArray(colorAdjustments)
       || !COLOR_ADJUSTMENTS.every(({ key }) => Number.isFinite(colorAdjustments[key])
         && colorAdjustments[key] >= -50 && colorAdjustments[key] <= 50)) return null;
+  const scopes = data.colorAdjustmentScopes === undefined
+    ? { ...DEFAULT_COLOR_ADJUSTMENT_SCOPES, hueShift: data.hueShiftRoles === true ? 'all' : 'app' }
+    : data.colorAdjustmentScopes;
+  if (!scopes || typeof scopes !== 'object' || Array.isArray(scopes)
+      || !COLOR_ADJUSTMENTS.every(({ key }) => COLOR_ADJUSTMENT_SCOPE_OPTIONS.some(option => option.value === scopes[key]))) return null;
   if (!data.fonts || !data.roleColors
       || !FONT_AREAS.every(area => FONT_CHOICES.some(font => font.value === data.fonts[area.key]))
       || !ARRANGED_PARTS.every(role => isRoleColor(data.roleColors[role]))) return null;
@@ -120,9 +133,9 @@ export function decodeAppearance(value: unknown): AppearancePreferences | null {
     windowWidthLimit: data.windowWidthLimit ?? 'none',
     panelLayout: data.panelLayout ?? 'spacious',
     resetAdjustments: data.resetAdjustments === true,
-    hueShiftRoles: data.hueShiftRoles === true,
     progressiveTrackColoring: data.progressiveTrackColoring !== false,
     colorAdjustments: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, colorAdjustments[key]])) as ColorAdjustments,
+    colorAdjustmentScopes: Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => [key, scopes[key]])) as ColorAdjustmentScopes,
     themeColors: Object.fromEntries(THEME_COLORS.map(color => [color.key, resolvedColors[color.key].toLowerCase()])) as ThemeColors,
     fonts: Object.fromEntries(FONT_AREAS.map(area => [area.key, data.fonts[area.key]])) as AppearancePreferences['fonts'],
     roleColors: Object.fromEntries(ARRANGED_PARTS.map(role => [role, data.roleColors[role].toLowerCase()])) as AppearancePreferences['roleColors'],
@@ -144,6 +157,22 @@ export function adjustColor(base: string, adjustments: ColorAdjustments): string
     : hue < 3 ? [0, chroma, x] : hue < 4 ? [0, x, chroma] : hue < 5 ? [x, 0, chroma] : [chroma, 0, x];
   return '#' + channels.map(channel => Math.max(0, Math.min(255,
     Math.round((channel + max - chroma) * (1 + brightness / 100) * 255))).toString(16).padStart(2, '0')).join('');
+}
+
+export function adjustedPalette(appearance: AppearancePreferences): Pick<AppearancePreferences, 'themeColors' | 'roleColors'> {
+  const adjustmentsFor = (group: 'app' | 'role'): ColorAdjustments =>
+    Object.fromEntries(COLOR_ADJUSTMENTS.map(({ key }) => {
+      const scope = appearance.colorAdjustmentScopes[key];
+      return [key, scope === 'all' || scope === group ? appearance.colorAdjustments[key] : 0];
+    })) as ColorAdjustments;
+  const appAdjustments = adjustmentsFor('app');
+  const roleAdjustments = adjustmentsFor('role');
+  return {
+    themeColors: Object.fromEntries(THEME_COLORS.map(({ key }) =>
+      [key, adjustColor(appearance.themeColors[key], appAdjustments)])) as ThemeColors,
+    roleColors: Object.fromEntries(ARRANGED_PARTS.map(role =>
+      [role, adjustColor(appearance.roleColors[role], roleAdjustments)])) as AppearancePreferences['roleColors'],
+  };
 }
 
 /** Concrete hex values also work in the canvas and Pixi color parsers. */

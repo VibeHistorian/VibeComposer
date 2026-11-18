@@ -19,7 +19,7 @@ import { downloadProjectFile } from '../../core/project/download-file';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ProjectService } from '../../core/project/project.service';
 import { SectionTypeSettingsComponent } from '../section-types/section-type-settings.component';
-import { COLOR_ADJUSTMENTS, FONT_AREAS, FONT_CHOICES, PANEL_LAYOUT_OPTIONS, WINDOW_WIDTH_OPTIONS, type FontArea } from '../../core/ui/appearance';
+import { COLOR_ADJUSTMENTS, COLOR_ADJUSTMENT_SCOPE_OPTIONS, DEFAULT_COLOR_ADJUSTMENT_SCOPES, FONT_AREAS, FONT_CHOICES, PANEL_LAYOUT_OPTIONS, WINDOW_WIDTH_OPTIONS, type FontArea } from '../../core/ui/appearance';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ARRANGED_PARTS, type ArrangedPart } from '../../core/music/part-role';
 import { THEME_COLORS, type ThemeColor } from '../../core/ui/theme';
@@ -218,6 +218,8 @@ export class SettingsDialogComponent {
   readonly roles = ARRANGED_PARTS;
   readonly themeColors = THEME_COLORS;
   readonly colorAdjustments = COLOR_ADJUSTMENTS;
+  readonly colorAdjustmentScopeOptions = COLOR_ADJUSTMENT_SCOPE_OPTIONS;
+  readonly defaultColorAdjustmentScopes = DEFAULT_COLOR_ADJUSTMENT_SCOPES;
   readonly harmonyGenerations = HARMONY_GENERATIONS;
   readonly harmonyValues = computed(() => ({ ...DEFAULT_HARMONY_SETTINGS, ...this.projects.project().harmonySettings }));
   changeHarmony(selection: string): void {

@@ -640,11 +640,17 @@ test('panel layout persists, transfers, defaults and stays outside project histo
   assert.equal(service.historyPosition(), history);
 });
 
- test('applying adjustments stores the visible palette and persists neutral knobs', () => {
-  for (const includeRoles of [false, true]) {
+test('applying scoped adjustments stores the palette and persists scopes with neutral knobs', () => {
+  const cases = [
+    { scopes: ['role', 'all', 'app'], app: [0, 25, 30], role: [-20, 25, 0] },
+    { scopes: ['app', 'role', 'all'], app: [-20, 0, 30], role: [0, 25, 30] },
+    { scopes: ['all', 'app', 'role'], app: [-20, 25, 0], role: [-20, 0, 30] },
+  ];
+  const adjustments = ([brightness, hueShift, saturation]) => ({ brightness, hueShift, saturation });
+  for (const { scopes, app, role } of cases) {
     const { uiPreferences: preferences, load } = fixture();
     const { adjustColor } = load('core/ui/appearance.ts');
-    if (includeRoles) preferences.toggleHueShiftRoles();
+    for (const [key, scope] of Object.entries(adjustments(scopes))) preferences.setColorAdjustmentScope(key, scope);
     preferences.setColorAdjustment('brightness', -20);
     preferences.setColorAdjustment('saturation', 30);
     preferences.setColorAdjustment('hueShift', 25);
@@ -652,9 +658,10 @@ test('panel layout persists, transfers, defaults and stays outside project histo
     preferences.applyAdjustmentsToBaseColors();
     const after = preferences.appearance();
     for (const [key, color] of Object.entries(before.themeColors))
-      assert.equal(after.themeColors[key], adjustColor(color, before.colorAdjustments));
-    for (const [role, color] of Object.entries(before.roleColors))
-      assert.equal(after.roleColors[role], adjustColor(color, { ...before.colorAdjustments, hueShift: includeRoles ? 25 : 0 }));
+      assert.equal(after.themeColors[key], adjustColor(color, adjustments(app)));
+    for (const [key, color] of Object.entries(before.roleColors))
+      assert.equal(after.roleColors[key], adjustColor(color, adjustments(role)));
+    assert.deepEqual(after.colorAdjustmentScopes, adjustments(scopes));
     assert.deepEqual(after.colorAdjustments, { brightness: 0, saturation: 0, hueShift: 0 });
     assert.deepEqual(new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)().appearance(), after);
     preferences.applyAdjustmentsToBaseColors();

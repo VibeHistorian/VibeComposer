@@ -34,7 +34,8 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 .appearance-toggle[aria-pressed="true"] { border-color: var(--border-accent); background: var(--surface-accent); color: var(--accent-primary); }
 .color-adjustments { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: start; gap: 8px 4px; }
 .color-adjustment { display: grid; justify-items: center; gap: 4px; width: 60px; }
-.color-adjustment .appearance-toggle { padding: 3px 7px; font-size: 10px; }
+.color-adjustment vc-select { width: 50px; gap: 4px; padding: 3px 6px; font: 11px var(--font-ui); }
+.color-adjustment vc-select::after { content: ''; flex: 0 0 auto; width: 4px; height: 4px; border: solid currentColor; border-width: 0 1px 1px 0; transform: translateY(-1px) rotate(45deg); }
 .export-name-preview { min-width: 0; max-width: 100%; padding: 8px; border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font: 11px var(--font-mono); overflow-wrap: anywhere; text-align: right; }
 
 /* Scope indicators and preference transfer */

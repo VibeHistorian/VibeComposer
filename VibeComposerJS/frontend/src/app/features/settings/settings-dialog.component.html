@@ -77,10 +77,13 @@
             <div class="setting-row" vcSettingRow label="Random theme" description="Random theme with five distinct track colors. Keeps your fonts and optionally resets color adjustments.">
               <div class="setting-controls"><div class="appearance-actions"><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('dark')">Random dark mode</button><button type="button" class="appearance-reset" (click)="preferences.randomizeAppearance('light')">Random light mode</button></div><label class="preserve-color-adjustments"><input type="checkbox" [checked]="preferences.appearance().resetAdjustments" (change)="preferences.toggleResetAdjustments()" />Reset adjustments</label></div>
             </div>
-            <div class="setting-row" vcSettingRow label="Color adjustments" description="Adjust brightness, hue and saturation. Enable All to include track role colors in the hue shift.">
+            <div class="setting-row" vcSettingRow label="Color adjustments" descriptionId="color-adjustments-description" description="Choose a scope for each knob. All adjusts every color, Role adjusts the five track role colors, and App adjusts the rest. Apply to Base Colors saves the scoped changes and resets the knobs.">
               <div class="setting-controls"><div class="color-adjustments">@for (adjustment of colorAdjustments; track adjustment.key) {
                 <div class="color-adjustment"><vc-compact-knob [label]="adjustment.label" [description]="adjustment.description" [value]="preferences.appearance().colorAdjustments[adjustment.key]" [minimum]="-50" [maximum]="50" [defaultValue]="0" [dense]="true" [showValueBelow]="true" (valueCommit)="preferences.setColorAdjustment(adjustment.key, $event)" />
-                  @if (adjustment.key === 'hueShift') { <button type="button" class="appearance-toggle" [attr.aria-pressed]="preferences.appearance().hueShiftRoles" title="Include all five track role colors in hue shift" (click)="preferences.toggleHueShiftRoles()">All</button> }
+                  <vc-select [attr.aria-label]="adjustment.label + ' scope'" aria-describedby="color-adjustments-description"
+                    [options]="colorAdjustmentScopeOptions" [value]="preferences.appearance().colorAdjustmentScopes[adjustment.key]"
+                    [selectDefault]="defaultColorAdjustmentScopes[adjustment.key]"
+                    (valueChange)="preferences.setColorAdjustmentScope(adjustment.key, $event)" />
                 </div>
               }</div><button type="button" class="appearance-reset" (click)="preferences.applyAdjustmentsToBaseColors()">Apply to Base Colors</button></div>
             </div>
