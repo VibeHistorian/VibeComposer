@@ -11,6 +11,7 @@ import { DEFAULT_VARIATION_POLICY, pruneVariations, validVariationPolicy } from 
 import type { VariationPolicy } from '../music/arrangement-variation.model';
 import type { VariationDraft, VariationDraftOptions } from './arrangement-variation-draft';
 import { loadTrackPreset } from './track-presets';
+import { assignTrackMidiChannel } from './track-midi-channel';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
 import { appendPhraseRangeEdit, hasManualPhrase, type PhraseRangeEdit } from '../music/phrase-range-edit';
@@ -472,7 +473,7 @@ export class ProjectService {
         .map(track => Number(track.id.match(/(\d+)$/)?.[1] ?? 0))) + 1;
       const id = `track-${role}-${number}`;
       const track = { ...source, id, name: `${role[0].toUpperCase()}${number}`,
-        midiChannel: role === 'drums' ? 10 : this.nextAvailableChannel(tracks),
+        midiChannel: assignTrackMidiChannel(role, tracks),
         generatorSettings: copyPartSettings(source.generatorSettings),
         mix: { ...source.mix, muted: false, solo: false }, rerollLocked: false, instrumentLocked: false, editedPhrase: undefined, phraseEdits: undefined } as CompositionTrack;
       created.push(track); tracks.push(track);
@@ -1103,7 +1104,7 @@ export class ProjectService {
       return match ? Math.max(maximum, Number(match[1])) : maximum;
     }, 0) + 1;
     const id = `track-${role}-${nextNumber}`;
-    const channel = role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
+    const channel = assignTrackMidiChannel(role, current.tracks);
     let track = { ...source, id, name: `${role[0].toUpperCase()}${nextNumber}`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(role === 'drums' ? DEFAULT_DRUM_SETTINGS : source.generatorSettings),
@@ -1157,7 +1158,7 @@ export class ProjectService {
     if (sourceIndex < 0) return undefined;
     const source = current.tracks[sourceIndex];
     const id = this.nextTrackId(current.tracks, source.role);
-    const channel = source.role === 'drums' ? 10 : this.nextAvailableChannel(current.tracks);
+    const channel = assignTrackMidiChannel(source.role, current.tracks);
     const duplicate = { ...source, id, name: `${source.name} copy`, midiChannel: channel,
       mix: { ...source.mix, muted: false, solo: false },
       generatorSettings: copyPartSettings(source.generatorSettings),
@@ -1651,12 +1652,6 @@ export class ProjectService {
     let index = 1;
     while (used.has(`track-${role}-${index}`)) index++;
     return `track-${role}-${index}`;
-  }
-
-  private nextAvailableChannel(tracks: readonly CompositionTrack[]): number {
-    const used = new Set(tracks.filter((track) => track.role !== 'drums').map((track) => track.midiChannel));
-    for (let channel = 1; channel <= 16; channel++) if (channel !== 10 && !used.has(channel)) return channel;
-    return 1;
   }
 
   private loadProject(): CompositionProject {

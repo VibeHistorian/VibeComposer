@@ -156,7 +156,9 @@ test('preset replacement preserves locked tracks and occupied slots, cleans surp
   const replacedId = service.addTrack('bass');
   const preset = structuredClone(service.project().tracks.filter(track => track.id === replacedId));
   preset[0].generatorSettings.noteVariation = 55;
+  preset[0].mix = { program: 39, volumePercent: 72, panPercent: -15, muted: false, solo: true };
   const removedId = service.addTrack('bass');
+  service.updateTrack(replacedId, { midiChannel: 12, mix: { muted: true } });
   service.updatePartSettings({ kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: replacedId }, { noteVariation: 61 });
   service.updatePartSettings({ kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: removedId }, { noteVariation: 71 });
   const before = service.exportProjectJson();
@@ -166,7 +168,10 @@ test('preset replacement preserves locked tracks and occupied slots, cleans surp
   const tracks = service.project().tracks.filter(track => track.role === 'bass');
   assert.equal(tracks.length, 2);
   assert.deepEqual(tracks.find(track => track.id === lockedId), locked);
-  assert.equal(tracks.find(track => track.id === replacedId).generatorSettings.noteVariation, 55);
+  const replaced = tracks.find(track => track.id === replacedId);
+  assert.equal(replaced.generatorSettings.noteVariation, 55);
+  assert.equal(replaced.midiChannel, 12);
+  assert.deepEqual(replaced.mix, { ...preset[0].mix, muted: true, solo: false });
   assert.equal(service.project().arrangement[0].trackPartOverrides[replacedId].noteVariation, 61);
   assert.ok(!tracks.some(track => track.id === removedId));
   for (const section of service.project().arrangement) {
@@ -220,6 +225,31 @@ test('preset append allocates independent identities and rejects invalid batches
   const tooMany = Array.from({ length: 64 }, (_, index) => ({ ...tracks[0], id: 'preset-' + index }));
   assert.equal(service.loadTrackPreset('drums', tooMany, false), 'invalid');
   assert.equal(service.exportProjectJson(), before);
+});
+
+test('appending a melodic preset assigns successive free channels and skips percussion', () => {
+  const { service } = fixture();
+  const before = service.project().tracks;
+  const bass = before.find(track => track.role === 'bass');
+  const preset = Array.from({ length: 7 }, (_, index) => ({ ...bass, id: `preset-bass-${index}` }));
+  assert.equal(service.loadTrackPreset('bass', preset, false), 'changed');
+  const after = service.project().tracks;
+  assert.deepEqual(after.slice(0, before.length), before);
+  assert.deepEqual(after.slice(before.length).map(track => track.midiChannel), [5, 6, 7, 8, 9, 11, 12]);
+});
+
+test('all-role presets allocate channels freed by removals across roles', () => {
+  const { service } = fixture();
+  const before = service.project().tracks;
+  const bass = before.find(track => track.role === 'bass');
+  const chords = before.find(track => track.role === 'chords');
+  const preset = [...before.filter(track => track.role !== 'arpeggio'),
+    { ...bass, id: 'preset-bass-extra' }, { ...chords, id: 'preset-chords-extra' }];
+  assert.equal(service.loadTrackPreset('all', preset, true), 'changed');
+  const after = service.project().tracks;
+  assert.ok(after.every(track => track.role !== 'arpeggio'));
+  assert.deepEqual(after.filter(track => before.some(original => original.id === track.id)).map(track => track.midiChannel), [4, 1, 2, 10]);
+  assert.deepEqual(after.filter(track => !before.some(original => original.id === track.id)).map(track => track.midiChannel), [3, 5]);
 });
 
 test('preset JSON round trips all roles and rejects mixed roles, duplicate names and bad track data', () => {

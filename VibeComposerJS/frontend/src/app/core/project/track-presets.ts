@@ -2,6 +2,7 @@ import { fitVariationCapacity } from './arrangement-variation-capacity';
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
 import { pruneVariations } from '../music/arrangement-variations';
 import type { CompositionTrack } from './track.model';
+import { assignTrackMidiChannel } from './track-midi-channel';
 import { decodeTracks } from './project-track-decoder';
 import type { CompositionProject } from './project.model';
 
@@ -49,8 +50,11 @@ function loadRolePreset(project: CompositionProject, role: ArrangedPart, sources
   presence: (tracks: readonly CompositionTrack[], section: CompositionProject['arrangement'][number]) => Readonly<Record<string, boolean>>): CompositionProject | undefined {
   const destinations = project.tracks.filter(track => replace && track.role === role && !track.rerollLocked);
   const removed = new Set(destinations.slice(sources.length).map(track => track.id));
-  const replacements = new Map(destinations.slice(0, sources.length).map((track, index) =>
-    [track.id, structuredClone({ ...sources[index], id: track.id })]));
+  const replacements = new Map(destinations.slice(0, sources.length).map((track, index) => {
+    const source = sources[index];
+    return [track.id, structuredClone({ ...source, id: track.id, midiChannel: track.midiChannel,
+      mix: { ...source.mix, muted: track.mix.muted, solo: track.mix.solo } })];
+  }));
   const tracks = project.tracks.filter(track => !removed.has(track.id)).map(track => replacements.get(track.id) ?? track);
   const extraSources = sources.slice(destinations.length);
   if (tracks.length + extraSources.length > 64) return undefined;
@@ -61,7 +65,7 @@ function loadRolePreset(project: CompositionProject, role: ArrangedPart, sources
     while (ids.has(`track-${role}-${number}`)) number++;
     const id = `track-${role}-${number}`;
     ids.add(id);
-    const track = structuredClone({ ...source, id });
+    const track = structuredClone({ ...source, id, midiChannel: assignTrackMidiChannel(role, tracks) });
     tracks.push(track);
     return track;
   });
