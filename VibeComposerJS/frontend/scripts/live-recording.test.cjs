@@ -17,6 +17,19 @@ test('full keyboard follows white notes continuously across rows; Shift raises e
   assert.deepEqual(helpers.NOTE_CODES.map(code=>helpers.keyboardMidi(code,true)),expected.map(n=>n+1));
   assert.equal(helpers.keyboardMidi('Space',false),null);
 });
+test('drum keyboard assigns consecutive input notes in physical row order, extending with Shift', () => {
+  assert.deepEqual(helpers.NOTE_CODES.map(code => helpers.drumKeyboardMidi(code, false)), Array.from({ length: 36 }, (_, i) => 36 + i));
+  assert.equal(helpers.drumKeyboardMidi('Digit1', true), 72);
+  assert.equal(helpers.drumKeyboardMidi('Space', false), null);
+});
+test('numpad digits match top-row digits in drum and pitched phrases', () => {
+  for (const digit of '1234567890') for (const shift of [false, true]) {
+    const numpad = 'Numpad' + digit, topRow = 'Digit' + digit;
+    assert.equal(helpers.drumKeyboardMidi(numpad, shift), helpers.drumKeyboardMidi(topRow, shift));
+    assert.equal(helpers.keyboardMidi(numpad, shift), helpers.keyboardMidi(topRow, shift));
+  }
+  assert.equal(helpers.drumKeyboardMidi('NumpadAdd', false), null);
+});
 test('recording quantizes taps and splits held notes across loops without dropping duration', () => {
   const record=(start,end)=>helpers.recordedSegments({start,end,midi:61,velocity:104},4,.25);
   assert.deepEqual(record(.31,.32),[{start:.25,end:.5,midi:61,velocity:104}]);
@@ -179,11 +192,11 @@ test('recording highlights all held notes instead of normal selection, including
  assert.deepEqual(editor.selectedNoteIds(),['previous'],'live highlighting does not replace the editing selection');
  editor.finishRecording();running=false;assert.deepEqual(editor.canvasSelectedNoteIds(),['previous']);
 });
-test('drum recording ignores undefined pitches and routes audition, held notes, and draft notes to the same tracks', () => {
+test('drum input addresses ordered tracks with duplicate instruments during idle audition and recording', () => {
  const f = fixture();
  f.service.setRoleTrackCount('drums', 4);
  const [firstKick, firstSnare, selectedKick, otherSnare] = f.service.project().tracks.filter(track => track.role === 'drums');
- for (const [track, pitch] of [[firstKick, 36], [firstSnare, 38], [selectedKick, 36], [otherSnare, 38]]) {
+ for (const [track, pitch] of [[firstKick, 42], [firstSnare, 49], [selectedKick, 42], [otherSnare, 49]]) {
   f.service.updateTrackGeneratorSettings(track.id, { pitch });
  }
  f.ui.selectedTrackId.set(selectedKick.id);
@@ -200,7 +213,8 @@ test('drum recording ignores undefined pitches and routes audition, held notes, 
  const c = recorder.component;
  c.ngOnInit();
  c.armed = () => true;
- c.acceptRecordingPitch.set(editor.acceptRecordingPitch);
+ c.drumTracks.set(editor.drumInputTracks());
+ c.preferActionShortcut.set(() => true);
  c.began.emit = () => editor.beginRecording();
  c.ended.emit = () => editor.finishRecording();
  c.noteInput.emit = note => editor.previewInput(note);
@@ -209,29 +223,43 @@ test('drum recording ignores undefined pitches and routes audition, held notes, 
  c.cursor.emit = cursor => editor.recordCursor(cursor);
 
  const sendMidi = (midi, velocity) => c.input({ id: `midi:${midi}`, midi, velocity, down: velocity > 0 });
+ const key = code => ({ code, shiftKey: false, preventDefault() {}, stopImmediatePropagation() {} });
+ sendMidi(40, 100);
+ c.keydown(key('Digit5'));
+ assert.deepEqual(auditioned, [], 'unassigned MIDI and keyboard inputs are silent while idle');
+ c.keydown(key('Digit2'));
+ sendMidi(39, 101);
+ assert.deepEqual(auditioned.splice(0), [[firstSnare.id, 49, 90], [otherSnare.id, 49, 101]]);
+ assert.deepEqual(editor.soundingPitches(), [49]);
+ c.keyup(key('Digit2'));
+ assert.deepEqual(editor.soundingPitches(), [49], 'releasing one duplicate keeps the other sounding');
+ sendMidi(39, 0);
+ assert.deepEqual(released.splice(0), [firstSnare.id, otherSnare.id]);
+ assert.deepEqual(editor.draftNotes(), baseline);
+
  c.toggle();
- sendMidi(127, 100);
- sendMidi(127, 0);
- assert.equal(c.waiting(), true, 'undefined pitches leave armed recording waiting');
+ sendMidi(35, 100);
+ sendMidi(40, 100);
+ assert.equal(c.waiting(), true, 'unassigned input leaves armed recording waiting');
  assert.deepEqual(auditioned, []);
 
- const kickKey = { code: 'Digit1', shiftKey: false, preventDefault() {}, stopImmediatePropagation() {} };
+ const kickKey = key('Digit1');
  c.keydown(kickKey);
  assert.equal(c.waiting(), false);
  sendMidi(38, 111);
  sendMidi(127, 100);
  recorder.advance(200);
- const expected = [[selectedKick.id, 36, 90], [firstSnare.id, 38, 111]];
+ const expected = [[firstKick.id, 42, 90], [selectedKick.id, 42, 111]];
  const routing = notes => notes.map(note => [note.trackId, note.midi, note.velocity]);
  assert.deepEqual(auditioned, expected);
  assert.deepEqual(routing(editor.heldRecordingNotes()), expected);
- assert.deepEqual(editor.soundingPitches(), [36, 38]);
+ assert.deepEqual(editor.soundingPitches(), [42]);
  assert.deepEqual(editor.draftNotes(), baseline);
 
  c.keyup(kickKey);
  c.stop();
  c.ngOnDestroy();
- assert.deepEqual(released, [selectedKick.id, firstSnare.id]);
+ assert.deepEqual(released, [firstKick.id, selectedKick.id]);
  assert.deepEqual(editor.soundingPitches(), []);
  assert.deepEqual(routing(editor.draftNotes().filter(note => !baseline.some(old => old.id === note.id))), expected);
  editor.undo();
@@ -255,6 +283,14 @@ test('idle keyboard and MIDI audition emit sound events and never create recordi
  assert.ok(c.heldNotes.values.every(notes=>notes.length===0),'idle audition does not draw phrase notes');
  c.stop();assert.equal(c.noteInput.values.at(-1).id,'midi');assert.equal(c.noteInput.values.at(-1).down,false);
  assert.equal(c.span.values.length,0);c.ngOnDestroy();assert.equal(f.listeners.size,0);
+});
+test('top-row and numpad keys can be held and released independently', () => {
+ const {component:c}=recordingFixture(false);c.ngOnInit();
+ const key=(code,location)=>({code,key:'1',location,shiftKey:false,preventDefault(){},stopImmediatePropagation(){}});
+ c.keydown(key('Digit1',0));c.keydown(key('Numpad1',3));
+ assert.deepEqual(c.noteInput.values.map(note=>[note.id,note.midi]),[['Digit1',36],['Numpad1',36]]);
+ c.keyup(key('',3));assert.deepEqual([...c.held.keys()],['Digit1']);
+ c.keyup(key('',0));assert.equal(c.held.size,0);c.ngOnDestroy();
 });
 test('audition-to-record transitions release previews and record only new input', () => {
  const f=recordingFixture(false),c=f.component;c.ngOnInit();

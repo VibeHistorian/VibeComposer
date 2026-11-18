@@ -5,7 +5,7 @@ import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { MidiInputService, type LiveMidiNote } from '../../core/audio/midi-input.service';
 import { LiveRecordingService } from '../../core/audio/live-recording.service';
-import { keyboardCode, keyboardMidi, recordingPosition, recordingTickAtOrAfter, nextRecordingTick, type RecordedSpan } from '../../core/audio/live-recording';
+import { drumKeyboardMidi, FIRST_DRUM_INPUT_NOTE, keyboardCode, keyboardMidi, recordingPosition, recordingTickAtOrAfter, nextRecordingTick, type RecordedSpan, type RecordingPitch } from '../../core/audio/live-recording';
 import { shortcutLabel } from '../../core/ui/shortcuts';
 import { isEditingText } from '../../shared/keyboard-shortcuts';
 import { SelectComponent } from '../../shared/select.component';
@@ -32,11 +32,11 @@ export class LiveRecordingComponent {
   readonly displayBeat = computed(() => Math.floor(this.beat()) + 1);
   readonly beatCount = computed(() => Math.ceil(this.loopBeats()));
   readonly notes = input(false);
-  readonly acceptRecordingPitch = input<((midi: number) => boolean) | null>(null);
+  readonly drumTracks = input<readonly Required<RecordingPitch>[] | null>(null);
   readonly preferActionShortcut = input<((event: KeyboardEvent) => boolean) | null>(null);
   readonly disabled = input(false);
   readonly heldNotes = output<readonly (RecordedSpan & { id: string })[]>();
-  readonly noteInput = output<LiveMidiNote>();
+  readonly noteInput = output<LiveMidiNote & RecordingPitch>();
   readonly countingIn = signal(0);
   private started = false;
   readonly began = output<void>();
@@ -70,7 +70,7 @@ export class LiveRecordingComponent {
   }
   private readonly midi = inject(MidiInputService);
   private readonly session = inject(LiveRecordingService);
-  private held = new Map<string, { start: number; midi: number; velocity: number }>();
+  private held = new Map<string, Omit<RecordedSpan, 'end'>>();
   private frame = 0;
   private lastTime = 0;
   private elapsed = 0;
@@ -190,7 +190,9 @@ export class LiveRecordingComponent {
   }
   private readonly input = (note: LiveMidiNote): void => {
     if (!this.running() && !this.notes()) return;
-    if (note.down && this.running() && this.acceptRecordingPitch()?.(note.midi) === false) return;
+    const drumTracks = this.drumTracks();
+    const pitch = note.down && drumTracks ? drumTracks[note.midi - FIRST_DRUM_INPUT_NOTE] : { midi: note.midi };
+    if (!pitch) return;
     let beat = this.running() ? this.time() : 0;
     if (note.down && this.waiting() && this.activeContext()) {
       this.waiting.set(false); this.elapsed = 0; this.lastTime = performance.now(); this.nextTick = this.offset;
@@ -204,7 +206,7 @@ export class LiveRecordingComponent {
     if (this.running() && beat >= 0) this.startRecording();
     if (this.running() && !this.started) return;
     if (note.down) {
-      if (!this.held.has(note.id)) { this.held.set(note.id, { start: beat, midi: note.midi, velocity: note.velocity }); this.noteInput.emit(note); this.publishHeld(beat); if (this.running()) this.cursor.emit({ beat, held: true }); }
+      if (!this.held.has(note.id)) { this.held.set(note.id, { ...pitch, start: beat, velocity: note.velocity }); this.noteInput.emit({ ...note, ...pitch }); this.publishHeld(beat); if (this.running()) this.cursor.emit({ beat, held: true }); }
     } else {
       const held = this.held.get(note.id);
       if (held) { this.held.delete(note.id); this.noteInput.emit(note); if (this.running()) this.span.emit({ ...held, end: beat }); this.publishHeld(beat); if (this.running()) this.cursor.emit({ beat, held: this.held.size > 0 }); }
@@ -221,10 +223,17 @@ export class LiveRecordingComponent {
       }
       return;
     }
-    if (this.notes() && !this.running() && this.preferActionShortcut()?.(event)) return;
-    const code = keyboardCode(event.code, event.key);
-    const midi = this.notes() && this.preferences.preferences().keyboardNoteInput && !event.ctrlKey && !event.metaKey && !event.altKey ? keyboardMidi(code, event.shiftKey, this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : null;
-    if (this.notes() ? midi === null : !this.preferences.matchesShortcut('recordRhythm', event)) return;
+    const code = keyboardCode(event.code, event.key, event.location);
+    const drumTracks = this.drumTracks();
+    let midi: number | null = null;
+    if (this.notes()) {
+      if (!this.preferences.preferences().keyboardNoteInput || event.ctrlKey || event.metaKey || event.altKey) return;
+      midi = drumTracks ? drumKeyboardMidi(code, event.shiftKey)
+        : keyboardMidi(code, event.shiftKey, this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic());
+      if (midi === null) return;
+      if (drumTracks && !drumTracks[midi - FIRST_DRUM_INPUT_NOTE] && !this.held.has(code)) return;
+      if (!drumTracks && !this.running() && this.preferActionShortcut()?.(event)) return;
+    } else if (!this.preferences.matchesShortcut('recordRhythm', event)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (!event.repeat) {
       // A fresh press is also a recovery point if the host lost the preceding release.
@@ -233,7 +242,7 @@ export class LiveRecordingComponent {
     }
   };
   private readonly keyup = (event: KeyboardEvent): void => {
-    const code = keyboardCode(event.code, event.key);
+    const code = keyboardCode(event.code, event.key, event.location);
     if (!this.held.has(code)) return;
     event.preventDefault(); event.stopImmediatePropagation(); this.input({ id: code, midi: 0, velocity: 0, down: false });
   };

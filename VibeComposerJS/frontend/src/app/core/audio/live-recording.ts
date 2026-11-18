@@ -1,18 +1,28 @@
-/** Physical row order: white keys beginning with C2 on 1. */
+/** Physical row order for phrase input. */
 export const NOTE_CODES = ['Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Digit8','Digit9','Digit0',
   ...'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map(key => 'Key' + key)];
+export const FIRST_DRUM_INPUT_NOTE = 36;
+
+function noteKeyIndex(code: string): number {
+  return NOTE_CODES.indexOf(code.replace(/^Numpad([0-9])$/, 'Digit$1'));
+}
+
+export function drumKeyboardMidi(code: string, shift: boolean): number | null {
+  const index = noteKeyIndex(code);
+  return index < 0 ? null : FIRST_DRUM_INPUT_NOTE + index + (shift ? NOTE_CODES.length : 0);
+}
 /** Scale pitch classes are in degree order, shared with the phrase editor's scale/key snapping. */
 /** Some desktop hosts omit the physical code on key release. */
-export function keyboardCode(code: string | undefined, key: string | undefined): string {
+export function keyboardCode(code: string | undefined, key: string | undefined, location?: number): string {
   if (code && code !== 'Unidentified') return code;
   if (/^[a-z]$/i.test(key ?? '')) return 'Key' + key!.toUpperCase();
-  if (/^[0-9]$/.test(key ?? '')) return 'Digit' + key;
+  if (/^[0-9]$/.test(key ?? '')) return (location === 3 ? 'Numpad' : 'Digit') + key;
   const shifted = '!@#$%^&*()'.indexOf(key ?? '');
   if (key && shifted >= 0) return 'Digit' + ((shifted + 1) % 10);
   return key === '~' || key === '`' ? 'Backquote' : key ?? '';
 }
 export function keyboardMidi(code: string, shift: boolean, scale: readonly number[] = [], tonic?: number): number | null {
-  const index = NOTE_CODES.indexOf(code);
+  const index = noteKeyIndex(code);
   if (index < 0) return null;
   if (scale.length) {
     const root = scale[0], degree = index % scale.length;
@@ -40,7 +50,8 @@ export function nextRecordingTick(beat: number, length: number): number { return
 export function recordingCell(beat: number, length: number, cells: number): number {
   return Math.min(cells - 1, Math.floor(((beat % length + length) % length) / length * cells));
 }
-export interface RecordedSpan { start: number; end: number; midi: number; velocity: number; }
+export interface RecordingPitch { midi: number; trackId?: string; }
+export interface RecordedSpan extends RecordingPitch { start: number; end: number; velocity: number; }
 export function recordedSegments(span: RecordedSpan, length: number, grid: number | null, live = false): RecordedSpan[] {
   const start = grid === null ? span.start : Math.floor(span.start / grid + 1e-7) * grid;
   const end = live ? Math.max(start + 0.02, span.end) : grid === null ? Math.max(start + 1 / 960, span.end) : Math.max(start + grid, Math.round(span.end / grid) * grid);

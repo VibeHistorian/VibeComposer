@@ -37,7 +37,10 @@
       }
 
   <div class="phrase-tools">
-    <vc-live-recording [notes]="true" [measureBeats]="recordingMeasureBeats()" [startBeat]="recordingStartBeat()" (began)="beginRecording()" (cancelled)="cancelRecording()" [acceptRecordingPitch]="acceptRecordingPitch" [preferActionShortcut]="preferActionShortcut" [backingContext]="recordingBackingContext()" [keyboardScale]="keyboardScale()" [keyboardTonic]="keyboardTonic()" [beats]="phraseBeats()" (span)="recordSpan($event)" (cursor)="recordCursor($event)" (noteInput)="previewInput($event)" (heldNotes)="updateHeldNotes($event)" (ended)="finishRecording()" />
+    <vc-live-recording [notes]="true" [measureBeats]="recordingMeasureBeats()" [startBeat]="recordingStartBeat()" (began)="beginRecording()" (cancelled)="cancelRecording()" [drumTracks]="drumInputTracks()" [preferActionShortcut]="preferActionShortcut" [backingContext]="recordingBackingContext()" [keyboardScale]="keyboardScale()" [keyboardTonic]="keyboardTonic()" [beats]="phraseBeats()" (span)="recordSpan($event)" (cursor)="recordCursor($event)" (noteInput)="previewInput($event)" (heldNotes)="updateHeldNotes($event)" (ended)="finishRecording()" />
+    @if (drumInputTracks(); as tracks) {
+      <p class="inspector-copy">Play drum tracks in order with 1–0 (top row or numpad), Q–P, A–L, Z–M, or MIDI notes starting at 36.@if (tracks.length > 36) { Hold Shift for tracks 37 and up. }</p>
+    }
     <p class="inspector-copy">Loop recording adds notes on the time grid. Hold keys or MIDI notes for longer notes. Stop before Apply; Cancel discards the draft.</p>
     <label class="field-label" for="phrase-grid">Time grid (beats)</label>
     <vc-select [options]="gridSelectOptions()" id="phrase-grid" [value]="snapBeats()" (valueChange)="setGrid($event)"></vc-select>

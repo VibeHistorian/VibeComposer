@@ -163,6 +163,33 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   button('Stop recording').click();
   check(lane.value.split(',').some(n=>Number(n)<0),'silence becomes pauses regardless of drawing tool');
   button('Cancel').click();
+
+  (await wait(()=>document.querySelector('.track-group.drums .track-select'),'first drum track')).click();
+  await changeControl(document.querySelector('.track-group.drums .track-instrument'),'42');
+  (await wait(()=>button('Duplicate'),'duplicate drum track')).click();
+  await wait(()=>document.querySelectorAll('.track-group.drums .track-select').length===2,'two drum tracks');
+  (await wait(()=>button('Edit notes'),'edit duplicate drum phrase')).click();
+  await wait(()=>document.querySelector('#phrase-grid'),'drum phrase');
+  const armDrums=await wait(()=>button('Arm recording'),'arm drum recording');
+  armDrums.focus();press('keydown','Digit1','1');
+  await wait(()=>document.querySelector('.drum-label.sounding'),'keyboard auditions the first drum while idle');
+  press('keyup','Digit1','1');
+  await wait(()=>!document.querySelector('.drum-label.sounding'),'idle drum releases');
+  armDrums.click();
+  await wait(()=>button('Waiting for note'),'drum recording armed');
+  port.onmidimessage({data:[0x99,42,120]});port.onmidimessage({data:[0x89,42,0]});
+  await pause(50);
+  check(!!button('Waiting for note'),'instrument pitch outside the assigned MIDI range leaves drums armed');
+  press('keydown','Numpad1','1');await pause(100);press('keyup','Numpad1','1');
+  port.onmidimessage({data:[0x99,37,117]});await pause(100);port.onmidimessage({data:[0x89,37,0]});
+  await wait(()=>document.querySelector('#note-velocity')?.value==='117','second drum records the MIDI input');
+  check(document.querySelector('#note-pitch').value==='42','the track instrument pitch is recorded');
+  button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'),'drum phrase applied');
+  await wait(()=>{
+    const [first, second]=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.filter(track=>track.role==='drums');
+    return first.phraseEdits?.some(edit=>edit.notes.some(note=>note.midi===42&&note.velocity===90))
+      && second.phraseEdits?.some(edit=>edit.notes.some(note=>note.midi===42&&note.velocity===117));
+  },'duplicate drum instruments saved on their respective tracks');
   await fetch('/result',{method:'POST',body:JSON.stringify({passed:true})});
  }catch(error){await fetch('/result',{method:'POST',body:JSON.stringify({error:error.stack + " | controls: " + document.querySelector('vc-live-recording')?.textContent + " | alerts: " + [...document.querySelectorAll('[role=alert]')].map(e=>e.textContent).join(' / ')})});}
 })();</script>`;
