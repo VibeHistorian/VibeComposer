@@ -9,6 +9,7 @@ interface WailsApp {
 
 declare global {
   interface Window {
+    runtime?: { BrowserOpenURL(url: string): void };
     go?: {
       main?: {
         App?: WailsApp;
@@ -24,4 +25,13 @@ export async function getAppInfo(): Promise<AppInfo | null> {
   }
 
   return app.GetAppInfo();
+}
+
+export function openInSystemBrowser(url: string): boolean {
+  const runtime = window.runtime;
+  if (!runtime?.BrowserOpenURL) {
+    return false;
+  }
+  runtime.BrowserOpenURL(url);
+  return true;
 }

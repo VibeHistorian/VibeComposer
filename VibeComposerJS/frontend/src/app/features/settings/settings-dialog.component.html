@@ -293,12 +293,16 @@
       <span><vc-settings-scope-indicator scope="ui" />UI</span>
       <span><vc-settings-scope-indicator scope="compose" />Compose / reroll</span>
       <span><vc-settings-scope-indicator scope="sound" />Track sound</span></div>
-    <span role="status">{{ transferMessage() }}</span>
-    <input #themeFile aria-label="Import theme file" type="file" accept=".json,application/json" hidden (change)="importPreferences($event, true)" />
-    <button type="button" (click)="themeFile.click()">Import Theme</button>
-    <input #preferencesFile aria-label="Import UI preferences file" type="file" accept=".json,application/json" hidden (change)="importPreferences($event)" />
-    <button type="button" (click)="preferencesFile.click()">Import UI preferences</button>
-    <button type="button" (click)="exportPreferences()">Export UI preferences</button>
+    <a #sourceLink class="source-link" href="https://github.com/VibeHistorian/vibehistorian.github.io"
+      target="_blank" rel="noopener" (click)="openSource($event, sourceLink)">[View Source - GitHub]</a>
+    <div class="preferences-transfer-actions">
+      <span role="status">{{ transferMessage() }}</span>
+      <input #themeFile aria-label="Import theme file" type="file" accept=".json,application/json" hidden (change)="importPreferences($event, true)" />
+      <button type="button" (click)="themeFile.click()">Import Theme</button>
+      <input #preferencesFile aria-label="Import UI preferences file" type="file" accept=".json,application/json" hidden (change)="importPreferences($event)" />
+      <button type="button" (click)="preferencesFile.click()">Import UI preferences</button>
+      <button type="button" (click)="exportPreferences()">Export UI preferences</button>
+    </div>
   </footer>
 </section>
 

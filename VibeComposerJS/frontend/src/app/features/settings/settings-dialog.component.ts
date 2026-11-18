@@ -27,6 +27,7 @@ import { HARMONY_GENERATIONS } from '../../core/music/contextual-harmony';
 import { DEFAULT_HARMONY_SETTINGS, type HarmonySettings } from '../../core/music/harmony-voicing';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { MAX_DRUM_SOUNDS, type DrumMappingPreference } from '../../core/music/drum-instruments';
+import { openInSystemBrowser } from '../../core/wails/wails-api';
 
 interface SettingsCheckboxRow {
   readonly label: string;
@@ -83,6 +84,13 @@ export class SettingsDialogComponent {
     this.preferences.setDrumMapping(selection as DrumMappingPreference);
   }
   readonly transferMessage = signal('');
+
+  openSource(event: MouseEvent, link: HTMLAnchorElement): void {
+    if (openInSystemBrowser(link.href)) {
+      event.preventDefault();
+    }
+  }
+
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
   readonly checkboxSettings: Readonly<Record<"arrangement" | "score" | "midi" | "harmony", readonly SettingsCheckboxRow[]>> = {

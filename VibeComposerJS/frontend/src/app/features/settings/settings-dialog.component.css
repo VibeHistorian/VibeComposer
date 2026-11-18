@@ -40,14 +40,17 @@ h2 { margin: 0 0 20px; font-size: 18px; font-weight: 550; }
 
 /* Scope indicators and preference transfer */
 .category-scopes { display: inline-flex; flex: 0 0 auto; gap: 0; }
-.preferences-transfer { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border-subtle); }
-.scope-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-right: auto; }
+.preferences-transfer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border-subtle); }
+.scope-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; justify-self: start; }
 .scope-legend > span { display: inline-flex; align-items: center; gap: 3px; color: var(--text-secondary); font: 10px var(--font-ui); }
 /* Center symbol glyphs optically with the smaller legend labels. */
 .scope-legend vc-settings-scope-indicator,
 .category-scopes vc-settings-scope-indicator { transform: translateY(-3px); }
-.preferences-transfer > span { color: var(--text-muted); font-size: 11px; }
-.preferences-transfer > span:empty { display: none; }
+.source-link { color: var(--accent-primary); font: 12px var(--font-ui); }
+.source-link:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.preferences-transfer-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.preferences-transfer-actions > span { color: var(--text-muted); font-size: 11px; }
+.preferences-transfer-actions > span:empty { display: none; }
 .preferences-transfer button { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-button); color: var(--text-primary); font: 12px var(--font-ui); cursor: pointer; }
 .preferences-transfer button:hover { background: var(--surface-button-hover); }
 
