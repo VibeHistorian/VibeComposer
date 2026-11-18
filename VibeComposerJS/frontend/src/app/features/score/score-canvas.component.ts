@@ -21,9 +21,9 @@ import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-ed
 import type { ArrangedPart } from '../../core/music/part-role';
 import type { PhraseNote } from '../../core/music/phrase-note';
 import {
-  canvasPoint, clampViewport, contentHeight, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
+  canvasPoint, clampViewport, contentHeight, harmonicNotePitchBounds, laneHeight, maxVerticalScale, overviewPitchRange, pitchAt,
   scoreBeat, scoreHeight, scoreX, sectionViewport, VELOCITY_HEIGHT,
-  type ScorePitchGeometry, type ScoreTimeGeometry,
+  type NotePitchBounds, type ScorePitchGeometry, type ScoreTimeGeometry,
 } from './score-geometry';
 import {
   addHitArea, boxNoteIds, HIT_BUCKET_WIDTH, hitAreaAt, noteDragZone, type NoteHitArea as HitArea,
@@ -104,6 +104,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   readonly drumSlots = input<DrumSlots>();
   readonly tracks = input.required<readonly ScoreCanvasTrack[]>();
   readonly notes = input.required<readonly ScoreCanvasNote[]>();
+  readonly overviewNotePitchBounds = input<NotePitchBounds | null>(null);
   readonly ghostNotes = input<readonly ScoreCanvasNote[]>([]);
   readonly recordingPitches = input<readonly number[]>([]);
   readonly soundingPitches = input<readonly number[]>([]);
@@ -266,6 +267,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.recordingPitches();
     this.notesReady();
     this.ghostNotes();
+    this.overviewNotePitchBounds();
     this.chordBoundaries();
     this.preferences.scoreChordGrid();
     this.preferences.scoreOutlineOtherTracks();
@@ -1027,9 +1029,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     graphics.rect(0, 0, this.width, this.height).fill({ color: color('--surface-score').value });
     const ghosts = this.editable() ? this.ghostNotes() : [];
     const visibleNotes = notes.filter(note => !hiddenTrackIds.has(note.part));
-    const harmonic = visibleNotes.filter(note => note.color !== 'drums');
-    const notePitchMin = harmonic.length ? harmonic.reduce((min, note) => Math.min(min, note.midi), 127) : 48;
-    const notePitchMax = harmonic.length ? harmonic.reduce((max, note) => Math.max(max, note.midi), 0) : 72;
+    const { notePitchMin, notePitchMax } = (this.editable() ? null : this.overviewNotePitchBounds())
+      ?? harmonicNotePitchBounds(visibleNotes);
     const phrasePitchMin = Math.max(0, notePitchMin - 2);
     const phrasePitchMax = Math.min(127, notePitchMax + 2);
     const drumTracks = tracks.filter(track => track.color === 'drums');

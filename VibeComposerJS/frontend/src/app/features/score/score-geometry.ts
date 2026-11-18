@@ -1,3 +1,5 @@
+import type { ArrangedPart } from '../../core/music/part-role';
+
 /** Canvas coordinates are CSS pixels; offsets are fractions of the full song. */
 export interface ScoreTimeGeometry {
   readonly width: number;
@@ -44,6 +46,23 @@ export function scoreHeight(geometry: Pick<ScorePitchGeometry, 'height' | 'veloc
 
 export function laneHeight(geometry: ScorePitchGeometry): number {
   return Math.min(MAX_PITCH_ROW_HEIGHT, Math.max(1, geometry.harmonicHeight) * geometry.verticalScale / (geometry.pitchMax - geometry.pitchMin + 1));
+}
+
+export interface NotePitchBounds {
+  readonly notePitchMin: number;
+  readonly notePitchMax: number;
+}
+
+export function harmonicNotePitchBounds(notes: readonly { midi: number; color: ArrangedPart }[]): NotePitchBounds {
+  let notePitchMin = Infinity;
+  let notePitchMax = -Infinity;
+  for (const note of notes) {
+    if (note.color !== 'drums') {
+      notePitchMin = Math.min(notePitchMin, note.midi);
+      notePitchMax = Math.max(notePitchMax, note.midi);
+    }
+  }
+  return notePitchMin === Infinity ? { notePitchMin: 48, notePitchMax: 72 } : { notePitchMin, notePitchMax };
 }
 
 /** Fill the overview with pitch rows even when the visible phrase spans only one note. */

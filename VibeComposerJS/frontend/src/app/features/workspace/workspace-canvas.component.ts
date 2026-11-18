@@ -46,6 +46,7 @@ import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
 import type { SettingsSelection } from '../../core/ui/workspace-ui.service';
 import { ArrangementOverviewComponent } from '../arrangement/arrangement-overview.component';
 import { ScoreCanvasComponent } from '../score/score-canvas.component';
+import { harmonicNotePitchBounds } from '../score/score-geometry';
 import { ScoreChordLabelsDirective } from '../score/score-chord-labels.directive';
 import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from '../score/score-canvas.component';
 import { EditWorkspaceComponent } from '../edit/edit-workspace.component';
@@ -556,6 +557,8 @@ export class WorkspaceCanvasComponent {
         color: track.role, topPercent: 0, opacity: 0.5 + note.velocity / 127 * 0.5 };
     });
   });
+  readonly overviewNotePitchBounds = computed(() => this.editing() || this.preferences.shrinkPianoRollToVisibleNotes()
+    ? null : harmonicNotePitchBounds(this.scoreNotes()));
   readonly ghostNotes = computed<ScoreNote[]>(() => {
     const editor = this.editor();
     if (!this.editing() || !editor || !this.preferences.scoreGhostNotes()) return [];

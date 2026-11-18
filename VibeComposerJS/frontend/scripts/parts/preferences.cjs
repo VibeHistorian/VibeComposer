@@ -49,6 +49,21 @@ test('ghost note preference defaults on, persists, transfers and rejects invalid
   assert.equal(service.historyPosition(), history);
 });
 
+test('piano-roll shrinking defaults off and persists when enabled', () => {
+  const { uiPreferences: prefs, load } = fixture();
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  assert.equal(prefs.shrinkPianoRollToVisibleNotes(), false);
+  prefs.setShrinkPianoRollToVisibleNotes(true);
+  assert.equal(new UiPreferencesService().shrinkPianoRollToVisibleNotes(), true);
+  const saved = prefs.exportJson();
+  const older = JSON.parse(saved);
+  delete older.shrinkPianoRollToVisibleNotes;
+  assert.equal(prefs.importJson(JSON.stringify(older)), true);
+  assert.equal(prefs.shrinkPianoRollToVisibleNotes(), false);
+  assert.equal(prefs.importJson(saved), true);
+  assert.equal(prefs.shrinkPianoRollToVisibleNotes(), true);
+});
+
 test('score outlines persist independently of phrase ghosts', () => {
   const { uiPreferences: prefs, load } = fixture();
   const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');

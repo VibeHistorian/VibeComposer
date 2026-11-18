@@ -108,6 +108,14 @@ export class SettingsDialogComponent {
     ],
     score: [
       {
+        label: "Shrink piano roll to visible notes",
+        description: "Fit the score's piano roll to the pitch range of the tracks currently shown.",
+        descriptionId: "score-shrink-piano-roll-description",
+        ariaLabel: "Shrink piano roll to visible notes",
+        checked: () => this.preferences.shrinkPianoRollToVisibleNotes(),
+        change: (checked: boolean) => this.preferences.setShrinkPianoRollToVisibleNotes(checked)
+      },
+      {
         label: "Highlight audible",
         description: "Show only tracks audible under the current Solo/Mute settings. Score role filters still apply. Saved in your UI preferences.",
         descriptionId: "highlight-audible-description",

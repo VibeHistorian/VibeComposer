@@ -142,6 +142,8 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await evaluate(`(async()=>{${waitCode}document.querySelector('.track-group.arpeggio .track-select').click();await wait(()=>document.querySelector('#part-inspector').dataset.controlRole==='arpeggio');})()`);
   const filters=await evaluate(`(async()=>{${waitCode}
     const role=document.querySelector('.score-role-controls [aria-label="Drums"]');
+    const bassRole=document.querySelector('.score-role-controls [aria-label="Bass"]');
+    const bassMute=document.querySelector('.track-group.bass .group-mix-controls .mute-toggle');
     const before=document.querySelector('vc-score-canvas canvas');
     const project=()=>sessionStorage.getItem('vibecomposer.project.v12');
     const original=project();
@@ -150,10 +152,30 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       (await wait(()=>document.querySelector('.settings-sidebar [aria-label="Appearance Score"]'))).click();
       return await wait(()=>document.querySelector('[aria-label="Highlight audible"]'));
     };
+    const shrink=()=>document.querySelector('[aria-label="Shrink piano roll to visible notes"]');
+    const closeSettings=()=>document.querySelector('[aria-label="Close settings"]').click();
+    const pitchRows=()=>JSON.stringify([...document.querySelectorAll('.pitch-key:not(.drum-label)')]
+      .map(row=>[row.title,row.style.top,row.style.height]));
+    const settle=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const rowsAfter=async button=>{button.click();await settle();return pitchRows();};
     role.click();await wait(()=>!document.querySelector('.drum-label'));
     (await openScore()).click();
-    document.querySelector('[aria-label="Close settings"]').click();
+    if(shrink().checked)throw Error('Piano-roll shrinking should default to off');
+    closeSettings();
     if(project()!==original)throw Error('Score preference changed mix');
+    role.click();await wait(()=>document.querySelectorAll('.drum-label').length===3);
+    const fullRows=pitchRows();
+    if(await rowsAfter(bassRole)!==fullRows)throw Error('Hiding a pitched role changed the pitch rows with shrinking off');
+    await rowsAfter(bassRole);
+    if(await rowsAfter(bassMute)!==fullRows)throw Error('Muting a pitched role changed the pitch rows with shrinking off');
+    await rowsAfter(bassMute);
+    await openScore();shrink().click();closeSettings();
+    const shrunkRows=await rowsAfter(bassRole);
+    if(JSON.parse(shrunkRows).length>=JSON.parse(fullRows).length)throw Error('Hiding a pitched role should shrink the piano roll');
+    if(await rowsAfter(bassRole)!==fullRows)throw Error('Restoring the role should restore the full pitch range');
+    if(await rowsAfter(bassMute)!==shrunkRows)throw Error('Muting a pitched role should shrink the piano roll to the same range');
+    await rowsAfter(bassMute);
+    role.click();await wait(()=>!document.querySelector('.drum-label'));
     role.click();await wait(()=>document.querySelectorAll('.drum-label').length===3);
     const mute=document.querySelector('.track-group.drums .group-mix-controls .mute-toggle');
     mute.click();await wait(()=>!document.querySelector('.drum-label'));
@@ -163,7 +185,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const soloed=project();role.click();role.click();
     if(project()!==soloed)throw Error('Score role buttons changed Solo/Mute');
     solo.click();await wait(()=>document.querySelectorAll('.drum-label').length===3);
-    (await openScore()).click();document.querySelector('[aria-label="Close settings"]').click();
+    (await openScore()).click();shrink().click();closeSettings();
     role.click();await wait(()=>!document.querySelector('.drum-label'));
     return document.querySelector('vc-score-canvas canvas')===before;
   })()`);assert.equal(filters,true);

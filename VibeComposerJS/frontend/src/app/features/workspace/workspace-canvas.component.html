@@ -288,6 +288,7 @@
             </div>
               <div class="score-track-lanes">
                 <vc-score-canvas [drumSlots]="project().drumSlots" [tracks]="scoreTracks()" [notes]="canvasNotes()" [sections]="timelineSections()"
+                  [overviewNotePitchBounds]="overviewNotePitchBounds()"
                   [ghostNotes]="ghostNotes()"
                   [chordBoundaries]="scoreChordBoundaries()"
                   [soundingDrums]="editor()?.selectedPart() === 'drums'" [soundingPitches]="editor()?.soundingPitches() ?? []" [recordingPitches]="editor()?.recordingPitches() ?? []" [keyboardLabels]="editor()?.keyboardLabels() ?? []"

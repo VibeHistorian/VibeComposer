@@ -65,6 +65,7 @@ export class UiPreferencesService {
     if (SCORE_NOTE_SHAPES.some(choice => choice.value === value)) this.commit({ ...this.state(), scoreNoteShape: value as ScoreNoteShape });
   }
   readonly scoreGhostNotes = computed(() => this.state().scoreGhostNotes);
+  readonly shrinkPianoRollToVisibleNotes = computed(() => this.state().shrinkPianoRollToVisibleNotes);
   readonly restartPlaybackOnCompose = computed(() => this.state().restartPlaybackOnCompose);
   readonly replaceCurrentProjectTab = computed(() => this.state().replaceCurrentProjectTab);
   setReplaceCurrentProjectTab(enabled: boolean): void {
@@ -263,6 +264,9 @@ export class UiPreferencesService {
   toggleScoreOutlineOtherTracks(): void { this.commit({ ...this.state(), scoreOutlineOtherTracks: !this.scoreOutlineOtherTracks() }); }
 
   toggleScoreGhostNotes(): void { this.commit({ ...this.state(), scoreGhostNotes: !this.scoreGhostNotes() }); }
+  setShrinkPianoRollToVisibleNotes(enabled: boolean): void {
+    this.commit({ ...this.state(), shrinkPianoRollToVisibleNotes: enabled });
+  }
   toggleRestartPlaybackOnCompose(): void { this.commit({ ...this.state(), restartPlaybackOnCompose: !this.restartPlaybackOnCompose() }); }
   toggleLimitInstrumentsToPool(): void { this.commit({ ...this.state(), limitInstrumentsToPool: !this.limitInstrumentsToPool() }); }
   setComposeBpmBound(key: 'composeBpmMin' | 'composeBpmMax', value: number): void {
