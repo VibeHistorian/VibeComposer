@@ -1,8 +1,12 @@
 <form (submit)="$event.preventDefault(); apply()" (keydown)="keydown($event)">
-  <header><h2>Import MIDI</h2><button type="button" aria-label="Cancel MIDI import" (click)="dialog.close()">×</button></header>
+  <header><h2>{{ data.paste ? 'Paste notes' : 'Import MIDI' }}</h2><button type="button" [attr.aria-label]="data.paste ? 'Cancel paste' : 'Cancel MIDI import'" (click)="dialog.close()">×</button></header>
   @if (tooLong) {
-    <section aria-label="Fit MIDI duration">
-      <p>The imported track is {{ data.track.durationBeats }} beats long. This phrase allows {{ data.phraseBeats }} beats.</p>
+    <section [attr.aria-label]="data.paste ? 'Fit pasted notes' : 'Fit MIDI duration'">
+      @if (data.paste) {
+        <p>The copied notes span {{ data.track.durationBeats }} beats. {{ data.phraseBeats }} beats are available after the playhead.</p>
+      } @else {
+        <p>The imported track is {{ data.track.durationBeats }} beats long. This phrase allows {{ data.phraseBeats }} beats.</p>
+      }
       <label for="midi-import-duration">Rescale to duration (beats)</label>
       <input id="midi-import-duration" type="text" inputmode="decimal" autocomplete="off" [value]="duration()"
         aria-describedby="midi-import-duration-help midi-import-duration-error" [attr.aria-invalid]="!!error()"
@@ -19,12 +23,13 @@
     </section>
   }
   @if (data.choices.length && !data.drumImport) {
-    <section aria-label="Fit MIDI key and mode">
-      <p>Some imported notes fall outside the selected harmony. Choose how to import their pitches.</p>
+    <section [attr.aria-label]="data.paste ? 'Fit copied key and mode' : 'Fit MIDI key and mode'">
+      <p>{{ data.paste ? 'The copied notes came from a different key or scale.' : 'Some imported notes fall outside the selected harmony. Choose how to import their pitches.' }}</p>
       <label for="midi-import-scale">Key/mode translation</label>
       <vc-select [options]="scaleOptions()" id="midi-import-scale" [value]="choice()" (valueChange)="choice.set($event)" aria-describedby="midi-import-scale-help"></vc-select>
-      <p id="midi-import-scale-help">Choose an inferred source key/mode to translate its scale degrees into the current key/mode. Source matches are estimates.</p>
+      <p id="midi-import-scale-help">{{ data.paste ? 'Keep the copied pitches or translate their scale degrees into the destination key and scale.'
+        : 'Choose an inferred source key/mode to translate its scale degrees into the current key/mode. Source matches are estimates.' }}</p>
     </section>
   }
-  <footer><button type="button" (click)="dialog.close()">Cancel</button><button type="submit" class="apply" [disabled]="!!error()">Apply</button></footer>
+  <footer><button type="button" (click)="dialog.close()">Cancel</button><button type="submit" class="apply" [disabled]="!!error()">{{ data.paste ? 'Paste' : 'Apply' }}</button></footer>
 </form>

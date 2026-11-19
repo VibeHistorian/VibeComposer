@@ -37,7 +37,7 @@
       }
 
   <div class="phrase-tools">
-    <vc-live-recording [notes]="true" [measureBeats]="recordingMeasureBeats()" [startBeat]="recordingStartBeat()" (began)="beginRecording()" (cancelled)="cancelRecording()" [drumTracks]="drumInputTracks()" [preferActionShortcut]="preferActionShortcut" [backingContext]="recordingBackingContext()" [keyboardScale]="keyboardScale()" [keyboardTonic]="keyboardTonic()" [beats]="phraseBeats()" (span)="recordSpan($event)" (cursor)="recordCursor($event)" (noteInput)="previewInput($event)" (heldNotes)="updateHeldNotes($event)" (ended)="finishRecording()" />
+    <vc-live-recording [notes]="true" [measureBeats]="recordingMeasureBeats()" [startBeat]="phrasePlayheadBeat()" (began)="beginRecording()" (cancelled)="cancelRecording()" [drumTracks]="drumInputTracks()" [preferActionShortcut]="preferActionShortcut" [backingContext]="recordingBackingContext()" [keyboardScale]="keyboardScale()" [keyboardTonic]="keyboardTonic()" [beats]="phraseBeats()" (span)="recordSpan($event)" (cursor)="recordCursor($event)" (noteInput)="previewInput($event)" (heldNotes)="updateHeldNotes($event)" (ended)="finishRecording()" />
     @if (drumInputTracks(); as tracks) {
       <p class="inspector-copy">Play drum tracks in order with 1–0 (top row or numpad), Q–P, A–L, Z–M, or MIDI notes starting at 36.@if (tracks.length > 36) { Hold Shift for tracks 37 and up. }</p>
     }
@@ -46,6 +46,8 @@
     <vc-select [options]="gridSelectOptions()" id="phrase-grid" [value]="snapBeats()" (valueChange)="setGrid($event)"></vc-select>
     <div class="phrase-actions">
       <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="selectAll()">Select all</button>
+      <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="copyNotes()" [disabled]="!selectedNoteIds().length">Copy notes</button>
+      <button type="button" title="Paste notes at the playhead" (click)="pasteNotes()" [disabled]="!canPasteNotes()">Paste notes</button>
       <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>
     </div>
     @if (transposeOpen()) {

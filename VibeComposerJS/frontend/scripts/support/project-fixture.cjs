@@ -32,13 +32,14 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
     read.set = next => { read(); current = next; };
     return read;
   };
-  let service, ui, uiPreferences;
+  let service, ui, uiPreferences, clipboard;
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
     signal, linkedSignal, afterRenderEffect: () => {}, computed: reactivity?.computed ?? ((read) => read), effect: callback => { effects.push(callback); }, untracked: read => read(), input,
     output: () => ({ values: [], emit(value) { this.values.push(value); } }), ElementRef: class ElementRef {}, ChangeDetectorRef: class ChangeDetectorRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
+      : type?.name === 'ContextClipboardService' ? clipboard
       : type?.name === 'AudioPlaybackService' ? { setPhrasePreview() {} } : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
       : type?.name === 'ChangeDetectorRef' ? { detectChanges() {} }
       : type?.name === 'Combobox' ? { expanded: signal(false), disabled: signal(false) }
@@ -101,6 +102,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
     constructor(write) { super(write, persistenceEnvironment); }
   };
   uiPreferences = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  clipboard = new (load('core/ui/context-clipboard.service.ts').ContextClipboardService)();
   const { ProjectService } = load('core/project/project.service.ts');
   service = new ProjectService();
   if (contextualMelody !== undefined) service.state.set({ ...service.project(), melodyGlobal: { contextualMelody } });

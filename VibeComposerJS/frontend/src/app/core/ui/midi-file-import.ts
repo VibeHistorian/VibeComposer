@@ -4,7 +4,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import type { Injector } from '@angular/core';
 import { fitImportedMidi, type ImportedMidiTrack, type MidiScaleChoice } from '../music/midi-import-options';
 import type { ScaleMode } from '../music/scales';
-import { MidiImportDialogComponent } from '../../features/midi-import/midi-import-dialog.component';
+import { MidiImportDialogComponent, type MidiImportDialogData } from '../../features/midi-import/midi-import-dialog.component';
 
 export interface MidiDropOptions {
   readonly injector: Injector;
@@ -25,8 +25,15 @@ export async function readMidiFile(buffer: ArrayBuffer, maximumBeats: number, ma
       label: 'Chromatic 36–51 → project drum sounds', pitches: track.notes.map(note => inverse.get(note.midi)!) });
   }
   if (track.durationBeats <= maximumBeats && !choices.length && !options.drumSlots) return fitImportedMidi(track, maximumBeats);
-  const dialog = options.injector.get(Dialog).open<PhraseNote[]>(MidiImportDialogComponent, {
-    ariaLabel: 'MIDI import options', data: { track, phraseBeats: maximumBeats, choices, drumImport: options.drumSlots !== undefined },
+  return showNoteInsertOptions(options.injector, signal, {
+    track, phraseBeats: maximumBeats, choices, drumImport: options.drumSlots !== undefined,
+  });
+}
+
+export function showNoteInsertOptions(injector: Injector, signal: AbortSignal, data: MidiImportDialogData): Promise<PhraseNote[] | null> {
+  if (signal.aborted) return Promise.resolve(null);
+  const dialog = injector.get(Dialog).open<PhraseNote[]>(MidiImportDialogComponent, {
+    ariaLabel: data.paste ? 'Paste notes options' : 'MIDI import options', data,
   });
   return new Promise(resolve => {
     const abort = () => dialog.close();

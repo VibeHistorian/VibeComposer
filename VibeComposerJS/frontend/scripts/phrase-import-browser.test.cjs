@@ -2,7 +2,7 @@ const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, 
 const assert=require('node:assert/strict');
 const fs=require('node:fs'); const path=require('node:path'); const test=require('node:test');
 const browser=findBrowser();
-test('phrase MIDI drop, transpose, preferences and draft undo work in the production browser', {skip:!browser,timeout:60000},async()=>{
+test('phrase MIDI drop, clipboard, transpose and draft undo work in the production browser', {skip:!browser,timeout:60000},async()=>{
  const root=requireProductionBuild();
  const server=createBrowserServer({ root });
  await listen(server);
@@ -161,6 +161,96 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     return {combined,emptyDefault,rejectsEqual,rejectsZero,singleUndo,scaled,translated,cancelClean,snapOffNoTranslation,translationOnly,noPopupForFittingMidi};
   })()`);
   for(const [key,value] of Object.entries(options))assert.equal(value,true,key);
+
+  await evaluate(`(() => {
+    window.dispatchEvent(new Event('pagehide'));
+    const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    project.scale = 'major';
+    project.transposeSemitones = 0;
+    const { id, type, measures, trackPresence } = project.arrangement[0];
+    project.arrangement = [
+      { id, type, measures, trackPresence },
+      { id: 'clipboard-destination', type: 'OUTRO', measures, trackPresence, context: { scale: 'natural-minor', keyChange: 2 } },
+    ];
+    const bass = project.tracks.find(track => track.role === 'bass');
+    delete bass.phraseEdits;
+    bass.editedPhrase = [
+      { id: 'clipboard-first', midi: 64, startBeat: 1, durationBeats: 0.5, velocity: 79 },
+      { id: 'clipboard-second', midi: 67, startBeat: 3, durationBeats: 0.75, velocity: 108 },
+    ];
+    localStorage.removeItem('vibecomposer.project-tabs.v1');
+    sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
+  })()`);
+  await reload();
+  const clipboard = await evaluate(`(async()=>{ ${waitCode} ${setup}
+    const key = (target, key, modifiers = {}) => target.dispatchEvent(new KeyboardEvent('keydown',
+      { key, bubbles: true, cancelable: true, ...modifiers }));
+    const selected = count => [...document.querySelectorAll('.inspector-copy')].some(p => p.textContent.trim() === count + ' notes selected');
+    const field = id => document.querySelector('#note-' + id)?.value;
+    const position = document.querySelector('[aria-label="Song position"]');
+    const seekForward = count => { for (let i = 0; i < count; i++) key(position, 'ArrowRight'); };
+    await open('bass');
+    const initiallyEmpty = button('Paste notes').disabled;
+    key(document.body, 'a', { ctrlKey: true }); await wait(() => selected(2));
+    const inputCopyIsNative = key(document.querySelector('#note-pitch'), 'c', { ctrlKey: true });
+    key(document.body, 'c', { ctrlKey: true });
+    await wait(() => !button('Paste notes').disabled);
+    const copyLeavesUndoEmpty = button('Undo phrase').disabled;
+    button('Remove selected notes').click();
+    await wait(() => !field('pitch'));
+    seekForward(2);
+    const inputPasteIsNative = key(document.querySelector('[aria-label="Generation seed"]'), 'v', { ctrlKey: true });
+    key(document.body, 'v', { ctrlKey: true });
+    await wait(() => selected(2) && field('start') === '3');
+    const detachedSnapshot = field('pitch') === '64' && field('length') === '0.5' && field('velocity') === '79';
+    seekForward(2);
+    button('Paste notes').click();
+    await wait(() => selected(2) && field('start') === '5');
+    button('Undo phrase').click(); await wait(() => selected(2) && field('start') === '3');
+    button('Redo phrase').click(); await wait(() => selected(2) && field('start') === '5');
+    const originalClick = HTMLAnchorElement.prototype.click;
+    let exportBytes;
+    HTMLAnchorElement.prototype.click = function() { exportBytes = fetch(this.href).then(r => r.arrayBuffer()); };
+    try { button('Export Phrase').click(); } finally { HTMLAnchorElement.prototype.click = originalClick; }
+    const bytes = [...new Uint8Array(await exportBytes)];
+    button('Cancel').click(); await wait(() => !document.querySelector('#phrase-grid'));
+    (await wait(() => document.querySelector('[aria-label="Select OUTRO section"]'))).click();
+    await open('bass');
+    button('Paste notes').click();
+    const outsidePhrase = await wait(() => [...document.querySelectorAll('[role="alert"]')].some(p => p.textContent.includes('Move the playhead')));
+    seekForward(14);
+    button('Paste notes').click();
+    const pasteDialog = () => document.querySelector('vc-midi-import-dialog');
+    const dialog = await wait(pasteDialog);
+    const clipboardHarmony = dialog.querySelector('h2').textContent === 'Paste notes'
+      && (await selectOptions(dialog.querySelector('#midi-import-scale')))[1].textContent.trim().startsWith('C Major → D Natural minor');
+    dialog.querySelector('[aria-label="Cancel paste"]').click();
+    await wait(() => !pasteDialog());
+    const cancelLeavesUndoEmpty = button('Undo phrase').disabled;
+    button('Paste notes').click();
+    (await wait(pasteDialog)).querySelector('button[type="submit"]').click();
+    await wait(() => selected(2) && field('start') === '3');
+    const keepCopiedPitch = field('pitch') === '64';
+    button('Paste notes').click();
+    const translation = (await wait(pasteDialog)).querySelector('#midi-import-scale');
+    await change(translation, (await selectOptions(translation))[1].value);
+    pasteDialog().querySelector('button[type="submit"]').click();
+    await wait(() => selected(2) && field('pitch') === '65');
+    button('Copy notes').click();
+    button('Remove selected notes').click();
+    await wait(() => !field('pitch'));
+    button('Paste notes').click();
+    await wait(() => selected(2) && field('pitch') === '65');
+    const newCopyReplacesClipboard = !pasteDialog() && field('start') === '3';
+    return { bytes, initiallyEmpty, inputCopyIsNative, inputPasteIsNative, copyLeavesUndoEmpty,
+      detachedSnapshot, outsidePhrase, clipboardHarmony, cancelLeavesUndoEmpty, keepCopiedPitch, newCopyReplacesClipboard };
+  })()`);
+  const { bytes: clipboardBytes, ...clipboardChecks } = clipboard;
+  for (const [key, value] of Object.entries(clipboardChecks)) assert.equal(value, true, key);
+  const pasted = new Midi(Buffer.from(clipboardBytes));
+  assert.deepEqual(pasted.tracks[0].notes.map(note => [
+    note.midi, note.ticks / pasted.header.ppq, note.durationTicks / pasted.header.ppq, Math.round(note.velocity * 127),
+  ]).sort((a, b) => a[1] - b[1] || a[0] - b[0]), [[64, 2, 0.5, 79], [64, 4, 0.5, 79], [67, 4, 0.75, 108], [67, 6, 0.75, 108]]);
  } finally {
     await closeBrowser({ child, server, socket });
   }

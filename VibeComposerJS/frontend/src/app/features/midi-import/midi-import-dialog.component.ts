@@ -8,6 +8,7 @@ export interface MidiImportDialogData {
   readonly phraseBeats: number;
   readonly choices: readonly MidiScaleChoice[];
   readonly drumImport?: boolean;
+  readonly paste?: boolean;
 }
 
 @Component({
@@ -18,7 +19,8 @@ export interface MidiImportDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MidiImportDialogComponent {
-  readonly scaleOptions = computed(() => [{ value: '', label: this.data.drumImport ? 'General MIDI / keep original pitches' : 'Keep imported pitches (default)' }, ...this.data.choices.map(item => ({ value: item.id, label: item.label }))]);
+  readonly scaleOptions = computed(() => [{ value: '', label: this.data.drumImport ? 'General MIDI / keep original pitches'
+    : this.data.paste ? 'Keep copied pitches (default)' : 'Keep imported pitches (default)' }, ...this.data.choices.map(item => ({ value: item.id, label: item.label }))]);
 
   readonly data = inject<MidiImportDialogData>(DIALOG_DATA);
   readonly dialog = inject(DialogRef);

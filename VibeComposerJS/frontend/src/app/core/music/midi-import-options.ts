@@ -11,9 +11,29 @@ export interface MidiScaleChoice {
   readonly label: string;
   readonly pitches: readonly number[];
 }
+export interface NoteHarmony {
+  readonly tonic: number;
+  readonly scale: ScaleMode;
+}
+
 const pc = (pitch: number) => (pitch % 12 + 12) % 12;
 const names = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-const degrees = (mode: ScaleMode) => [...new Set(scaleNotes(mode).map(pc))].sort((a, b) => a - b);
+
+export function scaleTranslation(notes: readonly PhraseNote[], from: NoteHarmony, to: NoteHarmony): MidiScaleChoice {
+  const source = scaleNotes(from.scale), target = scaleNotes(to.scale);
+  const sourcePcs = source.map(degree => pc(from.tonic + degree));
+  const targetPcs = target.map(degree => pc(to.tonic + degree));
+  // Use the closest tonic shift, retaining the source octave/degree contour.
+  const shift = pc(to.tonic - from.tonic + 6) - 6;
+  const pitches = notes.map(note => {
+    const sourcePitch = snapMidiToScale(note.midi, sourcePcs);
+    const degree = source.indexOf(pc(sourcePitch - from.tonic));
+    const targetDegree = target[Math.round(degree * (target.length - 1) / Math.max(1, source.length - 1))];
+    return snapMidiToScale(sourcePitch - source[degree] + shift + targetDegree, targetPcs);
+  });
+  const label = (harmony: NoteHarmony) => `${names[pc(harmony.tonic)]} ${SCALE_DEFINITIONS[harmony.scale].label}`;
+  return { id: `${pc(from.tonic)}:${from.scale}`, label: `${label(from)} → ${label(to)}`, pitches };
+}
 
 export function midiDurationError(text: string, phraseBeats: number): string | null {
   if (!text.trim()) return null;
@@ -26,26 +46,16 @@ export function midiDurationError(text: string, phraseBeats: number): string | n
  * Ambiguous source keys remain explicit choices; never silently snap the import.
  */
 export function midiScaleChoices(notes: readonly PhraseNote[], root: number, mode: ScaleMode): MidiScaleChoice[] {
-  const target = degrees(mode), targetPcs = target.map(degree => pc(root + degree));
+  const targetPcs = scaleNotes(mode).map(degree => pc(root + degree));
   if (!notes.some(note => !targetPcs.includes(pc(note.midi)))) return [];
   const candidates: (MidiScaleChoice & { fit: number; movement: number })[] = [];
   for (const sourceMode of SCALE_MODES) for (let sourceRoot = 0; sourceRoot < 12; sourceRoot++) {
-    const source = degrees(sourceMode);
-    let fit = 0, movement = 0;
-    const pitches = notes.map(note => {
-      const relative = pc(note.midi - sourceRoot);
-      if (source.includes(relative)) fit++;
-      const sourcePitch = snapMidiToScale(note.midi, source.map(degree => pc(sourceRoot + degree)));
-      const degree = source.indexOf(pc(sourcePitch - sourceRoot));
-      const targetDegree = target[Math.min(target.length - 1, Math.round(degree * (target.length - 1) / Math.max(1, source.length - 1)))];
-      // Use the closest tonic shift, retaining the source octave/degree contour.
-      const shift = pc(root - sourceRoot + 6) - 6;
-      const pitch = snapMidiToScale(sourcePitch - source[degree] + shift + targetDegree, targetPcs);
-      movement += Math.abs(pitch - note.midi);
-      return pitch;
-    });
-    if (pitches.every((pitch, index) => pitch === notes[index].midi)) continue;
-    candidates.push({ id: `${sourceRoot}:${sourceMode}`, label: `${names[sourceRoot]} ${SCALE_DEFINITIONS[sourceMode].label} → ${names[pc(root)]} ${SCALE_DEFINITIONS[mode].label} (${Math.round(fit / notes.length * 100)}% source match)`, pitches, fit, movement });
+    const source = scaleNotes(sourceMode);
+    const choice = scaleTranslation(notes, { tonic: sourceRoot, scale: sourceMode }, { tonic: root, scale: mode });
+    const movement = choice.pitches.reduce((sum, pitch, index) => sum + Math.abs(pitch - notes[index].midi), 0);
+    if (!movement) continue;
+    const fit = notes.filter(note => source.includes(pc(note.midi - sourceRoot))).length;
+    candidates.push({ ...choice, label: `${choice.label} (${Math.round(fit / notes.length * 100)}% source match)`, fit, movement });
   }
   candidates.sort((a, b) => b.fit - a.fit || a.movement - b.movement || a.id.localeCompare(b.id));
   const seen = new Set<string>();
