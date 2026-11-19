@@ -43,6 +43,10 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await command('Page.reload');
   const initial=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));return {labels:document.querySelectorAll('.pitch-key').length,drums:document.querySelectorAll('.drum-label').length,arrangement:!!document.querySelector('vc-arrangement-overview canvas'),velocity:!!document.querySelector('.velocity-label')};})()`);
   assert.ok(initial.labels>=17);assert.equal(initial.drums,3);assert.equal(initial.arrangement,true);assert.equal(initial.velocity,false);
+  const scrubTracks = await evaluate(`(() => {
+    const tracks = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks;
+    return ['bass', 'melody', 'drums'].map(role => tracks.find(track => track.role === role));
+  })()`);
   const seekSelection = await evaluate(`(async()=>{${waitCode}
     const buttons=[...document.querySelectorAll('.track-group.drums .track-select')];
     buttons.at(-1).click();
@@ -634,6 +638,90 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     assert.deepEqual(removal,action==='Track'?{removed:true,presence:[false,false]}:
       {removed:false,presence:action==='From Section 1 [VERSE1]'?[false,true]:[false,false]});
   }
+  await evaluate(`(() => {
+    window.dispatchEvent(new Event('pagehide'));
+    const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    project.transposeSemitones = 0;
+    project.progression = [1, 5, 6, 4];
+    delete project.progressionChords;
+    const [bass, melody, drum] = ${JSON.stringify(scrubTracks)};
+    project.tracks = [
+      bass, melody, drum,
+      {...drum, id: 'scrub-drums', name: 'Scrub drums', generatorSettings: {...drum.generatorSettings, pitch: 70 }},
+    ];
+    for (const [track, notes] of [
+      [project.tracks[0], [[48, 0], [54, 4.125], [36, 13], [64, 13]]],
+      [project.tracks[1], [[55, 8.125]]],
+      [project.tracks[2], [[36, 10.125]]],
+      [project.tracks[3], [[70, 14]]],
+    ]) {
+      track.editedPhrase = notes.map(([midi, startBeat], index) =>
+        ({ id: track.id + '-' + index, midi, startBeat, durationBeats: 0.5, velocity: 90 }));
+      delete track.phraseEdits;
+    }
+    project.arrangement = [{ id: 'scrub', type: 'VERSE1', measures: 4,
+      trackPresence: Object.fromEntries(project.tracks.map(track => [track.id, true])) }];
+    localStorage.removeItem('vibecomposer.project-tabs.v1');
+    sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
+  })()`);
+  await command('Page.reload');
+  await evaluate(`(async () => { ${waitCode}
+    (await wait(() => document.querySelector('.track-group.bass .track-select'))).click();
+    (await wait(() => [...document.querySelectorAll('#part-inspector button')].find(button => button.textContent.trim().startsWith('Edit notes')))).click();
+    await wait(() => document.querySelector('#phrase-grid'));
+    const setGhosts = async enabled => {
+      document.querySelector('[aria-label="Settings"]').click();
+      (await wait(() => document.querySelector('[aria-label="Appearance Score"]'))).click();
+      const toggle = await wait(() => document.querySelector('[aria-label="Ghost notes from other tracks"]'));
+      if (toggle.checked !== enabled) toggle.click();
+      document.querySelector('[aria-label="Close settings"]').click();
+      await wait(() => !!document.querySelector('.drum-label') === enabled);
+    };
+    window.scrubGhosts = setGhosts;
+    await setGhosts(false);
+  })()`);
+  const percentPerBeat = await evaluate(`(async () => {
+    const slider = document.querySelector('[aria-label="Song position"]');
+    for (const key of ['Home', 'ArrowRight']) {
+      slider.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    }
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    return Number(slider.getAttribute('aria-valuenow'));
+  })()`);
+  const dragPlayhead = async (beat, pitch, expected) => {
+    const points = await evaluate(`(() => {
+      const section = document.querySelector('.score-ruler-section');
+      const bounds = section.getBoundingClientRect();
+      const lastSlot = [...section.querySelectorAll('.score-chord-slot')].at(-1);
+      const pixelsPerBeat = bounds.width / Number(lastSlot.dataset.endBeat);
+      const row = document.querySelector(${JSON.stringify(pitch === 'drum' ? '.drum-label' : '.pitch-key:not(.drum-label)[title="MIDI ' + pitch + '"]')}).getBoundingClientRect();
+      const y = row.top + row.height / 2;
+      return { from: { x: bounds.left + 2 * pixelsPerBeat, y }, to: { x: bounds.left + ${beat} * pixelsPerBeat, y } };
+    })()`);
+    await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...points.from, button: 'left', buttons: 1, clickCount: 1 });
+    try {
+      await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...points.to, button: 'left', buttons: 1 });
+      const percent = await evaluate(`(async () => {
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const slider = document.querySelector('[aria-label="Song position"]');
+        return Number(slider.getAttribute('aria-valuenow'));
+      })()`);
+      assert.ok(Math.abs(percent - expected * percentPerBeat) < 1e-8,
+        `drag to beat ${beat} at pitch ${pitch} snapped to ${percent / percentPerBeat}, expected ${expected}`);
+    } finally {
+      await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...points.to, button: 'left', buttons: 0, clickCount: 1 });
+    }
+  };
+  await dragPlayhead(6.31, 48, 6.25);
+  await dragPlayhead(4.20, 48, 4.125); // Exactly six semitones away.
+  await dragPlayhead(4.20, 47, 4.25);
+  await dragPlayhead(8.20, 53, 8.25);
+  await evaluate('window.scrubGhosts(true)');
+  await dragPlayhead(8.20, 53, 8.125);
+  await dragPlayhead(10.20, 36, 10.25);
+  await dragPlayhead(10.20, 'drum', 10.125); // The other drum row can latch to MIDI 36.
+  assert.equal(await evaluate(`[...document.querySelectorAll('.score-display-header button')]
+    .find(button => button.textContent === 'Apply').disabled`), true, 'dragging the playhead leaves the phrase draft clean');
  } finally {
     await closeBrowser({ child, server, socket });
   }
