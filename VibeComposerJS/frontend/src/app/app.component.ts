@@ -18,7 +18,7 @@ import { TransportDockComponent } from './features/transport/transport-dock.comp
 import { WorkspaceCanvasComponent } from './features/workspace/workspace-canvas.component';
 import { WorkspaceUiService } from './core/ui/workspace-ui.service';
 import { translateJavaConfig } from './core/project/java-config-translator';
-import { isEditingText, usesSpaceKey } from './shared/keyboard-shortcuts';
+import { isEditingText, usesArrowKeys, usesSpaceKey } from './shared/keyboard-shortcuts';
 
 @Component({
   selector: 'vc-root',
@@ -26,7 +26,7 @@ import { isEditingText, usesSpaceKey } from './shared/keyboard-shortcuts';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
-  host: { '(document:keydown)': 'historyKeydown($event)' },
+  host: { '(document:keydown)': 'globalKeydown($event)' },
 })
 export class AppComponent {
   constructor() {
@@ -71,23 +71,39 @@ export class AppComponent {
     });
   });
 
-  historyKeydown(event: KeyboardEvent): void {
-    if (this.preferences.matchesShortcut('playback', event) && !event.defaultPrevented && !event.isComposing
-      && !isEditingText(event) && (event.key !== ' ' || !usesSpaceKey(event))) {
+  globalKeydown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing || isEditingText(event)) return;
+    if (this.preferences.matchesShortcut('playback', event) && (event.key !== ' ' || !usesSpaceKey(event))) {
       event.preventDefault();
       event.stopPropagation();
       if (!event.repeat) void this.playback.toggle(this.project());
       return;
     }
-    if (event.defaultPrevented || event.isComposing || isEditingText(event)) return;
     const redo = this.preferences.matchesShortcut('redo', event);
-    if (!redo && !this.preferences.matchesShortcut('undo', event)) return;
+    if (redo || this.preferences.matchesShortcut('undo', event)) {
+      // Phrase history owns the shortcut for the entire editing session, even when empty.
+      const workspace = this.workspace();
+      const history = workspace?.editing() ? workspace.editor() : this.projects;
+      if (redo) history?.redo();
+      else history?.undo();
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    this.navigateWithArrow(event);
+  }
 
-    // Phrase history owns the shortcut for the entire editing session, even when empty.
+  private navigateWithArrow(event: KeyboardEvent): void {
+    const horizontal = event.key === 'ArrowLeft' || event.key === 'ArrowRight';
+    if (!horizontal && event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || usesArrowKeys(event)
+      || this.dialogs.openDialogs.length || this.preferences.capturingShortcut()) return;
     const workspace = this.workspace();
-    const history = workspace?.editing() ? workspace.editor() : this.projects;
-    if (redo) history?.redo();
-    else history?.undo();
+    if (!workspace) return;
+
+    const direction = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1;
+    if (horizontal) workspace.seekAdjacentBoundary(direction);
+    else if (!workspace.editing()) this.workspaceUi.moveSettingsSelection(direction);
     event.preventDefault();
     event.stopPropagation();
   }

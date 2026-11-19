@@ -102,13 +102,17 @@ export class TransportDockComponent {
   });
 
   seek(event: MouseEvent): void {
+    if (event.detail > 0) this.progressPointerFocused = true;
     const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
     if (bounds.width <= 0) return;
     const fraction = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
     this.playback.seek(this.project(), this.timelineBounds().startBeat + fraction * this.timelineBeats());
   }
 
+  progressPointerFocused = false;
+
   seekKey(event: KeyboardEvent): void {
+    if (this.progressPointerFocused && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) return;
     const bounds = this.timelineBounds();
     const beat = event.key === 'Home' ? bounds.startBeat : event.key === 'End' ? bounds.endBeat
       : event.key === 'ArrowLeft' ? this.playback.beat() - 1 : event.key === 'ArrowRight' ? this.playback.beat() + 1 : null;

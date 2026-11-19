@@ -18,3 +18,9 @@ export function usesSpaceKey(event: KeyboardEvent): boolean {
   return isEditingText(event) || event.composedPath().some(target => target instanceof HTMLElement
     && target.matches(SPACE_ACTIONS));
 }
+
+/** Keep arrow navigation available to native ranges and focused menus. */
+export function usesArrowKeys(event: KeyboardEvent): boolean {
+  return event.composedPath().some(target => target instanceof HTMLElement
+    && target.matches('input[type="range"], [role="menu"], [role="menubar"]'));
+}

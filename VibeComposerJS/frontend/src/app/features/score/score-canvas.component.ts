@@ -339,6 +339,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     canvas?.removeEventListener('pointerleave', this.onPointerLeave);
     canvas?.removeEventListener('keydown', this.onCanvasKeydown);
     canvas?.removeEventListener('focus', this.onCanvasFocus);
+    canvas?.removeEventListener('blur', this.onCanvasBlur);
     canvas?.removeEventListener('wheel', this.onCanvasWheel);
     this.app?.destroy({ removeView: true }, { children: true });
     this.app = undefined;
@@ -395,6 +396,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       canvas.addEventListener('pointerleave', this.onPointerLeave);
       canvas.addEventListener('keydown', this.onCanvasKeydown);
       canvas.addEventListener('focus', this.onCanvasFocus);
+      canvas.addEventListener('blur', this.onCanvasBlur);
       // A non-passive listener is required to suppress browser Ctrl+wheel zoom.
       canvas.addEventListener('wheel', this.onCanvasWheel, { passive: false });
       this.resizeRenderer();
@@ -506,6 +508,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
 
   private readonly onCanvasClick = (event: MouseEvent): void => {
+    if (event.detail > 0) this.pointerFocused = true;
     if (this.suppressClick) { this.suppressClick = false; return; }
     if (this.editable()) return;
     if (event.button && event.button !== 0) return;
@@ -670,12 +673,15 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
   };
 
+  private pointerFocused = false;
+  private readonly onCanvasBlur = (): void => { this.pointerFocused = false; };
+
   private readonly onCanvasKeydown = (event: KeyboardEvent): void => {
     if (this.hitAreas.length === 0) return;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    if (!this.pointerFocused && (event.key === 'ArrowRight' || event.key === 'ArrowDown')) {
       event.preventDefault();
       this.focusedNoteIndex = (this.focusedNoteIndex + 1 + this.hitAreas.length) % this.hitAreas.length;
-    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    } else if (!this.pointerFocused && (event.key === 'ArrowLeft' || event.key === 'ArrowUp')) {
       event.preventDefault();
       this.focusedNoteIndex = this.focusedNoteIndex <= 0 ? this.hitAreas.length - 1 : this.focusedNoteIndex - 1;
     } else if (event.key === 'Enter' && this.focusedNoteIndex >= 0 && this.focusedNoteIndex < this.hitAreas.length) {
@@ -766,6 +772,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (!this.editable() || !this.app) return;
     event.preventDefault();
     this.app.canvas.focus?.();
+    this.pointerFocused = true;
     const area = this.hitAreaAt(event);
     if (this.preferences.matchesShortcut('applyPhrase', event)) this.middlePress = { pointerId: event.pointerId, startedEmpty: this.emptyCanvasPoint(event), canApply: false };
     const bounds = this.app.canvas.getBoundingClientRect();

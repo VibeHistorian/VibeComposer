@@ -505,6 +505,21 @@ export class WorkspaceCanvasComponent {
   seek(beat: number): void {
     this.playback.seek(this.project(), beat);
   }
+
+  seekAdjacentBoundary(direction: -1 | 1): void {
+    const timeline = this.timeline();
+    const section = this.editing() ? timeline.sections.find(section => section.sectionId === this.editSectionId()) : undefined;
+    if (this.editing() && !section) return;
+    const boundaries = section
+      ? section.slots.map(slot => slot.startBeat)
+      : [...timeline.sections.map(section => section.startBeat), timeline.arrangementBounds.endBeat];
+    const beat = this.playback.beat();
+    // Treat rounding noise at a fractional grid boundary as already on that boundary.
+    const next = direction === -1
+      ? boundaries.reverse().find(boundary => boundary < beat - 1e-7)
+      : boundaries.find(boundary => boundary > beat + 1e-7);
+    if (next !== undefined) this.seek(next);
+  }
   readonly playheadPercent = computed(() => this.totalBeats() > 0
     ? this.playback.beat() / this.totalBeats() * 100 : 0);
   readonly timelineSections = computed<TimelineSection[]>(() => this.timeline().sections.map((item, index) => ({

@@ -249,6 +249,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   private offsetY = 0;
   private hits: OverviewHitArea[] = [];
   private focusedKey: string | null = null;
+  private pointerFocused = false;
   private accent = '#32d7f4';
 
   private copyDrag: { source: ArrangementPhraseSource; project: CompositionProject; pointerId: number;
@@ -772,6 +773,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasClick(event: MouseEvent): void {
+    if (event.detail > 0) this.pointerFocused = true;
     if (this.suppressCopyClick) { this.suppressCopyClick = false; return; }
     if (event.button && event.button !== 0) return;
     const area = this.hitAt(event);
@@ -884,6 +886,8 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.scheduleDraw();
   }
 
+  onCanvasBlur(): void { this.pointerFocused = false; }
+
   onCanvasKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape' && this.copyDrag) { event.preventDefault(); event.stopPropagation(); this.cancelCopyDrag(); return; }
     if (this.preferences.matchesShortcut('clearSections', event)) {
@@ -897,7 +901,7 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     if (event.key === 'Enter') {
       event.preventDefault();
       this.hits[Math.max(0, index)].activate(event);
-    } else if (event.key.startsWith('Arrow')) {
+    } else if (!this.pointerFocused && event.key.startsWith('Arrow')) {
       event.preventDefault();
       const offset = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1;
       this.focusedKey = this.hits[(index + offset + this.hits.length) % this.hits.length].key;

@@ -55,6 +55,16 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     return {before,after:snapshot()};
   })()`);
   assert.deepEqual(seekSelection.after,seekSelection.before,'seeking in empty score space preserves the selected drum track and inspector');
+  assert.equal(await evaluate(`(async()=>{${waitCode}
+    const press=key=>document.body.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));
+    const progress=document.querySelector('[aria-label="Song position"]');
+    press('ArrowLeft'); await wait(()=>Number(progress.getAttribute('aria-valuenow'))===0);
+    press('ArrowRight'); await wait(()=>Number(progress.getAttribute('aria-valuenow'))===100);
+    const drums=[...document.querySelectorAll('.track-group.drums .track-select')];
+    press('ArrowUp'); await wait(()=>drums.at(-2).getAttribute('aria-pressed')==='true');
+    press('ArrowDown'); await wait(()=>drums.at(-1).getAttribute('aria-pressed')==='true');
+    return true;
+  })()`),true,'global arrows seek along the arrangement grid and move the selected track');
   const capture=async name=>{const png=await command('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.resolve(__dirname,'../.angular/'+name+'.png'),Buffer.from(png.data,'base64'));};
   await capture('unified-score');
   const fittedScroll = await evaluate(`(async()=>{
@@ -223,6 +233,20 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
       && [...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply').disabled
       && sessionStorage.getItem('vibecomposer.project.v12')===saved;
   })()`),true,'Plain left click on empty phrase grid seeks the global transport without changing the draft or selection');
+  assert.equal(await evaluate(`(async()=>{${waitCode}
+    const canvas=document.querySelector('vc-score-canvas canvas');
+    if(document.activeElement!==canvas) throw Error('Phrase grid should have focus after seeking');
+    const press=key=>canvas.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));
+    const position=()=>Number(document.querySelector('[aria-label="Song position"]').getAttribute('aria-valuenow'));
+    for(let i=0;i<4;i++) press('ArrowLeft');
+    await wait(()=>position()===0);
+    for(const percent of [25,50,75]){
+      press('ArrowRight'); await wait(()=>position()===percent);
+    }
+    press('ArrowRight'); press('ArrowUp'); press('ArrowDown');
+    await new Promise(requestAnimationFrame);
+    return position()===75 && document.querySelector('#part-inspector').dataset.controlRole==='bass';
+  })()`),true,'arrows move by measure after focusing the phrase grid with the pointer');
   const placementStarts=await evaluate(`(async()=>{${waitCode}
     const canvas=document.querySelector('vc-score-canvas canvas'),bounds=canvas.getBoundingClientRect();
     const row=document.querySelector('.pitch-key[title="MIDI 60"]').getBoundingClientRect();

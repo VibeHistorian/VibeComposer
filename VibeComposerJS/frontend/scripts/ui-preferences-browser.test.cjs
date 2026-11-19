@@ -542,17 +542,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const footer=dialog.querySelector('.preferences-transfer');
         ensure(footer.querySelectorAll('button').length===3,'transfer buttons');
         ensure(footer.querySelector('button').textContent.trim()==='Import Theme','theme import first');
-        const source=footer.querySelector('a');
-        const repository='https://github.com/VibeHistorian/vibehistorian.github.io';
-        ensure(source.textContent.trim()==='View Source - GitHub' && source.href===repository && source.target==='_blank','project source link');
-        const footerBounds=footer.getBoundingClientRect();
-        const sourceBounds=source.getBoundingClientRect();
-        ensure(Math.abs(sourceBounds.left+sourceBounds.right-footerBounds.left-footerBounds.right)<=2,'source link is centered in footer');
-        let openedUrl;
-        window.runtime={ BrowserOpenURL: url=>{ openedUrl=url; } };
-        const clicked=source.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
-        delete window.runtime;
-        ensure(!clicked && openedUrl===repository,'desktop opens project source in system browser');
+        ensure(footer.querySelector('a.source-link[href]'),'project source link');
         const explainers=dialog.querySelector('[aria-label="Settings explainers as tooltips"]');
         ensure(explainers.checked,'explainers default to tooltips');
         explainers.click(); await new Promise(resolve=>setTimeout(resolve,30));

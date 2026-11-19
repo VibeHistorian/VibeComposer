@@ -55,7 +55,8 @@
         <span>{{ durationText() }}</span>
       </div>
       <div class="progress-track" role="slider" tabindex="0" aria-label="Song position" [attr.aria-valuenow]="progressPercent()" aria-valuemin="0" aria-valuemax="100"
-        [attr.aria-valuetext]="positionText()" (click)="seek($event)" (keydown)="seekKey($event)">
+        [attr.aria-valuetext]="positionText()" (click)="seek($event)" (keydown)="seekKey($event)"
+        (blur)="progressPointerFocused = false">
         <div class="progress-rail"><span [style.transform]="'scaleX(' + progressPercent() / 100 + ')'"></span></div>
         @if (loopRegion(); as region) {
           <i class="progress-loop-line" [style.left.%]="region.left" [style.width.%]="region.width" aria-hidden="true"></i>

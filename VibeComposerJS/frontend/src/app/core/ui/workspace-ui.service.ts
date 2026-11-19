@@ -1,7 +1,7 @@
 import { UiPreferencesService } from './ui-preferences.service';
 import { resolveProjectTimeline } from '../music/project-timeline';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import type { ArrangedPart } from '../music/part-role';
+import { ARRANGED_PARTS, tracksInRoleOrder, type ArrangedPart } from '../music/part-role';
 import { ProjectService } from '../project/project.service';
 
 export type SettingsTarget =
@@ -119,6 +119,23 @@ export class WorkspaceUiService {
         || !project.tracks.some((track) => track.id === trackId)) return;
     this.selectedTrackId.set(trackId);
     this.target.set({ kind: 'section-track', sectionId, trackId });
+  }
+
+  moveSettingsSelection(direction: -1 | 1): void {
+    const target = this.settingsTarget();
+    if (target.kind === 'global-track' || target.kind === 'section-track') {
+      const tracks = tracksInRoleOrder(this.projects.project().tracks);
+      const index = tracks.findIndex(track => track.id === target.trackId);
+      const next = index >= 0 ? tracks[index + direction] : undefined;
+      if (!next) return;
+      if (target.kind === 'global-track') this.selectTrack(next.id);
+      else this.selectSectionTrack(target.sectionId, next.id);
+    } else if (target.kind === 'global-role' || target.kind === 'section-role') {
+      const role = ARRANGED_PARTS[ARRANGED_PARTS.indexOf(target.role) + direction];
+      if (!role) return;
+      if (target.kind === 'global-role') this.selectRole(role);
+      else this.selectCell(target.sectionId, role);
+    }
   }
 
   setSectionSelection(sectionId: string | null, preserveSettingsTarget = false): void {

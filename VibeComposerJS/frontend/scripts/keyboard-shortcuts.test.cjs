@@ -7,8 +7,9 @@ const ts = require('typescript');
 class Element {
   constructor(tag, editable = false, type = 'text', role = '') { this.tag = tag; this.isContentEditable = editable; this.type = type; this.role = role; }
   matches(selector) {
-    return (['input', 'textarea', 'select'].includes(this.tag)
-      && !(this.tag === 'input' && this.type === 'range' && selector.includes(':not([type="range"])')))
+    return (this.tag === 'input' && (this.type === 'range' ? selector.includes('input[type="range"]')
+      : selector.includes('input:not([type="range"])')))
+      || (['textarea', 'select'].includes(this.tag) && selector.split(', ').includes(this.tag))
       || (this.tag === 'button' && selector.split(', ').includes('button'))
       || (this.tag === 'summary' && selector.includes('summary'))
       || (this.role && selector.includes('[role="' + this.role + '"]'));
@@ -40,16 +41,21 @@ function fixture() {
   app.projects = history('project');
   app.project = () => ({ name: 'Song' });
   app.playback = { toggle: project => calls.push('playback:' + project.name) };
+  app.dialogs = { openDialogs: [] };
+  app.workspaceUi = { moveSettingsSelection: direction => calls.push('selection:' + direction) };
   let editing = false;
   let editor = history('phrase');
-  app.workspace = () => ({ editing: () => editing, editor: () => editor });
+  app.workspace = () => ({
+    editing: () => editing, editor: () => editor,
+    seekAdjacentBoundary: direction => calls.push((editing ? 'measure:' : 'section:') + direction),
+  });
   const press = (key, options = {}) => {
     const event = { key, ctrlKey: true, defaultPrevented: false, composedPath: () => [],
       preventDefault() { this.defaultPrevented = true; }, stopPropagation() {}, ...options };
-    app.historyKeydown(event);
+    app.globalKeydown(event);
     return event;
   };
-  return { calls, press, edit: () => { editing = true; }, removeEditor: () => { editor = undefined; } };
+  return { app, calls, press, edit: () => { editing = true; }, removeEditor: () => { editor = undefined; } };
 }
 
 test('routes Ctrl Z, Ctrl Y and Ctrl Shift Z to global or phrase history exactly once', () => {
@@ -135,12 +141,38 @@ test('custom shortcuts replace defaults, match exact modifiers and preserve acti
   app.project = () => ({});
   app.playback = { toggle: () => calls.push('play') };
   app.preferences.setShortcut('undo', { kind: 'key', input: 'u', ctrl: false, shift: true, alt: true });
-  const press = (key, extras = {}) => app.historyKeydown({ key, composedPath: () => [], preventDefault() {}, stopPropagation() {}, ...extras });
+  const press = (key, extras = {}) => app.globalKeydown({ key, composedPath: () => [], preventDefault() {}, stopPropagation() {}, ...extras });
   press('z', { ctrlKey: true });
   press('u', { shiftKey: true });
   assert.deepEqual(calls, []);
   press('U', { shiftKey: true, altKey: true });
   assert.deepEqual(calls, ['undo']);
+});
+
+test('unmodified arrows seek and move the inspector, with vertical arrows idle in phrase editing', () => {
+  const f = fixture();
+  for (const editing of [false, true]) {
+    if (editing) f.edit();
+    for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']) {
+      assert.equal(f.press(key, { ctrlKey: false }).defaultPrevented, true);
+    }
+  }
+  assert.deepEqual(f.calls, ['section:-1', 'section:1', 'selection:-1', 'selection:1', 'measure:-1', 'measure:1']);
+});
+
+test('arrows leave editable controls, menus, dialogs, modified keys and handled keys alone', () => {
+  const f = fixture();
+  for (const control of [new Element('input'), new Element('input', false, 'range'),
+    new Element('div', false, '', 'menu'), new Element('span', true)]) {
+    assert.equal(f.press('ArrowDown', { ctrlKey: false, composedPath: () => [new Element('span'), control] }).defaultPrevented, false);
+  }
+  for (const options of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { shiftKey: true },
+    { isComposing: true }, { defaultPrevented: true }]) {
+    f.press('ArrowRight', { ctrlKey: false, ...options });
+  }
+  f.app.dialogs.openDialogs.push({});
+  assert.equal(f.press('ArrowRight', { ctrlKey: false }).defaultPrevented, false);
+  assert.deepEqual(f.calls, []);
 });
 test('capture normalization and preference decoding cover keys, mouse, wheel and malformed imports', () => {
   const { shortcutFromEvent, decodeShortcuts, defaultShortcuts } = shortcutSupport;

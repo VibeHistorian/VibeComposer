@@ -127,6 +127,75 @@ test('role settings default collapsed, follow role selection and retain manual t
   assert.ok(roles.every(role => workspace.isGroupCollapsed(role)));
 });
 
+test('keyboard selection follows role order within the current inspector scope', () => {
+  const { project, ui } = fixture();
+  project.set({ ...project(), tracks: [
+    { id: 'drums', role: 'drums' }, { id: 'melody-2', role: 'melody' },
+    { id: 'bass', role: 'bass' }, { id: 'melody-1', role: 'melody' },
+  ] });
+  ui.setSectionSelection('a');
+  for (const sectionId of [null, 'b']) {
+    const kind = sectionId ? 'section-track' : 'global-track';
+    const scope = sectionId ? { sectionId } : {};
+    if (sectionId) ui.selectSectionTrack(sectionId, 'melody-2');
+    else ui.selectTrack('melody-2');
+    for (const [direction, trackId] of [[-1, 'melody-2'], [1, 'melody-1'], [1, 'bass'],
+      [1, 'drums'], [1, 'drums'], [-1, 'bass'], [-1, 'melody-1']]) {
+      ui.moveSettingsSelection(direction);
+      assert.deepEqual(ui.settingsTarget(), { kind, ...scope, trackId });
+      assert.equal(ui.selectedTrackId(), trackId);
+    }
+    if (sectionId) ui.selectCell(sectionId, 'melody');
+    else ui.selectRole('melody');
+    for (const [direction, role] of [[1, 'chords'], [1, 'arpeggio'], [-1, 'chords']]) {
+      ui.moveSettingsSelection(direction);
+      assert.deepEqual(ui.settingsTarget(), { kind: sectionId ? 'section-role' : 'global-role', ...scope, role });
+    }
+  }
+  ui.selectArrangement();
+  ui.moveSettingsSelection(1);
+  assert.deepEqual(ui.settingsTarget(), { kind: 'arrangement' });
+  ui.setSectionSelection('a');
+  ui.moveSettingsSelection(-1);
+  assert.deepEqual(ui.settingsTarget(), { kind: 'section', sectionId: 'a' });
+  assert.deepEqual(ui.selectedSectionIds(), ['a']);
+});
+
+test('keyboard seeking uses section grid boundaries or measure starts in the edited section', () => {
+  const { workspace, project } = fixture();
+  project.set({ ...project(), arrangement: [
+    { id: 'intro', measures: 1, customDurations: [2.5] },
+    { id: 'edited', measures: 4, customDurations: [1.5, 2.75, 4, 3] },
+    { id: 'outro', measures: 1, customDurations: [3] },
+  ] });
+  const timeline = workspace.timeline();
+  workspace.timeline = () => ({ ...timeline, soundingBounds: { startBeat: -2, endBeat: 23 } });
+  let position = -1;
+  workspace.playback = { beat: () => position, seek: (_project, beat) => { position = beat; } };
+  const step = (direction, expected) => {
+    workspace.seekAdjacentBoundary(direction);
+    assert.equal(position, expected);
+  };
+  step(1, 0);
+  step(1, 2.5);
+  step(1, 13.75);
+  step(1, 16.75);
+  step(1, 16.75);
+  position = 21;
+  step(-1, 16.75);
+  step(-1, 13.75);
+  workspace.editing.set(true);
+  workspace.editSectionId.set('edited');
+  step(-1, 10.75);
+  step(1, 10.75);
+  step(-1, 6.75);
+  step(-1, 4);
+  step(-1, 2.5);
+  step(-1, 2.5);
+  position = 4 - 1e-9;
+  step(1, 6.75);
+});
+
 test('role heading selects a role, then toggles its settings without changing selection', () => {
   const { workspace, flushEffects } = fixture();
   workspace.selectRoleHeading('bass'); flushEffects();
