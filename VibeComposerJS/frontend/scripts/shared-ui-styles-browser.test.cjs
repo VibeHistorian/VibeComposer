@@ -58,6 +58,11 @@ test('shared button hover, disabled, toggle and settings-row styles work in prod
       const contextual=await uiStyleWait(() => document.querySelector('[aria-label="Contextual Melody"]'));
       if(contextual.checked)contextual.click();
       const action=await uiStyleWait(() => document.querySelector('[aria-label="Default block change order"]'));
+      window.settingsFieldSize = field => {
+        const title = field.closest('.setting-row').querySelector('.setting-copy h3');
+        return { font: parseFloat(getComputedStyle(field).fontSize), title: parseFloat(getComputedStyle(title).fontSize), height: field.getBoundingClientRect().height };
+      };
+      window.melodyFieldSize = settingsFieldSize(document.querySelector('[aria-label="Block change preference"]'));
       uiStyleProbe(action);
     })()`);
     await move(500,20);
@@ -106,11 +111,15 @@ test('shared button hover, disabled, toggle and settings-row styles work in prod
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       window.dispatchEvent(new Event('pagehide'));
       const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-      return { rows, uiLeavesProjectUnchanged, harmonySaved: project.harmonySettings.progressiveVoicing === harmony.checked };
+      const fields = [melodyFieldSize, ...['Harmony generation', 'Flatten voicing'].map(label => settingsFieldSize(document.querySelector('[aria-label="' + label + '"]')))];
+      document.querySelector('[aria-label="Appearance General"]').click();
+      fields.push(settingsFieldSize(await uiStyleWait(() => document.querySelector('[aria-label="Panel layout"]'))));
+      return { rows, fields, uiLeavesProjectUnchanged, harmonySaved: project.harmonySettings.progressiveVoicing === harmony.checked };
     })()`);
     assert.equal(settings.uiLeavesProjectUnchanged, true, 'preference rows retain UI-only ownership');
     assert.equal(settings.harmonySaved, true, 'musical rows retain project command ownership');
     assert.equal(settings.rows.length, 3);
     assert.ok(settings.rows.every(row => row.changed && row.heading && row.description), JSON.stringify(settings));
+    assert.ok(settings.fields.every(field => field.font < field.title && field.height === settings.fields[0].height), JSON.stringify(settings.fields));
   } finally { await closeBrowser({ child, server, socket }); }
 });

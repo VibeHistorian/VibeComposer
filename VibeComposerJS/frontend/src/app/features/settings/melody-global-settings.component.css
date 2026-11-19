@@ -1,6 +1,6 @@
 /* Ranked block changes */
 .preference-row .setting-controls { flex-direction: column; align-items: flex-end; }
-.preference-row input { width: min(100%, 230px); padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); font: 11px var(--font-mono); }
+.preference-row input { width: min(100%, 230px); font-family: var(--font-mono); }
 .preference-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .preference-actions button { padding: 5px 7px; --button-border: 1px solid var(--border-default); font: 10px var(--font-ui); }
 .preference-actions button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }

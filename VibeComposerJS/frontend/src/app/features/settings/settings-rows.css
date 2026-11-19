@@ -14,12 +14,17 @@
 :where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--accent-primary); cursor: pointer; }
 :where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .block-weights { min-width: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 4px; }
 :where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .block-weights vc-compact-knob { flex: 0 0 60px; }
-:where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) vc-select { max-width: 100%; }
-
 /* Settings input surfaces */
-:where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls input[type="number"] { width: 80px; max-width: 100%; padding: 6px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
+:where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls :is(vc-select, vc-menu-select, input[type="number"], input[type="text"], input:not([type])) {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 3px 6px;
+  font: 11px/1.3 var(--font-ui);
+}
+:where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls :is(input[type="number"], input[type="text"], input:not([type])) { border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); color: var(--text-primary); }
+:where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls input[type="number"] { width: 72px; }
 :where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls > input[type="color"] { width: 52px; height: 30px; padding: 2px; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface-input); cursor: pointer; }
-:where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls > vc-select { min-width: 0; max-width: 100%; }
 
 /* Labeled musical and export inputs */
 :where(vc-settings-dialog, vc-melody-global-settings, vc-section-type-settings) .setting-controls > label { display: grid; gap: 4px; max-width: 100%; color: var(--text-secondary); font: 12px var(--font-ui); }
