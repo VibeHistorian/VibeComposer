@@ -117,6 +117,7 @@ export function decodeArrangement(value: unknown, tracks: readonly CompositionTr
       type: sectionType,
       measures: section.measures!,
       ...(section.context ? { context: { ...section.context } } : {}),
+      ...(section.manualPhraseMode ? { manualPhraseMode: { ...section.manualPhraseMode } } : {}),
       ...(section.customChords ? { customChords: section.customChords.map(chord => chord ? { ...chord } : null) } : {}),
       ...(section.customDurations ? { customDurations: [...section.customDurations] } : {}),
       chordDegrees: chordDegrees === undefined ? undefined : [...chordDegrees],

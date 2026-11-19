@@ -1,5 +1,5 @@
 import { validVolumePercent } from '../audio/mix-values';
-import { ARRANGED_PARTS } from './part-role';
+import { ARRANGED_PARTS, type ArrangedPart } from './part-role';
 import { isScaleMode } from './scales';
 import type { ArrangementSection, SectionMusicalContext } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
@@ -60,6 +60,9 @@ export function sectionHasChordOverride(project: CompositionProject, section: Ar
 
 export function validSectionHarmony(section: ArrangementSection): boolean {
   return (section.context === undefined || validSectionContext(section.context))
+    && (section.manualPhraseMode === undefined || !!section.manualPhraseMode
+      && Object.keys(section.manualPhraseMode).length === 2
+      && isScaleMode(section.manualPhraseMode.from) && isScaleMode(section.manualPhraseMode.to))
     && validProgressionChords(section.customChords, section.chordDegrees?.length ?? section.customChords?.length ?? 0)
     && (section.customChords === undefined || section.customChords.length > 0 && section.customChords.length <= 32)
     && (section.customDurations === undefined || Array.isArray(section.customDurations)
@@ -67,6 +70,10 @@ export function validSectionHarmony(section: ArrangementSection): boolean {
       && section.customDurations.every(duration => Number.isFinite(duration) && duration >= 0.25 && duration <= 32)
       && (section.customChords === undefined || section.customDurations.length === section.customChords.length)
       && (section.chordDegrees === undefined || section.customDurations.length === section.chordDegrees.length));
+}
+
+export function sectionTranspose(section: ArrangementSection | undefined, role: ArrangedPart): number {
+  return role === 'drums' ? 0 : section?.context?.keyChange ?? 0;
 }
 
 /** Duration-only overrides keep the existing harmony, repeating its slots as needed. */

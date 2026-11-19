@@ -270,7 +270,7 @@ export class ProjectService {
     const next = { ...current, arrangement: current.arrangement.map(change) };
     if (!isProject(next, this.sectionTypeSettings.chances(), Math.random)) return 'invalid';
     if (JSON.stringify(current) === JSON.stringify(next)) return 'unchanged';
-    this.commit(followHarmonyMode(current, next, this.uiPreferences.harmonyFollowsMode()));
+    this.commit(this.followMode(current, next));
     return 'changed';
   }
 
@@ -298,7 +298,7 @@ export class ProjectService {
     const copied = { ...next, context: next.context ? { ...next.context } : undefined,
       chordDegrees: next.chordDegrees ? [...next.chordDegrees] : undefined,
       customChords: next.customChords?.map(chord => chord ? { ...chord } : null), customDurations: next.customDurations ? [...next.customDurations] : undefined };
-    this.commit(followHarmonyMode(current, { ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? copied : item) }, this.uiPreferences.harmonyFollowsMode()));
+    this.commit(this.followMode(current, { ...current, arrangement: current.arrangement.map(item => item.id === sectionId ? copied : item) }));
     return 'changed';
   }
 
@@ -1028,9 +1028,12 @@ export class ProjectService {
       }
     }
     const current = this.state();
-    const next = followHarmonyMode(current, { ...current, ...patch }, this.uiPreferences.harmonyFollowsMode());
-    this.commit(this.uiPreferences.manualPhrasesFollowMode() ? followManualPhraseMode(current, next) : next,
-      this.controlHistoryKey(['project'], patch));
+    this.commit(this.followMode(current, { ...current, ...patch }), this.controlHistoryKey(['project'], patch));
+  }
+
+  private followMode(current: CompositionProject, proposed: CompositionProject): CompositionProject {
+    const next = followHarmonyMode(current, proposed, this.uiPreferences.harmonyFollowsMode());
+    return this.uiPreferences.manualPhrasesFollowMode() ? followManualPhraseMode(current, next) : next;
   }
 
   updateRoleGeneratorSettings(role: ArrangedPart, patch: PartSettingsPatch): void {

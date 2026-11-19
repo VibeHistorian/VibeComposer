@@ -134,9 +134,9 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     const select=dialog.querySelector('#midi-import-scale');const choice=(await selectOptions(select))[1];await change(select,choice.value);
     apply.click();await wait(()=>!document.querySelector('vc-midi-import-dialog'));
     await wait(()=>document.querySelector('.score-display-header button.active'));
-    button('Undo phrase').click();await wait(()=>document.querySelector('[aria-label="Transpose phrase"]').value==='0');
+    button('Undo phrase').click();await wait(()=>!button('Redo phrase').disabled);
     const singleUndo=button('Undo phrase').disabled;
-    button('Redo phrase').click();await wait(()=>!button('Undo phrase').disabled);
+    button('Redo phrase').click();await wait(()=>!button('Undo phrase').disabled && !button('Apply').disabled);
     {const beforeApply=sessionStorage.getItem('vibecomposer.project.v12');button('Apply').click();await wait(()=>!document.querySelector('#phrase-grid'));await wait(()=>sessionStorage.getItem('vibecomposer.project.v12')!==beforeApply);}
     const notes=read().tracks.find(t=>t.role==='bass').phraseEdits.at(-1).notes;
     const scaled=notes.length===3&&Math.abs(Math.max(...notes.map(n=>n.startBeat+n.durationBeats))-12)<1e-8;
@@ -145,13 +145,13 @@ test('phrase MIDI drop, transpose, preferences and draft undo work in the produc
     document.querySelector('[aria-label="Cancel MIDI import"]').click();await wait(()=>!document.querySelector('vc-midi-import-dialog'));
     const cancelClean=button('Undo phrase').disabled;
     button('Cancel').click();await wait(()=>!document.querySelector('#phrase-grid'));
-    await open('bass');const snap=document.querySelector('[aria-label="Snap to scale/key"]');if(snap.getAttribute('aria-pressed')==='true')snap.click();
-    await wait(()=>snap.getAttribute('aria-pressed')==='false');
+    await open('bass');const snap=document.querySelector('vc-select[aria-label="Harmony snapping"]');await change(snap,'off');
+    await wait(()=>snap.getAttribute('value')==='off');
     startDrop();await wait(()=>document.querySelector('vc-midi-import-dialog button[type="submit"]'));
     const snapOffNoTranslation=!document.querySelector('#midi-import-scale')&&!!document.querySelector('#midi-import-duration');
     document.querySelector('[aria-label="Cancel MIDI import"]').click();
-    await wait(()=>!document.querySelector('vc-midi-import-dialog'));snap.click();
-    await wait(()=>snap.getAttribute('aria-pressed')==='true');
+    await wait(()=>!document.querySelector('vc-midi-import-dialog'));await change(snap,'global');
+    await wait(()=>snap.getAttribute('value')==='global');
     const dropBytes=bytes=>{const data=new DataTransfer();data.items.add(new File([new Uint8Array(bytes)],'short.mid'));document.querySelector('.score-panel').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));};
     dropBytes(${shortBytes});await wait(()=>document.querySelector('#midi-import-scale'));
     const translationOnly=!document.querySelector('#midi-import-duration');

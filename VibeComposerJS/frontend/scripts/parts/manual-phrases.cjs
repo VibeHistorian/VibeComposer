@@ -514,6 +514,65 @@ test('manual section phrases inherit Mode while explicit section modes and chrom
   assert.equal(transposedSection.trackPhrases['track-bass-1'][0].midi, 66);
 });
 
+test('section Mode and transpose reach local and shared manual phrases, editor and MIDI', () => {
+  const { service, ui, uiPreferences, phrase, midi, load } = fixture();
+  const bass = 'track-bass-1', chords = 'track-chords-1', drums = 'track-drums-1';
+  const notes = (pitch, id = 'manual') => [{ id, midi: pitch, startBeat: 0, durationBeats: 1, velocity: 90 }];
+  const [section, other] = service.project().arrangement;
+  for (const id of [bass, chords, drums]) service.setSectionTrackPresence(0, id, true);
+  service.setSectionTrackPresence(1, bass, true);
+  service.updateTrackPhrase(bass, notes(64));
+  service.updateSectionTrackPhrase(section.id, chords, notes(64));
+  service.updateSectionTrackPhrase(section.id, drums, notes(36));
+  service.updateSettings({ transposeSemitones: 2 });
+  const track = id => service.project().tracks.find(track => track.id === id);
+  const sectionNotes = (id, sectionId = section.id) => phrase.layOutTrackPhrase(service.project(), track(id), false, true)
+    .filter(note => note.sectionId === sectionId);
+  const before = service.exportProjectJson();
+  assert.equal(service.updateSectionContext(section.id, { scale: 'natural-minor', keyChange: 3 }), 'changed');
+  const shifted = service.exportProjectJson();
+  assert.equal(track(bass).editedPhrase[0].midi, 64);
+  assert.equal(sectionNotes(bass)[0].midi, 68);
+  assert.equal(sectionNotes(bass, other.id)[0].midi, 66);
+  assert.equal(sectionNotes(chords)[0].midi, 68);
+  assert.equal(sectionNotes(drums)[0].midi, 36);
+  const exported = new Midi(midi.generateCompositionMidi(service.project()));
+  assert.deepEqual(exported.tracks.find(item => item.name === track(bass).name).notes.map(note => note.midi),
+    phrase.layOutTrackPhrase(service.project(), track(bass)).map(note => note.midi));
+  service.undo(); assert.equal(service.exportProjectJson(), before);
+  service.redo(); assert.equal(service.exportProjectJson(), shifted);
+  assert.equal(service.importProjectJson(shifted), true);
+
+  ui.selectedTrackId.set(bass);
+  const Editor = load('features/edit/edit-workspace.component.ts').EditWorkspaceComponent;
+  const editor = new Editor(); editor.sectionId.set(section.id); editor.phraseLength.set(4); editor.ngOnInit();
+  assert.equal(editor.notes()[0].midi, 68);
+  assert.ok(!editor.scalePitchClasses().includes(68 % 12));
+  editor.setHarmonySnapping('section');
+  assert.ok(editor.scalePitchClasses().includes(68 % 12));
+  assert.equal(editor.snapToScale(), true);
+  editor.setHarmonySnapping('off');
+  assert.equal(editor.snapToScale(), false);
+  assert.equal(editor.hasChanges(), false);
+  editor.selectNote(editor.notes()[0].id);
+  editor.updateSelected('velocity', { target: { value: '97' } });
+  editor.applyChanges();
+  assert.equal(track(bass).phraseEdits.at(-1).notes[0].midi, 64);
+  assert.equal(sectionNotes(bass)[0].midi, 68);
+  assert.equal(sectionNotes(bass, other.id)[0].midi, 66);
+
+  const reopened = new Editor(); reopened.sectionId.set(section.id); reopened.phraseLength.set(4); reopened.ngOnInit();
+  reopened.selectNote(reopened.notes()[0].id);
+  reopened.updateSelected('velocity', { target: { value: '98' } });
+  reopened.applyLocalChanges();
+  assert.equal(service.project().arrangement[0].trackPhrases[bass][0].midi, 63);
+  assert.equal(sectionNotes(bass)[0].midi, 68);
+  uiPreferences.toggleManualPhrasesFollowMode();
+  service.updateSectionContext(section.id, { scale: null, keyChange: 5 });
+  assert.equal(sectionNotes(bass)[0].midi, 70);
+  assert.equal(sectionNotes(chords)[0].midi, 70);
+});
+
 test('free phrase transpose accepts semitones, ignores scale snapping, records once and resets on reopening', () => {
   const { service, ui, load } = fixture();
   const id = 'track-bass-1';

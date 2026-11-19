@@ -374,7 +374,7 @@ test('P5f section Chordlets, timing and key edits preserve scopes, manual owners
   const manual=JSON.stringify(service.project().tracks.find(track=>track.id===trackId).editedPhrase);
   service.updateSectionContext(id,{ keyChange: 7 });
   assert.equal(JSON.stringify(service.project().tracks.find(track=>track.id===trackId).editedPhrase),manual);
-  assert.equal(notes('melody')[0].midi,65);
+  assert.equal(notes('melody')[0].midi,72);
 });
 
 test('P5e section selections share harmony across roles, preserve sparse overrides and replay history/JSON/session/MIDI', () => {

@@ -13,17 +13,19 @@ test('role copy freezes present tracks into a local phrase and enables the targe
   const note = (midi, startBeat) => ({ id: 'same', midi, startBeat, durationBeats: 2, velocity: 80 });
   source.trackPhrases = { [a.id]: [note(60, -.5)], [b.id]: [note(67, 1)], [absent.id]: [note(99, 0)] };
   target.trackPresence[a.id] = false;
+  source.context = { keyChange: 2 };
+  target.context = { keyChange: -3 };
   p.transposeSemitones = 5;
   assert.equal(service.importProjectJson(JSON.stringify(p)), true);
   const before = service.exportProjectJson(), originalSource = service.project().arrangement.find(s => s.id === source.id);
   service.copyArrangementPhrase({ source: { sectionId: source.id, role: 'chords' }, target: { sectionId: target.id, trackId: a.id } });
   const next = service.project(), saved = next.arrangement[2].trackPhrases[a.id];
-  assert.deepEqual(saved.map(n => [n.midi, n.startBeat]), [[60, -.5], [67, 1]]);
+  assert.deepEqual(saved.map(n => [n.midi, n.startBeat]), [[65, -.5], [72, 1]]);
   assert.equal(new Set(saved.map(n => n.id)).size, 2);
   assert.equal(next.arrangement[2].trackPresence[a.id], true);
   assert.equal(next.arrangement[1], originalSource);
   assert.deepEqual(phrase.layOutTrackPhrase(next, next.tracks.find(t => t.id === a.id), false, true)
-    .filter(n => n.sectionId === target.id).map(n => n.midi), [65, 72]);
+    .filter(n => n.sectionId === target.id).map(n => n.midi), [67, 74]);
   const after = service.exportProjectJson();
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo(); assert.equal(service.exportProjectJson(), after);

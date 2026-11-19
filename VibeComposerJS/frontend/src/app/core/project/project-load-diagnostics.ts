@@ -125,7 +125,7 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     check('project.arrangement', Array.isArray(arrangement) && arrangement.length >= 1 && arrangement.length <= MAX_ARRANGEMENT_SECTIONS, `expected 1–${MAX_ARRANGEMENT_SECTIONS} sections`);
     if (Array.isArray(arrangement)) arrangement.forEach((raw, index) => {
       const path = `project.arrangement[${index}]`;
-      const section = object(raw, path, ['id', 'type', 'measures'], ['id', 'type', 'measures', 'context', 'customChords', 'customDurations', 'chordDegrees',
+      const section = object(raw, path, ['id', 'type', 'measures'], ['id', 'type', 'measures', 'context', 'manualPhraseMode', 'customChords', 'customDurations', 'chordDegrees',
         'useMelodyHarmony', 'variations', 'trackPresence', 'rolePartOverrides', 'trackPartOverrides', 'trackPhrases', 'generatedTrackIds', 'parts', 'partChances', 'trackParts', 'trackPartChances']);
       if (!section) return;
       check(`${path}.type`, SECTION_TYPES.includes(section['type'] as SectionType), `expected one of ${SECTION_TYPES.join(', ')}`);

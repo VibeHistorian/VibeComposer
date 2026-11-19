@@ -11,6 +11,8 @@ export interface ArrangementSection {
   readonly variations?: import('../music/arrangement-variation.model').SectionVariations;
   /** Sparse section context; omission inherits project/part values. */
   readonly context?: SectionMusicalContext;
+  /** Mode conversion for track-owned manual notes used in this section. */
+  readonly manualPhraseMode?: { readonly from: ScaleMode; readonly to: ScaleMode };
   readonly customChords?: readonly (import('../music/harmony').ProgressionChord | null)[];
   readonly customDurations?: readonly number[];
   /** Realized harmony selections; explicit section chords take precedence. */

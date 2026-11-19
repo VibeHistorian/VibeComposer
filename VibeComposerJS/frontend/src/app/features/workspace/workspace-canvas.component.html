@@ -321,7 +321,8 @@
             <button class="vc-button" type="button" title="Redo. Shortcuts: Settings > Shortcuts." [disabled]="!editor()?.canRedo()" (click)="editor()?.redo()">Redo phrase</button>
             <button class="vc-button" type="button" (click)="editor()?.cancelChanges()">Cancel</button>
             @if (editor(); as edit) {
-              <button class="vc-button" type="button" [disabled]="selectedPart() === 'drums'" [class.active]="edit.snapToScale() && selectedPart() !== 'drums'" [attr.aria-pressed]="edit.snapToScale()" aria-label="Snap to scale/key" title="Snap pitch edits to the current key and scale" (click)="edit.snapToScale.update(toggleBoolean)">Snap to scale/key</button>
+              <vc-select aria-label="Harmony snapping" [disabled]="selectedPart() === 'drums'" [options]="edit.harmonySnappingOptions"
+                [value]="edit.harmonySnapping()" selectDefault="global" (valueChange)="edit.setHarmonySnapping($event)" />
             }
             <button class="vc-button" type="button" (click)="editor()?.applyLocalChanges()" [disabled]="!editSectionId() || !editor()?.hasChanges()">Local Apply</button>
             <button class="vc-button" type="button" [class.active]="editor()?.hasChanges()" [disabled]="!editor()?.hasChanges()" (click)="editor()?.applyChanges()">Apply</button>

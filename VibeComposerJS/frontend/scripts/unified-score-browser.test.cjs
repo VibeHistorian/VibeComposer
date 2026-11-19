@@ -290,18 +290,27 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const key=(key,extra={})=>document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,...extra}));
     const apply=()=>[...document.querySelectorAll('.score-display-header button')].find(b=>b.textContent==='Apply');
     if (!apply().disabled || apply().classList.contains('active')) throw Error('Unchanged Apply must be disabled');
-    const snap=document.querySelector('[aria-label="Snap to scale/key"]');
-    if (snap.getAttribute('aria-pressed') !== 'true' || !document.querySelector('.pitch-key.in-scale')) throw Error('Scale snapping must start enabled and highlight rows');
+    const snap=document.querySelector('vc-select[aria-label="Harmony snapping"]');
+    const recordingMode=document.querySelector('vc-select[aria-label="Recording mode"]');
+    for (const [select, button] of [[snap, apply()], [recordingMode, recordingMode.closest('.recording-controls').querySelector('button')]]) {
+      const triggerStyle=getComputedStyle(select), buttonStyle=getComputedStyle(button);
+      if (triggerStyle.fontSize!==buttonStyle.fontSize || triggerStyle.padding!==buttonStyle.padding) {
+        throw Error(select.getAttribute('aria-label')+' must use the adjacent button spacing and type size');
+      }
+    }
+    if (snap.getAttribute('value') !== 'global' || !document.querySelector('.pitch-key.in-scale')) throw Error('Global snapping must start enabled and highlight rows');
+    await changeControl(snap,'section');
+    await wait(()=>snap.getAttribute('value')==='section');
     const pitchEdit=()=>document.querySelector('#note-pitch');
     pitchEdit().value='49';pitchEdit().dispatchEvent(new Event('change',{bubbles:true}));
     await new Promise(r=>requestAnimationFrame(r));
     if (pitchEdit().value !== '48' || !apply().disabled) throw Error('Pitch input must snap without creating an edit');
-    snap.click();await wait(()=>snap.getAttribute('aria-pressed')==='false');
+    await changeControl(snap,'off');await wait(()=>snap.getAttribute('value')==='off');
     if (document.querySelector('.pitch-key.in-scale')) throw Error('Scale highlight must turn off');
     pitchEdit().value='49';pitchEdit().dispatchEvent(new Event('change',{bubbles:true}));
     await wait(()=>pitchEdit().value==='49' && !apply().disabled && apply().classList.contains('active'));
     key('z',{ctrlKey:true});await wait(()=>pitchEdit()?.value==='48' && apply().disabled);
-    snap.click();await wait(()=>snap.getAttribute('aria-pressed')==='true');
+    await changeControl(snap,'global');await wait(()=>snap.getAttribute('value')==='global');
     const oldShortcut=new KeyboardEvent('keydown',{key:'t',ctrlKey:true,bubbles:true,cancelable:true});
     document.querySelector('vc-score-canvas canvas').dispatchEvent(oldShortcut);
     if (oldShortcut.defaultPrevented || document.querySelector('#phrase-transpose')) throw Error('Ctrl+T must remain available to the browser');

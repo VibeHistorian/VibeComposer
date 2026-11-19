@@ -166,7 +166,7 @@ export class SettingsDialogComponent {
       },
       {
         label: "Match keyboard scale/key",
-        description: "Transpose keyboard note recording to the same scale and key highlighted by Snap scale/key. Shift raises a mapped note by one semitone. MIDI input keeps its original pitches.",
+        description: "Match keyboard note recording to the selected harmony. Shift raises a mapped note by one semitone. MIDI input keeps its original pitches.",
         ariaLabel: "Match keyboard scale/key",
         checked: () => this.preferences.preferences().keyboardMatchScale,
         change: (checked: boolean) => this.preferences.setRecordingOption('keyboardMatchScale', checked)
@@ -206,11 +206,11 @@ export class SettingsDialogComponent {
         change: (checked: boolean) => this.projects.updateHarmonySettings({ progressiveVoicing: checked })
       },
       {
-        label: "Manual phrases follow global Mode",
-        description: "When every note in a manually edited phrase fits its current key and mode, changing global Mode translates its scale degrees into the new mode. Applies to track and section phrases, excluding drums and sections with their own Mode. Saved in your UI preferences.",
+        label: "Manual phrases follow Mode",
+        description: "When all notes in a pitched manual phrase fit its original mode, global and section Mode changes translate those notes by scale degree. Saved in your UI preferences.",
         descriptionId: "manual-mode-description",
         scope: "ui",
-        ariaLabel: "Manual phrases follow global Mode",
+        ariaLabel: "Manual phrases follow Mode",
         checked: () => this.preferences.manualPhrasesFollowMode(),
         change: () => this.preferences.toggleManualPhrasesFollowMode()
       }

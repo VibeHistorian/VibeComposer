@@ -1,4 +1,4 @@
 /* Recording controls */
 .recording-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-block: 6px; color: var(--text-secondary); }
-vc-select { min-width: 130px; }
-button { --button-active-shadow: none; padding: 6px 9px; font: 11px var(--font-ui); --button-border: 1px solid var(--border-default); }
+button, vc-select { padding: 6px 9px; font: 11px var(--font-ui); }
+button { --button-active-shadow: none; --button-border: 1px solid var(--border-default); }

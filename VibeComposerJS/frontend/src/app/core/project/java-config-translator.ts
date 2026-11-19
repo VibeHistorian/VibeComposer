@@ -378,7 +378,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
         : direct && bool(direct, 'applied') ? direct : fallback && bool(fallback, 'applied') ? fallback : undefined;
       if (stored) {
         selectedPatterns.add(stored);
-        phrases[track.id] = translatePhrase(stored, track.role, full, mode, Number(context['keyChange'] ?? 0), length, `${id}-${track.id}`);
+        phrases[track.id] = translatePhrase(stored, track.role, full, mode, length, `${id}-${track.id}`);
         savedPhraseCount++;
       } else if (reference && reference.name.toUpperCase() !== 'NONE') warn(`${path}.${track.id}`, 'missing-pattern', `No applied note payload for ${reference.name}; this section/track remains generated.`);
     }
@@ -405,7 +405,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   });
 
   function translatePhrase(stored: Element, role: ArrangedPart, settings: Record<string, unknown>, mode: ScaleMode,
-    keyChange: number, length: number, prefix: string): PhraseNote[] {
+    length: number, prefix: string): PhraseNote[] {
     const notes = all(stored, 'phraseNote').map(note => ({ midi: numeric(note, 'pitch', -1)!, rhythm: numeric(note, 'rv', 0)!,
       duration: numeric(note, 'duration', 0)!, offset: numeric(note, 'offset', 0)!, velocity: numeric(note, 'dynamic', 80)! }));
     const originalLength = notes.reduce((sum, note) => sum + note.rhythm, 0);
@@ -429,7 +429,6 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
           if (customSnap) midi = convertScalePitch(midi, scaleNotes('major'), scaleNotes('major'), true);
           midi = convertScalePitch(midi, scaleNotes('major'), scaleNotes(mode), snap);
         } else midi = convertScalePitch(midi, scaleNotes('major'), scaleNotes(mode), snap) + Number(settings['transpose'] ?? 0);
-        midi += keyChange;
       }
       let duration = note.duration * articulation;
       if (articulation > 1) {
@@ -440,8 +439,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
       result.push({ id: `${prefix}-${index}`, midi: clampMidi(midi), startBeat: Math.max(0, startBeat),
         durationBeats: duration, velocity: Math.max(1, clampMidi(Math.trunc(note.velocity))) });
     });
-    // Local phrases bypass generator processing. Bake offsets/feedback once, while
-    // the global project transpose stays live in layOutTrackPhrase.
+    // Bake offsets and feedback once. Section and project transpose stay live in layout.
     return applyPartTiming(result, settings as PartSettingsPatch).filter(note => note.startBeat < length);
   }
 

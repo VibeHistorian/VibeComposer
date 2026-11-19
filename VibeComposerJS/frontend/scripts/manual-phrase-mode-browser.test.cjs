@@ -32,7 +32,7 @@ test('manual Mode behavior setting changes matching phrases and persists in the 
     const settings=async()=>{
       (await wait(()=>document.querySelector('[aria-label="Settings"]'))).click();
       (await wait(()=>document.querySelector('[aria-label="Behavior Harmony"]'))).click();
-      return await wait(()=>document.querySelector('[aria-label="Manual phrases follow global Mode"]'));
+      return await wait(()=>document.querySelector('[aria-label="Manual phrases follow Mode"]'));
     };
     const close=()=>document.querySelector('[aria-label="Close settings"]').click();
   `;

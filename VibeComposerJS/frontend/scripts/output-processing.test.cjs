@@ -33,7 +33,7 @@ test('note processing preserves enumerable extension fields and detaches frozen 
   assert.notEqual(processed[0], delayed[0]);
 });
 
-test('arranged manual notes retain metadata through ownership tagging and project transpose', () => {
+test('arranged manual notes retain metadata through ownership tagging and section and project transpose', () => {
   const f = fixture(), base = f.service.project();
   const { resolvedTrackPhrase } = f.load('core/music/phrase.ts');
   const marker = Symbol('manual extension'), extension = Object.freeze({ label: 'source' });
@@ -44,7 +44,7 @@ test('arranged manual notes retain metadata through ownership tagging and projec
     ...(index === 0 ? { trackPhrases: { [track.id]: [note] } } : {}),
   })) };
   const notes = resolvedTrackPhrase(project, track);
-  assert.deepEqual(notes.map(note => [note.midi, note.startBeat, note.phraseSource]), [[67, 1, 'section-edited'], [67, 5, 'global-edited']]);
+  assert.deepEqual(notes.map(note => [note.midi, note.startBeat, note.phraseSource]), [[70, 1, 'section-edited'], [70, 5, 'global-edited']]);
   for (const [index, output] of notes.entries()) {
     assert.equal(output.sectionId, project.arrangement[index].id);
     assert.equal(output.extension, extension);
