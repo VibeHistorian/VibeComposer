@@ -3,7 +3,7 @@ import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
 import { flattenProgression, soundingHarmony, voicedSoundingChords, type GenerationHarmony } from './harmony-voicing';
-import { chordPitches, getPitchClass, progressionChords } from './harmony';
+import { BASE_KEY, chordPitches, getPitchClass, progressionChords } from './harmony';
 import { sectionChordDurations, sectionDegrees, sectionHasChordOverride, sectionProject } from './section-context';
 import { melodyRepairChords, melodyRootChords } from './melody-chord-targets';
 import { generateMelody } from './melody-generator';
@@ -46,15 +46,15 @@ export function baseGenerationHarmony(project: CompositionProject, section?: Arr
   let customChords = section?.customChords ?? (section?.chordDegrees ? undefined : project.progressionChords);
   if (customChords && customChords.length !== degrees.length) customChords = degrees.map((_, index) => customChords![index % customChords!.length]);
   if (section?.context?.keyChangeType === 'two-five-one' && !section.chordDegrees && !section.customChords && degrees.length > 2) {
-    const root = getPitchClass(contextual.key)!;
-    customChords = degrees.map((_, index) => index === degrees.length - 2 ? { root: (root + 2) % 12, spice: 'm', inversion: 0 }
-      : index === degrees.length - 1 ? { root: (root + 7) % 12, spice: '7', inversion: 0 } : customChords?.[index] ?? null);
+    const tonic = getPitchClass(BASE_KEY)!;
+    customChords = degrees.map((_, index) => index === degrees.length - 2 ? { root: (tonic + 2) % 12, spice: 'm', inversion: 0 }
+      : index === degrees.length - 1 ? { root: (tonic + 7) % 12, spice: '7', inversion: 0 } : customChords?.[index] ?? null);
   }
   project = contextual;
-  const roots = melodyRootChords(project.key, project.scale, degrees, customChords);
-  const raw = melodyRepairChords(project.key, project.scale, degrees, customChords);
+  const roots = melodyRootChords(BASE_KEY, project.scale, degrees, customChords);
+  const raw = melodyRepairChords(BASE_KEY, project.scale, degrees, customChords);
   const inversions = customChords?.flatMap((chord,index) => chord && (chord.inversion || chord.explicitZeroInversion) ? [index] : []) ?? [];
-  const definitions = progressionChords(project.key, project.scale, degrees, customChords);
+  const definitions = progressionChords(BASE_KEY, project.scale, degrees, customChords);
   const soundingRoots = definitions.map(chord => chordPitches({ ...chord,inversion:0 },60));
   const originalSounding = definitions.map(chord => chordPitches(chord,60));
   const voicings = flattenProgression(raw, roots, BigInt(project.seed), project.harmonySettings, inversions);
@@ -74,20 +74,20 @@ export function projectMelodyHarmony(project: CompositionProject): MelodyHarmony
     manualSource: source !== undefined && hasManualPhrase(source), harmony: base };
   if (source?.role === 'melody') {
     let skeleton: MelodySkeleton | undefined;
-    generateMelody(BigInt(withTrackSeed(project, source).seed), project.key, project.scale, base.degrees,
+    generateMelody(BigInt(withTrackSeed(project, source).seed), BASE_KEY, project.scale, base.degrees,
       source.generatorSettings, 0, undefined, project.melodyGlobal, base.customChords, base,
       notes => { skeleton = notes; });
     if (skeleton) {
       const inferred = inferMelodyChordDegrees(skeleton);
       const degrees = base.degrees.map((degree,index) => index > 0 && index < inferred.length - 1 ? inferred[index] : degree);
-      const interiorRoots = melodyRootChords('C', 'major', degrees);
+      const interiorRoots = melodyRootChords(BASE_KEY, 'major', degrees);
       const roots = base.roots.map((chord,index) => [...(index > 0 && index < degrees.length - 1 ? interiorRoots[index] : chord)]);
       const raw = base.voicings.map((chord,index) => [...(index > 0 && index < degrees.length - 1 ? interiorRoots[index] : chord)]);
       // Java inference always uses ordinary squish and protects no inversion slots.
       // One/two-chord recovery retains the base progression without Java's duplicate endpoint.
       const voicings = degrees.length <= 2 ? base.voicings.map(chord => [...chord])
         : flattenProgression(raw, roots, BigInt(project.seed), { ...project.harmonySettings, progressiveVoicing: false });
-      const inferredSounding = soundingHarmony(interiorRoots,project.key,project.scale);
+      const inferredSounding = soundingHarmony(interiorRoots, BASE_KEY, project.scale);
       const soundingRoots = roots.map((_,index) => [...(index > 0 && index < degrees.length - 1 ? inferredSounding[index] : base.soundingRoots![index])]);
       const rawSounding = raw.map((_,index) => [...(index > 0 && index < degrees.length - 1 ? inferredSounding[index] : base.soundingVoicings![index])]);
       const soundingVoicings = voicedSoundingChords(raw,voicings,rawSounding);
@@ -105,16 +105,16 @@ export function sectionGenerationHarmony(project: CompositionProject, section: A
     || !section.useMelodyHarmony) return base;
   const inference = projectMelodyHarmony(project);
   if (!inference.available) return base;
-  if (section.context?.key !== undefined || section.context?.scale !== undefined || section.context?.keyChange !== undefined
+  if (section.context?.scale !== undefined || section.context?.keyChange !== undefined
     || base.degrees.length !== inference.harmony.degrees.length) {
     const contextual = sectionProject(project, section);
     const degrees = base.degrees.map((_, index) => inference.harmony.degrees[index % inference.harmony.degrees.length]);
-    const roots = melodyRootChords(contextual.key, contextual.scale, degrees);
-    const raw = melodyRepairChords(contextual.key, contextual.scale, degrees);
+    const roots = melodyRootChords(BASE_KEY, contextual.scale, degrees);
+    const raw = melodyRepairChords(BASE_KEY, contextual.scale, degrees);
     const voicings = flattenProgression(raw, roots, BigInt(project.seed), { ...project.harmonySettings, progressiveVoicing: false });
-    const soundingRoots = soundingHarmony(roots, contextual.key, contextual.scale);
+    const soundingRoots = soundingHarmony(roots, BASE_KEY, contextual.scale);
     return { degrees, customChords: undefined, roots, durations: base.durations, voicings, soundingRoots,
-      soundingVoicings: soundingHarmony(voicings, contextual.key, contextual.scale), inferred: true };
+      soundingVoicings: soundingHarmony(voicings, BASE_KEY, contextual.scale), inferred: true };
   }
   return { ...inference.harmony, durations: base.durations };
 }

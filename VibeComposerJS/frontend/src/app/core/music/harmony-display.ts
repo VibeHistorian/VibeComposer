@@ -2,7 +2,7 @@ import type { ArrangedPart } from './part-role';
 import type { ArrangementSection } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
 import type { CompositionTrack } from '../project/track.model';
-import { chordPitches, inversionSuffix, chordRootHue, effectiveKey, KEYS, progressionChords } from './harmony';
+import { BASE_KEY, chordPitches, inversionSuffix, chordRootHue, effectiveKey, KEYS, progressionChords } from './harmony';
 import { baseGenerationHarmony, sectionGenerationHarmony } from './project-harmony';
 import { sectionProject } from './section-context';
 
@@ -34,11 +34,11 @@ export function sectionHarmonyDisplay(project: CompositionProject, section: Arra
   if (cached) return cached;
   const contextual = sectionProject(project, section);
   const harmony = sectionGenerationHarmony(project, section, role), global = baseGenerationHarmony(project);
-  const chords = progressionChords(contextual.key, contextual.scale, harmony.degrees, harmony.customChords);
-  const primary = progressionChords(project.key, project.scale, global.degrees, global.customChords);
+  const chords = progressionChords(BASE_KEY, contextual.scale, harmony.degrees, harmony.customChords);
+  const primary = progressionChords(BASE_KEY, project.scale, global.degrees, global.customChords);
   const shift = section.context?.keyChange ?? 0;
   const transpose = (project.transposeSemitones ?? 0) + shift;
-  const key = effectiveKey(contextual.key, transpose);
+  const key = effectiveKey(BASE_KEY, transpose);
   const pitches = chords.map(chord => chordPitches(chord, 0).map(pitch => pitch + shift));
   const primaryPitches = primary.map(chord => chordPitches(chord, 0));
   const result: SectionHarmonyDisplay = {
@@ -59,7 +59,6 @@ export function sectionHarmonyDisplay(project: CompositionProject, section: Arra
 export function trackHasSectionHarmony(project: CompositionProject, track: CompositionTrack, section: ArrangementSection): boolean {
   const harmony = sectionHarmonyDisplay(project, section, track.role), context = section.context;
   return track.role !== 'drums' && (harmony.chordsDiffer
-    || context?.key !== undefined && context.key !== project.key
     || context?.scale !== undefined && context.scale !== project.scale);
 }
 

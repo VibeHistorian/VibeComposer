@@ -6,7 +6,7 @@ import type { SectionTypeChanceSettings } from './section-type-chances';
 import { MAX_ARRANGEMENT_SECTIONS } from './project-arrangement-decoder';
 import { generateContextualPresence } from '../music/arrangement-intent';
 import { copyPartSettings } from '../music/part-settings';
-import { getDiatonicChords } from '../music/harmony';
+import { BASE_KEY, getDiatonicChords } from '../music/harmony';
 import { generateArrangementPlan } from '../music/arrangement-plan';
 import { JavaRandom } from '../music/java-random';
 import { DEFAULT_VARIATION_POLICY, planSectionVariations, validVariationPolicy } from '../music/arrangement-variations';
@@ -140,7 +140,7 @@ export function updateSection(project: CompositionProject, index: number, patch:
 export function setSectionChordDegree(project: CompositionProject, sectionIndex: number, measureIndex: number, degree: number): CompositionProject | undefined {
   const section = project.arrangement[sectionIndex];
   if (!section || !Number.isInteger(measureIndex) || measureIndex < 0 || measureIndex >= section.measures
-      || !getDiatonicChords(project.key, project.scale).some((chord) => chord.degree === degree)) {
+      || !getDiatonicChords(BASE_KEY, project.scale).some((chord) => chord.degree === degree)) {
     return;
   }
   const chordDegrees = Array.from({ length: section.measures }, (_, measure) =>

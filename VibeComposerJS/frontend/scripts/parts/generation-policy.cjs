@@ -13,7 +13,7 @@ test('Global Harmony On Compose defaults on, uses the composition seed, and comm
   const before = service.exportProjectJson();
   const project = service.project();
   const expected = load('core/music/contextual-harmony.ts').generateHarmony(BigInt(project.seed), 6,
-    project.key, project.scale, project.harmonySettings, project.melodyGlobal);
+    'C', project.scale, project.harmonySettings, project.melodyGlobal);
   assert.equal(service.generateComposition(), 'changed');
   assert.deepEqual(service.project().progression, expected.degrees);
   assert.deepEqual(service.project().progressionChords, expected.chords);
@@ -518,7 +518,7 @@ test('P5e target mode edits reinterpret scoped notes and prepare Chordlet target
   const project = service.project(), locked = track(duplicate);
   const targetSeed = ((track(id).generatorSettings.patternSeed || Number(BigInt.asIntN(32, BigInt(project.seed)))) + 1) | 0;
   assert.equal(service.generateComposition(), 'changed');
-  const expected = chooseMelodyTargets(targetSeed, project.progression, project.melodyGlobal, project.key, project.scale,
+  const expected = chooseMelodyTargets(targetSeed, project.progression, project.melodyGlobal, 'C', project.scale,
     project.progressionChords, track(id).generatorSettings);
   assert.deepEqual(track(id).generatorSettings.chordNoteChoices, expected);
   assert.strictEqual(track(duplicate), locked);

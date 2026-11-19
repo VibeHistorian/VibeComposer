@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, input, signal } from '@angular/core';
 import { ProjectService } from '../../core/project/project.service';
-import { CHORD_SPICES, inversionSuffix, stepChordInversion, SCALE_INTERVALS, scaleIntervalChord, KEYS, chordKeyOverlap, chordRootHue, chordRomanNumeral, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
+import { BASE_KEY, CHORD_SPICES, inversionSuffix, stepChordInversion, SCALE_INTERVALS, scaleIntervalChord, KEYS, chordKeyOverlap, chordRootHue, chordRomanNumeral, effectiveKey, progressionChords, type ProgressionChord } from '../../core/music/harmony';
 import type { ArrangementSection } from '../../core/project/arrangement.model';
 import { baseGenerationHarmony, sectionGenerationHarmony } from '../../core/music/project-harmony';
 import { sectionProject } from '../../core/music/section-context';
@@ -23,7 +23,7 @@ export class ChordletEditorComponent {
     const harmony = section.useMelodyHarmony ? sectionGenerationHarmony(this.project(), section, 'chords')
       : baseGenerationHarmony(this.project(), section);
     const context = sectionProject(this.project(), section);
-    return JSON.stringify(progressionChords(context.key, context.scale, harmony.degrees, harmony.customChords)) !== JSON.stringify(this.chords());
+    return JSON.stringify(progressionChords(BASE_KEY, context.scale, harmony.degrees, harmony.customChords)) !== JSON.stringify(this.chords());
   }));
   private applyAll(chords: (ProgressionChord | null)[]): void {
     this.projects.editAllSectionMusic(section => ({ ...section, customChords: chords,
@@ -34,14 +34,14 @@ export class ChordletEditorComponent {
     const section = this.section();
     const project = sectionProject(this.project(), section), harmony = section?.useMelodyHarmony
       ? sectionGenerationHarmony(this.project(), section, 'chords') : baseGenerationHarmony(this.project(), section);
-    return progressionChords(project.key, project.scale, harmony.degrees, harmony.customChords);
+    return progressionChords(BASE_KEY, project.scale, harmony.degrees, harmony.customChords);
   });
   readonly roots = KEYS;
   readonly spices = CHORD_SPICES;
   readonly menu = signal<{ index: number; kind: 'root' | 'spice'; x: number; y: number; project: unknown; sectionId?: string } | null>(null);
   readonly colorContext = computed(() => {
     const project = sectionProject(this.project(), this.section());
-    return { key: effectiveKey(project.key, this.displayTranspose()), scale: project.scale };
+    return { key: effectiveKey(BASE_KEY, this.displayTranspose()), scale: project.scale };
   });
   readonly spiceChoices = computed(() => {
     const menu = this.menu(), chord = menu && this.chords()[menu.index];
@@ -123,7 +123,7 @@ export class ChordletEditorComponent {
     if (this.allSections()) {
       this.projects.editAllSectionMusic(section => {
         const context = sectionProject(this.project(), section), harmony = baseGenerationHarmony(this.project(), section);
-        const chords = progressionChords(context.key, context.scale, harmony.degrees, harmony.customChords);
+        const chords = progressionChords(BASE_KEY, context.scale, harmony.degrees, harmony.customChords);
         if (index >= chords.length) return section;
         chords[index] = chord;
         return { ...section, customChords: chords, chordDegrees: harmony.degrees };

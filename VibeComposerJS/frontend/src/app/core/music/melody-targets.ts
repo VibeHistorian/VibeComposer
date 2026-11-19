@@ -4,7 +4,7 @@ import { contextualTargets } from './contextual-randomizer';
 import type { MelodyGlobalSettings, MelodySettings } from './part-settings.model';
 import { resolveMelodyInputs, decodeMelodyGlobal } from './melody-global-settings';
 import { melodyRootChords } from './melody-chord-targets';
-import { getPitchClass, validProgressionChords, type ProgressionChord, type ScaleMode } from './harmony';
+import { BASE_KEY, getPitchClass, validProgressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 
@@ -56,7 +56,7 @@ export function forceMelodyOutline(first: MelodySettings, target: MelodySettings
  * Keep Java's directional closest-note search and root-insertion indexing.
  */
 export function chooseMelodyTargets(seed: number, progression: readonly number[], globalSettings: MelodyGlobalSettings = {},
-  key = 'C', scale: ScaleMode = 'major', customChords?: readonly (ProgressionChord | null)[], track: Partial<MelodySettings> = {}): number[] {
+  key: string = BASE_KEY, scale: ScaleMode = 'major', customChords?: readonly (ProgressionChord | null)[], track: Partial<MelodySettings> = {}): number[] {
   if (!Number.isInteger(seed) || seed < -2147483648 || seed > 2147483647
     || !progression.length || progression.length > 32
     || progression.some(degree => !Number.isInteger(degree) || degree < 1 || degree > 7)

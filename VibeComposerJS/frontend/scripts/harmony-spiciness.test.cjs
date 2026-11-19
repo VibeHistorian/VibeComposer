@@ -66,7 +66,7 @@ test('project spice policy validates, saves, undoes and drives global and contex
   const { decodeProject } = load('core/project/project-codec.ts');
   const { DEFAULT_SECTION_TYPE_CHANCES } = load('core/project/section-type-chances.ts');
   assert.equal(decodeProject(JSON.parse(json), DEFAULT_SECTION_TYPE_CHANCES, () => 0.5).harmonySettings.spiciness, 100);
-  service.updateSectionContext(settings.arrangement[0].id, { key: 'F', scale: 'natural-minor' });
+  service.updateSectionContext(settings.arrangement[0].id, { scale: 'natural-minor' });
   for (const sectionId of [undefined, settings.arrangement[0].id]) {
     const previous = service.project();
     service.generateProgression(sectionId, false, true);
@@ -74,7 +74,7 @@ test('project spice policy validates, saves, undoes and drives global and contex
     const section = sectionId ? project.arrangement.find(section => section.id === sectionId) : undefined;
     const { sectionProject } = load('core/music/section-context.ts');
     const context = sectionProject(previous, section);
-    const expected = generateHarmony(BigInt(previous.seed), previous.progression.length, context.key, context.scale,
+    const expected = generateHarmony(BigInt(previous.seed), previous.progression.length, 'C', context.scale,
       previous.harmonySettings, previous.melodyGlobal);
     assert.deepEqual(section ? section.customChords : project.progressionChords, expected.chords);
     service.undo(); assert.deepEqual(service.project(), previous);
@@ -84,7 +84,7 @@ test('project spice policy validates, saves, undoes and drives global and contex
   for (const section of service.project().arrangement) {
     const { sectionProject } = load('core/music/section-context.ts');
     const context = sectionProject(previous, section);
-    const expected = generateHarmony(BigInt(previous.seed), previous.progression.length, context.key, context.scale,
+    const expected = generateHarmony(BigInt(previous.seed), previous.progression.length, 'C', context.scale,
       previous.harmonySettings, previous.melodyGlobal);
     assert.deepEqual(section.customChords, expected.chords);
   }
@@ -97,7 +97,7 @@ test('Compose shares the spice policy and stored colored harmony feeds dependent
   service.updateHarmonySettings({ spiciness: 100, generation: 'FIFTHS' });
   assert.notEqual(service.generateComposition(), 'invalid');
   const project = service.project();
-  const expected = generateHarmony(BigInt(project.seed), project.progression.length, project.key, project.scale,
+  const expected = generateHarmony(BigInt(project.seed), project.progression.length, 'C', project.scale,
     project.harmonySettings, project.melodyGlobal);
   assert.deepEqual(project.progressionChords, expected.chords);
   const { baseGenerationHarmony } = load('core/music/project-harmony.ts');
@@ -114,7 +114,7 @@ test('chordlet clicks use fresh seeds; Shift-click uses the exact project seed i
     service.updateSettings({ seed: '9223372036854775807' });
     service.updateHarmonySettings({ generation: 'FUNCTIONAL', spiciness: 65 });
     const sectionId = service.project().arrangement[0].id;
-    service.updateSectionContext(sectionId, { key: 'F', scale: 'natural-minor' });
+    service.updateSectionContext(sectionId, { scale: 'natural-minor' });
     const editor = new (load('features/harmony/chordlet-editor.component.ts').ChordletEditorComponent)();
     if (scope === 'section') editor.section.set(service.project().arrangement[0]);
     editor.allSections.set(scope === 'all-sections');
@@ -130,7 +130,7 @@ test('chordlet clicks use fresh seeds; Shift-click uses the exact project seed i
       for (const section of sections) {
         const context = sectionProject(project, section);
         const degrees = section?.chordDegrees ?? project.progression;
-        const expected = generateHarmony(BigInt(seed), degrees.length, context.key, context.scale,
+        const expected = generateHarmony(BigInt(seed), degrees.length, 'C', context.scale,
           project.harmonySettings, project.melodyGlobal);
         assert.deepEqual(degrees, expected.degrees);
         assert.deepEqual(section ? section.customChords : project.progressionChords, expected.chords);

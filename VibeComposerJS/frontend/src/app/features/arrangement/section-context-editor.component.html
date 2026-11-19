@@ -50,9 +50,8 @@
       <button type="button" [disabled]="!contextMixed(field.key) && section().context?.[field.key] === undefined" (click)="reset(field.key)">Inherit</button>
     </div>
   }
-  <label>Key<vc-select [options]="keyOptions()" [selectDefault]="projects.project().key" [mixed]="contextMixed('key')" [value]="section().context?.key ?? ''" (valueChange)="choose('key', $event)"></vc-select></label>
   <label>Scale<vc-menu-select [groups]="scaleMenuGroups" [options]="scaleOptions()" [selectDefault]="projects.project().scale" [mixed]="contextMixed('scale')" [value]="section().context?.scale ?? ''" (valueChange)="choose('scale', $event)"></vc-menu-select></label>
-  <label>Key change type<vc-select [options]="[{ value: 'direct', label: 'Direct' }, { value: 'two-five-one', label: 'Ending ii–V' }]" selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
+  <label>Transition<vc-select [options]="[{ value: 'direct', label: 'Direct' }, { value: 'two-five-one', label: 'Ending ii–V' }]" selectDefault="direct" [disabled]="!!section().customChords || !!section().chordDegrees || durations().length < 3"
     [mixed]="contextMixed('keyChangeType')" [value]="section().context?.keyChangeType ?? 'direct'" (valueChange)="choose('keyChangeType', $event)"></vc-select></label>
   @if (section().customChords || section().chordDegrees) { <p>Explicit section chords take precedence over the ending cadence.</p> }
   <label>Beat duration<vc-select [options]="[{ value: '0.5', label: 'Half' }, { value: '1', label: 'Normal' }, { value: '2', label: 'Double' }]" [selectDefault]="1" [mixed]="contextMixed('beatDurationMultiplier')" [value]="section().context?.beatDurationMultiplier ?? 1" (valueChange)="choose('beatDurationMultiplier', $event, true)"></vc-select></label>

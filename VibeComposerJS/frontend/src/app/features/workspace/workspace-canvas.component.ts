@@ -38,7 +38,7 @@ import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { GM_INSTRUMENTS } from '../../core/music/gm-instruments';
 import { trackPhraseSource } from '../../core/music/phrase';
 import { hasManualPhrase } from '../../core/music/phrase-range-edit';
-import { getDiatonicChords } from '../../core/music/harmony';
+import { BASE_KEY, getDiatonicChords } from '../../core/music/harmony';
 
 
 import { ProjectService } from '../../core/project/project.service';
@@ -241,7 +241,7 @@ export class WorkspaceCanvasComponent {
   readonly midi = inject(MidiOutputService);
   readonly drumInstruments = DRUM_INSTRUMENTS;
   readonly sectionTypes = SECTION_TYPES;
-  readonly chords = computed(() => getDiatonicChords(this.project().key, this.project().scale));
+  readonly chords = computed(() => getDiatonicChords(BASE_KEY, this.project().scale));
   readonly midiChannels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly roles = ARRANGED_PARTS.map((role) => ({ role, name: ROLE_NAMES[role] }));
   readonly generationAvailable = PART_GENERATION_AVAILABLE;

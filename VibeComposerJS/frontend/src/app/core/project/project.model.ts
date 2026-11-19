@@ -14,7 +14,6 @@ export interface CompositionProject {
   readonly melodyGlobal?: MelodyGlobalSettings;
   readonly schemaVersion: 12;
   readonly name: string;
-  readonly key: string;
   readonly scale: ScaleMode;
   readonly transposeSemitones?: number;
   readonly masterVolumePercent?: number;
@@ -29,7 +28,7 @@ export interface CompositionProject {
   readonly randomizeTransposeOnCompose?: boolean;
   /** Decimal text preserves Java long seeds when JSON is exported or persisted. */
   readonly seed: string;
-  /** One-based diatonic chord degrees in the selected key and scale. */
+  /** One-based diatonic chord degrees in the selected scale from C. */
   readonly progression: readonly number[];
   /** Explicit Chordlet edits; null entries continue to follow the diatonic mode. */
   readonly progressionChords?: readonly (import('../music/harmony').ProgressionChord | null)[];

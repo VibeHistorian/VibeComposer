@@ -5,7 +5,7 @@ import { validVariationPolicy } from '../music/arrangement-variations';
 import type { ArrangedPart } from '../music/part-role';
 import type { CompositionProject } from './project.model';
 import type { TrackGenerationPolicies } from '../music/generation-policy.model';
-import { KEYS, validProgressionChords } from '../music/harmony';
+import { validProgressionChords } from '../music/harmony';
 import { isScaleMode } from '../music/scales';
 import { decodeMelodyGlobal } from '../music/melody-global-settings';
 import { decodeHarmonySettings } from '../music/harmony-voicing';
@@ -24,7 +24,6 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
 
   const project = value as Partial<CompositionProject>;
   const validBase = typeof project.name === 'string'
-    && typeof project.key === 'string' && KEYS.includes(project.key)
     && (isScaleMode(project.scale))
     && validOutputSettings(project)
     && (project.masterVolumePercent === undefined || validVolumePercent(project.masterVolumePercent))
@@ -61,7 +60,6 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
   const decoded: CompositionProject = {
     schemaVersion: 12,
     name: project.name!,
-    key: project.key!,
     scale: project.scale!,
     transposeSemitones: project.transposeSemitones ?? 0,
     tempoBpm: project.tempoBpm!,
@@ -103,7 +101,7 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
   const project = value as Partial<CompositionProject>;
   const tracks = decodeTracks(project.tracks);
   return typeof project.name === 'string'
-    && typeof project.key === 'string' && KEYS.includes(project.key)
+    && !Object.hasOwn(project, 'key')
     && (isScaleMode(project.scale))
     && validOutputSettings(project)
     && (project.masterVolumePercent === undefined || validVolumePercent(project.masterVolumePercent))

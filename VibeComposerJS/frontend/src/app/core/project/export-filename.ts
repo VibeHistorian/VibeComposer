@@ -1,4 +1,4 @@
-import { effectiveKey } from '../music/harmony';
+import { BASE_KEY, effectiveKey } from '../music/harmony';
 import type { CompositionProject } from './project.model';
 
 export const EXPORT_NAME_FIELDS = [
@@ -12,10 +12,10 @@ export function safeExportName(value: string): string {
   return value.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-').trim().replace(/[. ]+$/, '');
 }
 
-export function exportFilename(project: Pick<CompositionProject, 'name' | 'key' | 'transposeSemitones' | 'tempoBpm' | 'seed'>,
+export function exportFilename(project: Pick<CompositionProject, 'name' | 'transposeSemitones' | 'tempoBpm' | 'seed'>,
   fields: readonly ExportNameField[], now = new Date()): string {
   const pad = (value: number) => String(value).padStart(2, '0');
-  const key = effectiveKey(project.key.replace(/#/g, '♯').replace(/b/g, '♭'), project.transposeSemitones ?? 0);
+  const key = effectiveKey(BASE_KEY, project.transposeSemitones ?? 0);
   const values: Record<ExportNameField, string> = {
     date: `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`,
     time: `${pad(now.getHours())}-${pad(now.getMinutes())}`,

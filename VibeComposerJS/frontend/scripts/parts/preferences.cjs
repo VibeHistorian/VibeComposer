@@ -714,7 +714,7 @@ test('mode edits reinterpret explicit global and section chords by scope in one 
   for (const scope of ['off', 'global', 'all']) {
     const { service, uiPreferences: prefs } = fixture();
     prefs.setHarmonyFollowsMode(scope);
-    service.updateSettings({ key: 'C', scale: 'major' });
+    service.updateSettings({ scale: 'major' });
     service.setProgression([1,6,2,5]);
     const chords = [{ root:0, spice:'maj9', inversion:1 }, { root:9, spice:'m7', inversion:0 },
       { root:2, spice:'m7', inversion:0 }, { root:7, spice:'7', inversion:0 }];
@@ -738,7 +738,7 @@ test('mode edits reinterpret explicit global and section chords by scope in one 
 
 test('All follows section mode edits and inherited modes while respecting explicit section modes', () => {
   const { service } = fixture();
-  service.updateSettings({ key: 'C', scale: 'major' });
+  service.updateSettings({ scale: 'major' });
   const [section] = service.project().arrangement;
   service.setSectionMusicalState(section.id, { context: { scale: 'major' }, chordDegrees: [1],
     customChords: [{ root:0, spice:'maj7', inversion:0, explicitZeroInversion:true }] });
@@ -752,7 +752,7 @@ test('All follows section mode edits and inherited modes while respecting explic
 
 test('local mode changes adapt inherited explicit global harmony without changing the global chords', () => {
   const { service } = fixture();
-  service.updateSettings({ key: 'C', scale: 'major' });
+  service.updateSettings({ scale: 'major' });
   service.setProgression([1]);
   service.setProgressionChord(0, { root:0, spice:'maj9', inversion:-1 });
   const [section] = service.project().arrangement;

@@ -250,7 +250,7 @@ test('an active chord drag accepts a new target near its starting point and comm
 test('harmony headers compare effective chords and durations and reuse transposed chordlet labels', () => {
   const { service } = fixture({ contextualMelody: false });
   const { sectionHarmonyDisplay, trackHasSectionHarmony } = require('../music-loader.cjs').loadMusic('harmony-display.ts');
-  const project = { ...service.project(), key: 'C', scale: 'major', transposeSemitones: 2, progression: [1, 4], progressionChords: undefined };
+  const project = { ...service.project(), scale: 'major', transposeSemitones: 2, progression: [1, 4], progressionChords: undefined };
   const section = { ...project.arrangement[0], measures: 2 };
   const inherited = sectionHarmonyDisplay(project, section);
   assert.deepEqual(inherited.chords.map(chord => chord.label), ['D', 'G']);
@@ -268,8 +268,8 @@ test('harmony headers compare effective chords and durations and reuse transpose
   assert.equal(trackHasSectionHarmony(project, bass, local), true);
   assert.equal(trackHasSectionHarmony(project, drums, { ...section, chordDegrees: [2, 5] }), false);
   assert.equal(trackHasSectionHarmony(project, drums, local), false);
-  assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { key: 'C', scale: 'major', tempoBpm: project.tempoBpm } }), false);
-  assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { key: 'D' } }), true);
+  assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { scale: 'major', tempoBpm: project.tempoBpm } }), false);
+  assert.equal(trackHasSectionHarmony(project, bass, { ...section, context: { keyChange: 2 } }), true);
 });
 
 test('contextual Melody settings persist, undo, and filter controls by algorithm', () => {
@@ -358,7 +358,7 @@ test('P5f section Chordlets, timing and key edits preserve scopes, manual owners
   for (const role of ['melody','bass','chords','arpeggio']) assert.deepEqual(notes(role),baseline[role].map(note => ({ ...note, midi: note.midi - 12 })),role);
   assert.deepEqual(notes('drums'),baseline.drums);
   const bases = JSON.stringify(service.project().tracks);
-  service.updateSectionContext(id, { keyChange: null, swingPercent: 70, key: 'D', scale: 'natural-minor' });
+  service.updateSectionContext(id, { keyChange: null, swingPercent: 70, scale: 'natural-minor' });
   for (const role of ['melody','bass','chords','arpeggio']) assert.notDeepEqual(notes(role),baseline[role],role);
   assert.equal(JSON.stringify(service.project().tracks),bases);
   service.setSectionChord(id, 0, { root: 6, spice: 'maj7', inversion: 1 });
@@ -492,7 +492,7 @@ test('matching explicit section chords share primary harmony checks in the inspe
   };
   check(false);
   service.setSectionMusicalState(id, { chordDegrees: [1,5,6,4] }); check(false);
-  const project = service.project(), chords = progressionChords(project.key, project.scale, project.progression);
+  const project = service.project(), chords = progressionChords('C', project.scale, project.progression);
   service.setSectionMusicalState(id, { customChords: chords }); check(false);
   service.updateSectionHarmony(id, { useMelodyHarmony: true });
   assert.equal(sectionGenerationHarmony(service.project(), section(), 'melody').inferred, true);
@@ -515,12 +515,12 @@ test('section chord comparison resolves custom primary chords, modes and duratio
   const { service, load } = fixture({ contextualMelody: false });
   const { sectionHasChordOverride } = load('core/music/section-context.ts');
   const { progressionChords } = load('core/music/harmony.ts');
-  const project = { ...service.project(), key: 'D', scale: 'dorian', progression: [1,4,5] };
+  const project = { ...service.project(), scale: 'dorian', progression: [1,4,5] };
   const section = { ...project.arrangement[0], chordDegrees: [1,4,5], customChords: undefined };
   assert.equal(sectionHasChordOverride(project, section), false);
-  const contextual = { ...section, context: { key: 'F', scale: 'natural-minor' } };
+  const contextual = { ...section, context: { scale: 'natural-minor' } };
   assert.equal(sectionHasChordOverride(project, contextual), false);
-  const customChords = progressionChords('F', 'natural-minor', project.progression);
+  const customChords = progressionChords('C', 'natural-minor', project.progression);
   assert.equal(sectionHasChordOverride(project, { ...contextual, customChords }), false);
   assert.equal(sectionHasChordOverride(project, { ...contextual, customChords, customDurations: [2,4,8] }), false);
   assert.equal(sectionHasChordOverride(project, { ...section, customDurations: [2,4,8,2,4,8] }), false);
@@ -613,7 +613,7 @@ test('P5e chord targeting and avoid notes preserve scoped harmony, history, manu
   assert.notDeepEqual(localContext, globalContext);
   const { generateMelody } = load('core/music/melody-generator.ts');
   let expectedContext;
-  generateMelody(BigInt(service.project().seed), service.project().key, service.project().scale,
+  generateMelody(BigInt(service.project().seed), 'C', service.project().scale,
     localSection.chordDegrees, track().generatorSettings, 0,
     notes => { expectedContext = load('core/music/melody-context.ts').melodyContext(notes, localSection.chordDegrees.length); },
     service.project().melodyGlobal);
@@ -2713,7 +2713,7 @@ test('section chordlets preview inferred harmony and restore authored chords whe
   const harmony = sectionGenerationHarmony(service.project(), section(), 'chords');
   const context = sectionProject(service.project(), section());
   assert.equal(harmony.inferred, true);
-  assert.deepEqual(editor.chords(), progressionChords(context.key, context.scale, harmony.degrees, harmony.customChords));
+  assert.deepEqual(editor.chords(), progressionChords('C', context.scale, harmony.degrees, harmony.customChords));
   const saved = service.exportProjectJson();
   editor.add(); editor.remove(0); editor.generate();
   editor.wheel(0, { deltaY: 1 });

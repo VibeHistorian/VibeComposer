@@ -4,7 +4,7 @@ import { isScaleMode } from './scales';
 import type { ArrangementSection, SectionMusicalContext } from '../project/arrangement.model';
 import type { CompositionProject } from '../project/project.model';
 import type { PhraseNote } from './phrase-note';
-import { chordPitches, KEYS, progressionChords, validProgressionChords } from './harmony';
+import { BASE_KEY, chordPitches, progressionChords, validProgressionChords } from './harmony';
 
 export function validSectionContext(value: unknown): value is SectionMusicalContext {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -15,7 +15,6 @@ export function validSectionContext(value: unknown): value is SectionMusicalCont
           && validVolumePercent(db));
       case 'tempoBpm': return Number.isInteger(field) && field >= 30 && field <= 300;
       case 'swingPercent': return Number.isInteger(field) && field >= 0 && field <= 100;
-      case 'key': return KEYS.includes(field);
       case 'scale': return isScaleMode(field);
       case 'keyChange': return Number.isInteger(field) && field >= -24 && field <= 24;
       case 'keyChangeType': return field === 'direct' || field === 'two-five-one';
@@ -42,7 +41,7 @@ export function sectionDegrees(project: CompositionProject, section: Arrangement
 }
 
 /** Compare musical chords, rather than the presence of stored section overrides.
- * Resolve primary harmony in the same section key/scale; timing stays independent.
+ * Resolve primary harmony in the same section scale; timing stays independent.
  * Keep matching explicit values stored so later primary edits preserve ownership. */
 export function sectionHasChordOverride(project: CompositionProject, section: ArrangementSection): boolean {
   if (!section.chordDegrees && !section.customChords) return false;
@@ -50,7 +49,7 @@ export function sectionHasChordOverride(project: CompositionProject, section: Ar
   const resolve = (degrees: readonly number[], custom: CompositionProject['progressionChords']) => {
     const expanded = section.customDurations ? section.customDurations.map((_, index) => degrees[index % degrees.length]) : degrees;
     const chords = custom && custom.length !== expanded.length ? expanded.map((_, index) => custom[index % custom.length]) : custom;
-    return progressionChords(contextual.key, contextual.scale, expanded, chords);
+    return progressionChords(BASE_KEY, contextual.scale, expanded, chords);
   };
   const primary = resolve(project.progression, project.progressionChords);
   const local = resolve(sectionDegrees(project, section), section.customChords ?? (section.chordDegrees ? undefined : project.progressionChords));
@@ -86,8 +85,7 @@ export function sectionDurationBeats(project: CompositionProject, section: Arran
 export function sectionProject(project: CompositionProject, section?: ArrangementSection): CompositionProject {
   if (!section?.context) return project;
   const context = section.context;
-  return { ...project, key: context.key ?? project.key,
-    scale: context.scale ?? project.scale, tempoBpm: context.tempoBpm ?? project.tempoBpm };
+  return { ...project, scale: context.scale ?? project.scale, tempoBpm: context.tempoBpm ?? project.tempoBpm };
 }
 
 /** Seeded generators work in normalized four-beat slots. Map onset and end separately,

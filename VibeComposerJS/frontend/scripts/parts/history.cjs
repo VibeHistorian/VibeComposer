@@ -1123,8 +1123,8 @@ test('consecutive section inspector edits preserve current state before its inpu
   edit(() => editor.setDuration(0, { target: { value: '2' } }));
   edit(() => service.setSectionChord(rendered.id, 0, { root: 2, spice: 'm', inversion: 1 }));
   const chords = structuredClone(section().customChords);
-  edit(() => editor.choose('key', 'G'));
-  assert.deepEqual(section().context, { tempoBpm: 87, swingPercent: 67, key: 'G' });
+  edit(() => editor.choose('keyChange', '7', true));
+  assert.deepEqual(section().context, { tempoBpm: 87, swingPercent: 67, keyChange: 7 });
   assert.equal(section().customDurations[0], 2);
   assert.deepEqual(section().customChords, chords, 'later inspector edits preserve external chord edits');
   assert.equal(JSON.stringify(service.project().arrangement.slice(1)), otherSections);

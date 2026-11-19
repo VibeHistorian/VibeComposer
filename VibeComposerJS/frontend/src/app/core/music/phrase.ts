@@ -1,3 +1,4 @@
+import { BASE_KEY } from './harmony';
 import { processManualPhrase } from './manual-phrase-processing';
 import { resolveDrumEndFill } from './arrangement-drum-fill';
 import { applyArpSubdivision, resolveArpSubdivision } from './arrangement-subdivision-ramp';
@@ -32,24 +33,24 @@ export function generateTrackPhrase(project: CompositionProject, track: Composit
   let notes: PhraseNote[];
   switch (track.role) {
     case 'melody':
-      notes = generateMelody(seed, project.key, project.scale, project.progression, track.generatorSettings,
+      notes = generateMelody(seed, BASE_KEY, project.scale, project.progression, track.generatorSettings,
         0, undefined, project.melodyGlobal, project.progressionChords, harmony);
       break;
     case 'bass':
-      notes = generateBassline(seed, project.key, project.scale, project.progression,
+      notes = generateBassline(seed, BASE_KEY, project.scale, project.progression,
         track.generatorSettings.rhythm, track.generatorSettings.noteVariation, track.generatorSettings, project.progressionChords, harmony)
         .map((note, index) => ({ id: `bass-${index}`, midi: note.midi, startBeat: note.startBeat,
           durationBeats: note.durationBeats, velocity: note.velocity }));
       break;
     case 'chords':
-      notes = generateChordPart(seed, project.key, project.scale, project.progression, track.generatorSettings, project.progressionChords, harmony)
+      notes = generateChordPart(seed, BASE_KEY, project.scale, project.progression, track.generatorSettings, project.progressionChords, harmony)
         .flatMap((hit, hitIndex) => hit.pitches.map((midi, pitchIndex) => ({
           id: `chords-${hitIndex}-${pitchIndex}`, midi, startBeat: hit.startBeat + (hit.pitchOffsets?.[pitchIndex] ?? 0),
           durationBeats: hit.pitchDurations?.[pitchIndex] ?? hit.durationBeats, velocity: hit.velocity,
         })));
       break;
     case 'arpeggio':
-      notes = generateArpeggio(seed, project.key, project.scale, project.progression, track.generatorSettings, project.progressionChords,
+      notes = generateArpeggio(seed, BASE_KEY, project.scale, project.progression, track.generatorSettings, project.progressionChords,
         context ?? (track.generatorSettings.rhythm === 'melody' ? sectionMelodyContext(project) : undefined), harmony,
         track.orderOffset ?? Math.max(1, project.tracks.filter(candidate => candidate.role === track.role).findIndex(candidate => candidate.id === track.id) + 1))
         .map((note, index) => ({ id: `arpeggio-${index}`, midi: note.midi, startBeat: note.startBeat,
@@ -298,7 +299,7 @@ function buildSectionMelodyContext(project: CompositionProject, section?: Arrang
   let result = melodyContext([], progression.length);
   const contextual = sectionProject(project, section);
   const seeded = withTrackSeed(contextual, source);
-  generateMelody(BigInt(seeded.seed), contextual.key, contextual.scale, progression, effective.generatorSettings, 0,
+  generateMelody(BigInt(seeded.seed), BASE_KEY, contextual.scale, progression, effective.generatorSettings, 0,
     notes => {
       const generated = notes.map((note, index) => ({ ...note, id: `context-${index}`, durationBeats: .25, velocity: 90,
         midi: note.midi < 0 ? note.midi : Math.max(0, Math.min(127, note.midi + (section?.context?.keyChange ?? 0))) }));

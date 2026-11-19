@@ -71,7 +71,6 @@ export const DEFAULT_PROJECT: CompositionProject = {
   drumSlots: { 36: 37 },
   schemaVersion: 12,
   name: 'Untitled vibe',
-  key: 'C',
   scale: 'major',
   transposeSemitones: 0,
   tempoBpm: 120,

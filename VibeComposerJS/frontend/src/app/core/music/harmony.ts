@@ -1,6 +1,8 @@
 import { harmonyScaleNotes, scaleNotes, type ScaleMode } from './scales';
 export { SCALE_DEFINITIONS, SCALE_MODES, isScaleMode, scaleNotes, type ScaleMode } from './scales';
 
+export const BASE_KEY = 'C';
+
 export const CHORD_SPICES = ['', 'm', 'maj7', 'm7', '7', 'mM7', 'sus2', 'sus4', 'sus7',
   'maj6', 'm6', 'maj9', 'm9', 'maj13', 'm13', 'aug', 'dim',
   'add9', 'add11', '6/9', 'maj7#11', 'maj9#11',

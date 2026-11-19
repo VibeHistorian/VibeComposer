@@ -1094,12 +1094,12 @@ test('contextual range reaches shared notes, melody dependencies and MIDI while 
   const section = { ...project.arrangement[1], variations: { seed: '1', policy: { chance: 100, maxChanges: 2 }, choices: [choice] } };
   const patch = engine.variationPatch(base, choice);
   let pitchChanges = 0;
-  for (const [key, scale, tonic] of [['C', 'major', 0], ['F♯', 'dorian', 6], ['B', 'natural-minor', 11]]) for (let seed = 1; seed <= 10; seed++) {
-    const p = { ...project, seed: String(seed), key, scale, melodyGlobal: { contextualMelody: true }, arrangement: [section] };
+  for (const [scale, transposeSemitones] of [['major', 0], ['dorian', 6], ['natural-minor', 11]]) for (let seed = 1; seed <= 10; seed++) {
+    const p = { ...project, seed: String(seed), transposeSemitones, scale, melodyGlobal: { contextualMelody: true }, arrangement: [section] };
     const explicit = { ...p, arrangement: [{ ...section, variations: undefined, trackPartOverrides: { [base.id]: patch } }] };
     const bare = { ...p, arrangement: [{ ...section, variations: undefined }] };
     const notes = phrase.layOutTrackPhrase(p, base);
-    assert.ok(notes.length && notes.every(n => n.midi >= patch.rangeMin + tonic && n.midi <= patch.rangeMax + tonic));
+    assert.ok(notes.length && notes.every(n => n.midi >= patch.rangeMin + transposeSemitones && n.midi <= patch.rangeMax + transposeSemitones));
     assert.deepEqual(notes, phrase.layOutTrackPhrase(explicit, base));
     assert.deepEqual(phrase.sectionMelodyContext(p, section), phrase.sectionMelodyContext(explicit, explicit.arrangement[0]));
     assert.deepEqual(midi.generateCompositionMidi(p), midi.generateCompositionMidi(explicit));
@@ -1875,7 +1875,7 @@ test('subdivision output preserves baseline draws across custom timing, harmony 
     const t={...track,generatorSettings:{...track.generatorSettings,hitsPerPattern:hits}};
     const section={...project.arrangement[1],measures:6,customDurations,context:{beatDurationMultiplier:multiplier}};
     const arrangement=project.arrangement.map(s=>s.id===section.id?section:s);
-    const p={...project,key:'F♯',scale:'dorian',humanization,tracks:project.tracks.map(track=>track.id===t.id?t:track),arrangement};
+    const p={...project,transposeSemitones:6,scale:'dorian',humanization,tracks:project.tracks.map(track=>track.id===t.id?t:track),arrangement};
     const baseline=phrase.layOutTrackPhrase(p,t,true,true);
     const choice={trackId:t.id,kind:'arp-subdivision-ramp',amount:1,enabled:true};
     const variations={seed:'-9223372036854775808',policy:{chance:100,maxChanges:5},choices:[choice]};

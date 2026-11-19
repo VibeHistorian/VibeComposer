@@ -1,5 +1,5 @@
 import type { CompositionProject } from '../project/project.model';
-import { CHORD_SPICES, chordPitches, getPitchClass, progressionChords, type ProgressionChord, type ScaleMode } from './harmony';
+import { BASE_KEY, CHORD_SPICES, chordPitches, getPitchClass, progressionChords, type ProgressionChord, type ScaleMode } from './harmony';
 import { harmonyScaleNotes } from './scales';
 import { sectionProject } from './section-context';
 
@@ -55,7 +55,7 @@ export function reinterpretHarmonyChords(chords: readonly (ProgressionChord | nu
 export function followHarmonyMode(current: CompositionProject, next: CompositionProject, scope: HarmonyModeScope): CompositionProject {
   if (scope === 'off') return next;
   const progressionChords = current.scale !== next.scale && next.progressionChords
-    ? reinterpretHarmonyChords(next.progressionChords, next.progression, current.key, current.scale, next.scale)
+    ? reinterpretHarmonyChords(next.progressionChords, next.progression, BASE_KEY, current.scale, next.scale)
     : next.progressionChords;
   const arrangement = scope !== 'all' ? next.arrangement : next.arrangement.map(section => {
     const previous = current.arrangement.find(item => item.id === section.id);
@@ -70,7 +70,7 @@ export function followHarmonyMode(current: CompositionProject, next: Composition
     const expanded = section.customDurations && custom.length !== section.customDurations.length
       ? section.customDurations.map((_, i) => custom[i % custom.length]) : custom;
     return { ...section, customChords: reinterpretHarmonyChords(expanded,
-      section.chordDegrees ?? next.progression, before.key, before.scale, after.scale) };
+      section.chordDegrees ?? next.progression, BASE_KEY, before.scale, after.scale) };
   });
   return { ...next, progressionChords, arrangement };
 }

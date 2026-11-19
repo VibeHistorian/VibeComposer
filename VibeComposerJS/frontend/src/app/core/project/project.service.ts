@@ -27,7 +27,7 @@ import { followManualPhraseMode } from '../music/manual-phrase-mode';
 import { normalizeVolumePercent, validVolumePercent } from '../audio/mix-values';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { historyContent, preserveAudition, projectDiff } from './project-history';
-import { getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
+import { BASE_KEY, getDiatonicChords, progressionChords, validProgressionChords, type ProgressionChord } from '../music/harmony';
 import { generateTrackPresence } from '../music/arrangement-generator';
 import type { ArpeggioSettings, BassSettings, ChordSettings, DrumSettings, PartSettingsPatch, MelodySettings, MelodyGlobalSettings } from '../music/part-settings.model';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
@@ -278,7 +278,7 @@ export class ProjectService {
     const current = this.state(), section = current.arrangement.find(item => item.id === sectionId);
     if (!section || !patch || typeof patch !== 'object' || Array.isArray(patch)) return 'invalid';
     const context = { ...section.context } as Record<string, unknown>;
-    const keys = ['velocityPercent','tempoBpm','swingPercent','key','scale','keyChange','keyChangeType','beatDurationMultiplier'];
+    const keys = ['velocityPercent','tempoBpm','swingPercent','scale','keyChange','keyChangeType','beatDurationMultiplier'];
     for (const [key, value] of Object.entries(patch)) {
       if (!keys.includes(key)) return 'invalid';
       if (value === null) delete context[key]; else context[key] = value;
@@ -309,7 +309,7 @@ export class ProjectService {
     const count = section.customDurations?.length ?? degrees.length;
     if (!Number.isInteger(index) || index < 0 || index >= count) return;
     const contextual = sectionProject(project, section), harmony = baseGenerationHarmony(project, section);
-    const displayed = progressionChords(contextual.key, contextual.scale, harmony.degrees, harmony.customChords);
+    const displayed = progressionChords(BASE_KEY, contextual.scale, harmony.degrees, harmony.customChords);
     const custom = Array.from({ length: count }, (_, i) => i === index ? chord : displayed[i]);
     this.setSectionMusicalState(sectionId, { chordDegrees: Array.from({ length: count }, (_, i) => degrees[i % degrees.length]), customChords: custom });
   }
@@ -320,7 +320,7 @@ export class ProjectService {
     const base = sectionDegrees(project, section), count = section.customDurations?.length ?? base.length;
     const degrees = Array.from({ length: count }, (_, i) => base[i % base.length]);
     const contextual = sectionProject(project, section), harmony = baseGenerationHarmony(project, section);
-    const chords: (ProgressionChord | null)[] = progressionChords(contextual.key, contextual.scale, harmony.degrees, harmony.customChords);
+    const chords: (ProgressionChord | null)[] = progressionChords(BASE_KEY, contextual.scale, harmony.degrees, harmony.customChords);
     const durations = section.customDurations ? [...section.customDurations] : undefined;
     if (action === 'add') { if (count >= 32) return; degrees.push(1); chords.push(null); durations?.push(4); }
     else {
@@ -522,7 +522,7 @@ export class ProjectService {
           const seed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(current.seed)))) + order) | 0;
           if (melodyPolicy.patternsOnCompose ?? true) Object.assign(settings, { melodyPatternOffsets: chooseMelodyPattern(seed) });
           if (melodyPolicy.targetsOnCompose ?? true) Object.assign(settings, { chordNoteChoices: chooseMelodyTargets(seed, current.progression,
-            current.melodyGlobal, current.key, current.scale, current.progressionChords, { ...track.generatorSettings, patternSeed: settings.patternSeed }) });
+            current.melodyGlobal, BASE_KEY, current.scale, current.progressionChords, { ...track.generatorSettings, patternSeed: settings.patternSeed }) });
         }
         return { ...track, generatorSettings: settings } as CompositionTrack;
       });
@@ -671,7 +671,7 @@ export class ProjectService {
       tempoBpm: current.randomizeTempoOnCompose === false ? current.tempoBpm : tempo };
     if (current.randomizeHarmonyOnCompose !== false) {
       // Harmony owns its seeded stream; toggling it never shifts other random draws.
-      const generated = generateHarmony(BigInt(seed), current.progression.length, next.key, next.scale,
+      const generated = generateHarmony(BigInt(seed), current.progression.length, BASE_KEY, next.scale,
         next.harmonySettings, next.melodyGlobal);
       next = { ...next, progression: generated.degrees, progressionChords: generated.chords };
     }
@@ -699,7 +699,7 @@ export class ProjectService {
         const patternSeed = ((settings.patternSeed || Number(BigInt.asIntN(32, BigInt(next.seed)))) + order) | 0;
         if (policy.patternsOnCompose ?? true) settings.melodyPatternOffsets = chooseMelodyPattern(patternSeed);
         if (policy.targetsOnCompose ?? true) settings.chordNoteChoices = chooseMelodyTargets(patternSeed, next.progression, next.melodyGlobal,
-          next.key, next.scale, next.progressionChords, settings);
+          BASE_KEY, next.scale, next.progressionChords, settings);
         if (partPatchesEqual(track.generatorSettings, settings)) return track;
         return { ...track, generatorSettings: settings };
       });
@@ -1011,7 +1011,7 @@ export class ProjectService {
     return String(values[0] || 1);
   }
 
-  updateSettings(patch: Partial<Pick<CompositionProject, 'masterVolumePercent' | 'humanization' | 'midiPadding' | 'name' | 'key' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationPolicy'>>): void {
+  updateSettings(patch: Partial<Pick<CompositionProject, 'masterVolumePercent' | 'humanization' | 'midiPadding' | 'name' | 'scale' | 'transposeSemitones' | 'tempoBpm' | 'seed' | 'randomizeTempoOnCompose' | 'randomizeHarmonyOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeArrangementOnCompose' | 'arrangementPreview' | 'arrangementManual' | 'arrangementVariationPolicy'>>): void {
     if (patch.scale !== undefined && !isScaleMode(patch.scale)) return;
     if (patch.masterVolumePercent !== undefined && !validVolumePercent(patch.masterVolumePercent)) return;
     if (patch.transposeSemitones !== undefined
@@ -1480,7 +1480,7 @@ export class ProjectService {
   }
 
   setChordDegree(index: number, degree: number): void {
-    const chords = getDiatonicChords(this.state().key, this.state().scale);
+    const chords = getDiatonicChords(BASE_KEY, this.state().scale);
     if (!Number.isInteger(index) || index < 0 || index >= this.state().progression.length
         || !chords.some((chord) => chord.degree === degree)) {
       return;
@@ -1509,7 +1509,7 @@ export class ProjectService {
   }
 
   setProgression(progression: readonly number[]): void {
-    const chords = getDiatonicChords(this.state().key, this.state().scale);
+    const chords = getDiatonicChords(BASE_KEY, this.state().scale);
     if (progression.length < 1 || progression.length > 32
         || progression.some((degree) => !chords.some((chord) => chord.degree === degree))) {
       return;
@@ -1523,11 +1523,11 @@ export class ProjectService {
     const seed = BigInt(useProjectSeed ? project.seed : this.randomCompositionSeed());
     const context = sectionProject(project, section);
     const length = section?.customChords?.length ?? section?.chordDegrees?.length ?? project.progression.length;
-    const generated = generateHarmony(seed, length, context.key, context.scale, project.harmonySettings, project.melodyGlobal);
+    const generated = generateHarmony(seed, length, BASE_KEY, context.scale, project.harmonySettings, project.melodyGlobal);
     if (allSections) this.editAllSectionMusic(item => {
       const local = sectionProject(project, item);
       const count = item.customChords?.length ?? item.chordDegrees?.length ?? project.progression.length;
-      const harmony = generateHarmony(seed, count, local.key, local.scale, project.harmonySettings, project.melodyGlobal);
+      const harmony = generateHarmony(seed, count, BASE_KEY, local.scale, project.harmonySettings, project.melodyGlobal);
       return { ...item, chordDegrees: harmony.degrees, customChords: harmony.chords };
     });
     else if (section) this.setSectionMusicalState(section.id, { chordDegrees: generated.degrees, customChords: generated.chords });

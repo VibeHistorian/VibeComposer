@@ -892,32 +892,31 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('D'),'section chord render');
       editor.querySelector('.chordlet-label').dispatchEvent(new WheelEvent('wheel',{deltaY:-1,bubbles:true,cancelable:true}));
       await wait(()=>section().customChords?.[0]?.explicitZeroInversion===true,'section explicit zero inversion');
-      await change(editor.querySelector(':is(vc-select, vc-menu-select)'),'G');
-      if((await selectOptions(editor.querySelectorAll(':is(vc-select, vc-menu-select)')[1])).length!==18) throw new Error('missing section modes');
-      await change(editor.querySelectorAll(':is(vc-select, vc-menu-select)')[1],'mixolydian');
+      if((await selectOptions(editor.querySelector('label vc-menu-select'))).length!==18) throw new Error('missing section modes');
+      await change(editor.querySelector('label vc-menu-select'),'mixolydian');
       await wait(()=>section().context?.scale==='mixolydian'&&read().scale==='major','local Mixolydian override');
-      await change(editor.querySelectorAll(':is(vc-select, vc-menu-select)')[1],'natural-minor');
+      await change(editor.querySelector('label vc-menu-select'),'natural-minor');
       await change(editor.querySelector('input[min="-24"]'),'2');
-      await wait(()=>section().context?.key==='G'&&section().context?.scale==='natural-minor'&&section().context?.keyChange===2,'section key context');
-      await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('E'),'section key render');
+      await wait(()=>section().context?.scale==='natural-minor'&&section().context?.keyChange===2,'section scale and transpose');
+      await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('E'),'section transpose render');
       editor.querySelector('.chordlet-label').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2}));
       const sectionRoots=await wait(()=>editor.querySelector('[aria-label="Chord root"]'),'section root colors');
-      const tonic=sectionRoots.querySelector('[data-root="A"]');
+      const tonic=sectionRoots.querySelector('[data-root="D"]');
       const sectionRootColors=tonic.style.getPropertyValue('--chord-hue')==='0'
-        && editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='210';
+        && editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='60';
       editor.querySelector('.chordlet-label').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1}));
       const sectionSpices=await wait(()=>editor.querySelector('[aria-label="Chord spice"]'),'section spice colors');
       const spiceChoice=name=>[...sectionSpices.querySelectorAll('button')].find(button=>button.textContent===name);
-      const sectionSpiceColors=Number(spiceChoice('m').dataset.keyOverlap)===1
-        && Number(spiceChoice('maj7').dataset.keyOverlap)===.5 && spiceChoice('m').title.includes('A Natural minor');
+      const sectionSpiceColors=Number(spiceChoice('m').dataset.keyOverlap)===2/3
+        && Number(spiceChoice('maj7').dataset.keyOverlap)===.25 && spiceChoice('m').title.includes('D Natural minor');
       sectionSpices.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
       await change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'7');
-      await wait(()=>read().transposeSemitones===7,'global transpose with section key');
+      await wait(()=>read().transposeSemitones===7,'global and section transpose');
       await wait(()=>editor.querySelector('.chordlet-label').textContent.startsWith('B'),'section transpose render');
       editor.querySelector('.chordlet-label').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,button:1}));
-      const transposed=await wait(()=>editor.querySelector('[aria-label="Chord spice"] button[title*="E Natural minor"]'),'transposed section palette');
-      const transposeColors=editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='210'
-        && Number([...editor.querySelectorAll('.spice-choice')].find(button=>button.textContent==='m').dataset.keyOverlap)===1;
+      const transposed=await wait(()=>editor.querySelector('[aria-label="Chord spice"] button[title*="A Natural minor"]'),'transposed section palette');
+      const transposeColors=editor.querySelector('.chordlet').style.getPropertyValue('--chord-hue')==='60'
+        && Number([...editor.querySelectorAll('.spice-choice')].find(button=>button.textContent==='m').dataset.keyOverlap)===2/3;
       transposed.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
       await change(document.querySelector('.transport-dock [aria-label="Transpose in semitones"]'),'0');
       await wait(()=>read().transposeSemitones===0,'restore global transpose');

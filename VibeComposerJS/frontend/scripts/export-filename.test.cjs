@@ -3,23 +3,19 @@ const test = require('node:test');
 const { loadMusic } = require('./music-loader.cjs');
 const { exportFilename, DEFAULT_EXPORT_NAME_FIELDS } = loadMusic('../project/export-filename.ts');
 const { defaultUiPreferences, decodeUiPreferences } = loadMusic('../ui/ui-preferences.ts');
-const project = { name: 'My composition', key: 'F#', tempoBpm: 128, seed: '9223372036854775807' };
+const project = { name: 'My composition', tempoBpm: 128, seed: '9223372036854775807' };
 const now = new Date(2026, 0, 2, 3, 4);
 
 test('export fields use local date and time, fixed order, and preserve long seeds', () => {
-  assert.equal(exportFilename(project, DEFAULT_EXPORT_NAME_FIELDS, now), '20260102_03-04_Fs_128_9223372036854775807_My composition');
-  assert.equal(exportFilename(project, ['seed', 'key'], now), 'Fs_9223372036854775807_My composition');
-  for (const key of ['Bb', 'B♭']) assert.equal(exportFilename({ ...project, key }, ['key'], now), 'Bb_My composition');
-  assert.equal(exportFilename({ ...project, key: 'F♯' }, ['key'], now), 'Fs_My composition');
+  assert.equal(exportFilename(project, DEFAULT_EXPORT_NAME_FIELDS, now), '20260102_03-04_C_128_9223372036854775807_My composition');
+  assert.equal(exportFilename(project, ['seed', 'key'], now), 'C_9223372036854775807_My composition');
 });
 
 test('export key follows global transpose across semitones and octaves', () => {
   const keys = ['C', 'Cs', 'D', 'Eb', 'E', 'F', 'Fs', 'G', 'Ab', 'A', 'Bb', 'B'];
-  for (const [key, root] of [['C', 0], ['F#', 6], ['B♭', 10]]) {
-    for (let transposeSemitones = -24; transposeSemitones <= 24; transposeSemitones++) {
-      const expected = keys[((root + transposeSemitones) % 12 + 12) % 12];
-      assert.equal(exportFilename({ ...project, key, transposeSemitones }, ['key'], now), `${expected}_My composition`);
-    }
+  for (let transposeSemitones = -24; transposeSemitones <= 24; transposeSemitones++) {
+    const expected = keys[(transposeSemitones % 12 + 12) % 12];
+    assert.equal(exportFilename({ ...project, transposeSemitones }, ['key'], now), `${expected}_My composition`);
   }
 });
 

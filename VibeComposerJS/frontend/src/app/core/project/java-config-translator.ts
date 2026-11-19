@@ -465,7 +465,7 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   }
   const instrumentGenerationPolicies = structuredClone(DEFAULT_INSTRUMENT_POLICIES);
   if (chordGen && one(chordGen, 'sustainChance')) Object.assign(instrumentGenerationPolicies.chords, { sustainChance: numeric(chordGen, 'sustainChance') });
-  const project = { ...DEFAULT_PROJECT, name: options.name?.trim() || 'Imported Java composition', key: 'C', scale,
+  const project = { ...DEFAULT_PROJECT, name: options.name?.trim() || 'Imported Java composition', scale,
     tempoBpm: Math.max(30, Math.min(240, Math.round(bpm))), transposeSemitones: numeric(root, 'transpose', 0)!, seed: BigInt(seedText).toString(),
     progression, ...(globalChords ? { progressionChords: globalChords } : {}), melodyGlobal, harmonySettings,
     tracks, arrangement, editedPhrases: {}, trackGenerationPolicies, instrumentGenerationPolicies,

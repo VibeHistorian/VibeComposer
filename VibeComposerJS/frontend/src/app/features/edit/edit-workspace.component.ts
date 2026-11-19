@@ -16,7 +16,7 @@ import { generateTrackPhrase, phraseForTrack, layOutTrackPhrase } from '../../co
 import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import { PhraseEditHistory, phraseNotesEqual, snapMidiToScale, type PhraseEditSnapshot } from '../../core/music/phrase-edit';
-import { getDiatonicChords, getPitchClass } from '../../core/music/harmony';
+import { BASE_KEY, getDiatonicChords, getPitchClass } from '../../core/music/harmony';
 import { ProjectService } from '../../core/project/project.service';
 import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
 import { isEditingText } from '../../shared/keyboard-shortcuts';
@@ -165,7 +165,7 @@ export class EditWorkspaceComponent {
     startBeat: (resolveProjectTimeline(this.project()).sections.find(section => section.sectionId === this.sectionId())?.startBeat ?? 0) + this.phraseStartBeat(),
     trackIds: this.editedTracks().map(track => track.id) }));
   readonly keyboardScale = computed(() => this.selectedPart() === 'drums' ? [] : this.scalePitchClasses());
-  readonly keyboardTonic = computed(() => 36 + (getPitchClass(this.project().key) ?? 0) + this.displayTranspose());
+  readonly keyboardTonic = computed(() => 36 + getPitchClass(BASE_KEY)! + this.displayTranspose());
   readonly keyboardLabels = computed(() => this.selectedPart() !== 'drums' && this.preferences.preferences().keyboardNoteInput
     ? keyboardLabels(this.preferences.preferences().keyboardMatchScale ? this.keyboardScale() : [], this.keyboardTonic()) : []);
   readonly gridSelectOptions = computed(() => this.gridChoices.map(grid => ({ value: grid, label: String(grid === 1 / 6 ? '1/6' : grid === 1 / 3 ? '1/3' : grid === 2 / 3 ? '2/3' : grid === 4 / 3 ? '4/3' : grid) })));
@@ -256,7 +256,7 @@ export class EditWorkspaceComponent {
       const buffer = await file.arrayBuffer();
       const { readMidiFile } = await import('../../core/ui/midi-file-import');
       const imported = await readMidiFile(buffer, Math.min(132, this.editBounds().endBeat), 2048, controller.signal, {
-        injector: this.injector, transpose: this.displayTranspose(), root: getPitchClass(this.project().key)!,
+        injector: this.injector, transpose: this.displayTranspose(), root: getPitchClass(BASE_KEY)!,
         mode: this.project().scale, snap: this.snapToScale() && track.role !== 'drums',
         ...(track.role === 'drums' ? { drumSlots: resolvedDrumSlots(this.project()) } : {}),
       });
@@ -297,7 +297,7 @@ export class EditWorkspaceComponent {
   readonly snapToScale = signal(true);
   readonly scalePitchClasses = computed(() => {
     const transpose = this.displayTranspose();
-    return getDiatonicChords(this.project().key, this.project().scale)
+    return getDiatonicChords(BASE_KEY, this.project().scale)
       .map(chord => ((getPitchClass(chord.root)! + transpose) % 12 + 12) % 12);
   });
   readonly hasChanges = computed(() => {

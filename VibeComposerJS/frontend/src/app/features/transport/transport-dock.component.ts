@@ -10,7 +10,7 @@ import { AudioPlaybackService } from '../../core/audio/audio-playback.service';
 import { ProjectService } from '../../core/project/project.service';
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { WorkspaceUiService } from '../../core/ui/workspace-ui.service';
-import { effectiveKey } from '../../core/music/harmony';
+import { BASE_KEY, effectiveKey } from '../../core/music/harmony';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { ChordletEditorComponent } from '../harmony/chordlet-editor.component';
 
@@ -56,7 +56,7 @@ export class TransportDockComponent {
   toggleComposeRandomization(field: 'randomizeTempoOnCompose' | 'randomizeTransposeOnCompose' | 'randomizeHarmonyOnCompose'): void {
     this.projects.updateSettings({ [field]: this.project()[field] === false });
   }
-  readonly key = computed(() => effectiveKey(this.project().key, this.project().transposeSemitones ?? 0));
+  readonly key = computed(() => effectiveKey(BASE_KEY, this.project().transposeSemitones ?? 0));
   private readonly generationFeedback = signal<{ project: unknown; message: string } | null>(null);
   readonly generationMessage = computed(() => this.generationFeedback()?.project === this.project() ? this.generationFeedback()?.message : null);
 

@@ -39,10 +39,10 @@ test('manual Mode behavior setting changes matching phrases and persists in the 
   await evaluate(`(async()=>{${waitCode}${helpers}
     const seed=await wait(()=>document.querySelector('[aria-label="Generation seed"]'));await change(seed,'43');
     window.dispatchEvent(new Event('pagehide')); // Flush before replacing the saved fixture.
-    const project=await wait(read);project.scale='major';project.key='D';project.transposeSemitones=7;
+    const project=await wait(read);project.scale='major';project.transposeSemitones=7;
     const notes=pitches=>pitches.map((midi,i)=>({id:'manual-'+i,midi,startBeat:i,durationBeats:.5,velocity:90}));
-    project.tracks.find(t=>t.role==='bass').editedPhrase=notes([62,66,69,73]);
-    project.tracks.find(t=>t.role==='chords').editedPhrase=notes([62,63,66]);
+    project.tracks.find(t=>t.role==='bass').editedPhrase=notes([60,64,67,71]);
+    project.tracks.find(t=>t.role==='chords').editedPhrase=notes([60,61,64]);
     project.tracks.find(t=>t.role==='drums').editedPhrase=notes([38]);
     localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
   })()`);
@@ -60,12 +60,12 @@ test('manual Mode behavior setting changes matching phrases and persists in the 
     const mode=await wait(()=>document.querySelector('[aria-label="Mode"]'));
     await change(mode,'natural-minor');await wait(()=>read().scale==='natural-minor');
     const project=read();
-    const converted=JSON.stringify(project.tracks.find(t=>t.role==='bass').editedPhrase.map(n=>n.midi))==='[62,65,69,72]';
-    const chromaticPreserved=JSON.stringify(project.tracks.find(t=>t.role==='chords').editedPhrase.map(n=>n.midi))==='[62,63,66]';
+    const converted=JSON.stringify(project.tracks.find(t=>t.role==='bass').editedPhrase.map(n=>n.midi))==='[60,63,67,70]';
+    const chromaticPreserved=JSON.stringify(project.tracks.find(t=>t.role==='chords').editedPhrase.map(n=>n.midi))==='[60,61,64]';
     const drumsPreserved=project.tracks.find(t=>t.role==='drums').editedPhrase[0].midi===38;
     const off=await settings();off.click();close();
     await change(mode,'major');await wait(()=>read().scale==='major');
-    const disabledPreserved=JSON.stringify(read().tracks.find(t=>t.role==='bass').editedPhrase.map(n=>n.midi))==='[62,65,69,72]';
+    const disabledPreserved=JSON.stringify(read().tracks.find(t=>t.role==='bass').editedPhrase.map(n=>n.midi))==='[60,63,67,70]';
     return {defaultOn,converted,chromaticPreserved,drumsPreserved,disabledPreserved};
   })()`);
   for(const [key,value] of Object.entries(result))assert.equal(value,true,key);

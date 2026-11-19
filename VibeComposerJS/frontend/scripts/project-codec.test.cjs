@@ -61,6 +61,7 @@ test('project decoding works without Angular or storage and preserves import def
   assert.equal(isProject(input, DEFAULT_SECTION_TYPE_CHANCES, () => 0.5), true);
   const decoded = decodeProject(input, DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
   assert.ok(decoded);
+  assert.equal(Object.hasOwn(decoded, 'key'), false);
   assert.equal(decoded.seed, '9223372036854775807');
   assert.equal(decoded.transposeSemitones, 0);
   assert.equal(decoded.tracks.find(track => track.role === 'melody').generatorSettings.algorithm, 'block');

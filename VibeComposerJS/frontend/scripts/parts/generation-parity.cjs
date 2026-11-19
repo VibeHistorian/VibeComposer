@@ -203,7 +203,7 @@ test('P5e inference retains Java helper parity and supported melody generation f
       pauseChance: 0, fillPauses: false, velocityMin: 80, velocityMax: 105, swingPercent: 50 };
     settings.newBlocksChance = entry.sample % 2 === 0 ? 25 : 100;
     const globalSettings = { patternEffect: entry.sample % 3 };
-    const project = { ...DEFAULT_PROJECT, key: 'C', scale: 'major', seed: entry.seed, progression: [1,5,6,4], progressionChords: undefined,
+    const project = { ...DEFAULT_PROJECT, scale: 'major', seed: entry.seed, progression: [1,5,6,4], progressionChords: undefined,
       melodyGlobal: globalSettings, tracks: [{ ...DEFAULT_PROJECT.tracks.find(track => track.role === 'melody'), generatorSettings: settings }] };
     const base = baseGenerationHarmony(project);
     let skeleton;
@@ -229,20 +229,20 @@ test('P5e inference retains Java helper parity and supported melody generation f
   }
 });
 
-test('P5e sounding harmony preserves chromatic Chordlets across keys/modes while canonical voicing keeps independent roots', () => {
+test('P5e sounding harmony preserves chromatic Chordlets across transpositions and modes while canonical voicing keeps independent roots', () => {
   const { service, load, phrase, midi } = fixture();
-  const { chordPitches, progressionChords, getPitchClass } = load('core/music/harmony.ts');
+  const { chordPitches, progressionChords } = load('core/music/harmony.ts');
   const { baseGenerationHarmony, projectMelodyHarmony } = load('core/music/project-harmony.ts');
   service.setProgression([1,5,6,4]);
   service.updateHarmonySettings({ flattenVoicingChance:0 });
   const id = service.project().arrangement[0].id;
   service.project().tracks.forEach(track => service.setSectionTrackPresence(0,track.id,true));
-  for (const key of ['C','D','F♯','A♭']) for (const scale of ['major','natural-minor']) {
-    service.updateSettings({ key,scale });
-    const custom = { root:(getPitchClass(key)+4)%12,spice:'maj7',inversion:1 };
+  for (const transposeSemitones of [0, 2, 6, 8]) for (const scale of ['major','natural-minor']) {
+    service.updateSettings({ transposeSemitones, scale });
+    const custom = { root:4,spice:'maj7',inversion:1 };
     service.setProgressionChord(0,custom);
     const harmony = baseGenerationHarmony(service.project());
-    const definitions = progressionChords(key,scale,service.project().progression,service.project().progressionChords);
+    const definitions = progressionChords('C',scale,service.project().progression,service.project().progressionChords);
     assert.deepEqual(harmony.soundingRoots,definitions.map(chord => chordPitches({ ...chord,inversion:0 },60)));
     assert.deepEqual(harmony.soundingVoicings,definitions.map(chord => chordPitches(chord,60)));
     const roots = harmony.soundingRoots;
@@ -385,7 +385,7 @@ test('arpeggio contour attacks stay in every supported key and mode with CHORD e
 
 test('chord-relative contours use the same in-key pitches in production phrases and exported MIDI', () => {
   const { service, phrase, midi } = fixture();
-  service.updateSettings({ key: 'G', scale: 'natural-minor', transposeSemitones: 0 });
+  service.updateSettings({ scale: 'natural-minor', transposeSemitones: 7 });
   service.setProgression([1]);
   const id = 'track-arpeggio-1';
   service.setSectionTrackPresence(0, id, true);
@@ -393,7 +393,7 @@ test('chord-relative contours use the same in-key pitches in production phrases 
     arpContour: [0,0,1,2], arpContourChordMode: true, exceptionChance: 0, pauseChance: 0,
     useOctaveAdjustments: false, transpose: 0, swingPercent: 50 });
   const project = service.project(), track = project.tracks.find(track => track.id === id);
-  assert.deepEqual(phrase.generateTrackPhrase(project, track).map(note => note.midi), [67,67,69,70]);
+  assert.deepEqual(phrase.generateTrackPhrase(project, track).map(note => note.midi), [60,60,62,63]);
   const expected = phrase.layOutTrackPhrase(project, track).map(note => note.midi);
   assert.ok(expected.length > 0);
   assert.deepEqual(new Midi(midi.generateCompositionMidi(project)).tracks.find(item => item.name === track.name).notes.map(note => note.midi), expected);

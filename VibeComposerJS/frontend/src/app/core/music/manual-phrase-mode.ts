@@ -1,21 +1,21 @@
 import type { CompositionProject } from '../project/project.model';
 import type { PhraseNote } from './phrase-note';
-import { getPitchClass } from './harmony';
+import { BASE_KEY, getPitchClass } from './harmony';
 import { convertScalePitch, scaleNotes, type ScaleMode } from './scales';
 
-/** Convert a whole manual phrase only when every pitch belongs to its old key/mode.
+/** Convert a whole manual phrase only when every pitch belongs to its old scale.
  * Stored pitches exclude global transpose. Preserve note identity, timing and velocity.
  */
-function convertPhrase(notes: readonly PhraseNote[] | undefined, key: string, fromMode: ScaleMode, toMode: ScaleMode): readonly PhraseNote[] | undefined {
+function convertPhrase(notes: readonly PhraseNote[] | undefined, fromMode: ScaleMode, toMode: ScaleMode): readonly PhraseNote[] | undefined {
   if (!notes?.length || fromMode === toMode) return notes;
-  const root = getPitchClass(key)!;
+  const tonic = getPitchClass(BASE_KEY)!;
   const from = scaleNotes(fromMode), to = scaleNotes(toMode);
-  const degree = (midi: number) => from.findIndex(pitch => pitch % 12 === ((midi - root) % 12 + 12) % 12);
+  const degree = (midi: number) => from.findIndex(pitch => pitch % 12 === (midi - tonic + 12) % 12);
   if (!notes.every(note => degree(note.midi) >= 0)) return notes;
   return notes.map(note => {
-    const relative = note.midi - root;
+    const relative = note.midi - tonic;
     const octave = Math.floor(relative / 12) * 12;
-    let midi = root + octave + convertScalePitch(relative - octave, from, to);
+    let midi = tonic + octave + convertScalePitch(relative - octave, from, to);
     if (midi < 0) midi += 12;
     if (midi > 127) midi -= 12;
     return midi === note.midi ? note : { ...note, midi };
@@ -26,18 +26,18 @@ export function followManualPhraseMode(previous: CompositionProject, next: Compo
   if (previous.scale === next.scale) return next;
   return { ...next,
     tracks: next.tracks.map(track => track.role === 'drums' || track.editedPhrase === undefined && !track.phraseEdits?.length ? track : {
-      ...track, editedPhrase: convertPhrase(track.editedPhrase, previous.key, previous.scale, next.scale),
+      ...track, editedPhrase: convertPhrase(track.editedPhrase, previous.scale, next.scale),
       ...(track.phraseEdits ? { phraseEdits: track.phraseEdits.map(edit => ({ ...edit,
-        notes: convertPhrase(edit.notes, previous.key, previous.scale, next.scale)!,
+        notes: convertPhrase(edit.notes, previous.scale, next.scale)!,
       })) } : {}),
     }),
     editedPhrases: Object.fromEntries(Object.entries(next.editedPhrases).map(([role, notes]) => [role,
-      role === 'drums' ? notes : convertPhrase(notes, previous.key, previous.scale, next.scale)])),
+      role === 'drums' ? notes : convertPhrase(notes, previous.scale, next.scale)])),
     arrangement: next.arrangement.map(section => {
       if (!section.trackPhrases || section.context?.scale !== undefined) return section;
       return { ...section, trackPhrases: Object.fromEntries(Object.entries(section.trackPhrases).map(([id, notes]) => [id,
         next.tracks.find(track => track.id === id)?.role === 'drums' ? notes
-          : convertPhrase(notes, section.context?.key ?? previous.key, previous.scale, next.scale)!])) };
+          : convertPhrase(notes, previous.scale, next.scale)!])) };
     }),
   };
 }

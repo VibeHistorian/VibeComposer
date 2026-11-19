@@ -2,7 +2,7 @@ import { projectDrumPitches, validDrumSlots } from './project-drum-kit';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
 import type { PartSettingsPatch } from '../music/part-settings.model';
 import { type SectionType, SECTION_TYPES } from './arrangement.model';
-import { KEYS, validProgressionChords } from '../music/harmony';
+import { validProgressionChords } from '../music/harmony';
 import { isScaleMode } from '../music/scales';
 import { validVolumePercent } from '../audio/mix-values';
 import { PART_CONTROLS, decodePartPatch, validVelocityRange } from '../music/part-settings';
@@ -60,7 +60,7 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     check(`${path}.panPercent`, Number.isInteger(fields['panPercent']) && Math.abs(fields['panPercent'] as number) <= 100, 'expected an integer from -100 to 100');
     for (const key of ['muted', 'solo']) check(`${path}.${key}`, typeof fields[key] === 'boolean', 'expected a boolean');
   };
-  const required = ['name', 'key', 'scale', 'tempoBpm', 'seed', 'progression', 'editedPhrases', 'tracks', 'arrangement'];
+  const required = ['name', 'scale', 'tempoBpm', 'seed', 'progression', 'editedPhrases', 'tracks', 'arrangement'];
   const project = object(value, 'project', required, [...required, 'schemaVersion', 'transposeSemitones', 'progressionChords',
     'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies', 'arrangementVariationPolicy', 'drumSlots']);
   if (project) {
@@ -68,7 +68,6 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (project['arrangementVariationPolicy'] !== undefined) check('project.arrangementVariationPolicy',
       validVariationPolicy(project['arrangementVariationPolicy'], Array.isArray(project['tracks']) ? project['tracks'].length : 0), 'expected a valid variation policy');
     check('project.name', typeof project['name'] === 'string', 'expected a string');
-    check('project.key', KEYS.includes(project['key'] as string), `expected one of ${KEYS.join(', ')}`);
     check('project.scale', isScaleMode(project['scale']), 'expected a supported scale/mode');
     check('project.tempoBpm', Number.isInteger(project['tempoBpm']) && (project['tempoBpm'] as number) >= 30 && (project['tempoBpm'] as number) <= 240, 'expected an integer from 30 to 240');
     const seed = project['seed'];

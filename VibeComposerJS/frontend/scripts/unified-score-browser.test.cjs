@@ -427,7 +427,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await evaluate(`(()=>{
     window.dispatchEvent(new Event('pagehide')); // Flush before replacing the saved fixture.
     const p=JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
-    p.key='C';p.scale='major';p.transposeSemitones=2;p.progression=[1,4];delete p.progressionChords;
+    p.scale='major';p.transposeSemitones=2;p.progression=[1,4];delete p.progressionChords;
     const bass=p.tracks.find(t=>t.role==='bass');
     const base={...p.arrangement[0],measures:2};
     delete base.trackPhrases;delete base.trackPartOverrides;delete base.rolePartOverrides;

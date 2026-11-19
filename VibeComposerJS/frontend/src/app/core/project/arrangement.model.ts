@@ -34,10 +34,9 @@ export interface SectionMusicalContext {
   readonly velocityPercent?: Readonly<Partial<Record<ArrangedPart, number>>>;
   readonly tempoBpm?: number;
   readonly swingPercent?: number;
-  readonly key?: string;
   readonly scale?: ScaleMode;
   readonly keyChange?: number;
-  /** Direct transposition or an ending ii–V cadence in the selected section key. */
+  /** Direct transposition or an ending ii–V cadence in the section’s transposed key. */
   readonly keyChangeType?: 'direct' | 'two-five-one';
   readonly beatDurationMultiplier?: 0.5 | 1 | 2;
 }
