@@ -22,7 +22,7 @@
           <input id="note-velocity" type="range" min="1" max="127" step="1" [value]="note.velocity" (change)="updateSelected('velocity', $event)" />
           <output>{{ note.velocity }}</output>
         </div>
-        <button type="button" class="remove-note" (click)="deleteSelected()">Remove selected notes</button>
+        <button type="button" class="vc-button remove-note" (click)="deleteSelected()">Remove selected notes</button>
       } @else {
         <p class="inspector-copy">Select a note in the piano roll to edit its properties. Applying saves this phrase as one undo step.</p>
       }
@@ -30,7 +30,7 @@
       @if (isEdited()) {
         <div class="restore-panel">
           <p>{{ generationAvailable() ? 'This part includes your saved note edits.' : 'This track uses your saved melody notes.' }}</p>
-          @if (generationAvailable()) { <button type="button" class="secondary-button" (click)="restoreGenerated()">Restore generated phrase</button> }
+          @if (generationAvailable()) { <button type="button" class="vc-button" (click)="restoreGenerated()">Restore generated phrase</button> }
         </div>
       } @else {
         <div class="source-panel"><span class="status-dot"></span> {{ generationAvailable() ? 'Following current seed and generation settings' : 'Add melody notes here. Automatic generation is not available yet.' }}</div>
@@ -45,15 +45,15 @@
     <label class="field-label" for="phrase-grid">Time grid (beats)</label>
     <vc-select [options]="gridSelectOptions()" id="phrase-grid" [value]="snapBeats()" (valueChange)="setGrid($event)"></vc-select>
     <div class="phrase-actions">
-      <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="selectAll()">Select all</button>
-      <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="copyNotes()" [disabled]="!selectedNoteIds().length">Copy notes</button>
-      <button type="button" title="Paste notes at the playhead" (click)="pasteNotes()" [disabled]="!canPasteNotes()">Paste notes</button>
-      <button type="button" title="Shortcuts: Settings > Shortcuts" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>
+      <button type="button" class="vc-button" title="Shortcuts: Settings > Shortcuts" (click)="selectAll()">Select all</button>
+      <button type="button" class="vc-button" title="Shortcuts: Settings > Shortcuts" (click)="copyNotes()" [disabled]="!selectedNoteIds().length">Copy notes</button>
+      <button type="button" class="vc-button" title="Paste notes at the playhead" (click)="pasteNotes()" [disabled]="!canPasteNotes()">Paste notes</button>
+      <button type="button" class="vc-button" title="Shortcuts: Settings > Shortcuts" (click)="openTranspose()" [disabled]="!selectedNoteIds().length">Transpose…</button>
     </div>
     @if (transposeOpen()) {
       <label class="field-label" for="phrase-transpose">Transpose selected notes (semitones)</label>
       <input id="phrase-transpose" type="number" step="1" [value]="transposeAmount()" (input)="setTranspose($event)" (keydown.enter)="transposeSelected()" (keydown.escape)="transposeOpen.set(false)" />
-      <button type="button" (click)="transposeSelected()" [disabled]="!selectedNoteIds().length">Transpose</button>
+      <button type="button" class="vc-button" (click)="transposeSelected()" [disabled]="!selectedNoteIds().length">Transpose</button>
     }
   </div>
   <details class="phrase-help">
