@@ -16,6 +16,7 @@ const mod = (n: number, d = 12) => (n % d + d) % d;
 type Purpose = 'STATEMENT' | 'CONTINUATION' | 'QUESTION' | 'ANSWER' | 'CLOSING';
 interface Phrase { start: number; end: number; motif: number; purpose: Purpose }
 interface Slot { start: number; duration: number; rest: boolean; phrase: Phrase; arrival: boolean; appoggiatura: boolean }
+interface RhythmStep { end: number; pauseRoll?: number }
 type Role = 'CHORD' | 'EXTENSION' | 'PASSING' | 'CHROMATIC' | 'APPOGGIATURA' | 'SUSPENSION';
 interface Planned { slot: Slot; pitch: number; role: Role }
 interface State { path: Planned[]; score: number; last: number; previous: number; first: number; phraseFirst: number;
@@ -73,8 +74,9 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
     phrases.push({ start, end, purpose, motif: motifs[index % motifs.length] });
   }
   const fill = partFillMask(degrees.length, settings), leap = Math.min(24, 2 + (settings.maxBlockChange ?? 7) + (settings.blockJump ?? 1));
+  const syncopation = settings.syncopation ?? 0, rhythmicReuse = settings.rhythmicReuse ?? 0;
   const overlapping = (slot: Slot) => events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
-  const makeRhythm = (variant: number): Slot[] => {
+  const makeRhythm = (variant: number, shapeRhythm: boolean): Slot[] => {
     const slots: Slot[] = [];
     if (settings.rhythm === 'durations') {
       for (let chord = 0; chord < events.length; chord++) {
@@ -99,11 +101,20 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
       }
       return slots;
     }
+    const references = new Map<number, RhythmStep[]>();
     for (const phrase of phrases) {
-      const random = new JavaRandom(baseSeed ^ 0x72687974686dn ^ 0x9e3779b97f4a7c15n * BigInt(Math.abs(phrase.motif)) ^ BigInt(variant));
+      const word = Math.abs(phrase.motif);
+      const rhythmSeed = baseSeed ^ 0x72687974686dn ^ 0x9e3779b97f4a7c15n * BigInt(word) ^ BigInt(variant);
+      const random = new JavaRandom(rhythmSeed);
+      const reuseEnabled = shapeRhythm && rhythmicReuse > 0;
+      const reference = reuseEnabled ? references.get(word) : undefined;
+      const recorded: RhythmStep[] | undefined = reuseEnabled && !reference ? [] : undefined;
+      const reuseRandom = reference && new JavaRandom(mixContextualSeed(rhythmSeed ^ BigInt(phrase.start) ^ 0x7265757365n));
+      const reuseEnd = phrase.end - BEAT;
+      const variedTail = phrase.purpose === 'ANSWER' || phrase.purpose === 'CONTINUATION';
       const arrivals = [phrase.start];
       if (phrase.end - phrase.start > 2 * BEAT || phrase.purpose === 'CLOSING' && phrase.end - phrase.start > BEAT) arrivals.push(phrase.end - BEAT);
-      let index = 0;
+      let index = 0, referenceIndex = 0;
       for (let cursor = phrase.start; cursor < phrase.end; index++) {
         const event = at(cursor), arrival = arrivals.includes(cursor);
         let available = Math.min(phrase.end, ...arrivals.filter(t => t > cursor)) - cursor;
@@ -126,8 +137,22 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         let roll = random.nextDouble() * weights.reduce((sum,w) => sum+w,0);
         let duration = Math.min(240,available);
         for (let i = 0; i < weights.length; i++) if (weights[i] && (roll -= weights[i]) < 0) { duration = durations[i]; break; }
+        const relative = cursor - phrase.start;
+        let reused: RhythmStep | undefined;
+        const reuseChance = variedTail && cursor >= reuseEnd - BEAT ? rhythmicReuse * 0.65 : rhythmicReuse;
+        if (reference && reuseRandom && cursor < reuseEnd && reuseRandom.nextInt(100) < reuseChance) {
+          // Find the next reference boundary, even after a locally varied slot.
+          while (referenceIndex < reference.length && reference[referenceIndex].end <= relative) referenceIndex++;
+          const step = reference[referenceIndex], end = step && phrase.start + step.end;
+          if (end !== undefined && end <= cursor + available && end <= reuseEnd) {
+            duration = end - cursor;
+            reused = step;
+          }
+        }
         if (phrase.purpose === 'CLOSING' && phrase.end - cursor <= BEAT) duration = phrase.end - cursor;
-        const rest = index > 0 && cursor + duration < phrase.end && random.nextInt(100) < (settings.pauseChance ?? 0) + (phrase.purpose === 'QUESTION' ? 8 : 0);
+        const pauseRoll = index > 0 && cursor + duration < phrase.end ? random.nextInt(100) : undefined;
+        const rest = pauseRoll !== undefined && (reused?.pauseRoll ?? pauseRoll) < (settings.pauseChance ?? 0) + (phrase.purpose === 'QUESTION' ? 8 : 0);
+        recorded?.push({ end: relative + duration, pauseRoll });
         const appoggiatura = !rest && phrase.purpose === 'CONTINUATION' && cursor % BEAT === 0 && random.nextInt(100) < 12;
         const chordIndex = events.indexOf(event);
         const muted = rest || !fill[chordIndex] || arrival && cursor + duration < total
@@ -137,6 +162,26 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
           slots.push({ ...slot, duration: duration / 2 }, { ...slot, start: cursor + duration / 2, duration: duration / 2, arrival: false, appoggiatura: false });
         } else slots.push(slot);
         cursor += duration;
+      }
+      if (recorded) references.set(word, recorded);
+    }
+    if (shapeRhythm && syncopation > 0) {
+      for (let index = 1; index < slots.length; index++) {
+        const slot = slots[index], previous = slots[index - 1];
+        if (slot.rest || slot.arrival || slot.appoggiatura || slot.start % BEAT !== 0 || previous.phrase !== slot.phrase
+          || previous.duration < BEAT / 2) continue;
+        const relative = slot.start - slot.phrase.start, word = Math.abs(slot.phrase.motif);
+        const random = new JavaRandom(mixContextualSeed(baseSeed ^ 0x73796e636f70n ^ BigInt(variant)
+          ^ BigInt(relative) * 0x9e3779b97f4a7c15n ^ BigInt(word) * 0xd1b54a32d192ed03n));
+        if (random.nextInt(100) >= syncopation) continue;
+        const event = at(slot.start);
+        // Move the shared boundary, keeping the attack count and surrounding rhythm.
+        const shift = previous.duration >= BEAT && slot.start - BEAT / 2 >= event.start && random.nextBoolean()
+          ? BEAT / 2 : BEAT / 4;
+        if (slot.start - shift < event.start) continue;
+        previous.duration -= shift;
+        slot.start -= shift;
+        slot.duration += shift;
       }
     }
     return slots;
@@ -153,8 +198,11 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   };
   const pending = (role: Role) => !['CHORD', 'EXTENSION'].includes(role);
   let result: Planned[] | undefined;
-  for (let variant = 0; variant < 3 && !result; variant++) {
-    const rhythm = makeRhythm(variant === 2 ? 0 : variant);
+  const shapeRhythm = settings.rhythm !== 'durations' && (syncopation > 0 || rhythmicReuse > 0);
+  // Rhythm shaping is a preference. Retry the original rhythms if the pitch search cannot resolve one.
+  for (let attempt = 0; attempt < (shapeRhythm ? 6 : 3) && !result; attempt++) {
+    const variant = attempt % 3;
+    const rhythm = makeRhythm(variant === 2 ? 0 : variant, shapeRhythm && attempt < 3);
     const slots = variant === 2 ? rhythm.flatMap(slot => {
       const split: Slot[] = [];
       for (let cursor = slot.start; cursor < slot.start + slot.duration;) {

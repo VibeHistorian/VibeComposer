@@ -130,6 +130,74 @@ test('contextual search preserves exact notes, patterns and skeletons across the
   });
 });
 
+test('contextual rhythm controls are neutral at zero and leave authored durations and block melody alone', () => {
+  const generate = (settings, global) => {
+    let pattern, skeleton;
+    const notes = generateMelody(42n, 'C', 'natural-minor', [1, 6, 3, 7], { algorithm: 'block', ...settings },
+      0, value => { pattern = value; }, global, undefined, undefined, value => { skeleton = value; });
+    return { notes, pattern, skeleton };
+  };
+  assert.deepEqual(generate({ syncopation: 0, rhythmicReuse: 0 }), generate({}));
+  const active = { syncopation: 87, rhythmicReuse: 93 };
+  const authored = { rhythm: 'durations', customDurations: [[-0.5, 0.5, 1, -1, 1], ...Array.from({ length: 9 }, () => [])] };
+  assert.deepEqual(generate({ ...authored, ...active }), generate(authored));
+  assert.deepEqual(generate(active, { contextualMelody: false }), generate({}, { contextualMelody: false }));
+});
+
+test('syncopation and rhythmic reuse shape seeded rhythm while preserving other controls', () => {
+  const sample = (settings) => {
+    const results = { attacks: 0, offbeats: 0, anticipations: 0, coreDifference: 0, tailDifference: 0 };
+    for (let seed = 1n; seed <= 32n; seed++) {
+      const notes = generateMelody(seed, 'C', 'natural-minor', [1, 1, 4, 5, 1, 6, 3, 7], {
+        algorithm: 'block', pauseChance: 18, melodyPatternOffsets: [1], ...settings,
+      }, 0, undefined, { phraseBars: 2 });
+      results.attacks += notes.length;
+      for (const note of notes) {
+        if (note.startBeat % 1 === 0) continue;
+        results.offbeats++;
+        if (note.startBeat + note.durationBeats > Math.ceil(note.startBeat)) results.anticipations++;
+      }
+      for (const [start, end, key] of [[0, 7, 'coreDifference'], [7, 8, 'tailDifference']]) {
+        const first = new Set(notes.filter(note => note.startBeat >= start && note.startBeat < end).map(note => note.startBeat));
+        const second = new Set(notes.filter(note => note.startBeat >= 8 + start && note.startBeat < 8 + end).map(note => note.startBeat - 8));
+        results[key] += first.symmetricDifference(second).size;
+      }
+    }
+    return results;
+  };
+  const neutral = sample({});
+  const syncMiddle = sample({ syncopation: 50 }), syncHigh = sample({ syncopation: 100 });
+  assert.equal(syncMiddle.attacks, neutral.attacks);
+  assert.equal(syncHigh.attacks, neutral.attacks);
+  assert.ok(syncMiddle.offbeats > neutral.offbeats && syncHigh.offbeats > syncMiddle.offbeats);
+  assert.ok(syncMiddle.anticipations > neutral.anticipations && syncHigh.anticipations > syncMiddle.anticipations);
+
+  const reuseMiddle = sample({ rhythmicReuse: 50 }), reuseHigh = sample({ rhythmicReuse: 100 });
+  assert.ok(reuseMiddle.coreDifference < neutral.coreDifference * 0.8);
+  assert.ok(reuseHigh.coreDifference < reuseMiddle.coreDifference * 0.5);
+  assert.ok(reuseHigh.tailDifference > 0, 'recurring words retain ending variation');
+
+  const active = { syncopation: 85, rhythmicReuse: 90 };
+  const combined = sample(active);
+  assert.ok(combined.offbeats > reuseHigh.offbeats && combined.coreDifference < neutral.coreDifference * 0.5);
+  const slow = sample({ ...active, speed: -40 }), fast = sample({ ...active, speed: 95 });
+  assert.ok(fast.attacks > slow.attacks * 1.5, 'Speed still changes density');
+  assert.ok(sample({ ...active, pauseChance: 45 }).attacks < combined.attacks * 0.85, 'Pause still removes attacks');
+  assert.ok(sample({ ...active, melodyPatternOffsets: [1, 2, 3, 4] }).coreDifference > combined.coreDifference * 2, 'Words still controls which rhythms recur');
+  assert.ok(sample({ ...active, form: 'QUESTION_ANSWER' }).tailDifference < combined.tailDifference * 0.75, 'Form still shapes phrase endings');
+});
+
+test('rhythm shaping yields to the loop constraint when its rhythm cannot resolve', () => {
+  const seed = 172n;
+  const harmony = generateHarmony(seed, 8, 'C', 'lydian', { generation: 'MODAL' });
+  const notes = generateMelody(seed, 'C', 'lydian', harmony.degrees, {
+    algorithm: 'block', speed: 100, pauseChance: 70, melodyPatternOffsets: [1, 1, 2, 1],
+    form: 'CONTINUOUS', ending: 'LOOP', syncopation: 100, rhythmicReuse: 100,
+  }, 0, undefined, { phraseBars: 2 }, harmony.chords);
+  assert.ok(notes.length > 1);
+  assert.ok(Math.abs(notes.at(-1).midi - notes[0].midi) <= 10);
+});
+
 test('contextual defaults and seeded ranges use the lower octave', () => {
   const { DEFAULT_MELODY_TRACK } = loadMusic('melody-global-settings.ts');
   const { contextualRange } = loadMusic('contextual-randomizer.ts');
