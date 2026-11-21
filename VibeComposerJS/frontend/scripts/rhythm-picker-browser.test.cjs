@@ -333,9 +333,13 @@ test('production Angular controls initialize selects from settings and support r
         wheel(transpose, -100, true);
         await waitFor(() => transpose.getAttribute('aria-valuetext') === '7 st', 'melody next discrete transpose');
         await waitFor(() => readTrack('melody').generatorSettings.transpose===7, 'melody transpose saved');
-        result.melody = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')).tracks.find(track => track.role === 'melody').generatorSettings;
-        result.melodyHasSpeed = document.querySelectorAll('input[aria-label="Speed"]').length;
-        result.melodyHasAccent = document.querySelectorAll('input[aria-label="Accent"]').length;
+        const melodyEditor = document.querySelector('vc-part-settings-editor[data-control-role="melody"]');
+        const contrast = melodyEditor.querySelector('input[aria-label="Velocity Contrast"]');
+        await changeControl(contrast, '-35');
+        await waitFor(() => readTrack('melody').generatorSettings.velocityContrast === -35, 'melody velocity contrast saved');
+        result.melody = readTrack('melody').generatorSettings;
+        result.melodyControls = [...melodyEditor.querySelectorAll('.part-control[data-control-key], .joined-member[data-parameter-key]')]
+          .map(control => control.dataset.controlKey ?? control.dataset.parameterKey);
         document.querySelector('.track-group.melody .track-select').click();
         await waitFor(() => document.querySelector('.track-name-field input')?.value === readTrack('melody').name, 'melody track context');
         result.recreatedSelection = [...document.querySelectorAll('.track-group.melody .track-inline-select')].map(select => select.getAttribute("value"));
@@ -741,8 +745,12 @@ test('production Angular controls initialize selects from settings and support r
     assert.deepEqual(actual.melody.chordNoteChoices, [0, 4, -2]);
     assert.deepEqual(actual.melody.melodyPatternOffsets, [1, -1, 2]);
     assert.equal(actual.melody.transpose, 7);
-    assert.equal(actual.melodyHasSpeed, 1);
-    assert.equal(actual.melodyHasAccent, 1);
+    for (const key of ['speed', 'entryPlacement', 'rhythmicGrouping', 'syncopation', 'rhythmicReuse',
+      'motifLength', 'variationLocation', 'pitchReuse', 'articulationContrast', 'velocityContrast']) {
+      assert.ok(actual.melodyControls.includes(key), `Melody control ${key} is available`);
+    }
+    assert.equal(actual.melodyControls.includes('accents'), false);
+    assert.equal(actual.melody.velocityContrast, -35);
   } finally {
     await closeBrowser({ child, server, watchdog });
   }

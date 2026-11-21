@@ -1725,7 +1725,8 @@ export class ProjectService {
         tabs: this.tabs().map(tab => ({ ...tab, project: encodeProjectStorage(tab.project),
           past: tab.past.map(encodeProjectStorage), future: tab.future.map(encodeProjectStorage) })) }));
       this.workspaceRevision = revision;
-    } catch {
+    } catch (error) {
+      console.error('Autosave failed to write the workspace to localStorage.', error);
       recovery = { tabId: activeId, automaticSeed: this.automaticSeed(), workspaceRevision: this.workspaceRevision };
     }
     let sessionSaved = false;
@@ -1734,7 +1735,9 @@ export class ProjectService {
       // Write the recovery metadata and its project together so a failed session write cannot tag an older copy.
       globalThis.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(recovery ? { ...project, workspaceRecovery: recovery } : project));
       sessionSaved = true;
-    } catch { /* The workspace save is independent of session storage. */ }
+    } catch (error) {
+      console.error('Autosave failed to write the active project to sessionStorage.', error);
+    }
     this.persistenceFailure.set(!recovery ? null : sessionSaved
       ? 'Autosave could not save the workspace. Reloading this tab can recover the active project. Export a project file before closing the tab.'
       : 'Autosave could not save your latest changes. Export a project file before reloading or closing the tab.');
