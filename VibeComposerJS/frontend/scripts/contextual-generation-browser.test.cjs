@@ -108,6 +108,9 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       const performanceGradients='vc-part-settings-editor [aria-label="Articulation Contrast"], vc-part-settings-editor [aria-label="Velocity Contrast"]';
       const accent='vc-part-settings-editor [aria-label="Accent"]';
       ensure(!document.querySelector(rhythmGradients),'authored durations hide rhythm gradients');
+      const pitchReuse=await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="Pitch Reuse"]'),'pitch reuse with authored rhythm');
+      await change(pitchReuse,'71');
+      await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.pitchReuse===71),'pitch reuse saved');
       ensure(document.querySelectorAll(performanceGradients).length===2&&!document.querySelector(accent),'contextual performance controls also apply to authored rhythms');
       await change(melodyPattern,'melody1');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rhythm==='melody1'),'enable generated melody rhythm');
@@ -134,6 +137,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       dialog.querySelector('[aria-label="Close settings"]').click();
       await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="TONIC%"]'),'restore track block controls');
       ensure(!document.querySelector(rhythmGradients),'hide rhythm gradients in block mode');
+      ensure(!document.querySelector('vc-part-settings-editor [aria-label="Pitch Reuse"]'),'hide pitch reuse in block mode');
       ensure(!document.querySelector(performanceGradients)&&document.querySelector(accent),'block mode restores Accent');
       ensure(!document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]'),'hide contextual controls');
       dialog=await settings('Harmony');

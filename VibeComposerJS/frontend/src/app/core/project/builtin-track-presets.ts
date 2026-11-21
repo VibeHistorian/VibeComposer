@@ -100,15 +100,18 @@ function track<R extends keyof PartSettingsByRole>(role: R, name: string, index:
 export const BUILTIN_TRACK_PRESETS: readonly TrackPreset[] = STYLES.flatMap(style => {
   const character = builtinStyleSettings(style.name);
   const common = { patternSeed: 0, swingPercent: style.swing, velocityMin: 68, velocityMax: 100 };
+  // Start with two statements of the same Word, then allow a contrasting phrase on longer loops.
+  const melody = { ...common, algorithm: 'block' as const, rhythm: 'durations' as const, melodyPatternOffsets: [1, 1, 2, 1] };
   const bassCommon = { patternSeed: 0, velocityMin: 68, velocityMax: 100 };
   const durations = durationSettings(style.durations, character.answer);
   const name = `${style.name} · ${style.bpm} BPM`;
   const tracks: CompositionTrack[][] = [
-    [track('melody', 'Lead', 1, style.programs[0], { ...common, algorithm: 'block', rhythm: 'durations', ...durations,
+    [track('melody', 'Lead', 1, style.programs[0], { ...melody, ...durations,
       ending: 'OPEN', splitChance: 0, noteLengthMultiplier: Math.min(100, style.gate), ...character.lead }),
-    track('melody', 'Quiet response', 2, style.programs[3], { ...common, algorithm: 'block', rhythm: 'durations',
-      ...character.lead, ...durationSettings(character.answer, style.durations, 85),
-      ending: 'OPEN', transpose: 12, noteLengthMultiplier: Math.min(100, style.gate), velocityMin: 45, velocityMax: 65 }, 45, 18)],
+    track('melody', 'Quiet response', 2, style.programs[3], { ...melody,
+      ...character.lead, ...durationSettings(character.responseDurations ?? character.answer, style.durations, character.responseDurations ? 100 : 85),
+      ending: 'OPEN', transpose: 12, noteLengthMultiplier: Math.min(100, style.gate), velocityMin: 45, velocityMax: 65,
+      ...character.response }, 45, 18)],
     [track('bass', 'Foundation', 1, style.programs[1], { ...bassCommon, ...grid(style.bass), noteVariation: style.variation, octaveInterval: false,
       patternJoinMode: 'NOJOIN', noteLengthMultiplier: Math.min(style.gate, 95) }),
     track('bass', 'Low anchor', 2, style.programs[1], { ...bassCommon, ...grid(character.bassSupport),

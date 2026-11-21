@@ -209,6 +209,30 @@ test('rhythm shaping yields to the loop constraint when its rhythm cannot resolv
   assert.ok(Math.abs(notes.at(-1).midi - notes[0].midi) <= 10);
 });
 
+test('pitch reuse retains intervals across recurring words without owning rhythm or forcing pitches', () => {
+  let neutralError = 0, mediumError = 0, strongError = 0;
+  const intervalError = notes => notes.slice(1, 8).reduce((sum, note, index) =>
+    sum + Math.abs(note.midi - notes[index].midi - (notes[index + 9].midi - notes[index + 8].midi)), 0);
+  for (let seed = 1n; seed <= 24n; seed++) {
+    const render = overrides => generateMelody(seed, 'C', 'major', [1, 5, 4, 1], {
+      algorithm: 'block', melodyPatternOffsets: [1], rhythm: 'durations',
+      customDurations: [[1, 1, 1, 1], ...Array.from({ length: 9 }, () => [])], ...overrides,
+    });
+    const original = render({}), medium = render({ pitchReuse: 50 }), strong = render({ pitchReuse: 100 });
+    assert.deepEqual(render({ pitchReuse: 0 }), original);
+    assert.deepEqual(render({ melodyPatternOffsets: [1, 2], pitchReuse: 100 }), render({ melodyPatternOffsets: [1, 2] }));
+    for (const result of [medium, strong]) {
+      const performance = notes => notes.map(({ startBeat, durationBeats, velocity }) => [startBeat, durationBeats, velocity]);
+      assert.deepEqual(performance(result), performance(original));
+      assert.ok(Math.abs(result.at(-1).midi - result[0].midi) <= 10, 'preserves loop closure');
+    }
+    neutralError += intervalError(original);
+    mediumError += intervalError(medium);
+    strongError += intervalError(strong);
+  }
+  assert.ok(mediumError < neutralError * 0.6 && strongError < mediumError);
+});
+
 test('contextual articulation and velocity contrast shape performance independently across seeds and settings', () => {
   const measures = [], reversedMeasures = [];
   for (let index = 0; index < 32; index++) {

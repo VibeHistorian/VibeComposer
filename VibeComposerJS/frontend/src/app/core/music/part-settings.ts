@@ -134,6 +134,8 @@ export const PART_CONTROLS: Readonly<Record<ArrangedPart, readonly PartControl[]
       description: 'Negative values favor the beat. Positive values anticipate the beat. Speed and Pause still shape the underlying rhythm.' },
     { ...number('rhythmicReuse', 'Rhythmic Reuse', 0, 100, 0), advanced: true,
       description: 'Reuse more of the rhythm and rest placements when a Word returns. Phrase endings can still vary.' },
+    { ...number('pitchReuse', 'Pitch Reuse', 0, 100, 0), advanced: true,
+      description: 'Favor familiar pitch intervals when a Word returns. Motifs can transpose or adapt to the harmony.' },
     { key: 'fillPauses', label: 'Fill pauses', kind: 'boolean', defaultValue: false,
       description: 'Extend preceding notes through generated pauses. Fill determines which pauses add note duration.' },
     { key: 'chordNoteChoices', label: 'TARGETS', kind: 'integers', minimum: -24, maximum: 24, defaultValue: [0, 2, 2, 4],

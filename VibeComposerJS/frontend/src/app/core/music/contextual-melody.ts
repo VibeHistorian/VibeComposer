@@ -23,6 +23,40 @@ interface State { path: Planned[]; score: number; last: number; previous: number
   phraseStart: number; run: number; serial: number }
 interface Candidate extends State { planned: Planned }
 
+function pitchReuseMatches(slots: readonly Slot[]): ReadonlyMap<number, { previous: number; source: number; sourcePrevious: number }> {
+  const attacks = new Map<Phrase, number[]>();
+  slots.forEach((slot, index) => {
+    if (slot.rest) return;
+    const indices = attacks.get(slot.phrase);
+    if (indices) indices.push(index);
+    else attacks.set(slot.phrase, [index]);
+  });
+  const sources = new Map<number, number[]>();
+  const matches = new Map<number, { previous: number; source: number; sourcePrevious: number }>();
+  for (const [phrase, indices] of attacks) {
+    const source = sources.get(phrase.motif);
+    if (!source) {
+      sources.set(phrase.motif, indices);
+      continue;
+    }
+    const sourceStart = slots[source[0]].phrase.start;
+    let cursor = 0, previous: number | undefined, sourcePrevious: number | undefined;
+    for (const index of indices) {
+      const tick = slots[index].start - phrase.start + sourceStart;
+      // Match nearby attacks in order so a pickup or rest need not shift the entire motif.
+      while (cursor + 1 < source.length && slots[source[cursor + 1]].start <= tick) cursor++;
+      if (cursor + 1 < source.length && Math.abs(slots[source[cursor + 1]].start - tick) < Math.abs(slots[source[cursor]].start - tick)) cursor++;
+      if (cursor >= source.length || Math.abs(slots[source[cursor]].start - tick) > BEAT / 2) continue;
+      if (previous !== undefined && sourcePrevious !== undefined) {
+        matches.set(index, { previous, source: source[cursor], sourcePrevious });
+      }
+      previous = index;
+      sourcePrevious = source[cursor++];
+    }
+  }
+  return matches;
+}
+
 const MAX_CONTEXTUAL_RESULTS = 64;
 const contextualResults = new Map<string, ReturnType<typeof planContextualMelody>>();
 
@@ -75,6 +109,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   }
   const fill = partFillMask(degrees.length, settings), leap = Math.min(24, 2 + (settings.maxBlockChange ?? 7) + (settings.blockJump ?? 1));
   const syncopation = settings.syncopation ?? 0, rhythmicReuse = settings.rhythmicReuse ?? 0;
+  const pitchReuse = (settings.pitchReuse ?? 0) / 100;
   const overlapping = (slot: Slot) => events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
   const makeRhythm = (variant: number, shapeRhythm: boolean): Slot[] => {
     const slots: Slot[] = [];
@@ -242,6 +277,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
       }
       return split;
     }) : rhythm;
+    const pitchMatches = pitchReuse > 0 ? pitchReuseMatches(slots) : undefined;
     const finalIndex = slots.reduce((last,slot,i) => slot.rest ? last : i, -1);
     const catalogue = new ContextualCatalogue(baseSeed, options.newBlocksChance);
     const soundsRemaining = Array<number>(slots.length);
@@ -258,6 +294,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
     let beam: State[] = [{ path: [], score: 0, last: -1, previous: -1, first: -1, phraseFirst: -1, phraseStart: -1, run: 0, serial: serial++ }];
     for (let index = 0; index < slots.length && beam.length; index++) {
       const slot = slots[index], event = at(slot.start), next: Candidate[] = [];
+      const pitchMatch = pitchMatches?.get(index);
       const accented = slot.start % BEAT === 0 && (slot.start / BEAT % options.beatsPerBar === 0
         || options.beatsPerBar % 2 === 0 && slot.start / BEAT % options.beatsPerBar === options.beatsPerBar / 2) || slot.duration >= BEAT;
       const random = new JavaRandom(baseSeed ^ BigInt(slot.start) * 0x9e3779b97f4a7c15n), preferences = Array.from({ length: 128 }, () => random.nextDouble() * 0.25);
@@ -284,6 +321,8 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         }
         const origin = state.phraseStart === slot.phrase.start && state.phraseFirst >= 0 ? state.phraseFirst
           : center + (kind === 0 ? -width : kind === 1 ? width : kind === 2 ? -width / 2 : width / 2);
+        const reusedPitch = pitchMatch && state.path[pitchMatch.previous].pitch
+          + state.path[pitchMatch.source].pitch - state.path[pitchMatch.sourcePrevious].pitch;
         // Each candidate compares with the same earlier motif and catalogue prefix.
         let motifDirection: number | undefined;
         for (let i = state.path.length - 1; i > 0; i--) {
@@ -327,6 +366,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
           if (index === finalIndex && options.ending === 'LOOP' && state.first >= 0 && Math.abs(pitch - state.first) > leap) continue;
           let score = state.score + preferences[pitch] + slot.duration / BEAT * (pending(role) ? -(1 - options.tension / 100) : accented ? 2 : 0.5)
             - Math.abs(pitch - origin - arc) * 0.18;
+          if (reusedPitch !== undefined) score -= Math.min(12, Math.abs(pitch - reusedPitch)) * (1.8 * pitchReuse);
           if (state.last >= 0) {
             score -= Math.abs(movement) * 0.3;
             score += direction * Math.sign(movement) * Math.min(3,Math.abs(movement)) * (options.targetDirection === 'ANY' ? 0.35 : 0.6);

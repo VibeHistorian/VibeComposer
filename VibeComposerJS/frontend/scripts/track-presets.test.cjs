@@ -149,6 +149,30 @@ test('factory support voices and melody controls are distinct across styles', ()
   }
 });
 
+test('factory Techno stays compact on minor harmony and dedicated replies leave room around lead attacks', () => {
+  const { service, load } = fixture();
+  const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
+  const { generateTrackPhrase } = load('core/music/phrase.ts');
+  for (const style of ['Techno', 'Lo-fi Hip Hop', 'Reggae', 'Blues Shuffle', 'Samba', 'Swing Jazz', 'Disco']) {
+    const preset = library.find(item => item.role === 'melody' && item.name.startsWith(style + ' ·'));
+    const tracks = preset.tracks.map((track, index) => ({ ...track, id: `track-melody-${index + 1}` }));
+    const seeds = Array.from({ length: style === 'Techno' ? 64 : 16 }, (_, i) => String(Math.imul(i + 1, 0x9e3779b1)));
+    for (const seed of seeds) {
+      const project = { ...service.project(), seed, scale: 'natural-minor', progression: [1, 6, 3, 7], tracks };
+      const [lead, reply] = tracks.map(track => generateTrackPhrase(project, track));
+      assert.ok(lead.length && reply.length, `${style}: both voices sound at ${seed}`);
+      assert.ok(reply.every(note => note.startBeat >= 8), `${style}: reply enters in the second half`);
+      if (style === 'Techno') {
+        const pitches = lead.map(note => note.midi);
+        assert.ok(Math.max(...pitches) - Math.min(...pitches) <= 12, 'wider feasible leaps retain a compact register');
+      } else {
+        assert.ok(reply.every(note => lead.every(other => Math.abs(note.startBeat - other.startBeat) > 1e-5)),
+          `${style}: reply attacks in the gaps`);
+      }
+    }
+  }
+});
+
 test('preset replacement preserves locked tracks and occupied slots, cleans surplus references and undoes once', () => {
   const { service } = fixture();
   const lockedId = service.project().tracks.find(track => track.role === 'bass').id;
