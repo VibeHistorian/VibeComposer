@@ -1,4 +1,5 @@
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
+const { readWorkspace } = require('./support/workspace-browser.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -7,11 +8,15 @@ const browser = findBrowser();
 for (const width of [700, 1440]) test(`project pills, context actions, checkpoint history and reload at ${width}px`, {skip: !browser}, async () => {
   const root = requireProductionBuild();
   const script = `<script>(async () => {
-    const wait = async (read, label) => { for(let i=0;i<250;i++) {const v=read();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out: '+label); };
+    const wait = async (read, label) => { for(let i=0;i<250;i++) {const v=await read();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out: '+label); };
     const ensure = (v,label) => {if(!v)throw Error(label);};
     const button = label => [...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label || b.getAttribute('aria-label')===label);
     const pills = () => [...document.querySelectorAll('.project-pill')];
-    const read = () => JSON.parse(localStorage.getItem('vibecomposer.project-tabs.v1'));
+    const read = ${readWorkspace};
+    const savedProject = async name => {
+      const workspace = await read();
+      return workspace?.tabs.find(tab => tab.id === workspace.activeId && tab.project.name === name);
+    };
     const name = () => ({value: document.querySelector('button.project-pill.active')?.textContent.trim()});
     let checkpointName = sessionStorage.getItem('checkpoint-name');
     const editor = () => document.querySelector('input[aria-label="Project name"]');
@@ -62,9 +67,10 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
         ensure(!setting.checked,'new tabs default');setting.click();
         await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).replaceCurrentProjectTab===true,'setting saved');
         button('Close settings').click();
-        const active=read().activeId;
+        const active=(await wait(()=>savedProject('Opened in new tab'),'saved open project')).id;
         await open({...exported,name:'Replaced current tab'});
-        ensure(pills().length===3 && read().activeId===active,'preference replaces the current tab');
+        const replaced=await wait(()=>savedProject('Replaced current tab'),'replacement saved');
+        ensure(pills().length===3 && replaced.id===active,'preference replaces the current tab');
         ensure(button('Undo').disabled,'opened file starts its own history');
         ensure(document.documentElement.scrollWidth<=innerWidth,'no page overflow');
         await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
@@ -79,14 +85,14 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
         ensure(!button('Undo').disabled,'branch has source history');
         await rename('Independent edit');button('Undo').click();await wait(()=>name().value===checkpointName,'independent undo');
         pills()[0].click();await wait(()=>name().value==='Original','left click switching');
-        const active=read().activeId;
+        const active=(await wait(()=>savedProject('Original'),'original is active in storage')).id;
         await context(1,'Rename Project');await editName('Renamed inactive');
-        ensure(read().activeId===active && name().value==='Original','inactive rename keeps active tab');
+        ensure((await read()).activeId===active && name().value==='Original','inactive rename keeps active tab');
         ensure(pills()[1].textContent.trim()==='Renamed inactive','inactive name changed');
         await context(1,'Rename Project');await editName(checkpointName);
         pills()[1].dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:100,clientY:100,button:2}));
         await wait(()=>button('Remove Project'),'right click menu');
-        ensure(read().activeId===active,'right click does not switch');
+        ensure((await read()).activeId===active,'right click does not switch');
         document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
         sessionStorage.setItem('tabs-reload','true');location.reload();
       }

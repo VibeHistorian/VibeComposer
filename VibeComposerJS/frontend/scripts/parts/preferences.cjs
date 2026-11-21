@@ -400,7 +400,7 @@ test('score chord grid defaults off and persists and transfers without changing 
 });
 
 test('UI preferences customize per-role placement without changing project, history, or fixed order', () => {
-  const { service, uiPreferences: preferences, uiStored, load } = fixture();
+  const { service, uiPreferences: preferences, uiStored, workspaceStorage, load } = fixture();
   service.flushPersistence();
   const before = service.exportProjectJson(), position = service.historyPosition();
   const defaults = preferences.exportJson();
@@ -416,7 +416,7 @@ test('UI preferences customize per-role placement without changing project, hist
   assert.equal(service.exportProjectJson(), before);
   assert.equal(service.historyPosition(), position);
   assert.ok(uiStored.has('vibecomposer.ui-preferences.v1'));
-  assert.ok(uiStored.has('vibecomposer.project-tabs.v1'));
+  assert.ok(workspaceStorage.saved);
   const restored = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
   assert.deepEqual(restored.preferences(), preferences.preferences());
   assert.equal(service.importProjectJson(before), true);

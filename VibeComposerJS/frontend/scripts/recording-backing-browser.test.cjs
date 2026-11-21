@@ -1,3 +1,4 @@
+const { clearWorkspace } = require('./support/workspace-browser.cjs');
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -29,7 +30,7 @@ test('recording backing advances transport and arrangement while x/X release and
     drum.editedPhrase=[{id:'conga-fixture',midi:62,startBeat:0,durationBeats:4,velocity:90}];
     project.scale='major';project.transposeSemitones=0;project.tempoBpm=120;project.progression=[1,5,6,4];
     project.arrangement=[{id:project.arrangement[0].id,type:'VERSE1',measures:4,trackPresence:Object.fromEntries(project.tracks.map(track=>[track.id,true])),trackPhrases:{[drum.id]:[{id:'conga-local',midi:62,startBeat:0,durationBeats:16,velocity:90}]}}];
-    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
+    await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
     sessionStorage.setItem('conga-fixture-ready','1');location.reload();return;
   }
   (await wait(()=>document.querySelector('[aria-label="Settings"]'),'settings')).click();

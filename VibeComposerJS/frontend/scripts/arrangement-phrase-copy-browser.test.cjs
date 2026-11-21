@@ -1,3 +1,4 @@
+const { clearWorkspace } = require('./support/workspace-browser.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
@@ -29,7 +30,7 @@ for (const width of [1440, 780]) test('real Ctrl mouse copy drag at '+width+'px'
       p.arrangement=['INTRO','VERSE1'].map((type,i)=>({id:'copy-section-'+i,type,measures:4,
         trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,i===0&&t.id===track.id])),
         ...(i===0?{trackPhrases:{[track.id]:[{id:'source',midi:64,startBeat:1,durationBeats:2,velocity:90}]}}:{})}));
-      localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+      await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
       window.copyDragReloadPending=true;location.reload();})()`);
     // Wait for a new document: sessionStorage already contains the fixture before reload starts.
     await wait(`!window.copyDragReloadPending&&JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')||'null')?.arrangement[0].id==='copy-section-0'&&!!document.querySelector('vc-arrangement-overview canvas[tabindex]')`);

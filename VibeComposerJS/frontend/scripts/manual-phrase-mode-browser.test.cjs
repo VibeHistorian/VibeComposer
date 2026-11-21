@@ -1,3 +1,4 @@
+const { clearWorkspace } = require('./support/workspace-browser.cjs');
 const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'); const path=require('node:path'); const test=require('node:test');
@@ -44,7 +45,7 @@ test('manual Mode behavior setting changes matching phrases and persists in the 
     project.tracks.find(t=>t.role==='bass').editedPhrase=notes([60,64,67,71]);
     project.tracks.find(t=>t.role==='chords').editedPhrase=notes([60,61,64]);
     project.tracks.find(t=>t.role==='drums').editedPhrase=notes([38]);
-    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
+    await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
   })()`);
   await reload();
   await evaluate(`(async()=>{${waitCode}${helpers}

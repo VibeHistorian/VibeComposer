@@ -1,5 +1,6 @@
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const { fixture } = require('./support/project-fixture.cjs');
+const { readWorkspace } = require('./support/workspace-browser.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -17,12 +18,12 @@ for (const failing of [false, true]) test(`hosted startup and project menu under
     '/defaults/theme.json':{...preferences,midiPpq:240,appearance:{...preferences.appearance,roleColors:{...preferences.appearance.roleColors,melody:'#123456'}}},
   };
   const script=`<script>(async () => {
-    const wait=async(read,label)=>{for(let i=0;i<250;i++){const v=read();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out: '+label);};
+    const wait=async(read,label)=>{for(let i=0;i<250;i++){const v=await read();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out: '+label);};
     const ensure=(v,label)=>{if(!v)throw Error(label);};
     const pills=()=>[...document.querySelectorAll('button.project-pill')];
     const active=()=>document.querySelector('button.project-pill.active')?.textContent.trim();
     const prefs=()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1'));
-    const workspace=()=>JSON.parse(localStorage.getItem('vibecomposer.project-tabs.v1'));
+    const workspace=${readWorkspace};
     const menu=async label=>{
       document.querySelector('.branch-project').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2,clientX:200,clientY:60}));
       const item=await wait(()=>[...document.querySelectorAll('[role="menuitem"]')].find(item=>item.textContent.trim()===label),label);
@@ -53,7 +54,10 @@ for (const failing of [false, true]) test(`hosted startup and project menu under
         input.value='Saved demo edits';input.dispatchEvent(new Event('input',{bubbles:true}));
         input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
         await wait(()=>active()==='Saved demo edits','rename applied');
-        await wait(()=>workspace()?.tabs.length===3 && workspace().tabs.some(tab=>tab.project.name==='Saved demo edits'),'workspace saved');
+        await wait(async()=>{
+          const saved=await workspace();
+          return saved?.tabs.length===3 && saved.tabs.some(tab=>tab.project.name==='Saved demo edits');
+        },'workspace saved');
         dispatchEvent(new Event('pagehide'));
         localStorage.setItem('vibecomposer.ui-preferences.v1',JSON.stringify({...prefs(),midiPpq:240,compactHistory:false}));
         sessionStorage.setItem('hosted-phase','1');location.reload();
@@ -70,7 +74,7 @@ for (const failing of [false, true]) test(`hosted startup and project menu under
         const url=new URL(location.href);
         ensure(!['project','settings','theme'].some(key=>url.searchParams.has(key)),'successful imports consumed');
         ensure(url.searchParams.get('keep')==='1' && url.hash==='#preview','other URL state preserved');
-        await wait(()=>workspace()?.tabs.length===4,'URL project saved');
+        await wait(async()=>(await workspace())?.tabs.length===4,'URL project saved');
         sessionStorage.setItem('hosted-phase','3');location.reload();
       } else {
         ensure(pills().length===4 && active()==='Linked project','reload does not duplicate imports');

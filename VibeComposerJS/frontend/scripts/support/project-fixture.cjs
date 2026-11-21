@@ -39,6 +39,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
     output: () => ({ values: [], emit(value) { this.values.push(value); } }), ElementRef: class ElementRef {}, ChangeDetectorRef: class ChangeDetectorRef {}, ChangeDetectionStrategy: { OnPush: 0 },
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
+      : type?.name === 'WorkspaceStorage' ? workspaceStorage
       : type?.name === 'ContextClipboardService' ? clipboard
       : type?.name === 'AudioPlaybackService' ? { setPhrasePreview() {} } : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
       : type?.name === 'ChangeDetectorRef' ? { detectChanges() {} }
@@ -77,6 +78,11 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
   const preferences = { chances: () => sectionTypes.DEFAULT_SECTION_TYPE_CHANCES };
   const uiStored = new Map();
   global.localStorage = { getItem: key => uiStored.get(key) ?? null, setItem: (key, value) => uiStored.set(key, value) };
+  const workspaceStorage = {
+    saved: undefined,
+    takeInitialWorkspace() { return structuredClone(this.saved); },
+    async write(workspace) { this.saved = structuredClone(workspace); },
+  };
   // Persistence uses a fixture-owned clock and lifecycle, never timers that can
   // write into a later fixture's browser-storage stand-ins.
   let persistenceTime = 0, nextTimer = 0;
@@ -115,7 +121,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
   const phrase = load('core/music/phrase.ts');
   const settings = load('core/music/part-settings.ts');
   const midi = load('core/music/midi-export.ts');
-  return { service, ui, workspace, phrase, settings, midi, stored, load, uiPreferences, uiStored, flushEffects,
+  return { service, ui, workspace, phrase, settings, midi, stored, load, uiPreferences, uiStored, workspaceStorage, flushEffects,
     advancePersistence, persistencePage, persistenceDocument, persistenceTimers };
 }
 

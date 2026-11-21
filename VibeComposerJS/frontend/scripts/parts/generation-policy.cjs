@@ -464,7 +464,9 @@ test('automatic events are atomic, replayable and preserve locks, local settings
   service.redo(); assert.equal(service.exportProjectJson(), after);
   service.undo(); service.generateComposition(); assert.equal(service.exportProjectJson(), after);
   service.flushPersistence();
-  assert.deepEqual(projectData(stored.get('vibecomposer.project.v12')), projectData(after));
+  const sessionProject = projectData(stored.get('vibecomposer.project.v12'));
+  delete sessionProject.workspaceRecovery;
+  assert.deepEqual(sessionProject, projectData(after));
   assert.equal(service.importProjectJson(after), true);
   const { ProjectService } = load('core/project/project.service.ts');
   service.flushPersistence();

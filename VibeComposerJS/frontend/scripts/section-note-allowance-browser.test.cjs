@@ -1,3 +1,4 @@
+const { clearWorkspace } = require('./support/workspace-browser.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -33,7 +34,7 @@ test('production score edits pickups and late notes with 00/END space and retain
           {id:'cross',midi:50,startBeat:3,durationBeats:3,velocity:90},
           {id:'late',midi:52,startBeat:7,durationBeats:1,velocity:90}
         ]}}];
-      localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
+      await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));
     })()`);
     await command('Page.reload');
     const point = await evaluate(`(async()=>{${helpers}

@@ -24,7 +24,7 @@ for (const { width, missingMethod, sampler, chiptune } of [
     { id: 'second', type: 'VERSE2', measures: 1, trackPresence: presence, context: { tempoBpm: 60 }, trackPhrases: { [trackId]: [] } },
   ] };
   const script = `<script>
-    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12', ${JSON.stringify(JSON.stringify(project))});
+    sessionStorage.setItem('vibecomposer.project.v12', ${JSON.stringify(JSON.stringify(project))});
     (async () => {
       const wait = async (read, label) => {
         for (let i=0;i<400;i++) { const value=read(); if(value) return value; await new Promise(r=>setTimeout(r,25)); }

@@ -3,13 +3,14 @@ const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
 test('all project commands publish immediately and coalesce encoding and both storage writes', () => {
-  const { service, load, stored, uiStored, advancePersistence, persistenceTimers } = fixture();
+  const { service, load, stored, workspaceStorage, advancePersistence, persistenceTimers } = fixture();
   service.flushPersistence();
   const storage = load('core/project/project-storage.ts'), encode = storage.encodeProjectStorage;
   let encodes = 0, sessionWrites = 0, workspaceWrites = 0;
   storage.encodeProjectStorage = project => { encodes++; return encode(project); };
   global.sessionStorage.setItem = (key, value) => { sessionWrites++; stored.set(key, value); };
-  global.localStorage.setItem = (key, value) => { workspaceWrites++; uiStored.set(key, value); };
+  const write = workspaceStorage.write.bind(workspaceStorage);
+  workspaceStorage.write = workspace => { workspaceWrites++; return write(workspace); };
   const commands = [
     () => service.updateSettings({ tempoBpm: 137 }),
     () => service.rerollRoleTracks('chords', 'track-chords-1'),
@@ -32,8 +33,10 @@ test('all project commands publish immediately and coalesce encoding and both st
   assert.equal(sessionWrites, 1);
   assert.equal(workspaceWrites, 1);
   assert.equal(persistenceTimers.size, 0);
-  assert.equal(stored.get('vibecomposer.project.v12'), JSON.stringify(encode(service.project())));
-  const saved = JSON.parse(uiStored.get('vibecomposer.project-tabs.v1'));
+  const { workspaceRecovery, ...sessionProject } = JSON.parse(stored.get('vibecomposer.project.v12'));
+  assert.deepEqual(sessionProject, JSON.parse(JSON.stringify(encode(service.project()))));
+  assert.equal(workspaceRecovery.tabId, service.activeProjectTabId());
+  const saved = workspaceStorage.saved;
   assert.equal(saved.tabs.find(tab => tab.id === saved.activeId).past.length, service.historyPosition());
   advancePersistence(2000);
   assert.equal(sessionWrites, 1, 'cancelled deadlines do not save again');
@@ -60,7 +63,7 @@ test('sustained project changes save at the deadline and resume coalescing after
 });
 
 test('pending saves retain both tabs, undo/redo, inactive edits and the latest active identity', () => {
-  const { service, load, stored, uiStored, advancePersistence } = fixture();
+  const { service, load, stored, workspaceStorage, advancePersistence } = fixture();
   service.flushPersistence();
   const first = service.activeProjectTabId();
   service.updateSettings({ name: 'Original latest' });
@@ -77,7 +80,7 @@ test('pending saves retain both tabs, undo/redo, inactive edits and the latest a
   assert.equal(service.project().tempoBpm, 137);
   advancePersistence(150);
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, service.project().name);
-  const saved = JSON.parse(uiStored.get('vibecomposer.project-tabs.v1'));
+  const saved = workspaceStorage.saved;
   assert.equal(saved.activeId, second);
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   restored.switchProjectTab(first);
@@ -115,45 +118,48 @@ test('visibility, pagehide and destruction flush the latest workspace and releas
   assert.equal(writes, 0);
 });
 
-test('unavailable storage does not reject changes or prevent later persistence', () => {
-  const { service, stored, uiStored, advancePersistence } = fixture();
-  service.flushPersistence();
+test('unavailable storage does not reject changes or prevent later persistence', async () => {
+  const { service, stored, workspaceStorage, advancePersistence } = fixture();
+  await service.flushPersistence();
+  const write = workspaceStorage.write;
   global.sessionStorage.setItem = () => { throw new Error('Storage unavailable'); };
   service.updateSettings({ name: 'Workspace only' });
   advancePersistence(150);
-  assert.equal(JSON.parse(uiStored.get('vibecomposer.project-tabs.v1')).tabs[0].project.name, 'Workspace only');
-  global.localStorage.setItem = () => { throw new Error('Quota exceeded'); };
+  assert.equal(workspaceStorage.saved.tabs[0].project.name, 'Workspace only');
+  workspaceStorage.write = async () => { throw new Error('Quota exceeded'); };
   service.updateSettings({ name: 'Memory only' });
   advancePersistence(150);
+  await service.flushPersistence();
   assert.equal(service.project().name, 'Memory only');
   assert.match(service.persistenceError(), /could not save your latest changes/);
   global.sessionStorage.setItem = (key, value) => stored.set(key, value);
-  global.localStorage.setItem = (key, value) => uiStored.set(key, value);
+  workspaceStorage.write = write;
   service.updateSettings({ name: 'Storage recovered' });
   advancePersistence(150);
+  await service.flushPersistence();
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Storage recovered');
   assert.equal(service.persistenceError(), null);
   service.ngOnDestroy();
 });
 
-test('failed workspace writes recover the active session project and preserve other tabs', () => {
-  const { service, load, uiStored, persistencePage } = fixture();
-  const key = 'vibecomposer.project-tabs.v1';
+test('failed workspace writes recover the active session project and preserve other tabs', async () => {
+  const { service, load, workspaceStorage, persistencePage } = fixture();
   const first = service.activeProjectTabId();
   service.updateSettings({ name: 'First saved' });
   service.duplicateProjectTab();
   const second = service.activeProjectTabId();
   service.updateSettings({ name: 'Second saved' });
-  service.flushPersistence();
-  const workspace = uiStored.get(key);
-  const write = global.localStorage.setItem;
-  global.localStorage.setItem = () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
+  await service.flushPersistence();
+  const workspace = workspaceStorage.saved;
+  const write = workspaceStorage.write;
+  workspaceStorage.write = async () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
 
   service.switchProjectTab(first);
   service.updateSettings({ tempoBpm: 137 });
   persistencePage.dispatchEvent(new Event('pagehide'));
+  await service.flushPersistence();
   assert.match(service.persistenceError(), /Reloading this tab can recover the active project/);
-  assert.equal(uiStored.get(key), workspace);
+  assert.equal(workspaceStorage.saved, workspace);
 
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.equal(restored.activeProjectTabId(), first);
@@ -161,8 +167,8 @@ test('failed workspace writes recover the active session project and preserve ot
   assert.equal(restored.canUndo(), false, 'the session copy has no matching history');
   assert.equal(restored.openProjects().find(tab => tab.id === second).name, 'Second saved');
   service.ngOnDestroy();
-  global.localStorage.setItem = write;
-  restored.flushPersistence();
+  workspaceStorage.write = write;
+  await restored.flushPersistence();
   assert.equal(restored.persistenceError(), null);
   restored.switchProjectTab(second);
   restored.undo();
@@ -170,20 +176,50 @@ test('failed workspace writes recover the active session project and preserve ot
   restored.ngOnDestroy();
 });
 
-test('a newer workspace save supersedes an old recovery copy even if the session mirror fails', () => {
-  const { service, load } = fixture();
-  service.flushPersistence();
-  const write = global.localStorage.setItem;
-  global.localStorage.setItem = () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
+test('a newer workspace save supersedes an old recovery copy even if the session mirror fails', async () => {
+  const { service, load, workspaceStorage } = fixture();
+  await service.flushPersistence();
+  const write = workspaceStorage.write;
+  workspaceStorage.write = async () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
   service.updateSettings({ tempoBpm: 137 });
-  service.flushPersistence();
-  global.localStorage.setItem = write;
+  await service.flushPersistence();
+  workspaceStorage.write = write;
   global.sessionStorage.setItem = () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
   service.updateSettings({ tempoBpm: 138 });
-  service.flushPersistence();
+  await service.flushPersistence();
   assert.equal(service.persistenceError(), null);
   const restored = new (load('core/project/project.service.ts').ProjectService)();
   assert.equal(restored.project().tempoBpm, 138);
+  service.ngOnDestroy();
+  restored.ngOnDestroy();
+});
+
+test('an interrupted save recovers the latest edit after an earlier in-flight transaction commits', async () => {
+  const { service, load, workspaceStorage } = fixture();
+  await service.flushPersistence();
+  const write = workspaceStorage.write;
+  const earlier = Promise.withResolvers();
+  workspaceStorage.write = async function(workspace) {
+    await earlier.promise;
+    await write.call(this, workspace);
+  };
+  service.updateSettings({ name: 'Earlier transaction' });
+  const saving = service.flushPersistence();
+
+  const latest = Promise.withResolvers();
+  workspaceStorage.write = () => latest.promise;
+  service.updateSettings({ name: 'Latest edit' });
+  const interrupted = service.flushPersistence();
+  earlier.resolve();
+  await saving;
+  assert.equal(workspaceStorage.saved.tabs[0].project.name, 'Earlier transaction');
+
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.project().name, 'Latest edit');
+  latest.reject(new Error('Transaction interrupted'));
+  await interrupted;
+  workspaceStorage.write = write;
+  await restored.flushPersistence();
   service.ngOnDestroy();
   restored.ngOnDestroy();
 });

@@ -1,3 +1,4 @@
+const { clearWorkspace } = require('./support/workspace-browser.cjs');
 const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'); const path=require('node:path'); const test=require('node:test');
@@ -48,7 +49,7 @@ test('phrase MIDI drop, clipboard, transpose and draft undo work in the producti
     project.progression=[1,5,6,4];
     project.arrangement=[{...project.arrangement[0],measures:4,trackPresence:Object.fromEntries(project.tracks.map(t=>[t.id,true]))}];
     for(const track of project.tracks)track.editedPhrase=[{id:track.id+'-old',midi:track.role==='drums'?36:48,startBeat:2,durationBeats:1,velocity:90}];
-    localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
+    await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(project));
   })()`);
   await reload();
   const setup=`
@@ -162,7 +163,7 @@ test('phrase MIDI drop, clipboard, transpose and draft undo work in the producti
   })()`);
   for(const [key,value] of Object.entries(options))assert.equal(value,true,key);
 
-  await evaluate(`(() => {
+  await evaluate(`(async () => {
     window.dispatchEvent(new Event('pagehide'));
     const project = JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
     project.scale = 'major';
@@ -178,7 +179,7 @@ test('phrase MIDI drop, clipboard, transpose and draft undo work in the producti
       { id: 'clipboard-first', midi: 64, startBeat: 1, durationBeats: 0.5, velocity: 79 },
       { id: 'clipboard-second', midi: 67, startBeat: 3, durationBeats: 0.75, velocity: 108 },
     ];
-    localStorage.removeItem('vibecomposer.project-tabs.v1');
+    await (${clearWorkspace})();
     sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
   })()`);
   await reload();

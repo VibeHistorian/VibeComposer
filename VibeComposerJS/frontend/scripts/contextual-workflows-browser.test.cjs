@@ -1,3 +1,4 @@
+const { clearWorkspace, readSessionProject } = require('./support/workspace-browser.cjs');
 const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild, readBrowserDownload } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -20,7 +21,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       for (let i = 0; i < 300; i++) { const value = read(); if (value) return value; await new Promise(r => setTimeout(r, 50)); }
       throw new Error('Timed out: ' + label);
     };
-    const read = () => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    const read = ${readSessionProject};
     const change = changeControl;
     const reset = async input => {
       await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
@@ -65,7 +66,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
         project.arrangement[0].rolePartOverrides = { bass: { noteVariation: 35 } };
         project.arrangement[0].trackPartOverrides = { 'track-bass-2': { noteVariation: 45 } };
         project.melodyGlobal = { ...project.melodyGlobal, contextualMelody: false };
-        localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
+        await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
         sessionStorage.setItem('contextual-fixture', 'ready'); location.reload(); return;
       }
       await wait(() => document.querySelectorAll('.track-line').length === 30, '30 track rows');

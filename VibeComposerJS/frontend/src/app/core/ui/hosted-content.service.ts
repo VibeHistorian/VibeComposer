@@ -24,7 +24,7 @@ export class HostedContentService {
     const consumed = await this.content.initialize(this.injector.get(UiPreferencesService), () => this.injector.get(ProjectService));
     this.demoAvailable.set(this.content.hasDemo);
     if (!consumed.length) return;
-    this.injector.get(ProjectService).flushPersistence();
+    await this.injector.get(ProjectService).flushPersistence();
     // Consume successful imports so refreshing restores the workspace instead of
     // adding another linked tab. Unrelated parameters and the fragment survive.
     const window = this.document.defaultView;

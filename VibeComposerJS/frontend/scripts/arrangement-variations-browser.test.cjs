@@ -1,3 +1,4 @@
+const { clearWorkspace, readSessionProject } = require('./support/workspace-browser.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -10,7 +11,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const script = `<script>(async()=>{
     const wait=async(read,label)=>{for(let i=0;i<400;i++){const value=read();if(value){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return value;}await new Promise(r=>setTimeout(r,20));}throw new Error(label);};
-    const read=()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'));
+    const read=${readSessionProject};
     const ensure=(value,label)=>{if(!value)throw new Error(label);};
     const button=(root,text)=>[...root.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
     const dialog=()=>document.querySelector('vc-arrangement-variations-dialog');
@@ -70,7 +71,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
         p.arrangement=['VERSE1','BUILDUP2','CHORUS1','VERSE1','CLIMAX','OUTRO'].map((type,i)=>({id:'section-'+(i+1),type,measures:4,
           trackPresence:Object.fromEntries(['melody','chords','arpeggio','bass','drums'].map(role=>[role,Array(6).fill(true)]))}));
         p.arrangement[0].variations={seed:'1',policy:{chance:100,maxChanges:2},choices:[{trackId:p.tracks.find(t=>t.role==='melody').id,kind:'melody-range',amount:1,enabled:true}]};
-        localStorage.removeItem('vibecomposer.project-tabs.v1');sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
+        await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));sessionStorage.setItem('variation-fixture','1');location.reload();return;
       }
       await changeControl(seed,'43');await wait(()=>read()?.seed==='43','canonical project');
       const original=JSON.stringify(read());

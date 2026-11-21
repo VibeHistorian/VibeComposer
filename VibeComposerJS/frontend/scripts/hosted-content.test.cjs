@@ -94,7 +94,7 @@ test('a valid legacy session also protects work when no saved tabs exist', async
   const f = fixture();
   f.service.updateSettings({ name: 'Session work' });
   f.service.flushPersistence();
-  f.uiStored.delete('vibecomposer.project-tabs.v1');
+  f.workspaceStorage.saved = undefined;
   const restored = new (f.load('core/project/project.service.ts').ProjectService)();
   assert.equal(restored.hasSavedWorkspace, true);
   const { content, requests } = hosted(f, { config: { demoProject: 'missing.json' } });
