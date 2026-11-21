@@ -105,7 +105,7 @@ export class PartSettingsEditorComponent {
       maxBlockChange: 'BLOCK⤒', blockJump: 'BLOCK↕', hitsPerPattern: 'HITS', euclideanPulses: 'PULSE',
       patternShift: 'SHIFT', chordSpan: 'SPAN', chordNotesStretch: 'VOICE', patternRepeat: 'REPEAT',
       noteVariation: 'VAR', pauseChance: 'PAUSE', exceptionChance: 'SPLIT', swingPercent: 'SWING',
-      syncopation: 'SYNC', rhythmicReuse: 'REUSE',
+      syncopation: 'SYNC', rhythmicReuse: 'REUSE', articulationContrast: 'ARTIC', velocityContrast: 'VEL CT',
       strumPauseChance: 'STRUM⏸︎', transitionChance: 'TRAN%', transitionSplit: 'TRAN⌖',
       offset: 'OFFS', accents: 'ACCENT',
     };
@@ -173,12 +173,12 @@ export class PartSettingsEditorComponent {
     (this.inspectorOnly() ? !this.isQuick(control.key)
       : this.advanced() || this.isQuick(control.key)) &&
     (this.preferences.editingQuickSettings() || (
-    (!['rangeMin', 'rangeMax', 'tension', 'ending', 'style', 'form', 'syncopation', 'rhythmicReuse'].includes(control.key)
+    (!['rangeMin', 'rangeMax', 'tension', 'ending', 'style', 'form', 'syncopation', 'rhythmicReuse', 'articulationContrast', 'velocityContrast'].includes(control.key)
       || this.role() !== 'melody' || (this.projects.project().melodyGlobal?.contextualMelody ?? true)) &&
     (!this.usesDurations() || this.role() !== 'melody'
       || !['speed', 'pauseChance', 'fillPauses', 'splitChance', 'startNoteChance', 'syncopation', 'rhythmicReuse'].includes(control.key)) &&
     (this.role() !== 'melody' || !(this.projects.project().melodyGlobal?.contextualMelody ?? true)
-      || !['fillPauses', 'fillPausesPerChord', 'patternFlexible', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey'].includes(control.key)) &&
+       || !['accents', 'fillPauses', 'fillPausesPerChord', 'patternFlexible', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey'].includes(control.key)) &&
     (!this.usesDurations() || this.role() === 'melody' || !['patternShift', 'chordSpan', 'patternRepeat', 'patternJoinMode', 'euclideanPulses', 'useCustomVelocities', 'customVelocities', 'pauseChance', 'exceptionChance', ...(this.role() === 'bass' ? ['hitsPerPattern'] : [])].includes(control.key)) &&
     (this.values()['rhythm'] !== 'melody' || !['hitsPerPattern', 'patternShift', 'chordSpan', 'patternRepeat',
       ...(this.melodyHits() > 32 ? ['customVelocities', 'useCustomVelocities'] : [])].includes(control.key)) &&

@@ -105,15 +105,19 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       const inspectorButton=button('Open inspector'); if(inspectorButton) inspectorButton.click();
       const melodyPattern=await wait(()=>document.querySelector('vc-part-settings-editor vc-menu-select[aria-label="PATTERN"]'),'melody pattern');
       const rhythmGradients='vc-part-settings-editor [aria-label="Syncopation"], vc-part-settings-editor [aria-label="Rhythmic Reuse"]';
+      const performanceGradients='vc-part-settings-editor [aria-label="Articulation Contrast"], vc-part-settings-editor [aria-label="Velocity Contrast"]';
+      const accent='vc-part-settings-editor [aria-label="Accent"]';
       ensure(!document.querySelector(rhythmGradients),'authored durations hide rhythm gradients');
+      ensure(document.querySelectorAll(performanceGradients).length===2&&!document.querySelector(accent),'contextual performance controls also apply to authored rhythms');
       await change(melodyPattern,'melody1');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rhythm==='melody1'),'enable generated melody rhythm');
-      for(const [label,value] of [['Melody High MIDI','81'],['Melody Low MIDI','62'],['Melody Tension','50'],['Syncopation','62'],['Rhythmic Reuse','74']]) {
+      for(const [label,value] of [['Melody High MIDI','81'],['Melody Low MIDI','62'],['Melody Tension','50'],['Syncopation','62'],['Rhythmic Reuse','74'],['Articulation Contrast','68'],['Velocity Contrast','79']]) {
         const input=await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="'+label+'"]'),'track '+label);
         await change(input,value); await new Promise(r=>requestAnimationFrame(r));
       }
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rangeMin===62&&t.generatorSettings.rangeMax===81&&t.generatorSettings.tension===50),'track fields saved');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.syncopation===62&&t.generatorSettings.rhythmicReuse===74),'rhythm gradients saved');
+      await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.articulationContrast===68&&t.generatorSettings.velocityContrast===79),'performance gradients saved');
       const phrasing=await wait(()=>document.querySelector('.part-settings-content [data-control-key="ending"]'),'track phrasing stack');
       for(const [label,value] of [['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {
         await change(phrasing.querySelector('[aria-label="'+label+'"]'),value);await new Promise(r=>requestAnimationFrame(r));
@@ -130,6 +134,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       dialog.querySelector('[aria-label="Close settings"]').click();
       await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="TONIC%"]'),'restore track block controls');
       ensure(!document.querySelector(rhythmGradients),'hide rhythm gradients in block mode');
+      ensure(!document.querySelector(performanceGradients)&&document.querySelector(accent),'block mode restores Accent');
       ensure(!document.querySelector('vc-melody-global-settings [aria-label="Melody Low MIDI"]'),'hide contextual controls');
       dialog=await settings('Harmony');
       generation=await wait(()=>dialog.querySelector('[aria-label="Harmony generation"]'),'Random selector');await change(generation,'RANDOM');

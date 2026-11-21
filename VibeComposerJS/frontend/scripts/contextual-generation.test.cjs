@@ -198,6 +198,81 @@ test('rhythm shaping yields to the loop constraint when its rhythm cannot resolv
   assert.ok(Math.abs(notes.at(-1).midi - notes[0].midi) <= 10);
 });
 
+test('contextual articulation and velocity contrast shape performance independently across seeds and settings', () => {
+  const measures = [];
+  for (let index = 0; index < 32; index++) {
+    const seed = BigInt(index + 1), scale = ['major', 'natural-minor', 'dorian', 'lydian'][index % 4];
+    const durations = index % 2 === 0 ? [4, 4, 4, 4] : [2, 3, 0.5, 5];
+    const global = { phraseBars: 1 + index % 2, beatsPerBar: index % 2 === 0 ? 4 : 3 };
+    const settings = {
+      algorithm: 'block', form: index % 2 === 0 ? 'QUESTION_ANSWER' : 'SENTENCE',
+      speed: [-30, 40, 90][index % 3], pauseChance: index % 3 * 12, syncopation: index % 2 * 75,
+      rhythmicReuse: 85, melodyPatternOffsets: [1, 1, 2], splitChance: index % 2 * 50,
+      accents: index % 2 * 100, velocityMin: 60 + index % 3 * 10, velocityMax: 110 + index % 3 * 3,
+      swingPercent: [35, 50, 70][index % 3], noteLengthMultiplier: [45, 85, 125, 180][index % 4],
+    };
+    const render = (overrides = {}) => {
+      let pattern, skeleton;
+      const notes = generateMelody(seed, 'C', scale, [1, 5, 6, 4], { ...settings, ...overrides }, 0,
+        value => { pattern = value; }, global, undefined, { roots: [], voicings: [], durations }, value => { skeleton = value; });
+      return { notes: mapChordNotes(notes, durations), pattern, skeleton };
+    };
+    const base = render();
+    assert.deepEqual(render({ articulationContrast: 0, velocityContrast: 0 }), base);
+    const middle = render({ articulationContrast: 50, velocityContrast: 50 });
+    const full = render({ articulationContrast: 100, velocityContrast: 100 });
+    const gateOnly = render({ articulationContrast: 100 });
+    const velocityOnly = render({ velocityContrast: 100 });
+    const legacyAccent = render({ velocityContrast: 100, accents: 100 - settings.accents });
+    const shorter = render({ articulationContrast: 100, noteLengthMultiplier: 25 });
+    const flat = render({ velocityContrast: 100, velocityMin: 91, velocityMax: 91 });
+    const { pattern, skeleton } = base;
+    const identity = ({ id, midi, startBeat }) => [id, midi, startBeat];
+    for (const shaped of [middle, full, gateOnly, velocityOnly, shorter, flat]) {
+      assert.deepEqual(shaped.pattern, pattern);
+      assert.deepEqual(shaped.skeleton, skeleton);
+      assert.deepEqual(shaped.notes.map(identity), base.notes.map(identity));
+    }
+    const ends = durations.map((_, i) => durations.slice(0, i + 1).reduce((sum, beats) => sum + beats, 0));
+    for (const [i, note] of full.notes.entries()) {
+      const original = base.notes[i], next = full.notes[i + 1]?.startBeat ?? Infinity;
+      const difference = note.durationBeats - original.durationBeats;
+      measures.push(difference);
+      assert.ok(note.durationBeats > 0 && note.startBeat + note.durationBeats <= ends.find(end => end > note.startBeat) + 1e-9);
+      if (original.startBeat + original.durationBeats <= next + 1e-9) {
+        assert.ok(note.startBeat + note.durationBeats <= next + 1e-9, 'articulation introduces no new overlap');
+      }
+      assert.ok(Math.abs(middle.notes[i].durationBeats - original.durationBeats) <= Math.abs(difference) + 1e-9);
+      assert.ok(shorter.notes[i].durationBeats <= note.durationBeats + 1e-9, 'Note Length still sets the base gate');
+      assert.ok(Number.isInteger(note.velocity) && note.velocity >= settings.velocityMin && note.velocity <= settings.velocityMax);
+      assert.ok(Math.abs(middle.notes[i].velocity - original.velocity) <= Math.abs(note.velocity - original.velocity));
+      assert.equal(gateOnly.notes[i].velocity, original.velocity);
+      assert.equal(velocityOnly.notes[i].durationBeats, original.durationBeats);
+      assert.equal(legacyAccent.notes[i].velocity, note.velocity, 'full contrast replaces the saved arrival boost');
+      assert.equal(flat.notes[i].velocity, 91);
+    }
+  }
+  assert.ok(measures.filter(delta => delta > 0.01).length > 50, 'contrast lengthens landmarks');
+  assert.ok(measures.filter(delta => delta < -0.01).length > 50, 'contrast shortens supporting notes');
+});
+
+test('velocity contrast emphasizes offbeat entries in authored rhythms and legacy melody still uses Accent', () => {
+  const authored = { algorithm: 'block', rhythm: 'durations', tension: 0, velocityMin: 60, velocityMax: 120,
+    customDurations: [[-0.5, 0.25, -0.25, 0.25, 0.25, 0.5, 1, -1], ...Array.from({ length: 9 }, () => [])] };
+  for (let seed = 1n; seed <= 16n; seed++) {
+    const render = (settings, global) => generateMelody(seed, 'C', 'major', [1, 4, 5, 1], settings, 0, undefined, global);
+    const notes = render({ ...authored, velocityContrast: 100, articulationContrast: 100 });
+    assert.equal(notes.find(note => note.startBeat === 0.5).velocity, 102, 'offbeat entry after a rest');
+    assert.equal(notes.find(note => note.startBeat === 1.25).velocity, 75, 'supporting offbeat after an attack');
+    const legacy = { contextualMelody: false };
+    const original = render(authored, legacy);
+    assert.deepEqual(render({ ...authored, velocityContrast: 100, articulationContrast: 100 }, legacy), original);
+  }
+  const legacy = { contextualMelody: false };
+  const renderAccent = accents => generateMelody(2n, 'C', 'major', [1, 4, 5, 1], { algorithm: 'block', accents }, 0, undefined, legacy);
+  assert.notDeepEqual(renderAccent(0), renderAccent(100));
+});
+
 test('contextual defaults and seeded ranges use the lower octave', () => {
   const { DEFAULT_MELODY_TRACK } = loadMusic('melody-global-settings.ts');
   const { contextualRange } = loadMusic('contextual-randomizer.ts');

@@ -345,7 +345,11 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   if (!result) throw new RangeError('No contextual melody satisfies the range, leap and ending constraints.');
   const [low,high] = velocityBounds(settings,[80,105]), pattern: Pick<PhraseNote, 'midi' | 'startBeat'>[] = [];
   const skeleton: { midi: number; rhythm: number }[][] = events.map(() => []);
-  const notes = result.flatMap((note,index) => {
+  const articulation = (settings.articulationContrast ?? 0) / 100, contrast = (settings.velocityContrast ?? 0) / 100;
+  const length = (settings.noteLengthMultiplier ?? 100), swing = (settings.swingPercent ?? 50) / 50 - 1;
+  const performedStart = (tick: number, event = at(tick)) => Math.max(event.start / BEAT,
+    Math.min((event.end - 1) / BEAT, tick / BEAT + (tick % BEAT === BEAT / 2 ? swing * 0.5 : 0)));
+  const notes = result.flatMap((note,index,path) => {
     const slot = note.slot, event = at(slot.start);
     pattern.push({ midi: note.pitch < 0 ? -1 : note.pitch + tonic + (settings.transpose ?? 0), startBeat: slot.start / BEAT });
     skeleton[events.indexOf(event)].push({ midi: note.pitch < 0 ? -1 : convertScalePitch(note.pitch,notesInScale,scaleNotes('major')), rhythm: slot.duration / BEAT });
@@ -353,12 +357,33 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
     const performance = new JavaRandom(baseSeed ^ BigInt(slot.start) * 0xd1b54a32d192ed03n);
     let velocity = low + performance.nextInt(high - low + 1);
     if (slot.arrival && performance.nextInt(100) < (settings.accents ?? 100)) velocity = Math.min(high,velocity + Math.max(1,Math.trunc((high-low)/4)));
-    const rawStart = slot.start / BEAT, swing = (settings.swingPercent ?? 50) / 50 - 1;
-    // Bound swing and articulation to the validated harmonic event.
-    const startBeat = Math.max(event.start / BEAT, Math.min((event.end - 1) / BEAT, rawStart + (slot.start % BEAT === BEAT / 2 ? swing * 0.5 : 0)));
-    const duration = slot.duration / BEAT * 0.95 * (0.9 + performance.nextDouble() * 0.1) * (settings.noteLengthMultiplier ?? 100) / 100;
+    const startBeat = performedStart(slot.start, event), horizon = event.end / BEAT - startBeat;
+    const duration = slot.duration / BEAT * 0.95 * (0.9 + performance.nextDouble() * 0.1) * length / 100;
+    let gate = Math.min(duration,horizon);
+    const subdivision = slot.start % BEAT;
+    const anticipation = subdivision !== 0 && subdivision + slot.duration > BEAT;
+    const ornament = pending(note.role);
+    if (contrast > 0) {
+      const afterRest = path[index - 1]?.slot.rest;
+      const downbeat = slot.start % (options.beatsPerBar * BEAT) === 0;
+      const emphasis = slot.arrival ? 1 : anticipation ? 0.9 : downbeat ? 0.8 : afterRest ? 0.7
+        : subdivision === 0 ? 0.55 : ornament ? 0.1 : 0.25;
+      // Fade the seeded performance into the phrased dynamic profile within the user's velocity range.
+      velocity = Math.round(velocity + contrast * (low + (high - low) * emphasis - velocity));
+    }
+    if (articulation > 0) {
+      if (slot.arrival || anticipation || slot.duration >= BEAT && !ornament) {
+        let next = index + 1;
+        while (next < path.length && path[next].pitch < 0) next++;
+        const room = next < path.length ? performedStart(path[next].slot.start) - startBeat : horizon;
+        // Extend landmarks up to the next attack. Any overlap already requested by Note Length is preserved.
+        gate = Math.min(gate * (1 + 0.45 * articulation), Math.max(gate,room), horizon);
+      } else {
+        gate *= 1 - (ornament ? 0.55 : 0.4) * articulation;
+      }
+    }
     return [{ id: `melody-${index}`, midi: Math.max(0,Math.min(127,note.pitch + tonic + (settings.transpose ?? 0))), startBeat,
-      durationBeats: Math.max(1 / BEAT,Math.min(duration,event.end / BEAT - startBeat)), velocity }];
+      durationBeats: Math.max(1 / BEAT,gate), velocity }];
   });
   // The app's phrase contract uses four beats per chord; arrangement mapping then
   // restores each actual duration. Plan on actual beats, invert that mapping once here.
