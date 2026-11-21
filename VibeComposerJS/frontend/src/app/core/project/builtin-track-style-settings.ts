@@ -2,6 +2,7 @@ import type { ArpeggioSettings, ChordSettings, MelodySettings } from '../music/p
 
 interface StyleSettings {
   readonly lead: Partial<MelodySettings>;
+  readonly automaticLead?: Partial<MelodySettings>;
   readonly response: Partial<MelodySettings>;
   readonly responseDurations?: readonly number[];
   readonly answer: readonly number[];
@@ -18,6 +19,7 @@ interface StyleSettings {
 // seeds follow the project/track seed; loading a preset never rolls or bakes notes.
 export const BUILTIN_STYLE_SETTINGS = {
   'Deep House': {
+    automaticLead: { speed: 0, pauseChance: 28, syncopation: 5, rhythmicGrouping: 25, rhythmicReuse: 88, motifLength: 1, variationLocation: 45, noteLengthMultiplier: 47 },
     lead: { speed: 25, maxBlockChange: 2, blockJump: 0, chordNoteTarget: 85, newBlocksChance: 12,
       rangeMin: 52, rangeMax: 67, targetDirection: 'ANY', tension: 15, pitchReuse: 78, articulationContrast: 28, velocityContrast: 52 },
     response: { chordSpanFill: 'HALF2', targetDirection: 'DESC' },
@@ -28,6 +30,7 @@ export const BUILTIN_STYLE_SETTINGS = {
     humanize: 8, hatSplit: 2, accentPause: 8,
   },
   'Techno': {
+    automaticLead: { speed: 35, pauseChance: 36, syncopation: 20, rhythmicGrouping: 45, rhythmicReuse: 92, motifLength: 1, variationLocation: 65, noteLengthMultiplier: 25 },
     lead: { speed: 80, maxBlockChange: 4, blockJump: 0, newBlocksChance: 5,
       rangeMin: 53, rangeMax: 65, tension: 0, style: 'MODAL', targetDirection: 'ANY', pitchReuse: 94, articulationContrast: 18, velocityContrast: 40 },
     response: { chordSpanFill: 'HALF2', articulationContrast: -20 },
@@ -65,6 +68,7 @@ export const BUILTIN_STYLE_SETTINGS = {
     humanize: 20, hatSplit: 3, accentPause: 12,
   },
   'Funk': {
+    automaticLead: { speed: 35, pauseChance: 35, syncopation: 35, entryPlacement: 35, rhythmicGrouping: 100, rhythmicReuse: 25, motifLength: 1, variationLocation: 45 },
     lead: { speed: 75, maxBlockChange: 4, blockJump: 2, chordNoteTarget: 80, newBlocksChance: 40,
       rangeMin: 51, rangeMax: 67, targetDirection: 'ANY', tension: 52, pitchReuse: 76, articulationContrast: -45, velocityContrast: 82 },
     response: { chordSpanFill: 'HALF2', targetDirection: 'ASC', velocityContrast: 48 },
@@ -93,6 +97,7 @@ export const BUILTIN_STYLE_SETTINGS = {
     humanize: 85, hatSplit: 3, accentPause: 20,
   },
   'Trap': {
+    automaticLead: { speed: 21, pauseChance: 42, syncopation: 15, entryPlacement: 15, rhythmicGrouping: 80, rhythmicReuse: 78, motifLength: 1, variationLocation: 75, noteLengthMultiplier: 60 },
     lead: { speed: 65, maxBlockChange: 2, blockJump: 1, newBlocksChance: 10, targetDirection: 'DESC',
       rangeMin: 55, rangeMax: 68, tension: 15, pitchReuse: 88, articulationContrast: 35, velocityContrast: 57 },
     response: { chordSpanFill: 'HALF2', targetDirection: 'ASC' },
@@ -207,6 +212,7 @@ export const BUILTIN_STYLE_SETTINGS = {
     humanize: 28, hatSplit: 4, accentPause: 12,
   },
   'Pop Punk': {
+    automaticLead: { speed: 35, pauseChance: 12, syncopation: -25, rhythmicGrouping: 35, rhythmicReuse: 83, motifLength: 1, variationLocation: 65 },
     lead: { speed: 90, maxBlockChange: 3, blockJump: 2, newBlocksChance: 15, targetDirection: 'ASC',
       rangeMin: 53, rangeMax: 68, tension: 15, pitchReuse: 81, articulationContrast: 45, velocityContrast: 51 },
     response: { chordSpanFill: 'HALF2', targetDirection: 'ASC' },

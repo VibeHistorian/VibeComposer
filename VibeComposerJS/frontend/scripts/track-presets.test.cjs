@@ -179,9 +179,13 @@ test('generic rhythm controls approach Reggae, Funk and Dub Factory lead rhythms
   const { generateTrackPhrase } = load('core/music/phrase.ts');
   const profiles = {
     Reggae: { entryPlacement: 100, rhythmicGrouping: 65, pauseChance: 16, syncopation: 30 },
-    Funk: { entryPlacement: 35, rhythmicGrouping: 100, speed: 35, pauseChance: 35, syncopation: 35 },
+    Funk: {},
     Dub: { entryPlacement: 35, rhythmicGrouping: 75, speed: -25, pauseChance: 52, noteLengthMultiplier: 30 },
   };
+  const authoredFunk = { rhythm: 'durations', customDurationRandomWeighting: true,
+    customDurations: [[0.25, -0.25, 0.5, -0.5, 0.5, 1, -1], [-0.75, 0.25, -0.5, 0.5, -1, 0.5, 0.5],
+      ...Array.from({ length: 8 }, () => [])],
+    customDurationChances: [75, 25, ...Array(8).fill(0)] };
   const samples = 48;
   for (const [style, profile] of Object.entries(profiles)) {
     const preset = library.find(item => item.role === 'melody' && item.name.startsWith(style + ' ·'));
@@ -209,7 +213,7 @@ test('generic rhythm controls approach Reggae, Funk and Dub Factory lead rhythms
       return { density: attacks / (4 * samples), offbeats: offbeats / attacks, sounding: sounding / (16 * samples),
         downbeatEntries, closePairs: closePairs / (attacks - samples), longGaps, diversity: rhythms.size };
     };
-    const authored = sample({}), automatic = sample({ rhythm: 'melody1' });
+    const authored = sample(style === 'Funk' ? authoredFunk : {}), automatic = sample({ rhythm: 'melody1' });
     const tuned = sample({ rhythm: 'melody1', ...profile });
     for (const [metric, tolerance] of [['density', 0.45], ['offbeats', 0.07], ['sounding', 0.04]]) {
       assert.ok(Math.abs(tuned[metric] - authored[metric]) < tolerance, `${style}: approaches authored ${metric}`);
@@ -223,6 +227,69 @@ test('generic rhythm controls approach Reggae, Funk and Dub Factory lead rhythms
       assert.ok(Math.abs(tuned.closePairs - authored.closePairs) < Math.abs(ungrouped.closePairs - authored.closePairs));
     }
     if (style === 'Dub') assert.ok(automatic.longGaps < tuned.longGaps && tuned.longGaps < authored.longGaps);
+  }
+});
+
+test('factory generated leads repeat short seeded motifs and keep authored replies', () => {
+  const { service, load } = fixture();
+  const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
+  const { generateTrackPhrase } = load('core/music/phrase.ts');
+  const styles = ['Deep House', 'Techno', 'Funk', 'Trap', 'Pop Punk'];
+  const generated = library.filter(preset => preset.role === 'melody' && preset.tracks[0].generatorSettings.rhythm === 'melody1');
+  assert.deepEqual(generated.map(preset => preset.name.split(' · ')[0]), styles);
+  for (const preset of generated) {
+    const [lead, reply] = preset.tracks.map((track, index) => ({ ...track, id: `track-melody-${index + 1}` }));
+    assert.equal(lead.generatorSettings.motifLength, 1);
+    assert.equal(reply.generatorSettings.rhythm, 'durations');
+    const neutral = { ...lead, generatorSettings: { ...lead.generatorSettings, motifLength: 0, rhythmicReuse: 0, variationLocation: 0 } };
+    let motifDifference = 0, neutralDifference = 0;
+    const rhythms = new Set();
+    const barDifference = notes => {
+      const bar = start => new Set(notes.filter(note => note.startBeat >= start && note.startBeat < start + 4)
+        .map(note => Math.round((note.startBeat - start) * 960)));
+      return bar(0).symmetricDifference(bar(4)).size;
+    };
+    for (const [scale, progression] of [['major', [1, 5, 6, 4]], ['natural-minor', [1, 6, 3, 7]]]) {
+      for (let seed = 1; seed <= 24; seed++) {
+        const project = { ...service.project(), scale, progression, seed: String(Math.imul(seed, 0x9e3779b1)), tracks: [lead, reply] };
+        const notes = generateTrackPhrase(project, lead);
+        assert.ok(notes.length);
+        rhythms.add(notes.map(note => note.startBeat).join(','));
+        motifDifference += barDifference(notes);
+        neutralDifference += barDifference(generateTrackPhrase(project, neutral));
+      }
+    }
+    assert.ok(rhythms.size > 8, `${preset.name}: different seeds produce different rhythms`);
+    assert.ok(motifDifference < neutralDifference, `${preset.name}: the second bar recalls the first`);
+  }
+});
+
+test('factory multi-bar drum grids put kick turnarounds and fills on later bars at the intended subdivision', () => {
+  const { load } = fixture();
+  const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
+  const { generateDrumPart } = load('core/music/drum-generator.ts');
+  const cases = [
+    ['Funk', 36, [[0, 6, 8, 14], [0, 6, 8, 13, 14]], 16],
+    ['Trap', 36, [[0, 6, 10, 15], [0, 6, 10, 14, 15]], 16],
+    ['UK Garage', 36, [[0, 10], [6, 10, 14]], 16],
+    ['Pop Punk', 50, [[12], [12, 13, 14, 15]], 16],
+    ['Blues Shuffle', 45, [[10], [8, 10, 11]], 12],
+    ['Cinematic Pulse', 57, [[4], [], [], [6, 7]], 8],
+  ];
+  for (const [style, pitch, bars, steps] of cases) {
+    const preset = library.find(item => item.role === 'drums' && item.name.startsWith(style + ' ·'));
+    const settings = preset.tracks.find(track => track.generatorSettings.pitch === pitch).generatorSettings;
+    const span = bars.length;
+    assert.equal(settings.chordSpan, span);
+    assert.equal(settings.hitsPerPattern, span * steps);
+    if (steps === 12) assert.equal(settings.swingPercent, 50);
+    for (const seed of [1n, 17n, 9007199254740993n]) {
+      const hits = generateDrumPart(seed, span * 2 + 1, settings);
+      for (let index = 0; index < span * 2 + 1; index++) {
+        assert.deepEqual(hits.filter(hit => hit.barIndex === index).map(hit => hit.step % steps), bars[index % span]);
+      }
+      assert.deepEqual(generateDrumPart(seed, 1, settings).map(hit => hit.step), bars[0]);
+    }
   }
 });
 

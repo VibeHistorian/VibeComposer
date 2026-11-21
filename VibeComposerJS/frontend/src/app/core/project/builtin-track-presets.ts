@@ -23,48 +23,48 @@ interface Style {
 }
 
 // Additional voices use the full GM catalogue, with sparse accents around the core groove.
-// Each mask spans four beats; shuffle accents retain a twelve-cell triplet grid.
+// Each | separates four beats at the same subdivision.
 const PERCUSSION: Readonly<Record<string, readonly (readonly [pitch: number, mask: string])[]>> = {
-  'Deep House': [[46, '0010001000100010'], [63, '0001000000010010'], [69, '1000100010001000']],
-  'Techno': [[46, '0010001000100010'], [52, '1000000000000000'], [50, '0000000000000011']],
-  'Trance': [[46, '0010001000100010'], [49, '1000000000000000'], [57, '0000000010000000']],
-  'Synthwave': [[46, '0000001000000010'], [49, '1000000000000000'], [45, '0000000000001010']],
-  'Disco': [[46, '0010001000100010'], [56, '1000001000100000'], [70, '1010101010101010']],
+  'Deep House': [[46, '0010001000100010'], [63, '0001000000010010|0001000000010110'], [69, '1000100010001000']],
+  'Techno': [[46, '0010001000100010'], [52, '1000000000000000'], [50, '0000000000000010|0000000000001011']],
+  'Trance': [[46, '0010001000100010'], [49, '1000000000000000'], [57, '00001000|00000000|00000000|00000001']],
+  'Synthwave': [[46, '0000001000000010'], [49, '1000000000000000'], [45, '0000000000001010|0000000000011011']],
+  'Disco': [[46, '0010001000100010'], [56, '1000001000100000|1000001000100010'], [70, '1010101010101010']],
   'Funk': [[46, '0000001000000010'], [56, '1001000000100100'], [63, '0001001000010010']],
   'Boom Bap': [[44, '0000001000000010'], [51, '1000000000000000'], [69, '0010001000100010']],
-  'Lo-fi Hip Hop': [[44, '0000001000000010'], [59, '1000000000000000'], [70, '0010000000100000']],
-  'Trap': [[46, '0000001000000010'], [55, '1000000000000000'], [76, '0000000000010001']],
+  'Lo-fi Hip Hop': [[44, '0000001000000010'], [59, '10000000|00000000|00000010|00000000'], [70, '0010000000100000']],
+  'Trap': [[46, '0000001000000010'], [55, '1000000000000000'], [76, '0000000000010000|0000000000010111']],
   'Drum and Bass': [[46, '0000001000000010'], [51, '1000100010001000'], [57, '1000000000000000']],
   'UK Garage': [[46, '0000001000000010'], [62, '0001000000010010'], [75, '0000000100000100']],
   'Dubstep': [[46, '0000001000000010'], [52, '1000000000000000'], [50, '0000000000001010']],
-  'Reggae': [[46, '0000001000000010'], [64, '0001001000010010'], [73, '0010001000100010']],
-  'Dub': [[59, '0000000010000000'], [64, '0001000000000010'], [58, '1000000000000000']],
-  'Afrobeat': [[56, '1001001000101000'], [63, '0010010001000010'], [64, '0001001000010100'], [67, '1000001000100000']],
-  'Bossa Nova': [[69, '1010101010101010'], [75, '1001001000101000'], [63, '0000001000000010']],
-  'Samba': [[67, '1001001000101000'], [64, '1000001010000010'], [74, '0010010000100100'], [78, '0001000000010000']],
-  'Swing Jazz': [[44, '000100000100'], [51, '100101100101'], [55, '100000000000']],
-  'Blues Shuffle': [[46, '001000001000'], [51, '100101100101'], [45, '000000000011']],
-  'Indie Rock': [[46, '0000001000000010'], [49, '1000000000000000'], [48, '0000000000001010']],
-  'Pop Punk': [[46, '0010001000100010'], [57, '1000000010000000'], [50, '0000000000001111']],
-  'Acoustic Folk': [[70, '1010101010101010'], [77, '0000001000000010'], [81, '1000000000000000']],
-  'Ambient': [[59, '1000000000000000'], [80, '0000000010000000'], [74, '0000000000001000']],
-  'Cinematic Pulse': [[43, '1000000010000000'], [50, '0000001000000010'], [52, '1000000000000000'], [57, '0000000010000000']],
+  'Reggae': [[46, '0000001000000010'], [64, '0001001000010010|0001001000010110'], [73, '0010001000100010']],
+  'Dub': [[59, '0000000010000000'], [64, '0001000000000010'], [58, '10000000|00000000|00000000|00000010']],
+  'Afrobeat': [[56, '1001001000101000|1001001001001010'], [63, '0010010001000010'], [64, '0001001000010100'], [67, '1000001000100000']],
+  'Bossa Nova': [[69, '1010101010101010'], [75, '1001001000101000|0010100010010010'], [63, '0000001000000010']],
+  'Samba': [[67, '1001001000101000'], [64, '1000001010000010'], [74, '0010010000100100|0010010000101110'], [78, '0001000000010000']],
+  'Swing Jazz': [[44, '000100000100'], [51, '100101100101|100101100111'], [55, '100000000000']],
+  'Blues Shuffle': [[46, '001000001000'], [51, '100101100101'], [45, '000000000010|000000001011']],
+  'Indie Rock': [[46, '0000001000000010'], [49, '1000000000000000'], [48, '0000000000001000|0000000000111010']],
+  'Pop Punk': [[46, '0010001000100010'], [57, '1000000010000000'], [50, '0000000000001000|0000000000001111']],
+  'Acoustic Folk': [[70, '1010101010101010'], [77, '0000001000000010'], [81, '10000000|00000000|00000000|00000100']],
+  'Ambient': [[59, '10000000|00000000|00000000|00001000'], [80, '0000000010000000'], [74, '0000000000001000']],
+  'Cinematic Pulse': [[43, '1000000010000000'], [50, '0000001000000010'], [52, '1000000000000000'], [57, '00001000|00000000|00000000|00000011']],
 };
 
-// All masks describe a four-beat bar. Twelve cells provide true triplet grids.
+// Each mask segment describes a four-beat bar. Twelve cells provide a triplet grid.
 const STYLES: readonly Style[] = [
   { name: 'Deep House', bpm: '118–124', swing: 54, programs: [81, 38, 4, 89], bass: '0010001000100010', comp: '0010001000100010', kick: '1000100010001000', snare: '0000100000001000', hat: '0010001000100010', durations: [0.5, -0.5, 1, -1, 1], arp: 'up-down', gate: 65, variation: 8 },
   { name: 'Techno', bpm: '128–140', swing: 50, programs: [80, 38, 81, 80], bass: '1010101010101010', comp: '1000001000100000', kick: '1000100010001000', snare: '0000100000001000', hat: '1011101010111010', durations: [0.25, 0.25, -0.5, 0.5, -0.5, 1, -1], arp: 'up', gate: 40, variation: 0 },
   { name: 'Trance', bpm: '134–142', swing: 50, programs: [81, 38, 89, 81], bass: '0111011101110111', comp: '1000000010000000', kick: '1000100010001000', snare: '0000100000001000', hat: '0010001000100010', durations: [0.5, 0.5, 1, 0.5, 0.5, 1], arp: 'up-down', gate: 85, variation: 5 },
   { name: 'Synthwave', bpm: '90–110', swing: 50, programs: [81, 38, 90, 80], bass: '1010101010101010', comp: '1000000010000000', kick: '1000000010100000', snare: '0000100000001000', hat: '1010101010101010', durations: [1, 0.5, 0.5, -1, 1], arp: 'down-up', gate: 95, variation: 8 },
   { name: 'Disco', bpm: '110–126', swing: 52, programs: [62, 34, 4, 10], bass: '1010011010100110', comp: '0010001000100010', kick: '1000100010001000', snare: '0000100000001000', hat: '1111111111111111', durations: [-0.5, 0.5, 0.5, 0.5, 1, 1], arp: 'frog-up', gate: 55, variation: 35 },
-  { name: 'Funk', bpm: '95–112', swing: 56, programs: [65, 36, 27, 11], bass: '1001001010010110', comp: '0010010000100101', kick: '1000001010000010', snare: '0000100000001000', hat: '1110101111101011', durations: [0.25, -0.25, 0.5, -0.5, 0.5, 1, -1], arp: 'frog-down', gate: 40, variation: 45 },
-  { name: 'Boom Bap', bpm: '82–96', swing: 62, programs: [65, 33, 4, 11], bass: '1000001000100000', comp: '1000000000100000', kick: '1000000010010000', snare: '0000100000001000', hat: '1010101010101010', durations: [0.5, -0.5, 0.5, 0.5, -1, 1], arp: 'down', gate: 80, variation: 18 },
+  { name: 'Funk', bpm: '95–112', swing: 56, programs: [65, 36, 27, 11], bass: '1001001010010110', comp: '0010010000100101', kick: '1000001010000010|1000001010000110', snare: '0000100000001000', hat: '1110101111101011', durations: [0.25, -0.25, 0.5, -0.5, 0.5, 1, -1], arp: 'frog-down', gate: 40, variation: 45 },
+  { name: 'Boom Bap', bpm: '82–96', swing: 62, programs: [65, 33, 4, 11], bass: '1000001000100000', comp: '1000000000100000', kick: '1000000010010000|1000000010010010', snare: '0000100000001000', hat: '1010101010101010', durations: [0.5, -0.5, 0.5, 0.5, -1, 1], arp: 'down', gate: 80, variation: 18 },
   { name: 'Lo-fi Hip Hop', bpm: '68–84', swing: 60, programs: [11, 32, 4, 8], bass: '1000000010000010', comp: '1000000000100000', kick: '1000000010000010', snare: '0000100000001000', hat: '1010001010100010', durations: [1, -0.5, 0.5, 1, -1], arp: 'random', gate: 110, variation: 20 },
-  { name: 'Trap', bpm: '130–150 half-time', swing: 50, programs: [80, 38, 88, 10], bass: '1000000000100010', comp: '1000000000000000', kick: '1000001000100001', snare: '0000000010000000', hat: '1111101011111011', durations: [0.25, 0.25, -0.5, 1, -1, 1], arp: 'down', gate: 70, variation: 0 },
-  { name: 'Drum and Bass', bpm: '168–176', swing: 50, programs: [81, 39, 89, 80], bass: '1000001010000100', comp: '1000000000100000', kick: '1000000000100000', snare: '0000100000001000', hat: '1011101010111010', durations: [0.5, 0.5, -1, 0.5, 0.5, 1], arp: 'up-down', gate: 65, variation: 12 },
-  { name: 'UK Garage', bpm: '128–136', swing: 64, programs: [11, 38, 4, 10], bass: '1000010010100001', comp: '0010010000100100', kick: '1000000000100000', snare: '0000100000001000', hat: '0010100100101001', durations: [-0.5, 0.5, 0.25, 0.25, -0.5, 1, -1], arp: 'frog-up', gate: 45, variation: 20 },
-  { name: 'Dubstep', bpm: '138–144 half-time', swing: 50, programs: [81, 39, 91, 80], bass: '1000010010000010', comp: '1000000000001000', kick: '1000000000000010', snare: '0000000010000000', hat: '1010101110101011', durations: [1, -1, 0.5, 0.5, -1], arp: 'down-up', gate: 50, variation: 5 },
+  { name: 'Trap', bpm: '130–150 half-time', swing: 50, programs: [80, 38, 88, 10], bass: '1000000000100010', comp: '1000000000000000', kick: '1000001000100001|1000001000100011', snare: '0000000010000000', hat: '1111101011111011', durations: [0.25, 0.25, -0.5, 1, -1, 1], arp: 'down', gate: 70, variation: 0 },
+  { name: 'Drum and Bass', bpm: '168–176', swing: 50, programs: [81, 39, 89, 80], bass: '1000001010000100', comp: '1000000000100000', kick: '1000000000100000|1000000000100010', snare: '0000100000001000', hat: '1011101010111010', durations: [0.5, 0.5, -1, 0.5, 0.5, 1], arp: 'up-down', gate: 65, variation: 12 },
+  { name: 'UK Garage', bpm: '128–136', swing: 64, programs: [11, 38, 4, 10], bass: '1000010010100001', comp: '0010010000100100', kick: '1000000000100000|0000001000100010', snare: '0000100000001000', hat: '0010100100101001', durations: [-0.5, 0.5, 0.25, 0.25, -0.5, 1, -1], arp: 'frog-up', gate: 45, variation: 20 },
+  { name: 'Dubstep', bpm: '138–144 half-time', swing: 50, programs: [81, 39, 91, 80], bass: '1000010010000010', comp: '1000000000001000', kick: '1000000000000010|1000010000000011', snare: '0000000010000000', hat: '1010101110101011', durations: [1, -1, 0.5, 0.5, -1], arp: 'down-up', gate: 50, variation: 5 },
   { name: 'Reggae', bpm: '70–90', swing: 54, programs: [65, 33, 27, 16], bass: '1000001010000100', comp: '0010001000100010', kick: '0000000010000000', snare: '0000000010000000', hat: '1010101010101010', durations: [-0.5, 0.5, 1, -0.5, 0.5, 1], arp: 'up', gate: 35, variation: 15 },
   { name: 'Dub', bpm: '65–82', swing: 55, programs: [16, 33, 16, 98], bass: '1000001000001000', comp: '0010000000100000', kick: '0000000010000000', snare: '0000000010000000', hat: '0010001000100010', durations: [1, -1, 0.5, -1.5], arp: 'down', gate: 45, variation: 8 },
   { name: 'Afrobeat', bpm: '100–118', swing: 50, programs: [56, 34, 27, 12], bass: '1001001000101000', comp: '0010010010010010', kick: '1000001010000010', snare: '0000100000001000', hat: '1011010110101101', durations: [0.5, -0.5, 1, -1, 1], arp: 'frog-up', gate: 55, variation: 30 },
@@ -80,8 +80,19 @@ const STYLES: readonly Style[] = [
 ];
 
 function grid(mask: string) {
-  return { rhythm: 'custom' as const, hitsPerPattern: mask.length,
-    customPattern: Array.from({ length: 32 }, (_, index) => Number(mask[index] ?? 0)) };
+  const bars = mask.split('|'), steps = bars.join('');
+  if (bars.length > 4 || steps.length > 32 || bars.some(bar => bar.length !== bars[0].length || !/^[01]+$/.test(bar))) {
+    throw new RangeError('Factory rhythm grids must fit 32 hits across up to four equal bars.');
+  }
+  return { rhythm: 'custom' as const, hitsPerPattern: steps.length,
+    ...(bars.length > 1 ? { chordSpan: bars.length } : {}),
+    customPattern: Array.from({ length: 32 }, (_, index) => Number(steps[index] ?? 0)) };
+}
+
+function drumGrid(mask: string, swing: number) {
+  const rhythm = grid(mask);
+  // Twelve cells per bar already encode a triplet pulse.
+  return { ...rhythm, swingPercent: rhythm.hitsPerPattern / (rhythm.chordSpan ?? 1) === 12 ? 50 : swing };
 }
 
 /** A recognizable motif with a less frequent, style-specific answer rhythm. */
@@ -104,10 +115,12 @@ export const BUILTIN_TRACK_PRESETS: readonly TrackPreset[] = STYLES.flatMap(styl
   const melody = { ...common, algorithm: 'block' as const, rhythm: 'durations' as const, melodyPatternOffsets: [1, 1, 2, 1] };
   const bassCommon = { patternSeed: 0, velocityMin: 68, velocityMax: 100 };
   const durations = durationSettings(style.durations, character.answer);
+  const leadRhythm = character.automaticLead
+    ? { rhythm: 'melody1' as const, ...character.automaticLead } : durations;
   const name = `${style.name} · ${style.bpm} BPM`;
   const tracks: CompositionTrack[][] = [
-    [track('melody', 'Lead', 1, style.programs[0], { ...melody, ...durations,
-      ending: 'OPEN', splitChance: 0, noteLengthMultiplier: Math.min(100, style.gate), ...character.lead }),
+    [track('melody', 'Lead', 1, style.programs[0], { ...melody,
+      ending: 'OPEN', splitChance: 0, noteLengthMultiplier: Math.min(100, style.gate), ...character.lead, ...leadRhythm }),
     track('melody', 'Quiet response', 2, style.programs[3], { ...melody,
       ...character.lead, ...durationSettings(character.responseDurations ?? character.answer, style.durations, character.responseDurations ? 100 : 85),
       ending: 'OPEN', transpose: 12, noteLengthMultiplier: Math.min(100, style.gate), velocityMin: 45, velocityMax: 65,
@@ -131,17 +144,20 @@ export const BUILTIN_TRACK_PRESETS: readonly TrackPreset[] = STYLES.flatMap(styl
       ...grid(character.bassSupport), patternShift: 1, arpPatternRotate: 1,
       pauseChance: character.accentPause, exceptionChance: Math.floor(character.hatSplit / 2),
       noteLengthMultiplier: Math.min(style.gate, 75), velocityMin: 40, velocityMax: 60 }, 35, -8)],
-    [track('drums', 'Kick', 1, 0, { ...common, ...grid(style.kick), pitch: 36, humanize: Math.floor(character.humanize / 3) }),
-    track('drums', 'Snare / rim', 2, 0, { ...common, ...grid(style.snare), pitch: /Bossa|Reggae|Dub$/.test(style.name) ? 37 : 38,
+    [track('drums', 'Kick', 1, 0, { ...common, ...drumGrid(style.kick, style.swing), pitch: 36, humanize: Math.floor(character.humanize / 3) }),
+    track('drums', 'Snare / rim', 2, 0, { ...common, ...drumGrid(style.snare, style.swing), pitch: /Bossa|Reggae|Dub$/.test(style.name) ? 37 : 38,
       humanize: Math.floor(character.humanize / 2) }),
-    track('drums', 'Hat / ride', 3, 0, { ...common, ...grid(style.hat), pitch: style.name === 'Swing Jazz' ? 53 : 42,
+    track('drums', 'Hat / ride', 3, 0, { ...common, ...drumGrid(style.hat, style.swing), pitch: style.name === 'Swing Jazz' ? 53 : 42,
       velocityMin: 45, velocityMax: 75, humanize: character.humanize,
       exceptionChance: character.hatSplit }, 65, 12),
-    ...PERCUSSION[style.name].map(([pitch, mask], index) => track('drums', drumInstrumentName(pitch), index + 4, 0,
-      { ...common, ...grid(mask), pitch, velocityMin: 42, velocityMax: 72, humanize: character.humanize,
-        // Single-hit crashes/bells remain dependable; denser percussion may leave gaps.
-        pauseChance: [...mask].filter(cell => cell === '1').length > 1 ? character.accentPause : 0,
-        exceptionChance: Math.floor(character.hatSplit / 3) }, 50, index % 2 === 0 ? -18 : 18))],
+    ...PERCUSSION[style.name].map(([pitch, mask], index) => {
+      const rhythm = drumGrid(mask, style.swing), authoredCycle = (rhythm.chordSpan ?? 1) > 1;
+      return track('drums', drumInstrumentName(pitch), index + 4, 0,
+        { ...common, ...rhythm, pitch, velocityMin: 42, velocityMax: 72, humanize: character.humanize,
+          // Keep authored fill placements and sparse crashes dependable.
+          pauseChance: !authoredCycle && rhythm.customPattern.filter(Boolean).length > 1 ? character.accentPause : 0,
+          exceptionChance: authoredCycle ? 0 : Math.floor(character.hatSplit / 3) }, 50, index % 2 === 0 ? -18 : 18);
+    })],
   ];
   return tracks.map(group => ({ name, role: group[0].role, tracks: group }));
 });
