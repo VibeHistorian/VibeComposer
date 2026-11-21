@@ -183,6 +183,37 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         slot.start -= shift;
         slot.duration += shift;
       }
+    } else if (shapeRhythm && syncopation < 0) {
+      for (let index = 1; index < slots.length; index++) {
+        const slot = slots[index], previous = slots[index - 1], subdivision = slot.start % BEAT;
+        if (slot.rest || slot.arrival || !subdivision || previous.phrase !== slot.phrase) continue;
+        const event = at(slot.start);
+        const earliest = previous.start + Math.min(BEAT / 4, previous.duration);
+        const latest = slot.start + slot.duration - Math.min(BEAT / 4, slot.duration);
+        const before = slot.start - subdivision, after = before + BEAT;
+        const next = slots[index + 1];
+        const beforeRest = previous.start === before && previous.rest && !previous.arrival;
+        const afterRest = next?.start === after && next.phrase === slot.phrase && next.rest && !next.arrival;
+        const canMoveBefore = before >= event.start && (before >= earliest || beforeRest);
+        const canMoveAfter = after < event.end && (after <= latest || afterRest);
+        const target = canMoveBefore && (!canMoveAfter || subdivision < BEAT / 2) ? before
+          : canMoveAfter ? after : slot.start;
+        if (target === slot.start) continue;
+        const random = new JavaRandom(mixContextualSeed(baseSeed ^ 0x70756c7365n ^ BigInt(variant)
+          ^ BigInt(slot.start - slot.phrase.start) * 0x9e3779b97f4a7c15n ^ BigInt(Math.abs(slot.phrase.motif)) * 0xd1b54a32d192ed03n));
+        if (random.nextInt(100) >= -syncopation) continue;
+        // Use a vacant beat where possible. Otherwise move the shared boundary to the beat.
+        const vacantBeat = target === before && beforeRest ? previous : target === after && afterRest ? next : undefined;
+        if (vacantBeat) {
+          vacantBeat.rest = false;
+          slot.rest = true;
+          continue;
+        }
+        const shift = target - slot.start;
+        previous.duration += shift;
+        slot.start = target;
+        slot.duration -= shift;
+      }
     }
     return slots;
   };
@@ -198,7 +229,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   };
   const pending = (role: Role) => !['CHORD', 'EXTENSION'].includes(role);
   let result: Planned[] | undefined;
-  const shapeRhythm = settings.rhythm !== 'durations' && (syncopation > 0 || rhythmicReuse > 0);
+  const shapeRhythm = settings.rhythm !== 'durations' && (syncopation !== 0 || rhythmicReuse > 0);
   // Rhythm shaping is a preference. Retry the original rhythms if the pitch search cannot resolve one.
   for (let attempt = 0; attempt < (shapeRhythm ? 6 : 3) && !result; attempt++) {
     const variant = attempt % 3;
@@ -363,23 +394,27 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
     const subdivision = slot.start % BEAT;
     const anticipation = subdivision !== 0 && subdivision + slot.duration > BEAT;
     const ornament = pending(note.role);
-    if (contrast > 0) {
+    if (contrast !== 0) {
       const afterRest = path[index - 1]?.slot.rest;
       const downbeat = slot.start % (options.beatsPerBar * BEAT) === 0;
       const emphasis = slot.arrival ? 1 : anticipation ? 0.9 : downbeat ? 0.8 : afterRest ? 0.7
         : subdivision === 0 ? 0.55 : ornament ? 0.1 : 0.25;
       // Fade the seeded performance into the phrased dynamic profile within the user's velocity range.
-      velocity = Math.round(velocity + contrast * (low + (high - low) * emphasis - velocity));
+      const weight = contrast > 0 ? emphasis : 1 - emphasis;
+      velocity = Math.round(velocity + Math.abs(contrast) * (low + (high - low) * weight - velocity));
     }
-    if (articulation > 0) {
-      if (slot.arrival || anticipation || slot.duration >= BEAT && !ornament) {
+    if (articulation !== 0) {
+      const landmark = slot.arrival || anticipation || slot.duration >= BEAT && !ornament;
+      const amount = landmark ? 0.45 : ornament ? -0.55 : -0.4;
+      const factor = 1 + amount * articulation;
+      if (factor > 1) {
         let next = index + 1;
         while (next < path.length && path[next].pitch < 0) next++;
         const room = next < path.length ? performedStart(path[next].slot.start) - startBeat : horizon;
         // Extend landmarks up to the next attack. Any overlap already requested by Note Length is preserved.
-        gate = Math.min(gate * (1 + 0.45 * articulation), Math.max(gate,room), horizon);
+        gate = Math.min(gate * factor, Math.max(gate,room), horizon);
       } else {
-        gate *= 1 - (ornament ? 0.55 : 0.4) * articulation;
+        gate *= factor;
       }
     }
     return [{ id: `melody-${index}`, midi: Math.max(0,Math.min(127,note.pitch + tonic + (settings.transpose ?? 0))), startBeat,

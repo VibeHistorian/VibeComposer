@@ -128,6 +128,13 @@ test('contextual search preserves exact notes, patterns and skeletons across the
     // Rebaselined for corrected scale collections and the m9 third/seventh.
     sha256: 'b9b7dc4abe67945834211e29deade52b1e12bfda7cb4fe912a4a667713d2bc85', failures: 0,
   });
+  assert.deepEqual(contextualDigest(120, i => ({
+    syncopation: [0, 38, 100][i % 3], rhythmicReuse: [0, 67][i % 2],
+    articulationContrast: [0, 44, 100][Math.floor(i / 3) % 3], velocityContrast: [0, 58, 100][Math.floor(i / 9) % 3],
+  })), {
+    // Captured with the original 0–100 controls.
+    sha256: '27831313354dae3acad88570c44fa11a6581f42cf81bd2f2a6b0e5e280ac4f3a', failures: 0,
+  });
 });
 
 test('contextual rhythm controls are neutral at zero and leave authored durations and block melody alone', () => {
@@ -166,6 +173,10 @@ test('syncopation and rhythmic reuse shape seeded rhythm while preserving other 
     return results;
   };
   const neutral = sample({});
+  const syncGrounded = sample({ syncopation: -50 }), syncMostGrounded = sample({ syncopation: -100 });
+  assert.equal(syncGrounded.attacks, neutral.attacks);
+  assert.equal(syncMostGrounded.attacks, neutral.attacks);
+  assert.ok(syncMostGrounded.offbeats < syncGrounded.offbeats && syncGrounded.offbeats < neutral.offbeats);
   const syncMiddle = sample({ syncopation: 50 }), syncHigh = sample({ syncopation: 100 });
   assert.equal(syncMiddle.attacks, neutral.attacks);
   assert.equal(syncHigh.attacks, neutral.attacks);
@@ -199,7 +210,7 @@ test('rhythm shaping yields to the loop constraint when its rhythm cannot resolv
 });
 
 test('contextual articulation and velocity contrast shape performance independently across seeds and settings', () => {
-  const measures = [];
+  const measures = [], reversedMeasures = [];
   for (let index = 0; index < 32; index++) {
     const seed = BigInt(index + 1), scale = ['major', 'natural-minor', 'dorian', 'lydian'][index % 4];
     const durations = index % 2 === 0 ? [4, 4, 4, 4] : [2, 3, 0.5, 5];
@@ -221,6 +232,8 @@ test('contextual articulation and velocity contrast shape performance independen
     assert.deepEqual(render({ articulationContrast: 0, velocityContrast: 0 }), base);
     const middle = render({ articulationContrast: 50, velocityContrast: 50 });
     const full = render({ articulationContrast: 100, velocityContrast: 100 });
+    const inverted = render({ articulationContrast: -100, velocityContrast: -100 });
+    const partiallyInverted = render({ articulationContrast: -50, velocityContrast: -50 });
     const gateOnly = render({ articulationContrast: 100 });
     const velocityOnly = render({ velocityContrast: 100 });
     const legacyAccent = render({ velocityContrast: 100, accents: 100 - settings.accents });
@@ -228,7 +241,7 @@ test('contextual articulation and velocity contrast shape performance independen
     const flat = render({ velocityContrast: 100, velocityMin: 91, velocityMax: 91 });
     const { pattern, skeleton } = base;
     const identity = ({ id, midi, startBeat }) => [id, midi, startBeat];
-    for (const shaped of [middle, full, gateOnly, velocityOnly, shorter, flat]) {
+    for (const shaped of [middle, full, inverted, partiallyInverted, gateOnly, velocityOnly, shorter, flat]) {
       assert.deepEqual(shaped.pattern, pattern);
       assert.deepEqual(shaped.skeleton, skeleton);
       assert.deepEqual(shaped.notes.map(identity), base.notes.map(identity));
@@ -237,14 +250,22 @@ test('contextual articulation and velocity contrast shape performance independen
     for (const [i, note] of full.notes.entries()) {
       const original = base.notes[i], next = full.notes[i + 1]?.startBeat ?? Infinity;
       const difference = note.durationBeats - original.durationBeats;
+      const inverse = inverted.notes[i], inverseDifference = inverse.durationBeats - original.durationBeats;
       measures.push(difference);
-      assert.ok(note.durationBeats > 0 && note.startBeat + note.durationBeats <= ends.find(end => end > note.startBeat) + 1e-9);
-      if (original.startBeat + original.durationBeats <= next + 1e-9) {
-        assert.ok(note.startBeat + note.durationBeats <= next + 1e-9, 'articulation introduces no new overlap');
+      reversedMeasures.push(inverseDifference);
+      for (const shaped of [note, inverse]) {
+        assert.ok(shaped.durationBeats > 0 && shaped.startBeat + shaped.durationBeats <= ends.find(end => end > shaped.startBeat) + 1e-9);
+        if (original.startBeat + original.durationBeats <= next + 1e-9) {
+          assert.ok(shaped.startBeat + shaped.durationBeats <= next + 1e-9, 'articulation introduces no new overlap');
+        }
+        assert.ok(Number.isInteger(shaped.velocity) && shaped.velocity >= settings.velocityMin && shaped.velocity <= settings.velocityMax);
       }
+      assert.ok(difference * inverseDifference <= 1e-9, 'negative articulation reverses the gate emphasis');
+      assert.ok(Math.abs(partiallyInverted.notes[i].durationBeats - original.durationBeats) <= Math.abs(inverseDifference) + 1e-9);
+      assert.ok(Math.abs(partiallyInverted.notes[i].velocity - original.velocity) <= Math.abs(inverse.velocity - original.velocity));
+      assert.ok(Math.abs(note.velocity + inverse.velocity - settings.velocityMin - settings.velocityMax) <= 1);
       assert.ok(Math.abs(middle.notes[i].durationBeats - original.durationBeats) <= Math.abs(difference) + 1e-9);
       assert.ok(shorter.notes[i].durationBeats <= note.durationBeats + 1e-9, 'Note Length still sets the base gate');
-      assert.ok(Number.isInteger(note.velocity) && note.velocity >= settings.velocityMin && note.velocity <= settings.velocityMax);
       assert.ok(Math.abs(middle.notes[i].velocity - original.velocity) <= Math.abs(note.velocity - original.velocity));
       assert.equal(gateOnly.notes[i].velocity, original.velocity);
       assert.equal(velocityOnly.notes[i].durationBeats, original.durationBeats);
@@ -254,6 +275,8 @@ test('contextual articulation and velocity contrast shape performance independen
   }
   assert.ok(measures.filter(delta => delta > 0.01).length > 50, 'contrast lengthens landmarks');
   assert.ok(measures.filter(delta => delta < -0.01).length > 50, 'contrast shortens supporting notes');
+  assert.ok(reversedMeasures.filter(delta => delta > 0.01).length > 50, 'negative contrast lengthens supporting notes');
+  assert.ok(reversedMeasures.filter(delta => delta < -0.01).length > 50, 'negative contrast clips landmarks');
 });
 
 test('velocity contrast emphasizes offbeat entries in authored rhythms and legacy melody still uses Accent', () => {
@@ -264,6 +287,9 @@ test('velocity contrast emphasizes offbeat entries in authored rhythms and legac
     const notes = render({ ...authored, velocityContrast: 100, articulationContrast: 100 });
     assert.equal(notes.find(note => note.startBeat === 0.5).velocity, 102, 'offbeat entry after a rest');
     assert.equal(notes.find(note => note.startBeat === 1.25).velocity, 75, 'supporting offbeat after an attack');
+    const inverted = render({ ...authored, velocityContrast: -100 });
+    assert.equal(inverted.find(note => note.startBeat === 0.5).velocity, 78, 'offbeat entry recedes');
+    assert.equal(inverted.find(note => note.startBeat === 1.25).velocity, 105, 'supporting offbeat comes forward');
     const legacy = { contextualMelody: false };
     const original = render(authored, legacy);
     assert.deepEqual(render({ ...authored, velocityContrast: 100, articulationContrast: 100 }, legacy), original);

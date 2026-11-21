@@ -4,7 +4,7 @@ const { loadMusic } = require('./music-loader.cjs');
 const { generateMelody } = loadMusic('melody-generator.ts');
 const { SCALE_MODES } = loadMusic('scales.ts');
 
-function contextualCase(index) {
+function contextualCase(index, overrides) {
   const settings = { algorithm: 'block', speed: [-20, 30, 80][index % 3], pauseChance: index % 4 * 10,
     splitChance: index % 3 * 20,
     melodyPatternOffsets: [1, -1, 2, 1], swingPercent: index % 2 ? 66 : 50 };
@@ -19,7 +19,7 @@ function contextualCase(index) {
     rangeMin: index % 11 === 0 ? 60 : 48, rangeMax: index % 11 === 0 ? 64 : 72,
     blockTypeWeights: index % 13 === 0 ? [0, 0, 0, 0, 0, 0, 0] : [100, 70, 40, 60, 80, 30, 20] };
   const inputs = splitMelodyInputs(global);
-  Object.assign(settings, inputs.track);
+  Object.assign(settings, inputs.track, overrides);
   let pattern, skeleton;
   try {
     const notes = generateMelody(BigInt(index + 1), index % 2 ? 'F♯' : 'C', SCALE_MODES[index % SCALE_MODES.length],
@@ -30,11 +30,11 @@ function contextualCase(index) {
   } catch (error) { return { error: error.message }; }
 }
 
-function contextualDigest(count = 120) {
+function contextualDigest(count = 120, overrides) {
   const hash = createHash('sha256');
   let failures = 0;
   for (let index = 0; index < count; index++) {
-    const result = contextualCase(index);
+    const result = contextualCase(index, overrides?.(index));
     if (result.error) failures++;
     hash.update(JSON.stringify(result));
   }
