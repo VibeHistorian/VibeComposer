@@ -23,6 +23,16 @@ Paths below are relative to `src/app/`. See the [feature map](src/app/features/R
 - Preserve manual-phrase ownership: global Apply belongs to the independent track; Local Apply belongs to the section and track. Respect manual replacements and explicit generated-track selections when resolving phrases.
 - Keep generated output consistent across score, dependent parts, playback and MIDI/audio export through the shared phrase/harmony pipeline. Keep generation framework-independent and playback scheduling outside Angular rendering.
 
+## Project JSON authoring tools
+
+The project authoring CLI is available from `frontend/` as `node scripts/song-project.cjs <command>`. Its `--help` option lists command syntax.
+
+- `template` emits a starter project with app defaults in the native JSON format.
+- `reference <role>` lists stored generator keys and values. `reference variations` lists compatible roles, protected settings, and supported strengths.
+- `inspect <file>` reports section and track IDs, resolved harmony, generated note counts, and each variation's status and effect on notes. It also checks JSON round-trip and MIDI export.
+- `seeds <file> <section-id> <track-id> <first-seed> <count> [--local]` previews generated phrases for candidate `patternSeed` values. Track scope supports recurring phrases, and `--local` previews a section-track override.
+- [Example songs](examples/songs) show complete arrangements, including track presence, scoped overrides, and authored variations.
+
 ## Install and verify
 
 From `frontend/`, use the pnpm version pinned in [package.json](package.json) and `pnpm install --frozen-lockfile`; [setup](../README.md#setup-and-builds) explains Node requirements, Wails and mixed-install recovery. The authoritative lockfile is `pnpm-lock.yaml`; preserve the [TinySynth patch contract](patches/README.md).

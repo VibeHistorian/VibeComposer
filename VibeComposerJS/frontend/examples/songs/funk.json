@@ -1,0 +1,1376 @@
+{
+  "schemaVersion": 12,
+  "name": "Switchyard Etiquette",
+  "scale": "dorian",
+  "transposeSemitones": 4,
+  "tempoBpm": 107,
+  "masterVolumePercent": 83,
+  "humanization": {
+    "timingBeats": 0.003,
+    "durationBeats": 0.004
+  },
+  "randomizeTempoOnCompose": false,
+  "randomizeHarmonyOnCompose": false,
+  "randomizeTransposeOnCompose": false,
+  "seed": "4628071303181721",
+  "randomizeArrangementOnCompose": false,
+  "arrangementPreview": false,
+  "arrangementManual": true,
+  "arrangementVariationPolicy": {
+    "chance": 80,
+    "maxChanges": 4
+  },
+  "progression": [1, 1, 4, 5],
+  "progressionChords": [
+    {
+      "root": 0,
+      "spice": "m9",
+      "inversion": 0
+    },
+    {
+      "root": 0,
+      "spice": "m9",
+      "inversion": 0
+    },
+    {
+      "root": 5,
+      "spice": "13",
+      "inversion": -1
+    },
+    {
+      "root": 7,
+      "spice": "7#9",
+      "inversion": -1
+    }
+  ],
+  "harmonySettings": {
+    "generation": "CURRENT",
+    "spiciness": 28,
+    "flattenVoicingChance": 70,
+    "flattenLargeChords": true,
+    "progressiveVoicing": true
+  },
+  "melodyGlobal": {
+    "contextualMelody": true,
+    "style": "MODAL",
+    "phraseBars": 2,
+    "beatsPerBar": 4,
+    "chromaticApproaches": true,
+    "patternEffect": 2,
+    "replaceAvoidNotes": 1,
+    "blockTargetMode": 0,
+    "targetNoteVariation": 2,
+    "blockTypeWeights": [12, 24, 17, 20, 9, 5, 13],
+    "blockChangePreference": [0, 1, 2, 3, 4, 5, 6, 7]
+  },
+  "editedPhrases": {},
+  "tracks": [
+    {
+      "id": "alto",
+      "role": "melody",
+      "name": "Alto sax",
+      "midiChannel": 4,
+      "mix": {
+        "program": 65,
+        "volumePercent": 82,
+        "panPercent": -6,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "algorithm": "block",
+        "rhythm": "melody1",
+        "patternSeed": 47219,
+        "rangeMin": 60,
+        "rangeMax": 75,
+        "tension": 14,
+        "style": "MODAL",
+        "form": "QUESTION_ANSWER",
+        "ending": "LOOP",
+        "targetDirection": "ANY",
+        "tonicNoteTarget": 15,
+        "modeNoteTarget": 13,
+        "chordNoteTarget": 68,
+        "maxDirectionChanges": 2,
+        "emphasizeKey": true,
+        "newBlocksChance": 10,
+        "startNoteChance": 62,
+        "chordNoteChoices": [0, 2, 3, 0],
+        "melodyPatternOffsets": [1, 1, 2, 1],
+        "maxBlockChange": 3,
+        "blockJump": 1,
+        "patternFlexible": true,
+        "speed": 27,
+        "syncopation": 58,
+        "entryPlacement": 47,
+        "rhythmicGrouping": 77,
+        "rhythmicReuse": 85,
+        "motifLength": 1,
+        "variationLocation": 57,
+        "pitchReuse": 80,
+        "splitChance": 14,
+        "pauseChance": 33,
+        "swingPercent": 55,
+        "accents": 64,
+        "noteLengthMultiplier": 64,
+        "articulationContrast": -15,
+        "velocityContrast": 48,
+        "velocityMin": 74,
+        "velocityMax": 103,
+        "offset": 8
+      },
+      "instrumentLocked": true
+    },
+    {
+      "id": "brass",
+      "role": "melody",
+      "name": "Brass answers",
+      "midiChannel": 5,
+      "mix": {
+        "program": 61,
+        "volumePercent": 65,
+        "panPercent": 15,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "algorithm": "block",
+        "rhythm": "durations",
+        "patternSeed": 18582,
+        "rangeMin": 53,
+        "rangeMax": 68,
+        "tension": 16,
+        "style": "MODAL",
+        "form": "QUESTION_ANSWER",
+        "ending": "CLOSED",
+        "targetDirection": "ANY",
+        "tonicNoteTarget": 15,
+        "modeNoteTarget": 13,
+        "chordNoteTarget": 68,
+        "maxDirectionChanges": 2,
+        "emphasizeKey": true,
+        "newBlocksChance": 3,
+        "startNoteChance": 100,
+        "chordNoteChoices": [0, 1, 2, 0],
+        "melodyPatternOffsets": [1, 2, 1, 2],
+        "maxBlockChange": 3,
+        "blockJump": 0,
+        "patternFlexible": true,
+        "speed": 27,
+        "syncopation": 58,
+        "entryPlacement": 47,
+        "rhythmicGrouping": 77,
+        "rhythmicReuse": 85,
+        "motifLength": 1,
+        "variationLocation": 57,
+        "pitchReuse": 72,
+        "splitChance": 0,
+        "pauseChance": 0,
+        "swingPercent": 55,
+        "accents": 64,
+        "noteLengthMultiplier": 64,
+        "articulationContrast": -15,
+        "velocityContrast": 30,
+        "velocityMin": 79,
+        "velocityMax": 101,
+        "offset": 8,
+        "customDurations": [
+          [-0.5, 0.25, 0.25, -1.25, 0.5, -0.5, 0.5, -0.25],
+          [-0.75, 0.25, -0.75, 0.25, -1, 0.25, -0.25, 0.5],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "customDurationRandomWeighting": false,
+        "chordSpanFill": "F34"
+      },
+      "instrumentLocked": true
+    },
+    {
+      "id": "bass",
+      "role": "bass",
+      "name": "Slap bass",
+      "midiChannel": 1,
+      "mix": {
+        "program": 36,
+        "volumePercent": 94,
+        "panPercent": 0,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "rhythm": "custom",
+        "chordSpan": 2,
+        "hitsPerPattern": 32,
+        "customPattern": [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1],
+        "patternSeed": 7879,
+        "useCustomVelocities": true,
+        "customVelocities": [111, 0, 0, 83, 0, 0, 95, 0, 103, 0, 0, 87, 0, 0, 99, 0, 112, 0, 0, 86, 0, 0, 98, 0, 105, 0, 78, 0, 0, 0, 100, 77],
+        "patternJoinMode": "EXPAND",
+        "noteVariation": 31,
+        "octaveInterval": false,
+        "noteLengthMultiplier": 72,
+        "offset": 5
+      },
+      "instrumentLocked": true
+    },
+    {
+      "id": "scratch",
+      "role": "chords",
+      "name": "Muted guitar chops",
+      "midiChannel": 2,
+      "mix": {
+        "program": 28,
+        "volumePercent": 61,
+        "panPercent": -26,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "rhythm": "custom",
+        "chordSpan": 2,
+        "hitsPerPattern": 32,
+        "customPattern": [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+        "patternSeed": 8173,
+        "useCustomVelocities": true,
+        "customVelocities": [0, 0, 76, 0, 0, 83, 0, 0, 0, 0, 86, 0, 0, 77, 0, 72, 0, 0, 77, 0, 0, 84, 0, 0, 0, 81, 0, 0, 85, 0, 0, 75],
+        "voicing": "close",
+        "noteLengthPercent": 67,
+        "swingPercent": 55,
+        "strum": 21,
+        "strumType": "HUMAN_D",
+        "strumPauseChance": 12,
+        "patternJoinMode": "NOJOIN",
+        "stretchEnabled": true,
+        "chordNotesStretch": 3,
+        "offset": 11,
+        "transitionChance": 10,
+        "transitionSplit": 850
+      },
+      "instrumentLocked": true
+    },
+    {
+      "id": "rhodes",
+      "role": "chords",
+      "name": "Electric piano",
+      "midiChannel": 6,
+      "mix": {
+        "program": 4,
+        "volumePercent": 51,
+        "panPercent": 24,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "rhythm": "tresillo",
+        "hitsPerPattern": 8,
+        "patternShift": 1,
+        "patternSeed": 20591,
+        "voicing": "close",
+        "swingPercent": 51,
+        "noteLengthPercent": 57,
+        "velocityMin": 60,
+        "velocityMax": 78,
+        "patternJoinMode": "NOJOIN",
+        "transitionChance": 11,
+        "transitionSplit": 625,
+        "stretchEnabled": true,
+        "chordNotesStretch": 4
+      },
+      "instrumentLocked": true
+    },
+    {
+      "id": "clav",
+      "role": "arpeggio",
+      "name": "Clavinet pocket",
+      "midiChannel": 3,
+      "mix": {
+        "program": 7,
+        "volumePercent": 48,
+        "panPercent": -17,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pattern": "frog-down",
+        "rate": "eighth",
+        "octaves": 1,
+        "rhythm": "full",
+        "hitsPerPattern": 4,
+        "patternSeed": 14144,
+        "arpPatternRotate": 1,
+        "velocityMin": 60,
+        "velocityMax": 76,
+        "swingPercent": 50,
+        "noteLengthMultiplier": 37
+      },
+      "instrumentLocked": true
+    },
+    {
+      "id": "kick",
+      "role": "drums",
+      "name": "Kick",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 97,
+        "panPercent": 0,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 36,
+        "rhythm": "custom",
+        "chordSpan": 2,
+        "hitsPerPattern": 32,
+        "customPattern": [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+        "swingPercent": 54,
+        "humanize": 4,
+        "patternSeed": 6279,
+        "useCustomVelocities": true,
+        "customVelocities": [117, 0, 0, 0, 0, 0, 0, 99, 0, 0, 105, 0, 0, 0, 0, 75, 116, 0, 0, 0, 0, 0, 99, 0, 107, 0, 0, 92, 0, 0, 97, 0]
+      }
+    },
+    {
+      "id": "snare",
+      "role": "drums",
+      "name": "Snare backbeat",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 91,
+        "panPercent": 0,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 38,
+        "rhythm": "sparse",
+        "hitsPerPattern": 8,
+        "patternShift": 2,
+        "swingPercent": 50,
+        "humanize": 9,
+        "patternSeed": 8192,
+        "velocityMin": 96,
+        "velocityMax": 113
+      }
+    },
+    {
+      "id": "closed",
+      "role": "drums",
+      "name": "Closed hi-hat",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 53,
+        "panPercent": 15,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 42,
+        "rhythm": "full",
+        "hitsPerPattern": 8,
+        "swingPercent": 53,
+        "humanize": 21,
+        "patternSeed": 4182,
+        "velocityMin": 48,
+        "velocityMax": 72
+      }
+    },
+    {
+      "id": "open",
+      "role": "drums",
+      "name": "Open hi-hat",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 51,
+        "panPercent": 16,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 46,
+        "rhythm": "custom",
+        "chordSpan": 2,
+        "hitsPerPattern": 32,
+        "customPattern": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "swingPercent": 54,
+        "patternSeed": 9404,
+        "velocityMin": 60,
+        "velocityMax": 77,
+        "humanize": 12,
+        "noteLengthMultiplier": 115
+      }
+    },
+    {
+      "id": "tamb",
+      "role": "drums",
+      "name": "Tambourine",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 43,
+        "panPercent": -22,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 54,
+        "rhythm": "euclid",
+        "hitsPerPattern": 16,
+        "euclideanPulses": 3,
+        "patternShift": 4,
+        "swingPercent": 55,
+        "velocityMin": 44,
+        "velocityMax": 68,
+        "humanize": 24,
+        "offset": 15,
+        "patternSeed": 4846
+      }
+    },
+    {
+      "id": "crash",
+      "role": "drums",
+      "name": "Crash accents",
+      "midiChannel": 10,
+      "mix": {
+        "program": 0,
+        "volumePercent": 52,
+        "panPercent": -14,
+        "muted": false,
+        "solo": false
+      },
+      "generatorSettings": {
+        "pitch": 49,
+        "rhythm": "single",
+        "chordSpanFill": "F1",
+        "hitsPerPattern": 8,
+        "swingPercent": 50,
+        "patternSeed": 355,
+        "velocityMin": 81,
+        "velocityMax": 95
+      }
+    }
+  ],
+  "arrangement": [
+    {
+      "id": "guitar-pickup",
+      "type": "INTRO",
+      "measures": 4,
+      "context": {
+        "velocityPercent": {
+          "bass": 88,
+          "chords": 90,
+          "drums": 86
+        }
+      },
+      "customChords": [
+        {
+          "root": 0,
+          "spice": "m7",
+          "inversion": 0
+        },
+        {
+          "root": 0,
+          "spice": "m7",
+          "inversion": 0
+        },
+        {
+          "root": 5,
+          "spice": "9",
+          "inversion": 0
+        },
+        {
+          "root": 7,
+          "spice": "7#9",
+          "inversion": 0
+        }
+      ],
+      "chordDegrees": [1, 1, 4, 5],
+      "trackPresence": {
+        "melody": [],
+        "chords": [1],
+        "arpeggio": [1],
+        "bass": [1],
+        "drums": [3]
+      },
+      "variations": {
+        "seed": "58107981",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "establish",
+        "choices": [
+          {
+            "trackId": "clav",
+            "kind": "arp-contour",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "58109994",
+            "parameters": {
+              "contourSteps": 2
+            }
+          }
+        ]
+      },
+      "rolePartOverrides": {},
+      "trackPartOverrides": {
+        "bass": {
+          "rhythm": "custom",
+          "chordSpan": 1,
+          "hitsPerPattern": 16,
+          "customPattern": [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "useCustomVelocities": false,
+          "noteVariation": 12,
+          "velocityMin": 86,
+          "velocityMax": 100
+        },
+        "scratch": {
+          "chordSpanFill": "F34",
+          "patternShift": 1,
+          "useCustomVelocities": false,
+          "velocityMin": 70,
+          "velocityMax": 85
+        },
+        "closed": {
+          "hitsPerPattern": 4,
+          "swingPercent": 50
+        }
+      }
+    },
+    {
+      "id": "lock-the-pocket",
+      "type": "VERSE1",
+      "measures": 8,
+      "trackPresence": {
+        "melody": [1],
+        "chords": [1],
+        "arpeggio": [],
+        "bass": [1],
+        "drums": [1, 2, 3, 4]
+      },
+      "variations": {
+        "seed": "58835100",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "establish",
+        "choices": [
+          {
+            "trackId": "alto",
+            "kind": "melody-direction",
+            "amount": -1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "58837113"
+          },
+          {
+            "trackId": "snare",
+            "kind": "drum-ghosts",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "58839126"
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "chordSpanFill": "EVEN",
+          "noteLengthMultiplier": 56
+        }
+      },
+      "trackPartOverrides": {
+        "alto": {
+          "tension": 10
+        },
+        "open": {
+          "chordSpanFill": "F34"
+        }
+      }
+    },
+    {
+      "id": "switchyard-hook",
+      "type": "CHORUS1",
+      "measures": 8,
+      "trackPresence": {
+        "melody": [1, 2],
+        "chords": [1, 2],
+        "arpeggio": [],
+        "bass": [1],
+        "drums": [1, 2, 3, 4, 5, 6]
+      },
+      "variations": {
+        "seed": "59562219",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "release-tension",
+        "choices": [
+          {
+            "trackId": "bass",
+            "kind": "bass-weight",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "59564232"
+          },
+          {
+            "trackId": "rhodes",
+            "kind": "chord-transition",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "59566245",
+            "parameters": {
+              "transitionDelta": 45
+            }
+          },
+          {
+            "trackId": "closed",
+            "kind": "drum-density",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "59568258"
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "articulationContrast": 5,
+          "velocityContrast": 46
+        }
+      },
+      "trackPartOverrides": {
+        "alto": {
+          "chordSpanFill": "F12"
+        },
+        "brass": {
+          "noteLengthMultiplier": 55
+        },
+        "scratch": {
+          "strumType": "HUMAN_U",
+          "strum": 28
+        }
+      }
+    },
+    {
+      "id": "backtalk",
+      "type": "VERSE2",
+      "measures": 8,
+      "context": {
+        "velocityPercent": {
+          "drums": 92
+        }
+      },
+      "trackPresence": {
+        "melody": [1, 2],
+        "chords": [1],
+        "arpeggio": [1],
+        "bass": [1],
+        "drums": [1, 2, 3, 5]
+      },
+      "variations": {
+        "seed": "60289338",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "thin",
+        "choices": [
+          {
+            "trackId": "alto",
+            "kind": "melody-speed",
+            "amount": -1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "60291351",
+            "parameters": {
+              "speedDelta": 18
+            }
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "chordSpanFill": "EVEN"
+        }
+      },
+      "trackPartOverrides": {
+        "brass": {
+          "chordSpanFill": "ODD",
+          "swingPercent": 54,
+          "noteLengthMultiplier": 52
+        },
+        "scratch": {
+          "patternShift": 2,
+          "useCustomVelocities": false,
+          "velocityMin": 67,
+          "velocityMax": 85,
+          "strumPauseChance": 24,
+          "noteLengthPercent": 54
+        },
+        "bass": {
+          "noteVariation": 23
+        },
+        "clav": {
+          "rhythm": "melody",
+          "hitsPerPattern": 16,
+          "chordSpanFill": "EVEN",
+          "pattern": "down-up",
+          "transpose": -12,
+          "pauseChance": 18,
+          "velocityMin": 50,
+          "velocityMax": 65
+        },
+        "tamb": {
+          "euclideanPulses": 2,
+          "patternShift": 7
+        }
+      }
+    },
+    {
+      "id": "switchyard-refrain",
+      "type": "CHORUS2",
+      "measures": 8,
+      "trackPresence": {
+        "melody": [1, 2],
+        "chords": [1, 2],
+        "arpeggio": [],
+        "bass": [1],
+        "drums": [1, 2, 3, 4, 5, 6]
+      },
+      "variations": {
+        "seed": "61016457",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "release-tension",
+        "choices": [
+          {
+            "trackId": "bass",
+            "kind": "bass-weight",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "61018470"
+          },
+          {
+            "trackId": "closed",
+            "kind": "drum-density",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "61020483"
+          },
+          {
+            "trackId": "rhodes",
+            "kind": "accompaniment-velocity-ramp",
+            "amount": -1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "61022496",
+            "parameters": {
+              "velocityDelta": 22
+            }
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "articulationContrast": 5,
+          "velocityContrast": 46
+        }
+      },
+      "trackPartOverrides": {
+        "alto": {
+          "chordSpanFill": "F12"
+        },
+        "brass": {
+          "noteLengthMultiplier": 55
+        },
+        "scratch": {
+          "strumType": "HUMAN_U",
+          "strum": 28
+        },
+        "tamb": {
+          "euclideanPulses": 4,
+          "patternShift": 2
+        },
+        "crash": {
+          "chordSpanFill": "F3"
+        }
+      }
+    },
+    {
+      "id": "stop-time-break",
+      "type": "BREAKDOWN",
+      "measures": 4,
+      "context": {
+        "tempoBpm": 104,
+        "velocityPercent": {
+          "drums": 88,
+          "chords": 93
+        }
+      },
+      "customChords": [
+        {
+          "root": 0,
+          "spice": "m7",
+          "inversion": 0
+        },
+        {
+          "root": 0,
+          "spice": "m7",
+          "inversion": 0
+        },
+        {
+          "root": 10,
+          "spice": "13",
+          "inversion": -1
+        },
+        {
+          "root": 7,
+          "spice": "7#9",
+          "inversion": 0
+        }
+      ],
+      "chordDegrees": [1, 1, 7, 5],
+      "trackPresence": {
+        "melody": [2],
+        "chords": [1],
+        "arpeggio": [],
+        "bass": [1],
+        "drums": [1, 2, 5]
+      },
+      "variations": {
+        "seed": "61743576",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "thin",
+        "choices": [
+          {
+            "trackId": "brass",
+            "kind": "melody-direction",
+            "amount": -1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "61745589"
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "chordSpanFill": "EVEN"
+        },
+        "chords": {
+          "noteLengthPercent": 88
+        }
+      },
+      "trackPartOverrides": {
+        "bass": {
+          "rhythm": "custom",
+          "chordSpan": 2,
+          "hitsPerPattern": 32,
+          "customPattern": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+          "useCustomVelocities": false,
+          "noteVariation": 12,
+          "velocityMin": 92,
+          "velocityMax": 112,
+          "noteLengthMultiplier": 44
+        },
+        "kick": {
+          "rhythm": "custom",
+          "chordSpan": 2,
+          "hitsPerPattern": 32,
+          "customPattern": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+          "useCustomVelocities": false,
+          "velocityMin": 96,
+          "velocityMax": 116
+        },
+        "snare": {
+          "chordSpanFill": "ODD",
+          "chordSpan": 1,
+          "hitsPerPattern": 4,
+          "patternShift": 0,
+          "rhythm": "single"
+        },
+        "scratch": {
+          "rhythm": "custom",
+          "chordSpan": 2,
+          "hitsPerPattern": 32,
+          "customPattern": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+          "useCustomVelocities": false,
+          "velocityMin": 62,
+          "velocityMax": 90
+        },
+        "tamb": {
+          "chordSpanFill": "ODD",
+          "euclideanPulses": 2
+        }
+      }
+    },
+    {
+      "id": "clavinet-lift",
+      "type": "BUILDUP1",
+      "measures": 4,
+      "context": {
+        "tempoBpm": 106,
+        "velocityPercent": {
+          "arpeggio": 118
+        }
+      },
+      "customChords": [
+        {
+          "root": 5,
+          "spice": "13",
+          "inversion": 0
+        },
+        {
+          "root": 5,
+          "spice": "13",
+          "inversion": 0
+        },
+        {
+          "root": 10,
+          "spice": "9",
+          "inversion": -1
+        },
+        {
+          "root": 7,
+          "spice": "7#9",
+          "inversion": 0
+        }
+      ],
+      "chordDegrees": [4, 4, 7, 5],
+      "trackPresence": {
+        "melody": [],
+        "chords": [2],
+        "arpeggio": [1],
+        "bass": [1],
+        "drums": [1, 2, 3, 5]
+      },
+      "variations": {
+        "seed": "62470695",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "build-pulse",
+        "choices": [
+          {
+            "trackId": "clav",
+            "kind": "arp-subdivision-ramp",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "62472708",
+            "parameters": {
+              "subdivisionLimit": 15
+            }
+          },
+          {
+            "trackId": "rhodes",
+            "kind": "pre-drop-cut",
+            "amount": -1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "62474721",
+            "parameters": {
+              "cutQuarters": 6
+            }
+          },
+          {
+            "trackId": "closed",
+            "kind": "drum-density",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "62476734"
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "bass": {
+          "noteVariation": 45,
+          "noteLengthMultiplier": 58
+        }
+      },
+      "trackPartOverrides": {
+        "kick": {
+          "rhythm": "custom",
+          "chordSpan": 1,
+          "hitsPerPattern": 16,
+          "customPattern": [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "useCustomVelocities": false,
+          "velocityMin": 91,
+          "velocityMax": 110
+        },
+        "snare": {
+          "rhythm": "custom",
+          "chordSpan": 4,
+          "hitsPerPattern": 32,
+          "customPattern": [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1],
+          "patternShift": 0,
+          "useCustomVelocities": true,
+          "customVelocities": [0, 0, 98, 0, 0, 0, 108, 0, 0, 0, 98, 0, 0, 0, 109, 0, 0, 0, 101, 0, 0, 58, 108, 0, 0, 0, 101, 0, 63, 72, 98, 111]
+        },
+        "tamb": {
+          "euclideanPulses": 5,
+          "chordSpanFill": "HALF2",
+          "patternShift": 3
+        }
+      }
+    },
+    {
+      "id": "sax-floor",
+      "type": "VERSE3",
+      "measures": 8,
+      "context": {
+        "tempoBpm": 108,
+        "swingPercent": 55,
+        "velocityPercent": {
+          "melody": 108
+        }
+      },
+      "customChords": [
+        {
+          "root": 0,
+          "spice": "m9",
+          "inversion": 0
+        },
+        {
+          "root": 0,
+          "spice": "m9",
+          "inversion": 0
+        },
+        {
+          "root": 5,
+          "spice": "13",
+          "inversion": -1
+        },
+        {
+          "root": 0,
+          "spice": "m9",
+          "inversion": 0
+        },
+        {
+          "root": 3,
+          "spice": "maj9",
+          "inversion": -1
+        },
+        {
+          "root": 5,
+          "spice": "13",
+          "inversion": 0
+        },
+        {
+          "root": 10,
+          "spice": "9",
+          "inversion": -1
+        },
+        {
+          "root": 7,
+          "spice": "7#9",
+          "inversion": 0
+        }
+      ],
+      "chordDegrees": [1, 1, 4, 1, 3, 4, 7, 5],
+      "trackPresence": {
+        "melody": [1],
+        "chords": [1, 2],
+        "arpeggio": [1],
+        "bass": [1],
+        "drums": [1, 2, 3, 4]
+      },
+      "variations": {
+        "seed": "63197814",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "build-pulse",
+        "choices": [
+          {
+            "trackId": "alto",
+            "kind": "melody-speed",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "63199827",
+            "parameters": {
+              "speedDelta": 24
+            }
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "noteLengthMultiplier": 74,
+          "chordSpanFill": "ALL"
+        }
+      },
+      "trackPartOverrides": {
+        "alto": {
+          "patternSeed": 33400,
+          "form": "CONTINUOUS",
+          "ending": "OPEN",
+          "chordNoteChoices": [0, 2, 4, 2, 2, 3, 1, 0],
+          "melodyPatternOffsets": [1, 2, 1, 3, 2, 4, 5, 1],
+          "blockJump": 2,
+          "pauseChance": 24,
+          "splitChance": 24,
+          "newBlocksChance": 28
+        },
+        "scratch": {
+          "chordSpanFill": "HALF1",
+          "noteLengthPercent": 57
+        },
+        "rhodes": {
+          "chordSpanFill": "HALF2",
+          "strumType": "HUMAN_U",
+          "strum": 27,
+          "noteLengthPercent": 66
+        },
+        "clav": {
+          "rhythm": "euclid",
+          "hitsPerPattern": 16,
+          "euclideanPulses": 3,
+          "patternShift": 3,
+          "arpContour": [0, 2, 1, -2],
+          "arpContourChordMode": true,
+          "transpose": -12,
+          "chordSpanFill": "ODD"
+        },
+        "open": {
+          "chordSpanFill": "ODD"
+        }
+      }
+    },
+    {
+      "id": "last-hook",
+      "type": "CLIMAX",
+      "measures": 8,
+      "context": {
+        "tempoBpm": 108,
+        "velocityPercent": {
+          "bass": 102,
+          "melody": 108,
+          "drums": 105
+        }
+      },
+      "trackPresence": {
+        "melody": [1, 2],
+        "chords": [1, 2],
+        "arpeggio": [1],
+        "bass": [1],
+        "drums": [1, 2, 3, 4, 5, 6]
+      },
+      "variations": {
+        "seed": "63924933",
+        "policy": {
+          "chance": 80,
+          "maxChanges": 4
+        },
+        "gesture": "release-tension",
+        "choices": [
+          {
+            "trackId": "bass",
+            "kind": "bass-weight",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "63926946"
+          },
+          {
+            "trackId": "brass",
+            "kind": "melody-register",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "63928959"
+          },
+          {
+            "trackId": "closed",
+            "kind": "drum-density",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "63930972"
+          },
+          {
+            "trackId": "rhodes",
+            "kind": "accompaniment-velocity-ramp",
+            "amount": 1,
+            "enabled": true,
+            "origin": "authored",
+            "seed": "63932985",
+            "parameters": {
+              "velocityDelta": 24
+            }
+          }
+        ]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "articulationContrast": 5,
+          "velocityContrast": 46
+        }
+      },
+      "trackPartOverrides": {
+        "alto": {
+          "chordSpanFill": "F12"
+        },
+        "brass": {
+          "noteLengthMultiplier": 54
+        },
+        "clav": {
+          "chordSpanFill": "F34",
+          "rhythm": "tresillo",
+          "hitsPerPattern": 8,
+          "patternShift": 1,
+          "pattern": "down",
+          "transpose": -12,
+          "velocityMin": 49,
+          "velocityMax": 62
+        },
+        "tamb": {
+          "euclideanPulses": 5,
+          "patternShift": 2
+        },
+        "scratch": {
+          "strum": 28,
+          "strumType": "HUMAN_U"
+        }
+      }
+    },
+    {
+      "id": "last-word",
+      "type": "OUTRO",
+      "measures": 4,
+      "context": {
+        "tempoBpm": 104,
+        "velocityPercent": {
+          "drums": 92,
+          "chords": 98
+        }
+      },
+      "customChords": [
+        {
+          "root": 0,
+          "spice": "m9",
+          "inversion": 0
+        },
+        {
+          "root": 5,
+          "spice": "9",
+          "inversion": 0
+        },
+        {
+          "root": 7,
+          "spice": "7#9",
+          "inversion": 0
+        },
+        {
+          "root": 0,
+          "spice": "m6/9",
+          "inversion": 0
+        }
+      ],
+      "customDurations": [4, 4, 4, 3],
+      "chordDegrees": [1, 4, 5, 1],
+      "trackPresence": {
+        "melody": [2],
+        "chords": [1, 2],
+        "arpeggio": [],
+        "bass": [1],
+        "drums": [1, 2, 3, 6]
+      },
+      "rolePartOverrides": {
+        "melody": {
+          "chordSpanFill": "F3",
+          "ending": "CLOSED"
+        }
+      },
+      "trackPartOverrides": {
+        "bass": {
+          "rhythm": "custom",
+          "chordSpan": 2,
+          "hitsPerPattern": 32,
+          "customPattern": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "patternJoinMode": "NOJOIN",
+          "useCustomVelocities": false,
+          "velocityMin": 91,
+          "velocityMax": 108,
+          "noteLengthMultiplier": 138,
+          "noteVariation": 0
+        },
+        "scratch": {
+          "rhythm": "custom",
+          "chordSpan": 2,
+          "hitsPerPattern": 32,
+          "customPattern": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "useCustomVelocities": false,
+          "chordNotesStretch": 4,
+          "strumPauseChance": 0,
+          "velocityMin": 72,
+          "velocityMax": 86,
+          "noteLengthPercent": 100,
+          "patternJoinMode": "EXPAND"
+        },
+        "rhodes": {
+          "hitsPerPattern": 4,
+          "rhythm": "single",
+          "patternShift": 0,
+          "transitionChance": 0,
+          "noteLengthPercent": 140
+        },
+        "kick": {
+          "rhythm": "custom",
+          "chordSpan": 2,
+          "hitsPerPattern": 32,
+          "customPattern": [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "useCustomVelocities": false,
+          "velocityMin": 100,
+          "velocityMax": 115
+        },
+        "snare": {
+          "rhythm": "single",
+          "hitsPerPattern": 4,
+          "patternShift": 0,
+          "chordSpanFill": "F4"
+        },
+        "closed": {
+          "chordSpanFill": "F12",
+          "hitsPerPattern": 4
+        },
+        "crash": {
+          "chordSpanFill": "F4"
+        }
+      }
+    }
+  ],
+  "drumSlots": {
+    "36": 37,
+    "38": 39,
+    "42": 43,
+    "46": 45,
+    "49": 47,
+    "54": 48
+  }
+}
