@@ -164,10 +164,16 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   check(lane.value.split(',').some(n=>Number(n)<0),'silence becomes pauses regardless of drawing tool');
   button('Cancel').click();
 
-  (await wait(()=>document.querySelector('.track-group.drums .track-select'),'first drum track')).click();
+  const drumTrack=await wait(()=>document.querySelector('.track-group.drums .track-select'),'first drum track');
+  drumTrack.click();
   await changeControl(document.querySelector('.track-group.drums .track-instrument'),'42');
-  (await wait(()=>button('Duplicate'),'duplicate drum track')).click();
+  drumTrack.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:120,clientY:180,button:2}));
+  const duplicate=await wait(()=>button('Duplicate›'),'duplicate drum track menu');
+  duplicate.dispatchEvent(new MouseEvent('mouseenter'));
+  duplicate.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));
+  (await wait(()=>button('Global (empty)'),'duplicate empty drum track')).click();
   await wait(()=>document.querySelectorAll('.track-group.drums .track-select').length===2,'two drum tracks');
+  [...document.querySelectorAll('.track-group.drums .track-select')].at(-1).click();
   (await wait(()=>button('Edit notes'),'edit duplicate drum phrase')).click();
   await wait(()=>document.querySelector('#phrase-grid'),'drum phrase');
   const armDrums=await wait(()=>button('Arm recording'),'arm drum recording');

@@ -48,6 +48,7 @@
             <p class="generation-status">Manual notes · automatic generation coming later</p>
           }
           @for (track of tracksFor(group.role); track track.id) {
+            @let hasGlobalEdit = hasManualPhrase(track);
             <article class="track-row-card" [class.selected]="settingsTarget().kind === 'global-track' && selectedTrackId() === track.id">
               <span class="track-row-gradient" aria-hidden="true"></span>
               <div class="track-line" (click)="selectTrack(track.id)">
@@ -60,8 +61,10 @@
                   <vc-mix-buttons class="track-level" [trackIds]="[track.id]" [label]="track.name" />
                   <button type="button" [disabled]="editing()" [attr.aria-pressed]="track.rerollLocked ?? false"
                     [class.parameter-locks-active]="!track.rerollLocked && !!track.parameterLocks?.length"
-                    [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
+                    [class.global-phrase-edited]="hasGlobalEdit"
+                    [attr.title]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name + (hasGlobalEdit ? ' · Globally edited phrase' : '')"
                     [attr.aria-label]="(track.rerollLocked ? 'Unlock reroll for ' : 'Lock reroll for ') + track.name"
+                    [attr.aria-description]="hasGlobalEdit ? 'Globally edited phrase' : null"
                     (click)="projects.setTrackRerollLock(track.id, !track.rerollLocked)">🔒︎</button>
                   <button type="button" [disabled]="editing() || track.rerollLocked" [attr.aria-label]="'Reroll ' + track.name" [title]="'Reroll ' + track.name"
                     (click)="rerollRole(track.role, track.id)">↻</button>
@@ -450,12 +453,13 @@
             @if (hasChannelCollision()) { <span class="channel-warning" role="status">Another track also uses channel {{ selectedTrack().midiChannel }}.</span> }
             <div class="track-actions" aria-label="Track actions">
               <button class="vc-button" type="button" (click)="openTrackEditor(selectedTrack().id)">Edit notes</button>
-              <button class="vc-button" type="button" (click)="duplicateTrack(selectedTrack().id)">Duplicate</button>
+              @if (hasManualPhrase(selectedTrack()) && partGenerationAvailable()) {
+                <button class="vc-button" type="button" title="Restore generated notes for this track" (click)="restoreTrackPhrase()">Restore</button>
+              }
               <button class="vc-button" type="button" [disabled]="!canMoveTrack(selectedTrack().id, -1)" (click)="reorderTrack(selectedTrack().id, -1)" aria-label="Move track up">↑</button>
               <button class="vc-button" type="button" [disabled]="!canMoveTrack(selectedTrack().id, 1)" (click)="reorderTrack(selectedTrack().id, 1)" aria-label="Move track down">↓</button>
               @if (canRemoveTrack(selectedTrack().id)) { <button type="button" class="remove-track vc-button" (click)="removeTrack(selectedTrack().id)">Remove</button> }
             </div>
-            @if (selectedTrack().editedPhrase && partGenerationAvailable()) { <button type="button" class="restore-track-button vc-button" (click)="restoreTrackPhrase()">Restore generated notes</button> }
           }
         </div>
 

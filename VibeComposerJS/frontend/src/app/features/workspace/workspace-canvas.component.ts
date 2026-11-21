@@ -245,6 +245,7 @@ export class WorkspaceCanvasComponent {
   readonly midiChannels = Array.from({ length: 16 }, (_, index) => index + 1);
   readonly roles = ARRANGED_PARTS.map((role) => ({ role, name: ROLE_NAMES[role] }));
   readonly generationAvailable = PART_GENERATION_AVAILABLE;
+  protected readonly hasManualPhrase = hasManualPhrase;
   readonly selectedTrackId = this.workspaceUi.selectedTrackId;
   readonly selectedRole = this.workspaceUi.selectedRole;
   readonly editingNoteId = this.workspaceUi.editingNoteId;
@@ -996,11 +997,6 @@ export class WorkspaceCanvasComponent {
       : action.note.startBeat >= entry.startBeat && action.note.startBeat < (all[index + 1]?.startBeat ?? this.totalBeats()));
     if (action.scope === 'section' && !section) return;
     this.projects.clearTrackPresence(action.note.part, action.scope === 'section' ? section!.section.id : undefined);
-  }
-
-  duplicateTrack(trackId: string): void {
-    const duplicateId = this.projects.duplicateTrack(trackId);
-    if (duplicateId) this.selectTrack(duplicateId);
   }
 
   removeTrack(trackId: string): void {

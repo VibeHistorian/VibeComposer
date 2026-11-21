@@ -54,6 +54,19 @@
 .track-reroll-actions button:hover:not(:disabled) { border-color: var(--border-strong); background: var(--surface-button-hover); color: var(--text-primary); }
 .track-reroll-actions button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 .track-reroll-actions button:disabled { opacity: .5; cursor: default; }
+.track-reroll-actions button.global-phrase-edited { position: relative; }
+.global-phrase-edited::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--track-group-color);
+  box-shadow: 0 0 0 1px var(--surface-base);
+  pointer-events: none;
+}
 
 /* Track rows */
 .track-row-card { position: relative; isolation: isolate; min-width: 0; padding: 3px 3px 4px; border: 1px solid var(--surface-role-group); border-radius: var(--radius-tight);  }

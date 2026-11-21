@@ -36,10 +36,12 @@ for (const width of [1440, 780]) test(`track context menu at ${width}px`, { skip
  await open();menuButton('Global + Events').click();const d=await wait(()=>document.querySelector('vc-duplicate-track-dialog'),'popup again');[...d.querySelectorAll('button')].find(b=>b.textContent==='OK').click();await wait(()=>read().tracks.length===p.tracks.length+1,'events duplicate');await wait(()=>!document.querySelector('vc-duplicate-track-dialog'),'popup closed');
 
  const chords='.track-group.chords .track-select';
+ const globalEditIndicator=()=>document.querySelector(chords)?.closest('.track-row-card')?.querySelector('button.global-phrase-edited');
  const chordId=read().tracks.find(t=>t.role==='chords').id;
  const chordTrack=()=>read().tracks.find(t=>t.id===chordId);
  const sectionPhrase=()=>read().arrangement.find(s=>s.trackPhrases?.[chordId])?.trackPhrases[chordId];
  const button=(selector,label)=>[...document.querySelectorAll(selector)].find(b=>b.textContent.trim()===label);
+ const restoreButton=()=>button('.track-actions button','Restore');
  const editVelocity=async applyLabel=>{
    menuButton('Edit notes').click();
    await wait(()=>document.querySelector('#phrase-grid'),'phrase editor');
@@ -51,17 +53,28 @@ for (const width of [1440, 780]) test(`track context menu at ${width}px`, { skip
    (await wait(()=>button('[aria-label="Score edit actions"] button:enabled',applyLabel),'apply phrase edit')).click();
    await wait(()=>!document.querySelector('#phrase-grid'),'editor closed');
  };
+ document.querySelector(chords).click();
+ await wait(()=>button('.track-actions button','Edit notes'),'track inspector actions');
+ ensure(!button('.track-actions button','Duplicate'),'track inspector has no duplicate action');
+ ensure(!restoreButton(),'generated track has no inspector restore action');
  await openMenu(chords);
  ensure(!menuButton('Restore generated'),'generated track has no restore action');
  await editVelocity('Local Apply');
  const localNotes=JSON.stringify(await wait(sectionPhrase,'local phrase saved'));
+ ensure(!globalEditIndicator(),'local-only edit has no global indicator');
+ ensure(!restoreButton(),'local-only edit has no inspector restore action');
  await openMenu(chords);
  ensure(!menuButton('Restore generated'),'local-only edit has no restore action');
  await editVelocity('Apply');
  await wait(()=>chordTrack()?.phraseEdits?.length,'global phrase edit saved');
+ await wait(globalEditIndicator,'global edit indicator shown on the lock button');
  await openMenu(chords);
- (await wait(()=>menuButton('Restore generated'),'restore action')).click();
+ ensure(menuButton('Restore generated'),'global edit has a context-menu restore action');
+ document.body.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+ (await wait(restoreButton,'inspector restore action')).click();
  await wait(()=>!chordTrack()?.phraseEdits?.length,'global edit cleared');
+ ensure(!globalEditIndicator(),'global edit indicator cleared');
+ ensure(!restoreButton(),'inspector restore action cleared');
  ensure(JSON.stringify(sectionPhrase())===localNotes,'section phrase preserved');
  await openMenu(chords);
  ensure(!menuButton('Restore generated'),'restore action hidden after clearing the edit');
