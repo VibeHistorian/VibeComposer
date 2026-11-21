@@ -115,6 +115,20 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       ensure(document.querySelectorAll(performanceGradients).length===2&&!document.querySelector(accent),'contextual performance controls also apply to authored rhythms');
       await change(melodyPattern,'melody1');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rhythm==='melody1'),'enable generated melody rhythm');
+      const reuseFrame=await wait(()=>document.querySelector('vc-part-settings-editor .part-control[data-control-key="rhythmicReuse"]'),'combined reuse frame');
+      const reuseInputs=()=>[...reuseFrame.querySelectorAll('.joined-member input')];
+      const allMelody=predicate=>read().tracks.filter(track=>track.role==='melody').every(predicate);
+      await wait(()=>reuseInputs().length===3&&reuseInputs().slice(1).every(input=>input.disabled),'reuse dependents are inactive at zero');
+      ensure(!reuseInputs()[0].disabled && reuseFrame.querySelector('legend').textContent.trim()==='REUSE / BARS / VAR LOC','one compact heading identifies the three knobs');
+      ensure([...reuseFrame.querySelectorAll('.joined-member vc-control-heading')].every(heading=>getComputedStyle(heading).display==='none'),'no member heading rows');
+      const motifMember=reuseFrame.querySelector('.joined-member[data-parameter-key="motifLength"]');
+      motifMember.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2,shiftKey:true}));
+      await wait(()=>allMelody(track=>track.parameterLocks?.includes('motifLength'))&&reuseFrame.classList.contains('partially-frozen'),'inactive member shortcut retains partial locking');
+      const reuseLock=reuseFrame.querySelector('.parameter-lock');
+      reuseLock.click();
+      await wait(()=>reuseLock.getAttribute('aria-pressed')==='true'&&allMelody(track=>['rhythmicReuse','motifLength','variationLocation'].every(key=>track.parameterLocks?.includes(key))),'whole frame locks all three settings');
+      reuseLock.click();
+      await wait(()=>reuseLock.getAttribute('aria-pressed')==='false','release frame locks');
       for(const [label,value] of [['Entry Placement','65'],['Rhythmic Grouping','83']]) {
         await change(await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="'+label+'"]'),'generated rhythm '+label),value);
         await new Promise(r=>requestAnimationFrame(r));
@@ -126,11 +140,15 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       }
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rangeMin===62&&t.generatorSettings.rangeMax===81&&t.generatorSettings.tension===50),'track fields saved');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.syncopation===-62&&t.generatorSettings.rhythmicReuse===74),'rhythm gradients saved');
+      await wait(()=>reuseInputs().every(input=>!input.disabled),'reuse enables both dependent knobs');
       for(const [label,value] of [['Motif Length','1'],['Variation Location','-73']]) {
         await change(await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="'+label+'"]'),'motif '+label),value);
         await new Promise(r=>requestAnimationFrame(r));
       }
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.motifLength===1&&t.generatorSettings.variationLocation===-73),'motif controls saved');
+      await change(reuseInputs()[0],'0');
+      await wait(()=>reuseInputs().slice(1).every(input=>input.disabled)&&allMelody(track=>track.generatorSettings.motifLength===1&&track.generatorSettings.variationLocation===-73),'zero reuse keeps saved member values');
+      await change(reuseInputs()[0],'74');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.articulationContrast===-68&&t.generatorSettings.velocityContrast===-79),'performance gradients saved');
       const phrasing=await wait(()=>document.querySelector('.part-settings-content [data-control-key="ending"]'),'track phrasing stack');
       for(const [label,value] of [['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {

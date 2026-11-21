@@ -21,6 +21,8 @@ export type QuickSettings = Readonly<Record<ArrangedPart, readonly string[]>>;
 /** Joined controls share placement and inheritance in the musical editor. */
 export function combinedControlKeys(key: string, role?: ArrangedPart): readonly string[] {
   if (role === 'arpeggio' && ['pattern', 'arpPatternCustom'].includes(key)) return ['pattern', 'arpPatternCustom'];
+  const reuseKeys = ['rhythmicReuse', 'motifLength', 'variationLocation'];
+  if (role === 'melody' && reuseKeys.includes(key)) return reuseKeys;
   for (const keys of [['feedbackCount', 'feedbackDuration'], ['velocityMin', 'velocityMax'], ['rangeMin', 'rangeMax'], ['ending', 'style', 'form']]) {
     if (keys.includes(key)) return keys;
   }

@@ -5,6 +5,7 @@ import { inspectArrangementVariation } from '../../core/music/arrangement-variat
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { combinedControlKeys } from '../../core/ui/ui-preferences';
+import { DEFAULT_MELODY_GLOBAL } from '../../core/music/melody-global-settings';
 import { Dialog, DialogModule } from '@angular/cdk/dialog';
 import { PatternSequencerComponent } from './pattern-sequencer.component';
 import { DurationsDialogComponent } from './durations-dialog.component';
@@ -80,6 +81,7 @@ export class PartSettingsEditorComponent {
       : control.key === 'feedbackCount' ? ['feedbackCount', 'feedbackDuration']
       : control.key === 'velocityMin' ? ['velocityMin', 'velocityMax']
       : control.key === 'rangeMin' ? ['rangeMin', 'rangeMax']
+      : control.key === 'rhythmicReuse' ? combinedControlKeys(control.key, this.role())
       : control.key === 'ending' ? ['ending', 'style', 'form'] : [];
     return keys.flatMap(key => this.controls().filter(control => control.key === key));
   }
@@ -87,6 +89,7 @@ export class PartSettingsEditorComponent {
     if (control.key === 'rhythm' && ['hitsPerPattern', 'patternShift'].every(key => this.members(control).some(member => member.key === key))) {
       return 'PATTERN / # / SHIFT';
     }
+    if (control.key === 'rhythmicReuse') return 'REUSE / BARS / VAR LOC';
     return control.key === 'velocityMin' ? 'VEL↓↑' : control.key === 'rangeMin' ? 'MIDI↓↑' : control.key === 'ending' ? 'SENTENCE'
       : control.kind === 'number' ? this.code(control) : control.label;
   }
@@ -166,6 +169,27 @@ export class PartSettingsEditorComponent {
     return tracks
       .map(track => trackPhraseSource(track, section, project).endsWith('edited'));
   });
+  private readonly reuseActivity = computed(() => {
+    const { rows } = this.context();
+    const manual = this.phraseModes();
+    const active = rows.filter((row, index) =>
+      !manual[index] && row['rhythm'] !== 'durations' && Number(row['rhythmicReuse']) > 0).length;
+    return active === 0 ? 'none' : active < rows.length ? 'some' : 'all';
+  });
+  reuseMemberInactive(key: string): boolean {
+    return (key === 'motifLength' || key === 'variationLocation') && this.reuseActivity() === 'none';
+  }
+  memberDescription(member: PartControl): string {
+    const description = member.description ?? '';
+    if (this.reuseMemberInactive(member.key)) return 'Increase Rhythmic Reuse to use this value.';
+    if (member.key !== 'motifLength' && member.key !== 'variationLocation') return description;
+    const phraseBars = this.projects.project().melodyGlobal?.phraseBars ?? DEFAULT_MELODY_GLOBAL.phraseBars;
+    const bars = this.values()['motifLength'];
+    const phraseHint = member.key === 'motifLength' && typeof bars === 'number' && bars >= phraseBars
+      ? ' The motif uses the whole phrase at this length.' : '';
+    const scopeHint = this.reuseActivity() === 'some' ? ' Used only by selected tracks with automatic rhythm and reuse enabled.' : '';
+    return description + phraseHint + scopeHint;
+  }
   readonly controls = computed(() => PART_CONTROLS[this.role()].filter((control) =>
     (this.preferences.editingQuickSettings() || (control.key in MANUAL_PARAMETER_TARGETS
       ? this.phraseModes().some(Boolean) && (control.key !== 'manualTranspose' || this.role() !== 'drums')
@@ -194,7 +218,7 @@ export class PartSettingsEditorComponent {
       || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1'))))));
   readonly controlGroups = computed(() => PART_CONTROL_GROUPS.map(group => ({
     id: group.id, label: group.label,
-    controls: this.controls().filter(control => !['patternSeed', 'feedbackDuration', 'velocityMax', 'rangeMax', 'style', 'form'].includes(control.key)
+    controls: this.controls().filter(control => !['patternSeed', 'feedbackDuration', 'velocityMax', 'rangeMax', 'style', 'form', 'motifLength', 'variationLocation'].includes(control.key)
       && (!['hitsPerPattern', 'patternShift'].includes(control.key) || !this.controls().some(control => control.key === 'rhythm'))
       && partControlGroup(control.key) === group.id),
   })).filter(group => group.controls.length > 0));

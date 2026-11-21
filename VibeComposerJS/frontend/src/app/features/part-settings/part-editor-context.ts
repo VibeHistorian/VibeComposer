@@ -9,6 +9,7 @@ export interface PartEditorContext {
   readonly tracks: readonly CompositionTrack[];
   readonly section: ArrangementSection | undefined;
   readonly role: ArrangedPart;
+  readonly rows: readonly Readonly<Record<string, PartSettingValue>>[];
   readonly values: Readonly<Record<string, PartSettingValue | null>>;
   readonly overriddenKeys: readonly string[];
 }
@@ -24,7 +25,7 @@ function resolvePartEditorContext(project: CompositionProject, scope: PartSettin
     ? [...new Set([...Object.keys(section.rolePartOverrides?.[scope.role] ?? {}),
       ...tracks.flatMap(track => Object.keys(section.trackPartOverrides?.[track.id] ?? {}))])]
     : Object.keys(section.trackPartOverrides?.[scope.trackId] ?? {});
-  return { tracks, section, role, values, overriddenKeys };
+  return { tracks, section, role, rows, values, overriddenKeys };
 }
 
 const contexts = new WeakMap<CompositionProject, Map<string, ReturnType<typeof resolvePartEditorContext>>>();

@@ -49,7 +49,7 @@
               @for (member of members(control); track member.key) {
                 <vc-select #choice="vcSelect" [class.custom-member]="parameterFrozen(member.key)" [options]="member.options" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key" [attr.aria-label]="'Melody ' + member.label" [title]="member.label" [selectDefault]="choiceDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="choose(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
               }
-            } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin' || control.key === 'rangeMin') {
+            } @else if (control.key === 'feedbackCount' || control.key === 'velocityMin' || control.key === 'rangeMin' || control.key === 'rhythmicReuse') {
               <vc-control-heading [label]="title(control)" [inheritance]="'global'" (inheritRequested)="resetControl(control)" />
               <div class="joined-members">
                 @for (member of members(control); track member.key) {
@@ -161,14 +161,16 @@
 </ng-template>
 
 <ng-template #compactMember let-member>
-  <div class="joined-member" [class.custom-member]="parameterFrozen(member.key)" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key">
+  @let inactive = reuseMemberInactive(member.key);
+  <div class="joined-member" [class.custom-member]="parameterFrozen(member.key)" [class.inactive-member]="inactive"
+    [attr.title]="inactive ? memberDescription(member) : null" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key">
     @if (member.key === 'feedbackCount' || member.key === 'patternShift') {
       <vc-select [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event)" [mixed]="values()[member.key] === null"></vc-select>
     } @else {
       <vc-compact-knob [defaultValue]="numericDefault(member)" [value]="numericValue(member)" [mixed]="values()[member.key] === null"
         [minimum]="minimum(member)" [maximum]="maximum(member)" [step]="member.step ?? 1" [label]="member.label"
         [mini]="member.key !== 'feedbackDuration'" [compact]="true" [hoverLabelOnly]="true" [showLabel]="false"
-        [description]="member.description ?? ''" [unit]="member.unit ?? ''"
+        [disabled]="inactive" [description]="memberDescription(member)" [unit]="member.unit ?? ''"
         (valueCommit)="settingsChanged.emit({ key: member.key, value: $event })" />
     }
   </div>

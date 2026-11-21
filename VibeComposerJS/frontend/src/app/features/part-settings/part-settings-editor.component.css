@@ -130,6 +130,7 @@
 /* Combined controls distinguish individually frozen members */
 .part-control.joined-control .control-content { --border-default: var(--control-border-base); }
 .part-control.joined-control .custom-member { --border-default: var(--accent-primary); }
+.joined-member.inactive-member > vc-compact-knob { pointer-events: none; }
 :host .part-control.partially-frozen .quick-control-border { border-style: dashed; border-color: color-mix(in srgb, var(--accent-primary) 45%, var(--control-border-base)); box-shadow: none; }
 
 .part-control.joined-control .flip-button.custom-member { border-color: var(--accent-primary); }

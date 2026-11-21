@@ -2806,3 +2806,37 @@ test('parameter shortcut targets exact combined members and only releases sectio
   editor.parameterShortcut({ key: 'velocityMin', combined: false });
   assert.deepEqual(emitted, [['velocityMin']]);
 });
+
+test('rhythm reuse frame resolves mixed activity and unfreezes members independently', () => {
+  const { service, load } = fixture();
+  const Editor = load('features/part-settings/part-settings-editor.component.ts').PartSettingsEditorComponent;
+  const editor = new Editor();
+  const first = 'track-melody-1', second = service.duplicateTrack(first);
+  const global = { kind: 'global-role', role: 'melody' };
+  editor.scope.set(global);
+  assert.ok(editor.reuseMemberInactive('motifLength'));
+  service.updatePartSettings({ kind: 'global-track', trackId: second }, { rhythmicReuse: 75 });
+  assert.equal(editor.values().rhythmicReuse, null);
+  assert.equal(editor.reuseMemberInactive('variationLocation'), false);
+  assert.match(editor.memberDescription({ key: 'variationLocation' }), /only by selected tracks/);
+  service.updatePartSettings({ kind: 'global-track', trackId: first }, { rhythmicReuse: 60, motifLength: 3 });
+  const scope = { kind: 'section-track', sectionId: service.project().arrangement[0].id, trackId: first };
+  editor.scope.set(scope);
+  assert.match(editor.memberDescription({ key: 'motifLength' }), /whole phrase/);
+  service.updatePartSettings(scope, { rhythmicReuse: 0, motifLength: 1, variationLocation: -65 });
+  assert.ok(editor.reuseMemberInactive('motifLength'));
+  assert.equal(editor.values().motifLength, 1);
+  editor.inheritRequested.emit = keys => service.resetPartSettings(scope, keys);
+  editor.parameterShortcut({ key: 'rhythmicReuse', combined: false });
+  assert.equal(editor.reuseMemberInactive('motifLength'), false);
+  assert.deepEqual([...editor.overriddenKeys()].sort(), ['motifLength', 'variationLocation']);
+  assert.equal(editor.categoryFreezeState([{ key: 'rhythmicReuse' }]), 'partial');
+  editor.parameterShortcut({ key: 'rhythmicReuse', combined: true });
+  assert.deepEqual(editor.overriddenKeys(), []);
+  const memberKeys = ['rhythmicReuse', 'motifLength', 'variationLocation'];
+  editor.preferences.beginQuickSettings();
+  editor.preferences.moveControl('melody', 'motifLength');
+  assert.deepEqual(editor.preferences.quickSettings().melody.filter(key => memberKeys.includes(key)), memberKeys);
+  editor.preferences.moveControl('melody', 'variationLocation');
+  assert.deepEqual(editor.preferences.quickSettings().melody.filter(key => memberKeys.includes(key)), []);
+});
