@@ -1,7 +1,7 @@
 import { MANUAL_PARAMETER_TARGETS } from '../../core/music/part-settings';
 /** Musical impact categories shared by the quick panel and inspector across roles. */
 export const PART_CONTROL_GROUPS = [
-  { id: 'rhythm', label: 'Rhythm', keys: ['speed', 'syncopation', 'rhythmicReuse', 'hitsPerPattern', 'rhythm', 'euclideanPulses', 'patternShift', 'patternFlip', 'customPattern', 'pauseChance', 'fillPauses', 'humanize'] },
+  { id: 'rhythm', label: 'Rhythm', keys: ['speed', 'entryPlacement', 'rhythmicGrouping', 'syncopation', 'rhythmicReuse', 'hitsPerPattern', 'rhythm', 'euclideanPulses', 'patternShift', 'patternFlip', 'customPattern', 'pauseChance', 'fillPauses', 'humanize'] },
   { id: 'pitch', label: 'Pitch', keys: ['transpose', 'chordNoteChoices', 'pitchReuse', 'octaveInterval', 'octaves', 'voicing', 'chordNotesStretch', 'stretchEnabled'] },
   { id: 'structure', label: 'Structure', keys: ['chordSpanFill', 'fillFlip', 'chordSpan', 'patternRepeat', 'melodyPatternOffsets', 'patternJoinMode'] },
   { id: 'shape', label: 'Shape', keys: ['noteVariation', 'maxBlockChange', 'blockJump', 'patternFlexible', 'pattern', 'transitionChance', 'transitionSplit', 'strum', 'strumType', 'strumPauseChance'] },

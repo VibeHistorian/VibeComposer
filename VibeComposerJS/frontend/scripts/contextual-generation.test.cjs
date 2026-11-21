@@ -144,11 +144,33 @@ test('contextual rhythm controls are neutral at zero and leave authored duration
       0, value => { pattern = value; }, global, undefined, undefined, value => { skeleton = value; });
     return { notes, pattern, skeleton };
   };
-  assert.deepEqual(generate({ syncopation: 0, rhythmicReuse: 0 }), generate({}));
-  const active = { syncopation: 87, rhythmicReuse: 93 };
+  assert.deepEqual(generate({ syncopation: 0, rhythmicReuse: 0, entryPlacement: 0, rhythmicGrouping: 0 }), generate({}));
+  const active = { syncopation: 87, rhythmicReuse: 93, entryPlacement: 100, rhythmicGrouping: 100 };
   const authored = { rhythm: 'durations', customDurations: [[-0.5, 0.5, 1, -1, 1], ...Array.from({ length: 9 }, () => [])] };
   assert.deepEqual(generate({ ...authored, ...active }), generate(authored));
   assert.deepEqual(generate(active, { contextualMelody: false }), generate({}, { contextualMelody: false }));
+});
+
+test('entry placement delays more phrase starts while respecting rhythmic reuse and short closing phrases', () => {
+  const strengths = [0, 50, 100], delayed = strengths.map(() => 0);
+  for (let seed = 1n; seed <= 32n; seed++) {
+    for (const [index, entryPlacement] of strengths.entries()) {
+      const notes = generateMelody(seed, 'C', 'major', [1, 5, 6, 1], {
+        algorithm: 'block', entryPlacement, rhythmicGrouping: 55, rhythmicReuse: 75, melodyPatternOffsets: [1], ending: 'CLOSED',
+      }, 0, undefined, { phraseBars: 1 });
+      for (const start of [0, 4, 8, 12]) {
+        const first = notes.find(note => note.startBeat >= start && note.startBeat < start + 4);
+        assert.ok([0, 0.5, 1.5].includes(first.startBeat - start));
+        if (first.startBeat > start) delayed[index]++;
+      }
+      assert.equal(notes.at(-1).midi % 12, 0);
+    }
+  }
+  assert.ok(delayed[0] === 0 && delayed[1] > 0 && delayed[1] < delayed[2] && delayed[2] === 128);
+  const short = generateMelody(42n, 'C', 'major', [1], {
+    algorithm: 'block', entryPlacement: 100, rhythmicGrouping: 100, ending: 'CLOSED',
+  }, 0, undefined, {}, undefined, { roots: [], voicings: [], durations: [0.5] });
+  assert.ok(short.length && short[0].startBeat === 0 && short.at(-1).midi % 12 === 0);
 });
 
 test('syncopation and rhythmic reuse shape seeded rhythm while preserving other controls', () => {

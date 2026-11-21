@@ -109,6 +109,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   }
   const fill = partFillMask(degrees.length, settings), leap = Math.min(24, 2 + (settings.maxBlockChange ?? 7) + (settings.blockJump ?? 1));
   const syncopation = settings.syncopation ?? 0, rhythmicReuse = settings.rhythmicReuse ?? 0;
+  const entryPlacement = settings.entryPlacement ?? 0, rhythmicGrouping = (settings.rhythmicGrouping ?? 0) / 100;
   const pitchReuse = (settings.pitchReuse ?? 0) / 100;
   const overlapping = (slot: Slot) => events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
   const makeRhythm = (variant: number, shapeRhythm: boolean): Slot[] => {
@@ -149,8 +150,27 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
       const variedTail = phrase.purpose === 'ANSWER' || phrase.purpose === 'CONTINUATION';
       const arrivals = [phrase.start];
       if (phrase.end - phrase.start > 2 * BEAT || phrase.purpose === 'CLOSING' && phrase.end - phrase.start > BEAT) arrivals.push(phrase.end - BEAT);
+      let entry = phrase.start;
+      if (shapeRhythm && entryPlacement > 0) {
+        const entryRandom = new JavaRandom(mixContextualSeed(rhythmSeed ^ 0x656e747279n));
+        const draw = entryRandom.nextInt(100);
+        const event = at(entry);
+        if (draw < entryPlacement && fill[events.indexOf(event)]) {
+          const limit = Math.min(event.end, arrivals[1] ?? phrase.end);
+          const delay = draw + 65 < entryPlacement && entry + 1.5 * BEAT < limit ? 1.5 * BEAT : BEAT / 2;
+          if (entry + delay < limit) {
+            entry += delay;
+            arrivals[0] = entry;
+            slots.push({ start: phrase.start, duration: delay, rest: true, phrase, arrival: false, appoggiatura: false });
+          }
+        }
+      }
+      const grouping = shapeRhythm ? rhythmicGrouping : 0;
+      const bar = options.beatsPerBar * BEAT;
+      const groupStart = grouping > 0
+        ? new JavaRandom(mixContextualSeed(rhythmSeed ^ 0x67726f7570n)).nextInt(options.beatsPerBar * 2) * BEAT / 2 : 0;
       let index = 0, referenceIndex = 0;
-      for (let cursor = phrase.start; cursor < phrase.end; index++) {
+      for (let cursor = entry; cursor < phrase.end; index++) {
         const event = at(cursor), arrival = arrivals.includes(cursor);
         let available = Math.min(phrase.end, ...arrivals.filter(t => t > cursor)) - cursor;
         if (cursor % BEAT !== 0) available = Math.min(available, BEAT - cursor % BEAT);
@@ -166,7 +186,14 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
           if (event.classes.has(mod(event.root + 4)) && event.classes.has(mod(event.root + 10)) && mod(nextEvent.root - event.root) === 5) preferred -= 0.25;
         }
         if (arrival) preferred += 0.45;
+        const groupPhase = grouping > 0 ? mod(cursor - phrase.start - groupStart, bar) : 0;
+        const inGroup = groupPhase < BEAT;
+        if (grouping > 0) preferred += grouping * (inGroup ? -1.65 : 0.4);
         const durations = [240,480,960,1920], weights = durations.map((duration,i) => duration > available ? 0 : Math.exp(-0.5 * ((i - 2 - preferred) / 0.9) ** 2));
+        if (grouping > 0 && !inGroup) {
+          // Keep some weight on longer slots while giving the next burst a chance to begin on the grid.
+          weights.forEach((weight, i) => { if (durations[i] > bar - groupPhase) weights[i] = weight * (1 - 0.7 * grouping); });
+        }
         const peak = Math.max(...weights);
         weights.forEach((weight,i) => { if (durations[i] <= available) weights[i] = weight + peak * 0.002; });
         let roll = random.nextDouble() * weights.reduce((sum,w) => sum+w,0);
@@ -186,7 +213,11 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         }
         if (phrase.purpose === 'CLOSING' && phrase.end - cursor <= BEAT) duration = phrase.end - cursor;
         const pauseRoll = index > 0 && cursor + duration < phrase.end ? random.nextInt(100) : undefined;
-        const rest = pauseRoll !== undefined && (reused?.pauseRoll ?? pauseRoll) < (settings.pauseChance ?? 0) + (phrase.purpose === 'QUESTION' ? 8 : 0);
+        let pause = (settings.pauseChance ?? 0) + (phrase.purpose === 'QUESTION' ? 8 : 0);
+        if (grouping > 0 && pause < 100) {
+          pause += grouping * (inGroup ? -0.9 * pause : 0.9 * Math.min(pause, 100 - pause));
+        }
+        const rest = pauseRoll !== undefined && (reused?.pauseRoll ?? pauseRoll) < pause;
         recorded?.push({ end: relative + duration, pauseRoll });
         const appoggiatura = !rest && phrase.purpose === 'CONTINUATION' && cursor % BEAT === 0 && random.nextInt(100) < 12;
         const chordIndex = events.indexOf(event);
@@ -264,7 +295,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   };
   const pending = (role: Role) => !['CHORD', 'EXTENSION'].includes(role);
   let result: Planned[] | undefined;
-  const shapeRhythm = settings.rhythm !== 'durations' && (syncopation !== 0 || rhythmicReuse > 0);
+  const shapeRhythm = settings.rhythm !== 'durations' && (syncopation !== 0 || rhythmicReuse > 0 || entryPlacement > 0 || rhythmicGrouping > 0);
   // Rhythm shaping is a preference. Retry the original rhythms if the pitch search cannot resolve one.
   for (let attempt = 0; attempt < (shapeRhythm ? 6 : 3) && !result; attempt++) {
     const variant = attempt % 3;

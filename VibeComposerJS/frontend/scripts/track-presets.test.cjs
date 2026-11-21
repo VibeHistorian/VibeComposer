@@ -173,6 +173,59 @@ test('factory Techno stays compact on minor harmony and dedicated replies leave 
   }
 });
 
+test('generic rhythm controls approach Reggae, Funk and Dub Factory lead rhythms across seeds', () => {
+  const { service, load } = fixture();
+  const { BUILTIN_TRACK_PRESETS: library } = load('core/project/builtin-track-presets.ts');
+  const { generateTrackPhrase } = load('core/music/phrase.ts');
+  const profiles = {
+    Reggae: { entryPlacement: 100, rhythmicGrouping: 65, pauseChance: 16, syncopation: 30 },
+    Funk: { entryPlacement: 35, rhythmicGrouping: 100, speed: 35, pauseChance: 35, syncopation: 35 },
+    Dub: { entryPlacement: 35, rhythmicGrouping: 75, speed: -25, pauseChance: 52, noteLengthMultiplier: 30 },
+  };
+  const samples = 48;
+  for (const [style, profile] of Object.entries(profiles)) {
+    const preset = library.find(item => item.role === 'melody' && item.name.startsWith(style + ' ·'));
+    const sample = overrides => {
+      const track = { ...preset.tracks[0], id: 'track-melody-1',
+        generatorSettings: { ...preset.tracks[0].generatorSettings, ...overrides } };
+      let attacks = 0, offbeats = 0, sounding = 0, downbeatEntries = 0, closePairs = 0, longGaps = 0;
+      const rhythms = new Set();
+      for (let i = 1; i <= samples; i++) {
+        const project = { ...service.project(), seed: String(Math.imul(i, 0x9e3779b1)), tracks: [track] };
+        const notes = generateTrackPhrase(project, track);
+        assert.ok(notes.length > 0);
+        rhythms.add(notes.map(note => note.startBeat).join(','));
+        attacks += notes.length;
+        downbeatEntries += notes.filter(note => note.startBeat === 0 || note.startBeat === 8).length;
+        for (const [index, note] of notes.entries()) {
+          sounding += note.durationBeats;
+          offbeats += Number(note.startBeat % 1 !== 0);
+          const previous = notes[index - 1];
+          if (!previous) continue;
+          closePairs += Number(note.startBeat - previous.startBeat <= 0.65);
+          longGaps += Number(note.startBeat - previous.startBeat - previous.durationBeats >= 1.5);
+        }
+      }
+      return { density: attacks / (4 * samples), offbeats: offbeats / attacks, sounding: sounding / (16 * samples),
+        downbeatEntries, closePairs: closePairs / (attacks - samples), longGaps, diversity: rhythms.size };
+    };
+    const authored = sample({}), automatic = sample({ rhythm: 'melody1' });
+    const tuned = sample({ rhythm: 'melody1', ...profile });
+    for (const [metric, tolerance] of [['density', 0.45], ['offbeats', 0.07], ['sounding', 0.04]]) {
+      assert.ok(Math.abs(tuned[metric] - authored[metric]) < tolerance, `${style}: approaches authored ${metric}`);
+    }
+    assert.ok(tuned.diversity > authored.diversity);
+    if (style === 'Reggae') assert.equal(tuned.downbeatEntries, authored.downbeatEntries);
+    if (style === 'Funk') {
+      const ungrouped = sample({ rhythm: 'melody1', ...profile, rhythmicGrouping: 0 });
+      const middle = sample({ rhythm: 'melody1', ...profile, rhythmicGrouping: 50 });
+      assert.ok(ungrouped.closePairs < middle.closePairs && middle.closePairs < tuned.closePairs);
+      assert.ok(Math.abs(tuned.closePairs - authored.closePairs) < Math.abs(ungrouped.closePairs - authored.closePairs));
+    }
+    if (style === 'Dub') assert.ok(automatic.longGaps < tuned.longGaps && tuned.longGaps < authored.longGaps);
+  }
+});
+
 test('preset replacement preserves locked tracks and occupied slots, cleans surplus references and undoes once', () => {
   const { service } = fixture();
   const lockedId = service.project().tracks.find(track => track.role === 'bass').id;

@@ -71,6 +71,8 @@ export interface MelodySettings extends CommonPartSettings {
   readonly rhythm?: 'melody1' | 'durations';
   readonly speed?: number;
   readonly syncopation?: number;
+  readonly entryPlacement?: number;
+  readonly rhythmicGrouping?: number;
   readonly rhythmicReuse?: number;
   readonly pitchReuse?: number;
   readonly articulationContrast?: number;

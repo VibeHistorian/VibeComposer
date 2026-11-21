@@ -104,7 +104,8 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       dialog.querySelector('[aria-label="Close settings"]').click();
       const inspectorButton=button('Open inspector'); if(inspectorButton) inspectorButton.click();
       const melodyPattern=await wait(()=>document.querySelector('vc-part-settings-editor vc-menu-select[aria-label="PATTERN"]'),'melody pattern');
-      const rhythmGradients='vc-part-settings-editor [aria-label="Syncopation"], vc-part-settings-editor [aria-label="Rhythmic Reuse"]';
+      const rhythmGradients=['Syncopation', 'Rhythmic Reuse', 'Entry Placement', 'Rhythmic Grouping']
+        .map(label=>'vc-part-settings-editor [aria-label="'+label+'"]').join(', ');
       const performanceGradients='vc-part-settings-editor [aria-label="Articulation Contrast"], vc-part-settings-editor [aria-label="Velocity Contrast"]';
       const accent='vc-part-settings-editor [aria-label="Accent"]';
       ensure(!document.querySelector(rhythmGradients),'authored durations hide rhythm gradients');
@@ -114,6 +115,11 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       ensure(document.querySelectorAll(performanceGradients).length===2&&!document.querySelector(accent),'contextual performance controls also apply to authored rhythms');
       await change(melodyPattern,'melody1');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rhythm==='melody1'),'enable generated melody rhythm');
+      for(const [label,value] of [['Entry Placement','65'],['Rhythmic Grouping','83']]) {
+        await change(await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="'+label+'"]'),'generated rhythm '+label),value);
+        await new Promise(r=>requestAnimationFrame(r));
+      }
+      await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.entryPlacement===65&&t.generatorSettings.rhythmicGrouping===83),'entry and grouping saved');
       for(const [label,value] of [['Melody High MIDI','81'],['Melody Low MIDI','62'],['Melody Tension','50'],['Syncopation','-62'],['Rhythmic Reuse','74'],['Articulation Contrast','-68'],['Velocity Contrast','-79']]) {
         const input=await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="'+label+'"]'),'track '+label);
         await change(input,value); await new Promise(r=>requestAnimationFrame(r));
