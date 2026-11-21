@@ -21,8 +21,10 @@ export class HostedContentService {
   demoProject(): Promise<string | null> { return this.content.demoProject(); }
 
   async initialize(): Promise<void> {
-    const consumed = await this.content.initialize(this.injector.get(UiPreferencesService), () => this.injector.get(ProjectService));
+    const preferences = this.injector.get(UiPreferencesService);
+    const consumed = await this.content.initialize(preferences, () => this.injector.get(ProjectService));
     this.demoAvailable.set(this.content.hasDemo);
+    await preferences.flushPersistence();
     if (!consumed.length) return;
     await this.injector.get(ProjectService).flushPersistence();
     // Consume successful imports so refreshing restores the workspace instead of

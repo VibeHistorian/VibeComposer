@@ -1,3 +1,4 @@
+const { observeSettings } = require('./support/workspace-browser.cjs');
 const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild, readBrowserDownload } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -9,7 +10,7 @@ const browser = findBrowser();
 for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI preference transfer at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const script = `<script>(async () => {
+  const script = `<script>${observeSettings}(async () => {
     const wait = async (read, label) => {
       for (let i=0;i<200;i++) { const value=await read(); if(value) return value; await new Promise(r=>setTimeout(r,30)); }
       throw new Error('Timed out: '+label);
@@ -41,7 +42,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         }
       }
       if (sessionStorage.getItem('ui-preferences-reloaded')) {
-        ensure(JSON.parse(localStorage.getItem(key)).scoreNoteShape==='instrument-log','note shape restored after reload');
+        ensure(JSON.parse(storedSetting(key)).scoreNoteShape==='instrument-log','note shape restored after reload');
         ensure(button('Harmony On Compose').getAttribute('aria-pressed')==='false','harmony Compose toggle restored after reload');
         ensure(getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#dd88ee','main theme restored after reload');
         ensure(getComputedStyle(document.querySelector('.arrangement-panel > .canvas-heading')).backgroundColor==='rgb(56, 40, 72)','app heading restored after reload');
@@ -69,14 +70,14 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         const originalPreview = preview();
         seedToggle.click();
         await wait(()=>preview()!==originalPreview,'filename preview updates');
-        ensure(!JSON.parse(localStorage.getItem(key)).exportNameFields.includes('seed'),'filename toggle saved');
+        await wait(()=>JSON.parse(storedSetting(key))?.exportNameFields.includes('seed')===false,'filename toggle saved');
         seedToggle.click();
         await wait(()=>seedToggle.getAttribute('aria-pressed')==='true','restore seed field');
         for (const toggle of fields.querySelectorAll('button')) toggle.click();
-        await wait(()=>JSON.parse(localStorage.getItem(key)).exportNameFields.length===0,'disable all export fields');
+        await wait(()=>JSON.parse(storedSetting(key)).exportNameFields.length===0,'disable all export fields');
         await wait(()=>preview().endsWith('.vibe.json') && !/^\\d{8}_/.test(preview()),'project name only preview');
         for (const toggle of fields.querySelectorAll('button')) toggle.click();
-        await wait(()=>JSON.parse(localStorage.getItem(key)).exportNameFields.length===5,'restore export fields');
+        await wait(()=>JSON.parse(storedSetting(key)).exportNameFields.length===5,'restore export fields');
         button('Appearance General').click();
         await wait(()=>document.querySelector('[aria-label="Interface text and controls font"]'),'return to appearance');
         checkFonts();
@@ -154,10 +155,10 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         await wait(()=>control(quick(),'rhythm'),'restore quick Pattern');
         await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===before,'placement changed musical project');
-        ensure(!localStorage.getItem(key),'draft persisted before save');
+        ensure(!storedSetting(key),'draft persisted before save');
         button('Save quick settings').click();
         await wait(()=>button('Edit quick settings'),'save mode');
-        ensure(JSON.parse(localStorage.getItem(key)).quickSettings.bass.includes('feedbackCount'),'saved preference');
+        await wait(()=>JSON.parse(storedSetting(key))?.quickSettings.bass.includes('feedbackCount'),'saved preference');
         const areas=quick().querySelectorAll('.part-control-area');
         ensure([...areas].every(area=>getComputedStyle(area).display==='contents'),'quick categories must flow');
         ensure([...inspector().querySelectorAll('.part-control-area')].every(area=>getComputedStyle(area).display!=='contents'),'inspector category areas');
@@ -236,7 +237,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             ensure((await selectOptions(modeHarmony)).map(o=>o.value).join(',')==='off,global,all','mode harmony scopes');
             for(const scope of ['off','global','all']) {
               await changeControl(modeHarmony,scope);
-              await wait(()=>JSON.parse(localStorage.getItem(key)).harmonyFollowsMode===scope,'mode harmony preference persists');
+              await wait(()=>JSON.parse(storedSetting(key)).harmonyFollowsMode===scope,'mode harmony preference persists');
               ensure(sessionStorage.getItem('vibecomposer.project.v12')===beforeLayoutCheck,'mode harmony preference does not edit the project');
             }
           }
@@ -249,14 +250,14 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
               document.dispatchEvent(event);
               await wait(()=>button('Record '+label).getAttribute('aria-pressed')==='false','capture ends');
               await new Promise(resolve=>setTimeout(resolve,550));
-              return JSON.parse(localStorage.getItem(key)).shortcuts[id][0];
+              return JSON.parse(storedSetting(key)).shortcuts[id][0];
             };
             if (category.getAttribute('aria-label')==='Shortcuts General') {
               ensure(button('Record Reset value') && button('Record Fine knob dragging'),'general includes controls and modifiers');
               ensure(button('Record Toggle parameter lock'),'general includes parameter lock shortcut');
               const lock=await record('Toggle parameter lock',new PointerEvent('pointerdown',{button:1,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'controlFreeze');
               ensure(lock.kind==='mouse' && lock.input==='1' && lock.ctrl && lock.alt && !lock.shift,'parameter lock shortcut can be remapped');
-              const unfreeze=JSON.parse(localStorage.getItem(key)).shortcuts.controlUnfreeze[0];
+              const unfreeze=JSON.parse(storedSetting(key)).shortcuts.controlUnfreeze[0];
               ensure(unfreeze.input==='2' && unfreeze.shift && !unfreeze.ctrl,'remapping global lock preserves section unfreeze');
               await record('Toggle parameter lock',new PointerEvent('pointerdown',{button:2,shiftKey:true,bubbles:true,cancelable:true}),'controlFreeze');
               const fine=await record('Fine knob dragging',new KeyboardEvent('keyup',{key:'Alt',shiftKey:true,bubbles:true,cancelable:true}),'fineDrag');
@@ -286,7 +287,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
               ensure(bypass.kind==='modifier' && bypass.ctrl,'shared grid bypass can be remapped');
               const snapped=await record('Place note on grid',new PointerEvent('pointerdown',{button:0,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}),'addNote');
               ensure(snapped.input==='0' && snapped.ctrl && snapped.alt,'snapped placement has its own binding');
-              const free=JSON.parse(localStorage.getItem(key)).shortcuts.addNoteFree[0];
+              const free=JSON.parse(storedSetting(key)).shortcuts.addNoteFree[0];
               ensure(free.input==='0' && free.shift && !free.ctrl,'remapping snapped placement preserves free placement');
               button('Record Place note off grid').click();
               document.dispatchEvent(new PointerEvent('pointerdown',{button:0,ctrlKey:true,altKey:true,bubbles:true,cancelable:true}));
@@ -301,11 +302,11 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
               document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
               await wait(()=>button('Record Delete selected notes').getAttribute('aria-pressed')==='false','escape cancels');
               button('Clear Open transpose').click();
-              await wait(()=>JSON.parse(localStorage.getItem(key)).shortcuts.transposeNotes.length===0,'clear binding');
+              await wait(()=>JSON.parse(storedSetting(key)).shortcuts.transposeNotes.length===0,'clear binding');
             }
             button('Reset to app defaults').click();
-            await wait(()=>JSON.parse(localStorage.getItem(key)).shortcuts.transposeNotes[0].input==='t','reset shortcuts');
-            ensure(JSON.parse(localStorage.getItem(key)).shortcuts.reroll[0].input==='1','mouse defaults restored');
+            await wait(()=>JSON.parse(storedSetting(key))?.shortcuts.transposeNotes[0]?.input==='t','reset shortcuts');
+            await wait(()=>JSON.parse(storedSetting(key))?.shortcuts.reroll[0]?.input==='1','mouse defaults restored');
           }
           if (category.getAttribute('aria-label')==='Behavior Melody') {
             ensure(dialog.querySelector('[aria-label="Contextual Melody"]').closest('.setting-row').querySelector('[data-scope="sound"]'),'algorithm affects track sound');
@@ -316,7 +317,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             const chance=dialog.querySelector('[aria-label="INTRO Melody preference"]');
             ensure(chance?.type==='range','section chance slider');
             await setChance(chance,'37');
-            await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1'))?.INTRO.melody===37,'section chance persists');
+            await wait(()=>JSON.parse(storedSetting(key))?.sectionTypeChances?.INTRO.melody===37,'section chance persists');
             const roles=['melody','chords','arpeggio','bass','drums'];
             const row=dialog.querySelector('[data-section-type="INTRO"]');
             const sliders=[...row.querySelectorAll('input[type="range"]')];
@@ -357,17 +358,17 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
             await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
             ensure(Math.abs(segment('melody').getBoundingClientRect().width/distribution.getBoundingClientRect().width-0.6)<0.001,'single active role leaves 10% for each other role');
             button('Reset defaults').click();
-            await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.section-type-settings.v1')).INTRO.melody===20,'section chances reset');
+            await wait(()=>JSON.parse(storedSetting(key))?.sectionTypeChances.INTRO.melody===20,'section chances reset');
           }
         }
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===beforeLayoutCheck,'browsing categories and section defaults preserves project');
         button('Appearance General').click();
         await wait(()=>dialog.querySelector('#appearance-title'),'return from layout checks');
-        const beforeRandomize = JSON.parse(localStorage.getItem(key));
+        const beforeRandomize = JSON.parse(storedSetting(key));
         const projectBeforeRandomize = sessionStorage.getItem('vibecomposer.project.v12');
         button('Random dark mode').click();
         const randomized = await wait(()=>{
-          const appearance = JSON.parse(localStorage.getItem(key)).appearance;
+          const appearance = JSON.parse(storedSetting(key)).appearance;
           return appearance.themeColors.background !== '#080e16' && appearance;
         },'random palette saved');
         const brightness = color => [1,3,5].reduce((sum,offset)=>sum+parseInt(color.slice(offset,offset+2),16),0)/3;
@@ -381,7 +382,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
           ensure(randomStyle.getPropertyValue('--role-'+role).trim()===color,'random track color applied: '+role);
         }
         button('Random light mode').click();
-        await wait(()=>brightness(JSON.parse(localStorage.getItem(key)).appearance.themeColors.background)>220,'light button produces light background');
+        await wait(()=>brightness(JSON.parse(storedSetting(key)).appearance.themeColors.background)>220,'light button produces light background');
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===projectBeforeRandomize,'randomizer preserves musical project');
         button('Reset appearance to defaults').click();
         await wait(()=>getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim()==='#32d7f4','reset randomized palette');
@@ -390,16 +391,16 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(JSON.stringify((await selectOptions(noteShape)).map(option=>option.value))===JSON.stringify(['classic','triangle','instrument','instrument-log']),'note shape choices');
         for (const mode of ['triangle','instrument','classic','instrument-log']) {
           await changeControl(noteShape, mode);
-          await wait(()=>JSON.parse(localStorage.getItem(key)).scoreNoteShape===mode,'note shape saved: '+mode);
+          await wait(()=>JSON.parse(storedSetting(key)).scoreNoteShape===mode,'note shape saved: '+mode);
           ensure(document.querySelector('vc-score-canvas canvas'),'score canvas remains mounted after shape change');
         }
 
         const ghostToggle = await wait(()=>document.querySelector('[aria-label="Ghost notes from other tracks"]'),'ghost preference');
         ensure(ghostToggle.checked, 'ghost notes default on');
         ghostToggle.click();
-        await wait(()=>JSON.parse(localStorage.getItem(key)).scoreGhostNotes===false,'ghost preference off persisted');
+        await wait(()=>JSON.parse(storedSetting(key)).scoreGhostNotes===false,'ghost preference off persisted');
         ghostToggle.click();
-        await wait(()=>JSON.parse(localStorage.getItem(key)).scoreGhostNotes===true,'ghost preference on persisted');
+        await wait(()=>JSON.parse(storedSetting(key)).scoreGhostNotes===true,'ghost preference on persisted');
         button('Appearance General').click();
         await wait(()=>dialog.querySelector('#appearance-title'),'return to general appearance');
         const backdrop=()=>document.querySelector('.cdk-overlay-backdrop');
@@ -418,7 +419,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(restart.getAttribute('aria-pressed')==='true','restart defaults on');
         restart.click();
         await wait(()=>restart.getAttribute('aria-pressed')==='false','restart toggles off');
-        ensure(JSON.parse(localStorage.getItem(key)).restartPlaybackOnCompose===false,'restart preference persisted');
+        await wait(()=>JSON.parse(storedSetting(key)).restartPlaybackOnCompose===false,'restart preference persisted');
         const poolToggle=button('Limit instrument options to selected pool');
         const bassInstrument=()=>document.querySelector('.track-group.bass vc-menu-select.track-instrument');
         ensure(poolToggle?.getAttribute('aria-pressed')==='false','instrument pool filtering defaults off');
@@ -432,7 +433,7 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(JSON.stringify((await selectOptions(bassInstrument())).map(option=>Number(option.value)))===JSON.stringify(expected),'bass pool plus selected instrument');
         ensure(bassInstrument().getAttribute("value")===selectedProgram,'filter retains selected instrument');
         ensure(sessionStorage.getItem('vibecomposer.project.v12')===projectBeforePoolToggle,'filter does not edit musical project');
-        ensure(JSON.parse(localStorage.getItem(key)).limitInstrumentsToPool===true,'pool filter preference persisted');
+        await wait(()=>JSON.parse(storedSetting(key)).limitInstrumentsToPool===true,'pool filter preference persisted');
         poolToggle.click();
         await wait(async()=>(await selectOptions(bassInstrument())).length===128,'toggle restores full instrument catalog');
         await wait(()=>!backdrop().classList.contains('appearance-preview'),'preview only applies in Appearance');
@@ -488,11 +489,11 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         ensure(style().getPropertyValue('--role-melody').trim()==='#40d4d4','App brightness excludes role colors');
         await changeAdjustment('Saturation',-50);
         await wait(()=>style().getPropertyValue('--role-melody').trim()==='#8ad4d4','saturation combines with scoped role hue');
-        ensure(JSON.parse(localStorage.getItem(key)).appearance.colorAdjustments.saturation===-50,'adjustment persisted');
-        ensure(JSON.parse(localStorage.getItem(key)).appearance.roleColors.melody==='#d44040','chosen color retained');
+        await wait(()=>JSON.parse(storedSetting(key)).appearance.colorAdjustments.saturation===-50,'adjustment persisted');
+        ensure(JSON.parse(storedSetting(key)).appearance.roleColors.melody==='#d44040','chosen color retained');
         const adjustedAccent=style().getPropertyValue('--accent-primary').trim();
         button('Apply to Base Colors').click();
-        const applied=JSON.parse(localStorage.getItem(key)).appearance;
+        const applied=await wait(()=>{ const appearance=JSON.parse(storedSetting(key)).appearance; return appearance.roleColors.melody==='#8ad4d4' && appearance; },'adjusted colors saved');
         ensure(applied.themeColors.accent===adjustedAccent && applied.roleColors.melody==='#8ad4d4','apply saves the scoped preview');
         ensure(style().getPropertyValue('--accent-primary').trim()===adjustedAccent &&
           style().getPropertyValue('--role-melody').trim()==='#8ad4d4','apply preserves visible colors');
@@ -568,16 +569,17 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
         };
         await upload(before);
         await wait(()=>footer.textContent.includes('Invalid UI preferences'),'reject project as UI preferences');
-        ensure(localStorage.getItem(key)===JSON.stringify(JSON.parse(json)),'invalid import changed preferences');
+        ensure(storedSetting(key)===JSON.stringify(JSON.parse(json)),'invalid import changed preferences');
         await upload(json);
         await wait(()=>footer.textContent.includes('UI preferences imported.'),'valid UI import');
-        const imported=localStorage.getItem(key);
+        await wait(()=>storedSetting(key)===JSON.stringify(JSON.parse(json)),'imported UI preferences saved');
+        const imported=storedSetting(key);
         await upload(JSON.stringify({...JSON.parse(json),appearance:{...JSON.parse(json).appearance,roleColors:{...JSON.parse(json).appearance.roleColors,bass:'invalid'}}}));
         await wait(()=>footer.textContent.includes('Invalid UI preferences'),'invalid appearance rejected');
-        ensure(localStorage.getItem(key)===imported,'invalid appearance import atomic');
+        ensure(storedSetting(key)===imported,'invalid appearance import atomic');
         await upload(JSON.stringify({...JSON.parse(json),appearance:{...JSON.parse(json).appearance,themeColors:{...JSON.parse(json).appearance.themeColors,accent:'invalid'}}}));
         await wait(()=>footer.textContent.includes('Invalid UI preferences'),'invalid main theme rejected');
-        ensure(localStorage.getItem(key)===imported,'invalid main theme import atomic');
+        ensure(storedSetting(key)===imported,'invalid main theme import atomic');
         button('Reset appearance to defaults').click();
         await wait(()=>style().getPropertyValue('--role-bass').trim()==='#8ca9ba','reset appearance');
         ensure(style().getPropertyValue('--accent-primary').trim()==='#32d7f4','main theme reset');
@@ -787,14 +789,14 @@ for (const width of [1440, 1400, 780]) test(`quick-settings placement and UI pre
 
 for (const width of [780, 1440, 2560, 3840]) test(`workspace width limits use available space and persist at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
-  const script = `<script>(async () => {
+  const script = `<script>${observeSettings}(async () => {
     const wait = async (read, label) => {
       for (let i=0;i<200;i++) { const value=read(); if(value)return value; await new Promise(r=>setTimeout(r,25)); }
       throw new Error(label);
     };
     const ensure = (value, label) => { if(!value)throw new Error(label); };
     const settle = () => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const read = () => JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1'));
+    const read = () => JSON.parse(storedSetting('vibecomposer.ui-preferences.v1'));
     const open = async () => {
       document.querySelector('.project-tools [aria-label="Settings"]').click();
       const tab = await wait(()=>document.querySelector('[aria-label="Appearance General"]'),'appearance tab');

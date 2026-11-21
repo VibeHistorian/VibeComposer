@@ -11,7 +11,7 @@ import { Overlay } from '@angular/cdk/overlay';
 import { TrackPresetDialogComponent } from '../tracks/track-preset-dialog.component';
 import { BUILTIN_TRACK_PRESETS, BUILTIN_MULTI_ROLE_PRESETS } from '../../core/project/builtin-track-presets';
 import type { TrackPreset } from '../../core/project/track-presets';
-import { readTrackPresetLibrary } from '../../core/ui/track-preset-storage';
+import { TrackPresetStorage } from '../../core/ui/track-preset-storage';
 import { ArrangementVariationsDialogComponent } from '../arrangement/arrangement-variations-dialog.component';
 import type { VariationScope } from '../../core/project/arrangement-variation-draft';
 import { isScaleMode } from '../../core/music/scales';
@@ -134,23 +134,22 @@ export class WorkspaceCanvasComponent {
   openTrackPresets(role: ArrangedPart | 'all'): void {
     this.presetDialogs.open(TrackPresetDialogComponent, { ariaLabel: `${role === 'all' ? 'All roles' : ROLE_NAMES[role]} preset manager`, data: { role, name: role === 'all' ? 'All roles' : ROLE_NAMES[role] } });
   }
-  private readonly quickUserPresets = signal<readonly TrackPreset[]>([]);
+  private readonly trackPresetStorage = inject(TrackPresetStorage);
   private invertQuickPresetReplace = false;
   refreshQuickPresets(event?: MouseEvent): void {
     this.invertQuickPresetReplace = event?.shiftKey === true;
-    this.quickUserPresets.set(readTrackPresetLibrary() ?? []);
   }
   presetContextItems(role: ArrangedPart | 'all'): readonly ContextMenuItem[] {
     const items = (presets: readonly TrackPreset[], source: string) => presets.filter(preset => preset.role === role)
       .map(preset => ({ id: `${source}:${preset.name}`, label: `${preset.name} (${preset.tracks.length})`, disabled: this.editing() }));
-    const user = items(this.quickUserPresets(), 'user');
+    const user = items(this.trackPresetStorage.library() ?? [], 'user');
     return [{ id: 'factory', label: 'Factory', children: items([...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS], 'factory') },
       ...(user.length ? [{ id: 'user', label: 'User', children: user }] : [])];
   }
   loadQuickPreset(role: ArrangedPart | 'all', action: ContextMenuAction): void {
     if (this.editing()) return;
     const factory = action.id.startsWith('factory:');
-    const source = factory ? [...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS] : readTrackPresetLibrary() ?? [];
+    const source = factory ? [...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS] : this.trackPresetStorage.library() ?? [];
     const preset = source.find(preset => preset.role === role && `${factory ? 'factory' : 'user'}:${preset.name}` === action.id);
     if (!preset) return;
     const replace = this.preferences.replacePresetTracks();

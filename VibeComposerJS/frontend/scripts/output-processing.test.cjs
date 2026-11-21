@@ -146,7 +146,7 @@ test('section role velocity edits isolate roles, reject invalid maps and persist
   assert.equal(valid({ velocityPercent: { melody: 201 } }), false);
   assert.equal(valid({ velocityPercent: { melody: NaN } }), false);
   const codec = f.load('core/project/project-codec.ts');
-  const chances = f.load('core/project/section-type-settings.service.ts').DEFAULT_SECTION_TYPE_CHANCES;
+  const chances = f.load('core/project/section-type-chances.ts').DEFAULT_SECTION_TYPE_CHANCES;
   const restored = codec.decodeProject(JSON.parse(f.service.exportProjectJson()), chances, () => .5);
   assert.deepEqual(restored.arrangement[0].context.velocityPercent, { melody: 50, bass: 199 });
 });

@@ -1,3 +1,4 @@
+const { observeSettings } = require('./support/workspace-browser.cjs');
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -23,7 +24,7 @@ for (const { width, missingMethod, sampler, chiptune } of [
       trackPhrases: { [trackId]: [{ id: 'sustain', midi: 48, startBeat: .5, durationBeats: 5, velocity: 100 }] } },
     { id: 'second', type: 'VERSE2', measures: 1, trackPresence: presence, context: { tempoBpm: 60 }, trackPhrases: { [trackId]: [] } },
   ] };
-  const script = `<script>
+  const script = `<script>${observeSettings}
     sessionStorage.setItem('vibecomposer.project.v12', ${JSON.stringify(JSON.stringify(project))});
     (async () => {
       const wait = async (read, label) => {
@@ -174,7 +175,7 @@ for (const { width, missingMethod, sampler, chiptune } of [
         await wait(()=>filenamePattern.test(preview()),'current project filename preview');
         for (const toggle of fields.querySelectorAll('button')) toggle.click();
         await wait(()=>preview()==='Export- test.vibe.json','project name only preview');
-        ensure(JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).exportNameFields.length===0,'filename preferences saved');
+        await wait(()=>JSON.parse(storedSetting('vibecomposer.ui-preferences.v1'))?.exportNameFields.length===0,'filename preferences saved');
         settings.querySelector('[aria-label="Close settings"]').click();
         trigger.click(); await wait(menu,'project menu after filename settings'); item('Export Project').click();
         await wait(()=>downloads.length===4,'project name only download');

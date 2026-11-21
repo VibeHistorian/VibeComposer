@@ -55,7 +55,6 @@ import { baseGenerationHarmony } from '../music/project-harmony';
 import { layOutTrackPhrase, phraseForTrack, resolvedTrackPhrase } from '../music/phrase';
 
 const STORAGE_KEY = 'vibecomposer.project.v12';
-const LEGACY_STORAGE_KEY = 'vibecomposer.project.v11';
 interface ProjectTab {
   readonly id: string;
   readonly project: CompositionProject;
@@ -1684,15 +1683,14 @@ export class ProjectService {
   }
 
   private loadProject(): CompositionProject {
-    for (const key of [STORAGE_KEY, LEGACY_STORAGE_KEY]) {
-      try {
-        const raw = globalThis.sessionStorage?.getItem(key);
-        if (!raw) continue;
+    try {
+      const raw = globalThis.sessionStorage?.getItem(STORAGE_KEY);
+      if (raw) {
         const value: unknown = JSON.parse(raw);
         const decoded = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
         if (decoded) {
           this.restoredSession = true;
-          if (key === STORAGE_KEY && value && typeof value === 'object' && 'workspaceRecovery' in value) {
+          if (value && typeof value === 'object' && 'workspaceRecovery' in value) {
             const recovery = value.workspaceRecovery as Partial<SessionRecovery> | null;
             if (recovery && typeof recovery.tabId === 'string' && typeof recovery.automaticSeed === 'boolean'
               && (recovery.workspaceRevision === null || typeof recovery.workspaceRevision === 'string')) {
@@ -1704,13 +1702,12 @@ export class ProjectService {
           }
           return decoded;
         }
-        this.warnProjectLoadFailure(`session storage (${key})`, value);
-      } catch (error) {
-        console.warn(`Could not load project from session storage (${key}).`, error);
+        this.warnProjectLoadFailure(`session storage (${STORAGE_KEY})`, value);
       }
+    } catch (error) {
+      console.warn(`Could not load project from session storage (${STORAGE_KEY}).`, error);
     }
-    const initial = copyDefaultProject(this.sectionTypeSettings.chances(), Math.random);
-    return initial;
+    return copyDefaultProject(this.sectionTypeSettings.chances(), Math.random);
   }
 
   private warnProjectLoadFailure(source: string, value: unknown): void {

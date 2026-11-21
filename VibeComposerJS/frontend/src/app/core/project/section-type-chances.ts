@@ -1,7 +1,31 @@
-import type { ArrangedPart } from '../music/part-role';
-import type { SectionType } from './arrangement.model';
+import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
+import { SECTION_TYPES, type SectionType } from './arrangement.model';
 
 export type SectionTypeChanceSettings = Readonly<Record<SectionType, Readonly<Record<ArrangedPart, number>>>>;
+
+export function validSectionChance(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100;
+}
+
+/** Older settings can omit roles introduced after they were saved. */
+export function decodeSectionTypeChances(value: unknown, tolerateInvalid = false): SectionTypeChanceSettings | null {
+  const fields = (entry: unknown) => entry && typeof entry === 'object' && !Array.isArray(entry)
+    ? entry as Record<string, unknown> : null;
+  const sections = fields(value);
+  if (!sections) return null;
+  const result = {} as Record<SectionType, Record<ArrangedPart, number>>;
+  for (const type of SECTION_TYPES) {
+    const section = fields(sections[type]);
+    if (sections[type] !== undefined && !section && !tolerateInvalid) return null;
+    result[type] = { ...DEFAULT_SECTION_TYPE_CHANCES[type] };
+    for (const role of ARRANGED_PARTS) {
+      const chance = section?.[role];
+      if (validSectionChance(chance)) result[type][role] = chance;
+      else if (chance !== undefined && !tolerateInvalid) return null;
+    }
+  }
+  return result;
+}
 
 export const DEFAULT_SECTION_TYPE_CHANCES: SectionTypeChanceSettings = {
   // Melody probabilities follow Arrangement.defaultSections in the Java app.

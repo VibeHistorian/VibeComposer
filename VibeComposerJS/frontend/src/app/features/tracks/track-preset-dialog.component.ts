@@ -8,7 +8,7 @@ import { SelectComponent } from '../../shared/select.component';
 import { BUILTIN_TRACK_PRESETS, BUILTIN_MULTI_ROLE_PRESETS } from '../../core/project/builtin-track-presets';
 
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
-import { readTrackPresetLibrary, TRACK_PRESET_STORAGE_KEY } from '../../core/ui/track-preset-storage';
+import { TrackPresetStorage } from '../../core/ui/track-preset-storage';
 
 @Component({
   selector: 'vc-track-preset-dialog',
@@ -22,13 +22,15 @@ export class TrackPresetDialogComponent {
   readonly dialog = inject(DialogRef);
   readonly projects = inject(ProjectService);
   readonly preferences = inject(UiPreferencesService);
+  private readonly storage = inject(TrackPresetStorage);
   readonly tracks = computed(() => this.projects.project().tracks.filter(track => (this.data.role === 'all' || track.role === this.data.role)));
   readonly selected = signal(new Set(this.tracks().map(track => track.id)));
   readonly name = signal('');
   readonly presetName = signal('');
   readonly replace = this.preferences.replacePresetTracks;
-  readonly message = signal('');
-  readonly library = signal<TrackPreset[]>(this.readLibrary());
+  readonly message = signal(this.storage.library() ? '' : 'Could not read saved presets. Import a valid library to recover it.');
+  readonly library = computed(() => this.storage.library() ?? []);
+  readonly saving = signal(false);
   readonly presets = computed(() => this.library().filter(preset => preset.role === this.data.role));
   readonly builtins = [...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS].filter(preset => preset.role === this.data.role);
   readonly isBuiltin = computed(() => this.presetName().startsWith('builtin:'));
@@ -43,25 +45,37 @@ export class TrackPresetDialogComponent {
   toggle(id: string, checked: boolean): void {
     this.selected.update(current => { const next = new Set(current); checked ? next.add(id) : next.delete(id); return next; });
   }
-  private readLibrary(): TrackPreset[] {
-    const presets = readTrackPresetLibrary();
-    if (presets) return presets;
-    this.message.set('Could not read saved presets. Import a valid library to recover it.');
-    return [];
+  private async store(change: (presets: TrackPreset[]) => TrackPreset[]): Promise<boolean> {
+    if (this.saving()) return false;
+    this.saving.set(true);
+    let invalid = '';
+    try {
+      await this.storage.update(current => {
+        try {
+          const next = change(current);
+          if (!decodeTrackPresets(next)) throw new Error('Preset library is invalid or exceeds 256 presets.');
+          return next;
+        } catch (error) {
+          if (error instanceof Error) invalid = error.message;
+          throw error;
+        }
+      });
+      return true;
+    } catch {
+      this.message.set(invalid || 'Could not save presets in browser storage.');
+      return false;
+    } finally { this.saving.set(false); }
   }
-  private store(presets: TrackPreset[]): boolean {
-    if (!decodeTrackPresets(presets)) { this.message.set('Preset library is invalid or exceeds 256 presets.'); return false; }
-    try { localStorage.setItem(TRACK_PRESET_STORAGE_KEY, JSON.stringify(presets)); }
-    catch { this.message.set('Could not save presets in browser storage.'); return false; }
-    this.library.set(presets);
-    return true;
-  }
-  save(): void {
+  async save(): Promise<void> {
     if (!this.canSave()) return;
     const name = this.name().trim();
-    if (this.presets().some(preset => preset.name === name)) { this.message.set('This name already exists. Choose a different name.'); return; }
     const preset: TrackPreset = { name, role: this.data.role, tracks: structuredClone(this.tracks().filter(track => this.selected().has(track.id))) };
-    if (this.store([...this.library(), preset])) { this.presetName.set(`user:${name}`); this.name.set(''); this.message.set('Preset saved.'); }
+    if (await this.store(current => {
+      if (current.some(item => item.role === preset.role && item.name === name)) {
+        throw new Error('This name already exists. Choose a different name.');
+      }
+      return [...current, preset];
+    })) { this.presetName.set(`user:${name}`); this.name.set(''); this.message.set('Preset saved.'); }
   }
   load(): void {
     const preset = this.chosen();
@@ -69,9 +83,12 @@ export class TrackPresetDialogComponent {
     const result = this.projects.loadTrackPreset(this.data.role, preset.tracks, this.replace());
     this.message.set(result === 'invalid' ? 'Cannot load preset. The project supports up to 64 tracks.' : 'Preset loaded. Undo restores the previous tracks.');
   }
-  remove(): void {
+  async remove(): Promise<void> {
     const preset = this.chosen();
-    if (preset && !this.isBuiltin() && this.store(this.library().filter(item => item !== preset))) { this.presetName.set(''); this.message.set('Preset deleted.'); }
+    if (preset && !this.isBuiltin() && await this.store(current =>
+      current.filter(item => item.role !== preset.role || item.name !== preset.name))) {
+      this.presetName.set(''); this.message.set('Preset deleted.');
+    }
   }
   async importFile(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -82,8 +99,12 @@ export class TrackPresetDialogComponent {
       const imported = decodeTrackPresets(JSON.parse(await file.text()));
       if (!imported) throw new Error('Invalid preset JSON. Import an exported preset library.');
       // Keep existing presets on name conflicts, so imports cannot silently overwrite them.
-      const additions = imported.filter(preset => !this.library().some(existing => existing.role === preset.role && existing.name === preset.name));
-      if (this.store([...this.library(), ...additions])) this.message.set(`Imported ${additions.length} presets. Existing names were kept.`);
+      let added = 0;
+      if (await this.store(current => {
+        const additions = imported.filter(preset => !current.some(existing => existing.role === preset.role && existing.name === preset.name));
+        added = additions.length;
+        return [...current, ...additions];
+      })) this.message.set(`Imported ${added} presets. Existing names were kept.`);
     } catch (error) { this.message.set(error instanceof Error ? error.message : 'Could not import presets.'); }
     finally { input.value = ''; }
   }

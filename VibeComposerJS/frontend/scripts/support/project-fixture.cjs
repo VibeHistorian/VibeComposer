@@ -32,7 +32,8 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
     read.set = next => { read(); current = next; };
     return read;
   };
-  let service, ui, uiPreferences, clipboard;
+  let service, ui, uiPreferences, clipboard, sectionTypes, trackPresets;
+  const fallback = {};
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type, Directive: () => (type) => type,
     HostListener: () => () => {}, Injector: class Injector {}, afterNextRender: () => {}, Input: () => () => {}, Output: () => () => {}, EventEmitter: class { values = []; emit(value) { this.values.push(value); } },
     signal, linkedSignal, afterRenderEffect: () => {}, computed: reactivity?.computed ?? ((read) => read), effect: callback => { effects.push(callback); }, untracked: read => read(), input,
@@ -40,11 +41,14 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
     viewChild: Object.assign(() => () => undefined, { required: () => () => undefined }),
     inject: (type) => type === 'sequencer-data' ? dialogData ?? { scope: { kind: 'global-track', trackId: 'track-chords-1' }, role: 'chords', velocities: false, melodyHits: 16 } : type?.name === 'ProjectService' ? service : type?.name === 'WorkspaceUiService' ? ui
       : type?.name === 'WorkspaceStorage' ? workspaceStorage
+      : type?.name === 'SettingsStorage' ? settingsStorage
+      : type?.name === 'SectionTypeSettingsService' ? sectionTypes
+      : type?.name === 'TrackPresetStorage' ? trackPresets
       : type?.name === 'ContextClipboardService' ? clipboard
       : type?.name === 'AudioPlaybackService' ? { setPhrasePreview() {} } : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
       : type?.name === 'ChangeDetectorRef' ? { detectChanges() {} }
       : type?.name === 'Combobox' ? { expanded: signal(false), disabled: signal(false) }
-      : type?.name === 'UiPreferencesService' ? uiPreferences : preferences,
+      : type?.name === 'UiPreferencesService' ? uiPreferences : fallback,
   };
   const root = path.join(__dirname, '../../src/app');
   function load(file) {
@@ -74,10 +78,13 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
   }
   const stored = new Map();
   global.sessionStorage = { getItem: (key) => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value) };
-  const sectionTypes = load('core/project/section-type-settings.service.ts');
-  const preferences = { chances: () => sectionTypes.DEFAULT_SECTION_TYPE_CHANCES };
   const uiStored = new Map();
-  global.localStorage = { getItem: key => uiStored.get(key) ?? null, setItem: (key, value) => uiStored.set(key, value) };
+  const localStored = new Map();
+  global.localStorage = { getItem: key => localStored.get(key) ?? null, setItem: (key, value) => localStored.set(key, value) };
+  const settingsStorage = {
+    read(key) { return uiStored.has(key) ? JSON.parse(uiStored.get(key)) : undefined; },
+    async write(key, value) { uiStored.set(key, JSON.stringify(value)); },
+  };
   const workspaceStorage = {
     saved: undefined,
     takeInitialWorkspace() { return structuredClone(this.saved); },
@@ -108,6 +115,8 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
     constructor(write) { super(write, persistenceEnvironment); }
   };
   uiPreferences = new (load('core/ui/ui-preferences.service.ts').UiPreferencesService)();
+  sectionTypes = new (load('core/project/section-type-settings.service.ts').SectionTypeSettingsService)();
+  trackPresets = new (load('core/ui/track-preset-storage.ts').TrackPresetStorage)();
   clipboard = new (load('core/ui/context-clipboard.service.ts').ContextClipboardService)();
   const { ProjectService } = load('core/project/project.service.ts');
   service = new ProjectService();

@@ -1,3 +1,4 @@
+const { observeSettings } = require('./support/workspace-browser.cjs');
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -7,7 +8,7 @@ const browser = findBrowser();
 
 for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard, selection and hotplug at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
-  const script = `<script>
+  const script = `<script>${observeSettings}
     let requests=0, denied=true, changed;
     const output={id:'test',name:'External synthesizer with a very long device name',manufacturer:'Test',state:'connected',
       async open(){},async close(){},clear(){},send(){}};
@@ -57,7 +58,7 @@ for (const width of [1440, 780, 700]) test(`MIDI dropdown permissions, keyboard,
         ensure(mapping.getAttribute("value")==='auto','Auto is default');
         const setMode=async(mode,label)=>{await changeControl(mapping, mode);await wait(()=>drumOption()?.textContent.trim()===label,'mapping updates drum labels: '+mode);};
         await setMode('general-midi','Kick · 36');
-        ensure(JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).drumMapping==='general-midi','mapping persisted');
+        await wait(()=>JSON.parse(storedSetting('vibecomposer.ui-preferences.v1'))?.drumMapping==='general-midi','mapping persisted');
         await setMode('chromatic','Kick · 37');
         await setMode('auto','Kick · 37');
         document.querySelector('[aria-label="Close settings"]').click();

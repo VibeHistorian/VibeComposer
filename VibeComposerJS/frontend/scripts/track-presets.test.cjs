@@ -3,14 +3,14 @@ const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
 test('quick preset menus group current libraries and load with the remembered replace preference', () => {
-  const { service, workspace, uiPreferences, load } = fixture();
+  const { service, workspace, uiPreferences, uiStored, load } = fixture();
   const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
   assert.equal(uiPreferences.replacePresetTracks(), true);
   const original = service.exportProjectJson();
   const user = { name: 'My bass', role: 'bass', tracks: service.project().tracks.filter(track => track.role === 'bass') };
   workspace.refreshQuickPresets();
   assert.deepEqual(workspace.presetContextItems('bass').map(item => item.label), ['Factory']);
-  localStorage.setItem('vibecomposer.track-presets', JSON.stringify([user]));
+  uiStored.set('vibecomposer.track-presets', JSON.stringify([user]));
   workspace.refreshQuickPresets();
   const menu = workspace.presetContextItems('bass');
   assert.deepEqual(menu.map(item => item.label), ['Factory', 'User']);
@@ -41,7 +41,7 @@ test('quick preset menus group current libraries and load with the remembered re
   const older = JSON.parse(saved); delete older.replacePresetTracks;
   assert.equal(uiPreferences.importJson(JSON.stringify(older)), true);
   assert.equal(uiPreferences.replacePresetTracks(), true);
-  localStorage.setItem('vibecomposer.track-presets', '{broken');
+  uiStored.set('vibecomposer.track-presets', 'null');
   workspace.refreshQuickPresets();
   assert.deepEqual(workspace.presetContextItems('bass').map(item => item.label), ['Factory']);
 });

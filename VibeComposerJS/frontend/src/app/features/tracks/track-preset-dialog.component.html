@@ -8,7 +8,7 @@
     } @empty { <p>No tracks in this role.</p> }
   </div>
   <div class="actions"><label>Preset name <input type="text" maxlength="80" [value]="name()" (input)="name.set($any($event.target).value)" (keydown.enter)="save()" /></label>
-    <button type="button" [disabled]="!canSave()" (click)="save()">Save preset</button></div>
+    <button type="button" [disabled]="saving() || !canSave()" (click)="save()">Save preset</button></div>
 </section>
 <section aria-labelledby="load-preset-heading">
   <h3 id="load-preset-heading">Load tracks</h3>
@@ -16,10 +16,10 @@
   <label>Preset <vc-select aria-label="Track preset" [options]="options()" [value]="presetName()" (valueChange)="presetName.set('' + $event)" /></label>
   <label class="replace"><input type="checkbox" [checked]="replace()" (change)="preferences.setReplacePresetTracks($any($event.target).checked)" />Replace existing unlocked {{ data.name }} tracks</label>
   <p>Locked tracks are kept. Turn Replace off to append preset tracks. Section overrides are not saved in presets.</p>
-  <div class="actions"><button type="button" [disabled]="!chosen()" (click)="load()">Load preset</button><button type="button" [disabled]="!chosen() || isBuiltin()" (click)="remove()">Delete preset</button></div>
+  <div class="actions"><button type="button" [disabled]="saving() || !chosen()" (click)="load()">Load preset</button><button type="button" [disabled]="saving() || !chosen() || isBuiltin()" (click)="remove()">Delete preset</button></div>
 </section>
 <footer><input #fileInput type="file" hidden accept=".json,application/json" (change)="importFile($event)" />
-  <button type="button" (click)="fileInput.click()">Import presets</button>
+  <button type="button" [disabled]="saving()" (click)="fileInput.click()">Import presets</button>
   <button type="button" [disabled]="!library().length" (click)="export()">Export all presets</button>
 </footer>
 <p role="status" aria-live="polite">{{ message() }}</p>

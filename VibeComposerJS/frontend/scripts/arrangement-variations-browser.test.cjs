@@ -1,4 +1,4 @@
-const { clearWorkspace, readSessionProject } = require('./support/workspace-browser.cjs');
+const { clearWorkspace, readSessionProject, observeSettings } = require('./support/workspace-browser.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -9,7 +9,7 @@ const browser = findBrowser();
 for (const width of [1440, 780]) test(`variation drafts, scopes and history with 30 tracks at ${width}px`, { skip: !browser }, async () => {
   const root = requireProductionBuild();
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const script = `<script>(async()=>{
+  const script = `<script>${observeSettings}(async()=>{
     const wait=async(read,label)=>{for(let i=0;i<400;i++){const value=read();if(value){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));return value;}await new Promise(r=>setTimeout(r,20));}throw new Error(label);};
     const read=${readSessionProject};
     const ensure=(value,label)=>{if(!value)throw new Error(label);};
@@ -40,7 +40,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
         item.click();await new Promise(r=>requestAnimationFrame(r));
       }
     };
-    const prefs=()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1'));
+    const prefs=()=>JSON.parse(storedSetting('vibecomposer.ui-preferences.v1'));
     const setBehavior=async(generate,presence)=>{
       const before=JSON.stringify(read());
       [...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Settings'||b.getAttribute('aria-label')==='Settings').click();
@@ -84,7 +84,7 @@ for (const width of [1440, 780]) test(`variation drafts, scopes and history with
       const groupedKinds=[...variationSettings.querySelectorAll('.variation-settings-group input[type="checkbox"]')].map(i=>i.getAttribute('aria-label'));
       ensure(groupedKinds.includes('Reroll Arp subdivision ramp')&&new Set(groupedKinds).size===groupedKinds.length,'each variation appears once');
       const speedToggle=await wait(()=>variationSettings.querySelector('[aria-label="Reroll Melody speed"]'),'variation rows');
-      speedToggle.click();await wait(()=>!prefs().variationRerolls.allowedKinds.includes('melody-speed'),'disabled for future rerolls');
+      speedToggle.click();await wait(()=>prefs()?.variationRerolls.allowedKinds.includes('melody-speed')===false,'disabled for future rerolls');
       ensure(JSON.stringify(read())===original,'eligibility preference leaves project untouched');
       speedToggle.click();
       const speedDelta=variationSettings.querySelector('[aria-label="Melody speed variation delta"]');

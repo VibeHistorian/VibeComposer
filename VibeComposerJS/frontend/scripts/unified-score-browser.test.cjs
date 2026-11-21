@@ -1,4 +1,4 @@
-const { clearWorkspace } = require('./support/workspace-browser.cjs');
+const { clearWorkspace, readSetting } = require('./support/workspace-browser.cjs');
 const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'); const path=require('node:path'); const test=require('node:test');
@@ -15,7 +15,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   socket = connection.socket;
   const command = connection.command;
   const evaluate=async expression=>{let result;for(let retry=0;retry<3;retry++){try{result=await command('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});break;}catch(error){if(!error.message.includes('Execution context was destroyed'))throw error;await new Promise(r=>setTimeout(r,500));}}assert.equal(result.exceptionDetails,undefined,JSON.stringify({...result,expressionContext:expression.split('\n').slice(18,25)}));return result.result.value;};
-  const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
+  const waitCode=`const wait=async f=>{for(let i=0;i<200;i++){const v=await f();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out waiting for score');};`;
   const roleVisibility = await evaluate(`(async()=>{${waitCode}
     await wait(()=>document.querySelectorAll('.score-role-controls button').length===5);
     const buttons=[...document.querySelectorAll('.score-role-controls button')];
@@ -525,9 +525,9 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     button('Settings').click();(await wait(()=>button('Score'))).click();
     const toggle=await wait(()=>document.querySelector('[aria-label="Chord-based grid subdivisions"]'));
     const defaultOff=!toggle.checked;toggle.click();
-    await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid===true);
+    await wait(async()=>(await (${readSetting})('vibecomposer.ui-preferences.v1'))?.scoreChordGrid===true);
     button('Close settings').click();
-    return {defaultOff,saved:JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid,
+    return {defaultOff,saved:(await (${readSetting})('vibecomposer.ui-preferences.v1')).scoreChordGrid,
       border:getComputedStyle(document.querySelector('.score-chord-label')).borderTopWidth,
       sectionSeparator:getComputedStyle(document.querySelector('.score-header-separator.section-end')).width,
       chordSeparator:getComputedStyle(document.querySelector('.score-header-separator')).width};
@@ -568,7 +568,7 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
     const label=section.querySelector('.score-chord-label');
     const initial={hidden:label.classList.contains('chord-clipped'),measure:section.querySelector('.measure-end').textContent,
       separator:getComputedStyle(section.querySelector('.score-header-separator')).backgroundColor,
-      saved:JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).scoreChordGrid};
+      saved:(await (${readSetting})('vibecomposer.ui-preferences.v1')).scoreChordGrid};
     const canvas=await wait(()=>document.querySelector('vc-score-canvas canvas')),c=canvas.getBoundingClientRect();
     canvas.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,ctrlKey:true,deltaY:-1000,clientX:c.left,clientY:c.top}));
     await wait(()=>!label.classList.contains('chord-clipped'));

@@ -3,17 +3,26 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const { findBrowser, requireProductionBuild, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser } = require('./support/browser-harness.cjs');
-const { readWorkspace } = require('./support/workspace-browser.cjs');
+const { readWorkspace, readSetting } = require('./support/workspace-browser.cjs');
 const { fixture } = require('./support/project-fixture.cjs');
 
 const browser = findBrowser();
-async function runPersistenceScenario(script) {
+async function runPersistenceScenario(script, setup) {
   const root = requireProductionBuild();
   let resolve, reject;
   const result = new Promise((done, fail) => { resolve = done; reject = fail; });
   result.catch(() => {});
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace('</body>', script + '</body>');
   const server = createBrowserServer({ root, html, resolve, reject });
+  if (setup) {
+    const serve = server.listeners('request')[0];
+    server.removeAllListeners('request');
+    server.on('request', (request, response) => {
+      if (request.url !== '/') return serve(request, response);
+      response.setHeader('Content-Type', 'text/html');
+      response.end(setup);
+    });
+  }
   await listen(server);
   const profile = fs.mkdtempSync(path.resolve(__dirname, '../.angular/project-persistence-browser-'));
   const child = launchBrowser(browser, ['--headless', '--disable-gpu', '--no-first-run', '--window-size=1440,1000', '--user-data-dir=' + profile,
@@ -81,6 +90,68 @@ test('production project edits render before storage writes and immediate reload
     } catch (error) { await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.stack }) }); }
   })();</script>`;
   await runPersistenceScenario(script);
+});
+
+test('database upgrade retains the workspace and migrates preferences, section chances and presets', { skip: !browser }, async () => {
+  const { service, uiPreferences } = fixture();
+  const project = JSON.parse(service.exportProjectJson());
+  const preferences = JSON.parse(uiPreferences.exportJson());
+  delete preferences.sectionTypeChances;
+  const preset = { name: 'Legacy bass', role: 'bass', tracks: project.tracks.filter(track => track.role === 'bass') };
+  const setup = `<script>(async () => {
+    try {
+      localStorage.setItem('vibecomposer.ui-preferences.v1', JSON.stringify(${JSON.stringify({ ...preferences, midiPpq: 240 })}));
+      localStorage.setItem('vibecomposer.section-type-settings.v1', JSON.stringify({ INTRO: { bass: 67, drums: 102 } }));
+      localStorage.setItem('vibecomposer.track-presets', JSON.stringify([${JSON.stringify(preset)}]));
+      await new Promise((resolve, reject) => {
+        const request = indexedDB.open('vibecomposer', 1);
+        request.onerror = () => reject(request.error);
+        request.onupgradeneeded = () => request.result.createObjectStore('workspaces').put({
+          activeId: 'original', revision: 'version-one', tabs: [{
+            id: 'original', project: ${JSON.stringify({ ...project, name: 'Version one workspace' })},
+            past: [${JSON.stringify(project)}], future: [], automaticSeed: true
+          }]
+        }, 'current');
+        request.onsuccess = () => { request.result.close(); resolve(); };
+      });
+      location.replace('/?seeded=1');
+    } catch (error) { await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.stack }) }); }
+  })();</script>`;
+  const script = `<script>(async () => {
+    const report = result => fetch('/result', { method: 'POST', body: JSON.stringify(result) });
+    const readSetting = ${readSetting};
+    const preferencesKey = 'vibecomposer.ui-preferences.v1';
+    const presetsKey = 'vibecomposer.track-presets';
+    const chancesKey = 'vibecomposer.section-type-settings.v1';
+    try {
+      for (let index = 0; index < 200 && !document.querySelector('.project-pill.active'); index++) {
+        await new Promise(resolve => setTimeout(resolve, 25));
+      }
+      const workspace = await (${readWorkspace})();
+      if (workspace.activeId !== 'original' || workspace.tabs[0]?.past.length !== 1
+        || document.querySelector('.project-pill.active')?.textContent.trim() !== 'Version one workspace') {
+        throw Error('Version one workspace or history was lost');
+      }
+      const preferences = await readSetting(preferencesKey);
+      if (preferences?.midiPpq !== 240 || preferences.sectionTypeChances.INTRO.bass !== 67
+        || preferences.sectionTypeChances.INTRO.melody !== 20 || preferences.sectionTypeChances.INTRO.drums !== 20
+        || await readSetting(chancesKey) !== undefined) throw Error('Section chances were not merged into preferences');
+      const presets = await readSetting(presetsKey);
+      if (presets?.length !== 1 || presets[0].name !== 'Legacy bass' || !presets[0].tracks.length) {
+        throw Error('Legacy preset was lost');
+      }
+      if ([preferencesKey, presetsKey, chancesKey].some(key => localStorage.getItem(key) !== null)) {
+        throw Error('Migrated entries remain in localStorage');
+      }
+      if (!sessionStorage.getItem('settings-upgrade-reloaded')) {
+        sessionStorage.setItem('settings-upgrade-reloaded', '1');
+        location.reload();
+        return;
+      }
+      await report({ ok: true });
+    } catch (error) { await report({ error: error.stack }); }
+  })();</script>`;
+  await runPersistenceScenario(script, setup);
 });
 
 test('an aborted workspace transaction shows a warning and reload recovers the latest active edit', { skip: !browser }, async () => {

@@ -1,6 +1,6 @@
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
 const { fixture } = require('./support/project-fixture.cjs');
-const { readWorkspace } = require('./support/workspace-browser.cjs');
+const { readWorkspace, observeSettings, writeSetting } = require('./support/workspace-browser.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -17,12 +17,12 @@ for (const failing of [false, true]) test(`hosted startup and project menu under
     '/defaults/linked-settings.json':{...preferences,midiPpq:960,replaceCurrentProjectTab:true},
     '/defaults/theme.json':{...preferences,midiPpq:240,appearance:{...preferences.appearance,roleColors:{...preferences.appearance.roleColors,melody:'#123456'}}},
   };
-  const script=`<script>(async () => {
+  const script=`<script>${observeSettings}(async () => {
     const wait=async(read,label)=>{for(let i=0;i<250;i++){const v=await read();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out: '+label);};
     const ensure=(v,label)=>{if(!v)throw Error(label);};
     const pills=()=>[...document.querySelectorAll('button.project-pill')];
     const active=()=>document.querySelector('button.project-pill.active')?.textContent.trim();
-    const prefs=()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1'));
+    const prefs=()=>JSON.parse(storedSetting('vibecomposer.ui-preferences.v1'));
     const workspace=${readWorkspace};
     const menu=async label=>{
       document.querySelector('.branch-project').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2,clientX:200,clientY:60}));
@@ -59,7 +59,7 @@ for (const failing of [false, true]) test(`hosted startup and project menu under
           return saved?.tabs.length===3 && saved.tabs.some(tab=>tab.project.name==='Saved demo edits');
         },'workspace saved');
         dispatchEvent(new Event('pagehide'));
-        localStorage.setItem('vibecomposer.ui-preferences.v1',JSON.stringify({...prefs(),midiPpq:240,compactHistory:false}));
+        await (${writeSetting})('vibecomposer.ui-preferences.v1', {...prefs(),midiPpq:240,compactHistory:false});
         sessionStorage.setItem('hosted-phase','1');location.reload();
       } else if(phase===1) {
         ensure(pills().length===3 && active()==='Saved demo edits','saved workspace wins');

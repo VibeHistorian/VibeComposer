@@ -1,4 +1,4 @@
-const { clearWorkspace, readSessionProject } = require('./support/workspace-browser.cjs');
+const { clearWorkspace, readSessionProject, observeSettings } = require('./support/workspace-browser.cjs');
 const { findBrowser, connectToPage, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild, readBrowserDownload } = require('./support/browser-harness.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -16,7 +16,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
 }, async () => {
   const root = requireProductionBuild();
   const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const script = `<script>(async () => {
+  const script = `<script>${observeSettings}(async () => {
     const wait = async (read, label) => {
       for (let i = 0; i < 300; i++) { const value = read(); if (value) return value; await new Promise(r => setTimeout(r, 50)); }
       throw new Error('Timed out: ' + label);
@@ -101,11 +101,14 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       drumName.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(() => !drumButton('Save preset').disabled, 'drum preset name');
       drumButton('Save preset').click();
-      await wait(() => !drumButton('Load preset').disabled, 'saved drum preset');
+      await wait(() => drumManager.querySelector('[role="status"]').textContent.includes('Preset saved.')
+        && drumManager.querySelector('vc-select[aria-label="Track preset"]').getAttribute('value') === 'user:Six drums'
+        && !drumButton('Load preset').disabled, 'saved drum preset');
       drumButton('Load preset').click();
       await wait(() => drumManager.querySelector('[role="status"]').textContent.includes('Preset loaded'), 'replace six drums');
       if (JSON.stringify(read()) !== beforeDrumPreset) throw new Error('replacing saved drums changed project state or section presence');
       drumButton('Delete preset').click();
+      await wait(() => drumManager.querySelector('[role="status"]').textContent.includes('Preset deleted.'), 'deleted drum preset');
       drumManager.querySelector('[aria-label="Close preset manager"]').click();
       await wait(() => !document.querySelector('vc-track-preset-dialog'), 'drum manager closed');
       const presetButton = document.querySelector('[aria-label="Bass preset manager"]');
@@ -124,7 +127,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       const managerButton = text => [...manager.querySelectorAll('button')].find(button => button.textContent.trim() === text);
       await change(manager.querySelector('vc-select[aria-label="Track preset"]'), 'builtin:Deep House · 118–124 BPM');
       await wait(() => !managerButton('Load preset').disabled && managerButton('Delete preset').disabled, 'factory preset available and protected');
-      if (JSON.parse(localStorage.getItem('vibecomposer.track-presets') ?? '[]').length) throw new Error('factory presets leaked into user storage');
+      if (JSON.parse(storedSetting('vibecomposer.track-presets') ?? '[]').length) throw new Error('factory presets leaked into user storage');
       const selection = [...manager.querySelectorAll('.track-list input')];
       selection.slice(1).forEach(input => input.click());
       const presetNameInput = manager.querySelector('input[type="text"]');
@@ -132,8 +135,9 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       presetNameInput.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(() => !managerButton('Save preset').disabled, 'preset name ready');
       managerButton('Save preset').click();
-      await wait(() => JSON.parse(localStorage.getItem('vibecomposer.track-presets'))?.[0]?.tracks.length === 1, 'save selected preset tracks');
-      await wait(() => !managerButton('Load preset').disabled, 'saved preset ready');
+      await wait(() => JSON.parse(storedSetting('vibecomposer.track-presets'))?.[0]?.tracks.length === 1, 'save selected preset tracks');
+      await wait(() => manager.querySelector('[role="status"]').textContent.includes('Preset saved.')
+        && !managerButton('Load preset').disabled, 'saved preset ready');
       if (JSON.stringify(read()) !== beforePreset) throw new Error('saving preset edited the project');
       manager.querySelector('.replace input').click();
       managerButton('Load preset').click();
@@ -149,16 +153,16 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       [...reopened.querySelectorAll('button')].find(button => button.textContent.trim() === 'Load preset').click();
       await wait(() => bassRows().length === 2, 'replace unlocked tracks');
       if (JSON.stringify(bassRows()[0]) !== JSON.stringify(JSON.parse(beforePreset).tracks.find(track => track.id === bassRows()[0].id))) throw new Error('locked preset survivor changed');
-      const storedLibrary = localStorage.getItem('vibecomposer.track-presets');
+      const storedLibrary = storedSetting('vibecomposer.track-presets');
       const importedLibrary = JSON.parse(storedLibrary).map(preset => ({ ...preset, name: 'Imported bass' }));
       const presetInput = reopened.querySelector('input[type="file"]');
       const importPresets = text => { const files = new DataTransfer(); files.items.add(new File([text], 'presets.json', { type: 'application/json' })); presetInput.files = files.files; presetInput.dispatchEvent(new Event('change', { bubbles: true })); };
       importPresets(JSON.stringify(importedLibrary));
-      await wait(() => JSON.parse(localStorage.getItem('vibecomposer.track-presets')).length === 2, 'import preset library');
-      const afterImport = localStorage.getItem('vibecomposer.track-presets');
+      await wait(() => JSON.parse(storedSetting('vibecomposer.track-presets')).length === 2, 'import preset library');
+      const afterImport = storedSetting('vibecomposer.track-presets');
       importPresets('[{}]');
       await wait(() => reopened.querySelector('[role="status"]').textContent.includes('Invalid preset JSON'), 'invalid preset error');
-      if (localStorage.getItem('vibecomposer.track-presets') !== afterImport) throw new Error('invalid import changed library');
+      if (storedSetting('vibecomposer.track-presets') !== afterImport) throw new Error('invalid import changed library');
       [...reopened.querySelectorAll('button')].find(button => button.textContent.trim() === 'Export all presets').click();
       result.presetExport = JSON.parse(afterImport);
       reopened.querySelector('[aria-label="Close preset manager"]').click();
@@ -178,7 +182,6 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       if (document.querySelector('vc-track-preset-dialog')) throw new Error('quick preset opened manager');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => JSON.stringify(read()) === beforeQuickPreset, 'undo quick factory preset');
-      localStorage.removeItem('vibecomposer.track-presets');
       const groupToggle = () => document.querySelector('.group-track-toggle');
       const trackRows = () => [...document.querySelectorAll('.group-track-settings-row')];
       const rowControl = (id, key) => document.querySelector('.group-track-settings-row[data-track-id="' + id + '"] [data-control-key="' + key + '"] input');
@@ -655,6 +658,7 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       result.trackScroll = document.querySelector('.track-groups').scrollHeight > document.querySelector('.track-groups').clientHeight || document.documentElement.scrollHeight > innerHeight;
       await fetch('/result', { method: 'POST', body: JSON.stringify(result) });
     } catch(error) { await fetch('/result', { method: 'POST', body: JSON.stringify({ error: error.message, context: document.querySelector('.part-context-label')?.textContent,
+      presetStatus: document.querySelector('vc-track-preset-dialog [role="status"]')?.textContent,
       stack: error.stack, canvas: document.querySelector('.arrangement-panel canvas[tabindex]')?.getAttribute('aria-label') }) }); }
   })();</script>`;
   new (require('node:vm').Script)(script.slice('<script>'.length, -'</script>'.length));

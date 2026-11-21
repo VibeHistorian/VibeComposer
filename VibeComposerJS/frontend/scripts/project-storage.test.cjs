@@ -2,6 +2,17 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('startup ignores the retired v11 session key', () => {
+  const { service, stored, load } = fixture();
+  const project = JSON.parse(service.exportProjectJson());
+  stored.set('vibecomposer.project.v11', JSON.stringify({ ...project, name: 'Retired session' }));
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.hasSavedWorkspace, false);
+  assert.notEqual(restored.project().name, 'Retired session');
+  restored.ngOnDestroy();
+  service.ngOnDestroy();
+});
+
 test('all project commands publish immediately and coalesce encoding and both storage writes', () => {
   const { service, load, stored, workspaceStorage, advancePersistence, persistenceTimers } = fixture();
   service.flushPersistence();

@@ -1,10 +1,17 @@
+import { computed, inject, Injectable } from '@angular/core';
 import { decodeTrackPresets, type TrackPreset } from '../project/track-presets';
+import { SettingsStorage, TRACK_PRESETS_KEY } from './settings-storage';
 
-export const TRACK_PRESET_STORAGE_KEY = 'vibecomposer.track-presets';
+@Injectable({ providedIn: 'root' })
+export class TrackPresetStorage {
+  private readonly storage = inject(SettingsStorage);
+  readonly library = computed(() => this.decode(this.storage.read(TRACK_PRESETS_KEY)));
 
-export function readTrackPresetLibrary(): TrackPreset[] | undefined {
-  try {
-    const saved = localStorage.getItem(TRACK_PRESET_STORAGE_KEY);
-    return saved ? decodeTrackPresets(JSON.parse(saved)) : [];
-  } catch { return undefined; }
+  update(change: (presets: TrackPreset[]) => TrackPreset[]): Promise<void> {
+    return this.storage.updatePresets(value => change(this.decode(value) ?? []));
+  }
+
+  private decode(value: unknown): TrackPreset[] | undefined {
+    return value === undefined ? [] : decodeTrackPresets(value);
+  }
 }

@@ -2,7 +2,7 @@ import { DEFAULT_MIDI_PPQ, validMidiPpq } from '../music/midi-resolution';
 import { decodeVariationRerolls, type VariationRerollPreferences } from './variation-reroll-preferences';
 import type { VariationKind } from '../music/arrangement-variation.model';
 import { fixedMouseButton, defaultShortcuts, shortcutFromEvent, sameShortcut, type Shortcut, type ShortcutId } from './shortcuts';
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { EXPORT_NAME_FIELDS, type ExportNameField } from '../project/export-filename';
 import { type ArrangedPart, ARRANGED_PARTS } from '../music/part-role';
 import { decodeAppearance, adjustedPalette, COLOR_ADJUSTMENTS, COLOR_ADJUSTMENT_SCOPE_OPTIONS, defaultAppearance, FONT_CHOICES, isRoleColor, roleColorTokens, PANEL_LAYOUT_OPTIONS, type PanelLayout, WINDOW_WIDTH_OPTIONS, type WindowWidthLimit, type ColorAdjustment, type FontArea } from './appearance';
@@ -12,13 +12,28 @@ import { THEME_COLORS, themeColorTokens, type ThemeColor } from './theme';
 import { randomAppearance, type AppearanceMode } from './random-appearance';
 import { SCORE_NOTE_SHAPES, type ScoreNoteShape, combinedControlKeys, decodeUiPreferences, defaultQuickSettings, defaultUiPreferences, type QuickSettings, type UiPreferences } from './ui-preferences';
 
-const STORAGE_KEY = 'vibecomposer.ui-preferences.v1';
+import { SettingsStorage, UI_PREFERENCES_KEY } from './settings-storage';
+import { SECTION_TYPES, type SectionType } from '../project/arrangement.model';
+import { DEFAULT_SECTION_TYPE_CHANCES, validSectionChance } from '../project/section-type-chances';
 
 @Injectable({ providedIn: 'root' })
 export class UiPreferencesService {
-  private readonly state = signal(this.load());
+  private readonly storage = inject(SettingsStorage);
+  private readonly state = signal(decodeUiPreferences(this.storage.read(UI_PREFERENCES_KEY)) ?? defaultUiPreferences());
+  private latestWrite?: Promise<void>;
   private readonly draft = signal<QuickSettings | null>(null);
   readonly preferences = this.state.asReadonly();
+  readonly sectionTypeChances = computed(() => this.state().sectionTypeChances);
+  setSectionTypeChance(type: SectionType, role: ArrangedPart, chance: number): void {
+    if (!SECTION_TYPES.includes(type) || !ARRANGED_PARTS.includes(role) || !validSectionChance(chance)) return;
+    const sectionTypeChances = this.sectionTypeChances();
+    this.commit({ ...this.state(), sectionTypeChances: {
+      ...sectionTypeChances, [type]: { ...sectionTypeChances[type], [role]: chance },
+    } });
+  }
+  resetSectionTypeChances(): void {
+    this.commit({ ...this.state(), sectionTypeChances: DEFAULT_SECTION_TYPE_CHANCES });
+  }
   setRecordingOption(key: 'recordingDiscardOnLoop' | 'recordingLockGrid' | 'recordingOtherTracks' | 'recordingCountIn' | 'recordingTick' | 'keyboardNoteInput' | 'keyboardMatchScale', value: boolean): void { this.commit({ ...this.state(), [key]: value }); }
   setRecordingMode(value: string): void { if (value === 'count-in' || value === 'armed') this.commit({ ...this.state(), recordingMode: value }); }
   readonly midiPpq = computed(() => this.state().midiPpq ?? DEFAULT_MIDI_PPQ);
@@ -281,29 +296,24 @@ export class UiPreferencesService {
   }
   exportJson(): string { return JSON.stringify(this.state(), null, 2); }
   hasStoredPreferences(): boolean {
-    try { return globalThis.localStorage?.getItem(STORAGE_KEY) != null; }
-    catch { return false; }
+    return this.storage.read(UI_PREFERENCES_KEY) != null;
   }
+  flushPersistence(): Promise<void> { return this.latestWrite ?? Promise.resolve(); }
   importJson(json: string): boolean {
     try {
-      const preferences = decodeUiPreferences(JSON.parse(json));
+      const data = JSON.parse(json);
+      const preferences = decodeUiPreferences(data);
       if (!preferences) return false;
-      this.commit(preferences);
+      this.commit(data.sectionTypeChances === undefined
+        ? { ...preferences, sectionTypeChances: this.sectionTypeChances() } : preferences);
       this.draft.set(null);
       return true;
     } catch { return false; }
   }
-  private load(): UiPreferences {
-    try {
-      const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
-      if (raw) return decodeUiPreferences(JSON.parse(raw)) ?? defaultUiPreferences();
-    } catch { /* Storage may be unavailable. */ }
-    return defaultUiPreferences();
-  }
   private commit(preferences: UiPreferences): void {
     this.applyAppearance(preferences);
     this.state.set(preferences);
-    try { globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(preferences)); }
-    catch { /* Keep preferences usable in memory when storage is unavailable. */ }
+    this.latestWrite = this.storage.write(UI_PREFERENCES_KEY, preferences)
+      .catch(error => console.warn('Could not save UI preferences to IndexedDB.', error));
   }
 }

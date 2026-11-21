@@ -1,5 +1,5 @@
 const { findBrowser, createBrowserServer, listen, launchBrowser, closeBrowser, watchBrowser, requireProductionBuild } = require('./support/browser-harness.cjs');
-const { readWorkspace } = require('./support/workspace-browser.cjs');
+const { readWorkspace, observeSettings } = require('./support/workspace-browser.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -7,7 +7,7 @@ const test = require('node:test');
 const browser = findBrowser();
 for (const width of [700, 1440]) test(`project pills, context actions, checkpoint history and reload at ${width}px`, {skip: !browser}, async () => {
   const root = requireProductionBuild();
-  const script = `<script>(async () => {
+  const script = `<script>${observeSettings}(async () => {
     const wait = async (read, label) => { for(let i=0;i<250;i++) {const v=await read();if(v)return v;await new Promise(r=>setTimeout(r,25));}throw Error('Timed out: '+label); };
     const ensure = (v,label) => {if(!v)throw Error(label);};
     const button = label => [...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label || b.getAttribute('aria-label')===label);
@@ -65,7 +65,7 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
         button('Settings').click();(await wait(()=>button('Project'),'project settings')).click();
         const setting=await wait(()=>document.querySelector('[aria-label="Replace current project tab when opening projects"]'),'replace setting');
         ensure(!setting.checked,'new tabs default');setting.click();
-        await wait(()=>JSON.parse(localStorage.getItem('vibecomposer.ui-preferences.v1')).replaceCurrentProjectTab===true,'setting saved');
+        await wait(()=>JSON.parse(storedSetting('vibecomposer.ui-preferences.v1'))?.replaceCurrentProjectTab===true,'setting saved');
         button('Close settings').click();
         const active=(await wait(()=>savedProject('Opened in new tab'),'saved open project')).id;
         await open({...exported,name:'Replaced current tab'});

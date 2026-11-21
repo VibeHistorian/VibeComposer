@@ -144,25 +144,28 @@ test('manual Mode preference defaults on for existing preferences and persists e
   assert.equal(uiPreferences.manualPhrasesFollowMode(), true);
 });
 
-test('section chance preferences gain melody defaults while retaining saved probabilities for other roles', () => {
-  const { load } = fixture();
-  const previousStorage = global.localStorage;
-  const values = new Map([['vibecomposer.section-type-settings.v1', JSON.stringify({
+test('section chances share UI preference persistence and old imports retain local chances', () => {
+  const { load, uiPreferences, uiStored } = fixture();
+  const { SectionTypeSettingsService } = load('core/project/section-type-settings.service.ts');
+  const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');
+  const preferences = new SectionTypeSettingsService();
+  const older = JSON.parse(uiPreferences.exportJson());
+  delete older.sectionTypeChances;
+  assert.equal(uiPreferences.importJson(JSON.stringify({ ...older, sectionTypeChances: {
     CHORUS1: { bass: 13, chords: 72, arpeggio: 19, drums: 81 },
-  })]]);
-  global.localStorage = { getItem: (key) => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
-  try {
-    const { SectionTypeSettingsService } = load('core/project/section-type-settings.service.ts');
-    const preferences = new SectionTypeSettingsService();
-    assert.equal(preferences.chances().INTRO.melody, 20);
-    assert.equal(preferences.chances().HALF_CHORUS.melody, 0);
-    assert.equal(preferences.chances().CLIMAX.melody, 100);
-    assert.equal(preferences.chances().CHORUS1.melody, 50);
-    assert.equal(preferences.chances().CHORUS1.bass, 13);
-    preferences.setChance('CHORUS1', 'melody', 87);
-    assert.equal(new SectionTypeSettingsService().chances().CHORUS1.melody, 87);
-    assert.equal(preferences.chances().CHORUS1.bass, 13);
-  } finally { global.localStorage = previousStorage; }
+  } })), true);
+  assert.equal(preferences.chances().INTRO.melody, 20);
+  assert.equal(preferences.chances().HALF_CHORUS.melody, 0);
+  assert.equal(preferences.chances().CLIMAX.melody, 100);
+  assert.equal(preferences.chances().CHORUS1.melody, 50);
+  assert.equal(preferences.chances().CHORUS1.bass, 13);
+  preferences.setChance('CHORUS1', 'melody', 87);
+  assert.equal(uiPreferences.importJson(JSON.stringify(older)), true);
+  assert.equal(new UiPreferencesService().sectionTypeChances().CHORUS1.melody, 87);
+  assert.equal(JSON.parse(uiStored.get('vibecomposer.ui-preferences.v1')).sectionTypeChances.CHORUS1.bass, 13);
+  assert.equal(uiPreferences.importJson(JSON.stringify({ ...older, sectionTypeChances: { CHORUS1: { melody: 101 } } })), false);
+  preferences.reset();
+  assert.equal(preferences.chances().CHORUS1.bass, 90);
 });
 
 test('Highlight audible filters score tracks and notes from Solo/Mute without changing the mix', () => {
