@@ -274,14 +274,18 @@ vc-section-context-editor { grid-column: 1 / -1; min-width: 0; }
 .context-inspector > .inspector-heading { grid-column: 1 / -1; }
 .inspector-variations { grid-column: 1 / -1; display: block; width: 100%; margin-top: 12px; margin-bottom: 8px; }
 
-/* Generation errors */
-.generation-error {
+/* Workspace alerts */
+.workspace-alerts {
   position: fixed;
   bottom: 5rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
   max-width: 80vw;
+  display: grid;
+  gap: 0.5rem;
+}
+.workspace-alert {
   display: flex;
   align-items: center;
   gap: 1rem;

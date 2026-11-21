@@ -126,12 +126,66 @@ test('unavailable storage does not reject changes or prevent later persistence',
   service.updateSettings({ name: 'Memory only' });
   advancePersistence(150);
   assert.equal(service.project().name, 'Memory only');
+  assert.match(service.persistenceError(), /could not save your latest changes/);
   global.sessionStorage.setItem = (key, value) => stored.set(key, value);
   global.localStorage.setItem = (key, value) => uiStored.set(key, value);
   service.updateSettings({ name: 'Storage recovered' });
   advancePersistence(150);
   assert.equal(JSON.parse(stored.get('vibecomposer.project.v12')).name, 'Storage recovered');
+  assert.equal(service.persistenceError(), null);
   service.ngOnDestroy();
+});
+
+test('failed workspace writes recover the active session project and preserve other tabs', () => {
+  const { service, load, uiStored, persistencePage } = fixture();
+  const key = 'vibecomposer.project-tabs.v1';
+  const first = service.activeProjectTabId();
+  service.updateSettings({ name: 'First saved' });
+  service.duplicateProjectTab();
+  const second = service.activeProjectTabId();
+  service.updateSettings({ name: 'Second saved' });
+  service.flushPersistence();
+  const workspace = uiStored.get(key);
+  const write = global.localStorage.setItem;
+  global.localStorage.setItem = () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
+
+  service.switchProjectTab(first);
+  service.updateSettings({ tempoBpm: 137 });
+  persistencePage.dispatchEvent(new Event('pagehide'));
+  assert.match(service.persistenceError(), /Reloading this tab can recover the active project/);
+  assert.equal(uiStored.get(key), workspace);
+
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.activeProjectTabId(), first);
+  assert.equal(restored.project().tempoBpm, 137);
+  assert.equal(restored.canUndo(), false, 'the session copy has no matching history');
+  assert.equal(restored.openProjects().find(tab => tab.id === second).name, 'Second saved');
+  service.ngOnDestroy();
+  global.localStorage.setItem = write;
+  restored.flushPersistence();
+  assert.equal(restored.persistenceError(), null);
+  restored.switchProjectTab(second);
+  restored.undo();
+  assert.equal(restored.project().name, 'First saved (copy)');
+  restored.ngOnDestroy();
+});
+
+test('a newer workspace save supersedes an old recovery copy even if the session mirror fails', () => {
+  const { service, load } = fixture();
+  service.flushPersistence();
+  const write = global.localStorage.setItem;
+  global.localStorage.setItem = () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
+  service.updateSettings({ tempoBpm: 137 });
+  service.flushPersistence();
+  global.localStorage.setItem = write;
+  global.sessionStorage.setItem = () => { throw new DOMException('Storage full', 'QuotaExceededError'); };
+  service.updateSettings({ tempoBpm: 138 });
+  service.flushPersistence();
+  assert.equal(service.persistenceError(), null);
+  const restored = new (load('core/project/project.service.ts').ProjectService)();
+  assert.equal(restored.project().tempoBpm, 138);
+  service.ngOnDestroy();
+  restored.ngOnDestroy();
 });
 
 test('storage role arrays follow track order, including arbitrary IDs, empty roles and all-false groups', () => {

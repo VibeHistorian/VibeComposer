@@ -63,6 +63,11 @@ interface ProjectTab {
   readonly future: readonly CompositionProject[];
   readonly automaticSeed: boolean;
 }
+interface SessionRecovery {
+  readonly tabId: string;
+  readonly automaticSeed: boolean;
+  readonly workspaceRevision: string | null;
+}
 const MAX_HISTORY = 100;
 const COMPACT_HISTORY_WINDOW_MS = 1000;
 
@@ -70,6 +75,8 @@ const COMPACT_HISTORY_WINDOW_MS = 1000;
 export class ProjectService {
   private readonly sectionTypeSettings = inject(SectionTypeSettingsService);
   private restoredSession = false;
+  private sessionRecovery?: SessionRecovery;
+  private workspaceRevision: string | null = null;
   /** Captured before the initial workspace is persisted; hosted defaults must not replace restored work. */
   readonly hasSavedWorkspace: boolean;
   private readonly state = signal<CompositionProject>(this.loadProject());
@@ -85,6 +92,8 @@ export class ProjectService {
   private readonly generationFailure = signal<string | null>(null);
   readonly generationError = this.generationFailure.asReadonly();
   dismissGenerationError(): void { this.generationFailure.set(null); }
+  private readonly persistenceFailure = signal<string | null>(null);
+  readonly persistenceError = this.persistenceFailure.asReadonly();
   private readonly automaticSeed = signal(BigInt(this.state().seed) === 0n);
   readonly seedInput = computed(() => this.automaticSeed() ? '0' : this.project().seed);
   readonly canUndo = this.undoAvailable.asReadonly();
@@ -119,6 +128,7 @@ export class ProjectService {
       if (raw) {
         const data = JSON.parse(raw);
         if (Array.isArray(data.tabs)) {
+          this.workspaceRevision = typeof data.revision === 'string' ? data.revision : null;
           const decode = (value: unknown) => decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
           for (const tab of data.tabs) {
             if (!tab || typeof tab !== 'object') continue;
@@ -136,6 +146,16 @@ export class ProjectService {
       }
     } catch { /* Keep the session project when workspace storage is unavailable. */ }
     this.hasSavedWorkspace = restored.length > 0 || this.restoredSession;
+    const recovery = this.sessionRecovery;
+    // A newer successful workspace write supersedes a session recovery copy.
+    if (recovery && (!restored.length || recovery.workspaceRevision === this.workspaceRevision)) {
+      const recovered: ProjectTab = { id: recovery.tabId, project: this.state(), past: [], future: [],
+        automaticSeed: recovery.automaticSeed };
+      const index = restored.findIndex(tab => tab.id === recovery.tabId);
+      if (index < 0) restored.push(recovered);
+      else restored[index] = recovered;
+      active = recovery.tabId;
+    }
     if (!restored.length) restored.push(this.snapshotTab(globalThis.crypto.randomUUID()));
     this.tabs.set(restored);
     this.activateTab(restored.find(tab => tab.id === active) ?? restored[0]);
@@ -1666,6 +1686,14 @@ export class ProjectService {
         const decoded = decodeProject(value, this.sectionTypeSettings.chances(), Math.random);
         if (decoded) {
           this.restoredSession = true;
+          if (key === STORAGE_KEY && value && typeof value === 'object' && 'workspaceRecovery' in value) {
+            const recovery = value.workspaceRecovery as Partial<SessionRecovery> | null;
+            if (recovery && typeof recovery.tabId === 'string' && typeof recovery.automaticSeed === 'boolean'
+              && (recovery.workspaceRevision === null || typeof recovery.workspaceRevision === 'string')) {
+              this.sessionRecovery = { tabId: recovery.tabId, automaticSeed: recovery.automaticSeed,
+                workspaceRevision: recovery.workspaceRevision };
+            }
+          }
           return decoded;
         }
         this.warnProjectLoadFailure(`session storage (${key})`, value);
@@ -1689,16 +1717,26 @@ export class ProjectService {
   }
 
   private writeWorkspace(): void {
+    const activeId = this.activeProjectTabId();
+    let recovery: SessionRecovery | undefined;
     try {
-      globalThis.sessionStorage?.setItem(STORAGE_KEY, JSON.stringify(encodeProjectStorage(this.state())));
-    } catch {
-      // Keep the project usable if storage is disabled or full.
-    }
-    if (!this.tabs || !this.activeProjectTabId()) return;
-    try {
-      globalThis.localStorage?.setItem(TABS_STORAGE_KEY, JSON.stringify({ activeId: this.activeProjectTabId(),
+      const revision = globalThis.crypto.randomUUID();
+      globalThis.localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify({ activeId, revision,
         tabs: this.tabs().map(tab => ({ ...tab, project: encodeProjectStorage(tab.project),
           past: tab.past.map(encodeProjectStorage), future: tab.future.map(encodeProjectStorage) })) }));
-    } catch { /* Tabs remain usable when browser storage is disabled or full. */ }
+      this.workspaceRevision = revision;
+    } catch {
+      recovery = { tabId: activeId, automaticSeed: this.automaticSeed(), workspaceRevision: this.workspaceRevision };
+    }
+    let sessionSaved = false;
+    try {
+      const project = encodeProjectStorage(this.state());
+      // Write the recovery metadata and its project together so a failed session write cannot tag an older copy.
+      globalThis.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(recovery ? { ...project, workspaceRecovery: recovery } : project));
+      sessionSaved = true;
+    } catch { /* The workspace save is independent of session storage. */ }
+    this.persistenceFailure.set(!recovery ? null : sessionSaved
+      ? 'Autosave could not save the workspace. Reloading this tab can recover the active project. Export a project file before closing the tab.'
+      : 'Autosave could not save your latest changes. Export a project file before reloading or closing the tab.');
   }
 }

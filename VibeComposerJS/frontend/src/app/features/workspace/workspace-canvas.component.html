@@ -1,7 +1,14 @@
-@if (projects.generationError(); as error) {
-  <div class="generation-error" role="alert">
-    <span>Change cancelled. Previous working state kept. {{ error }}</span>
-    <button type="button" (click)="projects.dismissGenerationError()" aria-label="Dismiss generation error">Dismiss</button>
+@if (projects.generationError() || projects.persistenceError()) {
+  <div class="workspace-alerts">
+    @if (projects.generationError(); as error) {
+      <div class="workspace-alert" role="alert">
+        <span>Change cancelled. Previous working state kept. {{ error }}</span>
+        <button type="button" (click)="projects.dismissGenerationError()" aria-label="Dismiss generation error">Dismiss</button>
+      </div>
+    }
+    @if (projects.persistenceError(); as error) {
+      <div class="workspace-alert" role="alert">{{ error }}</div>
+    }
   </div>
 }
 <section class="workspace-canvas" [class.quick-layout-editing]="preferences.editingQuickSettings()" aria-label="Song workspace" (pointerdown)="beginEmptyMiddleClick($event)" (pointerup)="endEmptyMiddleClick($event)" (pointercancel)="cancelEmptyMiddleClick()" (auxclick)="applyOnEmptyMiddleClick($event)">
