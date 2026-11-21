@@ -104,7 +104,7 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       dialog.querySelector('[aria-label="Close settings"]').click();
       const inspectorButton=button('Open inspector'); if(inspectorButton) inspectorButton.click();
       const melodyPattern=await wait(()=>document.querySelector('vc-part-settings-editor vc-menu-select[aria-label="PATTERN"]'),'melody pattern');
-      const rhythmGradients=['Syncopation', 'Rhythmic Reuse', 'Entry Placement', 'Rhythmic Grouping']
+      const rhythmGradients=['Syncopation', 'Rhythmic Reuse', 'Entry Placement', 'Rhythmic Grouping', 'Motif Length', 'Variation Location']
         .map(label=>'vc-part-settings-editor [aria-label="'+label+'"]').join(', ');
       const performanceGradients='vc-part-settings-editor [aria-label="Articulation Contrast"], vc-part-settings-editor [aria-label="Velocity Contrast"]';
       const accent='vc-part-settings-editor [aria-label="Accent"]';
@@ -126,6 +126,11 @@ for (const width of [1440,780]) test(`contextual generation settings and visibil
       }
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.rangeMin===62&&t.generatorSettings.rangeMax===81&&t.generatorSettings.tension===50),'track fields saved');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.syncopation===-62&&t.generatorSettings.rhythmicReuse===74),'rhythm gradients saved');
+      for(const [label,value] of [['Motif Length','1'],['Variation Location','-73']]) {
+        await change(await wait(()=>document.querySelector('vc-part-settings-editor [aria-label="'+label+'"]'),'motif '+label),value);
+        await new Promise(r=>requestAnimationFrame(r));
+      }
+      await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.motifLength===1&&t.generatorSettings.variationLocation===-73),'motif controls saved');
       await wait(()=>read().tracks.filter(t=>t.role==='melody').every(t=>t.generatorSettings.articulationContrast===-68&&t.generatorSettings.velocityContrast===-79),'performance gradients saved');
       const phrasing=await wait(()=>document.querySelector('.part-settings-content [data-control-key="ending"]'),'track phrasing stack');
       for(const [label,value] of [['Melody Style','JAZZ'],['Melody Form','QUESTION_ANSWER'],['Melody Ending','CLOSED']]) {

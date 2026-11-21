@@ -130,6 +130,7 @@ test('contextual search preserves exact notes, patterns and skeletons across the
   });
   assert.deepEqual(contextualDigest(120, i => ({
     syncopation: [0, 38, 100][i % 3], rhythmicReuse: [0, 67][i % 2],
+    motifLength: 0, variationLocation: 0,
     articulationContrast: [0, 44, 100][Math.floor(i / 3) % 3], velocityContrast: [0, 58, 100][Math.floor(i / 9) % 3],
   })), {
     // Captured with the original 0–100 controls.
@@ -144,11 +145,59 @@ test('contextual rhythm controls are neutral at zero and leave authored duration
       0, value => { pattern = value; }, global, undefined, undefined, value => { skeleton = value; });
     return { notes, pattern, skeleton };
   };
-  assert.deepEqual(generate({ syncopation: 0, rhythmicReuse: 0, entryPlacement: 0, rhythmicGrouping: 0 }), generate({}));
-  const active = { syncopation: 87, rhythmicReuse: 93, entryPlacement: 100, rhythmicGrouping: 100 };
+  assert.deepEqual(generate({ syncopation: 0, rhythmicReuse: 0, entryPlacement: 0, rhythmicGrouping: 0, motifLength: 0, variationLocation: 0 }), generate({}));
+  const active = { syncopation: 87, rhythmicReuse: 93, entryPlacement: 100, rhythmicGrouping: 100, motifLength: 1, variationLocation: -80 };
   const authored = { rhythm: 'durations', customDurations: [[-0.5, 0.5, 1, -1, 1], ...Array.from({ length: 9 }, () => [])] };
   assert.deepEqual(generate({ ...authored, ...active }), generate(authored));
   assert.deepEqual(generate(active, { contextualMelody: false }), generate({}, { contextualMelody: false }));
+});
+
+test('short rhythm motifs recur inside a phrase and variation moves toward the selected end', () => {
+  const sample = (motifLength, variationLocation) => {
+    const differences = { within: 0, opening: 0, tail: 0 };
+    const rhythms = new Set();
+    for (let seed = 1; seed <= 48; seed++) {
+      const notes = generateMelody(Math.imul(seed, 0x9e3779b1), 'C', 'major', [1, 1, 4, 4, 5, 5, 1, 1], {
+        algorithm: 'block', speed: 53, pauseChance: 25, melodyPatternOffsets: [1],
+        rhythmicReuse: 85, motifLength, variationLocation,
+      }, 0, undefined, { phraseBars: 2 });
+      const onsets = start => new Set(notes.filter(note => note.startBeat >= start && note.startBeat < start + 4)
+        .map(note => note.startBeat - start));
+      differences.within += onsets(0).symmetricDifference(onsets(4)).size;
+      differences.opening += onsets(0).symmetricDifference(onsets(8)).size;
+      differences.tail += onsets(4).symmetricDifference(onsets(12)).size;
+      rhythms.add(notes.map(note => note.startBeat).join(','));
+    }
+    assert.ok(rhythms.size > 32);
+    return differences;
+  };
+  const whole = sample(0, 0), cell = sample(1, 0);
+  assert.ok(cell.within < whole.within * 0.5);
+  for (const length of [0, 1]) {
+    const early = sample(length, -100), earlyMiddle = sample(length, -50), neutral = sample(length, 0);
+    const lateMiddle = sample(length, 50), late = sample(length, 100);
+    assert.ok(early.opening > earlyMiddle.opening && earlyMiddle.opening > neutral.opening);
+    assert.ok(late.tail > lateMiddle.tail && lateMiddle.tail > neutral.tail);
+    assert.ok(early.tail < neutral.tail && late.opening < neutral.opening);
+  }
+});
+
+test('motif bars follow the meter over uneven chord lengths and preserve a closed arrival', () => {
+  const durations = [2, 3, 4, 3], harmony = { roots: [], voicings: [], durations };
+  const global = { phraseBars: 4, beatsPerBar: 3 };
+  for (let seed = 1n; seed <= 12n; seed++) {
+    const render = settings => generateMelody(seed, 'C', 'major', [1, 1, 1, 1], {
+      algorithm: 'block', speed: 45, pauseChance: 20, ending: 'CLOSED', ...settings,
+    }, 0, undefined, global, undefined, harmony);
+    assert.deepEqual(render({ motifLength: 1, variationLocation: 100 }), render({}));
+    assert.deepEqual(render({ motifLength: 4, rhythmicReuse: 100 }), render({ rhythmicReuse: 100 }));
+    const notes = mapChordNotes(render({ motifLength: 1, rhythmicReuse: 100 }), durations);
+    const offsets = start => notes.filter(note => note.startBeat >= start && note.startBeat < start + 3)
+      .map(note => Math.round((note.startBeat - start) * 960));
+    assert.deepEqual(offsets(0), offsets(3));
+    assert.deepEqual(offsets(0), offsets(6));
+    assert.equal(notes.at(-1).midi % 12, 0);
+  }
 });
 
 test('entry placement delays more phrase starts while respecting rhythmic reuse and short closing phrases', () => {

@@ -16,7 +16,7 @@ const mod = (n: number, d = 12) => (n % d + d) % d;
 type Purpose = 'STATEMENT' | 'CONTINUATION' | 'QUESTION' | 'ANSWER' | 'CLOSING';
 interface Phrase { start: number; end: number; motif: number; purpose: Purpose }
 interface Slot { start: number; duration: number; rest: boolean; phrase: Phrase; arrival: boolean; appoggiatura: boolean }
-interface RhythmStep { end: number; pauseRoll?: number }
+interface RhythmStep { end: number; pauseRoll?: number; entryRest?: boolean }
 type Role = 'CHORD' | 'EXTENSION' | 'PASSING' | 'CHROMATIC' | 'APPOGGIATURA' | 'SUSPENSION';
 interface Planned { slot: Slot; pitch: number; role: Role }
 interface State { path: Planned[]; score: number; last: number; previous: number; first: number; phraseFirst: number;
@@ -109,6 +109,9 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   }
   const fill = partFillMask(degrees.length, settings), leap = Math.min(24, 2 + (settings.maxBlockChange ?? 7) + (settings.blockJump ?? 1));
   const syncopation = settings.syncopation ?? 0, rhythmicReuse = settings.rhythmicReuse ?? 0;
+  const requestedMotif = (settings.motifLength ?? 0) * options.beatsPerBar * BEAT;
+  const motifLength = requestedMotif < span ? requestedMotif : 0;
+  const variationLocation = (settings.variationLocation ?? 0) / 100;
   const entryPlacement = settings.entryPlacement ?? 0, rhythmicGrouping = (settings.rhythmicGrouping ?? 0) / 100;
   const pitchReuse = (settings.pitchReuse ?? 0) / 100;
   const overlapping = (slot: Slot) => events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
@@ -138,6 +141,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
       return slots;
     }
     const references = new Map<number, RhythmStep[]>();
+    const cellLength = shapeRhythm && rhythmicReuse > 0 ? motifLength : 0;
     for (const phrase of phrases) {
       const word = Math.abs(phrase.motif);
       const rhythmSeed = baseSeed ^ 0x72687974686dn ^ 0x9e3779b97f4a7c15n * BigInt(word) ^ BigInt(variant);
@@ -145,8 +149,10 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
       const reuseEnabled = shapeRhythm && rhythmicReuse > 0;
       const reference = reuseEnabled ? references.get(word) : undefined;
       const recorded: RhythmStep[] | undefined = reuseEnabled && !reference ? [] : undefined;
-      const reuseRandom = reference && new JavaRandom(mixContextualSeed(rhythmSeed ^ BigInt(phrase.start) ^ 0x7265757365n));
-      const reuseEnd = phrase.end - BEAT;
+      const reuseRandom = (reference || reuseEnabled && cellLength > 0)
+        ? new JavaRandom(mixContextualSeed(rhythmSeed ^ BigInt(phrase.start) ^ 0x7265757365n)) : undefined;
+      const phraseReuseEnd = phrase.end - BEAT;
+      const reuseEnd = cellLength || variationLocation < 0 ? phrase.end : phraseReuseEnd;
       const variedTail = phrase.purpose === 'ANSWER' || phrase.purpose === 'CONTINUATION';
       const arrivals = [phrase.start];
       if (phrase.end - phrase.start > 2 * BEAT || phrase.purpose === 'CLOSING' && phrase.end - phrase.start > BEAT) arrivals.push(phrase.end - BEAT);
@@ -156,12 +162,13 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         const draw = entryRandom.nextInt(100);
         const event = at(entry);
         if (draw < entryPlacement && fill[events.indexOf(event)]) {
-          const limit = Math.min(event.end, arrivals[1] ?? phrase.end);
+          const limit = Math.min(event.end, arrivals[1] ?? phrase.end, cellLength ? phrase.start + cellLength : Infinity);
           const delay = draw + 65 < entryPlacement && entry + 1.5 * BEAT < limit ? 1.5 * BEAT : BEAT / 2;
           if (entry + delay < limit) {
             entry += delay;
             arrivals[0] = entry;
             slots.push({ start: phrase.start, duration: delay, rest: true, phrase, arrival: false, appoggiatura: false });
+            if (cellLength) recorded?.push({ end: delay, entryRest: true });
           }
         }
       }
@@ -169,10 +176,18 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
       const bar = options.beatsPerBar * BEAT;
       const groupStart = grouping > 0
         ? new JavaRandom(mixContextualSeed(rhythmSeed ^ 0x67726f7570n)).nextInt(options.beatsPerBar * 2) * BEAT / 2 : 0;
-      let index = 0, referenceIndex = 0;
+      let index = 0, referenceIndex = 0, previousCell = 0;
       for (let cursor = entry; cursor < phrase.end; index++) {
         const event = at(cursor), arrival = arrivals.includes(cursor);
+        const relative = cursor - phrase.start;
+        const cellPosition = cellLength ? relative % cellLength : relative;
+        const cellOffset = relative - cellPosition;
+        if (cellOffset !== previousCell) {
+          referenceIndex = 0;
+          previousCell = cellOffset;
+        }
         let available = Math.min(phrase.end, ...arrivals.filter(t => t > cursor)) - cursor;
+        if (cellLength) available = Math.min(available, cellLength - cellPosition);
         if (cursor % BEAT !== 0) available = Math.min(available, BEAT - cursor % BEAT);
         const nextEvent = event.end < total ? at(event.end) : undefined;
         const change = nextEvent && (event.classes.size !== nextEvent.classes.size || [...event.classes].some(pc => !nextEvent.classes.has(pc)));
@@ -199,26 +214,37 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         let roll = random.nextDouble() * weights.reduce((sum,w) => sum+w,0);
         let duration = Math.min(240,available);
         for (let i = 0; i < weights.length; i++) if (weights[i] && (roll -= weights[i]) < 0) { duration = durations[i]; break; }
-        const relative = cursor - phrase.start;
         let reused: RhythmStep | undefined;
-        const reuseChance = variedTail && cursor >= reuseEnd - BEAT ? rhythmicReuse * 0.65 : rhythmicReuse;
-        if (reference && reuseRandom && cursor < reuseEnd && reuseRandom.nextInt(100) < reuseChance) {
+        let reuseChance = rhythmicReuse;
+        if (!cellLength && cursor >= phraseReuseEnd) reuseChance = 0;
+        else if (!cellLength && variedTail && cursor >= phraseReuseEnd - BEAT) reuseChance *= 0.65;
+        if (variationLocation !== 0) {
+          const bias = (2 * relative / (phrase.end - phrase.start) - 1) * Math.sign(variationLocation);
+          const target = bias < 0 ? rhythmicReuse - bias * (100 - rhythmicReuse) : reuseChance * (1 - 0.9 * bias);
+          reuseChance += Math.abs(variationLocation) * (target - reuseChance);
+        }
+        const source = reference ?? (cellOffset > 0 ? recorded : undefined);
+        if (source && reuseRandom && cursor < reuseEnd && reuseRandom.nextInt(100) < reuseChance) {
           // Find the next reference boundary, even after a locally varied slot.
-          while (referenceIndex < reference.length && reference[referenceIndex].end <= relative) referenceIndex++;
-          const step = reference[referenceIndex], end = step && phrase.start + step.end;
+          while (referenceIndex < source.length && source[referenceIndex].end <= cellPosition) referenceIndex++;
+          const step = source[referenceIndex], end = step && phrase.start + cellOffset + step.end;
           if (end !== undefined && end <= cursor + available && end <= reuseEnd) {
             duration = end - cursor;
             reused = step;
           }
         }
-        if (phrase.purpose === 'CLOSING' && phrase.end - cursor <= BEAT) duration = phrase.end - cursor;
+        if (phrase.purpose === 'CLOSING' && phrase.end - cursor <= BEAT) {
+          duration = cellLength ? Math.min(phrase.end - cursor, cellLength - cellPosition) : phrase.end - cursor;
+        }
         const pauseRoll = index > 0 && cursor + duration < phrase.end ? random.nextInt(100) : undefined;
         let pause = (settings.pauseChance ?? 0) + (phrase.purpose === 'QUESTION' ? 8 : 0);
         if (grouping > 0 && pause < 100) {
           pause += grouping * (inGroup ? -0.9 * pause : 0.9 * Math.min(pause, 100 - pause));
         }
-        const rest = pauseRoll !== undefined && (reused?.pauseRoll ?? pauseRoll) < pause;
-        recorded?.push({ end: relative + duration, pauseRoll });
+        const rest = (!arrival && reused?.entryRest === true)
+          || (pauseRoll !== undefined && (reused?.pauseRoll ?? pauseRoll) < pause);
+        // A protected source attack can recur where a later cell would normally roll for Pause.
+        if (cellOffset === 0) recorded?.push({ end: relative + duration, pauseRoll: cellLength ? pauseRoll ?? Infinity : pauseRoll });
         const appoggiatura = !rest && phrase.purpose === 'CONTINUATION' && cursor % BEAT === 0 && random.nextInt(100) < 12;
         const chordIndex = events.indexOf(event);
         const muted = rest || !fill[chordIndex] || arrival && cursor + duration < total
@@ -244,7 +270,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         // Move the shared boundary, keeping the attack count and surrounding rhythm.
         const shift = previous.duration >= BEAT && slot.start - BEAT / 2 >= event.start && random.nextBoolean()
           ? BEAT / 2 : BEAT / 4;
-        if (slot.start - shift < event.start) continue;
+        if (slot.start - shift < event.start || cellLength && shift > relative % cellLength) continue;
         previous.duration -= shift;
         slot.start -= shift;
         slot.duration += shift;
@@ -260,8 +286,9 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
         const next = slots[index + 1];
         const beforeRest = previous.start === before && previous.rest && !previous.arrival;
         const afterRest = next?.start === after && next.phrase === slot.phrase && next.rest && !next.arrival;
-        const canMoveBefore = before >= event.start && (before >= earliest || beforeRest);
-        const canMoveAfter = after < event.end && (after <= latest || afterRest);
+        const cellPosition = cellLength ? (slot.start - slot.phrase.start) % cellLength : 0;
+        const canMoveBefore = before >= event.start && (!cellLength || subdivision <= cellPosition) && (before >= earliest || beforeRest);
+        const canMoveAfter = after < event.end && (!cellLength || BEAT - subdivision < cellLength - cellPosition) && (after <= latest || afterRest);
         const target = canMoveBefore && (!canMoveAfter || subdivision < BEAT / 2) ? before
           : canMoveAfter ? after : slot.start;
         if (target === slot.start) continue;
