@@ -58,6 +58,7 @@ export const SHORTCUTS = [
   { id: 'dragVelocity', group: 'Drag actions', label: 'Drag note velocity', description: 'Drag notes to change velocity.', defaults: [mouse(0, false, false, true)] },
   { id: 'applyPhrase', group: 'Selection and navigation', label: 'Finish phrase editing', description: 'Click empty space to apply edits and exit, or exit an unchanged draft.', defaults: [mouse(1)] },
   { id: 'dragDuration', group: 'Drag actions', label: 'Drag note length', description: 'Drag notes to change their length.', defaults: [mouse(0, false, true, true)] },
+  { id: 'scaleNoteSelection', group: 'Drag actions', label: 'Scale selection in time', description: 'Drag the start or end of a multi-note selection to scale its timing. Release Shift to snap to the grid and nearby notes.', defaults: [mouse(0, true, true)] },
   { id: 'dragPitch', group: 'Drag actions', label: 'Drag pitch', description: 'Drag notes to change pitch.', defaults: [mouse(0, true, true)] },
   { id: 'trimStart', group: 'Drag actions', label: 'Drag note start', description: 'Hold while left-dragging anywhere on a note to trim its start.', defaults: [mouse(0, true, false, true)] },
   { id: 'duplicateNotes', group: 'Drag actions', label: 'Duplicate notes', description: 'Drag notes to duplicate them. During the drag, hold Ctrl/Cmd to retain pitch; hold the time-grid bypass modifier for free timing.', defaults: [mouse(0, true)] },
@@ -71,7 +72,7 @@ export const SHORTCUT_PAGES = [
 ] as const;
 /** These actions customize modifiers while retaining their standard mouse button. */
 export const FIXED_MOUSE_BUTTONS = {
-  dragVelocity: 0, dragDuration: 0, dragPitch: 0, trimStart: 0, duplicateNotes: 0,
+  dragVelocity: 0, dragDuration: 0, scaleNoteSelection: 0, dragPitch: 0, trimStart: 0, duplicateNotes: 0,
   shapePitch: 1, shapeVelocity: 1, deleteNote: 2, splitNote: 2, addNote: 0, addNoteFree: 0,
 } as const;
 export function fixedMouseButton(id: ShortcutId): number | undefined {
@@ -89,6 +90,8 @@ export interface ShortcutContext {
   readonly scope?: readonly ('global' | 'section')[];
   readonly target?: readonly ('section-header' | 'role-cell' | 'track-cell' | 'empty-grid' | 'note-body' | 'note-start' | 'note-end' | 'velocity-bar')[];
   readonly selection?: readonly ('selected' | 'unselected')[];
+  /** An exact selection-edge gesture can take precedence over a note drag with the same binding. */
+  readonly dragPriority?: readonly ('selection-edge' | 'fallback')[];
   /** Only constrain phase when the shared handler actually distinguishes it.
    * Actions claiming a pointer on press overlap both click and drag. */
   readonly phase?: readonly ('click' | 'drag')[];
@@ -144,7 +147,9 @@ export const SHORTCUT_CONTEXTS = {
   shapeVelocity: [phraseContext],
   dragVelocity: [{ ...phraseNotes, target: [...noteTargets, 'velocity-bar'] }],
   applyPhrase: [emptyPhrase],
-  dragDuration: [phraseNotes], dragPitch: [phraseNotes],
+  dragDuration: [phraseNotes],
+  scaleNoteSelection: [{ ...phraseContext, target: ['note-start', 'note-end'], selection: ['selected'], dragPriority: ['selection-edge'] }],
+  dragPitch: [{ ...phraseNotes, dragPriority: ['fallback'] }],
   trimStart: [phraseNotes],
   togglePhraseRecording: [phraseContext],
   cancelPhraseRecording: [phraseContext],

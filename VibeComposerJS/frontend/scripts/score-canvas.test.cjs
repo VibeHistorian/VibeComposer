@@ -1441,6 +1441,87 @@ test('drag defaults keep left mouse and select each editing mode without consumi
   }
 });
 
+test('selection time scaling keeps the opposite edge fixed and commits one batch on release', () => {
+  const { component: c, notes } = editFixture();
+  const modifiers = { ctrlKey: true, shiftKey: true };
+  assert.equal(c.hoverDragZone(c.hitAreas[1], 514, modifiers), 'duration');
+  c.onPointerDown(pointer(357, 20, modifiers));
+  assert.ok(c.drag.timeScale);
+  c.onPointerMove(pointer(407, 40, modifiers));
+  const expanded = [
+    { ...notes[0], durationBeats: 1.5 },
+    { ...notes[1], startBeat: 23, durationBeats: 3 },
+  ];
+  assert.deepEqual(c.drag.preview, expanded);
+  assert.deepEqual(c.notesChanged.values, []);
+  c.onPointerMove(pointer(607, 20, modifiers));
+  assert.equal(c.drag.current.startBeat + c.drag.current.durationBeats, 28, 'expansion stops at the edit bound');
+  c.onPointerUp(pointer(407, 40, modifiers));
+  assert.deepEqual(c.notesChanged.values, [{ notes: expanded, duplicate: false }]);
+
+  c.onPointerDown(pointer(296, 20, modifiers));
+  c.onPointerMove(pointer(346, 20, modifiers));
+  assert.deepEqual(c.drag.preview, [
+    { ...notes[0], startBeat: 22, durationBeats: .5 },
+    { ...notes[1], startBeat: 23, durationBeats: 1 },
+  ]);
+  c.onPointerMove(pointer(696, 20, modifiers));
+  assert.equal(c.drag.preview[0].durationBeats, .05 / 4);
+  assert.ok(c.drag.preview[0].startBeat < c.drag.preview[1].startBeat);
+  c.onPointerCancel();
+  assert.equal(c.notesChanged.values.length, 1);
+
+  c.onPointerDown(pointer(306, 20, modifiers));
+  assert.equal(c.drag.mode, 'pitch', 'the first note tail is inside the selection');
+  c.onPointerCancel();
+  c.selectedNoteIds = () => ['a'];
+  c.onPointerDown(pointer(296, 20, modifiers));
+  assert.equal(c.drag.mode, 'pitch', 'a single note retains its pitch gesture');
+});
+
+test('scaling compresses short imported notes proportionally', () => {
+  const { scalePhraseNotes } = phraseEditLibrary();
+  const notes = [
+    { id: 'a', startBeat: 0, durationBeats: .01, midi: 48, velocity: 80 },
+    { id: 'b', startBeat: 1, durationBeats: 1, midi: 52, velocity: 100 },
+  ];
+  assert.deepEqual(scalePhraseNotes(notes, 0, 2, 1, 0, 4), [
+    { ...notes[0], durationBeats: .005 },
+    { ...notes[1], startBeat: .5, durationBeats: .5 },
+  ]);
+});
+
+test('releasing Shift during selection scaling snaps a stationary edge to grid or nearby onsets', () => {
+  const { component: c } = editFixture();
+  c.harmonicHeight = 264;
+  c.laneHeight = 10;
+  const held = { ctrlKey: true, shiftKey: true };
+  const end = () => c.drag.current.startBeat + c.drag.current.durationBeats;
+  const expectEnd = beat => assert.ok(Math.abs(end() - beat) < 1e-10, `expected edge ${beat}, got ${end()}`);
+  const updateModifiers = shiftKey => c.onModifiersChanged({ active: true, ctrlKey: true, shiftKey, altKey: false, metaKey: false });
+  c.onPointerDown(pointer(357, 20, held));
+  c.onPointerMove(pointer(385, 20, held));
+  expectEnd(25.12);
+  updateModifiers(false);
+  expectEnd(25);
+
+  const beat = 25.1875;
+  const x = c.scoreX(beat);
+  c.seekOnsets = [
+    { id: 'a', x: c.scoreX(25.12), beat: 25.12, midi: 70, drum: false },
+    { id: 'far-pitch', x: c.scoreX(25.13), beat: 25.13, midi: 50, drum: false },
+    { id: 'nearby', x, beat, midi: 64, drum: false },
+  ];
+  updateModifiers(true);
+  expectEnd(25.12);
+  updateModifiers(false);
+  expectEnd(beat);
+  c.onPointerUp(pointer(385, 20));
+  assert.equal(c.notesChanged.values.length, 1);
+  c.onPointerDown(pointer(357, 20, held));
+  c.onPointerUp(pointer(357, 20));
+  assert.equal(c.notesChanged.values.length, 1, 'press and release without horizontal motion leaves the draft unchanged');
+});
 
 test('velocity drag feedback reports the clamped value and signed change, including velocity bars', () => {
   const { component:c } = editFixture(); c.harmonicHeight=264;

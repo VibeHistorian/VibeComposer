@@ -1,4 +1,4 @@
-import { dragPhraseNotes, snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
+import { dragPhraseNotes, scalePhraseNotes, snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
 import type { PhraseNote } from '../../core/music/phrase-note';
 import type { ScorePoint, ScoreTimeGeometry } from './score-geometry';
 
@@ -18,6 +18,7 @@ export interface ScoreDrag<Note extends PhraseNote = PhraseNote> {
   readonly mode: PhraseDragMode;
   readonly originals: readonly Note[];
   readonly duplicate: boolean;
+  readonly timeScale?: { readonly anchor: number; readonly edge: number; readonly selectedIds: ReadonlySet<string> };
   readonly gestureModifiers?: { readonly ctrl: boolean; readonly shift: boolean; readonly alt: boolean };
   readonly lockPitch: boolean;
   currentPointer?: ScorePoint;
@@ -34,10 +35,17 @@ export interface ScoreDragContext {
   readonly scalePitchClasses: readonly number[];
   readonly startBeat: number;
   readonly endBeat: number;
+  readonly snapSelectionEdge?: (beat: number) => number;
 }
 
 export function previewScoreDrag(drag: ScoreDrag, delta: ScorePoint, context: ScoreDragContext): readonly PhraseNote[] {
   const rawDelta = delta.x / (context.time.width * context.time.horizontalScale) * context.time.totalBeats;
+  if (drag.timeScale) {
+    const { anchor, edge } = drag.timeScale;
+    const target = edge + rawDelta;
+    return scalePhraseNotes(drag.originals, anchor, edge, context.snapSelectionEdge?.(target) ?? target,
+      context.startBeat, context.endBeat);
+  }
   const grid = context.shiftKey ? 0 : context.snapBeats;
   const anchor = drag.mode === 'duration' ? drag.note.durationBeats : drag.note.startBeat;
   const beatDelta = grid ? Math.round((anchor + rawDelta) / grid) * grid - anchor : rawDelta;

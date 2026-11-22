@@ -2,6 +2,7 @@ import type { PhraseNote } from './phrase-note';
 
 export type PhraseDragMode = 'move' | 'start' | 'duration' | 'pitch' | 'velocity';
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
+const MIN_DRAG_DURATION = 0.05;
 
 export function snapMidiToScale(midi: number, pitchClasses: readonly number[]): number {
   const pitch = clamp(Math.round(midi), 0, 127);
@@ -25,12 +26,11 @@ export function phraseNotesEqual(left: readonly PhraseNote[], right: readonly Ph
 export function dragPhraseNotes(notes: readonly PhraseNote[], mode: PhraseDragMode, beats: number,
   pitch: number, velocity: number, start: number, end: number): PhraseNote[] {
   if (!notes.length) return [];
-  const minimum = 0.05;
   if (mode === 'move') beats = clamp(beats, Math.max(...notes.map(n => start - n.startBeat)),
     Math.min(...notes.map(n => end - n.startBeat - n.durationBeats)));
   if (mode === 'start') beats = clamp(beats, Math.max(...notes.map(n => start - n.startBeat)),
-    Math.min(...notes.map(n => n.durationBeats - minimum)));
-  if (mode === 'duration') beats = clamp(beats, Math.max(...notes.map(n => minimum - n.durationBeats)),
+    Math.min(...notes.map(n => n.durationBeats - MIN_DRAG_DURATION)));
+  if (mode === 'duration') beats = clamp(beats, Math.max(...notes.map(n => MIN_DRAG_DURATION - n.durationBeats)),
     Math.min(...notes.map(n => end - n.startBeat - n.durationBeats)));
   pitch = clamp(pitch, -Math.min(...notes.map(n => n.midi)), 127 - Math.max(...notes.map(n => n.midi)));
   velocity = clamp(velocity, 1 - Math.min(...notes.map(n => n.velocity)), 127 - Math.max(...notes.map(n => n.velocity)));
@@ -40,6 +40,22 @@ export function dragPhraseNotes(notes: readonly PhraseNote[], mode: PhraseDragMo
     midi: n.midi + (mode === 'move' || mode === 'pitch' ? pitch : 0),
     velocity: n.velocity + (mode === 'velocity' ? velocity : 0),
   }));
+}
+
+/** Stretch around the opposite selection edge, keeping the same scale factor for every note. */
+export function scalePhraseNotes(notes: readonly PhraseNote[], anchor: number, edge: number, target: number,
+  start: number, end: number): readonly PhraseNote[] {
+  const span = edge - anchor;
+  if (!span || target === edge || anchor < start || anchor > end) return notes;
+  const minimumFactor = Math.min(1, MIN_DRAG_DURATION / Math.abs(span));
+  const maximumFactor = ((span < 0 ? start : end) - anchor) / span;
+  if (maximumFactor < minimumFactor) return notes;
+  const factor = clamp((target - anchor) / span, minimumFactor, maximumFactor);
+  if (factor === 1) return notes;
+  return notes.map(note => {
+    const startBeat = Math.max(start, anchor + (note.startBeat - anchor) * factor);
+    return { ...note, startBeat, durationBeats: Math.min(note.durationBeats * factor, end - startBeat) };
+  });
 }
 
 export interface PhraseEditSnapshot<T extends PhraseNote = PhraseNote> {

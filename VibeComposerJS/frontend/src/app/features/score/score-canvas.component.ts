@@ -155,7 +155,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private drumRows: { trackId: string; midi: number; label: string }[] = [];
   private harmonicHeight = 0;
   private drumHeight = 0;
-  private seekOnsets: { x: number; beat: number; midi: number; drum: boolean }[] = [];
+  private seekOnsets: { id: string; x: number; beat: number; midi: number; drum: boolean }[] = [];
   private seekDrag: { pointerId: number; x: number; y: number; moved: boolean; beat?: number } | null = null;
   private drag: ScoreDrag<ScoreCanvasNote> | null = null;
   private box: { x: number; y: number; endX: number; endY: number; pointerId: number; previous: readonly string[]; split?: boolean; delete?: boolean; select?: boolean } | null = null;
@@ -335,7 +335,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     canvas?.removeEventListener('pointerdown', this.onPointerDown);
     canvas?.removeEventListener('pointerup', this.onPointerUp);
     canvas?.removeEventListener('pointercancel', this.onPointerCancel);
-    canvas?.removeEventListener('lostpointercapture', this.onLostSeekCapture);
+    canvas?.removeEventListener('lostpointercapture', this.onLostPointerCapture);
     canvas?.removeEventListener('auxclick', this.onAuxClick);
     canvas?.removeEventListener('dblclick', this.onDoubleClick);
     canvas?.removeEventListener('pointermove', this.onPointerMove);
@@ -393,7 +393,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       canvas.addEventListener('pointerdown', this.onPointerDown);
       canvas.addEventListener('pointerup', this.onPointerUp);
       canvas.addEventListener('pointercancel', this.onPointerCancel);
-      canvas.addEventListener('lostpointercapture', this.onLostSeekCapture);
+      canvas.addEventListener('lostpointercapture', this.onLostPointerCapture);
       canvas.addEventListener('auxclick', this.onAuxClick);
       canvas.addEventListener('dblclick', this.onDoubleClick);
       canvas.addEventListener('pointermove', this.onPointerMove);
@@ -566,7 +566,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.hoverX = Math.min(this.width, Math.max(0, (event.clientX - bounds.left) * this.width / Math.max(1, bounds.width)));
-    if (this.drag) {
+    const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+    if (this.drag && (!this.drag.timeScale || this.drag.currentPointer || event.clientX !== this.drag.x)) {
       const drag = this.drag;
       drag.currentPointer = { x: event.clientX, y: event.clientY };
       const dx = (event.clientX - drag.x) * this.width / Math.max(1, bounds.width);
@@ -576,6 +577,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         metaKey: event.metaKey && !drag.gestureModifiers?.ctrl,
         shiftKey: event.shiftKey && !drag.gestureModifiers?.shift,
         altKey: event.altKey && !drag.gestureModifiers?.alt };
+      const scale = drag.timeScale;
+      const snapSelectionEdge = scale && !event.shiftKey
+        ? (beat: number) => this.snapBeatNearNotes(beat, this.scoreX(beat), y, scale.selectedIds)
+        : undefined;
       drag.preview = previewScoreDrag(drag, { x: dx, y: dy }, {
         time: this.timeGeometry, laneHeight: this.laneHeight, snapBeats: this.snapBeats(),
         shiftKey: this.preferences.matchesModifiers('freeGrid', drag.duplicate ? event : effectModifiers),
@@ -583,6 +588,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         scalePitchClasses: this.snapToScale() ? this.scalePitchClasses() : [],
         startBeat: this.editBounds()?.startBeat ?? 0,
         endBeat: this.editBounds()?.endBeat ?? this.model?.totalBeats ?? 1,
+        snapSelectionEdge,
       });
       drag.current = drag.preview.find(note => note.id === drag.note.id) ?? drag.note;
       const pitchChanged = drag.preview.some((note, index) => note.midi !== previousPreview[index]?.midi);
@@ -594,11 +600,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     }
     if (this.box) {
       this.box.endX = this.hoverX;
-      this.box.endY = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
+      this.box.endY = y;
     }
     if (this.shape) {
       const beat = this.beatAt(event);
-      const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
       const selectedIds = new Set(this.selectedNoteIds());
       for (const note of this.model?.notes ?? []) {
         if (this.shape.mode === 'velocity' && selectedIds.size && !selectedIds.has(note.id)) continue;
@@ -612,11 +617,11 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.placementPointer = { clientX: event.clientX, clientY: event.clientY };
     this.updatePlacement(event);
     const area = this.hitAreaAt(event);
-    const y = (event.clientY - bounds.top) * this.height / Math.max(1, bounds.height);
     this.hoveredNote = this.editable() && area && y < this.scoreHeight
       && !this.drag && !this.box && !this.shape && event.pointerType !== 'touch'
       ? { area, zone: this.hoverDragZone(area, this.hoverX, event) } : null;
-    canvas.style.cursor = this.hoveredNote ? (this.hoveredNote.zone === 'move' ? 'grab' : this.hoveredNote.zone === 'velocity' ? 'ns-resize' : 'ew-resize')
+    canvas.style.cursor = this.drag?.timeScale ? 'ew-resize'
+      : this.hoveredNote ? (this.hoveredNote.zone === 'move' ? 'grab' : this.hoveredNote.zone === 'velocity' ? 'ns-resize' : 'ew-resize')
       : area ? 'pointer' : 'default';
     this.drawDynamic();
     const hidden = this.box || this.shape || event.pointerType === 'touch' || (y >= this.scoreHeight && this.drag?.mode !== 'velocity');
@@ -735,23 +740,27 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     drag.moved = true;
     const point = canvasPoint(event.clientX, event.clientY, bounds, { width: this.width, height: this.height });
     const x = Math.max(0, Math.min(this.width, point.x));
-    const beat = scoreBeat(x, this.timeGeometry);
+    const target = this.snapBeatNearNotes(scoreBeat(x, this.timeGeometry), x, point.y);
+    if (target === drag.beat) return;
+    drag.beat = target;
+    this.seekRequested.emit(target);
+  }
+
+  private snapBeatNearNotes(beat: number, x: number, y: number, excludedIds?: ReadonlySet<string>): number {
     const grid = this.snapBeats();
     let target = grid > 0 ? Math.round(beat / grid) * grid : beat;
-    const inDrums = point.y >= this.harmonicHeight && point.y < this.scoreHeight;
-    const inPitches = point.y >= 0 && point.y < this.harmonicHeight;
-    const midi = inPitches ? pitchAt(point.y, this.pitchGeometry, []) : null;
+    const inDrums = y >= this.harmonicHeight && y < this.scoreHeight;
+    const inPitches = y >= 0 && y < this.harmonicHeight;
+    const midi = inPitches ? pitchAt(y, this.pitchGeometry, []) : null;
     let distance = 8;
     for (const onset of this.seekOnsets) {
       const nearby = onset.drum ? inDrums : midi !== null && Math.abs(onset.midi - midi) <= 6;
       const delta = Math.abs(onset.x - x);
-      if (!nearby || delta >= distance) continue;
+      if (!nearby || delta >= distance || excludedIds?.has(onset.id)) continue;
       distance = delta;
       target = onset.beat;
     }
-    if (target === drag.beat) return;
-    drag.beat = target;
-    this.seekRequested.emit(target);
+    return target;
   }
 
   private snapPitch(midi: number): number {
@@ -829,12 +838,14 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         return;
       }
     }
-    const noteGestures = ['dragVelocity', 'dragDuration', 'dragPitch', 'trimStart', 'duplicateNotes', 'shapePitch', 'shapeVelocity', 'splitNote', 'deleteNote', 'boxSelect', 'boxExtend'] as const;
-    const exactGesture = noteGestures.some(id => this.preferences.matchesShortcut(id, event));
-    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => exactGesture || id === 'addNote' || id === 'addNoteFree'
-      ? this.preferences.matchesShortcut(id, event) : this.preferences.matchesGesture(id, event);
     const edge = area ? this.noteDragZone(area, x) : null;
     const leftDrag = event.button === 0 && !this.preferences.capturingShortcut();
+    const timeScale = area && edge && y < this.scoreHeight && this.preferences.matchesShortcut('scaleNoteSelection', event)
+      ? this.selectionTimeScale(area.note, edge) : undefined;
+    const noteGestures = ['dragVelocity', 'dragDuration', 'dragPitch', 'trimStart', 'duplicateNotes', 'shapePitch', 'shapeVelocity', 'splitNote', 'deleteNote', 'boxSelect', 'boxExtend'] as const;
+    const exactGesture = timeScale || noteGestures.some(id => this.preferences.matchesShortcut(id, event));
+    const matches = (id: import('../../core/ui/shortcuts').ShortcutId) => exactGesture || id === 'addNote' || id === 'addNoteFree'
+      ? this.preferences.matchesShortcut(id, event) : this.preferences.matchesGesture(id, event);
     const trimStart = leftDrag && (matches('trimStart') || edge === 'start');
     const trimEnd = leftDrag && edge === 'duration';
     const velocity = matches('dragVelocity') || (y >= this.scoreHeight && leftDrag);
@@ -849,7 +860,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     } else if (area && (velocity || (y < this.scoreHeight && (leftDrag || matches('duplicateNotes') || trimStart || trimEnd || matches('dragDuration') || matches('dragPitch'))))) {
       const ids = this.selectedNoteIds().includes(area.note.id) ? this.selectedNoteIds() : [area.note.id];
       this.selectionChanged.emit(ids);
-      const mode: PhraseDragMode = velocity ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch'
+      const mode: PhraseDragMode = timeScale ? (edge === 'start' ? 'start' : 'duration')
+        : velocity ? 'velocity' : matches('dragDuration') ? 'duration' : matches('dragPitch') ? 'pitch'
         : matches('duplicateNotes') ? 'move'
         : trimStart ? 'start'
         : trimEnd ? 'duration' : 'move';
@@ -858,7 +870,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const gestureModifiers = gesture ? this.preferences.shortcuts()[gesture].find(b => b.kind === 'mouse'
         && (!b.ctrl || event.ctrlKey || event.metaKey) && (!b.shift || event.shiftKey) && (!b.alt || event.altKey)) : undefined;
       this.drag = { note: area.note, x: event.clientX, y: event.clientY, pointerId: event.pointerId,
-        current: area.note, mode, originals, preview: originals, gestureModifiers, duplicate: matches('duplicateNotes'), lockPitch: area.note.color === 'drums' };
+        current: area.note, mode, originals, preview: originals, gestureModifiers, timeScale,
+        duplicate: !timeScale && matches('duplicateNotes'), lockPitch: area.note.color === 'drums' };
       this.auditionRequested.emit(originals);
       this.lastAudition = performance.now();
     } else if (matches('addNote') || matches('addNoteFree')) {
@@ -909,6 +922,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         this.selectionChanged.emit([...new Set([...box.previous, ...ids])]);
       }
     }
+    if (this.drag?.pointerId === event.pointerId && this.drag.timeScale) this.onPointerMove(event);
     if (this.drag || this.shape) this.timeTooltip.set(null);
     if (this.shape?.pointerId === event.pointerId) {
       this.notesChanged.emit({ notes: [...this.shape.notes.values()], duplicate: false });
@@ -947,8 +961,9 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     this.timeTooltip.set(null);
     this.drawDynamic();
   };
-  private readonly onLostSeekCapture = (event: PointerEvent): void => {
+  private readonly onLostPointerCapture = (event: PointerEvent): void => {
     if (this.seekDrag?.pointerId === event.pointerId) this.seekDrag = null;
+    if (this.drag?.pointerId === event.pointerId && this.drag.timeScale) this.onPointerCancel(event);
   };
   private readonly onAuxClick = (event: MouseEvent): void => {
     if (!this.preferences.matchesShortcut('applyPhrase', event)) return;
@@ -970,7 +985,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   }
   private readonly onModifiersChanged = (state: ModifierState): void => {
     if (!state.active) { if (this.placementPointer) this.onPointerLeave(); return; }
-    if (this.drag?.duplicate) {
+    if (this.drag?.duplicate || (this.drag?.timeScale && this.drag.currentPointer)) {
       const { x, y } = this.drag.currentPointer ?? this.drag;
       this.onPointerMove({ clientX: x, clientY: y, pointerId: this.drag.pointerId,
         ctrlKey: state.ctrlKey, metaKey: state.metaKey, shiftKey: state.shiftKey, altKey: state.altKey } as PointerEvent);
@@ -1028,6 +1043,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
 
   private hoverDragZone(area: NoteHitArea, x: number, event: MouseEvent): 'start' | 'move' | 'duration' | 'velocity' {
     const gesture = { button: 0, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey, altKey: event.altKey } as MouseEvent;
+    const edge = this.noteDragZone(area, x);
+    if (this.preferences.matchesShortcut('scaleNoteSelection', gesture) && this.selectionTimeScale(area.note, edge)) return edge;
     const actions = ['dragVelocity', 'dragDuration', 'dragPitch', 'trimStart', 'duplicateNotes'] as const;
     const action = actions.find(id => this.preferences.matchesShortcut(id, gesture))
       ?? actions.find(id => this.preferences.matchesGesture(id, gesture));
@@ -1035,7 +1052,19 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     if (action === 'dragDuration') return 'duration';
     if (action === 'trimStart') return 'start';
     if (action) return 'move';
-    return this.noteDragZone(area, x);
+    return edge;
+  }
+  private selectionTimeScale(note: ScoreCanvasNote, zone: 'start' | 'move' | 'duration'): ScoreDrag['timeScale'] {
+    const ids = this.selectedNoteIds();
+    if (zone === 'move' || ids.length < 2 || !ids.includes(note.id)) return;
+    const selectedIds = new Set(ids);
+    const notes = (this.model?.notes ?? []).filter(candidate => selectedIds.has(candidate.id));
+    if (notes.length < 2) return;
+    const start = Math.min(...notes.map(candidate => candidate.startBeat));
+    const end = Math.max(...notes.map(candidate => candidate.startBeat + candidate.durationBeats));
+    if (zone === 'start' && note.startBeat === start) return { anchor: end, edge: start, selectedIds };
+    if (zone === 'duration' && note.startBeat + note.durationBeats === end) return { anchor: start, edge: end, selectedIds };
+    return undefined;
   }
   private noteDragZone(area: NoteHitArea, x: number, altKey = false): 'start' | 'move' | 'duration' {
     return noteDragZone(area, x, altKey);
@@ -1265,7 +1294,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const bottom = note.color === 'drums' ? scoreHeight : this.harmonicHeight;
       if (centerY < top || centerY >= bottom) continue;
       if (this.editable() && x >= 0) {
-        this.seekOnsets.push({ x, beat: note.startBeat, midi: note.midi, drum: note.color === 'drums' });
+        this.seekOnsets.push({ id: note.id, x, beat: note.startBeat, midi: note.midi, drum: note.color === 'drums' });
       }
       const rowHeight = note.color === 'drums' ? drumRowHeight : this.laneHeight;
       const y = Math.max(top, centerY - rowHeight * 0.375);

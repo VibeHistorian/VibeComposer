@@ -723,6 +723,47 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   await dragPlayhead(10.20, 'drum', 10.125); // The other drum row can latch to MIDI 36.
   assert.equal(await evaluate(`[...document.querySelectorAll('.score-display-header button')]
     .find(button => button.textContent === 'Apply').disabled`), true, 'dragging the playhead leaves the phrase draft clean');
+
+  const scalePoints = await evaluate(`(async () => { ${waitCode}
+    const canvas = document.querySelector('vc-score-canvas canvas');
+    canvas.focus();
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(() => Number(document.querySelector('#note-start')?.value) === 1);
+    const section = document.querySelector('.score-ruler-section');
+    const bounds = section.getBoundingClientRect();
+    const lastSlot = [...section.querySelectorAll('.score-chord-slot')].at(-1);
+    const pixelsPerBeat = bounds.width / Number(lastSlot.dataset.endBeat);
+    const pitchCenter = midi => {
+      const row = document.querySelector('.pitch-key[title="MIDI ' + midi + '"]').getBoundingClientRect();
+      return row.top + row.height / 2;
+    };
+    const x = bounds.left + 2;
+    return { from: { x, y: pitchCenter(48) }, to: { x: x + 8.17 * pixelsPerBeat, y: pitchCenter(53) } };
+  })()`);
+  const readScaleTooltip = `document.querySelector('.time-tooltip')?.textContent.trim()`;
+  await command('Input.dispatchMouseEvent', { type: 'mousePressed', ...scalePoints.from, button: 'left', buttons: 1, modifiers: 10, clickCount: 1 });
+  await command('Input.dispatchMouseEvent', { type: 'mouseMoved', ...scalePoints.to, button: 'left', buttons: 1, modifiers: 10 });
+  const freePreview = await evaluate(`(async () => { ${waitCode} return wait(() => {
+    const text = ${readScaleTooltip};
+    return text?.startsWith('Start 03:1.') ? text : null;
+  }); })()`);
+  assert.equal(await evaluate(`Number(document.querySelector('#note-start').value)`), 1, 'the draft stays unchanged during the preview');
+  await command('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Shift', code: 'ShiftLeft', modifiers: 2 });
+  await evaluate(`(async () => { ${waitCode} return wait(() => {
+    const text = ${readScaleTooltip};
+    return text?.startsWith('Start 03:1.') && text !== ${JSON.stringify(freePreview)} ? text : null;
+  }); })()`);
+  await command('Input.dispatchMouseEvent', { type: 'mouseReleased', ...scalePoints.to, button: 'left', modifiers: 2, clickCount: 1 });
+  const scaled = await evaluate(`(async () => { ${waitCode}
+    await wait(() => Number(document.querySelector('#note-start')?.value) !== 1);
+    return { start: Number(document.querySelector('#note-start').value) - 1, length: Number(document.querySelector('#note-length').value) };
+  })()`);
+  assert.equal(scaled.start, 8.125, 'the selection edge latches to the visible ghost onset');
+  assert.ok(Math.abs(scaled.length - 0.5 * (13.5 - 8.125) / 13.5) < 1e-10);
+  await evaluate(`(async () => { ${waitCode}
+    document.querySelector('vc-score-canvas canvas').dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
+    await wait(() => [...document.querySelectorAll('.score-display-header button')].find(button => button.textContent === 'Apply').disabled);
+  })()`);
  } finally {
     await closeBrowser({ child, server, socket });
   }
