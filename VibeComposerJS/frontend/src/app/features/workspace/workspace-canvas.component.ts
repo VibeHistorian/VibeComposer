@@ -48,7 +48,7 @@ import { ArrangementOverviewComponent } from '../arrangement/arrangement-overvie
 import { ScoreCanvasComponent } from '../score/score-canvas.component';
 import { harmonicNotePitchBounds } from '../score/score-geometry';
 import { ScoreChordLabelsDirective } from '../score/score-chord-labels.directive';
-import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreSectionFocus, ScoreViewport } from '../score/score-canvas.component';
+import type { ScoreCanvasNote, ScoreCanvasTrack, ScoreTimeFocus, ScoreViewport } from '../score/score-canvas.component';
 import { EditWorkspaceComponent } from '../edit/edit-workspace.component';
 import { PartSettingsEditorComponent } from '../part-settings/part-settings-editor.component';
 import { PartScopeActionsComponent } from '../part-settings/part-scope-actions.component';
@@ -458,12 +458,15 @@ export class WorkspaceCanvasComponent {
     const selected = this.selectedRole();
     this.collapsedGroups.set(new Set(ARRANGED_PARTS.filter(role => role !== selected)));
   });
-  readonly scoreSectionFocus = computed<ScoreSectionFocus>(() => {
+  readonly scoreSectionFocus = computed<ScoreTimeFocus>(() => {
     if (this.editing()) return this.scoreEditBounds();
+    this.projects.projectActivation();
     this.workspaceUi.sectionFocusRevision();
     this.selectedSectionIds();
-    // A changed selection must refit even when its bounds equal the full arrangement.
-    return { ...(this.workspaceUi.sectionRange() ?? this.scoreTimelineBounds()) };
+    // A new selection requests a fit even when its bounds match the old selection.
+    // Fitting the full score uses the current canvas extent, which can change as notes regenerate.
+    const range = this.workspaceUi.sectionRange();
+    return range ? { ...range } : { fullScore: true };
   });
   readonly scoreViewport = signal<ScoreViewport>({ scale: 1, offsetPercent: 0, width: 0, laneHeight: 40, verticalOffset: 0, scoreHeight: 0 });
 

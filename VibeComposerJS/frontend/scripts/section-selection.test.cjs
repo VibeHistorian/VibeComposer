@@ -20,7 +20,7 @@ function fixture() {
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     ChangeDetectionStrategy: { OnPush: 0 },
   };
-  const projects = { project, projectWithoutVolumeChanges: project };
+  const projects = { project, projectWithoutVolumeChanges: project, projectActivation: signal(0) };
   const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false), appearance: signal({ progressiveTrackColoring: true }) });
   let ui;
   angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? { setPhrasePreview() {} } : projects;
@@ -388,7 +388,7 @@ test('deletion, reordering, and imports cannot leave stale IDs or a gap', () => 
 
 test('workspace score focus follows the selection range or the full arrangement when cleared', () => {
   const { ui, workspace, project } = fixture();
-  assert.deepEqual(workspace.scoreSectionFocus(), { startBeat: 0, endBeat: 48 });
+  assert.deepEqual(workspace.scoreSectionFocus(), { fullScore: true });
   workspace.selectOverviewSection('b', 'track-bass-1');
   assert.deepEqual(workspace.scoreSectionFocus(), { startBeat: 8, endBeat: 24 });
   workspace.selectOverviewSection('d', 'track-bass-1', { ctrlKey: true });
@@ -397,7 +397,7 @@ test('workspace score focus follows the selection range or the full arrangement 
     section.id === 'b' ? { ...section, measures: 2 } : section) });
   assert.deepEqual(workspace.scoreSectionFocus(), { startBeat: 8, endBeat: 32 }, 'section length edits update the range');
   ui.clearSectionSelection();
-  assert.deepEqual(workspace.scoreSectionFocus(), { startBeat: 0, endBeat: 40 });
+  assert.deepEqual(workspace.scoreSectionFocus(), { fullScore: true });
 });
 
 test('cell and section-track contexts preserve the header range and score focus', () => {

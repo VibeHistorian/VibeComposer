@@ -40,6 +40,35 @@ test('unified score keeps the workspace, filters drums and applies contextual ha
   const hoveredHeader=await evaluate(`({background:getComputedStyle(document.querySelector('.score-ruler-section')).backgroundColor,
     expected:getComputedStyle(document.documentElement).getPropertyValue('--surface-hover').trim(),hovered:document.querySelector('.score-ruler-section').matches(':hover')})`);
   assert.equal(hoveredHeader.hovered,true);assert.notEqual(hoveredHeader.background,headerSelection.background);
+  const liveViewport = await evaluate(`(async()=>{${waitCode}
+    const canvas = await wait(() => document.querySelector('vc-score-canvas canvas'));
+    const scroll = document.querySelector('vc-score-canvas .horizontal-scroll');
+    const viewport = () => ({ width: parseFloat(scroll.firstElementChild.style.width), left: scroll.scrollLeft });
+    const settle = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const live = document.querySelector('[aria-label="Toggle live reload"]');
+    if (live.getAttribute('aria-pressed') !== 'true') live.click();
+    await wait(() => live.getAttribute('aria-pressed') === 'true');
+    const track = document.querySelector('.track-group.bass .track-select');
+    track.click();
+    const seed = await wait(() => document.querySelector('#part-inspector [data-control-key="patternSeed"] input'));
+    const value = seed.value === '8675309' ? '8675310' : '8675309';
+    await settle();
+    const fitted = viewport();
+    const bounds = canvas.getBoundingClientRect();
+    canvas.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, ctrlKey: true,
+      deltaY: -350, clientX: bounds.left + bounds.width / 2, clientY: bounds.top + bounds.height / 2 }));
+    await settle();
+    const zoomed = viewport();
+    seed.focus();
+    await changeControl(seed, value);
+    await wait(() => JSON.parse(sessionStorage.getItem('vibecomposer.project.v12'))?.tracks
+      .find(track => track.role === 'bass').generatorSettings.patternSeed === Number(value));
+    await settle();
+    return { fitted, zoomed, edited: viewport(), selected: document.querySelectorAll('.score-ruler-section[aria-pressed="true"]').length };
+  })()`);
+  assert.equal(liveViewport.selected, 0);
+  assert.ok(liveViewport.zoomed.width > liveViewport.fitted.width && liveViewport.zoomed.left > 0);
+  assert.deepEqual(liveViewport.edited, liveViewport.zoomed, 'a LIVE track edit keeps the unselected score zoomed and panned');
   await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('vc-score-canvas canvas'));const seed=document.querySelector('[aria-label="Generation seed"]');await changeControl(seed, '43');window.dispatchEvent(new Event('pagehide'));const p=await wait(()=>JSON.parse(sessionStorage.getItem('vibecomposer.project.v12')));p.arrangement=[{...p.arrangement[0],measures:4,trackPresence:Object.fromEntries(p.tracks.map(t=>[t.id,true]))}];for(const t of p.tracks)t.editedPhrase=[{id:t.id+'-fixture',midi:t.role==='drums'?36:t.role==='bass'?48:60,startBeat:0,durationBeats:1,velocity:90}];const bass=p.tracks.find(t=>t.role==='bass');bass.editedPhrase.push({id:'bass-low',midi:24,startBeat:4,durationBeats:1,velocity:90},{id:'bass-high',midi:96,startBeat:8,durationBeats:1,velocity:90});const drum=p.tracks.find(t=>t.role==='drums');for(const [index,pitch] of [[2,38],[3,42]])p.tracks.push({...drum,id:'track-drums-'+index,name:'D'+index,generatorSettings:{...drum.generatorSettings,pitch},editedPhrase:[{id:'shared-drum',midi:pitch,startBeat:0,durationBeats:1,velocity:90}]});await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12',JSON.stringify(p));return true;})()`);
   await command('Page.reload');
   const initial=await evaluate(`(async()=>{${waitCode}await wait(()=>document.querySelector('.drum-label'));return {labels:document.querySelectorAll('.pitch-key').length,drums:document.querySelectorAll('.drum-label').length,arrangement:!!document.querySelector('vc-arrangement-overview canvas'),velocity:!!document.querySelector('.velocity-label')};})()`);

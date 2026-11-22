@@ -63,6 +63,8 @@ export interface ScoreSectionFocus {
   readonly endBeat: number;
 }
 
+export type ScoreTimeFocus = ScoreSectionFocus | { readonly fullScore: true };
+
 export interface ScoreViewport {
   readonly scale: number;
   readonly offsetPercent: number;
@@ -221,7 +223,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     } else this.addTrackAtPoint(action);
   }
   private suppressClick = false;
-  readonly sectionFocus = input<ScoreSectionFocus | null>(null);
+  readonly sectionFocus = input<ScoreTimeFocus | null>(null);
   readonly noteSelected = output<ScoreCanvasNote>();
   readonly noteTrackSelected = output<ScoreCanvasNote>();
   readonly seekRequested = output<number>();
@@ -311,10 +313,10 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
   private horizontalOffset = 0;
   private verticalScale = 1;
   private verticalOffset = 0;
-  private lastSectionFocus: ScoreSectionFocus | null = null;
+  private lastSectionFocus: ScoreTimeFocus | null = null;
   private wasEditable = false;
   private overviewViewport: { horizontalScale: number; horizontalOffset: number; verticalScale: number; verticalOffset: number } | null = null;
-  private pendingSectionFocus: ScoreSectionFocus | null = null;
+  private pendingSectionFocus: ScoreTimeFocus | null = null;
   private pendingEditPitchFocus = false;
 
   ngAfterViewInit(): void {
@@ -1089,7 +1091,13 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const focus = this.pendingSectionFocus;
     if (focus) {
       this.pendingSectionFocus = null;
-      Object.assign(this, sectionViewport(focus.startBeat - (model.timelineStartBeat ?? 0), focus.endBeat - (model.timelineStartBeat ?? 0), totalBeats));
+      if ('fullScore' in focus) {
+        this.horizontalScale = 1;
+        this.horizontalOffset = 0;
+      } else {
+        const origin = model.timelineStartBeat ?? 0;
+        Object.assign(this, sectionViewport(focus.startBeat - origin, focus.endBeat - origin, totalBeats));
+      }
     }
     const scoreHeight = this.scoreHeight;
     const previousLaneHeight = this.laneHeight;
