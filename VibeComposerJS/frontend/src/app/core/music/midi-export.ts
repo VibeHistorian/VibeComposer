@@ -62,7 +62,7 @@ export function generateCompositionMidi(project: CompositionProject, drumMapping
       const track = midi.addTrack();
       track.name = compositionTrack.name;
       track.channel = compositionTrack.midiChannel - 1;
-      const included = configureMix(track, withMasterVolume(compositionTrack, project), anySolo);
+      const included = configureMix(track, withMasterVolume(compositionTrack, project.masterVolumePercent), anySolo);
       if (!included) continue;
       for (const note of phrases[compositionTrack.id]) {
         track.addNote({

@@ -1394,12 +1394,25 @@ test('all-role rerolls preserve locks and undo as one command', () => {
 });
 
 test('master volume persists, validates, exports MIDI levels and undoes independently of track mix', () => {
-  const { service, load } = fixture();
+  const { service, load, phrase, uiPreferences } = fixture();
+  assert.equal(uiPreferences.harmonyFollowsMode(), 'all');
   const before = service.project();
+  const generationFailure = 'Previous generation failed';
+  service.generationFailure.set(generationFailure);
+  const originalGlobal = phrase.phraseForTrack, originalResolved = phrase.resolvedTrackPhrase;
+  const codec = load('core/project/project-codec.ts');
+  const originalValidation = codec.isProject;
+  const unexpected = () => { assert.fail('Master volume must skip full validation and phrase resolution'); };
+  phrase.phraseForTrack = phrase.resolvedTrackPhrase = codec.isProject = unexpected;
   service.updateSettings({ masterVolumePercent: 50 });
   const after = service.project();
-  assert.deepEqual(after.tracks, before.tracks);
-  const { decodeProject } = load('core/project/project-codec.ts');
+  assert.equal(after.tracks, before.tracks);
+  assert.equal(after.arrangement, before.arrangement);
+  assert.equal(service.generationError(), generationFailure);
+  phrase.phraseForTrack = originalGlobal;
+  phrase.resolvedTrackPhrase = originalResolved;
+  codec.isProject = originalValidation;
+  const { decodeProject } = codec;
   // Round-trip the saved master level through the project decoder.
   const json = service.exportProjectJson();
   assert.equal(JSON.parse(json).masterVolumePercent, 50);

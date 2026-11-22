@@ -56,7 +56,7 @@ export class WorkspaceUiService {
   readonly sectionRange = computed(() => {
     const selected = this.selectedSectionIds();
     if (!selected.length) return null;
-    const sections = resolveProjectTimeline(this.projects.project()).sections;
+    const sections = resolveProjectTimeline(this.projects.projectWithoutMasterVolumeChanges()).sections;
     return { startBeat: sections.find(section => section.sectionId === selected[0])!.startBeat,
       endBeat: sections.find(section => section.sectionId === selected.at(-1))!.endBeat };
   }, { equal: (left, right) => left?.startBeat === right?.startBeat && left?.endBeat === right?.endBeat });

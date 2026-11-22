@@ -167,16 +167,16 @@ export class WorkspaceCanvasComponent {
       : result === 'unchanged' ? 'No eligible track settings changed.' : '');
   }
   previewMasterVolume(value: number): void {
-    this.playback.updateMix({ ...this.project(), masterVolumePercent: value });
+    this.playback.updateMasterVolume(value);
   }
   updateMasterVolume(value: number): void {
     this.projects.updateSettings({ masterVolumePercent: value });
-    this.playback.updateMix(this.project());
+    this.playback.updateMasterVolume(this.project().masterVolumePercent ?? 100);
   }
   readonly instrumentMenuGroups = INSTRUMENT_MENU_GROUPS;
   readonly drumMenuGroups = DRUM_MENU_GROUPS;
   readonly drumSelectOptions = computed(() => {
-    const project = this.project(), slots = resolvedDrumSlots(project);
+    const project = this.projects.projectWithoutMasterVolumeChanges(), slots = resolvedDrumSlots(project);
     const pool = INSTRUMENT_POOLS[this.instrumentPolicyFor('drums').pool as Exclude<InstrumentPool, 'AUTO'>];
     return Object.fromEntries(project.tracks.filter(track => track.role === 'drums').map(track => {
       const retained = projectDrumPitches(project, [track.id]);
@@ -472,14 +472,14 @@ export class WorkspaceCanvasComponent {
     return { startBeat: this.editStartBeat() + bounds.startBeat, endBeat: this.editStartBeat() + bounds.endBeat };
   });
   private readonly phrasePlaybackEffect = effect(() => {
-    const project = this.project();
+    this.projects.projectWithoutMasterVolumeChanges();
     const editor = this.editing() ? this.editor() : undefined;
     const preview = editor?.draftReady() ? {
       ...this.scoreEditBounds(),
       trackIds: editor.editedTracks().map(track => track.id),
       notes: editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat() })),
     } : null;
-    untracked(() => this.playback.setPhrasePreview(project, preview));
+    untracked(() => this.playback.setPhrasePreview(this.project(), preview));
   });
   readonly scoreTimelineBounds = computed(() => {
     const bounds = this.timeline().soundingBounds;
@@ -497,7 +497,7 @@ export class WorkspaceCanvasComponent {
   });
   readonly totalMeasures = computed(() => this.project().arrangement.reduce((sum, section) => sum + section.measures, 0));
   readonly selectedSectionBeats = computed(() => { const section = this.selectedSection(); return section ? sectionDurationBeats(this.project(), section) : 0; });
-  readonly timeline = computed(() => resolveProjectTimeline(this.project()));
+  readonly timeline = computed(() => resolveProjectTimeline(this.phraseProject()));
   readonly totalBeats = computed(() => this.timeline().arrangementBounds.endBeat);
   readonly loopRange = computed(() => this.playback.loopEnabled()
     ? this.workspaceUi.sectionRange() ?? this.timeline().soundingBounds : null);

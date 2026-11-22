@@ -6,6 +6,10 @@ function equalExcept(left: object, right: object, excluded: readonly string[]): 
     && keys.every(key => (left as Record<string, unknown>)[key] === (right as Record<string, unknown>)[key]);
 }
 
+export function sameProjectExceptMasterVolume(left: CompositionProject, right: CompositionProject): boolean {
+  return left === right || equalExcept(left, right, ['masterVolumePercent']);
+}
+
 /** Projects are immutable. Mix settings do not affect generated note data. */
 export function samePhraseInputs(left: CompositionProject, right: CompositionProject): boolean {
   return left === right || equalExcept(left, right, ['mix', 'tracks', 'drumSlots', 'masterVolumePercent'])

@@ -154,6 +154,22 @@ test('MIDI volume clamps boosted gain while preserving notes and stored mix', as
   service.ngOnDestroy();
 });
 
+test('live master volume sends only CC7 to the track currently using a shared MIDI channel', async () => {
+  const output = port('master');
+  const service = fixture(async () => ({ outputs: new Map([[output.id, output]]), addEventListener() {}, removeEventListener() {} }));
+  await service.refresh();
+  await service.select(output.id);
+  const bass = { id: 'bass', midiChannel: 3, role: 'bass', mix: { program: 32, volumePercent: 80, panPercent: 0 } };
+  const chords = { ...bass, id: 'chords', role: 'chords', mix: { ...bass.mix, program: 0 } };
+  service.configure(bass);
+  output.messages.length = 0;
+  service.updateVolume(chords, 50);
+  service.updateVolume(bass, 40);
+  service.configure({ ...bass, mix: { ...bass.mix, volumePercent: 40 } });
+  assert.deepEqual(output.messages.map(message => message.data), [[0xb2, 7, 51]]);
+  service.ngOnDestroy();
+});
+
 test('denial and unsupported browsers report actionable status; retry works and failed opens never select a device', async () => {
   let deny = true;
   const output = port('one');

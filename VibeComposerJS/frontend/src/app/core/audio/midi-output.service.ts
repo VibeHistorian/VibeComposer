@@ -14,7 +14,7 @@ export class MidiOutputService {
   private readonly pending = signal(false);
   private readonly message = signal('');
   private readonly channels = new Set<number>();
-  private readonly configurations = new Map<number, string>();
+  private readonly configurations = new Map<number, { trackId: string; program: number | null; volume: number; pan: number }>();
   readonly selectedOutput = this.output.asReadonly();
   readonly drumMapping = computed(() => resolveDrumMapping(this.preferences.drumMapping(), this.selectedOutput() !== null));
   drumLabel(pitch: number, slots?: DrumSlots): string { return drumInstrumentLabel(pitch, this.drumMapping(), slots); }
@@ -96,15 +96,34 @@ export class MidiOutputService {
   configure(track: CompositionTrack, audible = true): void {
     if (!this.output()) return;
     const channel = track.midiChannel - 1;
-    const volume = audible ? Math.max(0, Math.min(127, Math.round(track.mix.volumePercent * 127 / 100))) : 0;
+    const program = track.role === 'drums' ? null : track.mix.program;
+    const volume = audible ? this.channelVolume(track.mix.volumePercent) : 0;
     const pan = midiPanValue(track.mix.panPercent);
-    const key = `${track.mix.program}:${volume}:${pan}`;
-    if (this.configurations.get(channel) === key) return;
+    const previous = this.configurations.get(channel);
+    if (previous?.program === program && previous.volume === volume && previous.pan === pan) {
+      previous.trackId = track.id;
+      return;
+    }
+    this.configurations.set(channel, { trackId: track.id, program, volume, pan });
     this.channels.add(channel);
-    this.configurations.set(channel, key);
-    if (track.role !== 'drums') this.send([0xc0 | channel, track.mix.program]);
+    if (program !== null) this.send([0xc0 | channel, program]);
     this.send([0xb0 | channel, 7, volume]);
     this.send([0xb0 | channel, 10, pan]);
+  }
+
+  updateVolume(track: CompositionTrack, volumePercent: number): void {
+    const channel = track.midiChannel - 1;
+    const configuration = this.configurations.get(channel);
+    // A shared channel follows the track that last configured it.
+    if (!configuration || configuration.trackId !== track.id) return;
+    const volume = this.channelVolume(volumePercent);
+    if (configuration.volume === volume) return;
+    configuration.volume = volume;
+    this.send([0xb0 | channel, 7, volume]);
+  }
+
+  private channelVolume(volumePercent: number): number {
+    return Math.max(0, Math.min(127, Math.round(volumePercent * 127 / 100)));
   }
 
   readonly silence = (): void => {

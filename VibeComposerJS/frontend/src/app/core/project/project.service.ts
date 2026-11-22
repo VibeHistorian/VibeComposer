@@ -3,7 +3,7 @@ import { followHarmonyMode } from '../music/harmony-mode';
 import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
 import { projectDrumPitches, reconcileDrumKit } from './project-drum-kit';
 import { copyArrangementPhrase, type ArrangementPhraseCopy } from './arrangement-phrase-copy';
-import { samePhraseInputs } from '../music/phrase-inputs';
+import { samePhraseInputs, sameProjectExceptMasterVolume } from '../music/phrase-inputs';
 import type { TrackDuplicationOptions } from './track-duplication';
 import * as arrangementCommands from './project-arrangement-commands';
 import { fitVariationCapacity } from './arrangement-variation-capacity';
@@ -93,6 +93,7 @@ export class ProjectService {
   private readonly historyRevision = signal(0);
 
   readonly project = this.state.asReadonly();
+  readonly projectWithoutMasterVolumeChanges = computed(this.project, { equal: sameProjectExceptMasterVolume });
   private readonly generationFailure = signal<string | null>(null);
   readonly generationError = this.generationFailure.asReadonly();
   dismissGenerationError(): void { this.generationFailure.set(null); }
@@ -1053,7 +1054,14 @@ export class ProjectService {
       }
     }
     const current = this.state();
-    this.commit(this.followMode(current, { ...current, ...patch }), this.controlHistoryKey(['project'], patch));
+    const controlKey = this.controlHistoryKey(['project'], patch);
+    if (patch.masterVolumePercent !== undefined && controlKey !== undefined) {
+      if (patch.masterVolumePercent !== (current.masterVolumePercent ?? 100)) {
+        this.publishHistoryEdit(current, { ...current, masterVolumePercent: patch.masterVolumePercent }, controlKey);
+      }
+      return;
+    }
+    this.commit(this.followMode(current, { ...current, ...patch }), controlKey);
   }
 
   private followMode(current: CompositionProject, proposed: CompositionProject): CompositionProject {
@@ -1637,7 +1645,10 @@ export class ProjectService {
       this.persist();
       return;
     }
+    this.publishHistoryEdit(current, next, controlKey);
+  }
 
+  private publishHistoryEdit(current: CompositionProject, next: CompositionProject, controlKey?: string): void {
     const time = performance.now();
     const compact = this.compactHistory() && controlKey !== undefined
       && this.lastControlEdit?.key === controlKey && this.past.length > 0 && this.future.length === 0

@@ -56,6 +56,8 @@ export class AudioPlaybackService {
 
   private context?: AudioContext;
   private master?: GainNode;
+  private masterVolumePercent = 100;
+  private mixBus?: GainNode;
   private synth?: InstrumentEngine;
   private startRequest = 0;
   private engineLoading?: Promise<void>;
@@ -110,7 +112,7 @@ export class AudioPlaybackService {
           const beat = this.currentSongBeat();
           this.clearScheduler();
           this.stopSources();
-          void this.start(this.mixProject, beat);
+          void this.start(this.mixProject, beat, this.masterVolumePercent);
         } else if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
         else this.stopSources();
       });
@@ -145,7 +147,7 @@ export class AudioPlaybackService {
         if (context.state !== 'running') await context.resume();
         if (cancelled) return;
         if (this.midi.selectedOutput()) {
-          release = this.midi.hold(withMasterVolume(track, project), note.midi, note.velocity,
+          release = this.midi.hold(withMasterVolume(track, project.masterVolumePercent), note.midi, note.velocity,
             track.role === 'drums' ? this.drumSlotsFor(project, [note.midi]) : undefined);
           return;
         }
@@ -181,7 +183,7 @@ export class AudioPlaybackService {
         for (const note of notes) {
           if (pitches.has(note.midi)) continue;
           pitches.add(note.midi);
-          this.midi.schedule(withMasterVolume(track, project), note.midi, note.velocity, performance.now() + 3, 0.3,
+          this.midi.schedule(withMasterVolume(track, project?.masterVolumePercent), note.midi, note.velocity, performance.now() + 3, 0.3,
             project && track.role === 'drums' ? this.drumSlotsFor(project, notes.map(note => note.midi)) : undefined);
         }
         return;
@@ -247,10 +249,11 @@ export class AudioPlaybackService {
     await this.start(project, this.state() === 'stopped' && resumeAt === 0 ? undefined : resumeAt);
   }
 
-  async start(project: CompositionProject, startBeat?: number | (() => number)): Promise<void> {
+  async start(project: CompositionProject, startBeat?: number | (() => number), masterVolume = project.masterVolumePercent ?? 100): Promise<void> {
     const request = ++this.startRequest;
     this.playbackError.set('');
     try {
+      this.updateMasterVolume(masterVolume);
       const context = this.getContext();
       if (context.state !== 'running') await context.resume();
       if (context.state !== 'running') throw new Error('Audio is interrupted. Press Play to resume when audio is available.');
@@ -404,17 +407,29 @@ export class AudioPlaybackService {
     this.restartAt(this.safeStartBeat(this.loopEnabled() ? start + (beat - start) % (duration - start) : beat));
   }
 
+  updateMasterVolume(volume: number): void {
+    if (volume === this.masterVolumePercent) return;
+    this.masterVolumePercent = volume;
+    if (this.context) this.master?.gain.setTargetAtTime(0.8 * volume / 100, this.context.currentTime, 0.02);
+    if (this.midi.selectedOutput() && this.state() === 'playing' && this.mixProject) {
+      const tracks = this.mixProject.tracks;
+      const anySolo = tracks.some(track => track.mix.solo);
+      for (const track of tracks) {
+        this.midi.updateVolume(track, mixEnabled(track.mix, anySolo) ? track.mix.volumePercent * volume / 100 : 0);
+      }
+    }
+  }
+
   updateMix(project: CompositionProject): void {
     this.mixProject = project;
     if (!this.context || this.state() === 'stopped') return;
     const anySolo = project.tracks.some((track) => track.mix.solo);
     const now = this.context.currentTime;
-    this.master?.gain.setTargetAtTime(0.8 * (project.masterVolumePercent ?? 100) / 100, now, 0.02);
     for (const track of project.tracks) {
       const settings = track.mix;
       this.programs.set(track.id, settings.program);
       const audible = mixEnabled(settings, anySolo);
-      this.midi.configure(withMasterVolume(track, project), audible);
+      this.midi.configure(withMasterVolume(track, this.masterVolumePercent), audible);
       const bus = this.buses.get(track.id);
       if (!bus) continue;
       bus.gain.gain.setTargetAtTime(audible ? settings.volumePercent / 100 : 0, now, 0.02);
@@ -478,28 +493,34 @@ export class AudioPlaybackService {
   private prepareMix(project: CompositionProject, context: AudioContext, crossfade = false): void {
     this.mixProject = project;
     const oldBuses = [...this.buses.values()];
-    const oldMaster = this.master;
+    const oldMixBus = this.mixBus;
     const disconnect = () => {
       for (const bus of oldBuses) {
         bus.pan.disconnect();
         bus.gain.disconnect();
       }
-      oldMaster?.disconnect();
+      oldMixBus?.disconnect();
     };
-    if (crossfade && oldMaster) {
-      oldMaster.gain.cancelScheduledValues(context.currentTime);
-      oldMaster.gain.setValueAtTime(oldMaster.gain.value, context.currentTime);
-      oldMaster.gain.linearRampToValueAtTime(0, context.currentTime + RELOAD_FADE_SECONDS);
+    if (crossfade && oldMixBus) {
+      oldMixBus.gain.cancelScheduledValues(context.currentTime);
+      oldMixBus.gain.setValueAtTime(oldMixBus.gain.value, context.currentTime);
+      oldMixBus.gain.linearRampToValueAtTime(0, context.currentTime + RELOAD_FADE_SECONDS);
       setTimeout(disconnect, RELOAD_FADE_SECONDS * 1000 + SCHEDULER_INTERVAL_MS);
     } else {
       disconnect();
     }
     this.buses.clear();
     this.programs.clear();
-    this.master = context.createGain();
-    this.master.gain.value = crossfade ? 0 : 0.8 * (project.masterVolumePercent ?? 100) / 100;
-    if (crossfade) this.master.gain.linearRampToValueAtTime(0.8 * (project.masterVolumePercent ?? 100) / 100, context.currentTime + RELOAD_FADE_SECONDS);
-    this.master.connect(protectedAudioOutput(context));
+    if (!this.master) {
+      this.master = context.createGain();
+      this.master.gain.value = 0.8 * this.masterVolumePercent / 100;
+      this.master.connect(protectedAudioOutput(context));
+    }
+    // Reload fades and user level changes have independent automation.
+    this.mixBus = context.createGain();
+    this.mixBus.gain.value = crossfade ? 0 : 1;
+    if (crossfade) this.mixBus.gain.linearRampToValueAtTime(1, context.currentTime + RELOAD_FADE_SECONDS);
+    this.mixBus.connect(this.master);
     const anySolo = project.tracks.some((track) => track.mix.solo);
 
     for (const track of project.tracks) {
@@ -511,7 +532,7 @@ export class AudioPlaybackService {
       const pan = context.createStereoPanner();
       pan.pan.value = settings.panPercent / 100;
       gain.connect(pan);
-      pan.connect(this.master);
+      pan.connect(this.mixBus);
       this.buses.set(track.id, { gain, pan });
     }
   }
@@ -667,7 +688,7 @@ export class AudioPlaybackService {
       const project = this.mixProject;
       const track = project?.tracks.find(track => track.id === note.trackId);
       if (track && mixEnabled(track.mix, project!.tracks.some(track => track.mix.solo))) {
-        this.midi.schedule(withMasterVolume(track, project), note.midi, note.velocity,
+        this.midi.schedule(withMasterVolume(track, this.masterVolumePercent), note.midi, note.velocity,
           performance.now() + (startTime - context.currentTime) * 1000, duration,
           track.role === 'drums' ? this.drumSlotsFor(project!) : undefined);
         this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });

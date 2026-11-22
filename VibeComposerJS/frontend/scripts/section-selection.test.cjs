@@ -20,7 +20,7 @@ function fixture() {
     output: () => ({ values: [], emit(value) { this.values.push(value); } }),
     ChangeDetectionStrategy: { OnPush: 0 },
   };
-  const projects = { project };
+  const projects = { project, projectWithoutMasterVolumeChanges: project };
   const preferences = Object.assign(require('./support/shortcut-preferences.cjs').shortcutPreferences(), { syncScoreMix: signal(false), scoreChordGrid: signal(false), appearance: signal({ progressiveTrackColoring: true }) });
   let ui;
   angular.inject = (type) => type === 'ui' ? ui : type === 'preferences' ? preferences : type === 'audio' ? { setPhrasePreview() {} } : projects;

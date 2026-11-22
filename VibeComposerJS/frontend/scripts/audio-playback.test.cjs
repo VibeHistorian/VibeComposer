@@ -38,7 +38,7 @@ function fixture({ loop = false } = {}) {
     createOscillator() { const source = node(); sources.push(source); return source; },
   };
   const instruments = { kind: signal('synth'), normalization: signal(false), calibrationStatus: signal(''), selectedBank: () => undefined };
-  const midi = { selectedOutput: signal(null), drumMapping: signal('general-midi'), schedule() {}, configure() {}, silence() {} };
+  const midi = { selectedOutput: signal(null), drumMapping: signal('general-midi'), schedule() {}, configure() {}, updateVolume() {}, silence() {} };
   const angular = { Injectable: () => (type) => type, Component: () => (type) => type,
     signal, effect, untracked, inject: (token) => token.name === 'InstrumentSettingsService' ? instruments : midi, computed: (read) => read, ChangeDetectionStrategy: { OnPush: 0 } };
   const load = (file, dependencies) => {
@@ -610,15 +610,16 @@ test('live note edits cancel queued voices, crossfade, and resume sustained note
   context.currentTime = 1.9;
   playback.tick(); // Queue the beat-four note before the edit.
   const oldSources = [...sources];
-  const oldMaster = playback.master;
+  const oldMixBus = playback.mixBus, master = playback.master;
   context.currentTime = 2.01;
   const notes = project.tracks[0].notes.map((note) => ({ ...note, midi: note.midi + 12 }));
   playback.reload({ ...project, tracks: [{ ...project.tracks[0], notes }] });
   assert.equal(playback.state(), 'playing');
   assert.equal(playback.beat(), 4.02);
   for (const source of oldSources) assert.equal(source.stopTime, 2.022);
-  assert.equal(oldMaster.gain.events.at(-1).value, 0);
-  assert.equal(playback.master.gain.events.at(-1).value, 0.8);
+  assert.equal(oldMixBus.gain.events.at(-1).value, 0);
+  assert.equal(playback.mixBus.gain.events.at(-1).value, 1);
+  assert.equal(playback.master, master);
   const resumed = sources.slice(oldSources.length);
   assert.equal(resumed.length, 2, 'both notes overlapping the playhead resume');
   assert.equal(resumed[0].frequency.value, 440 * 2 ** ((60 - 69) / 12));
@@ -656,13 +657,13 @@ test('mix and label edits do not restart unchanged notes, but program edits do',
   await playback.start(project);
   context.currentTime = 1;
   const track = { ...project.tracks[0], mix: { ...project.tracks[0].mix, muted: true } };
-  const master = playback.master;
+  const mixBus = playback.mixBus;
   playback.reload({ ...project, name: 'Renamed', tracks: [track] });
-  assert.equal(playback.master, master);
+  assert.equal(playback.mixBus, mixBus);
   assert.equal(sources.length, 1);
   assert.equal(playback.buses.get('bass').gain.gain.events.at(-1).value, 0);
   playback.reload({ ...project, tracks: [{ ...track, mix: { ...track.mix, program: 0 } }] });
-  assert.notEqual(playback.master, master);
+  assert.notEqual(playback.mixBus, mixBus);
   assert.equal(sources.at(-1).program, 0);
 });
 
@@ -738,7 +739,7 @@ test('paused and stopped playback stay inactive until resumed with the latest pr
 function transportFixture() {
   const { playback, project, angular, load, context, timelineModule } = fixture();
   const projectSignal = angular.signal(project);
-  const projects = { project: projectSignal };
+  const projects = { project: projectSignal, projectWithoutMasterVolumeChanges: projectSignal };
   const workspaceUi = { sectionRange: angular.signal(null), selectedSectionIds: () => [] };
   angular.inject = (type) => type === 'audio' ? playback : type === 'ui' ? workspaceUi : projects;
   const { TransportDockComponent } = load('features/transport/transport-dock.component.ts', {
@@ -1057,7 +1058,7 @@ test('pan and gain commits update active buses without generating a schedule', a
   await playback.start(project);
   const schedule = playback.createSchedule;
   playback.createSchedule = () => { throw Error('Mix changes must not rebuild notes'); };
-  const master = playback.master;
+  const mixBus = playback.mixBus;
   for (const panPercent of [-50, 0, 50]) {
     const updated = { ...project, tracks: project.tracks.map(track => ({ ...track,
       mix: { ...track.mix, panPercent, volumePercent: 150 },
@@ -1066,12 +1067,12 @@ test('pan and gain commits update active buses without generating a schedule', a
     playback.reload(updated);
     assert.equal(playback.buses.get('bass').gain.gain.events.at(-1).value, 1.5);
     assert.equal(playback.buses.get('bass').pan.pan.events.at(-1).value, panPercent / 100);
-    assert.equal(playback.master, master);
+    assert.equal(playback.mixBus, mixBus);
     assert.equal(sources.length, 1);
   }
   playback.createSchedule = schedule;
   playback.reload({ ...project, tempoBpm: 60 });
-  assert.notEqual(playback.master, master, 'musical edits still rebuild the playing schedule');
+  assert.notEqual(playback.mixBus, mixBus, 'musical edits still rebuild the playing schedule');
 });
 
 test('Compose restart uses zero or selected loop origin and keeps paused/stopped transport inactive', async () => {
@@ -1190,20 +1191,51 @@ test('changing normalization leaves external MIDI playback running', async () =>
 });
 
 
-test('master gain previews and commits change the output bus without rebuilding notes', async () => {
+test('master gain changes only the output bus, leaving tracks and notes alone', async () => {
   const { playback, project, sources } = fixture();
   await playback.start({ ...project, masterVolumePercent: 50 });
   assert.equal(playback.master.gain.value, 0.4);
-  const master = playback.master;
+  const master = playback.master, mixBus = playback.mixBus, mixProject = playback.mixProject;
+  const bus = playback.buses.get('bass');
   playback.createSchedule = () => { throw Error('Master gain must not rebuild notes'); };
   for (const masterVolumePercent of [0, 25, 100, 150]) {
-    const updated = { ...project, masterVolumePercent };
-    playback.updateMix(updated);
-    playback.reload(updated);
+    playback.updateMasterVolume(masterVolumePercent);
     assert.equal(playback.master, master);
     assert.equal(master.gain.events.at(-1).value, 0.8 * masterVolumePercent / 100);
+    assert.equal(playback.mixBus, mixBus);
+    assert.equal(playback.mixProject, mixProject);
+    assert.deepEqual(bus.gain.gain.events, []);
+    assert.deepEqual(bus.pan.pan.events, []);
     assert.equal(sources.length, 1);
   }
+  playback.stop();
+});
+
+test('volume changes during instrument preparation reach the new playback graph', async () => {
+  const { playback, project } = fixture();
+  let finishPreparing;
+  playback.prepareInstrument = () => new Promise(resolve => { finishPreparing = resolve; });
+  const started = playback.start({ ...project, masterVolumePercent: 65 });
+  playback.updateMasterVolume(25);
+  finishPreparing();
+  await started;
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.master.gain.value, 0.2);
+  playback.stop();
+});
+
+test('master volume restored by project history applies with LIVE off', async () => {
+  const { playback, project, projectSignal, TransportDockComponent } = transportFixture();
+  const quieter = { ...project, masterVolumePercent: 50 };
+  projectSignal.set(quieter);
+  new TransportDockComponent();
+  playback.toggleLive();
+  await playback.start(quieter);
+  playback.reload = () => { throw Error('LIVE reload is disabled'); };
+  projectSignal.set(project);
+  assert.equal(playback.master.gain.events.at(-1).value, 0.8);
+  projectSignal.set(quieter);
+  assert.equal(playback.master.gain.events.at(-1).value, 0.4);
   playback.stop();
 });
 test('live audition sustains to release and cancels cleanly during asynchronous preparation', async () => {

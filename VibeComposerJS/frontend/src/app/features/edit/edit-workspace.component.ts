@@ -200,7 +200,8 @@ export class EditWorkspaceComponent {
   });
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);
-  readonly editedTracks = computed(() => this.selectedTrack().role === 'drums' ? this.project().tracks.filter(track => track.role === 'drums') : [this.selectedTrack()]);
+  readonly editedTracks = computed(() => this.selectedTrack().role === 'drums'
+    ? this.projects.projectWithoutMasterVolumeChanges().tracks.filter(track => track.role === 'drums') : [this.selectedTrack()]);
   readonly drumInputTracks = computed(() => this.selectedPart() === 'drums'
     ? this.editedTracks().flatMap(track => track.role === 'drums' ? [{ trackId: track.id, midi: track.generatorSettings.pitch }] : [])
     : null);
@@ -441,14 +442,16 @@ export class EditWorkspaceComponent {
   private lastDuration = 0.5;
   get placementDuration(): number { return this.lastDuration; }
   readonly phraseBeats = computed(() => {
-    const section = this.project().arrangement.find(section => section.id === this.sectionId());
-    return this.phraseLength() ?? (section ? sectionDurationBeats(this.project(), section) : this.project().progression.length * 4);
+    const project = this.projects.projectWithoutMasterVolumeChanges();
+    const section = project.arrangement.find(section => section.id === this.sectionId());
+    return this.phraseLength() ?? (section ? sectionDurationBeats(project, section) : project.progression.length * 4);
   });
   readonly editBounds = computed(() => {
-    const section = this.project().arrangement.find(section => section.id === this.sectionId());
+    const project = this.projects.projectWithoutMasterVolumeChanges();
+    const section = project.arrangement.find(section => section.id === this.sectionId());
     if (!section) return { startBeat: -4, endBeat: this.phraseBeats() + 4 };
-    const bounds = sectionPhraseBounds(this.project(), section);
-    const sectionEnd = sectionDurationBeats(this.project(), section);
+    const bounds = sectionPhraseBounds(project, section);
+    const sectionEnd = sectionDurationBeats(project, section);
     return { startBeat: this.phraseStartBeat() === 0 ? bounds.startBeat : 0,
       endBeat: this.phraseBeats() + (this.phraseStartBeat() + this.phraseBeats() >= sectionEnd ? bounds.endBeat - sectionEnd : 0) };
   });

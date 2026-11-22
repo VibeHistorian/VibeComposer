@@ -143,7 +143,7 @@
         [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     }
     }
-      <vc-arrangement-overview [project]="project()"
+      <vc-arrangement-overview [project]="projects.projectWithoutMasterVolumeChanges()"
         [sectionHarmony]="sectionHarmony()"
         [loopRange]="loopRange()"
         [settingsTarget]="settingsTarget()"

@@ -34,7 +34,6 @@ export function midiPanValue(panPercent: number): number {
 }
 
 /** MIDI channel volume has no separate master bus; combine levels only at the output boundary. */
-export function withMasterVolume(track: import('../project/track.model').CompositionTrack, project?: import('../project/project.model').CompositionProject): import('../project/track.model').CompositionTrack {
-  const master = project?.masterVolumePercent ?? 100;
+export function withMasterVolume(track: import('../project/track.model').CompositionTrack, master = 100): import('../project/track.model').CompositionTrack {
   return master === 100 ? track : { ...track, mix: { ...track.mix, volumePercent: track.mix.volumePercent * master / 100 } };
 }
