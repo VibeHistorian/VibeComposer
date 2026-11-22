@@ -1,6 +1,8 @@
 import { fitVariationCapacity } from './arrangement-variation-capacity';
 import { ARRANGED_PARTS, type ArrangedPart } from '../music/part-role';
+import { shouldGenerateTrackInSection } from '../music/arrangement-generator';
 import { pruneVariations } from '../music/arrangement-variations';
+import { copyPartSettings, partPatchesEqual, partValuesEqual, settingsValues } from '../music/part-settings';
 import type { CompositionTrack } from './track.model';
 import { assignTrackMidiChannel } from './track-midi-channel';
 import { decodeTracks } from './project-track-decoder';
@@ -44,6 +46,30 @@ export function loadTrackPreset(project: CompositionProject, role: ArrangedPart 
     return next;
   }
   return loadRolePreset(project, role, decoded[0].tracks, replace, presence);
+}
+
+export function loadSectionRolePreset(project: CompositionProject, sectionId: string, role: ArrangedPart,
+  value: unknown): CompositionProject | undefined {
+  const section = project.arrangement.find(item => item.id === sectionId);
+  const decoded = decodeTrackPresets([{ name: 'Load', role, tracks: value }]);
+  if (!section || !decoded) return undefined;
+  const sources = decoded[0].tracks;
+  const destinations = project.tracks.filter(track => track.role === role && shouldGenerateTrackInSection(section, track));
+  const trackPartOverrides = { ...section.trackPartOverrides };
+  let changed = false;
+  // The overview numbers role tracks in project order.
+  for (const [index, track] of destinations.slice(0, sources.length).entries()) {
+    const source = sources[index];
+    const globalValues = settingsValues(track.generatorSettings, role);
+    const patch = Object.fromEntries(Object.entries(settingsValues(source.generatorSettings, role))
+      .filter(([key, value]) => !partValuesEqual(value, globalValues[key])));
+    if (partPatchesEqual(trackPartOverrides[track.id], patch)) continue;
+    if (Object.keys(patch).length) trackPartOverrides[track.id] = copyPartSettings(patch);
+    else delete trackPartOverrides[track.id];
+    changed = true;
+  }
+  return changed ? { ...project, arrangement: project.arrangement.map(item => item === section
+    ? { ...section, trackPartOverrides } : item) } : project;
 }
 
 function loadRolePreset(project: CompositionProject, role: ArrangedPart, sources: readonly CompositionTrack[], replace: boolean,

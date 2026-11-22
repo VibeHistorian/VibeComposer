@@ -146,15 +146,29 @@ export class WorkspaceCanvasComponent {
     return [{ id: 'factory', label: 'Factory', children: items([...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS], 'factory') },
       ...(user.length ? [{ id: 'user', label: 'User', children: user }] : [])];
   }
+  readonly rolePresetItems = computed(() => Object.fromEntries(ARRANGED_PARTS.map(role => [role, this.presetContextItems(role)])));
+
+  private findQuickPreset(role: ArrangedPart | 'all', presetId: string): TrackPreset | undefined {
+    const factory = presetId.startsWith('factory:');
+    const source = factory ? [...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS] : this.trackPresetStorage.library() ?? [];
+    return source.find(preset => preset.role === role && `${factory ? 'factory' : 'user'}:${preset.name}` === presetId);
+  }
+
   loadQuickPreset(role: ArrangedPart | 'all', action: ContextMenuAction): void {
     if (this.editing()) return;
-    const factory = action.id.startsWith('factory:');
-    const source = factory ? [...BUILTIN_TRACK_PRESETS, ...BUILTIN_MULTI_ROLE_PRESETS] : this.trackPresetStorage.library() ?? [];
-    const preset = source.find(preset => preset.role === role && `${factory ? 'factory' : 'user'}:${preset.name}` === action.id);
+    const preset = this.findQuickPreset(role, action.id);
     if (!preset) return;
     const replace = this.preferences.replacePresetTracks();
     const result = this.projects.loadTrackPreset(role, preset.tracks, this.invertQuickPresetReplace ? !replace : replace);
     this.allRoleMessage.set(result === 'invalid' ? 'Cannot load preset. Check track capacity and local settings.' : '');
+  }
+
+  loadRoleCellPreset({ sectionId, role, presetId }: { sectionId: string; role: ArrangedPart; presetId: string }): void {
+    if (this.editing()) return;
+    const preset = this.findQuickPreset(role, presetId);
+    if (!preset) return;
+    const result = this.projects.loadSectionRolePreset(sectionId, role, preset.tracks);
+    this.allRoleMessage.set(result === 'invalid' ? 'Cannot load preset. Check section settings.' : '');
   }
   readonly allRoleExpanded = signal(false);
   readonly allRoleMessage = signal('');

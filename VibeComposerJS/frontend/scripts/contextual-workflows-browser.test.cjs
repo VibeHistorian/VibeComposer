@@ -63,8 +63,9 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
             generatorSettings: { ...base.generatorSettings, ...(role === 'bass' && i === 2 ? { transpose: 12 } : {}) } });
           // Existing one-based presence lists leave appended tracks absent.
         }
+        project.arrangement[0].trackPresence.bass = [1];
         project.arrangement[0].rolePartOverrides = { bass: { noteVariation: 35 } };
-        project.arrangement[0].trackPartOverrides = { 'track-bass-2': { noteVariation: 45 } };
+        project.arrangement[0].trackPartOverrides = { 'track-bass-1': { patternShift: 0 }, 'track-bass-2': { noteVariation: 45 } };
         project.melodyGlobal = { ...project.melodyGlobal, contextualMelody: false };
         await (${clearWorkspace})();sessionStorage.setItem('vibecomposer.project.v12', JSON.stringify(project));
         sessionStorage.setItem('contextual-fixture', 'ready'); location.reload(); return;
@@ -182,6 +183,35 @@ for (const width of [1440, 780]) test(`production contextual workflows with 30 t
       if (document.querySelector('vc-track-preset-dialog')) throw new Error('quick preset opened manager');
       document.querySelector('[aria-label="Undo"]').click();
       await wait(() => JSON.stringify(read()) === beforeQuickPreset, 'undo quick factory preset');
+      const overview = document.querySelector('vc-arrangement-overview canvas[tabindex]');
+      const cellBounds = overview.getBoundingClientRect();
+      const roleCellClick = (type, shiftKey = false) => overview.dispatchEvent(new MouseEvent(type, {
+        bubbles: true, cancelable: true, button: 2, shiftKey, clientX: cellBounds.left + 30, clientY: cellBounds.top + 201,
+      }));
+      for (const [source, preset, noteVariation] of [
+        ['User', 'Browser bass (1)', undefined],
+        ['Factory', 'Deep House · 118–124 BPM (2)', 8],
+      ]) {
+        roleCellClick('contextmenu');
+        roleCellClick('auxclick');
+        const factoryMenu = await wait(() => menuChoice('Factory'), 'role cell factory presets');
+        if (document.activeElement !== factoryMenu) throw new Error('role cell menu did not receive focus');
+        (await wait(() => menuChoice(source), 'role cell ' + source + ' presets')).dispatchEvent(new MouseEvent('mouseenter'));
+        (await wait(() => menuChoice(preset), 'role cell preset')).click();
+        await wait(() => {
+          const patch = read().arrangement[0].trackPartOverrides['track-bass-1'];
+          return source === 'User' ? patch === undefined : patch?.noteVariation === noteVariation;
+        }, 'section preset saved');
+        if (JSON.stringify(read().tracks) !== JSON.stringify(JSON.parse(beforeQuickPreset).tracks)) throw new Error('section preset changed global tracks');
+        document.querySelector('[aria-label="Undo"]').click();
+        await wait(() => JSON.stringify(read()) === beforeQuickPreset, 'undo role cell preset');
+      }
+      roleCellClick('contextmenu', true);
+      roleCellClick('auxclick', true);
+      await wait(() => !read().arrangement[0].rolePartOverrides?.bass, 'shift-right-click still resets section role');
+      if (menuChoice('Factory')) throw new Error('shift-right-click opened the preset menu');
+      document.querySelector('[aria-label="Undo"]').click();
+      await wait(() => JSON.stringify(read()) === beforeQuickPreset, 'undo role cell reset');
       const groupToggle = () => document.querySelector('.group-track-toggle');
       const trackRows = () => [...document.querySelectorAll('.group-track-settings-row')];
       const rowControl = (id, key) => document.querySelector('.group-track-settings-row[data-track-id="' + id + '"] [data-control-key="' + key + '"] input');

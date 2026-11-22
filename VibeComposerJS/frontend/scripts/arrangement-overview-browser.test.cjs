@@ -99,6 +99,7 @@ test('arrangement scrollbar layout settles after local edits, zoom, and resizing
       computed: read => read, effect: () => {}, input, signal, inject: () => ({ subscribe: () => () => {}, appearance: () => ({}) }), output: () => ({ emit() {} }),
       viewChild: { required: name => () => ({ nativeElement: refs.get(name) }) } };
     const dependencies = { '@angular/core': angular,
+      '../../shared/context-menu.component': { ContextMenuComponent: class ContextMenuComponent {} },
       '../../core/music/phrase-range-edit': (() => { const module={exports:{}}; const exports=module.exports; ${rangeCode}; return module.exports; })(),
       '../../core/music/phrase-inputs': (() => { const module={exports:{}}; const exports=module.exports; ${phraseInputsCode}; return module.exports; })(),
       '../../core/ui/modifier-keys.service': { ModifierKeysService: class ModifierKeysService {} },

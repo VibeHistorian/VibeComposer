@@ -2,6 +2,65 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { fixture } = require('./support/project-fixture.cjs');
 
+test('section role presets overwrite only present slots in display order and commit once', () => {
+  const { service, workspace, uiStored } = fixture();
+  const first = service.project().tracks.find(track => track.role === 'bass').id;
+  const second = service.addTrack('bass');
+  const third = service.addTrack('bass');
+  const fourth = service.addTrack('bass');
+  const sectionId = service.project().arrangement[0].id;
+  const scope = trackId => ({ kind: 'section-track', sectionId, trackId });
+  for (const [id, present] of [[first, false], [second, true], [third, false], [fourth, true]]) {
+    service.setSectionTrackPresence(0, id, present);
+    service.updatePartSettings(scope(id), { noteVariation: 60 });
+  }
+  service.updatePartSettings({ kind: 'section-role', sectionId, role: 'bass' }, { transpose: 12 });
+  service.updatePartSettings(scope(second), { transpose: -12 });
+  service.setTrackRerollLock(second, true);
+  const before = service.exportProjectJson();
+  const project = service.project();
+  const sources = [10, 20, 30].map((noteVariation, index) => {
+    const track = project.tracks.find(track => track.id === (index === 1 ? fourth : second));
+    return { ...track, id: 'preset-' + index, generatorSettings: { ...track.generatorSettings, noteVariation } };
+  });
+  uiStored.set('vibecomposer.track-presets', JSON.stringify([{ name: 'Single', role: 'bass', tracks: sources.slice(0, 1) }]));
+  workspace.loadRoleCellPreset({ sectionId, role: 'bass', presetId: 'user:Single' });
+  const short = service.project().arrangement[0].trackPartOverrides;
+  assert.deepEqual([first, second, third, fourth].map(id => short[id].noteVariation), [60, 10, 60, 60]);
+  assert.deepEqual(short[second], { noteVariation: 10 });
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+
+  assert.equal(service.loadSectionRolePreset(sectionId, 'bass', sources), 'changed');
+  const after = service.project();
+  const { trackPartOverrides, ...section } = after.arrangement[0];
+  const { trackPartOverrides: previousOverrides, ...previousSection } = project.arrangement[0];
+  assert.equal(trackPartOverrides[second].noteVariation, 10);
+  assert.equal(Object.hasOwn(trackPartOverrides, fourth), false);
+  assert.deepEqual(trackPartOverrides[first], previousOverrides[first]);
+  assert.deepEqual(trackPartOverrides[third], previousOverrides[third]);
+  assert.deepEqual(section, previousSection);
+  assert.deepEqual(after.tracks, project.tracks);
+  assert.deepEqual(after.arrangement.slice(1), project.arrangement.slice(1));
+  assert.equal(service.loadSectionRolePreset(sectionId, 'bass', sources), 'unchanged');
+  assert.equal(service.loadSectionRolePreset(sectionId, 'chords', sources), 'invalid');
+  service.undo();
+  assert.equal(service.exportProjectJson(), before);
+});
+
+test('section arpeggio presets compare hits using the legacy rate fallback', () => {
+  const { service } = fixture();
+  const track = service.project().tracks.find(track => track.role === 'arpeggio');
+  const sectionId = service.project().arrangement[0].id;
+  service.setSectionTrackPresence(0, track.id, true);
+  const preset = { ...track, generatorSettings: { ...track.generatorSettings, rate: 'sixteenth' } };
+  assert.equal(service.loadSectionRolePreset(sectionId, 'arpeggio', [preset]), 'changed');
+  assert.deepEqual(service.project().arrangement[0].trackPartOverrides[track.id], { hitsPerPattern: 16 });
+  assert.equal(service.loadSectionRolePreset(sectionId, 'arpeggio',
+    [{ ...preset, generatorSettings: { ...preset.generatorSettings, hitsPerPattern: 8 } }]), 'changed');
+  assert.equal(service.project().arrangement[0].trackPartOverrides[track.id], undefined);
+});
+
 test('quick preset menus group current libraries and load with the remembered replace preference', () => {
   const { service, workspace, uiPreferences, uiStored, load } = fixture();
   const { UiPreferencesService } = load('core/ui/ui-preferences.service.ts');

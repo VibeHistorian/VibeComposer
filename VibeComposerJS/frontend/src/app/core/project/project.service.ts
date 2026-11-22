@@ -10,7 +10,7 @@ import { fitVariationCapacity } from './arrangement-variation-capacity';
 import { DEFAULT_VARIATION_POLICY, pruneVariations, validVariationPolicy } from '../music/arrangement-variations';
 import type { VariationPolicy } from '../music/arrangement-variation.model';
 import type { VariationDraft, VariationDraftOptions } from './arrangement-variation-draft';
-import { loadTrackPreset } from './track-presets';
+import { loadSectionRolePreset, loadTrackPreset } from './track-presets';
 import { assignTrackMidiChannel } from './track-midi-channel';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
@@ -1131,6 +1131,12 @@ export class ProjectService {
     const candidate = loadTrackPreset(this.state(), role, tracks, replace,
       (added, section) => generateTrackPresence(added, this.sectionTypeSettings.chances()[section.type]));
     return candidate ? this.commitPartWorkflow(candidate) : 'invalid';
+  }
+
+  loadSectionRolePreset(sectionId: string, role: ArrangedPart, tracks: unknown): PartWorkflowResult {
+    const current = this.state();
+    const candidate = loadSectionRolePreset(current, sectionId, role, tracks);
+    return candidate ? candidate === current ? 'unchanged' : this.commitPartWorkflow(candidate) : 'invalid';
   }
 
   addTrack(role: ArrangedPart, scorePoint?: { sectionId: string; midi: number; scope?: 'section' | 'global' }): string | undefined {

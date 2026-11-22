@@ -30,6 +30,7 @@ function fixture(reactivity) {
     '../../core/music/phrase-bounds': require('./music-loader.cjs').loadMusic('phrase-bounds.ts'),
     '../../core/music/section-context': require('./music-loader.cjs').loadMusic('section-context.ts'),
     '@angular/core': angular,
+    '../../shared/context-menu.component': { ContextMenuComponent: class ContextMenuComponent {} },
     '../../core/music/part-role': { ARRANGED_PARTS: ['melody', 'chords', 'arpeggio', 'bass', 'drums'] },
     '../../core/project/arrangement.model': { SECTION_TYPES: [] },
     '../../core/music/arrangement-generator': { shouldGenerateTrackInSection: (section, track) => section.presentTracks.includes(track.id) },
@@ -697,7 +698,7 @@ test('overview mouse shortcuts target tracks, cells and headers without toggling
   const { component } = fixture();
   const mouse = (area, button, shiftKey = false) => ({ button, shiftKey,
     clientX: area.x + area.width / 2, clientY: area.y + area.height / 2,
-    preventDefault() { this.prevented = true; } });
+    preventDefault() { this.prevented = true; }, stopPropagation() {} });
   for (const [key, target] of [
     ['toggle:intro:bass-1', { sectionId: 'intro', trackId: 'bass-1' }],
     ['cell:intro:bass', { sectionId: 'intro', role: 'bass' }],

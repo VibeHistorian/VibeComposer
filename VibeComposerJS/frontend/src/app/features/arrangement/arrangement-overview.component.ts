@@ -4,7 +4,7 @@ import type { ArrangementPhraseSource, ArrangementPhraseTarget, ArrangementPhras
 import { UiPreferencesService } from '../../core/ui/ui-preferences.service';
 import { sectionDurationBeats, sectionChordDurations } from '../../core/music/section-context';
 import type { SectionHarmonyDisplay } from '../../core/music/harmony-display';
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { type ArrangedPart, ARRANGED_PARTS } from '../../core/music/part-role';
 import { type ArrangementSection, type SectionType, SECTION_TYPES } from '../../core/project/arrangement.model';
 import type { CompositionProject } from '../../core/project/project.model';
@@ -14,6 +14,7 @@ import { resolveProjectTimeline } from '../../core/music/project-timeline';
 import { hasManualPhrase } from '../../core/music/phrase-range-edit';
 import type { SettingsTarget } from '../../core/ui/workspace-ui.service';
 import type { PlaybackRange } from '../../core/audio/audio-playback.service';
+import { ContextMenuComponent, type ContextMenuItem } from '../../shared/context-menu.component';
 
 /** CSS brightness scales sRGB channels without changing source alpha. */
 export function arrangementBrightnessColor(color: string, factor: number): string {
@@ -41,7 +42,13 @@ interface PreviewNote {
   readonly overflow: boolean;
 }
 
+interface OverviewRoleCell {
+  readonly sectionId: string;
+  readonly role: ArrangedPart;
+}
+
 interface OverviewHitArea {
+  readonly roleCell?: OverviewRoleCell;
   readonly copySource?: ArrangementPhraseSource;
   readonly copyTarget?: ArrangementPhraseTarget;
   readonly key: string;
@@ -71,6 +78,7 @@ const ROLE_NAMES: Readonly<Record<ArrangedPart, string>> = {
 
 @Component({
   selector: 'vc-arrangement-overview',
+  imports: [ContextMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './arrangement-overview.component.html',
   styleUrl: './arrangement-overview.component.css',
@@ -142,7 +150,21 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     readonly ctrlKey?: boolean; readonly metaKey?: boolean; readonly shiftKey?: boolean; readonly altKey?: boolean }>();
   readonly selectionCleared = output<void>();
   readonly groupSelected = output<ArrangedPart>();
-  readonly cellSelected = output<{ readonly sectionId: string; readonly role: ArrangedPart }>();
+  readonly cellSelected = output<OverviewRoleCell>();
+  readonly rolePresetItems = input<Partial<Record<ArrangedPart, readonly ContextMenuItem[]>>>({});
+  private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly presetTarget = signal<OverviewRoleCell | null>(null);
+  readonly presetItems = computed(() => {
+    const target = this.presetTarget();
+    return target ? this.rolePresetItems()[target.role] ?? [] : [];
+  });
+  readonly rolePresetRequested = output<OverviewRoleCell & { readonly presetId: string }>();
+
+  chooseRolePreset(presetId: string): void {
+    const target = this.presetTarget();
+    if (target) this.rolePresetRequested.emit({ ...target, presetId });
+  }
+
   readonly trackSelected = output<{ readonly sectionId: string; readonly trackId: string }>();
   readonly partToggled = output<{ readonly sectionId: string; readonly trackId: string; readonly present: boolean }>();
   readonly groupPresenceToggled = output<{ readonly sectionId: string; readonly role: ArrangedPart }>();
@@ -509,9 +531,10 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
           context.strokeStyle = this.accent;
           context.strokeRect(x + 0.5, y + 0.5, width - 1, this.rowHeight - 1);
         }
-        hit({ copySource: { sectionId: item.section.id, role: group.role }, key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
-          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Presence controls: Settings > Shortcuts.`,
-          activate: () => this.cellSelected.emit({ sectionId: item.section.id, role: group.role }),
+        const roleCell = { sectionId: item.section.id, role: group.role };
+        hit({ roleCell, copySource: roleCell, key: `cell:${item.section.id}:${group.role}`, x, y, width, height: this.rowHeight,
+          label: `Select ${group.name} settings in ${this.sectionLabel(item.section.type)}, bars ${this.measureLabel(item)}. ${customized ? 'Customized' : 'Inherited'}. Right-click for presets. Presence controls: Settings > Shortcuts.`,
+          activate: () => this.cellSelected.emit(roleCell),
           togglePresence: () => this.groupPresenceToggled.emit({ sectionId: item.section.id, role: group.role }),
           reroll: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reroll' }),
           reset: () => this.tracksChangeRequested.emit({ sectionId: item.section.id, role: group.role, action: 'reset' }) }, this.labelWidth, RULER_HEIGHT);
@@ -802,21 +825,22 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
     this.scoreCanvas().nativeElement.setPointerCapture(event.pointerId);
   }
 
-  private runShortcut(area: OverviewHitArea, event: KeyboardEvent | MouseEvent): boolean {
+  private shortcutAction(area: OverviewHitArea, event: KeyboardEvent | MouseEvent): (() => void) | undefined {
     const actions = [
       ['reroll', area.reroll], ['reset', area.reset], ['duplicateSection', area.duplicate],
       ['removeSection', area.remove], ['presence', area.togglePresence],
     ] as const;
-    for (const [id, action] of actions) {
-      if (action && this.preferences.matchesShortcut(id, event)) {
-        event.preventDefault();
-        event.stopPropagation?.();
-        action();
-        this.scheduleDraw();
-        return true;
-      }
-    }
-    return false;
+    return actions.find(([id, action]) => action && this.preferences.matchesShortcut(id, event))?.[1];
+  }
+
+  private runShortcut(area: OverviewHitArea, event: KeyboardEvent | MouseEvent): boolean {
+    const action = this.shortcutAction(area, event);
+    if (!action) return false;
+    event.preventDefault();
+    event.stopPropagation?.();
+    action();
+    this.scheduleDraw();
+    return true;
   }
 
   onCanvasAuxclick(event: MouseEvent): void {
@@ -825,8 +849,18 @@ export class ArrangementOverviewComponent implements AfterViewInit, OnDestroy {
   }
 
   onCanvasContextmenu(event: MouseEvent): void {
-    // Actions run on auxclick, once per gesture.
-    if (this.hitAt(event)) event.preventDefault();
+    const area = this.hitAt(event);
+    if (area?.roleCell && this.rolePresetItems()[area.roleCell.role]?.length
+      && event.button === 2 && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey
+      && !this.shortcutAction(area, event)) {
+      this.presetTarget.set(area.roleCell);
+      // Give the trigger the new role's items before the event bubbles up and opens the menu.
+      this.changeDetector.detectChanges();
+      return;
+    }
+    // Shortcut actions run on auxclick, once per gesture.
+    if (area) event.preventDefault();
+    event.stopPropagation();
   }
 
   onPointerMove(event: PointerEvent): void {
