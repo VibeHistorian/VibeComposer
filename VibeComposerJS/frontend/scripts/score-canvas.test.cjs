@@ -1549,6 +1549,54 @@ test('instrument shapes follow sound character and log envelopes surround the tr
   }
 });
 
+test('short log note outlines stay within compact pitch rows after Pixi tessellation', () => {
+  const { Graphics, buildLine } = require('pixi.js');
+  const { component: c } = fixture();
+  c.staticGraphics = new Graphics();
+  c.dynamicGraphics = new Graphics();
+  c.horizontalOffset = 0;
+  c.horizontalScale = 1;
+  c.playhead = 5;
+  c.overviewNotePitchBounds = () => ({ notePitchMin: 0, notePitchMax: 127 });
+  c.preferences.scoreNoteShape = () => 'instrument-log';
+  c.preferences.scoreOutlineOtherTracks = () => true;
+  const notes = [0, 48].map((instrumentProgram, index) => ({
+    id: String(index), part: String(index), color: 'melody', midi: 60 + index, instrumentProgram,
+    startBeat: 4, durationBeats: .4, velocity: 90, opacity: 1,
+  }));
+  c.model = {
+    tracks: notes.map(note => ({ id: note.part, color: note.color })),
+    notes, sections: [], totalBeats: 80, selectedTrackId: '0', hiddenTrackIds: new Set(),
+  };
+  const polygonStrokeBounds = graphics => graphics.context.instructions.flatMap(({ action, data }) => {
+    if (action !== 'stroke') return [];
+    return data.path.shapePath.shapePrimitives.filter(({ shape }) => shape.type === 'polygon' && shape.closePath !== false).map(({ shape }) => {
+      const vertices = [];
+      buildLine(shape.points, data.style, false, true, vertices, []);
+      const y = vertices.filter((_, index) => index % 2 === 1);
+      return { top: Math.min(...y), bottom: Math.max(...y) };
+    });
+  });
+  for (const rowHeight of [2, 10]) {
+    c.height = 128 * rowHeight;
+    c.drawStatic();
+    const outlines = polygonStrokeBounds(c.staticGraphics);
+    const highlights = polygonStrokeBounds(c.dynamicGraphics);
+    assert.equal(outlines.length, notes.length);
+    assert.equal(highlights.length, notes.length);
+    notes.forEach((note, index) => {
+      const row = c.gutterRows().find(row => row.midi === note.midi);
+      const bounds = c.hitAreas[index].visualBounds;
+      assert.ok(outlines[index].top >= row.y && outlines[index].bottom <= row.y + row.height,
+        `program ${note.instrumentProgram} fits in its ${rowHeight}px row`);
+      assert.ok(highlights[index].top >= bounds.y - 3.5 && highlights[index].bottom <= bounds.y + bounds.height + 3.5,
+        'playback highlight stays within its padding and centered stroke');
+    });
+  }
+  c.staticGraphics.destroy();
+  c.dynamicGraphics.destroy();
+});
+
 test('log note polygons keep subpixel envelope error across zoom levels and cache by height', () => {
   const { logNoteContour, logNotePolygon, LOG_NOTE_MAX_ERROR } = scoreHelper('score-note-shape');
   assert.equal(logNoteContour(13, true), logNoteContour(16, true));

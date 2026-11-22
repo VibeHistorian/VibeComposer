@@ -14,7 +14,7 @@ import type { ModifierState } from '../../core/ui/modifier-observer';
 import {
   AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, computed, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
-import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics } from 'pixi.js';
+import type { Application as PixiApplication, Color as PixiColor, Graphics as PixiGraphics, StrokeStyle } from 'pixi.js';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 import type { PhraseSource } from '../../core/music/phrase';
 import { snapMidiToScale, type PhraseDragMode } from '../../core/music/phrase-edit';
@@ -1303,12 +1303,20 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
       const parsed = parsedNote;
       if (noteHeight > 0) {
         const shape = this.noteShape(graphics, x, y, noteWidth, noteHeight, Math.min(3, noteHeight / 2), note);
+        const logNote = !this.editable() && this.preferences.scoreNoteShape() === 'instrument-log';
+        // Miter joins spike at the steep start of short log notes. Fit the bevel stroke into the row's remaining quarter.
+        const outline: StrokeStyle = {
+          color: parsed.value,
+          alpha: opacity * parsed.alpha,
+          width: logNote ? Math.min(1, rowHeight / 4) : 1,
+          join: logNote ? 'bevel' : 'miter',
+        };
         if (!this.editable() && this.preferences.scoreOutlineOtherTracks() && selectedTrackId !== note.part) {
-          shape.stroke({ color: parsed.value, alpha: opacity * parsed.alpha, width: 1 });
+          shape.stroke(outline);
         } else {
           const fillOpacity = 0.15 + Math.max(0, Math.min(127, note.velocity)) / 127 * 0.65;
           shape.fill({ color: parsed.value, alpha: fillOpacity * parsed.alpha })
-            .stroke({ color: parsed.value, alpha: opacity * parsed.alpha, width: 1 });
+            .stroke(outline);
         }
       }
       if (this.velocityVisible()) {
@@ -1379,7 +1387,8 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
     const beat = this.playhead / 100 * (this.model?.totalBeats ?? 1) + (this.model?.timelineStartBeat ?? 0);
     for (const area of this.hitAreas) {
       if (beat < area.note.startBeat || beat >= area.note.startBeat + area.note.durationBeats) continue;
-      const bounds = !this.editable() && this.preferences.scoreNoteShape() !== 'classic' ? (area.visualBounds ?? area) : area;
+      const noteShapeMode = this.editable() ? 'classic' : this.preferences.scoreNoteShape();
+      const bounds = noteShapeMode !== 'classic' ? (area.visualBounds ?? area) : area;
       const glowStrength = 1 - (beat - area.note.startBeat) / area.note.durationBeats;
       let glow = glowColors.get(area.note.color);
       if (glow === undefined) {
@@ -1387,7 +1396,7 @@ export class ScoreCanvasComponent implements AfterViewInit, OnDestroy {
         glowColors.set(area.note.color, glow);
       }
       this.noteShape(graphics, bounds.x - 3, bounds.y - 2, bounds.width + 6, bounds.height + 4, 3, area.note)
-        .stroke({ color: glow, alpha: 0.325 * glowStrength, width: 3 });
+        .stroke({ color: glow, alpha: 0.325 * glowStrength, width: 3, join: noteShapeMode === 'instrument-log' ? 'bevel' : 'miter' });
       this.noteShape(graphics, bounds.x, bounds.y + bounds.height / 4, bounds.width, bounds.height / 2, 2, area.note)
         .fill({ color: glow, alpha: 0.4 * glowStrength });
     }
