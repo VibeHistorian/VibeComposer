@@ -17,7 +17,12 @@ import { beatToSeconds, secondsToBeat, type TempoPoint } from '../music/section-
 
 type PlaybackState = 'stopped' | 'playing' | 'paused';
 interface ScheduledNote extends PhraseNote { readonly trackId: string; readonly role: ArrangedPart; }
-interface PartBus { readonly gain: GainNode; readonly pan: StereoPannerNode; }
+interface PartBus {
+  readonly gain: GainNode;
+  readonly pan: StereoPannerNode;
+  track: CompositionTrack;
+  audible: boolean;
+}
 export interface RecordingBackingContext { readonly project: CompositionProject; readonly startBeat: number; readonly captureBeat?: () => number; readonly trackIds: readonly string[]; }
 export interface RecordingBackingSession { readonly ready: Promise<void>; beat(): number; active(): boolean; stop(): void; }
 export interface PlaybackRange { readonly startBeat: number; readonly endBeat: number; }
@@ -57,6 +62,9 @@ export class AudioPlaybackService {
   private context?: AudioContext;
   private master?: GainNode;
   private masterVolumePercent = 100;
+  private committedTrackVolumes = new Map<string, number>();
+  private trackVolumeOverrides = new Map<string, number>();
+  private pendingTrackVolumes?: Map<string, number>;
   private mixBus?: GainNode;
   private synth?: InstrumentEngine;
   private startRequest = 0;
@@ -112,7 +120,7 @@ export class AudioPlaybackService {
           const beat = this.currentSongBeat();
           this.clearScheduler();
           this.stopSources();
-          void this.start(this.mixProject, beat, this.masterVolumePercent);
+          void this.startPlayback(this.mixProject, beat, false);
         } else if (this.state() === 'playing') this.restartAt(this.currentSongBeat());
         else this.stopSources();
       });
@@ -249,16 +257,24 @@ export class AudioPlaybackService {
     await this.start(project, this.state() === 'stopped' && resumeAt === 0 ? undefined : resumeAt);
   }
 
-  async start(project: CompositionProject, startBeat?: number | (() => number), masterVolume = project.masterVolumePercent ?? 100): Promise<void> {
+  start(project: CompositionProject, startBeat?: number | (() => number)): Promise<void> {
+    return this.startPlayback(project, startBeat, true);
+  }
+
+  private async startPlayback(project: CompositionProject, startBeat: number | (() => number) | undefined, resetVolumes: boolean): Promise<void> {
     const request = ++this.startRequest;
+    // Keep the current mix active while preparing the new graph.
+    this.pendingTrackVolumes = resetVolumes ? new Map() : undefined;
     this.playbackError.set('');
     try {
-      this.updateMasterVolume(masterVolume);
+      if (resetVolumes) this.updateMasterVolume(project.masterVolumePercent ?? 100);
       const context = this.getContext();
       if (context.state !== 'running') await context.resume();
       if (context.state !== 'running') throw new Error('Audio is interrupted. Press Play to resume when audio is available.');
       if (!this.midi.selectedOutput()) await this.prepareInstrument(context);
       if (request !== this.startRequest) return;
+      if (this.pendingTrackVolumes) this.trackVolumeOverrides = this.pendingTrackVolumes;
+      this.pendingTrackVolumes = undefined;
       this.clearScheduler();
       this.stopSources();
       this.prepareMix(project, context);
@@ -280,6 +296,7 @@ export class AudioPlaybackService {
       this.startScheduler();
     } catch (error: unknown) {
       if (request !== this.startRequest) return;
+      this.pendingTrackVolumes = undefined;
       this.clearScheduler();
       this.stopSources();
       this.playbackState.set('stopped');
@@ -298,6 +315,7 @@ export class AudioPlaybackService {
 
   stop(): void {
     this.startRequest++;
+    this.pendingTrackVolumes = undefined;
     this.clearScheduler();
     this.stopSources();
     this.position.set(this.timelineStart());
@@ -415,9 +433,47 @@ export class AudioPlaybackService {
       const tracks = this.mixProject.tracks;
       const anySolo = tracks.some(track => track.mix.solo);
       for (const track of tracks) {
-        this.midi.updateVolume(track, mixEnabled(track.mix, anySolo) ? track.mix.volumePercent * volume / 100 : 0);
+        this.midi.updateVolume(track, mixEnabled(track.mix, anySolo) ? this.trackVolume(track) * volume / 100 : 0);
       }
     }
+  }
+
+  updateTrackVolume(trackId: string, volume: number): void {
+    this.pendingTrackVolumes?.set(trackId, volume);
+    if (volume === this.trackVolumeOverrides.get(trackId)) return;
+    this.trackVolumeOverrides.set(trackId, volume);
+    const bus = this.buses.get(trackId);
+    if (!bus || !this.context || this.state() === 'stopped') return;
+    if (this.midi.selectedOutput()) {
+      this.midi.updateVolume(bus.track, bus.audible ? volume * this.masterVolumePercent / 100 : 0);
+    } else {
+      bus.gain.gain.setTargetAtTime(bus.audible ? volume / 100 : 0, this.context.currentTime, 0.02);
+    }
+  }
+
+  /** Follow committed changes, including history, without resetting an unrelated knob preview. */
+  syncTrackVolumes(tracks: readonly CompositionTrack[]): void {
+    const volumes = new Map(tracks.map(track => [track.id, track.mix.volumePercent]));
+    for (const [id, volume] of volumes) {
+      if (volume !== this.committedTrackVolumes.get(id)) this.updateTrackVolume(id, volume);
+    }
+    for (const id of this.committedTrackVolumes.keys()) {
+      if (!volumes.has(id)) {
+        // A track can still be playing from the previous arrangement with LIVE off.
+        if (!this.buses.has(id)) this.trackVolumeOverrides.delete(id);
+        this.pendingTrackVolumes?.delete(id);
+      }
+    }
+    this.committedTrackVolumes = volumes;
+  }
+
+  private trackVolume(track: CompositionTrack): number {
+    return this.trackVolumeOverrides.get(track.id) ?? track.mix.volumePercent;
+  }
+
+  private midiTrack(track: CompositionTrack): CompositionTrack {
+    const volumePercent = this.trackVolume(track) * this.masterVolumePercent / 100;
+    return volumePercent === track.mix.volumePercent ? track : { ...track, mix: { ...track.mix, volumePercent } };
   }
 
   updateMix(project: CompositionProject): void {
@@ -429,10 +485,12 @@ export class AudioPlaybackService {
       const settings = track.mix;
       this.programs.set(track.id, settings.program);
       const audible = mixEnabled(settings, anySolo);
-      this.midi.configure(withMasterVolume(track, this.masterVolumePercent), audible);
+      this.midi.configure(this.midiTrack(track), audible);
       const bus = this.buses.get(track.id);
       if (!bus) continue;
-      bus.gain.gain.setTargetAtTime(audible ? settings.volumePercent / 100 : 0, now, 0.02);
+      bus.track = track;
+      bus.audible = audible;
+      bus.gain.gain.setTargetAtTime(audible ? this.trackVolume(track) / 100 : 0, now, 0.02);
       bus.pan.pan.setTargetAtTime(settings.panPercent / 100, now, 0.02);
     }
   }
@@ -528,12 +586,12 @@ export class AudioPlaybackService {
       this.programs.set(track.id, settings.program);
       const audible = mixEnabled(settings, anySolo);
       const gain = context.createGain();
-      gain.gain.value = audible ? settings.volumePercent / 100 : 0;
+      gain.gain.value = audible ? this.trackVolume(track) / 100 : 0;
       const pan = context.createStereoPanner();
       pan.pan.value = settings.panPercent / 100;
       gain.connect(pan);
       pan.connect(this.mixBus);
-      this.buses.set(track.id, { gain, pan });
+      this.buses.set(track.id, { gain, pan, track, audible });
     }
   }
 
@@ -688,7 +746,7 @@ export class AudioPlaybackService {
       const project = this.mixProject;
       const track = project?.tracks.find(track => track.id === note.trackId);
       if (track && mixEnabled(track.mix, project!.tracks.some(track => track.mix.solo))) {
-        this.midi.schedule(withMasterVolume(track, this.masterVolumePercent), note.midi, note.velocity,
+        this.midi.schedule(this.midiTrack(track), note.midi, note.velocity,
           performance.now() + (startTime - context.currentTime) * 1000, duration,
           track.role === 'drums' ? this.drumSlotsFor(project!) : undefined);
         this.scheduledNotes.push({ trackId: note.trackId, noteId: note.id, startTime, endTime: startTime + duration });

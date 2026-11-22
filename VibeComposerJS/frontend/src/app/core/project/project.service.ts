@@ -3,7 +3,7 @@ import { followHarmonyMode } from '../music/harmony-mode';
 import { MAX_DRUM_SOUNDS } from '../music/drum-instruments';
 import { projectDrumPitches, reconcileDrumKit } from './project-drum-kit';
 import { copyArrangementPhrase, type ArrangementPhraseCopy } from './arrangement-phrase-copy';
-import { samePhraseInputs, sameProjectExceptMasterVolume } from '../music/phrase-inputs';
+import { samePhraseInputs, sameProjectExceptVolume } from '../music/phrase-inputs';
 import type { TrackDuplicationOptions } from './track-duplication';
 import * as arrangementCommands from './project-arrangement-commands';
 import { fitVariationCapacity } from './arrangement-variation-capacity';
@@ -93,7 +93,7 @@ export class ProjectService {
   private readonly historyRevision = signal(0);
 
   readonly project = this.state.asReadonly();
-  readonly projectWithoutMasterVolumeChanges = computed(this.project, { equal: sameProjectExceptMasterVolume });
+  readonly projectWithoutVolumeChanges = computed(this.project, { equal: sameProjectExceptVolume });
   private readonly generationFailure = signal<string | null>(null);
   readonly generationError = this.generationFailure.asReadonly();
   dismissGenerationError(): void { this.generationFailure.set(null); }
@@ -1237,8 +1237,15 @@ export class ProjectService {
     if (patch.mix?.program !== undefined && patch.mix.program !== track.mix.program) {
       delete (tracks[index] as { instrumentPool?: string }).instrumentPool;
     }
-    this.commit({ ...current, tracks }, Object.keys(patch).length === 1
-      ? this.controlHistoryKey(['track', trackId, ...(patch.mix ? ['mix'] : [])], patch.mix ?? patch) : undefined);
+    const controlKey = Object.keys(patch).length === 1
+      ? this.controlHistoryKey(['track', trackId, ...(patch.mix ? ['mix'] : [])], patch.mix ?? patch) : undefined;
+    if (controlKey !== undefined && patch.mix?.volumePercent !== undefined) {
+      if (tracks[index].mix.volumePercent !== track.mix.volumePercent) {
+        this.publishHistoryEdit(current, { ...current, tracks }, controlKey);
+      }
+      return;
+    }
+    this.commit({ ...current, tracks }, controlKey);
   }
 
   updateTrackGeneratorSettings(trackId: string, patch: PartSettingsPatch): void {

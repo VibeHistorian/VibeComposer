@@ -45,7 +45,7 @@ function fixture({ compactHistory = false, dialogData = null, reactivity, contex
       : type?.name === 'SectionTypeSettingsService' ? sectionTypes
       : type?.name === 'TrackPresetStorage' ? trackPresets
       : type?.name === 'ContextClipboardService' ? clipboard
-      : type?.name === 'AudioPlaybackService' ? { setPhrasePreview() {}, updateMasterVolume() {} } : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
+      : type?.name === 'AudioPlaybackService' ? { setPhrasePreview() {}, updateMasterVolume() {}, updateTrackVolume() {}, syncTrackVolumes() {} } : type?.name === 'MidiOutputService' ? { drumMapping: () => 'general-midi', drumLabel: pitch => load('core/music/drum-instruments.ts').drumInstrumentLabel(pitch, 'general-midi') }
       : type?.name === 'ChangeDetectorRef' ? { detectChanges() {} }
       : type?.name === 'Combobox' ? { expanded: signal(false), disabled: signal(false) }
       : type?.name === 'UiPreferencesService' ? uiPreferences : fallback,

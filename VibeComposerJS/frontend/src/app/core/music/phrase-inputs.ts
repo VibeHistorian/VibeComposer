@@ -6,8 +6,13 @@ function equalExcept(left: object, right: object, excluded: readonly string[]): 
     && keys.every(key => (left as Record<string, unknown>)[key] === (right as Record<string, unknown>)[key]);
 }
 
-export function sameProjectExceptMasterVolume(left: CompositionProject, right: CompositionProject): boolean {
-  return left === right || equalExcept(left, right, ['masterVolumePercent']);
+export function sameProjectExceptVolume(left: CompositionProject, right: CompositionProject): boolean {
+  return left === right || equalExcept(left, right, ['masterVolumePercent', 'tracks'])
+    && (left.tracks === right.tracks || left.tracks.length === right.tracks.length
+      && left.tracks.every((track, index) => {
+        const other = right.tracks[index];
+        return track === other || equalExcept(track, other, ['mix']) && equalExcept(track.mix, other.mix, ['volumePercent']);
+      }));
 }
 
 /** Projects are immutable. Mix settings do not affect generated note data. */

@@ -58,7 +58,7 @@ export class TransportDockComponent {
   }
   readonly key = computed(() => effectiveKey(BASE_KEY, this.project().transposeSemitones ?? 0));
   private readonly generationFeedback = signal<{ project: unknown; message: string } | null>(null);
-  readonly generationMessage = computed(() => this.generationFeedback()?.project === this.projects.projectWithoutMasterVolumeChanges()
+  readonly generationMessage = computed(() => this.generationFeedback()?.project === this.projects.projectWithoutVolumeChanges()
     ? this.generationFeedback()?.message : null);
 
   generate(): void {
@@ -71,7 +71,7 @@ export class TransportDockComponent {
       }
       else if (this.preferences.restartPlaybackOnCompose()) this.playback.restartAfterCompose(this.project());
     }
-    this.generationFeedback.set(result === 'changed' ? null : { project: this.projects.projectWithoutMasterVolumeChanges(), message: result === 'invalid'
+    this.generationFeedback.set(result === 'changed' ? null : { project: this.projects.projectWithoutVolumeChanges(), message: result === 'invalid'
       ? `Compose cancelled. ${this.projects.generationError() ?? 'Generation conflicts with local settings.'} Previous arrangement kept.`
       : 'Settings already match the generation rules.' });
     // Include Angular's update, canvas drawing and the browser's next paint.
@@ -80,7 +80,7 @@ export class TransportDockComponent {
     }, 0)), { injector: this.injector });
   }
   private readonly liveReloadEffect = effect(() => {
-    this.projects.projectWithoutMasterVolumeChanges();
+    this.projects.projectWithoutVolumeChanges();
     const live = this.playback.liveEnabled();
     // Playback ticks must not trigger regeneration or subscribe this effect to position/state.
     if (live) untracked(() => this.playback.reload(this.project()));
@@ -90,11 +90,16 @@ export class TransportDockComponent {
     const volume = this.masterVolume();
     untracked(() => this.playback.updateMasterVolume(volume));
   });
+  private readonly tracks = computed(() => this.project().tracks);
+  private readonly trackVolumeEffect = effect(() => {
+    const tracks = this.tracks();
+    untracked(() => this.playback.syncTrackVolumes(tracks));
+  });
   private readonly loopRangeEffect = effect(() => {
     const range = this.workspaceUi.sectionRange();
     untracked(() => this.playback.setLoopRange(range));
   });
-  private readonly projectTimeline = computed(() => resolveProjectTimeline(this.projects.projectWithoutMasterVolumeChanges()));
+  private readonly projectTimeline = computed(() => resolveProjectTimeline(this.projects.projectWithoutVolumeChanges()));
   readonly timeline = computed(() => this.playback.state() === 'stopped'
     ? this.projectTimeline() : this.playback.timeline() ?? this.projectTimeline());
   readonly totalBeats = computed(() => this.timeline().arrangementBounds.endBeat);

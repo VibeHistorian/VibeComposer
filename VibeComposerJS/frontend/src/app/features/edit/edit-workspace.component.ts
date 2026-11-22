@@ -201,7 +201,10 @@ export class EditWorkspaceComponent {
   readonly selectedTrack = computed<CompositionTrack>(() => this.project().tracks.find((track) => track.id === this.workspaceUi.selectedTrackId())
     ?? this.project().tracks[0]);
   readonly editedTracks = computed(() => this.selectedTrack().role === 'drums'
-    ? this.projects.projectWithoutMasterVolumeChanges().tracks.filter(track => track.role === 'drums') : [this.selectedTrack()]);
+    ? this.project().tracks.filter(track => track.role === 'drums') : [this.selectedTrack()]);
+  readonly editedTrackIds = computed(() => this.editedTracks().map(track => track.id), {
+    equal: (left, right) => left.length === right.length && left.every((id, index) => id === right[index]),
+  });
   readonly drumInputTracks = computed(() => this.selectedPart() === 'drums'
     ? this.editedTracks().flatMap(track => track.role === 'drums' ? [{ trackId: track.id, midi: track.generatorSettings.pitch }] : [])
     : null);
@@ -442,12 +445,12 @@ export class EditWorkspaceComponent {
   private lastDuration = 0.5;
   get placementDuration(): number { return this.lastDuration; }
   readonly phraseBeats = computed(() => {
-    const project = this.projects.projectWithoutMasterVolumeChanges();
+    const project = this.projects.projectWithoutVolumeChanges();
     const section = project.arrangement.find(section => section.id === this.sectionId());
     return this.phraseLength() ?? (section ? sectionDurationBeats(project, section) : project.progression.length * 4);
   });
   readonly editBounds = computed(() => {
-    const project = this.projects.projectWithoutMasterVolumeChanges();
+    const project = this.projects.projectWithoutVolumeChanges();
     const section = project.arrangement.find(section => section.id === this.sectionId());
     if (!section) return { startBeat: -4, endBeat: this.phraseBeats() + 4 };
     const bounds = sectionPhraseBounds(project, section);

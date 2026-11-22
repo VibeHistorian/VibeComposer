@@ -748,26 +748,33 @@ test('quick mixer knobs format linear gain and pan, audition without history, an
   const heard = [];
   workspace.playback.updateMix = project => heard.push(project);
   const before = service.exportProjectJson();
-  workspace.previewTrackMix('track-bass-1', 'panPercent', -50);
+  workspace.previewTrackPan('track-bass-1', -50);
   assert.equal(service.exportProjectJson(), before);
   assert.equal(heard.at(-1).tracks.find(track => track.id === 'track-bass-1').mix.panPercent, -50);
-  workspace.updateTrackMix('track-bass-1', 'panPercent', -50);
+  workspace.updateTrackPan('track-bass-1', -50);
   assert.equal(service.project().tracks.find(track => track.id === 'track-bass-1').mix.panPercent, -50);
   assert.equal(service.project().tracks.find(track => track.id === 'track-chords-1').mix.panPercent, 0);
   service.undo(); assert.equal(service.exportProjectJson(), before);
   service.redo();
-  workspace.updateTrackMix('track-bass-1', 'volumePercent', 50);
+  workspace.playback.updateTrackVolume = (id, volume) => heard.push({ id, volume });
+  workspace.playback.updateMix = () => assert.fail('Track volume should use its own audio update');
+  workspace.updateTrackVolume('track-bass-1', 50);
   assert.equal(service.project().tracks.find(track => track.role === 'bass').mix.volumePercent, 50);
-  assert.equal(heard.at(-1).tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, 50);
+  assert.deepEqual(heard.at(-1), { id: 'track-bass-1', volume: 50 });
 });
 
 test('track gain supports +6 dB, fractional attenuation, history and project round trips', () => {
-  const { load, service, workspace } = fixture();
-  workspace.playback.updateMix = () => {};
+  const { load, service, workspace, phrase } = fixture();
   const { MAX_VOLUME_PERCENT, volumeDecibels } = load('core/audio/mix-values.ts');
   assert.equal(volumeDecibels(MAX_VOLUME_PERCENT), '+6.0');
   assert.equal(volumeDecibels(100 * 10 ** (-0.1 / 20)), '-0.1');
-  workspace.updateTrackMix('track-bass-1', 'volumePercent', MAX_VOLUME_PERCENT);
+  const codec = load('core/project/project-codec.ts');
+  const validate = codec.isProject, resolve = phrase.resolvedTrackPhrase;
+  const unexpected = () => assert.fail('Track volume must skip whole-project validation and phrase resolution');
+  codec.isProject = phrase.resolvedTrackPhrase = unexpected;
+  workspace.updateTrackVolume('track-bass-1', MAX_VOLUME_PERCENT);
+  codec.isProject = validate;
+  phrase.resolvedTrackPhrase = resolve;
   const saved = service.exportProjectJson();
   assert.equal(service.project().tracks.find(track => track.id === 'track-bass-1').mix.volumePercent, MAX_VOLUME_PERCENT);
   service.undo();
@@ -777,7 +784,7 @@ test('track gain supports +6 dB, fractional attenuation, history and project rou
   assert.equal(service.importProjectJson(saved), true);
   const imported = service.exportProjectJson();
   for (const value of [MAX_VOLUME_PERCENT + 0.01, -0.1, NaN, Infinity]) {
-    workspace.updateTrackMix('track-bass-1', 'volumePercent', value);
+    workspace.updateTrackVolume('track-bass-1', value);
     assert.equal(service.exportProjectJson(), imported);
   }
 });

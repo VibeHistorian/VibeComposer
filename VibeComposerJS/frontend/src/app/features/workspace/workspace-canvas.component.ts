@@ -176,7 +176,7 @@ export class WorkspaceCanvasComponent {
   readonly instrumentMenuGroups = INSTRUMENT_MENU_GROUPS;
   readonly drumMenuGroups = DRUM_MENU_GROUPS;
   readonly drumSelectOptions = computed(() => {
-    const project = this.projects.projectWithoutMasterVolumeChanges(), slots = resolvedDrumSlots(project);
+    const project = this.projects.projectWithoutVolumeChanges(), slots = resolvedDrumSlots(project);
     const pool = INSTRUMENT_POOLS[this.instrumentPolicyFor('drums').pool as Exclude<InstrumentPool, 'AUTO'>];
     return Object.fromEntries(project.tracks.filter(track => track.role === 'drums').map(track => {
       const retained = projectDrumPitches(project, [track.id]);
@@ -472,11 +472,11 @@ export class WorkspaceCanvasComponent {
     return { startBeat: this.editStartBeat() + bounds.startBeat, endBeat: this.editStartBeat() + bounds.endBeat };
   });
   private readonly phrasePlaybackEffect = effect(() => {
-    this.projects.projectWithoutMasterVolumeChanges();
+    this.projects.projectWithoutVolumeChanges();
     const editor = this.editing() ? this.editor() : undefined;
     const preview = editor?.draftReady() ? {
       ...this.scoreEditBounds(),
-      trackIds: editor.editedTracks().map(track => track.id),
+      trackIds: editor.editedTrackIds(),
       notes: editor.notes().map(note => ({ ...note, startBeat: note.startBeat + this.editStartBeat() })),
     } : null;
     untracked(() => this.playback.setPhrasePreview(this.project(), preview));
@@ -1073,15 +1073,21 @@ export class WorkspaceCanvasComponent {
     if (event.button === 1) event.preventDefault();
   }
 
-  updateTrackMix(trackId: string, setting: 'panPercent' | 'volumePercent', value: number): void {
-    this.projects.updateTrack(trackId, { mix: { [setting]: value } });
+  updateTrackVolume(trackId: string, volumePercent: number): void {
+    this.projects.updateTrack(trackId, { mix: { volumePercent } });
+    const track = this.project().tracks.find(candidate => candidate.id === trackId);
+    if (track) this.playback.updateTrackVolume(trackId, track.mix.volumePercent);
+  }
+
+  updateTrackPan(trackId: string, panPercent: number): void {
+    this.projects.updateTrack(trackId, { mix: { panPercent } });
     this.playback.updateMix(this.project());
   }
 
-  previewTrackMix(trackId: string, setting: 'panPercent' | 'volumePercent', value: number): void {
+  previewTrackPan(trackId: string, panPercent: number): void {
     const project = this.project();
     this.playback.updateMix({ ...project, tracks: project.tracks.map((track) => track.id === trackId
-      ? { ...track, mix: { ...track.mix, [setting]: value } } : track) });
+      ? { ...track, mix: { ...track.mix, panPercent } } : track) });
   }
 
   sectionLabel(type: string): string { return type.replaceAll('_', ' '); }
@@ -1110,15 +1116,13 @@ export class WorkspaceCanvasComponent {
   updateVolume(event: Event): void {
     const volumePercent = Number(this.inputValue(event));
     if (validVolumePercent(volumePercent)) {
-      this.projects.updateTrack(this.selectedTrackId(), { mix: { volumePercent } });
-      this.playback.updateMix(this.project());
+      this.updateTrackVolume(this.selectedTrackId(), volumePercent);
     }
   }
   updatePan(event: Event): void {
     const panPercent = Number(this.inputValue(event));
     if (Number.isInteger(panPercent) && panPercent >= -100 && panPercent <= 100) {
-      this.projects.updateTrack(this.selectedTrackId(), { mix: { panPercent } });
-      this.playback.updateMix(this.project());
+      this.updateTrackPan(this.selectedTrackId(), panPercent);
     }
   }
   panName(value: number): string {

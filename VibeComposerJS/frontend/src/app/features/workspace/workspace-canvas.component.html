@@ -92,12 +92,12 @@
                 <div class="track-mix-controls" (click)="$event.stopPropagation()">
                   <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Pan ' + track.name" [defaultValue]="0"
                     [value]="track.mix.panPercent" [minimum]="-100" [maximum]="100" valueFormat="pan"
-                    (valuePreview)="previewTrackMix(track.id, 'panPercent', $event)"
-                    (valueCommit)="updateTrackMix(track.id, 'panPercent', $event)" />
+                    (valuePreview)="previewTrackPan(track.id, $event)"
+                    (valueCommit)="updateTrackPan(track.id, $event)" />
                   <vc-compact-knob [mini]="true" [showValueBelow]="true" [label]="'Volume ' + track.name" [defaultValue]="100"
                     [value]="track.mix.volumePercent" [minimum]="0" [maximum]="maximumVolume" [step]="0.1" valueFormat="decibels"
-                    (valuePreview)="previewTrackMix(track.id, 'volumePercent', $event)"
-                    (valueCommit)="updateTrackMix(track.id, 'volumePercent', $event)" />
+                    (valuePreview)="playback.updateTrackVolume(track.id, $event)"
+                    (valueCommit)="updateTrackVolume(track.id, $event)" />
                 </div>
               </div>
 
@@ -143,7 +143,7 @@
         [phraseLength]="editPhraseLength()" (applied)="closeEditor()" (cancelled)="closeEditor()" />
     }
     }
-      <vc-arrangement-overview [project]="projects.projectWithoutMasterVolumeChanges()"
+      <vc-arrangement-overview [project]="projects.projectWithoutVolumeChanges()"
         [sectionHarmony]="sectionHarmony()"
         [loopRange]="loopRange()"
         [settingsTarget]="settingsTarget()"

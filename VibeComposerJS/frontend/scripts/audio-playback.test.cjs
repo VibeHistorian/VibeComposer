@@ -739,7 +739,7 @@ test('paused and stopped playback stay inactive until resumed with the latest pr
 function transportFixture() {
   const { playback, project, angular, load, context, timelineModule } = fixture();
   const projectSignal = angular.signal(project);
-  const projects = { project: projectSignal, projectWithoutMasterVolumeChanges: projectSignal };
+  const projects = { project: projectSignal, projectWithoutVolumeChanges: projectSignal };
   const workspaceUi = { sectionRange: angular.signal(null), selectedSectionIds: () => [] };
   angular.inject = (type) => type === 'audio' ? playback : type === 'ui' ? workspaceUi : projects;
   const { TransportDockComponent } = load('features/transport/transport-dock.component.ts', {
@@ -1236,6 +1236,82 @@ test('master volume restored by project history applies with LIVE off', async ()
   assert.equal(playback.master.gain.events.at(-1).value, 0.8);
   projectSignal.set(quieter);
   assert.equal(playback.master.gain.events.at(-1).value, 0.4);
+  playback.stop();
+});
+
+test('track volume previews touch only the selected gain and retain other previews on commit', async () => {
+  const { playback, project } = fixture();
+  const bass = project.tracks[0], chords = { ...bass, id: 'chords', role: 'chords', notes: [] };
+  project.tracks.push(chords);
+  playback.syncTrackVolumes(project.tracks);
+  await playback.start(project);
+  const bassBus = playback.buses.get(bass.id), chordsBus = playback.buses.get(chords.id);
+  playback.createSchedule = () => { throw Error('Track volume must leave the schedule alone'); };
+  playback.updateMix = () => { throw Error('Track volume must leave the other mix parameters alone'); };
+  playback.updateTrackVolume(bass.id, 50);
+  assert.equal(bassBus.gain.gain.events.at(-1).value, 0.5);
+  assert.deepEqual(chordsBus.gain.gain.events, []);
+  assert.deepEqual(bassBus.pan.pan.events, []);
+  assert.deepEqual(playback.master.gain.events, []);
+  playback.updateTrackVolume(chords.id, 40);
+  playback.syncTrackVolumes([{ ...bass, mix: { ...bass.mix, volumePercent: 50 } }, chords]);
+  assert.equal(bassBus.gain.gain.events.length, 1, 'committing a preview avoids a second gain update');
+  assert.equal(chordsBus.gain.gain.events.at(-1).value, 0.4);
+  assert.equal(chordsBus.gain.gain.events.length, 1);
+  playback.stop();
+});
+
+test('track volumes restored by project history apply with LIVE off', async () => {
+  const { playback, project, projectSignal, TransportDockComponent } = transportFixture();
+  const [bass] = project.tracks;
+  const quieter = { ...project, tracks: [{ ...bass, mix: { ...bass.mix, volumePercent: 50 } }] };
+  projectSignal.set(quieter);
+  new TransportDockComponent();
+  playback.toggleLive();
+  await playback.start(quieter);
+  playback.reload = () => { throw Error('LIVE reload is disabled'); };
+  const gain = playback.buses.get(bass.id).gain.gain;
+  projectSignal.set(project);
+  assert.equal(gain.events.at(-1).value, 0.8);
+  projectSignal.set(quieter);
+  assert.equal(gain.events.at(-1).value, 0.5);
+  playback.stop();
+});
+
+test('track volume changes during instrument preparation reach the new playback graph', async () => {
+  const { playback, project } = fixture();
+  const [bass] = project.tracks;
+  playback.syncTrackVolumes(project.tracks);
+  let finishPreparing;
+  playback.prepareInstrument = () => new Promise(resolve => { finishPreparing = resolve; });
+  const started = playback.start(project);
+  playback.syncTrackVolumes([{ ...bass, mix: { ...bass.mix, volumePercent: 27 } }]);
+  finishPreparing();
+  await started;
+  assert.equal(playback.state(), 'playing');
+  assert.equal(playback.buses.get(bass.id).gain.gain.value, 0.27);
+  playback.stop();
+});
+
+test('MIDI track volume uses the current master level and leaves other channels alone', async () => {
+  const { playback, project, midi, context } = fixture();
+  const [bass] = project.tracks;
+  const chords = { ...bass, id: 'chords', role: 'chords', notes: [] };
+  project.tracks.push(chords);
+  playback.syncTrackVolumes(project.tracks);
+  midi.selectedOutput.set({ id: 'external' });
+  const volumeUpdates = [], scheduledLevels = [];
+  midi.updateVolume = (track, volume) => volumeUpdates.push([track.id, volume]);
+  midi.schedule = track => scheduledLevels.push(track.mix.volumePercent);
+  await playback.start({ ...project, masterVolumePercent: 50 });
+  assert.equal(scheduledLevels.at(-1), 40);
+  playback.updateTrackVolume('bass', 60);
+  assert.deepEqual(volumeUpdates, [['bass', 30]]);
+  playback.toggleLive();
+  playback.syncTrackVolumes([chords]);
+  context.currentTime = 1.9;
+  playback.tick();
+  assert.equal(scheduledLevels.at(-1), 30, 'notes still playing with LIVE off keep their volume');
   playback.stop();
 });
 test('live audition sustains to release and cancels cleanly during asynchronous preparation', async () => {
