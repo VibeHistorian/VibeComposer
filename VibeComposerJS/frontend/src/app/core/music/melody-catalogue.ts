@@ -62,7 +62,7 @@ function typedBlock(type: number | undefined, change: number, length: number | u
 /** Production approximate selection: signed direct/inverted pools, constraints, ranking and thinning. */
 export function chooseCatalogueBlock(change: number, approximation: number, random: JavaRandom,
   length: number | undefined, variance: number, directions: number,
-  preference: readonly number[], weights: readonly number[]): Shape {
+  preference: readonly number[], weights: readonly number[], allowGeneratedFallback = false): Shape {
   let viable: Shape[] = [];
   for (let value = Math.max(change - approximation, -7); value <= Math.min(change + approximation, 7); value++) {
     for (const pool of [DIRECT_BLOCKS.get(value), INVERTED_BLOCKS.get(value)]) {
@@ -74,6 +74,9 @@ export function chooseCatalogueBlock(change: number, approximation: number, rand
   }
   if (!viable.length) {
     const notes = typedBlock(undefined, change, length, random, 4);
+    if (!notes && allowGeneratedFallback) {
+      return { type: 2147483647, notes: generateBlock(change, approximation, random, length, variance, directions) };
+    }
     if (!notes) throw new RangeError('No Melody catalogue block fits the requested length.');
     return { type: classify(notes), notes };
   }
@@ -102,10 +105,11 @@ export function chooseCatalogueBlock(change: number, approximation: number, rand
 /** MelodyBlockSkeletonGenerator.selectBlockShape, retaining its post-selection draw order. */
 export function selectMelodyBlock(change: number, jump: number, random: JavaRandom,
   generated: boolean, length: number | undefined, variance: number, directions: number,
-  preference: readonly number[], weights: readonly number[], startingDegree: number, previousType: number): Shape {
+  preference: readonly number[], weights: readonly number[], startingDegree: number, previousType: number,
+  allowGeneratedFallback = false): Shape {
   let selected: Shape = generated
     ? { type: 2147483647, notes: generateBlock(change, jump, random, length, variance, directions) }
-    : chooseCatalogueBlock(change, jump, random, length, variance, directions, preference, weights);
+    : chooseCatalogueBlock(change, jump, random, length, variance, directions, preference, weights, allowGeneratedFallback);
   const chordyMismatch = selected.type === 3 && ![0, 2, 3, 5].includes((startingDegree + 70) % 7);
   if (selected.type !== 2147483647 && (selected.type === previousType || chordyMismatch)) {
     const types = CATALOGUE.flatMap((blocks, type) => type !== selected.type && blocks.some(notes => changeOf(notes) === Math.abs(change)) ? [type] : []);

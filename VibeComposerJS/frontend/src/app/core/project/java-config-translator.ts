@@ -167,6 +167,8 @@ export function translateJavaConfig(xml: string, options: JavaTranslationOptions
   const readPart = (node: Element, role: ArrangedPart, path: string): PartSettingsPatch => {
     const result: Record<string, unknown> = {};
     for (const control of PART_CONTROLS[role]) {
+      // Java Melody generates its own rhythm regardless of these inherited grid fields.
+      if (role === 'melody' && ['rhythm', 'hitsPerPattern', 'euclideanPulses', 'patternShift', 'customPattern', 'patternJoinMode'].includes(control.key)) continue;
       const name = control.key === 'rhythm' ? 'pattern' : role === 'chords' && control.key === 'noteLengthPercent' ? 'noteLengthMultiplier' : control.key;
       if (!one(node, name)) continue;
       if (['pattern', 'useCustomVelocities', 'humanize'].includes(control.key)) continue;

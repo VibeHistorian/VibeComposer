@@ -13,11 +13,12 @@ import { ArpeggioPatternDialogComponent } from './arpeggio-pattern-dialog.compon
 import { arpeggioPreviews } from '../../core/music/arpeggio-preview';
 import { durationPreview } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
-import type { CommonPartSettings, ChordRhythm } from '../../core/music/part-settings.model';
+import type { CommonPartSettings, ChordRhythm, PatternJoinMode } from '../../core/music/part-settings.model';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { PART_CONTROLS, MANUAL_PARAMETER_TARGETS, type PartControl, type PartSettingValue, partValuesEqual } from '../../core/music/part-settings';
 import { chordRhythmMask } from '../../core/music/rhythm-pattern';
+import { isMelodyGrid, melodyGridSteps, MIN_MELODY_GRID_ATTACKS } from '../../core/music/melody-grid';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
 import { CompactKnobComponent } from '../../shared/compact-knob.component';
 import { CompactToggleComponent } from '../../shared/compact-toggle.component';
@@ -93,9 +94,10 @@ export class PartSettingsEditorComponent {
     return control.key === 'velocityMin' ? 'VEL↓↑' : control.key === 'rangeMin' ? 'MIDI↓↑' : control.key === 'ending' ? 'SENTENCE'
       : control.kind === 'number' ? this.code(control) : control.label;
   }
-  chooseNumber(control: PartControl, selection: string): void {
+  chooseNumber(control: PartControl, selection: string, select: Pick<SelectComponent, 'restoreValue'>): void {
     const value = selection;
     if (value !== '') this.settingsChanged.emit({ key: control.key, value: Number(value) });
+    if (this.role() === 'melody') select.restoreValue();
   }
   code(control: PartControl): string {
     const codes: Readonly<Record<string, string>> = {
@@ -134,7 +136,7 @@ export class PartSettingsEditorComponent {
   readonly arpeggioPoints = computed(() => this.arpeggioPreview()?.map((value, index, values) =>
     `${(index + .5) / values.length * 100},${(12 - value) / 24 * 100}`).join(' ') ?? '');
   openSequencer(velocities = false): void {
-    if (!velocities && (this.role() === 'melody' || this.usesDurations())) {
+    if (!velocities && this.usesDurations()) {
       this.openDurations();
       return;
     }
@@ -146,6 +148,7 @@ export class PartSettingsEditorComponent {
       data: { scope: this.scope(), flipped } });
   }
   readonly usesDurations = computed(() => this.values()['rhythm'] === 'durations');
+  private readonly usesMelodyGrid = computed(() => this.role() === 'melody' && this.context().rows.some(row => isMelodyGrid(row['rhythm'])));
   readonly emptyAllowedValues: readonly number[] = [];
   readonly role = computed(() => this.context().role);
   readonly values = computed(() => this.context().values);
@@ -173,7 +176,7 @@ export class PartSettingsEditorComponent {
     const { rows } = this.context();
     const manual = this.phraseModes();
     const active = rows.filter((row, index) =>
-      !manual[index] && row['rhythm'] !== 'durations' && Number(row['rhythmicReuse']) > 0).length;
+      !manual[index] && row['rhythm'] === 'melody1' && Number(row['rhythmicReuse']) > 0).length;
     return active === 0 ? 'none' : active < rows.length ? 'some' : 'all';
   });
   reuseMemberInactive(key: string): boolean {
@@ -200,8 +203,13 @@ export class PartSettingsEditorComponent {
     (this.preferences.editingQuickSettings() || (
     (!['rangeMin', 'rangeMax', 'tension', 'ending', 'style', 'form', 'syncopation', 'rhythmicReuse', 'entryPlacement', 'rhythmicGrouping', 'motifLength', 'variationLocation', 'pitchReuse', 'articulationContrast', 'velocityContrast'].includes(control.key)
       || this.role() !== 'melody' || (this.projects.project().melodyGlobal?.contextualMelody ?? true)) &&
-    (!this.usesDurations() || this.role() !== 'melody'
-      || !['speed', 'pauseChance', 'fillPauses', 'splitChance', 'startNoteChance', 'syncopation', 'rhythmicReuse', 'entryPlacement', 'rhythmicGrouping', 'motifLength', 'variationLocation'].includes(control.key)) &&
+    (this.role() !== 'melody' || (
+      (this.usesMelodyGrid() || !['hitsPerPattern', 'patternShift', 'euclideanPulses', 'patternJoinMode'].includes(control.key)) &&
+      (!this.usesDurations() && !isMelodyGrid(this.values()['rhythm'])
+        || !['speed', 'pauseChance', 'fillPauses', 'fillPausesPerChord', 'splitChance', 'startNoteChance', 'syncopation',
+          'rhythmicReuse', 'entryPlacement', 'rhythmicGrouping', 'motifLength', 'variationLocation'].includes(control.key)) &&
+      (!isMelodyGrid(this.values()['rhythm']) || control.key !== 'swingPercent')
+    )) &&
     (this.role() !== 'melody' || !(this.projects.project().melodyGlobal?.contextualMelody ?? true)
        || !['accents', 'fillPauses', 'fillPausesPerChord', 'patternFlexible', 'tonicNoteTarget', 'modeNoteTarget', 'chordNoteTarget', 'emphasizeKey'].includes(control.key)) &&
     (!this.usesDurations() || this.role() === 'melody' || !['patternShift', 'chordSpan', 'patternRepeat', 'patternJoinMode', 'euclideanPulses', 'useCustomVelocities', 'customVelocities', 'pauseChance', 'exceptionChance', ...(this.role() === 'bass' ? ['hitsPerPattern'] : [])].includes(control.key)) &&
@@ -229,7 +237,8 @@ export class PartSettingsEditorComponent {
     return (values['customVelocities'] as readonly number[] ?? DEFAULT_CUSTOM_VELOCITIES).slice(0, values['rhythm'] === 'melody' ? this.melodyHits() : values['hitsPerPattern'] as number ?? 8);
   });
   readonly rhythmPreview = computed(() => {
-    if (this.usesDurations() || this.role() === 'melody' || this.values()['rhythm'] === 'melody' || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1')) return undefined;
+    if (this.usesDurations() || (this.role() === 'melody' && !this.usesMelodyGrid()) || this.values()['rhythm'] === 'melody'
+      || (this.role() === 'bass' && this.values()['rhythm'] === 'bass1')) return undefined;
     const values = this.values();
     const keys = ['rhythm', 'hitsPerPattern', 'patternShift', 'patternFlip',
       ...(values['rhythm'] === 'euclid' ? ['euclideanPulses'] : []),
@@ -250,6 +259,11 @@ export class PartSettingsEditorComponent {
   });
   readonly rhythmPreviewLabel = computed(() => {
     const pattern = this.rhythmPreview();
+    if (pattern && this.role() === 'melody') {
+      const join = this.values()['patternJoinMode'] as PatternJoinMode | null;
+      return join === null ? 'Mixed Pattern Join settings. Edit the rhythm grid for each track.'
+        : `${melodyGridSteps(pattern, join).filter(value => value > 0).length} attacks per chord after Pattern Join. Edit the rhythm grid.`;
+    }
     return pattern ? `${pattern.filter((slot) => slot > 0).length} enabled slots in the ${pattern.length}-cell base rhythm. Span and Repeat change its placement; Pause and Fill can suppress notes; zero velocity silences individual hits.`
       : 'Mixed rhythm settings. Select an individual track to see its rhythm.';
   });
@@ -322,7 +336,7 @@ export class PartSettingsEditorComponent {
   }
 
   flipControl(control: PartControl): PartControl | undefined {
-    if (control.key === 'rhythm' && this.role() === 'melody' && !this.usesDurations()) return undefined;
+    if (control.key === 'rhythm' && this.role() === 'melody' && !this.usesDurations() && !this.usesMelodyGrid()) return undefined;
     if (control.key === 'rhythm' && this.role() === 'bass' && this.values()['rhythm'] === 'bass1'
         && !this.preferences.editingQuickSettings()) return undefined;
     const key = control.key === 'rhythm' ? 'patternFlip' : control.key === 'chordSpanFill' ? 'fillFlip' : undefined;
@@ -354,6 +368,7 @@ export class PartSettingsEditorComponent {
   }
 
   minimum(control: PartControl): number {
+    if (this.role() === 'melody' && control.key === 'hitsPerPattern') return MIN_MELODY_GRID_ATTACKS;
     return control.key === 'velocityMax' && typeof this.values()['velocityMin'] === 'number'
       ? this.values()['velocityMin'] as number : control.minimum!;
   }
@@ -373,6 +388,7 @@ export class PartSettingsEditorComponent {
       return;
     }
     this.settingsChanged.emit({ key: control.key, value: typeof control.options?.[0] === 'number' ? Number(value) : value });
+    if (this.role() === 'melody') select?.restoreValue();
   }
 
   textValue(control: PartControl): string {

@@ -3,12 +3,15 @@
   @if (data.role === 'drums') {
     <vc-select #multiplier="vcSelect" [options]="[{ value: '', label: '× Hits…' }, { value: '0.5', label: '× ½' }, { value: '0.75', label: '× ¾' }, { value: '1.5', label: '× 1½' }, { value: '2', label: '× 2' }]" aria-label="Multiply Hits" title="Multiply hits for the selected drum track or group" [disabled]="!canMultiplyHits()" (valueChange)="multiplyHits($event); multiplier.restoreValue()"></vc-select>
   }
-  <button type="button" [attr.aria-pressed]="showVelocities()" (click)="cancel(); showVelocities.set(!showVelocities())">Velocities</button>
+  @if (data.role !== 'melody') {
+    <button type="button" [attr.aria-pressed]="showVelocities()" (click)="cancel(); showVelocities.set(!showVelocities())">Velocities</button>
+  }
   <button type="button" aria-label="Close pattern sequencer" (click)="dialog.close()">×</button>
 </header>
 <vc-live-recording [disabled]="!recordingOptions().length" (began)="beginRecording()" (cursor)="recordCursor($event)" (span)="recordSpan($event)" (ended)="endRecording()" />
 <label>Recording track <vc-select aria-label="Recording pattern track" [disabled]="recordingBeat() !== null" [options]="recordingOptions()" [value]="recordingTrack() || recordingOptions()[0]?.value || ''" (valueChange)="recordingTrack.set($event)" /></label>
 <p>Tap or hold the rhythm shortcut or MIDI notes to add hits. Stop recording saves one undo step.</p>
+@if (error(); as message) { <p role="alert" class="pattern-error">{{ message }}</p> }
 <div class="sequencer-scroll">
   <div class="sequencer" [style.--steps]="steps().length">
     <div class="ruler"><span class="identity">Track / steps</span><div class="cells">@for (step of steps(); track step) { <span>{{ step + 1 }}</span> }</div></div>
@@ -16,7 +19,7 @@
       <section class="track" [class.selected]="row.active" [attr.data-track-id]="row.id">
         <div class="pattern-row">
           <div class="identity"><strong>{{ row.name }}</strong><span>{{ row.instrument }}</span>
-            @if (row.supported) { <input type="number" min="1" max="32" [value]="row.hits" [attr.aria-label]="row.name + ' steps'" (change)="patch(row.id, { hitsPerPattern: +$any($event.target).value })" /> }
+            @if (row.supported) { <input type="number" [min]="minimumHits" max="32" [value]="row.hits" [attr.aria-label]="row.name + ' steps'" (change)="changeHits(row.id, $event)" /> }
             @if ('sectionId' in data.scope) { <button type="button" class="inherit" [attr.aria-label]="'Inherit ' + row.name + ' pattern'" (click)="inherit(row.id, 'customPattern')">Inherit rhythm</button> }
           </div>
           @if (row.supported) {
@@ -26,7 +29,8 @@
                   (pointerdown)="start($event, row.id, $index)" (click)="$event.detail === 0 && toggle(row.id, $index)"></button>
               }
             </div>
-          } @else { <span class="unavailable">{{ row.values['rhythm'] === 'bass1' ? 'bass1 rhythm' : 'Follows melody blocks' }}</span> }
+          } @else { <span class="unavailable">{{ row.values['rhythm'] === 'bass1' ? 'bass1 rhythm'
+            : data.role === 'melody' ? (row.values['rhythm'] === 'durations' ? 'Custom durations' : 'Generated rhythm') : 'Follows melody blocks' }}</span> }
         </div>
         @if (showVelocities() && row.velocitySupported) {
           <div class="velocity-row">

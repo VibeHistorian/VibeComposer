@@ -87,7 +87,8 @@ export function variationPatch(track: CompositionTrack, choice: ArrangementVaria
         ? { rangeMin, rangeMax } : {};
     }
     case 'arp-density': case 'chord-transition': case 'drum-density': case 'drum-ghosts': return rhythmVariationPatch(track, choice);
-    case 'melody-speed': return track.role === 'melody' && !s.customDurations?.length && track.generatorSettings.rhythm !== 'durations'
+    case 'melody-speed': return track.role === 'melody' && !s.customDurations?.length
+      && (track.generatorSettings.rhythm ?? 'melody1') === 'melody1'
       ? { speed: clamp((track.generatorSettings.speed ?? 50) + a * melodySpeedDelta(choice), -100, 100) } : {};
     case 'melody-direction': return { targetDirection: a > 0 ? 'ASC' : 'DESC' };
     case 'melody-register': {

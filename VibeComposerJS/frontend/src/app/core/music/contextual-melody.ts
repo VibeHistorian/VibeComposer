@@ -10,6 +10,7 @@ import { velocityBounds } from './part-settings';
 import { mixContextualSeed } from './contextual-harmony';
 import { convertScalePitch } from './scales';
 import { durationBlocks } from './durations';
+import { melodyGrid } from './melody-grid';
 
 const BEAT = 960;
 const mod = (n: number, d = 12) => (n % d + d) % d;
@@ -114,9 +115,25 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   const variationLocation = (settings.variationLocation ?? 0) / 100;
   const entryPlacement = settings.entryPlacement ?? 0, rhythmicGrouping = (settings.rhythmicGrouping ?? 0) / 100;
   const pitchReuse = (settings.pitchReuse ?? 0) / 100;
-  const overlapping = (slot: Slot) => events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
+  const grid = melodyGrid(settings), hits = settings.hitsPerPattern ?? 8;
+  const tickSeed = (tick: number) => BigInt(grid ? Math.round(tick) : tick);
+  const overlapping = (slot: Slot) => grid ? [at(slot.start)]
+    : events.filter(event => event.start < slot.start + slot.duration && event.end > slot.start);
   const makeRhythm = (variant: number, shapeRhythm: boolean): Slot[] => {
     const slots: Slot[] = [];
+    if (grid) {
+      for (const [chord, event] of events.entries()) {
+        let step = 0;
+        for (const value of grid) {
+          const start = event.start + step / hits * event.duration;
+          const phrase = phrases.find(phrase => start >= phrase.start && start < phrase.end)!;
+          slots.push({ start, duration: Math.abs(value) / hits * event.duration, rest: value < 0 || !fill[chord],
+            phrase, arrival: step === 0 || start === phrase.start, appoggiatura: false });
+          step += Math.abs(value);
+        }
+      }
+      return slots;
+    }
     if (settings.rhythm === 'durations') {
       for (let chord = 0; chord < events.length; chord++) {
         const event = events[chord];
@@ -322,9 +339,9 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
   };
   const pending = (role: Role) => !['CHORD', 'EXTENSION'].includes(role);
   let result: Planned[] | undefined;
-  const shapeRhythm = settings.rhythm !== 'durations' && (syncopation !== 0 || rhythmicReuse > 0 || entryPlacement > 0 || rhythmicGrouping > 0);
+  const shapeRhythm = !grid && settings.rhythm !== 'durations' && (syncopation !== 0 || rhythmicReuse > 0 || entryPlacement > 0 || rhythmicGrouping > 0);
   // Rhythm shaping is a preference. Retry the original rhythms if the pitch search cannot resolve one.
-  for (let attempt = 0; attempt < (shapeRhythm ? 6 : 3) && !result; attempt++) {
+  for (let attempt = 0; attempt < (grid ? 1 : shapeRhythm ? 6 : 3) && !result; attempt++) {
     const variant = attempt % 3;
     const rhythm = makeRhythm(variant === 2 ? 0 : variant, shapeRhythm && attempt < 3);
     const slots = variant === 2 ? rhythm.flatMap(slot => {
@@ -355,7 +372,7 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
       const pitchMatch = pitchMatches?.get(index);
       const accented = slot.start % BEAT === 0 && (slot.start / BEAT % options.beatsPerBar === 0
         || options.beatsPerBar % 2 === 0 && slot.start / BEAT % options.beatsPerBar === options.beatsPerBar / 2) || slot.duration >= BEAT;
-      const random = new JavaRandom(baseSeed ^ BigInt(slot.start) * 0x9e3779b97f4a7c15n), preferences = Array.from({ length: 128 }, () => random.nextDouble() * 0.25);
+      const random = new JavaRandom(baseSeed ^ tickSeed(slot.start) * 0x9e3779b97f4a7c15n), preferences = Array.from({ length: 128 }, () => random.nextDouble() * 0.25);
       // Harmony and contour are fixed for this slot, independent of the beam state.
       const overlaps = overlapping(slot);
       const stableRoles: (Role | undefined)[] = [];
@@ -471,23 +488,26 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
     }
     result = beam[0]?.path;
   }
-  if (!result) throw new RangeError('No contextual melody satisfies the range, leap and ending constraints.');
+  if (!result) throw new RangeError(grid
+    ? 'No contextual melody fits this pattern with the current harmony, range, leap and ending settings.'
+    : 'No contextual melody satisfies the range, leap and ending constraints.');
   const [low,high] = velocityBounds(settings,[80,105]), pattern: Pick<PhraseNote, 'midi' | 'startBeat'>[] = [];
   const skeleton: { midi: number; rhythm: number }[][] = events.map(() => []);
   const articulation = (settings.articulationContrast ?? 0) / 100, contrast = (settings.velocityContrast ?? 0) / 100;
   const length = (settings.noteLengthMultiplier ?? 100), swing = (settings.swingPercent ?? 50) / 50 - 1;
-  const performedStart = (tick: number, event = at(tick)) => Math.max(event.start / BEAT,
-    Math.min((event.end - 1) / BEAT, tick / BEAT + (tick % BEAT === BEAT / 2 ? swing * 0.5 : 0)));
+  const performedStart = (tick: number, event = at(tick)) => grid ? tick / BEAT
+    : Math.max(event.start / BEAT, Math.min((event.end - 1) / BEAT, tick / BEAT + (tick % BEAT === BEAT / 2 ? swing * 0.5 : 0)));
   const notes = result.flatMap((note,index,path) => {
     const slot = note.slot, event = at(slot.start);
     pattern.push({ midi: note.pitch < 0 ? -1 : note.pitch + tonic + (settings.transpose ?? 0), startBeat: slot.start / BEAT });
     skeleton[events.indexOf(event)].push({ midi: note.pitch < 0 ? -1 : convertScalePitch(note.pitch,notesInScale,scaleNotes('major')), rhythm: slot.duration / BEAT });
     if (note.pitch < 0) return [];
-    const performance = new JavaRandom(baseSeed ^ BigInt(slot.start) * 0xd1b54a32d192ed03n);
+    const performance = new JavaRandom(baseSeed ^ tickSeed(slot.start) * 0xd1b54a32d192ed03n);
     let velocity = low + performance.nextInt(high - low + 1);
     if (slot.arrival && performance.nextInt(100) < (settings.accents ?? 100)) velocity = Math.min(high,velocity + Math.max(1,Math.trunc((high-low)/4)));
     const startBeat = performedStart(slot.start, event), horizon = event.end / BEAT - startBeat;
-    const duration = slot.duration / BEAT * 0.95 * (0.9 + performance.nextDouble() * 0.1) * length / 100;
+    const beats = slot.duration / BEAT;
+    const duration = (grid ? beats : beats * 0.95 * (0.9 + performance.nextDouble() * 0.1)) * length / 100;
     let gate = Math.min(duration,horizon);
     const subdivision = slot.start % BEAT;
     const anticipation = subdivision !== 0 && subdivision + slot.duration > BEAT;
@@ -525,8 +545,11 @@ function planContextualMelody(seed: bigint | number, key: string, scale: ScaleMo
     const event = at(Math.max(0,beat * BEAT));
     return events.indexOf(event) * 4 + (beat * BEAT - event.start) / event.duration * 4;
   };
-  return { notes: notes.map(note => ({ ...note, startBeat: gridBeat(note.startBeat),
-    durationBeats: gridBeat(note.startBeat + note.durationBeats) - gridBeat(note.startBeat) })),
-    pattern: pattern.map(note => ({ ...note, startBeat: gridBeat(note.startBeat) })),
+  const onset = (beat: number) => grid ? Math.round(gridBeat(beat) * hits / 4) * 4 / hits : gridBeat(beat);
+  return { notes: notes.map(note => {
+    const startBeat = onset(note.startBeat);
+    return { ...note, startBeat, durationBeats: gridBeat(note.startBeat + note.durationBeats) - startBeat };
+  }),
+    pattern: pattern.map(note => ({ ...note, startBeat: onset(note.startBeat) })),
     skeleton: skeleton.map((notes,index) => notes.map(note => ({ ...note, rhythm: note.rhythm * 4 * BEAT / events[index].duration }))) };
 }

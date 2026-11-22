@@ -27,10 +27,9 @@ export function combinedControlKeys(key: string, role?: ArrangedPart): readonly 
   for (const keys of [['feedbackCount', 'feedbackDuration'], ['velocityMin', 'velocityMax'], ['rangeMin', 'rangeMax'], ['ending', 'style', 'form']]) {
     if (keys.includes(key)) return keys;
   }
-  const gridKeys = role === 'melody' ? [] : ['hitsPerPattern', 'patternShift'];
+  const gridKeys = ['hitsPerPattern', 'patternShift'];
   const durationKeys = ['rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting'];
-  if (role === 'melody' && durationKeys.includes(key)) return durationKeys;
-  if ((role === 'bass' || role === 'arpeggio') && [...durationKeys, 'customPattern', ...gridKeys].includes(key)) return [...durationKeys, 'customPattern', ...gridKeys];
+  if ((role === 'melody' || role === 'bass' || role === 'arpeggio') && [...durationKeys, 'customPattern', ...gridKeys].includes(key)) return [...durationKeys, 'customPattern', ...gridKeys];
   if (['rhythm', 'patternFlip', 'customPattern', ...gridKeys].includes(key)) return ['rhythm', 'patternFlip', 'customPattern', ...gridKeys];
   if (key === 'chordSpanFill' || key === 'fillFlip') return ['chordSpanFill', 'fillFlip'];
   return [key];
@@ -78,7 +77,8 @@ export interface UiPreferences {
 export function defaultQuickSettings(): QuickSettings {
   const selected: QuickSettings = {
     melody: [...Object.keys(MANUAL_PARAMETER_TARGETS),
-      'chordSpanFill', 'fillFlip', 'ending', 'style', 'form', 'rhythm', 'patternFlip', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
+      'chordSpanFill', 'fillFlip', 'ending', 'style', 'form', 'rhythm', 'hitsPerPattern', 'patternShift', 'euclideanPulses',
+      'patternFlip', 'customPattern', 'customDurations', 'customDurationChances', 'customDurationRandomWeighting', 'speed', 'fillPauses', 'chordNoteChoices', 'melodyPatternOffsets',
       'patternFlexible', 'pauseChance', 'swingPercent', 'transpose', 'velocityMin', 'velocityMax',
       'feedbackCount', 'feedbackDuration',
     ],

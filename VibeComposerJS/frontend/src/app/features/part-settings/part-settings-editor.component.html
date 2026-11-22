@@ -165,7 +165,7 @@
   <div class="joined-member" [class.custom-member]="parameterFrozen(member.key)" [class.inactive-member]="inactive"
     [attr.title]="inactive ? memberDescription(member) : null" [attr.data-control-key]="member.key" [attr.data-parameter-key]="member.key">
     @if (member.key === 'feedbackCount' || member.key === 'patternShift') {
-      <vc-select [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event)" [mixed]="values()[member.key] === null"></vc-select>
+      <vc-select #choice="vcSelect" [options]="member.key === 'feedbackCount' ? delayOptions : shiftOptions" [attr.aria-label]="member.label" [title]="member.label" [selectDefault]="numericDefault(member)" [value]="values()[member.key] ?? ''" (valueChange)="chooseNumber(member, $event, choice)" [mixed]="values()[member.key] === null"></vc-select>
     } @else {
       <vc-compact-knob [defaultValue]="numericDefault(member)" [value]="numericValue(member)" [mixed]="values()[member.key] === null"
         [minimum]="minimum(member)" [maximum]="maximum(member)" [step]="member.step ?? 1" [label]="member.label"

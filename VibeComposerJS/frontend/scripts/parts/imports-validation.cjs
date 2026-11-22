@@ -329,7 +329,7 @@ test('bass join validation rejects malformed and wrong-role patches without losi
       assertRejectedProjectImport(service, JSON.stringify(project));
     }
   }
-  for (const role of ['melody', 'arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, { patternJoinMode: 'JOIN' }), undefined);
+  for (const role of ['arpeggio', 'drums']) assert.equal(settings.decodePartPatch(role, { patternJoinMode: 'JOIN' }), undefined);
   assert.equal(service.exportProjectJson(), saved); assert.equal(service.canRedo(), true);
 });
 
@@ -523,7 +523,7 @@ test('invalid fills fail at every scope and on import; omitted fields keep older
   assert.equal(service.exportProjectJson(), before);
 });
 
-test('unsupported roles and invalid rhythm controls reject edits/imports without discarding older settings', () => {
+test('invalid rhythm controls reject edits/imports without discarding older settings', () => {
   const { service } = fixture();
   const sectionId = service.project().arrangement[0].id;
   const trackId = 'track-chords-1';
@@ -537,10 +537,8 @@ test('unsupported roles and invalid rhythm controls reject edits/imports without
     service.updatePartSettings(scope, patch);
     assert.equal(service.exportProjectJson(), before);
   }
-  for (const role of ['melody']) {
-    service.updatePartSettings({ kind: 'section-role', sectionId, role }, { hitsPerPattern: 16 });
-    assert.equal(service.exportProjectJson(), before);
-    service.updatePartSettings({ kind: 'section-role', sectionId, role }, { euclideanPulses: 4 });
+  for (const patch of [...invalid.filter(patch => patch.rhythm !== 'melody1'), { rhythm: 'melody' }, { patternJoinMode: 'LEGATO' }]) {
+    service.updatePartSettings({ kind: 'section-role', sectionId, role: 'melody' }, patch);
     assert.equal(service.exportProjectJson(), before);
   }
   for (const patch of invalid) {

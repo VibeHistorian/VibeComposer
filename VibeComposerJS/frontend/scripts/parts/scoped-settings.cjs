@@ -1471,9 +1471,70 @@ test('custom melody durations copy nested lanes, persist every scope, group inhe
   for (const invalid of [[[0], ...rows.slice(1)], [[5], ...rows.slice(1)], [[NaN], ...rows.slice(1)], [[Infinity], ...rows.slice(1)], [[3, 2], ...rows.slice(1)], rows.slice(1)])
     assert.equal(decodePartPatch('melody', { customDurations: invalid }), undefined);
   assert.equal(decodePartPatch('melody', { customDurationChances: [50] }), undefined);
-  assert.equal(decodePartPatch('melody', { rhythm: 'custom' }), undefined);
+  assert.deepEqual(decodePartPatch('melody', { rhythm: 'custom' }), { rhythm: 'custom' });
   for (const role of ['melody', 'bass', 'arpeggio']) assert.deepEqual(decodePartPatch(role, { rhythm: 'durations' }), { rhythm: 'durations' });
   assert.equal(decodePartPatch('chords', { customDurations: rows }), undefined);
+});
+
+test('Melody grids preserve exact attacks and joined lengths in both generators', () => {
+  const { load } = fixture();
+  const { generateMelody } = load('core/music/melody-generator.ts');
+  const settings = {
+    algorithm: 'block', rhythm: 'custom', hitsPerPattern: 7, patternShift: 1,
+    customPattern: [1, 1, 0, 1, 0, 0, ...Array(26).fill(0)],
+    pauseChance: 100, splitChance: 100, startNoteChance: 0, fillPauses: true,
+    swingPercent: 75, syncopation: 100, newBlocksChance: 0,
+  };
+  for (const contextualMelody of [false, true]) {
+    for (const [patternJoinMode, onsets, lengths] of [
+      ['NOJOIN', [1, 2, 4], [1, 1, 1]],
+      ['EXPAND', [1, 2, 4], [1, 2, 3]],
+      ['JOIN', [1, 4], [2, 1]],
+    ]) {
+      let pattern, skeleton;
+      const notes = generateMelody(33n, 'C', 'major', [1, 5], { ...settings, patternJoinMode }, 0,
+        value => { pattern = value; }, { contextualMelody }, undefined, { durations: [2.3, 3.7] },
+        value => { skeleton = value; });
+      const starts = [0, 4].flatMap(chord => onsets.map(step => chord + step * 4 / 7));
+      assert.equal(notes.length, starts.length);
+      notes.forEach((note, index) => {
+        assert.ok(Math.abs(note.startBeat - starts[index]) < 1e-9);
+        assert.ok(Math.abs(note.durationBeats - lengths[index % lengths.length] * 4 / 7) < 1e-9);
+      });
+      assert.deepEqual(pattern.filter(note => note.midi >= 0).map(note => note.startBeat), notes.map(note => note.startBeat));
+      assert.deepEqual(skeleton.map(notes => notes.filter(note => note.midi >= 0).length), [onsets.length, onsets.length]);
+    }
+  }
+});
+
+test('Melody grid changes validate merged settings before committing or loading', () => {
+  const { service, phrase } = fixture();
+  const trackId = 'track-melody-1', sectionId = service.project().arrangement[0].id;
+  const track = () => service.project().tracks.find(track => track.id === trackId);
+  const global = { kind: 'global-track', trackId }, local = { kind: 'section-track', trackId, sectionId };
+  service.updatePartSettings(global, { rhythm: 'half', hitsPerPattern: 8 });
+  service.updatePartSettings(local, { rhythm: 'full', patternJoinMode: 'EXPAND' });
+  assert.equal(track().generatorSettings.rhythm, 'half');
+  const before = service.project(), history = service.historyPosition(), saved = service.exportProjectJson();
+  service.updatePartSettings({ kind: 'section-role', role: 'melody', sectionId }, { patternJoinMode: 'JOIN' });
+  assert.equal(service.project(), before, 'a group edit clears the edited member exception before validating');
+  assert.match(service.generationError(), /at least two attacks/);
+  service.updatePartSettings(global, { rhythm: 'single' });
+  assert.equal(service.project(), before);
+  assert.equal(service.historyPosition(), history);
+  const invalid = JSON.parse(saved);
+  invalid.arrangement[0].trackPartOverrides[trackId].patternFlip = true;
+  assertRejectedProjectImport(service, JSON.stringify(invalid));
+  service.updatePartSettings(local, { rhythm: 'half', patternShift: 1, patternJoinMode: 'JOIN' });
+  const result = service.project();
+  assert.notEqual(result, before);
+  assert.ok(phrase.resolvedTrackPhrase(result, track()).length);
+  service.updatePartSettings(global, { rangeMin: 60, rangeMax: 60 });
+  assert.equal(service.project(), result);
+  assert.match(service.generationError(), /No contextual melody fits this pattern/);
+  const valid = service.exportProjectJson();
+  assert.equal(service.importProjectJson(valid), true);
+  assert.deepEqual(projectData(service.exportProjectJson()), projectData(valid));
 });
 
 test('duration popup dry runs all lanes against contextual range and harmony without changing project or history', () => {

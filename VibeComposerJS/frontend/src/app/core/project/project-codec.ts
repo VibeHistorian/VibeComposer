@@ -15,6 +15,20 @@ import { decodeTracks, decodeEditedPhrases } from './project-track-decoder';
 import { decodeArrangement } from './project-arrangement-decoder';
 import { decodeStoredArrangement } from './project-storage';
 import type { SectionTypeChanceSettings } from './section-type-chances';
+import { melodyGrid } from '../music/melody-grid';
+
+/** Check inherited grids even when a manual phrase currently masks generation. */
+export function validateMelodyGrids(project: Pick<CompositionProject, 'tracks' | 'arrangement'>): void {
+  for (const track of project.tracks) {
+    if (track.role !== 'melody') continue;
+    melodyGrid(track.generatorSettings);
+    for (const section of project.arrangement) {
+      const rolePatch = section.rolePartOverrides?.melody;
+      const trackPatch = section.trackPartOverrides?.[track.id];
+      if (rolePatch || trackPatch) melodyGrid({ ...track.generatorSettings, ...rolePatch, ...trackPatch });
+    }
+  }
+}
 
 /** Decode imported/session data, retaining the existing optional-field defaults and recovery rules. */
 export function decodeProject(value: unknown, chances: SectionTypeChanceSettings, random: () => number): CompositionProject | undefined {
@@ -55,6 +69,8 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
   if (!arrangement || !editedPhrases || !tracks) {
     return undefined;
   }
+  try { validateMelodyGrids({ tracks, arrangement }); }
+  catch { return undefined; }
   const trackIds = new Set(tracks.map((track) => track.id));
   if (arrangement.some((section) => Object.keys(section.trackPresence).some((trackId) => !trackIds.has(trackId)))) return undefined;
   const decoded: CompositionProject = {

@@ -15,7 +15,7 @@ import { assignTrackMidiChannel } from './track-midi-channel';
 import { decodeMelody, decodeBass, decodeChords, decodeArpeggio, decodeDrums } from './project-part-decoder';
 import { isPhrase, isPhraseRangeEdits } from './project-track-decoder';
 import { appendPhraseRangeEdit, hasManualPhrase, type PhraseRangeEdit } from '../music/phrase-range-edit';
-import { decodeProject, isProject } from './project-codec';
+import { decodeProject, isProject, validateMelodyGrids } from './project-codec';
 import { formatProjectJson } from './project-json';
 import { encodeProjectStorage } from './project-storage';
 import { ProjectPersistence } from './project-persistence';
@@ -1638,9 +1638,12 @@ export class ProjectService {
     // Exercise both the global preview and section/dependency pipeline before
     // publishing signals, changing history or persisting an unusable candidate.
     try {
-      for (const track of samePhraseInputs(current, next) ? [] : next.tracks) {
-        phraseForTrack(next, track);
-        resolvedTrackPhrase(next, track);
+      if (!samePhraseInputs(current, next)) {
+        validateMelodyGrids(next);
+        for (const track of next.tracks) {
+          phraseForTrack(next, track);
+          resolvedTrackPhrase(next, track);
+        }
       }
     } catch (error) {
       this.generationFailure.set(error instanceof Error ? error.message : 'The requested music could not be generated.');

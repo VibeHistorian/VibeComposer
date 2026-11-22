@@ -13,6 +13,7 @@ export type StaticRhythmPattern = typeof STATIC_RHYTHM_DEFINITIONS[StaticRhythm]
 export const STATIC_RHYTHMS = Object.keys(STATIC_RHYTHM_DEFINITIONS) as StaticRhythm[];
 export const STATIC_RHYTHM_PATTERNS = Object.values(STATIC_RHYTHM_DEFINITIONS).map((definition) => definition.javaName);
 export const RHYTHM_PATTERNS = [...STATIC_RHYTHMS, 'euclid', 'custom'] as const;
+export type GridRhythm = typeof RHYTHM_PATTERNS[number];
 export const MELODY_RHYTHMS = [...RHYTHM_PATTERNS, 'melody'] as const;
 export type RhythmPattern = typeof MELODY_RHYTHMS[number];
 

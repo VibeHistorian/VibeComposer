@@ -59,7 +59,7 @@ for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, {
  for(const [value,label] of [['ARP_U','Arp.Up'],['ARP_D','Arp.Down'],['RAND_U','Rand.Up'],['RAND','Rand.Any'],['RAND_D','Rand.Down'],['RAND_WU','Rand.Spaced'],['HUMAN_U','Human.Up'],['HUMAN','Human.Any'],['HUMAN_D','Human.Down']]) {
    await changeControl(strum,value);await wait(()=>strum.textContent.trim()===label,'compact selected strum '+value);
  }
- for(const [role,count] of [['melody',2],['bass',10],['chords',8],['arpeggio',10],['drums',9]]) {
+ for(const [role,count] of [['melody',10],['bass',10],['chords',8],['arpeggio',10],['drums',9]]) {
    document.querySelector('.track-group.'+role+' .group-select').click();
    const editor=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="'+role+'"]'),'role editor '+role);
    const rhythm=editor.querySelector('vc-menu-select[data-parameter-key="rhythm"]');

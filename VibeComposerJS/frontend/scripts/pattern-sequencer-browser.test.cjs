@@ -6,7 +6,7 @@ const test = require('node:test');
 
 const browser = findBrowser();
 
-test('compact pattern popup edits independent drum rows and commits velocities once', {
+test('compact pattern editors commit drum velocities and validate Melody grids', {
   skip: browser ? false : 'Set OVERVIEW_TEST_BROWSER to a Chromium executable',
 }, async () => {
   const root = requireProductionBuild();
@@ -184,6 +184,29 @@ test('compact pattern popup edits independent drum rows and commits velocities o
       await wait(()=>!melodyControl.querySelector('.flip-button, .mini-preview'),'normal melody hides custom widgets again');
       check(melodySettings().customDurations[0][0]===1,'normal retains custom duration data');
       check((await selectOptions(rhythm)).find(option=>option.value==='durations').textContent.trim()==='durations','melody option renamed');
+      await changeControl(rhythm, 'half');
+      await wait(()=>melodySettings().rhythm==='half','Melody grid chosen');
+      await wait(()=>melodyControl.querySelector('[data-control-key="hitsPerPattern"]'),'Melody subdivision control');
+      const melodyShift=await wait(()=>melodyControl.querySelector('vc-select[aria-label="Shift"]'),'Melody shift control');
+      await changeControl(melodyShift, '1');
+      await wait(()=>melodySettings().patternShift===1,'Melody shift saved');
+      const join=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="melody"] vc-select[aria-label="Pattern Join"]'),'Melody Pattern Join');
+      await changeControl(join, 'JOIN');
+      await wait(()=>melodySettings().patternJoinMode==='JOIN','Melody Join saved');
+      await changeControl(rhythm, 'full');
+      await wait(()=>rhythm.getAttribute('value')==='half' && document.body.textContent.includes('at least two attacks'),'invalid joined pattern rejected and selection restored');
+      check(melodySettings().rhythm==='half','invalid choice left project intact');
+      const melodyPreview=await wait(()=>melodyControl.querySelector('.rhythm-preview-grid'),'Melody grid preview');
+      melodyPreview.click();
+      const melodyGrid=await wait(()=>document.querySelector('vc-pattern-sequencer'),'Melody pattern popup');
+      const melodySteps=await wait(()=>melodyGrid.querySelector('input[type="number"]'),'Melody grid subdivision input');
+      await changeControl(melodySteps, '2');
+      await wait(()=>melodyGrid.querySelector('[role="alert"]')?.textContent.includes('at least two attacks'),'invalid subdivision count explained in popup');
+      check(melodySteps.value==='8' && melodyGrid.querySelectorAll('.step').length===8,'rejected subdivision count restored');
+      melodyGrid.querySelector('.step.active').click();
+      await wait(()=>melodySettings().rhythm==='custom','grid editing saves custom Melody hits');
+      melodyGrid.querySelector('button[aria-label="Close pattern sequencer"]').click();
+      await wait(()=>!document.querySelector('vc-pattern-sequencer'),'Melody grid closed');
       for (const role of ['bass','arpeggio']) {
         document.querySelector('.track-group.'+role+' .track-select').click();
         const control=await wait(()=>document.querySelector('vc-part-settings-editor[data-control-role="'+role+'"] [data-control-key="rhythm"]'),role+' rhythm');

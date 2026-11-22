@@ -16,6 +16,7 @@ import { decodeArrangement, MAX_ARRANGEMENT_SECTIONS, MAX_ARRANGEMENT_MEASURES }
 import type { SectionTypeChanceSettings } from './section-type-chances';
 import { decodeStoredArrangement, decodeStoredTrackPresence } from './project-storage';
 import { validSectionVariations, validVariationPolicy } from '../music/arrangement-variations';
+import { validateMelodyGrids } from './project-codec';
 
 /** Gather diagnostics only after rejection; these messages do not define acceptance rules. */
 export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSettings, random: () => number): readonly string[] {
@@ -149,6 +150,10 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
     if (Array.isArray(arrangement)) check('project.arrangement', arrangement.reduce((total, section) => total + (section?.measures ?? 0), 0) <= MAX_ARRANGEMENT_MEASURES, `total length must not exceed ${MAX_ARRANGEMENT_MEASURES} measures`);
     const decodedTracks = decodeTracks(tracks), editedPhrases = decodeEditedPhrases(project['editedPhrases']);
     const decodedArrangement = decodedTracks ? decodeArrangement(decodeStoredArrangement(arrangement, decodedTracks), decodedTracks, 0n, chances, random) : undefined;
+    if (decodedTracks && decodedArrangement) {
+      try { validateMelodyGrids({ tracks: decodedTracks, arrangement: decodedArrangement }); }
+      catch (error) { issues.push(`project: ${(error as Error).message}`); }
+    }
     if (decodedTracks && editedPhrases && decodedArrangement) check('project.drums',
       projectDrumPitches({ tracks: decodedTracks, editedPhrases, arrangement: decodedArrangement }).length <= MAX_DRUM_SOUNDS,
       `a project supports at most ${MAX_DRUM_SOUNDS} distinct drum sounds, including retained manual notes`);

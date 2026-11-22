@@ -31,6 +31,7 @@ header vc-select[aria-disabled="true"] { opacity: .5; }
 .step.beat { border-left-color: var(--border-contrast); }
 .step.active { background: var(--parameter-rhythm); border-color: var(--parameter-rhythm); }
 .unavailable { color: var(--text-muted); font-size: 11px; }
+.pattern-error { color: var(--color-danger); }
 
 /* Shared timeline positions, independent of each track's subdivision count */
 .custom-pattern-grid, .velocity-pattern-grid { display: block; position: relative; height: 24px; }

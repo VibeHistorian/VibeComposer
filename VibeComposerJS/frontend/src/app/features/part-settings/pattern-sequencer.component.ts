@@ -10,6 +10,7 @@ import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { ProjectService } from '../../core/project/project.service';
 import { resolvePartTrack, settingsValues } from '../../core/music/part-settings';
 import { chordRhythmMask } from '../../core/music/rhythm-pattern';
+import { isMelodyGrid, MIN_MELODY_GRID_ATTACKS } from '../../core/music/melody-grid';
 import { DEFAULT_CUSTOM_VELOCITIES } from '../../core/music/velocity-pattern';
 import { MidiOutputService } from '../../core/audio/midi-output.service';
 
@@ -66,6 +67,8 @@ export class PatternSequencerComponent {
     if (valid && this.recordedHits && draft?.pattern) this.storePattern(draft.id, draft.pattern);
   }
   readonly showVelocities = signal(this.data.velocities);
+  readonly error = signal<string | null>(null);
+  readonly minimumHits = this.data.role === 'melody' ? MIN_MELODY_GRID_ATTACKS : 1;
   readonly draft = signal<{ id: string; pattern?: number[]; velocities?: number[] } | null>(null);
   private gesture: { pointer: number; id: string; last: number; sounded: number; project: ReturnType<ProjectService['project']> } | null = null;
   private velocityProject: ReturnType<ProjectService['project']> | null = null;
@@ -78,8 +81,9 @@ export class PatternSequencerComponent {
       : 'trackId' in scope ? track.id === scope.trackId : track.role === this.data.role).map(track => {
       const effective = resolvePartTrack(track, section, project.melodyGlobal);
       const values = settingsValues(effective.generatorSettings, effective.role);
-      const supported = track.role !== 'melody' && values['rhythm'] !== 'melody' && !(track.role === 'bass' && values['rhythm'] === 'bass1');
-      const hits = values['rhythm'] === 'melody' || track.role === 'melody' ? this.data.melodyHits : Number(values['hitsPerPattern'] ?? 8);
+      const supported = track.role === 'melody' ? isMelodyGrid(values['rhythm'])
+        : values['rhythm'] !== 'melody' && !(track.role === 'bass' && values['rhythm'] === 'bass1');
+      const hits = values['rhythm'] === 'melody' ? this.data.melodyHits : Number(values['hitsPerPattern'] ?? 8);
       const pattern = draft?.id === track.id && draft.pattern ? draft.pattern : supported ? chordRhythmMask({
         rhythm: values['rhythm'] as ChordRhythm, hitsPerPattern: hits, patternShift: Number(values['patternShift'] ?? 0),
         patternFlip: values['patternFlip'] === true, euclideanPulses: Number(values['euclideanPulses'] ?? 4),
@@ -110,8 +114,16 @@ export class PatternSequencerComponent {
 
   patch(id: string, patch: PartSettingsPatch): void {
     const scope = this.data.scope;
+    if (this.data.role === 'melody') this.projects.dismissGenerationError();
     this.projects.updatePartSettings('sectionId' in scope ? { kind: 'section-track', sectionId: scope.sectionId, trackId: id }
       : { kind: 'global-track', trackId: id }, patch);
+    if (this.data.role === 'melody') this.error.set(this.projects.generationError());
+  }
+
+  changeHits(id: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.value && input.checkValidity()) this.patch(id, { hitsPerPattern: input.valueAsNumber });
+    input.value = String(this.rows().find(row => row.id === id)!.hits);
   }
 
   toggle(id: string, index: number): void {
@@ -193,6 +205,10 @@ export class PatternSequencerComponent {
 
   inherit(id: string, field: string): void {
     const scope = this.data.scope;
-    if ('sectionId' in scope) this.projects.resetPartSettings({ kind: 'section-track', sectionId: scope.sectionId, trackId: id }, combinedControlKeys(field));
+    if (!('sectionId' in scope)) return;
+    if (this.data.role === 'melody') this.projects.dismissGenerationError();
+    this.projects.resetPartSettings({ kind: 'section-track', sectionId: scope.sectionId, trackId: id },
+      combinedControlKeys(field, this.data.role === 'melody' ? 'melody' : undefined));
+    if (this.data.role === 'melody') this.error.set(this.projects.generationError());
   }
 }

@@ -1,5 +1,5 @@
 import type { ChordSpanFill } from './chord-span-fill';
-import type { BassRhythm, RhythmPattern } from './rhythm-patterns';
+import type { BassRhythm, GridRhythm, RhythmPattern } from './rhythm-patterns';
 import type { StrumType } from './chord-strum';
 import type { ArpeggioPattern } from './arpeggio-pattern';
 
@@ -8,6 +8,7 @@ export type ChordRhythm = RhythmPattern;
 export type ChordVoicing = 'close' | 'open';
 
 export type ArpeggioRate = 'eighth' | 'sixteenth';
+export type PatternJoinMode = 'NOJOIN' | 'EXPAND' | 'JOIN';
 
 export interface CommonPartSettings {
   /** Non-destructive adjustments to stored manual notes, independent of baked generation. */
@@ -68,7 +69,8 @@ export interface MelodySettings extends CommonPartSettings {
   readonly fillPausesPerChord?: boolean;
 
   readonly algorithm: 'block';
-  readonly rhythm?: 'melody1' | 'durations';
+  readonly rhythm?: 'melody1' | 'durations' | GridRhythm;
+  readonly patternJoinMode?: PatternJoinMode;
   readonly speed?: number;
   readonly syncopation?: number;
   readonly entryPlacement?: number;
@@ -123,7 +125,7 @@ export interface MelodyGlobalSettings {
 export interface BassSettings extends CommonPartSettings {
   readonly rhythm: BassRhythm;
   /** Omission preserves the translated subdivision path; Java's part default is EXPAND. */
-  readonly patternJoinMode?: 'NOJOIN' | 'EXPAND' | 'JOIN';
+  readonly patternJoinMode?: PatternJoinMode;
   /** Chance, in percent, of choosing a chord tone instead of its root. */
   readonly noteVariation: number;
   /** Add a quieter note one octave above each generated bass note. */
@@ -148,7 +150,7 @@ export interface RhythmSettings {
 }
 
 export interface ChordSettings extends CommonPartSettings, RhythmSettings {
-  readonly patternJoinMode?: 'NOJOIN' | 'EXPAND' | 'JOIN';
+  readonly patternJoinMode?: PatternJoinMode;
   readonly transitionChance?: number;
   /** Thousandths of the current chord duration; 625 starts transitions at 62.5%. */
   readonly transitionSplit?: number;
