@@ -84,9 +84,9 @@ test('duration recording preserves pauses and separate attacks across a loop', (
   assert.deepEqual(editor.rows()[0],[.5,.5,-2.75,.25]);
   assert.equal(JSON.stringify(f.service.project()),before);
 });
-test('duration recording captures silence and ignores the manual drawing tool, including short taps', () => {
+test('duration recording captures silence and short taps', () => {
   const f=fixture(); const editor=new (f.load('features/part-settings/durations-dialog.component.ts').DurationsDialogComponent)();
-  editor.tool.set('rest'); editor.editRow(0,'4'); editor.beginRecording();
+  editor.editRow(0,'4'); editor.beginRecording();
   editor.recordCursor({beat:1,held:false});
   assert.deepEqual(editor.rows()[0],[-1,3]);
   editor.recordCursor({beat:1,held:true}); editor.recordCursor({beat:1.1,held:false});

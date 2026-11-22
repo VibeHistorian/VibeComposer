@@ -154,14 +154,13 @@ test('live recording captures phrase notes, MIDI velocity, held patterns and dur
   const durations=await wait(()=>document.querySelector('vc-durations-dialog'),'durations popup');
   const lane=await wait(()=>durations.querySelector('[aria-label="Lane 1 durations"]'),'duration lane');
   await changeControl(lane,'4');
-  button('Draw pauses').click();
   button('Record live').focus();button('Record live').click();
   await wait(()=>durations.querySelector('.recording-cursor'),'moving duration cursor');
   press('keydown','Backquote','\u0060');await pause(300);press('keyup','Backquote','\u0060');
   await wait(()=>lane.value && lane.value.split(',').some(n=>Number(n)>0),'held duration recorded');
   await pause(250);
   button('Stop recording').click();
-  check(lane.value.split(',').some(n=>Number(n)<0),'silence becomes pauses regardless of drawing tool');
+  check(lane.value.split(',').some(n=>Number(n)<0),'recorded silence becomes pauses');
   button('Cancel').click();
 
   const drumTrack=await wait(()=>document.querySelector('.track-group.drums .track-select'),'first drum track');

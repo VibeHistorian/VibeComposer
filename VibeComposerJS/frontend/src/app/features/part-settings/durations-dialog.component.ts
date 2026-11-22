@@ -10,6 +10,13 @@ import { resolvePartTrack } from '../../core/music/part-settings';
 import { DEFAULT_DURATION_CHANCES, DEFAULT_DURATIONS, durationError, paddedDurations } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
 
+interface DurationStroke {
+  row: number;
+  start: number;
+  end: number;
+  original: readonly number[];
+}
+
 @Component({
   imports: [LiveRecordingComponent, SelectComponent],
   selector: 'vc-durations-dialog',
@@ -61,9 +68,8 @@ export class DurationsDialogComponent {
   private writeRecordingSpan(span: RecordedSpan, sounded: boolean): void {
     const lane = this.recordingLane(), grid = this.grid();
     for (const segment of recordedSegments(span, 4, grid)) {
-      this.gesture = { pointer: -1, row: lane, start: Math.round(segment.start / grid),
-        end: Math.round(segment.end / grid) - 1, original: this.rows()[lane] };
-      this.paint(sounded); this.gesture = null;
+      this.paint({ row: lane, start: Math.round(segment.start / grid),
+        end: Math.round(segment.end / grid) - 1, original: this.rows()[lane] }, sounded);
     }
   }
   recordSpan(span: RecordedSpan): void {
@@ -71,7 +77,6 @@ export class DurationsDialogComponent {
     this.writeRecordingSpan(span, true);
   }
   readonly grid = signal(0.25);
-  readonly tool = signal<'note' | 'rest'>('note');
   readonly rows = computed(() => this.texts().map(text => text.trim() ? text.split(',').map(value => value.trim() ? Number(value) : NaN) : []));
   readonly patch = computed<PartSettingsPatch>(() => ({ rhythm: 'durations', customDurations: this.rows(),
     customDurationChances: this.chances(), customDurationRandomWeighting: this.weighted(), patternFlip: this.flipped() }));
@@ -91,7 +96,7 @@ export class DurationsDialogComponent {
       const slot = { start, duration: Math.abs(value), rest: value < 0 }; start += slot.duration; return slot;
     });
   }));
-  private gesture: { pointer: number; row: number; start: number; end: number; original: readonly number[] } | null = null;
+  private gesture: (DurationStroke & { pointer: number; sounded: boolean }) | null = null;
 
   editRow(row: number, text: string): void { this.texts.update(rows => rows.map((value, index) => index === row ? text : value)); }
   editChance(row: number, value: string): void { this.chances.update(chances => chances.map((chance, index) => index === row ? Number(value) : chance)); }
@@ -100,27 +105,33 @@ export class DurationsDialogComponent {
     return Math.max(0, Math.min(this.steps().length - 1, Math.floor((event.clientX - bounds.left) / bounds.width * this.steps().length)));
   }
   start(event: PointerEvent, row: number): void {
-    if (event.button !== 0) return;
+    if (this.gesture || (event.button !== 0 && event.button !== 2)) return;
     event.preventDefault();
     const values = this.rows()[row];
     if (values.some(value => !Number.isFinite(value) || value === 0) || values.reduce((sum, value) => sum + Math.abs(value), 0) > 4.0000001) return;
     const cell = this.cell(event);
-    this.gesture = { pointer: event.pointerId, row, start: cell, end: cell, original: values };
+    const gesture = { pointer: event.pointerId, row, start: cell, end: cell, original: values, sounded: event.button === 0 };
+    this.gesture = gesture;
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-    this.paint();
+    this.paint(gesture, gesture.sounded);
   }
   move(event: PointerEvent): void {
     if (!this.gesture || this.gesture.pointer !== event.pointerId) return;
     const cell = this.cell(event);
-    if (cell !== this.gesture.end) { this.gesture.end = cell; this.paint(); }
+    if (cell !== this.gesture.end) {
+      this.gesture.end = cell;
+      this.paint(this.gesture, this.gesture.sounded);
+    }
   }
-  finish(): void { this.gesture = null; }
-  cancel(): void {
-    if (this.gesture) this.editRow(this.gesture.row, this.gesture.original.join(', '));
+  finish(event: PointerEvent): void {
+    if (this.gesture?.pointer === event.pointerId) this.gesture = null;
+  }
+  cancel(event: PointerEvent): void {
+    if (this.gesture?.pointer !== event.pointerId) return;
+    this.editRow(this.gesture.row, this.gesture.original.join(', '));
     this.gesture = null;
   }
-  private paint(recordedSounded?: boolean): void {
-    const gesture = this.gesture!;
+  private paint(gesture: DurationStroke, sounded: boolean): void {
     const left = Math.min(gesture.start, gesture.end) * this.grid(), right = (Math.max(gesture.start, gesture.end) + 1) * this.grid();
     const before: number[] = [], after: number[] = [];
     let time = 0;
@@ -130,7 +141,7 @@ export class DurationsDialogComponent {
       if (end > right) after.push(sign * (end - Math.max(time, right)));
       time = end;
     }
-    const sign = (recordedSounded ?? (this.tool() === 'note')) !== this.flipped() ? 1 : -1;
+    const sign = sounded !== this.flipped() ? 1 : -1;
     this.editRow(gesture.row, [...before, sign * (right - left), ...after].map(value => Math.round(value * 960) / 960).join(', '));
   }
   validate(): void {

@@ -149,6 +149,27 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       };
       const durationButton=label=>[...durations.querySelectorAll('button')].find(button=>button.textContent.trim()===label);
       await wait(()=>durations.querySelectorAll('.duration-row').length===10,'ten duration lanes');
+      const drawingLane = durations.querySelector('[aria-label="Lane 1 duration drawing area"]');
+      const laneInput = durations.querySelector('[aria-label="Lane 1 durations"]');
+      // Synthetic pointer events have no active pointer for the browser to capture.
+      drawingLane.setPointerCapture = () => {};
+      const bounds = drawingLane.getBoundingClientRect();
+      const drag = (button, buttons, from, to) => {
+        const pointer = (type, cell, changedButton, heldButtons) => drawingLane.dispatchEvent(new PointerEvent(type, {
+          pointerId: 1, pointerType: 'mouse', button: changedButton, buttons: heldButtons,
+          clientX: bounds.left + (cell + 0.5) * bounds.width / 16, bubbles: true, cancelable: true,
+        }));
+        pointer('pointerdown', from, button, buttons);
+        pointer('pointermove', to, -1, buttons);
+        pointer('pointerup', to, button, 0);
+      };
+      edit('Lane 1 durations','4');
+      drag(2, 2, 7, 4);
+      await wait(()=>laneInput.value==='1, -1, 2','right drag draws a pause');
+      drag(0, 1, 8, 11);
+      await wait(()=>laneInput.value==='1, -1, 1, 1','left drag draws a separate note');
+      const contextMenu = new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true });
+      check(!drawingLane.dispatchEvent(contextMenu),'the duration lane suppresses the browser context menu');
       edit('Lane 1 durations','-4');
       await wait(()=>durations.querySelector('.error')?.textContent.includes('only pauses'),'invalid durations explained');
       check(durationButton('Save durations').disabled,'invalid durations cannot save');

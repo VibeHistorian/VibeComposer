@@ -1577,12 +1577,14 @@ test('melody duration drawing and validation stay in the draft, save once, and r
   let closed = false; popup.dialog.close = () => { closed = true; };
   const before = service.exportProjectJson(), position = service.historyPosition();
   const area = { getBoundingClientRect: () => ({ left: 0, width: 400 }), setPointerCapture() {} };
-  const event = x => ({ button: 0, pointerId: 1, clientX: x, currentTarget: area, preventDefault() {} });
+  const event = (x, button = 0) => ({ button, pointerId: 1, clientX: x, currentTarget: area, preventDefault() {} });
   popup.start(event(0), 1); popup.move(event(199));
   assert.deepEqual(popup.rows()[1], [2, -2]);
-  popup.cancel(); assert.deepEqual(popup.rows()[1], []);
-  popup.flipped.set(true); popup.start(event(0), 1); popup.move(event(199)); popup.finish();
+  popup.cancel(event(199)); assert.deepEqual(popup.rows()[1], []);
+  popup.flipped.set(true); popup.start(event(0), 1); popup.move(event(199)); popup.finish(event(199));
   assert.deepEqual(popup.rows()[1], [-2, -2], 'drawing notes while flipped stores underlying pauses');
+  popup.start(event(0, 2), 1); popup.move(event(199)); popup.finish(event(199, 2));
+  assert.deepEqual(popup.rows()[1], [2, -2], 'drawing pauses while flipped stores underlying notes');
   popup.editRow(1, ''); popup.flipped.set(false);
   popup.editRow(0, '-4'); assert.match(popup.error(), /only pauses/); assert.equal(popup.canSave(), false);
   popup.editRow(0, '1, -1, 1, -1');

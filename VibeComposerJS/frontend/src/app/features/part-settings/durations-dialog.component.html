@@ -6,12 +6,10 @@
 <label>Recording lane <vc-select aria-label="Recording duration lane" [disabled]="recordingBeat() !== null" [options]="recordingLaneOptions" [value]="recordingLane()" (valueChange)="recordingLane.set(+$event)" /></label>
 <div class="duration-toolbar">
   <label>Grid <vc-select [options]="[{ value: '0.5', label: '½ beat' }, { value: '0.25', label: '¼ beat' }, { value: '0.125', label: '⅛ beat' }, { value: 1 / 3, label: '⅓ beat' }, { value: 1 / 6, label: '⅙ beat' }]" aria-label="Duration grid" [value]="grid()" (valueChange)="grid.set(+$event)"></vc-select></label>
-  <button type="button" [class.active]="tool() === 'note'" [attr.aria-pressed]="tool() === 'note'" (click)="tool.set('note')">Draw notes</button>
-  <button type="button" [class.active]="tool() === 'rest'" [attr.aria-pressed]="tool() === 'rest'" (click)="tool.set('rest')">Draw pauses</button>
   <label><input type="checkbox" aria-label="Flip custom durations" [checked]="flipped()" (change)="flipped.set($any($event.target).checked)" /> Flip</label>
   <label><input type="checkbox" aria-label="Weighted duration selection" [checked]="weighted()" (change)="weighted.set($any($event.target).checked)" /> Weighted selection</label>
 </div>
-<p class="instructions">Drag across a lane to set a note’s length or paint a pause. Separate notes keep their own boundaries. Empty lanes are skipped; otherwise lanes follow {{ role === 'melody' ? 'block identities' : 'chord order' }}, or their chances when weighted selection is on. Durations stretch with the chord.</p>
+<p class="instructions">Use the left mouse button for notes and the right mouse button for pauses. Click a cell or drag to set the length. Separate notes keep their own boundaries. Empty lanes are skipped; otherwise lanes follow {{ role === 'melody' ? 'block identities' : 'chord order' }}, or their chances when weighted selection is on. Durations stretch with the chord.</p>
 @if (trackCount > 1) { <p class="instructions">Saving applies these rhythms to all selected tracks. The first track supplies the starting draft.</p> }
 <div class="duration-scroll">
   <div class="duration-ruler"><span>Lane / chance</span><div><span>1</span><span>2</span><span>3</span><span>4</span></div><span>Durations in beats</span></div>
@@ -21,7 +19,8 @@
         <input type="number" min="0" max="100" [value]="chances()[lane]" [attr.aria-label]="'Lane ' + (lane + 1) + ' chance'" (input)="editChance(lane, $any($event.target).value)" /><span>%</span>
       </div>
       <div class="duration-lane" [style.--cells]="steps().length" [attr.aria-label]="'Lane ' + (lane + 1) + ' duration drawing area'"
-        (pointerdown)="start($event, lane)" (pointermove)="move($event)" (pointerup)="finish()" (pointercancel)="cancel()" (lostpointercapture)="finish()">
+        (pointerdown)="start($event, lane)" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel($event)"
+        (lostpointercapture)="finish($event)" (contextmenu)="$event.preventDefault()">
         @if (recordingBeat() !== null && recordingLane() === lane) { <span class="recording-cursor" [style.left.%]="recordingBeat()! / 4 * 100" aria-hidden="true"></span> }
         @for (slot of row; track $index) {
           <span class="duration-event" [class.sounded]="!slot.rest" [style.left.%]="slot.start / 4 * 100" [style.width.%]="slot.duration / 4 * 100" aria-hidden="true">{{ slot.rest ? '·' : '' }}</span>
