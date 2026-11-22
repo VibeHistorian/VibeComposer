@@ -10,25 +10,40 @@ export const DEFAULT_DURATIONS: Durations = Object.freeze([
 export const DEFAULT_DURATION_CHANCES: readonly number[] = Object.freeze(Array(10).fill(50));
 const EPS = 1e-7;
 
-export function isDurations(value: unknown): value is Durations {
-  return Array.isArray(value) && value.length === 10 && Array.from(value).every(row => Array.isArray(row)
+export function isDurationRow(row: unknown): row is readonly number[] {
+  return Array.isArray(row)
     && row.length <= 64 && Array.from(row).every(duration => typeof duration === 'number' && Number.isFinite(duration)
-      && Math.abs(duration) >= 1 / 960 - EPS && Math.abs(duration) <= 4)
-    && row.reduce((sum, duration) => sum + Math.abs(duration), 0) <= 4 + EPS);
+      && Math.abs(duration) >= 1 / 960 - EPS && Math.abs(duration) <= 4 + EPS)
+    && row.reduce((sum, duration) => sum + Math.abs(duration), 0) <= 4 + EPS;
 }
 
-/** Java pads the chosen lane with trailing silence to fill one chord. */
+export function isDurations(value: unknown): value is Durations {
+  return Array.isArray(value) && value.length === 10 && Array.from(value).every(isDurationRow);
+}
+
+export function joinDurationPauses(row: readonly number[]): number[] {
+  const joined: number[] = [];
+  for (const duration of row) {
+    const last = joined.length - 1;
+    if (duration < 0 && joined[last] < 0) joined[last] += duration;
+    else joined.push(duration);
+  }
+  return joined;
+}
+
+/** Pad to one chord, then join pauses before Flip so each silent run becomes one note. */
 export function paddedDurations(row: readonly number[], flipped = false): number[] {
   const result = [...row], remaining = 4 - row.reduce((sum, duration) => sum + Math.abs(duration), 0);
   if (remaining > EPS) result.push(-remaining);
-  return flipped ? result.map(duration => -duration) : result;
+  const joined = joinDurationPauses(result);
+  return flipped ? joinDurationPauses(joined.map(duration => -duration)) : joined;
 }
 
 export function durationError(settings: CommonPartSettings): string | null {
   const rows: unknown = settings.customDurations ?? DEFAULT_DURATIONS;
   if (!isDurations(rows)) {
     const lane = Array.isArray(rows) && rows.length === 10
-      ? rows.findIndex(row => !isDurations([row, ...Array.from({ length: 9 }, () => [])])) : -1;
+      ? rows.findIndex(row => !isDurationRow(row)) : -1;
     return `${lane >= 0 ? 'Lane ' + (lane + 1) + ': ' : ''}Use up to 64 nonzero durations per lane, totaling at most four beats.`;
   }
   const chances = settings.customDurationChances ?? DEFAULT_DURATION_CHANCES;

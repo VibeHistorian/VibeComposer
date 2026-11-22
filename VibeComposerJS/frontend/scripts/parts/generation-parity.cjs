@@ -877,10 +877,10 @@ test('P5e Start note delays feed same-section melody dependency grids before swi
   assert.equal(service.project().arrangement[1].trackPresence['track-melody-1'], section.trackPresence['track-melody-1']);
 });
 
-test('custom melody durations preserve note/rest boundaries in both generators and Flip complements them', () => {
+test('custom melody durations join pauses and preserve note attacks in both generators', () => {
   const { load } = fixture();
   const { generateMelody } = load('core/music/melody-generator.ts');
-  const rows = [[1, -0.5, 0.5, 1, -1], ...Array.from({ length: 9 }, () => [])];
+  const rows = [[1, -0.25, -0.25, 0.5, 1, -0.5, -0.5], ...Array.from({ length: 9 }, () => [])];
   const settings = { algorithm: 'block', rhythm: 'durations', customDurations: rows };
   for (const contextualMelody of [false, true]) for (const patternFlip of [false, true]) {
     const notes = generateMelody(42n, 'C', 'major', [1, 5, 6, 4], { ...settings, patternFlip }, 0, undefined, { contextualMelody });
@@ -901,8 +901,9 @@ test('custom melody lanes pad, cycle by block identity, weight deterministically
   const { durationBlocks, durationError, paddedDurations } = load('core/music/durations.ts');
   const rows = [[1, -1], [], [0.5, -0.5, 1, -2], ...Array.from({ length: 7 }, () => [])];
   const settings = { algorithm: 'block', rhythm: 'durations', customDurations: rows };
-  assert.deepEqual(paddedDurations(rows[0]), [1, -1, -2]);
-  assert.deepEqual(durationBlocks(settings, 42, 0, 0).flat(), [1, -1, -2]);
+  assert.deepEqual(paddedDurations(rows[0]), [1, -3]);
+  assert.deepEqual(durationBlocks(settings, 42, 0, 0).flat(), [1, -3]);
+  assert.deepEqual(durationBlocks({ ...settings, patternFlip: true }, 42, 0, 0).flat(), [-1, 3]);
   assert.deepEqual(durationBlocks(settings, 42, 0, 1).flat(), rows[2]);
   const chances = [0, 0, 100, ...Array(7).fill(0)];
   for (let seed = 0; seed < 20; seed++) assert.deepEqual(durationBlocks({ ...settings, customDurationRandomWeighting: true, customDurationChances: chances }, seed, 0).flat(), rows[2]);

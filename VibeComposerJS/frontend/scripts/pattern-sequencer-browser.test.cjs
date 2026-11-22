@@ -168,6 +168,16 @@ test('compact pattern editors commit drum velocities and validate Melody grids',
       await wait(()=>laneInput.value==='1, -1, 2','right drag draws a pause');
       drag(0, 1, 8, 11);
       await wait(()=>laneInput.value==='1, -1, 1, 1','left drag draws a separate note');
+      drag(2, 2, 8, 11);
+      const drawnNotes = () => [...drawingLane.querySelectorAll('.duration-event')];
+      await wait(()=>laneInput.value==='1, -2, 1' && drawnNotes().map(note => note.style.left).join(',')==='0%,75%','replacing a note with a pause joins the silence and leaves the grid clear');
+      const flipDurations = durations.querySelector('[aria-label="Flip custom durations"]');
+      flipDurations.click();
+      await wait(()=>drawnNotes().length===1 && drawnNotes()[0].style.left==='25%' && drawnNotes()[0].style.width==='50%','joined pauses produce one note when flipped');
+      flipDurations.click();
+      edit('Lane 1 durations','1, -0.5, -0.5, 2');
+      laneInput.dispatchEvent(new FocusEvent('blur'));
+      await wait(()=>laneInput.value==='1, -1, 2','text entry joins pauses when leaving the field');
       const contextMenu = new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true });
       check(!drawingLane.dispatchEvent(contextMenu),'the duration lane suppresses the browser context menu');
       edit('Lane 1 durations','-4');

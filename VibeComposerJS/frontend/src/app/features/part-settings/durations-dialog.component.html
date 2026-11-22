@@ -13,7 +13,7 @@
 @if (trackCount > 1) { <p class="instructions">Saving applies these rhythms to all selected tracks. The first track supplies the starting draft.</p> }
 <div class="duration-scroll">
   <div class="duration-ruler"><span>Lane / chance</span><div><span>1</span><span>2</span><span>3</span><span>4</span></div><span>Durations in beats</span></div>
-  @for (row of displayRows(); track $index; let lane = $index) {
+  @for (row of displayedNotes(); track $index; let lane = $index) {
     <div class="duration-row" [class.unused]="!rows()[lane].length">
       <div class="lane-identity"><strong>{{ lane + 1 }}</strong>
         <input type="number" min="0" max="100" [value]="chances()[lane]" [attr.aria-label]="'Lane ' + (lane + 1) + ' chance'" (input)="editChance(lane, $any($event.target).value)" /><span>%</span>
@@ -22,16 +22,16 @@
         (pointerdown)="start($event, lane)" (pointermove)="move($event)" (pointerup)="finish($event)" (pointercancel)="cancel($event)"
         (lostpointercapture)="finish($event)" (contextmenu)="$event.preventDefault()">
         @if (recordingBeat() !== null && recordingLane() === lane) { <span class="recording-cursor" [style.left.%]="recordingBeat()! / 4 * 100" aria-hidden="true"></span> }
-        @for (slot of row; track $index) {
-          <span class="duration-event" [class.sounded]="!slot.rest" [style.left.%]="slot.start / 4 * 100" [style.width.%]="slot.duration / 4 * 100" aria-hidden="true">{{ slot.rest ? '·' : '' }}</span>
+        @for (note of row; track $index) {
+          <span class="duration-event" [style.left.%]="note.start / 4 * 100" [style.width.%]="note.duration / 4 * 100" aria-hidden="true"></span>
         }
       </div>
-      <label class="duration-text"><span class="sr-only">Lane {{ lane + 1 }} durations</span><input type="text" [attr.aria-label]="'Lane ' + (lane + 1) + ' durations'" [value]="texts()[lane]" placeholder="Unused" (input)="editRow(lane, $any($event.target).value)" /></label>
+      <label class="duration-text"><span class="sr-only">Lane {{ lane + 1 }} durations</span><input type="text" [attr.aria-label]="'Lane ' + (lane + 1) + ' durations'" [value]="texts()[lane]" placeholder="Unused" (input)="editRow(lane, $any($event.target).value)" (blur)="finishTextEdit(lane)" /></label>
       <button type="button" [attr.aria-label]="'Clear duration lane ' + (lane + 1)" (click)="editRow(lane, '')">×</button>
     </div>
   }
 </div>
-<p class="instructions">Keyboard editing: enter comma-separated beats in a lane. Positive values are notes; negative values are pauses (for example 1, -0.5, 0.5, 2). Any unused time becomes a pause. Flip swaps notes and pauses.</p>
+<p class="instructions">Keyboard editing: enter comma-separated beats in a lane. Positive values are notes; negative values are pauses (for example 1, -0.5, 0.5, 2). Consecutive pauses and unused time join into one pause wherever they touch. Flip swaps notes and pauses.</p>
 <footer>
   <div class="validation" aria-live="polite">
     @if (stale()) { <p class="error">The project changed while this popup was open. Reopen it to edit the current settings.</p> }

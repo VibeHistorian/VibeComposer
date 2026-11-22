@@ -26,8 +26,7 @@ input[type="checkbox"] { accent-color: var(--parameter-rhythm); }
 .lane-identity strong { width: 16px; text-align: right; }
 .lane-identity input { width: 58px; padding: 4px; }
 .duration-lane { position: relative; height: 30px; border: 1px solid var(--border-default); border-radius: var(--radius-micro); background: repeating-linear-gradient(to right, transparent 0 calc(100% / var(--cells) - 1px), var(--border-default) calc(100% / var(--cells) - 1px) calc(100% / var(--cells))); cursor: crosshair; touch-action: none; user-select: none; }
-.duration-event { position: absolute; top: 3px; bottom: 3px; border-inline: 1px solid var(--surface-input); color: var(--text-muted); text-align: center; pointer-events: none; overflow: hidden; }
-.duration-event.sounded { background: var(--parameter-rhythm); border: 1px solid var(--border-strong); border-radius: var(--radius-micro); }
+.duration-event { position: absolute; top: 3px; bottom: 3px; background: var(--parameter-rhythm); border: 1px solid var(--border-strong); border-radius: var(--radius-micro); pointer-events: none; }
 .duration-row.unused .duration-lane { opacity: .5; }
 .duration-text { min-width: 0; }
 .duration-text input { width: 100%; padding: 5px; font-family: var(--font-mono); }

@@ -7,8 +7,10 @@ import type { CommonPartSettings, PartSettingsPatch } from '../../core/music/par
 import type { PartSettingsScope } from '../../core/project/part-settings-scope';
 import { ProjectService } from '../../core/project/project.service';
 import { resolvePartTrack } from '../../core/music/part-settings';
-import { DEFAULT_DURATION_CHANCES, DEFAULT_DURATIONS, durationError, paddedDurations } from '../../core/music/durations';
+import { DEFAULT_DURATION_CHANCES, DEFAULT_DURATIONS, durationError, isDurationRow, joinDurationPauses, paddedDurations } from '../../core/music/durations';
 import { validateDurationDraft } from '../../core/music/duration-validation';
+
+const TICKS_PER_BEAT = 960;
 
 interface DurationStroke {
   row: number;
@@ -34,7 +36,7 @@ export class DurationsDialogComponent {
   private readonly tracks = this.initialProject.tracks.filter(track => track.role === this.role && (!('trackId' in this.data.scope) || track.id === this.data.scope.trackId));
   private readonly initial = resolvePartTrack(this.tracks[0], this.section, this.initialProject.melodyGlobal).generatorSettings as CommonPartSettings;
   readonly trackCount = this.tracks.length;
-  readonly texts = signal((this.initial.customDurations ?? DEFAULT_DURATIONS).map(row => row.join(', ')));
+  readonly texts = signal((this.initial.customDurations ?? DEFAULT_DURATIONS).map(row => joinDurationPauses(row).join(', ')));
   readonly chances = signal([...(this.initial.customDurationChances ?? DEFAULT_DURATION_CHANCES)]);
   readonly weighted = signal(this.initial.customDurationRandomWeighting ?? false);
   readonly flipped = signal(this.data.flipped ?? this.initial.patternFlip ?? false);
@@ -77,7 +79,8 @@ export class DurationsDialogComponent {
     this.writeRecordingSpan(span, true);
   }
   readonly grid = signal(0.25);
-  readonly rows = computed(() => this.texts().map(text => text.trim() ? text.split(',').map(value => value.trim() ? Number(value) : NaN) : []));
+  private readonly enteredRows = computed(() => this.texts().map(text => text.trim() ? text.split(',').map(value => value.trim() ? Number(value) : NaN) : []));
+  readonly rows = computed(() => this.enteredRows().map(row => isDurationRow(row) ? joinDurationPauses(row) : row));
   readonly patch = computed<PartSettingsPatch>(() => ({ rhythm: 'durations', customDurations: this.rows(),
     customDurationChances: this.chances(), customDurationRandomWeighting: this.weighted(), patternFlip: this.flipped() }));
   readonly error = computed(() => durationError({ ...this.initial, ...this.patch() }));
@@ -89,16 +92,23 @@ export class DurationsDialogComponent {
   readonly canSave = computed(() => !this.stale() && !this.error() && !this.checking()
     && this.checked()?.draft === this.fingerprint() && this.checked()?.error === null);
   readonly steps = computed(() => Array.from({ length: Math.round(4 / this.grid()) }, (_, index) => index));
-  readonly displayRows = computed(() => this.rows().map(row => {
+  readonly displayedNotes = computed(() => this.rows().map(row => {
     if (!row.length || row.some(value => !Number.isFinite(value) || value === 0) || row.reduce((sum, value) => sum + Math.abs(value), 0) > 4.0000001) return [];
     let start = 0;
-    return paddedDurations(row, this.flipped()).map(value => {
-      const slot = { start, duration: Math.abs(value), rest: value < 0 }; start += slot.duration; return slot;
+    return paddedDurations(row, this.flipped()).flatMap(value => {
+      const duration = Math.abs(value);
+      const note = { start, duration };
+      start += duration;
+      return value > 0 ? [note] : [];
     });
   }));
   private gesture: (DurationStroke & { pointer: number; sounded: boolean }) | null = null;
 
   editRow(row: number, text: string): void { this.texts.update(rows => rows.map((value, index) => index === row ? text : value)); }
+  finishTextEdit(row: number): void {
+    const joined = this.rows()[row];
+    if (joined.length < this.enteredRows()[row].length) this.editRow(row, joined.join(', '));
+  }
   editChance(row: number, value: string): void { this.chances.update(chances => chances.map((chance, index) => index === row ? Number(value) : chance)); }
   private cell(event: PointerEvent): number {
     const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
@@ -132,17 +142,24 @@ export class DurationsDialogComponent {
     this.gesture = null;
   }
   private paint(gesture: DurationStroke, sounded: boolean): void {
-    const left = Math.min(gesture.start, gesture.end) * this.grid(), right = (Math.max(gesture.start, gesture.end) + 1) * this.grid();
+    const left = Math.round(Math.min(gesture.start, gesture.end) * this.grid() * TICKS_PER_BEAT);
+    const right = Math.round((Math.max(gesture.start, gesture.end) + 1) * this.grid() * TICKS_PER_BEAT);
     const before: number[] = [], after: number[] = [];
-    let time = 0;
-    for (const value of paddedDurations(gesture.original)) {
-      const end = time + Math.abs(value), sign = Math.sign(value);
-      if (time < left) before.push(sign * (Math.min(left, end) - time));
-      if (end > right) after.push(sign * (end - Math.max(time, right)));
-      time = end;
+    let elapsed = 0, start = 0;
+    // Round boundaries before cutting so adjacent slots share an edge and no zero-length fragments survive.
+    const original = gesture.original.length ? paddedDurations(gesture.original) : [this.flipped() ? 4 : -4];
+    for (const value of original) {
+      elapsed += Math.abs(value);
+      const end = Math.round(elapsed * TICKS_PER_BEAT);
+      const beforeTicks = Math.min(left, end) - start;
+      const afterTicks = end - Math.max(start, right);
+      if (beforeTicks > 0) before.push(Math.sign(value) * beforeTicks);
+      if (afterTicks > 0) after.push(Math.sign(value) * afterTicks);
+      start = end;
     }
     const sign = sounded !== this.flipped() ? 1 : -1;
-    this.editRow(gesture.row, [...before, sign * (right - left), ...after].map(value => Math.round(value * 960) / 960).join(', '));
+    const joined = joinDurationPauses([...before, sign * (right - left), ...after]);
+    this.editRow(gesture.row, joined.map(ticks => ticks / TICKS_PER_BEAT).join(', '));
   }
   validate(): void {
     if (this.error() || this.stale() || this.checking()) return;
