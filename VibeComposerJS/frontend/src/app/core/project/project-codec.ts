@@ -41,6 +41,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     && (isScaleMode(project.scale))
     && validOutputSettings(project)
     && (project.masterVolumePercent === undefined || validVolumePercent(project.masterVolumePercent))
+    && (project.soundbankName === undefined || typeof project.soundbankName === 'string')
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
     && (project.randomizeHarmonyOnCompose === undefined || typeof project.randomizeHarmonyOnCompose === 'boolean')
@@ -80,6 +81,7 @@ export function decodeProject(value: unknown, chances: SectionTypeChanceSettings
     transposeSemitones: project.transposeSemitones ?? 0,
     tempoBpm: project.tempoBpm!,
     ...(project.masterVolumePercent !== undefined ? { masterVolumePercent: project.masterVolumePercent } : {}),
+    ...(project.soundbankName !== undefined ? { soundbankName: project.soundbankName } : {}),
     ...(project.humanization ? { humanization: { ...project.humanization } } : {}),
     ...(project.midiPadding ? { midiPadding: { ...project.midiPadding } } : {}),
     ...(project.randomizeTempoOnCompose !== undefined ? { randomizeTempoOnCompose: project.randomizeTempoOnCompose } : {}),
@@ -121,6 +123,7 @@ export function isProject(value: unknown, chances: SectionTypeChanceSettings, ra
     && (isScaleMode(project.scale))
     && validOutputSettings(project)
     && (project.masterVolumePercent === undefined || validVolumePercent(project.masterVolumePercent))
+    && (project.soundbankName === undefined || typeof project.soundbankName === 'string')
     && (project.transposeSemitones === undefined || (Number.isInteger(project.transposeSemitones) && project.transposeSemitones >= -24 && project.transposeSemitones <= 24))
     && (project.randomizeTempoOnCompose === undefined || typeof project.randomizeTempoOnCompose === 'boolean')
     && (project.randomizeHarmonyOnCompose === undefined || typeof project.randomizeHarmonyOnCompose === 'boolean')

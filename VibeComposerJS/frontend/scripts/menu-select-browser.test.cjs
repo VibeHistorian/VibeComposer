@@ -29,6 +29,7 @@ for (const width of [1440, 700]) test(`grouped selection menus at ${width}px`, {
  check(load?.getAttribute('role')==='menuitem','load soundfont is a command');
  load.click();await wait(()=>pickerOpens===1,'load action invoked');
  check(engine.getAttribute('value')==='synth','file action preserves selected engine');
+ await wait(()=>read().soundbankName==='synth','engine reset saved before browsing another menu');
  const picker=await wait(()=>document.querySelector('.track-group.melody vc-menu-select'),'instrument');
  check(picker.getAttribute('role')==='button','menu button semantics');
  const before=JSON.stringify(read());const options=await selectOptions(picker);

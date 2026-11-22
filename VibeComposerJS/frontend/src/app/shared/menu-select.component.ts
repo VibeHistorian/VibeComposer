@@ -41,6 +41,7 @@ export class MenuSelectComponent {
   readonly displayLabel = input<string>();
   readonly defaultValue = input<string | number | undefined>(undefined, { alias: 'selectDefault' });
   readonly valueChange = output<string>();
+  readonly allowReselect = input(false);
   readonly choices = computed(() => (this.options() ?? []).map(option => typeof option === 'object'
     ? { ...option, value: String(option.value) } : { value: String(option), label: String(option), disabled: false }));
   readonly boundValue = computed(() => this.mixed() ? '' : this.value() === undefined
@@ -62,15 +63,15 @@ export class MenuSelectComponent {
     if (!this.disabled() && this.actions().some(action => action.id === id && !action.disabled)) this.action.emit(id);
   }
   commit(value: string): void {
-    if (this.choices().some(option => option.value === value && !option.disabled)) this.choose(value);
+    if (this.choices().some(option => option.value === value && !option.disabled)) this.choose(value, this.allowReselect());
   }
   /** Restore the bound value after an action or a choice that opens a draft dialog. */
   restoreValue(): void {
     this.selectedValue.set(this.boundValue());
   }
 
-  private choose(value: string): void {
-    if (this.disabled() || value === this.selectedValue()) return;
+  private choose(value: string, allowReselect = false): void {
+    if (this.disabled() || (!allowReselect && value === this.selectedValue())) return;
     this.selectedValue.set(value);
     this.valueChange.emit(value);
   }

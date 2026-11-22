@@ -17,6 +17,8 @@ export interface CompositionProject {
   readonly scale: ScaleMode;
   readonly transposeSemitones?: number;
   readonly masterVolumePercent?: number;
+  /** Built-in synth key or loaded SF2 filename. Defaults to TinySynth. */
+  readonly soundbankName?: string;
   readonly tempoBpm: number;
   readonly randomizeTempoOnCompose?: boolean;
   readonly randomizeHarmonyOnCompose?: boolean;

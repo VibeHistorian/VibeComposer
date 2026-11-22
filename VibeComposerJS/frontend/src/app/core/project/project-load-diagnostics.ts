@@ -63,8 +63,9 @@ export function projectLoadIssues(value: unknown, chances: SectionTypeChanceSett
   };
   const required = ['name', 'scale', 'tempoBpm', 'seed', 'progression', 'editedPhrases', 'tracks', 'arrangement'];
   const project = object(value, 'project', required, [...required, 'schemaVersion', 'transposeSemitones', 'progressionChords',
-    'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies', 'arrangementVariationPolicy', 'drumSlots']);
+    'melodyGlobal', 'harmonySettings', 'trackGenerationPolicies', 'trackRerollCounts', 'instrumentGenerationPolicies', 'arrangementVariationPolicy', 'drumSlots', 'soundbankName']);
   if (project) {
+    if (project['soundbankName'] !== undefined) check('project.soundbankName', typeof project['soundbankName'] === 'string', 'expected a soundbank name');
     check('project.drumSlots', validDrumSlots(project['drumSlots']), `expected up to ${MAX_DRUM_SOUNDS} unique percussion pitches mapped to unique notes 36–${36 + MAX_DRUM_SOUNDS - 1}`);
     if (project['arrangementVariationPolicy'] !== undefined) check('project.arrangementVariationPolicy',
       validVariationPolicy(project['arrangementVariationPolicy'], Array.isArray(project['tracks']) ? project['tracks'].length : 0), 'expected a valid variation policy');

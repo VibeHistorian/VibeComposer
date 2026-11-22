@@ -12,7 +12,7 @@ export class AudioExportService {
 
   async export(project: CompositionProject, region?: AudioExportRegion): Promise<Blob> {
     if (this.busy()) throw new Error('An audio export is already running.');
-    const kind = this.instruments.kind(), bank = this.instruments.selectedBank();
+    const { kind, bank } = this.instruments.resolve(project.soundbankName);
     const normalize = this.instruments.normalization();
     this.busy.set(true);
     this.progress.set(0);

@@ -1027,6 +1027,13 @@ export class ProjectService {
     }
   }
 
+  setSoundbankName(soundbankName: string): void {
+    const current = this.state();
+    if (soundbankName !== (current.soundbankName ?? 'synth')) {
+      this.publishHistoryEdit(current, { ...current, soundbankName });
+    }
+  }
+
   randomizeSeed(): void {
     this.updateSettings({ seed: this.randomCompositionSeed() });
   }

@@ -134,6 +134,7 @@ for (const { width, missingMethod, sampler, chiptune } of [
         const saved=JSON.parse(await (await downloads[0].blob).text());
         const filenamePattern = /^\\d{8}_\\d{2}-\\d{2}_G_${project.tempoBpm}_${project.seed}_Export- test/;
         ensure(!Object.hasOwn(saved, 'key') && saved.transposeSemitones===7,'project export stores global transpose');
+        if (${Boolean(sampler)}) ensure(saved.soundbankName==='Fourth.sf2','project export stores the selected soundfont filename');
         ensure(saved.name==='Export: test' && filenamePattern.test(downloads[0].name) && downloads[0].name.endsWith('.vibe.json'),'project export preserved with automatic filename');
         trigger.click(); await wait(menu,'MIDI menu'); item('Export MIDI').click();
         await wait(()=>downloads.length===2,'MIDI download');

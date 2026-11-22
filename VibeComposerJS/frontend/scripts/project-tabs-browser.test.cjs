@@ -12,6 +12,7 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
     const ensure = (v,label) => {if(!v)throw Error(label);};
     const button = label => [...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label || b.getAttribute('aria-label')===label);
     const pills = () => [...document.querySelectorAll('.project-pill')];
+    const engine = () => document.querySelector('[aria-label="Audio instrument engine"]');
     const read = ${readWorkspace};
     const savedProject = async name => {
       const workspace = await read();
@@ -41,7 +42,9 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
       if(sessionStorage.getItem('tabs-reload')) {
         ensure(pills().length===2,'restored tabs');
         ensure(name().value==='Original','restored active');
+        await wait(()=>engine()?.getAttribute('value')==='chiptune','original synth restored after reload');
         pills()[1].click();await wait(()=>name().value===checkpointName,'switch restored copy');
+        await wait(()=>engine().getAttribute('value')==='synth','copied project restores its own synth');
         ensure(!button('Undo').disabled,'checkpoint retained undo after reload');
         await context(0,'Remove Project');await wait(()=>pills().length===1,'remove inactive');
         ensure(name().value===checkpointName,'removal keeps current project');
@@ -60,8 +63,13 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
           input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
           await wait(()=>name().value===project.name,'file opened');
         };
-        await open({...exported,name:'Opened in new tab'});
+        await open({...exported,name:'Opened in new tab',soundbankName:'Unavailable.sf2'});
         ensure(pills().length===3,'file opens new tab by default');
+        await wait(()=>engine().getAttribute('value')==='synth','unavailable soundbank falls back to TinySynth');
+        const missing = await wait(()=>savedProject('Opened in new tab'),'project with unavailable bank is saved');
+        ensure(missing.project.soundbankName==='Unavailable.sf2','fallback retains the saved bank name');
+        await changeControl(engine(),'synth');
+        await wait(async ()=>(await savedProject('Opened in new tab'))?.project.soundbankName==='synth','explicit TinySynth selection replaces the missing bank');
         button('Settings').click();(await wait(()=>button('Project'),'project settings')).click();
         const setting=await wait(()=>document.querySelector('[aria-label="Replace current project tab when opening projects"]'),'replace setting');
         ensure(!setting.checked,'new tabs default');setting.click();
@@ -76,6 +84,7 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
         await fetch('/result',{method:'POST',body:JSON.stringify({ok:true})});
       } else {
         await rename('Original');
+        await changeControl(await wait(engine,'instrument engine'),'chiptune');
         document.querySelector('button.project-pill.active').click();await editName('Discard this','Escape');
         ensure(name().value==='Original','Escape cancels rename');
         button('Branch project').click();await wait(()=>pills().length===2,'branch');
@@ -83,8 +92,11 @@ for (const width of [700, 1440]) test(`project pills, context actions, checkpoin
         ensure(/^Original \\(\\d{2}_\\d{2}\\)$/.test(checkpointName),'branch timestamp');
         sessionStorage.setItem('checkpoint-name',checkpointName);
         ensure(!button('Undo').disabled,'branch has source history');
+        await wait(()=>engine().getAttribute('value')==='chiptune','branch inherits synth');
         await rename('Independent edit');button('Undo').click();await wait(()=>name().value===checkpointName,'independent undo');
+        await changeControl(engine(),'synth');
         pills()[0].click();await wait(()=>name().value==='Original','left click switching');
+        await wait(()=>engine().getAttribute('value')==='chiptune','switch restores original synth');
         const active=(await wait(()=>savedProject('Original'),'original is active in storage')).id;
         await context(1,'Rename Project');await editName('Renamed inactive');
         ensure((await read()).activeId===active && name().value==='Original','inactive rename keeps active tab');

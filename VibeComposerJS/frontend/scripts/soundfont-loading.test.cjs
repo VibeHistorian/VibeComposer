@@ -13,13 +13,24 @@ function fixture(calibrateInstruments = async () => ({})) {
     read.asReadonly = () => read;
     return read;
   };
+  const project = signal({});
+  const projectActivation = signal(0);
+  const projects = { project, projectActivation, setSoundbankName: soundbankName => project.set({ soundbankName }) };
+  let runEffect;
   const module = { exports: {} };
   const source = fs.readFileSync(path.join(__dirname, '../src/app/core/audio/instrument-settings.service.ts'), 'utf8');
   const compiled = ts.transpileModule(source, {compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, experimentalDecorators: true}}).outputText;
-  new Function('require','module','exports',compiled)(name => name === '@angular/core'
-    ? {signal, computed: fn => fn, Injectable: () => type => type}
-    : name === './instrument-loudness' ? {calibrateInstruments} : {Sf2Bank}, module, module.exports);
-  return {service: new module.exports.InstrumentSettingsService(), max: module.exports.MAX_SOUNDFONT_BYTES};
+  const dependencies = {
+    '@angular/core': { signal, computed: fn => fn, Injectable: () => type => type, inject: () => projects,
+      effect: fn => { runEffect = fn; }, untracked: fn => fn() },
+    '../project/project.service': { ProjectService: class {} },
+    './instrument-loudness': { calibrateInstruments },
+    './sf2-resolver': { Sf2Bank },
+  };
+  new Function('require', 'module', 'exports', compiled)(name => dependencies[name], module, module.exports);
+  const service = new module.exports.InstrumentSettingsService();
+  runEffect();
+  return { service, projects, runEffect, max: module.exports.MAX_SOUNDFONT_BYTES };
 }
 const file = name => new File([bytes], name);
 
@@ -41,11 +52,12 @@ test('enabling normalization prepares immediately and retains readiness without 
 
 test('disabling or switching banks ignores obsolete calibration progress and completion', async () => {
   const jobs = [];
-  const {service} = fixture((bank, progress) => new Promise((resolve, reject) => jobs.push({bank, progress, resolve, reject})));
+  const {service, runEffect} = fixture((bank, progress) => new Promise((resolve, reject) => jobs.push({bank, progress, resolve, reject})));
   await service.load(file('one.sf2'));
   const first = service.setNormalization(true);
   await new Promise(setImmediate);
   await service.load(file('two.sf2'));
+  runEffect();
   await new Promise(setImmediate);
   assert.equal(jobs.length, 2, 'new bank prepares without Play');
   const before = service.calibrationStatus();
@@ -94,6 +106,30 @@ test('bundled chiptune selects without a soundfont and prepares its own normaliz
   assert.equal(selectedKind, 'chiptune');
   assert.equal(service.calibrationStatus(), 'Loudness normalization ready for Chiptune (TinySynth).');
 });
+test('projects resolve their saved soundfont by filename as banks become available', async () => {
+  const { service, projects } = fixture();
+  await service.load(file('other.sf2'));
+  const other = projects.project();
+  projects.project.set({ soundbankName: 'saved.sf2' });
+  assert.equal(service.kind(), 'synth', 'a different loaded bank cannot satisfy the saved name');
+
+  const loading = service.load(file('saved.sf2'));
+  projects.projectActivation.update(n => n + 1);
+  projects.project.set(other);
+  await loading;
+  assert.equal(service.selectedBank(), service.loaded()[0].bank, 'pending load does not change the newly active project');
+  projects.project.set({ soundbankName: 'saved.sf2' });
+  assert.equal(service.selectedBank(), service.loaded()[1].bank);
+
+  const oldId = service.kind();
+  await service.load(file('saved.sf2'));
+  assert.notEqual(service.kind(), oldId);
+  assert.deepEqual(service.loaded().map(bank => bank.name), ['other.sf2', 'saved.sf2']);
+  service.unload(service.kind());
+  assert.equal(service.kind(), 'synth');
+  assert.equal(projects.project().soundbankName, 'saved.sf2');
+});
+
 test('250 MiB is accepted; oversized files are rejected before reading or evicting a bank', async () => {
   const {service,max} = fixture();let read = false;
   await service.load({name:'large.sf2',size:max+1,arrayBuffer:async()=>{read=true;throw Error('must not read');}});

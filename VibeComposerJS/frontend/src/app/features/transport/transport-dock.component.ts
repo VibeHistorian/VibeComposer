@@ -32,6 +32,7 @@ export class TransportDockComponent {
   readonly instrumentMenuGroups = computed(() => [{ id: 'soundfonts', label: 'Soundfonts', values: this.instruments.loaded().map(bank => bank.id) }]);
   readonly instrumentActions = computed(() => [{ id: 'load-soundfont', label: 'Load soundfont…', disabled: this.instruments.busy() }]);
   readonly instrumentLabel = computed(() => this.instrumentOptions().find(option => option.value === this.instruments.kind())?.label ?? 'Audio instrument engine');
+  readonly usingSynthFallback = computed(() => this.instruments.kind() === 'synth' && (this.project().soundbankName ?? 'synth') !== 'synth');
   selectInstrument(value: string): void {
     this.playback.stop();
     this.instruments.select(value);

@@ -82,7 +82,7 @@
     <ng-content select="[transportHistory]" />
     <div class="project-tool-group transport-audio-tools" role="group" aria-label="Audio playback settings">
       <input #soundfontInput type="file" accept=".sf2" aria-label="Load soundfont" hidden [disabled]="instruments.busy()" (change)="loadSoundfont($event)" />
-      <vc-menu-select [groups]="instrumentMenuGroups()" [actions]="instrumentActions()" (action)="instrumentAction($event, soundfontInput)" class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [title]="instrumentLabel()" aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()"
+      <vc-menu-select [groups]="instrumentMenuGroups()" [actions]="instrumentActions()" (action)="instrumentAction($event, soundfontInput)" class="instrument-selector" [class.active]="instruments.kind() !== 'synth'" displayLabel="🔊 ▾" [title]="instrumentLabel()" aria-label="Audio instrument engine" [options]="instrumentOptions()" [value]="instruments.kind()" [allowReselect]="usingSynthFallback()"
         (valueChange)="selectInstrument($event)" />
       <button type="button" class="transport-button live-button" [class.active]="playback.liveEnabled()"
         [attr.aria-pressed]="playback.liveEnabled()" (click)="toggleLive()" aria-label="Toggle live reload"

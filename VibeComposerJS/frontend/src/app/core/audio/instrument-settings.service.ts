@@ -1,4 +1,5 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
+import { ProjectService } from '../project/project.service';
 import type { InstrumentEngineKind } from './instrument-engine';
 import type { Sf2Bank } from './sf2-resolver';
 
@@ -14,15 +15,18 @@ export interface LoadedSoundfont {
   readonly size: number;
   readonly bank: Sf2Bank;
 }
-/** Session audio resources, independent of project history and MIDI program identity. */
+/** Session audio resources and the active project's resolved soundbank. */
 @Injectable({ providedIn: 'root' })
 export class InstrumentSettingsService {
+  private readonly projects = inject(ProjectService);
   readonly normalization = signal(loadNormalization());
   readonly calibrationStatus = signal('');
   private calibrationRequest = 0;
-  readonly kind = signal<InstrumentEngineKind>('synth');
   private readonly banks = signal<readonly LoadedSoundfont[]>([]);
   readonly loaded = this.banks.asReadonly();
+  private readonly selection = computed(() => this.resolve(this.projects.project().soundbankName));
+  readonly kind = computed(() => this.selection().kind);
+  readonly selectedBank = computed(() => this.selection().bank);
   readonly busy = signal(false);
   readonly message = signal('');
   readonly options = computed(() => [{ value: 'synth', label: 'TinySynth' },
@@ -30,7 +34,19 @@ export class InstrumentSettingsService {
     ...this.loaded().map(bank => ({ value: bank.id, label: bank.name }))]);
   private nextId = 0;
 
-  constructor() { void this.prepareNormalization(); }
+  constructor() {
+    effect(() => {
+      this.kind();
+      untracked(() => void this.prepareNormalization());
+    });
+  }
+
+  resolve(name: string | undefined): { kind: InstrumentEngineKind; bank?: Sf2Bank } {
+    if (name === undefined || name === 'synth' || name === 'chiptune') return { kind: name ?? 'synth' };
+    const loaded = this.loaded().find(bank => bank.name === name);
+    return loaded ? { kind: loaded.id, bank: loaded.bank } : { kind: 'synth' };
+  }
+
   async setNormalization(enabled: boolean): Promise<void> {
     this.normalization.set(enabled);
     try { localStorage.setItem(NORMALIZATION_KEY, String(enabled)); } catch { /* Session preference remains usable. */ }
@@ -57,12 +73,9 @@ export class InstrumentSettingsService {
         + (error instanceof Error ? error.message : 'Calibration failed.') + ' Turn normalization off and on to retry.');
     }
   }
-  selectedBank(): Sf2Bank | undefined { return this.loaded().find(bank => bank.id === this.kind())?.bank; }
   select(id: string): void {
-    if (id === 'synth' || id === 'chiptune' || this.loaded().some(bank => bank.id === id)) {
-      this.kind.set(id as InstrumentEngineKind);
-      void this.prepareNormalization();
-    }
+    const name = id === 'synth' || id === 'chiptune' ? id : this.loaded().find(bank => bank.id === id)?.name;
+    if (name !== undefined) this.projects.setSoundbankName(name);
   }
   async load(file: File): Promise<void> {
     if (this.busy()) return;
@@ -71,6 +84,7 @@ export class InstrumentSettingsService {
     if (!file.name.toLowerCase().endsWith('.sf2')) { this.message.set('Choose an SF2 soundfont file.'); return; }
     this.busy.set(true);
     this.message.set('Loading ' + file.name + '…');
+    const activation = this.projects.projectActivation();
     try {
       await new Promise<void>(resolve => setTimeout(resolve, 0));
       const data = await file.arrayBuffer();
@@ -79,20 +93,16 @@ export class InstrumentSettingsService {
       const bank = new Sf2Bank(data);
       if (!bank.presets.some(preset => preset.regions.length)) throw new Error('The soundfont contains no playable presets.');
       const entry: LoadedSoundfont = { id: `sf2:${++this.nextId}`, name: file.name, size: file.size, bank };
-      const previous = this.loaded();
+      const previous = this.loaded().filter(item => item.name !== entry.name);
       const evicted = previous.length === MAX_LOADED_SOUNDFONTS ? previous[0] : undefined;
       this.banks.set([...previous, entry].slice(-MAX_LOADED_SOUNDFONTS));
-      this.kind.set(entry.id);
-      void this.prepareNormalization();
+      if (this.projects.projectActivation() === activation) this.select(entry.id);
       this.message.set('Loaded ' + file.name + '.' + (evicted ? ' Unloaded ' + evicted.name + ' (oldest).' : ''));
     } catch (error) {
       this.message.set('Could not load ' + file.name + ': ' + (error instanceof Error ? error.message : 'Invalid soundfont.'));
     } finally { this.busy.set(false); }
   }
   unload(id: InstrumentEngineKind): void {
-    const selected = this.kind() === id;
-    if (selected) this.kind.set('synth');
     this.banks.update(banks => banks.filter(bank => bank.id !== id));
-    if (selected) void this.prepareNormalization();
   }
 }

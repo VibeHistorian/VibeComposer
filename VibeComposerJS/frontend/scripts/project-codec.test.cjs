@@ -20,6 +20,7 @@ test('compact project exports preserve JSON data and keep numeric arrays and man
   const input = copyDefaultProject(DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
   input.name = 'Quotes " and brackets [1, 2] and newline\nwith backslash \\';
   input.seed = '9223372036854775807';
+  input.soundbankName = 'My soundbank.sf2';
   const notes = [
     { id: 'n"1', midi: 48, startBeat: 0, durationBeats: 0.5, velocity: 90 },
     { id: 'n2', midi: 55, startBeat: 0.5, durationBeats: 1, velocity: 85 },
@@ -46,6 +47,7 @@ test('compact project exports preserve JSON data and keep numeric arrays and man
   }
   const decoded = decodeProject(JSON.parse(exported), DEFAULT_SECTION_TYPE_CHANCES, () => 0.5);
   assert.ok(decoded);
+  assert.equal(decoded.soundbankName, input.soundbankName);
   assert.deepEqual(decoded, decodeProject(JSON.parse(originalJson), DEFAULT_SECTION_TYPE_CHANCES, () => 0.5));
   assert.deepEqual(decoded.tracks.find(item => item.id === track.id).editedPhrase, notes);
 });
