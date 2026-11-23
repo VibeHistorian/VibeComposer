@@ -20,7 +20,8 @@ polyline { fill: none; stroke: var(--sequence-color, var(--accent-primary)); str
 .point-label { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); color: var(--text-primary); font: 11px var(--font-mono); }
 .steps { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
 .steps label { display: flex; flex-direction: column; gap: 4px; color: var(--text-secondary); text-align: center; }
-.steps input { width: 52px; }
+.steps input { box-sizing: content-box; width: 3.5ch; padding-inline: 3px; text-align: center; font: 12px var(--font-mono); appearance: textfield; }
+.steps input::-webkit-inner-spin-button, .steps input::-webkit-outer-spin-button { appearance: none; margin: 0; }
 /* Commit actions */
 footer { display: flex; flex-direction: column; gap: 12px; }
 footer > div { justify-content: end; }
